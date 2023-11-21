@@ -1,0 +1,15 @@
+type Number @entity {
+  id: ID!
+  sender: Sender!
+  number: BigInt!
+  createdAt: BigInt!
+  transactionHash: String!
+}
+
+type Sender @entity {
+  id: ID!
+  address: Bytes!
+  numbers: [Number!] @derivedFrom(field: "sender")
+  createdAt: BigInt!
+  numberCount: BigInt!
+}
