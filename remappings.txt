@@ -1,2 +1,3 @@
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
+allo-v2/=lib/allo-v2/contracts/
