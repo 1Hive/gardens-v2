@@ -9,7 +9,10 @@ module.exports = {
     content: [""],
     darkMode: "class",
     extend: {
-      fontFamily: {},
+      fontFamily: {
+        press: ["var(--font-press)"],
+        chakra: ["var(--font-chakra)"],
+      },
       colors: {
         primary: "var(--color-primary)",
         secondary: "var(--color-secondary)",

@@ -6,9 +6,10 @@ export default function Home() {
   return (
     <>
       <NavBar />
-      <main className="flex justify-center">
+      <main className="flex flex-col items-center space-y-8 justify-center">
         <ThemeModeButton />
-        <h1>Landing page</h1>
+        <h1 className="font-press">Landing page</h1>
+        <h3 className="font-chakra">Getting Started</h3>
       </main>
     </>
   );
