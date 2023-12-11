@@ -3,7 +3,7 @@ import { ThemeProvider as NextThemeProvider } from "next-themes"
 
 const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 	return (
-		<NextThemeProvider enableSystem={true} attribute="class">
+		<NextThemeProvider  attribute="class">
 			{children}
 		</NextThemeProvider>
 	)

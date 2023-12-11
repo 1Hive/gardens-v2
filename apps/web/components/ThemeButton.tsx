@@ -8,13 +8,12 @@ export function ThemeModeButton() {
   const { resolvedTheme, setTheme } = useTheme();
   const isMounted = useIsMounted();
 
-  
   if (!isMounted) {
     return null ;
   }
 
   return (
-    <button className="text-icon-light hover:text-iconHighlight-light dark:text-icon-dark hover:dark:text-iconHighlight-dark" 
+    <button className="text-purple-300" 
     onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}>
       {
         resolvedTheme === "dark" ? (

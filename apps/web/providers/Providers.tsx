@@ -1,6 +1,7 @@
 "use client"
 import React from 'react';
 import WagmiProvider from './WagmiProvider';
+import ThemeProvider from './ThemeProvider';
 
 type ProviderType = {
   children: React.ReactNode,
@@ -8,7 +9,11 @@ type ProviderType = {
 
 const Providers = ({children}: ProviderType) => {
   return (
-    <WagmiProvider>{children}</WagmiProvider>
+    <WagmiProvider>
+      <ThemeProvider>
+        {children}
+      </ThemeProvider>
+      </WagmiProvider>
   )
 }
 
