@@ -3,26 +3,26 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 
-import {IAllo} from "allo-v2/core/interfaces/IAllo.sol";
-import {IStrategy} from "allo-v2/core/interfaces/IStrategy.sol";
-
-import {Allo} from "allo-v2/core/Allo.sol";
-import {Registry} from "allo-v2/core/Registry.sol";
-
-import {Native} from "allo-v2/core/libraries/Native.sol";
-import {Errors} from "allo-v2/core/libraries/Errors.sol";
-import {Metadata} from "allo-v2/core/libraries/Metadata.sol";
-
-import {AlloSetup} from "allo-v2/../test/foundry/shared/AlloSetup.sol";
-import {RegistrySetupFull} from "allo-v2/../test/foundry/shared/RegistrySetup.sol";
-
-import {GasHelpers} from "allo-v2/../test/utils/GasHelpers.sol";
-import {MockERC20} from "allo-v2/../test/utils/MockERC20.sol";
+import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
+import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
+// Core contracts
+import {Allo} from "allo-v2-contracts/core/Allo.sol";
+import {Registry} from "allo-v2-contracts/core/Registry.sol";
+// Internal Libraries
+import {Errors} from "allo-v2-contracts/core/libraries/Errors.sol";
+import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
+import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
+// Test libraries
+import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
+import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
+import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
+import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
+import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
+import {GasHelpers} from "allo-v2-test/utils/GasHelpers.sol";
 
 import {CVMockStrategy} from "./CVMockStrategy.sol";
 
 contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers {
-
     address public strategy;
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * 10 ** 18;
@@ -48,6 +48,7 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         token.approve(address(allo()), mintAmount);
 
         strategy = address(new CVMockStrategy(address(allo())));
+//        strategy = address(new MockStrategy(address(allo())));
 
         vm.startPrank(allo_owner());
         allo().transferOwnership(local());
@@ -55,13 +56,13 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
     }
 
     event PoolCreated(
-    uint256 indexed poolId,
-    bytes32 indexed profileId,
-    IStrategy strategy,
-    address token,
-    uint256 amount,
-    Metadata metadata
-);
+        uint256 indexed poolId,
+        bytes32 indexed profileId,
+        IStrategy strategy,
+        address token,
+        uint256 amount,
+        Metadata metadata
+    );
 
     function test_createPool() public {
         startMeasuringGas("createPool");
@@ -73,12 +74,12 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         vm.prank(pool_admin());
 
         uint256 poolId = allo().createPool(poolProfile_id(), strategy, "0x", NATIVE, 0, metadata, pool_managers());
-//
-//        IAllo.Pool memory pool = allo().getPool(poolId);
-//        stopMeasuringGas();
-//
-//        assertEq(pool.profileId, poolProfile_id());
-//        assertNotEq(address(pool.strategy), address(strategy));
-//
+        //
+        IAllo.Pool memory pool = allo().getPool(poolId);
+        stopMeasuringGas();
+    //
+        assertEq(pool.profileId, poolProfile_id());
+        assertNotEq(address(pool.strategy), address(strategy));
+        //
     }
 }

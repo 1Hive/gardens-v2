@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import "allo-v2/strategies/BaseStrategy.sol";
+import "allo-v2-contracts/strategies/BaseStrategy.sol";
 
 contract CVMockStrategy is BaseStrategy {
     uint256 internal surpressStateMutabilityWarning;
 
-    constructor(address _allo) BaseStrategy(_allo, "MockStrategy") {}
+    constructor(address _allo) BaseStrategy(_allo, "CVMockStrategy") {}
 
     function initialize(uint256 _poolId, bytes memory _data) external {
         __BaseStrategy_init(_poolId);
