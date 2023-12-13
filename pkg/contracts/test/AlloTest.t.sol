@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
+import "forge-std/console.sol";
 
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
@@ -64,6 +65,21 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         Metadata metadata
     );
 
+    enum ProposalType {
+        Signaling,
+        Funding,
+        Streaming
+    }
+    struct Proposal {
+        uint256 id;
+        uint256 poolId;
+        address beneficiary;
+        address creator;
+        ProposalType proposalType;
+        uint256 amountRequested;
+        address token;
+//        bytes data;
+    }
     function test_createPool() public {
         startMeasuringGas("createPool");
         allo().addToCloneableStrategies(strategy);
@@ -74,12 +90,17 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         vm.prank(pool_admin());
 
         uint256 poolId = allo().createPool(poolProfile_id(), strategy, "0x", NATIVE, 0, metadata, pool_managers());
-        //
+
         IAllo.Pool memory pool = allo().getPool(poolId);
         stopMeasuringGas();
-    //
+
         assertEq(pool.profileId, poolProfile_id());
         assertNotEq(address(pool.strategy), address(strategy));
-        //
+
+        Proposal memory proposal = Proposal(1, poolId, pool_admin(), pool_admin(), ProposalType.Signaling, 0, NATIVE);
+
+        bytes memory data = abi.encode(proposal);
+        allo().registerRecipient(poolId, data);
+
     }
 }
