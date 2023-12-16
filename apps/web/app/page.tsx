@@ -8,8 +8,10 @@ export default function Home() {
       <NavBar />
       <main className="flex flex-col items-center justify-center space-y-8">
         <ThemeModeButton />
-        <h1 className="font-press">Landing page</h1>
-        <h3 className="font-chakra">Getting Started</h3>
+        <div className="text-center">
+          <h1 className="font-press">Landing page</h1>
+          <h3 className="font-chakra">Getting Started</h3>
+        </div>
       </main>
     </>
   );
