@@ -63,9 +63,15 @@ importers:
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.14.0
         version: 6.14.0(@typescript-eslint/parser@6.14.0)(eslint@8.55.0)(typescript@5.3.2)
+      '@urql/next':
+        specifier: ^1.1.0
+        version: 1.1.0(next@14.0.3)(react@18.2.0)(urql@4.0.6)
       '@web3modal/wagmi':
         specifier: ^3.4.0
         version: 3.4.0(@types/react@18.0.26)(@wagmi/core@1.4.8)(typescript@5.3.2)(viem@1.19.11)
+      graphql:
+        specifier: ^16.8.1
+        version: 16.8.1
       heroicons-react:
         specifier: ^1.4.1
         version: 1.4.1(react@18.2.0)
@@ -87,6 +93,9 @@ importers:
       ui:
         specifier: workspace:*
         version: link:../../pkg/ui
+      urql:
+        specifier: ^4.0.6
+        version: 4.0.6(graphql@16.8.1)(react@18.2.0)
       viem:
         specifier: ^1.19.11
         version: 1.19.11(typescript@5.3.2)
@@ -248,6 +257,17 @@ importers:
         version: 0.28.4(jsdom@21.1.0)
 
 packages:
+
+  /@0no-co/graphql.web@1.0.4(graphql@16.8.1):
+    resolution: {integrity: sha512-W3ezhHGfO0MS1PtGloaTpg0PbaT8aZSmmaerL7idtU5F7oCI+uu25k+MsMS31BVFlp4aMkHSrNRxiD72IlK8TA==}
+    peerDependencies:
+      graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
+    peerDependenciesMeta:
+      graphql:
+        optional: true
+    dependencies:
+      graphql: 16.8.1
+    dev: false
 
   /@aashutoshrathi/word-wrap@1.2.6:
     resolution: {integrity: sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==}
@@ -3753,6 +3773,27 @@ packages:
 
   /@ungap/structured-clone@1.2.0:
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
+
+  /@urql/core@4.2.2(graphql@16.8.1):
+    resolution: {integrity: sha512-TP1kheq9bnrEdnVbJqh0g0ZY/wfdpPeAzjiiDK+Tm+Pbi0O1Xdu6+fUJ/wJo5QpHZzkIyya4/AecG63e6scFqQ==}
+    dependencies:
+      '@0no-co/graphql.web': 1.0.4(graphql@16.8.1)
+      wonka: 6.3.4
+    transitivePeerDependencies:
+      - graphql
+    dev: false
+
+  /@urql/next@1.1.0(next@14.0.3)(react@18.2.0)(urql@4.0.6):
+    resolution: {integrity: sha512-yem5319hUn9cg+BIOMBRGb2Xt39Jusz4eu3Vdv0Fb5+mRLal644JxYpB98OBj0idBtMvl04zuJ69FGuHz4Aa6w==}
+    peerDependencies:
+      next: '>=13.0.0'
+      react: '>=18.0.0'
+      urql: ^4.0.0
+    dependencies:
+      next: 14.0.3(@babel/core@7.20.12)(react-dom@18.2.0)(react@18.2.0)
+      react: 18.2.0
+      urql: 4.0.6(graphql@16.8.1)(react@18.2.0)
+    dev: false
 
   /@vitejs/plugin-react@3.1.0(vite@4.1.1):
     resolution: {integrity: sha512-AfgcRL8ZBhAlc3BFdigClmTUMISmmzHn7sB2h9U1odvc5U/MjWXsAaz18b/WoppUTDBzxOJwo2VdClfUcItu9g==}
@@ -7790,6 +7831,11 @@ packages:
 
   /graphql@16.6.0:
     resolution: {integrity: sha512-KPIBPDlW7NxrbT/eh4qPXz5FiFdL5UbaA0XUNz2Rp3Z3hqBSkbj0GVjwFDztsWVauZUWsbKHgMg++sk8UX0bkw==}
+    engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
+    dev: false
+
+  /graphql@16.8.1:
+    resolution: {integrity: sha512-59LZHPdGZVh695Ud9lRzPBVTtlX9ZCV150Er2W43ro37wVof0ctenSaskPPjN7lVTIN8mSZt8PHUNKZuNQUuxw==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
     dev: false
 
@@ -11887,6 +11933,18 @@ packages:
     resolution: {integrity: sha512-Qp95D4TPJl1kC9SKigDcqgyM2VDVO4RiJc2d4qe5GrYm+zbIQCWWKAFaJNQ4BhdFeDGwBmAxqJBwWSJDb9T3BQ==}
     dev: false
 
+  /urql@4.0.6(graphql@16.8.1)(react@18.2.0):
+    resolution: {integrity: sha512-meXJ2puOd64uCGKh7Fse2R7gPa8+ZpBOoA62jN7CPXXUt7SVZSdeXWSpB3HvlfzLUkEqsWbvshwrgeWRYNNGaQ==}
+    peerDependencies:
+      react: '>= 16.8.0'
+    dependencies:
+      '@urql/core': 4.2.2(graphql@16.8.1)
+      react: 18.2.0
+      wonka: 6.3.4
+    transitivePeerDependencies:
+      - graphql
+    dev: false
+
   /use-sync-external-store@1.2.0(react@18.2.0):
     resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
     peerDependencies:
@@ -12346,6 +12404,10 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       string-width: 4.2.3
+    dev: false
+
+  /wonka@6.3.4:
+    resolution: {integrity: sha512-CjpbqNtBGNAeyNS/9W6q3kSkKE52+FjIj7AkFlLr11s/VWGUu6a2CdYSdGxocIhIVjaW/zchesBQUKPVU69Cqg==}
     dev: false
 
   /word-wrap@1.2.3:

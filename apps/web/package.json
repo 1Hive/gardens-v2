@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@urql/next": "^1.1.0",
     "@web3modal/wagmi": "^3.4.0",
+    "graphql": "^16.8.1",
     "heroicons-react": "^1.4.1",
     "lokijs": "^1.5.12",
     "next-themes": "^0.2.1",
@@ -18,6 +20,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "ui": "workspace:*",
+    "urql": "^4.0.6",
     "viem": "^1.19.11",
     "wagmi": "^1.4.7"
   },
