@@ -43,6 +43,7 @@
     "prettier": "^3.1.0",
     "prettier-plugin-tailwindcss": "^0.5.7",
     "tailwindcss": "^3.3.6",
+    "daisyui": "^4.4.20",
     "tsconfig": "workspace:*",
     "typescript": "^5.3.2"
   }

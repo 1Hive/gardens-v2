@@ -8,11 +8,7 @@ type ProviderType = {
 };
 
 const Providers = ({ children }: ProviderType) => {
-  return (
-    <WagmiProvider>
-      <ThemeProvider>{children}</ThemeProvider>
-    </WagmiProvider>
-  );
+  return <WagmiProvider>{children}</WagmiProvider>;
 };
 
 export default Providers;
