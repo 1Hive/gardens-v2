@@ -24,6 +24,7 @@ import {GasHelpers} from "allo-v2-test/utils/GasHelpers.sol";
 import {CVMockStrategy} from "./CVMockStrategy.sol";
 import {CVStrategy, IRegistryGardens} from "../src/CVStrategy.sol";
 
+// @dev Run forge test --mc TestAllo -vvvvv
 contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers {
     IStrategy public strategy;
     MockERC20 public token;
