@@ -22,9 +22,10 @@ import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
 import {GasHelpers} from "allo-v2-test/utils/GasHelpers.sol";
 
 import {CVMockStrategy} from "./CVMockStrategy.sol";
+import {CVStrategy, IRegistryGardens} from "../src/CVStrategy.sol";
 
 contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers {
-    address public strategy;
+    IStrategy public strategy;
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * 10 ** 18;
 
@@ -48,12 +49,17 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         vm.prank(pool_admin());
         token.approve(address(allo()), mintAmount);
 
-        strategy = address(new CVMockStrategy(address(allo())));
-//        strategy = address(new MockStrategy(address(allo())));
+        //        strategy = address(new CVMockStrategy(address(allo())));
+        strategy = new CVStrategy(address(allo()));
+        //        strategy = address(new MockStrategy(address(allo())));
 
         vm.startPrank(allo_owner());
         allo().transferOwnership(local());
         vm.stopPrank();
+    }
+
+    function _registryGardens() internal pure returns (IRegistryGardens) {
+        return IRegistryGardens(address(0));
     }
 
     event PoolCreated(
@@ -65,42 +71,44 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         Metadata metadata
     );
 
-    enum ProposalType {
-        Signaling,
-        Funding,
-        Streaming
-    }
-    struct Proposal {
-        uint256 id;
-        uint256 poolId;
-        address beneficiary;
-        address creator;
-        ProposalType proposalType;
-        uint256 amountRequested;
-        address token;
-//        bytes data;
-    }
-    function test_createPool() public {
-        startMeasuringGas("createPool");
-        allo().addToCloneableStrategies(strategy);
+    //        bytes data;
+
+    function test_createProposal() public {
+        startMeasuringGas("createProposal");
+        allo().addToCloneableStrategies(address(strategy));
 
         vm.expectEmit(true, true, false, false);
         emit PoolCreated(1, poolProfile_id(), IStrategy(strategy), NATIVE, 0, metadata);
 
         vm.prank(pool_admin());
 
-        uint256 poolId = allo().createPool(poolProfile_id(), strategy, "0x", NATIVE, 0, metadata, pool_managers());
+        CVStrategy.InitializeParams memory params =
+            CVStrategy.InitializeParams(address(_registryGardens()), 10, 1, 1, 1);
+
+        uint256 poolId = allo().createPool(
+            poolProfile_id(), address(strategy), abi.encode(params), NATIVE, 0, metadata, pool_managers()
+        );
 
         IAllo.Pool memory pool = allo().getPool(poolId);
+
+        vm.deal(address(this), 1 ether);
+        allo().fundPool{value:1 ether}(poolId, 1 ether);
+
         stopMeasuringGas();
 
         assertEq(pool.profileId, poolProfile_id());
         assertNotEq(address(pool.strategy), address(strategy));
 
-        Proposal memory proposal = Proposal(1, poolId, pool_admin(), pool_admin(), ProposalType.Signaling, 0, NATIVE);
+        CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
+            1, poolId, pool_admin(), pool_admin(), CVStrategy.ProposalType.Signaling, 0.1 ether, NATIVE
+        );
 
         bytes memory data = abi.encode(proposal);
         allo().registerRecipient(poolId, data);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        (address submitter,,,,,,,,,) = cv.getProposal(1);
 
+        data = abi.encode(1, 0.01 ether);
+        allo().allocate(poolId, data);
     }
 }
