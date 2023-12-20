@@ -1,0 +1,1 @@
+export { GardensLogo } from "./GardensLogo";

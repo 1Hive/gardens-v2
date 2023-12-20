@@ -18,7 +18,7 @@ const projectId = "cc52770b49b75b8067dfa6149a52b103"; // change project id
 
 const { chains, publicClient } = configureChains(
   [sepolia, optimism, gnosis, mainnet],
-  [walletConnectProvider({ projectId }), publicProvider()]
+  [walletConnectProvider({ projectId }), publicProvider()],
 );
 
 const metadata = {
@@ -51,8 +51,8 @@ createWeb3Modal({
   chains,
   themeMode: "light",
   themeVariables: {
-    "--w3m-color-mix": "#5e7990",
-    "--w3m-color-mix-strength": 50,
+    "--w3m-color-mix": "#8DE995",
+    "--w3m-color-mix-strength": 20,
   },
 });
 
