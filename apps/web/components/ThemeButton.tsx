@@ -4,7 +4,7 @@ import { MoonOutline, SunOutline } from "heroicons-react";
 import { useTheme } from "next-themes";
 import { useIsMounted } from "@/hooks/useIsMounted";
 
-export function ThemeModeButton() {
+export function ThemeButton() {
   const { resolvedTheme, setTheme } = useTheme();
   const isMounted = useIsMounted();
 
