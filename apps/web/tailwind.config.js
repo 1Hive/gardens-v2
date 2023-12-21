@@ -18,7 +18,6 @@ module.exports = {
   },
   theme: {
     content: [""],
-
     extend: {
       fontFamily: {
         press: ["var(--font-press)"],
