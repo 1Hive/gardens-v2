@@ -5,7 +5,7 @@ interface ButtonProps {
   type?: "primary" | "secondary";
   handleOnClick?: () => {};
   link?: string;
-  styles?: string;
+  className?: string;
   disabled?: boolean;
   children?: React.ReactNode;
 }
@@ -13,7 +13,7 @@ interface ButtonProps {
 export function Button({
   handleOnClick,
   action,
-  styles,
+  className,
   disabled = false,
   children,
   type = "primary",
@@ -26,7 +26,7 @@ export function Button({
   return (
     <button
       type={action}
-      className={`${styles} ${buttonTypeStyles[type]} rounded-lg border-2 border-black bg-primary px-10 py-3 font-chakra font-bold`}
+      className={`${className} ${buttonTypeStyles[type]} rounded-lg border-2 border-black bg-primary px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95`}
       onClick={handleOnClick}
       disabled={disabled}
     >

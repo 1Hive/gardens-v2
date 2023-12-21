@@ -9,6 +9,7 @@ const press = Press_Start_2P({
   subsets: ["latin"],
   weight: ["400"],
 });
+
 const chakra = Chakra_Petch({
   variable: "--font-chakra",
   subsets: ["latin"],
@@ -27,8 +28,9 @@ export default function RootLayout({
 }) {
   return (
     <html
+      suppressHydrationWarning
       lang="en"
-      className={`${press.variable} ${chakra.variable} font-sans`}
+      className={`${press.className} ${chakra.className} font-sans`}
     >
       <body className="min-h-screen font-chakra">
         <Providers>{children}</Providers>

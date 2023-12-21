@@ -6,12 +6,16 @@ import { navItems } from "@/constants/navigation";
 import { Fragment } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Button } from ".";
+import { useWeb3Modal } from "@web3modal/wagmi/react";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
 export function NavBar() {
+  const modal = useWeb3Modal();
+
   return (
     <Disclosure as="nav" className="bg-surface shadow">
       {({ open }) => (
@@ -35,6 +39,7 @@ export function NavBar() {
                   </a> */}
                   {navItems.map(({ name, href }) => (
                     <Link
+                      key={href}
                       href={href}
                       className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
                     >
@@ -44,7 +49,7 @@ export function NavBar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                <w3m-button balance="hide" label="Connect Wallet" />
+                <Button handleOnClick={() => modal.open()}>Wallet</Button>
                 {/* <Menu as="div" className="relative ml-3">
                   <div>
                     <Menu.Button className="relative flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
@@ -142,6 +147,7 @@ export function NavBar() {
               </Disclosure.Button> */}
               {navItems.map(({ name, href }) => (
                 <Link
+                  key={href}
                   href={href}
                   className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
                 >
@@ -150,7 +156,7 @@ export function NavBar() {
               ))}
             </div>
             <div className="flex border-t border-gray-200 p-4">
-              <w3m-button balance="hide" label="Connect Wallet" />
+              <Button handleOnClick={() => modal.open()}>Wallet</Button>
             </div>
           </Disclosure.Panel>
         </>

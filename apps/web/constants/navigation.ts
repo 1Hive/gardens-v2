@@ -4,10 +4,6 @@ export const navItems = [
     href: "/gardens",
   },
   {
-    name: "Proposals",
-    href: "/proposals",
-  },
-  {
     name: "Docs",
     href: "/docs",
   },

@@ -6,9 +6,8 @@ export default function Home() {
     <>
       <NavBar />
       <main className="flex flex-col items-center justify-center space-y-8">
-        <h1 className="text-4xl font-bold">
-          Welcome to Gardens v2 with daisyui
-        </h1>
+        <h1 className="text-4xl font-bold">Landing page...</h1>
+        <ThemeButton />
         <button className="btn btn-primary text-white">primary</button>
         <button className="btn btn-secondary w-44">secondary</button>
         <button className="btn btn-accent w-44">accent</button>
