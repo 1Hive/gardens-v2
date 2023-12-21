@@ -22,9 +22,10 @@ import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
 import {GasHelpers} from "allo-v2-test/utils/GasHelpers.sol";
 
 import {CVMockStrategy} from "./CVMockStrategy.sol";
-import {CVStrategy } from "../src/CVStrategy.sol";
+import {CVStrategy} from "../src/CVStrategy.sol";
 import {RegistryGardens} from "../src/RegistryGardensMock.sol";
 // @dev Run forge test --mc TestAllo -vvvvv
+
 contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers {
     CVStrategy public strategy;
     MockERC20 public token;
@@ -91,7 +92,7 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         //        = CVStrategy.InitializeParams();
         //address(_registryGardens()), 10, 1, 1, 1
         params.decay = 0.9 ether / 10 ** 11; // alpha
-        params.maxRatio = 0.2 ether  / 10 ** 11; // beta
+        params.maxRatio = 0.2 ether / 10 ** 11; // beta
         params.weight = 0.002 ether / 10 ** 11; // RHO?
         params.minThresholdStakePercentage = 0.2 ether; // 20%
         params.registryGardens = address(_registryGardens());

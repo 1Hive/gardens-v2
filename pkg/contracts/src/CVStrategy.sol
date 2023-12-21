@@ -121,7 +121,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         weight = ip.weight;
         minThresholdStakePercentage = ip.minThresholdStakePercentage;
 
-
         emit Initialized(_poolId, _data);
     }
     /*|--------------------------------------------|*/
@@ -448,7 +447,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
         uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / funds;
-       console.log("denom", denom);
+        console.log("denom", denom);
         //        uint256 denom = (maxRatio << 64).div(D).sub((_requestedAmount << 64).div(funds));
         // _threshold = (weight * 2 ** 128 / D) / (denom ** 2 / 2 ** 64) * totalStaked * D / 2 ** 128
         //         _threshold = ((weight * 2 ** 128) / D) / ((denom ** 2) / 2 ** 64) * D / (D - decay) * (_totalStaked()) / 2 ** 64;
