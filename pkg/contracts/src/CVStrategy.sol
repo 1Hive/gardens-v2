@@ -4,13 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/console.sol";
 import {BaseStrategy} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
-
-interface IRegistryGardens {
-    //    function isUser(address _user) external view returns (bool);
-    function isMember(address _member) external view returns (bool);
-    function getBasisStakedAmount() external view returns (uint256);
-    function getAllStakedAmount() external view returns (uint256);
-}
+import {RegistryGardens} from "./RegistryGardensMock.sol";
 
 interface IWithdrawMember {
     function withdraw(address _member) external;
@@ -27,6 +21,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     error AmountOverMaxRatio();
     error ProposalNotInList(uint256 _proposalId);
     error PoolIsEmpty();
+    error SupportUnderflow();
 
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -86,7 +81,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     /*|--------------------------------------------|*/
 
     uint256 internal surpressStateMutabilityWarning;
-    IRegistryGardens registryGardens;
+    RegistryGardens registryGardens;
 
     mapping(uint256 => Proposal) internal proposals;
     mapping(address => uint256) internal totalVoterStake; // maybe should be replace to fixed max amount like 100 points
@@ -120,17 +115,20 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         console.log("InitializeParams.weight", ip.weight);
         console.log("InitializeParams.minThresholdStakePercentage", ip.minThresholdStakePercentage);
 
-        registryGardens = IRegistryGardens(ip.registryGardens);
+        registryGardens = RegistryGardens(ip.registryGardens);
         decay = ip.decay;
         maxRatio = ip.maxRatio;
         weight = ip.weight;
+        minThresholdStakePercentage = ip.minThresholdStakePercentage;
+
 
         emit Initialized(_poolId, _data);
     }
     /*|--------------------------------------------|*/
     /*|                 FALLBACK                  |*/
     /*|--------------------------------------------|*/
-    fallback() payable external {
+
+    fallback() external payable {
         surpressStateMutabilityWarning++;
     }
 
@@ -187,23 +185,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         p.blockLast = block.number;
         p.convictionLast = 0;
         p.agreementActionId = 0;
-
-        //        Proposal storage p = Proposal(
-        //            proposal.proposalId,
-        //            proposal.amountRequested,
-        //            0,
-        //            0,
-        //            0,
-        //            proposal.beneficiary,
-        //            proposal.creator,
-        //            //            false,
-        //            proposal.requestedToken,
-        //            0,
-        //            proposal.proposalType,
-        //            ProposalStatus.Active
-        //        );
-        //
-        //        proposals[proposal.proposalId] = p;
 
         return address(uint160(proposal.proposalId));
     }
@@ -274,20 +255,11 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         _setPoolActive(_active);
     }
 
+    //    @TODO: onlyOnwer onlyRegistryGardens{
     function withdraw(address _member) external override {
         //        _withdraw(_member);
     }
 
-    //      @return Requested amount
-    //      @return If requested in stable amount
-    //      @return Beneficiary address
-    //      @return Current total stake of tokens on this proposal
-    //      @return Conviction this proposal had last time calculateAndSetConviction was called
-    //      @return Block when calculateAndSetConviction was called
-    //      @return True if proposal has already been executed
-    //      @return AgreementActionId assigned by the Agreements app
-    //      @return ProposalStatus defining the state of the proposal
-    //      @return Submitter of the proposal
     /**
      * @dev Get proposal details
      * @param _proposalId Proposal id
@@ -341,11 +313,24 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
      * @return Proposal voter stake
      */
     function getProposalVoterStake(uint256 _proposalId, address _voter) external view returns (uint256) {
+        return _internal_getProposalVoterStake(_proposalId, _voter);
+    }
+    //    do a internal function to get the total voter stake
+
+    function getTotalVoterStake(address _voter) public view returns (uint256) {
+        return totalVoterStake[_voter];
+    }
+
+    function _internal_getProposalVoterStake(uint256 _proposalId, address _voter) internal view returns (uint256) {
         return proposals[_proposalId].voterStakedPointsPct[_voter];
     }
 
     function convertPctToTokens(uint256 _pct) internal view returns (uint256) {
         return _pct * getBasisPoint() / 100;
+    }
+
+    function convertTokensToPct(uint256 _tokens) internal view returns (uint256) {
+        return _tokens * 100 / getBasisPoint();
     }
 
     function getBasisPoint() internal view returns (uint256) {
@@ -356,6 +341,15 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
     }
 
+    //        vote(1, 30%); // 30 * 50 / 100 = 15 HNY
+    //        vote(2, 70%); // 70 * 50 / 100 = 35 HNY
+    //        vote(3, 10%); // should revert
+    //        // user doing that manually
+    //        vote(1, 30%);// 1 - 30%
+    //        vote(2, 70%);
+    //        vote(2, -20%); // 2- 50%
+    //        vote(3, 10%);
+    //        vote(3, 10%); // 3 - 20%
     function _vote(ProposalVote[] calldata _proposalVote) internal {
         int256 deltaSupportSum = 0;
         for (uint256 i = 0; i < _proposalVote.length; i++) {
@@ -365,19 +359,34 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
             deltaSupportSum += _proposalVote[i].deltaSupport;
         }
+        uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStake(msg.sender), deltaSupportSum);
+        uint256 participantBalance = convertTokensToPct(registryGardens.getBasisStakedAmount());
+        // Check that the sum of support is not greater than the participant balance
+        require(newTotalVotingSupport <= participantBalance, "NOT_ENOUGH_BALANCE"); //@TODO: change to custom error
 
-        //        vote(1, 30%); // 30 * 50 / 100 = 15 HNY
-        //        vote(2, 70%); // 70 * 50 / 100 = 35 HNY
-        //        vote(3, 10%); // should revert
-        //
-        //        // user doing that manually
-        //        vote(1, 30%);// 1 - 30%
-        //        vote(2, 70%);
-        //        vote(2, -20%); // 2- 50%
-        //        vote(3, 10%);
-        //        vote(3, 10%); // 3 - 20%
+        //        totalParticipantSupportAt[currentRound][msg.sender] = newTotalVotingSupport;
+
+        //        totalSupportAt[currentRound] = _applyDelta(getTotalSupport(), deltaSupportSum);
+
+        for (uint256 i = 0; i < _proposalVote.length; i++) {
+            uint256 proposalId = _proposalVote[i].proposalId;
+            int256 delta = _proposalVote[i].deltaSupport;
+
+            Proposal storage proposal = proposals[proposalId];
+            proposal.voterStakedPointsPct[msg.sender] = _applyDelta(proposal.voterStakedPointsPct[msg.sender], delta);
+
+            //@todo: should emit event
+        }
     }
 
+    function _applyDelta(uint256 _support, int256 _delta) internal pure returns (uint256) {
+        int256 result = int256(_support) + _delta;
+
+        if (result < 0) {
+            revert SupportUnderflow();
+        }
+        return uint256(result);
+    }
     /**
      * @dev Conviction formula: a^t * y(0) + x * (1 - a^t) / (1 - a)
      * Solidity implementation: y = (2^128 * a^t * y0 + x * D * (2^128 - 2^128 * a^t) / (D - aD) + 2^127) / 2^128
@@ -386,6 +395,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
      * @param _oldAmount Amount of tokens staked until now
      * @return Current conviction
      */
+
     function calculateConviction(uint256 _timePassed, uint256 _lastConv, uint256 _oldAmount)
         public
         view
@@ -438,6 +448,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
         uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / funds;
+       console.log("denom", denom);
         //        uint256 denom = (maxRatio << 64).div(D).sub((_requestedAmount << 64).div(funds));
         // _threshold = (weight * 2 ** 128 / D) / (denom ** 2 / 2 ** 64) * totalStaked * D / 2 ** 128
         //         _threshold = ((weight * 2 ** 128) / D) / ((denom ** 2) / 2 ** 64) * D / (D - decay) * (_totalStaked()) / 2 ** 64;
@@ -445,6 +456,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         //            ((weight << 128).div(D).div(denom.mul(denom) >> 64)).mul(D).div(D.sub(decay)).mul(_totalStaked()) >> 64;
         //        _threshold = (((weight << 128) / D) / (denom.mul(denom) >> 64)) * D / (D - decay) * (_totalStaked()) >> 64;
         _threshold = ((weight * 2 ** 128 / D / (denom * denom >> 64)) * D / (D - decay) * _totalStaked()) >> 64;
+        console.log("_threshold", _threshold);
     }
 
     /**
@@ -505,6 +517,9 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     function _totalStaked() internal view returns (uint256) {
+        console.log("totalStaked", totalStaked);
+        console.log("registryGardens.getAllStakedAmount()", registryGardens.getAllStakedAmount());
+        console.log("minThresholdStakePercentage", minThresholdStakePercentage);
         uint256 minTotalStake =
             (registryGardens.getAllStakedAmount() * minThresholdStakePercentage) / ONE_HUNDRED_PERCENT;
         return totalStaked < minTotalStake ? minTotalStake : totalStaked;

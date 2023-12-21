@@ -22,15 +22,17 @@ import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
 import {GasHelpers} from "allo-v2-test/utils/GasHelpers.sol";
 
 import {CVMockStrategy} from "./CVMockStrategy.sol";
-import {CVStrategy, IRegistryGardens} from "../src/CVStrategy.sol";
-
+import {CVStrategy } from "../src/CVStrategy.sol";
+import {RegistryGardens} from "../src/RegistryGardensMock.sol";
 // @dev Run forge test --mc TestAllo -vvvvv
 contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers {
-    IStrategy public strategy;
+    CVStrategy public strategy;
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * 10 ** 18;
 
     Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
+
+    RegistryGardens internal registryGardens;
 
     function setUp() public {
         __RegistrySetupFull();
@@ -57,10 +59,12 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         vm.startPrank(allo_owner());
         allo().transferOwnership(local());
         vm.stopPrank();
+
+        registryGardens = new RegistryGardens();
     }
 
-    function _registryGardens() internal pure returns (IRegistryGardens) {
-        return IRegistryGardens(address(0));
+    function _registryGardens() internal returns (RegistryGardens) {
+        return registryGardens;
     }
 
     event PoolCreated(
@@ -81,19 +85,27 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         vm.expectEmit(true, true, false, false);
         emit PoolCreated(1, poolProfile_id(), IStrategy(strategy), NATIVE, 0, metadata);
 
-        vm.prank(pool_admin());
+        vm.startPrank(pool_admin());
 
-        CVStrategy.InitializeParams memory params =
-            CVStrategy.InitializeParams(address(_registryGardens()), 10, 1, 1, 1);
+        CVStrategy.InitializeParams memory params;
+        //        = CVStrategy.InitializeParams();
+        //address(_registryGardens()), 10, 1, 1, 1
+        params.decay = 0.9 ether / 10 ** 11; // alpha
+        params.maxRatio = 0.2 ether  / 10 ** 11; // beta
+        params.weight = 0.002 ether / 10 ** 11; // RHO?
+        params.minThresholdStakePercentage = 0.2 ether; // 20%
+        params.registryGardens = address(_registryGardens());
 
         uint256 poolId = allo().createPool(
             poolProfile_id(), address(strategy), abi.encode(params), NATIVE, 0, metadata, pool_managers()
         );
 
+        vm.stopPrank();
+
         IAllo.Pool memory pool = allo().getPool(poolId);
 
         vm.deal(address(this), 1 ether);
-        allo().fundPool{value:1 ether}(poolId, 1 ether);
+        allo().fundPool{value: 1 ether}(poolId, 1 ether);
 
         stopMeasuringGas();
 
@@ -106,6 +118,7 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
 
         bytes memory data = abi.encode(proposal);
         allo().registerRecipient(poolId, data);
+
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         (address submitter,,,,,,,,,) = cv.getProposal(1);
 
