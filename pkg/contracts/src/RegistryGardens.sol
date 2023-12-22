@@ -114,7 +114,7 @@ contract RegistryGardens is ReentrancyGuard {
         enabledStrategies[_newStrategy] = true;
         emit StrategyAdded(_newStrategy);
     }
-    function revertZeroAddress(address _address) internal {
+    function revertZeroAddress(address _address) internal pure {
         if(_address == address(0)) revert AddressCannotBeZero();
     }
     function removeStrategy(address _strategy) public onlyCouncilMember{

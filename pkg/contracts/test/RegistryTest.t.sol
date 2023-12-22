@@ -71,7 +71,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
         registryGardens = RegistryGardens(registryFactory.createRegistry(params));
     }
 
-    function _registryGardens() internal returns (RegistryGardens) {
+    function _registryGardens() internal view returns (RegistryGardens) {
         return registryGardens;
     }
 
