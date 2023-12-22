@@ -14,9 +14,10 @@ export default function ProposalId({
   return (
     <div>
       {proposal.map((proposal) => (
-        <h2>hello</h2>
+        <>
+          <ProposalView {...proposal} />
+        </>
       ))}
-      <ProposalView id={proposal[0].id} />
     </div>
   );
 }

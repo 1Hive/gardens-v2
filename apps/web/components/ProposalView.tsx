@@ -1,31 +1,95 @@
 import React from "react";
+import { formatAddress } from "@/utils/formatAddress";
+const ProposalView = ({
+  id,
+  title,
+  type,
+  description,
+  status,
+  requestedAmount,
+  beneficiary,
+  createdBy,
+  points,
+  supporters,
+}: any) => {
+  const sumSupportersAmount = () => {
+    let sum = 0;
+    supporters.forEach((supporter: any) => {
+      sum += supporter.amount;
+    });
+    return sum;
+  };
 
-const ProposalView = ({ id }: any) => {
+  const supportersTotalAmount = sumSupportersAmount();
+
   return (
-    <div className="mx-auto flex h-screen max-w-7xl gap-3 border-4 px-4 sm:px-6 lg:px-8">
-      <main className="flex h-full flex-1 flex-col gap-6 border border-black p-16">
+    <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
+      <main className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black p-16">
         {/* main content */}
-
-        <span className="badge badge-primary p-4 text-white">
-          {"Proposal Type"}
-        </span>
+        <span className="badge badge-secondary p-4">{type}</span>
 
         {/* title - description - status */}
-        <div className="border-2 border-black p-4">
+        <div className="space-y-10 rounded-xl border-2 border-black bg-[#ffff] px-4 py-8">
           <div className="relative flex items-baseline justify-end space-x-4 ">
-            <h4 className="w-full border text-center text-3xl font-bold">
-              {"Proposal Title"}
-
-              <span className="badge badge-outline absolute right-3 top-3">
-                Status
+            <h4 className="w-full text-center text-2xl font-semibold">
+              {title}
+              <span className="badge badge-success  absolute right-3 top-2">
+                {status}
               </span>
             </h4>
           </div>
-          <div></div>
-          <p className="text-xl">{"Proposal Description"}</p>
+          <div className="">
+            <p className="text-start text-xl">{description}</p>
+          </div>
+          <div>
+            {/* reqAmount - bene - creatBy */}
+            <div className="flex justify-between">
+              {requestedAmount && (
+                <div className="flex-1 flex-col">
+                  <span className="text-md">Requested Amount</span>
+                  <span className="text-md">{requestedAmount}</span>
+                </div>
+              )}
+              <div className="flex flex-1 flex-col items-center">
+                <span className="text-md">Beneficiary</span>
+                <span className="text-md">{formatAddress(beneficiary)}</span>
+              </div>
+              <div className="flex flex-1 flex-col items-center">
+                <span className="text-md">Created By</span>
+                <span className="text-md">{formatAddress(createdBy)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* TODO!: this section */}
+        <div className="flex h-64 items-center justify-center border-2">
+          div for chart and stuff
+        </div>
+        {/* Support - Remove buttons */}
+        <div className="mt-20 flex justify-evenly">
+          <button className="btn btn-primary px-8">Support</button>
+          <button className="btn btn-accent px-8">Dispute</button>
         </div>
       </main>
-      <aside className="h-full w-96 border border-black p-4"></aside>
+
+      <aside className="sapce-y-4 sticky top-5 flex h-fit w-96 flex-col rounded-xl border-2 border-black px-[38px] py-6">
+        <h4 className="border-b-2 border-dashed py-4 text-center text-xl">
+          Supporters
+        </h4>
+        <div className="mt-10 space-y-8">
+          {supporters.map((supporter: any) => (
+            <div className="flex justify-between" key={supporter.address}>
+              <span>{formatAddress(supporter.address)}</span>
+              <span>{supporter.amount}</span>
+            </div>
+          ))}
+          <div className="flex justify-between  py-6">
+            <span>Total</span>
+            <span>{supportersTotalAmount ?? ""}</span>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 };
