@@ -24,7 +24,7 @@ const ProposalView = ({
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
-      <main className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black p-16">
+      <main className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 p-16">
         {/* main content */}
         <span className="badge badge-secondary p-4">{type}</span>
 
@@ -73,8 +73,9 @@ const ProposalView = ({
         </div>
       </main>
 
-      <aside className="sapce-y-4 sticky top-5 flex h-fit w-96 flex-col rounded-xl border-2 border-black px-[38px] py-6">
-        <h4 className="border-b-2 border-dashed py-4 text-center text-xl">
+      {/* aside - supporters info address + amount */}
+      <aside className="sapce-y-4 sticky top-5 flex h-fit w-96 flex-col rounded-xl border-2 border-black bg-base-100 px-[38px] py-6">
+        <h4 className="border-b-2 border-dashed py-4 text-center text-xl font-semibold">
           Supporters
         </h4>
         <div className="mt-10 space-y-8">
@@ -84,7 +85,7 @@ const ProposalView = ({
               <span>{supporter.amount}</span>
             </div>
           ))}
-          <div className="flex justify-between  py-6">
+          <div className="flex justify-between py-6">
             <span>Total</span>
             <span>{supportersTotalAmount ?? ""}</span>
           </div>
