@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/console.sol";
 import {BaseStrategy} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
-import {RegistryGardens} from "./RegistryGardensMock.sol";
+import {RegistryGardens} from "./RegistryGardens.sol";
 
 interface IWithdrawMember {
     function withdraw(address _member) external;

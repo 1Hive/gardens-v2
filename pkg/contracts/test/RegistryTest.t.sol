@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 // Core contracts
@@ -20,20 +20,22 @@ import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
 import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
 import {GasHelpers} from "allo-v2-test/utils/GasHelpers.sol";
-
+import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {CVMockStrategy} from "./CVMockStrategy.sol";
 import {CVStrategy} from "../src/CVStrategy.sol";
 import {RegistryGardens} from "../src/RegistryGardens.sol";
-// @dev Run forge test --mc TestAllo -vvvvv
+// @dev Run forge test --mc RegistryTest -vvvvv
 
-contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers {
+contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers {
     CVStrategy public strategy;
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * 10 ** 18;
-
+    uint256 public constant MINIMUM_STAKE = 1000;
     Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
     RegistryGardens internal registryGardens;
+
+    address gardenOwner = makeAddr("communityGardenOwner");
 
     function setUp() public {
         __RegistrySetupFull();
@@ -47,7 +49,7 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         token = new MockERC20();
         token.mint(local(), mintAmount);
         token.mint(allo_owner(), mintAmount);
-        token.mint(pool_admin(), mintAmount);
+        token.mint(gardenOwner, mintAmount);
         token.approve(address(allo()), mintAmount);
 
         vm.prank(pool_admin());
@@ -60,8 +62,14 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
         vm.startPrank(allo_owner());
         allo().transferOwnership(local());
         vm.stopPrank();
-
-        registryGardens = new RegistryGardens();
+        RegistryFactory registryFactory = new RegistryFactory();
+        RegistryGardens.InitializeParams memory params;
+        params._allo = address(allo());
+        params._gardenToken = IERC20(address(token));
+        params._minimumStakeAmount = MINIMUM_STAKE;
+        params._protocolFee = 2;
+        params._metadata = metadata;
+        registryGardens = RegistryGardens(registryFactory.createRegistry(params));
     }
 
     function _registryGardens() internal returns (RegistryGardens) {
@@ -79,51 +87,17 @@ contract TestAllo is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelp
 
     //        bytes data;
 
-    function test_createProposal() public {
+    function test_stakeAndRegisterMember() public {
         startMeasuringGas("createProposal");
         allo().addToCloneableStrategies(address(strategy));
 
-        vm.expectEmit(true, true, false, false);
-        emit PoolCreated(1, poolProfile_id(), IStrategy(strategy), NATIVE, 0, metadata);
-
-        vm.startPrank(pool_admin());
-
-        CVStrategy.InitializeParams memory params;
-        //        = CVStrategy.InitializeParams();
-        //address(_registryGardens()), 10, 1, 1, 1
-        params.decay = 0.9 ether / 10 ** 11; // alpha
-        params.maxRatio = 0.2 ether / 10 ** 11; // beta
-        params.weight = 0.002 ether / 10 ** 11; // RHO?
-        params.minThresholdStakePercentage = 0.2 ether; // 20%
-        params.registryGardens = address(_registryGardens());
-
-        uint256 poolId = allo().createPool(
-            poolProfile_id(), address(strategy), abi.encode(params), NATIVE, 0, metadata, pool_managers()
-        );
+        vm.startPrank(gardenOwner);
+        token.approve(address(registryGardens), MINIMUM_STAKE);
+        _registryGardens().stakeAndregisterMember();
+        assertEq(token.balanceOf(address(registryGardens)), MINIMUM_STAKE);
+        // assertEq(token.balanceOf(address(gardenOwner)),mintAmount-MINIMUM_STAKE);
 
         vm.stopPrank();
-
-        IAllo.Pool memory pool = allo().getPool(poolId);
-
-        vm.deal(address(this), 1 ether);
-        allo().fundPool{value: 1 ether}(poolId, 1 ether);
-
         stopMeasuringGas();
-
-        assertEq(pool.profileId, poolProfile_id());
-        assertNotEq(address(pool.strategy), address(strategy));
-
-        CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            1, poolId, pool_admin(), pool_admin(), CVStrategy.ProposalType.Signaling, 0.1 ether, NATIVE
-        );
-
-        bytes memory data = abi.encode(proposal);
-        allo().registerRecipient(poolId, data);
-
-        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-        (address submitter,,,,,,,,,) = cv.getProposal(1);
-
-        data = abi.encode(1, 0.01 ether);
-        allo().allocate(poolId, data);
     }
 }
