@@ -24,6 +24,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result);
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance);
     error TokenCannotBeZero();
+    error ProposalSupportDuplicated(uint256 _proposalId, uint256 index);
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -54,7 +55,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     struct Proposal {
         uint256 proposalId;
         uint256 requestedAmount;
-        //        uint256 stakedAmount;
+        uint256 stakedAmount;
         uint256 convictionLast;
         uint256 agreementActionId;
         address beneficiary;
@@ -278,6 +279,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
      * @return beneficiary Proposal beneficiary
      * @return requestedToken Proposal requested token
      * @return requestedAmount Proposal requested amount
+     * @return stakedTokens Proposal staked tokens
      * @return proposalType Proposal type
      * @return proposalStatus Proposal status
      * @return blockLast Last block when conviction was calculated
@@ -293,6 +295,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             address beneficiary,
             address requestedToken,
             uint256 requestedAmount,
+            uint256 stakedTokens,
             ProposalType proposalType,
             ProposalStatus proposalStatus,
             uint256 blockLast,
@@ -308,6 +311,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             proposal.beneficiary,
             proposal.requestedToken,
             proposal.requestedAmount,
+            proposal.stakedAmount,
             proposal.proposalType,
             proposal.proposalStatus,
             proposal.blockLast,
@@ -325,6 +329,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
      */
     function getProposalVoterStake(uint256 _proposalId, address _voter) external view returns (uint256) {
         return _internal_getProposalVoterStake(_proposalId, _voter);
+    }
+
+    function getProposalStakedAmount(uint256 _proposalId) external view returns (uint256) {
+        return proposals[_proposalId].stakedAmount;
     }
     //    do a internal function to get the total voter stake
 
@@ -352,23 +360,21 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
     }
 
-    //        vote(1, 30%); // 30 * 50 / 100 = 15 HNY
-    //        vote(2, 70%); // 70 * 50 / 100 = 35 HNY
-    //        vote(3, 10%); // should revert
-    //        // user doing that manually
-    //        vote(1, 30%);// 1 - 30%
-    //        vote(2, 70%);
-    //        vote(2, -20%); // 2- 50%
-    //        vote(3, 10%);
-    //        vote(3, 10%); // 3 - 20%
-    function _addSupport(address _sender, ProposalSupport[] memory _proposalProposal) internal {
+    function _addSupport(address _sender, ProposalSupport[] memory _proposalSupport) internal {
         int256 deltaSupportSum = 0;
-        for (uint256 i = 0; i < _proposalProposal.length; i++) {
-            if (!proposalExists(_proposalProposal[i].proposalId)) {
-                revert ProposalNotInList(_proposalProposal[i].proposalId); //@TODO: maybe we should skip emitting a event instead of revert
+        // int256[] memory deltaSupportByID = new int256[](_proposalSupport.length); //@audit-issue the length that arrays dont match with what they are doing
+        for (uint256 i = 0; i < _proposalSupport.length; i++) {
+            // check if _proposalSupport index i exist
+            if (_proposalSupport[i].proposalId == 0) {
+                //@todo: check better way to do that.
+                console.log("proposalId == 0");
+                continue;
             }
-
-            deltaSupportSum += _proposalProposal[i].deltaSupport;
+            uint256 proposalId = _proposalSupport[i].proposalId;
+            if (!proposalExists(proposalId)) {
+                revert ProposalNotInList(proposalId); //@TODO: maybe we should skip emitting a event instead of revert
+            }
+            deltaSupportSum += _proposalSupport[i].deltaSupport;
         }
         console.log("deltaSupportSum");
         console.logInt(deltaSupportSum);
@@ -386,18 +392,49 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         //        totalParticipantSupportAt[currentRound][_sender] = newTotalVotingSupport;
 
         //        totalSupportAt[currentRound] = _applyDelta(getTotalSupport(), deltaSupportSum);
-        for (uint256 i = 0; i < _proposalProposal.length; i++) {
-            uint256 proposalId = _proposalProposal[i].proposalId;
-            int256 delta = _proposalProposal[i].deltaSupport;
+        _addSupport_(_sender, _proposalSupport);
+    }
+
+    function _addSupport_(address _sender, ProposalSupport[] memory _proposalSupport) internal {
+        uint256[] memory proposalsIds;
+        for (uint256 i = 0; i < _proposalSupport.length; i++) {
+            uint256 proposalId = _proposalSupport[i].proposalId;
+            // add proposalid to the list if not exist
+            if (proposalsIds.length == 0) {
+                proposalsIds = new uint256[](1);
+                proposalsIds[0] = proposalId; // 0 => 1
+            } else {
+                bool exist = false;
+                for (uint256 j = 0; j < proposalsIds.length; j++) {
+                    // 1
+                    if (proposalsIds[j] == proposalId) {
+                        exist = true;
+                        revert ProposalSupportDuplicated(proposalId, j);
+                        // break;
+                    }
+                }
+                if (!exist) {
+                    uint256[] memory temp = new uint256[](proposalsIds.length + 1);
+                    for (uint256 j = 0; j < proposalsIds.length; j++) {
+                        temp[j] = proposalsIds[j];
+                    }
+                    temp[proposalsIds.length] = proposalId;
+                    proposalsIds = temp;
+                }
+            }
+            int256 delta = _proposalSupport[i].deltaSupport;
 
             Proposal storage proposal = proposals[proposalId];
+
             uint256 beforeStakedPointsPct = proposal.voterStakedPointsPct[_sender];
             uint256 previousStakedAmount = proposal.voterStake[_sender];
             // console.log("beforeStakedPointsPct", beforeStakedPointsPct);
+            // console.log("previousStakedAmount", previousStakedAmount);
 
             uint256 stakedPointsPct = _applyDelta(beforeStakedPointsPct, delta);
+
             console.log("proposalID", proposalId);
-            console.log("stakedPointsPct", stakedPointsPct);
+            console.log("stakedPointsPct%", stakedPointsPct);
 
             proposal.voterStakedPointsPct[_sender] = stakedPointsPct;
 
@@ -405,8 +442,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             uint256 stakedAmount = convertPctToTokens(stakedPointsPct);
             console.log("stakedAmount", stakedAmount);
             proposal.voterStake[_sender] = stakedAmount;
-            // proposal.stakedAmount = convertPctToTokens(stakedPointsPct);
-            // console.log("proposal.stakedAmount", proposal.stakedAmount);
+            proposal.stakedAmount += proposal.voterStake[_sender];
+
             //@todo: should emit event
             if (proposal.blockLast == 0) {
                 proposal.blockLast = block.number;
@@ -424,6 +461,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         }
         return uint256(result);
     }
+
     /**
      * @dev Conviction formula: a^t * y(0) + x * (1 - a^t) / (1 - a)
      * Solidity implementation: y = (2^128 * a^t * y0 + x * D * (2^128 - 2^128 * a^t) / (D - aD) + 2^127) / 2^128
@@ -473,19 +511,19 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         }
         uint256 funds = poolAmount;
         //        require(maxRatio.mul(funds) > _requestedAmount.mul(D), ERROR_AMOUNT_OVER_MAX_RATIO);
-        console.log("maxRatio", maxRatio);
-        console.log("funds", funds);
-        console.log("_requestedAmount", _requestedAmount);
-        console.log("D", D);
-        console.log("maxRatio * funds", maxRatio * funds);
-        console.log("_requestedAmount * D", _requestedAmount * D);
+        // console.log("maxRatio", maxRatio);
+        // console.log("funds", funds);
+        // console.log("_requestedAmount", _requestedAmount);
+        // console.log("D", D);
+        // console.log("maxRatio * funds", maxRatio * funds);
+        // console.log("_requestedAmount * D", _requestedAmount * D);
 
         if (maxRatio * funds <= _requestedAmount * D) {
             revert AmountOverMaxRatio();
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
         uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / funds;
-        console.log("denom", denom);
+        // console.log("denom", denom);
         //        uint256 denom = (maxRatio << 64).div(D).sub((_requestedAmount << 64).div(funds));
         // _threshold = (weight * 2 ** 128 / D) / (denom ** 2 / 2 ** 64) * totalStaked * D / 2 ** 128
         //         _threshold = ((weight * 2 ** 128) / D) / ((denom ** 2) / 2 ** 64) * D / (D - decay) * (_totalStaked()) / 2 ** 64;
@@ -493,7 +531,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         //            ((weight << 128).div(D).div(denom.mul(denom) >> 64)).mul(D).div(D.sub(decay)).mul(_totalStaked()) >> 64;
         //        _threshold = (((weight << 128) / D) / (denom.mul(denom) >> 64)) * D / (D - decay) * (_totalStaked()) >> 64;
         _threshold = ((weight * 2 ** 128 / D / (denom * denom >> 64)) * D / (D - decay) * _totalStaked()) >> 64;
-        console.log("_threshold", _threshold);
+        // console.log("_threshold", _threshold);
     }
 
     /**
@@ -558,9 +596,9 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         if (address(registryGardens.gardenToken()) == address(0)) {
             revert TokenCannotBeZero();
         }
-        console.log("totalStaked", totalStaked);
-        console.log("registryGardens.gardenToken.totalSupply()", registryGardens.gardenToken().totalSupply());
-        console.log("minThresholdStakePercentage", minThresholdStakePercentage);
+        // console.log("totalStaked", totalStaked);
+        // console.log("registryGardens.gardenToken.totalSupply()", registryGardens.gardenToken().totalSupply());
+        // console.log("minThresholdStakePercentage", minThresholdStakePercentage);
         uint256 minTotalStake =
             (registryGardens.gardenToken().totalSupply() * minThresholdStakePercentage) / ONE_HUNDRED_PERCENT;
         return totalStaked < minTotalStake ? minTotalStake : totalStaked;
