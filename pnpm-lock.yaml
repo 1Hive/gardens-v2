@@ -15,8 +15,8 @@ importers:
         specifier: latest
         version: 3.1.0
       turbo:
-        specifier: latest
-        version: 1.11.0
+        specifier: ^1.7.4
+        version: 1.7.4
 
   apps/docs:
     dependencies:
@@ -6177,10 +6177,6 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       path-type: 4.0.0
-
-  /dlv@1.1.3:
-    resolution: {integrity: sha512-+HlytyjlPKnIG8XuRG8WvmBP8xs8P71y+SKKS6ZXWoEgLuePxtDoUEiH7WkdePWrQ5JBpE6aoVqfZfJUQkjXwA==}
-    dev: true
 
   /dns-over-http-resolver@1.2.3(node-fetch@2.7.0):
     resolution: {integrity: sha512-miDiVSI6KSNbi4SVifzO/reD8rMnxgrlnkrlkugOLQpWQTe2qMdHsZp5DmfKjxNE+/T3VAAYLQUZMv9SMr6+AA==}
