@@ -27,6 +27,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
+
     enum ProposalType {
         Signaling,
         Funding,

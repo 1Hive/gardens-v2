@@ -124,7 +124,6 @@ contract RegistryGardens is ReentrancyGuard {
         return 50;
     }
 
-
     //TODO
     //function updateProtocolFee()
     //function updateMinimumStake()
