@@ -25,7 +25,7 @@
         "prettier.tabWidth": 4,
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "[solidity]": {
-            "editor.defaultFormatter": "JuanBlanco.solidity"
+            "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
         },
         "[json]": {
             "editor.defaultFormatter": "vscode.json-language-features"
@@ -42,7 +42,11 @@
             "dsznajder.es7-react-js-snippets",
             "dbaeumer.vscode-eslint",
             "xabikos.javascriptsnippets",
-            "styled-components.vscode-styled-components"
+            "styled-components.vscode-styled-components",
+            "nomicfoundation.hardhat-solidity",
+            "tintinweb.vscode-solidity-language",
+            "tintinweb.solidity-visual-auditor",
+            "tintinweb.solidity-metrics"
         ]
     }
 }

@@ -21,8 +21,9 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     error AmountOverMaxRatio();
     error ProposalNotInList(uint256 _proposalId);
     error PoolIsEmpty();
-    error SupportUnderflow();
-
+    error SupportUnderflow(uint256 _support, int256 _delta, int256 _result);
+    error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance);
+    error TokenCannotBeZero();
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -52,7 +53,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     struct Proposal {
         uint256 proposalId;
         uint256 requestedAmount;
-        uint256 stakedAmount;
+        //        uint256 stakedAmount;
         uint256 convictionLast;
         uint256 agreementActionId;
         address beneficiary;
@@ -62,9 +63,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         ProposalStatus proposalStatus;
         ProposalType proposalType;
         mapping(address => uint256) voterStakedPointsPct; // voter staked percentage
+        mapping(address => uint256) voterStake; // voter staked percentage
     }
 
-    struct ProposalVote {
+    struct ProposalSupport {
         uint256 proposalId;
         int256 deltaSupport; // use int256 to allow negative values
     }
@@ -84,7 +86,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     RegistryGardens registryGardens;
 
     mapping(uint256 => Proposal) internal proposals;
-    mapping(address => uint256) internal totalVoterStake; // maybe should be replace to fixed max amount like 100 points
+    mapping(address => uint256) internal totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
     mapping(address => uint256[]) internal voterStakedProposals; // voter
 
     uint256 public decay;
@@ -131,19 +133,23 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         surpressStateMutabilityWarning++;
     }
 
+    receive() external payable {
+        surpressStateMutabilityWarning++;
+    }
+
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
-    modifier checkSenderIsMember() {
+    modifier checkSenderIsMember(address _sender) {
         //        @todo: check if user is in registry
         //        require(_user != address(0), "CVStrategy: User is not valid");
-        if (msg.sender == address(0)) {
+        if (_sender == address(0)) {
             revert UserCannotBeZero();
         }
         if (address(registryGardens) == address(0)) {
             revert RegistryCannotBeZero();
         }
-        if (!registryGardens.isMember(msg.sender)) {
+        if (!registryGardens.isMember(_sender)) {
             revert UserNotInRegistry();
         }
         _;
@@ -175,7 +181,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             revert UserCannotBeZero();
         }
         Proposal storage p = proposals[proposal.proposalId];
-        p.submitter = proposal.creator;
+        p.proposalId = proposal.proposalId;
+        p.submitter = _sender;
         p.beneficiary = proposal.beneficiary;
         p.requestedToken = proposal.requestedToken;
         p.requestedAmount = proposal.amountRequested;
@@ -186,14 +193,18 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         p.agreementActionId = 0;
 
         return address(uint160(proposal.proposalId));
+        //        @TODO: emit events
     }
 
     // only called via allo.sol by users to allocate to a recipient
     // this will update some data in this contract to store votes, etc.
-    function _allocate(bytes memory _data, address _sender) internal override checkSenderIsMember {
+    function _allocate(bytes memory _data, address _sender) internal override {
         surpressStateMutabilityWarning++;
-        _data;
-        _sender;
+        //        _data;
+        //        _sender;
+
+        ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
+        _addSupport(_sender, pv);
     }
 
     // this will distribute tokens to recipients
@@ -316,12 +327,12 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
     //    do a internal function to get the total voter stake
 
-    function getTotalVoterStake(address _voter) public view returns (uint256) {
-        return totalVoterStake[_voter];
+    function getTotalVoterStakePct(address _voter) public view returns (uint256) {
+        return totalVoterStakePct[_voter];
     }
 
     function _internal_getProposalVoterStake(uint256 _proposalId, address _voter) internal view returns (uint256) {
-        return proposals[_proposalId].voterStakedPointsPct[_voter];
+        return proposals[_proposalId].voterStake[_voter];
     }
 
     function convertPctToTokens(uint256 _pct) internal view returns (uint256) {
@@ -349,32 +360,58 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     //        vote(2, -20%); // 2- 50%
     //        vote(3, 10%);
     //        vote(3, 10%); // 3 - 20%
-    function _vote(ProposalVote[] calldata _proposalVote) internal {
+    function _addSupport(address _sender, ProposalSupport[] memory _proposalProposal) internal {
         int256 deltaSupportSum = 0;
-        for (uint256 i = 0; i < _proposalVote.length; i++) {
-            if (!proposalExists(_proposalVote[i].proposalId)) {
-                revert ProposalNotInList(_proposalVote[i].proposalId);
+        for (uint256 i = 0; i < _proposalProposal.length; i++) {
+            if (!proposalExists(_proposalProposal[i].proposalId)) {
+                revert ProposalNotInList(_proposalProposal[i].proposalId); //@TODO: maybe we should skip emitting a event instead of revert
             }
 
-            deltaSupportSum += _proposalVote[i].deltaSupport;
+            deltaSupportSum += _proposalProposal[i].deltaSupport;
         }
-        uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStake(msg.sender), deltaSupportSum);
+        console.log("deltaSupportSum");
+        console.logInt(deltaSupportSum);
+        uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
+        console.log("newTotalVotingSupport", newTotalVotingSupport);
         uint256 participantBalance = convertTokensToPct(registryGardens.getBasisStakedAmount());
+        console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
-        require(newTotalVotingSupport <= participantBalance, "NOT_ENOUGH_BALANCE"); //@TODO: change to custom error
+        // require(newTotalVotingSupport <= participantBalance, "NOT_ENOUGH_BALANCE");
+        if (newTotalVotingSupport > participantBalance) {
+            revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
+        }
 
-        //        totalParticipantSupportAt[currentRound][msg.sender] = newTotalVotingSupport;
+        totalVoterStakePct[_sender] = newTotalVotingSupport;
+        //        totalParticipantSupportAt[currentRound][_sender] = newTotalVotingSupport;
 
         //        totalSupportAt[currentRound] = _applyDelta(getTotalSupport(), deltaSupportSum);
-
-        for (uint256 i = 0; i < _proposalVote.length; i++) {
-            uint256 proposalId = _proposalVote[i].proposalId;
-            int256 delta = _proposalVote[i].deltaSupport;
+        for (uint256 i = 0; i < _proposalProposal.length; i++) {
+            uint256 proposalId = _proposalProposal[i].proposalId;
+            int256 delta = _proposalProposal[i].deltaSupport;
 
             Proposal storage proposal = proposals[proposalId];
-            proposal.voterStakedPointsPct[msg.sender] = _applyDelta(proposal.voterStakedPointsPct[msg.sender], delta);
+            uint256 beforeStakedPointsPct = proposal.voterStakedPointsPct[_sender];
+            uint256 previousStakedAmount = proposal.voterStake[_sender];
+            // console.log("beforeStakedPointsPct", beforeStakedPointsPct);
 
+            uint256 stakedPointsPct = _applyDelta(beforeStakedPointsPct, delta);
+            console.log("proposalID", proposalId);
+            console.log("stakedPointsPct", stakedPointsPct);
+
+            proposal.voterStakedPointsPct[_sender] = stakedPointsPct;
+
+            // console.log("_sender", _sender);
+            uint256 stakedAmount = convertPctToTokens(stakedPointsPct);
+            console.log("stakedAmount", stakedAmount);
+            proposal.voterStake[_sender] = stakedAmount;
+            // proposal.stakedAmount = convertPctToTokens(stakedPointsPct);
+            // console.log("proposal.stakedAmount", proposal.stakedAmount);
             //@todo: should emit event
+            if (proposal.blockLast == 0) {
+                proposal.blockLast = block.number;
+            } else {
+                _calculateAndSetConviction(proposal, previousStakedAmount);
+            }
         }
     }
 
@@ -382,7 +419,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         int256 result = int256(_support) + _delta;
 
         if (result < 0) {
-            revert SupportUnderflow();
+            revert SupportUnderflow(_support, _delta, result);
         }
         return uint256(result);
     }
@@ -503,6 +540,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         uint256 blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
+            console.log("blockNumber == _proposal.blockLast");
             return; // Conviction already stored
         }
         // calculateConviction and store it
@@ -516,11 +554,14 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     function _totalStaked() internal view returns (uint256) {
+        if (address(registryGardens.gardenToken()) == address(0)) {
+            revert TokenCannotBeZero();
+        }
         console.log("totalStaked", totalStaked);
-        console.log("registryGardens.getAllStakedAmount()", registryGardens.getAllStakedAmount());
+        console.log("registryGardens.gardenToken.totalSupply()", registryGardens.gardenToken().totalSupply());
         console.log("minThresholdStakePercentage", minThresholdStakePercentage);
         uint256 minTotalStake =
-            (registryGardens.getAllStakedAmount() * minThresholdStakePercentage) / ONE_HUNDRED_PERCENT;
+            (registryGardens.gardenToken().totalSupply() * minThresholdStakePercentage) / ONE_HUNDRED_PERCENT;
         return totalStaked < minTotalStake ? minTotalStake : totalStaked;
     }
 }
