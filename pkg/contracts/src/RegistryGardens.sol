@@ -121,7 +121,7 @@ contract RegistryGardens is ReentrancyGuard {
     }
 
     function getBasisStakedAmount() external view returns (uint256) {
-        return 50;
+        return minimumStakeAmount;
     }
 
     //TODO

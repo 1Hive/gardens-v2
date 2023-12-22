@@ -21,7 +21,6 @@ import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
 import {GasHelpers} from "allo-v2-test/utils/GasHelpers.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
-import {CVMockStrategy} from "./CVMockStrategy.sol";
 import {CVStrategy} from "../src/CVStrategy.sol";
 import {RegistryGardens} from "../src/RegistryGardens.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
