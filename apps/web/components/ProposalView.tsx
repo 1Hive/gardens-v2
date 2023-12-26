@@ -29,23 +29,23 @@ const ProposalView = ({
         <span className="badge badge-secondary p-4">{type}</span>
 
         {/* title - description - status */}
-        <div className="space-y-10 rounded-xl border-2 border-black bg-[#ffff] px-4 py-8">
-          <div className="relative flex items-baseline justify-end space-x-4 ">
-            <h4 className="w-full text-center text-2xl font-semibold">
+        <div className="relative space-y-10 rounded-xl border-2 border-black bg-[#ffff] px-4 py-8">
+          <div className=" flex items-baseline justify-end space-x-4 ">
+            <h4 className="w-full text-center text-xl font-semibold">
               {title}
-              <span className="badge badge-success  absolute right-3 top-2">
+              <span className="badge badge-success absolute right-3 top-3">
                 {status}
               </span>
             </h4>
           </div>
           <div className="">
-            <p className="text-start text-xl">{description}</p>
+            <p className="text-md text-start">{description}</p>
           </div>
           <div>
             {/* reqAmount - bene - creatBy */}
             <div className="flex justify-between">
               {requestedAmount && (
-                <div className="flex-1 flex-col">
+                <div className="flex flex-1 flex-col items-center">
                   <span className="text-md">Requested Amount</span>
                   <span className="text-md">{requestedAmount}</span>
                 </div>
@@ -74,7 +74,7 @@ const ProposalView = ({
       </main>
 
       {/* aside - supporters info address + amount */}
-      <aside className="sapce-y-4 sticky top-5 flex h-fit w-96 flex-col rounded-xl border-2 border-black bg-base-100 px-[38px] py-6">
+      <aside className="sapce-y-4 sticky top-3 flex h-fit w-96 flex-col rounded-xl border-2 border-black bg-base-100 px-[38px] py-6">
         <h4 className="border-b-2 border-dashed py-4 text-center text-xl font-semibold">
           Supporters
         </h4>

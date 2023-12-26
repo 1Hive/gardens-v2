@@ -4,56 +4,55 @@ import { clouds1, clouds2, gardenHeader } from "@/assets";
 import Link from "next/link";
 import { Button } from "@/components";
 import GardenCard from "@/components/GardenCard";
-import { Key } from "heroicons-react";
 
 const gardens = [
   {
     imageSrc: "/blanck",
-    title: "Garden sample 0",
+    title: "HNY",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/gardens/communities",
   },
   {
     imageSrc: "/blanck",
-    title: "Garden sample 1",
+    title: "OP",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/#",
   },
   {
     imageSrc: "/blanck",
-    title: "Garden sample 2",
+    title: "GIV",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/#",
   },
   {
     imageSrc: "/blanck",
-    title: "Garden sample 3",
+    title: "ETH",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/#",
   },
   {
     imageSrc: "/blanck",
-    title: "Garden sample 4",
+    title: "UNI",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/#",
   },
   {
     imageSrc: "/blanck",
-    title: "Garden sample 5",
+    title: "ADA",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/#",
   },
 ];
 
