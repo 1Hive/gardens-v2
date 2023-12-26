@@ -9,7 +9,6 @@ export default function ProposalId({
 }) {
   const { proposals } = useProposals();
   const proposal = proposals?.filter((proposal) => proposal.id === Number(id));
-  console.log(proposal);
 
   return (
     <div>
