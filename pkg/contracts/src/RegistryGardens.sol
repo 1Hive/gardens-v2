@@ -8,7 +8,6 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {ISafe} from "./interfaces/ISafe.sol";
 
 contract RegistryGardens is ReentrancyGuard {
-    
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
     /*|--------------------------------------------|*/
@@ -17,29 +16,30 @@ contract RegistryGardens is ReentrancyGuard {
     event MemberRegistered(address _member, uint256 _amountStaked);
     event MemberUnregistered(address _member, uint256 _amountReturned);
     event StakeAmountUpdated(address _member, uint256 _newAmount);
-    event CouncilMemberSet(address [] _councilMembers);
+    event CouncilMemberSet(address[] _councilMembers);
     event CouncilSafeSet(address _safe);
     event ProtocolFeeUpdated(uint256 _newFee);
     event AlloSet(address _allo);
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
+
     modifier onlyCouncilMember() {
-        if(!isCouncilMember(msg.sender)) {
+        if (!isCouncilMember(msg.sender)) {
             revert UserNotInCouncil();
         }
         _;
     }
 
-    modifier onlyRegistryMember(){
-        if(!isMember(msg.sender)) {
-        revert UserNotInRegistry();
-        } 
+    modifier onlyRegistryMember() {
+        if (!isMember(msg.sender)) {
+            revert UserNotInRegistry();
+        }
         _;
     }
 
-    modifier onlyGardenOwner(){
-        if(msg.sender!=gardenOwner) {
+    modifier onlyGardenOwner() {
+        if (msg.sender != gardenOwner) {
             revert UserNotGardenOwner();
         }
         _;
@@ -54,7 +54,7 @@ contract RegistryGardens is ReentrancyGuard {
     error UserNotInRegistry();
     error UserNotGardenOwner();
     error StrategyExists();
-    
+
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -107,24 +107,25 @@ contract RegistryGardens is ReentrancyGuard {
 
     function setCouncilMembers(address[] memory _members) public {}
 
-    function addStrategy(address _newStrategy) public onlyRegistryMember{        
+    function addStrategy(address _newStrategy) public onlyRegistryMember {
         if (enabledStrategies[_newStrategy]) {
             revert StrategyExists();
         }
         enabledStrategies[_newStrategy] = true;
         emit StrategyAdded(_newStrategy);
     }
+
     function revertZeroAddress(address _address) internal pure {
-        if(_address == address(0)) revert AddressCannotBeZero();
+        if (_address == address(0)) revert AddressCannotBeZero();
     }
-    function removeStrategy(address _strategy) public onlyCouncilMember{
+
+    function removeStrategy(address _strategy) public onlyCouncilMember {
         revertZeroAddress(_strategy);
         enabledStrategies[_strategy] = false;
         emit StrategyRemoved(_strategy);
-
     }
-    function setAllo(address _allo) public {
 
+    function setAllo(address _allo) public {
         allo = IAllo(_allo);
         emit AlloSet(_allo);
     }
@@ -134,7 +135,6 @@ contract RegistryGardens is ReentrancyGuard {
         councilSafe = ISafe(_safe);
         emit CouncilSafeSet(_safe);
     }
-
 
     function isMember(address _member) public view returns (bool _isMember) {
         Member memory newMember = addressToMemberInfo[_member];
@@ -147,10 +147,10 @@ contract RegistryGardens is ReentrancyGuard {
         Member storage newMember = addressToMemberInfo[msg.sender];
         require(
             //If fee percentage => minimumStakeAmount*protocolFee/100
-            gardenToken.balanceOf(msg.sender) >= minimumStakeAmount+ protocolFee,
+            gardenToken.balanceOf(msg.sender) >= minimumStakeAmount + protocolFee,
             "[Registry]: Amount staked must be greater than minimum staked amount"
         );
-        if(newMember.stakedAmount>= minimumStakeAmount){revert("already Staked");}
+        if (newMember.stakedAmount >= minimumStakeAmount) revert("already Staked");
         //Check if already member
         newMember.isRegistered = true;
         newMember.stakedAmount = minimumStakeAmount;
@@ -158,7 +158,8 @@ contract RegistryGardens is ReentrancyGuard {
         emit MemberRegistered(msg.sender, minimumStakeAmount);
     }
     //Check use of payable and msg.value
-    function modifyStakeAmount(uint256 newTotalAmount) public payable nonReentrant onlyRegistryMember{
+
+    function modifyStakeAmount(uint256 newTotalAmount) public payable nonReentrant onlyRegistryMember {
         Member storage member = addressToMemberInfo[msg.sender];
         uint256 oldAmount = member.stakedAmount;
         member.stakedAmount = newTotalAmount;
@@ -171,21 +172,22 @@ contract RegistryGardens is ReentrancyGuard {
             gardenToken.transferFrom(address(this), msg.sender, oldAmount - newTotalAmount);
         }
 
-        emit StakeAmountUpdated(msg.sender,newTotalAmount);
+        emit StakeAmountUpdated(msg.sender, newTotalAmount);
     }
 
     function getBasisStakedAmount() external view returns (uint256) {
         return minimumStakeAmount;
     }
 
-    function updateProtocolFee(uint256 _newProtocolFee) public{
-        if(!isCouncilMember(msg.sender)) {
+    function updateProtocolFee(uint256 _newProtocolFee) public {
+        if (!isCouncilMember(msg.sender)) {
             revert("Must be in council safe");
         }
         protocolFee = _newProtocolFee;
         emit ProtocolFeeUpdated(_newProtocolFee);
     }
     //function updateMinimumStake()
+
     function isCouncilMember(address _member) public view returns (bool) {
         return councilMembers[_member];
     }
@@ -194,7 +196,7 @@ contract RegistryGardens is ReentrancyGuard {
         require(isMember(_member) || isCouncilMember(msg.sender), "[Registry]: Must be active member to unregister");
         Member memory member = addressToMemberInfo[msg.sender];
         delete addressToMemberInfo[msg.sender];
-        gardenToken.transfer( msg.sender, member.stakedAmount);
+        gardenToken.transfer(msg.sender, member.stakedAmount);
         emit MemberUnregistered(msg.sender, member.stakedAmount);
     }
 }

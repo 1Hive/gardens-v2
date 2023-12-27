@@ -482,7 +482,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         //        @audit-ok they use 2^128 as the container for the result of the _pow function
 
         //        uint256 atTWO_128 = _pow((decay << 128).div(D), t);
-        uint256 atTWO_128 = _pow((decay << 128) / D,t);
+        uint256 atTWO_128 = _pow((decay << 128) / D, t);
         // solium-disable-previous-line
         // conviction = (atTWO_128 * _lastConv + _oldAmount * D * (2^128 - atTWO_128) / (D - aD) + 2^127) / 2^128
         //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
