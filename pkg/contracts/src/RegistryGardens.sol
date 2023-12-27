@@ -109,7 +109,7 @@ contract RegistryGardens is ReentrancyGuard {
 
     //@todo: maybe we want use ROLES instead fixed address that give mroe flexibility
     //@todo: also who should be allowed to set the council members? the DAO? the garden owner?
-    function setCouncilMembers(address[] memory _members) public onlyGardenOwner{ 
+    function setCouncilMembers(address[] memory _members) public onlyGardenOwner {
         for (uint256 i = 0; i < _members.length; i++) {
             councilMembers[_members[i]] = true;
         }

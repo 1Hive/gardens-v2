@@ -34,8 +34,12 @@ import {RegistryFactory} from "../src/RegistryFactory.sol";
 contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers {
     CVStrategy public strategy;
     MockERC20 public token;
-    uint256 public mintAmount = 1_000_000 * 10 ** 18;
+    // uint256 public mintAmount = 1_000 * 10 ** 18;
+    uint256 public mintAmount = 15000;
+    uint256 public constant TOTAL_SUPPLY = 45000;
+    uint256 public constant POOL_AMOUNT = 15000;
     uint256 public constant MINIMUM_STAKE = 50;
+    uint256 public constant REQUESTED_AMOUNT = 1000;
 
     Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
@@ -54,12 +58,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         vm.stopPrank();
 
         token = new MockERC20();
-        token.mint(local(), mintAmount);
-        token.mint(allo_owner(), mintAmount);
-        token.mint(pool_admin(), mintAmount);
-        token.approve(address(allo()), mintAmount);
-
-        vm.prank(pool_admin());
+        token.mint(local(), TOTAL_SUPPLY);
         token.approve(address(allo()), mintAmount);
 
         strategy = new CVStrategy(address(allo()));
@@ -77,6 +76,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         params._protocolFee = 2;
         params._metadata = metadata;
         registryGardens = RegistryGardens(registryFactory.createRegistry(params));
+
+        address[] memory initialmembers = new address[](2);
+        initialmembers[0] = local();
+        initialmembers[1] = pool_admin();
+
+        registryGardens.setCouncilMembers(initialmembers);
     }
 
     function _registryGardens() internal view returns (RegistryGardens) {
@@ -91,8 +96,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         uint256 amount,
         Metadata metadata
     );
-
-    //        bytes data;
 
     /**
      *   HELPERS FUNCTIONS
@@ -122,14 +125,14 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         pool = allo().getPool(poolId);
 
         vm.deal(address(this), 1 ether);
-        allo().fundPool{value: 1 ether}(poolId, 1 ether);
+        allo().fundPool{value: POOL_AMOUNT}(poolId, POOL_AMOUNT);
 
         assertEq(pool.profileId, poolProfile_id());
         assertNotEq(address(pool.strategy), address(strategy));
 
         startMeasuringGas("createProposal");
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            1, poolId, pool_admin(), pool_admin(), CVStrategy.ProposalType.Signaling, 0.1 ether, NATIVE
+            1, poolId, pool_admin(), pool_admin(), CVStrategy.ProposalType.Signaling, REQUESTED_AMOUNT, NATIVE
         );
         bytes memory data = abi.encode(proposal);
         allo().registerRecipient(poolId, data);
@@ -230,7 +233,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         assertEq(cv.getProposalStakedAmount(1), 40 + 50);
     }
 
-    function test_proposalSupported_conviction_check() public {
+    function test_conviction_check_function() public {
         (IAllo.Pool memory pool, uint256 poolId) = _createProposal();
 
         /**
@@ -238,21 +241,111 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
          */
         startMeasuringGas("Support a Proposal");
         CVStrategy.ProposalSupport[] memory votes = new CVStrategy.ProposalSupport[](1);
-        votes[0] = CVStrategy.ProposalSupport(1, 80); // 0 + 70 = 70% = 35
+        votes[0] = CVStrategy.ProposalSupport(1, 80);
         bytes memory data = abi.encode(votes);
         allo().allocate(poolId, data);
         stopMeasuringGas();
 
         uint256 AMOUNT_STAKED = 40;
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-        assertEq(cv.getProposalVoterStake(1, address(this)), AMOUNT_STAKED); // 80% of 50 = 40
-        assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED); // 80% of 50 = 40
+        assertEq(cv.getProposalVoterStake(1, address(this)), AMOUNT_STAKED);
+        assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED);
 
         uint256 cv_amount = cv.calculateConviction(10, 0, AMOUNT_STAKED);
         console.log("cv_amount: %s", cv_amount);
         uint256 cv_cmp = _calculateConviction(10, 0, AMOUNT_STAKED, 0.9 ether / 10 ** 11);
         console.log("cv_cmp: %s", cv_cmp);
         assertEq(cv_amount, cv_cmp);
+    }
+
+    function test_conviction_check_as_js_test() public {
+        (IAllo.Pool memory pool, uint256 poolId) = _createProposal();
+        uint256 AMOUNT_STAKED = 45000;
+
+        registryGardens.setBasisStakedAmount(AMOUNT_STAKED);
+        /**
+         * ASSERTS
+         */
+        startMeasuringGas("Support a Proposal");
+        CVStrategy.ProposalSupport[] memory votes = new CVStrategy.ProposalSupport[](1);
+        votes[0] = CVStrategy.ProposalSupport(1, 100);
+        bytes memory data = abi.encode(votes);
+        allo().allocate(poolId, data);
+        stopMeasuringGas();
+
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        assertEq(cv.getProposalVoterStake(1, address(this)), AMOUNT_STAKED);
+        assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED);
+
+        uint256 AMOUNT_STAKED_1 = 15000;
+        uint256 cv_amount = cv.calculateConviction(10, 0, AMOUNT_STAKED_1);
+
+        console.log("cv_amount: %s", cv_amount);
+        uint256 cv_cmp = _calculateConviction(10, 0, AMOUNT_STAKED_1, 0.9 ether / 10 ** 11);
+        console.log("cv_cmp: %s", cv_cmp);
+
+        assertEq(cv_amount, cv_cmp);
+        assertEq(AMOUNT_STAKED_1, 15000);
+        assertEq(AMOUNT_STAKED, 45000);
+        assertEq(cv_amount, 97698);
+
+        registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+    }
+
+    function test_threshold_check_as_js_test() public {
+        (IAllo.Pool memory pool, uint256 poolId) = _createProposal();
+        registryGardens.setBasisStakedAmount(45000);
+        /**
+         * ASSERTS
+         */
+        startMeasuringGas("Support a Proposal");
+        CVStrategy.ProposalSupport[] memory votes = new CVStrategy.ProposalSupport[](1);
+        votes[0] = CVStrategy.ProposalSupport(1, 100); // 0 + 70 = 70% = 35
+        bytes memory data = abi.encode(votes);
+        allo().allocate(poolId, data);
+        stopMeasuringGas();
+
+        uint256 AMOUNT_STAKED = 45000;
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        assertEq(cv.getProposalVoterStake(1, address(this)), AMOUNT_STAKED); // 80% of 50 = 40
+        assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED); // 80% of 50 = 40
+
+        uint256 ct1 = cv.calculateThreshold(REQUESTED_AMOUNT);
+
+        assertEq(AMOUNT_STAKED, 45000);
+        assertEq(ct1, 50625);
+
+        registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+    }
+
+    function test_total_staked_amount() public {
+        (IAllo.Pool memory pool, uint256 poolId) = _createProposal();
+        registryGardens.setBasisStakedAmount(45000);
+        /**
+         * ASSERTS
+         */
+        // startMeasuringGas("Support a Proposal");
+        CVStrategy.ProposalSupport[] memory votes = new CVStrategy.ProposalSupport[](1);
+        votes[0] = CVStrategy.ProposalSupport(1, 100);
+        bytes memory data = abi.encode(votes);
+        allo().allocate(poolId, data);
+        // stopMeasuringGas();
+
+        uint256 AMOUNT_STAKED = 45000;
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        assertEq(cv.getProposalVoterStake(1, address(this)), AMOUNT_STAKED);
+        assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED);
+
+        votes[0] = CVStrategy.ProposalSupport(1, -100);
+        data = abi.encode(votes);
+        allo().allocate(poolId, data);
+
+        assertEq(cv.getProposalVoterStake(1, address(this)), 0, "VoterStake");
+        assertEq(cv.getProposalStakedAmount(1), 0, "StakedAmount");
+
+        assertEq(cv.totalStaked(), 0, "TotalStaked");
+
+        registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
     }
 
     function testRevert_allocate_removeSupport_wo_support_before_SUPPORT_UNDERFLOW() public {
