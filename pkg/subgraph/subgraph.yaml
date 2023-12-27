@@ -19,6 +19,6 @@ dataSources:
               - name: CVStrategy
                 file: ../contracts/out/CVStrategy.sol/CVStrategy.json
           eventHandlers:
-              - event: Test()
-                handler: handleTest
+              - event: InitializedCV(uint256,bytes)
+                handler: handleInitialized
           file: ./src/mapping.ts

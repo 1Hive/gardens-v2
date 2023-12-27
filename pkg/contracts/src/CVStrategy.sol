@@ -25,6 +25,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance);
     error TokenCannotBeZero();
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index);
+    /*|--------------------------------------------|*/
+    /*|              CUSTOM EVENTS                 |*/
+    /*|--------------------------------------------|*/
+    event InitializedCV(uint256 poolId, bytes data);
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -125,7 +129,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         weight = ip.weight;
         minThresholdStakePercentage = ip.minThresholdStakePercentage;
 
-        emit Initialized(_poolId, _data);
+        emit InitializedCV(_poolId, _data);
     }
     /*|--------------------------------------------|*/
     /*|                 FALLBACK                  |*/

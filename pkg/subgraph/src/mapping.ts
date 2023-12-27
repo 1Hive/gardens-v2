@@ -1,6 +1,6 @@
 import { CVStrategy } from "../generated/schema";
 
-export function handleTest(event: CVStrategy): void {
+export function handleInitialized(event: CVStrategy): void {
     console.log("test");
 }
 
