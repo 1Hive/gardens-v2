@@ -71,6 +71,7 @@ contract RegistryGardens is ReentrancyGuard {
         uint256 _protocolFee;
         uint256 _nonce;
         Metadata _metadata;
+        address owner;
     }
 
     //TODO: can change to uint32 with optimized storage order
@@ -99,13 +100,21 @@ contract RegistryGardens is ReentrancyGuard {
         gardenToken = params._gardenToken;
         minimumStakeAmount = params._minimumStakeAmount;
         protocolFee = params._protocolFee;
-        gardenOwner = msg.sender;
+        // gardenOwner = msg.sender; //@todo: RegistryFactory is the onwer of that contract, that need be able to change the owner
+        gardenOwner = params.owner; //@todo: check if address(0) is a valid owner
         registry = IRegistry(allo.getRegistry());
         address[] memory initialmembers = new address[](0);
         profileId = registry.createProfile(params._nonce, communityName, params._metadata, msg.sender, initialmembers);
     }
 
-    function setCouncilMembers(address[] memory _members) public {}
+    //@todo: maybe we want use ROLES instead fixed address that give mroe flexibility
+    //@todo: also who should be allowed to set the council members? the DAO? the garden owner?
+    function setCouncilMembers(address[] memory _members) public onlyGardenOwner{ 
+        for (uint256 i = 0; i < _members.length; i++) {
+            councilMembers[_members[i]] = true;
+        }
+        emit CouncilMemberSet(_members);
+    }
 
     function addStrategy(address _newStrategy) public onlyRegistryMember {
         if (enabledStrategies[_newStrategy]) {
@@ -177,6 +186,10 @@ contract RegistryGardens is ReentrancyGuard {
 
     function getBasisStakedAmount() external view returns (uint256) {
         return minimumStakeAmount;
+    }
+
+    function setBasisStakedAmount(uint256 _newAmount) external onlyCouncilMember {
+        minimumStakeAmount = _newAmount;
     }
 
     function updateProtocolFee(uint256 _newProtocolFee) public {
