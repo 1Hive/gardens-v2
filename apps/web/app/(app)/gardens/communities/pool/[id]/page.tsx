@@ -1,11 +1,11 @@
-export default function Community({
+export default function Gardens({
   params: { id },
 }: {
   params: { id: string };
 }) {
   return (
     <div>
-      <h2>hello {id}</h2>
+      <h1>Pool{id} </h1>
     </div>
   );
 }
