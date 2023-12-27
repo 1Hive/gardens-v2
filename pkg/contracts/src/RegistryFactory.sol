@@ -13,7 +13,6 @@ contract RegistryFactory {
     {
         RegistryGardens gardenRegistry = new RegistryGardens();
         params._nonce = nonce++;
-        params.owner = msg.sender;
         gardenRegistry.initialize(params);
         return address(gardenRegistry);
     }

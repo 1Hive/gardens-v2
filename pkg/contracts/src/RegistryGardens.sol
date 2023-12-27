@@ -2,22 +2,29 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IAllo, Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
-import {ISafe} from "./interfaces/ISafe.sol";
 
-contract RegistryGardens is ReentrancyGuard {
+import {Safe} from "safe-contracts/contracts/Safe.sol";
+
+contract RegistryGardens is ReentrancyGuard, AccessControl {
+    /*|--------------------------------------------|*/
+    /*|                 ROLES                      |*/
+    /*|--------------------------------------------|*/
+    bytes32 public constant COUNCIL_MEMBER_CHANGE = keccak256("COUNCIL_MEMBER_CHANGE");
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
     /*|--------------------------------------------|*/
+
     event StrategyAdded(address _strategy);
     event StrategyRemoved(address _strategy);
     event MemberRegistered(address _member, uint256 _amountStaked);
     event MemberUnregistered(address _member, uint256 _amountReturned);
     event StakeAmountUpdated(address _member, uint256 _newAmount);
-    event CouncilMemberSet(address[] _councilMembers);
     event CouncilSafeSet(address _safe);
+    event CouncilSafeChangeStarted(address _safeOwner, address _newSafeOwner);
     event ProtocolFeeUpdated(uint256 _newFee);
     event AlloSet(address _allo);
     /*|--------------------------------------------|*/
@@ -25,7 +32,7 @@ contract RegistryGardens is ReentrancyGuard {
     /*|--------------------------------------------|*/
 
     modifier onlyCouncilMember() {
-        if (!isCouncilMember(msg.sender)) {
+        if (!hasRole(COUNCIL_MEMBER_CHANGE, msg.sender)) {
             revert UserNotInCouncil();
         }
         _;
@@ -38,12 +45,6 @@ contract RegistryGardens is ReentrancyGuard {
         _;
     }
 
-    modifier onlyGardenOwner() {
-        if (msg.sender != gardenOwner) {
-            revert UserNotGardenOwner();
-        }
-        _;
-    }
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
@@ -54,6 +55,7 @@ contract RegistryGardens is ReentrancyGuard {
     error UserNotInRegistry();
     error UserNotGardenOwner();
     error StrategyExists();
+    error CallerIsNotNewOnwer();
 
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -71,7 +73,7 @@ contract RegistryGardens is ReentrancyGuard {
         uint256 _protocolFee;
         uint256 _nonce;
         Metadata _metadata;
-        address owner;
+        address payable _councilSafe;
     }
 
     //TODO: can change to uint32 with optimized storage order
@@ -82,38 +84,37 @@ contract RegistryGardens is ReentrancyGuard {
     IERC20 public gardenToken;
     uint256 public protocolFee;
     string private covenantIpfsHash;
-    address private gardenOwner;
     bytes32 public profileId;
 
-    ISafe public councilSafe;
-    mapping(address => bool) public councilMembers;
+    address payable public pendingCouncilSafe;
+    Safe public councilSafe;
 
     mapping(address => bool) public tribunalMembers;
 
     mapping(address => Member) public addressToMemberInfo;
     mapping(address => bool) public enabledStrategies;
 
-    constructor() {}
+    constructor() {
+        // _grantRole(DEFAULT_ADMIN_ROLE, address(this));
+        _setRoleAdmin(COUNCIL_MEMBER_CHANGE, DEFAULT_ADMIN_ROLE);
+    }
 
     function initialize(RegistryGardens.InitializeParams memory params) public {
         allo = IAllo(params._allo);
         gardenToken = params._gardenToken;
         minimumStakeAmount = params._minimumStakeAmount;
         protocolFee = params._protocolFee;
+        if (params._councilSafe == address(0)) {
+            revert AddressCannotBeZero();
+        }
+        councilSafe = Safe(params._councilSafe);
+        _grantRole(COUNCIL_MEMBER_CHANGE, params._councilSafe);
+
         // gardenOwner = msg.sender; //@todo: RegistryFactory is the onwer of that contract, that need be able to change the owner
-        gardenOwner = params.owner; //@todo: check if address(0) is a valid owner
+        // gardenOwner = params.owner; //@todo: check if address(0) is a valid owner
         registry = IRegistry(allo.getRegistry());
         address[] memory initialmembers = new address[](0);
         profileId = registry.createProfile(params._nonce, communityName, params._metadata, msg.sender, initialmembers);
-    }
-
-    //@todo: maybe we want use ROLES instead fixed address that give mroe flexibility
-    //@todo: also who should be allowed to set the council members? the DAO? the garden owner?
-    function setCouncilMembers(address[] memory _members) public onlyGardenOwner {
-        for (uint256 i = 0; i < _members.length; i++) {
-            councilMembers[_members[i]] = true;
-        }
-        emit CouncilMemberSet(_members);
     }
 
     function addStrategy(address _newStrategy) public onlyRegistryMember {
@@ -139,10 +140,22 @@ contract RegistryGardens is ReentrancyGuard {
         emit AlloSet(_allo);
     }
 
-    function setCouncilSafe(address _safe) public {
-        require(msg.sender == gardenOwner, "Only the owner can call this method.");
-        councilSafe = ISafe(_safe);
-        emit CouncilSafeSet(_safe);
+    function setCouncilSafe(address payable _safe) public onlyCouncilMember {
+        pendingCouncilSafe = _safe;
+        emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
+    }
+
+    function _changeCouncilSafe() internal {
+        councilSafe = Safe(pendingCouncilSafe);
+        delete pendingCouncilSafe;
+        emit CouncilSafeSet(pendingCouncilSafe);
+    }
+
+    function acceptCouncilSafe() public {
+        if (msg.sender != pendingCouncilSafe){
+            revert CallerIsNotNewOnwer();
+        }
+        _changeCouncilSafe();
     }
 
     function isMember(address _member) public view returns (bool _isMember) {
@@ -192,17 +205,14 @@ contract RegistryGardens is ReentrancyGuard {
         minimumStakeAmount = _newAmount;
     }
 
-    function updateProtocolFee(uint256 _newProtocolFee) public {
-        if (!isCouncilMember(msg.sender)) {
-            revert("Must be in council safe");
-        }
+    function updateProtocolFee(uint256 _newProtocolFee) public onlyCouncilMember {
         protocolFee = _newProtocolFee;
         emit ProtocolFeeUpdated(_newProtocolFee);
     }
     //function updateMinimumStake()
 
     function isCouncilMember(address _member) public view returns (bool) {
-        return councilMembers[_member];
+        return hasRole(COUNCIL_MEMBER_CHANGE, _member);
     }
 
     function unregisterMember(address _member) public nonReentrant {

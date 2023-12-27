@@ -26,12 +26,14 @@ import {CVStrategy} from "../src/CVStrategy.sol";
 import {RegistryGardens} from "../src/RegistryGardens.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 
+import {SafeSetup} from "./shared/SafeSetup.sol";
 /* @dev Run 
 * forge test --mc CVStrategyTest -vvvvv
 * forge test --mt testRevert -vvvv
 * forge test --mc CVStrategyTest --mt test -vv 
 */
-contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers {
+
+contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers, SafeSetup {
     CVStrategy public strategy;
     MockERC20 public token;
     // uint256 public mintAmount = 1_000 * 10 ** 18;
@@ -75,13 +77,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         params._minimumStakeAmount = MINIMUM_STAKE;
         params._protocolFee = 2;
         params._metadata = metadata;
+        params._councilSafe = payable(address(_councilSafe()));
         registryGardens = RegistryGardens(registryFactory.createRegistry(params));
 
-        address[] memory initialmembers = new address[](2);
-        initialmembers[0] = local();
-        initialmembers[1] = pool_admin();
-
-        registryGardens.setCouncilMembers(initialmembers);
     }
 
     function _registryGardens() internal view returns (RegistryGardens) {
@@ -262,7 +260,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         (IAllo.Pool memory pool, uint256 poolId) = _createProposal();
         uint256 AMOUNT_STAKED = 45000;
 
-        registryGardens.setBasisStakedAmount(AMOUNT_STAKED);
+        // registryGardens.setBasisStakedAmount(AMOUNT_STAKED);
+        safeHelper(
+            address(registryGardens),
+            0,
+            abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, AMOUNT_STAKED)
+        );
         /**
          * ASSERTS
          */
@@ -289,12 +292,20 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         assertEq(AMOUNT_STAKED, 45000);
         assertEq(cv_amount, 97698);
 
-        registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+        // registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+        safeHelper(
+            address(registryGardens),
+            0,
+            abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, MINIMUM_STAKE)
+        );
     }
 
     function test_threshold_check_as_js_test() public {
         (IAllo.Pool memory pool, uint256 poolId) = _createProposal();
-        registryGardens.setBasisStakedAmount(45000);
+        // registryGardens.setBasisStakedAmount(45000);
+        safeHelper(
+            address(registryGardens), 0, abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, 45000)
+        );
         /**
          * ASSERTS
          */
@@ -315,12 +326,20 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         assertEq(AMOUNT_STAKED, 45000);
         assertEq(ct1, 50625);
 
-        registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+        // registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+        safeHelper(
+            address(registryGardens),
+            0,
+            abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, MINIMUM_STAKE)
+        );
     }
 
     function test_total_staked_amount() public {
         (IAllo.Pool memory pool, uint256 poolId) = _createProposal();
-        registryGardens.setBasisStakedAmount(45000);
+        // registryGardens.setBasisStakedAmount(45000);
+        safeHelper(
+            address(registryGardens), 0, abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, 45000)
+        );
         /**
          * ASSERTS
          */
@@ -345,7 +364,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
 
         assertEq(cv.totalStaked(), 0, "TotalStaked");
 
-        registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+        // registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+        safeHelper(
+            address(registryGardens),
+            0,
+            abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, MINIMUM_STAKE)
+        );
     }
 
     function testRevert_allocate_removeSupport_wo_support_before_SUPPORT_UNDERFLOW() public {
