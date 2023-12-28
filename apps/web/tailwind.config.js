@@ -27,6 +27,7 @@ module.exports = {
         primary: "var(--color-primary)",
         secondary: "var(--color-secondary)",
         surface: "var(--color-surface)",
+        black: "var(--color-black)",
       },
     },
   },

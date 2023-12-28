@@ -3,12 +3,14 @@ import { useProposals } from "@/hooks/useProposals";
 import ProposalView from "@/components/ProposalView";
 
 export default function ProposalId({
-  params: { id },
+  params: { slug },
 }: {
-  params: { id: string };
+  params: { slug: string };
 }) {
   const { proposals } = useProposals();
-  const proposal = proposals?.filter((proposal) => proposal.id === Number(id));
+  const proposal = proposals?.filter(
+    (proposal) => proposal.id === Number(slug),
+  );
 
   return (
     <div>

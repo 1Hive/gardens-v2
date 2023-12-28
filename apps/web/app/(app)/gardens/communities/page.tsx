@@ -3,7 +3,7 @@ import Image from "next/image";
 import { gardenLand } from "@/assets";
 import Link from "next/link";
 
-export default function Gardens() {
+export default function Garden() {
   return (
     <>
       <div className="container relative mx-auto max-w-5xl space-y-10 rounded-xl border-[3px] border-black bg-base-100 px-2 py-4">
@@ -25,12 +25,12 @@ export default function Gardens() {
           </div>
         </header>
 
-        <div className="mx-auto max-w-3xl space-y-4 ">
+        <section className="mx-auto max-w-3xl space-y-4 ">
           {/* communites */}
           {conmmunities.map((community) => (
             <CommunityCard {...community} />
           ))}
-        </div>
+        </section>
       </div>
     </>
   );
@@ -53,7 +53,11 @@ const CommunityCard = ({ name, address, href, pools }: any) => {
 
           {/* pools */}
           <div className="mx-auto flex h-[170px] w-full snap-x  space-x-4 overflow-x-auto transition-all duration-150 ease-in">
-            {pools?.map((pool: any) => <PoolCard {...pool} />)}
+            {pools?.map((pool: any, i: number) => (
+              <div key={i}>
+                <PoolCard {...pool} />
+              </div>
+            ))}
           </div>
         </div>
       </>
