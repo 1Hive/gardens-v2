@@ -1,9 +1,13 @@
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#default-profile
 [profile.default]
+solc-version = "0.8.19"
 src = 'pkg/contracts/src'
 test = 'pkg/contracts/test'
 out = 'pkg/contracts/out'
 libs = ['lib']
+
+optimizer = true
+optimizer-runs = 1_000
 
 # auto_detect_remappings = true # recursive auto-detection of remappings
 # remappings = []
@@ -44,7 +48,7 @@ libs = ['lib']
 # # ignore solc warnings for missing license and exceeded contract size
 # # known error codes are: ["unreachable", "unused-return", "unused-param", "unused-var", "code-size", "shadowing", "func-mutability", "license", "pragma-solidity", "virtual-interfaces", "same-varname"]
 # # additional warnings can be added using their numeric error code: ["license", 1337]
-# ignored_error_codes = ["license", "code-size"]
+# ignored_error_codes = [9553,9574]
 # deny_warnings = false
 # match_test = "Foo"
 # no_match_test = "Bar"

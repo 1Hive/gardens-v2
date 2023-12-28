@@ -11,9 +11,8 @@
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.1.1",
-    "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@urql/next": "^1.1.0",
-    "@web3modal/wagmi": "^3.4.0",
+    "@web3modal/wagmi": "^3.5.3",
     "graphql": "^16.8.1",
     "heroicons-react": "^1.4.1",
     "lokijs": "^1.5.12",
@@ -23,18 +22,20 @@
     "react-dom": "18.2.0",
     "ui": "workspace:*",
     "urql": "^4.0.6",
-    "viem": "^1.19.11",
-    "wagmi": "^1.4.7"
+    "viem": "^1.21.1",
+    "wagmi": "^1.4.12"
   },
   "devDependencies": {
     "@babel/core": "^7.20.12",
+    "@babel/eslint-parser": "^7.23.3",
     "@babel/preset-env": "^7.23.5",
     "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
     "@types/node": "^17.0.12",
     "@types/react": "^18.0.22",
     "@types/react-dom": "^18.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
     "autoprefixer": "^10.4.16",
-    "babel-eslint": "^10.1.0",
     "daisyui": "^4.4.20",
     "eslint": "^8.55.0",
     "eslint-config-custom": "workspace:*",
@@ -44,12 +45,13 @@
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-prettier": "^5.0.1",
     "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "next": "14.0.3",
     "postcss": "^8.4.32",
     "prettier": "^3.1.0",
     "prettier-plugin-tailwindcss": "^0.5.7",
     "tailwindcss": "^3.3.6",
     "tsconfig": "workspace:*",
-    "typescript": "^5.3.2"
+    "typescript": "^5.1.1"
   }
 }
