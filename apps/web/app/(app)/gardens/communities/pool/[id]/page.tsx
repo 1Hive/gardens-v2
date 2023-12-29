@@ -9,7 +9,7 @@ export default function Gardens({
 }) {
   return (
     <div className="mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 p-16">
+      <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
         <header>
           <h3 className="text-center">
             Pool {id} Gardens Swarm Community Funding Pool
@@ -17,7 +17,7 @@ export default function Gardens({
         </header>
         <main className="flex flex-col gap-10">
           {/* header: description - data - bottom land image */}
-          <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
+          <section className="relative flex w-full flex-col items-center  overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="flex flex-col gap-10 p-8">
               <p className="max-w-2xl  text-center text-lg font-semibold">
                 Funding pool for the Gardens Platform. Dedicated to investing in

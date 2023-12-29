@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { Button } from "@/components";
 
 export function Proposals() {
   const [editView, setEditView] = useState(false);
@@ -39,7 +40,7 @@ export function Proposals() {
       {/* points */}
       <div></div>
 
-      {/* proposals: title - proposals -create button */}
+      {/* proposals: title - proposals -create Button */}
       <div className="mx-auto max-w-3xl space-y-10">
         <header className="flex items-center justify-between">
           <h3 className="">Proposals</h3>
@@ -67,8 +68,7 @@ export function Proposals() {
                       min={0}
                       max={100}
                       value={inputs[i].value}
-                      // className={`range range-${color} range-sm min-w-[420px]`}
-                      className={`range range-sm min-w-[420px]`}
+                      className={`range-aja range range-sm min-w-[420px]`}
                       step="5"
                       onChange={(e) => inputHandler(i, Number(e.target.value))}
                     />
@@ -78,31 +78,24 @@ export function Proposals() {
                       ))}
                     </div>
                   </div>
-                  <div className="mb-2">
-                    {/* <input
-                      type="number"
-                      // placeholder="Type here"
-                      className="input input-bordered w-20"
-                    /> */}
-                    {inputs[i].value} %
-                  </div>
+                  <div className="mb-2">{inputs[i].value} %</div>
                 </div>
               )}
             </div>
           ))}
         </div>
         <div className="flex justify-center gap-8">
-          <button className="btn btn-primary">Create Proposal</button>
-          <button
-            className="btn btn-accent"
+          <Button className="bg-primary">Create Proposal</Button>
+          <Button
+            className="bg-accent"
             onClick={() => setEditView((prev) => !prev)}
           >
             Manage support
-          </button>
+          </Button>
           {editView && (
-            <button className="btn" onClick={() => submit()}>
-              Submit
-            </button>
+            <Button className="bg-secondary" onClick={() => submit()}>
+              Save changes
+            </Button>
           )}
         </div>
       </div>

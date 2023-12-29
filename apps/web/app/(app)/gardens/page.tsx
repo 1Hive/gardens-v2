@@ -2,8 +2,7 @@ import React from "react";
 import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import Link from "next/link";
-import { Button } from "@/components";
-import GardenCard from "@/components/GardenCard";
+import { Button, GardenCard } from "@/components";
 
 const gardens = [
   {
@@ -73,10 +72,10 @@ export default function Gardens() {
             </div>
             <div className="flex justify-center gap-6">
               <Link href="/create-garden">
-                <Button>Create a Garden</Button>
+                <Button className="bg-primary">Create a Garden</Button>
               </Link>
               <Link href="/docs">
-                <Button type="secondary">Documentation</Button>
+                <Button className="bg-secondary">Documentation</Button>
               </Link>
             </div>
           </div>

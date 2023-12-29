@@ -42,7 +42,9 @@ export function NavBar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                <Button handleOnClick={() => modal.open()}>Wallet</Button>
+                <Button onClick={() => modal.open()} className="bg-primary">
+                  Wallet
+                </Button>
               </div>
               <div className="-mr-2 flex items-center sm:hidden">
                 {/* Mobile menu button */}
@@ -77,7 +79,9 @@ export function NavBar() {
               ))}
             </div>
             <div className="flex border-t border-gray-200 p-4">
-              <Button handleOnClick={() => modal.open()}>Wallet</Button>
+              <Button onClick={() => modal.open()} className="bg-primary">
+                Wallet
+              </Button>
             </div>
           </Disclosure.Panel>
         </>

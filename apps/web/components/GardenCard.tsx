@@ -12,7 +12,7 @@ interface CardProps {
   link: string;
 }
 
-export default function GardenCard({ garden }: { garden: CardProps }) {
+export function GardenCard({ garden }: { garden: CardProps }) {
   const { imageSrc, title, subtitle, description, link } = garden;
 
   return (
@@ -30,7 +30,7 @@ export default function GardenCard({ garden }: { garden: CardProps }) {
           {/* <Link href={link}> */}
           {/* </Link> */}
           <Link href={link}>
-            <Button className="w-full">Check Garden</Button>
+            <Button className="w-full bg-primary">Check Garden</Button>
           </Link>
         </div>
       </div>
