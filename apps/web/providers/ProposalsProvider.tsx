@@ -4,7 +4,7 @@ type Proposals = {
   id: number;
   title: string;
   description: string;
-  type: string;
+  type: "funding" | "streaming" | "signaling";
   status: string;
   requestedAmount?: number;
   beneficiary?: string;
@@ -22,11 +22,11 @@ type Proposals = {
 
 const proposals: Proposals[] = [
   {
-    id: 1,
+    id: 0,
     title: "Gardens Swarm December 2023 Funding Proposal",
     description:
       "This is a proposal to fund the Gardens Swarm for the month of December 2023. This is a proposal to fund the Gardens Swarm for the month of December 2023. This is a proposal to fund the Gardens Swarm for the month of December 2023. This is a proposal to fund the Gardens Swarm for the month of December 2023.",
-    type: "Funding",
+    type: "funding",
     status: "active",
     requestedAmount: 1000,
     beneficiary: "0x809c9f8dd8ca93a41c3adca4972fa234c28f7714",
@@ -54,11 +54,11 @@ const proposals: Proposals[] = [
     ],
   },
   {
-    id: 2,
+    id: 1,
     title: "Fluid Proposal paul active contributor",
     description:
       "I’ve been a full time web3 contributor since April 2021, working mostly on 1Hive and all the cool stuff getting built here.",
-    type: "Streaming",
+    type: "streaming",
     status: "active",
     beneficiary: "0x809c9f8dd8ca93a41c3adca4972fa234c28f7714",
     createdBy: "0x809c9f8dd8ca93a41c3adca4972fa234c28f7714",
@@ -85,10 +85,10 @@ const proposals: Proposals[] = [
     ],
   },
   {
-    id: 3,
+    id: 2,
     title: "Signaling example",
-    description: "lorem20",
-    type: "Signaling",
+    description: "this is a description of the example",
+    type: "signaling",
     status: "active",
     points: [
       {

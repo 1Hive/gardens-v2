@@ -6,7 +6,7 @@ import { Button, GardenCard } from "@/components";
 
 const gardens = [
   {
-    imageSrc: "/blanck",
+    imageSrc: "/blank",
     title: "HNY",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
@@ -14,7 +14,7 @@ const gardens = [
     link: "/gardens/communities",
   },
   {
-    imageSrc: "/blanck",
+    imageSrc: "/blank",
     title: "OP",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
@@ -22,7 +22,7 @@ const gardens = [
     link: "/#",
   },
   {
-    imageSrc: "/blanck",
+    imageSrc: "/blank",
     title: "GIV",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
@@ -30,7 +30,7 @@ const gardens = [
     link: "/#",
   },
   {
-    imageSrc: "/blanck",
+    imageSrc: "/blank",
     title: "ETH",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
@@ -38,7 +38,7 @@ const gardens = [
     link: "/#",
   },
   {
-    imageSrc: "/blanck",
+    imageSrc: "/blank",
     title: "UNI",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
@@ -46,7 +46,7 @@ const gardens = [
     link: "/#",
   },
   {
-    imageSrc: "/blanck",
+    imageSrc: "/blank",
     title: "ADA",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:

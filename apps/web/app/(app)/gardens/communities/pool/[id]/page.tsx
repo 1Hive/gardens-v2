@@ -1,12 +1,8 @@
 import { gardenLand } from "@/assets";
 import { Proposals } from "@/components";
-
 import Image from "next/image";
-export default function Gardens({
-  params: { id },
-}: {
-  params: { id: string };
-}) {
+
+export default function Pool({ params: { id } }: { params: { id: string } }) {
   return (
     <div className="mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
@@ -17,15 +13,15 @@ export default function Gardens({
         </header>
         <main className="flex flex-col gap-10">
           {/* header: description - data - bottom land image */}
-          <section className="relative flex w-full flex-col items-center  overflow-hidden rounded-lg border-2 border-black bg-white">
-            <div className="flex flex-col gap-10 p-8">
+          <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
+            <div className="mt-4 flex flex-col gap-12 p-8">
               <p className="max-w-2xl  text-center text-lg font-semibold">
                 Funding pool for the Gardens Platform. Dedicated to investing in
                 operations, growth, and improvements of gardens, including
                 maintenance and bug fixes to the open-source software, community
                 outreach, support, contributor compensation, and education.
               </p>
-              <div className="flex w-full">
+              <div className="flex w-full p-4">
                 <div className="flex flex-1 flex-col space-y-4 font-semibold">
                   <span>Strategy type: Conviction Voting</span>
                   <span>Funding Token: Honey</span>
