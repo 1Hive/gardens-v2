@@ -29,6 +29,7 @@
     "@babel/core": "^7.20.12",
     "@babel/eslint-parser": "^7.23.3",
     "@babel/preset-env": "^7.23.5",
+    "@typescript-eslint/typescript-estree": "^6.17.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
     "@types/node": "^17.0.12",
     "@types/react": "^18.0.22",
