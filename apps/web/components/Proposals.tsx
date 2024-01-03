@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components";
+import { Button, Badge } from "@/components";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function Proposals() {
   const [editView, setEditView] = useState(false);
@@ -8,6 +10,7 @@ export function Proposals() {
   const [inputs, setInputs] = useState(
     proposalsItems.map(({ id, value }) => ({ id: id, value: value })),
   );
+  const pathname = usePathname();
 
   useEffect(() => {
     setDistributedPoints(calculatePoints());
@@ -47,38 +50,53 @@ export function Proposals() {
           {editView && <div>Total distributed: {distributedPoints} %</div>}
         </header>
         <div className="flex flex-col gap-6">
-          {proposalsItems.map(({ label, color, type }, i) => (
+          {proposalsItems.map(({ label, type, id }, i) => (
             <div
-              className="flex flex-col justify-between gap-4 rounded-lg bg-surface p-4"
-              key={i}
+              className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
+              key={id}
             >
               <div className="flex w-full items-center justify-between">
-                <span className="font-semibold">{label}</span>
-                <span className={`badge w-28 p-4 font-semibold bg-${color}`}>
-                  {type}
-                </span>
+                <h4 className="font-semibold">{label}</h4>
+                <div>
+                  <Badge type={type} />
+                  {!editView && (
+                    <Link href={`${pathname}/proposals/${id}`} className="ml-8">
+                      <Button className="bg-primary px-3 py-[6px]">
+                        Check Proposal
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
-
               {editView && (
-                <div className="flex items-center gap-8">
-                  <div>
-                    <input
-                      key={i}
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={inputs[i].value}
-                      className={`range-aja range range-sm min-w-[420px]`}
-                      step="5"
-                      onChange={(e) => inputHandler(i, Number(e.target.value))}
-                    />
-                    <div className="flex w-full justify-between px-[10px] text-[4px]">
-                      {[...Array(21)].map((_, i) => (
-                        <span key={i}>|</span>
-                      ))}
+                <div className="flex w-full flex-wrap items-center justify-between gap-6">
+                  <div className="flex items-center gap-8">
+                    <div>
+                      <input
+                        key={i}
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={inputs[i].value}
+                        className={`range-aja range range-sm min-w-[420px]`}
+                        step="5"
+                        onChange={(e) =>
+                          inputHandler(i, Number(e.target.value))
+                        }
+                      />
+                      <div className="flex w-full justify-between px-[10px] text-[4px]">
+                        {[...Array(21)].map((_, i) => (
+                          <span key={i}>|</span>
+                        ))}
+                      </div>
                     </div>
+                    <div className="mb-2">{inputs[i].value} %</div>
                   </div>
-                  <div className="mb-2">{inputs[i].value} %</div>
+                  <Link href={`${pathname}/proposals/${id}`}>
+                    <Button className="bg-primary px-3 py-[6px]">
+                      Check Proposal
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -102,26 +120,29 @@ export function Proposals() {
     </section>
   );
 }
+interface Proposal {
+  label: string;
+  type: "funding" | "streaming" | "signaling";
+  value: number;
+  id: number;
+}
 
-const proposalsItems = [
+const proposalsItems: Proposal[] = [
   {
     label: "Buy a billboard in Times Square",
-    type: "Funding",
-    color: "primary",
+    type: "funding",
     value: 10,
     id: 0,
   },
   {
     label: "Zack active contributor",
-    type: "Streaming",
-    color: "secondary",
+    type: "streaming",
     value: 45,
     id: 1,
   },
   {
     label: "Current signaling proposal",
-    type: "Signaling",
-    color: "accent",
+    type: "signaling",
     value: 25,
     id: 2,
   },

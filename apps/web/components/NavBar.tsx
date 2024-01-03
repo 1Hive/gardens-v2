@@ -8,6 +8,7 @@ import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Button } from ".";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
+import { usePathname } from "next/navigation";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -15,6 +16,9 @@ function classNames(...classes: string[]) {
 
 export function NavBar() {
   const modal = useWeb3Modal();
+
+  //we use pathname to show current page on navigation items...
+  const pathname = usePathname();
 
   return (
     <Disclosure as="nav" className="bg-surface shadow">

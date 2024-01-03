@@ -34,7 +34,7 @@ export function GardenCard({ garden }: { garden: CardProps }) {
           </Link>
         </div>
       </div>
-      <Image src={gardenLand} alt="garden land floor" />
+      <Image src={gardenLand} alt="garden land" />
     </div>
   );
 }
