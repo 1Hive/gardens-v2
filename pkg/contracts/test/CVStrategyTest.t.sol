@@ -489,4 +489,15 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         // console.log("Beneficiary: %s", beneficiary);
         // console.log("Submitter: %s", submitter);
     }
+
+    function testRevert_registerRecipient_ProposalIdAlreadyExist() public {
+        (, uint256 poolId) = _createProposal();
+
+        CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
+            1, poolId, pool_admin(), pool_admin(), CVStrategy.ProposalType.Signaling, REQUESTED_AMOUNT, NATIVE
+        );
+        bytes memory data = abi.encode(proposal);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalIdAlreadyExist.selector, 1));
+        allo().registerRecipient(poolId, data);
+    }
 }
