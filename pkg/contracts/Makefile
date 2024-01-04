@@ -11,7 +11,7 @@ print :
 	@echo $(RPC_URL)
 	
 deploy : 
-	forge script script/DeployCV.s.sol:DeployCV --account pk --rpc-url $(RPC_URL_LOCALHOST) --account pk  --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 --broadcast --unlocked -vvvv
+	forge script script/DeployCV.s.sol:DeployCV --account pk --rpc-url $(RPC_URL_LOCALHOST) --account pk  --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 --broadcast --unlocked -vv
 	
 fork:
 	anvil -f $(RPC_URL)
