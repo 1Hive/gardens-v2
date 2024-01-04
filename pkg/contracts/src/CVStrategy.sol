@@ -25,6 +25,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance);
     error TokenCannotBeZero();
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index);
+    /*|--------------------------------------------|*/
+    /*|              CUSTOM EVENTS                 |*/
+    /*|--------------------------------------------|*/
+    event InitializedCV(uint256 poolId, bytes data);
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -125,7 +129,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         weight = ip.weight;
         minThresholdStakePercentage = ip.minThresholdStakePercentage;
 
-        emit Initialized(_poolId, _data);
+        emit InitializedCV(_poolId, _data);
     }
     /*|--------------------------------------------|*/
     /*|                 FALLBACK                  |*/
@@ -442,8 +446,15 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             uint256 stakedAmount = convertPctToTokens(stakedPointsPct);
             console.log("stakedAmount", stakedAmount);
             proposal.voterStake[_sender] = stakedAmount;
-            proposal.stakedAmount += proposal.voterStake[_sender];
-
+            // proposal.stakedAmount += stakedAmount;
+            // uint256 diff =_diffStakedTokens(previousStakedAmount, stakedAmount);
+            if (previousStakedAmount <= stakedAmount) {
+                totalStaked += stakedAmount - previousStakedAmount;
+                proposal.stakedAmount += stakedAmount - previousStakedAmount;
+            } else {
+                totalStaked -= previousStakedAmount - stakedAmount;
+                proposal.stakedAmount -= previousStakedAmount - stakedAmount;
+            }
             //@todo: should emit event
             if (proposal.blockLast == 0) {
                 proposal.blockLast = block.number;
@@ -482,7 +493,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         //        @audit-ok they use 2^128 as the container for the result of the _pow function
 
         //        uint256 atTWO_128 = _pow((decay << 128).div(D), t);
-        uint256 atTWO_128 = ((decay << 128) / D) ** t;
+        uint256 atTWO_128 = _pow((decay << 128) / D, t);
         // solium-disable-previous-line
         // conviction = (atTWO_128 * _lastConv + _oldAmount * D * (2^128 - atTWO_128) / (D - aD) + 2^127) / 2^128
         //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
@@ -512,7 +523,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         uint256 funds = poolAmount;
         //        require(maxRatio.mul(funds) > _requestedAmount.mul(D), ERROR_AMOUNT_OVER_MAX_RATIO);
         // console.log("maxRatio", maxRatio);
-        // console.log("funds", funds);
+        // console.log("funds/poolAmount", funds);
         // console.log("_requestedAmount", _requestedAmount);
         // console.log("D", D);
         // console.log("maxRatio * funds", maxRatio * funds);
@@ -530,7 +541,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         //        _threshold =
         //            ((weight << 128).div(D).div(denom.mul(denom) >> 64)).mul(D).div(D.sub(decay)).mul(_totalStaked()) >> 64;
         //        _threshold = (((weight << 128) / D) / (denom.mul(denom) >> 64)) * D / (D - decay) * (_totalStaked()) >> 64;
-        _threshold = ((weight * 2 ** 128 / D / (denom * denom >> 64)) * D / (D - decay) * _totalStaked()) >> 64;
+        // _threshold = ((weight * 2 ** 128 / D / (denom * denom >> 64)) * D / (D - decay) * _totalStaked()) >> 64;
+
+        // _threshold = (  (weight << 128).div(D).div(denom.mul(denom) >> 64)).mul(D).div(D.sub(decay)).mul(_totalStaked()) >> 64;
+        _threshold = ((((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * _totalStaked()) >> 64;
         // console.log("_threshold", _threshold);
     }
 
@@ -596,11 +610,12 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         if (address(registryGardens.gardenToken()) == address(0)) {
             revert TokenCannotBeZero();
         }
-        // console.log("totalStaked", totalStaked);
         // console.log("registryGardens.gardenToken.totalSupply()", registryGardens.gardenToken().totalSupply());
         // console.log("minThresholdStakePercentage", minThresholdStakePercentage);
         uint256 minTotalStake =
             (registryGardens.gardenToken().totalSupply() * minThresholdStakePercentage) / ONE_HUNDRED_PERCENT;
+        // console.log("minTotalStake", minTotalStake);
+        // console.log("totalStaked", totalStaked);
         return totalStaked < minTotalStake ? minTotalStake : totalStaked;
     }
 }

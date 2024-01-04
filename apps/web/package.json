@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build_": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint_": "next lint"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",

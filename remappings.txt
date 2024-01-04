@@ -3,3 +3,4 @@ forge-std/=lib/forge-std/src/
 allo-v2/=lib/allo-v2/
 allo-v2-contracts/=lib/allo-v2/contracts/
 allo-v2-test/=lib/allo-v2/test/
+safe-contracts/=lib/safe-contracts/
