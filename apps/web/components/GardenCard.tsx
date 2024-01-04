@@ -12,7 +12,7 @@ interface CardProps {
   link: string;
 }
 
-export default function GardenCard({ garden }: { garden: CardProps }) {
+export function GardenCard({ garden }: { garden: CardProps }) {
   const { imageSrc, title, subtitle, description, link } = garden;
 
   return (
@@ -22,17 +22,19 @@ export default function GardenCard({ garden }: { garden: CardProps }) {
           {/* <Image fill src={imageSrc} alt="garden main image" /> */}
         </div>
         <div>
-          <h3>{title}</h3>
+          <h3 className="text-center">{title}</h3>
           <p>{subtitle}</p>
         </div>
         <div>{description}</div>
         <div className="mb-2 mt-4">
           {/* <Link href={link}> */}
-          <Button className="w-full">Check Garden</Button>
           {/* </Link> */}
+          <Link href={link}>
+            <Button className="w-full bg-primary">Check Garden</Button>
+          </Link>
         </div>
       </div>
-      <Image src={gardenLand} alt="garden land floor" />
+      <Image src={gardenLand} alt="garden land" />
     </div>
   );
 }
