@@ -2,13 +2,17 @@ import { gardenLand } from "@/assets";
 import { Proposals } from "@/components";
 import Image from "next/image";
 
-export default function Pool({ params: { id } }: { params: { id: string } }) {
+export default function Pool({
+  params: { poolId },
+}: {
+  params: { poolId: string };
+}) {
   return (
     <div className="mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
         <header>
           <h3 className="text-center">
-            Pool {id} Gardens Swarm Community Funding Pool
+            Pool {poolId} Gardens Swarm Community Funding Pool
           </h3>
         </header>
         <main className="flex flex-col gap-10">

@@ -4,13 +4,13 @@ import { Badge, Button } from "@/components";
 import { formatAddress } from "@/utils/formatAddress";
 
 export default function Proposal({
-  params: { slug },
+  params: { proposalId },
 }: {
-  params: { slug: string };
+  params: { proposalId: string };
 }) {
   const { proposals } = useProposals();
   // const proposal = proposals?.filter(
-  //   (proposal) => proposal.id === Number(slug),
+  //   (proposal) => proposal.id === Number(proposalId),
   // );
 
   const {
@@ -24,7 +24,7 @@ export default function Proposal({
     createdBy,
     points,
     supporters,
-  } = proposals?.filter((proposal) => proposal.id === Number(slug))[0];
+  } = proposals?.filter((proposal) => proposal.id === Number(proposalId))[0];
 
   const sumSupportersAmount = () => {
     let sum = 0;
