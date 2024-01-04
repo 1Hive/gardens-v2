@@ -40,6 +40,7 @@ cache/
 # Ignores development broadcast logs
 !pkg/contracts/broadcast
 pkg/contracts/broadcast/*/31337/
+pkg/contracts/broadcast/*/1/
 pkg/contracts/broadcast/**/dry-run/
 
 # subgraph
