@@ -64,18 +64,23 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         CVStrategy strategy = new CVStrategy(ALLO_PROXY_ADDRESS);
         vm.stopBroadcast();
-
-        // vm.prank(address(allo.owner()));
-        // allo.addToCloneableStrategies(address(strategy));
+        
+        vm.startBroadcast(address(allo.owner()));
+        allo.addToCloneableStrategies(address(strategy));
+        vm.stopBroadcast();
 
         vm.startBroadcast(pool_admin());
         vm.deal(address(pool_admin()), 1 ether);
 
-        uint256 poolId = createPool(Allo(address(allo)), address(strategy), address(0), registry);
+        token.mint(address(pool_admin()), 100 ether);
 
-        // allo.fundPool{value: 0.1 ether}(poolId, 0.1 ether);
+        uint256 poolId = createPool(Allo(address(allo)), address(strategy), address(0), registry, address(token));
+        token.approve(address(allo), 100 ether);
         allo.fundPool(poolId, 0.1 ether); // gonna sue TOKENS here
-        // @todo fund with tokens.
+
+        uint256 poolIdNative = createPool(Allo(address(allo)), address(strategy), address(0), registry, address(0));
+        allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
+        
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);
