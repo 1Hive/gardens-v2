@@ -1,4 +1,15 @@
+/**
+ * @type {import('eslint').Linter.Config}
+ */
 module.exports = {
-  root: true,
-  extends: ["custom"],
+  extends: ["next/core-web-vitals", "turbo", "prettier"],
+  ignorePatterns: ["node_modules", "dist"],
+  parserOptions: {
+    babelOptions: {
+      presets: [require.resolve("next/babel")],
+    },
+  },
+  rules: {
+    "@typescript-eslint/no-deprecated": "off",
+  },
 };

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/eas-contracts" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/hats-protocol" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/hats-protocol/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/hats-protocol/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/hats-protocol/lib/solady" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/hats-protocol/lib/solady/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/hats-protocol/lib/solbase" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/hats-protocol/lib/solbase/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/hats-protocol/lib/solbase/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/hats-protocol/lib/solbase/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/openzeppelin-contracts" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/openzeppelin-contracts-upgradeable" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/openzeppelin-contracts-upgradeable/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/openzeppelin-contracts-upgradeable/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/openzeppelin-contracts/lib/erc4626-tests" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/openzeppelin-contracts/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/openzeppelin-contracts/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/permit2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/permit2/lib/forge-gas-snapshot" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/permit2/lib/forge-gas-snapshot/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/permit2/lib/forge-gas-snapshot/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/permit2/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/permit2/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/permit2/lib/openzeppelin-contracts" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/permit2/lib/solmate" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/permit2/lib/solmate/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/solady" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/solady/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/openzeppelin-contracts" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/openzeppelin-contracts/lib/erc4626-tests" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/openzeppelin-contracts/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/openzeppelin-contracts/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/prb-math" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/prb-math/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/prb-math/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/prb-math/lib/prb-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/prb-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/solady" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/solady/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/solarray" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/solarray/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/allo-v2/lib/v2-core/lib/solarray/lib/forge-std/lib/ds-test" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/forge-std/lib/ds-test" vcs="Git" />
+  </component>
+</project>

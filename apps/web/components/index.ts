@@ -1,1 +1,3 @@
-export { Account } from './Account'
+export { NavBar } from "./NavBar";
+export { ThemeButton } from "./ThemeButton";
+export { Button } from "./Button";
