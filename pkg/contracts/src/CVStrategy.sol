@@ -28,6 +28,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
     /*|--------------------------------------------|*/
+
     event InitializedCV(uint256 poolId, bytes data);
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -54,6 +55,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         Paused, // A vote that is being challenged by Agreements
         Cancelled, // A vote that has been cancelled
         Executed // A vote that has been executed
+
     }
 
     struct Proposal {
@@ -481,7 +483,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
      * @param _oldAmount Amount of tokens staked until now
      * @return Current conviction
      */
-
     function calculateConviction(uint256 _timePassed, uint256 _lastConv, uint256 _oldAmount)
         public
         view

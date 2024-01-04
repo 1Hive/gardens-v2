@@ -79,7 +79,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
         registryGardens = RegistryGardens(registryFactory.createRegistry(params));
-
     }
 
     function _registryGardens() internal view returns (RegistryGardens) {
@@ -206,9 +205,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
          */
         startMeasuringGas("Support a Proposal");
         CVStrategy.ProposalSupport[] memory votes = new CVStrategy.ProposalSupport[](1);
-        votes[0] = CVStrategy.ProposalSupport(1, 80); // 0 + 70 = 70% = 35
+        votes[0] = CVStrategy.ProposalSupport(1, 80); // 0 + 70 = 70% = 35 range is -100 +100
         bytes memory data = abi.encode(votes);
+
         allo().allocate(poolId, data);
+
         stopMeasuringGas();
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
@@ -231,6 +232,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         assertEq(cv.getProposalStakedAmount(1), 40 + 50);
     }
 
+    // @todo write that test vote without have points
     function test_conviction_check_function() public {
         (IAllo.Pool memory pool, uint256 poolId) = _createProposal();
 
@@ -459,7 +461,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
          * ASSERTS
          *
          */
-
         vm.warp(10 days);
 
         (

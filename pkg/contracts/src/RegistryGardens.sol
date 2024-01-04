@@ -45,7 +45,6 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         _;
     }
 
-
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -152,7 +151,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     }
 
     function acceptCouncilSafe() public {
-        if (msg.sender != pendingCouncilSafe){
+        if (msg.sender != pendingCouncilSafe) {
             revert CallerIsNotNewOnwer();
         }
         _changeCouncilSafe();
