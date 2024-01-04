@@ -45,3 +45,4 @@ pkg/contracts/broadcast/**/dry-run/
 # subgraph
 pkg/subgraph/generated
 pkg/**/data
+

@@ -7,7 +7,7 @@ import "forge-std/Test.sol";
 import "safe-contracts/contracts/Safe.sol";
 import "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 
-contract SafeSetup is Test{
+contract SafeSetup is Test {
     Safe public councilSafe;
     address public councilMember1;
     uint256 public councilMemberPK = 1;
@@ -20,6 +20,7 @@ contract SafeSetup is Test{
             SafeProxyFactory spf = new SafeProxyFactory();
             SafeProxy sp = spf.createProxyWithNonce(address(new Safe()), "", 0);
             councilSafe = Safe(payable(address(sp)));
+            console.log("councilSafe address: %s", address(councilSafe));
             vm.label(address(councilSafe), "councilSafe");
             address[] memory owners = new address[](1);
             owners[0] = address(councilMember1);
@@ -29,27 +30,27 @@ contract SafeSetup is Test{
     }
 
     function safeHelper(address to_, uint256 value_, bytes memory data_) public {
-      bytes memory txData = councilSafe.encodeTransactionData(
-          address(to_),
-          value_,
-          data_,
-          Enum.Operation.Call,
-          0,
-          0,
-          0,
-          address(0),
-          payable(address(0)),
-          councilSafe.nonce()
-      );
+        bytes memory txData = councilSafe.encodeTransactionData(
+            address(to_),
+            value_,
+            data_,
+            Enum.Operation.Call,
+            0,
+            0,
+            0,
+            address(0),
+            payable(address(0)),
+            councilSafe.nonce()
+        );
 
-      bytes32 txDataHash = keccak256(txData);
+        bytes32 txDataHash = keccak256(txData);
 
-      (uint8 v, bytes32 r, bytes32 s) = vm.sign(councilMemberPK, txDataHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(councilMemberPK, txDataHash);
 
-      bytes memory signature = abi.encodePacked(r, s, v);
-      // vm.star
-      councilSafe.execTransaction(
-          address(to_), value_, data_, Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), signature
-      );
-  }
+        bytes memory signature = abi.encodePacked(r, s, v);
+        // vm.star
+        councilSafe.execTransaction(
+            address(to_), value_, data_, Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), signature
+        );
+    }
 }
