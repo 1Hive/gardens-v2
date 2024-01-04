@@ -1,6 +1,6 @@
 "use client";
 import { useProposals } from "@/hooks/useProposals";
-import { Badge, Button } from "@/components";
+import { Badge, Button, StackedBarChart } from "@/components";
 import { formatAddress } from "@/utils/formatAddress";
 
 export default function Proposal({
@@ -84,8 +84,8 @@ export default function Proposal({
         </div>
 
         {/* TODO!: this section */}
-        <div className="flex h-64 items-center justify-center border-2">
-          div for chart and stuff
+        <div className="flex border-2">
+          <StackedBarChart {...fundingProposalTest} />
         </div>
         {/* Support - Remove buttons */}
         <div className="mt-20 flex justify-evenly">
@@ -116,3 +116,17 @@ export default function Proposal({
     </div>
   );
 }
+
+const fundingProposalTest: {
+  type: "funding" | "streaming" | "signaling";
+  cvPoints: number;
+  supportingPoints: number;
+  neededPoints: number;
+  threshold: number;
+} = {
+  type: "funding",
+  cvPoints: 300,
+  supportingPoints: 700,
+  neededPoints: 600,
+  threshold: 1300,
+};

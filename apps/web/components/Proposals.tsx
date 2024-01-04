@@ -47,7 +47,18 @@ export function Proposals() {
       <div className="mx-auto max-w-3xl space-y-10">
         <header className="flex items-center justify-between">
           <h3 className="">Proposals</h3>
-          {editView && <div>Total distributed: {distributedPoints} %</div>}
+          {editView && (
+            <span
+              className={`${
+                distributedPoints >= 100 && "scale-110 font-semibold text-red"
+              } transition-all`}
+            >
+              {distributedPoints >= 100
+                ? "Max points reached: "
+                : "Total distributed: "}
+              {distributedPoints} %
+            </span>
+          )}
         </header>
         <div className="flex flex-col gap-6">
           {proposalsItems.map(({ label, type, id }, i) => (
@@ -62,7 +73,7 @@ export function Proposals() {
                   {!editView && (
                     <Link href={`${pathname}/proposals/${id}`} className="ml-8">
                       <Button className="bg-primary px-3 py-[6px]">
-                        Check Proposal
+                        View Proposal
                       </Button>
                     </Link>
                   )}
@@ -94,7 +105,7 @@ export function Proposals() {
                   </div>
                   <Link href={`${pathname}/proposals/${id}`}>
                     <Button className="bg-primary px-3 py-[6px]">
-                      Check Proposal
+                      View Proposal
                     </Button>
                   </Link>
                 </div>
