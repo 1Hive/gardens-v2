@@ -3,10 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "generate": "wagmi generate",
     "dev": "next dev",
-    "build": "next build",
+    "build_": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint_": "next lint"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -37,6 +38,7 @@
     "@typescript-eslint/eslint-plugin": "^6.16.0",
     "@typescript-eslint/parser": "^6.16.0",
     "autoprefixer": "^10.4.16",
+    "@wagmi/cli": "2.0.0-rc.3",
     "daisyui": "^4.4.20",
     "eslint": "^8.55.0",
     "eslint-config-custom": "workspace:*",

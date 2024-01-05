@@ -23,9 +23,12 @@ import {GasHelpers} from "allo-v2-test/utils/GasHelpers.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {CVStrategy} from "../src/CVStrategy.sol";
 import {RegistryGardens} from "../src/RegistryGardens.sol";
+
+import {SafeSetup} from "./shared/SafeSetup.sol";
+
 // @dev Run forge test --mc RegistryTest -vvvvv
 
-contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers {
+contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers, SafeSetup {
     CVStrategy public strategy;
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * 10 ** 18;
@@ -68,6 +71,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
         params._minimumStakeAmount = MINIMUM_STAKE;
         params._protocolFee = 2;
         params._metadata = metadata;
+        params._councilSafe = payable(address(_councilSafe()));
         registryGardens = RegistryGardens(registryFactory.createRegistry(params));
     }
 
