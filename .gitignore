@@ -12,6 +12,7 @@ coverage
 .next/
 out/
 build
+**/src/generated.ts
 
 # misc
 .DS_Store
@@ -38,10 +39,10 @@ yarn-error.log*
 cache/
 
 # Ignores development broadcast logs
-!pkg/contracts/broadcast
-pkg/contracts/broadcast/*/31337/
-pkg/contracts/broadcast/*/1/
-pkg/contracts/broadcast/**/dry-run/
+!broadcast
+broadcast/*/31337/
+broadcast/**/1/
+broadcast/**/dry-run/
 
 # subgraph
 pkg/subgraph/generated

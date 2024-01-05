@@ -1,8 +1,19 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "pipeline": {
+    "generate": {
+      "dependsOn": [
+        "^generate"
+      ],
+      "outputs": [
+        "src/**"
+      ]
+    },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "generate",
+        "^build"
+      ],
       "outputs": [
         "dist/**",
         ".next/**",
@@ -13,8 +24,12 @@
       ]
     },
     "test": {
-      "dependsOn": ["build"],
-      "inputs": ["test/**/*.t.sol"],
+      "dependsOn": [
+        "build"
+      ],
+      "inputs": [
+        "test/**/*.t.sol"
+      ],
       "outputs": []
     },
     "test:watch": {
@@ -24,10 +39,22 @@
       "outputs": []
     },
     "dev": {
+      "dependsOn": [
+        "web#generate",
+        "^dev"
+      ],
+      "cache": false
+    },
+    "foundry#dev": {
+      "cache": false
+    },
+    "foundry#fork": {
       "cache": false
     },
     "subgraph#build": {
-      "dependsOn": ["foundry#build"]
+      "dependsOn": [
+        "foundry#build"
+      ]
     }
   }
 }

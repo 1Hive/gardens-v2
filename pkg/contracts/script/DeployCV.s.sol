@@ -44,6 +44,13 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         ALLO_PROXY_ADDRESS = vm.envAddress("ALLO_PROXY");
         Allo allo = Allo(ALLO_PROXY_ADDRESS);
 
+        // console2.log("allo.owner(): %s", address(allo.owner()));
+        // vm.prank(address(allo.owner()));
+        // allo.transferOwnership(local());
+
+        // console2.log("allo.owner2(): %s", address(allo.owner()));
+        // console2.log("local(): %s", address(local()));
+
         vm.startBroadcast(pool_admin());
 
         token = new AMockERC20();
@@ -81,7 +88,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             vm.stopBroadcast();
         }
 
-        vm.startBroadcast(address(allo.owner()));
+        // vm.startBroadcast(address(local()));
+        vm.startBroadcast(allo.owner());
         allo.addToCloneableStrategies(address(strategy));
         vm.stopBroadcast();
 

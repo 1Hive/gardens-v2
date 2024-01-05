@@ -11,14 +11,21 @@ print :
 	@echo $(RPC_URL)
 	
 deploy : 
-	forge script script/DeployCV.s.sol:DeployCV --account pk --rpc-url $(RPC_URL_LOCALHOST) --account pk  --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 --broadcast --unlocked -vv
+	-forge script script/DeployCV.s.sol:DeployCV \
+	--rpc-url $(RPC_URL_LOCALHOST) \
+	--sender 0x34d82D1ED8B4fB6e6A569d6D086A39f9f734107E \
+	0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
+	--unlocked \
+	--broadcast -vv
 	
 fork:
 	anvil -f $(RPC_URL)
 
 test1:
-	forge test --fork-url $(RPC_URL_LOCALHOST) --mc CVStrategyTest --sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 -vv
+	forge test --fork-url $(RPC_URL_LOCALHOST) --mc CVStrategyTest \ 
+	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 -vv
 
 
 cast1:
-	 cast send --account pk --rpc-url $(RPC_URL_LOCALHOST) "0xfEcFbe13c84595Ba47464CD4d8d3bb359372Fc6f" "nonce()" 
+	 cast send --account pk --rpc-url $(RPC_URL_LOCALHOST) \ 
+	 "0xfEcFbe13c84595Ba47464CD4d8d3bb359372Fc6f" "nonce()" 
