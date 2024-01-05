@@ -1,7 +1,5 @@
 import React from "react";
 
-// type StackedBarChart = Funding | Streaming | Signaling;
-
 type StackedBarChart = {
   type: "funding" | "streaming" | "signaling";
   cvPoints: number;
@@ -21,27 +19,12 @@ export function StackedBarChart({
   streamingPoints,
   deadLine,
 }: StackedBarChart) {
-  // let totalPoints: number;
-  // if (type === "funding"){
-  //   totalPoints = threshold;
-  // }
-
   const calculatePercentage = (value: number, total: number) => {
     const result = (value * 100) / total;
 
     if (result > 100) return 100;
     return Math.round(result);
   };
-
-  console.log(
-    type,
-    cvPoints,
-    supportingPoints,
-    neededPoints,
-    threshold,
-    streamingPoints,
-    deadLine,
-  );
 
   return (
     <div className="flex w-full flex-col gap-8 p-6">

@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 export function Proposals() {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
-  const [inputs, setInputs] = useState(
+  const [inputs, setInputs] = useState<InputItem[]>(
     proposalsItems.map(({ id, value }) => ({ id: id, value: value })),
   );
   const pathname = usePathname();
@@ -17,7 +17,23 @@ export function Proposals() {
   }, []);
 
   const submit = () => {
-    console.log(inputs);
+    const getParsedProposals = (
+      inputData: InputItem[],
+      currentData: Proposal[],
+    ) => {
+      const resultArr: InputItem[] = [];
+      inputData.forEach((input) => {
+        currentData.forEach((current) => {
+          if (input.id === current.id) {
+            const dif = input.value - current.value;
+            if (dif !== 0) resultArr.push({ id: input.id, value: dif });
+          }
+        });
+      });
+      return resultArr;
+    };
+
+    console.log(getParsedProposals(inputs, proposalsItems));
   };
 
   const inputHandler = (i: number, value: number) => {
@@ -131,11 +147,14 @@ export function Proposals() {
     </section>
   );
 }
-interface Proposal {
-  label: string;
-  type: "funding" | "streaming" | "signaling";
+
+interface InputItem {
   value: number;
   id: number;
+}
+interface Proposal extends InputItem {
+  label: string;
+  type: "funding" | "streaming" | "signaling";
 }
 
 const proposalsItems: Proposal[] = [
