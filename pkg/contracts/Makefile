@@ -5,7 +5,7 @@
 include .env
 
 # create RPC_URL_LOCALHOST variable
-RPC_URL_LOCALHOST = http://localhost:8545
+RPC_URL_LOCALHOST = http://0.0.0.0:8545
 # print RPC_URL
 print : 
 	@echo $(RPC_URL)
@@ -19,7 +19,7 @@ deploy :
 	--broadcast -vv
 	
 fork:
-	anvil -f $(RPC_URL)
+	anvil --host=0.0.0.0 -f $(RPC_URL)
 
 test1:
 	forge test --fork-url $(RPC_URL_LOCALHOST) --mc CVStrategyTest \ 
