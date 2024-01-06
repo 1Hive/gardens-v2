@@ -5,10 +5,11 @@ import { walletConnectProvider, EIP6963Connector } from "@web3modal/wagmi";
 
 import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
-import { sepolia, optimism, gnosis, mainnet } from "viem/chains";
+import { sepolia, optimism, gnosis, mainnet, arbitrum } from "viem/chains";
 import { CoinbaseWalletConnector } from "wagmi/connectors/coinbaseWallet";
 import { InjectedConnector } from "wagmi/connectors/injected";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 
 type WagmiProviderType = {
   children: React.ReactNode;
@@ -16,9 +17,32 @@ type WagmiProviderType = {
 
 const projectId = "cc52770b49b75b8067dfa6149a52b103"; // change project id
 
+const localChain = {
+  id: 1337,
+  name: "Localhost",
+  network: "localhost",
+  nativeCurrency: {
+    name: "Ether",
+    symbol: "ETH",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: { http: ["http://127.0.0.1:8545"] },
+    public: { http: ["http://127.0.0.1:8545"] },
+  },
+  blockExplorers: {
+    default: { name: "Etherscan", url: "https://etherscan.io" },
+  },
+  testnet: true,
+};
+
 const { chains, publicClient } = configureChains(
-  [sepolia, optimism, gnosis, mainnet],
-  [walletConnectProvider({ projectId }), publicProvider()],
+  [localChain, arbitrum],
+  [
+    jsonRpcProvider({ rpc: (chain: any) => chain.rpcUrls.default }),
+    walletConnectProvider({ projectId }),
+    publicProvider(),
+  ],
 );
 
 const metadata = {

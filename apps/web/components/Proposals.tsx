@@ -3,6 +3,9 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useContractWrite, useContractRead } from "wagmi";
+import { contractsAddresses, alloContract } from "@/constants/contracts";
+import { encodeFunctionResult } from "viem";
 
 export function Proposals() {
   const [editView, setEditView] = useState(false);
@@ -17,23 +20,51 @@ export function Proposals() {
   }, []);
 
   const submit = () => {
-    const getParsedProposals = (
-      inputData: InputItem[],
-      currentData: Proposal[],
-    ) => {
-      const resultArr: InputItem[] = [];
-      inputData.forEach((input) => {
-        currentData.forEach((current) => {
-          if (input.id === current.id) {
-            const dif = input.value - current.value;
-            if (dif !== 0) resultArr.push({ id: input.id, value: dif });
-          }
-        });
-      });
-      return resultArr;
-    };
+    const encodedData = getEncodedProposals(inputs, proposalsItems);
+    const poolId = 1;
 
-    console.log(getParsedProposals(inputs, proposalsItems));
+    writeContract({
+      args: [poolId, encodedData],
+    });
+  };
+
+  const {
+    isLoading,
+    write: writeContract,
+    isError,
+    error,
+  } = useContractWrite({
+    address: contractsAddresses.allo,
+    abi: alloContract.abi,
+    functionName: "allocate",
+    // value: BigInt(1000000000),
+  });
+
+  useEffect(() => {
+    console.log(error);
+  }, [error, isError]);
+
+  const getEncodedProposals = (
+    inputData: InputItem[],
+    currentData: Proposal[],
+  ) => {
+    const resultArr: InputItem[] = [];
+    inputData.forEach((input) => {
+      currentData.forEach((current) => {
+        if (input.id === current.id) {
+          const dif = input.value - current.value;
+          if (dif !== 0) resultArr.push({ id: input.id, value: dif });
+        }
+      });
+    });
+
+    const encodedData = encodeFunctionResult({
+      abi: alloContract.abi,
+      functionName: "allocate",
+      // value: ["???"],
+    });
+
+    return encodedData;
   };
 
   const inputHandler = (i: number, value: number) => {

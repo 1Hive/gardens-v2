@@ -21,7 +21,6 @@ export function StackedBarChart({
 }: StackedBarChart) {
   const calculatePercentage = (value: number, total: number) => {
     const result = (value * 100) / total;
-
     if (result > 100) return 100;
     return Math.round(result);
   };
@@ -43,40 +42,55 @@ export function StackedBarChart({
         </div>
       </div>
       <div className="my-6 flex flex-col gap-3">
-        <div className="relative flex h-12 overflow-clip rounded-xl border-2 border-black text-sm font-bold ">
-          {threshold && neededPoints && (
-            <>
-              <div
-                className={`flex h-full items-center justify-center bg-green-700 text-white`}
-                style={{
-                  width: `${calculatePercentage(cvPoints, threshold)}%`,
-                }}
-              >
-                {calculatePercentage(cvPoints, threshold) > 5 && cvPoints}
+        <div className="relative">
+          {/* {threshold && neededPoints && (
+
+          )} */}
+          {/* <div className="flex h-12 text-sm font-bold "> */}
+          <div className="h-14 rounded-xl border-2 border-black p-[6px] text-sm font-bold">
+            {threshold && neededPoints && (
+              <div className="relative  flex h-full">
+                <div
+                  className="absolute -top-[14px] h-[70px] w-px border-r-[3px] border-dashed border-black"
+                  style={{
+                    left: `calc(${calculatePercentage(
+                      threshold,
+                      threshold,
+                    )}% - 3px)`,
+                  }}
+                ></div>
+                <div
+                  className={`flex h-full items-center justify-center bg-green-700 text-white`}
+                  style={{
+                    width: `${calculatePercentage(cvPoints, threshold)}%`,
+                  }}
+                >
+                  {calculatePercentage(cvPoints, threshold) > 5 && cvPoints}
+                </div>
+                <div
+                  className={`flex h-full items-center justify-center bg-green-500 text-white`}
+                  style={{
+                    width: `${calculatePercentage(
+                      supportingPoints - cvPoints,
+                      threshold,
+                    )}%`,
+                  }}
+                >
+                  {calculatePercentage(supportingPoints - cvPoints, threshold) >
+                    5 && supportingPoints}
+                </div>
+                <div
+                  className={`flex h-full items-center justify-center bg-gray-300`}
+                  style={{
+                    width: `${calculatePercentage(neededPoints, threshold)}%`,
+                  }}
+                >
+                  {calculatePercentage(neededPoints, threshold) > 5 &&
+                    neededPoints}
+                </div>
               </div>
-              <div
-                className={`flex h-full items-center justify-center bg-green-500 text-white`}
-                style={{
-                  width: `${calculatePercentage(
-                    supportingPoints - cvPoints,
-                    threshold,
-                  )}%`,
-                }}
-              >
-                {calculatePercentage(supportingPoints - cvPoints, threshold) >
-                  5 && supportingPoints}
-              </div>
-              <div
-                className={`flex h-full items-center justify-center bg-gray-300`}
-                style={{
-                  width: `${calculatePercentage(neededPoints, threshold)}%`,
-                }}
-              >
-                {calculatePercentage(neededPoints, threshold) > 5 &&
-                  neededPoints}
-              </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
         <span className="font-bold">
           {type === "funding" ? `${neededPoints} more points needed` : ""}
