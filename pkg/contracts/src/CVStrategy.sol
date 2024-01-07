@@ -212,6 +212,11 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         //        @TODO: emit events
     }
 
+    function supportProposal(ProposalSupport[] memory) public {
+        // _allocate(abi.encode(_support), msg.sender);
+        revert("not implemented");
+    }
+
     // only called via allo.sol by users to allocate to a recipient
     // this will update some data in this contract to store votes, etc.
     function _allocate(bytes memory _data, address _sender) internal override {
