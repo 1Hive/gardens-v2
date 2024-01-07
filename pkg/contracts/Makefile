@@ -17,8 +17,9 @@ deploy :
 	--unlocked \
 	--broadcast -vv
 fork:
-	anvil --host=0.0.0.0 -f $(RPC_URL)
+	anvil
 
+# anvil --host=0.0.0.0 -f $(RPC_URL)
 test1:
 	forge test --fork-url $(RPC_URL_LOCALHOST) --mc CVStrategyTest \ 
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 -vv
