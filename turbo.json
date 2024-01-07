@@ -56,6 +56,12 @@
       ],
       "cache": false
     },
+    "web#build": {
+      "dependsOn": [
+        "foundry#build"
+      ],
+      "cache": false
+    },
     "subgraph#build": {
       "dependsOn": [
         "foundry#build"
