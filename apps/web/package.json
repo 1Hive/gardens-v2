@@ -5,9 +5,9 @@
   "scripts": {
     "generate": "wagmi generate",
     "dev": "next dev",
-    "build_": "next build",
+    "build": "next build",
     "start": "next start",
-    "lint_": "next lint"
+    "lint": "next lint"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
