@@ -50,6 +50,9 @@
     "foundry#fork": {
       "cache": false
     },
+    "web#generate": {
+      "cache": false
+    },
     "subgraph#build": {
       "dependsOn": [
         "foundry#build"

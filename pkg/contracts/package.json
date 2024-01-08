@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "make deploy",
     "fork": "make fork",
-    "build": "forge build --sizes",
+    "_build": "forge build --sizes",
     "lint": "forge fmt",
     "test": "forge test -vvv"
   }

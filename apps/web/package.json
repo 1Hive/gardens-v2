@@ -5,9 +5,9 @@
   "scripts": {
     "generate": "wagmi generate",
     "dev": "next dev",
-    "build_": "next build",
+    "build": "next build",
     "start": "next start",
-    "lint_": "next lint"
+    "lint": "next lint"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -35,8 +35,8 @@
     "@types/node": "^17.0.12",
     "@types/react": "^18.0.22",
     "@types/react-dom": "^18.0.7",
-    "@typescript-eslint/eslint-plugin": "^6.16.0",
-    "@typescript-eslint/parser": "^6.16.0",
+    "@typescript-eslint/eslint-plugin": "^6.18.0",
+    "@typescript-eslint/parser": "^6.18.0",
     "autoprefixer": "^10.4.16",
     "@wagmi/cli": "2.0.0-rc.3",
     "daisyui": "^4.4.20",

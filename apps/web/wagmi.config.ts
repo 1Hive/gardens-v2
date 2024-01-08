@@ -1,5 +1,5 @@
 import { defineConfig } from "@wagmi/cli";
-import { etherscan, react } from "@wagmi/cli/plugins";
+import { react, foundry } from "@wagmi/cli/plugins";
 // import {  erc20Abi } from 'viem'
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
 import { abi as RegistryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
@@ -10,20 +10,6 @@ import { Abi } from "viem";
 
 export default defineConfig({
   out: "src/generated.ts",
-  contracts: [
-    {
-      name: "CVStrategy",
-      abi: CVStrategyABI as Abi,
-    },
-    {
-      name: "RegistryFactory",
-      abi: RegistryFactoryABI as Abi,
-    },
-    {
-      name: "RegistryGardens",
-      abi: RegistryGardensABI as Abi,
-    },
-  ],
   plugins: [
     // etherscan({
     //   apiKey: process.env.ETHERSCAN_API_KEY!,
@@ -38,6 +24,10 @@ export default defineConfig({
     //     // },
     //   ],
     // }),
+    foundry({
+      project: "../../",
+      include: ["CVStrategy.sol", "RegistryFactory.sol", "RegistryGardens.sol"],
+    }),
     react(),
   ],
 });

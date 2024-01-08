@@ -13,14 +13,13 @@ print :
 deploy : 
 	-forge script script/DeployCV.s.sol:DeployCV \
 	--rpc-url $(RPC_URL_LOCALHOST) \
-	--sender 0x34d82D1ED8B4fB6e6A569d6D086A39f9f734107E \
-	0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
+	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
 	--unlocked \
 	--broadcast -vv
-	
 fork:
-	anvil --host=0.0.0.0 -f $(RPC_URL)
+	anvil
 
+# anvil --host=0.0.0.0 -f $(RPC_URL)
 test1:
 	forge test --fork-url $(RPC_URL_LOCALHOST) --mc CVStrategyTest \ 
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 -vv
@@ -29,3 +28,10 @@ test1:
 cast1:
 	 cast send --account pk --rpc-url $(RPC_URL_LOCALHOST) \ 
 	 "0xfEcFbe13c84595Ba47464CD4d8d3bb359372Fc6f" "nonce()" 
+
+fund_arb:
+	cast send \
+	--from 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 \
+	--unlocked 0xefeab1ea32a5d7c6b1de6192ee531a2ef51198d9 \
+	--value 100ether \
+	--rpc-url=$(RPC_URL_LOCALHOST)
