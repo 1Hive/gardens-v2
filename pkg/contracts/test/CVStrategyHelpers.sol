@@ -11,7 +11,7 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 contract CVStrategyHelpers is Native, Accounts {
-    Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
+    Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"}); //@todo CID from IPFS
 
     bytes32 internal _poolProfileId1_;
 
@@ -43,6 +43,7 @@ contract CVStrategyHelpers is Native, Accounts {
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
         _pool_managers[1] = address(msg.sender);
+        //@todo make councilSafe a member
 
         // bytes32 memory_poolProfileId_ = registry.createProfile(
         //     0, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()

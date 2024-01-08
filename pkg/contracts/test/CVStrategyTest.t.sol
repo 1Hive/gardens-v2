@@ -107,8 +107,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertNotEq(address(pool.strategy), address(strategy), "Strategy Clones");
 
         startMeasuringGas("createProposal");
+
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            1, poolId, pool_admin(), pool_admin(), CVStrategy.ProposalType.Signaling, REQUESTED_AMOUNT, NATIVE
+            1, poolId, pool_admin(), pool_admin(), CVStrategy.ProposalType.Funding, REQUESTED_AMOUNT, address(token)
         );
         bytes memory data = abi.encode(proposal);
         allo().registerRecipient(poolId, data);
@@ -148,7 +149,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
     }
 
-    // @todo write that test vote without have points
     function testRevert_allocate_UserNotInRegistry() public {
         ( /*IAllo.Pool memory pool*/ , uint256 poolId) = _createProposal(NATIVE);
 
@@ -542,5 +542,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
         assertEq(amount, requestedAmount);
+    }
+
+    function test_getProposal() public {
+        IAllo.Pool memory pool = allo().getPool(1);
+
+        CVStrategy(payable(address(pool.strategy))).getProposal(1);
+        // CVStrategy.Proposal memory p = CVStrategy(payable(address(pool.strategy))).proposals(1);
     }
 }

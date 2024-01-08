@@ -38,6 +38,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
     event InitializedCV(uint256 poolId, bytes data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
+    event ProposalCreated(uint256 proposalId, address beneficiary, uint256 amountRequested);
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -105,9 +106,9 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     uint256 internal surpressStateMutabilityWarning;
     RegistryGardens registryGardens;
 
-    mapping(uint256 => Proposal) internal proposals;
-    mapping(address => uint256) internal totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
-    mapping(address => uint256[]) internal voterStakedProposals; // voter
+    mapping(uint256 => Proposal) public proposals;
+    mapping(address => uint256) public totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
+    mapping(address => uint256[]) public voterStakedProposals; // voter
 
     uint256 public decay;
     uint256 public maxRatio;
@@ -222,13 +223,17 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         p.convictionLast = 0;
         p.agreementActionId = 0;
 
+        emit ProposalCreated(proposal.proposalId, proposal.beneficiary, proposal.amountRequested);
         return address(uint160(proposal.proposalId));
-        //        @TODO: emit events
     }
 
+    // [[[proposalId, delta],[proposalId, delta]]]
+    // layout.txs -> console.log(data)
+    // data = bytes
     function supportProposal(ProposalSupport[] memory) public {
         surpressStateMutabilityWarning++;
         revert NotImplemented();
+        // allo().allocate(poolId, abi.encode(proposalId));
     }
 
     // only called via allo.sol by users to allocate to a recipient
