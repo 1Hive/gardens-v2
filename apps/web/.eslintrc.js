@@ -10,6 +10,7 @@ module.exports = {
     },
   },
   rules: {
-    "@typescript-eslint/no-deprecated": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "no-html-link-for-pages": "off",
   },
 };
