@@ -53,7 +53,7 @@ export function NavBar() {
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
                 {/* <w3m-button balance="show" label="Connect Wallet" size="md" />{" "} */}
                 <Button onClick={() => modal.open()} className="bg-primary">
-                  {account.address ? formattedAddress : "Connect Wallet"}
+                  Wallet
                 </Button>
               </div>
               <div className="-mr-2 flex items-center sm:hidden">

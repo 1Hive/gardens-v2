@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useContractWrite, useContractRead } from "wagmi";
 import { contractsAddresses, alloContract } from "@/constants/contracts";
 import { encodeFunctionResult } from "viem";
+import { TransactionData } from "@allo-team/allo-v2-sdk/dist/Common/types";
+import { Allo } from "@allo-team/allo-v2-sdk/";
 
 export function Proposals() {
   const [editView, setEditView] = useState(false);
@@ -19,13 +21,29 @@ export function Proposals() {
     setDistributedPoints(calculatePoints());
   }, []);
 
-  const submit = () => {
+  const submit = async () => {
     const encodedData = getEncodedProposals(inputs, proposalsItems);
-    const poolId = 1;
 
-    writeContract({
-      args: [poolId, encodedData],
-    });
+    // writeContract({
+    //   args: [poolId, encodedData],
+    // });
+
+    const allo = new Allo({ chain: 31337 });
+
+    const poolId = 1;
+    const strategyData = "strategy_data_here";
+
+    const txData: TransactionData = allo.allocate(poolId, strategyData);
+
+    // Client could be from ethers, viem, etc.
+    // const hash = await client.sendTransaction({
+    //   data: txData.data,
+    //   account,
+    //   to: txData.to, // put localhost address for Allo
+    //   value: BigInt(txData.value),
+    // });
+
+    // console.log(`Transaction hash: ${hash}`);
   };
 
   const {

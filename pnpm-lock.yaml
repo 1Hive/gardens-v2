@@ -60,6 +60,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@allo-team/allo-v2-sdk':
+        specifier: ^1.0.34
+        version: 1.0.34(typescript@5.3.2)
       '@headlessui/react':
         specifier: ^1.7.17
         version: 1.7.17(react-dom@18.2.0)(react@18.2.0)
@@ -315,6 +318,19 @@ packages:
 
   /@adraffy/ens-normalize@1.10.0:
     resolution: {integrity: sha512-nA9XHtlAkYfJxY7bce8DcN7eKxWWCWkU+1GR9d+U6MbNpfwQp8TI7vqOsBsMcHoT4mBu2kypKoSKnghEzOOq5Q==}
+
+  /@allo-team/allo-v2-sdk@1.0.34(typescript@5.3.2):
+    resolution: {integrity: sha512-3rRRZQqyGsii5bro2JkshfVq38JQ1NfXx7naDu6ggI0uu2ssPtNDZYqLhFW3+FYjw8+RgVP06iZAd+3ol2gOfQ==}
+    dependencies:
+      dotenv: 16.3.1
+      events: 3.3.0
+      viem: 1.21.4(typescript@5.3.2)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
+    dev: false
 
   /@alloc/quick-lru@5.2.0:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
@@ -6438,7 +6454,6 @@ packages:
   /dotenv@16.3.1:
     resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
     engines: {node: '>=12'}
-    dev: true
 
   /duplexify@4.1.2:
     resolution: {integrity: sha512-fz3OjcNCHmRP12MJoZMPglx8m4rrFP8rovnk4vT8Fs+aonZoCwGg10dSsQsfP/E62eZcPTMSMP6686fu9Qlqtw==}
