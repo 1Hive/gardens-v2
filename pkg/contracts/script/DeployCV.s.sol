@@ -41,17 +41,19 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         token = new AMockERC20();
 
         IRegistry registry = allo.getRegistry();
+
         RegistryFactory registryFactory = new RegistryFactory();
 
         RegistryGardens.InitializeParams memory params;
+
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._minimumStakeAmount = MINIMUM_STAKE;
-        params._protocolFee = 2;
-        params._metadata = metadata;
+        params._protocolFee = 0;
+        params._metadata = metadata; // convenant ipfs
         params._councilSafe = payable(address(_councilSafe()));
 
-        RegistryGardens registryGardens = RegistryGardens(registryFactory.createRegistry(params));
+        RegistryGardens registryGardens = RegistryGardens(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
         CVStrategy strategy = new CVStrategy(address(allo));
 
@@ -80,25 +82,48 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         token.mint(address(pool_admin()), 100 ether);
 
-        uint256 poolId = createPool(Allo(address(allo)), address(strategy), address(0), registry, address(token));
+        uint256 poolId =
+            createPool(Allo(address(allo)), address(strategy), address(registryGardens), registry, address(token));
         token.approve(address(allo), 100 ether);
         allo.fundPool(poolId, 0.1 ether);
 
-        uint256 poolIdNative = createPool(Allo(address(allo)), address(strategy), address(0), registry, address(0));
+        uint256 poolIdNative =
+            createPool(Allo(address(allo)), address(strategy), address(registryGardens), registry, address(0));
         allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
+
+        CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
+            1, poolId, membersStaked[0], pool_admin(), CVStrategy.ProposalType.Funding, 1000 wei, address(token)
+        );
+        bytes memory data = abi.encode(proposal);
+        allo.registerRecipient(poolId, data);
+
+        proposal = CVStrategy.CreateProposal(
+            2, poolId, membersStaked[1], pool_admin(), CVStrategy.ProposalType.Funding, 500 wei, address(token)
+        );
+        data = abi.encode(proposal);
+        allo.registerRecipient(poolId, data);
+
+        proposal = CVStrategy.CreateProposal(
+            3, poolId, membersStaked[2], pool_admin(), CVStrategy.ProposalType.Funding, 900 wei, address(token)
+        );
+        data = abi.encode(proposal);
+        allo.registerRecipient(poolId, data);
 
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);
+        console2.log("PoolIdNative: %s", poolIdNative);
+
         console2.log("Allo Addr: %s", address(allo));
         console2.log("Strategy Addr: %s", address(strategy));
         console2.log("Token Addr: %s", address(token));
+        console2.log("Token Native Addr: %s", address(NATIVE));
 
         console2.log("Registry Gardens Addr: %s", address(registryGardens));
 
-        console2.log("Registry Addr: %s", address(registry));
-        console2.log("Pool Admin: %s", pool_admin());
-        console2.log("Council Safe: %s", address(_councilSafe()));
+        console2.log("Allo Registry Addr: %s", address(registry));
+        console2.log("Pool Admin Addr: %s", pool_admin());
+        console2.log("Council Safe Addr: %s", address(_councilSafe()));
     }
 
     function deployAllo() public returns (address) {

@@ -15,23 +15,30 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
     error UserCannotBeZero();
-    error RegistryCannotBeZero();
     error UserNotInRegistry();
-    error ProposalIdCannotBeZero();
-    error AmountOverMaxRatio();
-    error ProposalNotInList(uint256 _proposalId);
+
     error PoolIsEmpty();
+    error NotImplemented();
+    error TokenCannotBeZero();
+    error AmountOverMaxRatio();
+    error RegistryCannotBeZero();
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result);
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance);
-    error TokenCannotBeZero();
-    error ProposalSupportDuplicated(uint256 _proposalId, uint256 index);
+
+    error ProposalDataIsEmpty();
+    error ProposalIdCannotBeZero();
+    error ProposalNotActive(uint256 _proposalId);
+    error ProposalNotInList(uint256 _proposalId);
     error ProposalIdAlreadyExist(uint256 _proposalId);
+    error ProposalSupportDuplicated(uint256 _proposalId, uint256 index);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
     /*|--------------------------------------------|*/
 
     event InitializedCV(uint256 poolId, bytes data);
+    event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
+    event ProposalCreated(uint256 proposalId, address beneficiary, uint256 amountRequested);
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -83,9 +90,13 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
     struct InitializeParams {
         address registryGardens;
+        // Alpha | Decay | a
         uint256 decay;
+        // MaxRatio | Beta | b | SpendingLimit
         uint256 maxRatio;
+        // Weight | RHO | p
         uint256 weight;
+        //Minimum Effective Supply
         uint256 minThresholdStakePercentage;
     }
     /*|--------------------------------------------|*/
@@ -95,16 +106,16 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     uint256 internal surpressStateMutabilityWarning;
     RegistryGardens registryGardens;
 
-    mapping(uint256 => Proposal) internal proposals;
-    mapping(address => uint256) internal totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
-    mapping(address => uint256[]) internal voterStakedProposals; // voter
+    mapping(uint256 => Proposal) public proposals;
+    mapping(address => uint256) public totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
+    mapping(address => uint256[]) public voterStakedProposals; // voter
 
     uint256 public decay;
     uint256 public maxRatio;
     uint256 public weight;
     uint256 public minThresholdStakePercentage;
     uint256 public proposalCounter;
-    uint256 public totalStaked;
+    uint256 public effectiveSupply_old_totalStaked;
 
     uint256 public constant D = 10000000;
     uint256 public constant ONE_HUNDRED_PERCENT = 1e18;
@@ -126,6 +137,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         console.log("InitializeParams.maxRatio", ip.maxRatio);
         console.log("InitializeParams.weight", ip.weight);
         console.log("InitializeParams.minThresholdStakePercentage", ip.minThresholdStakePercentage);
+
+        if (ip.registryGardens == address(0)) {
+            revert RegistryCannotBeZero();
+        }
 
         registryGardens = RegistryGardens(ip.registryGardens);
         decay = ip.decay;
@@ -208,23 +223,26 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         p.convictionLast = 0;
         p.agreementActionId = 0;
 
+        emit ProposalCreated(proposal.proposalId, proposal.beneficiary, proposal.amountRequested);
         return address(uint160(proposal.proposalId));
-        //        @TODO: emit events
     }
 
+    // [[[proposalId, delta],[proposalId, delta]]]
+    // layout.txs -> console.log(data)
+    // data = bytes
     function supportProposal(ProposalSupport[] memory) public {
-        // _allocate(abi.encode(_support), msg.sender);
-        revert("not implemented");
+        surpressStateMutabilityWarning++;
+        revert NotImplemented();
+        // allo().allocate(poolId, abi.encode(proposalId));
     }
 
     // only called via allo.sol by users to allocate to a recipient
     // this will update some data in this contract to store votes, etc.
-    function _allocate(bytes memory _data, address _sender) internal override {
+    function _allocate(bytes memory _data, address _sender) internal override checkSenderIsMember(_sender) {
         surpressStateMutabilityWarning++;
-        //        _data;
-        //        _sender;
 
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
+        _check_before_addSupport(_sender, pv);
         _addSupport(_sender, pv);
     }
 
@@ -234,8 +252,32 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     function _distribute(address[] memory _recipientIds, bytes memory _data, address _sender) internal override {
         surpressStateMutabilityWarning++;
         _recipientIds;
-        _data;
         _sender;
+
+        if (_data.length <= 0) {
+            revert ProposalDataIsEmpty();
+        }
+
+        uint256 proposalId = abi.decode(_data, (uint256));
+
+        if (proposalId == 0) {
+            revert ProposalIdCannotBeZero();
+        }
+
+        Proposal storage proposal = proposals[proposalId];
+
+        if (proposal.proposalId != proposalId) {
+            revert ProposalNotInList(proposalId);
+        }
+
+        if (proposal.proposalStatus != ProposalStatus.Active) {
+            revert ProposalNotActive(proposalId);
+        }
+        IAllo.Pool memory pool = allo.getPool(poolId);
+
+        _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
+
+        emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
     }
 
     // simply returns the status of a recipient
@@ -248,21 +290,11 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     /// @return Input the values you would send to distribute(), get the amounts each recipient in the array would receive
-    function getPayouts(address[] memory _recipientIds, bytes[] memory _data)
-        external
-        view
-        override
-        returns (PayoutSummary[] memory)
-    {
+    function getPayouts(address[] memory, bytes[] memory) external view override returns (PayoutSummary[] memory) {
         surpressStateMutabilityWarning;
-
-        PayoutSummary[] memory payouts = new PayoutSummary[](_recipientIds.length);
-
-        for (uint256 i; i < _recipientIds.length; i++) {
-            payouts[i] = abi.decode(_data[i], (PayoutSummary));
-        }
-
-        return payouts;
+        revert NotImplemented();
+        // PayoutSummary[] memory payouts = new PayoutSummary[](0);
+        // return payouts;
     }
 
     function _getPayout(address _recipientId, bytes memory _data)
@@ -379,9 +411,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
     }
 
-    function _addSupport(address _sender, ProposalSupport[] memory _proposalSupport) internal {
+    function _check_before_addSupport(address _sender, ProposalSupport[] memory _proposalSupport) internal {
         int256 deltaSupportSum = 0;
-        // int256[] memory deltaSupportByID = new int256[](_proposalSupport.length); //@audit-issue the length that arrays dont match with what they are doing
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             // check if _proposalSupport index i exist
             if (_proposalSupport[i].proposalId == 0) {
@@ -395,12 +426,12 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             }
             deltaSupportSum += _proposalSupport[i].deltaSupport;
         }
-        console.log("deltaSupportSum");
-        console.logInt(deltaSupportSum);
+        // console.log("deltaSupportSum");
+        // console.logInt(deltaSupportSum);
         uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
-        console.log("newTotalVotingSupport", newTotalVotingSupport);
+        // console.log("newTotalVotingSupport", newTotalVotingSupport);
         uint256 participantBalance = convertTokensToPct(registryGardens.getBasisStakedAmount());
-        console.log("participantBalance", participantBalance);
+        // console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
         // require(newTotalVotingSupport <= participantBalance, "NOT_ENOUGH_BALANCE");
         if (newTotalVotingSupport > participantBalance) {
@@ -411,10 +442,9 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         //        totalParticipantSupportAt[currentRound][_sender] = newTotalVotingSupport;
 
         //        totalSupportAt[currentRound] = _applyDelta(getTotalSupport(), deltaSupportSum);
-        _addSupport_(_sender, _proposalSupport);
     }
 
-    function _addSupport_(address _sender, ProposalSupport[] memory _proposalSupport) internal {
+    function _addSupport(address _sender, ProposalSupport[] memory _proposalSupport) internal {
         uint256[] memory proposalsIds;
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             uint256 proposalId = _proposalSupport[i].proposalId;
@@ -452,8 +482,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
             uint256 stakedPointsPct = _applyDelta(beforeStakedPointsPct, delta);
 
-            console.log("proposalID", proposalId);
-            console.log("stakedPointsPct%", stakedPointsPct);
+            // console.log("proposalID", proposalId);
+            // console.log("stakedPointsPct%", stakedPointsPct);
 
             proposal.voterStakedPointsPct[_sender] = stakedPointsPct;
 
@@ -464,10 +494,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             // proposal.stakedAmount += stakedAmount;
             // uint256 diff =_diffStakedTokens(previousStakedAmount, stakedAmount);
             if (previousStakedAmount <= stakedAmount) {
-                totalStaked += stakedAmount - previousStakedAmount;
+                effectiveSupply_old_totalStaked += stakedAmount - previousStakedAmount;
                 proposal.stakedAmount += stakedAmount - previousStakedAmount;
             } else {
-                totalStaked -= previousStakedAmount - stakedAmount;
+                effectiveSupply_old_totalStaked -= previousStakedAmount - stakedAmount;
                 proposal.stakedAmount -= previousStakedAmount - stakedAmount;
             }
             //@todo: should emit event
@@ -607,7 +637,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         uint256 blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
-            console.log("blockNumber == _proposal.blockLast");
+            // console.log("blockNumber == _proposal.blockLast");
             return; // Conviction already stored
         }
         // calculateConviction and store it
@@ -628,8 +658,14 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         // console.log("minThresholdStakePercentage", minThresholdStakePercentage);
         uint256 minTotalStake =
             (registryGardens.gardenToken().totalSupply() * minThresholdStakePercentage) / ONE_HUNDRED_PERCENT;
-        // console.log("minTotalStake", minTotalStake);
-        // console.log("totalStaked", totalStaked);
-        return totalStaked < minTotalStake ? minTotalStake : totalStaked;
+
+        // Supply from HNY token = 36_000 HNY
+        // All Staked HNY token to became member 150 HNY
+        //
+        // 1 - 100% Felipe = 50 HNY
+        // 2 - 100% Paulo = 50 HNY
+        // 3 - 100% Gabriel = 50HNY
+        // EffectiveSupply/ActivatedCVWeight = 0;
+        return effectiveSupply_old_totalStaked < minTotalStake ? minTotalStake : effectiveSupply_old_totalStaked;
     }
 }
