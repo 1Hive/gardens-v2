@@ -83,9 +83,13 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
     struct InitializeParams {
         address registryGardens;
+        // Alpha | Decay | a
         uint256 decay;
+        // MaxRatio | Beta | b | SpendingLimit
         uint256 maxRatio;
+        // Weight | RHO | p
         uint256 weight;
+        //Minimum Effective Supply
         uint256 minThresholdStakePercentage;
     }
     /*|--------------------------------------------|*/
@@ -104,7 +108,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     uint256 public weight;
     uint256 public minThresholdStakePercentage;
     uint256 public proposalCounter;
-    uint256 public totalStaked;
+    uint256 public effectiveSupply_old_totalStaked;
 
     uint256 public constant D = 10000000;
     uint256 public constant ONE_HUNDRED_PERCENT = 1e18;
@@ -464,10 +468,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             // proposal.stakedAmount += stakedAmount;
             // uint256 diff =_diffStakedTokens(previousStakedAmount, stakedAmount);
             if (previousStakedAmount <= stakedAmount) {
-                totalStaked += stakedAmount - previousStakedAmount;
+                effectiveSupply_old_totalStaked += stakedAmount - previousStakedAmount;
                 proposal.stakedAmount += stakedAmount - previousStakedAmount;
             } else {
-                totalStaked -= previousStakedAmount - stakedAmount;
+                effectiveSupply_old_totalStaked -= previousStakedAmount - stakedAmount;
                 proposal.stakedAmount -= previousStakedAmount - stakedAmount;
             }
             //@todo: should emit event
@@ -628,8 +632,14 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         // console.log("minThresholdStakePercentage", minThresholdStakePercentage);
         uint256 minTotalStake =
             (registryGardens.gardenToken().totalSupply() * minThresholdStakePercentage) / ONE_HUNDRED_PERCENT;
-        // console.log("minTotalStake", minTotalStake);
-        // console.log("totalStaked", totalStaked);
-        return totalStaked < minTotalStake ? minTotalStake : totalStaked;
+
+        // Supply from HNY token = 36_000 HNY
+        // All Staked HNY token to became member 150 HNY
+        //
+        // 1 - 100% Felipe = 50 HNY
+        // 2 - 100% Paulo = 50 HNY
+        // 3 - 100% Gabriel = 50HNY
+        // EffectiveSupply/ActivatedCVWeight = 0;
+        return effectiveSupply_old_totalStaked < minTotalStake ? minTotalStake : effectiveSupply_old_totalStaked;
     }
 }

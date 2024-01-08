@@ -108,7 +108,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
 
         CVStrategy.InitializeParams memory params;
         params.decay = _etherToFloat(0.9 ether); // alpha = decay
-        params.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
+        params.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio, Spending Limit
         params.weight = _etherToFloat(0.002 ether); // RHO = p  = weight
         params.minThresholdStakePercentage = 0.2 ether; // 20%
         params.registryGardens = address(_registryGardens());
@@ -324,7 +324,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED); // 80% of 50 = 40
 
         uint256 ct1 = cv.calculateThreshold(REQUESTED_AMOUNT);
-
+        console.log("threshold %s", ct1);
         assertEq(AMOUNT_STAKED, 45000);
         assertEq(ct1, 50625);
 
@@ -364,7 +364,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, G
         assertEq(cv.getProposalVoterStake(1, address(this)), 0, "VoterStake");
         assertEq(cv.getProposalStakedAmount(1), 0, "StakedAmount");
 
-        assertEq(cv.totalStaked(), 0, "TotalStaked");
+        assertEq(cv.effectiveSupply_old_totalStaked(), 0, "TotalStaked");
 
         // registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
         safeHelper(
