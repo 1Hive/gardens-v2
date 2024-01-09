@@ -1,26 +1,24 @@
 import { useContractRead, useContractReads } from "wagmi";
 import { useState, useEffect } from "react";
 import { Abi } from "viem";
-import CVStrategyABI from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
-import { alloContract, contractsAddresses } from "@/constants/contracts";
+import { contractsAddresses } from "@/constants/contracts";
+import { alloABI, cvStrategyABI } from "@/src/generated";
 
 export const useProposalsRead = ({ poolId }: { poolId: number }) => {
-  const [strategyAddress, setStrategyAddress] = useState<
-    `0x${string}` | undefined
-  >();
+  const [strategyAddress, setStrategyAddress] = useState<`0x${string}`>();
 
   const { data, error: poolError } = useContractRead({
     address: contractsAddresses.allo,
-    abi: alloContract.abi as Abi,
+    abi: alloABI as Abi,
     functionName: "getPool",
-    args: [poolId],
+    args: [BigInt(poolId)],
     watch: true,
     onError: (error) => {
       console.log(error);
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { strategy: `0x${string}` }) => {
       if (data) {
-        setStrategyAddress(data?.strategy?.toString());
+        setStrategyAddress(data?.strategy);
       }
     },
   });
@@ -28,7 +26,7 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
   //get the proposals data based on strategy address
   const alloContractReads = {
     address: strategyAddress,
-    abi: CVStrategyABI.abi as Abi,
+    abi: cvStrategyABI as Abi,
     functionName: "getProposal",
   };
 
@@ -53,8 +51,9 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
 
   // parse the proposals data from contract into object with keys and values
   const transformedProposals: Proposal[] =
-    proposalsReadsContract?.map((proposal) => transformData(proposal.result)) ??
-    [];
+    proposalsReadsContract?.map((proposal) =>
+      transformData(proposal.result as string[]),
+    ) ?? [];
 
   // Choose between proposalsMock and proposalsMock2 based on poolId
   const selectedProposalsMock =
@@ -94,8 +93,8 @@ function transformData(data: string[]): Proposal {
     submitter: data[0],
     requestedToken: data[2],
     blockLast: BigInt(data[10]),
-    proposalStatus: data.Pending, // Update accordingly
-    proposalType: data.Type1, // Update accordingly
+    // proposalStatus: data, // Update accordingly
+    // proposalType: data, // Update accordingly
   };
 }
 interface ProposalsMock {
