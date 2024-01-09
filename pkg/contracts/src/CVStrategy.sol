@@ -372,6 +372,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         );
     }
 
+    function getProposalVoterStakedPointsPct(uint256 _proposalId, address _voter) external view returns (uint256) {
+        return proposals[_proposalId].voterStakedPointsPct[_voter];
+    }
+
     /**
      * @notice Get stake of voter `_voter` on proposal #`_proposalId`
      * @param _proposalId Proposal id
