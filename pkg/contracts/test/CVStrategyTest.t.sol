@@ -468,7 +468,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             uint256 blockLast,
             uint256 convictionLast,
             uint256 agreementActionId,
-            uint256 threshold
+            uint256 threshold,
+            uint256 voterPointsPct
         ) = cv.getProposal(1);
 
         // console.log("Proposal Status: %s", proposalStatus);
@@ -480,6 +481,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("Agreement Action Id: %s", agreementActionId);
         console.log("Block Last: %s", blockLast);
         console.log("Conviction Last: %s", convictionLast);
+        console.log("Voter points pct %s", voterPointsPct);
         // console.log("Beneficiary: %s", beneficiary);
         // console.log("Submitter: %s", submitter);
     }
@@ -515,7 +517,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             uint256 blockLast,
             uint256 convictionLast,
             ,
-            uint256 threshold
+            uint256 threshold,
+            // uint256 voterPointsPct
         ) = cv.getProposal(1);
 
         // console.log("Proposal Status: %s", proposalStatus);
@@ -527,6 +530,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("Agreement Action Id: %s", agreementActionId);
         console.log("Block Last: %s", blockLast);
         console.log("Conviction Last: %s", convictionLast);
+        // console.log("Voter points pct %s", voterPointsPct);
         // console.log("Beneficiary: %s", beneficiary);
         // console.log("Submitter: %s", submitter);
         address[] memory recipients = new address[](0);
