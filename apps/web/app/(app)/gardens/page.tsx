@@ -2,58 +2,56 @@ import React from "react";
 import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import Link from "next/link";
-import { Button } from "@/components";
-import GardenCard from "@/components/GardenCard";
-import { Key } from "heroicons-react";
+import { Button, GardenCard } from "@/components";
 
 const gardens = [
   {
-    imageSrc: "/blanck",
-    title: "Garden sample 0",
+    imageSrc: "/blank",
+    title: "HNY",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/gardens/communities",
   },
   {
-    imageSrc: "/blanck",
-    title: "Garden sample 1",
+    imageSrc: "/blank",
+    title: "OP",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/#",
   },
   {
-    imageSrc: "/blanck",
-    title: "Garden sample 2",
+    imageSrc: "/blank",
+    title: "GIV",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/#",
   },
   {
-    imageSrc: "/blanck",
-    title: "Garden sample 3",
+    imageSrc: "/blank",
+    title: "ETH",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/#",
   },
   {
-    imageSrc: "/blanck",
-    title: "Garden sample 4",
+    imageSrc: "/blank",
+    title: "UNI",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/#",
   },
   {
-    imageSrc: "/blanck",
-    title: "Garden sample 5",
+    imageSrc: "/blank",
+    title: "ADA",
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/href",
+    link: "/#",
   },
 ];
 
@@ -74,10 +72,10 @@ export default function Gardens() {
             </div>
             <div className="flex justify-center gap-6">
               <Link href="/create-garden">
-                <Button>Create a Garden</Button>
+                <Button className="bg-primary">Create a Garden</Button>
               </Link>
               <Link href="/docs">
-                <Button type="secondary">Documentation</Button>
+                <Button className="bg-secondary">Documentation</Button>
               </Link>
             </div>
           </div>

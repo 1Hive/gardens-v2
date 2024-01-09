@@ -3,10 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "generate": "wagmi generate",
     "dev": "next dev",
-    "build_": "next build",
+    "build": "next build",
     "start": "next start",
-    "lint_": "next lint"
+    "lint": "next lint"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -29,13 +30,15 @@
     "@babel/core": "^7.20.12",
     "@babel/eslint-parser": "^7.23.3",
     "@babel/preset-env": "^7.23.5",
+    "@typescript-eslint/typescript-estree": "^6.17.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
     "@types/node": "^17.0.12",
     "@types/react": "^18.0.22",
     "@types/react-dom": "^18.0.7",
-    "@typescript-eslint/eslint-plugin": "^6.16.0",
-    "@typescript-eslint/parser": "^6.16.0",
+    "@typescript-eslint/eslint-plugin": "^6.18.0",
+    "@typescript-eslint/parser": "^6.18.0",
     "autoprefixer": "^10.4.16",
+    "@wagmi/cli": "2.0.0-rc.3",
     "daisyui": "^4.4.20",
     "eslint": "^8.55.0",
     "eslint-config-custom": "workspace:*",
@@ -52,6 +55,6 @@
     "prettier-plugin-tailwindcss": "^0.5.7",
     "tailwindcss": "^3.3.6",
     "tsconfig": "workspace:*",
-    "typescript": "^5.1.1"
+    "typescript": "5.2"
   }
 }

@@ -32,7 +32,7 @@ export default function RootLayout({
       lang="en"
       className={`${press.variable} ${chakra.variable} font-sans`}
     >
-      <body className="min-h-screen font-chakra">
+      <body className="min-h-screen bg-white font-chakra">
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -168,7 +168,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         Member storage newMember = addressToMemberInfo[msg.sender];
         require(
             //If fee percentage => minimumStakeAmount*protocolFee/100
-            gardenToken.balanceOf(msg.sender) >= minimumStakeAmount + protocolFee,
+            gardenToken.balanceOf(msg.sender) >= minimumStakeAmount + protocolFee, //@todo fix this protocol fee and func to return StakeAmount need consider it
             "[Registry]: Amount staked must be greater than minimum staked amount"
         );
         if (newMember.stakedAmount >= minimumStakeAmount) revert("already Staked");
@@ -197,7 +197,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     }
 
     function getBasisStakedAmount() external view returns (uint256) {
-        return minimumStakeAmount;
+        return minimumStakeAmount; //@todo need consider adding protocol fee or not here
     }
 
     function setBasisStakedAmount(uint256 _newAmount) external onlyCouncilMember {

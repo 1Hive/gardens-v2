@@ -19,7 +19,7 @@ import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
 import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
 import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
-import {GasHelpers} from "allo-v2-test/utils/GasHelpers.sol";
+import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {CVStrategy} from "../src/CVStrategy.sol";
 import {RegistryGardens} from "../src/RegistryGardens.sol";
@@ -28,7 +28,7 @@ import {SafeSetup} from "./shared/SafeSetup.sol";
 
 // @dev Run forge test --mc RegistryTest -vvvvv
 
-contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers, SafeSetup {
+contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers2, SafeSetup {
     CVStrategy public strategy;
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * 10 ** 18;
@@ -78,17 +78,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
     function _registryGardens() internal view returns (RegistryGardens) {
         return registryGardens;
     }
-
-    event PoolCreated(
-        uint256 indexed poolId,
-        bytes32 indexed profileId,
-        IStrategy strategy,
-        address token,
-        uint256 amount,
-        Metadata metadata
-    );
-
-    //        bytes data;
 
     function test_stakeAndRegisterMember() public {
         startMeasuringGas("createProposal");
