@@ -352,7 +352,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             uint256 blockLast,
             uint256 convictionLast,
             uint256 agreementActionId,
-            uint256 threshold
+            uint256 threshold,
+            uint256 voterStakedPointsPct
         )
     {
         Proposal storage proposal = proposals[_proposalId];
@@ -368,7 +369,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             proposal.blockLast,
             proposal.convictionLast,
             proposal.agreementActionId,
-            threshold
+            threshold,
+            proposal.voterStakedPointsPct[msg.sender]
         );
     }
 
