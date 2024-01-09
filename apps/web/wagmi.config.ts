@@ -10,6 +10,20 @@ import { Abi } from "viem";
 
 export default defineConfig({
   out: "src/generated.ts",
+  contracts: [
+    {
+      name: "CVStrategy",
+      abi: CVStrategyABI as Abi,
+    },
+    {
+      name: "RegistryFactory",
+      abi: RegistryFactoryABI as Abi,
+    },
+    {
+      name: "RegistryGardens",
+      abi: RegistryGardensABI as Abi,
+    },
+  ],
   plugins: [
     // etherscan({
     //   apiKey: process.env.ETHERSCAN_API_KEY!,
@@ -24,10 +38,10 @@ export default defineConfig({
     //     // },
     //   ],
     // }),
-    foundry({
-      project: "../../",
-      include: ["CVStrategy.sol", "RegistryFactory.sol", "RegistryGardens.sol"],
-    }),
+    // foundry({
+    //   project: "../../",
+    //   include: ["CVStrategy.sol", "RegistryFactory.sol", "RegistryGardens.sol"],
+    // }),
     react(),
   ],
 });
