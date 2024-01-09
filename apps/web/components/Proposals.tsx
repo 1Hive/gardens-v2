@@ -45,6 +45,7 @@ export function Proposals({ poolId }: { poolId: string }) {
   const { write: writeContract } = useContractWrite({
     address: contractsAddresses.allo,
     abi: alloABI,
+    chainId: 31337,
     functionName: "allocate",
     onError: (err) => {
       console.log(err);
@@ -71,7 +72,7 @@ export function Proposals({ poolId }: { poolId: string }) {
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       [
         // [proposalId, deltaSupport]
-        [1, 10],
+        [1, 30],
         // [2, 30],
       ],
     ]);

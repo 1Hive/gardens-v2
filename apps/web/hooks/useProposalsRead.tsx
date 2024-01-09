@@ -3,6 +3,43 @@ import { useState, useEffect } from "react";
 import { Abi } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
 import { alloABI, cvStrategyABI } from "@/src/generated";
+import { formatEther } from "viem";
+interface ProposalsMock {
+  title: string;
+  type: "funding" | "streaming" | "signaling";
+  description: string;
+  value: number;
+  id: number;
+}
+
+interface Proposal {
+  submitter: `0x${string}`;
+  beneficiary: `0x${string}`;
+  requestedToken: `0x${string}`;
+  requestedAmount: number;
+  stakedTokens: number;
+  proposalType: any;
+  proposalStatus: any;
+  blockLast: number;
+  convictionLast: number;
+  agreementActionId: number;
+  threshold: number;
+  voterStakedPointsPct: number;
+}
+
+// type Proposal = {
+//   proposalId: bigint;
+//   requestedAmount: number;
+//   stakedAmount: number;
+//   convictionLast: number;
+//   agreementActionId: number;
+//   beneficiary: string;
+//   createdBy: string;
+//   requestedToken: string;
+//   blockLast: bigint;
+//   proposalStatus?: any; // !defined
+//   proposalType?: any; //  !defined
+// };
 
 export const useProposalsRead = ({ poolId }: { poolId: number }) => {
   const [strategyAddress, setStrategyAddress] = useState<`0x${string}`>();
@@ -54,6 +91,8 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
       transformData(proposal.result as string[]),
     ) ?? [];
 
+  console.log(transformedProposals);
+
   // Choose between proposalsMock and proposalsMock2 based on poolId
   const selectedProposalsMock =
     poolId === 1 ? fundingProposals : signalingProposals;
@@ -67,41 +106,21 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
   return { proposals, proposalsLoading };
 };
 
-type Proposal = {
-  proposalId: bigint;
-  requestedAmount: number;
-  stakedAmount: number;
-  convictionLast: number;
-  agreementActionId: number;
-  beneficiary: string;
-  createdBy: string;
-  requestedToken: string;
-  blockLast: bigint;
-  proposalStatus?: any; // !defined
-  proposalType?: any; //  !defined
-};
-
-function transformData(data: string[]): Proposal {
+function transformData(data: any[]): Proposal {
   return {
-    proposalId: BigInt(data[0]),
-    requestedAmount: Number(data[3]),
-    stakedAmount: Number(data[4]),
-    convictionLast: Number(data[7]),
-    agreementActionId: Number(data[5]),
+    submitter: data[0],
     beneficiary: data[1],
-    createdBy: data[0],
     requestedToken: data[2],
-    blockLast: BigInt(data[10]),
-    // proposalStatus: data, // Update accordingly
-    // proposalType: data, // Update accordingly
+    requestedAmount: Number(data[3]),
+    stakedTokens: Number(data[4]),
+    proposalType: data[5],
+    proposalStatus: data[6],
+    blockLast: Number(data[7]),
+    convictionLast: Number(data[8]),
+    agreementActionId: Number(data[9]),
+    threshold: Number(formatEther(data[10])),
+    voterStakedPointsPct: Number(data[11]),
   };
-}
-interface ProposalsMock {
-  title: string;
-  type: "funding" | "streaming" | "signaling";
-  description: string;
-  value: number;
-  id: number;
 }
 
 const fundingProposals: ProposalsMock[] = [
