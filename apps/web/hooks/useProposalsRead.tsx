@@ -4,12 +4,12 @@ import { Abi } from "viem";
 import CVStrategyABI from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
 import { alloContract, contractsAddresses } from "@/constants/contracts";
 
-export const useProposalsReads = ({ poolId }: { poolId: number }) => {
+export const useProposalsRead = ({ poolId }: { poolId: number }) => {
   const [strategyAddress, setStrategyAddress] = useState<
     `0x${string}` | undefined
   >();
 
-  const { data, error: poolerro } = useContractRead({
+  const { data, error: poolError } = useContractRead({
     address: contractsAddresses.allo,
     abi: alloContract.abi as Abi,
     functionName: "getPool",
@@ -49,6 +49,7 @@ export const useProposalsReads = ({ poolId }: { poolId: number }) => {
         },
       ],
     });
+  console.log(proposalsReadsContract);
 
   // parse the proposals data from contract into object with keys and values
   const transformedProposals: Proposal[] =
@@ -98,7 +99,7 @@ function transformData(data: string[]): Proposal {
   };
 }
 interface ProposalsMock {
-  label: string;
+  title: string;
   type: "funding" | "streaming" | "signaling";
   description: string;
   value: number;
@@ -107,7 +108,7 @@ interface ProposalsMock {
 
 const fundingProposals: ProposalsMock[] = [
   {
-    label: "Arbitrum Code Clash - Liquidity Mining Marathon",
+    title: "Arbitrum Code Clash - Liquidity Mining Marathon",
     type: "funding",
     description:
       "Dive into the Arbitrum Code Clash! Amplify HoneySwap's liquidity with this thrilling liquidity mining marathon on the Arbitrum Network. Your contribution fuels the coding frenzy and boosts the liquidity ecosystem. Join the clash and let the hackathon excitement begin!",
@@ -115,7 +116,7 @@ const fundingProposals: ProposalsMock[] = [
     id: 1,
   },
   {
-    label: "Zack's Hackathon Hustle - December 2023",
+    title: "Zack's Hackathon Hustle - December 2023",
     type: "funding",
     description:
       "Back Zack's Hackathon Hustle for December 2023! Your support propels Zack's coding prowess, innovation, and breakthroughs during this epic hackathon. Let's fund Zack and witness the magic unfold!",
@@ -123,7 +124,7 @@ const fundingProposals: ProposalsMock[] = [
     id: 2,
   },
   {
-    label: "Gardens Swarm - January 2024 Hackathon Surge",
+    title: "Gardens Swarm - January 2024 Hackathon Surge",
     description:
       "Boost the Gardens Swarm for December 2023! Your contributions power the hackathon spirit, collaboration, and growth of Gardens on the Arbitrum Network. Let's sow the seeds of success in this thrilling hackathon adventure!",
     type: "funding",
@@ -133,7 +134,7 @@ const fundingProposals: ProposalsMock[] = [
 ];
 const signalingProposals: ProposalsMock[] = [
   {
-    label: "HoneySwap Liquidity Mining Program",
+    title: "HoneySwap Liquidity Mining Program",
     type: "signaling",
     description:
       "This is a proposal to add liquidity to HoneySwap.This is a proposal to add liquidity to HoneySwap.This is a proposal to add liquidity to HoneySwap.This is a proposal to add liquidity to HoneySwap.This is a proposal to add liquidity to HoneySwap.",
@@ -141,7 +142,7 @@ const signalingProposals: ProposalsMock[] = [
     id: 1,
   },
   {
-    label: "Zack Funding Proposal for the Hackathon",
+    title: "Zack Funding Proposal for the Hackathon",
     type: "signaling",
     description:
       "This is a proposal to fund Zack for the month of December 2023. This is a proposal to fund Zack for the month of December 2023. This is a proposal to fund Zack for the month of December 2023. This is a proposal to fund Zack for the month of December 2023.",
@@ -149,7 +150,7 @@ const signalingProposals: ProposalsMock[] = [
     id: 2,
   },
   {
-    label: "Gardens Swarm January 2024 Funding Proposal",
+    title: "Gardens Swarm January 2024 Funding Proposal",
     description:
       "This is a proposal to fund the Gardens Swarm for the month of December 2023. This is a proposal to fund the Gardens Swarm for the month of December 2023. This is a proposal to fund the Gardens Swarm for the month of December 2023. This is a proposal to fund the Gardens Swarm for the month of December 2023.",
     type: "signaling",

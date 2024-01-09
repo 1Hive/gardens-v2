@@ -10,7 +10,7 @@ import { TransactionData } from "@allo-team/allo-v2-sdk/dist/Common/types";
 import { Abi } from "viem";
 import { Allo } from "@allo-team/allo-v2-sdk/";
 import CVStrategyABI from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
-import { useProposalsReads } from "@/hooks/useProposalsRead";
+import { useProposalsRead } from "@/hooks/useProposalsRead";
 
 //!POOL == STRATEGY
 export function Proposals({ poolId }: { poolId: string }) {
@@ -25,10 +25,10 @@ export function Proposals({ poolId }: { poolId: string }) {
   const pathname = usePathname();
 
   //Proposals
-  const { proposals } = useProposalsReads({
+  const { proposals } = useProposalsRead({
     poolId: Number(poolId),
   });
-  console.log("proposals", proposals);
+  console.log(proposals);
   //
 
   useEffect(() => {
@@ -141,13 +141,13 @@ export function Proposals({ poolId }: { poolId: string }) {
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposals?.map(({ label, type, id }, i) => (
+          {proposals?.map(({ title, type, id }, i) => (
             <div
               className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
               key={id}
             >
               <div className="flex w-full items-center justify-between">
-                <h4 className="font-semibold">{label}</h4>
+                <h4 className="font-semibold">{title}</h4>
                 <div>
                   <Badge type={type} />
                   {!editView && (

@@ -2,6 +2,7 @@
 import { useProposals } from "@/hooks/useProposals";
 import { Badge, Button, StackedBarChart } from "@/components";
 import { formatAddress } from "@/utils/formatAddress";
+import { useProposalsRead } from "@/hooks/useProposalsRead";
 
 export default function Proposal({
   params: { proposalId },
@@ -13,14 +14,20 @@ export default function Proposal({
   //   (proposal) => proposal.id === Number(proposalId),
   // );
 
+  const { proposals: proposalsReadsContract } = useProposalsRead({ poolId: 1 });
+  console.log(proposalsReadsContract);
+
+  const { id, beneficiary } = proposalsReadsContract?.filter(
+    (proposal) => proposal.id === Number(proposalId),
+  )[0];
+
   const {
-    id,
     title,
     type,
     description,
     status,
     requestedAmount,
-    beneficiary,
+
     createdBy,
     points,
     supporters,
