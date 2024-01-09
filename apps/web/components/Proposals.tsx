@@ -3,29 +3,40 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useContractWrite, useContractRead } from "wagmi";
+import { useContractWrite } from "wagmi";
 import { useProposalsRead } from "@/hooks/useProposalsRead";
 import { contractsAddresses } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { cvStrategyABI, alloABI } from "@/src/generated";
+import { useBalance } from "wagmi";
 
 //!POOL == STRATEGY
 export function Proposals({ poolId }: { poolId: string }) {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
-  const [strategyAddress, setStrategyAddress] = useState<
-    `0x${string}` | undefined
-  >();
+
   const [inputs, setInputs] = useState<InputItem[]>(
     proposalsItems.map(({ id, value }) => ({ id: id, value: value })),
   );
   const pathname = usePathname();
 
   //Proposals
-  const { proposals } = useProposalsRead({
+  const { proposals, strategyAddress, tokenAddress } = useProposalsRead({
     poolId: Number(poolId),
   });
+
+  console.log(proposals);
   //
+  const balance = useBalance({
+    address: strategyAddress,
+    token: tokenAddress,
+    onError: (error) => {
+      console.log(error);
+    },
+    onSettled: (data) => {
+      console.log(data);
+    },
+  });
 
   useEffect(() => {
     setDistributedPoints(calculatePoints());
@@ -99,6 +110,7 @@ export function Proposals({ poolId }: { poolId: string }) {
 
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
+      <span className="absolute top-20 border-4 ">balance</span>
       {/* points */}
       <div></div>
 

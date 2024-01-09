@@ -53,7 +53,8 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
     onError: (error) => {
       console.log(error);
     },
-    onSuccess: (data: { strategy: `0x${string}` }) => {
+    onSuccess: (data: { strategy: `0x${string}`; token: `0x${string}` }) => {
+      // Add 'token' property to the type
       if (data) {
         setStrategyAddress(data?.strategy);
       }
@@ -103,7 +104,10 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
     ...selectedProposalsMock[index],
   }));
 
-  return { proposals, proposalsLoading };
+  const tokenAddress = data?.token;
+  console.log(tokenAddress);
+
+  return { proposals, proposalsLoading, strategyAddress, tokenAddress };
 };
 
 function transformData(data: any[]): Proposal {
