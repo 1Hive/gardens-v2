@@ -4,20 +4,29 @@ import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useContractWrite, useContractRead } from "wagmi";
+import { useProposalsRead } from "@/hooks/useProposalsRead";
 import { contractsAddresses } from "@/constants/contracts";
-import { TransactionData } from "@allo-team/allo-v2-sdk/dist/Common/types";
-import { Allo } from "@allo-team/allo-v2-sdk/";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { Abi, decodeErrorResult } from "viem";
 import { cvStrategyABI, alloABI } from "@/src/generated";
 
-export function Proposals() {
+//!POOL == STRATEGY
+export function Proposals({ poolId }: { poolId: string }) {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
+  const [strategyAddress, setStrategyAddress] = useState<
+    `0x${string}` | undefined
+  >();
   const [inputs, setInputs] = useState<InputItem[]>(
     proposalsItems.map(({ id, value }) => ({ id: id, value: value })),
   );
   const pathname = usePathname();
+
+  //Proposals
+  const { proposals } = useProposalsRead({
+    poolId: Number(poolId),
+  });
+  console.log(proposals);
+  //
 
   useEffect(() => {
     setDistributedPoints(calculatePoints());
@@ -111,13 +120,13 @@ export function Proposals() {
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposalsItems.map(({ label, type, id }, i) => (
+          {proposals?.map(({ title, type, id }, i) => (
             <div
               className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
               key={id}
             >
               <div className="flex w-full items-center justify-between">
-                <h4 className="font-semibold">{label}</h4>
+                <h4 className="font-semibold">{title}</h4>
                 <div>
                   <Badge type={type} />
                   {!editView && (
