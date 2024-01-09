@@ -10,14 +10,22 @@ import { TransactionData } from "@allo-team/allo-v2-sdk/dist/Common/types";
 import { Abi } from "viem";
 import { Allo } from "@allo-team/allo-v2-sdk/";
 import CVStrategyABI from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
+import { useProposalsReads } from "@/hooks/useProposalsRead";
 
-export function Proposals() {
+//!POOL == STRATEGY
+export function Proposals({ poolId }: { poolId: string }) {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
+  const [strategyAddress, setStrategyAddress] = useState<
+    `0x${string}` | undefined
+  >();
   const [inputs, setInputs] = useState<InputItem[]>(
     proposalsItems.map(({ id, value }) => ({ id: id, value: value })),
   );
   const pathname = usePathname();
+
+  const proposalsReads = useProposalsReads({ poolId: Number(poolId) });
+  console.log("proposals", proposalsReads);
 
   useEffect(() => {
     setDistributedPoints(calculatePoints());
@@ -48,6 +56,7 @@ export function Proposals() {
     // console.log(`Transaction hash: ${hash}`);
   };
 
+  //!Writting section
   const {
     isLoading,
     write: writeContract,
@@ -195,7 +204,6 @@ export function Proposals() {
           )}
         </div>
       </div>
-      <ReadContractExample />
     </section>
   );
 }
@@ -229,101 +237,3 @@ const proposalsItems: Proposal[] = [
     id: 2,
   },
 ];
-
-const ReadContractExample = () => {
-  const alloContractReads = {
-    address: contractsAddresses.allo,
-    abi: alloContract.abi as Abi,
-    onError: (error: any) => {
-      console.log(error);
-    },
-    onSettled: (data: any) => {
-      console.log(data);
-    },
-  };
-  const { data, isLoading, isError, error } = useContractReads({
-    contracts: [
-      // {
-      //   ...alloContractReads,
-      //   functionName: "isPoolManager",
-      //   args: [2, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
-      // },
-      // {
-      //   ...alloContractReads,
-      //   functionName: "getStrategy",
-      //   args: [1],
-      // },
-      // {
-      //   ...alloContractReads,
-      //   functionName: "getTreasury",
-      // },
-      {
-        ...alloContractReads,
-        functionName: "getPool",
-        args: [1],
-      },
-      {
-        ...alloContractReads,
-        functionName: "getPool",
-        args: [2],
-      },
-    ],
-  });
-  // const { data, isLoading, isError, error } = useContractRead({
-  //   //here is the addres of the strategy-pool to fetch the proposal in arg 1, 2, 3 ..
-  //   address: "0xB6EFb6B6ED78ECa0B571d40Bf798AAbF57b6e615",
-  //   abi: CVStrategyABI.abi as Abi,
-  //   functionName: "getProposal",
-  //   chainId: 31337,
-  //   args: [1],
-  //   onError: (error) => {
-  //     console.log(error);
-  //   },
-  //   onSuccess: (data) => {
-  //     console.log(data);
-  //   },
-  // });
-
-  return (
-    <>{/* <div>pool 1 Strate Address : {data?.toString() ?? ""}</div> */}</>
-  );
-};
-
-// const { data, isLoading, isError, error } = useContractRead({
-//   address: "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
-//   abi: CVStrategyABI.abi as Abi,
-//   functionName: "getProposal",
-//   chainId: 31337,
-//   args: [1],
-//   onError: (error) => {
-//     console.log(error);
-//   },
-//   onSuccess: (data) => {
-//     console.log(data);
-//   },
-// });
-
-// const { data, isLoading, isError, error } = useContractRead({
-//   address: contractsAddresses.allo,
-//   abi: alloContract.abi as Abi,
-//   functionName: "isPoolManager",
-//   args: [2, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
-//   onError: (error) => {
-//     console.log(error);
-//   },
-//   onSettled: (data) => {
-//     console.log(data);
-//   },
-// });
-// const { data, isLoading, isError, error } = useContractRead({
-//   address: contractsAddresses.allo,
-//   abi: alloContract.abi as Abi,
-//   functionName: "getStrategy",
-//   args: [1],
-//   onError: (error) => {
-//     console.log(error);
-//   },
-//   onSettled: (data) => {
-//     console.log(data);
-//   },
-// });
