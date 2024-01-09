@@ -33,7 +33,6 @@ export const encodeFunctionParams = function (
       docsPath: "/docs/contract/encodeFunctionData",
     });
   }
-
   const data =
     "inputs" in abiItem && abiItem.inputs
       ? encodeAbiParameters(abiItem.inputs, (args ?? []) as readonly unknown[])

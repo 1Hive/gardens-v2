@@ -18,7 +18,7 @@ type WagmiProviderType = {
 const projectId = "cc52770b49b75b8067dfa6149a52b103"; // change project id
 
 const localChain = {
-  id: 1,
+  id: 31337,
   name: "Localhost",
   network: "localhost",
   nativeCurrency: {

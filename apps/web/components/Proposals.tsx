@@ -4,10 +4,12 @@ import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useContractWrite, useContractRead } from "wagmi";
-import { contractsAddresses, alloContract } from "@/constants/contracts";
-import { encodeFunctionResult } from "viem";
+import { contractsAddresses } from "@/constants/contracts";
 import { TransactionData } from "@allo-team/allo-v2-sdk/dist/Common/types";
 import { Allo } from "@allo-team/allo-v2-sdk/";
+import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
+import { Abi, decodeErrorResult } from "viem";
+import { cvStrategyABI, alloABI } from "@/src/generated";
 
 export function Proposals() {
   const [editView, setEditView] = useState(false);
@@ -21,46 +23,28 @@ export function Proposals() {
     setDistributedPoints(calculatePoints());
   }, []);
 
-  const submit = async () => {
+  const submit = () => {
     const encodedData = getEncodedProposals(inputs, proposalsItems);
-
-    // writeContract({
-    //   args: [poolId, encodedData],
-    // });
-
-    const allo = new Allo({ chain: 31337 });
-
     const poolId = 1;
-    const strategyData = "strategy_data_here";
 
-    const txData: TransactionData = allo.allocate(poolId, strategyData);
+    console.log([poolId, encodedData]);
 
-    // Client could be from ethers, viem, etc.
-    // const hash = await client.sendTransaction({
-    //   data: txData.data,
-    //   account,
-    //   to: txData.to, // put localhost address for Allo
-    //   value: BigInt(txData.value),
-    // });
-
-    // console.log(`Transaction hash: ${hash}`);
+    writeContract({
+      args: [BigInt(poolId), encodedData as `0x${string}`],
+    });
   };
 
-  const {
-    isLoading,
-    write: writeContract,
-    isError,
-    error,
-  } = useContractWrite({
+  const { write: writeContract } = useContractWrite({
     address: contractsAddresses.allo,
-    abi: alloContract.abi,
+    abi: alloABI,
     functionName: "allocate",
-    // value: BigInt(1000000000),
+    onError: (err) => {
+      console.log(err);
+    },
+    onSuccess: (data) => {
+      console.log(data);
+    },
   });
-
-  useEffect(() => {
-    console.log(error);
-  }, [error, isError]);
 
   const getEncodedProposals = (
     inputData: InputItem[],
@@ -76,12 +60,13 @@ export function Proposals() {
       });
     });
 
-    const encodedData = encodeFunctionResult({
-      abi: alloContract.abi,
-      functionName: "allocate",
-      // value: ["???"],
-    });
-
+    const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
+      [
+        // [proposalId, deltaSupport]
+        [1, 10],
+        // [2, 30],
+      ],
+    ]);
     return encodedData;
   };
 
