@@ -5,12 +5,12 @@ import Image from "next/image";
 //some metadata for each pool
 const poolInfo = [
   {
-    title: "Gardens Swarm Community Funding Pool",
+    title: "1Hive Community Hackaton Funding Pool",
     description:
-      "Funding pool for the Gardens Platform. Dedicated to investing in operations, growth, and improvements of gardens, including maintenance and bug fixes to the open-source software, community outreach, support, contributor compensation, and education.",
+      "Fueling the Allo Hackathon on the Arbitrum Network! Your support powers the coding magic, bug-busting feats, community buzz, mentorship vibes, and knowledge boosts. Let's make this hackathon epic together! 🚀💻🌐",
   },
   {
-    title: "1Hive Signaling  Pool",
+    title: "1Hive Hackaton Signaling Pool",
     description:
       "Signaling pool for the 1hive Platform. Which most commonly used to signal support for a proposal or idea. The funds in this pool are not used for funding proposals, but rather to signal support for proposals in other pools.",
   },

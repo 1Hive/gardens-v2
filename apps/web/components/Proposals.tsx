@@ -24,8 +24,12 @@ export function Proposals({ poolId }: { poolId: string }) {
   );
   const pathname = usePathname();
 
-  const proposalsReads = useProposalsReads({ poolId: Number(poolId) });
-  console.log("proposals", proposalsReads);
+  //Proposals
+  const { proposals } = useProposalsReads({
+    poolId: Number(poolId),
+  });
+  console.log("proposals", proposals);
+  //
 
   useEffect(() => {
     setDistributedPoints(calculatePoints());
@@ -137,7 +141,7 @@ export function Proposals({ poolId }: { poolId: string }) {
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposalsItems.map(({ label, type, id }, i) => (
+          {proposals?.map(({ label, type, id }, i) => (
             <div
               className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
               key={id}
