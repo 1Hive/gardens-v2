@@ -26,18 +26,11 @@ export default function Proposal({
 
   if (proposalsReadsContract.length === 0) {
     // Render loading state or handle the absence of data
-    return <div>Loading...</div>;
+    return null;
   }
 
-  const {
-    id,
-    title,
-    type,
-    description,
-    requestedAmount,
-    beneficiary,
-    createdBy,
-  } = proposalsReadsContract[0];
+  const { title, type, description, requestedAmount, beneficiary, createdBy } =
+    proposalsReadsContract[0];
 
   const { status, points, supporters } = proposals?.filter(
     (proposal) => proposal.id === Number(proposalId),

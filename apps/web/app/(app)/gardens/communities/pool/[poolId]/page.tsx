@@ -22,7 +22,7 @@ export default function Pool({
   params: { poolId: string };
 }) {
   return (
-    <div className="mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
+    <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
         <header className="flex flex-col items-center justify-center">
           <h2 className="text-center font-press">Pool {poolId} </h2>
