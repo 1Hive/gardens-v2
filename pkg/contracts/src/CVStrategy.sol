@@ -652,6 +652,21 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         _proposal.convictionLast = conviction;
     }
 
+    function updateProposalConviction(uint256 proposalId) public returns (uint256) {
+        Proposal storage proposal = proposals[proposalId];
+
+        if (proposal.proposalId != proposalId) {
+            revert ProposalNotInList(proposalId);
+        }
+
+        if (proposal.proposalStatus != ProposalStatus.Active) {
+            revert ProposalNotActive(proposalId);
+        }
+
+        _calculateAndSetConviction(proposal, proposal.stakedAmount);
+        return proposal.convictionLast;
+    }
+
     function _totalStaked() internal view returns (uint256) {
         if (address(registryGardens.gardenToken()) == address(0)) {
             revert TokenCannotBeZero();
