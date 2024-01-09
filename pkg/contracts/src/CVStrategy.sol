@@ -14,23 +14,23 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
-    error UserCannotBeZero();
-    error UserNotInRegistry();
+    error UserCannotBeZero(); // 0xd1f28288
+    error UserNotInRegistry(); //0x6a5cfb6d
 
-    error PoolIsEmpty();
-    error NotImplemented();
-    error TokenCannotBeZero();
-    error AmountOverMaxRatio();
-    error RegistryCannotBeZero();
-    error SupportUnderflow(uint256 _support, int256 _delta, int256 _result);
-    error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance);
+    error PoolIsEmpty(); // 0xed4421ad
+    error NotImplemented(); //0xd6234725
+    error TokenCannotBeZero(); //0x596a094c
+    error AmountOverMaxRatio(); // 0x3bf5ca14
+    error RegistryCannotBeZero(); // 0x5df4b1ef
+    error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
+    error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
-    error ProposalDataIsEmpty();
-    error ProposalIdCannotBeZero();
-    error ProposalNotActive(uint256 _proposalId);
-    error ProposalNotInList(uint256 _proposalId);
-    error ProposalIdAlreadyExist(uint256 _proposalId);
-    error ProposalSupportDuplicated(uint256 _proposalId, uint256 index);
+    error ProposalDataIsEmpty(); //0xc5f7c4c0
+    error ProposalIdCannotBeZero(); //0xf881a10d
+    error ProposalNotActive(uint256 _proposalId); // 0x44980d8f
+    error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
+    error ProposalIdAlreadyExist(uint256 _proposalId); //0xdf4eff3b
+    error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
