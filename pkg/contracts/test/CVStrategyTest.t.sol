@@ -543,11 +543,4 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("Beneficienry After amount: %s", amount);
         assertEq(amount, requestedAmount);
     }
-
-    function test_getProposal() public {
-        IAllo.Pool memory pool = allo().getPool(1);
-
-        CVStrategy(payable(address(pool.strategy))).getProposal(1);
-        // CVStrategy.Proposal memory p = CVStrategy(payable(address(pool.strategy))).proposals(1);
-    }
 }
