@@ -10,10 +10,11 @@ export default function Pool({
   return (
     <div className="mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
-        <header>
-          <h3 className="text-center">
-            Pool {poolId} Gardens Swarm Community Funding Pool
-          </h3>
+        <header className="flex items-center justify-center border-4">
+          <h2 className="text-center">
+            <span className="font-press">Pool {poolId} - </span> Gardens Swarm
+            Community Funding Pool
+          </h2>
         </header>
         <main className="flex flex-col gap-10">
           {/* header: description - data - bottom land image */}
