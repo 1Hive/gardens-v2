@@ -47,7 +47,6 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
         },
       ],
     });
-  console.log(proposalsReadsContract);
 
   // parse the proposals data from contract into object with keys and values
   const transformedProposals: Proposal[] =
@@ -75,7 +74,7 @@ type Proposal = {
   convictionLast: number;
   agreementActionId: number;
   beneficiary: string;
-  submitter: string;
+  createdBy: string;
   requestedToken: string;
   blockLast: bigint;
   proposalStatus?: any; // !defined
@@ -90,7 +89,7 @@ function transformData(data: string[]): Proposal {
     convictionLast: Number(data[7]),
     agreementActionId: Number(data[5]),
     beneficiary: data[1],
-    submitter: data[0],
+    createdBy: data[0],
     requestedToken: data[2],
     blockLast: BigInt(data[10]),
     // proposalStatus: data, // Update accordingly

@@ -1,16 +1,16 @@
 "use client";
-import { honeyIcon, gardenLand } from "@/assets";
+import { honeyIcon } from "@/assets";
 import Image from "next/image";
 import { CommunityCard } from "@/components";
-import { useContractRead, useContractReads } from "wagmi";
+import { useContractReads } from "wagmi";
 import { Abi } from "viem";
-import CVStrategyABI from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
-import { contractsAddresses, alloContract } from "@/constants/contracts";
+import { contractsAddresses } from "@/constants/contracts";
+import { alloABI } from "@/src/generated";
 
 export default function Garden() {
   const alloContractReads = {
     address: contractsAddresses.allo,
-    abi: alloContract.abi as Abi,
+    abi: alloABI as Abi,
     onError: (error: any) => {
       console.log(error);
     },
@@ -45,7 +45,6 @@ export default function Garden() {
     });
   }
 
-  console.log(conmmunities);
   return (
     <div className=" relative mx-auto max-w-5xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
       {/* header: honey logo +stats */}

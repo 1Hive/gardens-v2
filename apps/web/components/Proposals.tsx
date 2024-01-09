@@ -25,7 +25,6 @@ export function Proposals({ poolId }: { poolId: string }) {
   const { proposals } = useProposalsRead({
     poolId: Number(poolId),
   });
-  console.log(proposals);
   //
 
   useEffect(() => {
