@@ -136,12 +136,14 @@ const conmmunities: Community[] = [
       {
         name: "Pool 1",
         strategy: "C.V",
-        proposals: 5,
+        proposals: 3,
+        href: "1",
       },
       {
         name: "Pool 2",
-        strategy: "quest",
-        proposals: 2,
+        strategy: "C.V",
+        proposals: 3,
+        href: "2",
       },
     ],
   },
@@ -153,17 +155,20 @@ const conmmunities: Community[] = [
       {
         name: "Pool 1",
         strategy: "C.V",
-        proposals: 2,
+        proposals: 3,
+        href: "1",
       },
       {
         name: "Pool 2",
-        strategy: "quest",
+        strategy: "C.V",
         proposals: 3,
+        href: "2",
       },
       {
         name: "Pool 3",
         strategy: "C.V",
-        proposals: 1,
+        proposals: 3,
+        href: "3",
       },
     ],
   },
@@ -175,61 +180,9 @@ const conmmunities: Community[] = [
       {
         name: "Pool 1",
         strategy: "C.V",
-        proposals: 8,
+        proposals: 3,
+        href: "1",
       },
     ],
   },
 ];
-
-//contracts:
-// {
-//   ...alloContractReads,
-//   functionName: "isPoolManager",
-//   args: [2, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
-// },
-// {
-//   ...alloContractReads,
-//   functionName: "getStrategy",
-//   args: [1],
-// },
-// {
-//   ...alloContractReads,
-//   functionName: "getTreasury",
-// },
-
-// {
-//   name: "Pool 3",
-//   strategy: "C.V",
-//   proposals: 2,
-//   href: "3",
-// },
-// {
-//   name: "Pool 4",
-//   strategy: "C.V",
-//   proposals: 3,
-//   href: "4",
-// },
-// {
-//   name: "Pool 5",
-//   strategy: "C.V",
-//   proposals: 6,
-//   href: "5",
-// },
-// {
-//   name: "Pool 6",
-//   strategy: "C.V",
-//   proposals: 2,
-//   href: "6",
-// },
-// {
-//   name: "Pool 7",
-//   strategy: "C.V",
-//   proposals: 3,
-//   href: "7",
-// },
-// {
-//   name: "Pool 8",
-//   strategy: "C.V",
-//   proposals: 6,
-//   href: "8",
-// },
