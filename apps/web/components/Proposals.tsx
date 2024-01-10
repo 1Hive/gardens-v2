@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useContractWrite } from "wagmi";
+import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { useProposalsRead } from "@/hooks/useProposalsRead";
 import { contractsAddresses } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
@@ -46,7 +46,9 @@ export function Proposals({ poolId }: { poolId: string }) {
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
 
-  const proposals = useProposalsRead(Number(poolId));
+  const { proposals } = useProposalsRead({
+    poolId: Number(poolId),
+  });
   const pathname = usePathname();
   const router = useRouter();
 
@@ -61,6 +63,26 @@ export function Proposals({ poolId }: { poolId: string }) {
   useEffect(() => {
     setDistributedPoints(calculatePoints());
   }, [inputs]);
+
+  const {
+    data: contractWriteData,
+    write: writeContract,
+    isLoading,
+  } = useContractWrite({
+    address: contractsAddresses.allo,
+    abi: alloABI,
+    functionName: "allocate",
+    onError: (err) => {
+      console.log(err);
+    },
+    onSuccess: (data) => {
+      setMessage("Transaction sent, hash: " + data.hash);
+    },
+  });
+
+  const { data: txSettledData, status } = useWaitForTransaction({
+    hash: contractWriteData?.hash,
+  });
 
   // const balance = useBalance({
   //   address: strategyAddress,
@@ -82,19 +104,6 @@ export function Proposals({ poolId }: { poolId: string }) {
     });
   };
 
-  const { write: writeContract, isLoading } = useContractWrite({
-    address: contractsAddresses.allo,
-    abi: alloABI,
-    functionName: "allocate",
-    onError: (err) => {
-      console.log(err);
-    },
-    onSuccess: (data) => {
-      console.log(data);
-      setMessage("Transaction sent, hash: " + data.hash);
-    },
-  });
-
   const getEncodedProposals = (
     inputData: InputItem[],
     currentData: Proposal[],
@@ -109,6 +118,7 @@ export function Proposals({ poolId }: { poolId: string }) {
       });
     });
 
+    console.log(resultArr, currentData);
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
@@ -221,12 +231,9 @@ export function Proposals({ poolId }: { poolId: string }) {
             <Button
               className="min-w-[200px] bg-secondary"
               onClick={() => submit()}
+              isLoading={isLoading}
             >
-              {!isLoading ? (
-                "Save Changes"
-              ) : (
-                <span className="loading loading-spinner"></span>
-              )}
+              Save changes
             </Button>
           )}
         </div>

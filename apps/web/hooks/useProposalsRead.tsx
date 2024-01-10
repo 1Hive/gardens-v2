@@ -30,7 +30,7 @@ type UnparsedProposal = {
 
 type Proposal = UnparsedProposal & ProposalsMock;
 
-export const useProposalsRead = (poolId: number) => {
+export const useProposalsRead = ({ poolId }: { poolId: number }) => {
   const [strategyAddress, setStrategyAddress] = useState<`0x${string}`>();
   const [proposals, setProposals] = useState<Proposal[]>([]);
 
@@ -105,7 +105,7 @@ export const useProposalsRead = (poolId: number) => {
     );
   }, [strategyAddress]);
 
-  return proposals;
+  return { proposals };
 };
 
 function transformData(data: any[]): UnparsedProposal {

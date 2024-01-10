@@ -16,7 +16,7 @@ export default function Proposal({
   //   (proposal) => proposal.id === Number(proposalId),
   // );
 
-  const { proposals: proposalContract, proposalsLoading } = useProposalsRead({
+  const { proposals: proposalContract } = useProposalsRead({
     poolId: Number(poolId),
   });
 
@@ -29,8 +29,14 @@ export default function Proposal({
     return null;
   }
 
-  const { title, type, description, requestedAmount, beneficiary, createdBy } =
-    proposalsReadsContract[0];
+  const {
+    title,
+    type,
+    description,
+    requestedAmount,
+    beneficiary,
+    submitter: createdBy,
+  } = proposalsReadsContract[0];
 
   const { status, points, supporters } = proposals?.filter(
     (proposal) => proposal.id === Number(proposalId),
