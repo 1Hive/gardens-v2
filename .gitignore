@@ -10,8 +10,8 @@ coverage
 
 # next.js
 .next/
-out/
 build
+**/src/generated.ts
 
 # misc
 .DS_Store

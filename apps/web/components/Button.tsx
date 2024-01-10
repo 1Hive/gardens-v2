@@ -1,9 +1,8 @@
 import React from "react";
-
 interface ButtonProps {
   action?: "button" | "submit" | "reset" | undefined;
-  type?: "primary" | "secondary";
-  handleOnClick?: () => {};
+  style?: "fill" | "outline";
+  onClick?: () => void;
   link?: string;
   className?: string;
   disabled?: boolean;
@@ -11,22 +10,22 @@ interface ButtonProps {
 }
 
 export function Button({
-  handleOnClick,
+  onClick: handleOnClick,
   action,
   className,
   disabled = false,
   children,
-  type = "primary",
+  style = "fill",
 }: ButtonProps) {
-  const buttonTypeStyles: Record<string, string> = {
-    primary: "bg-primary",
-    secondary: "bg-secondary",
+  const btnType = {
+    fill: "",
+    outline: "",
   };
 
   return (
     <button
       type={action}
-      className={`${className} ${buttonTypeStyles[type]} rounded-lg border-2 border-black bg-primary px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95`}
+      className={`${btnType[style]} ${className} rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95`}
       onClick={handleOnClick}
       disabled={disabled}
     >
