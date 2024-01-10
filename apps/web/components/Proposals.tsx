@@ -1,8 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useContractWrite } from "wagmi";
 import { useProposalsRead } from "@/hooks/useProposalsRead";
 import { contractsAddresses } from "@/constants/contracts";
@@ -15,17 +15,19 @@ export function Proposals({ poolId }: { poolId: string }) {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
 
-  const [inputs, setInputs] = useState<InputItem[]>(
-    proposalsItems.map(({ id, value }) => ({ id: id, value: value })),
-  );
-  const pathname = usePathname();
-
-  //Proposals
   const { proposals, strategyAddress, tokenAddress } = useProposalsRead({
     poolId: Number(poolId),
   });
 
-  console.log(proposals);
+  const [inputs, setInputs] =
+    useState<InputItem[]>(
+      proposalsItems?.map(({ id, value }) => ({ id: id, value: value })),
+    ) || [];
+
+  const pathname = usePathname();
+  const router = useRouter();
+  //Proposals
+  //console.log(proposals);
   //
   const balance = useBalance({
     address: strategyAddress,
@@ -40,7 +42,7 @@ export function Proposals({ poolId }: { poolId: string }) {
 
   useEffect(() => {
     setDistributedPoints(calculatePoints());
-  }, []);
+  }, []); // Update when inputs change
 
   const submit = () => {
     const encodedData = getEncodedProposals(inputs, proposalsItems);
@@ -53,7 +55,7 @@ export function Proposals({ poolId }: { poolId: string }) {
     });
   };
 
-  const { write: writeContract } = useContractWrite({
+  const { write: writeContract, isLoading } = useContractWrite({
     address: contractsAddresses.allo,
     abi: alloABI,
     chainId: 31337,
@@ -83,7 +85,7 @@ export function Proposals({ poolId }: { poolId: string }) {
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       [
         // [proposalId, deltaSupport]
-        [1, 30],
+        [1, 20],
         // [2, 30],
       ],
     ]);
@@ -132,7 +134,7 @@ export function Proposals({ poolId }: { poolId: string }) {
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposals?.map(({ title, type, id }, i) => (
+          {proposals?.map(({ title, type, id, stakedTokens }, i) => (
             <div
               className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
               key={id}
@@ -143,9 +145,9 @@ export function Proposals({ poolId }: { poolId: string }) {
                   <Badge type={type} />
                   {!editView && (
                     <Link href={`${pathname}/proposals/${id}`} className="ml-8">
-                      <Button className="bg-primary px-3 py-[6px]">
+                      <button className="btn btn-outline btn-info px-3 py-[6px]">
                         View Proposal
-                      </Button>
+                      </button>
                     </Link>
                   )}
                 </div>
@@ -159,7 +161,7 @@ export function Proposals({ poolId }: { poolId: string }) {
                         type="range"
                         min={0}
                         max={100}
-                        value={inputs[i].value}
+                        value={inputs[i]?.value}
                         className={`range-aja range range-sm min-w-[420px]`}
                         step="5"
                         onChange={(e) =>
@@ -175,9 +177,9 @@ export function Proposals({ poolId }: { poolId: string }) {
                     <div className="mb-2">{inputs[i].value} %</div>
                   </div>
                   <Link href={`${pathname}/proposals/${id}`}>
-                    <Button className="bg-primary px-3 py-[6px]">
+                    <button className="btn btn-outline btn-info px-3 py-[6px] font-thin">
                       View Proposal
-                    </Button>
+                    </button>
                   </Link>
                 </div>
               )}
@@ -193,8 +195,15 @@ export function Proposals({ poolId }: { poolId: string }) {
             Manage support
           </Button>
           {editView && (
-            <Button className="bg-secondary" onClick={() => submit()}>
-              Save changes
+            <Button
+              className="min-w-[200px] bg-secondary"
+              onClick={() => submit()}
+            >
+              {!isLoading ? (
+                "Save Changes"
+              ) : (
+                <span className="loading loading-spinner"></span>
+              )}
             </Button>
           )}
         </div>
@@ -216,19 +225,19 @@ const proposalsItems: Proposal[] = [
   {
     label: "Buy a billboard in Times Square",
     type: "funding",
-    value: 10,
+    value: 0,
     id: 0,
   },
   {
     label: "Zack active contributor",
     type: "streaming",
-    value: 45,
+    value: 0,
     id: 1,
   },
   {
     label: "Current signaling proposal",
     type: "signaling",
-    value: 25,
+    value: 0,
     id: 2,
   },
 ];

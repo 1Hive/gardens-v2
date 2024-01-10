@@ -49,7 +49,8 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
     abi: alloABI as Abi,
     functionName: "getPool",
     args: [BigInt(poolId)],
-    watch: true,
+    watch: false,
+
     onError: (error) => {
       console.log(error);
     },
@@ -66,6 +67,7 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
     address: strategyAddress,
     abi: cvStrategyABI as Abi,
     functionName: "getProposal",
+    watch: true,
   };
 
   const { data: proposalsReadsContract, isLoading: proposalsLoading } =
@@ -105,7 +107,6 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
   }));
 
   const tokenAddress = data?.token;
-  console.log(tokenAddress);
 
   return { proposals, proposalsLoading, strategyAddress, tokenAddress };
 };
