@@ -8,47 +8,74 @@ import { useProposalsRead } from "@/hooks/useProposalsRead";
 import { contractsAddresses } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { cvStrategyABI, alloABI } from "@/src/generated";
-import { useBalance } from "wagmi";
+
+type ProposalsMock = {
+  title: string;
+  type: "funding" | "streaming" | "signaling";
+  description: string;
+  value: number;
+  id: number;
+};
+
+type UnparsedProposal = {
+  submitter: `0x${string}`;
+  beneficiary: `0x${string}`;
+  requestedToken: `0x${string}`;
+  requestedAmount: number;
+  stakedTokens: number;
+  proposalType: any;
+  proposalStatus: any;
+  blockLast: number;
+  convictionLast: number;
+  agreementActionId: number;
+  threshold: number;
+  voterStakedPointsPct: number;
+};
+
+type Proposal = UnparsedProposal & ProposalsMock;
+
+type InputItem = {
+  value: number;
+  id: number;
+};
 
 //!POOL == STRATEGY
 export function Proposals({ poolId }: { poolId: string }) {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
+  const [message, setMessage] = useState("");
+  const [inputs, setInputs] = useState<InputItem[]>([]);
 
-  const { proposals, strategyAddress, tokenAddress } = useProposalsRead({
-    poolId: Number(poolId),
-  });
-
-  const [inputs, setInputs] =
-    useState<InputItem[]>(
-      proposalsItems?.map(({ id, value }) => ({ id: id, value: value })),
-    ) || [];
-
+  const proposals = useProposalsRead(Number(poolId));
   const pathname = usePathname();
   const router = useRouter();
-  //Proposals
-  //console.log(proposals);
-  //
-  const balance = useBalance({
-    address: strategyAddress,
-    token: tokenAddress,
-    onError: (error) => {
-      console.log(error);
-    },
-    onSettled: (data) => {
-      console.log(data);
-    },
-  });
+
+  useEffect(() => {
+    const newInputs = proposals.map(({ id, voterStakedPointsPct }) => ({
+      id: id,
+      value: voterStakedPointsPct,
+    }));
+    setInputs(newInputs);
+  }, [proposals]);
 
   useEffect(() => {
     setDistributedPoints(calculatePoints());
-  }, []); // Update when inputs change
+  }, [inputs]);
+
+  // const balance = useBalance({
+  //   address: strategyAddress,
+  //   token: tokenAddress,
+  //   onError: (error) => {
+  //     console.log(error);
+  //   },
+  //   onSettled: (data) => {
+  //     console.log(data);
+  //   },
+  // });
 
   const submit = () => {
-    const encodedData = getEncodedProposals(inputs, proposalsItems);
+    const encodedData = getEncodedProposals(inputs, proposals);
     const poolId = 1;
-
-    console.log([poolId, encodedData]);
 
     writeContract({
       args: [BigInt(poolId), encodedData as `0x${string}`],
@@ -58,13 +85,13 @@ export function Proposals({ poolId }: { poolId: string }) {
   const { write: writeContract, isLoading } = useContractWrite({
     address: contractsAddresses.allo,
     abi: alloABI,
-    chainId: 31337,
     functionName: "allocate",
     onError: (err) => {
       console.log(err);
     },
     onSuccess: (data) => {
       console.log(data);
+      setMessage("Transaction sent, hash: " + data.hash);
     },
   });
 
@@ -72,22 +99,18 @@ export function Proposals({ poolId }: { poolId: string }) {
     inputData: InputItem[],
     currentData: Proposal[],
   ) => {
-    const resultArr: InputItem[] = [];
+    const resultArr: number[][] = [];
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = input.value - current.value;
-          if (dif !== 0) resultArr.push({ id: input.id, value: dif });
+          const dif = input.value - current.voterStakedPointsPct;
+          if (dif !== 0) resultArr.push([input.id, dif]);
         }
       });
     });
 
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
-      [
-        // [proposalId, deltaSupport]
-        [1, 20],
-        // [2, 30],
-      ],
+      resultArr,
     ]);
     return encodedData;
   };
@@ -207,37 +230,36 @@ export function Proposals({ poolId }: { poolId: string }) {
             </Button>
           )}
         </div>
+        <div className="">
+          <p className="font-semibold">{message}</p>
+        </div>
       </div>
     </section>
   );
 }
 
-interface InputItem {
-  value: number;
-  id: number;
-}
-interface Proposal extends InputItem {
-  label: string;
-  type: "funding" | "streaming" | "signaling";
-}
+// interface Proposal extends InputItem {
+//   title: string;
+//   type: "funding" | "streaming" | "signaling";
+// }
 
-const proposalsItems: Proposal[] = [
-  {
-    label: "Buy a billboard in Times Square",
-    type: "funding",
-    value: 0,
-    id: 0,
-  },
-  {
-    label: "Zack active contributor",
-    type: "streaming",
-    value: 0,
-    id: 1,
-  },
-  {
-    label: "Current signaling proposal",
-    type: "signaling",
-    value: 0,
-    id: 2,
-  },
-];
+// const proposalsItems: Proposal[] = [
+//   {
+//     title: "Buy a billboard in Times Square",
+//     type: "funding",
+//     value: 0,
+//     id: 0,
+//   },
+//   {
+//     title: "Zack active contributor",
+//     type: "streaming",
+//     value: 0,
+//     id: 1,
+//   },
+//   {
+//     title: "Current signaling proposal",
+//     type: "signaling",
+//     value: 0,
+//     id: 2,
+//   },
+// ];

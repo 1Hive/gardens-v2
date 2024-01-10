@@ -1,18 +1,19 @@
-import { useContractRead, useContractReads } from "wagmi";
+import { useContractRead, useContractReads, useAccount } from "wagmi";
 import { useState, useEffect } from "react";
 import { Abi } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
 import { alloABI, cvStrategyABI } from "@/src/generated";
 import { formatEther } from "viem";
-interface ProposalsMock {
+
+type ProposalsMock = {
   title: string;
   type: "funding" | "streaming" | "signaling";
   description: string;
   value: number;
   id: number;
-}
+};
 
-interface Proposal {
+type UnparsedProposal = {
   submitter: `0x${string}`;
   beneficiary: `0x${string}`;
   requestedToken: `0x${string}`;
@@ -25,24 +26,15 @@ interface Proposal {
   agreementActionId: number;
   threshold: number;
   voterStakedPointsPct: number;
-}
+};
 
-// type Proposal = {
-//   proposalId: bigint;
-//   requestedAmount: number;
-//   stakedAmount: number;
-//   convictionLast: number;
-//   agreementActionId: number;
-//   beneficiary: string;
-//   createdBy: string;
-//   requestedToken: string;
-//   blockLast: bigint;
-//   proposalStatus?: any; // !defined
-//   proposalType?: any; //  !defined
-// };
+type Proposal = UnparsedProposal & ProposalsMock;
 
-export const useProposalsRead = ({ poolId }: { poolId: number }) => {
+export const useProposalsRead = (poolId: number) => {
   const [strategyAddress, setStrategyAddress] = useState<`0x${string}`>();
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+
+  const account = useAccount();
 
   const { data, error: poolError } = useContractRead({
     address: contractsAddresses.allo,
@@ -62,56 +54,61 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
     },
   });
 
-  //get the proposals data based on strategy address
   const alloContractReads = {
+    account: account.address,
     address: strategyAddress,
     abi: cvStrategyABI as Abi,
     functionName: "getProposal",
     watch: true,
   };
 
-  const { data: proposalsReadsContract, isLoading: proposalsLoading } =
-    useContractReads({
-      contracts: [
-        {
-          ...alloContractReads,
-          args: [1],
-        },
-        {
-          ...alloContractReads,
-          args: [2],
-        },
-        {
-          ...alloContractReads,
-          args: [3],
-        },
-      ],
+  const { data: contract1 } = useContractRead({
+    ...alloContractReads,
+    args: [1],
+  });
+
+  const { data: contract2 } = useContractRead({
+    ...alloContractReads,
+    args: [2],
+  });
+
+  const { data: contract3 } = useContractRead({
+    ...alloContractReads,
+    args: [3],
+  });
+
+  useEffect(() => {
+    const proposalsReadsContract = [
+      contract1 as any[],
+      contract2 as any[],
+      contract3 as any[],
+    ];
+
+    let transformedProposals: UnparsedProposal[] = [];
+
+    proposalsReadsContract.forEach((proposal) => {
+      if (proposal !== undefined)
+        transformedProposals.push(transformData(proposal));
     });
 
-  // parse the proposals data from contract into object with keys and values
-  const transformedProposals: Proposal[] =
-    proposalsReadsContract?.map((proposal) =>
-      transformData(proposal.result as string[]),
-    ) ?? [];
+    // Choose between proposalsMock and proposalsMock2 based on poolId
+    const selectedProposalsMock =
+      poolId === 1 ? fundingProposals : signalingProposals;
 
-  console.log(transformedProposals);
+    // Merge the additional data from proposalsMock based on the index
 
-  // Choose between proposalsMock and proposalsMock2 based on poolId
-  const selectedProposalsMock =
-    poolId === 1 ? fundingProposals : signalingProposals;
+    setProposals(
+      transformedProposals.map((proposal, index) => ({
+        ...proposal,
+        ...selectedProposalsMock[index],
+      })),
+    );
+  }, [strategyAddress]);
 
-  // Merge the additional data from proposalsMock based on the index
-  const proposals = transformedProposals.map((proposal, index) => ({
-    ...proposal,
-    ...selectedProposalsMock[index],
-  }));
-
-  const tokenAddress = data?.token;
-
-  return { proposals, proposalsLoading, strategyAddress, tokenAddress };
+  return proposals;
 };
 
-function transformData(data: any[]): Proposal {
+function transformData(data: any[]): UnparsedProposal {
   return {
     submitter: data[0],
     beneficiary: data[1],

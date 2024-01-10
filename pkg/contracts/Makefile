@@ -5,7 +5,7 @@
 include .env
 
 # create RPC_URL_LOCALHOST variable
-RPC_URL_LOCALHOST = http://0.0.0.0:8545
+RPC_URL_LOCALHOST = http://127.0.0.1:8545
 # print RPC_URL
 print : 
 	@echo $(RPC_URL)
@@ -17,7 +17,7 @@ deploy :
 	--unlocked \
 	--broadcast -vv
 fork:
-	anvil
+	anvil --chain-id 1337
 
 # anvil --host=0.0.0.0 -f $(RPC_URL)
 test1:
