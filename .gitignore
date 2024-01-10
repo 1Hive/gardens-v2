@@ -38,9 +38,11 @@ yarn-error.log*
 cache/
 
 # Ignores development broadcast logs
-!pkg/contracts/broadcast
-pkg/contracts/broadcast/*/31337/
-pkg/contracts/broadcast/**/dry-run/
+!/broadcast
+/broadcast/*/31337/
+/broadcast/*/1337/
+/broadcast/*/1/
+/broadcast/**/dry-run/
 
 # subgraph
 pkg/subgraph/generated
