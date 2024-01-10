@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -46,7 +46,8 @@ export function Proposals({ poolId }: { poolId: string }) {
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
 
-  const proposals = useProposalsRead(Number(poolId));
+  const { proposals } = useProposalsRead(Number(poolId));
+
   const pathname = usePathname();
   const router = useRouter();
 
@@ -61,17 +62,6 @@ export function Proposals({ poolId }: { poolId: string }) {
   useEffect(() => {
     setDistributedPoints(calculatePoints());
   }, [inputs]);
-
-  // const balance = useBalance({
-  //   address: strategyAddress,
-  //   token: tokenAddress,
-  //   onError: (error) => {
-  //     console.log(error);
-  //   },
-  //   onSettled: (data) => {
-  //     console.log(data);
-  //   },
-  // });
 
   const submit = () => {
     const encodedData = getEncodedProposals(inputs, proposals);
@@ -135,10 +125,6 @@ export function Proposals({ poolId }: { poolId: string }) {
 
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
-      <span className="absolute top-20 border-4 ">balance</span>
-      {/* points */}
-      <div></div>
-
       {/* proposals: title - proposals -create Button */}
       <div className="mx-auto max-w-3xl space-y-10">
         <header className="flex items-center justify-between">
