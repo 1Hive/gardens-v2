@@ -10,6 +10,7 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 
 contract RegistryGardens is ReentrancyGuard, AccessControl {
+    // todo rename all RegistryGardens to RegistryCommunity
     /*|--------------------------------------------|*/
     /*|                 ROLES                      |*/
     /*|--------------------------------------------|*/
@@ -69,7 +70,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         address _allo;
         IERC20 _gardenToken;
         uint256 _minimumStakeAmount;
-        uint256 _protocolFee;
+        uint256 _protocolFee; //@todo if remove the protocol fee, also remove it here
         uint256 _nonce;
         Metadata _metadata;
         address payable _councilSafe;
@@ -78,14 +79,14 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     //TODO: can change to uint32 with optimized storage order
     IAllo public allo;
     IRegistry public registry;
-    string public communityName;
+    string public communityName; //@todo comunityName is never defined, need be get from metadata probably.
     uint256 minimumStakeAmount;
     IERC20 public gardenToken;
     uint256 public protocolFee;
     string private covenantIpfsHash;
     bytes32 public profileId;
 
-    address payable public pendingCouncilSafe;
+    address payable public pendingCouncilSafe; //@todo write test for change owner in 2 step
     Safe public councilSafe;
 
     mapping(address => bool) public tribunalMembers;
@@ -99,25 +100,26 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     }
 
     function initialize(RegistryGardens.InitializeParams memory params) public {
+        revertZeroAddress(address(params._gardenToken));
+        revertZeroAddress(params._councilSafe);
+
         allo = IAllo(params._allo);
         gardenToken = params._gardenToken;
-        minimumStakeAmount = params._minimumStakeAmount;
+        minimumStakeAmount = params._minimumStakeAmount; //@todo can be zero?
         protocolFee = params._protocolFee;
-        if (params._councilSafe == address(0)) {
-            revert AddressCannotBeZero();
-        }
+
         councilSafe = Safe(params._councilSafe);
         _grantRole(COUNCIL_MEMBER_CHANGE, params._councilSafe);
 
-        // gardenOwner = msg.sender; //@todo: RegistryFactory is the onwer of that contract, that need be able to change the owner
-        // gardenOwner = params.owner; //@todo: check if address(0) is a valid owner
         registry = IRegistry(allo.getRegistry());
-        address[] memory initialmembers = new address[](0);
-        profileId = registry.createProfile(params._nonce, communityName, params._metadata, msg.sender, initialmembers);
+        address[] memory initialMembers = new address[](0);
+        profileId = registry.createProfile(params._nonce, communityName, params._metadata, msg.sender, initialMembers);
+        //@todo emit events
     }
 
     function addStrategy(address _newStrategy) public onlyRegistryMember {
         if (enabledStrategies[_newStrategy]) {
+            //@todo we dont use, if gonna use also write tests
             revert StrategyExists();
         }
         enabledStrategies[_newStrategy] = true;
@@ -135,12 +137,13 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     }
 
     function setAllo(address _allo) public {
-        allo = IAllo(_allo);
+        allo = IAllo(_allo); //@todo if used, write tests
         emit AlloSet(_allo);
     }
 
     function setCouncilSafe(address payable _safe) public onlyCouncilMember {
-        pendingCouncilSafe = _safe;
+        revertZeroAddress(_safe);
+        pendingCouncilSafe = _safe; //@todo write tests
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
 
@@ -168,7 +171,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         Member storage newMember = addressToMemberInfo[msg.sender];
         require(
             //If fee percentage => minimumStakeAmount*protocolFee/100
-            gardenToken.balanceOf(msg.sender) >= minimumStakeAmount + protocolFee,
+            gardenToken.balanceOf(msg.sender) >= minimumStakeAmount + protocolFee, //@todo fix this protocol fee and func to return StakeAmount need consider it or just remove protocolFee for now
             "[Registry]: Amount staked must be greater than minimum staked amount"
         );
         if (newMember.stakedAmount >= minimumStakeAmount) revert("already Staked");
@@ -197,7 +200,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     }
 
     function getBasisStakedAmount() external view returns (uint256) {
-        return minimumStakeAmount;
+        return minimumStakeAmount; //@todo need consider adding protocol fee or not here
     }
 
     function setBasisStakedAmount(uint256 _newAmount) external onlyCouncilMember {
@@ -215,6 +218,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     }
 
     function unregisterMember(address _member) public nonReentrant {
+        //@todo create test for this function
         require(isMember(_member) || isCouncilMember(msg.sender), "[Registry]: Must be active member to unregister");
         Member memory member = addressToMemberInfo[msg.sender];
         delete addressToMemberInfo[msg.sender];
