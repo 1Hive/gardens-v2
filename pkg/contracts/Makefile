@@ -6,16 +6,21 @@ include .env
 
 # create RPC_URL_LOCALHOST variable
 RPC_URL_LOCALHOST = http://0.0.0.0:8545
-# print RPC_URL
-print : 
-	@echo $(RPC_URL)
 	
-deploy : 
+deploy: 
 	-forge script script/DeployCV.s.sol:DeployCV \
 	--rpc-url $(RPC_URL_LOCALHOST) \
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
 	--unlocked \
 	--broadcast -vv
+	
+
+deploy-testnet: 
+	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--broadcast -vv
+	
 fork:
 	anvil
 

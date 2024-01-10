@@ -96,8 +96,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         uint256 maxRatio;
         // Weight | RHO | p
         uint256 weight;
-        //Minimum Effective Supply
-        uint256 minThresholdStakePercentage;
     }
     /*|--------------------------------------------|*/
     /*|                VARIABLES                   |*/
@@ -113,17 +111,17 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     uint256 public decay;
     uint256 public maxRatio;
     uint256 public weight;
-    uint256 public minThresholdStakePercentage;
-    uint256 public proposalCounter;
-    uint256 public effectiveSupply_old_totalStaked;
+    // uint256 public minThresholdStakePercentage;
+    uint256 public proposalCounter; //@todo need increment it and make automatically set the proposalId
+    uint256 public totalStakedEffectiveSupply;
 
-    uint256 public constant D = 10000000;
-    uint256 public constant ONE_HUNDRED_PERCENT = 1e18;
-    uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2^128
-    uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2^127
-    uint256 private constant TWO_64 = 0x10000000000000000; // 2^64
+    uint256 public constant D = 10000000; //10**7
+    // uint256 public constant ONE_HUNDRED_PERCENT = 1e18;
+    uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
+    uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
+    uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
     //    uint256 public constant ABSTAIN_PROPOSAL_ID = 1;
-    uint256 public constant MAX_STAKED_PROPOSALS = 10;
+    uint256 public constant MAX_STAKED_PROPOSALS = 10; //@todo not allow stake more than 10 proposals per user
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -133,10 +131,9 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     function initialize(uint256 _poolId, bytes memory _data) external {
         __BaseStrategy_init(_poolId);
         InitializeParams memory ip = abi.decode(_data, (InitializeParams));
-        console.log("InitializeParams.decay", ip.decay);
-        console.log("InitializeParams.maxRatio", ip.maxRatio);
-        console.log("InitializeParams.weight", ip.weight);
-        console.log("InitializeParams.minThresholdStakePercentage", ip.minThresholdStakePercentage);
+        // console.log("InitializeParams.decay", ip.decay);
+        // console.log("InitializeParams.maxRatio", ip.maxRatio);
+        // console.log("InitializeParams.weight", ip.weight);
 
         if (ip.registryGardens == address(0)) {
             revert RegistryCannotBeZero();
@@ -146,7 +143,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         decay = ip.decay;
         maxRatio = ip.maxRatio;
         weight = ip.weight;
-        minThresholdStakePercentage = ip.minThresholdStakePercentage;
 
         emit InitializedCV(_poolId, _data);
     }
@@ -496,10 +492,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             // proposal.stakedAmount += stakedAmount;
             // uint256 diff =_diffStakedTokens(previousStakedAmount, stakedAmount);
             if (previousStakedAmount <= stakedAmount) {
-                effectiveSupply_old_totalStaked += stakedAmount - previousStakedAmount;
+                totalStakedEffectiveSupply += stakedAmount - previousStakedAmount;
                 proposal.stakedAmount += stakedAmount - previousStakedAmount;
             } else {
-                effectiveSupply_old_totalStaked -= previousStakedAmount - stakedAmount;
+                totalStakedEffectiveSupply -= previousStakedAmount - stakedAmount;
                 proposal.stakedAmount -= previousStakedAmount - stakedAmount;
             }
             //@todo: should emit event
@@ -569,7 +565,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         uint256 funds = poolAmount;
         //        require(maxRatio.mul(funds) > _requestedAmount.mul(D), ERROR_AMOUNT_OVER_MAX_RATIO);
         // console.log("maxRatio", maxRatio);
-        // console.log("funds/poolAmount", funds);
+        // console.log("funds=poolAmount", funds);
         // console.log("_requestedAmount", _requestedAmount);
         // console.log("D", D);
         // console.log("maxRatio * funds", maxRatio * funds);
@@ -590,7 +586,20 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         // _threshold = ((weight * 2 ** 128 / D / (denom * denom >> 64)) * D / (D - decay) * _totalStaked()) >> 64;
 
         // _threshold = (  (weight << 128).div(D).div(denom.mul(denom) >> 64)).mul(D).div(D.sub(decay)).mul(_totalStaked()) >> 64;
-        _threshold = ((((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * _totalStaked()) >> 64;
+        // console.log("weight", weight);
+        // console.log("weight << 128", weight << 128);
+        // console.log("denom * denom", denom * denom);
+        // console.log("denom * denom >> 64", denom * denom >> 64);
+        // console.log("denom * denom >> 64 * D", ((denom * denom) >> 64) * D);
+        // console.log("decay", decay);
+        // console.log("D - decay", D - decay);
+        // 20000*2^128/10⁷
+        //  * formula: `threshold = (rho * supply) / (1 - alpha) / (beta - (requeted / funds)) ** 2`.
+
+        // console.log("totalStakedEffectiveSupply", totalStakedEffectiveSupply);
+        _threshold =
+            ((((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * totalStakedEffectiveSupply) >> 64;
+        //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
     }
 
@@ -667,22 +676,23 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         return proposal.convictionLast;
     }
 
-    function _totalStaked() internal view returns (uint256) {
-        if (address(registryGardens.gardenToken()) == address(0)) {
-            revert TokenCannotBeZero();
-        }
-        // console.log("registryGardens.gardenToken.totalSupply()", registryGardens.gardenToken().totalSupply());
-        // console.log("minThresholdStakePercentage", minThresholdStakePercentage);
-        uint256 minTotalStake =
-            (registryGardens.gardenToken().totalSupply() * minThresholdStakePercentage) / ONE_HUNDRED_PERCENT;
+    function getMaxConviction(uint256 amount) public view returns (uint256) {
+        return (amount * D / (D - decay));
+    }
 
-        // Supply from HNY token = 36_000 HNY
-        // All Staked HNY token to became member 150 HNY
-        //
-        // 1 - 100% Felipe = 50 HNY
-        // 2 - 100% Paulo = 50 HNY
-        // 3 - 100% Gabriel = 50HNY
-        // EffectiveSupply/ActivatedCVWeight = 0;
-        return effectiveSupply_old_totalStaked < minTotalStake ? minTotalStake : effectiveSupply_old_totalStaked;
+    function setDecay(uint256 _decay) external onlyPoolManager(msg.sender) {
+        decay = _decay;
+    }
+
+    function setMaxRatio(uint256 _maxRatio) external onlyPoolManager(msg.sender) {
+        maxRatio = _maxRatio;
+    }
+
+    function setWeight(uint256 _weight) external onlyPoolManager(msg.sender) {
+        weight = _weight;
+    }
+
+    function setRegistryGardens(address _registryGardens) external onlyPoolManager(msg.sender) {
+        registryGardens = RegistryGardens(_registryGardens);
     }
 }

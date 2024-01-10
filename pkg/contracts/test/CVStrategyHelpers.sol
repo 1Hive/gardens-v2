@@ -34,10 +34,10 @@ contract CVStrategyHelpers is Native, Accounts {
     {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         CVStrategy.InitializeParams memory params;
-        params.decay = _etherToFloat(0.9 ether); // alpha = decay
+        params.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         params.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
-        params.weight = _etherToFloat(0.002 ether); // RHO = p  = weight
-        params.minThresholdStakePercentage = 0.2 ether; // 20%
+        params.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
+        // params.minThresholdStakePercentage = 0.2 ether; // 20%
         params.registryGardens = registryGardens;
 
         address[] memory _pool_managers = new address[](2);
@@ -52,9 +52,15 @@ contract CVStrategyHelpers is Native, Accounts {
         if (token != address(0)) {
             _token = token;
         }
-        // poolId = allo.createPoolWithCustomStrategy(
-        poolId = allo.createPool(
-            poolProfile_id1(registry), address(strategy), abi.encode(params), _token, 0, metadata, _pool_managers
+        poolId = allo.createPoolWithCustomStrategy(
+            // poolId = allo.createPool(
+            poolProfile_id1(registry),
+            address(strategy),
+            abi.encode(params),
+            _token,
+            0,
+            metadata,
+            _pool_managers
         );
     }
 
