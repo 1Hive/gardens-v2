@@ -53,6 +53,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     error RegistryCannotBeZero();
     error UserNotInCouncil();
     error UserNotInRegistry();
+    error UserAlreadyRegistered();
     error UserNotGardenOwner();
     error StrategyExists();
     error CallerIsNotNewOnwer();
@@ -93,6 +94,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
 
     mapping(address => Member) public addressToMemberInfo;
     mapping(address => bool) public enabledStrategies;
+    mapping(address => address[]) public memberActivatedInStrategies;
 
     constructor() {
         // _grantRole(DEFAULT_ADMIN_ROLE, address(this));
@@ -167,14 +169,16 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
 
     //Todo: change minimumStaked to fixedStakedAmount (==)
     //ADD fee when staking
-    function stakeAndregisterMember() public payable nonReentrant {
+    function stakeAndRegisterMember() public nonReentrant {
         Member storage newMember = addressToMemberInfo[msg.sender];
-        require(
-            //If fee percentage => minimumStakeAmount*protocolFee/100
-            gardenToken.balanceOf(msg.sender) >= minimumStakeAmount + protocolFee, //@todo fix this protocol fee and func to return StakeAmount need consider it or just remove protocolFee for now
-            "[Registry]: Amount staked must be greater than minimum staked amount"
-        );
-        if (newMember.stakedAmount >= minimumStakeAmount) revert("already Staked");
+        // require(
+        //     gardenToken.balanceOf(msg.sender) >= minimumStakeAmount + protocolFee, //@todo fix this protocol fee and func to return StakeAmount need consider it or just remove protocolFee for now
+        //     "[Registry]: Amount staked must be greater than minimum staked amount"
+        // );
+        if (newMember.stakedAmount >= minimumStakeAmount) {
+            revert UserAlreadyRegistered();
+        }
+
         //Check if already member
         newMember.isRegistered = true;
         newMember.stakedAmount = minimumStakeAmount;

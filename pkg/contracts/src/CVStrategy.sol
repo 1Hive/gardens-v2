@@ -21,6 +21,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     error NotImplemented(); //0xd6234725
     error TokenCannotBeZero(); //0x596a094c
     error AmountOverMaxRatio(); // 0x3bf5ca14
+    error PoolIdCannotBeZero(); //0x4e791786
+    error AddressCannotBeZero(); //0xe622e040
     error RegistryCannotBeZero(); // 0x5df4b1ef
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
@@ -114,6 +116,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     // uint256 public minThresholdStakePercentage;
     uint256 public proposalCounter; //@todo need increment it and make automatically set the proposalId
     uint256 public totalStakedEffectiveSupply;
+    // uint256 public totalStakedPoints;
+    uint256 public totalPointsActivated;
 
     uint256 public constant D = 10000000; //10**7
     // uint256 public constant ONE_HUNDRED_PERCENT = 1e18;
@@ -189,17 +193,19 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         if (proposal.proposalId == 0) {
             revert ProposalIdCannotBeZero();
         }
-        if (proposal.beneficiary == address(0)) {
-            revert UserCannotBeZero();
-        }
         if (proposal.creator == address(0)) {
-            revert UserCannotBeZero();
+            proposal.creator = _sender;
         }
-        if (proposal.requestedToken == address(0)) {
-            revert UserCannotBeZero();
+        if (proposal.poolId == 0) {
+            revert PoolIdCannotBeZero();
         }
-        if (proposal.amountRequested == 0) {
-            revert UserCannotBeZero();
+        if (proposal.proposalType == ProposalType.Funding) {
+            if (proposal.beneficiary == address(0)) {
+                revert AddressCannotBeZero();
+            }
+            if (proposal.requestedToken == address(0)) {
+                revert TokenCannotBeZero();
+            }
         }
 
         Proposal storage p = proposals[proposal.proposalId];
@@ -245,11 +251,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     // this will distribute tokens to recipients
     // most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
     // this contract will need to track the amount paid already, so that it doesn't double pay
-    function _distribute(address[] memory _recipientIds, bytes memory _data, address _sender) internal override {
+    function _distribute(address[] memory, bytes memory _data, address _sender) internal override {
         surpressStateMutabilityWarning++;
-        _recipientIds;
-        _sender;
-
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty();
         }
@@ -262,18 +265,20 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
         Proposal storage proposal = proposals[proposalId];
 
-        if (proposal.proposalId != proposalId) {
-            revert ProposalNotInList(proposalId);
-        }
+        if (proposal.proposalType == ProposalType.Funding) {
+            if (proposal.proposalId != proposalId) {
+                revert ProposalNotInList(proposalId);
+            }
 
-        if (proposal.proposalStatus != ProposalStatus.Active) {
-            revert ProposalNotActive(proposalId);
-        }
-        IAllo.Pool memory pool = allo.getPool(poolId);
+            if (proposal.proposalStatus != ProposalStatus.Active) {
+                revert ProposalNotActive(proposalId);
+            }
+            IAllo.Pool memory pool = allo.getPool(poolId);
 
-        _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
+            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
 
-        emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
+            emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
+        } //signaling do nothing @todo write tests
     }
 
     // simply returns the status of a recipient
@@ -596,9 +601,11 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         // 20000*2^128/10⁷
         //  * formula: `threshold = (rho * supply) / (1 - alpha) / (beta - (requeted / funds)) ** 2`.
 
-        // console.log("totalStakedEffectiveSupply", totalStakedEffectiveSupply);
-        _threshold =
-            ((((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * totalStakedEffectiveSupply) >> 64;
+        console.log("totalEffectiveActivePoints", totalEffectiveActivePoints());
+
+        _threshold = (
+            (((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * totalEffectiveActivePoints()
+        ) >> 64;
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
     }
@@ -639,11 +646,15 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         }
     }
 
+    function totalEffectiveActivePoints() public view returns (uint256) {
+        return totalPointsActivated > totalStakedEffectiveSupply ? totalPointsActivated : totalStakedEffectiveSupply;
+    }
     /**
      * @dev Calculate conviction and store it on the proposal
      * @param _proposal Proposal
      * @param _oldStaked Amount of tokens staked on a proposal until now
      */
+
     function _calculateAndSetConviction(Proposal storage _proposal, uint256 _oldStaked) internal {
         uint256 blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
