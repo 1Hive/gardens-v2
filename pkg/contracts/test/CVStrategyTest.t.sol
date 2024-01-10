@@ -675,7 +675,68 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(amount, requestedAmount);
     }
 
-    function test_signaling_proposal() public pure {
-        revert("Not implemented");
+    function test_distribute_signaling_proposal() public {
+        (IAllo.Pool memory pool, uint256 poolId) = _createProposal(address(0), 0, 0);
+
+        startMeasuringGas("createProposal");
+
+        CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
+            2, poolId, address(0), address(0), CVStrategy.ProposalType.Signaling, 0, address(0)
+        );
+        bytes memory data = abi.encode(proposal);
+        allo().registerRecipient(poolId, data);
+
+        stopMeasuringGas();
+        /**
+         * ASSERTS
+         *
+         */
+        startMeasuringGas("Support a Proposal");
+        int256 SUPPORT_PCT = 100;
+        uint256 PROPOSAL_ID = 2;
+        CVStrategy.ProposalSupport[] memory votes = new CVStrategy.ProposalSupport[](1);
+        votes[0] = CVStrategy.ProposalSupport(PROPOSAL_ID, SUPPORT_PCT); // 0 + 70 = 70% = 35
+        // bytes memory data = ;
+        allo().allocate(poolId, abi.encode(votes));
+        stopMeasuringGas();
+
+        uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT) * MINIMUM_STAKE / 100;
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        assertEq(cv.getProposalVoterStake(PROPOSAL_ID, address(this)), STAKED_AMOUNT); // 80% of 50 = 40
+        assertEq(cv.getProposalStakedAmount(PROPOSAL_ID), STAKED_AMOUNT); // 80% of 50 = 40
+
+        (
+            ,
+            ,
+            ,
+            uint256 requestedAmount,
+            uint256 stakedTokens,
+            ,
+            ,
+            uint256 blockLast,
+            uint256 convictionLast,
+            ,
+            uint256 threshold,
+            // uint256 voterPointsPct
+        ) = cv.getProposal(1);
+
+        // console.log("Proposal Status: %s", proposalStatus);
+        // console.log("Proposal Type: %s", proposalType);
+        // console.log("Requested Token: %s", requestedToken);
+        console.log("Requested Amount: %s", requestedAmount);
+        console.log("Staked Tokens: %s", stakedTokens);
+        console.log("Threshold: %s", threshold);
+        // console.log("Agreement Action Id: %s", agreementActionId);
+        console.log("Block Last: %s", blockLast);
+        console.log("Conviction Last: %s", convictionLast);
+        // console.log("Voter points pct %s", voterPointsPct);
+        // console.log("Beneficiary: %s", beneficiary);
+        // console.log("Submitter: %s", submitter);
+        // address[] memory recipients = ;
+        // recipients[0] = address(1);
+        bytes memory dataProposal = abi.encode(PROPOSAL_ID);
+
+        allo().distribute(poolId, new address[](0), dataProposal);
+        // console.log("Beneficienry After amount: %s", amount);
     }
 }
