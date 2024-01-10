@@ -1,6 +1,6 @@
 {
-  "name": "osmotic",
-  "version": "0.0.0",
+  "name": "gardens-v2",
+  "version": "0.0.1",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -16,11 +16,13 @@
   "devDependencies": {
     "eslint-config-custom": "workspace:*",
     "prettier": "latest",
-    "turbo": "latest"
+    "turbo": "^1.7.4"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.17.0"
   },
-  "dependencies": {},
+  "resolutions": {
+    "@typescript-eslint/parser": "6.18.2-alpha.2"
+  },
   "packageManager": "pnpm@7.16.1"
 }

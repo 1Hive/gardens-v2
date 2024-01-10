@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #82c837;
+  --color-secondary: #4dafd6;
+  --color-surface: #f6ffe3;
+  --color-white: #f2f2f2;
+  --color-black: #2d2d2d;
+  --color-accent: #ffe236;
+  --color-red: #dc3030;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+html::-webkit-scrollbar-track {
+  background-color: #eee;
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: #171717;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  line-height: 1.15;
+}
+
+h1 {
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+  font-color: var(--color-black);
+  font-family: var(--font-chakra);
+  font-size: 3.25rem;
+  font-weight: bold;
+  @media only screen and (max-width: 680px) {
+    font-size: 2.5rem;
+  }
+}
+
+h2 {
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+  font-color: var(--color-black);
+  font-family: var(--font-chakra);
+  font-size: 2.75rem;
+  @media only screen and (max-width: 680px) {
+    font-size: 2rem;
+  }
+}
+
+h3 {
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+  font-color: var(--color-black);
+  font-family: var(--font-chakra);
+  font-size: 2.25rem;
+  @media only screen and (max-width: 680px) {
+    font-size: 1.75rem;
+  }
+}
+
+p {
+  margin-bottom: 0.5rem;
+  margin-top: 0.25rem;
+  font-color: var(--color-black);
+  font-family: var(--font-chakra);
+  font-size: 1rem;
+  @media only screen and (max-width: 680px) {
+    font-size: 1rem;
+  }
+}

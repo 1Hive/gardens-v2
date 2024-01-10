@@ -1,11 +1,34 @@
 {
-  "extends": "tsconfig/nextjs.json",
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "preserveSymlinks": true,
+    "target": "ES6",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
-      "~/*": ["./*"]
+      "@/*": ["./*"],
+      "#/*": ["./../../pkg/*"]
     }
   },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "prettier.config.js"
+  ],
   "exclude": ["node_modules"]
 }
