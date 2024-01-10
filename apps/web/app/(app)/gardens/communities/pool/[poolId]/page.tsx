@@ -1,6 +1,11 @@
+"use client";
 import { gardenLand } from "@/assets";
 import { Proposals } from "@/components";
 import Image from "next/image";
+import { useContractRead } from "wagmi";
+import { cvStrategyABI, alloABI } from "@/src/generated";
+import { useProposalsRead } from "@/hooks/useProposalsRead";
+import { formatEther } from "viem";
 
 //some metadata for each pool
 const poolInfo = [
@@ -21,6 +26,23 @@ export default function Pool({
 }: {
   params: { poolId: string };
 }) {
+  const { strategyAddress } = useProposalsRead({ poolId: Number(poolId) });
+
+  //get the Pool Balance
+  const {
+    data: poolBalance,
+    isLoading,
+    status,
+  } = useContractRead({
+    address: strategyAddress,
+    abi: cvStrategyABI,
+    functionName: "getPoolAmount",
+    watch: true,
+  });
+
+  //format the pool balance
+  const parsedPoolBalance = formatEther(poolBalance ?? BigInt(0)).toString();
+  console.log(status);
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
@@ -56,6 +78,24 @@ export default function Pool({
                 </div>
               </div>
             </div>
+
+            {poolId === "1" && (
+              <>
+                {status === "idle" ? (
+                  <>
+                    <p>fetching balance ..</p>{" "}
+                    <span className="loading loading-spinner loading-lg"></span>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-press text-2xl transition-all duration-150 ease-in">
+                      Funds: <span>{parsedPoolBalance} HNY</span>
+                    </h3>
+                  </>
+                )}
+              </>
+            )}
+
             <div className="mt-8 flex">
               {[...Array(6)].map((_, i) => (
                 <Image

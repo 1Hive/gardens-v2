@@ -105,7 +105,7 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
     );
   }, [strategyAddress]);
 
-  return { proposals };
+  return { proposals, strategyAddress };
 };
 
 function transformData(data: any[]): UnparsedProposal {

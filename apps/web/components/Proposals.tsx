@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -145,10 +145,6 @@ export function Proposals({ poolId }: { poolId: string }) {
 
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
-      <span className="absolute top-20 border-4 ">balance</span>
-      {/* points */}
-      <div></div>
-
       {/* proposals: title - proposals -create Button */}
       <div className="mx-auto max-w-3xl space-y-10">
         <header className="flex items-center justify-between">
