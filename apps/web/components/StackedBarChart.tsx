@@ -30,15 +30,15 @@ export function StackedBarChart({
       <div className="flex flex-col gap-1 font-bold">
         <div className="flex gap-2">
           <div className="h-4 w-8 rounded-md bg-green-700"></div>
-          <span>Conviction points</span>
+          <span>Current conviction</span>
         </div>
         <div className="flex gap-2">
           <div className="h-4 w-8 rounded-md bg-green-500"></div>
-          <span>Supporting points</span>
+          <span>Future conviction</span>
         </div>
         <div className="flex gap-2">
           <div className="h-4 w-8 rounded-md bg-gray-300"></div>
-          <span>Points needed</span>
+          <span>Conviction needed</span>
         </div>
       </div>
       <div className="my-6 flex flex-col gap-3">
@@ -65,7 +65,7 @@ export function StackedBarChart({
                     width: `${calculatePercentage(cvPoints, threshold)}%`,
                   }}
                 >
-                  {calculatePercentage(cvPoints, threshold) > 5 && cvPoints}
+                  {calculatePercentage(cvPoints, threshold) > 5 && Math.round(cvPoints)}
                 </div>
                 <div
                   className={`flex h-full items-center justify-center bg-green-500 text-white`}
@@ -77,7 +77,7 @@ export function StackedBarChart({
                   }}
                 >
                   {calculatePercentage(supportingPoints - cvPoints, threshold) >
-                    5 && supportingPoints}
+                    5 && Math.round(supportingPoints - cvPoints)}
                 </div>
                 <div
                   className={`flex h-full items-center justify-center bg-gray-300`}
@@ -86,14 +86,14 @@ export function StackedBarChart({
                   }}
                 >
                   {calculatePercentage(neededPoints, threshold) > 5 &&
-                    neededPoints}
+                    Math.round(neededPoints)}
                 </div>
               </div>
             )}
           </div>
         </div>
         <span className="font-bold">
-          {type === "funding" ? `${neededPoints} more points needed` : ""}
+          {type === "funding" && neededPoints ? `${Math.round(neededPoints)} more conviction points needed` : ""}
         </span>
       </div>
     </div>

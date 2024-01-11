@@ -120,7 +120,7 @@ function transformData(data: any[]): UnparsedProposal {
     blockLast: Number(data[7]),
     convictionLast: Number(data[8]),
     agreementActionId: Number(data[9]),
-    threshold: Number(formatEther(data[10])),
+    threshold: Number(data[10]),
     voterStakedPointsPct: Number(data[11]),
   };
 }

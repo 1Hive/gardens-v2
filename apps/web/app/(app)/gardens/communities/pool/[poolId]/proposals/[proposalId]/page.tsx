@@ -23,20 +23,20 @@ export default function Proposal({
 }) {
   const { proposals } = useProposals();
 
-  const { proposals: proposalContract, strategyAddress } = useProposalsRead({
+  const { proposals: proposalSContracts, strategyAddress } = useProposalsRead({
     poolId: Number(poolId),
   });
 
-  const proposalsReadsContract = proposalContract?.filter(
+  const proposalContract = proposalSContracts?.filter(
     (proposal) => proposal.id === Number(proposalId),
-  );
+  )[0];
 
   const cvStrategyContract = {
     address: strategyAddress,
     abi: cvStrategyABI as Abi,
   };
 
-  const { data: maxCVconvciton } = useContractRead({
+  const { data: maxCVSupply } = useContractRead({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
     args: [proposalId],
@@ -44,7 +44,7 @@ export default function Proposal({
       console.log(error);
     },
     onSuccess: (data) => {
-      console.log(data);
+      // console.log("maxCVSupply: " + Number(data));
     },
   });
 
@@ -56,19 +56,7 @@ export default function Proposal({
       console.log(error);
     },
     onSuccess: (data) => {
-      console.log(data);
-    },
-  });
-
-  const { data: maxCVSupply } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "updateProposalConviction",
-    args: [proposalId],
-    onError: (error) => {
-      console.log(error);
-    },
-    onSuccess: (data) => {
-      console.log(data);
+      // console.log("maxCVStaked: " + Number(data));
     },
   });
 
@@ -79,53 +67,14 @@ export default function Proposal({
       console.log(error);
     },
     onSuccess: (data) => {
-      console.log(data);
+      // console.log("totalEffectiveActivePoints: " + Number(data));
     },
   });
 
-  if (proposalsReadsContract.length === 0) {
+  if (proposalSContracts.length === 0) {
     // Render loading state or handle the absence of data
     return null;
   }
-
-  const { threshold, convictionLast } = proposalsReadsContract?.[0];
-  //format the maxConviction
-  const maxConviction = formatEther((maxCVconvciton as bigint) ?? BigInt(0));
-  const numMaxConviction = Number(maxConviction);
-  // format the maxCVStaked
-  const maxCVsuPPPLY = formatEther((maxCVStaked as bigint) ?? BigInt(0));
-  const numMaxCVsuPPPLY = Number(maxCVsuPPPLY);
-  // format maxCVSupply
-  const maxCVSupplyFormatted = formatEther(
-    (maxCVSupply as bigint) ?? BigInt(0),
-  );
-  const nummaxCVSupplyFormatted = Number(maxCVSupplyFormatted);
-  //format the totalEffectiveActivePoints
-  const totalEffectiveActivePointsFormatted = formatEther(
-    (totalEffectiveActivePoints as bigint) ?? BigInt(0),
-  );
-  const numtotalEffectiveActivePointsFormatted = Number(
-    totalEffectiveActivePointsFormatted,
-  );
-  //
-  //
-  //
-  //
-  //
-  console.log("threshold", threshold);
-  console.log("convictionLast", convictionLast);
-  console.log("maxConviction", maxConviction);
-  console.log("numMaxConviction", numMaxConviction);
-  console.log("maxCVsuPPPLY", maxCVsuPPPLY);
-  console.log("numMaxCVsuPPPLY", numMaxCVsuPPPLY);
-  console.log("maxCVSupplyFormatted", maxCVSupplyFormatted);
-  console.log("nummaxCVSupplyFormatted", nummaxCVSupplyFormatted);
-  //
-  //
-  //
-  //
-  //
-  //
 
   const {
     title,
@@ -134,7 +83,12 @@ export default function Proposal({
     requestedAmount,
     beneficiary,
     submitter: createdBy,
-  } = proposalsReadsContract[0];
+    threshold,
+    convictionLast,
+  } = proposalContract;
+
+  // console.log("threshold: " + threshold);
+  // console.log("convictionLast: " + convictionLast);
 
   const { status, points, supporters } = proposals?.filter(
     (proposal) => proposal.id === Number(proposalId),
@@ -152,13 +106,72 @@ export default function Proposal({
 
   //
   //
-  //
+  const {
+    _convictionLast,
+    _maxCVStaked,
+    _maxCVSupply,
+    _threshold,
+    _totalEffectiveActivePoints,
+  } = mockedPoints;
+
+  const _neededPoints =
+    calcThresholdPoints(_threshold, _maxCVSupply, _totalEffectiveActivePoints) -
+    calcFutureCvPoints(_maxCVStaked, _maxCVSupply, _totalEffectiveActivePoints);
+
+  console.log(
+    "threshold: " +
+      calcThresholdPoints(
+        _threshold,
+        _maxCVSupply,
+        _totalEffectiveActivePoints,
+      ),
+  );
+  console.log(
+    "cvPoints: " +
+      calcCvPoints(_convictionLast, _maxCVSupply, _totalEffectiveActivePoints),
+  );
+  console.log(
+    "futureCvPoints: " +
+      calcFutureCvPoints(
+        _maxCVStaked,
+        _maxCVSupply,
+        _totalEffectiveActivePoints,
+      ),
+  );
+
+  const fundingProposalTest: {
+    type: "funding" | "streaming" | "signaling";
+    cvPoints: number;
+    supportingPoints: number;
+    neededPoints: number;
+    threshold: number;
+  } = {
+    type: "funding",
+    cvPoints: calcCvPoints(
+      _convictionLast,
+      _maxCVSupply,
+      _totalEffectiveActivePoints,
+    ),
+    supportingPoints: calcFutureCvPoints(
+      _maxCVStaked,
+      _maxCVSupply,
+      _totalEffectiveActivePoints,
+    ),
+    neededPoints: _neededPoints,
+    threshold: calcThresholdPoints(
+      _threshold,
+      _maxCVSupply,
+      _totalEffectiveActivePoints,
+    ),
+  };
+
   //
   //
 
   const handleDispute = () => {
     console.log("dispute...");
   };
+
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
       <main className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 bg-surface p-16">
@@ -247,52 +260,40 @@ export default function Proposal({
   );
 }
 
-const fundingProposalTest: {
-  type: "funding" | "streaming" | "signaling";
-  cvPoints: number;
-  supportingPoints: number;
-  neededPoints: number;
-  threshold: number;
-} = {
-  type: "funding",
-  cvPoints: 300,
-  supportingPoints: 700,
-  neededPoints: 600,
-  threshold: 1300,
+const mockedPoints = {
+  _maxCVSupply: 289034,
+  _maxCVStaked: 28903,
+  _totalEffectiveActivePoints: 1000,
+  _threshold: 57806,
+  _convictionLast: 9093,
 };
 
-// function calculateThreshold(requested, funds, supply, alpha, beta, rho) {
-//   const share = requested / funds;
+// convictionLast
+function calcCvPoints(
+  convictionLast: number,
+  maxCVSupply: number,
+  totalEffectiveActivePoints: number,
+) {
+  let convictionLastPct = convictionLast / maxCVSupply;
+  return convictionLastPct * totalEffectiveActivePoints * 2;
+}
 
-//   if (share <= beta) {
-//     return (rho * supply) / (1 - alpha) / (beta - share) ** 2;
-//   } else {
-//     return null;
-//   }
-// }
+// futureConvictionStaked
+function calcFutureCvPoints(
+  maxCVStaked: number,
+  maxCVSupply: number,
+  totalEffectiveActivePoints: number,
+) {
+  let futureConvictionStakedPct = maxCVStaked / maxCVSupply;
+  return futureConvictionStakedPct * totalEffectiveActivePoints * 2;
+}
 
-// function getMaxConviction(amount, alpha) {
-//   const x = amount;
-//   const a = alpha;
-//   return x / (1 - a);
-// }
-
-// let t;
-// let max;
-// let supply = 9908.15; // total staked in proposala get it in CV contract
-// let alpha = 0.9999799;
-// let pool = 11722.22; // getpoolAmount from CVStatrtegy
-// t = calculateThreshold(800, pool, supply, alpha, 0.2, 0.001);
-// max = getMaxConviction(supply, alpha); //
-// //console.log("t", t);
-// //console.log("max", max);
-// const th = (t / max) * 100;
-// //console.log("th", th);
-
-//for user convert stakedTokens to points 1 point = 1% 100% = 50HNY StakedBasisAmaount IN REGISTRY CONTRACT
-// tokens needed: means u need 5.7 % of the effective supply to pass the proposal => tokens need
-
-//max ratio is beta
-//get max conviction => max conviction possible based on the supply
-//convitinLast is the current conviction fetcn in getPrposals
-// 1% == 1 points
+// threshold
+function calcThresholdPoints(
+  threshold: number,
+  maxCVSupply: number,
+  totalEffectiveActivePoints: number,
+) {
+  let thresholdPct = threshold / maxCVSupply;
+  return thresholdPct * totalEffectiveActivePoints * 2;
+}
