@@ -29,11 +29,7 @@ export default function Pool({
   const { strategyAddress } = useProposalsRead({ poolId: Number(poolId) });
 
   //get the Pool Balance
-  const {
-    data: poolBalance,
-    isLoading,
-    status,
-  } = useContractRead({
+  const { data: poolBalance, status } = useContractRead({
     address: strategyAddress,
     abi: cvStrategyABI,
     functionName: "getPoolAmount",
@@ -42,7 +38,7 @@ export default function Pool({
 
   //format the pool balance
   const parsedPoolBalance = formatEther(poolBalance ?? BigInt(0)).toString();
-  console.log(status);
+
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">

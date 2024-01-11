@@ -52,6 +52,47 @@ export default function Proposal({
 
   const supportersTotalAmount = sumSupportersAmount();
 
+  //
+  //
+  //
+  //
+  //
+  function calculateThreshold(requested, funds, supply, alpha, beta, rho) {
+    const share = requested / funds;
+
+    if (share <= beta) {
+      return (rho * supply) / (1 - alpha) / (beta - share) ** 2;
+    } else {
+      return null;
+    }
+  }
+
+  function getMaxConviction(amount, alpha) {
+    const x = amount;
+    const a = alpha;
+    return x / (1 - a);
+  }
+
+  let t;
+  let max;
+  let supply = 9908.15; // total staked in proposala get it in CV contract
+  let alpha = 0.9999799;
+  let pool = 11722.22; // getpoolAmount from CVStatrtegy
+  t = calculateThreshold(800, pool, supply, alpha, 0.2, 0.001);
+  max = getMaxConviction(supply, alpha); //
+  console.log("t", t);
+  console.log("max", max);
+  const th = (t / max) * 100;
+  console.log("th", th);
+  //for user convert stakedTokens to points 1 point = 1% 100% = 50HNY StakedBasisAmaount IN REGISTRY CONTRACT
+  // tokens needed: means u need 5.7 % of the effective supply to pass the proposal => tokens need
+  //  contract --- getMaxConviction => we need the alpha, is the decay variable from the contacts, weight is rho,
+  //max ratio is beta
+  //get max conviction => max conviction possible based on the supply
+  //convitinLast is the current conviction fetcn in getPrposals
+  // 1% == 1 points
+  //updatepRPPOSALcoNVICTION
+
   const handleDispute = () => {
     console.log("dispute...");
   };

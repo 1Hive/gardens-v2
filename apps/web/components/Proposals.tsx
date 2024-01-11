@@ -84,17 +84,6 @@ export function Proposals({ poolId }: { poolId: string }) {
     hash: contractWriteData?.hash,
   });
 
-  // const balance = useBalance({
-  //   address: strategyAddress,
-  //   token: tokenAddress,
-  //   onError: (error) => {
-  //     console.log(error);
-  //   },
-  //   onSettled: (data) => {
-  //     console.log(data);
-  //   },
-  // });
-
   const submit = () => {
     const encodedData = getEncodedProposals(inputs, proposals);
     const poolId = 1;
@@ -158,7 +147,7 @@ export function Proposals({ poolId }: { poolId: string }) {
               {distributedPoints >= 100
                 ? "Max points reached: "
                 : "Total distributed: "}
-              {distributedPoints} %
+              {distributedPoints} pts
             </span>
           )}
         </header>
