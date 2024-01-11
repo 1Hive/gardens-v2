@@ -1,8 +1,8 @@
 "use client";
 import { gardenLand } from "@/assets";
-import { Proposals } from "@/components";
+import { Proposals, Button } from "@/components";
 import Image from "next/image";
-import { useContractRead } from "wagmi";
+import { useContractRead, useContractWrite } from "wagmi";
 import { cvStrategyABI, alloABI } from "@/src/generated";
 import { useProposalsRead } from "@/hooks/useProposalsRead";
 import { formatEther } from "viem";
@@ -34,6 +34,17 @@ export default function Pool({
     abi: cvStrategyABI,
     functionName: "getPoolAmount",
     watch: true,
+  });
+
+  const {
+    data: activePoints,
+    write,
+    isLoading,
+    isSuccess,
+  } = useContractWrite({
+    address: strategyAddress,
+    abi: cvStrategyABI,
+    functionName: "activatePoints",
   });
 
   //format the pool balance
@@ -101,8 +112,13 @@ export default function Pool({
                   </div>
                 </div>
               </div>
+              <div className="flex items-center justify-center">
+                <Button onClick={() => write?.()} className="w-fit bg-primary">
+                  Activate Points
+                </Button>
+              </div>
             </div>
-            <div className="mt-8 flex">
+            <div className=" flex">
               {[...Array(6)].map((_, i) => (
                 <Image
                   key={i}
