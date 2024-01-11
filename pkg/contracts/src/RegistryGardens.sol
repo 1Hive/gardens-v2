@@ -71,6 +71,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     error UserNotInRegistry();
     error UserAlreadyRegistered();
     error UserNotGardenOwner();
+    error UserAlreadyActivated();
     error StrategyExists();
     error StrategyDisabled();
     error CallerIsNotNewOnwer();
@@ -114,7 +115,10 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
 
     mapping(address => Member) public addressToMemberInfo;
     mapping(address => bool) public enabledStrategies;
-    mapping(address => address[]) public memberActivatedInStrategies;
+    mapping(address => mapping(address => bool)) public memberActivatedInStrategies;
+    mapping(address => uint256) public totalPointsActivatedInStrategy;
+
+    uint256 public constant DEFAULT_POINTS = 100;
 
     constructor() {
         // _grantRole(DEFAULT_ADMIN_ROLE, address(this));
@@ -143,12 +147,15 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     }
 
     function activateMemberInStrategy(address _member, address _strategy) public onlyRegistryMemberAddress(_member) {
-        // if (!enabledStrategies[_strategy]) {
-        //     revert StrategyExists();
-        // }
         revertZeroAddress(_strategy);
 
-        memberActivatedInStrategies[msg.sender].push(_strategy);
+        if (memberActivatedInStrategies[_member][_strategy]) {
+            revert UserAlreadyActivated();
+        }
+
+        memberActivatedInStrategies[_member][_strategy] = true;
+        totalPointsActivatedInStrategy[_strategy] += DEFAULT_POINTS;
+
         emit StrategyAdded(_strategy);
     }
 

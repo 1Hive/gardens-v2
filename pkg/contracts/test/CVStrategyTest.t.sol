@@ -75,7 +75,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         registryGardens = RegistryGardens(registryFactory.createRegistry(params));
 
         token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
-        registryGardens.stakeAndRegisterMember();
     }
 
     function _registryGardens() internal view returns (RegistryGardens) {
@@ -107,6 +106,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         poolId = createPool(allo(), address(strategy), address(_registryGardens()), registry(), address(_tokenPool));
 
         vm.stopPrank();
+
+        strategy.activatePoints();
 
         pool = allo().getPool(poolId);
 
@@ -241,7 +242,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         // vm.startPrank(pool_admin());
 
-        token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
+        // token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
         // registryGardens.stakeAndregisterMember();
 
         CVStrategy.ProposalSupport[] memory votes2 = new CVStrategy.ProposalSupport[](1);
@@ -469,8 +470,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         vm.startPrank(pool_admin());
 
-        token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
-        registryGardens.stakeAndRegisterMember();
+        // token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
+        cv.activatePoints();
 
         CVStrategy.ProposalSupport[] memory votes2 = new CVStrategy.ProposalSupport[](1);
         int256 SUPPORT_PCT2 = 100;
@@ -558,6 +559,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          *
          */
         vm.startPrank(pool_admin());
+
         uint256 proposalID2 = 2;
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
             proposalID2, poolId, pool_admin(), CVStrategy.ProposalType.Funding, REQUESTED_AMOUNT, address(token)
@@ -566,7 +568,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().registerRecipient(poolId, data2);
 
         token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
-        registryGardens.stakeAndRegisterMember();
+        // registryGardens.stakeAndRegisterMember();
+        cv.activatePoints();
 
         CVStrategy.ProposalSupport[] memory votes2 = new CVStrategy.ProposalSupport[](1);
         int256 SUPPORT_PCT2 = 100;

@@ -66,12 +66,12 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         // for (uint256 i = 0; i < membersStaked.length; i++) {
         // vm.startBroadcast();
-        token.mint(address(allo_owner()), 100 ether);
-
-        token.approve(address(registryGardens), MINIMUM_STAKE);
-        registryGardens.stakeAndRegisterMember();
+        // token.mint(address(allo_owner()), 100 ether);
 
         CVStrategy strategy1 = new CVStrategy(address(allo));
+        // token.approve(address(registryGardens), MINIMUM_STAKE);
+        strategy1.activatePoints();
+
         uint256 poolId =
             createPool(Allo(address(allo)), address(strategy1), address(registryGardens), registry, address(token));
         token.approve(address(allo), 100 ether);

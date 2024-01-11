@@ -55,6 +55,9 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         RegistryGardens registryGardens = RegistryGardens(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
+        CVStrategy strategy1 = new CVStrategy(address(allo));
+        CVStrategy strategy2 = new CVStrategy(address(allo));
+
         vm.stopBroadcast();
 
         address[] memory membersStaked = new address[](4);
@@ -68,7 +71,10 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             vm.startBroadcast(address(membersStaked[i]));
             token.mint(address(membersStaked[i]), 100);
             token.approve(address(registryGardens), MINIMUM_STAKE);
-            registryGardens.stakeAndRegisterMember();
+            // registryGardens.stakeAndRegisterMember();
+            strategy1.activatePoints();
+            strategy2.activatePoints();
+
             vm.stopBroadcast();
         }
 
@@ -78,8 +84,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         vm.startBroadcast(pool_admin());
 
         token.mint(address(pool_admin()), 10_000);
-
-        CVStrategy strategy1 = new CVStrategy(address(allo));
 
         // FAST 1 MIN GROWTH
         strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
@@ -105,8 +109,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             CVStrategy.CreateProposal(3, poolId, membersStaked[2], CVStrategy.ProposalType.Funding, 10, address(token));
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
-
-        CVStrategy strategy2 = new CVStrategy(address(allo));
 
         // FAST 1 MIN GROWTH
         strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
