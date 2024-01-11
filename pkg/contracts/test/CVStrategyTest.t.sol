@@ -749,7 +749,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryGardens.UserAlreadyRegistered.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryGardens.UserAlreadyActivated.selector));
         cv.activatePoints();
 
         vm.startPrank(pool_admin());
