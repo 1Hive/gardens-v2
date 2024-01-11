@@ -9,6 +9,8 @@ import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Button } from ".";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { usePathname } from "next/navigation";
+import { useAccount } from "wagmi";
+import { formatAddress } from "@/utils/formatAddress";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -16,6 +18,9 @@ function classNames(...classes: string[]) {
 
 export function NavBar() {
   const modal = useWeb3Modal();
+  const account = useAccount();
+  const { address } = account;
+  const formattedAddress = formatAddress(address ?? "");
 
   //we use pathname to show current page on navigation items...
   const pathname = usePathname();
@@ -46,6 +51,7 @@ export function NavBar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
+                {/* <w3m-button balance="show" label="Connect Wallet" size="md" />{" "} */}
                 <Button onClick={() => modal.open()} className="bg-primary">
                   Wallet
                 </Button>

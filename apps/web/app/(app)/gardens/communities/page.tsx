@@ -1,8 +1,50 @@
-import { honeyIcon, gardenLand } from "@/assets";
+"use client";
+import { honeyIcon } from "@/assets";
 import Image from "next/image";
 import { CommunityCard } from "@/components";
+import { useContractReads } from "wagmi";
+import { Abi } from "viem";
+import { contractsAddresses } from "@/constants/contracts";
+import { alloABI } from "@/src/generated";
 
 export default function Garden() {
+  const alloContractReads = {
+    address: contractsAddresses.allo,
+    abi: alloABI as Abi,
+    onError: (error: any) => {
+      console.log(error);
+    },
+    onSettled: (data: any) => {
+      console.log(data);
+    },
+  };
+  const { data, isLoading, isError, error } = useContractReads({
+    contracts: [
+      {
+        ...alloContractReads,
+        functionName: "getPool",
+        args: [1],
+      },
+      {
+        ...alloContractReads,
+        functionName: "getPool",
+        args: [2],
+      },
+    ],
+  });
+
+  // Check if there is data available for the first community
+  if (data && data.length > 0) {
+    // Merge the data into the first community - 1hive
+    const firstCommunity = conmmunities[0];
+    firstCommunity.pools.forEach((pool, poolIndex) => {
+      if (data[poolIndex]) {
+        pool.result = data[poolIndex].result;
+        pool.status = data[poolIndex].status;
+      }
+    });
+  }
+
   return (
     <div className=" relative mx-auto max-w-5xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
       {/* header: honey logo +stats */}
@@ -50,7 +92,23 @@ const stats = [
   },
 ];
 
-const conmmunities = [
+interface Pool {
+  name: string;
+  strategy: string;
+  proposals: number;
+  href: string;
+  result?: any;
+  status?: any; // Add this line to allow the 'result' property
+}
+
+interface Community {
+  name: string;
+  address: string;
+  href: string;
+  pools: Pool[];
+}
+
+const conmmunities: Community[] = [
   {
     name: "1Hive",
     address: "0x...",
@@ -58,68 +116,34 @@ const conmmunities = [
     pools: [
       {
         name: "Pool 1",
-        strategy: "c.v",
+        strategy: "C.V",
         proposals: 3,
         href: "1",
       },
       {
         name: "Pool 2",
-        strategy: "c.v",
-        proposals: 6,
+        strategy: "C.V",
+        proposals: 3,
         href: "2",
-      },
-      {
-        name: "Pool 3",
-        strategy: "c.v",
-        proposals: 2,
-        href: "3",
-      },
-      {
-        name: "Pool 4",
-        strategy: "c.v",
-        proposals: 3,
-        href: "4",
-      },
-      {
-        name: "Pool 5",
-        strategy: "c.v",
-        proposals: 6,
-        href: "5",
-      },
-      {
-        name: "Pool 6",
-        strategy: "c.v",
-        proposals: 2,
-        href: "6",
-      },
-      {
-        name: "Pool 7",
-        strategy: "c.v",
-        proposals: 3,
-        href: "7",
-      },
-      {
-        name: "Pool 8",
-        strategy: "c.v",
-        proposals: 6,
-        href: "8",
       },
     ],
   },
   {
-    name: "1hive Memecoins",
+    name: "Memecoins",
     address: "0x...",
     href: "#",
     pools: [
       {
         name: "Pool 1",
-        strategy: "c.v",
-        proposals: 5,
+        strategy: "C.V",
+        proposals: 3,
+        href: "1",
       },
       {
         name: "Pool 2",
-        strategy: "quest",
-        proposals: 2,
+        strategy: "C.V",
+        proposals: 3,
+        href: "2",
       },
     ],
   },
@@ -130,18 +154,21 @@ const conmmunities = [
     pools: [
       {
         name: "Pool 1",
-        strategy: "c.v",
-        proposals: 2,
+        strategy: "C.V",
+        proposals: 3,
+        href: "1",
       },
       {
         name: "Pool 2",
-        strategy: "quest",
+        strategy: "C.V",
         proposals: 3,
+        href: "2",
       },
       {
         name: "Pool 3",
-        strategy: "c.v",
-        proposals: 1,
+        strategy: "C.V",
+        proposals: 3,
+        href: "3",
       },
     ],
   },
@@ -152,8 +179,9 @@ const conmmunities = [
     pools: [
       {
         name: "Pool 1",
-        strategy: "c.v",
-        proposals: 8,
+        strategy: "C.V",
+        proposals: 3,
+        href: "1",
       },
     ],
   },

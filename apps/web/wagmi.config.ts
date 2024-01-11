@@ -4,6 +4,7 @@ import { react, foundry } from "@wagmi/cli/plugins";
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
 import { abi as RegistryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
 import { abi as RegistryGardensABI } from "#/contracts/out/RegistryGardens.sol/RegistryGardens.json";
+import { abi as AlloABI } from "#/contracts/out/Allo.sol/Allo.json";
 
 import { mainnet, sepolia } from "wagmi/chains";
 import { Abi } from "viem";
@@ -23,6 +24,10 @@ export default defineConfig({
       name: "RegistryGardens",
       abi: RegistryGardensABI as Abi,
     },
+    {
+      name: "Allo",
+      abi: AlloABI as Abi,
+    },
   ],
   plugins: [
     // etherscan({
@@ -40,7 +45,12 @@ export default defineConfig({
     // }),
     // foundry({
     //   project: "../../",
-    //   include: ["CVStrategy.sol", "RegistryFactory.sol", "RegistryGardens.sol"],
+    //   include: [
+    //     "CVStrategy.sol",
+    //     "RegistryFactory.sol",
+    //     "RegistryGardens.sol",
+    //     "Allo.sol",
+    //   ],
     // }),
     react(),
   ],

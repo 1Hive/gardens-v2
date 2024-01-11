@@ -21,13 +21,13 @@ export function CommunityCard({ name, address, href, pools }: any) {
 
       {/* pools */}
       <div
-        className={`transition-height flex transform flex-wrap items-center justify-center gap-4 overflow-hidden p-4 duration-200 ease-in-out ${
+        className={`flex transform flex-wrap items-center justify-center gap-4 overflow-hidden p-4 transition-height duration-200 ease-in-out ${
           !open && "max-h-[290px]"
         } `}
       >
         {pools?.map((pool: any, i: number) => <PoolCard {...pool} key={i} />)}
       </div>
-      {pools.length > 3 && (
+      {pools.length > 2 && (
         <Button
           style="outline"
           className="!rounded-full bg-white !p-3"

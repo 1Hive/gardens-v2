@@ -9,8 +9,24 @@ import "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 
 contract SafeSetup is Test {
     Safe public councilSafe;
+    Safe public councilSafeOwner;
+
     address public councilMember1;
     uint256 public councilMemberPK = 1;
+
+    function _councilSafeWithOwner(address _owner) public returns (Safe) {
+        if (address(councilSafeOwner) == address(0)) {
+            SafeProxyFactory spf = new SafeProxyFactory();
+            SafeProxy sp = spf.createProxyWithNonce(address(new Safe()), "", 0);
+            councilSafeOwner = Safe(payable(address(sp)));
+            vm.label(address(councilSafeOwner), "councilSafeAddr");
+            vm.label(address(_owner), "councilSafeOwner");
+            address[] memory owners = new address[](1);
+            owners[0] = address(_owner);
+            councilSafeOwner.setup(owners, 1, address(0), "", address(0), address(0), 0, payable(address(0)));
+        }
+        return councilSafeOwner;
+    }
 
     function _councilSafe() internal returns (Safe) {
         councilMember1 = vm.addr(councilMemberPK);
