@@ -93,7 +93,9 @@ export const useProposalsRead = ({ poolId }: { poolId: number }) => {
 
     // Choose between proposalsMock and proposalsMock2 based on poolId
     const selectedProposalsMock =
-      poolId === 1 ? fundingProposals : signalingProposals;
+      poolId === Number(contractsAddresses.poolID)
+        ? fundingProposals
+        : signalingProposals;
 
     // Merge the additional data from proposalsMock based on the index
 

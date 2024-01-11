@@ -5,12 +5,20 @@ import { walletConnectProvider, EIP6963Connector } from "@web3modal/wagmi";
 
 import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
-import { sepolia, optimism, gnosis, mainnet, arbitrum } from "viem/chains";
+import {
+  sepolia,
+  optimism,
+  gnosis,
+  mainnet,
+  arbitrum,
+  arbitrumSepolia,
+} from "viem/chains";
 import { CoinbaseWalletConnector } from "wagmi/connectors/coinbaseWallet";
 import { InjectedConnector } from "wagmi/connectors/injected";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 
+import { contractsAddresses, isProd } from "@/constants/contracts";
 type WagmiProviderType = {
   children: React.ReactNode;
 };
@@ -37,7 +45,7 @@ const localChain = {
 };
 
 const { chains, publicClient } = configureChains(
-  [localChain, arbitrum],
+  isProd ? [arbitrumSepolia] : [localChain, arbitrumSepolia],
   [
     jsonRpcProvider({ rpc: (chain: any) => chain.rpcUrls.default }),
     walletConnectProvider({ projectId }),

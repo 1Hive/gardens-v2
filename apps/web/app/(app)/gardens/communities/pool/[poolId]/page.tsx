@@ -6,6 +6,7 @@ import { useContractRead, useContractWrite } from "wagmi";
 import { cvStrategyABI, alloABI } from "@/src/generated";
 import { useProposalsRead } from "@/hooks/useProposalsRead";
 import { formatEther } from "viem";
+import { contractsAddresses } from "@/constants/contracts";
 
 //some metadata for each pool
 const poolInfo = [
@@ -56,7 +57,7 @@ export default function Pool({
         <header className="flex flex-col items-center justify-center">
           <h2 className="text-center font-press">Pool {poolId} </h2>
           <h4 className="text-2xl ">
-            {poolInfo[(poolId as unknown as number) - 1].title}
+            {/* {poolInfo[(poolId as unknown as number) - 1].title} */}
           </h4>
         </header>
         <main className="flex flex-col gap-10">
@@ -64,11 +65,11 @@ export default function Pool({
           <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="mt-4 flex flex-col gap-12 p-8">
               <p className="max-w-4xl text-center text-lg font-semibold">
-                {poolInfo[(poolId as unknown as number) - 1].description}
+                {/* {poolInfo[(poolId as unknown as number) - 1].description} */}
               </p>
               <div className="flex w-full p-4">
                 <div className="flex flex-1 flex-col space-y-4 text-xl font-semibold">
-                  {poolId === "1" && (
+                  {poolId === contractsAddresses.poolID && (
                     <>
                       {status === "idle" ? (
                         <>

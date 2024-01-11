@@ -767,4 +767,23 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         assertEq(registryGardens.isMember(pool_admin()), true, "isMember");
     }
+
+    function test_deactivate_points() public {
+        (IAllo.Pool memory pool, uint256 poolId) = _createProposal(address(0), 0, 0);
+
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryGardens.UserAlreadyActivated.selector));
+        cv.activatePoints();
+
+        cv.deactivatePoints();
+        // assertEq(registryGardens.isMember(local()), false, "isMember");
+
+        vm.startPrank(pool_admin());
+        cv.activatePoints();
+        cv.deactivatePoints();
+        vm.stopPrank();
+
+        // assertEq(registryGardens.isMember(pool_admin()), false, "isMember");
+    }
 }
