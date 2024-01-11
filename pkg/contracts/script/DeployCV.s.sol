@@ -55,9 +55,28 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         RegistryGardens registryGardens = RegistryGardens(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
-        vm.stopBroadcast();
+        token.mint(address(pool_admin()), 10_000);
 
+        CVStrategy strategy1 = new CVStrategy(address(allo));
+        CVStrategy strategy2 = new CVStrategy(address(allo));
+        // FAST 1 MIN GROWTH
+
+        uint256 poolId =
+            createPool(Allo(address(allo)), address(strategy1), address(registryGardens), registry, address(token));
+
+        uint256 poolIdSignaling =
+            createPool(Allo(address(allo)), address(strategy2), address(registryGardens), registry, address(0));
         address[] memory membersStaked = new address[](4);
+
+        strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
+        strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+
+        // FAST 1 MIN GROWTH
+        strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
+        strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        vm.stopBroadcast();
 
         membersStaked[0] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
         membersStaked[1] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
@@ -66,54 +85,47 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         for (uint256 i = 0; i < membersStaked.length; i++) {
             vm.startBroadcast(address(membersStaked[i]));
-            token.mint(address(membersStaked[i]), 100 ether);
+            token.mint(address(membersStaked[i]), 100);
             token.approve(address(registryGardens), MINIMUM_STAKE);
-            registryGardens.stakeAndregisterMember();
+            // registryGardens.stakeAndRegisterMember();
+            strategy1.activatePoints();
+            strategy2.activatePoints();
+
             vm.stopBroadcast();
         }
-
-        // vm.startBroadcast(allo.owner());
-        // allo.addToCloneableStrategies(address(strategy));
-        // vm.stopBroadcast();
         vm.startBroadcast(pool_admin());
 
-        token.mint(address(pool_admin()), 100 ether);
+        token.approve(address(allo), type(uint256).max);
+        allo.fundPool(poolId, 1_000); // ether
 
-        CVStrategy strategy1 = new CVStrategy(address(allo));
-        uint256 poolId =
-            createPool(Allo(address(allo)), address(strategy1), address(registryGardens), registry, address(token));
-        token.approve(address(allo), 100 ether);
-        allo.fundPool(poolId, 0.1 ether);
-
-        CVStrategy strategy2 = new CVStrategy(address(allo));
-        uint256 poolIdNative =
-            createPool(Allo(address(allo)), address(strategy2), address(registryGardens), registry, address(0));
-        allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
-
-        CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            1, poolId, membersStaked[0], pool_admin(), CVStrategy.ProposalType.Funding, 1000 wei, address(token)
-        );
+        CVStrategy.CreateProposal memory proposal =
+            CVStrategy.CreateProposal(1, poolId, membersStaked[0], CVStrategy.ProposalType.Funding, 50, address(token));
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = CVStrategy.CreateProposal(
-            2, poolId, membersStaked[1], pool_admin(), CVStrategy.ProposalType.Funding, 500 wei, address(token)
-        );
+        proposal =
+            CVStrategy.CreateProposal(2, poolId, membersStaked[1], CVStrategy.ProposalType.Funding, 25, address(token));
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = CVStrategy.CreateProposal(
-            3, poolId, membersStaked[2], pool_admin(), CVStrategy.ProposalType.Funding, 900 wei, address(token)
-        );
+        proposal =
+            CVStrategy.CreateProposal(3, poolId, membersStaked[2], CVStrategy.ProposalType.Funding, 10, address(token));
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
+        // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
+
+        CVStrategy.CreateProposal memory proposal2 = CVStrategy.CreateProposal(
+            1, poolIdSignaling, membersStaked[0], CVStrategy.ProposalType.Signaling, 0, address(0)
+        );
+        bytes memory data2 = abi.encode(proposal2);
+        allo.registerRecipient(poolIdSignaling, data2);
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);
         console2.log("Strategy1 Addr: %s", address(strategy1));
 
-        console2.log("PoolIdNative: %s", poolIdNative);
+        console2.log("poolIdSignaling: %s", poolIdSignaling);
         console2.log("Strategy2 Addr: %s", address(strategy2));
 
         console2.log("Allo Addr: %s", address(allo));

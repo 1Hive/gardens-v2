@@ -11,7 +11,8 @@
     },
     "build": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "web#generate"
       ],
       "outputs": [
         "dist/**",

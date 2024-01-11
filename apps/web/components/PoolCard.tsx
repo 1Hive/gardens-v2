@@ -1,8 +1,11 @@
+"use client";
 import { gardenLand } from "@/assets";
 import Image from "next/image";
 import Link from "next/link";
 
-export function PoolCard({ name, strategy, proposals, href }: any) {
+export function PoolCard({ name, strategy, proposals, href, result }: any) {
+  const poolStrategyAddress = result?.strategy;
+  console.log(poolStrategyAddress);
   return (
     <Link
       className="min-w-56 relative flex snap-center flex-col items-start rounded-md border-2 border-black bg-white transition-all duration-150 ease-out hover:scale-105"
