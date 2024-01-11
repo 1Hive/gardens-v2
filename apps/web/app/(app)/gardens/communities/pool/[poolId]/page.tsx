@@ -61,12 +61,14 @@ export default function Pool({
                     <>
                       {status === "idle" ? (
                         <>
-                          <p>fetching balance ..</p>{" "}
-                          <span className="loading loading-spinner loading-lg"></span>
+                          <div className="flex flex-col items-center justify-center">
+                            <p>fetching balance ..</p>{" "}
+                            <span className="loading loading-spinner loading-lg"></span>
+                          </div>
                         </>
                       ) : (
                         <>
-                          <div className="justify-cente flex flex-col items-center">
+                          <div className="flex flex-col items-center justify-center">
                             <div>
                               <h3 className="font-press text-xl transition-all duration-150 ease-in ">
                                 Funds Available:{" "}
