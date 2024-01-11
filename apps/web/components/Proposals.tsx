@@ -195,9 +195,9 @@ export function Proposals({ poolId }: { poolId: string }) {
                     <div className="mb-2">{inputs[i].value} %</div>
                   </div>
                   <Link href={`${pathname}/proposals/${id}`}>
-                    <button className="btn btn-outline btn-info px-3 py-[6px] font-thin">
+                    <Button className="h-[38px] bg-slate-200">
                       View Proposal
-                    </button>
+                    </Button>
                   </Link>
                 </div>
               )}

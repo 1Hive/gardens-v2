@@ -118,26 +118,26 @@ export default function Proposal({
     calcThresholdPoints(_threshold, _maxCVSupply, _totalEffectiveActivePoints) -
     calcFutureCvPoints(_maxCVStaked, _maxCVSupply, _totalEffectiveActivePoints);
 
-  console.log(
-    "threshold: " +
-      calcThresholdPoints(
-        _threshold,
-        _maxCVSupply,
-        _totalEffectiveActivePoints,
-      ),
-  );
-  console.log(
-    "cvPoints: " +
-      calcCvPoints(_convictionLast, _maxCVSupply, _totalEffectiveActivePoints),
-  );
-  console.log(
-    "futureCvPoints: " +
-      calcFutureCvPoints(
-        _maxCVStaked,
-        _maxCVSupply,
-        _totalEffectiveActivePoints,
-      ),
-  );
+  // console.log(
+  //   "threshold: " +
+  //     calcThresholdPoints(
+  //       _threshold,
+  //       _maxCVSupply,
+  //       _totalEffectiveActivePoints,
+  //     ),
+  // );
+  // console.log(
+  //   "cvPoints: " +
+  //     calcCvPoints(_convictionLast, _maxCVSupply, _totalEffectiveActivePoints),
+  // );
+  // console.log(
+  //   "futureCvPoints: " +
+  //     calcFutureCvPoints(
+  //       _maxCVStaked,
+  //       _maxCVSupply,
+  //       _totalEffectiveActivePoints,
+  //     ),
+  // );
 
   const fundingProposalTest: {
     type: "funding" | "streaming" | "signaling";

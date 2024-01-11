@@ -37,7 +37,7 @@ export default function Pool({
   });
 
   //format the pool balance
-  const parsedPoolBalance = formatEther(poolBalance ?? BigInt(0)).toString();
+  const parsedPoolBalance = Number(poolBalance);
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
