@@ -25,9 +25,9 @@ deploy-testnet:
 	--broadcast -vv
 	
 fork:
-	anvil --chain-id 1337
-
-# anvil --host=0.0.0.0 -f $(RPC_URL)
+	anvil
+fork-testnet:
+	anvil --host=0.0.0.0 -f $(RPC_URL_ARB_TESTNET)
 test1:
 	forge test --fork-url $(RPC_URL_LOCALHOST) --mc CVStrategyTest \ 
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 -vv

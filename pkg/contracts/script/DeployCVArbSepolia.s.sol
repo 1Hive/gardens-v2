@@ -71,7 +71,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         // vm.startBroadcast(address());
         token.approve(address(registryGardens), MINIMUM_STAKE);
-        registryGardens.stakeAndregisterMember();
+        registryGardens.stakeAndRegisterMember();
         // vm.stopBroadcast();
         // }
 
