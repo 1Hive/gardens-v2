@@ -80,6 +80,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
+        token.mint(address(pool_admin()), 10_000);
         token.approve(address(allo), type(uint256).max);
         allo.fundPool(poolId, 1_000);
 
