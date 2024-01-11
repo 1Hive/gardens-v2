@@ -17,7 +17,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     error UserCannotBeZero(); // 0xd1f28288
     error UserNotInRegistry(); //0x6a5cfb6d
     error UserIsInactive(); //
-    error PoolIsEmpty(); // 0xed4421ad
+    error PoolIsEmpty();
+    // 0xed4421ad
     error NotImplemented(); //0xd6234725
     error TokenCannotBeZero(); //0x596a094c
     error AmountOverMaxRatio(); // 0x3bf5ca14
