@@ -86,8 +86,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
         vm.startPrank(gardenOwner);
         token.approve(address(registryGardens), MINIMUM_STAKE);
         _registryGardens().stakeAndRegisterMember();
-        assertEq(token.balanceOf(address(registryGardens)), MINIMUM_STAKE);
-        // assertEq(token.balanceOf(address(gardenOwner)),mintAmount-MINIMUM_STAKE);
+        assertEq(token.balanceOf(address(registryGardens)), 0);
 
         vm.stopPrank();
         stopMeasuringGas();

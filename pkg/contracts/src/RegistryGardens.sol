@@ -9,6 +9,8 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 
+import "forge-std/console.sol";
+
 contract RegistryGardens is ReentrancyGuard, AccessControl {
     // todo rename all RegistryGardens to RegistryCommunity
     /*|--------------------------------------------|*/
@@ -39,24 +41,41 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         _;
     }
 
-    modifier onlyRegistryMember() {
+    modifier onlyRegistryMemberSender() {
         if (!isMember(msg.sender)) {
             revert UserNotInRegistry();
         }
         _;
     }
 
+    modifier onlyRegistryMemberAddress(address _sender) {
+        if (!isMember(_sender)) {
+            revert UserNotInRegistry();
+        }
+        _;
+    }
+
+    modifier onlyStrategyEnabled(address _strategy) {
+        if (!enabledStrategies[_strategy]) {
+            revert StrategyDisabled();
+        }
+        _;
+    }
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
+
     error AddressCannotBeZero();
     error RegistryCannotBeZero();
     error UserNotInCouncil();
     error UserNotInRegistry();
     error UserAlreadyRegistered();
     error UserNotGardenOwner();
+    error UserAlreadyActivated();
     error StrategyExists();
+    error StrategyDisabled();
     error CallerIsNotNewOnwer();
+    error ValueCannotBeZero();
 
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -80,21 +99,26 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     //TODO: can change to uint32 with optimized storage order
     IAllo public allo;
     IRegistry public registry;
-    string public communityName; //@todo comunityName is never defined, need be get from metadata probably.
-    uint256 minimumStakeAmount;
     IERC20 public gardenToken;
+
+    uint256 fixedStakeAmount;
     uint256 public protocolFee;
-    string private covenantIpfsHash;
     bytes32 public profileId;
 
     address payable public pendingCouncilSafe; //@todo write test for change owner in 2 step
     Safe public councilSafe;
 
+    string public communityName; //@todo comunityName is never defined, need be get from metadata probably.
+    string private covenantIpfsHash;
+
     mapping(address => bool) public tribunalMembers;
 
     mapping(address => Member) public addressToMemberInfo;
     mapping(address => bool) public enabledStrategies;
-    mapping(address => address[]) public memberActivatedInStrategies;
+    mapping(address => mapping(address => bool)) public memberActivatedInStrategies;
+    mapping(address => uint256) public totalPointsActivatedInStrategy;
+
+    uint256 public constant DEFAULT_POINTS = 100;
 
     constructor() {
         // _grantRole(DEFAULT_ADMIN_ROLE, address(this));
@@ -107,7 +131,10 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
 
         allo = IAllo(params._allo);
         gardenToken = params._gardenToken;
-        minimumStakeAmount = params._minimumStakeAmount; //@todo can be zero?
+        if (params._minimumStakeAmount == 0) {
+            revert ValueCannotBeZero();
+        }
+        fixedStakeAmount = params._minimumStakeAmount; //@todo can be zero?
         protocolFee = params._protocolFee;
 
         councilSafe = Safe(params._councilSafe);
@@ -119,7 +146,20 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         //@todo emit events
     }
 
-    function addStrategy(address _newStrategy) public onlyRegistryMember {
+    function activateMemberInStrategy(address _member, address _strategy) public onlyRegistryMemberAddress(_member) {
+        revertZeroAddress(_strategy);
+
+        if (memberActivatedInStrategies[_member][_strategy]) {
+            revert UserAlreadyActivated();
+        }
+
+        memberActivatedInStrategies[_member][_strategy] = true;
+        totalPointsActivatedInStrategy[_strategy] += DEFAULT_POINTS;
+
+        emit StrategyAdded(_strategy);
+    }
+
+    function addStrategy(address _newStrategy) public onlyCouncilMember {
         if (enabledStrategies[_newStrategy]) {
             //@todo we dont use, if gonna use also write tests
             revert StrategyExists();
@@ -167,27 +207,35 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         return newMember.isRegistered;
     }
 
+    function stakeAndRegisterMember() public {
+        stakeAndRegisterMember(msg.sender);
+    }
     //Todo: change minimumStaked to fixedStakedAmount (==)
     //ADD fee when staking
-    function stakeAndRegisterMember() public nonReentrant {
-        Member storage newMember = addressToMemberInfo[msg.sender];
+
+    function stakeAndRegisterMember(address _member) public nonReentrant {
+        console.log("msg.sender", msg.sender);
+        console.log("msg.sender", _member);
+        Member storage newMember = addressToMemberInfo[_member];
         // require(
         //     gardenToken.balanceOf(msg.sender) >= minimumStakeAmount + protocolFee, //@todo fix this protocol fee and func to return StakeAmount need consider it or just remove protocolFee for now
         //     "[Registry]: Amount staked must be greater than minimum staked amount"
         // );
-        if (newMember.stakedAmount >= minimumStakeAmount) {
+        console.log("newMember.stakedAmount", newMember.stakedAmount);
+        console.log("minimumStakeAmount", fixedStakeAmount);
+        if (newMember.stakedAmount >= fixedStakeAmount) {
             revert UserAlreadyRegistered();
         }
 
         //Check if already member
         newMember.isRegistered = true;
-        newMember.stakedAmount = minimumStakeAmount;
-        gardenToken.transferFrom(msg.sender, address(this), minimumStakeAmount);
-        emit MemberRegistered(msg.sender, minimumStakeAmount);
+        newMember.stakedAmount = fixedStakeAmount;
+        // gardenToken.transferFrom(msg.sender, address(this), minimumStakeAmount);
+        emit MemberRegistered(_member, fixedStakeAmount);
     }
     //Check use of payable and msg.value
 
-    function modifyStakeAmount(uint256 newTotalAmount) public payable nonReentrant onlyRegistryMember {
+    function modifyStakeAmount(uint256 newTotalAmount) public payable nonReentrant onlyRegistryMemberSender {
         Member storage member = addressToMemberInfo[msg.sender];
         uint256 oldAmount = member.stakedAmount;
         member.stakedAmount = newTotalAmount;
@@ -204,11 +252,11 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     }
 
     function getBasisStakedAmount() external view returns (uint256) {
-        return minimumStakeAmount; //@todo need consider adding protocol fee or not here
+        return fixedStakeAmount; //@todo need consider adding protocol fee or not here
     }
 
     function setBasisStakedAmount(uint256 _newAmount) external onlyCouncilMember {
-        minimumStakeAmount = _newAmount;
+        fixedStakeAmount = _newAmount;
     }
 
     function updateProtocolFee(uint256 _newProtocolFee) public onlyCouncilMember {

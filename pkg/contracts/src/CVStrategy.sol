@@ -16,7 +16,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     /*|--------------------------------------------|*/
     error UserCannotBeZero(); // 0xd1f28288
     error UserNotInRegistry(); //0x6a5cfb6d
-
+    error UserIsInactive(); //
     error PoolIsEmpty(); // 0xed4421ad
     error NotImplemented(); //0xd6234725
     error TokenCannotBeZero(); //0x596a094c
@@ -55,7 +55,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         uint256 proposalId;
         uint256 poolId;
         address beneficiary;
-        address creator;
         ProposalType proposalType;
         uint256 amountRequested;
         address requestedToken;
@@ -115,9 +114,9 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     uint256 public weight;
     // uint256 public minThresholdStakePercentage;
     uint256 public proposalCounter; //@todo need increment it and make automatically set the proposalId
-    uint256 public totalStakedEffectiveSupply;
-    // uint256 public totalStakedPoints;
-    uint256 public totalPointsActivated;
+    uint256 public totalStaked;
+    uint256 public minPointsActivated = 100 * 10;
+    uint256 public totalPointsActivated = 0;
 
     uint256 public constant D = 10000000; //10**7
     // uint256 public constant ONE_HUNDRED_PERCENT = 1e18;
@@ -144,6 +143,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         }
 
         registryGardens = RegistryGardens(ip.registryGardens);
+
         decay = ip.decay;
         maxRatio = ip.maxRatio;
         weight = ip.weight;
@@ -193,9 +193,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         if (proposal.proposalId == 0) {
             revert ProposalIdCannotBeZero();
         }
-        if (proposal.creator == address(0)) {
-            proposal.creator = _sender;
-        }
         if (proposal.poolId == 0) {
             revert PoolIdCannotBeZero();
         }
@@ -229,6 +226,17 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         return address(uint160(proposal.proposalId));
     }
 
+    function activatePoints() external {
+        address member = msg.sender;
+        registryGardens.stakeAndRegisterMember(member);
+        registryGardens.activateMemberInStrategy(member, address(this));
+    }
+
+    function deactivatePoints() external {
+        address member = msg.sender; //@todo wip
+            // registryGardens.deactivateMemberInStrategy(member, address(this));
+    }
+
     // [[[proposalId, delta],[proposalId, delta]]]
     // layout.txs -> console.log(data)
     // data = bytes
@@ -241,8 +249,13 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     // only called via allo.sol by users to allocate to a recipient
     // this will update some data in this contract to store votes, etc.
     function _allocate(bytes memory _data, address _sender) internal override checkSenderIsMember(_sender) {
+        //@todo test for not member
         surpressStateMutabilityWarning++;
 
+        bool isMemberActivatedPoints = registryGardens.memberActivatedInStrategies(_sender, address(this));
+        if (!isMemberActivatedPoints) {
+            revert UserIsInactive();
+        }
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         _check_before_addSupport(_sender, pv);
         _addSupport(_sender, pv);
@@ -321,6 +334,19 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
     //    @TODO: onlyOnwer onlyRegistryGardens{
     function withdraw(address _member) external override {
+        // remove all proposals from the member
+        uint256[] memory proposalsIds = voterStakedProposals[_member];
+        for (uint256 i = 0; i < proposalsIds.length; i++) {
+            uint256 proposalId = proposalsIds[i];
+            Proposal storage proposal = proposals[proposalId];
+            proposalExists(proposalId);
+            uint256 stakedAmount = proposal.voterStake[_member];
+            proposal.voterStake[_member] = 0;
+            proposal.voterStakedPointsPct[_member] = 0;
+            proposal.stakedAmount -= stakedAmount;
+            totalStaked -= stakedAmount;
+        }
+
         //        _withdraw(_member);
     }
 
@@ -497,10 +523,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             // proposal.stakedAmount += stakedAmount;
             // uint256 diff =_diffStakedTokens(previousStakedAmount, stakedAmount);
             if (previousStakedAmount <= stakedAmount) {
-                totalStakedEffectiveSupply += stakedAmount - previousStakedAmount;
+                totalStaked += stakedAmount - previousStakedAmount;
                 proposal.stakedAmount += stakedAmount - previousStakedAmount;
             } else {
-                totalStakedEffectiveSupply -= previousStakedAmount - stakedAmount;
+                totalStaked -= previousStakedAmount - stakedAmount;
                 proposal.stakedAmount -= previousStakedAmount - stakedAmount;
             }
             //@todo: should emit event
@@ -647,7 +673,12 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     function totalEffectiveActivePoints() public view returns (uint256) {
-        return totalPointsActivated > totalStakedEffectiveSupply ? totalPointsActivated : totalStakedEffectiveSupply;
+        uint256 pointsActivated = minPointsActivated;
+        if (totalPointsActivated > minPointsActivated) {
+            pointsActivated = totalPointsActivated;
+        }
+        //@todo ignore totalStaked here
+        return pointsActivated > totalStaked ? pointsActivated : totalStaked;
     }
     /**
      * @dev Calculate conviction and store it on the proposal

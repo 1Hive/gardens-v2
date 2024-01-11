@@ -66,23 +66,12 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         // for (uint256 i = 0; i < membersStaked.length; i++) {
         // vm.startBroadcast();
-        token.mint(address(allo_owner()), 100 ether);
-        // vm.stopBroadcast();
-
-        // vm.startBroadcast(address());
-        token.approve(address(registryGardens), MINIMUM_STAKE);
-        registryGardens.stakeAndRegisterMember();
-        // vm.stopBroadcast();
-        // }
-
-        // vm.startBroadcast(allo.owner());
-        // allo.addToCloneableStrategies(address(strategy));
-        // vm.stopBroadcast();
-        // vm.startBroadcast(pool_admin());
-
-        // token.mint(address(pool_admin()), 100 ether);
+        // token.mint(address(allo_owner()), 100 ether);
 
         CVStrategy strategy1 = new CVStrategy(address(allo));
+        // token.approve(address(registryGardens), MINIMUM_STAKE);
+        strategy1.activatePoints();
+
         uint256 poolId =
             createPool(Allo(address(allo)), address(strategy1), address(registryGardens), registry, address(token));
         token.approve(address(allo), 100 ether);
@@ -95,20 +84,18 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            1, poolId, allo_owner(), pool_admin(), CVStrategy.ProposalType.Funding, 1000 wei, address(token)
+            1, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 1000 wei, address(token)
         );
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = CVStrategy.CreateProposal(
-            2, poolId, allo_owner(), pool_admin(), CVStrategy.ProposalType.Funding, 500 wei, address(token)
-        );
+        proposal =
+            CVStrategy.CreateProposal(2, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 500 wei, address(token));
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = CVStrategy.CreateProposal(
-            3, poolId, allo_owner(), pool_admin(), CVStrategy.ProposalType.Funding, 900 wei, address(token)
-        );
+        proposal =
+            CVStrategy.CreateProposal(3, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 900 wei, address(token));
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
