@@ -20,27 +20,27 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;
 
-    AMockERC20 public token;
-
-    Allo _allo_;
-    Registry _registry_;
-
     address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
     }
 
-    function allo_owner() public virtual override returns (address) {
-        return address(SENDER);
-    }
+    // function allo_owner() public virtual override returns (address) {
+    //     return address(SENDER);
+    // }
 
     function run() public {
+        address allo_proxy = vm.envAddress("ALLO_PROXY");
+        if (allo_proxy == address(0)) {
+            revert("ALLO_PROXY not set");
+        }
+
+        Allo allo = Allo(allo_proxy);
+
         vm.startBroadcast(pool_admin());
 
-        Allo allo = Allo(deployAllo());
-
-        token = new AMockERC20();
+        AMockERC20 token = new AMockERC20();
 
         IRegistry registry = allo.getRegistry();
 
@@ -53,35 +53,35 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         params._minimumStakeAmount = MINIMUM_STAKE;
         params._protocolFee = 0;
         params._metadata = metadata; // convenant ipfs
-        params._councilSafe = payable(address(_councilSafe()));
+        params._councilSafe = payable(address(_councilSafeWithOwner(pool_admin())));
 
         RegistryGardens registryGardens = RegistryGardens(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
-        // vm.stopBroadcast();
-
-        // address[] memory membersStaked = new address[](2);
-
-        // membersStaked[0] = address(SENDER);
-        // membersStaked[1] = address(0x3CeeF2C35d55a61514CeCe32C165fB96536d76c4);
-
-        // for (uint256 i = 0; i < membersStaked.length; i++) {
-        // vm.startBroadcast();
-        // token.mint(address(allo_owner()), 100 ether);
-
         CVStrategy strategy1 = new CVStrategy(address(allo));
-        // token.approve(address(registryGardens), MINIMUM_STAKE);
-        strategy1.activatePoints();
+        CVStrategy strategy2 = new CVStrategy(address(allo));
 
         uint256 poolId =
             createPool(Allo(address(allo)), address(strategy1), address(registryGardens), registry, address(token));
-        token.approve(address(allo), 100 ether);
-        allo.fundPool(poolId, 0.1 ether);
 
-        CVStrategy strategy2 = new CVStrategy(address(allo));
-        uint256 poolIdNative =
+        uint256 poolIdSignaling =
             createPool(Allo(address(allo)), address(strategy2), address(registryGardens), registry, address(0));
 
-        allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
+        strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
+        strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+
+        // FAST 1 MIN GROWTH
+        strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
+        strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+
+        strategy1.activatePoints();
+        strategy2.activatePoints();
+
+        // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
+
+        token.approve(address(allo), type(uint256).max);
+        allo.fundPool(poolId, 1_000);
 
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
             1, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 1000 wei, address(token)
@@ -99,12 +99,19 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
+        // Strategy 2 Signaling
+        CVStrategy.CreateProposal memory proposal2 = CVStrategy.CreateProposal(
+            1, poolIdSignaling, pool_admin(), CVStrategy.ProposalType.Signaling, 0, address(0)
+        );
+        bytes memory data2 = abi.encode(proposal2);
+        allo.registerRecipient(poolIdSignaling, data2);
+
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);
         console2.log("Strategy1 Addr: %s", address(strategy1));
 
-        console2.log("PoolIdNative: %s", poolIdNative);
+        console2.log("PoolIdSignaling: %s", poolIdSignaling);
         console2.log("Strategy2 Addr: %s", address(strategy2));
 
         console2.log("Allo Addr: %s", address(allo));
@@ -115,22 +122,6 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         console2.log("Allo Registry Addr: %s", address(registry));
         console2.log("Pool Admin Addr: %s", pool_admin());
-        console2.log("Council Safe Addr: %s", address(_councilSafe()));
-    }
-
-    function deployAllo() public returns (address) {
-        _registry_ = new Registry();
-        _registry_.initialize(registry_owner());
-        _allo_ = new Allo();
-
-        _allo_.initialize(
-            allo_owner(), // _owner
-            address(_registry_), // _registry
-            allo_treasury(), // _treasury
-            0, // _percentFee
-            0 // _baseFee
-        );
-
-        return address(_allo_);
+        console2.log("Council Safe Addr: %s", address(councilSafeOwner));
     }
 }

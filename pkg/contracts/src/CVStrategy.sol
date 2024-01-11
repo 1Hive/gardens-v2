@@ -117,7 +117,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     uint256 public proposalCounter; //@todo need increment it and make automatically set the proposalId
     uint256 public totalStaked;
     uint256 public minPointsActivated = 100 * 10;
-    uint256 public totalPointsActivated = 0;
 
     uint256 public constant D = 10000000; //10**7
     // uint256 public constant ONE_HUNDRED_PERCENT = 1e18;
@@ -201,6 +200,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             if (proposal.beneficiary == address(0)) {
                 revert AddressCannotBeZero();
             }
+            // getAllo().getPool(poolId).token;
             if (proposal.requestedToken == address(0)) {
                 revert TokenCannotBeZero();
             }
@@ -235,7 +235,9 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
     function deactivatePoints() external {
         address member = msg.sender; //@todo wip
-            // registryGardens.deactivateMemberInStrategy(member, address(this));
+        registryGardens.deactivateMemberInStrategy(member, address(this));
+        // remove support from all proposals
+        this.withdraw(member);
     }
 
     // [[[proposalId, delta],[proposalId, delta]]]
@@ -674,12 +676,12 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     function totalEffectiveActivePoints() public view returns (uint256) {
-        uint256 pointsActivated = minPointsActivated;
-        if (totalPointsActivated > minPointsActivated) {
-            pointsActivated = totalPointsActivated;
-        }
         //@todo ignore totalStaked here
-        return pointsActivated > totalStaked ? pointsActivated : totalStaked;
+        // return pointsActivated > totalStaked ? pointsActivated : totalStaked;
+        uint256 totalPointsActivated = registryGardens.totalPointsActivatedInStrategy(address(this));
+        console.log("totalPointsActivated", totalPointsActivated);
+        console.log("minPointsActivated", minPointsActivated);
+        return totalPointsActivated > minPointsActivated ? totalPointsActivated : minPointsActivated;
     }
     /**
      * @dev Calculate conviction and store it on the proposal

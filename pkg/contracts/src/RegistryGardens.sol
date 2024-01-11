@@ -72,6 +72,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     error UserAlreadyRegistered();
     error UserNotGardenOwner();
     error UserAlreadyActivated();
+    error UserAlreadyDeactivated();
     error StrategyExists();
     error StrategyDisabled();
     error CallerIsNotNewOnwer();
@@ -159,6 +160,19 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         emit StrategyAdded(_strategy);
     }
 
+    function deactivateMemberInStrategy(address _member, address _strategy) public onlyRegistryMemberAddress(_member) {
+        revertZeroAddress(_strategy);
+
+        if (!memberActivatedInStrategies[_member][_strategy]) {
+            revert UserAlreadyDeactivated();
+        }
+
+        memberActivatedInStrategies[_member][_strategy] = false;
+        totalPointsActivatedInStrategy[_strategy] -= DEFAULT_POINTS;
+
+        emit StrategyRemoved(_strategy);
+    }
+
     function addStrategy(address _newStrategy) public onlyCouncilMember {
         if (enabledStrategies[_newStrategy]) {
             //@todo we dont use, if gonna use also write tests
@@ -210,14 +224,9 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     function stakeAndRegisterMember() public {
         stakeAndRegisterMember(msg.sender);
     }
-    //Todo: change minimumStaked to fixedStakedAmount (==)
-    //ADD fee when staking
 
     function stakeAndRegisterMember(address _member) public nonReentrant {
-        console.log("msg.sender", msg.sender);
-        console.log("msg.sender", _member);
         Member storage newMember = addressToMemberInfo[_member];
-        //Check if already member
         newMember.isRegistered = true;
         newMember.stakedAmount = fixedStakeAmount;
         // gardenToken.transferFrom(msg.sender, address(this), minimumStakeAmount);
@@ -264,7 +273,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         require(isMember(_member) || isCouncilMember(msg.sender), "[Registry]: Must be active member to unregister");
         Member memory member = addressToMemberInfo[msg.sender];
         delete addressToMemberInfo[msg.sender];
-        gardenToken.transfer(msg.sender, member.stakedAmount);
+        // gardenToken.transfer(msg.sender, member.stakedAmount);
         emit MemberUnregistered(msg.sender, member.stakedAmount);
     }
 }
