@@ -10,9 +10,9 @@ import { formatEther } from "viem";
 //some metadata for each pool
 const poolInfo = [
   {
-    title: "1Hive Community Hackaton Funding Pool",
+    title: "Arbitrum Grants Conviction Voting Pool",
     description:
-      "Fueling the Allo Hackathon on the Arbitrum Network! Your support powers the coding magic, bug-busting feats, community buzz, mentorship vibes, and knowledge boosts. Let's make this hackathon epic together! 🚀💻🌐",
+      "This Funding Pool uses conviction voting to distribute funds for the best public goods providers on our network. Stake your support in your favorite proposals below - the longer you stake, the more conviction your support grows. if a proposal reaches enough conviction to pass, funds will be distributed.",
   },
   {
     title: "1Hive Hackaton Signaling Pool",
@@ -57,8 +57,34 @@ export default function Pool({
               </p>
               <div className="flex w-full p-4">
                 <div className="flex flex-1 flex-col space-y-4 text-xl font-semibold">
-                  <span>Strategy type: Conviction Voting</span>
-                  <span>Funding Token: Honey</span>
+                  {poolId === "1" && (
+                    <>
+                      {status === "idle" ? (
+                        <>
+                          <div className="flex flex-col items-center justify-center">
+                            <p>fetching balance ..</p>{" "}
+                            <span className="loading loading-spinner loading-lg"></span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex flex-col items-center justify-center">
+                            <div>
+                              <h3 className="font-press text-xl transition-all duration-150 ease-in ">
+                                Funds Available:{" "}
+                              </h3>
+                            </div>
+
+                            <h4 className="font-press">
+                              {parsedPoolBalance} $ALLO
+                            </h4>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                  {/* <span>Strategy type: Conviction Voting</span>
+                  <span>Funding Token: Honey</span> */}
                 </div>
                 <div className="flex flex-1 flex-col items-center space-y-4 font-bold">
                   <span>Proposals type accepted:</span>
@@ -66,32 +92,16 @@ export default function Pool({
                     <span className="badge w-28 bg-primary p-4 tracking-wide">
                       Funding
                     </span>
-                    <span className="badge w-28 bg-secondary p-4">
+                    <span className="badge w-28 bg-secondary p-4 opacity-30">
                       Streaming
                     </span>
-                    <span className="badge w-28 bg-accent p-4">Signaling</span>
+                    <span className="badge w-28 bg-accent p-4 opacity-40">
+                      Signaling
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-
-            {poolId === "1" && (
-              <>
-                {status === "idle" ? (
-                  <>
-                    <p>fetching balance ..</p>{" "}
-                    <span className="loading loading-spinner loading-lg"></span>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="font-press text-2xl transition-all duration-150 ease-in">
-                      Funds: <span>{parsedPoolBalance} HNY</span>
-                    </h3>
-                  </>
-                )}
-              </>
-            )}
-
             <div className="mt-8 flex">
               {[...Array(6)].map((_, i) => (
                 <Image
