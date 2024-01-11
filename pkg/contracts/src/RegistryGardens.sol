@@ -217,16 +217,6 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         console.log("msg.sender", msg.sender);
         console.log("msg.sender", _member);
         Member storage newMember = addressToMemberInfo[_member];
-        // require(
-        //     gardenToken.balanceOf(msg.sender) >= minimumStakeAmount + protocolFee, //@todo fix this protocol fee and func to return StakeAmount need consider it or just remove protocolFee for now
-        //     "[Registry]: Amount staked must be greater than minimum staked amount"
-        // );
-        console.log("newMember.stakedAmount", newMember.stakedAmount);
-        console.log("minimumStakeAmount", fixedStakeAmount);
-        if (newMember.stakedAmount >= fixedStakeAmount) {
-            revert UserAlreadyRegistered();
-        }
-
         //Check if already member
         newMember.isRegistered = true;
         newMember.stakedAmount = fixedStakeAmount;
