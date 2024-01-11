@@ -22,7 +22,7 @@ type Proposals = {
 
 const proposals: Proposals[] = [
   {
-    id: 0,
+    id: 1,
     title: "Gardens Swarm December 2023 Funding Proposal",
     description:
       "This is a proposal to fund the Gardens Swarm for the month of December 2023. This is a proposal to fund the Gardens Swarm for the month of December 2023. This is a proposal to fund the Gardens Swarm for the month of December 2023. This is a proposal to fund the Gardens Swarm for the month of December 2023.",
@@ -54,7 +54,7 @@ const proposals: Proposals[] = [
     ],
   },
   {
-    id: 1,
+    id: 2,
     title: "Fluid Proposal paul active contributor",
     description:
       "I’ve been a full time web3 contributor since April 2021, working mostly on 1Hive and all the cool stuff getting built here.",
@@ -85,7 +85,7 @@ const proposals: Proposals[] = [
     ],
   },
   {
-    id: 2,
+    id: 3,
     title: "Signaling example",
     description: "this is a description of the example",
     type: "signaling",

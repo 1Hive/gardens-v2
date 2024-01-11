@@ -7,6 +7,7 @@ interface ButtonProps {
   className?: string;
   disabled?: boolean;
   children?: React.ReactNode;
+  isLoading?: boolean;
 }
 
 export function Button({
@@ -16,6 +17,7 @@ export function Button({
   disabled = false,
   children,
   style = "fill",
+  isLoading = false,
 }: ButtonProps) {
   const btnType = {
     fill: "",
@@ -25,11 +27,11 @@ export function Button({
   return (
     <button
       type={action}
-      className={`${btnType[style]} ${className} rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95`}
+      className={`${btnType[style]} ${className} flex h-[48px] cursor-pointer items-center justify-center rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95`}
       onClick={handleOnClick}
-      disabled={disabled}
+      disabled={disabled || isLoading}
     >
-      {children}
+      {isLoading ? <span className="loading loading-spinner"></span> : children}
     </button>
   );
 }
