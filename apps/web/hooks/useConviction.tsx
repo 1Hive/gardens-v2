@@ -10,7 +10,9 @@ export const useConviction = () => {
   const [data, setData] = useState([]);
 
   const proposalId = 1;
-  const { proposals } = useProposalsRead({ poolId: Number(1) });
+  const { proposals } = useProposalsRead({
+    poolId: Number(contractsAddresses.poolID),
+  });
 
   const proposalsReadsContract = proposals?.filter(
     (proposal) => proposal.id === Number(proposalId),

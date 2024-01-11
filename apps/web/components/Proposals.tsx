@@ -86,7 +86,7 @@ export function Proposals({ poolId }: { poolId: string }) {
 
   const submit = () => {
     const encodedData = getEncodedProposals(inputs, proposals);
-    const poolId = 1;
+    const poolId = Number(contractsAddresses.poolID);
 
     writeContract({
       args: [BigInt(poolId), encodedData as `0x${string}`],

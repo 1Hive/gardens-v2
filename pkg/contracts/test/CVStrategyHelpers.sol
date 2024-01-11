@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.13;
 
+import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {CVStrategy} from "../src/CVStrategy.sol";
@@ -19,13 +20,17 @@ contract CVStrategyHelpers is Native, Accounts {
     uint256 internal constant TWO_128 = 2 ** 128;
     uint256 internal constant D = 10 ** 7;
 
+    // function poolProfile_id1(RegistryGardens registryGardens) public virtual returns (bytes32) {
     function poolProfile_id1(IRegistry registry) public virtual returns (bytes32) {
         if (_poolProfileId1_ == bytes32(0)) {
             _poolProfileId1_ = registry.createProfile(
-                1, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
+                2, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
             );
         }
         return _poolProfileId1_;
+        // bytes32 profileId = registryGardens.profileId();
+        // console.logBytes32(profileId);
+        // return profileId;
     }
 
     function createPool(Allo allo, address strategy, address registryGardens, IRegistry registry, address token)

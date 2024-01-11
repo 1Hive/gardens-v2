@@ -84,19 +84,18 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         token.approve(address(allo), type(uint256).max);
         allo.fundPool(poolId, 1_000);
 
-        CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            1, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 1000 wei, address(token)
-        );
+        CVStrategy.CreateProposal memory proposal =
+            CVStrategy.CreateProposal(1, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 50 wei, address(token));
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
         proposal =
-            CVStrategy.CreateProposal(2, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 500 wei, address(token));
+            CVStrategy.CreateProposal(2, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 25 wei, address(token));
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
         proposal =
-            CVStrategy.CreateProposal(3, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 900 wei, address(token));
+            CVStrategy.CreateProposal(3, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 10 wei, address(token));
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
