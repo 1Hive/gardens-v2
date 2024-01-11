@@ -50,3 +50,5 @@ console.log("env", ENV);
 console.log("envs", __contractsAddresses);
 
 export const contractsAddresses = __contractsAddresses;
+
+export const isProd = ENV === "prod";

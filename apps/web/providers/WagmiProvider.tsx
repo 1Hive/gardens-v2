@@ -18,7 +18,7 @@ import { InjectedConnector } from "wagmi/connectors/injected";
 import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 
-import { contractsAddresses } from "@/constants/contracts";
+import { contractsAddresses, isProd } from "@/constants/contracts";
 type WagmiProviderType = {
   children: React.ReactNode;
 };
@@ -45,7 +45,7 @@ const localChain = {
 };
 
 const { chains, publicClient } = configureChains(
-  [localChain, arbitrumSepolia],
+  isProd ? [arbitrumSepolia] : [localChain, arbitrumSepolia],
   [
     jsonRpcProvider({ rpc: (chain: any) => chain.rpcUrls.default }),
     walletConnectProvider({ projectId }),
