@@ -21,15 +21,16 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     /*|                 EVENTS                     |*/
     /*|--------------------------------------------|*/
 
-    event StrategyAdded(address _strategy);
-    event StrategyRemoved(address _strategy);
-    event MemberRegistered(address _member, uint256 _amountStaked);
-    event MemberUnregistered(address _member, uint256 _amountReturned);
-    event StakeAmountUpdated(address _member, uint256 _newAmount);
+    event AlloSet(address _allo);
     event CouncilSafeSet(address _safe);
     event CouncilSafeChangeStarted(address _safeOwner, address _newSafeOwner);
+    event MemberRegistered(address _member, uint256 _amountStaked);
+    event MemberUnregistered(address _member, uint256 _amountReturned);
     event ProtocolFeeUpdated(uint256 _newFee);
-    event AlloSet(address _allo);
+    event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
+    event StrategyAdded(address _strategy);
+    event StrategyRemoved(address _strategy);
+    event StakeAmountUpdated(address _member, uint256 _newAmount);
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
@@ -90,11 +91,12 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     struct InitializeParams {
         address _allo;
         IERC20 _gardenToken;
-        uint256 _minimumStakeAmount;
+        uint256 _registerStakeAmount;
         uint256 _protocolFee; //@todo if remove the protocol fee, also remove it here
         uint256 _nonce;
         Metadata _metadata;
         address payable _councilSafe;
+        string _communityName;
     }
 
     //TODO: can change to uint32 with optimized storage order
@@ -102,7 +104,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     IRegistry public registry;
     IERC20 public gardenToken;
 
-    uint256 fixedStakeAmount;
+    uint256 registerStakeAmount;
     uint256 public protocolFee;
     bytes32 public profileId;
 
@@ -129,22 +131,30 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     function initialize(RegistryGardens.InitializeParams memory params) public {
         revertZeroAddress(address(params._gardenToken));
         revertZeroAddress(params._councilSafe);
+        revertZeroAddress(params._allo);
 
         allo = IAllo(params._allo);
         gardenToken = params._gardenToken;
-        if (params._minimumStakeAmount == 0) {
+        if (params._registerStakeAmount == 0) {
             revert ValueCannotBeZero();
         }
-        fixedStakeAmount = params._minimumStakeAmount; //@todo can be zero?
+        registerStakeAmount = params._registerStakeAmount; //@todo can be zero?
         protocolFee = params._protocolFee;
+
+        communityName = params._communityName;
 
         councilSafe = Safe(params._councilSafe);
         _grantRole(COUNCIL_MEMBER_CHANGE, params._councilSafe);
 
         registry = IRegistry(allo.getRegistry());
-        address[] memory initialMembers = new address[](0);
-        profileId = registry.createProfile(params._nonce, communityName, params._metadata, msg.sender, initialMembers);
-        //@todo emit events
+
+        address[] memory initialMembers = new address[](1);
+        initialMembers[0] = address(councilSafe);
+
+        profileId =
+            registry.createProfile(params._nonce, communityName, params._metadata, address(this), initialMembers);
+
+        emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
     function activateMemberInStrategy(address _member, address _strategy) public onlyRegistryMemberAddress(_member) {
@@ -228,9 +238,9 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     function stakeAndRegisterMember(address _member) public nonReentrant {
         Member storage newMember = addressToMemberInfo[_member];
         newMember.isRegistered = true;
-        newMember.stakedAmount = fixedStakeAmount;
+        newMember.stakedAmount = registerStakeAmount;
         // gardenToken.transferFrom(msg.sender, address(this), minimumStakeAmount);
-        emit MemberRegistered(_member, fixedStakeAmount);
+        emit MemberRegistered(_member, registerStakeAmount);
     }
     //Check use of payable and msg.value
 
@@ -251,11 +261,11 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     }
 
     function getBasisStakedAmount() external view returns (uint256) {
-        return fixedStakeAmount; //@todo need consider adding protocol fee or not here
+        return registerStakeAmount; //@todo need consider adding protocol fee or not here
     }
 
     function setBasisStakedAmount(uint256 _newAmount) external onlyCouncilMember {
-        fixedStakeAmount = _newAmount;
+        registerStakeAmount = _newAmount;
     }
 
     function updateProtocolFee(uint256 _newProtocolFee) public onlyCouncilMember {

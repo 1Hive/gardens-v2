@@ -267,7 +267,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     // this will distribute tokens to recipients
     // most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
     // this contract will need to track the amount paid already, so that it doesn't double pay
-    function _distribute(address[] memory, bytes memory _data, address _sender) internal override {
+    function _distribute(address[] memory, bytes memory _data, address) internal override {
         surpressStateMutabilityWarning++;
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty();
