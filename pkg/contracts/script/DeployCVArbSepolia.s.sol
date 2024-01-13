@@ -56,6 +56,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         params._protocolFee = 0;
         params._metadata = metadata; // convenant ipfs
         params._councilSafe = payable(address(_councilSafeWithOwner(pool_admin())));
+        params._communityName = "GardensDAO";
 
         assertTrue(params._councilSafe != address(0));
 
