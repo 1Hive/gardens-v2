@@ -68,7 +68,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
         RegistryGardens.InitializeParams memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
-        params._minimumStakeAmount = MINIMUM_STAKE;
+        params._registerStakeAmount = MINIMUM_STAKE;
         params._protocolFee = 2;
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));

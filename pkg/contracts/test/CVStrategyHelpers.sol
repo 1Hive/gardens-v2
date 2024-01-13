@@ -21,16 +21,17 @@ contract CVStrategyHelpers is Native, Accounts {
     uint256 internal constant D = 10 ** 7;
 
     // function poolProfile_id1(RegistryGardens registryGardens) public virtual returns (bytes32) {
-    function poolProfile_id1(IRegistry registry) public virtual returns (bytes32) {
+    function poolProfile_id1(IRegistry registry, address pool_admin, address[] memory pool_managers)
+        public
+        virtual
+        returns (bytes32)
+    {
         if (_poolProfileId1_ == bytes32(0)) {
             _poolProfileId1_ = registry.createProfile(
-                2, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
+                2, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin, pool_managers
             );
         }
         return _poolProfileId1_;
-        // bytes32 profileId = registryGardens.profileId();
-        // console.logBytes32(profileId);
-        // return profileId;
     }
 
     function createPool(Allo allo, address strategy, address registryGardens, IRegistry registry, address token)
@@ -60,7 +61,7 @@ contract CVStrategyHelpers is Native, Accounts {
         }
         poolId = allo.createPoolWithCustomStrategy(
             // poolId = allo.createPool(
-            poolProfile_id1(registry),
+            poolProfile_id1(registry, pool_admin(), _pool_managers),
             address(strategy),
             abi.encode(params),
             _token,

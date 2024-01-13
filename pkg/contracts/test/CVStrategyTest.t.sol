@@ -64,13 +64,15 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // registryGardens = new RegistryGardens();
         RegistryFactory registryFactory = new RegistryFactory();
+
         RegistryGardens.InitializeParams memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
-        params._minimumStakeAmount = MINIMUM_STAKE;
+        params._registerStakeAmount = MINIMUM_STAKE;
         params._protocolFee = 2;
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
+
         registryGardens = RegistryGardens(registryFactory.createRegistry(params));
 
         token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
@@ -123,7 +125,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             allo().fundPool(poolId, poolAmount);
         }
 
-        assertEq(pool.profileId, poolProfile_id1(registry()), "poolProfileID");
+        assertEq(pool.profileId, poolProfile_id1(registry(), local(), pool_managers()), "poolProfileID");
         // assertNotEq(address(pool.strategy), address(strategy), "Strategy Clones");
 
         startMeasuringGas("createProposal");
@@ -718,7 +720,20 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalVoterStake(PROPOSAL_ID, address(this)), STAKED_AMOUNT); // 80% of 50 = 40
         assertEq(cv.getProposalStakedAmount(PROPOSAL_ID), STAKED_AMOUNT); // 80% of 50 = 40
 
+        printProposalDetails(cv, PROPOSAL_ID);
+        // address[] memory recipients = ;
+        // recipients[0] = address(1);
+        bytes memory dataProposal = abi.encode(PROPOSAL_ID);
+
+        allo().distribute(poolId, new address[](0), dataProposal);
+        // console.log("Beneficienry After amount: %s", amount);
+    }
+
+    function printProposalDetails(CVStrategy cv, uint256 proposalId) public view {
         (
+            // address submitter,
+            // address beneficiary,
+            // address requestedToken,
             ,
             ,
             ,
@@ -731,11 +746,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             ,
             uint256 threshold,
             // uint256 voterPointsPct
-        ) = cv.getProposal(1);
+        ) = cv.getProposal(proposalId);
 
         // console.log("Proposal Status: %s", proposalStatus);
         // console.log("Proposal Type: %s", proposalType);
         // console.log("Requested Token: %s", requestedToken);
+
+        // Return the proposal details
         console.log("Requested Amount: %s", requestedAmount);
         console.log("Staked Tokens: %s", stakedTokens);
         console.log("Threshold: %s", threshold);
@@ -745,16 +762,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("Voter points pct %s", voterPointsPct);
         // console.log("Beneficiary: %s", beneficiary);
         // console.log("Submitter: %s", submitter);
-        // address[] memory recipients = ;
-        // recipients[0] = address(1);
-        bytes memory dataProposal = abi.encode(PROPOSAL_ID);
-
-        allo().distribute(poolId, new address[](0), dataProposal);
-        // console.log("Beneficienry After amount: %s", amount);
     }
 
     function test_activate_points() public {
-        (IAllo.Pool memory pool, uint256 poolId) = _createProposal(address(0), 0, 0);
+        (IAllo.Pool memory pool,) = _createProposal(address(0), 0, 0);
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
@@ -768,8 +779,43 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(registryGardens.isMember(pool_admin()), true, "isMember");
     }
 
+    function test_registry_community_name_default_empty() public {
+        RegistryFactory registryFactory = new RegistryFactory();
+
+        RegistryGardens.InitializeParams memory params;
+        params._allo = address(allo());
+        params._gardenToken = IERC20(address(token));
+        params._registerStakeAmount = MINIMUM_STAKE;
+        params._protocolFee = 2;
+        params._metadata = metadata;
+        params._councilSafe = payable(address(_councilSafe()));
+
+        registryGardens = RegistryGardens(registryFactory.createRegistry(params));
+        // CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        assertEq(registryGardens.communityName(), "", "communityMember");
+    }
+
+    function test_registry_community_name_defined() public {
+        RegistryFactory registryFactory = new RegistryFactory();
+
+        RegistryGardens.InitializeParams memory params;
+        params._allo = address(allo());
+        params._gardenToken = IERC20(address(token));
+        params._registerStakeAmount = MINIMUM_STAKE;
+        params._protocolFee = 2;
+        params._metadata = metadata;
+        params._councilSafe = payable(address(_councilSafe()));
+        params._communityName = "GardensDAO";
+
+        registryGardens = RegistryGardens(registryFactory.createRegistry(params));
+        // CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        assertEq(registryGardens.communityName(), "GardensDAO", "communityMember");
+    }
+
     function test_deactivate_points() public {
-        (IAllo.Pool memory pool, uint256 poolId) = _createProposal(address(0), 0, 0);
+        (IAllo.Pool memory pool,) = _createProposal(address(0), 0, 0);
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
