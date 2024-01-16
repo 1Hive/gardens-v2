@@ -59,7 +59,18 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         token.mint(address(pool_admin()), 10_000);
 
         CVStrategy strategy1 = new CVStrategy(address(allo));
+
+        safeHelper(
+            address(registryGardens),
+            0,
+            abi.encodeWithSelector(registryGardens.addStrategy.selector, address(strategy1))
+        );
         CVStrategy strategy2 = new CVStrategy(address(allo));
+        safeHelper(
+            address(registryGardens),
+            0,
+            abi.encodeWithSelector(registryGardens.addStrategy.selector, address(strategy2))
+        );
         // FAST 1 MIN GROWTH
 
         uint256 poolId =
@@ -88,7 +99,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             vm.startBroadcast(address(membersStaked[i]));
             token.mint(address(membersStaked[i]), 100);
             token.approve(address(registryGardens), MINIMUM_STAKE);
-            // registryGardens.stakeAndRegisterMember();
+            registryGardens.stakeAndRegisterMember();
             strategy1.activatePoints();
             strategy2.activatePoints();
 
