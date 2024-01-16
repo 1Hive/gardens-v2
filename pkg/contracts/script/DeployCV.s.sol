@@ -44,16 +44,17 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         RegistryFactory registryFactory = new RegistryFactory();
 
-        RegistryGardens.InitializeParams memory params;
+        RegistryCommunity.InitializeParams memory params;
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
-        params._minimumStakeAmount = MINIMUM_STAKE;
+        params._registerStakeAmount = MINIMUM_STAKE;
         params._protocolFee = 0;
         params._metadata = metadata; // convenant ipfs
         params._councilSafe = payable(address(_councilSafe()));
+        params._communityName = "Allo";
 
-        RegistryGardens registryGardens = RegistryGardens(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
+        RegistryCommunity registryGardens = RegistryCommunity(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
         token.mint(address(pool_admin()), 10_000);
 

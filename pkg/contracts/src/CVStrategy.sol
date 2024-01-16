@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/console.sol";
 import {BaseStrategy} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
-import {RegistryGardens} from "./RegistryGardens.sol";
+import {RegistryCommunity} from "./RegistryCommunity.sol";
 
 interface IWithdrawMember {
     function withdraw(address _member) external;
@@ -104,7 +104,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     /*|--------------------------------------------|*/
 
     uint256 internal surpressStateMutabilityWarning;
-    RegistryGardens registryGardens;
+    RegistryCommunity registryGardens;
 
     mapping(uint256 => Proposal) public proposals;
     mapping(address => uint256) public totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
@@ -142,7 +142,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             revert RegistryCannotBeZero();
         }
 
-        registryGardens = RegistryGardens(ip.registryGardens);
+        registryGardens = RegistryCommunity(ip.registryGardens);
 
         decay = ip.decay;
         maxRatio = ip.maxRatio;
@@ -229,7 +229,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
     function activatePoints() external {
         address member = msg.sender;
-        registryGardens.stakeAndRegisterMember(member);
         registryGardens.activateMemberInStrategy(member, address(this));
     }
 
@@ -267,7 +266,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     // this will distribute tokens to recipients
     // most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
     // this contract will need to track the amount paid already, so that it doesn't double pay
-    function _distribute(address[] memory, bytes memory _data, address _sender) internal override {
+    function _distribute(address[] memory, bytes memory _data, address) internal override {
         surpressStateMutabilityWarning++;
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty();
@@ -335,19 +334,20 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         _setPoolActive(_active);
     }
 
-    //    @TODO: onlyOnwer onlyRegistryGardens{
+    //    @TODO: onlyOnwer onlyRegistryCommunity{
     function withdraw(address _member) external override {
         // remove all proposals from the member
         uint256[] memory proposalsIds = voterStakedProposals[_member];
         for (uint256 i = 0; i < proposalsIds.length; i++) {
             uint256 proposalId = proposalsIds[i];
             Proposal storage proposal = proposals[proposalId];
-            proposalExists(proposalId);
-            uint256 stakedAmount = proposal.voterStake[_member];
-            proposal.voterStake[_member] = 0;
-            proposal.voterStakedPointsPct[_member] = 0;
-            proposal.stakedAmount -= stakedAmount;
-            totalStaked -= stakedAmount;
+            if (proposalExists(proposalId)) {
+                uint256 stakedAmount = proposal.voterStake[_member];
+                proposal.voterStake[_member] = 0;
+                proposal.voterStakedPointsPct[_member] = 0;
+                proposal.stakedAmount -= stakedAmount;
+                totalStaked -= stakedAmount;
+            }
         }
 
         //        _withdraw(_member);
@@ -737,7 +737,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         weight = _weight;
     }
 
-    function setRegistryGardens(address _registryGardens) external onlyPoolManager(msg.sender) {
-        registryGardens = RegistryGardens(_registryGardens);
+    function setRegistryCommunity(address _registryGardens) external onlyPoolManager(msg.sender) {
+        registryGardens = RegistryCommunity(_registryGardens);
     }
 }

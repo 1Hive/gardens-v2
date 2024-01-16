@@ -38,6 +38,8 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         Allo allo = Allo(allo_proxy);
 
+        console2.log("Allo Addr: %s", address(allo));
+
         vm.startBroadcast(pool_admin());
 
         AMockERC20 token = new AMockERC20();
@@ -46,22 +48,41 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         RegistryFactory registryFactory = new RegistryFactory();
 
-        RegistryGardens.InitializeParams memory params;
+        RegistryCommunity.InitializeParams memory params;
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
-        params._minimumStakeAmount = MINIMUM_STAKE;
+        params._registerStakeAmount = MINIMUM_STAKE;
         params._protocolFee = 0;
         params._metadata = metadata; // convenant ipfs
         params._councilSafe = payable(address(_councilSafeWithOwner(pool_admin())));
+        params._communityName = "GardensDAO";
 
-        RegistryGardens registryGardens = RegistryGardens(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
+        assertTrue(params._councilSafe != address(0));
+
+        RegistryCommunity registryGardens = RegistryCommunity(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
         CVStrategy strategy1 = new CVStrategy(address(allo));
         CVStrategy strategy2 = new CVStrategy(address(allo));
 
-        uint256 poolId =
-            createPool(Allo(address(allo)), address(strategy1), address(registryGardens), registry, address(token));
+        address[] memory _pool_managers = new address[](2);
+        _pool_managers[0] = address(params._councilSafe);
+        _pool_managers[1] = address(msg.sender);
+
+        // bytes32 memory_poolProfileId_ = registry.createProfile(
+        //     0, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
+        // );
+        uint256 poolId = allo.createPoolWithCustomStrategy(
+            // poolId = allo.createPool(
+            registryGardens.profileId(),
+            address(strategy1),
+            abi.encode(params),
+            address(token),
+            0,
+            metadata,
+            _pool_managers
+        );
+        poolId = createPool(Allo(address(allo)), address(strategy1), address(registryGardens), registry, address(token));
 
         uint256 poolIdSignaling =
             createPool(Allo(address(allo)), address(strategy2), address(registryGardens), registry, address(0));
@@ -114,7 +135,6 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("PoolIdSignaling: %s", poolIdSignaling);
         console2.log("Strategy2 Addr: %s", address(strategy2));
 
-        console2.log("Allo Addr: %s", address(allo));
         console2.log("Token Addr: %s", address(token));
         console2.log("Token Native Addr: %s", address(NATIVE));
 

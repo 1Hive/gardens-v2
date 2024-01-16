@@ -2,8 +2,8 @@
 import { gardenLand } from "@/assets";
 import { Proposals, Button } from "@/components";
 import Image from "next/image";
-import { useContractRead, useContractWrite } from "wagmi";
-import { cvStrategyABI, alloABI } from "@/src/generated";
+import { useAccount, useContractRead, useContractWrite } from "wagmi";
+import { cvStrategyABI, alloABI, registryGardensABI } from "@/src/generated";
 import { useProposalsRead } from "@/hooks/useProposalsRead";
 import { formatEther } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
@@ -28,6 +28,8 @@ export default function Pool({
   params: { poolId: string };
 }) {
   const { strategyAddress } = useProposalsRead({ poolId: Number(poolId) });
+  const account = useAccount();
+  const { address } = account;
 
   //get the Pool Balance
   const { data: poolBalance, status } = useContractRead({
@@ -36,6 +38,15 @@ export default function Pool({
     functionName: "getPoolAmount",
     watch: true,
   });
+  // memberActivatedInStrategies
+  const { data: isMemberActived, status: statusMemberActived } =
+    useContractRead({
+      address: strategyAddress,
+      abi: registryGardensABI,
+      functionName: "memberActivatedInStrategies",
+      // watch: true,
+      args: [address as `0x${string}`, strategyAddress as `0x${string}`],
+    });
 
   const {
     data: activePoints,
@@ -57,7 +68,7 @@ export default function Pool({
         <header className="flex flex-col items-center justify-center">
           <h2 className="text-center font-press">Pool {poolId} </h2>
           <h4 className="text-2xl ">
-            {/* {poolInfo[(poolId as unknown as number) - 1].title} */}
+            {poolInfo[(poolId as unknown as number) - 1].title}
           </h4>
         </header>
         <main className="flex flex-col gap-10">
@@ -115,7 +126,7 @@ export default function Pool({
               </div>
               <div className="flex items-center justify-center">
                 <Button onClick={() => write?.()} className="w-fit bg-primary">
-                  Activate Points
+                  {isMemberActived ? "Deactivate Points" : "Activate Points"}
                 </Button>
               </div>
             </div>

@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import "../src/RegistryGardens.sol";
+import "../src/RegistryCommunity.sol";
 
 contract RegistryFactory {
-    mapping(RegistryGardens => bool) registries;
+    mapping(RegistryCommunity => bool) registries;
     uint256 public nonce = 0;
 
-    function createRegistry(RegistryGardens.InitializeParams memory params)
+    function createRegistry(RegistryCommunity.InitializeParams memory params)
         public
         returns (address _createdRegistryAddress)
     {
-        RegistryGardens gardenRegistry = new RegistryGardens();
+        RegistryCommunity gardenRegistry = new RegistryCommunity();
         params._nonce = nonce++;
         gardenRegistry.initialize(params);
         return address(gardenRegistry);
