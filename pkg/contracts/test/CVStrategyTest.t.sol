@@ -22,7 +22,7 @@ import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
 
 import {CVStrategy} from "../src/CVStrategy.sol";
-import {RegistryGardens} from "../src/RegistryGardens.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
@@ -42,7 +42,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     uint256 public constant MINIMUM_STAKE = 50;
     uint256 public constant REQUESTED_AMOUNT = 1000;
 
-    RegistryGardens internal registryGardens;
+    RegistryCommunity internal registryGardens;
 
     function setUp() public {
         __RegistrySetupFull();
@@ -62,10 +62,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().transferOwnership(local());
         vm.stopPrank();
 
-        // registryGardens = new RegistryGardens();
+        // registryGardens = new RegistryCommunity();
         RegistryFactory registryFactory = new RegistryFactory();
 
-        RegistryGardens.InitializeParams memory params;
+        RegistryCommunity.InitializeParams memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -73,12 +73,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        registryGardens = RegistryGardens(registryFactory.createRegistry(params));
+        registryGardens = RegistryCommunity(registryFactory.createRegistry(params));
 
         token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
     }
 
-    function _registryGardens() internal view returns (RegistryGardens) {
+    function _registryGardens() internal view returns (RegistryCommunity) {
         return registryGardens;
     }
 
@@ -769,7 +769,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryGardens.UserAlreadyActivated.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyActivated.selector));
         cv.activatePoints();
 
         vm.startPrank(pool_admin());
@@ -782,7 +782,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function test_registry_community_name_default_empty() public {
         RegistryFactory registryFactory = new RegistryFactory();
 
-        RegistryGardens.InitializeParams memory params;
+        RegistryCommunity.InitializeParams memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -790,7 +790,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        registryGardens = RegistryGardens(registryFactory.createRegistry(params));
+        registryGardens = RegistryCommunity(registryFactory.createRegistry(params));
         // CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
         assertEq(registryGardens.communityName(), "", "communityMember");
@@ -799,7 +799,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function test_registry_community_name_defined() public {
         RegistryFactory registryFactory = new RegistryFactory();
 
-        RegistryGardens.InitializeParams memory params;
+        RegistryCommunity.InitializeParams memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -808,7 +808,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "GardensDAO";
 
-        registryGardens = RegistryGardens(registryFactory.createRegistry(params));
+        registryGardens = RegistryCommunity(registryFactory.createRegistry(params));
         // CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
         assertEq(registryGardens.communityName(), "GardensDAO", "communityMember");
@@ -819,7 +819,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryGardens.UserAlreadyActivated.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyActivated.selector));
         cv.activatePoints();
 
         cv.deactivatePoints();

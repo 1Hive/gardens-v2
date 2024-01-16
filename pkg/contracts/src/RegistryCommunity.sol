@@ -11,8 +11,8 @@ import {Safe} from "safe-contracts/contracts/Safe.sol";
 
 import "forge-std/console.sol";
 
-contract RegistryGardens is ReentrancyGuard, AccessControl {
-    // todo rename all RegistryGardens to RegistryCommunity
+contract RegistryCommunity is ReentrancyGuard, AccessControl {
+    // todo rename all RegistryCommunity to RegistryCommunity
     /*|--------------------------------------------|*/
     /*|                 ROLES                      |*/
     /*|--------------------------------------------|*/
@@ -31,11 +31,12 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     event StrategyAdded(address _strategy);
     event StrategyRemoved(address _strategy);
     event StakeAmountUpdated(address _member, uint256 _newAmount);
+    event BasisStakedAmountSet(uint256 _newAmount);
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
 
-    modifier onlyCouncilMember() {
+    modifier onlyCouncilSafe() {
         if (!hasRole(COUNCIL_MEMBER_CHANGE, msg.sender)) {
             revert UserNotInCouncil();
         }
@@ -70,6 +71,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     error RegistryCannotBeZero();
     error UserNotInCouncil();
     error UserNotInRegistry();
+    error UserNotInRegistryOrCouncil();
     error UserAlreadyRegistered();
     error UserNotGardenOwner();
     error UserAlreadyActivated();
@@ -104,7 +106,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
     IRegistry public registry;
     IERC20 public gardenToken;
 
-    uint256 registerStakeAmount;
+    uint256 public registerStakeAmount;
     uint256 public protocolFee;
     bytes32 public profileId;
 
@@ -128,7 +130,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         _setRoleAdmin(COUNCIL_MEMBER_CHANGE, DEFAULT_ADMIN_ROLE);
     }
 
-    function initialize(RegistryGardens.InitializeParams memory params) public {
+    function initialize(RegistryCommunity.InitializeParams memory params) public {
         revertZeroAddress(address(params._gardenToken));
         revertZeroAddress(params._councilSafe);
         revertZeroAddress(params._allo);
@@ -157,9 +159,9 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
-    function activateMemberInStrategy(address _member, address _strategy) public onlyRegistryMemberAddress(_member) {
+    function activateMemberInStrategy(address _member, address _strategy) public onlyRegistryMemberAddress(_member) onlyStrategyEnabled(_strategy) {
         revertZeroAddress(_strategy);
-
+        
         if (memberActivatedInStrategies[_member][_strategy]) {
             revert UserAlreadyActivated();
         }
@@ -183,7 +185,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         emit StrategyRemoved(_strategy);
     }
 
-    function addStrategy(address _newStrategy) public onlyCouncilMember {
+    function addStrategy(address _newStrategy) public onlyCouncilSafe {
         if (enabledStrategies[_newStrategy]) {
             //@todo we dont use, if gonna use also write tests
             revert StrategyExists();
@@ -196,7 +198,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
-    function removeStrategy(address _strategy) public onlyCouncilMember {
+    function removeStrategy(address _strategy) public onlyCouncilSafe {
         revertZeroAddress(_strategy);
         enabledStrategies[_strategy] = false;
         emit StrategyRemoved(_strategy);
@@ -207,7 +209,7 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         emit AlloSet(_allo);
     }
 
-    function setCouncilSafe(address payable _safe) public onlyCouncilMember {
+    function setCouncilSafe(address payable _safe) public onlyCouncilSafe {
         revertZeroAddress(_safe);
         pendingCouncilSafe = _safe; //@todo write tests
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
@@ -237,12 +239,17 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
 
     function stakeAndRegisterMember(address _member) public nonReentrant {
         Member storage newMember = addressToMemberInfo[_member];
-        newMember.isRegistered = true;
-        newMember.stakedAmount = registerStakeAmount;
-        // gardenToken.transferFrom(msg.sender, address(this), minimumStakeAmount);
-        emit MemberRegistered(_member, registerStakeAmount);
+
+        if (!isMember(_member)) {
+            newMember.isRegistered = true;
+
+            newMember.stakedAmount = registerStakeAmount;
+
+            gardenToken.transferFrom(msg.sender, address(this), registerStakeAmount);
+
+            emit MemberRegistered(_member, registerStakeAmount);
+        }
     }
-    //Check use of payable and msg.value
 
     function modifyStakeAmount(uint256 newTotalAmount) public payable nonReentrant onlyRegistryMemberSender {
         Member storage member = addressToMemberInfo[msg.sender];
@@ -264,11 +271,12 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
         return registerStakeAmount; //@todo need consider adding protocol fee or not here
     }
 
-    function setBasisStakedAmount(uint256 _newAmount) external onlyCouncilMember {
+    function setBasisStakedAmount(uint256 _newAmount) external onlyCouncilSafe {
         registerStakeAmount = _newAmount;
+        emit BasisStakedAmountSet(_newAmount);
     }
 
-    function updateProtocolFee(uint256 _newProtocolFee) public onlyCouncilMember {
+    function updateProtocolFee(uint256 _newProtocolFee) public onlyCouncilSafe {
         protocolFee = _newProtocolFee;
         emit ProtocolFeeUpdated(_newProtocolFee);
     }
@@ -280,10 +288,18 @@ contract RegistryGardens is ReentrancyGuard, AccessControl {
 
     function unregisterMember(address _member) public nonReentrant {
         //@todo create test for this function
-        require(isMember(_member) || isCouncilMember(msg.sender), "[Registry]: Must be active member to unregister");
-        Member memory member = addressToMemberInfo[msg.sender];
-        delete addressToMemberInfo[msg.sender];
-        // gardenToken.transfer(msg.sender, member.stakedAmount);
-        emit MemberUnregistered(msg.sender, member.stakedAmount);
+        if(!(isMember(_member) && msg.sender == _member) || isCouncilMember(msg.sender)) {
+            revert UserNotInRegistryOrCouncil();
+        }
+
+        Member memory member = addressToMemberInfo[_member];
+        delete addressToMemberInfo[_member];
+
+        gardenToken.transfer(_member, member.stakedAmount);
+        emit MemberUnregistered(_member, member.stakedAmount);
+    }
+
+    function kickMember(address _member) public nonReentrant {
+
     }
 }

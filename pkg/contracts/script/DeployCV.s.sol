@@ -44,7 +44,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         RegistryFactory registryFactory = new RegistryFactory();
 
-        RegistryGardens.InitializeParams memory params;
+        RegistryCommunity.InitializeParams memory params;
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
@@ -54,7 +54,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "Allo";
 
-        RegistryGardens registryGardens = RegistryGardens(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
+        RegistryCommunity registryGardens = RegistryCommunity(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
         token.mint(address(pool_admin()), 10_000);
 

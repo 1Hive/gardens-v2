@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/console.sol";
 import {BaseStrategy} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
-import {RegistryGardens} from "./RegistryGardens.sol";
+import {RegistryCommunity} from "./RegistryCommunity.sol";
 
 interface IWithdrawMember {
     function withdraw(address _member) external;
@@ -66,7 +66,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         Paused, // A vote that is being challenged by Agreements
         Cancelled, // A vote that has been cancelled
         Executed // A vote that has been executed
-
     }
 
     struct Proposal {
@@ -104,7 +103,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     /*|--------------------------------------------|*/
 
     uint256 internal surpressStateMutabilityWarning;
-    RegistryGardens registryGardens;
+    RegistryCommunity registryGardens;
 
     mapping(uint256 => Proposal) public proposals;
     mapping(address => uint256) public totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
@@ -142,7 +141,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             revert RegistryCannotBeZero();
         }
 
-        registryGardens = RegistryGardens(ip.registryGardens);
+        registryGardens = RegistryCommunity(ip.registryGardens);
 
         decay = ip.decay;
         maxRatio = ip.maxRatio;
@@ -335,7 +334,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         _setPoolActive(_active);
     }
 
-    //    @TODO: onlyOnwer onlyRegistryGardens{
+    //    @TODO: onlyOnwer onlyRegistryCommunity{
     function withdraw(address _member) external override {
         // remove all proposals from the member
         uint256[] memory proposalsIds = voterStakedProposals[_member];
@@ -737,7 +736,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         weight = _weight;
     }
 
-    function setRegistryGardens(address _registryGardens) external onlyPoolManager(msg.sender) {
-        registryGardens = RegistryGardens(_registryGardens);
+    function setRegistryCommunity(address _registryGardens) external onlyPoolManager(msg.sender) {
+        registryGardens = RegistryCommunity(_registryGardens);
     }
 }

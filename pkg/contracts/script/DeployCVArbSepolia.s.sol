@@ -48,7 +48,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         RegistryFactory registryFactory = new RegistryFactory();
 
-        RegistryGardens.InitializeParams memory params;
+        RegistryCommunity.InitializeParams memory params;
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
@@ -60,7 +60,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         assertTrue(params._councilSafe != address(0));
 
-        RegistryGardens registryGardens = RegistryGardens(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
+        RegistryCommunity registryGardens = RegistryCommunity(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
         CVStrategy strategy1 = new CVStrategy(address(allo));
         CVStrategy strategy2 = new CVStrategy(address(allo));
