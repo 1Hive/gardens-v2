@@ -108,10 +108,16 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategy strategy = new CVStrategy(address(allo()));
 
+        safeHelper(
+            address(registryGardens), 0, abi.encodeWithSelector(registryGardens.addStrategy.selector, address(strategy))
+        );
+
         poolId = createPool(allo(), address(strategy), address(_registryGardens()), registry(), address(useTokenPool));
 
         vm.stopPrank();
 
+        _registryGardens().gardenToken().approve(address(registryGardens), registryGardens.getBasisStakedAmount());
+        _registryGardens().stakeAndRegisterMember();
         strategy.activatePoints();
 
         pool = allo().getPool(poolId);
@@ -481,7 +487,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         vm.startPrank(pool_admin());
 
-        // token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
+        token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
+        registryGardens.stakeAndRegisterMember();
         cv.activatePoints();
 
         CVStrategy.ProposalSupport[] memory votes2 = new CVStrategy.ProposalSupport[](1);
@@ -579,7 +586,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().registerRecipient(poolId, data2);
 
         token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
-        // registryGardens.stakeAndRegisterMember();
+        registryGardens.stakeAndRegisterMember();
         cv.activatePoints();
 
         CVStrategy.ProposalSupport[] memory votes2 = new CVStrategy.ProposalSupport[](1);
@@ -764,21 +771,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("Submitter: %s", submitter);
     }
 
-    function test_activate_points() public {
-        (IAllo.Pool memory pool,) = _createProposal(address(0), 0, 0);
-
-        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyActivated.selector));
-        cv.activatePoints();
-
-        vm.startPrank(pool_admin());
-        cv.activatePoints();
-        vm.stopPrank();
-
-        assertEq(registryGardens.isMember(pool_admin()), true, "isMember");
-    }
-
     function test_registry_community_name_default_empty() public {
         RegistryFactory registryFactory = new RegistryFactory();
 
@@ -814,11 +806,35 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(registryGardens.communityName(), "GardensDAO", "communityMember");
     }
 
+    function test_activate_points() public {
+        (IAllo.Pool memory pool,) = _createProposal(address(0), 0, 0);
+
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        registryGardens.stakeAndRegisterMember();
+        assertEq(registryGardens.isMember(local()), true, "isMember");
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyActivated.selector));
+        cv.activatePoints();
+
+        vm.startPrank(pool_admin());
+        token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
+        registryGardens.stakeAndRegisterMember();
+        assertEq(registryGardens.isMember(pool_admin()), true, "isMember");
+
+        cv.activatePoints();
+        vm.stopPrank();
+
+        assertEq(registryGardens.isMember(pool_admin()), true, "isMember");
+    }
+
     function test_deactivate_points() public {
         (IAllo.Pool memory pool,) = _createProposal(address(0), 0, 0);
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
+        registryGardens.stakeAndRegisterMember();
+        assertEq(registryGardens.isMember(local()), true, "isMember");
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyActivated.selector));
         cv.activatePoints();
 
@@ -826,6 +842,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // assertEq(registryGardens.isMember(local()), false, "isMember");
 
         vm.startPrank(pool_admin());
+        token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
+        registryGardens.stakeAndRegisterMember();
+        assertEq(registryGardens.isMember(pool_admin()), true, "isMember");
         cv.activatePoints();
         cv.deactivatePoints();
         vm.stopPrank();

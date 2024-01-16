@@ -66,6 +66,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         Paused, // A vote that is being challenged by Agreements
         Cancelled, // A vote that has been cancelled
         Executed // A vote that has been executed
+
     }
 
     struct Proposal {
@@ -228,7 +229,6 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
     function activatePoints() external {
         address member = msg.sender;
-        registryGardens.stakeAndRegisterMember(member);
         registryGardens.activateMemberInStrategy(member, address(this));
     }
 
@@ -341,12 +341,13 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         for (uint256 i = 0; i < proposalsIds.length; i++) {
             uint256 proposalId = proposalsIds[i];
             Proposal storage proposal = proposals[proposalId];
-            proposalExists(proposalId);
-            uint256 stakedAmount = proposal.voterStake[_member];
-            proposal.voterStake[_member] = 0;
-            proposal.voterStakedPointsPct[_member] = 0;
-            proposal.stakedAmount -= stakedAmount;
-            totalStaked -= stakedAmount;
+            if (proposalExists(proposalId)) {
+                uint256 stakedAmount = proposal.voterStake[_member];
+                proposal.voterStake[_member] = 0;
+                proposal.voterStakedPointsPct[_member] = 0;
+                proposal.stakedAmount -= stakedAmount;
+                totalStaked -= stakedAmount;
+            }
         }
 
         //        _withdraw(_member);

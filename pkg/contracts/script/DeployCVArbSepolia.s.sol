@@ -68,7 +68,6 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(params._councilSafe);
         _pool_managers[1] = address(msg.sender);
-        //@todo make councilSafe a member
 
         // bytes32 memory_poolProfileId_ = registry.createProfile(
         //     0, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()

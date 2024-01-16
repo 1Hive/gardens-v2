@@ -159,9 +159,13 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
-    function activateMemberInStrategy(address _member, address _strategy) public onlyRegistryMemberAddress(_member) onlyStrategyEnabled(_strategy) {
+    function activateMemberInStrategy(address _member, address _strategy)
+        public
+        onlyRegistryMemberAddress(_member)
+        onlyStrategyEnabled(_strategy)
+    {
         revertZeroAddress(_strategy);
-        
+
         if (memberActivatedInStrategies[_member][_strategy]) {
             revert UserAlreadyActivated();
         }
@@ -233,19 +237,15 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         return newMember.isRegistered;
     }
 
-    function stakeAndRegisterMember() public {
-        stakeAndRegisterMember(msg.sender);
-    }
-
-    function stakeAndRegisterMember(address _member) public nonReentrant {
+    function stakeAndRegisterMember() public nonReentrant {
+        address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
-
         if (!isMember(_member)) {
             newMember.isRegistered = true;
 
             newMember.stakedAmount = registerStakeAmount;
 
-            gardenToken.transferFrom(msg.sender, address(this), registerStakeAmount);
+            gardenToken.transferFrom(_member, address(this), registerStakeAmount);
 
             emit MemberRegistered(_member, registerStakeAmount);
         }
@@ -288,7 +288,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
     function unregisterMember(address _member) public nonReentrant {
         //@todo create test for this function
-        if(!(isMember(_member) && msg.sender == _member) || isCouncilMember(msg.sender)) {
+        if (!(isMember(_member) && msg.sender == _member) || isCouncilMember(msg.sender)) {
             revert UserNotInRegistryOrCouncil();
         }
 
@@ -299,7 +299,5 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         emit MemberUnregistered(_member, member.stakedAmount);
     }
 
-    function kickMember(address _member) public nonReentrant {
-
-    }
+    function kickMember(address _member) public nonReentrant {}
 }
