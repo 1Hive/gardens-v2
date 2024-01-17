@@ -29,7 +29,15 @@ const envRpcUrlArbTestnet = process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "";
 export const isProd = ENV === "prod";
 // import runLatest from "#/../broadcast/DeployCV.s.sol/31337/run-latest.json";
 async function getContractsAddresses() {
-  if (isProd) {
+  let __contractsAddresses = {
+    allo: `${envAlloAddress}` as `0x${string}`,
+    // strategy: `${envStrat1Address}` as `0x${string}`,
+    registryCommunity: `${envRegistryGardensAddArbSep}` as `0x${string}`,
+    registry: `${envAlloRegistryAddArbSep}` as `0x${string}`,
+    poolID: `${envPoolId}`,
+    rpcUrl: `${envRpcUrlArbTestnet}`,
+  };
+  if (!isProd) {
     const runLatest = await import(
       "#/../broadcast/DeployCV.s.sol/31337/run-latesta.json"
     );
@@ -70,18 +78,8 @@ async function getContractsAddresses() {
       poolID: `1`,
       rpcUrl: `http://127.0.0.1:8545`,
     };
-
-    if (ENV === "prod") {
-      __contractsAddresses = {
-        allo: `${envAlloAddress}` as `0x${string}`,
-        // strategy: `${envStrat1Address}` as `0x${string}`,
-        registryCommunity: `${envRegistryGardensAddArbSep}` as `0x${string}`,
-        registry: `${envAlloRegistryAddArbSep}` as `0x${string}`,
-        poolID: `${envPoolId}`,
-        rpcUrl: `${envRpcUrlArbTestnet}`,
-      };
-    }
   }
+  return __contractsAddresses;
 }
 
 let __contractsAddresses = await getContractsAddresses();
