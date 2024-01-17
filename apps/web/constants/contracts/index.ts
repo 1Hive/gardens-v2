@@ -26,12 +26,41 @@ const envCouncilSafeAddressArbSepolia =
 
 const envRpcUrlArbTestnet = process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "";
 
+import runLatest from "#/../broadcast/DeployCV.s.sol/31337/run-latest.json";
+const txs = runLatest.transactions;
+
+let registryCommunity;
+let token;
+let allo;
+let registry;
+for (const tx of txs) {
+  if (tx.contractName == "RegistryCommunity") {
+    registryCommunity = tx.contractAddress;
+  } else if (
+    tx.contractName == "lib/allo-v2/test/utils/MockERC20.sol:MockERC20"
+  ) {
+    token = tx.contractAddress;
+  } else if (tx.contractName == "Allo") {
+    allo = tx.contractAddress;
+  } else if (tx.contractName == "Registry") {
+    registry = tx.contractAddress;
+  }
+}
+
+// let __contractsAddresses = {
+//   allo: `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` as `0x${string}`,
+//   strategy: `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` as `0x${string}`,
+//   registryGardens:
+//     `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` as `0x${string}`,
+//   registry: `0x5FbDB2315678afecb367f032d93F642f64180aa3` as `0x${string}`,
+//   poolID: `1`,
+//   rpcUrl: `http://127.0.0.1:8545`,
+// };
 let __contractsAddresses = {
-  allo: `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` as `0x${string}`,
-  strategy: `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` as `0x${string}`,
-  registryGardens:
-    `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` as `0x${string}`,
-  registry: `0x5FbDB2315678afecb367f032d93F642f64180aa3` as `0x${string}`,
+  allo: `${allo}` as `0x${string}`,
+  // strategy: `` as `0x${string}`,
+  registryCommunity: `${registryCommunity}` as `0x${string}`,
+  registry: `${registry}` as `0x${string}`,
   poolID: `1`,
   rpcUrl: `http://127.0.0.1:8545`,
 };
@@ -39,8 +68,8 @@ let __contractsAddresses = {
 if (ENV === "prod") {
   __contractsAddresses = {
     allo: `${envAlloAddress}` as `0x${string}`,
-    strategy: `${envStrat1Address}` as `0x${string}`,
-    registryGardens: `${envRegistryGardensAddArbSep}` as `0x${string}`,
+    // strategy: `${envStrat1Address}` as `0x${string}`,
+    registryCommunity: `${envRegistryGardensAddArbSep}` as `0x${string}`,
     registry: `${envAlloRegistryAddArbSep}` as `0x${string}`,
     poolID: `${envPoolId}`,
     rpcUrl: `${envRpcUrlArbTestnet}`,
