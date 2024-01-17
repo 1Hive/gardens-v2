@@ -26,6 +26,7 @@ const envCouncilSafeAddressArbSepolia =
 
 const envRpcUrlArbTestnet = process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "";
 
+// @ts-ignore
 import runLatest from "#/../broadcast/DeployCV.s.sol/31337/run-latest.json";
 const txs = runLatest.transactions;
 
