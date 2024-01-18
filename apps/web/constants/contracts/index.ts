@@ -39,7 +39,8 @@ async function getContractsAddresses() {
   };
   if (!isProd) {
     const runLatest = await import(
-      "#/../broadcast/DeployCV.s.sol/31337/run-latesta.json"
+      // @ts-expect-error
+      "#/../broadcast/DeployCV.s.sol/31337/run-latest.json"
     );
 
     const txs = runLatest.transactions;
