@@ -5,7 +5,7 @@ import { formatAddress } from "@/utils/formatAddress";
 import { useProposalsRead } from "@/hooks/useProposalsRead";
 import { honeyIcon } from "@/assets";
 import Image from "next/image";
-import { cvStrategyABI } from "@/src/generated";
+import { cvStrategyAbi } from "@/src/generated";
 import { Abi, formatEther } from "viem";
 import { useContractRead } from "wagmi";
 
@@ -33,7 +33,7 @@ export default function Proposal({
 
   const cvStrategyContract = {
     address: strategyAddress,
-    abi: cvStrategyABI as Abi,
+    abi: cvStrategyAbi as Abi,
   };
 
   const { data: maxCVSupply } = useContractRead({

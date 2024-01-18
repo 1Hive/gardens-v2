@@ -5,12 +5,14 @@ import { CommunityCard } from "@/components";
 import { useContractReads } from "wagmi";
 import { Abi } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
-import { alloABI } from "@/src/generated";
+import { alloAbi } from "@/src/generated";
+import { useEffect } from "react";
+import { readContract } from "@wagmi/core";
 
 export default function Garden() {
   const alloContractReads = {
     address: contractsAddresses.allo,
-    abi: alloABI as Abi,
+    abi: alloAbi as Abi,
     onError: (error: any) => {
       console.log(error);
     },
@@ -18,6 +20,20 @@ export default function Garden() {
       console.log(data);
     },
   };
+
+  // useEffect(() => {
+  //   const getData = async function () {
+  //     const result = await readContract(serverConfig, {
+  //       abi: alloAbi,
+  //       address: contractsAddresses.allo,
+  //       functionName: "getPool",
+  //       args: [BigInt(1)],
+  //     });
+  //   };
+
+  //   console.log(getData());
+  // }, []);
+
   const { data, isLoading, isError, error } = useContractReads({
     contracts: [
       {
