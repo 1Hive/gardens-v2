@@ -8,7 +8,7 @@ const ENV = process.env.NEXT_PUBLIC_ENV_GARDENS || "";
 
 const envAlloAddress = process.env.NEXT_PUBLIC_ALLO_ADDRESS_ARB_SEPOLIA || "";
 
-const envPoolId = process.env.NEXT_PUBLIC_POOL_ID || 1;
+const envPoolId = process.env.NEXT_PUBLIC_POOL_ID || "1";
 
 const envStrat1Address = process.env.NEXT_PUBLIC_STRAT1_ADDR_ARB_SEPOLIA || "";
 
@@ -26,9 +26,16 @@ const envCouncilSafeAddressArbSepolia =
 
 const envRpcUrlArbTestnet = process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "";
 
+let runLatest = undefined as any;
+try {
+  runLatest = require("#/../broadcast/DeployCV.s.sol/31337/run-latest.json");
+} catch (error) {
+  console.log("error ignored");
+}
 export const isProd = ENV === "prod";
-// import runLatest from "#/../broadcast/DeployCV.s.sol/31337/run-latest.json";
-async function getContractsAddresses() {
+console.log("isProd", isProd);
+// import runLatest from "#/../broadcast/DeployC@V.s.sol/31337/run-latest.json";
+function getContractsAddresses() {
   let __contractsAddresses = {
     allo: `${envAlloAddress}` as `0x${string}`,
     // strategy: `${envStrat1Address}` as `0x${string}`,
@@ -37,12 +44,16 @@ async function getContractsAddresses() {
     poolID: `${envPoolId}`,
     rpcUrl: `${envRpcUrlArbTestnet}`,
   };
-  if (!isProd) {
-    const runLatest = await import(
-      // @ts-expect-error
-      "#/../broadcast/DeployCV.s.sol/31337/run-latest.json"
-    );
-
+  // let __contractsAddresses = {
+  //   allo: `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` as `0x${string}`,
+  //   strategy: `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` as `0x${string}`,
+  //   registryGardens:
+  //     `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` as `0x${string}`,
+  //   registry: `0x5FbDB2315678afecb367f032d93F642f64180aa3` as `0x${string}`,
+  //   poolID: `1`,
+  //   rpcUrl: `http://127.0.0.1:8545`,
+  // };
+  if (!isProd && runLatest) {
     const txs = runLatest.transactions;
     let registryCommunity;
     let token;
@@ -61,17 +72,7 @@ async function getContractsAddresses() {
         registry = tx.contractAddress;
       }
     }
-
-    // let __contractsAddresses = {
-    //   allo: `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` as `0x${string}`,
-    //   strategy: `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` as `0x${string}`,
-    //   registryGardens:
-    //     `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` as `0x${string}`,
-    //   registry: `0x5FbDB2315678afecb367f032d93F642f64180aa3` as `0x${string}`,
-    //   poolID: `1`,
-    //   rpcUrl: `http://127.0.0.1:8545`,
-    // };
-    let __contractsAddresses = {
+    __contractsAddresses = {
       allo: `${allo}` as `0x${string}`,
       // strategy: `` as `0x${string}`,
       registryCommunity: `${registryCommunity}` as `0x${string}`,
@@ -83,7 +84,8 @@ async function getContractsAddresses() {
   return __contractsAddresses;
 }
 
-let __contractsAddresses = await getContractsAddresses();
+let __contractsAddresses = getContractsAddresses();
+
 console.log("env", ENV);
 console.log("envs", __contractsAddresses);
 
