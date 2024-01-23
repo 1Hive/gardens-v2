@@ -1,10 +1,16 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider as Provider } from "wagmi";
+import { WagmiProvider as Provider, State } from "wagmi";
 import { wagmiConfig } from "@/configs/wagmiConfig";
+import { ReactNode } from "react";
 
 const queryClient = new QueryClient();
+
+type Props = {
+  children: ReactNode;
+  initialState: State;
+};
 
 // const projectId = "cc52770b49b75b8067dfa6149a52b103"; // change project id
 
@@ -71,9 +77,9 @@ const queryClient = new QueryClient();
 //   },
 // });
 
-const WagmiProvider = ({ children }: {children: React.ReactNode}) => {
+const WagmiProvider = ({ children, initialState }: Props) => {
   return (
-    <Provider config={wagmiConfig}>
+    <Provider config={wagmiConfig} initialState={initialState}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </Provider>
   );

@@ -27,7 +27,7 @@ export function ActivateMember({
     args: [address as `0x${string}`, strategyAddress],
   });
 
-  console.log(activePoints, status, error, isMemberActived);
+  // console.log(activePoints, status, error, isMemberActived);
 
   return (
     <Button

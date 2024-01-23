@@ -1,3 +1,4 @@
+"use client"
 import {
   Web3OnboardProvider as BlockNativeProvider,
   init,
