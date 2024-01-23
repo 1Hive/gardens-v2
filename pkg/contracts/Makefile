@@ -25,7 +25,7 @@ deploy-testnet:
 	--broadcast -vv
 	
 fork:
-	anvil
+	anvil --chain-id 1337
 fork-testnet:
 	anvil --host=0.0.0.0 -f $(RPC_URL_ARB_TESTNET)
 test1:

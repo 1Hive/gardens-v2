@@ -7,20 +7,22 @@ import { Fragment } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Button } from ".";
-import { useWeb3Modal } from "@web3modal/wagmi/react";
+// import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { usePathname } from "next/navigation";
-import { useAccount } from "wagmi";
-import { formatAddress } from "@/utils/formatAddress";
+// import { useAccount } from "wagmi";
+// import { formatAddress } from "@/utils/formatAddress";
+import { useConnectWallet } from '@web3-onboard/react'
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
 export function NavBar() {
-  const modal = useWeb3Modal();
-  const account = useAccount();
-  const { address } = account;
-  const formattedAddress = formatAddress(address ?? "");
+  // const modal = useWeb3Modal();
+  const [{ wallet, connecting }, connect, disconnect] = useConnectWallet()
+  // const account = useAccount();
+  // const { address } = account;
+  // const formattedAddress = formatAddress(address ?? "");
 
   //we use pathname to show current page on navigation items...
   const pathname = usePathname();
@@ -52,8 +54,16 @@ export function NavBar() {
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
                 {/* <w3m-button balance="show" label="Connect Wallet" size="md" />{" "} */}
-                <Button onClick={() => modal.open()} className="bg-primary">
-                  Wallet
+                <Button
+                  disabled={connecting}
+                  onClick={() => (wallet ? disconnect(wallet) : connect())}
+                  className="bg-primary"
+                >
+                  {connecting
+                    ? "Connecting"
+                    : wallet
+                      ? "Disconnect"
+                      : "Connect"}
                 </Button>
               </div>
               <div className="-mr-2 flex items-center sm:hidden">
@@ -89,8 +99,12 @@ export function NavBar() {
               ))}
             </div>
             <div className="flex border-t border-gray-200 p-4">
-              <Button onClick={() => modal.open()} className="bg-primary">
-                Wallet
+              <Button
+                disabled={connecting}
+                onClick={() => (wallet ? disconnect(wallet) : connect())}
+                className="bg-primary"
+              >
+                {connecting ? "Connecting" : wallet ? "Disconnect" : "Connect"}
               </Button>
             </div>
           </Disclosure.Panel>

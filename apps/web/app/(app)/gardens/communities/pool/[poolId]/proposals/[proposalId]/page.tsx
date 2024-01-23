@@ -1,13 +1,13 @@
-"use client";
-import { useProposals } from "@/hooks/useProposals";
 import { Badge, Button, StackedBarChart } from "@/components";
 import { formatAddress } from "@/utils/formatAddress";
-import { useProposalsRead } from "@/hooks/useProposalsRead";
 import { honeyIcon } from "@/assets";
 import Image from "next/image";
-import { cvStrategyAbi } from "@/src/generated";
+import { alloAbi, cvStrategyAbi } from "@/src/generated";
 import { Abi, formatEther } from "viem";
-import { useContractRead } from "wagmi";
+import { readContract } from "@wagmi/core";
+import { wagmiConfig } from "@/configs/wagmiConfig";
+import { contractsAddresses } from "@/constants/contracts";
+import { proposalsMockData } from "@/constants/proposalsMockData";
 
 //getPrposals => thersohold, convictinlast
 //totaleeffectiveactivepoints => same
@@ -16,65 +16,95 @@ import { useContractRead } from "wagmi";
 //
 //updatepRPPOSALcoNVICTION ESTA
 
-export default function Proposal({
+type ProposalsMock = {
+  title: string;
+  type: "funding" | "streaming" | "signaling";
+  description: string;
+  value?: number;
+  id: number;
+};
+
+type UnparsedProposal = {
+  submitter: `0x${string}`;
+  beneficiary: `0x${string}`;
+  requestedToken: `0x${string}`;
+  requestedAmount: number;
+  stakedTokens: number;
+  proposalType: any;
+  proposalStatus: any;
+  blockLast: number;
+  convictionLast: number;
+  agreementActionId: number;
+  threshold: number;
+  voterStakedPointsPct: number;
+};
+
+type Proposal = UnparsedProposal & ProposalsMock;
+
+type PoolData = {
+  profileId: `0x${string}`;
+  strategy: `0x${string}`;
+  token: `0x${string}`;
+  metadata: { protocol: bigint; pointer: string };
+  managerRole: `0x${string}`;
+  adminRole: `0x${string}`;
+};
+
+export default async function Proposal({
   params: { proposalId, poolId },
 }: {
-  params: { proposalId: string; poolId: string };
+  params: { proposalId: number; poolId: number };
 }) {
-  const { proposals } = useProposals();
+  // const { proposals: proposalSContracts, strategyAddress } = useProposalsRead({
+  //   poolId: Number(poolId),
+  // });
 
-  const { proposals: proposalSContracts, strategyAddress } = useProposalsRead({
-    poolId: Number(poolId),
-  });
+  // const proposalContract = proposalSContracts?.filter(
+  //   (proposal) => proposal.id === Number(proposalId),
+  // )[0];
 
-  const proposalContract = proposalSContracts?.filter(
-    (proposal) => proposal.id === Number(proposalId),
-  )[0];
+  const poolData = (await readContract(wagmiConfig, {
+    address: contractsAddresses.allo,
+    abi: alloAbi as Abi,
+    functionName: "getPool",
+    args: [BigInt(poolId)],
+  })) as PoolData;
 
   const cvStrategyContract = {
-    address: strategyAddress,
+    address: poolData.strategy,
     abi: cvStrategyAbi as Abi,
   };
 
-  const { data: maxCVSupply } = useContractRead({
+  const rawProposal = (await readContract(wagmiConfig, {
+    address: poolData.strategy,
+    abi: cvStrategyAbi as Abi,
+    functionName: "getProposal",
+    args: [proposalId],
+  })) as any[];
+
+  const proposal = {
+    ...transformData(rawProposal),
+    ...proposalsMockData[proposalId],
+  };
+
+  const maxCVSupply = await readContract(wagmiConfig, {
     ...cvStrategyContract,
     functionName: "getMaxConviction",
     args: [proposalId],
-    onError: (error) => {
-      console.log(error);
-    },
-    onSuccess: (data) => {
-      // console.log("maxCVSupply: " + Number(data));
-    },
   });
 
-  const { data: maxCVStaked } = useContractRead({
+  const maxCVStaked = await readContract(wagmiConfig, {
     ...cvStrategyContract,
     functionName: "getProposalStakedAmount",
     args: [proposalId],
-    onError: (error) => {
-      console.log(error);
-    },
-    onSuccess: (data) => {
-      // console.log("maxCVStaked: " + Number(data));
-    },
   });
 
-  const { data: totalEffectiveActivePoints } = useContractRead({
+  const totalEffectiveActivePoints = await readContract(wagmiConfig, {
     ...cvStrategyContract,
     functionName: "totalEffectiveActivePoints",
-    onError: (error) => {
-      console.log(error);
-    },
-    onSuccess: (data) => {
-      // console.log("totalEffectiveActivePoints: " + Number(data));
-    },
   });
 
-  if (proposalSContracts.length === 0) {
-    // Render loading state or handle the absence of data
-    return null;
-  }
+  // console.log(proposal, maxCVSupply, maxCVStaked, totalEffectiveActivePoints);
 
   const {
     title,
@@ -85,12 +115,9 @@ export default function Proposal({
     submitter: createdBy,
     threshold,
     convictionLast,
-  } = proposalContract;
+  } = proposal as Proposal;
 
-  // console.log("threshold: " + threshold);
-  // console.log("convictionLast: " + convictionLast);
-
-  const { status, points, supporters } = proposals?.filter(
+  const { status, points, supporters } = proposalsMockData?.filter(
     (proposal) => proposal.id === Number(proposalId),
   )[0];
 
@@ -104,8 +131,6 @@ export default function Proposal({
 
   const supportersTotalAmount = sumSupportersAmount();
 
-  //
-  //
   const {
     _convictionLast,
     _maxCVStaked,
@@ -117,27 +142,6 @@ export default function Proposal({
   const _neededPoints =
     calcThresholdPoints(_threshold, _maxCVSupply, _totalEffectiveActivePoints) -
     calcFutureCvPoints(_maxCVStaked, _maxCVSupply, _totalEffectiveActivePoints);
-
-  // console.log(
-  //   "threshold: " +
-  //     calcThresholdPoints(
-  //       _threshold,
-  //       _maxCVSupply,
-  //       _totalEffectiveActivePoints,
-  //     ),
-  // );
-  // console.log(
-  //   "cvPoints: " +
-  //     calcCvPoints(_convictionLast, _maxCVSupply, _totalEffectiveActivePoints),
-  // );
-  // console.log(
-  //   "futureCvPoints: " +
-  //     calcFutureCvPoints(
-  //       _maxCVStaked,
-  //       _maxCVSupply,
-  //       _totalEffectiveActivePoints,
-  //     ),
-  // );
 
   const fundingProposalTest: {
     type: "funding" | "streaming" | "signaling";
@@ -164,9 +168,6 @@ export default function Proposal({
       _totalEffectiveActivePoints,
     ),
   };
-
-  //
-  //
 
   const handleDispute = () => {
     console.log("dispute...");
@@ -232,9 +233,9 @@ export default function Proposal({
         </div>
         {/* Support - Remove buttons */}
         <div className="mt-20 flex justify-evenly">
-          <Button onClick={handleDispute} className="bg-red text-white">
-            Dispute
-          </Button>
+          {/* <Button onClick={handleDispute} className="bg-red text-white"> */}
+          Dispute
+          {/* </Button> */}
         </div>
       </main>
 
@@ -296,4 +297,21 @@ function calcThresholdPoints(
 ) {
   let thresholdPct = threshold / maxCVSupply;
   return thresholdPct * totalEffectiveActivePoints * 2;
+}
+
+function transformData(data: any[]): UnparsedProposal {
+  return {
+    submitter: data[0],
+    beneficiary: data[1],
+    requestedToken: data[2],
+    requestedAmount: Number(data[3]),
+    stakedTokens: Number(data[4]),
+    proposalType: data[5],
+    proposalStatus: data[6],
+    blockLast: Number(data[7]),
+    convictionLast: Number(data[8]),
+    agreementActionId: Number(data[9]),
+    threshold: Number(data[10]),
+    voterStakedPointsPct: Number(data[11]),
+  };
 }

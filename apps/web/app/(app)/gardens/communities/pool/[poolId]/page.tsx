@@ -1,12 +1,13 @@
-"use client";
 import { gardenLand } from "@/assets";
 import { Proposals, Button } from "@/components";
 import Image from "next/image";
-import { useAccount, useContractRead, useContractWrite } from "wagmi";
-import { cvStrategyABI, alloABI, registryGardensABI } from "@/src/generated";
-import { useProposalsRead } from "@/hooks/useProposalsRead";
-import { formatEther } from "viem";
+import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { cvStrategyAbi, alloAbi, registryGardensAbi } from "@/src/generated";
+import { Abi, formatEther } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
+import { wagmiConfig } from "@/configs/wagmiConfig";
+import { readContract } from "@wagmi/core";
+import { ActivateMember } from "@/components";
 
 //some metadata for each pool
 const poolInfo = [
@@ -22,44 +23,34 @@ const poolInfo = [
   },
 ];
 
-export default function Pool({
+type PoolData = {
+  profileId: `0x${string}`;
+  strategy: `0x${string}`;
+  token: `0x${string}`;
+  metadata: { protocol: bigint; pointer: string };
+  managerRole: `0x${string}`;
+  adminRole: `0x${string}`;
+};
+
+export default async function Pool({
   params: { poolId },
 }: {
-  params: { poolId: string };
+  params: { poolId: number };
 }) {
-  const { strategyAddress } = useProposalsRead({ poolId: Number(poolId) });
-  const account = useAccount();
-  const { address } = account;
+  const poolData = (await readContract(wagmiConfig, {
+    address: contractsAddresses.allo,
+    abi: alloAbi as Abi,
+    functionName: "getPool",
+    args: [BigInt(poolId)],
+  })) as PoolData;
 
   //get the Pool Balance
-  const { data: poolBalance, status } = useContractRead({
-    address: strategyAddress,
-    abi: cvStrategyABI,
+  const poolBalance = await readContract(wagmiConfig, {
+    address: poolData.strategy,
+    abi: cvStrategyAbi,
     functionName: "getPoolAmount",
-    watch: true,
-  });
-  // memberActivatedInStrategies
-  const { data: isMemberActived, status: statusMemberActived } =
-    useContractRead({
-      address: strategyAddress,
-      abi: registryGardensABI,
-      functionName: "memberActivatedInStrategies",
-      // watch: true,
-      args: [address as `0x${string}`, strategyAddress as `0x${string}`],
-    });
-
-  const {
-    data: activePoints,
-    write,
-    isLoading,
-    isSuccess,
-  } = useContractWrite({
-    address: strategyAddress,
-    abi: cvStrategyABI,
-    functionName: "activatePoints",
   });
 
-  //format the pool balance
   const parsedPoolBalance = Number(poolBalance);
 
   return (
@@ -80,9 +71,9 @@ export default function Pool({
               </p>
               <div className="flex w-full p-4">
                 <div className="flex flex-1 flex-col space-y-4 text-xl font-semibold">
-                  {poolId === contractsAddresses.poolID && (
+                  {/* {poolId === contractsAddresses.poolID && (
                     <>
-                      {status === "idle" ? (
+                      {status === "pending" ? (
                         <>
                           <div className="flex flex-col items-center justify-center">
                             <p>fetching balance ..</p>{" "}
@@ -90,22 +81,20 @@ export default function Pool({
                           </div>
                         </>
                       ) : (
-                        <>
-                          <div className="flex flex-col items-center justify-center">
-                            <div>
-                              <h3 className="font-press text-xl transition-all duration-150 ease-in ">
-                                Funds Available:{" "}
-                              </h3>
-                            </div>
+                        <> */}
+                  <div className="flex flex-col items-center justify-center">
+                    <div>
+                      <h3 className="font-press text-xl transition-all duration-150 ease-in ">
+                        Funds Available:{" "}
+                      </h3>
+                    </div>
 
-                            <h4 className="font-press">
-                              {parsedPoolBalance} $ALLO
-                            </h4>
-                          </div>
-                        </>
+                    <h4 className="font-press">{parsedPoolBalance} $ALLO</h4>
+                  </div>
+                  {/* </>
                       )}
                     </>
-                  )}
+                  )} */}
                   {/* <span>Strategy type: Conviction Voting</span>
                   <span>Funding Token: Honey</span> */}
                 </div>
@@ -125,9 +114,7 @@ export default function Pool({
                 </div>
               </div>
               <div className="flex items-center justify-center">
-                <Button onClick={() => write?.()} className="w-fit bg-primary">
-                  {isMemberActived ? "Deactivate Points" : "Activate Points"}
-                </Button>
+                <ActivateMember strategyAddress={poolData.strategy} />
               </div>
             </div>
             <div className=" flex">
@@ -141,7 +128,7 @@ export default function Pool({
               ))}
             </div>
           </section>
-          <Proposals poolId={poolId} />
+          <Proposals poolId={poolId} strategyAddress={poolData.strategy} />
         </main>
       </div>
     </div>
