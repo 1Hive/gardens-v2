@@ -1,6 +1,7 @@
-"use client";
 import React from "react";
-import WagmiProvider from "./WagmiProvider";
+import { headers } from 'next/headers'
+import { Web3Modal, wagmiConfig } from './WagmiProvider'
+import { cookieToInitialState } from 'wagmi'
 import ThemeProvider from "./ThemeProvider";
 import UrqlProvider from "./UrqlProvider";
 
@@ -9,12 +10,13 @@ type ProviderType = {
 };
 
 const Providers = ({ children }: ProviderType) => {
+  const initialState = cookieToInitialState(wagmiConfig, headers().get('cookie'))
   return (
-    <WagmiProvider>
+    <Web3Modal initialState={initialState}>
       {/* <UrqlProvider> */}
       <ThemeProvider>{children}</ThemeProvider>
       {/* </UrqlProvider> */}
-    </WagmiProvider>
+    </Web3Modal>
   );
 };
 

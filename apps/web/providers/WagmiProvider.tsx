@@ -1,28 +1,27 @@
 "use client";
 
-import { createWeb3Modal } from "@web3modal/wagmi/react";
-import { walletConnectProvider, EIP6963Connector } from "@web3modal/wagmi";
-
-import { WagmiConfig, configureChains, createConfig } from "wagmi";
-import { publicProvider } from "wagmi/providers/public";
+import type { ReactNode } from "react";
+import { createWeb3Modal } from "@web3modal/wagmi";
 import {
-  sepolia,
-  optimism,
-  gnosis,
-  mainnet,
-  arbitrum,
-  arbitrumSepolia,
-} from "viem/chains";
-import { CoinbaseWalletConnector } from "wagmi/connectors/coinbaseWallet";
-import { InjectedConnector } from "wagmi/connectors/injected";
-import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
-import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
+  WagmiProvider,
+  cookieStorage,
+  createStorage,
+  createConfig,
+  http,
+} from "wagmi";
+import { mainnet, sepolia } from "wagmi/chains";
+import { walletConnect, injected, coinbaseWallet } from "wagmi/connectors";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { State } from "@wagmi/core";
 
-import { contractsAddresses, isProd } from "@/constants/contracts";
-type WagmiProviderType = {
-  children: React.ReactNode;
-};
+// type WagmiProviderType = {
+//   children: React.ReactNode;
+// };
 
+// 0. Setup queryClient
+const queryClient = new QueryClient();
+
+// 1. Get projectId at https://cloud.walletconnect.com
 const projectId = "cc52770b49b75b8067dfa6149a52b103"; // change project id
 
 const localChain = {
@@ -44,15 +43,7 @@ const localChain = {
   testnet: true,
 };
 
-const { chains, publicClient } = configureChains(
-  isProd ? [arbitrumSepolia] : [localChain, arbitrumSepolia],
-  [
-    jsonRpcProvider({ rpc: (chain: any) => chain.rpcUrls.default }),
-    walletConnectProvider({ projectId }),
-    publicProvider(),
-  ],
-);
-
+// 2. Create wagmiConfig
 const metadata = {
   name: "Web3Modal",
   description: "Web3Modal Example",
@@ -60,27 +51,34 @@ const metadata = {
   icons: ["https://avatars.githubusercontent.com/u/37784886"],
 };
 
-const wagmiConfig = createConfig({
-  autoConnect: true,
+const chains = [localChain, sepolia] as const;
+
+export const wagmiConfig = createConfig({
+  chains,
+  transports: {
+    [localChain.id]: http(),
+    [sepolia.id]: http(),
+  },
   connectors: [
-    new WalletConnectConnector({
-      chains,
-      options: { projectId, showQrModal: false, metadata },
-    }),
-    new EIP6963Connector({ chains }),
-    new InjectedConnector({ chains, options: { shimDisconnect: true } }),
-    new CoinbaseWalletConnector({
-      chains,
-      options: { appName: metadata.name },
+    walletConnect({ projectId, metadata, showQrModal: false }),
+    injected({ shimDisconnect: true }),
+    coinbaseWallet({
+      appName: metadata.name,
+      appLogoUrl: metadata.icons[0],
     }),
   ],
-  publicClient,
+  ssr: true,
+  storage: createStorage({
+    storage: cookieStorage,
+  }),
 });
+
+const constChains = [localChain, sepolia];
 
 createWeb3Modal({
   wagmiConfig,
   projectId,
-  chains,
+  chains: constChains,
   themeMode: "light",
   themeVariables: {
     "--w3m-color-mix": "#8DE995",
@@ -88,8 +86,16 @@ createWeb3Modal({
   },
 });
 
-const WagmiProvider = ({ children }: WagmiProviderType) => {
-  return <WagmiConfig config={wagmiConfig}>{children}</WagmiConfig>;
-};
-
-export default WagmiProvider;
+export function Web3Modal({
+  children,
+  initialState,
+}: {
+  children: ReactNode;
+  initialState?: State;
+}) {
+  return (
+    <WagmiProvider config={wagmiConfig} initialState={initialState}>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </WagmiProvider>
+  );
+}
