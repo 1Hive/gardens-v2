@@ -15,7 +15,7 @@ export const encodeFunctionParams = function (
   let abiItem = abi[0] as AbiItem;
 
   if (functionName) {
-    abiItem = getAbiItem({
+    const abiItem = getAbiItem({
       abi,
       args,
       name: functionName,

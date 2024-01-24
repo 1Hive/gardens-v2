@@ -1,7 +1,7 @@
 import { http, createConfig, cookieStorage, createStorage } from "wagmi";
 import { sepolia } from "wagmi/chains";
 
-const localChain = {
+export const localChain = {
   id: 1337,
   name: "Localhost",
   network: "localhost",
@@ -24,7 +24,7 @@ export const wagmiConfig = createConfig({
   chains: [localChain, sepolia],
   ssr: true,
   storage: createStorage({
-    storage: cookieStorage,
+  storage: cookieStorage,
   }),
   transports: {
     [localChain.id]: http(),

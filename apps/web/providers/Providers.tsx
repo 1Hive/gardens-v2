@@ -13,8 +13,8 @@ type Props = {
 
 const Providers = ({ children }: Props) => {
   const initialState = cookieToInitialState(
-    wagmiConfig,
-    headers().get("cookie"),
+  wagmiConfig,
+  headers().get("cookie"),
   ) as State;
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { MoonOutline, SunOutline } from "heroicons-react";
+import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "next-themes";
 import { useIsMounted } from "@/hooks/useIsMounted";
 
@@ -18,9 +18,9 @@ export function ThemeButton() {
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
     >
       {resolvedTheme === "dark" ? (
-        <SunOutline className="h-5 w-5" aria-hidden="true" />
+        <SunIcon className="h-5 w-5" aria-hidden="true" />
       ) : (
-        <MoonOutline className="h-5 w-5" aria-hidden="true" />
+        <MoonIcon className="h-5 w-5" aria-hidden="true" />
       )}
     </button>
   );
