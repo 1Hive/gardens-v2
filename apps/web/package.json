@@ -29,6 +29,7 @@
     "@web3-onboard/trust": "^2.0.4",
     "@web3-onboard/walletconnect": "^2.5.3",
     "@web3-onboard/web3auth": "^2.2.3",
+    "classnames": "^2.5.1",
     "graphql": "^16.8.1",
     "lokijs": "^1.5.12",
     "next-themes": "^0.2.1",
