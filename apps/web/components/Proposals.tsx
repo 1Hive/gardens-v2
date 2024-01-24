@@ -3,15 +3,12 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useAccount,
-} from "wagmi";
+import { useWriteContract } from "wagmi";
 import { contractsAddresses } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { cvStrategyAbi, alloAbi } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
+import { useWallets } from "@web3-onboard/react";
 
 type ProposalsMock = {
   title: string;
@@ -51,20 +48,25 @@ export function Proposals({
   poolId: number;
   strategyAddress: `0x${string}`;
 }) {
-  const { address } = useAccount();
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const connectedWallets = useWallets();
+  const mainConnectedAccount = connectedWallets[0]?.accounts[0].address;
 
   useEffect(() => {
-    if (address !== undefined) {
-      getProposals(address, strategyAddress, poolId).then((res) => {
+    if (mainConnectedAccount !== undefined) {
+      getProposals(
+        mainConnectedAccount as `0x${string}`,
+        strategyAddress,
+        poolId,
+      ).then((res) => {
         if (res !== undefined) setProposals(res);
       });
     }
-  }, [address]);
+  }, [mainConnectedAccount]);
 
   const pathname = usePathname();
   const router = useRouter();

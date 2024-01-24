@@ -1,16 +1,17 @@
 "use client";
 import React from "react";
 import { Button } from "./Button";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useReadContract, useWriteContract } from "wagmi";
 import { registryGardensAbi, cvStrategyAbi } from "@/src/generated";
+import { useWallets } from "@web3-onboard/react";
 
 export function ActivateMember({
   strategyAddress,
 }: {
   strategyAddress: `0x${string}`;
 }) {
-  const account = useAccount();
-  const { address } = account;
+  const connectedWallets = useWallets();
+  const mainConnectedAccount = connectedWallets[0]?.accounts[0].address;
 
   const {
     data: activePoints,
@@ -20,14 +21,15 @@ export function ActivateMember({
   } = useWriteContract();
 
   // memberActivatedInStrategies
+  // args [member address, strategy address]
   const { data: isMemberActived } = useReadContract({
     address: strategyAddress,
     abi: registryGardensAbi,
     functionName: "memberActivatedInStrategies",
-    args: [address as `0x${string}`, strategyAddress],
+    args: [mainConnectedAccount as `0x${string}`, strategyAddress],
   });
 
-  // console.log(activePoints, status, error, isMemberActived);
+  console.log(error, isMemberActived, mainConnectedAccount, strategyAddress);
 
   return (
     <Button

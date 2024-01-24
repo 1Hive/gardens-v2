@@ -1,7 +1,6 @@
 import { gardenLand } from "@/assets";
 import { Proposals, Button } from "@/components";
 import Image from "next/image";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { cvStrategyAbi, alloAbi, registryGardensAbi } from "@/src/generated";
 import { Abi, formatEther } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
@@ -43,6 +42,12 @@ export default async function Pool({
     functionName: "getPool",
     args: [BigInt(poolId)],
   })) as PoolData;
+
+  console.log(poolData, {
+    address: poolData?.strategy,
+    abi: cvStrategyAbi,
+    functionName: "getPoolAmount",
+  });
 
   //get the Pool Balance
   const poolBalance = await readContract(wagmiConfig, {
@@ -89,7 +94,9 @@ export default async function Pool({
                       </h3>
                     </div>
 
-                    <h4 className="font-press">{parsedPoolBalance} $ALLO</h4>
+                    {parsedPoolBalance && (
+                      <h4 className="font-press">{parsedPoolBalance} $ALLO</h4>
+                    )}
                   </div>
                   {/* </>
                       )}

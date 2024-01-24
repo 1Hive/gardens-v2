@@ -68,7 +68,7 @@ export async function getProposals(
     const proposalsReadsContract = await readContracts(wagmiConfig, {
       contracts: contractsToRead,
     });
-
+console.log(proposalsReadsContract)
     let transformedProposals: UnparsedProposal[] = [];
 
     proposalsReadsContract.forEach((proposal) => {

@@ -78,6 +78,11 @@ const web3Onboard = init({
     name: "Gardens v2",
     icon: "<svg>App Icon</svg>",
     description: "Gardens v2 description",
+    logo: "<SVG_LOGO_STRING>",
+    recommendedInjectedWallets: [
+      // { name: 'Coinbase', url: 'https://wallet.coinbase.com/' },
+      { name: "MetaMask", url: "https://metamask.io" },
+    ],
   },
 });
 
