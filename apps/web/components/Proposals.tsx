@@ -90,9 +90,10 @@ export function Proposals({
     error,
   } = useWriteContract();
 
-  // useEffect(() => {
-  //   console.log(status, error);
-  // }, [status]);
+  useEffect(() => {
+    console.log(status);
+    console.log(error);
+  }, [status, error]);
 
   // const { data: txSettledData, status } = useWaitForTransactionReceipt({
   //   hash: contractWriteData,
