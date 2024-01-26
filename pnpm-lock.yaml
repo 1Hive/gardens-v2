@@ -16,7 +16,7 @@ importers:
         version: link:pkg/eslint-config-custom
       prettier:
         specifier: latest
-        version: 3.1.0
+        version: 3.2.4
       turbo:
         specifier: ^1.7.4
         version: 1.11.0
@@ -120,6 +120,9 @@ importers:
       '@web3-onboard/web3auth':
         specifier: ^2.2.3
         version: 2.2.3(@babel/runtime@7.23.8)(@walletconnect/client@1.8.0)(@walletconnect/types@1.8.0)(react-native@0.73.2)(react@18.2.0)
+      classnames:
+        specifier: ^2.5.1
+        version: 2.5.1
       graphql:
         specifier: ^16.8.1
         version: 16.8.1
@@ -254,7 +257,7 @@ importers:
         version: 8.6.0(eslint@8.55.0)
       eslint-config-turbo:
         specifier: latest
-        version: 1.11.0(eslint@8.55.0)
+        version: 1.11.3(eslint@8.55.0)
       eslint-plugin-html:
         specifier: ^7.1.0
         version: 7.1.0
@@ -11051,13 +11054,13 @@ packages:
       eslint: 8.55.0
     dev: true
 
-  /eslint-config-turbo@1.11.0(eslint@8.55.0):
-    resolution: {integrity: sha512-PBiDoO1ZRHBXoydfn/qYazJTwmoRNXdsf3CBg6j7BMVvuAPa39e7ao6KccsDplyLgV2jIjeRtra/q1CUaWs2kg==}
+  /eslint-config-turbo@1.11.3(eslint@8.55.0):
+    resolution: {integrity: sha512-v7CHpAHodBKlj+r+R3B2DJlZbCjpZLnK7gO/vCRk/Lc+tlD/f04wM6rmHlerevOlchtmwARilRLBnmzNLffTyQ==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
       eslint: 8.55.0
-      eslint-plugin-turbo: 1.11.0(eslint@8.55.0)
+      eslint-plugin-turbo: 1.11.3(eslint@8.55.0)
     dev: true
 
   /eslint-import-resolver-node@0.3.6:
@@ -11266,8 +11269,8 @@ packages:
       string.prototype.matchall: 4.0.8
     dev: true
 
-  /eslint-plugin-turbo@1.11.0(eslint@8.55.0):
-    resolution: {integrity: sha512-u3GeDFuKUMcQOPi5euJIAivTvJBPMZL62LVrNc4uGksGMYekl7Dl3yGcevcUpebm7XDValyWcw1iHZjUm3DfCg==}
+  /eslint-plugin-turbo@1.11.3(eslint@8.55.0):
+    resolution: {integrity: sha512-R5ftTTWQzEYaKzF5g6m/MInCU8pIN+2TLL+S50AYBr1enwUovdZmnZ1HDwFMaxIjJ8x5ah+jvAzql5IJE9VWaA==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
@@ -11753,7 +11756,6 @@ packages:
       is-hex-prefixed: 1.0.0
       strip-hex-prefix: 1.0.0
     dev: false
-    bundledDependencies: false
 
   /event-emitter@0.3.5:
     resolution: {integrity: sha512-D9rRn9y7kLPnJ+hMq7S/nhvoKwwvVJahBi2BPmx3bvbsEdK3W9ii8cBSGjP+72/LnM4n6fo3+dkCX5FeTQruXA==}
