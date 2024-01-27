@@ -1,6 +1,5 @@
 "use client";
-import React, { useState } from "react";
-
+import React, { useEffect, useState } from "react";
 import { Button } from "./Button";
 import {
   useContractRead,
@@ -57,9 +56,11 @@ export function ActivateMember({
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
   useErrorDetails(errorMemberActivated, "memberActivatedInStrategies");
 
-  console.log("isMemberActived", isMemberActived);
-  console.log("mainConnectedAccount", mainConnectedAccount);
-  console.log("strategyAddress", strategyAddress);
+  useEffect(() => {
+    console.log("isMemberActived", isMemberActived);
+    console.log("mainConnectedAccount", mainConnectedAccount);
+    console.log("strategyAddress", strategyAddress);
+  }, [isMemberActived, mainConnectedAccount, strategyAddress]);
 
   async function handleChange() {
     isMemberActived ? writeDeactivatePoints?.() : writeActivatePoints?.();

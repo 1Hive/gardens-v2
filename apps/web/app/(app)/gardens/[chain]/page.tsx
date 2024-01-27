@@ -55,7 +55,12 @@ const gardens = [
   },
 ];
 
-export default function Gardens() {
+export default function Gardens({
+  params: { chain },
+}:{
+  params:{ chain: string }
+}) {
+  console.log("chain",chain);
   return (
     <div className="flex flex-col items-center justify-center gap-12">
       <header className="flex flex-col items-center gap-12">
