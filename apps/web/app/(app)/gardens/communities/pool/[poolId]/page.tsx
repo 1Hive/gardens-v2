@@ -4,9 +4,14 @@ import Image from "next/image";
 import { cvStrategyAbi, alloAbi, registryGardensAbi } from "@/src/generated";
 import { Abi, formatEther } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
-import { wagmiConfig } from "@/configs/wagmiConfig";
-import { readContract } from "@wagmi/core";
 import { ActivateMember } from "@/components";
+import { createPublicClient, http } from 'viem'
+import { localhost } from 'viem/chains'
+ 
+const client = createPublicClient({
+  chain: localhost, //@todo that run in server need be changed based in the URI {chain}
+  transport: http()
+});
 
 //some metadata for each pool
 const poolInfo = [
@@ -36,25 +41,40 @@ export default async function Pool({
 }: {
   params: { poolId: number };
 }) {
-  const poolData = (await readContract(wagmiConfig, {
-    address: contractsAddresses.allo,
-    abi: alloAbi as Abi,
-    functionName: "getPool",
-    args: [BigInt(poolId)],
-  })) as PoolData;
 
-  console.log(poolData, {
-    address: poolData?.strategy,
-    abi: cvStrategyAbi,
-    functionName: "getPoolAmount",
-  });
+const poolData = await client.readContract({
+  abi: alloAbi,
+  address: contractsAddresses.allo,
+  functionName: 'getPool',
+  args: [BigInt(poolId)]
+}) as PoolData;
+
+  // const poolData = (await readContract(wagmiConfig,{
+  //   address: contractsAddresses.allo,
+  //   abi: alloAbi as Abi,
+  //   functionName: "getPool",
+  //   args: [BigInt(poolId)],
+  // })) as PoolData;
+
+  // console.log(poolData, {
+  //   address: poolData?.strategy,
+  //   abi: cvStrategyAbi,
+  //   functionName: "getPoolAmount",
+  // });
 
   //get the Pool Balance
-  const poolBalance = await readContract(wagmiConfig, {
+  // const poolBalance = await readContract(wagmiConfig,{
+  //   address: poolData.strategy,
+  //   abi: cvStrategyAbi,
+  //   functionName: "getPoolAmount",
+  // });
+
+  const poolBalance = await client.readContract({
     address: poolData.strategy,
     abi: cvStrategyAbi,
     functionName: "getPoolAmount",
   });
+
 
   const parsedPoolBalance = Number(poolBalance);
 

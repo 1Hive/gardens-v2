@@ -1,30 +1,56 @@
+"use client";
 import React from "react";
-import { headers } from "next/headers";
-import WagmiProvider from "./WagmiProvider";
-import { State, cookieToInitialState } from "wagmi";
+import "@rainbow-me/rainbowkit/styles.css";
 import ThemeProvider from "./ThemeProvider";
-import UrqlProvider from "./UrqlProvider";
-import Web3OnboardProvider from "./web3OnBoardProvider";
-import { wagmiConfig } from "@/configs/wagmiConfig";
+import {
+  connectorsForWallets,
+  RainbowKitProvider,
+} from "@rainbow-me/rainbowkit";
+import {
+  rabbyWallet,
+  frameWallet,
+  injectedWallet,
+} from "@rainbow-me/rainbowkit/wallets";
+import { configureChains, createConfig, WagmiConfig } from "wagmi";
+import { arbitrum, localhost, arbitrumSepolia } from "wagmi/chains";
+import { publicProvider } from "wagmi/providers/public";
 
 type Props = {
   children: React.ReactNode;
 };
+const { chains, publicClient } = configureChains(
+  [arbitrum, arbitrumSepolia, localhost],
+  [
+    publicProvider(),
+  ],
+);
+
+const connectors = connectorsForWallets([
+  {
+    groupName: "Recommended",
+    wallets: [
+      injectedWallet({ chains }),
+      rabbyWallet({ chains }),
+      frameWallet({ chains }),
+    ],
+  }
+]);
+export const wagmiConfig = createConfig({
+  autoConnect: true,
+  connectors,
+  publicClient,
+});
 
 const Providers = ({ children }: Props) => {
-  const initialState = cookieToInitialState(
-  wagmiConfig,
-  headers().get("cookie"),
-  ) as State;
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
   return (
-    <WagmiProvider initialState={initialState}>
-      {/* <UrqlProvider> */}
-      <Web3OnboardProvider>
-        <ThemeProvider>{children}</ThemeProvider>
-      </Web3OnboardProvider>
-      {/* </UrqlProvider> */}
-    </WagmiProvider>
+    <WagmiConfig config={wagmiConfig}>
+      <RainbowKitProvider modalSize="compact" chains={chains}>
+        <ThemeProvider>{mounted && children}</ThemeProvider>
+      </RainbowKitProvider>
+    </WagmiConfig>
   );
 };
 

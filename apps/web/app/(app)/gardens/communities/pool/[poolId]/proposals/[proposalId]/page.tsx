@@ -5,16 +5,9 @@ import Image from "next/image";
 import { alloAbi, cvStrategyAbi } from "@/src/generated";
 import { Abi, formatEther } from "viem";
 import { readContract } from "@wagmi/core";
-import { wagmiConfig } from "@/configs/wagmiConfig";
 import { contractsAddresses } from "@/constants/contracts";
 import { proposalsMockData } from "@/constants/proposalsMockData";
 
-//getPrposals => thersohold, convictinlast
-//totaleeffectiveactivepoints => same
-//getMaxConviction => passed to , maxCVsuPPPLY ESTA
-//MAX CONVICTION => getprpposalStakedAmount ESTA (proposalid) > maxCVconvciton
-//
-//updatepRPPOSALcoNVICTION ESTA
 
 type ProposalsMock = {
   title: string;
@@ -63,7 +56,7 @@ export default async function Proposal({
   //   (proposal) => proposal.id === Number(proposalId),
   // )[0];
 
-  const poolData = (await readContract(wagmiConfig, {
+  const poolData = (await readContract({
     address: contractsAddresses.allo,
     abi: alloAbi as Abi,
     functionName: "getPool",
@@ -75,7 +68,7 @@ export default async function Proposal({
     abi: cvStrategyAbi as Abi,
   };
 
-  const rawProposal = (await readContract(wagmiConfig, {
+  const rawProposal = (await readContract({
     address: poolData.strategy,
     abi: cvStrategyAbi as Abi,
     functionName: "getProposal",
@@ -87,19 +80,19 @@ export default async function Proposal({
     ...proposalsMockData[proposalId],
   };
 
-  const maxCVSupply = await readContract(wagmiConfig, {
+  const maxCVSupply = await readContract({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
     args: [proposalId],
   });
 
-  const maxCVStaked = await readContract(wagmiConfig, {
+  const maxCVStaked = await readContract({
     ...cvStrategyContract,
     functionName: "getProposalStakedAmount",
     args: [proposalId],
   });
 
-  const totalEffectiveActivePoints = await readContract(wagmiConfig, {
+  const totalEffectiveActivePoints = await readContract({
     ...cvStrategyContract,
     functionName: "totalEffectiveActivePoints",
   });
@@ -173,7 +166,7 @@ export default async function Proposal({
     console.log("dispute...");
   };
 
-  console.log(status);
+  // console.log(status);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">

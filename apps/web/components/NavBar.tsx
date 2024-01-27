@@ -1,17 +1,19 @@
 "use client";
+import React from "react";
 import { GardensLogo } from "@/assets";
 import Link from "next/link";
-import React from "react";
 import { navItems } from "@/constants/navigation";
-import { Fragment } from "react";
+// import { Fragment } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { Button } from ".";
+// import { Button } from ".";
+// import { ConnectButton } from "@rainbow-me/rainbowkit";
 // import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { usePathname } from "next/navigation";
-// import { useAccount } from "wagmi";
-// import { formatAddress } from "@/utils/formatAddress";
-import { useConnectWallet } from '@web3-onboard/react'
+import { useAccount } from "wagmi";
+import { formatAddress } from "@/utils/formatAddress";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+// import { useConnectWallet } from '@web3-onboard/react'
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -19,10 +21,10 @@ function classNames(...classes: string[]) {
 
 export function NavBar() {
   // const modal = useWeb3Modal();
-  const [{ wallet, connecting }, connect, disconnect] = useConnectWallet()
-  // const account = useAccount();
-  // const { address } = account;
-  // const formattedAddress = formatAddress(address ?? "");
+  // const [{ wallet, connecting }, connect, disconnect] = useConnectWallet();
+  const account = useAccount();
+  const { address } = account;
+  const formattedAddress = formatAddress(address ?? "");
 
   //we use pathname to show current page on navigation items...
   const pathname = usePathname();
@@ -53,8 +55,9 @@ export function NavBar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
+                <ConnectButton />
                 {/* <w3m-button balance="show" label="Connect Wallet" size="md" />{" "} */}
-                <Button
+                {/* <Button
                   disabled={connecting}
                   onClick={() => (wallet ? disconnect(wallet) : connect())}
                   className="bg-primary"
@@ -64,7 +67,7 @@ export function NavBar() {
                     : wallet
                       ? "Disconnect"
                       : "Connect"}
-                </Button>
+                </Button> */}
               </div>
               <div className="-mr-2 flex items-center sm:hidden">
                 {/* Mobile menu button */}
@@ -99,13 +102,14 @@ export function NavBar() {
               ))}
             </div>
             <div className="flex border-t border-gray-200 p-4">
-              <Button
+              {/* <ConnectButton /> */}
+              {/* <Button
                 disabled={connecting}
                 onClick={() => (wallet ? disconnect(wallet) : connect())}
                 className="bg-primary"
               >
                 {connecting ? "Connecting" : wallet ? "Disconnect" : "Connect"}
-              </Button>
+              </Button> */}
             </div>
           </Disclosure.Panel>
         </>

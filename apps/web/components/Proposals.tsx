@@ -3,12 +3,12 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useWriteContract } from "wagmi";
+import { useAccount, useContractWrite } from "wagmi";
 import { contractsAddresses } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { cvStrategyAbi, alloAbi } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
-import { useWallets } from "@web3-onboard/react";
+import useErrorDetails from "@/utils/getErrorName";
 
 type ProposalsMock = {
   title: string;
@@ -53,8 +53,9 @@ export function Proposals({
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const connectedWallets = useWallets();
-  const mainConnectedAccount = connectedWallets[0]?.accounts[0].address;
+  const { address: mainConnectedAccount } = useAccount();
+  // const connectedWallets = useWallets();
+  // const mainConnectedAccount = connectedWallets[0]?.accounts[0].address;
 
   useEffect(() => {
     if (mainConnectedAccount !== undefined) {
@@ -85,15 +86,25 @@ export function Proposals({
 
   const {
     data: contractWriteData,
-    writeContract,
+    write: writeAllocate,
+    error: errorAllocate,
+    isSuccess: isSuccessAllocate,
     status,
-    error,
-  } = useWriteContract();
+
+  } = useContractWrite({
+    address: contractsAddresses.allo,
+    abi: alloAbi,
+    functionName: "allocate",
+  });
+
+  const {errorName} = useErrorDetails(errorAllocate,'errorAllocate');
 
   useEffect(() => {
-    console.log(status);
-    console.log(error);
-  }, [status, error]);
+    if (isSuccessAllocate) {
+      setMessage("Transaction sent, hash: " + contractWriteData?.hash);
+    }
+  }
+  , [isSuccessAllocate, contractWriteData])
 
   // const { data: txSettledData, status } = useWaitForTransactionReceipt({
   //   hash: contractWriteData,
@@ -103,10 +114,7 @@ export function Proposals({
     const encodedData = getEncodedProposals(inputs, proposals);
     const poolId = Number(contractsAddresses.poolID);
 
-    writeContract({
-      address: contractsAddresses.allo,
-      abi: alloAbi,
-      functionName: "allocate",
+    writeAllocate({
       args: [BigInt(poolId), encodedData as `0x${string}`],
       // onError: (err: any) => {
       //   console.log(err);
@@ -131,7 +139,7 @@ export function Proposals({
       });
     });
 
-    console.log(resultArr, currentData);
+    // console.log(resultArr, currentData);
     const encodedData = encodeFunctionParams(cvStrategyAbi, "supportProposal", [
       resultArr,
     ]);
@@ -240,7 +248,7 @@ export function Proposals({
             <Button
               className="min-w-[200px] bg-secondary"
               onClick={() => submit()}
-              isLoading={status === "pending"}
+              isLoading={status === "loading"}
             >
               Save changes
             </Button>
@@ -253,29 +261,3 @@ export function Proposals({
     </section>
   );
 }
-
-// interface Proposal extends InputItem {
-//   title: string;
-//   type: "funding" | "streaming" | "signaling";
-// }
-
-// const proposalsItems: Proposal[] = [
-//   {
-//     title: "Buy a billboard in Times Square",
-//     type: "funding",
-//     value: 0,
-//     id: 0,
-//   },
-//   {
-//     title: "Zack active contributor",
-//     type: "streaming",
-//     value: 0,
-//     id: 1,
-//   },
-//   {
-//     title: "Current signaling proposal",
-//     type: "signaling",
-//     value: 0,
-//     id: 2,
-//   },
-// ];
