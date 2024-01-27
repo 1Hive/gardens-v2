@@ -1,5 +1,3 @@
-import { createContext } from "react";
-
 type Proposals = {
   id: number;
   title: string;
@@ -20,7 +18,7 @@ type Proposals = {
   }[];
 };
 
-const proposals: Proposals[] = [
+export const proposalsMockData: Proposals[] = [
   {
     id: 1,
     title: "Gardens Swarm December 2023 Funding Proposal",
@@ -113,12 +111,3 @@ const proposals: Proposals[] = [
     ],
   },
 ];
-export const ProposalContext = createContext({ proposals });
-
-export const ProposalProvider = ({ children }: any) => {
-  return (
-    <ProposalContext.Provider value={{ proposals }}>
-      {children}
-    </ProposalContext.Provider>
-  );
-};

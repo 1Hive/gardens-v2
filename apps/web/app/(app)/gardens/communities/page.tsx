@@ -1,48 +1,43 @@
-"use client";
 import { honeyIcon } from "@/assets";
 import Image from "next/image";
 import { CommunityCard } from "@/components";
-import { useContractReads } from "wagmi";
+import { useContractRead, readContracts } from "wagmi";
 import { Abi } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
-import { alloABI } from "@/src/generated";
+import { alloAbi } from "@/src/generated";
 
-export default function Garden() {
-  const alloContractReads = {
+export default async function Garden() {
+  const alloContractReadProps = {
     address: contractsAddresses.allo,
-    abi: alloABI as Abi,
-    onError: (error: any) => {
-      console.log(error);
-    },
-    onSettled: (data: any) => {
-      console.log(data);
-    },
+    abi: alloAbi as Abi,
   };
-  const { data, isLoading, isError, error } = useContractReads({
-    contracts: [
-      {
-        ...alloContractReads,
-        functionName: "getPool",
-        args: [1],
-      },
-      {
-        ...alloContractReads,
-        functionName: "getPool",
-        args: [2],
-      },
-    ],
-  });
 
-  // Check if there is data available for the first community
-  if (data && data.length > 0) {
+  try {
+    // await readContracts(wagmiConfig,
+    const result = await readContracts({
+      contracts: [
+        {
+          ...alloContractReadProps,
+          functionName: "getPool",
+          args: [1],
+        },
+        {
+          ...alloContractReadProps,
+          functionName: "getPool",
+          args: [2],
+        },
+      ],
+    });
+
     // Merge the data into the first community - 1hive
-    const firstCommunity = conmmunities[0];
-    firstCommunity.pools.forEach((pool, poolIndex) => {
-      if (data[poolIndex]) {
-        pool.result = data[poolIndex].result;
-        pool.status = data[poolIndex].status;
+    conmmunities[0].pools.forEach((pool, poolIndex) => {
+      if (result[poolIndex]) {
+        pool.result = result[poolIndex].result;
+        pool.status = result[poolIndex].status;
       }
     });
+  } catch (error) {
+    console.log(error);
   }
 
   return (

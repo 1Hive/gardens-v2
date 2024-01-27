@@ -28,7 +28,7 @@ const envRpcUrlArbTestnet = process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "";
 
 let runLatest = undefined as any;
 try {
-  runLatest = require("#/../broadcast/DeployCV.s.sol/31337/run-latest.json");
+  runLatest = require("#/../broadcast/DeployCV.s.sol/1337/run-latest.json");
 } catch (error) {
   console.log("error ignored");
 }

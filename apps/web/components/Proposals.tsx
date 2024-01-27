@@ -3,11 +3,12 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useContractWrite, useWaitForTransaction } from "wagmi";
-import { useProposalsRead } from "@/hooks/useProposalsRead";
+import { useAccount, useContractWrite } from "wagmi";
 import { contractsAddresses } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { cvStrategyABI, alloABI } from "@/src/generated";
+import { cvStrategyAbi, alloAbi } from "@/src/generated";
+import { getProposals } from "@/actions/getProposals";
+import useErrorDetails from "@/utils/getErrorName";
 
 type ProposalsMock = {
   title: string;
@@ -40,15 +41,34 @@ type InputItem = {
 };
 
 //!POOL == STRATEGY
-export function Proposals({ poolId }: { poolId: string }) {
+export function Proposals({
+  poolId,
+  strategyAddress,
+}: {
+  poolId: number;
+  strategyAddress: `0x${string}`;
+}) {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const { address: mainConnectedAccount } = useAccount();
+  // const connectedWallets = useWallets();
+  // const mainConnectedAccount = connectedWallets[0]?.accounts[0].address;
 
-  const { proposals } = useProposalsRead({
-    poolId: Number(poolId),
-  });
+  useEffect(() => {
+    if (mainConnectedAccount !== undefined) {
+      getProposals(
+        mainConnectedAccount as `0x${string}`,
+        strategyAddress,
+        poolId,
+      ).then((res) => {
+        if (res !== undefined) setProposals(res);
+      });
+    }
+  }, [mainConnectedAccount]);
+
   const pathname = usePathname();
   const router = useRouter();
 
@@ -66,30 +86,42 @@ export function Proposals({ poolId }: { poolId: string }) {
 
   const {
     data: contractWriteData,
-    write: writeContract,
-    isLoading,
+    write: writeAllocate,
+    error: errorAllocate,
+    isSuccess: isSuccessAllocate,
+    status,
+
   } = useContractWrite({
     address: contractsAddresses.allo,
-    abi: alloABI,
+    abi: alloAbi,
     functionName: "allocate",
-    onError: (err) => {
-      console.log(err);
-    },
-    onSuccess: (data) => {
-      setMessage("Transaction sent, hash: " + data.hash);
-    },
   });
 
-  const { data: txSettledData, status } = useWaitForTransaction({
-    hash: contractWriteData?.hash,
-  });
+  const {errorName} = useErrorDetails(errorAllocate,'errorAllocate');
+
+  useEffect(() => {
+    if (isSuccessAllocate) {
+      setMessage("Transaction sent, hash: " + contractWriteData?.hash);
+    }
+  }
+  , [isSuccessAllocate, contractWriteData])
+
+  // const { data: txSettledData, status } = useWaitForTransactionReceipt({
+  //   hash: contractWriteData,
+  // });
 
   const submit = () => {
     const encodedData = getEncodedProposals(inputs, proposals);
     const poolId = Number(contractsAddresses.poolID);
 
-    writeContract({
+    writeAllocate({
       args: [BigInt(poolId), encodedData as `0x${string}`],
+      // onError: (err: any) => {
+      //   console.log(err);
+      // },
+      // onSuccess: (data: any) => {
+      //   setMessage("Transaction sent, hash: " + data.hash);
+      // },
     });
   };
 
@@ -107,8 +139,8 @@ export function Proposals({ poolId }: { poolId: string }) {
       });
     });
 
-    console.log(resultArr, currentData);
-    const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
+    // console.log(resultArr, currentData);
+    const encodedData = encodeFunctionParams(cvStrategyAbi, "supportProposal", [
       resultArr,
     ]);
     return encodedData;
@@ -155,7 +187,7 @@ export function Proposals({ poolId }: { poolId: string }) {
           {proposals?.map(({ title, type, id, stakedTokens }, i) => (
             <div
               className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
-              key={id}
+              key={title + "_" + id}
             >
               <div className="flex w-full items-center justify-between">
                 <h4 className="font-semibold">{title}</h4>
@@ -188,7 +220,7 @@ export function Proposals({ poolId }: { poolId: string }) {
                       />
                       <div className="flex w-full justify-between px-[10px] text-[4px]">
                         {[...Array(21)].map((_, i) => (
-                          <span key={i}>|</span>
+                          <span key={"span_" + i}>|</span>
                         ))}
                       </div>
                     </div>
@@ -216,7 +248,7 @@ export function Proposals({ poolId }: { poolId: string }) {
             <Button
               className="min-w-[200px] bg-secondary"
               onClick={() => submit()}
-              isLoading={isLoading}
+              isLoading={status === "loading"}
             >
               Save changes
             </Button>
@@ -229,29 +261,3 @@ export function Proposals({ poolId }: { poolId: string }) {
     </section>
   );
 }
-
-// interface Proposal extends InputItem {
-//   title: string;
-//   type: "funding" | "streaming" | "signaling";
-// }
-
-// const proposalsItems: Proposal[] = [
-//   {
-//     title: "Buy a billboard in Times Square",
-//     type: "funding",
-//     value: 0,
-//     id: 0,
-//   },
-//   {
-//     title: "Zack active contributor",
-//     type: "streaming",
-//     value: 0,
-//     id: 1,
-//   },
-//   {
-//     title: "Current signaling proposal",
-//     type: "signaling",
-//     value: 0,
-//     id: 2,
-//   },
-// ];

@@ -52,6 +52,6 @@ export default defineConfig({
     //     "Allo.sol",
     //   ],
     // }),
-    react(),
+    // react(),
   ],
 });

@@ -31,6 +31,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
     event StrategyAdded(address _strategy);
     event StrategyRemoved(address _strategy);
+    event MemberActivatedStrategy(address _member, address _strategy);
+    event MemberDeactivatedStrategy(address _member, address _strategy);
     event StakeAmountUpdated(address _member, uint256 _newAmount);
     event BasisStakedAmountSet(uint256 _newAmount);
     /*|--------------------------------------------|*/
@@ -176,7 +178,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         memberActivatedInStrategies[_member][_strategy] = true;
         totalPointsActivatedInStrategy[_strategy] += DEFAULT_POINTS;
 
-        emit StrategyAdded(_strategy);
+        emit MemberActivatedStrategy(_member, _strategy);
     }
 
     function deactivateMemberInStrategy(address _member, address _strategy) public onlyRegistryMemberAddress(_member) {
@@ -189,7 +191,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         memberActivatedInStrategies[_member][_strategy] = false;
         totalPointsActivatedInStrategy[_strategy] -= DEFAULT_POINTS;
 
-        emit StrategyRemoved(_strategy);
+        // emit StrategyRemoved(_strategy);
+        emit MemberDeactivatedStrategy(_member, _strategy);
     }
 
     function addStrategy(address _newStrategy) public onlyCouncilSafe {
@@ -291,7 +294,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
     function unregisterMember() public nonReentrant {
         address _member = msg.sender;
-        if(!isMember(_member)) {
+        if (!isMember(_member)) {
             revert UserNotInRegistry();
         }
         Member memory member = addressToMemberInfo[_member];
@@ -301,17 +304,17 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         emit MemberUnregistered(_member, member.stakedAmount);
     }
 
-    function kickMember(address _member, address _transferAddress) public nonReentrant onlyCouncilSafe{
-        if(!isKickEnabled) {
+    function kickMember(address _member, address _transferAddress) public nonReentrant onlyCouncilSafe {
+        if (!isKickEnabled) {
             revert KickNotEnabled();
         }
-        if(!isMember(_member)){
+        if (!isMember(_member)) {
             revert UserNotInRegistry();
         }
         Member memory member = addressToMemberInfo[_member];
         delete addressToMemberInfo[_member];
 
-        gardenToken.transfer(_transferAddress,member.stakedAmount);
+        gardenToken.transfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
 }

@@ -29,7 +29,7 @@ export function CommunityCard({ name, address, href, pools }: any) {
       </div>
       {pools.length > 2 && (
         <Button
-          style="outline"
+          // style="outline"
           className="!rounded-full bg-white !p-3"
           onClick={() => setOpen((prev) => !prev)}
         >

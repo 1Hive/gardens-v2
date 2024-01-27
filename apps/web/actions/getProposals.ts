@@ -1,9 +1,19 @@
-import { useContractRead, useContractReads, useAccount } from "wagmi";
-import { useState, useEffect } from "react";
+// import { wagmiConfig } from "@/configs/wagmiConfig";
+import { readContract, readContracts } from "@wagmi/core";
+import { alloAbi, cvStrategyAbi } from "@/src/generated";
 import { Abi } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
-import { alloABI, cvStrategyABI } from "@/src/generated";
-import { formatEther } from "viem";
+
+const proposalsIds = [1, 2, 3];
+
+type PoolData = {
+  profileId: `0x${string}`;
+  strategy: `0x${string}`;
+  token: `0x${string}`;
+  metadata: { protocol: bigint; pointer: string };
+  managerRole: `0x${string}`;
+  adminRole: `0x${string}`;
+};
 
 type ProposalsMock = {
   title: string;
@@ -30,85 +40,55 @@ type UnparsedProposal = {
 
 type Proposal = UnparsedProposal & ProposalsMock;
 
-export const useProposalsRead = ({ poolId }: { poolId: number }) => {
-  const [strategyAddress, setStrategyAddress] = useState<`0x${string}`>();
-  const [proposals, setProposals] = useState<Proposal[]>([]);
+export async function getProposals(
+  accountAddress: `0x${string}`,
+  strategyAddress: `0x${string}`,
+  poolId: number,
+) {
+  try {
+    // const poolData = (await readContract(wagmiConfig, {
+    //   address: contractsAddresses.allo,
+    //   abi: alloAbi as Abi,
+    //   functionName: "getPool",
+    //   args: [BigInt(poolId)],
+    // })) as PoolData;
 
-  const account = useAccount();
+    const alloContractReadProps = {
+      account: accountAddress,
+      address: strategyAddress,
+      abi: cvStrategyAbi as Abi,
+      functionName: "getProposal",
+    };
 
-  const { data, error: poolError } = useContractRead({
-    address: contractsAddresses.allo,
-    abi: alloABI as Abi,
-    functionName: "getPool",
-    args: [BigInt(poolId)],
-    watch: false,
+    const contractsToRead = proposalsIds.map((proposalId) => ({
+      ...alloContractReadProps,
+      args: [proposalId],
+    }));
 
-    onError: (error) => {
-      console.log(error);
-    },
-    onSuccess: (data: { strategy: `0x${string}`; token: `0x${string}` }) => {
-      // Add 'token' property to the type
-      if (data) {
-        setStrategyAddress(data?.strategy);
-      }
-    },
-  });
-
-  const alloContractReads = {
-    account: account.address,
-    address: strategyAddress,
-    abi: cvStrategyABI as Abi,
-    functionName: "getProposal",
-    watch: true,
-  };
-
-  const { data: contract1 } = useContractRead({
-    ...alloContractReads,
-    args: [1],
-  });
-
-  const { data: contract2 } = useContractRead({
-    ...alloContractReads,
-    args: [2],
-  });
-
-  const { data: contract3 } = useContractRead({
-    ...alloContractReads,
-    args: [3],
-  });
-
-  useEffect(() => {
-    const proposalsReadsContract = [
-      contract1 as any[],
-      contract2 as any[],
-      contract3 as any[],
-    ];
-
+    const proposalsReadsContract = await readContracts({
+      contracts: contractsToRead,
+    });
+    // console.log(proposalsReadsContract);
     let transformedProposals: UnparsedProposal[] = [];
 
     proposalsReadsContract.forEach((proposal) => {
       if (proposal !== undefined)
-        transformedProposals.push(transformData(proposal));
+        transformedProposals.push(transformData(proposal.result as any[]));
     });
 
-    // Choose between proposalsMock and proposalsMock2 based on poolId
-    const selectedProposalsMock =
-      poolId === Number(contractsAddresses.poolID)
-        ? fundingProposals
-        : signalingProposals;
-
     // Merge the additional data from proposalsMock based on the index
-
-    setProposals(
-      transformedProposals.map((proposal, index) => ({
+    const parsedProposals: Proposal[] = transformedProposals.map(
+      (proposal, index) => ({
         ...proposal,
-        ...selectedProposalsMock[index],
-      })),
+        ...fundingProposals[index],
+      }),
     );
-  }, [strategyAddress]);
 
-  return { proposals, strategyAddress };
-};
+    return parsedProposals;
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 function transformData(data: any[]): UnparsedProposal {
   return {
