@@ -108,6 +108,9 @@ importers:
       ui:
         specifier: workspace:*
         version: link:../../pkg/ui
+      urql:
+        specifier: ^4.0.6
+        version: 4.0.6(graphql@16.8.1)(react@18.2.0)
       viem:
         specifier: ~1
         version: 1.21.4(typescript@5.2.2)
