@@ -1,12 +1,10 @@
 import { honeyIcon } from "@/assets";
 import Image from "next/image";
 import { CommunityCard } from "@/components";
-import { useReadContracts } from "wagmi";
+import { useContractRead, readContracts } from "wagmi";
 import { Abi } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
 import { alloAbi } from "@/src/generated";
-import { readContract, readContracts } from "@wagmi/core";
-import { wagmiConfig } from "@/configs/wagmiConfig";
 
 export default async function Garden() {
   const alloContractReadProps = {
@@ -15,7 +13,8 @@ export default async function Garden() {
   };
 
   try {
-    const result = await readContracts(wagmiConfig, {
+    // await readContracts(wagmiConfig,
+    const result = await readContracts({
       contracts: [
         {
           ...alloContractReadProps,

@@ -1,4 +1,4 @@
-import { wagmiConfig } from "@/configs/wagmiConfig";
+// import { wagmiConfig } from "@/configs/wagmiConfig";
 import { readContract, readContracts } from "@wagmi/core";
 import { alloAbi, cvStrategyAbi } from "@/src/generated";
 import { Abi } from "viem";
@@ -65,10 +65,10 @@ export async function getProposals(
       args: [proposalId],
     }));
 
-    const proposalsReadsContract = await readContracts(wagmiConfig, {
+    const proposalsReadsContract = await readContracts({
       contracts: contractsToRead,
     });
-    console.log(proposalsReadsContract);
+    // console.log(proposalsReadsContract);
     let transformedProposals: UnparsedProposal[] = [];
 
     proposalsReadsContract.forEach((proposal) => {
