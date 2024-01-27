@@ -1,7 +1,12 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
+
 import { Button } from "./Button";
-import { useContractRead, useContractWrite } from "wagmi";
+import {
+  useContractRead,
+  useContractWrite,
+  useWaitForTransaction,
+} from "wagmi";
 import { registryGardensAbi, cvStrategyAbi } from "@/src/generated";
 import { useAccount } from "wagmi";
 import useErrorDetails from "@/utils/getErrorName";
@@ -38,37 +43,33 @@ export function ActivateMember({
 
   // memberActivatedInStrategies
   // args [member address, strategy address]
-  const { data: isMemberActived, error: errorMemberActivated } = useContractRead({
-    address: contractsAddresses.registryCommunity,
-    abi: registryGardensAbi,
-    functionName: "memberActivatedInStrategies",
-    args: [mainConnectedAccount as `0x${string}`, strategyAddress],
-  });
+  const { data: isMemberActived, error: errorMemberActivated } =
+    useContractRead({
+      address: contractsAddresses.registryCommunity,
+      abi: registryGardensAbi,
+      functionName: "memberActivatedInStrategies",
+      args: [mainConnectedAccount as `0x${string}`, strategyAddress],
+      watch: true,
+      cacheOnBlock: true,
+    });
 
-        useErrorDetails(errorActivatePoints, "activatePoints");
-   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
-   useErrorDetails(errorMemberActivated, "memberActivatedInStrategies");
+  useErrorDetails(errorActivatePoints, "activatePoints");
+  useErrorDetails(errorDeactivatePoints, "deactivatePoints");
+  useErrorDetails(errorMemberActivated, "memberActivatedInStrategies");
 
-  // console.log(
-  //   isMemberActived,
-  //   mainConnectedAccount,
-  //   strategyAddress,
-  // );
-  console.log("isMemberActived",isMemberActived);
-  console.log("mainConnectedAccount",mainConnectedAccount);
-  console.log("strategyAddress",strategyAddress);
+  console.log("isMemberActived", isMemberActived);
+  console.log("mainConnectedAccount", mainConnectedAccount);
+  console.log("strategyAddress", strategyAddress);
 
+  async function handleChange() {
+    isMemberActived ? writeDeactivatePoints?.() : writeActivatePoints?.();
+  }
 
   return (
-    <Button
-      onClick={() => {
-        isMemberActived ? writeDeactivatePoints?.() : writeActivatePoints?.();
-      }}
-      className="w-fit bg-primary"
-    >
-      {isMemberActived ? "Deactivate Points" : "Activate Points"}
-    </Button>
+    <>
+      <Button onClick={handleChange} className="w-fit bg-primary">
+        {isMemberActived ? "Deactivate Points" : "Activate Points"}
+      </Button>
+    </>
   );
 }
-
-
