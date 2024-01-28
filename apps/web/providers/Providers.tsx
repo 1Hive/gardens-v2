@@ -11,19 +11,12 @@ import {
   frameWallet,
   injectedWallet,
 } from "@rainbow-me/rainbowkit/wallets";
-import { configureChains, createConfig, WagmiConfig } from "wagmi";
-import { arbitrum, localhost, arbitrumSepolia } from "wagmi/chains";
-import { publicProvider } from "wagmi/providers/public";
+import {createConfig, WagmiConfig } from "wagmi";
+import { chains, publicClient } from "@/configs/wagmiConfig";
 
 type Props = {
   children: React.ReactNode;
 };
-const { chains, publicClient } = configureChains(
-  [arbitrum, arbitrumSepolia, localhost],
-  [
-    publicProvider(),
-  ],
-);
 
 const connectors = connectorsForWallets([
   {

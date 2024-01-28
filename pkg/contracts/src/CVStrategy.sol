@@ -159,6 +159,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     receive() external payable {
+        //@todo allow only allo protocol to fund it.
         surpressStateMutabilityWarning++;
     }
 

@@ -1,18 +1,29 @@
 import { gardenLand } from "@/assets";
-import { Proposals, Button } from "@/components";
+import { Proposals } from "@/components";
 import Image from "next/image";
-import { cvStrategyAbi, alloAbi, registryGardensAbi } from "@/src/generated";
-import { Abi, formatEther } from "viem";
+import { cvStrategyAbi, alloAbi } from "@/src/generated";
 import { contractsAddresses } from "@/constants/contracts";
 import { ActivateMember } from "@/components";
-import { createPublicClient, http } from 'viem'
-import { localhost } from 'viem/chains'
- 
-const client = createPublicClient({
-  chain: localhost, //@todo that run in server need be changed based in the URI {chain}
-  transport: http()
-});
+import { createPublicClient, http, Chain } from "viem";
+import { localhost, arbitrumSepolia, arbitrum } from "viem/chains";
+import { useEffect } from "react";
 
+// import { getChain } from "@/configs/wagmiConfig";
+
+// import type { Chain } from "viem";
+// import { arbitrum, localhost, arbitrumSepolia } from "wagmi/chains";
+// import { chains } from "@/configs/wagmiConfig";
+
+const chains = [localhost, arbitrum, arbitrumSepolia];
+
+function getChain(chainId: number | string): Chain | undefined {
+  let chainResult = undefined;
+  if (typeof chainId === "string") {
+    chainId = parseInt(chainId);
+  }
+  chainResult = chains.find((chain) => chain.id === chainId);
+  return chainResult;
+}
 //some metadata for each pool
 const poolInfo = [
   {
@@ -37,46 +48,32 @@ type PoolData = {
 };
 
 export default async function Pool({
-  params: { poolId },
+  params: { chain, poolId },
 }: {
-  params: { poolId: number };
+  params: { chain: string; poolId: number };
 }) {
+  const client = createPublicClient({
+    chain: getChain(chain) ?? arbitrumSepolia, //@todo that run in server need be changed based in the URI {chain}
+    transport: http(),
+  });
 
-const poolData = await client.readContract({
-  abi: alloAbi,
-  address: contractsAddresses.allo,
-  functionName: 'getPool',
-  args: [BigInt(poolId)]
-}) as PoolData;
+  const poolData = (await client.readContract({
+    abi: alloAbi,
+    address: contractsAddresses.allo,
+    functionName: "getPool",
+    args: [BigInt(poolId)],
+  })) as PoolData;
 
-  // const poolData = (await readContract(wagmiConfig,{
-  //   address: contractsAddresses.allo,
-  //   abi: alloAbi as Abi,
-  //   functionName: "getPool",
-  //   args: [BigInt(poolId)],
-  // })) as PoolData;
-
-  // console.log(poolData, {
-  //   address: poolData?.strategy,
-  //   abi: cvStrategyAbi,
-  //   functionName: "getPoolAmount",
-  // });
-
-  //get the Pool Balance
-  // const poolBalance = await readContract(wagmiConfig,{
-  //   address: poolData.strategy,
-  //   abi: cvStrategyAbi,
-  //   functionName: "getPoolAmount",
-  // });
-
+  console.log(poolData);
   const poolBalance = await client.readContract({
     address: poolData.strategy,
     abi: cvStrategyAbi,
     functionName: "getPoolAmount",
   });
 
-
   const parsedPoolBalance = Number(poolBalance);
+
+  console.log("poolBalance", parsedPoolBalance);
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -84,7 +81,7 @@ const poolData = await client.readContract({
         <header className="flex flex-col items-center justify-center">
           <h2 className="text-center font-press">Pool {poolId} </h2>
           <h4 className="text-2xl ">
-            {poolInfo[(poolId as unknown as number) - 1].title}
+            {/* {poolInfo[(poolId as unknown as number) - 1].title} */}
           </h4>
         </header>
         <main className="flex flex-col gap-10">

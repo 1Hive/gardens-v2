@@ -22,7 +22,7 @@ deploy-testnet:
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pk1 \
-	--broadcast -vv
+	--broadcast -vvvv
 	
 fork:
 	anvil --chain-id 1337

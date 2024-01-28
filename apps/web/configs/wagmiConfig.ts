@@ -1,33 +1,19 @@
-// import { http, createConfig, cookieStorage, createStorage } from "wagmi";
-// import { sepolia } from "wagmi/chains";
+"use client";
+import { configureChains } from "wagmi";
+// import type { Chain } from "viem";
+import { arbitrum, localhost, arbitrumSepolia } from "wagmi/chains";
+import { publicProvider } from "wagmi/providers/public";
 
-// export const localChain = {
-//   id: 1337,
-//   name: "Localhost",
-//   network: "localhost",
-//   nativeCurrency: {
-//     name: "Ether",
-//     symbol: "ETH",
-//     decimals: 18,
-//   },
-//   rpcUrls: {
-//     default: { http: ["http://127.0.0.1:8545"] },
-//     public: { http: ["http://127.0.0.1:8545"] },
-//   },
-//   blockExplorers: {
-//     default: { name: "Etherscan", url: "https://etherscan.io" },
-//   },
-//   testnet: true,
-// };
+export const { chains, publicClient } = configureChains(
+  [arbitrum, arbitrumSepolia, localhost],
+  [publicProvider()],
+);
 
-// export const wagmiConfig = createConfig({
-//   chains: [localChain, sepolia],
-//   ssr: true,
-//   storage: createStorage({
-//   storage: cookieStorage,
-//   }),
-//   transports: {
-//     [localChain.id]: http(),
-//     [sepolia.id]: http(),
-//   },
-// });
+// export function getChain(chainId: number | string): Chain | undefined {
+//   let chainResult = undefined;
+//   if (typeof chainId === "string") {
+//     chainId = parseInt(chainId);
+//   }
+//   chainResult = chains.find(chain => chain.id === chainId);
+//   return chainResult;
+// }

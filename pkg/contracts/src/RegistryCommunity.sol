@@ -155,9 +155,17 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         registry = IRegistry(allo.getRegistry());
 
-        address[] memory initialMembers = new address[](1);
-        initialMembers[0] = address(councilSafe);
+        address[] memory owners = councilSafe.getOwners();
+        console.log("owners length", owners.length);
+        address[] memory initialMembers = new address[](owners.length + 1);
 
+        for (uint256 i = 0; i < owners.length; i++) {
+            initialMembers[i] = owners[i];
+        }
+
+        initialMembers[initialMembers.length - 1] = address(councilSafe);
+
+        console.log("initialMembers length", initialMembers.length);
         profileId =
             registry.createProfile(params._nonce, communityName, params._metadata, address(this), initialMembers);
 
