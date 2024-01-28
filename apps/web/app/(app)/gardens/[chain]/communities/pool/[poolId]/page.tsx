@@ -1,4 +1,4 @@
-import { gardenLand } from "@/assets";
+import { flowers, gardenLand } from "@/assets";
 import { Proposals } from "@/components";
 import Image from "next/image";
 import { cvStrategyAbi, alloAbi } from "@/src/generated";
@@ -6,6 +6,8 @@ import { contractsAddresses } from "@/constants/contracts";
 import { ActivateMember } from "@/components";
 import { createPublicClient, http } from "viem";
 import { getChain } from "@/configs/chainServer";
+import { Badge, StatusBadge } from "@/components";
+import { PoolStats } from "@/components";
 
 //some metadata for each pool
 const poolInfo = [
@@ -54,9 +56,7 @@ export default async function Pool({
     functionName: "getPoolAmount",
   });
 
-  const parsedPoolBalance = Number(poolBalance);
-
-  console.log("poolBalance", parsedPoolBalance);
+  const POOL_BALANCE = Number(poolBalance);
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -64,46 +64,28 @@ export default async function Pool({
         <header className="flex flex-col items-center justify-center">
           <h2 className="text-center font-press">Pool {poolId} </h2>
           <h4 className="text-2xl ">
-            {/* {poolInfo[(poolId as unknown as number) - 1].title} */}
+            {poolInfo[(poolId as unknown as number) - 1].title}
           </h4>
         </header>
         <main className="flex flex-col gap-10">
-          {/* header: description - data - bottom land image */}
-          <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
-            <div className="mt-4 flex flex-col gap-12 p-8">
-              <p className="max-w-4xl text-center text-lg font-semibold">
-                {/* {poolInfo[(poolId as unknown as number) - 1].description} */}
-              </p>
-              <div className="flex w-full p-4">
-                <div className="flex flex-1 flex-col space-y-4 text-xl font-semibold">
-                  {/* {poolId === contractsAddresses.poolID && (
-                    <>
-                      {status === "pending" ? (
-                        <>
-                          <div className="flex flex-col items-center justify-center">
-                            <p>fetching balance ..</p>{" "}
-                            <span className="loading loading-spinner loading-lg"></span>
-                          </div>
-                        </>
-                      ) : (
-                        <> */}
-                  <div className="flex flex-col items-center justify-center">
-                    <div>
-                      <h3 className="font-press text-xl transition-all duration-150 ease-in ">
-                        Funds Available:{" "}
-                      </h3>
-                    </div>
+          {/* Description section */}
 
-                    {parsedPoolBalance && (
-                      <h4 className="font-press">{parsedPoolBalance} $ALLO</h4>
-                    )}
-                  </div>
-                  {/* </>
-                      )}
-                    </>
-                  )} */}
-                  {/* <span>Strategy type: Conviction Voting</span>
-                  <span>Funding Token: Honey</span> */}
+          <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
+            <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
+              <p className="max-w-2xl  text-center text-lg font-semibold">
+                {/* {poolInfo[(poolId as unknown as number) - 1].description} */}
+                Description placeholder: ipsum dolor sit amet consectetur
+                adipisicing elit. In corporis itaque placeat voluptatem
+                consectetur temporibus autem commodi, unde accusantium magni
+                error, laborum saepe! Ipsum, cum id dolor dolorum blanditiis
+                ipsa!
+              </p>
+              <div className="flex w-full  p-4">
+                <div className="flex flex-1 flex-col space-y-4 text-xl font-semibold">
+                  <div className="flex flex-col items-center justify-center"></div>
+
+                  <span>Strategy type: Conviction Voting</span>
+                  <span>Funding Token: Honey</span>
                 </div>
                 <div className="flex flex-1 flex-col items-center space-y-4 font-bold">
                   <span>Proposals type accepted:</span>
@@ -120,9 +102,7 @@ export default async function Pool({
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-center">
-                <ActivateMember strategyAddress={poolData.strategy} />
-              </div>
+              <div className="flex items-center justify-center"></div>
             </div>
             <div className=" flex">
               {[...Array(6)].map((_, i) => (
@@ -135,6 +115,15 @@ export default async function Pool({
               ))}
             </div>
           </section>
+          {/* Stats section */}
+
+          <PoolStats
+            balance={POOL_BALANCE}
+            strategyAddress={poolData.strategy}
+          />
+
+          {/* Proposals section */}
+
           <Proposals poolId={poolId} strategyAddress={poolData.strategy} />
         </main>
       </div>
