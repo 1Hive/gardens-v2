@@ -46,27 +46,46 @@ contract SafeSetup is Test {
     }
 
     function safeHelper(address to_, uint256 value_, bytes memory data_) public {
-        bytes memory txData = councilSafe.encodeTransactionData(
-            address(to_),
-            value_,
-            data_,
-            Enum.Operation.Call,
-            0,
-            0,
-            0,
-            address(0),
-            payable(address(0)),
-            councilSafe.nonce()
+        safeHelper(councilSafe, councilMemberPK, to_, data_);
+    }
+
+    function getHash(address to_, bytes memory data_, Safe councilSafe_) private view returns (bytes32 txData) {
+        txData = keccak256(
+            councilSafe_.encodeTransactionData(
+                address(to_),
+                0,
+                data_,
+                Enum.Operation.Call,
+                0,
+                0,
+                0,
+                address(0),
+                payable(address(0)),
+                councilSafe_.nonce()
+            )
         );
+    }
 
-        bytes32 txDataHash = keccak256(txData);
+    function getSignature(address to_, bytes memory data_, Safe councilSafe_, uint256 councilMemberPK_)
+        private
+        view
+        returns (bytes memory signature)
+    {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(councilMemberPK_, getHash(to_, data_, councilSafe_));
+        signature = abi.encodePacked(r, s, v);
+    }
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(councilMemberPK, txDataHash);
+    function safeHelper(Safe councilSafe_, uint256 councilMemberPK_, address to_, bytes memory data_) public {
+        bytes memory sign;
+        {
+            sign = getSignature(to_, data_, councilSafe_, councilMemberPK_);
+        }
 
-        bytes memory signature = abi.encodePacked(r, s, v);
-        // vm.star
-        councilSafe.execTransaction(
-            address(to_), value_, data_, Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), signature
+        assertTrue(
+            councilSafe_.execTransaction(
+                to_, 0, data_, Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), sign
+            ),
+            "execTransaction failed"
         );
     }
 }
