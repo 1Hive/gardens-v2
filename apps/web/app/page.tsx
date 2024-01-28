@@ -1,13 +1,6 @@
-import { NavBar } from "@/components";
-import { redirect } from "next/navigation";
 import React from "react";
+import { redirect } from "next/navigation";
 
 export default function Home() {
   redirect("/gardens");
-  return (
-    <>
-      <NavBar />
-      <main className="flex flex-col items-center justify-center space-y-8"></main>
-    </>
-  );
 }

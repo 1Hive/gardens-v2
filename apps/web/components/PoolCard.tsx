@@ -2,13 +2,14 @@
 import { gardenLand } from "@/assets";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function PoolCard({ name, strategy, proposals, href, result }: any) {
-  const poolStrategyAddress = result?.strategy;
+  const pathname = usePathname();
   return (
     <Link
-      className="min-w-56 relative flex snap-center flex-col items-start rounded-md border-2 border-black bg-white transition-all duration-150 ease-out hover:scale-105"
-      href={`/gardens/communities/pool/${href}`}
+      className="relative flex min-w-56 snap-center flex-col items-start rounded-md border-2 border-black bg-white transition-all duration-150 ease-out hover:scale-105"
+      href={`${pathname}/pool/${href}`}
     >
       <h4 className="my-3 w-full text-center font-press">{name}</h4>
       <div className="flex w-full flex-col p-4">

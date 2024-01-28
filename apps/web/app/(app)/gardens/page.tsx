@@ -3,6 +3,7 @@ import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import Link from "next/link";
 import { Button, GardenCard } from "@/components";
+// import { useAccount, useConnect } from "wagmi";
 
 const gardens = [
   {
@@ -11,7 +12,7 @@ const gardens = [
     subtitle: "Lorem ipsum dolor sit amet, consectetur",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/gardens/communities",
+    link: "/gardens/[[chain]]/communities",
   },
   {
     imageSrc: "/blank",
@@ -55,12 +56,7 @@ const gardens = [
   },
 ];
 
-export default function Gardens({
-  params: { chain },
-}:{
-  params:{ chain: string }
-}) {
-  console.log("chain",chain);
+export default function Gardens() {
   return (
     <div className="flex flex-col items-center justify-center gap-12">
       <header className="flex flex-col items-center gap-12">

@@ -4,26 +4,9 @@ import Image from "next/image";
 import { cvStrategyAbi, alloAbi } from "@/src/generated";
 import { contractsAddresses } from "@/constants/contracts";
 import { ActivateMember } from "@/components";
-import { createPublicClient, http, Chain } from "viem";
-import { localhost, arbitrumSepolia, arbitrum } from "viem/chains";
-import { useEffect } from "react";
+import { createPublicClient, http } from "viem";
+import { getChain } from "@/configs/chainServer";
 
-// import { getChain } from "@/configs/wagmiConfig";
-
-// import type { Chain } from "viem";
-// import { arbitrum, localhost, arbitrumSepolia } from "wagmi/chains";
-// import { chains } from "@/configs/wagmiConfig";
-
-const chains = [localhost, arbitrum, arbitrumSepolia];
-
-function getChain(chainId: number | string): Chain | undefined {
-  let chainResult = undefined;
-  if (typeof chainId === "string") {
-    chainId = parseInt(chainId);
-  }
-  chainResult = chains.find((chain) => chain.id === chainId);
-  return chainResult;
-}
 //some metadata for each pool
 const poolInfo = [
   {
@@ -53,7 +36,7 @@ export default async function Pool({
   params: { chain: string; poolId: number };
 }) {
   const client = createPublicClient({
-    chain: getChain(chain) ?? arbitrumSepolia, //@todo that run in server need be changed based in the URI {chain}
+    chain: getChain(chain),
     transport: http(),
   });
 
@@ -64,7 +47,7 @@ export default async function Pool({
     args: [BigInt(poolId)],
   })) as PoolData;
 
-  console.log(poolData);
+  console.log("poolData", poolData);
   const poolBalance = await client.readContract({
     address: poolData.strategy,
     abi: cvStrategyAbi,

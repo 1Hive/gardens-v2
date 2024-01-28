@@ -6,10 +6,11 @@ import {
   useContractWrite,
   useWaitForTransaction,
 } from "wagmi";
-import { registryGardensAbi, cvStrategyAbi } from "@/src/generated";
+import { registryCommunityAbi, cvStrategyAbi } from "@/src/generated";
 import { useAccount } from "wagmi";
-import useErrorDetails from "@/utils/getErrorName";
+import useErrorDetails, { getErrorName } from "@/utils/getErrorName";
 import { contractsAddresses } from "@/constants/contracts";
+import { abiWithErrors } from "@/utils/abiWithErrors";
 
 export function ActivateMember({
   strategyAddress,
@@ -26,7 +27,7 @@ export function ActivateMember({
     error: errorActivatePoints,
   } = useContractWrite({
     address: strategyAddress,
-    abi: cvStrategyAbi,
+    abi: abiWithErrors(cvStrategyAbi),
     functionName: "activatePoints",
   });
 
@@ -36,21 +37,28 @@ export function ActivateMember({
     error: errorDeactivatePoints,
   } = useContractWrite({
     address: strategyAddress,
-    abi: cvStrategyAbi,
+    abi: abiWithErrors(cvStrategyAbi),
     functionName: "deactivatePoints",
   });
 
   // memberActivatedInStrategies
   // args [member address, strategy address]
-  const { data: isMemberActived, error: errorMemberActivated } =
-    useContractRead({
-      address: contractsAddresses.registryCommunity,
-      abi: registryGardensAbi,
-      functionName: "memberActivatedInStrategies",
-      args: [mainConnectedAccount as `0x${string}`, strategyAddress],
-      watch: true,
-      cacheOnBlock: true,
-    });
+  const {
+    data: isMemberActived,
+    error: errorMemberActivated,
+    status,
+  } = useContractRead({
+    address: contractsAddresses.registryCommunity,
+    abi: registryCommunityAbi,
+    functionName: "memberActivatedInStrategies",
+    args: [mainConnectedAccount as `0x${string}`, strategyAddress],
+    watch: true,
+    cacheOnBlock: true,
+  });
+
+  useEffect(() => {
+    console.log("status", status);
+  }, [status]);
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");

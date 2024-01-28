@@ -1,19 +1,14 @@
-"use client";
+// "use client";
 import { configureChains } from "wagmi";
-// import type { Chain } from "viem";
-import { arbitrum, localhost, arbitrumSepolia } from "wagmi/chains";
+
 import { publicProvider } from "wagmi/providers/public";
+import { alchemyProvider } from "wagmi/providers/alchemy";
 
-export const { chains, publicClient } = configureChains(
-  [arbitrum, arbitrumSepolia, localhost],
-  [publicProvider()],
-);
+import { chains as chainsServer } from "@/configs/chainServer";
 
-// export function getChain(chainId: number | string): Chain | undefined {
-//   let chainResult = undefined;
-//   if (typeof chainId === "string") {
-//     chainId = parseInt(chainId);
-//   }
-//   chainResult = chains.find(chain => chain.id === chainId);
-//   return chainResult;
-// }
+export const { chains, publicClient } = configureChains(chainsServer, [
+  publicProvider(),
+  alchemyProvider({
+    apiKey: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "",
+  }),
+]);

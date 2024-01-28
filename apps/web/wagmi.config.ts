@@ -1,12 +1,10 @@
 import { defineConfig } from "@wagmi/cli";
 import { react, foundry } from "@wagmi/cli/plugins";
-// import {  erc20Abi } from 'viem'
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
 import { abi as RegistryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
-import { abi as RegistryGardensABI } from "#/contracts/out/RegistryGardens.sol/RegistryGardens.json";
+import { abi as RegistryCommunityABI } from "#/contracts/out/RegistryCommunity.sol/RegistryCommunity.json";
 import { abi as AlloABI } from "#/contracts/out/Allo.sol/Allo.json";
 
-import { mainnet, sepolia } from "wagmi/chains";
 import { Abi } from "viem";
 
 export default defineConfig({
@@ -21,8 +19,8 @@ export default defineConfig({
       abi: RegistryFactoryABI as Abi,
     },
     {
-      name: "RegistryGardens",
-      abi: RegistryGardensABI as Abi,
+      name: "RegistryCommunity",
+      abi: RegistryCommunityABI as Abi,
     },
     {
       name: "Allo",
