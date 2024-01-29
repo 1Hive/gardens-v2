@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/console.sol";
 import {BaseStrategy} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
+import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {RegistryCommunity} from "./RegistryCommunity.sol";
 
 interface IWithdrawMember {
@@ -59,8 +60,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         ProposalType proposalType;
         uint256 amountRequested;
         address requestedToken;
-        string title;
-        string description;
+        Metadata metadata;
     }
 
     enum ProposalStatus {

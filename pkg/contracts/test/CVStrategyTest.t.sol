@@ -139,7 +139,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         startMeasuringGas("createProposal");
 
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            1, poolId, pool_admin(), CVStrategy.ProposalType.Funding, requestAmount, address(useTokenPool)
+            1, poolId, pool_admin(), CVStrategy.ProposalType.Funding, requestAmount, address(useTokenPool), metadata
         );
         bytes memory data = abi.encode(proposal);
         allo().registerRecipient(poolId, data);
@@ -229,7 +229,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (, uint256 poolId) = _createProposal(NATIVE, 0, 0);
 
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            1, poolId, pool_admin(), CVStrategy.ProposalType.Signaling, REQUESTED_AMOUNT, NATIVE
+            1, poolId, pool_admin(), CVStrategy.ProposalType.Signaling, REQUESTED_AMOUNT, NATIVE, metadata
         );
         bytes memory data = abi.encode(proposal);
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalIdAlreadyExist.selector, 1));
@@ -586,7 +586,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         uint256 proposalID2 = 2;
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            proposalID2, poolId, pool_admin(), CVStrategy.ProposalType.Funding, REQUESTED_AMOUNT, address(token)
+            proposalID2,
+            poolId,
+            pool_admin(),
+            CVStrategy.ProposalType.Funding,
+            REQUESTED_AMOUNT,
+            address(token),
+            metadata
         );
         bytes memory data2 = abi.encode(proposal);
         allo().registerRecipient(poolId, data2);
@@ -710,7 +716,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         startMeasuringGas("createProposal");
 
         CVStrategy.CreateProposal memory proposal =
-            CVStrategy.CreateProposal(2, poolId, address(0), CVStrategy.ProposalType.Signaling, 0, address(0));
+            CVStrategy.CreateProposal(2, poolId, address(0), CVStrategy.ProposalType.Signaling, 0, address(0), metadata);
         bytes memory data = abi.encode(proposal);
         allo().registerRecipient(poolId, data);
 

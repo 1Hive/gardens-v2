@@ -162,24 +162,27 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         token.approve(address(allo), type(uint256).max);
         allo.fundPool(poolId, 1_000);
 
-        CVStrategy.CreateProposal memory proposal =
-            CVStrategy.CreateProposal(1, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 50 wei, address(token));
+        CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
+            1, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 50 wei, address(token), metadata
+        );
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal =
-            CVStrategy.CreateProposal(2, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 25 wei, address(token));
+        proposal = CVStrategy.CreateProposal(
+            2, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 25 wei, address(token), metadata
+        );
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal =
-            CVStrategy.CreateProposal(3, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 10 wei, address(token));
+        proposal = CVStrategy.CreateProposal(
+            3, poolId, pool_admin(), CVStrategy.ProposalType.Funding, 10 wei, address(token), metadata
+        );
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
         // Strategy 2 Signaling
         CVStrategy.CreateProposal memory proposal2 = CVStrategy.CreateProposal(
-            1, poolIdSignaling, pool_admin(), CVStrategy.ProposalType.Signaling, 0, address(0)
+            1, poolIdSignaling, pool_admin(), CVStrategy.ProposalType.Signaling, 0, address(0), metadata
         );
         bytes memory data2 = abi.encode(proposal2);
         allo.registerRecipient(poolIdSignaling, data2);
