@@ -3,6 +3,7 @@ import { flowers } from "@/assets";
 import React, { FC } from "react";
 import Image from "next/image";
 import { StatusBadge } from "./Badge";
+import { ActivePointsChart } from "@/components";
 import { ActivateMember } from "./ActivateMember";
 import { useAccount, useContractRead } from "wagmi";
 import { contractsAddresses } from "@/constants/contracts";
@@ -83,14 +84,13 @@ export const PoolStats: FC<poolStatsProps> = ({ balance, strategyAddress }) => {
       </div>
 
       {/* right  */}
-      <div className="flex-1 rounded-xl border-2 border-black bg-white p-4">
+      <div className="flex-1 space-y-8 rounded-xl border-2 border-black bg-white p-4">
         <div>
           <h4 className="text-center text-xl font-bold">Governance</h4>
         </div>
         <div>
-          <div className="border-1 flex h-24 flex-1 items-center justify-center">
-            graph placeholder
-          </div>
+          {/* Testing styles and Data */}
+          <ActivePointsChart />
         </div>
       </div>
     </section>

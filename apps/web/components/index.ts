@@ -9,4 +9,5 @@ export { Badge } from "./Badge";
 export { StatusBadge } from "./Badge";
 export { StackedBarChart } from "./StackedBarChart";
 export { ActivateMember } from "./ActivateMember";
+export { ActivePointsChart } from "./Charts/ActivePointsChart";
 export { PoolStats } from "./PoolStats";
