@@ -410,6 +410,67 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         );
     }
 
+    function getMetadata(uint256 _proposalId) external view returns (Metadata memory) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.metadata;
+    }
+
+    function getProposalStatus(uint256 _proposalId) external view returns (ProposalStatus) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.proposalStatus;
+    }
+
+    function getProposalType(uint256 _proposalId) external view returns (ProposalType) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.proposalType;
+    }
+
+    function getProposalRequestedAmount(uint256 _proposalId) external view returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.requestedAmount;
+    }
+
+    function getProposalRequestedToken(uint256 _proposalId) external view returns (address) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.requestedToken;
+    }
+
+    function getProposalBeneficiary(uint256 _proposalId) external view returns (address) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.beneficiary;
+    }
+
+    function getProposalSubmitter(uint256 _proposalId) external view returns (address) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.submitter;
+    }
+
+    function getProposalThreshold(uint256 _proposalId) external view returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.requestedAmount == 0 ? 0 : calculateThreshold(proposal.requestedAmount);
+    }
+
+    function getProposalBlockLast(uint256 _proposalId) external view returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.blockLast;
+    }
+
+    function getProposalConvictionLast(uint256 _proposalId) external view returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.convictionLast;
+    }
+
+    function getProposalAgreementActionId(uint256 _proposalId) external view returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.agreementActionId;
+    }
+
+    function getProposalVoterStakedPointsPct(uint256 _proposalId, address _voter) external view returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.voterStakedPointsPct[_voter];
+    }
+
+    function getProposalVoterStakedAmount(uint256 _
     /**
      * @notice Get stake of voter `_voter` on proposal #`_proposalId`
      * @param _proposalId Proposal id
