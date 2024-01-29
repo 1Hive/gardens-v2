@@ -1,8 +1,8 @@
 import {
-  cvStrategyAbi,
-  registryCommunityAbi,
-  registryFactoryAbi,
-  alloAbi,
+  cvStrategyABI,
+  registryCommunityABI,
+  registryFactoryABI,
+  alloABI,
 } from "@/src/generated";
 import { Abi } from "viem";
 
@@ -10,10 +10,10 @@ const FuncFilterError = (item: { type: string }) => item.type === "error";
 
 // merge abi errors
 const errorsABI = [
-  ...alloAbi.filter(FuncFilterError),
-  ...cvStrategyAbi.filter(FuncFilterError),
-  ...registryCommunityAbi.filter(FuncFilterError),
-  ...registryFactoryAbi.filter(FuncFilterError),
+  ...alloABI.filter(FuncFilterError),
+  ...cvStrategyABI.filter(FuncFilterError),
+  ...registryCommunityABI.filter(FuncFilterError),
+  ...registryFactoryABI.filter(FuncFilterError),
 ];
 // console.log("errorsABI", errorsABI);
 

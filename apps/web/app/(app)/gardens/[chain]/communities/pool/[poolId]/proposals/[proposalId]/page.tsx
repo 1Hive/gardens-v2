@@ -2,12 +2,11 @@ import { Badge, StatusBadge, Button, StackedBarChart } from "@/components";
 import { formatAddress } from "@/utils/formatAddress";
 import { honeyIcon } from "@/assets";
 import Image from "next/image";
-import { alloAbi, cvStrategyAbi } from "@/src/generated";
+import { alloABI, cvStrategyABI } from "@/src/generated";
 import { Abi, formatEther } from "viem";
 import { readContract } from "@wagmi/core";
 import { contractsAddresses } from "@/constants/contracts";
 import { proposalsMockData } from "@/constants/proposalsMockData";
-
 
 type ProposalsMock = {
   title: string;
@@ -58,19 +57,19 @@ export default async function Proposal({
 
   const poolData = (await readContract({
     address: contractsAddresses.allo,
-    abi: alloAbi as Abi,
+    abi: alloABI as Abi,
     functionName: "getPool",
     args: [BigInt(poolId)],
   })) as PoolData;
 
   const cvStrategyContract = {
     address: poolData.strategy,
-    abi: cvStrategyAbi as Abi,
+    abi: cvStrategyABI as Abi,
   };
 
   const rawProposal = (await readContract({
     address: poolData.strategy,
-    abi: cvStrategyAbi as Abi,
+    abi: cvStrategyABI as Abi,
     functionName: "getProposal",
     args: [proposalId],
   })) as any[];

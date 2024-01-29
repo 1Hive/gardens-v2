@@ -1,7 +1,12 @@
 import { gardenLand } from "@/assets";
 import { Proposals } from "@/components";
 import Image from "next/image";
-import { cvStrategyAbi, alloAbi } from "@/src/generated";
+import {
+  cvStrategyABI,
+  alloABI,
+  watchCvStrategyEvent,
+  watchAlloEvent,
+} from "@/src/generated";
 import { contractsAddresses } from "@/constants/contracts";
 import { ActivateMember } from "@/components";
 import { createPublicClient, http } from "viem";
@@ -41,16 +46,19 @@ export default async function Pool({
   });
 
   const poolData = (await client.readContract({
-    abi: alloAbi,
+    abi: alloABI,
     address: contractsAddresses.allo,
     functionName: "getPool",
     args: [BigInt(poolId)],
   })) as PoolData;
 
   console.log("poolData", poolData);
+  if (poolData.strategy === "0x0000000000000000000000000000000000000000") {
+    return <div>Pool not found</div>;
+  }
   const poolBalance = await client.readContract({
     address: poolData.strategy,
-    abi: cvStrategyAbi,
+    abi: cvStrategyABI,
     functionName: "getPoolAmount",
   });
 

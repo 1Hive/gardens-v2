@@ -6,7 +6,7 @@ import {
   useContractWrite,
   useWaitForTransaction,
 } from "wagmi";
-import { registryCommunityAbi, cvStrategyAbi } from "@/src/generated";
+import { registryCommunityABI, cvStrategyABI } from "@/src/generated";
 import { useAccount } from "wagmi";
 import useErrorDetails, { getErrorName } from "@/utils/getErrorName";
 import { contractsAddresses } from "@/constants/contracts";
@@ -27,7 +27,7 @@ export function ActivateMember({
     error: errorActivatePoints,
   } = useContractWrite({
     address: strategyAddress,
-    abi: abiWithErrors(cvStrategyAbi),
+    abi: abiWithErrors(cvStrategyABI),
     functionName: "activatePoints",
   });
 
@@ -37,7 +37,7 @@ export function ActivateMember({
     error: errorDeactivatePoints,
   } = useContractWrite({
     address: strategyAddress,
-    abi: abiWithErrors(cvStrategyAbi),
+    abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
   });
 
@@ -49,7 +49,7 @@ export function ActivateMember({
     status,
   } = useContractRead({
     address: contractsAddresses.registryCommunity,
-    abi: registryCommunityAbi,
+    abi: registryCommunityABI,
     functionName: "memberActivatedInStrategies",
     args: [mainConnectedAccount as `0x${string}`, strategyAddress],
     watch: true,

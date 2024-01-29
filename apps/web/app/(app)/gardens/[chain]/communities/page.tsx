@@ -1,44 +1,122 @@
+// "use client";
 import { honeyIcon } from "@/assets";
 import Image from "next/image";
 import { CommunityCard } from "@/components";
-import { useContractRead, readContracts } from "wagmi";
-import { Abi } from "viem";
+// import { useContractRead, readContracts, useContractEvent } from "wagmi";
+import { Abi, createPublicClient, http, parseAbiItem } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
-import { alloAbi } from "@/src/generated";
+import { alloABI } from "@/src/generated";
+import { getChain } from "@/configs/chainServer";
 
-export default async function Garden() {
-  const alloContractReadProps = {
-    address: contractsAddresses.allo,
-    abi: alloAbi as Abi,
-  };
+import { arbitrum, arbitrumSepolia } from "viem/chains";
+const alloContractReadProps = {
+  address: contractsAddresses.allo,
+  abi: alloABI as Abi,
+};
 
-  try {
-    // await readContracts(wagmiConfig,
-    const result = await readContracts({
-      contracts: [
-        {
-          ...alloContractReadProps,
-          functionName: "getPool",
-          args: [1],
-        },
-        {
-          ...alloContractReadProps,
-          functionName: "getPool",
-          args: [2],
-        },
-      ],
-    });
+export default async function Garden({
+  params: { chain },
+}: {
+  params: { chain: string };
+}) {
+  // const currentChain = getChain(chain);
+  // const publicClient = createPublicClient({
+  //   chain: currentChain,
+  //   transport:
+  //     currentChain?.id === arbitrumSepolia.id
+  //       ? http(contractsAddresses.rpcUrl)
+  //       : // http("https://go.getblock.io/key_here")
+  //         // http(
+  //         //   "https://arbitrum-sepolia.infura.io/v3/key_here",
+  //         // )
+  //         http(),
+  // });
 
-    // Merge the data into the first community - 1hive
-    conmmunities[0].pools.forEach((pool, poolIndex) => {
-      if (result[poolIndex]) {
-        pool.result = result[poolIndex].result;
-        pool.status = result[poolIndex].status;
-      }
-    });
-  } catch (error) {
-    console.log(error);
-  }
+  // const filter = await publicClient.createContractEventFilter({
+  //   address: contractsAddresses.allo,
+  //   abi: alloABI,
+  //   eventName: "PoolCreated",
+  //   // fromBlock: BigInt(5976448),
+  //   // fromBlock: BigInt(3136627),
+  // });
+  // // ...
+  // const logs = await publicClient.getFilterChanges({ filter });
+  // const someIndex = 51;
+
+  // if (someIndex > -1) {
+  //   const filter = await client.createEventFilter({
+  //     address: contractsAddresses.allo,
+  //     event: alloABI[someIndex] as unknown as any,
+  //   });
+  //   const logs = await client.getFilterLogs({ filter });
+
+  const publicClient = createPublicClient({
+    chain: arbitrum,
+    transport: http("https://arb-mainnet.g.alchemy.com/v2/key_here"),
+  });
+
+  const filter = await publicClient.createEventFilter({
+    address: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
+    event: parseAbiItem(
+      "event Transfer(address indexed, address indexed, uint256)",
+    ),
+    fromBlock: BigInt(175138673),
+  });
+  // ...
+  const logs = await publicClient.getFilterChanges({ filter });
+  // ...
+  // const logs = await publicClient.getFilterChanges({ filter });
+
+  console.log("LOGS", logs);
+  // }
+  // ...
+  // const lgos = await client.getLogs();
+  // watchAlloEvent(
+  //   {
+  //     address: contractsAddresses.allo,
+  //     eventName: "PoolCreated",
+  //   },
+  //   (event) => {
+  //     console.log("event", event);
+  //   },
+  // );
+
+  // const unwatch = useContractEvent({
+  //   address: contractsAddresses.allo,
+  //   abi: alloABI,
+  //   eventName: "PoolCreated",
+  //   listener: (logs) => {
+  //     console.log("event", logs);
+  //   },
+  // });
+
+  // try {
+  //   // await readContracts(wagmiConfig,
+  //   const result = await readContracts({
+  //     contracts: [
+  //       {
+  //         ...alloContractReadProps,
+  //         functionName: "getPool",
+  //         args: [1],
+  //       },
+  //       {
+  //         ...alloContractReadProps,
+  //         functionName: "getPool",
+  //         args: [2],
+  //       },
+  //     ],
+  //   });
+
+  //   // Merge the data into the first community - 1hive
+  //   conmmunities[0].pools.forEach((pool, poolIndex) => {
+  //     if (result[poolIndex]) {
+  //       pool.result = result[poolIndex].result;
+  //       pool.status = result[poolIndex].status;
+  //     }
+  //   });
+  // } catch (error) {
+  //   console.log(error);
+  // }
 
   return (
     <div className=" relative mx-auto max-w-5xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
