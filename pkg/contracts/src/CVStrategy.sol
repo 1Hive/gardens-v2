@@ -85,8 +85,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         ProposalType proposalType;
         mapping(address => uint256) voterStakedPointsPct; // voter staked percentage
         mapping(address => uint256) voterStake; // voter staked percentage
-        string title;
-        string description;
+        Metadata metadata;
     }
 
     struct ProposalSupport {
@@ -228,6 +227,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         p.blockLast = block.number;
         p.convictionLast = 0;
         p.agreementActionId = 0;
+        p.metadata = proposal.metadata;
 
         emit ProposalCreated(proposal.proposalId, proposal.beneficiary, proposal.amountRequested);
         return address(uint160(proposal.proposalId));
@@ -470,7 +470,11 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         return proposal.voterStakedPointsPct[_voter];
     }
 
-    function getProposalVoterStakedAmount(uint256 _
+    function getProposalVoterStakedAmount(uint256 _proposalId, address _voter) external view returns (uint256) {
+        Proposal storage proposal = proposals[_proposalId];
+        return proposal.voterStake[_voter];
+    }
+
     /**
      * @notice Get stake of voter `_voter` on proposal #`_proposalId`
      * @param _proposalId Proposal id
