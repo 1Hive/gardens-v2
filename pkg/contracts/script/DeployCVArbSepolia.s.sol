@@ -85,7 +85,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
         paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
         // params.minThresholdStakePercentage = 0.2 ether; // 20%
-        paramsCV.registryGardens = address(registryCommunity);
+        paramsCV.registryCommunity = address(registryCommunity);
 
         CVStrategy strategy1 = new CVStrategy(address(allo));
         CVStrategy strategy2 = new CVStrategy(address(allo));

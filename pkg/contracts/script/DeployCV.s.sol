@@ -54,30 +54,30 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "Allo";
 
-        RegistryCommunity registryGardens = RegistryCommunity(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
+        RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
         token.mint(address(pool_admin()), 10_000);
 
         CVStrategy strategy1 = new CVStrategy(address(allo));
 
         safeHelper(
-            address(registryGardens),
+            address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryGardens.addStrategy.selector, address(strategy1))
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
         );
         CVStrategy strategy2 = new CVStrategy(address(allo));
         safeHelper(
-            address(registryGardens),
+            address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryGardens.addStrategy.selector, address(strategy2))
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
         );
         // FAST 1 MIN GROWTH
 
         uint256 poolId =
-            createPool(Allo(address(allo)), address(strategy1), address(registryGardens), registry, address(token));
+            createPool(Allo(address(allo)), address(strategy1), address(registryCommunity), registry, address(token));
 
         uint256 poolIdSignaling =
-            createPool(Allo(address(allo)), address(strategy2), address(registryGardens), registry, address(0));
+            createPool(Allo(address(allo)), address(strategy2), address(registryCommunity), registry, address(0));
         address[] memory membersStaked = new address[](4);
 
         strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
@@ -98,8 +98,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         for (uint256 i = 0; i < membersStaked.length; i++) {
             vm.startBroadcast(address(membersStaked[i]));
             token.mint(address(membersStaked[i]), 100);
-            token.approve(address(registryGardens), MINIMUM_STAKE);
-            registryGardens.stakeAndRegisterMember();
+            token.approve(address(registryCommunity), MINIMUM_STAKE);
+            registryCommunity.stakeAndRegisterMember();
             strategy1.activatePoints();
             strategy2.activatePoints();
 
@@ -144,7 +144,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("Token Addr: %s", address(token));
         console2.log("Token Native Addr: %s", address(NATIVE));
 
-        console2.log("Registry Gardens Addr: %s", address(registryGardens));
+        console2.log("Registry Gardens Addr: %s", address(registryCommunity));
 
         console2.log("Allo Registry Addr: %s", address(registry));
         console2.log("Pool Admin Addr: %s", pool_admin());

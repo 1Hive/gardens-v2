@@ -59,6 +59,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         ProposalType proposalType;
         uint256 amountRequested;
         address requestedToken;
+        string title;
+        string description;
     }
 
     enum ProposalStatus {
@@ -83,6 +85,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         ProposalType proposalType;
         mapping(address => uint256) voterStakedPointsPct; // voter staked percentage
         mapping(address => uint256) voterStake; // voter staked percentage
+        string title;
+        string description;
     }
 
     struct ProposalSupport {
@@ -91,7 +95,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     struct InitializeParams {
-        address registryGardens;
+        address registryCommunity;
         // Alpha | Decay | a
         uint256 decay;
         // MaxRatio | Beta | b | SpendingLimit
@@ -104,7 +108,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     /*|--------------------------------------------|*/
 
     uint256 internal surpressStateMutabilityWarning;
-    RegistryCommunity registryGardens;
+
+    RegistryCommunity public registryCommunity;
 
     mapping(uint256 => Proposal) public proposals;
     mapping(address => uint256) public totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
@@ -138,11 +143,11 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         // console.log("InitializeParams.maxRatio", ip.maxRatio);
         // console.log("InitializeParams.weight", ip.weight);
 
-        if (ip.registryGardens == address(0)) {
+        if (ip.registryCommunity == address(0)) {
             revert RegistryCannotBeZero();
         }
 
-        registryGardens = RegistryCommunity(ip.registryGardens);
+        registryCommunity = RegistryCommunity(ip.registryCommunity);
 
         decay = ip.decay;
         maxRatio = ip.maxRatio;
@@ -172,10 +177,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         if (_sender == address(0)) {
             revert UserCannotBeZero();
         }
-        if (address(registryGardens) == address(0)) {
+        if (address(registryCommunity) == address(0)) {
             revert RegistryCannotBeZero();
         }
-        if (!registryGardens.isMember(_sender)) {
+        if (!registryCommunity.isMember(_sender)) {
             revert UserNotInRegistry();
         }
         _;
@@ -230,12 +235,12 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
 
     function activatePoints() external {
         address member = msg.sender;
-        registryGardens.activateMemberInStrategy(member, address(this));
+        registryCommunity.activateMemberInStrategy(member, address(this));
     }
 
     function deactivatePoints() external {
         address member = msg.sender; //@todo wip
-        registryGardens.deactivateMemberInStrategy(member, address(this));
+        registryCommunity.deactivateMemberInStrategy(member, address(this));
         // remove support from all proposals
         this.withdraw(member);
     }
@@ -255,7 +260,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         //@todo test for not member
         surpressStateMutabilityWarning++;
 
-        bool isMemberActivatedPoints = registryGardens.memberActivatedInStrategies(_sender, address(this));
+        bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
         if (!isMemberActivatedPoints) {
             revert UserIsInactive();
         }
@@ -437,7 +442,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     function getBasisPoint() internal view returns (uint256) {
-        return registryGardens.getBasisStakedAmount(); // 50 HNY = 100%
+        return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
 
     function proposalExists(uint256 _proposalID) internal view returns (bool) {
@@ -463,7 +468,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         // console.logInt(deltaSupportSum);
         uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
         // console.log("newTotalVotingSupport", newTotalVotingSupport);
-        uint256 participantBalance = convertTokensToPct(registryGardens.getBasisStakedAmount());
+        uint256 participantBalance = convertTokensToPct(registryCommunity.getBasisStakedAmount());
         // console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
         // require(newTotalVotingSupport <= participantBalance, "NOT_ENOUGH_BALANCE");
@@ -679,7 +684,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     function totalEffectiveActivePoints() public view returns (uint256) {
         //@todo ignore totalStaked here
         // return pointsActivated > totalStaked ? pointsActivated : totalStaked;
-        uint256 totalPointsActivated = registryGardens.totalPointsActivatedInStrategy(address(this));
+        uint256 totalPointsActivated = registryCommunity.totalPointsActivatedInStrategy(address(this));
         console.log("totalPointsActivated", totalPointsActivated);
         console.log("minPointsActivated", minPointsActivated);
         return totalPointsActivated > minPointsActivated ? totalPointsActivated : minPointsActivated;
@@ -738,7 +743,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         weight = _weight;
     }
 
-    function setRegistryCommunity(address _registryGardens) external onlyPoolManager(msg.sender) {
-        registryGardens = RegistryCommunity(_registryGardens);
+    function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
+        registryCommunity = RegistryCommunity(_registryCommunity);
     }
 }
