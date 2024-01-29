@@ -29,7 +29,7 @@ export default defineConfig({
   ],
   plugins: [
     actions({
-      watchContractEvent: true,
+      watchContractEvent: false,
       readContract: true,
       writeContract: true,
       prepareWriteContract: true,

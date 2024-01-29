@@ -1,12 +1,7 @@
 import { gardenLand } from "@/assets";
 import { Proposals } from "@/components";
 import Image from "next/image";
-import {
-  cvStrategyABI,
-  alloABI,
-  watchCvStrategyEvent,
-  watchAlloEvent,
-} from "@/src/generated";
+import { cvStrategyABI, alloABI } from "@/src/generated";
 import { contractsAddresses } from "@/constants/contracts";
 import { ActivateMember } from "@/components";
 import { createPublicClient, http } from "viem";
