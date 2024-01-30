@@ -119,6 +119,7 @@ export default async function Pool({
           <PoolStats
             balance={POOL_BALANCE}
             strategyAddress={poolData.strategy}
+            poolId={poolId}
           />
 
           {/* Proposals section */}

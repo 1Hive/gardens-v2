@@ -13,9 +13,14 @@ import { registryCommunityAbi } from "@/src/generated";
 type poolStatsProps = {
   balance?: string | number;
   strategyAddress: `0x${string}`;
+  poolId: number;
 };
 
-export const PoolStats: FC<poolStatsProps> = ({ balance, strategyAddress }) => {
+export const PoolStats: FC<poolStatsProps> = ({
+  balance,
+  strategyAddress,
+  poolId,
+}) => {
   const { address: mainConnectedAccount } = useAccount();
 
   const {
@@ -38,14 +43,14 @@ export const PoolStats: FC<poolStatsProps> = ({ balance, strategyAddress }) => {
         {/* left-top */}
         <div className="flex-flex-col max-h-44 w-full space-y-4 rounded-xl border-2 border-black bg-white p-4">
           <div>
-            <h4 className="text-center text-xl font-bold">Funding Pool</h4>
+            <div className="flex items-center justify-around">
+              <h4 className="text-center text-xl font-bold">Funding Pool</h4>
+              <h4 className="text-center text-2xl font-bold">{balance} HNY</h4>
+            </div>
           </div>
           <div className="max-h-30 flex items-center gap-3 ">
             <div className="border-1 flex h-24 flex-1 items-center justify-center">
               <PoolTokenPriceChart />
-            </div>
-            <div className="flex-[0.4] rounded-xl border-2 border-black bg-primary py-3 text-center text-xl font-semibold text-white">
-              {balance} HNY
             </div>
           </div>
         </div>
@@ -60,7 +65,7 @@ export const PoolStats: FC<poolStatsProps> = ({ balance, strategyAddress }) => {
               {/* Points & Status */}
               <div className="flex flex-1 flex-col items-center">
                 <p>Points</p>
-                <div className="badge badge-success w-20 min-w-16 p-4 text-white">
+                <div className="badge w-20 min-w-16 bg-inherit p-4 text-xl text-black">
                   {isMemberActived ? "100" : "0"}
                 </div>
               </div>
@@ -72,6 +77,7 @@ export const PoolStats: FC<poolStatsProps> = ({ balance, strategyAddress }) => {
                 />
               </div>
             </div>
+
             {/* Activate - Deactivate/ points */}
             <div className="flex w-full justify-center">
               <ActivateMember
