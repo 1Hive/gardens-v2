@@ -11,11 +11,11 @@ export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
     tooltip: {
       trigger: "item",
     },
-
-    legend: {
-      orient: "h",
-      right: "left",
-    },
+    //TODO: see if legend is neccesary
+    // legend: {
+    //   orient: "h",
+    //   right: "right",
+    // },
     emphasis: {
       itemStyle: {
         shadowBlur: 10,

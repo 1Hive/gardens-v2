@@ -1,25 +1,43 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
 import type { EChartsOption } from "echarts";
 
-export const ActivePointsChart = () => {
-  const [data, setData] = useState([
-    { value: 70, name: "Points Active" },
-    { value: 30, name: "Points Inactive" },
-  ]);
+type ActivePointsChartProps = {
+  stakedPoints: number;
+};
+
+const defaultData = [
+  { value: 0, name: "Points Active & Staked" },
+  { value: 100, name: "Points Inactive" },
+];
+
+export const ActivePointsChart = ({
+  stakedPoints = 0,
+}: ActivePointsChartProps) => {
+  const [data, setData] = useState(defaultData);
+
+  const chartData = useMemo(() => {
+    const activeStakedPoints = stakedPoints || 0;
+    const inactivePoints = 100 - activeStakedPoints;
+
+    return [
+      { value: activeStakedPoints, name: "Points Active & Staked" },
+      { value: inactivePoints, name: "Points Inactive" },
+    ];
+  }, [stakedPoints]);
+
+  useEffect(() => {
+    setData(chartData);
+  }, [chartData]);
 
   const OPTIONS: EChartsOption = {
-    // TODO: check show state
-    // yAxis: { show: false },
-    // xAxis: { show: false },
-
     series: [
       {
         name: "Points distribution",
         type: "pie",
-        radius: "90%",
+        radius: "80%",
         data: data,
       },
     ],

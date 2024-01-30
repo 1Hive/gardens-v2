@@ -8,7 +8,7 @@ import { PoolTokenPriceChart } from "@/components";
 import { ActivateMember } from "./ActivateMember";
 import { useAccount, useContractRead } from "wagmi";
 import { contractsAddresses } from "@/constants/contracts";
-import { registryCommunityAbi } from "@/src/generated";
+import { registryCommunityAbi, cvStrategyAbi, alloAbi } from "@/src/generated";
 
 type poolStatsProps = {
   balance?: string | number;
@@ -32,6 +32,15 @@ export const PoolStats: FC<poolStatsProps> = ({
     abi: registryCommunityAbi,
     functionName: "memberActivatedInStrategies",
     args: [mainConnectedAccount as `0x${string}`, strategyAddress],
+    watch: true,
+    cacheOnBlock: true,
+  });
+
+  const { data: voterStakePct } = useContractRead({
+    address: strategyAddress,
+    abi: cvStrategyAbi,
+    functionName: "getTotalVoterStakePct",
+    args: [mainConnectedAccount as `0x${string}`],
     watch: true,
     cacheOnBlock: true,
   });
@@ -97,7 +106,7 @@ export const PoolStats: FC<poolStatsProps> = ({
         </div>
         <div>
           {/* Testing styles and Data */}
-          <ActivePointsChart />
+          <ActivePointsChart stakedPoints={Number(voterStakePct)} />
         </div>
       </div>
     </section>
