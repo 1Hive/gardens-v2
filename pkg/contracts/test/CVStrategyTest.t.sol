@@ -42,7 +42,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     uint256 public constant MINIMUM_STAKE = 50;
     uint256 public constant REQUESTED_AMOUNT = 1000;
 
-    RegistryCommunity internal registryGardens;
+    RegistryCommunity internal registryCommunity;
 
     function setUp() public {
         __RegistrySetupFull();
@@ -62,7 +62,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().transferOwnership(local());
         vm.stopPrank();
 
-        // registryGardens = new RegistryCommunity();
+        // registryCommunity = new RegistryCommunity();
         RegistryFactory registryFactory = new RegistryFactory();
 
         RegistryCommunity.InitializeParams memory params;
@@ -73,13 +73,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        registryGardens = RegistryCommunity(registryFactory.createRegistry(params));
+        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
 
-        token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
+        token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
     }
 
-    function _registryGardens() internal view returns (RegistryCommunity) {
-        return registryGardens;
+    function _registryCommunity() internal view returns (RegistryCommunity) {
+        return registryCommunity;
     }
 
     /**
@@ -109,15 +109,17 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         CVStrategy strategy = new CVStrategy(address(allo()));
 
         safeHelper(
-            address(registryGardens), 0, abi.encodeWithSelector(registryGardens.addStrategy.selector, address(strategy))
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy))
         );
 
-        poolId = createPool(allo(), address(strategy), address(_registryGardens()), registry(), address(useTokenPool));
+        poolId = createPool(allo(), address(strategy), address(_registryCommunity()), registry(), address(useTokenPool));
 
         vm.stopPrank();
 
-        _registryGardens().gardenToken().approve(address(registryGardens), registryGardens.getBasisStakedAmount());
-        _registryGardens().stakeAndRegisterMember();
+        _registryCommunity().gardenToken().approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        _registryCommunity().stakeAndRegisterMember();
         strategy.activatePoints();
 
         pool = allo().getPool(poolId);
@@ -137,7 +139,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         startMeasuringGas("createProposal");
 
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            1, poolId, pool_admin(), CVStrategy.ProposalType.Funding, requestAmount, address(useTokenPool)
+            1, poolId, pool_admin(), CVStrategy.ProposalType.Funding, requestAmount, address(useTokenPool), metadata
         );
         bytes memory data = abi.encode(proposal);
         allo().registerRecipient(poolId, data);
@@ -227,7 +229,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (, uint256 poolId) = _createProposal(NATIVE, 0, 0);
 
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            1, poolId, pool_admin(), CVStrategy.ProposalType.Signaling, REQUESTED_AMOUNT, NATIVE
+            1, poolId, pool_admin(), CVStrategy.ProposalType.Signaling, REQUESTED_AMOUNT, NATIVE, metadata
         );
         bytes memory data = abi.encode(proposal);
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalIdAlreadyExist.selector, 1));
@@ -259,8 +261,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         // vm.startPrank(pool_admin());
 
-        // token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
-        // registryGardens.stakeAndregisterMember();
+        // token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        // registryCommunity.stakeAndregisterMember();
 
         CVStrategy.ProposalSupport[] memory votes2 = new CVStrategy.ProposalSupport[](1);
         votes2[0] = CVStrategy.ProposalSupport(1, 20);
@@ -313,11 +315,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
         uint256 AMOUNT_STAKED = 45000;
 
-        // registryGardens.setBasisStakedAmount(AMOUNT_STAKED);
+        // registryCommunity.setBasisStakedAmount(AMOUNT_STAKED);
         safeHelper(
-            address(registryGardens),
+            address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, AMOUNT_STAKED)
+            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, AMOUNT_STAKED)
         );
         /**
          * ASSERTS
@@ -344,11 +346,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(AMOUNT_STAKED, 45000);
         assertEq(cv_amount, 97698);
 
-        // registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+        // registryCommunity.setBasisStakedAmount(MINIMUM_STAKE);
         safeHelper(
-            address(registryGardens),
+            address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, MINIMUM_STAKE)
+            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, MINIMUM_STAKE)
         );
     }
 
@@ -360,9 +362,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         cv.setDecay(_etherToFloat(0.9 ether)); // alpha = decay
         cv.setMaxRatio(_etherToFloat(0.2 ether)); // beta = maxRatio
         cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
-        // registryGardens.setBasisStakedAmount(45000);
+        // registryCommunity.setBasisStakedAmount(45000);
         safeHelper(
-            address(registryGardens), 0, abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, 45000)
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45000)
         );
         /**
          * ASSERTS
@@ -383,19 +387,21 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(AMOUNT_STAKED, 45000);
         assertEq(ct1, 50625);
 
-        // registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+        // registryCommunity.setBasisStakedAmount(MINIMUM_STAKE);
         safeHelper(
-            address(registryGardens),
+            address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, MINIMUM_STAKE)
+            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, MINIMUM_STAKE)
         );
     }
 
     function test_total_staked_amount() public {
         (IAllo.Pool memory pool, uint256 poolId) = _createProposal(NATIVE, 0, 0);
-        // registryGardens.setBasisStakedAmount(45000);
+        // registryCommunity.setBasisStakedAmount(45000);
         safeHelper(
-            address(registryGardens), 0, abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, 45000)
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45000)
         );
         /**
          * ASSERTS
@@ -421,11 +427,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         assertEq(cv.totalStaked(), 0, "TotalStaked");
 
-        // registryGardens.setBasisStakedAmount(MINIMUM_STAKE);
+        // registryCommunity.setBasisStakedAmount(MINIMUM_STAKE);
         safeHelper(
-            address(registryGardens),
+            address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryGardens.setBasisStakedAmount.selector, MINIMUM_STAKE)
+            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, MINIMUM_STAKE)
         );
     }
 
@@ -487,8 +493,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         vm.startPrank(pool_admin());
 
-        token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
-        registryGardens.stakeAndRegisterMember();
+        token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        registryCommunity.stakeAndRegisterMember();
         cv.activatePoints();
 
         CVStrategy.ProposalSupport[] memory votes2 = new CVStrategy.ProposalSupport[](1);
@@ -580,13 +586,19 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         uint256 proposalID2 = 2;
         CVStrategy.CreateProposal memory proposal = CVStrategy.CreateProposal(
-            proposalID2, poolId, pool_admin(), CVStrategy.ProposalType.Funding, REQUESTED_AMOUNT, address(token)
+            proposalID2,
+            poolId,
+            pool_admin(),
+            CVStrategy.ProposalType.Funding,
+            REQUESTED_AMOUNT,
+            address(token),
+            metadata
         );
         bytes memory data2 = abi.encode(proposal);
         allo().registerRecipient(poolId, data2);
 
-        token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
-        registryGardens.stakeAndRegisterMember();
+        token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        registryCommunity.stakeAndRegisterMember();
         cv.activatePoints();
 
         CVStrategy.ProposalSupport[] memory votes2 = new CVStrategy.ProposalSupport[](1);
@@ -704,7 +716,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         startMeasuringGas("createProposal");
 
         CVStrategy.CreateProposal memory proposal =
-            CVStrategy.CreateProposal(2, poolId, address(0), CVStrategy.ProposalType.Signaling, 0, address(0));
+            CVStrategy.CreateProposal(2, poolId, address(0), CVStrategy.ProposalType.Signaling, 0, address(0), metadata);
         bytes memory data = abi.encode(proposal);
         allo().registerRecipient(poolId, data);
 
@@ -782,10 +794,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        registryGardens = RegistryCommunity(registryFactory.createRegistry(params));
+        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
         // CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        assertEq(registryGardens.communityName(), "", "communityMember");
+        assertEq(registryCommunity.communityName(), "", "communityMember");
     }
 
     function test_registry_community_name_defined() public {
@@ -800,10 +812,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "GardensDAO";
 
-        registryGardens = RegistryCommunity(registryFactory.createRegistry(params));
+        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
         // CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        assertEq(registryGardens.communityName(), "GardensDAO", "communityMember");
+        assertEq(registryCommunity.communityName(), "GardensDAO", "communityMember");
     }
 
     function test_activate_points() public {
@@ -811,21 +823,21 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        registryGardens.stakeAndRegisterMember();
-        assertEq(registryGardens.isMember(local()), true, "isMember");
+        registryCommunity.stakeAndRegisterMember();
+        assertEq(registryCommunity.isMember(local()), true, "isMember");
 
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyActivated.selector));
         cv.activatePoints();
 
         vm.startPrank(pool_admin());
-        token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
-        registryGardens.stakeAndRegisterMember();
-        assertEq(registryGardens.isMember(pool_admin()), true, "isMember");
+        token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        registryCommunity.stakeAndRegisterMember();
+        assertEq(registryCommunity.isMember(pool_admin()), true, "isMember");
 
         cv.activatePoints();
         vm.stopPrank();
 
-        assertEq(registryGardens.isMember(pool_admin()), true, "isMember");
+        assertEq(registryCommunity.isMember(pool_admin()), true, "isMember");
     }
 
     function test_deactivate_points() public {
@@ -833,22 +845,22 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        registryGardens.stakeAndRegisterMember();
-        assertEq(registryGardens.isMember(local()), true, "isMember");
+        registryCommunity.stakeAndRegisterMember();
+        assertEq(registryCommunity.isMember(local()), true, "isMember");
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyActivated.selector));
         cv.activatePoints();
 
         cv.deactivatePoints();
-        // assertEq(registryGardens.isMember(local()), false, "isMember");
+        // assertEq(registryCommunity.isMember(local()), false, "isMember");
 
         vm.startPrank(pool_admin());
-        token.approve(address(registryGardens), registryGardens.getBasisStakedAmount());
-        registryGardens.stakeAndRegisterMember();
-        assertEq(registryGardens.isMember(pool_admin()), true, "isMember");
+        token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        registryCommunity.stakeAndRegisterMember();
+        assertEq(registryCommunity.isMember(pool_admin()), true, "isMember");
         cv.activatePoints();
         cv.deactivatePoints();
         vm.stopPrank();
 
-        // assertEq(registryGardens.isMember(pool_admin()), false, "isMember");
+        // assertEq(registryCommunity.isMember(pool_admin()), false, "isMember");
     }
 }

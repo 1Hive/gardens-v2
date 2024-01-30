@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAccount, useContractWrite } from "wagmi";
 import { contractsAddresses } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { cvStrategyAbi, alloAbi } from "@/src/generated";
+import { cvStrategyABI, alloABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
 
@@ -90,21 +90,19 @@ export function Proposals({
     error: errorAllocate,
     isSuccess: isSuccessAllocate,
     status,
-
   } = useContractWrite({
     address: contractsAddresses.allo,
-    abi: alloAbi,
+    abi: alloABI,
     functionName: "allocate",
   });
 
-  const {errorName} = useErrorDetails(errorAllocate,'errorAllocate');
+  const { errorName } = useErrorDetails(errorAllocate, "errorAllocate");
 
   useEffect(() => {
     if (isSuccessAllocate) {
       setMessage("Transaction sent, hash: " + contractWriteData?.hash);
     }
-  }
-  , [isSuccessAllocate, contractWriteData])
+  }, [isSuccessAllocate, contractWriteData]);
 
   // const { data: txSettledData, status } = useWaitForTransactionReceipt({
   //   hash: contractWriteData,
@@ -140,7 +138,7 @@ export function Proposals({
     });
 
     // console.log(resultArr, currentData);
-    const encodedData = encodeFunctionParams(cvStrategyAbi, "supportProposal", [
+    const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
     return encodedData;
