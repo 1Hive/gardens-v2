@@ -50,24 +50,25 @@ export default async function Garden({
   //   });
   //   const logs = await client.getFilterLogs({ filter });
 
-  const publicClient = createPublicClient({
-    chain: arbitrum,
-    transport: http("https://arb-mainnet.g.alchemy.com/v2/key_here"),
-  });
+  // const publicClient = createPublicClient({
+  // chain: arbitrum,
+  // transport: http("https://arb-mainnet.g.alchemy.com/v2/key_here"),
+  // transport: http(),
+  // });
 
-  const filter = await publicClient.createEventFilter({
-    address: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
-    event: parseAbiItem(
-      "event Transfer(address indexed, address indexed, uint256)",
-    ),
-    fromBlock: BigInt(175138673),
-  });
+  // const filter = await publicClient.createEventFilter({
+  //   address: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
+  //   event: parseAbiItem(
+  //     "event Transfer(address indexed, address indexed, uint256)",
+  //   ),
+  //   fromBlock: BigInt(175138673),
+  // });
   // ...
-  const logs = await publicClient.getFilterChanges({ filter });
+  // const logs = await publicClient.getFilterChanges({ filter });
   // ...
   // const logs = await publicClient.getFilterChanges({ filter });
 
-  console.log("LOGS", logs);
+  // console.log("LOGS", logs);
   // }
   // ...
   // const lgos = await client.getLogs();
