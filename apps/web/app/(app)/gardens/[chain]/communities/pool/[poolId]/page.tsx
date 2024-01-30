@@ -1,13 +1,11 @@
-import { flowers, gardenLand } from "@/assets";
 import { Proposals } from "@/components";
+import { PoolStats } from "@/components";
 import Image from "next/image";
 import { cvStrategyAbi, alloAbi } from "@/src/generated";
 import { contractsAddresses } from "@/constants/contracts";
-import { ActivateMember } from "@/components";
 import { createPublicClient, http } from "viem";
 import { getChain } from "@/configs/chainServer";
-import { Badge, StatusBadge } from "@/components";
-import { PoolStats } from "@/components";
+import { gardenLand } from "@/assets";
 
 //some metadata for each pool
 const poolInfo = [
@@ -50,6 +48,7 @@ export default async function Pool({
   })) as PoolData;
 
   console.log("poolData", poolData);
+
   const poolBalance = await client.readContract({
     address: poolData.strategy,
     abi: cvStrategyAbi,

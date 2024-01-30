@@ -4,6 +4,7 @@ import React, { FC } from "react";
 import Image from "next/image";
 import { StatusBadge } from "./Badge";
 import { ActivePointsChart } from "@/components";
+import { PoolTokenPriceChart } from "@/components";
 import { ActivateMember } from "./ActivateMember";
 import { useAccount, useContractRead } from "wagmi";
 import { contractsAddresses } from "@/constants/contracts";
@@ -41,7 +42,7 @@ export const PoolStats: FC<poolStatsProps> = ({ balance, strategyAddress }) => {
           </div>
           <div className="max-h-30 flex items-center gap-3 ">
             <div className="border-1 flex h-24 flex-1 items-center justify-center">
-              graph placeholder
+              <PoolTokenPriceChart />
             </div>
             <div className="flex-[0.4] rounded-xl border-2 border-black bg-primary py-3 text-center text-xl font-semibold text-white">
               {balance} HNY
