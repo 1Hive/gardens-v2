@@ -15,6 +15,7 @@ type CVStrategyConfig @entity(immutable: false) {
 type CVProposal @entity(immutable: false) {
   id: ID!
   proposalMetadata: ProposalMetadata!
+  metadata:String!
   version: BigInt
   strategy: CVStrategy!
   beneficiary: String!

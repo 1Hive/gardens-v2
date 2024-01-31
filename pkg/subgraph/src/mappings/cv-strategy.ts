@@ -51,7 +51,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
     
     const pointer = cvc.getMetadata(event.params.proposalId).pointer;
     
-    
+    newProposal.metadata = pointer;
     // newProposal.metadata = pointer;
     let hash ="QmW4zFLFJRN7J67EzNmdC2r2M9u2iJDha2fj5Gee6hJzSY";
     newProposal.proposalMetadata = hash; 
@@ -63,22 +63,4 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
     newProposal.save();
     
-}
-
-export function handleProposalMetadata(content: Bytes): void {
-    let hash = dataSource.stringParam();
-    log.debug("handleProposalMetadata1", [hash]);
-    let proposalData = new ProposalMetadata(hash)
-    
-    let jsonObject = json.fromBytes(content).toObject();
-
-    if (jsonObject) {
-        let version = jsonObject.get('v');
-        let proposalTitle = jsonObject.get('title');
-        let proposalDescription = jsonObject.get('description');
-        proposalData.title = proposalTitle?proposalTitle.toString(): '';
-        proposalData.content = proposalDescription?proposalDescription.toString(): '';
-        proposalData.version = version?version.toBigInt():BigInt.zero();
-    }
-    proposalData.save();
 }
