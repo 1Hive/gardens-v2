@@ -1,0 +1,22 @@
+specVersion: 0.0.5
+features:
+  - nonFatalErrors
+schema:
+  file: ./src/schema.graphql
+templates:
+  - name: ProposalMetadata
+    kind: file/ipfs
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/cv-strategy.ts
+      handler: handleProposalMetadata
+      entities:
+        - ProposalMetadata
+      abis:
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+dataSources:
+{{#dataSources}}
+  {{&subTemplate}}
+{{/dataSources}}

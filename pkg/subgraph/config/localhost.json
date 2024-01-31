@@ -1,0 +1,11 @@
+{
+  "network": "localhost",
+  "dataSources": [
+    {
+      "name": "CVStrategy",
+      "startBlock": 0,
+      "address": "0x3aAde2dCD2Df6a8cAc689EE797591b2913658659",
+      "customTemplate": "cvStrategy"
+    }
+  ]
+}

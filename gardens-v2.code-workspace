@@ -1,52 +1,56 @@
 {
-    "folders": [
-        {
-            "name": "Frontend",
-            "path": "./apps/web"
-        },
-        {
-            "name": "Foundry",
-            "path": "./pkg/contracts"
-        },
-        {
-            "name": "Subgraph",
-            "path": "./pkg/subgraph"
-        },
-        {
-            "name": "Root",
-            "path": "."
-        }
-        //   {
-        //     "path": "packages/nextjs/public/assets"
-        //   }
-    ],
-    "settings": {
-        "editor.tabSize": 2,
-        "prettier.tabWidth": 4,
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "[solidity]": {
-            "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
-        },
-        "[json]": {
-            "editor.defaultFormatter": "vscode.json-language-features"
-        },
-        "solidity.remappings": [
-            "ds-test/=lib/forge-std/lib/ds-test/src/",
-            "forge-std/=lib/forge-std/src/",
-            "allo-v2/=lib/allo-v2/contracts/"
-        ]
+  "folders": [
+    {
+      "name": "Frontend",
+      "path": "./apps/web",
     },
-    "extensions": {
-        "recommendations": [
-            "esbenp.prettier-vscode",
-            "dsznajder.es7-react-js-snippets",
-            "dbaeumer.vscode-eslint",
-            "xabikos.javascriptsnippets",
-            "styled-components.vscode-styled-components",
-            "nomicfoundation.hardhat-solidity",
-            "tintinweb.vscode-solidity-language",
-            "tintinweb.solidity-visual-auditor",
-            "tintinweb.solidity-metrics"
-        ]
-    }
+    {
+      "name": "Foundry",
+      "path": "./pkg/contracts",
+    },
+    {
+      "name": "Subgraph",
+      "path": "./pkg/subgraph",
+    },
+    {
+      "name": "Services",
+      "path": "./pkg/services",
+    },
+    {
+      "name": "Root",
+      "path": ".",
+    },
+    //   {
+    //     "path": "packages/nextjs/public/assets"
+    //   }
+  ],
+  "settings": {
+    "editor.tabSize": 2,
+    "prettier.tabWidth": 4,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[solidity]": {
+      "editor.defaultFormatter": "NomicFoundation.hardhat-solidity",
+    },
+    "[json]": {
+      "editor.defaultFormatter": "vscode.json-language-features",
+    },
+    "solidity.remappings": [
+      "ds-test/=lib/forge-std/lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "allo-v2/=lib/allo-v2/contracts/",
+    ],
+  },
+  "extensions": {
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "dsznajder.es7-react-js-snippets",
+      "dbaeumer.vscode-eslint",
+      "xabikos.javascriptsnippets",
+      "styled-components.vscode-styled-components",
+      "nomicfoundation.hardhat-solidity",
+      "tintinweb.vscode-solidity-language",
+      "tintinweb.solidity-visual-auditor",
+      "tintinweb.solidity-metrics",
+    ],
+  },
 }

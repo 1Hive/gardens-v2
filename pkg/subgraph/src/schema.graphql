@@ -1,3 +1,42 @@
-type CVStrategy @entity {
-    id: ID!
+type CVStrategy @entity(immutable: false) {
+  id: ID!
+  registryCommunityAddress: String!
+  config: CVStrategyConfig
+  proposals: [CVProposal!]! @derivedFrom(field: "strategy")
+}
+
+type CVStrategyConfig @entity(immutable: false) {
+  id: ID!
+  decay: BigInt!
+  maxRatio: BigInt!
+  weight: BigInt!
+}
+
+type CVProposal @entity(immutable: false) {
+  id: ID!
+  proposalMetadata: ProposalMetadata!
+  version: BigInt
+  strategy: CVStrategy!
+  beneficiary: String!
+  requestedAmount: BigInt!
+  requestedToken: String!
+  proposalStatus: BigInt!
+  blockLast: BigInt!
+  convictionLast: BigInt!
+  threshold: BigInt!
+  proposalType: BigInt!
+  stakedTokens: BigInt!
+  submitter: String!
+  voterStakedPointsPct: BigInt!
+  agreementActionId: BigInt!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type ProposalMetadata @entity(immutable: false) {
+  id: ID!
+  version: BigInt!
+  proposal: CVProposal!
+  title: String!
+  content: String!
 }
