@@ -5,11 +5,10 @@ import Link from "next/link";
 import { navItems } from "@/constants/navigation";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { formatAddress } from "@/utils/formatAddress";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import {  useParams, useRouter } from "next/navigation";
-import { useChainId } from "wagmi";
+import { useParams, useRouter } from "next/navigation";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -20,12 +19,24 @@ export function NavBar() {
   const { address } = account;
   const formattedAddress = formatAddress(address ?? "");
   const chainId = useChainId();
-  const params = useParams<{ chain: string }>()
+  const params = useParams<{ chain: string }>();
   const router = useRouter();
 
+  console.log("connected: " + chainId, "url: " + params?.chain);
   useEffect(() => {
-    if (params.chain !== undefined && chainId !== Number(params.chain))
-      router.push("/");
+    console.log(
+      params?.chain !== undefined,
+      chainId !== undefined,
+      chainId,
+      Number(params.chain),
+    );
+    if (
+      params?.chain !== undefined &&
+      chainId !== undefined &&
+      chainId !== Number(params.chain)
+    ) {
+      // router.push("/");
+    }
   }, [chainId, params]);
 
   return (

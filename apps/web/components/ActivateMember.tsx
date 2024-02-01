@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Button } from "./Button";
 import {
   useContractRead,
@@ -9,14 +9,20 @@ import {
 import { registryCommunityABI, cvStrategyABI } from "@/src/generated";
 import { useAccount } from "wagmi";
 import useErrorDetails, { getErrorName } from "@/utils/getErrorName";
-import { contractsAddresses } from "@/constants/contracts";
 import { abiWithErrors } from "@/utils/abiWithErrors";
+import cn from "classnames";
+
+type ActiveMemberProps = {
+  strategyAddress: `0x${string}`;
+  isMemberActived: boolean | undefined;
+  errorMemberActivated: Error | null;
+};
 
 export function ActivateMember({
   strategyAddress,
-}: {
-  strategyAddress: `0x${string}`;
-}) {
+  isMemberActived,
+  errorMemberActivated,
+}: ActiveMemberProps) {
   // const connectedWallets = useWallets();
   // const mainConnectedAccount = connectedWallets[0]?.accounts[0].address;
   const { address: mainConnectedAccount } = useAccount();
@@ -39,21 +45,6 @@ export function ActivateMember({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
-  });
-
-  // memberActivatedInStrategies
-  // args [member address, strategy address]
-  const {
-    data: isMemberActived,
-    error: errorMemberActivated,
-    status,
-  } = useContractRead({
-    address: contractsAddresses.registryCommunity,
-    abi: registryCommunityABI,
-    functionName: "memberActivatedInStrategies",
-    args: [mainConnectedAccount as `0x${string}`, strategyAddress],
-    watch: true,
-    cacheOnBlock: true,
   });
 
   useEffect(() => {

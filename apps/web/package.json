@@ -26,8 +26,10 @@
     "react-dom": "18.2.0",
     "ui": "workspace:*",
     "urql": "^4.0.6",
-    "viem": "~1",
-    "wagmi": "~1"
+    "wagmi": "~1",
+    "echarts": "^5.4.2",
+    "echarts-for-react": "^3.0.2",
+    "viem": "~1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.12",
