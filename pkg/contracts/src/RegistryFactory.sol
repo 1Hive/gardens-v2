@@ -38,12 +38,12 @@ contract RegistryFactory is Ownable {
     {
         RegistryCommunity registryCommunity = new RegistryCommunity();
         params._nonce = nonce++;
+        params._registryFactory = address(this);
 
         registryCommunity.initialize(params);
-        params._registryFactory = address(this);
-        communityToInfo[address(gardenRegistry)].valid = true;
+        communityToInfo[address(registryCommunity)].valid = true;
         emit CommunityCreated(address(registryCommunity));
-        return address(gardenRegistry);
+        return address(registryCommunity);
     }
 
     function setReceiverAddress(address _newFeeReceiver) public onlyOwner {
