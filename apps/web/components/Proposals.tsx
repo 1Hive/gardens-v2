@@ -9,6 +9,7 @@ import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { cvStrategyAbi, alloAbi } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
+import { ProposalStats } from "@/components";
 
 type ProposalsMock = {
   title: string;
@@ -90,21 +91,19 @@ export function Proposals({
     error: errorAllocate,
     isSuccess: isSuccessAllocate,
     status,
-
   } = useContractWrite({
     address: contractsAddresses.allo,
     abi: alloAbi,
     functionName: "allocate",
   });
 
-  const {errorName} = useErrorDetails(errorAllocate,'errorAllocate');
+  const { errorName } = useErrorDetails(errorAllocate, "errorAllocate");
 
   useEffect(() => {
     if (isSuccessAllocate) {
       setMessage("Transaction sent, hash: " + contractWriteData?.hash);
     }
-  }
-  , [isSuccessAllocate, contractWriteData])
+  }, [isSuccessAllocate, contractWriteData]);
 
   // const { data: txSettledData, status } = useWaitForTransactionReceipt({
   //   hash: contractWriteData,
@@ -202,6 +201,7 @@ export function Proposals({
                   )}
                 </div>
               </div>
+
               {editView && (
                 <div className="flex w-full flex-wrap items-center justify-between gap-6">
                   <div className="flex items-center gap-8">
@@ -236,6 +236,12 @@ export function Proposals({
             </div>
           ))}
         </div>
+        {/*  PROPOSALS STATS  ///// */}
+        <ProposalStats
+          strategyAddress={strategyAddress}
+          proposals={proposals}
+        />
+        {/* */}
         <div className="flex justify-center gap-8">
           <Button className="bg-primary">Create Proposal</Button>
           <Button

@@ -11,4 +11,5 @@ export { StackedBarChart } from "./StackedBarChart";
 export { ActivateMember } from "./ActivateMember";
 export { ActivePointsChart } from "./Charts/ActivePointsChart";
 export { PoolTokenPriceChart } from "./Charts/PoolTokenPriceChart";
+export { ProposalStats } from "./ProposalStats";
 export { PoolStats } from "./PoolStats";

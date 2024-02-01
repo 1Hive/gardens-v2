@@ -9,7 +9,7 @@ type ActivePointsChartProps = {
 };
 
 const defaultData = [
-  { value: 0, name: "Points Active & Staked" },
+  //   { value: 0, name: "Points Active & Staked" },
   { value: 100, name: "Points Inactive" },
 ];
 
@@ -24,7 +24,7 @@ export const ActivePointsChart = ({
 
     return [
       { value: activeStakedPoints, name: "Points Active & Staked" },
-      { value: inactivePoints, name: "Points Inactive" },
+      { value: inactivePoints, name: "Points Active & Not Staked" },
     ];
   }, [stakedPoints]);
 
