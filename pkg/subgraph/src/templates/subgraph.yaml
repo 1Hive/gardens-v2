@@ -4,8 +4,8 @@ features:
 schema:
   file: ./src/schema.graphql
 templates:
-  - name: ProposalMetadata
-    kind: file/ipfs
+  - kind: file/ipfs
+    name: ProposalMetadata
     mapping:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
@@ -13,11 +13,12 @@ templates:
       handler: handleProposalMetadata
       entities:
         - ProposalMetadata
+        - CVProposal
       abis:
         - name: CVStrategy
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
-  - name: CVStrategy
-    kind: ethereum/contract
+  - kind: ethereum/contract
+    name: CVStrategy
     network: localhost
     source:
       abi: CVStrategy
@@ -36,8 +37,8 @@ templates:
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
       file: ./src/mappings/cv-strategy.ts
-  - name: RegistryCommunity
-    kind: ethereum/contract
+  - kind: ethereum/contract
+    name: RegistryCommunity
     network: localhost
     source:
       abi: RegistryCommunity
@@ -61,8 +62,8 @@ templates:
         #   handler: handleMemberKicked
         # - event: ProtocolFeeUpdated(uint255)
         #   handler: handleProtocolFeeUpdated
-        # - event: StrategyAdded(address)
-        #   handler: handleStrategyAdded
+        - event: StrategyAdded(address)
+          handler: handleStrategyAdded
         # - event: StrategyRemoved(address)
         #   handler: handleStrategyRemoved
         # - event: MemberActivatedStrategy(address,address)

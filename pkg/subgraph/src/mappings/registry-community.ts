@@ -6,10 +6,15 @@ import {RegistryInitialized, RegistryCommunity as RegistryCommunityContract, Mem
 import { CTX_FACTORY_ADDRESS } from "./registry-factory";
 
 export function handleInitialized(event: RegistryInitialized): void {
-    log.debug("RegistryCommunity: handleInitialized: {}", [event.address.toHexString()]);
-   const rc =  RegistryCommunity.load(event.address.toHex());
-   const factoryAddress = dataSource.context().getString(CTX_FACTORY_ADDRESS);
-    if(rc == null){
+    log.debug("RegistryCommunity: handleInitialized1", []);
+    const communityAddr = event.address.toHexString();
+    log.debug("RegistryCommunity: handleInitialized/* : {}", [communityAddr]);
+   const rc =  RegistryCommunity.load(communityAddr);
+    const ctx = dataSource.context();
+    log.debug("ctx1", []);
+    if (ctx != null && rc == null) {
+        const factoryAddress = ctx.getString(CTX_FACTORY_ADDRESS) as string | null; 
+        log.debug("factoryAddress: {}", [factoryAddress?factoryAddress:'0x']);
         let newRC = new RegistryCommunity(event.address.toHex());
         
         
@@ -27,10 +32,7 @@ export function handleInitialized(event: RegistryInitialized): void {
         newRC.protocolFee = rcc.communityFee();
         newRC.registerToken = rcc.gardenToken().toHexString();
         newRC.registryFactory = factoryAddress;
-        // newRC.strategies = rcc.enabledStrategies();
         // const mc = new MembersCommunities(`${event.address.toHex()}-members`);
-        // newRC.members. = [mc];
-        // newRC.members
     
         newRC.save();
     }

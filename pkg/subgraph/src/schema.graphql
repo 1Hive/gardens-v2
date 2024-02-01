@@ -15,7 +15,7 @@ type CVStrategyConfig @entity(immutable: false) {
 type CVProposal @entity(immutable: false) {
   id: ID!
   proposalMetadata: ProposalMetadata!
-  metadata:String!
+  metadata: String!
   version: BigInt
   strategy: CVStrategy!
   beneficiary: String!
@@ -36,18 +36,18 @@ type CVProposal @entity(immutable: false) {
 
 type ProposalMetadata @entity(immutable: false) {
   id: ID!
-  version: BigInt!
-  proposal: CVProposal!
-  title: String!
-  content: String!
+  proposal: [CVProposal!]!
+  version: BigInt
+  title: String
+  content: String
 }
 
-
-type RegistryFactory @entity(immutable: false){
+type RegistryFactory @entity(immutable: false) {
   id: ID!
-  registryCommunities: [RegistryCommunity!] @derivedFrom(field: "registryFactory")
+  registryCommunities: [RegistryCommunity!]
+    @derivedFrom(field: "registryFactory")
 }
-type RegistryCommunity @entity(immutable: false){
+type RegistryCommunity @entity(immutable: false) {
   id: ID!
   profileId: String
   protocolFee: BigInt
@@ -64,7 +64,7 @@ type RegistryCommunity @entity(immutable: false){
   members: [MembersCommunities!] @derivedFrom(field: "registryCommunity")
 }
 
-type Member @entity(immutable: false){
+type Member @entity(immutable: false) {
   id: ID!
   registryCommunity: [MembersCommunities!] @derivedFrom(field: "member")
   # registryCommunity: RegistryCommunity!
@@ -73,9 +73,8 @@ type Member @entity(immutable: false){
   isRegistered: Boolean
 }
 
-type MembersCommunities @entity(immutable: false){
+type MembersCommunities @entity(immutable: false) {
   id: ID!
   member: Member
   registryCommunity: RegistryCommunity
 }
-

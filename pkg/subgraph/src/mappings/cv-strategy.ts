@@ -4,19 +4,12 @@ import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/te
 import {InitializedCV, ProposalCreated, CVStrategy as CVStrategyContract} from "../../generated/CVStrategy/CVStrategy";
 import { BigInt, log, Bytes, json, dataSource, DataSourceTemplate, ethereum, Value } from '@graphprotocol/graph-ts'
 
+export const CTX_PROPOSAL_ID = 'proposalId';
+export const CTX_METADATA_ID = 'metadataId';
+
 export function handleInitialized(event: InitializedCV): void {
     log.debug("handleInitialized", []);
     const poolIdString = event.params.poolId.toHex();
-    // const params = ethereum.decode("(address,uint256,uint256,uint256)", event.params.data);
-    // const tuple = params!.toTuple();
-    // if (tuple == null) {
-    //     log.error("handleInitialized tuple is null", []);
-    //     return;
-    // }
-    // const registryCommunity = tuple[0].toAddress().toHexString();
-    // const decay = tuple[1].toBigInt();
-    // const maxRatio = tuple[2].toBigInt();
-    // const weight = tuple[3].toBigInt();
     const registryCommunity = event.params.data.registryCommunity.toHexString();
     const decay = event.params.data.decay;
     const maxRatio = event.params.data.maxRatio;
@@ -69,14 +62,21 @@ export function handleProposalCreated(event: ProposalCreated): void {
     const pointer = cvc.getMetadata(event.params.proposalId).pointer;
     
     newProposal.metadata = pointer;
-    // newProposal.metadata = pointer;
-    let hash ="QmW4zFLFJRN7J67EzNmdC2r2M9u2iJDha2fj5Gee6hJzSY";
-    newProposal.proposalMetadata = hash; 
-    log.debug("handleProposalCreated pointer:{}", [newProposal.proposalMetadata]);
+    // const metadataID = `${pointer}-${proposalIdString}`;
+    const metadataID = `${pointer}`;
+    newProposal.proposalMetadata = metadataID; 
+    log.debug("handleProposalCreated pointer:{}", [metadataID]);
     newProposal.createdAt = event.block.timestamp;
     newProposal.updatedAt = event.block.timestamp;
 
-    ProposalMetadataTemplate.create(hash);
+    const ctx = dataSource.context();
+    ctx.setString(CTX_PROPOSAL_ID, proposalIdString);
+    ctx.setString(CTX_METADATA_ID, proposalIdString);
+    const pm = ProposalMetadata.load(pointer);
+    if (pm == null) {
+        ProposalMetadataTemplate.createWithContext(pointer,ctx);
+    }
+    // ProposalMetadataTemplate.create(pointer);
 
     newProposal.save();
     

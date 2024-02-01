@@ -122,13 +122,13 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             2, poolId, membersStaked[1], CVStrategy.ProposalType.Funding, 25, address(token), metadata
         );
         data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        // allo.registerRecipient(poolId, data);
 
         proposal = CVStrategy.CreateProposal(
             3, poolId, membersStaked[2], CVStrategy.ProposalType.Funding, 10, address(token), metadata
         );
         data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        // allo.registerRecipient(poolId, data);
 
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
@@ -136,7 +136,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             1, poolIdSignaling, membersStaked[0], CVStrategy.ProposalType.Signaling, 0, address(0), metadata
         );
         bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
+        // allo.registerRecipient(poolIdSignaling, data2);
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);
