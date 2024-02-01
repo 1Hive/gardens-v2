@@ -7,16 +7,21 @@ import { BigInt, log, Bytes, json, dataSource, DataSourceTemplate, ethereum, Val
 export function handleInitialized(event: InitializedCV): void {
     log.debug("handleInitialized", []);
     const poolIdString = event.params.poolId.toHex();
-    const params = ethereum.decode("(address,uint256,uint256,uint256)", event.params.data);
-    const tuple = params!.toTuple();
-    if (tuple == null) {
-        log.error("handleInitialized tuple is null", []);
-        return;
-    }
-    const registryCommunity = tuple[0].toAddress().toHexString();
-    const decay = tuple[1].toBigInt();
-    const maxRatio = tuple[2].toBigInt();
-    const weight = tuple[3].toBigInt();
+    // const params = ethereum.decode("(address,uint256,uint256,uint256)", event.params.data);
+    // const tuple = params!.toTuple();
+    // if (tuple == null) {
+    //     log.error("handleInitialized tuple is null", []);
+    //     return;
+    // }
+    // const registryCommunity = tuple[0].toAddress().toHexString();
+    // const decay = tuple[1].toBigInt();
+    // const maxRatio = tuple[2].toBigInt();
+    // const weight = tuple[3].toBigInt();
+    const registryCommunity = event.params.data.registryCommunity.toHexString();
+    const decay = event.params.data.decay;
+    const maxRatio = event.params.data.maxRatio;
+    const weight = event.params.data.weight;
+    
     log.debug("handleInitialized registryCommunity:{} decay:{} maxRatio:{} weight:{}", [registryCommunity, decay.toString(), maxRatio.toString(), weight.toString()]);
 
     let cvs = new CVStrategy(event.address.toHex());

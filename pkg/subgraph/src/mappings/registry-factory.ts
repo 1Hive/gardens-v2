@@ -1,4 +1,4 @@
-import {RegistryCommunity as CommunityTemplate } from "../../generated/templates";
+// import {RegistryCommunity as CommunityTemplate } from "../../generated/templates";
 import {RegistryFactory,RegistryCommunity } from "../../generated/schema";
 
 import { DataSourceContext, log } from '@graphprotocol/graph-ts'
@@ -13,6 +13,6 @@ export function handleCommunityCreated(event: CommunityCreated): void {
   
   let context = new DataSourceContext();
   context.setString(CTX_FACTORY_ADDRESS, event.address.toHexString());
-  CommunityTemplate.createWithContext(event.params.registryCommunity,context);
+  // CommunityTemplate.createWithContext(event.params._registryCommunity,context);
   factory.save();
 }

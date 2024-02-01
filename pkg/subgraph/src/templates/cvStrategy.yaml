@@ -2,9 +2,7 @@
     name: {{name}}
     network: {{network}}
     source:
-      address: "{{address}}"
       abi: {{name}}
-      startBlock: {{startBlock}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

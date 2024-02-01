@@ -102,3 +102,87 @@ dataSources:
           handler: handleCommunityCreated
       file: ./src/mappings/registry-factory.ts
 
+  - kind: ethereum/contract
+    name: RegistryCommunity
+    network: localhost
+    source:
+      abi: RegistryCommunity
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - RegistryCommunity
+      abis:
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+      eventHandlers:
+        - event: RegistryInitialized(bytes32,string,(uint256,string))
+          handler: handleInitialized
+        # - event: MemberRegistered(address,uint256)
+        #   handler: handleMemberRegistered
+        # - event: MemberUnregistered(address,uint256)
+        #   handler: handleMemberUnregistered
+        # - event: MemberKicked(address,address,uint256)
+        #   handler: handleMemberKicked
+        # - event: ProtocolFeeUpdated(uint256)
+        #   handler: handleProtocolFeeUpdated
+        # - event: StrategyAdded(address)
+        #   handler: handleStrategyAdded
+        # - event: StrategyRemoved(address)
+        #   handler: handleStrategyRemoved
+        # - event: MemberActivatedStrategy(address,address)
+        #   handler: handleMemberActivatedStrategy
+        # - event: MemberDeactivatedStrategy(address,address)
+        #   handler: handleMemberDeactivatedStrategy
+        # - event: StakeAmountUpdated(address,uint256)
+        #   handler: handleStakeAmountUpdated
+        # - event: BasisStakedAmountSet(uint256)
+        #   handler: handleBasisStakedAmountSet
+        # - event: CouncilSafeSet(address)
+        #   handler: handleCouncilSafeSet
+        # - event: CouncilSafeChangeStarted(address,address)
+        #   handler: handleCouncilSafeChangeStarted
+        # - event: AlloSet(address)
+        #   handler: handleAlloSet
+
+      file: ./src/mappings/registry-community.ts
+
+  # - AlloSet(address)
+  # - BasisStakedAmountSet(uint256)
+  # - CommunityInitialized(bytes32,string,(uint256,string))
+  # - CouncilSafeChangeStarted(address,address)
+  # - CouncilSafeSet(address)
+  # - MemberActivatedStrategy(address,address)
+  # - MemberDeactivatedStrategy(address,address)
+  # - MemberKicked(address,address,uint256)
+  # - MemberRegistered(address,uint256)
+  # - MemberUnregistered(address,uint256)
+  # - ProtocolFeeUpdated(uint256)
+  # - RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
+  # - RoleGranted(indexed bytes32,indexed address,indexed address)
+  # - RoleRevoked(indexed bytes32,indexed address,indexed address)
+  # - StakeAmountUpdated(address,uint256)
+  # - StrategyAdded(address)
+  # - StrategyRemoved(address)
+  - kind: ethereum/contract
+    name: CVStrategy
+    network: localhost
+    source:
+      abi: CVStrategy
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CVStrategy
+      abis:
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+      eventHandlers:
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256))
+          handler: handleInitialized
+        - event: ProposalCreated(uint256,uint256)
+          handler: handleProposalCreated
+      file: ./src/mappings/cv-strategy.ts
+
