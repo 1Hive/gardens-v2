@@ -1,45 +1,42 @@
-import React, { FC } from "react";
-import { useAccount, useContractReads } from "wagmi";
-import { registryCommunityAbi, cvStrategyAbi, alloAbi } from "@/src/generated";
+"use client";
+import React, { FC, useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { ProposalTotalStakedChart } from "./Charts";
+import { ProposalDistributionPointsChart } from "./Charts";
 
 type ProposalStatsProps = {
-  strategyAddress: `0x${string}`;
   proposals: any[];
+  distributedPoints: number;
 };
 
 export const ProposalStats: FC<ProposalStatsProps> = ({
-  strategyAddress,
   proposals,
+  distributedPoints,
 }) => {
-  const { address: mainConnectedAccount } = useAccount();
+  const proposalsDistributionPoints = proposals.map(
+    ({ title, voterStakedPointsPct }) => ({
+      value: voterStakedPointsPct,
+      name: title,
+    }),
+  );
 
-  const strategyContract = {
-    address: strategyAddress,
-    abi: cvStrategyAbi,
-    functionName: "getProposalStakedAmount",
-  } as const;
-
-  const proposalsId = proposals.map((proposals) => proposals.id);
-
-  const result = useContractReads({
-    contracts: [
-      { ...strategyContract, args: [3n] },
-      { ...strategyContract, args: [2n] },
-      { ...strategyContract, args: [1n] },
-    ],
-  });
-
-  console.log(result.data);
-
-  //   console.log("strategyAdd", strategyAddress);
-  //   console.log("proposals", proposals);
+  const proposalsTotalSupport = proposals.map(({ title, stakedTokens }) => ({
+    value: stakedTokens,
+    name: title,
+  }));
 
   return (
-    <div className="border2 w-full space-y-8 p-2">
+    <div className="w-full space-y-8 p-2">
       <h4 className="text-center font-bold">Proposals Metrics</h4>
-      <div className="flex w-full items-center justify-between gap-4 border-2">
-        <div className="border2 flex-1">graph 1</div>
-        <div className="border2 flex-1 ">graph 2</div>
+      <div className="flex w-full items-center justify-between gap-12">
+        <div className="flex-1">
+          <ProposalTotalStakedChart proposals={proposalsTotalSupport} />
+        </div>
+        <div className="flex-1 ">
+          <ProposalDistributionPointsChart
+            proposals={proposalsDistributionPoints}
+          />
+        </div>
       </div>
     </div>
   );

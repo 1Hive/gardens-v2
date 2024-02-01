@@ -48,6 +48,10 @@ export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
           ...DEFAULT_OPTIONS["tooltip"],
           ...(options?.tooltip || {}),
         },
+        // legend: {
+        //   ...DEFAULT_OPTIONS["legend"],
+        //   ...(options?.legend || {}),
+        // },
         xAxis: {
           ...DEFAULT_OPTIONS,
           ...(options?.xAxis || { show: false }),

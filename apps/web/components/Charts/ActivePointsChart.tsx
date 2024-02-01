@@ -8,11 +8,9 @@ type ActivePointsChartProps = {
   stakedPoints: number;
 };
 
-const defaultData = [
-  //   { value: 0, name: "Points Active & Staked" },
-  { value: 100, name: "Points Inactive" },
-];
+const defaultData = [{ value: 100, name: "Points Inactive" }];
 
+//Active:  Staked vs Unstaked Points for Member
 export const ActivePointsChart = ({
   stakedPoints = 0,
 }: ActivePointsChartProps) => {
@@ -45,7 +43,7 @@ export const ActivePointsChart = ({
 
   return (
     <>
-      <ChartWrapper title="Points distribution">
+      <ChartWrapper title="Active: Staked vs Unstaked points - %">
         <ChartSetup options={OPTIONS} />
       </ChartWrapper>
     </>

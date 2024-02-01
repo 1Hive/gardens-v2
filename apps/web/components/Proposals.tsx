@@ -238,8 +238,8 @@ export function Proposals({
         </div>
         {/*  PROPOSALS STATS  ///// */}
         <ProposalStats
-          strategyAddress={strategyAddress}
           proposals={proposals}
+          distributedPoints={distributedPoints}
         />
         {/* */}
         <div className="flex justify-center gap-8">
