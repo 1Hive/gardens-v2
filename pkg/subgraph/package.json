@@ -15,10 +15,11 @@
     "@graphprotocol/graph-cli": "^0.67.2",
     "@graphprotocol/graph-ts": "^0.32.0",
     "@types/node": "*",
-    "typescript": ">=2.7",
-    "node-fetch": "*"
+    "node-fetch": "*",
+    "typescript": ">=2.7"
   },
   "devDependencies": {
+    "minimist": "^1.2.8",
     "mustache": "^4.2.0"
   }
 }
