@@ -2,16 +2,35 @@
 pragma solidity ^0.8.19;
 
 import "../src/RegistryCommunity.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract RegistryFactory {
+contract RegistryFactory is Ownable {
     uint256 public nonce = 0;
 
-    mapping(RegistryCommunity => bool) communities;
+    //TODO: change from bool to uint (confirm if bool is bigger than uint8)
+    struct CommunityInfo {
+        bool valid;
+        uint256 fee;
+    }
+
+    mapping(address => CommunityInfo) communityToInfo;
+    //uint256 public protocolFee;
+    address public gardensFeeReceiver;
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
     /*|--------------------------------------------|*/
-    event CommunityCreated(address registryCommunity);
+
+    event FeeReceiverSet(address _newFeeReceiver);
+    event ProtocolFeeSet(address _community, uint256 _newProtocolFee);
+    event CommunityCreated(address _registryCommunity);
+    event CommunityValiditySet(address _community, bool _isValid);
+
+    /*|--------------------------------------------|*/
+    /*|                 ERRORS                     |*/
+    /*|--------------------------------------------|*/
+
+    error CommunityInvalid(address _community);
 
     function createRegistry(RegistryCommunity.InitializeParams memory params)
         public
@@ -19,8 +38,38 @@ contract RegistryFactory {
     {
         RegistryCommunity registryCommunity = new RegistryCommunity();
         params._nonce = nonce++;
+
         registryCommunity.initialize(params);
+        params._registryFactory = address(this);
+        communityToInfo[address(gardenRegistry)].valid = true;
         emit CommunityCreated(address(registryCommunity));
-        return address(registryCommunity);
+        return address(gardenRegistry);
+    }
+
+    function setReceiverAddress(address _newFeeReceiver) public onlyOwner {
+        gardensFeeReceiver = _newFeeReceiver;
+        emit FeeReceiverSet(_newFeeReceiver);
+    }
+
+    function getGardensFeeReceiver() external view returns (address) {
+        return gardensFeeReceiver;
+    }
+
+    function setProtocolFee(address _community, uint256 _newProtocolFee) public onlyOwner {
+        communityToInfo[_community].fee = _newProtocolFee;
+        emit ProtocolFeeSet(_community, _newProtocolFee);
+    }
+
+    function setCommunityValidity(address _community, bool _isValid) public onlyOwner {
+        communityToInfo[_community].valid = _isValid;
+        emit CommunityValiditySet(_community, _isValid);
+    }
+
+    function getProtocolFee(address _community) external view returns (uint256) {
+        if (!communityToInfo[_community].valid) {
+            revert CommunityInvalid(_community);
+        }
+
+        return communityToInfo[_community].fee;
     }
 }

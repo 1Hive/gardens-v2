@@ -3,10 +3,11 @@ import { formatAddress } from "@/utils/formatAddress";
 import { honeyIcon } from "@/assets";
 import Image from "next/image";
 import { alloABI, cvStrategyABI } from "@/src/generated";
-import { Abi, formatEther } from "viem";
-import { readContract } from "@wagmi/core";
+import { Abi, createPublicClient, formatEther, http } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
 import { proposalsMockData } from "@/constants/proposalsMockData";
+import { getChain } from "@/configs/chainServer";
+// import { wagmiConfig } from "@/configs/wagmiConfig";
 
 type ProposalsMock = {
   title: string;
@@ -43,9 +44,9 @@ type PoolData = {
 };
 
 export default async function Proposal({
-  params: { proposalId, poolId },
+  params: { proposalId, poolId, chain },
 }: {
-  params: { proposalId: number; poolId: number };
+  params: { proposalId: number; poolId: number; chain: number };
 }) {
   // const { proposals: proposalSContracts, strategyAddress } = useProposalsRead({
   //   poolId: Number(poolId),
@@ -54,10 +55,15 @@ export default async function Proposal({
   // const proposalContract = proposalSContracts?.filter(
   //   (proposal) => proposal.id === Number(proposalId),
   // )[0];
+  
+  const client = createPublicClient({
+    chain: getChain(chain),
+    transport: http(),
+  });
 
-  const poolData = (await readContract({
+  const poolData = (await client.readContract({
+    abi: alloABI,
     address: contractsAddresses.allo,
-    abi: alloABI as Abi,
     functionName: "getPool",
     args: [BigInt(poolId)],
   })) as PoolData;
@@ -67,7 +73,7 @@ export default async function Proposal({
     abi: cvStrategyABI as Abi,
   };
 
-  const rawProposal = (await readContract({
+  const rawProposal = (await client.readContract({
     address: poolData.strategy,
     abi: cvStrategyABI as Abi,
     functionName: "getProposal",
@@ -79,19 +85,19 @@ export default async function Proposal({
     ...proposalsMockData[proposalId],
   };
 
-  const maxCVSupply = await readContract({
+  const maxCVSupply = await client.readContract({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
     args: [proposalId],
   });
 
-  const maxCVStaked = await readContract({
+  const maxCVStaked = await client.readContract({
     ...cvStrategyContract,
     functionName: "getProposalStakedAmount",
     args: [proposalId],
   });
 
-  const totalEffectiveActivePoints = await readContract({
+  const totalEffectiveActivePoints = await client.readContract({
     ...cvStrategyContract,
     functionName: "totalEffectiveActivePoints",
   });

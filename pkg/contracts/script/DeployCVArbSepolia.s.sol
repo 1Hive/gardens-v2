@@ -67,7 +67,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
-        params._protocolFee = 0;
+        params._communityFee = 0;
         params._metadata = metadata; // convenant ipfs
         params._councilSafe = payable(address(councilSafeDeploy));
         // params._councilSafe = payable(address(_councilSafeWithOwner(pool_admin());

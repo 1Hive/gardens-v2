@@ -40,9 +40,14 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     uint256 public constant TOTAL_SUPPLY = 45000;
     uint256 public constant POOL_AMOUNT = 15000;
     uint256 public constant MINIMUM_STAKE = 50;
+    uint256 public constant PROTOCOL_FEE_PERCENTAGE = 1;
+    uint256 public constant COMMUNITY_FEE_PERCENTAGE = 2;
+    uint256 public constant STAKE_WITH_FEES =
+        MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / 100;
     uint256 public constant REQUESTED_AMOUNT = 1000;
 
     RegistryCommunity internal registryCommunity;
+    address factoryOwner = makeAddr("registryFactoryDeployer");
 
     function setUp() public {
         __RegistrySetupFull();
@@ -63,18 +68,22 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
 
         // registryCommunity = new RegistryCommunity();
+        vm.startPrank(factoryOwner);
         RegistryFactory registryFactory = new RegistryFactory();
+        vm.stopPrank();
 
         RegistryCommunity.InitializeParams memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
-        params._protocolFee = 2;
+        params._communityFee = COMMUNITY_FEE_PERCENTAGE;
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
         registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
-
+        vm.startPrank(factoryOwner);
+        registryFactory.setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
+        vm.stopPrank();
         token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
     }
 
@@ -118,7 +127,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         vm.stopPrank();
 
-        _registryCommunity().gardenToken().approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        _registryCommunity().gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
         strategy.activatePoints();
 
@@ -493,7 +502,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         vm.startPrank(pool_admin());
 
-        token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
         registryCommunity.stakeAndRegisterMember();
         cv.activatePoints();
 
@@ -597,7 +606,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         bytes memory data2 = abi.encode(proposal);
         allo().registerRecipient(poolId, data2);
 
-        token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
         registryCommunity.stakeAndRegisterMember();
         cv.activatePoints();
 
@@ -790,7 +799,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
-        params._protocolFee = 2;
+        params._communityFee = 2;
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
@@ -807,7 +816,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
-        params._protocolFee = 2;
+        params._communityFee = 2;
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "GardensDAO";
@@ -830,7 +839,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         cv.activatePoints();
 
         vm.startPrank(pool_admin());
-        token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
         registryCommunity.stakeAndRegisterMember();
         assertEq(registryCommunity.isMember(pool_admin()), true, "isMember");
 
@@ -854,7 +863,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // assertEq(registryCommunity.isMember(local()), false, "isMember");
 
         vm.startPrank(pool_admin());
-        token.approve(address(registryCommunity), registryCommunity.getBasisStakedAmount());
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
         registryCommunity.stakeAndRegisterMember();
         assertEq(registryCommunity.isMember(pool_admin()), true, "isMember");
         cv.activatePoints();
