@@ -44,6 +44,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         RegistryFactory registryFactory = new RegistryFactory();
 
+        console2.log("Registry Factory Addr: %s", address(registryFactory));
+
         RegistryCommunity.InitializeParams memory params;
 
         params._allo = address(allo);

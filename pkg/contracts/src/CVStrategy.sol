@@ -40,10 +40,10 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     /*|              CUSTOM EVENTS                 |*/
     /*|--------------------------------------------|*/
 
-    event InitializedCV(uint256 poolId, bytes data);
+    event InitializedCV(uint256 poolId, InitializeParams data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
-    event ProposalCreated(uint256 proposalId, address beneficiary, uint256 amountRequested);
-    /*|--------------------------------------------|*o
+    event ProposalCreated(uint256 poolId, uint256 proposalId);
+    /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
 
@@ -64,6 +64,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     enum ProposalStatus {
+        Inactive, // Inactive
         Active, // A vote that has been reported to Agreements
         Paused, // A vote that is being challenged by Agreements
         Cancelled, // A vote that has been cancelled
@@ -152,7 +153,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         maxRatio = ip.maxRatio;
         weight = ip.weight;
 
-        emit InitializedCV(_poolId, _data);
+        emit InitializedCV(_poolId, ip);
     }
     /*|--------------------------------------------|*/
     /*|                 FALLBACK                  |*/
@@ -229,7 +230,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         p.agreementActionId = 0;
         p.metadata = proposal.metadata;
 
-        emit ProposalCreated(proposal.proposalId, proposal.beneficiary, proposal.amountRequested);
+        emit ProposalCreated(poolId, proposal.proposalId);
         return address(uint160(proposal.proposalId));
     }
 
@@ -353,10 +354,9 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
                 proposal.voterStakedPointsPct[_member] = 0;
                 proposal.stakedAmount -= stakedAmount;
                 totalStaked -= stakedAmount;
+                _calculateAndSetConviction(proposal, stakedAmount);
             }
         }
-
-        //        _withdraw(_member);
     }
 
     /**

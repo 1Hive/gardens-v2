@@ -1,3 +1,81 @@
-type CVStrategy @entity {
-    id: ID!
+type CVStrategy @entity(immutable: false) {
+  id: ID!
+  registryCommunity: RegistryCommunity!
+  config: CVStrategyConfig
+  proposals: [CVProposal!]! @derivedFrom(field: "strategy")
 }
+
+type CVStrategyConfig @entity(immutable: false) {
+  id: ID!
+  decay: BigInt!
+  maxRatio: BigInt!
+  weight: BigInt!
+}
+
+type CVProposal @entity(immutable: false) {
+  id: ID!
+  proposalMetadata: ProposalMetadata!
+  metadata:String!
+  version: BigInt
+  strategy: CVStrategy!
+  beneficiary: String!
+  requestedAmount: BigInt!
+  requestedToken: String!
+  proposalStatus: BigInt!
+  blockLast: BigInt!
+  convictionLast: BigInt!
+  threshold: BigInt!
+  proposalType: BigInt!
+  stakedTokens: BigInt!
+  submitter: String!
+  voterStakedPointsPct: BigInt!
+  agreementActionId: BigInt!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type ProposalMetadata @entity(immutable: false) {
+  id: ID!
+  version: BigInt!
+  proposal: CVProposal!
+  title: String!
+  content: String!
+}
+
+
+type RegistryFactory @entity(immutable: false){
+  id: ID!
+  registryCommunities: [RegistryCommunity!] @derivedFrom(field: "registryFactory")
+}
+type RegistryCommunity @entity(immutable: false){
+  id: ID!
+  profileId: String
+  protocolFee: BigInt
+  communityName: String
+  covenantIpfsHash: String
+  registryFactory: RegistryFactory
+  strategies: [CVStrategy!] @derivedFrom(field: "registryCommunity")
+  councilSafe: String
+  isKickEnabled: Boolean
+  registerStakeAmount: BigInt
+  registerToken: String
+  alloAddress: String
+  # members: [Member!]! @derivedFrom(field: "registryCommunity")
+  members: [MembersCommunities!] @derivedFrom(field: "registryCommunity")
+}
+
+type Member @entity(immutable: false){
+  id: ID!
+  registryCommunity: [MembersCommunities!] @derivedFrom(field: "member")
+  # registryCommunity: RegistryCommunity!
+  memberAddress: String
+  stakedAmount: BigInt
+  isRegistered: Boolean
+}
+
+type MembersCommunities @entity(immutable: false){
+  id: ID!
+  member: Member
+  registryCommunity: RegistryCommunity
+}
+
