@@ -35,6 +35,8 @@ deploy-verify:
 	-vv
 fork:
 	anvil --chain-id 1337
+fork0:
+	anvil --host=0.0.0.0 --chain-id 1337
 fork-testnet:
 	anvil --host=0.0.0.0 -f $(RPC_URL_ARB_TESTNET)
 test1:

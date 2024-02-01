@@ -45,7 +45,7 @@ type ProposalMetadata @entity(immutable: false) {
 
 type RegistryFactory @entity(immutable: false){
   id: ID!
-  registryCommunities: [RegistryCommunity!]! @derivedFrom(field: "registryFactory")
+  registryCommunities: [RegistryCommunity!] @derivedFrom(field: "registryFactory")
 }
 type RegistryCommunity @entity(immutable: false){
   id: ID!

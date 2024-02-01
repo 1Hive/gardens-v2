@@ -1,10 +1,14 @@
+import { CVStrategy as CVStrategyTemplate  } from "../../generated/templates";
 import {  CVStrategy,  MembersCommunities, RegistryCommunity } from "../../generated/schema";
 
-import { log } from '@graphprotocol/graph-ts'
+import { dataSource, log } from '@graphprotocol/graph-ts'
 import {RegistryInitialized, RegistryCommunity as RegistryCommunityContract, MemberRegistered, StrategyAdded}from "../../generated/RegistryCommunity/RegistryCommunity";
+import { CTX_FACTORY_ADDRESS } from "./registry-factory";
 
 export function handleInitialized(event: RegistryInitialized): void {
+    log.debug("RegistryCommunity: handleInitialized: {}", [event.address.toHexString()]);
    const rc =  RegistryCommunity.load(event.address.toHex());
+   const factoryAddress = dataSource.context().getString(CTX_FACTORY_ADDRESS);
     if(rc == null){
         let newRC = new RegistryCommunity(event.address.toHex());
         
@@ -22,7 +26,7 @@ export function handleInitialized(event: RegistryInitialized): void {
         newRC.isKickEnabled = rcc.isKickEnabled();
         newRC.protocolFee = rcc.protocolFee();
         newRC.registerToken = rcc.gardenToken().toHexString();
-        // newRC.registryFactory = rcc.registryFactory().toHexString();
+        newRC.registryFactory = factoryAddress;
         // newRC.strategies = rcc.enabledStrategies();
         // const mc = new MembersCommunities(`${event.address.toHex()}-members`);
         // newRC.members. = [mc];
@@ -47,14 +51,9 @@ export function handleInitialized(event: RegistryInitialized): void {
 // }
 
 // //  handleStrategyAdded
-// export function handleStrategyAdded(event: StrategyAdded): void {
-//     const strategyAddress = event.params._strategy.toHexString();
-//     let strategy = CVStrategy.load(strategyAddress);
-//     if (strategy == null) {
-//         log.error("Strategy {} not found", [strategyAddress]);
-//         return;
-//     }
-//     strategy.registryCommunity = event.address.toHex();
-    
-//     strategy.save();
-// }
+export function handleStrategyAdded(event: StrategyAdded): void {
+    log.debug('handleStrategyAdded',[event.params._strategy.toHexString()]);
+    const strategyAddress = event.params._strategy;
+
+    CVStrategyTemplate.create(strategyAddress);
+}
