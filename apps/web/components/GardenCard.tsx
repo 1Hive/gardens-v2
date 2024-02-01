@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 import { Button } from ".";
 import { gardenLand } from "@/assets";
 import { useAccount, useNetwork } from "wagmi";
+import { arbitrumSepolia } from "viem/chains";
 
 interface CardProps {
   imageSrc: string;
@@ -17,8 +18,10 @@ interface CardProps {
 export function GardenCard({ garden }: { garden: CardProps }) {
   const { chain } = useNetwork();
 
+  const currentChainOrDefault =
+    chain?.id.toString() || arbitrumSepolia.id.toString();
   const { imageSrc, title, subtitle, description, link: linkReplace } = garden;
-  const link = linkReplace.replace("[[chain]]", chain?.id.toString() || "");
+  const link = linkReplace.replace("[[chain]]", currentChainOrDefault || "");
   return (
     <div className="relative flex max-w-[320px] flex-col overflow-hidden rounded-lg border-2 border-black bg-surface">
       <div className="flex flex-col gap-4 p-4">

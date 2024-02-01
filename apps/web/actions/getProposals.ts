@@ -1,6 +1,6 @@
 // import { wagmiConfig } from "@/configs/wagmiConfig";
 import { readContract, readContracts } from "@wagmi/core";
-import { alloAbi, cvStrategyAbi } from "@/src/generated";
+import { alloABI, cvStrategyABI } from "@/src/generated";
 import { Abi } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
 
@@ -48,7 +48,7 @@ export async function getProposals(
   try {
     // const poolData = (await readContract(wagmiConfig, {
     //   address: contractsAddresses.allo,
-    //   abi: alloAbi as Abi,
+    //   abi: alloABI as Abi,
     //   functionName: "getPool",
     //   args: [BigInt(poolId)],
     // })) as PoolData;
@@ -56,7 +56,7 @@ export async function getProposals(
     const alloContractReadProps = {
       account: accountAddress,
       address: strategyAddress,
-      abi: cvStrategyAbi as Abi,
+      abi: cvStrategyABI as Abi,
       functionName: "getProposal",
     };
 

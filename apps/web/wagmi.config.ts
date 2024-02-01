@@ -1,9 +1,9 @@
 import { defineConfig } from "@wagmi/cli";
-import { react, foundry } from "@wagmi/cli/plugins";
+import { react, foundry, actions } from "@wagmi/cli/plugins";
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
-import { abi as RegistryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
-import { abi as RegistryCommunityABI } from "#/contracts/out/RegistryCommunity.sol/RegistryCommunity.json";
-import { abi as AlloABI } from "#/contracts/out/Allo.sol/Allo.json";
+import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
+import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunity.sol/RegistryCommunity.json";
+import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
 
 import { Abi } from "viem";
 
@@ -16,18 +16,25 @@ export default defineConfig({
     },
     {
       name: "RegistryFactory",
-      abi: RegistryFactoryABI as Abi,
+      abi: registryFactoryABI as Abi,
     },
     {
       name: "RegistryCommunity",
-      abi: RegistryCommunityABI as Abi,
+      abi: registryCommunityABI as Abi,
     },
     {
       name: "Allo",
-      abi: AlloABI as Abi,
+      abi: alloABI as Abi,
     },
   ],
   plugins: [
+    actions({
+      watchContractEvent: false,
+      readContract: true,
+      writeContract: true,
+      prepareWriteContract: true,
+      getContract: true,
+    }),
     // etherscan({
     //   apiKey: process.env.ETHERSCAN_API_KEY!,
     //   chainId: mainnet.id,

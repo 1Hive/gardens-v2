@@ -1,33 +1,32 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { GardensLogo } from "@/assets";
 import Link from "next/link";
 import { navItems } from "@/constants/navigation";
-// import { Fragment } from "react";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-// import { Button } from ".";
-// import { ConnectButton } from "@rainbow-me/rainbowkit";
-// import { useWeb3Modal } from "@web3modal/wagmi/react";
-import { usePathname } from "next/navigation";
 import { useAccount } from "wagmi";
 import { formatAddress } from "@/utils/formatAddress";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-// import { useConnectWallet } from '@web3-onboard/react'
+import {  useParams, useRouter } from "next/navigation";
+import { useChainId } from "wagmi";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
 export function NavBar() {
-  // const modal = useWeb3Modal();
-  // const [{ wallet, connecting }, connect, disconnect] = useConnectWallet();
   const account = useAccount();
   const { address } = account;
   const formattedAddress = formatAddress(address ?? "");
+  const chainId = useChainId();
+  const params = useParams<{ chain: string }>()
+  const router = useRouter();
 
-  //we use pathname to show current page on navigation items...
-  const pathname = usePathname();
+  useEffect(() => {
+    if (params.chain !== undefined && chainId !== Number(params.chain))
+      router.push("/");
+  }, [chainId, params]);
 
   return (
     <Disclosure as="nav" className="bg-surface shadow">
