@@ -2,18 +2,31 @@ import { CVProposal, CVStrategy, CVStrategyConfig, ProposalMetadata } from "../.
 import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
 
 import {InitializedCV, ProposalCreated, CVStrategy as CVStrategyContract} from "../../generated/CVStrategy/CVStrategy";
-import { BigInt, log, Bytes, json, dataSource, DataSourceTemplate } from '@graphprotocol/graph-ts'
+import { BigInt, log, Bytes, json, dataSource, DataSourceTemplate, ethereum, Value } from '@graphprotocol/graph-ts'
 
 export function handleInitialized(event: InitializedCV): void {
     log.debug("handleInitialized", []);
     const poolIdString = event.params.poolId.toHex();
+    const params = ethereum.decode("(address,uint256,uint256,uint256)", event.params.data);
+    const tuple = params!.toTuple();
+    if (tuple == null) {
+        log.error("handleInitialized tuple is null", []);
+        return;
+    }
+    const registryCommunity = tuple[0].toAddress().toHexString();
+    const decay = tuple[1].toBigInt();
+    const maxRatio = tuple[2].toBigInt();
+    const weight = tuple[3].toBigInt();
+    log.debug("handleInitialized registryCommunity:{} decay:{} maxRatio:{} weight:{}", [registryCommunity, decay.toString(), maxRatio.toString(), weight.toString()]);
+
     let cvs = new CVStrategy(event.address.toHex());
-    cvs.registryCommunity = event.params.data.registryCommunity.toHex();
+    cvs.registryCommunity = registryCommunity;
     let config = new CVStrategyConfig(`${event.address.toHex()}-${poolIdString}-config`);
 
-    config.decay = event.params.data.decay;
-    config.maxRatio = event.params.data.maxRatio;
-    config.weight = event.params.data.weight;
+    config.decay = decay;
+    config.maxRatio = maxRatio;
+    config.weight = weight;
+
     config.save();
 
     cvs.config = config.id;
@@ -23,7 +36,6 @@ export function handleInitialized(event: InitializedCV): void {
 
 export function handleProposalCreated(event: ProposalCreated): void {
     // log.debug("handleProposalCreated", []);
-    const poolIdString = event.params.poolId.toHex();
     const proposalIdString = event.params.proposalId.toHex();
     const cvsId = event.address.toHex();
     const cvc = CVStrategyContract.bind(event.address);
