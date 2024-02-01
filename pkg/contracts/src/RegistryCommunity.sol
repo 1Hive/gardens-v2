@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IAllo, Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
-
+import {RegistryFactory} from "./RegistryFactory.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 
 import "forge-std/console.sol";
@@ -27,7 +27,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     event MemberRegistered(address _member, uint256 _amountStaked);
     event MemberUnregistered(address _member, uint256 _amountReturned);
     event MemberKicked(address _member, address _transferAddress, uint256 _amountReturned);
-    event ProtocolFeeUpdated(uint256 _newFee);
+    event CommunityFeeUpdated(uint256 _newFee);
     event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
     event StrategyAdded(address _strategy);
     event StrategyRemoved(address _strategy);
@@ -97,8 +97,10 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         address _allo;
         IERC20 _gardenToken;
         uint256 _registerStakeAmount;
-        uint256 _protocolFee; //@todo if remove the protocol fee, also remove it here
+        uint256 _communityFee; //@todo if remove the protocol fee, also remove it here
         uint256 _nonce;
+        address _registryFactory;
+        address _feeReceiver;
         Metadata _metadata;
         address payable _councilSafe;
         string _communityName;
@@ -111,9 +113,11 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     IERC20 public gardenToken;
 
     uint256 public registerStakeAmount;
-    uint256 public protocolFee;
+    uint256 public communityFee;
+    address public feeReceiver;
     bytes32 public profileId;
     bool public isKickEnabled;
+    address public registryFactory;
 
     address payable public pendingCouncilSafe; //@todo write test for change owner in 2 step
     Safe public councilSafe;
@@ -139,6 +143,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         revertZeroAddress(address(params._gardenToken));
         revertZeroAddress(params._councilSafe);
         revertZeroAddress(params._allo);
+        revertZeroAddress(params._registryFactory);
 
         allo = IAllo(params._allo);
         gardenToken = params._gardenToken;
@@ -146,10 +151,11 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             revert ValueCannotBeZero();
         }
         registerStakeAmount = params._registerStakeAmount; //@todo can be zero?
-        protocolFee = params._protocolFee;
+        communityFee = params._communityFee;
         isKickEnabled = params._isKickEnabled;
         communityName = params._communityName;
-
+        registryFactory = params._registryFactory;
+        feeReceiver = params._feeReceiver;
         councilSafe = Safe(params._councilSafe);
         _grantRole(COUNCIL_MEMBER_CHANGE, params._councilSafe);
 
@@ -250,16 +256,30 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         Member memory newMember = addressToMemberInfo[_member];
         return newMember.isRegistered;
     }
-
+    //Todo: add protocol fee logic
     function stakeAndRegisterMember() public nonReentrant {
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
+        RegistryFactory gardensFactory = RegistryFactory(registryFactory);
+        uint256 communityFeeAmount = (registerStakeAmount * communityFee)/100;
+        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this)))/100;
         if (!isMember(_member)) {
             newMember.isRegistered = true;
 
             newMember.stakedAmount = registerStakeAmount;
+            gardenToken.transferFrom(_member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount);
+            //TODO: Test if revert because of approve on contract, if doesnt work, transfer all to this contract, and then transfer to each receiver
+            //individually. Check vulnerabilites for that with Felipe
+            // gardenToken.approve(feeReceiver,communityFeeAmount);
+            //Error: ProtocolFee is equal to zero
+            if(communityFeeAmount > 0){
+            gardenToken.transfer(feeReceiver, communityFeeAmount);
+            }
+            // gardenToken.approve(gardensFactory.getGardensFeeReceiver(),gardensFeeAmount);
+            if(gardensFeeAmount > 0){
+            gardenToken.transfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
+            }
 
-            gardenToken.transferFrom(_member, address(this), registerStakeAmount);
 
             emit MemberRegistered(_member, registerStakeAmount);
         }
@@ -290,9 +310,9 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         emit BasisStakedAmountSet(_newAmount);
     }
 
-    function updateProtocolFee(uint256 _newProtocolFee) public onlyCouncilSafe {
-        protocolFee = _newProtocolFee;
-        emit ProtocolFeeUpdated(_newProtocolFee);
+    function updateCommunityFee(uint256 _newCommunityFee) public onlyCouncilSafe {
+        communityFee = _newCommunityFee;
+        emit CommunityFeeUpdated(_newCommunityFee);
     }
     //function updateMinimumStake()
 
