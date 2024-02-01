@@ -354,10 +354,9 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
                 proposal.voterStakedPointsPct[_member] = 0;
                 proposal.stakedAmount -= stakedAmount;
                 totalStaked -= stakedAmount;
+                _calculateAndSetConviction(proposal, stakedAmount);
             }
         }
-
-        //        _withdraw(_member);
     }
 
     /**

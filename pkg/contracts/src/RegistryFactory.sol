@@ -4,16 +4,23 @@ pragma solidity ^0.8.19;
 import "../src/RegistryCommunity.sol";
 
 contract RegistryFactory {
-    mapping(RegistryCommunity => bool) registries;
     uint256 public nonce = 0;
+
+    mapping(RegistryCommunity => bool) communities;
+
+    /*|--------------------------------------------|*/
+    /*|                 EVENTS                     |*/
+    /*|--------------------------------------------|*/
+    event CommunityCreated(address registryCommunity);
 
     function createRegistry(RegistryCommunity.InitializeParams memory params)
         public
         returns (address _createdRegistryAddress)
     {
-        RegistryCommunity gardenRegistry = new RegistryCommunity();
+        RegistryCommunity registryCommunity = new RegistryCommunity();
         params._nonce = nonce++;
-        gardenRegistry.initialize(params);
-        return address(gardenRegistry);
+        registryCommunity.initialize(params);
+        emit CommunityCreated(address(registryCommunity));
+        return address(registryCommunity);
     }
 }

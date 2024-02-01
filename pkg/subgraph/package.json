@@ -4,16 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "graph codegen && graph build",
+    "build": "pnpm manifest:local && graph codegen && graph build",
     "manifest:local": "node ./src/scripts/mustache localhost",
     "manifest:arbsep": "node ./src/scripts/mustache arbsepolia",
     "create-local": "graph create --node http://localhost:8020/ kamikazebr/gv2",
     "remove-local": "graph remove --node http://localhost:8020/ kamikazebr/gv2",
-    "deploy-local": "pnpm manifest:local && graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 kamikazebr/gv2 -l v0.0.1"
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 kamikazebr/gv2 -l v0.0.1"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "^0.62.0",
-    "@graphprotocol/graph-ts": "^0.31.0"
+    "@graphprotocol/graph-cli": "^0.67.2",
+    "@graphprotocol/graph-ts": "^0.32.0"
   },
   "devDependencies": {
     "mustache": "^4.2.0"

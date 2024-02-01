@@ -9,13 +9,77 @@ templates:
     mapping:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
-      file: ./src/mappings/cv-strategy.ts
+      file: ./src/mappings/proposalMetadata.ts
       handler: handleProposalMetadata
       entities:
         - ProposalMetadata
       abis:
         - name: CVStrategy
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+  - name: CVStrategy
+    kind: ethereum/contract
+    network: localhost
+    source:
+      abi: CVStrategy
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CVStrategy
+      abis:
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+      eventHandlers:
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256))
+          handler: handleInitialized
+        - event: ProposalCreated(uint256,uint256)
+          handler: handleProposalCreated
+      file: ./src/mappings/cv-strategy.ts
+  - name: RegistryCommunity
+    kind: ethereum/contract
+    network: localhost
+    source:
+      abi: RegistryCommunity
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - RegistryCommunity
+      abis:
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+      eventHandlers:
+        - event: RegistryInitialized(bytes32,string,(uint256,string))
+          handler: handleInitialized
+        # - event: MemberRegistered(address,uint255)
+        #   handler: handleMemberRegistered
+        # - event: MemberUnregistered(address,uint255)
+        #   handler: handleMemberUnregistered
+        # - event: MemberKicked(address,address,uint255)
+        #   handler: handleMemberKicked
+        # - event: ProtocolFeeUpdated(uint255)
+        #   handler: handleProtocolFeeUpdated
+        # - event: StrategyAdded(address)
+        #   handler: handleStrategyAdded
+        # - event: StrategyRemoved(address)
+        #   handler: handleStrategyRemoved
+        # - event: MemberActivatedStrategy(address,address)
+        #   handler: handleMemberActivatedStrategy
+        # - event: MemberDeactivatedStrategy(address,address)
+        #   handler: handleMemberDeactivatedStrategy
+        # - event: StakeAmountUpdated(address,uint255)
+        #   handler: handleStakeAmountUpdated
+        # - event: BasisStakedAmountSet(uint255)
+        #   handler: handleBasisStakedAmountSet
+        # - event: CouncilSafeSet(address)
+        #   handler: handleCouncilSafeSet
+        # - event: CouncilSafeChangeStarted(address,address)
+        #   handler: handleCouncilSafeChangeStarted
+        # - event: AlloSet(address)
+        #   handler: handleAlloSet
+      file: ./src/mappings/registry-community.ts
 dataSources:
 {{#dataSources}}
   {{&subTemplate}}

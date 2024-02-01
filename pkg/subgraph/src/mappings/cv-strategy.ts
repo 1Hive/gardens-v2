@@ -8,7 +8,7 @@ export function handleInitialized(event: InitializedCV): void {
     log.debug("handleInitialized", []);
     const poolIdString = event.params.poolId.toHex();
     let cvs = new CVStrategy(event.address.toHex());
-    cvs.registryCommunityAddress = event.params.data.registryCommunity.toHex();
+    cvs.registryCommunity = event.params.data.registryCommunity.toHex();
     let config = new CVStrategyConfig(`${event.address.toHex()}-${poolIdString}-config`);
 
     config.decay = event.params.data.decay;

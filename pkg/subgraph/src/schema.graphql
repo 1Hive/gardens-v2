@@ -1,6 +1,6 @@
 type CVStrategy @entity(immutable: false) {
   id: ID!
-  registryCommunityAddress: String!
+  registryCommunity: RegistryCommunity!
   config: CVStrategyConfig
   proposals: [CVProposal!]! @derivedFrom(field: "strategy")
 }
@@ -41,3 +41,41 @@ type ProposalMetadata @entity(immutable: false) {
   title: String!
   content: String!
 }
+
+
+type RegistryFactory @entity(immutable: false){
+  id: ID!
+  registryCommunities: [RegistryCommunity!]! @derivedFrom(field: "registryFactory")
+}
+type RegistryCommunity @entity(immutable: false){
+  id: ID!
+  profileId: String
+  protocolFee: BigInt
+  communityName: String
+  covenantIpfsHash: String
+  registryFactory: RegistryFactory
+  strategies: [CVStrategy!] @derivedFrom(field: "registryCommunity")
+  councilSafe: String
+  isKickEnabled: Boolean
+  registerStakeAmount: BigInt
+  registerToken: String
+  alloAddress: String
+  # members: [Member!]! @derivedFrom(field: "registryCommunity")
+  members: [MembersCommunities!] @derivedFrom(field: "registryCommunity")
+}
+
+type Member @entity(immutable: false){
+  id: ID!
+  registryCommunity: [MembersCommunities!] @derivedFrom(field: "member")
+  # registryCommunity: RegistryCommunity!
+  memberAddress: String
+  stakedAmount: BigInt
+  isRegistered: Boolean
+}
+
+type MembersCommunities @entity(immutable: false){
+  id: ID!
+  member: Member
+  registryCommunity: RegistryCommunity
+}
+
