@@ -1,7 +1,7 @@
 import { CVProposal, CVStrategy, CVStrategyConfig, ProposalMetadata } from "../../generated/schema";
 import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
 
-import {InitializedCV, ProposalCreated, CVStrategy as CVStrategyContract} from "../../generated/CVStrategy/CVStrategy";
+import {InitializedCV, ProposalCreated, CVStrategy as CVStrategyContract} from "../../generated/templates/CVStrategy/CVStrategy";
 import { BigInt, log, Bytes, json, dataSource, DataSourceTemplate, ethereum, Value } from '@graphprotocol/graph-ts'
 
 export const CTX_PROPOSAL_ID = 'proposalId';

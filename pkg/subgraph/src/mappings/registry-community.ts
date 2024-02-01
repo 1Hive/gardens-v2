@@ -2,7 +2,7 @@ import { CVStrategy as CVStrategyTemplate  } from "../../generated/templates";
 import {  CVStrategy,  MembersCommunities, RegistryCommunity } from "../../generated/schema";
 
 import { dataSource, log } from '@graphprotocol/graph-ts'
-import {RegistryInitialized, RegistryCommunity as RegistryCommunityContract, MemberRegistered, StrategyAdded}from "../../generated/RegistryCommunity/RegistryCommunity";
+import {RegistryInitialized, RegistryCommunity as RegistryCommunityContract, MemberRegistered, StrategyAdded}from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 import { CTX_FACTORY_ADDRESS } from "./registry-factory";
 
 export function handleInitialized(event: RegistryInitialized): void {
