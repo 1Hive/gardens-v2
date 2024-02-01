@@ -1,4 +1,4 @@
-import { CVProposal, CVStrategy, CVStrategyConfig, ProposalMetadata } from "../../generated/schema";
+import { CVProposal, CVStrategy, CVStrategyConfig, ProposalMeta as ProposalMetadata } from "../../generated/schema";
 import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
 
 import {InitializedCV, ProposalCreated, CVStrategy as CVStrategyContract} from "../../generated/templates/CVStrategy/CVStrategy";
@@ -64,7 +64,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
     newProposal.metadata = pointer;
     // const metadataID = `${pointer}-${proposalIdString}`;
     const metadataID = `${pointer}`;
-    newProposal.proposalMetadata = metadataID; 
+    newProposal.proposalMeta = metadataID; 
     log.debug("handleProposalCreated pointer:{}", [metadataID]);
     newProposal.createdAt = event.block.timestamp;
     newProposal.updatedAt = event.block.timestamp;

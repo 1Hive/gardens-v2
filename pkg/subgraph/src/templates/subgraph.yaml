@@ -12,7 +12,7 @@ templates:
       file: ./src/mappings/proposalMetadata.ts
       handler: handleProposalMetadata
       entities:
-        - ProposalMetadata
+        - ProposalMeta
         - CVProposal
       abis:
         - name: CVStrategy

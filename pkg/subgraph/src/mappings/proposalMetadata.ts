@@ -1,5 +1,5 @@
 import { Bytes, dataSource, log, json, BigInt } from "@graphprotocol/graph-ts";
-import { ProposalMetadata } from "../../generated/schema";
+import { ProposalMeta as ProposalMetadata } from "../../generated/schema";
 import { CTX_METADATA_ID, CTX_PROPOSAL_ID } from "./cv-strategy";
 // https://kdghxz4drlsffkptavafm6ws2qkdwpdqauxstqioi3xdli7yjo4q.arweave.net/UMx754OK5FKp8wVAVnrS1BQ7PHAFLynBDkbuNaP4S7k
 export function handleProposalMetadata(content: Bytes): void {

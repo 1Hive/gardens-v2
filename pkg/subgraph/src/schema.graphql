@@ -14,7 +14,7 @@ type CVStrategyConfig @entity(immutable: false) {
 
 type CVProposal @entity(immutable: false) {
   id: ID!
-  proposalMetadata: ProposalMetadata!
+  proposalMeta: ProposalMeta!
   metadata: String!
   version: BigInt
   strategy: CVStrategy!
@@ -34,9 +34,9 @@ type CVProposal @entity(immutable: false) {
   updatedAt: BigInt!
 }
 
-type ProposalMetadata @entity(immutable: false) {
+type ProposalMeta @entity(immutable: false) {
   id: ID!
-  proposal: [CVProposal!]!
+  proposal: [CVProposal!]! @derivedFrom(field: "proposalMeta")
   version: BigInt
   title: String
   content: String

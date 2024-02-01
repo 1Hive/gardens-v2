@@ -47,4 +47,3 @@ cache/
 # subgraph
 pkg/subgraph/generated
 pkg/**/data
-
