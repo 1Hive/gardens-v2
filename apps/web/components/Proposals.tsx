@@ -6,9 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAccount, useContractWrite } from "wagmi";
 import { contractsAddresses } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { cvStrategyAbi, alloAbi } from "@/src/generated";
+import { cvStrategyABI, alloABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
+import { ProposalStats } from "@/components";
 
 type ProposalsMock = {
   title: string;
@@ -53,21 +54,17 @@ export function Proposals({
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const { address: mainConnectedAccount } = useAccount();
-  // const connectedWallets = useWallets();
-  // const mainConnectedAccount = connectedWallets[0]?.accounts[0].address;
+  const { address } = useAccount();
 
   useEffect(() => {
-    if (mainConnectedAccount !== undefined) {
-      getProposals(
-        mainConnectedAccount as `0x${string}`,
-        strategyAddress,
-        poolId,
-      ).then((res) => {
-        if (res !== undefined) setProposals(res);
-      });
+    if (address !== undefined) {
+      getProposals(address as `0x${string}`, strategyAddress, poolId).then(
+        (res) => {
+          if (res !== undefined) setProposals(res);
+        },
+      );
     }
-  }, [mainConnectedAccount]);
+  }, [address]);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -90,21 +87,19 @@ export function Proposals({
     error: errorAllocate,
     isSuccess: isSuccessAllocate,
     status,
-
   } = useContractWrite({
     address: contractsAddresses.allo,
-    abi: alloAbi,
+    abi: alloABI,
     functionName: "allocate",
   });
 
-  const {errorName} = useErrorDetails(errorAllocate,'errorAllocate');
+  const { errorName } = useErrorDetails(errorAllocate, "errorAllocate");
 
   useEffect(() => {
     if (isSuccessAllocate) {
       setMessage("Transaction sent, hash: " + contractWriteData?.hash);
     }
-  }
-  , [isSuccessAllocate, contractWriteData])
+  }, [isSuccessAllocate, contractWriteData]);
 
   // const { data: txSettledData, status } = useWaitForTransactionReceipt({
   //   hash: contractWriteData,
@@ -140,7 +135,7 @@ export function Proposals({
     });
 
     // console.log(resultArr, currentData);
-    const encodedData = encodeFunctionParams(cvStrategyAbi, "supportProposal", [
+    const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
     return encodedData;
@@ -202,6 +197,7 @@ export function Proposals({
                   )}
                 </div>
               </div>
+
               {editView && (
                 <div className="flex w-full flex-wrap items-center justify-between gap-6">
                   <div className="flex items-center gap-8">
@@ -236,6 +232,12 @@ export function Proposals({
             </div>
           ))}
         </div>
+        {/*  PROPOSALS STATS  ///// */}
+        <ProposalStats
+          proposals={proposals}
+          distributedPoints={distributedPoints}
+        />
+        {/* */}
         <div className="flex justify-center gap-8">
           <Button className="bg-primary">Create Proposal</Button>
           <Button

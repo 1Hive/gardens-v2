@@ -3,7 +3,13 @@ import type { HTMLAttributes } from "react";
 import cn from "classnames";
 
 type Type = "funding" | "streaming" | "signaling";
-type Status = "active" | "paused" | "cancelled" | "executed" | string;
+type Status =
+  | "active"
+  | "paused"
+  | "cancelled"
+  | "executed"
+  | "inactive"
+  | string;
 
 type TypeStyles = Record<Type, HTMLAttributes<HTMLSpanElement>["className"]>;
 type StatusStyles = Record<
@@ -22,21 +28,24 @@ interface StatusBadgeProps {
 }
 
 // TODO!: add real styles, this is just a placeholder
+//variant for common badge
 const TYPE_STYLES: TypeStyles = {
   funding: "bg-primary text-black",
   streaming: "bg-primary text-white",
   signaling: "bg-secondary text-white",
 };
+
+//variants for Statys Badge
 const STATUS_STYLES: StatusStyles = {
-  active: "bg-primary",
+  active: "badge-success",
   paused: "bg-primary",
   cancelled: "bg-warning",
   executed: "bg-primary",
+  inactive: "bg-error",
 };
 
 const BASE_STYLES = "badge w-28 p-4 font-semibold";
-const BASE_STYLES_STATUS =
-  "badge absolute right-3 top-3 text-black border-black";
+const BASE_STYLES_STATUS = "badge text-white min-w-20 p-4 text-center";
 
 export function Badge({ type, classNames }: BadgeProps) {
   return (
@@ -56,14 +65,8 @@ export function StatusBadge({ status, classNames }: StatusBadgeProps) {
   return (
     <>
       <span
-        className={`${STATUS_STYLES[status] ?? "bg-transparet"} 
-           ${cn({
-             // TODO!: add real styles, this is just a placeholder for statuses
-             "border-2": status === "active",
-             "border-4": status === "paused",
-             "border-8": status === "cancelled",
-             "border-none bg-transparent": status === "executed",
-           })} ${BASE_STYLES_STATUS} ${classNames}`}
+        className={`${STATUS_STYLES[status] ?? "bg-primary"} 
+           ${BASE_STYLES_STATUS} ${classNames}`}
       >
         {status ?? "no type"}
       </span>

@@ -10,5 +10,6 @@ export function getChain(chainId: number | string): Chain | undefined {
   if (found) {
     chainResult = found;
   }
+  console.log(chainResult);
   return chainResult;
 }
