@@ -51,7 +51,7 @@ export default async function Pool({
   if (poolData.strategy === "0x0000000000000000000000000000000000000000") {
     return <div>Pool not found</div>;
   }
-  
+
   const poolBalance = await client.readContract({
     address: poolData.strategy,
     abi: cvStrategyABI,
