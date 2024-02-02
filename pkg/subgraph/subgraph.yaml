@@ -54,13 +54,13 @@ templates:
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
-        # - event: MemberRegistered(address,uint255)
-        #   handler: handleMemberRegistered
-        # - event: MemberUnregistered(address,uint255)
+        - event: MemberRegistered(address,uint256)
+          handler: handleMemberRegistered
+        # - event: MemberUnregistered(address,uint256)
         #   handler: handleMemberUnregistered
-        # - event: MemberKicked(address,address,uint255)
+        # - event: MemberKicked(address,address,uint256)
         #   handler: handleMemberKicked
-        # - event: ProtocolFeeUpdated(uint255)
+        # - event: ProtocolFeeUpdated(uint256)
         #   handler: handleProtocolFeeUpdated
         - event: StrategyAdded(address)
           handler: handleStrategyAdded
@@ -70,9 +70,9 @@ templates:
         #   handler: handleMemberActivatedStrategy
         # - event: MemberDeactivatedStrategy(address,address)
         #   handler: handleMemberDeactivatedStrategy
-        # - event: StakeAmountUpdated(address,uint255)
+        # - event: StakeAmountUpdated(address,uint256)
         #   handler: handleStakeAmountUpdated
-        # - event: BasisStakedAmountSet(uint255)
+        # - event: BasisStakedAmountSet(uint256)
         #   handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
         #   handler: handleCouncilSafeSet
