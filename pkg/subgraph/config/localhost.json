@@ -6,14 +6,6 @@
       "startBlock": 0,
       "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
       "customTemplate": "registryFactory"
-    },
-    {
-      "name": "RegistryCommunity",
-      "customTemplate": "registryCommunity"
-    },
-    {
-      "name": "CVStrategy",
-      "customTemplate": "cvStrategy"
     }
   ]
 }
