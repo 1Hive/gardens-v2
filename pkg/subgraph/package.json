@@ -9,7 +9,8 @@
     "manifest:arbsep": "node ./src/scripts/mustache arbsepolia",
     "create-local": "graph create --node http://localhost:8020/ kamikazebr/gv2",
     "remove-local": "graph remove --node http://localhost:8020/ kamikazebr/gv2",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 kamikazebr/gv2 -l v0.0.3"
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 kamikazebr/gv2 -l v0.0.3",
+    "last-addr": "ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-addr.ts"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.67.2",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "minimist": "^1.2.8",
-    "mustache": "^4.2.0"
+    "mustache": "^4.2.0",
+    "viem": "~1.21.4"
   }
 }

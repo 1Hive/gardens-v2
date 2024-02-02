@@ -46,8 +46,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         Allo allo = Allo(allo_proxy);
 
         // console2.log("Allo Addr: %s", address(allo));
-        AMockERC20 token = AMockERC20(0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D);
-        // console2.log("Token Addr: %s", address(token));
+        // AMockERC20 token = AMockERC20(0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D);
 
         // IRegistry registry = allo.getRegistry();
         // console2.log("Registry Addr: %s", address(registry));
@@ -56,7 +55,8 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         vm.startBroadcast(pool_admin());
 
-        // AMockERC20 token = new AMockERC20();
+        AMockERC20 token = new AMockERC20();
+        console2.log("Token Addr: %s", address(token));
         Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
 
         // RegistryFactory registryFactory = new RegistryFactory();
