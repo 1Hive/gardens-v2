@@ -44,17 +44,24 @@ if (runLatest) {
   }
   let registryCommunity;
   let factory;
+  let token = "0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D";
+  let safe;
   for (const tx of txs) {
     if (tx.contractName == "RegistryCommunity") {
       registryCommunity = tx.contractAddress;
     } else if (tx.contractName == "RegistryFactory") {
       factory = tx.contractAddress;
     } else if (tx.contractName == "SafeProxy") {
-      // safe = tx.contractAddress;
-      console.log("safe", tx.contractAddress);
+      safe = tx.contractAddress;
+    } else if (
+      tx.contractName == "lib/allo-v2/test/utils/MockERC20.sol:MockERC20"
+    ) {
+      token = tx.contractAddress;
     }
   }
 
+  console.log("token", token);
+  console.log("safe", safe);
   console.log("factory", factory);
   console.log("registryCommunity", registryCommunity);
 }
