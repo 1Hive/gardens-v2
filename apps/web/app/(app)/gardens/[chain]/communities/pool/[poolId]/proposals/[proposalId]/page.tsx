@@ -1,13 +1,12 @@
-import { Badge, StatusBadge, Button, StackedBarChart } from "@/components";
+import { Badge, StatusBadge } from "@/components";
 import { formatAddress } from "@/utils/formatAddress";
 import { honeyIcon } from "@/assets";
 import Image from "next/image";
 import { alloABI, cvStrategyABI } from "@/src/generated";
-import { Abi, createPublicClient, formatEther, http } from "viem";
+import { Abi, createPublicClient, http } from "viem";
 import { contractsAddresses } from "@/constants/contracts";
 import { proposalsMockData } from "@/constants/proposalsMockData";
 import { getChain } from "@/configs/chainServer";
-// import { wagmiConfig } from "@/configs/wagmiConfig";
 
 type ProposalsMock = {
   title: string;
@@ -48,14 +47,6 @@ export default async function Proposal({
 }: {
   params: { proposalId: number; poolId: number; chain: number };
 }) {
-  // const { proposals: proposalSContracts, strategyAddress } = useProposalsRead({
-  //   poolId: Number(poolId),
-  // });
-
-  // const proposalContract = proposalSContracts?.filter(
-  //   (proposal) => proposal.id === Number(proposalId),
-  // )[0];
-  
   const client = createPublicClient({
     chain: getChain(chain),
     transport: http(),
@@ -85,25 +76,6 @@ export default async function Proposal({
     ...proposalsMockData[proposalId],
   };
 
-  const maxCVSupply = await client.readContract({
-    ...cvStrategyContract,
-    functionName: "getMaxConviction",
-    args: [proposalId],
-  });
-
-  const maxCVStaked = await client.readContract({
-    ...cvStrategyContract,
-    functionName: "getProposalStakedAmount",
-    args: [proposalId],
-  });
-
-  const totalEffectiveActivePoints = await client.readContract({
-    ...cvStrategyContract,
-    functionName: "totalEffectiveActivePoints",
-  });
-
-  // console.log(proposal, maxCVSupply, maxCVStaked, totalEffectiveActivePoints);
-
   const {
     title,
     type,
@@ -114,6 +86,87 @@ export default async function Proposal({
     threshold,
     convictionLast,
   } = proposal as Proposal;
+
+  const totalEffectiveActivePoints = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "totalEffectiveActivePoints",
+  })) as bigint;
+
+  const getProposalStakedAmount = await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getProposalStakedAmount",
+    args: [proposalId],
+    blockTag: "latest",
+  });
+
+  console.log(getProposalStakedAmount);
+
+  const maxCVSupply = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getMaxConviction",
+    args: [totalEffectiveActivePoints],
+    blockTag: "latest",
+  })) as bigint;
+
+  console.log(maxCVSupply);
+  // => d
+
+  const maxCVStaked = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getMaxConviction",
+    args: [getProposalStakedAmount],
+    blockTag: "latest",
+  })) as bigint;
+
+  console.log(maxCVStaked);
+
+  //CALCS WITH CONTRACTS DATA
+  const currentConviction = calcCurrentConviction(
+    9093,
+    maxCVSupply,
+    totalEffectiveActivePoints as bigint,
+  );
+
+  const futureConviction = calcFutureConviction(
+    28903,
+    maxCVSupply,
+    totalEffectiveActivePoints as bigint,
+  );
+
+  const deductedFutureConvictionResult = calcDeductedFutureConviction(
+    9093,
+    28903,
+    maxCVSupply,
+    totalEffectiveActivePoints,
+  );
+
+  const calcThreshold = calcThresholdPoints(
+    threshold,
+    maxCVSupply,
+    totalEffectiveActivePoints as bigint,
+  );
+
+  const pointNeeded = calcPointsNeeded(
+    calcThreshold,
+    28903,
+    maxCVSupply,
+    totalEffectiveActivePoints,
+  );
+
+  console.log("proposalStakedAmount", getProposalStakedAmount);
+
+  //Params
+  console.log("maxCVSupply", maxCVSupply);
+  console.log("maxCVStaked", maxCVStaked);
+  console.log("convictionLast", convictionLast);
+  console.log("rawThreshold", threshold);
+  console.log("points needed", pointNeeded);
+
+  //Formulas Result worked
+  console.log("currentConviction", currentConviction);
+  console.log("futureConviction", futureConviction);
+  console.log("futureConvi", deductedFutureConvictionResult);
+  console.log("threshold", calcThreshold);
 
   const { status, points, supporters } = proposalsMockData?.filter(
     (proposal) => proposal.id === Number(proposalId),
@@ -128,50 +181,6 @@ export default async function Proposal({
   };
 
   const supportersTotalAmount = sumSupportersAmount();
-
-  const {
-    _convictionLast,
-    _maxCVStaked,
-    _maxCVSupply,
-    _threshold,
-    _totalEffectiveActivePoints,
-  } = mockedPoints;
-
-  const _neededPoints =
-    calcThresholdPoints(_threshold, _maxCVSupply, _totalEffectiveActivePoints) -
-    calcFutureCvPoints(_maxCVStaked, _maxCVSupply, _totalEffectiveActivePoints);
-
-  const fundingProposalTest: {
-    type: "funding" | "streaming" | "signaling";
-    cvPoints: number;
-    supportingPoints: number;
-    neededPoints: number;
-    threshold: number;
-  } = {
-    type: "funding",
-    cvPoints: calcCvPoints(
-      _convictionLast,
-      _maxCVSupply,
-      _totalEffectiveActivePoints,
-    ),
-    supportingPoints: calcFutureCvPoints(
-      _maxCVStaked,
-      _maxCVSupply,
-      _totalEffectiveActivePoints,
-    ),
-    neededPoints: _neededPoints,
-    threshold: calcThresholdPoints(
-      _threshold,
-      _maxCVSupply,
-      _totalEffectiveActivePoints,
-    ),
-  };
-
-  const handleDispute = () => {
-    console.log("dispute...");
-  };
-
-  // console.log(status);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
@@ -226,9 +235,7 @@ export default async function Proposal({
         </div>
 
         {/* TODO!: this section */}
-        <div className="flex border-2">
-          <StackedBarChart {...fundingProposalTest} />
-        </div>
+        <div className="flex border-2"></div>
         {/* Support - Remove buttons */}
         <div className="mt-20 flex justify-evenly">
           {/* <Button onClick={handleDispute} className="bg-red text-white"> */}
@@ -259,44 +266,171 @@ export default async function Proposal({
   );
 }
 
-const mockedPoints = {
-  _maxCVSupply: 289034,
-  _maxCVStaked: 28903,
-  _totalEffectiveActivePoints: 1000,
-  _threshold: 57806,
-  _convictionLast: 9093,
-};
-
 // convictionLast
-function calcCvPoints(
-  convictionLast: number,
-  maxCVSupply: number,
-  totalEffectiveActivePoints: number,
-) {
-  let convictionLastPct = convictionLast / maxCVSupply;
-  return convictionLastPct * totalEffectiveActivePoints * 2;
+function calcCurrentConviction(
+  convictionLast: number | bigint,
+  maxCVSupply: number | bigint,
+  totalEffectiveActivePoints: number | bigint,
+): number | string {
+  // Check if convictionLast, maxCVSupply, and totalEffectiveActivePoints are non-negative integers
+  if (
+    !Number.isInteger(Number(convictionLast)) ||
+    !Number.isInteger(Number(maxCVSupply)) ||
+    !Number.isInteger(Number(totalEffectiveActivePoints)) ||
+    convictionLast < 0 ||
+    maxCVSupply <= 0 ||
+    totalEffectiveActivePoints < 0
+  ) {
+    return "Invalid input. All parameters must be non-negative integers.";
+  }
+
+  // Check if maxCVSupply is greater than convictionLast to avoid division by zero
+  if (maxCVSupply <= convictionLast) {
+    return "Invalid input. maxCVSupply must be greater than convictionLast.";
+  }
+
+  // Calculate the percentage of the convictionLast relative to the maximum CV supply
+  const convictionLastPct = Number(convictionLast) / Number(maxCVSupply);
+
+  // Calculate the current conviction points based on the percentage and total effective active points
+  const result = convictionLastPct * Number(totalEffectiveActivePoints) * 2;
+
+  // Round up to the nearest integer with no decimals
+  return Math.floor(result);
 }
 
 // futureConvictionStaked
-function calcFutureCvPoints(
-  maxCVStaked: number,
-  maxCVSupply: number,
-  totalEffectiveActivePoints: number,
-) {
-  let futureConvictionStakedPct = maxCVStaked / maxCVSupply;
-  return futureConvictionStakedPct * totalEffectiveActivePoints * 2;
+function calcFutureConviction(
+  maxCVStaked: number | bigint,
+  maxCVSupply: number | bigint,
+  totalEffectiveActivePoints: number | bigint,
+): number | string {
+  // Check if maxCVStaked, maxCVSupply, and totalEffectiveActivePoints are non-negative integers
+  if (
+    !Number.isInteger(Number(maxCVStaked)) ||
+    !Number.isInteger(Number(maxCVSupply)) ||
+    !Number.isInteger(Number(totalEffectiveActivePoints)) ||
+    maxCVStaked < 0 ||
+    maxCVSupply <= 0 ||
+    totalEffectiveActivePoints < 0
+  ) {
+    return "Invalid input. All parameters must be non-negative integers.";
+  }
+
+  // Check if maxCVSupply /maxCVStaked is not zero to avoid division by zero
+  if (maxCVSupply === 0) {
+    return "Invalid input. maxCVSupply must be non-zero.";
+  }
+  if (maxCVStaked === 0) {
+    return "Invalid input. maxCVStaked must be non-zero.";
+  }
+
+  // Calculate the percentage of future conviction staked relative to the maximum CV supply
+  const futureConvictionStakedPct = (Number(maxCVStaked) /
+    Number(maxCVSupply)) as number;
+
+  // Calculate the future conviction points based on the percentage and total effective active points
+  const result =
+    futureConvictionStakedPct * Number(totalEffectiveActivePoints) * 2;
+
+  // Round up to the nearest integer with no decimals
+  return Math.floor(result);
 }
 
-// threshold
+function calcDeductedFutureConviction(
+  convictionLast: number | bigint,
+  maxCVStaked: number | bigint,
+  maxCVSupply: number | bigint,
+  totalEffectiveActivePoints: number | bigint,
+): number | string {
+  // Calculate the current conviction
+  const currentConviction = calcCurrentConviction(
+    convictionLast,
+    maxCVSupply,
+    totalEffectiveActivePoints,
+  );
+
+  // Calculate the future conviction
+  const futureConviction = calcFutureConviction(
+    maxCVStaked,
+    maxCVSupply,
+    totalEffectiveActivePoints,
+  );
+
+  // Check if results are valid numbers
+  if (
+    typeof currentConviction !== "number" ||
+    typeof futureConviction !== "number"
+  ) {
+    return "Invalid input. Conviction results must be numbers.";
+  }
+
+  // Deduct the current conviction from the future conviction
+  const deductedFutureConviction = futureConviction - currentConviction;
+
+  // Round up to the nearest integer with no decimals
+  return Math.floor(deductedFutureConviction);
+}
+
+function calcPointsNeeded(
+  threshold: number | string,
+  maxCVStaked: number | bigint,
+  maxCVSupply: number | bigint,
+  totalEffectiveActivePoints: number | bigint,
+): number | string {
+  // Calculate the future conviction
+  const futureConviction = calcFutureConviction(
+    maxCVStaked,
+    maxCVSupply,
+    totalEffectiveActivePoints,
+  );
+
+  // Check if threshold and futureConviction are valid numbers
+  if (typeof threshold !== "number" || typeof futureConviction !== "number") {
+    return "Invalid input. Threshold and future conviction must be numbers.";
+  }
+
+  // Calculate the points needed (difference between threshold and future conviction)
+  const pointsNeeded = threshold - futureConviction;
+
+  // Round up to the nearest integer with no decimals
+  return Math.ceil(pointsNeeded);
+}
+
+// threshold // OKK ///
 function calcThresholdPoints(
-  threshold: number,
-  maxCVSupply: number,
-  totalEffectiveActivePoints: number,
-) {
-  let thresholdPct = threshold / maxCVSupply;
-  return thresholdPct * totalEffectiveActivePoints * 2;
+  threshold: number | bigint,
+  maxCVSupply: number | bigint,
+  totalEffectiveActivePoints: number | bigint,
+): number | string {
+  // Check if threshold, maxCVSupply, and totalEffectiveActivePoints are non-negative integers
+  if (
+    !Number.isInteger(Number(threshold)) ||
+    !Number.isInteger(Number(maxCVSupply)) ||
+    !Number.isInteger(Number(totalEffectiveActivePoints)) ||
+    threshold < 0 ||
+    maxCVSupply <= 0 ||
+    totalEffectiveActivePoints < 0
+  ) {
+    return "Invalid input. All parameters must be non-negative integers.";
+  }
+
+  // Check if maxCVSupply > threshold to avoid division by zero
+  if (maxCVSupply <= threshold) {
+    return "Invalid input. maxCVSupply must be greater than threshold.";
+  }
+
+  // Calculate the percentage of the threshold relative to the maximum CV supply
+  const thresholdPct = Number(threshold) / Number(maxCVSupply);
+
+  // Calculate the threshold points based on the percentage and total effective active points
+  const result = thresholdPct * Number(totalEffectiveActivePoints) * 2;
+
+  // Round up to the nearest integer with no decimals
+  return Math.ceil(result);
 }
 
+//
 function transformData(data: any[]): UnparsedProposal {
   return {
     submitter: data[0],
