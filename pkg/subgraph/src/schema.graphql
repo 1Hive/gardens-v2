@@ -60,14 +60,12 @@ type RegistryCommunity @entity(immutable: false) {
   registerStakeAmount: BigInt
   registerToken: String
   alloAddress: String
-  # members: [Member!]! @derivedFrom(field: "registryCommunity")
   members: [MembersCommunity!] @derivedFrom(field: "registryCommunity")
 }
 
 type Member @entity(immutable: false) {
   id: ID!
   registryCommunity: [MembersCommunity!] @derivedFrom(field: "member")
-  # registryCommunity: RegistryCommunity!
   memberAddress: String
   stakedAmount: BigInt
   isRegistered: Boolean

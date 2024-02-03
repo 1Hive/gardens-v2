@@ -1,0 +1,12 @@
+query getFactories {
+  registryFactories {
+    id
+    registryCommunities {
+      id
+      registerToken
+      strategies {
+        id
+      }
+    }
+  }
+}
