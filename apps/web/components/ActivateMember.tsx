@@ -11,6 +11,9 @@ import { useAccount } from "wagmi";
 import useErrorDetails, { getErrorName } from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import cn from "classnames";
+import { toast } from "react-toastify";
+import { confirmationsRequired } from "@/constants/contracts";
+import { useViemClient } from "@/hooks/useViemClient";
 
 type ActiveMemberProps = {
   strategyAddress: `0x${string}`;
@@ -23,14 +26,14 @@ export function ActivateMember({
   isMemberActived,
   errorMemberActivated,
 }: ActiveMemberProps) {
-  // const connectedWallets = useWallets();
-  // const mainConnectedAccount = connectedWallets[0]?.accounts[0].address;
-  const { address: mainConnectedAccount } = useAccount();
+  const { address } = useAccount();
+  const viemClient = useViemClient();
 
   const {
-    data: activePoints,
+    data: activePointsData,
     write: writeActivatePoints,
     error: errorActivatePoints,
+    isSuccess: isSuccessActivatePoints,
   } = useContractWrite({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
@@ -38,38 +41,63 @@ export function ActivateMember({
   });
 
   const {
-    data: deactivePoints,
+    data: deactivePointsData,
     write: writeDeactivatePoints,
     error: errorDeactivatePoints,
+    isSuccess: isSuccessDeactivatePoints,
   } = useContractWrite({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
   });
 
-  useEffect(() => {
-    console.log("status", status);
-  }, [status]);
+  // useEffect(() => {
+  //   console.log("status", status);
+  // }, [status]);
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
   useErrorDetails(errorMemberActivated, "memberActivatedInStrategies");
 
-  useEffect(() => {
-    console.log("isMemberActived", isMemberActived);
-    console.log("mainConnectedAccount", mainConnectedAccount);
-    console.log("strategyAddress", strategyAddress);
-  }, [isMemberActived, mainConnectedAccount, strategyAddress]);
+  // useEffect(() => {
+  //   console.log("isMemberActived", isMemberActived);
+  //   console.log("mainConnectedAccount", mainConnectedAccount);
+  //   console.log("strategyAddress", strategyAddress);
+  // }, [isMemberActived, mainConnectedAccount, strategyAddress]);
+
+  const transactionReceipt = async () =>
+    await viemClient.waitForTransactionReceipt({
+      confirmations: confirmationsRequired,
+      hash: isMemberActived
+        ? deactivePointsData?.hash || "0x"
+        : activePointsData?.hash || "0x",
+    });
 
   async function handleChange() {
     isMemberActived ? writeDeactivatePoints?.() : writeActivatePoints?.();
   }
+  
+  useEffect(() => {
+    if (isSuccessActivatePoints || isSuccessDeactivatePoints) {
+      const receipt = transactionReceipt();
+      toast
+        .promise(receipt, {
+          pending: "Transaction in progress",
+          success: "Transaction Success",
+          error: "Something went wrong",
+        })
+        .then((data) => {
+          console.log(data);
+        })
+        .catch((error: any) => {
+          console.error(`Tx failure: ${error}`);
+        });
+    }
+  }, [isSuccessActivatePoints, isSuccessDeactivatePoints]);
 
   return (
-    <>
-      <Button onClick={handleChange} className="w-fit bg-primary">
-        {isMemberActived ? "Deactivate Points" : "Activate Points"}
-      </Button>
-    </>
+    <Button onClick={handleChange} className="w-fit bg-primary">
+      {isMemberActived ? "Deactivate Points" : "Activate Points"}
+    </Button>
   );
 }

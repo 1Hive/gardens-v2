@@ -16,26 +16,21 @@ function classNames(...classes: string[]) {
 
 export function NavBar() {
   const account = useAccount();
-  const { address } = account;
+  const { address, isConnected } = account;
   const formattedAddress = formatAddress(address ?? "");
   const chainId = useChainId();
   const params = useParams<{ chain: string }>();
   const router = useRouter();
 
-  console.log("connected: " + chainId, "url: " + params?.chain);
   useEffect(() => {
-    console.log(
-      params?.chain !== undefined,
-      chainId !== undefined,
-      chainId,
-      Number(params.chain),
-    );
+    // if wallet is connected to a different chain than the displayed it redirects to home page
     if (
+      isConnected &&
       params?.chain !== undefined &&
       chainId !== undefined &&
       chainId !== Number(params.chain)
     ) {
-      // router.push("/");
+      router.push("/");
     }
   }, [chainId, params]);
 

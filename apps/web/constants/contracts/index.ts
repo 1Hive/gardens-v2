@@ -33,6 +33,8 @@ try {
   console.log("error ignored");
 }
 export const isProd = ENV === "prod";
+export const confirmationsRequired = ENV === "prod" ? 5 : 1;
+
 console.log("isProd", isProd);
 // import runLatest from "#/../broadcast/DeployC@V.s.sol/31337/run-latest.json";
 function getContractsAddresses() {
