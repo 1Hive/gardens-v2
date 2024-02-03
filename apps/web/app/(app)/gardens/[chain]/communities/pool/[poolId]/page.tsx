@@ -66,7 +66,7 @@ export default async function Pool({
         <header className="flex flex-col items-center justify-center">
           <h2 className="text-center font-press">Pool {poolId} </h2>
           <h4 className="text-2xl ">
-            {poolInfo[(poolId as unknown as number) - 1].title}
+            {/* {poolInfo[(poolId as unknown as number) - 1].title} */}
           </h4>
         </header>
         <main className="flex flex-col gap-10">
