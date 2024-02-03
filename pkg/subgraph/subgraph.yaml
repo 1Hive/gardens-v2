@@ -84,11 +84,11 @@ templates:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: localhost
+    network: arbitrum-sepolia
     source:
-      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      address: "0xA7A94292413644DE53792597E28eDEF71D02bb7a"
       abi: RegistryFactory
-      startBlock: 0
+      startBlock: 11371411
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
