@@ -76,7 +76,7 @@ const Communities = gql`
 const makeClient = () => {
   return createClient({
     url: process.env.NEXT_PUBLIC_SUBGRAPH_URL || "",
-    exchanges: [cacheExchange, fetchExchange],
+    exchanges: [cacheExchange, fetchExchange], //@todo add graphclient exchange here
   });
 };
 
@@ -85,15 +85,20 @@ const { getClient } = registerUrql(makeClient);
 export default async function Gardens() {
   const result = await getClient().query(Communities, {});
   // console.log("result", result);
-  console.log("result", JSON.stringify(result.data.registryFactories, null, 2));
-  result.data.registryFactories.map((factory: any) => {
-    factory.registryCommunities.map((community: any) => {
-      const registerToken = community.registerToken;
-      community.strategies.map((strategy: any) => {
-        console.log("strategy", strategy);
+  if (result.data) {
+    console.log(
+      "result",
+      JSON.stringify(result.data.registryFactories, null, 2),
+    );
+    result.data.registryFactories?.map((factory: any) => {
+      factory.registryCommunities.map((community: any) => {
+        const registerToken = community.registerToken;
+        community.strategies.map((strategy: any) => {
+          console.log("strategy", strategy);
+        });
       });
     });
-  });
+  }
   return (
     <div className="flex flex-col items-center justify-center gap-12">
       <header className="flex flex-col items-center gap-12">
