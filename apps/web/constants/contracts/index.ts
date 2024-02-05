@@ -1,16 +1,7 @@
 // read env variables
-// const envPoolIdSignaling = process.env.POOL_ID_SIGNALING || "";
-// const envStrat2Address = process.env.STRAT2_ADDR_ARB_SEPOLIA || "";
-// const envTokenAddressArbSepolia = process.env.TOKEN_ADDR_ARB_SEPOLIA || "";
-// const envTokenNativeAddressArbSepolia =
-// process.env.TOKEN_NATIVE_ADDR_ARB_SEPOLIA || "";
 const ENV = process.env.NEXT_PUBLIC_ENV_GARDENS;
 
 const envAlloAddress = process.env.NEXT_PUBLIC_ALLO_ADDRESS_ARB_SEPOLIA;
-
-const envPoolId = process.env.NEXT_PUBLIC_POOL_ID;
-
-const envStrat1Address = process.env.NEXT_PUBLIC_STRAT1_ADDR_ARB_SEPOLIA;
 
 const envRegistryGardensAddArbSep =
   process.env.NEXT_PUBLIC_REGISTRY_GARDENS_ADDR_ARB_SEPOLIA;

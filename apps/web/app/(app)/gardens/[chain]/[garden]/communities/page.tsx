@@ -14,7 +14,6 @@ export default async function Garden({
   if (!addrs) {
     return <div>Chain ID: {chain} not supported</div>;
   }
-
   const sdk = getBuiltGraphSDK();
   const result = await sdk.getCommunityByGarden({ addr: garden });
   const communities = result.tokenGarden?.communities || [];
