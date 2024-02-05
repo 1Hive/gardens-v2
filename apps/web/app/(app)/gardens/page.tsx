@@ -11,6 +11,7 @@ export default async function Gardens() {
   const sdk = getBuiltGraphSDK();
   const gardens = await sdk.getTokenGardens();
 
+  console.log("gardens", gardens);
   return (
     <div className="flex flex-col items-center justify-center gap-12">
       <header className="flex flex-col items-center gap-12">

@@ -34,7 +34,6 @@ export type Block_height = {
 
 export type CVProposal = {
   id: Scalars['ID'];
-  proposalMeta: ProposalMeta;
   metadata: Scalars['String'];
   version?: Maybe<Scalars['BigInt']>;
   strategy: CVStrategy;
@@ -63,27 +62,6 @@ export type CVProposal_filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_in?: InputMaybe<Array<Scalars['ID']>>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
-  proposalMeta?: InputMaybe<Scalars['String']>;
-  proposalMeta_not?: InputMaybe<Scalars['String']>;
-  proposalMeta_gt?: InputMaybe<Scalars['String']>;
-  proposalMeta_lt?: InputMaybe<Scalars['String']>;
-  proposalMeta_gte?: InputMaybe<Scalars['String']>;
-  proposalMeta_lte?: InputMaybe<Scalars['String']>;
-  proposalMeta_in?: InputMaybe<Array<Scalars['String']>>;
-  proposalMeta_not_in?: InputMaybe<Array<Scalars['String']>>;
-  proposalMeta_contains?: InputMaybe<Scalars['String']>;
-  proposalMeta_contains_nocase?: InputMaybe<Scalars['String']>;
-  proposalMeta_not_contains?: InputMaybe<Scalars['String']>;
-  proposalMeta_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  proposalMeta_starts_with?: InputMaybe<Scalars['String']>;
-  proposalMeta_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  proposalMeta_not_starts_with?: InputMaybe<Scalars['String']>;
-  proposalMeta_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  proposalMeta_ends_with?: InputMaybe<Scalars['String']>;
-  proposalMeta_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  proposalMeta_not_ends_with?: InputMaybe<Scalars['String']>;
-  proposalMeta_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  proposalMeta_?: InputMaybe<ProposalMeta_filter>;
   metadata?: InputMaybe<Scalars['String']>;
   metadata_not?: InputMaybe<Scalars['String']>;
   metadata_gt?: InputMaybe<Scalars['String']>;
@@ -289,11 +267,6 @@ export type CVProposal_filter = {
 
 export type CVProposal_orderBy =
   | 'id'
-  | 'proposalMeta'
-  | 'proposalMeta__id'
-  | 'proposalMeta__version'
-  | 'proposalMeta__title'
-  | 'proposalMeta__content'
   | 'metadata'
   | 'version'
   | 'strategy'
@@ -553,94 +526,6 @@ export type OrderDirection =
   | 'asc'
   | 'desc';
 
-export type ProposalMeta = {
-  id: Scalars['ID'];
-  proposal: Array<CVProposal>;
-  version?: Maybe<Scalars['BigInt']>;
-  title?: Maybe<Scalars['String']>;
-  content?: Maybe<Scalars['String']>;
-};
-
-
-export type ProposalMetaproposalArgs = {
-  skip?: InputMaybe<Scalars['Int']>;
-  first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<CVProposal_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<CVProposal_filter>;
-};
-
-export type ProposalMeta_filter = {
-  id?: InputMaybe<Scalars['ID']>;
-  id_not?: InputMaybe<Scalars['ID']>;
-  id_gt?: InputMaybe<Scalars['ID']>;
-  id_lt?: InputMaybe<Scalars['ID']>;
-  id_gte?: InputMaybe<Scalars['ID']>;
-  id_lte?: InputMaybe<Scalars['ID']>;
-  id_in?: InputMaybe<Array<Scalars['ID']>>;
-  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
-  proposal_?: InputMaybe<CVProposal_filter>;
-  version?: InputMaybe<Scalars['BigInt']>;
-  version_not?: InputMaybe<Scalars['BigInt']>;
-  version_gt?: InputMaybe<Scalars['BigInt']>;
-  version_lt?: InputMaybe<Scalars['BigInt']>;
-  version_gte?: InputMaybe<Scalars['BigInt']>;
-  version_lte?: InputMaybe<Scalars['BigInt']>;
-  version_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  version_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  title?: InputMaybe<Scalars['String']>;
-  title_not?: InputMaybe<Scalars['String']>;
-  title_gt?: InputMaybe<Scalars['String']>;
-  title_lt?: InputMaybe<Scalars['String']>;
-  title_gte?: InputMaybe<Scalars['String']>;
-  title_lte?: InputMaybe<Scalars['String']>;
-  title_in?: InputMaybe<Array<Scalars['String']>>;
-  title_not_in?: InputMaybe<Array<Scalars['String']>>;
-  title_contains?: InputMaybe<Scalars['String']>;
-  title_contains_nocase?: InputMaybe<Scalars['String']>;
-  title_not_contains?: InputMaybe<Scalars['String']>;
-  title_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  title_starts_with?: InputMaybe<Scalars['String']>;
-  title_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  title_not_starts_with?: InputMaybe<Scalars['String']>;
-  title_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  title_ends_with?: InputMaybe<Scalars['String']>;
-  title_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  title_not_ends_with?: InputMaybe<Scalars['String']>;
-  title_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  content?: InputMaybe<Scalars['String']>;
-  content_not?: InputMaybe<Scalars['String']>;
-  content_gt?: InputMaybe<Scalars['String']>;
-  content_lt?: InputMaybe<Scalars['String']>;
-  content_gte?: InputMaybe<Scalars['String']>;
-  content_lte?: InputMaybe<Scalars['String']>;
-  content_in?: InputMaybe<Array<Scalars['String']>>;
-  content_not_in?: InputMaybe<Array<Scalars['String']>>;
-  content_contains?: InputMaybe<Scalars['String']>;
-  content_contains_nocase?: InputMaybe<Scalars['String']>;
-  content_not_contains?: InputMaybe<Scalars['String']>;
-  content_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  content_starts_with?: InputMaybe<Scalars['String']>;
-  content_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  content_not_starts_with?: InputMaybe<Scalars['String']>;
-  content_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  content_ends_with?: InputMaybe<Scalars['String']>;
-  content_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  content_not_ends_with?: InputMaybe<Scalars['String']>;
-  content_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  /** Filter for the block changed event. */
-  _change_block?: InputMaybe<BlockChangedFilter>;
-  and?: InputMaybe<Array<InputMaybe<ProposalMeta_filter>>>;
-  or?: InputMaybe<Array<InputMaybe<ProposalMeta_filter>>>;
-};
-
-export type ProposalMeta_orderBy =
-  | 'id'
-  | 'proposal'
-  | 'version'
-  | 'title'
-  | 'content';
-
 export type Query = {
   cvstrategy?: Maybe<CVStrategy>;
   cvstrategies: Array<CVStrategy>;
@@ -648,8 +533,6 @@ export type Query = {
   cvstrategyConfigs: Array<CVStrategyConfig>;
   cvproposal?: Maybe<CVProposal>;
   cvproposals: Array<CVProposal>;
-  proposalMeta?: Maybe<ProposalMeta>;
-  proposalMetas: Array<ProposalMeta>;
   registryFactory?: Maybe<RegistryFactory>;
   registryFactories: Array<RegistryFactory>;
   registryCommunity?: Maybe<RegistryCommunity>;
@@ -712,24 +595,6 @@ export type QuerycvproposalsArgs = {
   orderBy?: InputMaybe<CVProposal_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<CVProposal_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type QueryproposalMetaArgs = {
-  id: Scalars['ID'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type QueryproposalMetasArgs = {
-  skip?: InputMaybe<Scalars['Int']>;
-  first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<ProposalMeta_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<ProposalMeta_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1108,8 +973,6 @@ export type Subscription = {
   cvstrategyConfigs: Array<CVStrategyConfig>;
   cvproposal?: Maybe<CVProposal>;
   cvproposals: Array<CVProposal>;
-  proposalMeta?: Maybe<ProposalMeta>;
-  proposalMetas: Array<ProposalMeta>;
   registryFactory?: Maybe<RegistryFactory>;
   registryFactories: Array<RegistryFactory>;
   registryCommunity?: Maybe<RegistryCommunity>;
@@ -1172,24 +1035,6 @@ export type SubscriptioncvproposalsArgs = {
   orderBy?: InputMaybe<CVProposal_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<CVProposal_filter>;
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalMetaArgs = {
-  id: Scalars['ID'];
-  block?: InputMaybe<Block_height>;
-  subgraphError?: _SubgraphErrorPolicy_;
-};
-
-
-export type SubscriptionproposalMetasArgs = {
-  skip?: InputMaybe<Scalars['Int']>;
-  first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<ProposalMeta_orderBy>;
-  orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<ProposalMeta_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1426,10 +1271,6 @@ export type _SubgraphErrorPolicy_ =
   /** null **/
   cvproposals: InContextSdkMethod<Query['cvproposals'], QuerycvproposalsArgs, MeshContext>,
   /** null **/
-  proposalMeta: InContextSdkMethod<Query['proposalMeta'], QueryproposalMetaArgs, MeshContext>,
-  /** null **/
-  proposalMetas: InContextSdkMethod<Query['proposalMetas'], QueryproposalMetasArgs, MeshContext>,
-  /** null **/
   registryFactory: InContextSdkMethod<Query['registryFactory'], QueryregistryFactoryArgs, MeshContext>,
   /** null **/
   registryFactories: InContextSdkMethod<Query['registryFactories'], QueryregistryFactoriesArgs, MeshContext>,
@@ -1466,10 +1307,6 @@ export type _SubgraphErrorPolicy_ =
   cvproposal: InContextSdkMethod<Subscription['cvproposal'], SubscriptioncvproposalArgs, MeshContext>,
   /** null **/
   cvproposals: InContextSdkMethod<Subscription['cvproposals'], SubscriptioncvproposalsArgs, MeshContext>,
-  /** null **/
-  proposalMeta: InContextSdkMethod<Subscription['proposalMeta'], SubscriptionproposalMetaArgs, MeshContext>,
-  /** null **/
-  proposalMetas: InContextSdkMethod<Subscription['proposalMetas'], SubscriptionproposalMetasArgs, MeshContext>,
   /** null **/
   registryFactory: InContextSdkMethod<Subscription['registryFactory'], SubscriptionregistryFactoryArgs, MeshContext>,
   /** null **/
