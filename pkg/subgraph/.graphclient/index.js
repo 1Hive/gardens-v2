@@ -174,6 +174,9 @@ export const getTokenGardensDocument = gql `
 export const getCommunityByGardenDocument = gql `
     query getCommunityByGarden($addr: ID!) {
   tokenGarden(id: $addr) {
+    id
+    name
+    symbol
     communities {
       id
       communityName

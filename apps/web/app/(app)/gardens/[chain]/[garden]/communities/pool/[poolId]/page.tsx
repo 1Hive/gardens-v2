@@ -32,9 +32,9 @@ type PoolData = {
 };
 
 export default async function Pool({
-  params: { chain, poolId },
+  params: { chain, poolId, garden },
 }: {
-  params: { chain: string; poolId: number };
+  params: { chain: string; poolId: number; garden: string };
 }) {
   const client = createPublicClient({
     chain: getChain(chain),
@@ -128,6 +128,7 @@ export default async function Pool({
             balance={POOL_BALANCE}
             strategyAddress={poolData.strategy}
             poolId={poolId}
+            communityAddress={addrs.registryCommunity}
           />
 
           {/* Proposals section */}

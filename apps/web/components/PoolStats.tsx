@@ -7,19 +7,21 @@ import { ActivePointsChart } from "@/components";
 import { PoolTokenPriceChart } from "@/components";
 import { ActivateMember } from "./ActivateMember";
 import { useAccount, useContractRead } from "wagmi";
-import { contractsAddresses } from "@/constants/contracts";
+// import { contractsAddresses } from "@/constants/contracts";
 import { registryCommunityABI, cvStrategyABI, alloABI } from "@/src/generated";
 
-type poolStatsProps = {
+type PoolStatsProps = {
   balance?: string | number;
   strategyAddress: `0x${string}`;
   poolId: number;
+  communityAddress: `0x${string}`;
 };
 
-export const PoolStats: FC<poolStatsProps> = ({
+export const PoolStats: FC<PoolStatsProps> = ({
   balance,
   strategyAddress,
   poolId,
+  communityAddress,
 }) => {
   const { address: mainConnectedAccount } = useAccount();
 
@@ -28,7 +30,7 @@ export const PoolStats: FC<poolStatsProps> = ({
     error: errorMemberActivated,
     status,
   } = useContractRead({
-    address: contractsAddresses.registryCommunity,
+    address: communityAddress,
     abi: registryCommunityABI,
     functionName: "memberActivatedInStrategies",
     args: [mainConnectedAccount as `0x${string}`, strategyAddress],

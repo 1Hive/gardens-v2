@@ -16,9 +16,8 @@ export default async function Garden({
   }
 
   const sdk = getBuiltGraphSDK();
-  const communities =
-    (await sdk.getCommunityByGarden({ addr: garden })).tokenGarden
-      ?.communities || [];
+  const result = await sdk.getCommunityByGarden({ addr: garden });
+  const communities = result.tokenGarden?.communities || [];
 
   console.log("communities", communities);
   return (
@@ -27,10 +26,12 @@ export default async function Garden({
       <header className="flex items-center justify-between gap-4  py-6">
         <div className="flex w-44 items-center justify-center gap-2">
           <Image src={honeyIcon} alt="honey icon" className="h-20 w-20" />
-          <span className="text-2xl font-bold">HNY</span>
+          <span className="text-2xl font-bold">
+            {result.tokenGarden?.symbol}
+          </span>
         </div>
         <div className="flex flex-1">
-          {stats.map((stat, i) => (
+          {/* {stats.map((stat, i) => (
             <div
               className="flex w-full flex-col items-center justify-center gap-2"
               key={stat.label + i}
@@ -40,7 +41,7 @@ export default async function Garden({
               </span>
               <span className="text-xl font-bold">{stat.value}</span>
             </div>
-          ))}
+          ))} */}
         </div>
       </header>
       <section className="mx-auto flex flex-col gap-8">
@@ -56,17 +57,17 @@ export default async function Garden({
   );
 }
 
-const stats = [
-  {
-    label: "Price",
-    value: "11.4",
-  },
-  {
-    label: "Total Supply",
-    value: "49,126",
-  },
-  {
-    label: "Total Support",
-    value: "8,649 ",
-  },
-];
+// const stats = [
+//   {
+//     label: "Price",
+//     value: "11.4",
+//   },
+//   {
+//     label: "Total Supply",
+//     value: "49,126",
+//   },
+//   {
+//     label: "Total Support",
+//     value: "8,649 ",
+//   },
+// ];

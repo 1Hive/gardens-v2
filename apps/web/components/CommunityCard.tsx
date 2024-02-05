@@ -22,7 +22,7 @@ export function CommunityCard({
           Pools:{pools.length}
         </p>
         <h3 className="m-0 font-press text-lg text-info-content">{name}</h3>
-        <p className="absolute right-0 top-[50%] m-0 translate-y-[-50%] font-press text-xs">
+        <p className="absolute right-0 top-[120%] m-0 translate-y-[-50%] font-press text-xs">
           {address}
         </p>
       </div>
@@ -33,7 +33,9 @@ export function CommunityCard({
           !open && "max-h-[290px]"
         } `}
       >
-        {pools?.map((pool: any, i: number) => <PoolCard {...pool} key={i} />)}
+        {pools.map((pool, i) => (
+          <PoolCard {...pool} key={i} />
+        ))}
       </div>
       {pools.length > 2 && (
         <Button
