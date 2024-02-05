@@ -5,6 +5,8 @@ import { CommunityCard } from "@/components";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { getBuiltGraphSDK } from "#/subgraph/.graphclient";
 
+export const dynamic = "force-dynamic";
+
 export default async function Garden({
   params: { chain, garden },
 }: {

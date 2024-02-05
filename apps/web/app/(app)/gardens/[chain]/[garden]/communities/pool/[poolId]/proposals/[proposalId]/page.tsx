@@ -9,6 +9,8 @@ import { proposalsMockData } from "@/constants/proposalsMockData";
 import { getChain } from "@/configs/chainServer";
 // import { wagmiConfig } from "@/configs/wagmiConfig";
 
+export const dynamic = "force-dynamic";
+
 type ProposalsMock = {
   title: string;
   type: "funding" | "streaming" | "signaling";

@@ -4,22 +4,9 @@ features:
 schema:
   file: ./src/schema.graphql
 templates:
-  - kind: file/ipfs
-    name: ProposalMetadata
-    mapping:
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      file: ./src/mappings/proposalMetadata.ts
-      handler: handleProposalMetadata
-      entities:
-        - ProposalMeta
-        - CVProposal
-      abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
   - kind: ethereum/contract
     name: CVStrategy
-    network: localhost
+    network: {{network}}
     source:
       abi: CVStrategy
     mapping:
@@ -39,7 +26,7 @@ templates:
       file: ./src/mappings/cv-strategy.ts
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: localhost
+    network: {{network}}
     source:
       abi: RegistryCommunity
     mapping:

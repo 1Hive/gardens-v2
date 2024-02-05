@@ -15,7 +15,7 @@ type CVStrategyConfig @entity(immutable: false) {
 
 type CVProposal @entity(immutable: false) {
   id: ID!
-  proposalMeta: ProposalMeta!
+  # proposalMeta: ProposalMeta!
   metadata: String!
   version: BigInt
   strategy: CVStrategy!
@@ -35,13 +35,13 @@ type CVProposal @entity(immutable: false) {
   updatedAt: BigInt!
 }
 
-type ProposalMeta @entity(immutable: false) {
-  id: ID!
-  proposal: [CVProposal!]! @derivedFrom(field: "proposalMeta")
-  version: BigInt
-  title: String
-  content: String
-}
+# type ProposalMeta @entity(immutable: false) {
+#   id: ID!
+#   proposal: [CVProposal!]! @derivedFrom(field: "proposalMeta")
+#   version: BigInt
+#   title: String
+#   content: String
+# }
 
 type RegistryFactory @entity(immutable: false) {
   id: ID!
@@ -61,25 +61,17 @@ type RegistryCommunity @entity(immutable: false) {
   registerStakeAmount: BigInt
   registerToken: String
   alloAddress: String
-  # members: [MembersCommunity!] @derivedFrom(field: "registryCommunity")
   members: [Member!] @derivedFrom(field: "registryCommunity")
   garden: TokenGarden!
 }
 
 type Member @entity(immutable: false) {
   id: ID!
-  # registryCommunity: [MembersCommunity!] @derivedFrom(field: "member")
   registryCommunity: [RegistryCommunity!]
   memberAddress: String
   stakedAmount: BigInt
   isRegistered: Boolean
 }
-
-# type MembersCommunity @entity(immutable: false) {
-#   id: ID!
-#   member: Member
-#   registryCommunity: RegistryCommunity
-# }
 
 type TokenGarden @entity(immutable: false) {
   id: ID!
@@ -89,13 +81,3 @@ type TokenGarden @entity(immutable: false) {
   address: String!
   communities: [RegistryCommunity!] @derivedFrom(field: "garden")
 }
-
-# type Garden @entity(immutable: false) {
-#   id: ID!
-#   token: TokenGarden!
-#   title: String!
-#   subtitle: String!
-#   description: String!
-#   image: String!
-#   communities: [RegistryCommunity!] @derivedFrom(field: "garden")
-# }

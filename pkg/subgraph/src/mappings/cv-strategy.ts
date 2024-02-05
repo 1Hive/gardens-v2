@@ -2,9 +2,9 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
-  ProposalMeta as ProposalMetadata,
+  // ProposalMeta as ProposalMetadata,
 } from "../../generated/schema";
-import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
+// import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
 
 import {
   InitializedCV,
@@ -22,8 +22,8 @@ import {
   Value,
 } from "@graphprotocol/graph-ts";
 
-export const CTX_PROPOSAL_ID = "proposalId";
-export const CTX_METADATA_ID = "metadataId";
+// export const CTX_PROPOSAL_ID = "proposalId";
+// export const CTX_METADATA_ID = "metadataId";
 
 export function handleInitialized(event: InitializedCV): void {
   log.debug("handleInitialized", []);
@@ -93,19 +93,18 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.metadata = pointer;
   // const metadataID = `${pointer}-${proposalIdString}`;
   const metadataID = `${pointer}`;
-  newProposal.proposalMeta = metadataID;
+  // newProposal.proposalMeta = metadataID;
   log.debug("handleProposalCreated pointer:{}", [metadataID]);
   newProposal.createdAt = event.block.timestamp;
   newProposal.updatedAt = event.block.timestamp;
 
-  const ctx = dataSource.context();
-  ctx.setString(CTX_PROPOSAL_ID, proposalIdString);
-  ctx.setString(CTX_METADATA_ID, proposalIdString);
-  const pm = ProposalMetadata.load(pointer);
-  if (pm == null) {
-    ProposalMetadataTemplate.createWithContext(pointer, ctx);
-  }
-  // ProposalMetadataTemplate.create(pointer);
+  // const ctx = dataSource.context();
+  // ctx.setString(CTX_PROPOSAL_ID, proposalIdString);
+  // ctx.setString(CTX_METADATA_ID, proposalIdString);
+  // const pm = ProposalMetadata.load(pointer);
+  // if (pm == null) {
+  //   ProposalMetadataTemplate.createWithContext(pointer, ctx);
+  // }
 
   newProposal.save();
 }

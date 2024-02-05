@@ -7,6 +7,8 @@ import { createPublicClient, http } from "viem";
 import { getChain } from "@/configs/chainServer";
 import { gardenLand } from "@/assets";
 
+export const dynamic = "force-dynamic";
+
 //some metadata for each pool
 // @todo add this to IPFS to be fetched
 // const poolInfo = [

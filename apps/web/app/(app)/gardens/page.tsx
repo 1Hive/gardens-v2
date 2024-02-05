@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Button, GardenCard } from "@/components";
 import { getBuiltGraphSDK } from "#/subgraph/.graphclient";
 
+export const dynamic = "force-dynamic";
+
 export default async function Gardens() {
   const sdk = getBuiltGraphSDK();
   const gardens = await sdk.getTokenGardens();
