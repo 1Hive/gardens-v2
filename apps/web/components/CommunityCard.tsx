@@ -3,10 +3,18 @@ import { useState } from "react";
 import { Button } from "@/components";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
+import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
 
-export function CommunityCard({ name, address, href, pools }: any) {
+type CommunityQuery = NonNullable<
+  NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
+>[number];
+export function CommunityCard({
+  communityName: name,
+  id: address,
+  strategies,
+}: CommunityQuery) {
   const [open, setOpen] = useState(false);
-
+  const pools = strategies ?? [];
   return (
     <div className="flex flex-col items-center justify-center gap-8 rounded-xl border-2 border-black bg-info p-8 transition-all duration-200 ease-in-out">
       <div className="relative flex w-full items-center justify-center">

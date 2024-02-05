@@ -87,6 +87,18 @@ export async function getMeshOptions() {
                         return printWithCache(GetFactoriesDocument);
                     },
                     location: 'GetFactoriesDocument.graphql'
+                }, {
+                    document: GetTokenGardensDocument,
+                    get rawSDL() {
+                        return printWithCache(GetTokenGardensDocument);
+                    },
+                    location: 'GetTokenGardensDocument.graphql'
+                }, {
+                    document: GetCommunityByGardenDocument,
+                    get rawSDL() {
+                        return printWithCache(GetCommunityByGardenDocument);
+                    },
+                    location: 'GetCommunityByGardenDocument.graphql'
                 }
             ];
         },
@@ -125,9 +137,55 @@ export const getFactoriesDocument = gql `
     id
     registryCommunities {
       id
+      communityName
+      covenantIpfsHash
       registerToken
+      alloAddress
+      members {
+        memberAddress
+      }
       strategies {
         id
+        poolId
+        config {
+          id
+          decay
+          maxRatio
+          weight
+        }
+      }
+    }
+  }
+}
+    `;
+export const getTokenGardensDocument = gql `
+    query getTokenGardens {
+  tokenGardens {
+    id
+    name
+    symbol
+    decimals
+    communities {
+      id
+    }
+  }
+}
+    `;
+export const getCommunityByGardenDocument = gql `
+    query getCommunityByGarden($addr: ID!) {
+  tokenGarden(id: $addr) {
+    communities {
+      id
+      communityName
+      members {
+        id
+      }
+      strategies {
+        id
+        poolId
+        proposals {
+          id
+        }
       }
     }
   }
@@ -137,6 +195,12 @@ export function getSdk(requester) {
     return {
         getFactories(variables, options) {
             return requester(getFactoriesDocument, variables, options);
+        },
+        getTokenGardens(variables, options) {
+            return requester(getTokenGardensDocument, variables, options);
+        },
+        getCommunityByGarden(variables, options) {
+            return requester(getCommunityByGardenDocument, variables, options);
         }
     };
 }

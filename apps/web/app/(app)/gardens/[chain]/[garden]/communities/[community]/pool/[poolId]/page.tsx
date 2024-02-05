@@ -2,24 +2,25 @@ import { Proposals } from "@/components";
 import { PoolStats } from "@/components";
 import Image from "next/image";
 import { cvStrategyABI, alloABI } from "@/src/generated";
-import { contractsAddresses } from "@/constants/contracts";
+import { getContractsAddrByChain } from "@/constants/contracts";
 import { createPublicClient, http } from "viem";
 import { getChain } from "@/configs/chainServer";
 import { gardenLand } from "@/assets";
 
 //some metadata for each pool
-const poolInfo = [
-  {
-    title: "Arbitrum Grants Conviction Voting Pool",
-    description:
-      "This Funding Pool uses conviction voting to distribute funds for the best public goods providers on our network. Stake your support in your favorite proposals below - the longer you stake, the more conviction your support grows. if a proposal reaches enough conviction to pass, funds will be distributed.",
-  },
-  {
-    title: "1Hive Hackaton Signaling Pool",
-    description:
-      "Signaling pool for the 1hive Platform. Which most commonly used to signal support for a proposal or idea. The funds in this pool are not used for funding proposals, but rather to signal support for proposals in other pools.",
-  },
-];
+// @todo add this to IPFS to be fetched
+// const poolInfo = [
+//   {
+//     title: "Arbitrum Grants Conviction Voting Pool",
+//     description:
+//       "This Funding Pool uses conviction voting to distribute funds for the best public goods providers on our network. Stake your support in your favorite proposals below - the longer you stake, the more conviction your support grows. if a proposal reaches enough conviction to pass, funds will be distributed.",
+//   },
+//   {
+//     title: "1Hive Hackaton Signaling Pool",
+//     description:
+//       "Signaling pool for the 1hive Platform. Which most commonly used to signal support for a proposal or idea. The funds in this pool are not used for funding proposals, but rather to signal support for proposals in other pools.",
+//   },
+// ];
 
 type PoolData = {
   profileId: `0x${string}`;
@@ -40,9 +41,13 @@ export default async function Pool({
     transport: http(),
   });
 
+  const addrs = getContractsAddrByChain(chain);
+  if (!addrs) {
+    return <div>Chain ID: {chain} not supported</div>;
+  }
   const poolData = (await client.readContract({
     abi: alloABI,
-    address: contractsAddresses.allo,
+    address: addrs.allo,
     functionName: "getPool",
     args: [BigInt(poolId)],
   })) as PoolData;
@@ -127,7 +132,11 @@ export default async function Pool({
 
           {/* Proposals section */}
 
-          <Proposals poolId={poolId} strategyAddress={poolData.strategy} />
+          <Proposals
+            poolId={poolId}
+            strategyAddress={poolData.strategy}
+            addrs={addrs}
+          />
         </main>
       </div>
     </div>

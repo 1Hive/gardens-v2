@@ -3,9 +3,66 @@ query getFactories {
     id
     registryCommunities {
       id
+      communityName
+      covenantIpfsHash
       registerToken
+      alloAddress
+      members {
+        memberAddress
+      }
       strategies {
         id
+        poolId
+        config {
+          id
+          decay
+          maxRatio
+          weight
+        }
+      }
+    }
+  }
+}
+
+query getTokenGardens {
+  tokenGardens {
+    id
+    name
+    symbol
+    decimals
+    communities {
+      id
+    }
+  }
+}
+
+# query getCommunity($addr: ID!) {
+#   registryCommunity(id: $addr) {
+#     id
+#     strategies {
+#       id
+#       poolId
+#       proposals {
+#         id
+#       }
+#     }
+#   }
+# }
+
+query getCommunityByGarden($addr: ID!) {
+  tokenGarden(id: $addr) {
+    communities {
+      id
+      communityName
+      members {
+        id
+      }
+      strategies {
+        id
+        poolId
+        proposals {
+          id
+        }
       }
     }
   }

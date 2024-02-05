@@ -6,22 +6,20 @@ import { Button } from ".";
 import { gardenLand } from "@/assets";
 import { useAccount, useNetwork } from "wagmi";
 import { arbitrumSepolia } from "viem/chains";
+import { getTokenGardensQuery } from "#/subgraph/.graphclient";
 
-interface CardProps {
-  imageSrc: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  link: string;
-}
+type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
-export function GardenCard({ garden }: { garden: CardProps }) {
+export function GardenCard({ garden }: { garden: TokenGarden }) {
   const { chain } = useNetwork();
 
   const currentChainOrDefault =
     chain?.id.toString() || arbitrumSepolia.id.toString();
-  const { imageSrc, title, subtitle, description, link: linkReplace } = garden;
-  const link = linkReplace.replace("[[chain]]", currentChainOrDefault || "");
+  // const { imageSrc, title, subtitle, description, link: linkReplace } = garden;
+  const { id, name, decimals, symbol, communities } = garden;
+  const link = `/gardens/${currentChainOrDefault}/${id}/communities`;
+  const commLength = communities?.length ?? 0;
+  // const link = linkReplace.replace("[[chain]]", currentChainOrDefault || "");
   return (
     <div className="relative flex max-w-[320px] flex-col overflow-hidden rounded-lg border-2 border-black bg-surface">
       <div className="flex flex-col gap-4 p-4">
@@ -29,10 +27,14 @@ export function GardenCard({ garden }: { garden: CardProps }) {
           {/* <Image fill src={imageSrc} alt="garden main image" /> */}
         </div>
         <div>
-          <h3 className="text-center">{title}</h3>
-          <p>{subtitle}</p>
+          <h3 className="text-center">{symbol}</h3>
+          <p>
+            {name} - {decimals} decimals
+          </p>
         </div>
-        <div>{description}</div>
+        <div>
+          {commLength} Communit{commLength > 1 ? "ies" : "y"}
+        </div>
         <div className="mb-2 mt-4">
           {/* <Link href={link}> */}
           {/* </Link> */}

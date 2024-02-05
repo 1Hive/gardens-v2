@@ -298,6 +298,7 @@ export type CVProposal_orderBy =
   | 'version'
   | 'strategy'
   | 'strategy__id'
+  | 'strategy__poolId'
   | 'beneficiary'
   | 'requestedAmount'
   | 'requestedToken'
@@ -315,6 +316,7 @@ export type CVProposal_orderBy =
 
 export type CVStrategy = {
   id: Scalars['ID'];
+  poolId: Scalars['BigInt'];
   registryCommunity: RegistryCommunity;
   config?: Maybe<CVStrategyConfig>;
   proposals: Array<CVProposal>;
@@ -390,6 +392,14 @@ export type CVStrategy_filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_in?: InputMaybe<Array<Scalars['ID']>>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  poolId?: InputMaybe<Scalars['BigInt']>;
+  poolId_not?: InputMaybe<Scalars['BigInt']>;
+  poolId_gt?: InputMaybe<Scalars['BigInt']>;
+  poolId_lt?: InputMaybe<Scalars['BigInt']>;
+  poolId_gte?: InputMaybe<Scalars['BigInt']>;
+  poolId_lte?: InputMaybe<Scalars['BigInt']>;
+  poolId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  poolId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   registryCommunity?: InputMaybe<Scalars['String']>;
   registryCommunity_not?: InputMaybe<Scalars['String']>;
   registryCommunity_gt?: InputMaybe<Scalars['String']>;
@@ -441,6 +451,7 @@ export type CVStrategy_filter = {
 
 export type CVStrategy_orderBy =
   | 'id'
+  | 'poolId'
   | 'registryCommunity'
   | 'registryCommunity__id'
   | 'registryCommunity__profileId'
@@ -461,7 +472,7 @@ export type CVStrategy_orderBy =
 
 export type Member = {
   id: Scalars['ID'];
-  registryCommunity?: Maybe<Array<MembersCommunity>>;
+  registryCommunity?: Maybe<Array<RegistryCommunity>>;
   memberAddress?: Maybe<Scalars['String']>;
   stakedAmount?: Maybe<Scalars['BigInt']>;
   isRegistered?: Maybe<Scalars['Boolean']>;
@@ -471,9 +482,9 @@ export type Member = {
 export type MemberregistryCommunityArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<MembersCommunity_orderBy>;
+  orderBy?: InputMaybe<RegistryCommunity_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<MembersCommunity_filter>;
+  where?: InputMaybe<RegistryCommunity_filter>;
 };
 
 export type Member_filter = {
@@ -485,7 +496,13 @@ export type Member_filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_in?: InputMaybe<Array<Scalars['ID']>>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
-  registryCommunity_?: InputMaybe<MembersCommunity_filter>;
+  registryCommunity?: InputMaybe<Array<Scalars['String']>>;
+  registryCommunity_not?: InputMaybe<Array<Scalars['String']>>;
+  registryCommunity_contains?: InputMaybe<Array<Scalars['String']>>;
+  registryCommunity_contains_nocase?: InputMaybe<Array<Scalars['String']>>;
+  registryCommunity_not_contains?: InputMaybe<Array<Scalars['String']>>;
+  registryCommunity_not_contains_nocase?: InputMaybe<Array<Scalars['String']>>;
+  registryCommunity_?: InputMaybe<RegistryCommunity_filter>;
   memberAddress?: InputMaybe<Scalars['String']>;
   memberAddress_not?: InputMaybe<Scalars['String']>;
   memberAddress_gt?: InputMaybe<Scalars['String']>;
@@ -530,88 +547,6 @@ export type Member_orderBy =
   | 'memberAddress'
   | 'stakedAmount'
   | 'isRegistered';
-
-export type MembersCommunity = {
-  id: Scalars['ID'];
-  member?: Maybe<Member>;
-  registryCommunity?: Maybe<RegistryCommunity>;
-};
-
-export type MembersCommunity_filter = {
-  id?: InputMaybe<Scalars['ID']>;
-  id_not?: InputMaybe<Scalars['ID']>;
-  id_gt?: InputMaybe<Scalars['ID']>;
-  id_lt?: InputMaybe<Scalars['ID']>;
-  id_gte?: InputMaybe<Scalars['ID']>;
-  id_lte?: InputMaybe<Scalars['ID']>;
-  id_in?: InputMaybe<Array<Scalars['ID']>>;
-  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
-  member?: InputMaybe<Scalars['String']>;
-  member_not?: InputMaybe<Scalars['String']>;
-  member_gt?: InputMaybe<Scalars['String']>;
-  member_lt?: InputMaybe<Scalars['String']>;
-  member_gte?: InputMaybe<Scalars['String']>;
-  member_lte?: InputMaybe<Scalars['String']>;
-  member_in?: InputMaybe<Array<Scalars['String']>>;
-  member_not_in?: InputMaybe<Array<Scalars['String']>>;
-  member_contains?: InputMaybe<Scalars['String']>;
-  member_contains_nocase?: InputMaybe<Scalars['String']>;
-  member_not_contains?: InputMaybe<Scalars['String']>;
-  member_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  member_starts_with?: InputMaybe<Scalars['String']>;
-  member_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  member_not_starts_with?: InputMaybe<Scalars['String']>;
-  member_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  member_ends_with?: InputMaybe<Scalars['String']>;
-  member_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  member_not_ends_with?: InputMaybe<Scalars['String']>;
-  member_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  member_?: InputMaybe<Member_filter>;
-  registryCommunity?: InputMaybe<Scalars['String']>;
-  registryCommunity_not?: InputMaybe<Scalars['String']>;
-  registryCommunity_gt?: InputMaybe<Scalars['String']>;
-  registryCommunity_lt?: InputMaybe<Scalars['String']>;
-  registryCommunity_gte?: InputMaybe<Scalars['String']>;
-  registryCommunity_lte?: InputMaybe<Scalars['String']>;
-  registryCommunity_in?: InputMaybe<Array<Scalars['String']>>;
-  registryCommunity_not_in?: InputMaybe<Array<Scalars['String']>>;
-  registryCommunity_contains?: InputMaybe<Scalars['String']>;
-  registryCommunity_contains_nocase?: InputMaybe<Scalars['String']>;
-  registryCommunity_not_contains?: InputMaybe<Scalars['String']>;
-  registryCommunity_not_contains_nocase?: InputMaybe<Scalars['String']>;
-  registryCommunity_starts_with?: InputMaybe<Scalars['String']>;
-  registryCommunity_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  registryCommunity_not_starts_with?: InputMaybe<Scalars['String']>;
-  registryCommunity_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
-  registryCommunity_ends_with?: InputMaybe<Scalars['String']>;
-  registryCommunity_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  registryCommunity_not_ends_with?: InputMaybe<Scalars['String']>;
-  registryCommunity_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  registryCommunity_?: InputMaybe<RegistryCommunity_filter>;
-  /** Filter for the block changed event. */
-  _change_block?: InputMaybe<BlockChangedFilter>;
-  and?: InputMaybe<Array<InputMaybe<MembersCommunity_filter>>>;
-  or?: InputMaybe<Array<InputMaybe<MembersCommunity_filter>>>;
-};
-
-export type MembersCommunity_orderBy =
-  | 'id'
-  | 'member'
-  | 'member__id'
-  | 'member__memberAddress'
-  | 'member__stakedAmount'
-  | 'member__isRegistered'
-  | 'registryCommunity'
-  | 'registryCommunity__id'
-  | 'registryCommunity__profileId'
-  | 'registryCommunity__protocolFee'
-  | 'registryCommunity__communityName'
-  | 'registryCommunity__covenantIpfsHash'
-  | 'registryCommunity__councilSafe'
-  | 'registryCommunity__isKickEnabled'
-  | 'registryCommunity__registerStakeAmount'
-  | 'registryCommunity__registerToken'
-  | 'registryCommunity__alloAddress';
 
 /** Defines the order direction, either ascending or descending */
 export type OrderDirection =
@@ -721,8 +656,8 @@ export type Query = {
   registryCommunities: Array<RegistryCommunity>;
   member?: Maybe<Member>;
   members: Array<Member>;
-  membersCommunity?: Maybe<MembersCommunity>;
-  membersCommunities: Array<MembersCommunity>;
+  tokenGarden?: Maybe<TokenGarden>;
+  tokenGardens: Array<TokenGarden>;
   /** Access to subgraph metadata */
   _meta?: Maybe<_Meta_>;
 };
@@ -854,19 +789,19 @@ export type QuerymembersArgs = {
 };
 
 
-export type QuerymembersCommunityArgs = {
+export type QuerytokenGardenArgs = {
   id: Scalars['ID'];
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
 
-export type QuerymembersCommunitiesArgs = {
+export type QuerytokenGardensArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<MembersCommunity_orderBy>;
+  orderBy?: InputMaybe<TokenGarden_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<MembersCommunity_filter>;
+  where?: InputMaybe<TokenGarden_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -889,7 +824,8 @@ export type RegistryCommunity = {
   registerStakeAmount?: Maybe<Scalars['BigInt']>;
   registerToken?: Maybe<Scalars['String']>;
   alloAddress?: Maybe<Scalars['String']>;
-  members?: Maybe<Array<MembersCommunity>>;
+  members?: Maybe<Array<Member>>;
+  garden: TokenGarden;
 };
 
 
@@ -905,9 +841,9 @@ export type RegistryCommunitystrategiesArgs = {
 export type RegistryCommunitymembersArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<MembersCommunity_orderBy>;
+  orderBy?: InputMaybe<Member_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<MembersCommunity_filter>;
+  where?: InputMaybe<Member_filter>;
 };
 
 export type RegistryCommunity_filter = {
@@ -1081,7 +1017,28 @@ export type RegistryCommunity_filter = {
   alloAddress_ends_with_nocase?: InputMaybe<Scalars['String']>;
   alloAddress_not_ends_with?: InputMaybe<Scalars['String']>;
   alloAddress_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  members_?: InputMaybe<MembersCommunity_filter>;
+  members_?: InputMaybe<Member_filter>;
+  garden?: InputMaybe<Scalars['String']>;
+  garden_not?: InputMaybe<Scalars['String']>;
+  garden_gt?: InputMaybe<Scalars['String']>;
+  garden_lt?: InputMaybe<Scalars['String']>;
+  garden_gte?: InputMaybe<Scalars['String']>;
+  garden_lte?: InputMaybe<Scalars['String']>;
+  garden_in?: InputMaybe<Array<Scalars['String']>>;
+  garden_not_in?: InputMaybe<Array<Scalars['String']>>;
+  garden_contains?: InputMaybe<Scalars['String']>;
+  garden_contains_nocase?: InputMaybe<Scalars['String']>;
+  garden_not_contains?: InputMaybe<Scalars['String']>;
+  garden_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  garden_starts_with?: InputMaybe<Scalars['String']>;
+  garden_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  garden_not_starts_with?: InputMaybe<Scalars['String']>;
+  garden_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  garden_ends_with?: InputMaybe<Scalars['String']>;
+  garden_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  garden_not_ends_with?: InputMaybe<Scalars['String']>;
+  garden_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  garden_?: InputMaybe<TokenGarden_filter>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
@@ -1102,7 +1059,13 @@ export type RegistryCommunity_orderBy =
   | 'registerStakeAmount'
   | 'registerToken'
   | 'alloAddress'
-  | 'members';
+  | 'members'
+  | 'garden'
+  | 'garden__id'
+  | 'garden__name'
+  | 'garden__symbol'
+  | 'garden__decimals'
+  | 'garden__address';
 
 export type RegistryFactory = {
   id: Scalars['ID'];
@@ -1153,8 +1116,8 @@ export type Subscription = {
   registryCommunities: Array<RegistryCommunity>;
   member?: Maybe<Member>;
   members: Array<Member>;
-  membersCommunity?: Maybe<MembersCommunity>;
-  membersCommunities: Array<MembersCommunity>;
+  tokenGarden?: Maybe<TokenGarden>;
+  tokenGardens: Array<TokenGarden>;
   /** Access to subgraph metadata */
   _meta?: Maybe<_Meta_>;
 };
@@ -1286,19 +1249,19 @@ export type SubscriptionmembersArgs = {
 };
 
 
-export type SubscriptionmembersCommunityArgs = {
+export type SubscriptiontokenGardenArgs = {
   id: Scalars['ID'];
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
 
 
-export type SubscriptionmembersCommunitiesArgs = {
+export type SubscriptiontokenGardensArgs = {
   skip?: InputMaybe<Scalars['Int']>;
   first?: InputMaybe<Scalars['Int']>;
-  orderBy?: InputMaybe<MembersCommunity_orderBy>;
+  orderBy?: InputMaybe<TokenGarden_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
-  where?: InputMaybe<MembersCommunity_filter>;
+  where?: InputMaybe<TokenGarden_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1307,6 +1270,116 @@ export type SubscriptionmembersCommunitiesArgs = {
 export type Subscription_metaArgs = {
   block?: InputMaybe<Block_height>;
 };
+
+export type TokenGarden = {
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  symbol: Scalars['String'];
+  decimals: Scalars['BigInt'];
+  address: Scalars['String'];
+  communities?: Maybe<Array<RegistryCommunity>>;
+};
+
+
+export type TokenGardencommunitiesArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<RegistryCommunity_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<RegistryCommunity_filter>;
+};
+
+export type TokenGarden_filter = {
+  id?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  name?: InputMaybe<Scalars['String']>;
+  name_not?: InputMaybe<Scalars['String']>;
+  name_gt?: InputMaybe<Scalars['String']>;
+  name_lt?: InputMaybe<Scalars['String']>;
+  name_gte?: InputMaybe<Scalars['String']>;
+  name_lte?: InputMaybe<Scalars['String']>;
+  name_in?: InputMaybe<Array<Scalars['String']>>;
+  name_not_in?: InputMaybe<Array<Scalars['String']>>;
+  name_contains?: InputMaybe<Scalars['String']>;
+  name_contains_nocase?: InputMaybe<Scalars['String']>;
+  name_not_contains?: InputMaybe<Scalars['String']>;
+  name_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  name_starts_with?: InputMaybe<Scalars['String']>;
+  name_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  name_not_starts_with?: InputMaybe<Scalars['String']>;
+  name_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  name_ends_with?: InputMaybe<Scalars['String']>;
+  name_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  name_not_ends_with?: InputMaybe<Scalars['String']>;
+  name_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  symbol?: InputMaybe<Scalars['String']>;
+  symbol_not?: InputMaybe<Scalars['String']>;
+  symbol_gt?: InputMaybe<Scalars['String']>;
+  symbol_lt?: InputMaybe<Scalars['String']>;
+  symbol_gte?: InputMaybe<Scalars['String']>;
+  symbol_lte?: InputMaybe<Scalars['String']>;
+  symbol_in?: InputMaybe<Array<Scalars['String']>>;
+  symbol_not_in?: InputMaybe<Array<Scalars['String']>>;
+  symbol_contains?: InputMaybe<Scalars['String']>;
+  symbol_contains_nocase?: InputMaybe<Scalars['String']>;
+  symbol_not_contains?: InputMaybe<Scalars['String']>;
+  symbol_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  symbol_starts_with?: InputMaybe<Scalars['String']>;
+  symbol_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  symbol_not_starts_with?: InputMaybe<Scalars['String']>;
+  symbol_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  symbol_ends_with?: InputMaybe<Scalars['String']>;
+  symbol_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  symbol_not_ends_with?: InputMaybe<Scalars['String']>;
+  symbol_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  decimals?: InputMaybe<Scalars['BigInt']>;
+  decimals_not?: InputMaybe<Scalars['BigInt']>;
+  decimals_gt?: InputMaybe<Scalars['BigInt']>;
+  decimals_lt?: InputMaybe<Scalars['BigInt']>;
+  decimals_gte?: InputMaybe<Scalars['BigInt']>;
+  decimals_lte?: InputMaybe<Scalars['BigInt']>;
+  decimals_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  decimals_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  address?: InputMaybe<Scalars['String']>;
+  address_not?: InputMaybe<Scalars['String']>;
+  address_gt?: InputMaybe<Scalars['String']>;
+  address_lt?: InputMaybe<Scalars['String']>;
+  address_gte?: InputMaybe<Scalars['String']>;
+  address_lte?: InputMaybe<Scalars['String']>;
+  address_in?: InputMaybe<Array<Scalars['String']>>;
+  address_not_in?: InputMaybe<Array<Scalars['String']>>;
+  address_contains?: InputMaybe<Scalars['String']>;
+  address_contains_nocase?: InputMaybe<Scalars['String']>;
+  address_not_contains?: InputMaybe<Scalars['String']>;
+  address_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  address_starts_with?: InputMaybe<Scalars['String']>;
+  address_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  address_not_starts_with?: InputMaybe<Scalars['String']>;
+  address_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  address_ends_with?: InputMaybe<Scalars['String']>;
+  address_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  address_not_ends_with?: InputMaybe<Scalars['String']>;
+  address_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  communities_?: InputMaybe<RegistryCommunity_filter>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<TokenGarden_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<TokenGarden_filter>>>;
+};
+
+export type TokenGarden_orderBy =
+  | 'id'
+  | 'name'
+  | 'symbol'
+  | 'decimals'
+  | 'address'
+  | 'communities';
 
 export type _Block_ = {
   /** The hash of the block */
@@ -1369,9 +1442,9 @@ export type _SubgraphErrorPolicy_ =
   /** null **/
   members: InContextSdkMethod<Query['members'], QuerymembersArgs, MeshContext>,
   /** null **/
-  membersCommunity: InContextSdkMethod<Query['membersCommunity'], QuerymembersCommunityArgs, MeshContext>,
+  tokenGarden: InContextSdkMethod<Query['tokenGarden'], QuerytokenGardenArgs, MeshContext>,
   /** null **/
-  membersCommunities: InContextSdkMethod<Query['membersCommunities'], QuerymembersCommunitiesArgs, MeshContext>,
+  tokenGardens: InContextSdkMethod<Query['tokenGardens'], QuerytokenGardensArgs, MeshContext>,
   /** Access to subgraph metadata **/
   _meta: InContextSdkMethod<Query['_meta'], Query_metaArgs, MeshContext>
   };
@@ -1410,9 +1483,9 @@ export type _SubgraphErrorPolicy_ =
   /** null **/
   members: InContextSdkMethod<Subscription['members'], SubscriptionmembersArgs, MeshContext>,
   /** null **/
-  membersCommunity: InContextSdkMethod<Subscription['membersCommunity'], SubscriptionmembersCommunityArgs, MeshContext>,
+  tokenGarden: InContextSdkMethod<Subscription['tokenGarden'], SubscriptiontokenGardenArgs, MeshContext>,
   /** null **/
-  membersCommunities: InContextSdkMethod<Subscription['membersCommunities'], SubscriptionmembersCommunitiesArgs, MeshContext>,
+  tokenGardens: InContextSdkMethod<Subscription['tokenGardens'], SubscriptiontokenGardensArgs, MeshContext>,
   /** Access to subgraph metadata **/
   _meta: InContextSdkMethod<Subscription['_meta'], Subscription_metaArgs, MeshContext>
   };

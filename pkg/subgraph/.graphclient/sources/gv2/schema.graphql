@@ -294,6 +294,7 @@ enum CVProposal_orderBy {
   version
   strategy
   strategy__id
+  strategy__poolId
   beneficiary
   requestedAmount
   requestedToken
@@ -312,6 +313,7 @@ enum CVProposal_orderBy {
 
 type CVStrategy {
   id: ID!
+  poolId: BigInt!
   registryCommunity: RegistryCommunity!
   config: CVStrategyConfig
   proposals(skip: Int = 0, first: Int = 100, orderBy: CVProposal_orderBy, orderDirection: OrderDirection, where: CVProposal_filter): [CVProposal!]!
@@ -379,6 +381,14 @@ input CVStrategy_filter {
   id_lte: ID
   id_in: [ID!]
   id_not_in: [ID!]
+  poolId: BigInt
+  poolId_not: BigInt
+  poolId_gt: BigInt
+  poolId_lt: BigInt
+  poolId_gte: BigInt
+  poolId_lte: BigInt
+  poolId_in: [BigInt!]
+  poolId_not_in: [BigInt!]
   registryCommunity: String
   registryCommunity_not: String
   registryCommunity_gt: String
@@ -430,6 +440,7 @@ input CVStrategy_filter {
 
 enum CVStrategy_orderBy {
   id
+  poolId
   registryCommunity
   registryCommunity__id
   registryCommunity__profileId
@@ -457,7 +468,7 @@ scalar Int8
 
 type Member {
   id: ID!
-  registryCommunity(skip: Int = 0, first: Int = 100, orderBy: MembersCommunity_orderBy, orderDirection: OrderDirection, where: MembersCommunity_filter): [MembersCommunity!]
+  registryCommunity(skip: Int = 0, first: Int = 100, orderBy: RegistryCommunity_orderBy, orderDirection: OrderDirection, where: RegistryCommunity_filter): [RegistryCommunity!]
   memberAddress: String
   stakedAmount: BigInt
   isRegistered: Boolean
@@ -472,7 +483,13 @@ input Member_filter {
   id_lte: ID
   id_in: [ID!]
   id_not_in: [ID!]
-  registryCommunity_: MembersCommunity_filter
+  registryCommunity: [String!]
+  registryCommunity_not: [String!]
+  registryCommunity_contains: [String!]
+  registryCommunity_contains_nocase: [String!]
+  registryCommunity_not_contains: [String!]
+  registryCommunity_not_contains_nocase: [String!]
+  registryCommunity_: RegistryCommunity_filter
   memberAddress: String
   memberAddress_not: String
   memberAddress_gt: String
@@ -517,89 +534,6 @@ enum Member_orderBy {
   memberAddress
   stakedAmount
   isRegistered
-}
-
-type MembersCommunity {
-  id: ID!
-  member: Member
-  registryCommunity: RegistryCommunity
-}
-
-input MembersCommunity_filter {
-  id: ID
-  id_not: ID
-  id_gt: ID
-  id_lt: ID
-  id_gte: ID
-  id_lte: ID
-  id_in: [ID!]
-  id_not_in: [ID!]
-  member: String
-  member_not: String
-  member_gt: String
-  member_lt: String
-  member_gte: String
-  member_lte: String
-  member_in: [String!]
-  member_not_in: [String!]
-  member_contains: String
-  member_contains_nocase: String
-  member_not_contains: String
-  member_not_contains_nocase: String
-  member_starts_with: String
-  member_starts_with_nocase: String
-  member_not_starts_with: String
-  member_not_starts_with_nocase: String
-  member_ends_with: String
-  member_ends_with_nocase: String
-  member_not_ends_with: String
-  member_not_ends_with_nocase: String
-  member_: Member_filter
-  registryCommunity: String
-  registryCommunity_not: String
-  registryCommunity_gt: String
-  registryCommunity_lt: String
-  registryCommunity_gte: String
-  registryCommunity_lte: String
-  registryCommunity_in: [String!]
-  registryCommunity_not_in: [String!]
-  registryCommunity_contains: String
-  registryCommunity_contains_nocase: String
-  registryCommunity_not_contains: String
-  registryCommunity_not_contains_nocase: String
-  registryCommunity_starts_with: String
-  registryCommunity_starts_with_nocase: String
-  registryCommunity_not_starts_with: String
-  registryCommunity_not_starts_with_nocase: String
-  registryCommunity_ends_with: String
-  registryCommunity_ends_with_nocase: String
-  registryCommunity_not_ends_with: String
-  registryCommunity_not_ends_with_nocase: String
-  registryCommunity_: RegistryCommunity_filter
-  """Filter for the block changed event."""
-  _change_block: BlockChangedFilter
-  and: [MembersCommunity_filter]
-  or: [MembersCommunity_filter]
-}
-
-enum MembersCommunity_orderBy {
-  id
-  member
-  member__id
-  member__memberAddress
-  member__stakedAmount
-  member__isRegistered
-  registryCommunity
-  registryCommunity__id
-  registryCommunity__profileId
-  registryCommunity__protocolFee
-  registryCommunity__communityName
-  registryCommunity__covenantIpfsHash
-  registryCommunity__councilSafe
-  registryCommunity__isKickEnabled
-  registryCommunity__registerStakeAmount
-  registryCommunity__registerToken
-  registryCommunity__alloAddress
 }
 
 """Defines the order direction, either ascending or descending"""
@@ -871,7 +805,7 @@ type Query {
     """
     subgraphError: _SubgraphErrorPolicy_! = deny
   ): [Member!]!
-  membersCommunity(
+  tokenGarden(
     id: ID!
     """
     The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
@@ -881,13 +815,13 @@ type Query {
     Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
     """
     subgraphError: _SubgraphErrorPolicy_! = deny
-  ): MembersCommunity
-  membersCommunities(
+  ): TokenGarden
+  tokenGardens(
     skip: Int = 0
     first: Int = 100
-    orderBy: MembersCommunity_orderBy
+    orderBy: TokenGarden_orderBy
     orderDirection: OrderDirection
-    where: MembersCommunity_filter
+    where: TokenGarden_filter
     """
     The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
     """
@@ -896,7 +830,7 @@ type Query {
     Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
     """
     subgraphError: _SubgraphErrorPolicy_! = deny
-  ): [MembersCommunity!]!
+  ): [TokenGarden!]!
   """Access to subgraph metadata"""
   _meta(block: Block_height): _Meta_
 }
@@ -914,7 +848,8 @@ type RegistryCommunity {
   registerStakeAmount: BigInt
   registerToken: String
   alloAddress: String
-  members(skip: Int = 0, first: Int = 100, orderBy: MembersCommunity_orderBy, orderDirection: OrderDirection, where: MembersCommunity_filter): [MembersCommunity!]
+  members(skip: Int = 0, first: Int = 100, orderBy: Member_orderBy, orderDirection: OrderDirection, where: Member_filter): [Member!]
+  garden: TokenGarden!
 }
 
 input RegistryCommunity_filter {
@@ -1088,7 +1023,28 @@ input RegistryCommunity_filter {
   alloAddress_ends_with_nocase: String
   alloAddress_not_ends_with: String
   alloAddress_not_ends_with_nocase: String
-  members_: MembersCommunity_filter
+  members_: Member_filter
+  garden: String
+  garden_not: String
+  garden_gt: String
+  garden_lt: String
+  garden_gte: String
+  garden_lte: String
+  garden_in: [String!]
+  garden_not_in: [String!]
+  garden_contains: String
+  garden_contains_nocase: String
+  garden_not_contains: String
+  garden_not_contains_nocase: String
+  garden_starts_with: String
+  garden_starts_with_nocase: String
+  garden_not_starts_with: String
+  garden_not_starts_with_nocase: String
+  garden_ends_with: String
+  garden_ends_with_nocase: String
+  garden_not_ends_with: String
+  garden_not_ends_with_nocase: String
+  garden_: TokenGarden_filter
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [RegistryCommunity_filter]
@@ -1110,6 +1066,12 @@ enum RegistryCommunity_orderBy {
   registerToken
   alloAddress
   members
+  garden
+  garden__id
+  garden__name
+  garden__symbol
+  garden__decimals
+  garden__address
 }
 
 type RegistryFactory {
@@ -1321,7 +1283,7 @@ type Subscription {
     """
     subgraphError: _SubgraphErrorPolicy_! = deny
   ): [Member!]!
-  membersCommunity(
+  tokenGarden(
     id: ID!
     """
     The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
@@ -1331,13 +1293,13 @@ type Subscription {
     Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
     """
     subgraphError: _SubgraphErrorPolicy_! = deny
-  ): MembersCommunity
-  membersCommunities(
+  ): TokenGarden
+  tokenGardens(
     skip: Int = 0
     first: Int = 100
-    orderBy: MembersCommunity_orderBy
+    orderBy: TokenGarden_orderBy
     orderDirection: OrderDirection
-    where: MembersCommunity_filter
+    where: TokenGarden_filter
     """
     The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
     """
@@ -1346,9 +1308,111 @@ type Subscription {
     Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
     """
     subgraphError: _SubgraphErrorPolicy_! = deny
-  ): [MembersCommunity!]!
+  ): [TokenGarden!]!
   """Access to subgraph metadata"""
   _meta(block: Block_height): _Meta_
+}
+
+type TokenGarden {
+  id: ID!
+  name: String!
+  symbol: String!
+  decimals: BigInt!
+  address: String!
+  communities(skip: Int = 0, first: Int = 100, orderBy: RegistryCommunity_orderBy, orderDirection: OrderDirection, where: RegistryCommunity_filter): [RegistryCommunity!]
+}
+
+input TokenGarden_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  name: String
+  name_not: String
+  name_gt: String
+  name_lt: String
+  name_gte: String
+  name_lte: String
+  name_in: [String!]
+  name_not_in: [String!]
+  name_contains: String
+  name_contains_nocase: String
+  name_not_contains: String
+  name_not_contains_nocase: String
+  name_starts_with: String
+  name_starts_with_nocase: String
+  name_not_starts_with: String
+  name_not_starts_with_nocase: String
+  name_ends_with: String
+  name_ends_with_nocase: String
+  name_not_ends_with: String
+  name_not_ends_with_nocase: String
+  symbol: String
+  symbol_not: String
+  symbol_gt: String
+  symbol_lt: String
+  symbol_gte: String
+  symbol_lte: String
+  symbol_in: [String!]
+  symbol_not_in: [String!]
+  symbol_contains: String
+  symbol_contains_nocase: String
+  symbol_not_contains: String
+  symbol_not_contains_nocase: String
+  symbol_starts_with: String
+  symbol_starts_with_nocase: String
+  symbol_not_starts_with: String
+  symbol_not_starts_with_nocase: String
+  symbol_ends_with: String
+  symbol_ends_with_nocase: String
+  symbol_not_ends_with: String
+  symbol_not_ends_with_nocase: String
+  decimals: BigInt
+  decimals_not: BigInt
+  decimals_gt: BigInt
+  decimals_lt: BigInt
+  decimals_gte: BigInt
+  decimals_lte: BigInt
+  decimals_in: [BigInt!]
+  decimals_not_in: [BigInt!]
+  address: String
+  address_not: String
+  address_gt: String
+  address_lt: String
+  address_gte: String
+  address_lte: String
+  address_in: [String!]
+  address_not_in: [String!]
+  address_contains: String
+  address_contains_nocase: String
+  address_not_contains: String
+  address_not_contains_nocase: String
+  address_starts_with: String
+  address_starts_with_nocase: String
+  address_not_starts_with: String
+  address_not_starts_with_nocase: String
+  address_ends_with: String
+  address_ends_with_nocase: String
+  address_not_ends_with: String
+  address_not_ends_with_nocase: String
+  communities_: RegistryCommunity_filter
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [TokenGarden_filter]
+  or: [TokenGarden_filter]
+}
+
+enum TokenGarden_orderBy {
+  id
+  name
+  symbol
+  decimals
+  address
+  communities
 }
 
 type _Block_ {

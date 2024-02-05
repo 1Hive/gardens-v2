@@ -48,9 +48,12 @@ templates:
       language: wasm/assemblyscript
       entities:
         - RegistryCommunity
+        - ERC20
       abis:
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: ERC20
+          file: ../contracts/out/ERC20.sol/ERC20.json
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized

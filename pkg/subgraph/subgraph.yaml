@@ -48,9 +48,12 @@ templates:
       language: wasm/assemblyscript
       entities:
         - RegistryCommunity
+        - ERC20
       abis:
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: ERC20
+          file: ../contracts/out/ERC20.sol/ERC20.json
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -84,11 +87,11 @@ templates:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: arbitrum-sepolia
+    network: localhost
     source:
-      address: "0xA7A94292413644DE53792597E28eDEF71D02bb7a"
+      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
       abi: RegistryFactory
-      startBlock: 11371411
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
