@@ -1,6 +1,6 @@
 "use client";
 import { flowers } from "@/assets";
-import React, { FC } from "react";
+import React, { FC, useEffect } from "react";
 import Image from "next/image";
 import { StatusBadge } from "./Badge";
 import { ActivePointsChart } from "@/components";
@@ -24,9 +24,10 @@ export const PoolStats: FC<PoolStatsProps> = ({
   communityAddress,
 }) => {
   const { address: mainConnectedAccount } = useAccount();
+  const [isMemberActived, setIsMemberActived] = React.useState(false);
 
   const {
-    data: isMemberActived,
+    data: __isMemberActived,
     error: errorMemberActivated,
     status,
   } = useContractRead({
@@ -37,6 +38,11 @@ export const PoolStats: FC<PoolStatsProps> = ({
     watch: true,
     cacheOnBlock: true,
   });
+
+  useEffect(() => {
+    if (__isMemberActived === undefined) return;
+    setIsMemberActived(__isMemberActived);
+  }, [__isMemberActived]);
 
   const { data: voterStakePct } = useContractRead({
     address: strategyAddress,
