@@ -45,11 +45,13 @@ type CVProposal @entity(immutable: false) {
 
 type RegistryFactory @entity(immutable: false) {
   id: ID!
+  chainId: BigInt!
   registryCommunities: [RegistryCommunity!]
     @derivedFrom(field: "registryFactory")
 }
 type RegistryCommunity @entity(immutable: false) {
   id: ID!
+  chainId: BigInt!
   profileId: String
   protocolFee: BigInt
   communityName: String
@@ -76,6 +78,8 @@ type Member @entity(immutable: false) {
 type TokenGarden @entity(immutable: false) {
   id: ID!
   name: String!
+  chainId: BigInt!
+  totalBalance: BigInt!
   symbol: String!
   decimals: BigInt!
   address: String!

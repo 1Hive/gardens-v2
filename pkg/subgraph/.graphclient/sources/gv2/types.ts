@@ -427,6 +427,7 @@ export type CVStrategy_orderBy =
   | 'poolId'
   | 'registryCommunity'
   | 'registryCommunity__id'
+  | 'registryCommunity__chainId'
   | 'registryCommunity__profileId'
   | 'registryCommunity__protocolFee'
   | 'registryCommunity__communityName'
@@ -678,6 +679,7 @@ export type Query_metaArgs = {
 
 export type RegistryCommunity = {
   id: Scalars['ID'];
+  chainId: Scalars['BigInt'];
   profileId?: Maybe<Scalars['String']>;
   protocolFee?: Maybe<Scalars['BigInt']>;
   communityName?: Maybe<Scalars['String']>;
@@ -720,6 +722,14 @@ export type RegistryCommunity_filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_in?: InputMaybe<Array<Scalars['ID']>>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  chainId?: InputMaybe<Scalars['BigInt']>;
+  chainId_not?: InputMaybe<Scalars['BigInt']>;
+  chainId_gt?: InputMaybe<Scalars['BigInt']>;
+  chainId_lt?: InputMaybe<Scalars['BigInt']>;
+  chainId_gte?: InputMaybe<Scalars['BigInt']>;
+  chainId_lte?: InputMaybe<Scalars['BigInt']>;
+  chainId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  chainId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   profileId?: InputMaybe<Scalars['String']>;
   profileId_not?: InputMaybe<Scalars['String']>;
   profileId_gt?: InputMaybe<Scalars['String']>;
@@ -912,12 +922,14 @@ export type RegistryCommunity_filter = {
 
 export type RegistryCommunity_orderBy =
   | 'id'
+  | 'chainId'
   | 'profileId'
   | 'protocolFee'
   | 'communityName'
   | 'covenantIpfsHash'
   | 'registryFactory'
   | 'registryFactory__id'
+  | 'registryFactory__chainId'
   | 'strategies'
   | 'councilSafe'
   | 'isKickEnabled'
@@ -928,12 +940,15 @@ export type RegistryCommunity_orderBy =
   | 'garden'
   | 'garden__id'
   | 'garden__name'
+  | 'garden__chainId'
+  | 'garden__totalBalance'
   | 'garden__symbol'
   | 'garden__decimals'
   | 'garden__address';
 
 export type RegistryFactory = {
   id: Scalars['ID'];
+  chainId: Scalars['BigInt'];
   registryCommunities?: Maybe<Array<RegistryCommunity>>;
 };
 
@@ -955,6 +970,14 @@ export type RegistryFactory_filter = {
   id_lte?: InputMaybe<Scalars['ID']>;
   id_in?: InputMaybe<Array<Scalars['ID']>>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  chainId?: InputMaybe<Scalars['BigInt']>;
+  chainId_not?: InputMaybe<Scalars['BigInt']>;
+  chainId_gt?: InputMaybe<Scalars['BigInt']>;
+  chainId_lt?: InputMaybe<Scalars['BigInt']>;
+  chainId_gte?: InputMaybe<Scalars['BigInt']>;
+  chainId_lte?: InputMaybe<Scalars['BigInt']>;
+  chainId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  chainId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   registryCommunities_?: InputMaybe<RegistryCommunity_filter>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
@@ -964,6 +987,7 @@ export type RegistryFactory_filter = {
 
 export type RegistryFactory_orderBy =
   | 'id'
+  | 'chainId'
   | 'registryCommunities';
 
 export type Subscription = {
@@ -1119,6 +1143,8 @@ export type Subscription_metaArgs = {
 export type TokenGarden = {
   id: Scalars['ID'];
   name: Scalars['String'];
+  chainId: Scalars['BigInt'];
+  totalBalance: Scalars['BigInt'];
   symbol: Scalars['String'];
   decimals: Scalars['BigInt'];
   address: Scalars['String'];
@@ -1163,6 +1189,22 @@ export type TokenGarden_filter = {
   name_ends_with_nocase?: InputMaybe<Scalars['String']>;
   name_not_ends_with?: InputMaybe<Scalars['String']>;
   name_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  chainId?: InputMaybe<Scalars['BigInt']>;
+  chainId_not?: InputMaybe<Scalars['BigInt']>;
+  chainId_gt?: InputMaybe<Scalars['BigInt']>;
+  chainId_lt?: InputMaybe<Scalars['BigInt']>;
+  chainId_gte?: InputMaybe<Scalars['BigInt']>;
+  chainId_lte?: InputMaybe<Scalars['BigInt']>;
+  chainId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  chainId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalBalance?: InputMaybe<Scalars['BigInt']>;
+  totalBalance_not?: InputMaybe<Scalars['BigInt']>;
+  totalBalance_gt?: InputMaybe<Scalars['BigInt']>;
+  totalBalance_lt?: InputMaybe<Scalars['BigInt']>;
+  totalBalance_gte?: InputMaybe<Scalars['BigInt']>;
+  totalBalance_lte?: InputMaybe<Scalars['BigInt']>;
+  totalBalance_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalBalance_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   symbol?: InputMaybe<Scalars['String']>;
   symbol_not?: InputMaybe<Scalars['String']>;
   symbol_gt?: InputMaybe<Scalars['String']>;
@@ -1221,6 +1263,8 @@ export type TokenGarden_filter = {
 export type TokenGarden_orderBy =
   | 'id'
   | 'name'
+  | 'chainId'
+  | 'totalBalance'
   | 'symbol'
   | 'decimals'
   | 'address'

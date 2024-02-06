@@ -99,7 +99,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         for (uint256 i = 0; i < membersStaked.length; i++) {
             vm.startBroadcast(address(membersStaked[i]));
-            token.mint(address(membersStaked[i]), 100);
+            token.mint(address(membersStaked[i]), MINIMUM_STAKE * 2);
             token.approve(address(registryCommunity), MINIMUM_STAKE);
             registryCommunity.stakeAndRegisterMember();
             strategy1.activatePoints();

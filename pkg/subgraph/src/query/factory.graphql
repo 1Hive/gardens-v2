@@ -3,6 +3,7 @@ query getFactories {
     id
     registryCommunities {
       id
+      chainId
       communityName
       covenantIpfsHash
       registerToken
@@ -27,11 +28,17 @@ query getFactories {
 query getTokenGardens {
   tokenGardens {
     id
+    chainId
     name
     symbol
     decimals
+    totalBalance
     communities {
       id
+      chainId
+      members {
+        id
+      }
     }
   }
 }
@@ -54,9 +61,10 @@ query getCommunityByGarden($addr: ID!) {
     id
     name
     symbol
-
+    chainId
     communities {
       id
+      chainId
       communityName
       members {
         id
