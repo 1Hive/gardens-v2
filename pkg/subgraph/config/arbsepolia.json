@@ -1,5 +1,6 @@
 {
   "network": "arbitrum-sepolia",
+  "chainId": 421614,
   "dataSources": [
     {
       "name": "RegistryFactory",

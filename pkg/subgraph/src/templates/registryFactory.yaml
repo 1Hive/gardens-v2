@@ -1,6 +1,10 @@
 - kind: ethereum/contract
     name: {{name}}
     network: {{network}}
+    context:
+      chainId: 
+        type: Int
+        data: {{chainId}}
     source:
       address: "{{address}}"
       abi: {{name}}

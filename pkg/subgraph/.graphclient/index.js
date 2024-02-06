@@ -137,6 +137,7 @@ export const getFactoriesDocument = gql `
     id
     registryCommunities {
       id
+      chainId
       communityName
       covenantIpfsHash
       registerToken
@@ -162,11 +163,17 @@ export const getTokenGardensDocument = gql `
     query getTokenGardens {
   tokenGardens {
     id
+    chainId
     name
     symbol
     decimals
+    totalBalance
     communities {
       id
+      chainId
+      members {
+        id
+      }
     }
   }
 }
@@ -177,8 +184,10 @@ export const getCommunityByGardenDocument = gql `
     id
     name
     symbol
+    chainId
     communities {
       id
+      chainId
       communityName
       members {
         id

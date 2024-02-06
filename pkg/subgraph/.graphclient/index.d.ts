@@ -397,7 +397,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__profileId' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__decay' | 'config__maxRatio' | 'config__weight' | 'proposals';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__decay' | 'config__maxRatio' | 'config__weight' | 'proposals';
 export type Member = {
     id: Scalars['ID'];
     registryCommunity?: Maybe<Array<RegistryCommunity>>;
@@ -589,6 +589,7 @@ export type Query_metaArgs = {
 };
 export type RegistryCommunity = {
     id: Scalars['ID'];
+    chainId: Scalars['BigInt'];
     profileId?: Maybe<Scalars['String']>;
     protocolFee?: Maybe<Scalars['BigInt']>;
     communityName?: Maybe<Scalars['String']>;
@@ -626,6 +627,14 @@ export type RegistryCommunity_filter = {
     id_lte?: InputMaybe<Scalars['ID']>;
     id_in?: InputMaybe<Array<Scalars['ID']>>;
     id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+    chainId?: InputMaybe<Scalars['BigInt']>;
+    chainId_not?: InputMaybe<Scalars['BigInt']>;
+    chainId_gt?: InputMaybe<Scalars['BigInt']>;
+    chainId_lt?: InputMaybe<Scalars['BigInt']>;
+    chainId_gte?: InputMaybe<Scalars['BigInt']>;
+    chainId_lte?: InputMaybe<Scalars['BigInt']>;
+    chainId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    chainId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     profileId?: InputMaybe<Scalars['String']>;
     profileId_not?: InputMaybe<Scalars['String']>;
     profileId_gt?: InputMaybe<Scalars['String']>;
@@ -815,9 +824,10 @@ export type RegistryCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
 };
-export type RegistryCommunity_orderBy = 'id' | 'profileId' | 'protocolFee' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'strategies' | 'councilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__symbol' | 'garden__decimals' | 'garden__address';
+export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'profileId' | 'protocolFee' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__chainId' | 'garden__totalBalance' | 'garden__symbol' | 'garden__decimals' | 'garden__address';
 export type RegistryFactory = {
     id: Scalars['ID'];
+    chainId: Scalars['BigInt'];
     registryCommunities?: Maybe<Array<RegistryCommunity>>;
 };
 export type RegistryFactoryregistryCommunitiesArgs = {
@@ -836,13 +846,21 @@ export type RegistryFactory_filter = {
     id_lte?: InputMaybe<Scalars['ID']>;
     id_in?: InputMaybe<Array<Scalars['ID']>>;
     id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+    chainId?: InputMaybe<Scalars['BigInt']>;
+    chainId_not?: InputMaybe<Scalars['BigInt']>;
+    chainId_gt?: InputMaybe<Scalars['BigInt']>;
+    chainId_lt?: InputMaybe<Scalars['BigInt']>;
+    chainId_gte?: InputMaybe<Scalars['BigInt']>;
+    chainId_lte?: InputMaybe<Scalars['BigInt']>;
+    chainId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    chainId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     registryCommunities_?: InputMaybe<RegistryCommunity_filter>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<RegistryFactory_filter>>>;
     or?: InputMaybe<Array<InputMaybe<RegistryFactory_filter>>>;
 };
-export type RegistryFactory_orderBy = 'id' | 'registryCommunities';
+export type RegistryFactory_orderBy = 'id' | 'chainId' | 'registryCommunities';
 export type Subscription = {
     cvstrategy?: Maybe<CVStrategy>;
     cvstrategies: Array<CVStrategy>;
@@ -965,6 +983,8 @@ export type Subscription_metaArgs = {
 export type TokenGarden = {
     id: Scalars['ID'];
     name: Scalars['String'];
+    chainId: Scalars['BigInt'];
+    totalBalance: Scalars['BigInt'];
     symbol: Scalars['String'];
     decimals: Scalars['BigInt'];
     address: Scalars['String'];
@@ -1006,6 +1026,22 @@ export type TokenGarden_filter = {
     name_ends_with_nocase?: InputMaybe<Scalars['String']>;
     name_not_ends_with?: InputMaybe<Scalars['String']>;
     name_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    chainId?: InputMaybe<Scalars['BigInt']>;
+    chainId_not?: InputMaybe<Scalars['BigInt']>;
+    chainId_gt?: InputMaybe<Scalars['BigInt']>;
+    chainId_lt?: InputMaybe<Scalars['BigInt']>;
+    chainId_gte?: InputMaybe<Scalars['BigInt']>;
+    chainId_lte?: InputMaybe<Scalars['BigInt']>;
+    chainId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    chainId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    totalBalance?: InputMaybe<Scalars['BigInt']>;
+    totalBalance_not?: InputMaybe<Scalars['BigInt']>;
+    totalBalance_gt?: InputMaybe<Scalars['BigInt']>;
+    totalBalance_lt?: InputMaybe<Scalars['BigInt']>;
+    totalBalance_gte?: InputMaybe<Scalars['BigInt']>;
+    totalBalance_lte?: InputMaybe<Scalars['BigInt']>;
+    totalBalance_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    totalBalance_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     symbol?: InputMaybe<Scalars['String']>;
     symbol_not?: InputMaybe<Scalars['String']>;
     symbol_gt?: InputMaybe<Scalars['String']>;
@@ -1060,7 +1096,7 @@ export type TokenGarden_filter = {
     and?: InputMaybe<Array<InputMaybe<TokenGarden_filter>>>;
     or?: InputMaybe<Array<InputMaybe<TokenGarden_filter>>>;
 };
-export type TokenGarden_orderBy = 'id' | 'name' | 'symbol' | 'decimals' | 'address' | 'communities';
+export type TokenGarden_orderBy = 'id' | 'name' | 'chainId' | 'totalBalance' | 'symbol' | 'decimals' | 'address' | 'communities';
 export type _Block_ = {
     /** The hash of the block */
     hash?: Maybe<Scalars['Bytes']>;
@@ -1284,6 +1320,7 @@ export type QueryResolvers<ContextType = MeshContext, ParentType extends Resolve
 }>;
 export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['RegistryCommunity'] = ResolversParentTypes['RegistryCommunity']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    chainId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     profileId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     protocolFee?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     communityName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -1301,6 +1338,7 @@ export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType ext
 }>;
 export type RegistryFactoryResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['RegistryFactory'] = ResolversParentTypes['RegistryFactory']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    chainId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     registryCommunities?: Resolver<Maybe<Array<ResolversTypes['RegistryCommunity']>>, ParentType, ContextType, RequireFields<RegistryFactoryregistryCommunitiesArgs, 'skip' | 'first'>>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
@@ -1324,6 +1362,8 @@ export type SubscriptionResolvers<ContextType = MeshContext, ParentType extends 
 export type TokenGardenResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['TokenGarden'] = ResolversParentTypes['TokenGarden']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+    chainId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    totalBalance?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     symbol?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     decimals?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     address?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -1387,7 +1427,7 @@ export type getFactoriesQueryVariables = Exact<{
 }>;
 export type getFactoriesQuery = {
     registryFactories: Array<(Pick<RegistryFactory, 'id'> & {
-        registryCommunities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'communityName' | 'covenantIpfsHash' | 'registerToken' | 'alloAddress'> & {
+        registryCommunities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityName' | 'covenantIpfsHash' | 'registerToken' | 'alloAddress'> & {
             members?: Maybe<Array<Pick<Member, 'memberAddress'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
                 config?: Maybe<Pick<CVStrategyConfig, 'id' | 'decay' | 'maxRatio' | 'weight'>>;
@@ -1399,16 +1439,18 @@ export type getTokenGardensQueryVariables = Exact<{
     [key: string]: never;
 }>;
 export type getTokenGardensQuery = {
-    tokenGardens: Array<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'decimals'> & {
-        communities?: Maybe<Array<Pick<RegistryCommunity, 'id'>>>;
+    tokenGardens: Array<(Pick<TokenGarden, 'id' | 'chainId' | 'name' | 'symbol' | 'decimals' | 'totalBalance'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId'> & {
+            members?: Maybe<Array<Pick<Member, 'id'>>>;
+        })>>;
     })>;
 };
 export type getCommunityByGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
 }>;
 export type getCommunityByGardenQuery = {
-    tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'communityName'> & {
+    tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'chainId'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityName'> & {
             members?: Maybe<Array<Pick<Member, 'id'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
                 proposals: Array<Pick<CVProposal, 'id'>>;

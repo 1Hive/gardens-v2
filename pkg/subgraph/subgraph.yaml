@@ -75,6 +75,10 @@ dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
     network: arbitrum-sepolia
+    context:
+      chainId: 
+        type: Int
+        data: 421614
     source:
       address: "0xA7A94292413644DE53792597E28eDEF71D02bb7a"
       abi: RegistryFactory

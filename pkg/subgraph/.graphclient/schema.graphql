@@ -416,6 +416,7 @@ enum CVStrategy_orderBy {
   poolId
   registryCommunity
   registryCommunity__id
+  registryCommunity__chainId
   registryCommunity__profileId
   registryCommunity__protocolFee
   registryCommunity__communityName
@@ -704,6 +705,7 @@ type Query {
 
 type RegistryCommunity {
   id: ID!
+  chainId: BigInt!
   profileId: String
   protocolFee: BigInt
   communityName: String
@@ -728,6 +730,14 @@ input RegistryCommunity_filter {
   id_lte: ID
   id_in: [ID!]
   id_not_in: [ID!]
+  chainId: BigInt
+  chainId_not: BigInt
+  chainId_gt: BigInt
+  chainId_lt: BigInt
+  chainId_gte: BigInt
+  chainId_lte: BigInt
+  chainId_in: [BigInt!]
+  chainId_not_in: [BigInt!]
   profileId: String
   profileId_not: String
   profileId_gt: String
@@ -920,12 +930,14 @@ input RegistryCommunity_filter {
 
 enum RegistryCommunity_orderBy {
   id
+  chainId
   profileId
   protocolFee
   communityName
   covenantIpfsHash
   registryFactory
   registryFactory__id
+  registryFactory__chainId
   strategies
   councilSafe
   isKickEnabled
@@ -936,6 +948,8 @@ enum RegistryCommunity_orderBy {
   garden
   garden__id
   garden__name
+  garden__chainId
+  garden__totalBalance
   garden__symbol
   garden__decimals
   garden__address
@@ -943,6 +957,7 @@ enum RegistryCommunity_orderBy {
 
 type RegistryFactory {
   id: ID!
+  chainId: BigInt!
   registryCommunities(skip: Int = 0, first: Int = 100, orderBy: RegistryCommunity_orderBy, orderDirection: OrderDirection, where: RegistryCommunity_filter): [RegistryCommunity!]
 }
 
@@ -955,6 +970,14 @@ input RegistryFactory_filter {
   id_lte: ID
   id_in: [ID!]
   id_not_in: [ID!]
+  chainId: BigInt
+  chainId_not: BigInt
+  chainId_gt: BigInt
+  chainId_lt: BigInt
+  chainId_gte: BigInt
+  chainId_lte: BigInt
+  chainId_in: [BigInt!]
+  chainId_not_in: [BigInt!]
   registryCommunities_: RegistryCommunity_filter
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
@@ -964,6 +987,7 @@ input RegistryFactory_filter {
 
 enum RegistryFactory_orderBy {
   id
+  chainId
   registryCommunities
 }
 
@@ -1157,6 +1181,8 @@ type Subscription {
 type TokenGarden {
   id: ID!
   name: String!
+  chainId: BigInt!
+  totalBalance: BigInt!
   symbol: String!
   decimals: BigInt!
   address: String!
@@ -1192,6 +1218,22 @@ input TokenGarden_filter {
   name_ends_with_nocase: String
   name_not_ends_with: String
   name_not_ends_with_nocase: String
+  chainId: BigInt
+  chainId_not: BigInt
+  chainId_gt: BigInt
+  chainId_lt: BigInt
+  chainId_gte: BigInt
+  chainId_lte: BigInt
+  chainId_in: [BigInt!]
+  chainId_not_in: [BigInt!]
+  totalBalance: BigInt
+  totalBalance_not: BigInt
+  totalBalance_gt: BigInt
+  totalBalance_lt: BigInt
+  totalBalance_gte: BigInt
+  totalBalance_lte: BigInt
+  totalBalance_in: [BigInt!]
+  totalBalance_not_in: [BigInt!]
   symbol: String
   symbol_not: String
   symbol_gt: String
@@ -1250,6 +1292,8 @@ input TokenGarden_filter {
 enum TokenGarden_orderBy {
   id
   name
+  chainId
+  totalBalance
   symbol
   decimals
   address
