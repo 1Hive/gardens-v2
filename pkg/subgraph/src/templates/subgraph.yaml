@@ -4,20 +4,21 @@ features:
 schema:
   file: ./src/schema.graphql
 templates:
-  - name: ProposalMetadata
-    kind: file/ipfs
+  - kind: file/ipfs
+    name: ProposalMetadata
     mapping:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       file: ./src/mappings/proposalMetadata.ts
       handler: handleProposalMetadata
       entities:
-        - ProposalMetadata
+        - ProposalMeta
+        - CVProposal
       abis:
         - name: CVStrategy
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
-  - name: CVStrategy
-    kind: ethereum/contract
+  - kind: ethereum/contract
+    name: CVStrategy
     network: localhost
     source:
       abi: CVStrategy
@@ -36,8 +37,8 @@ templates:
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
       file: ./src/mappings/cv-strategy.ts
-  - name: RegistryCommunity
-    kind: ethereum/contract
+  - kind: ethereum/contract
+    name: RegistryCommunity
     network: localhost
     source:
       abi: RegistryCommunity
@@ -53,25 +54,25 @@ templates:
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
-        # - event: MemberRegistered(address,uint255)
-        #   handler: handleMemberRegistered
-        # - event: MemberUnregistered(address,uint255)
+        - event: MemberRegistered(address,uint256)
+          handler: handleMemberRegistered
+        # - event: MemberUnregistered(address,uint256)
         #   handler: handleMemberUnregistered
-        # - event: MemberKicked(address,address,uint255)
+        # - event: MemberKicked(address,address,uint256)
         #   handler: handleMemberKicked
-        # - event: ProtocolFeeUpdated(uint255)
+        # - event: ProtocolFeeUpdated(uint256)
         #   handler: handleProtocolFeeUpdated
-        # - event: StrategyAdded(address)
-        #   handler: handleStrategyAdded
+        - event: StrategyAdded(address)
+          handler: handleStrategyAdded
         # - event: StrategyRemoved(address)
         #   handler: handleStrategyRemoved
         # - event: MemberActivatedStrategy(address,address)
         #   handler: handleMemberActivatedStrategy
         # - event: MemberDeactivatedStrategy(address,address)
         #   handler: handleMemberDeactivatedStrategy
-        # - event: StakeAmountUpdated(address,uint255)
+        # - event: StakeAmountUpdated(address,uint256)
         #   handler: handleStakeAmountUpdated
-        # - event: BasisStakedAmountSet(uint255)
+        # - event: BasisStakedAmountSet(uint256)
         #   handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
         #   handler: handleCouncilSafeSet

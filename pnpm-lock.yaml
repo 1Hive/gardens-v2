@@ -111,6 +111,9 @@ importers:
       react-dom:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
+      react-toastify:
+        specifier: ^10.0.4
+        version: 10.0.4(react-dom@18.2.0)(react@18.2.0)
       ui:
         specifier: workspace:*
         version: link:../../pkg/ui
@@ -273,6 +276,9 @@ importers:
       mustache:
         specifier: ^4.2.0
         version: 4.2.0
+      viem:
+        specifier: ~1.21.4
+        version: 1.21.4(typescript@5.2.2)(zod@3.22.4)
 
   pkg/tsconfig: {}
 
@@ -9772,6 +9778,17 @@ packages:
       invariant: 2.2.4
       react: 18.2.0
       tslib: 2.6.2
+    dev: false
+
+  /react-toastify@10.0.4(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-etR3RgueY8pe88SA67wLm8rJmL1h+CLqUGHuAoNsseW35oTGJEri6eBTyaXnFKNQ80v/eO10hBYLgz036XRGgA==}
+    peerDependencies:
+      react: '>=16'
+      react-dom: '>=16'
+    dependencies:
+      clsx: 2.1.0
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /react@18.2.0:
