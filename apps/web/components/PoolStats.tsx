@@ -5,7 +5,7 @@ import Image from "next/image";
 import { StatusBadge } from "./Badge";
 import { ActivePointsChart } from "@/components";
 import { PoolTokenPriceChart } from "@/components";
-import { ActivateMember } from "./ActivateMember";
+import { ActivatePoints } from "./ActivatePoints";
 import { useAccount, useContractRead } from "wagmi";
 import { contractsAddresses } from "@/constants/contracts";
 import { registryCommunityABI, cvStrategyABI, alloABI } from "@/src/generated";
@@ -89,7 +89,7 @@ export const PoolStats: FC<poolStatsProps> = ({
 
             {/* Activate - Deactivate/ points */}
             <div className="flex w-full justify-center">
-              <ActivateMember
+              <ActivatePoints
                 strategyAddress={strategyAddress}
                 isMemberActived={isMemberActived}
                 errorMemberActivated={errorMemberActivated}

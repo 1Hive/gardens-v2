@@ -4,12 +4,16 @@ import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.
 import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
 import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunity.sol/RegistryCommunity.json";
 import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
-
+import { abi as mockERC20ABI } from "#/contracts/out/mocks/MockERC20.sol/MockERC20.json";
 import { Abi } from "viem";
 
 export default defineConfig({
   out: "src/generated.ts",
   contracts: [
+    {
+      name: "ERC20",
+      abi: mockERC20ABI as Abi,
+    },
     {
       name: "CVStrategy",
       abi: CVStrategyABI as Abi,
