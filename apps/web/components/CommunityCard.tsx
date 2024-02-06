@@ -4,11 +4,20 @@ import { Button, RegisterMember } from "@/components";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
 import { useAccount } from "wagmi";
+import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
 
-export function CommunityCard({ name, address, href, pools }: any) {
+type CommunityQuery = NonNullable<
+  NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
+>[number];
+export function CommunityCard({
+  communityName: name,
+  id: address,
+  strategies,
+}: CommunityQuery) {
   const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
 
+  const pools = strategies ?? [];
   return (
     <div className="flex flex-col items-center justify-center gap-8 rounded-xl border-2 border-black bg-info p-8 transition-all duration-200 ease-in-out">
       <div className="relative flex w-full items-center justify-center">
@@ -16,7 +25,7 @@ export function CommunityCard({ name, address, href, pools }: any) {
           Community Pools:{pools.length}
         </p>
         <h3 className="m-0 font-press text-lg text-info-content">{name}</h3>
-        <p className="absolute right-0 top-[50%] m-0 translate-y-[-50%] font-press text-xs">
+        <p className="absolute right-0 top-[120%] m-0 translate-y-[-50%] font-press text-xs">
           {address}
         </p>
       </div>
@@ -27,7 +36,9 @@ export function CommunityCard({ name, address, href, pools }: any) {
           !open && "max-h-[290px]"
         } `}
       >
-        {pools?.map((pool: any, i: number) => <PoolCard {...pool} key={i} />)}
+        {pools.map((pool, i) => (
+          <PoolCard {...pool} key={i} />
+        ))}
       </div>
       {accountAddress && <RegisterMember />}
       {pools.length > 2 && (

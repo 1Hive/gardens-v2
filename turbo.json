@@ -24,6 +24,9 @@
         "out/**",
         "build/**",
         "generated/**"
+      ],
+      "env": [
+        "NEXT_PUBLIC_SUBGRAPH_URL"
       ]
     },
     "test": {

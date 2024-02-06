@@ -3,18 +3,13 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useAccount, useContractRead, useContractWrite } from "wagmi";
 import {
-  useAccount,
-  useContractRead,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
-import {
-  contractsAddresses,
+  ContractsAddresses,
   confirmationsRequired,
 } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { cvStrategyABI, alloABI, registryCommunityABI } from "@/src/generated";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
@@ -55,9 +50,11 @@ type InputItem = {
 export function Proposals({
   poolId,
   strategyAddress,
+  addrs,
 }: {
   poolId: number;
   strategyAddress: `0x${string}`;
+  addrs: ContractsAddresses;
 }) {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
@@ -99,7 +96,7 @@ export function Proposals({
     error: errorMemberActivated,
     status,
   } = useContractRead({
-    address: contractsAddresses.registryCommunity,
+    address: addrs.registryCommunity,
     abi: registryCommunityABI,
     functionName: "memberActivatedInStrategies",
     args: [address as `0x${string}`, strategyAddress],
@@ -108,6 +105,7 @@ export function Proposals({
   });
 
   useEffect(() => {
+    if (isMemberActived === undefined) return;
     if (isMemberActived !== true) setEditView(false);
   }, [isMemberActived]);
 
@@ -118,7 +116,7 @@ export function Proposals({
     isSuccess: isSuccessAllocate,
     status: contractStatus,
   } = useContractWrite({
-    address: contractsAddresses.allo,
+    address: addrs.allo,
     abi: alloABI,
     functionName: "allocate",
   });
@@ -157,7 +155,8 @@ export function Proposals({
 
   const submit = async () => {
     const encodedData = getEncodedProposals(inputs, proposals);
-    const poolId = Number(contractsAddresses.poolID);
+    // const poolId = Number(poolID);
+    const poolId = Number(1); //@todo fix this using subgraph instead
 
     writeAllocate({
       args: [BigInt(poolId), encodedData as `0x${string}`],

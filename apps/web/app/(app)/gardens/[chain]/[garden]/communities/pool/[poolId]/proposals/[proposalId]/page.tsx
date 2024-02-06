@@ -4,10 +4,12 @@ import { honeyIcon } from "@/assets";
 import Image from "next/image";
 import { alloABI, cvStrategyABI } from "@/src/generated";
 import { Abi, createPublicClient, formatEther, http } from "viem";
-import { contractsAddresses } from "@/constants/contracts";
+import { getContractsAddrByChain } from "@/constants/contracts";
 import { proposalsMockData } from "@/constants/proposalsMockData";
 import { getChain } from "@/configs/chainServer";
 // import { wagmiConfig } from "@/configs/wagmiConfig";
+
+export const dynamic = "force-dynamic";
 
 type ProposalsMock = {
   title: string;
@@ -44,26 +46,23 @@ type PoolData = {
 };
 
 export default async function Proposal({
-  params: { proposalId, poolId, chain },
+  params: { proposalId, poolId, chain, garden },
 }: {
-  params: { proposalId: number; poolId: number; chain: number };
+  params: { proposalId: number; poolId: number; chain: number; garden: string };
 }) {
-  // const { proposals: proposalSContracts, strategyAddress } = useProposalsRead({
-  //   poolId: Number(poolId),
-  // });
-
-  // const proposalContract = proposalSContracts?.filter(
-  //   (proposal) => proposal.id === Number(proposalId),
-  // )[0];
-  
+  console.log(proposalId, poolId, chain, garden);
   const client = createPublicClient({
     chain: getChain(chain),
     transport: http(),
   });
 
+  const addrs = getContractsAddrByChain(chain);
+  if (!addrs) {
+    return <div>Chain ID: {chain} not supported</div>;
+  }
   const poolData = (await client.readContract({
     abi: alloABI,
-    address: contractsAddresses.allo,
+    address: addrs.allo,
     functionName: "getPool",
     args: [BigInt(poolId)],
   })) as PoolData;

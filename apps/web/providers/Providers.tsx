@@ -11,8 +11,9 @@ import {
   frameWallet,
   injectedWallet,
 } from "@rainbow-me/rainbowkit/wallets";
-import {createConfig, WagmiConfig } from "wagmi";
+import { createConfig, WagmiConfig } from "wagmi";
 import { chains, publicClient } from "@/configs/wagmiConfig";
+import UrqlProvider from "./UrqlProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -26,7 +27,7 @@ const connectors = connectorsForWallets([
       rabbyWallet({ chains }),
       frameWallet({ chains }),
     ],
-  }
+  },
 ]);
 export const wagmiConfig = createConfig({
   autoConnect: true,
@@ -39,11 +40,15 @@ const Providers = ({ children }: Props) => {
   React.useEffect(() => setMounted(true), []);
 
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider modalSize="compact" chains={chains}>
-        <ThemeProvider>{mounted && children}</ThemeProvider>
-      </RainbowKitProvider>
-    </WagmiConfig>
+    // if mounted UrlqProvider will be rendered
+    // if not, null will be rendered
+    mounted && (
+      <WagmiConfig config={wagmiConfig}>
+        <RainbowKitProvider modalSize="compact" chains={chains}>
+          <ThemeProvider>{mounted && children}</ThemeProvider>
+        </RainbowKitProvider>
+      </WagmiConfig>
+    )
   );
 };
 

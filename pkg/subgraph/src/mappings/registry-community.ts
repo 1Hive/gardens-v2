@@ -1,18 +1,15 @@
 import { CVStrategy as CVStrategyTemplate } from "../../generated/templates";
-import {
-  CVStrategy,
-  Member,
-  MembersCommunity,
-  RegistryCommunity,
-} from "../../generated/schema";
+import { Member, RegistryCommunity, TokenGarden } from "../../generated/schema";
 
-import { dataSource, log } from "@graphprotocol/graph-ts";
+import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   RegistryInitialized,
   RegistryCommunity as RegistryCommunityContract,
   MemberRegistered,
   StrategyAdded,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
+
+import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
 import { CTX_FACTORY_ADDRESS } from "./registry-factory";
 
 export function handleInitialized(event: RegistryInitialized): void {
@@ -39,9 +36,22 @@ export function handleInitialized(event: RegistryInitialized): void {
     newRC.alloAddress = rcc.allo().toHexString();
     newRC.isKickEnabled = rcc.isKickEnabled();
     newRC.protocolFee = rcc.communityFee();
-    newRC.registerToken = rcc.gardenToken().toHexString();
+    const token = rcc.gardenToken();
+    newRC.registerToken = token.toHexString();
     newRC.registryFactory = factoryAddress;
-    // const mc = new MembersCommunity(`${event.address.toHex()}-members`);
+
+    let tg = TokenGarden.load(token.toHexString());
+    if (tg == null) {
+      tg = new TokenGarden(token.toHexString());
+      const erc20 = ERC20Contract.bind(token);
+
+      tg.name = erc20.name();
+      tg.decimals = BigInt.fromI32(erc20.decimals());
+      tg.address = token.toHexString();
+      tg.symbol = erc20.symbol();
+      tg.save();
+    }
+    newRC.garden = tg.id;
 
     newRC.save();
   }
@@ -53,18 +63,19 @@ export function handleMemberRegistered(event: MemberRegistered): void {
   const memberAddress = event.params._member.toHexString();
   const id = `${memberAddress}-${community}`;
   const member = Member.load(memberAddress);
-  const memberC = MembersCommunity.load(id);
+  // const memberC = MembersCommunity.load(id);
   if (member == null) {
     let newMember = new Member(memberAddress);
     newMember.memberAddress = memberAddress;
+    let communities = newMember.registryCommunity;
+    if (communities == null) {
+      communities = [];
+    }
+    communities.push(community);
+
+    newMember.registryCommunity = communities;
     newMember.isRegistered = true;
     newMember.stakedAmount = event.params._amountStaked;
-    newMember.save();
-  }
-  if (memberC == null) {
-    let newMember = new MembersCommunity(id);
-    newMember.member = memberAddress;
-    newMember.registryCommunity = community;
     newMember.save();
   }
 }
