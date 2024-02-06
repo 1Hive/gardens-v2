@@ -5,6 +5,7 @@ import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
 import { useAccount } from "wagmi";
 import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
+import { formatAddress } from "@/utils/formatAddress";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
@@ -21,12 +22,12 @@ export function CommunityCard({
   return (
     <div className="flex flex-col items-center justify-center gap-8 rounded-xl border-2 border-black bg-info p-8 transition-all duration-200 ease-in-out">
       <div className="relative flex w-full items-center justify-center">
-        <p className="absolute left-0 top-[50%] m-0 translate-y-[-50%] font-press text-xs">
+        <p className="absolute left-0 top-[50%] m-0 translate-y-[-50%] font-bold">
           Community Pools:{pools.length}
         </p>
         <h3 className="m-0 font-press text-lg text-info-content">{name}</h3>
-        <p className="absolute right-0 top-[120%] m-0 translate-y-[-50%] font-press text-xs">
-          {address}
+        <p className="absolute right-0 top-[50%] m-0 translate-y-[-50%] font-bold">
+          {formatAddress(address)}
         </p>
       </div>
 
