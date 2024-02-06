@@ -44,12 +44,12 @@ export function extractAddr(runLatest?: RunLatest) {
           (tx) => tx.hash == logWithTopic.transactionHash,
         );
         const strategyAddr = txForIt?.arguments?.[1];
-        console.log("strategyAddr", strategyAddr);
+        // console.log("strategyAddr", strategyAddr);
         // console.log("topic", logWithTopic.topics[0]);
-        console.log(
-          "poolID",
-          fromHex(logWithTopic.topics[1] as `0x${string}`, "number"),
-        );
+        // console.log(
+        //   "poolID",
+        //   fromHex(logWithTopic.topics[1] as `0x${string}`, "number"),
+        // );
       }
     }
     for (const tx of txs) {
@@ -66,10 +66,10 @@ export function extractAddr(runLatest?: RunLatest) {
       }
     }
 
-    console.log("token", token);
-    console.log("safe", safe);
-    console.log("factory", factory);
-    console.log("registryCommunity", registryCommunity);
+    // console.log("token", token);
+    // console.log("safe", safe);
+    // console.log("factory", factory);
+    // console.log("registryCommunity", registryCommunity);
   }
   return {
     token,

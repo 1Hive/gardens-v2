@@ -3,7 +3,7 @@ import { react, foundry, actions } from "@wagmi/cli/plugins";
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
 import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
 import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunity.sol/RegistryCommunity.json";
-import { abi as mockERC20ABI } from "#/contracts/out/mocks/MockERC20.sol/MockERC20.json";
+import { abi as mockERC20ABI } from "#/contracts/out/utils/MockERC20.sol/MockERC20.json";
 import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
 import { Abi } from "viem";
 
