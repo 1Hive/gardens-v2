@@ -23,7 +23,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
   poolId,
   communityAddress,
 }) => {
-  const { address: mainConnectedAccount } = useAccount();
+  const { address } = useAccount();
   const [isMemberActived, setIsMemberActived] = React.useState(false);
 
   const {
@@ -34,7 +34,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
     address: communityAddress,
     abi: registryCommunityABI,
     functionName: "memberActivatedInStrategies",
-    args: [mainConnectedAccount as `0x${string}`, strategyAddress],
+    args: [address as `0x${string}`, strategyAddress],
     watch: true,
     cacheOnBlock: true,
   });
@@ -48,7 +48,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
     address: strategyAddress,
     abi: cvStrategyABI,
     functionName: "getTotalVoterStakePct",
-    args: [mainConnectedAccount as `0x${string}`],
+    args: [address as `0x${string}`],
     watch: true,
     cacheOnBlock: true,
   });
