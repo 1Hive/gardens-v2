@@ -9,6 +9,7 @@ type CVStrategy @entity(immutable: false) {
 
 type CVStrategyConfig @entity(immutable: false) {
   id: ID!
+  strategy: CVStrategy! @derivedFrom(field: "config")
   decay: BigInt!
   maxRatio: BigInt!
   weight: BigInt!
@@ -65,16 +66,26 @@ type RegistryCommunity @entity(immutable: false) {
   registerStakeAmount: BigInt
   registerToken: String
   alloAddress: String
-  members: [Member!] @derivedFrom(field: "registryCommunity")
+  members: [MemberCommunity!] @derivedFrom(field: "registryCommunity")
+  # members: [Member!] @derivedFrom(field: "registryCommunity")
   garden: TokenGarden!
 }
 
 type Member @entity(immutable: false) {
   id: ID!
-  registryCommunity: [RegistryCommunity!]
+  # registryCommunity: [RegistryCommunity!]
+  memberCommunity: [MemberCommunity!] @derivedFrom(field: "member")
+  totalStakedAmount: BigInt
+  # isRegistered: Boolean
+}
+
+type MemberCommunity @entity(immutable: false) {
+  id: ID!
   memberAddress: String
   stakedAmount: BigInt
   isRegistered: Boolean
+  member: Member!
+  registryCommunity: RegistryCommunity!
 }
 
 type TokenGarden @entity(immutable: false) {

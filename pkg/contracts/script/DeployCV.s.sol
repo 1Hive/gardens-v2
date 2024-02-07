@@ -103,11 +103,11 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
         vm.stopBroadcast();
 
-        address[] memory membersStaked = new address[](3);
+        address[] memory membersStaked = new address[](4);
         membersStaked[0] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
         membersStaked[1] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
         membersStaked[2] = address(0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC);
-        // membersStaked[3] = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+        membersStaked[3] = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
 
         for (uint256 i = 0; i < membersStaked.length; i++) {
             vm.startBroadcast(address(membersStaked[i]));

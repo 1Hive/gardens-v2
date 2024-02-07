@@ -1,5 +1,10 @@
 import { CVStrategy as CVStrategyTemplate } from "../../generated/templates";
-import { Member, RegistryCommunity, TokenGarden } from "../../generated/schema";
+import {
+  Member,
+  RegistryCommunity,
+  TokenGarden,
+  MemberCommunity,
+} from "../../generated/schema";
 
 import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
@@ -63,30 +68,34 @@ export function handleInitialized(event: RegistryInitialized): void {
 
 // // handleMemberRegistered
 export function handleMemberRegistered(event: MemberRegistered): void {
-  const memberAddress = event.params._member.toHexString();
-  log.debug("handleMemberRegistered: {} logIndex: {} hash:{}", [
-    memberAddress,
-    event.logIndex.toHexString(),
-    event.transaction.hash.toHexString(),
-  ]);
-
   const community = event.address.toHex();
+  const memberAddress = event.params._member.toHexString();
+  const id = `${memberAddress}-${community}`;
+  log.debug("handleMemberRegistered: {}", [memberAddress]);
+
   let member = Member.load(memberAddress);
+
   if (member == null) {
     member = new Member(memberAddress);
-    member.memberAddress = memberAddress;
+    // member.memberAddress = memberAddress;
   }
-  let communities = member.registryCommunity;
-  if (communities == null) {
-    communities = [];
-  }
-  communities.push(community);
-  log.debug("handleMemberRegistered: communities: {}", [
-    communities.length.toString(),
+  log.debug("totalStakedAmount: ", [
+    member.totalStakedAmount ? member.totalStakedAmount!.toString() : "",
   ]);
-  member.registryCommunity = communities;
-  member.isRegistered = true;
-  member.stakedAmount = event.params._amountStaked;
+  member.totalStakedAmount = member.totalStakedAmount
+    ? member.totalStakedAmount!.plus(event.params._amountStaked)
+    : event.params._amountStaked;
+  // let communities = member.registryCommunity;
+  // if (communities == null) {
+  //   communities = [];
+  // }
+  // communities.push(community);
+  // log.debug("handleMemberRegistered: communities: {}", [
+  //   communities.length.toString(),
+  // ]);
+  // member.registryCommunity = communities;
+  // member.isRegistered = true;
+  // member.stakedAmount = event.params._amountStaked;
   member.save();
 
   const rcc = RegistryCommunityContract.bind(event.address);
@@ -101,6 +110,18 @@ export function handleMemberRegistered(event: MemberRegistered): void {
 
   tg.totalBalance = erc20.balanceOf(event.address);
   tg.save();
+
+  let newMember = MemberCommunity.load(id);
+
+  if (newMember == null) {
+    newMember = new MemberCommunity(id);
+    newMember.member = memberAddress;
+    newMember.registryCommunity = community;
+    newMember.memberAddress = memberAddress;
+  }
+  newMember.stakedAmount = event.params._amountStaked;
+  newMember.isRegistered = true;
+  newMember.save();
 }
 
 // //  handleStrategyAdded

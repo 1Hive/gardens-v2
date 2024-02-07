@@ -44,10 +44,13 @@ query getTokenGardens {
 }
 
 query isMember($me: ID!, $comm: String!) {
-  members(where: { id: $me, registryCommunity_contains: [$comm] }) {
+  members(where: { id: $me }) {
     id
-    registryCommunity {
+    memberCommunity(where: { registryCommunity_contains: $comm }) {
       id
+      registryCommunity {
+        id
+      }
     }
   }
 }

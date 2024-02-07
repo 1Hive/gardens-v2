@@ -49,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "https://api.studio.thegraph.com/query/29898/gv2-arbsepolia/version/latest" },
+        config: { "endpoint": "http://localhost:8000/subgraphs/name/kamikazebr/gv2/" },
         baseDir,
         cache,
         pubsub,
@@ -186,10 +186,13 @@ export const getTokenGardensDocument = gql `
     `;
 export const isMemberDocument = gql `
     query isMember($me: ID!, $comm: String!) {
-  members(where: {id: $me, registryCommunity_contains: [$comm]}) {
+  members(where: {id: $me}) {
     id
-    registryCommunity {
+    memberCommunity(where: {registryCommunity_contains: $comm}) {
       id
+      registryCommunity {
+        id
+      }
     }
   }
 }
