@@ -257,29 +257,31 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         return newMember.isRegistered;
     }
     //Todo: add protocol fee logic
+
     function stakeAndRegisterMember() public nonReentrant {
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
         RegistryFactory gardensFactory = RegistryFactory(registryFactory);
-        uint256 communityFeeAmount = (registerStakeAmount * communityFee)/100;
-        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this)))/100;
+        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / 100;
+        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / 100;
         if (!isMember(_member)) {
             newMember.isRegistered = true;
 
             newMember.stakedAmount = registerStakeAmount;
-            gardenToken.transferFrom(_member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount);
+            gardenToken.transferFrom(
+                _member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
+            );
             //TODO: Test if revert because of approve on contract, if doesnt work, transfer all to this contract, and then transfer to each receiver
             //individually. Check vulnerabilites for that with Felipe
             // gardenToken.approve(feeReceiver,communityFeeAmount);
             //Error: ProtocolFee is equal to zero
-            if(communityFeeAmount > 0){
-            gardenToken.transfer(feeReceiver, communityFeeAmount);
+            if (communityFeeAmount > 0) {
+                gardenToken.transfer(feeReceiver, communityFeeAmount);
             }
             // gardenToken.approve(gardensFactory.getGardensFeeReceiver(),gardensFeeAmount);
-            if(gardensFeeAmount > 0){
-            gardenToken.transfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
+            if (gardensFeeAmount > 0) {
+                gardenToken.transfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
             }
-
 
             emit MemberRegistered(_member, registerStakeAmount);
         }

@@ -1,5 +1,6 @@
 {
   "network": "localhost",
+  "chainId": 1337,
   "dataSources": [
     {
       "name": "RegistryFactory",

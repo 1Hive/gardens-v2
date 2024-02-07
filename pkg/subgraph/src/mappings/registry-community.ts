@@ -1,19 +1,16 @@
 import { CVStrategy as CVStrategyTemplate } from "../../generated/templates";
-import {
-  CVStrategy,
-  Member,
-  MembersCommunity,
-  RegistryCommunity,
-} from "../../generated/schema";
+import { Member, RegistryCommunity, TokenGarden } from "../../generated/schema";
 
-import { dataSource, log } from "@graphprotocol/graph-ts";
+import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   RegistryInitialized,
   RegistryCommunity as RegistryCommunityContract,
   MemberRegistered,
   StrategyAdded,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
-import { CTX_FACTORY_ADDRESS } from "./registry-factory";
+
+import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
+import { CTX_CHAIN_ID, CTX_FACTORY_ADDRESS } from "./registry-factory";
 
 export function handleInitialized(event: RegistryInitialized): void {
   log.debug("RegistryCommunity: handleInitialized1", []);
@@ -27,6 +24,8 @@ export function handleInitialized(event: RegistryInitialized): void {
     log.debug("factoryAddress: {}", [factoryAddress ? factoryAddress : "0x"]);
     let newRC = new RegistryCommunity(event.address.toHex());
 
+    newRC.chainId = BigInt.fromI32(dataSource.context().getI32(CTX_CHAIN_ID));
+
     newRC.communityName = event.params._communityName;
     newRC.profileId = event.params._profileId.toHexString();
     newRC.covenantIpfsHash = event.params._metadata.pointer;
@@ -39,9 +38,24 @@ export function handleInitialized(event: RegistryInitialized): void {
     newRC.alloAddress = rcc.allo().toHexString();
     newRC.isKickEnabled = rcc.isKickEnabled();
     newRC.protocolFee = rcc.communityFee();
-    newRC.registerToken = rcc.gardenToken().toHexString();
+    const token = rcc.gardenToken();
+    newRC.registerToken = token.toHexString();
     newRC.registryFactory = factoryAddress;
-    // const mc = new MembersCommunity(`${event.address.toHex()}-members`);
+
+    let tg = TokenGarden.load(token.toHexString());
+    if (tg == null) {
+      tg = new TokenGarden(token.toHexString());
+      const erc20 = ERC20Contract.bind(token);
+
+      tg.name = erc20.name();
+      tg.totalBalance = erc20.balanceOf(event.address);
+      tg.chainId = newRC.chainId;
+      tg.decimals = BigInt.fromI32(erc20.decimals());
+      tg.address = token.toHexString();
+      tg.symbol = erc20.symbol();
+      tg.save();
+    }
+    newRC.garden = tg.id;
 
     newRC.save();
   }
@@ -49,24 +63,49 @@ export function handleInitialized(event: RegistryInitialized): void {
 
 // // handleMemberRegistered
 export function handleMemberRegistered(event: MemberRegistered): void {
-  const community = event.address.toHex();
+  const communityAddr = event.address.toHexString();
+  const rc = RegistryCommunity.load(communityAddr);
+  const memberLen = rc
+    ? rc.members.entries.length
+      ? rc.members.entries.length
+      : 0
+    : 0;
+  log.debug("handleMemberRegistered: memberLen: {}", [memberLen.toString()]);
   const memberAddress = event.params._member.toHexString();
-  const id = `${memberAddress}-${community}`;
-  const member = Member.load(memberAddress);
-  const memberC = MembersCommunity.load(id);
+  log.debug("handleMemberRegistered: {}", [memberAddress]);
+  const community = event.address.toHex();
+  // const id = `${memberAddress}-${community}`;
+  let member = Member.load(memberAddress);
+  // const memberC = MembersCommunity.load(id);
   if (member == null) {
-    let newMember = new Member(memberAddress);
-    newMember.memberAddress = memberAddress;
-    newMember.isRegistered = true;
-    newMember.stakedAmount = event.params._amountStaked;
-    newMember.save();
+    member = new Member(memberAddress);
+    member.memberAddress = memberAddress;
   }
-  if (memberC == null) {
-    let newMember = new MembersCommunity(id);
-    newMember.member = memberAddress;
-    newMember.registryCommunity = community;
-    newMember.save();
+  let communities = member.registryCommunity;
+  if (communities == null) {
+    communities = [];
   }
+  communities.push(community);
+  log.debug("handleMemberRegistered: communities: {}", [
+    communities.length.toString(),
+  ]);
+  member.registryCommunity = communities;
+  member.isRegistered = true;
+  member.stakedAmount = event.params._amountStaked;
+  member.save();
+
+  const rcc = RegistryCommunityContract.bind(event.address);
+
+  const token = rcc.gardenToken();
+  let tg = TokenGarden.load(token.toHexString());
+  if (tg == null) {
+    log.error("TokenGarden not found", []);
+    return;
+  }
+  const erc20 = ERC20Contract.bind(token);
+
+  tg.totalBalance = erc20.balanceOf(event.address);
+  tg.save();
 }
 
 // //  handleStrategyAdded

@@ -3,60 +3,15 @@ import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import Link from "next/link";
 import { Button, GardenCard } from "@/components";
-// import { useAccount, useConnect } from "wagmi";
+import { getBuiltGraphSDK } from "#/subgraph/.graphclient";
 
-const gardens = [
-  {
-    imageSrc: "/blank",
-    title: "HNY",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/gardens/[[chain]]/communities",
-  },
-  {
-    imageSrc: "/blank",
-    title: "OP",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/#",
-  },
-  {
-    imageSrc: "/blank",
-    title: "GIV",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/#",
-  },
-  {
-    imageSrc: "/blank",
-    title: "ETH",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/#",
-  },
-  {
-    imageSrc: "/blank",
-    title: "UNI",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/#",
-  },
-  {
-    imageSrc: "/blank",
-    title: "ADA",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/#",
-  },
-];
+export const dynamic = "force-dynamic";
 
-export default function Gardens() {
+export default async function Gardens() {
+  const sdk = getBuiltGraphSDK();
+  const gardens = await sdk.getTokenGardens();
+
+  console.log("gardens", gardens);
   return (
     <div className="flex flex-col items-center justify-center gap-12">
       <header className="flex flex-col items-center gap-12">
@@ -92,7 +47,7 @@ export default function Gardens() {
       <section className="my-10 flex justify-center">
         {/* <div className="grid max-w-[1216px] grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(360px,1fr))]"> */}
         <div className="flex max-w-[1216px] flex-wrap justify-center gap-6">
-          {gardens.map((garden, id) => (
+          {gardens.tokenGardens.map((garden, id) => (
             <div key={id}>
               <GardenCard garden={garden} />
             </div>

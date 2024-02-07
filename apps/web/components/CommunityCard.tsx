@@ -1,31 +1,59 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components";
+import { Button, RegisterMember } from "@/components";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
+import { useAccount } from "wagmi";
+import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
+import { formatAddress } from "@/utils/formatAddress";
 
-export function CommunityCard({ name, address, href, pools }: any) {
+type CommunityQuery = NonNullable<
+  NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
+>[number];
+type CommunityCardProps = CommunityQuery & { gardenToken: `0x${string}` };
+
+export function CommunityCard({
+  communityName: name,
+  id: address,
+  strategies,
+  gardenToken,
+}: CommunityCardProps) {
   const [open, setOpen] = useState(false);
+  const { address: accountAddress } = useAccount();
+
+  const pools = strategies ?? [];
+
+  const registerStakeAmount =
+    pools?.length > 0
+      ? Number(pools[0].registryCommunity.registerStakeAmount)
+      : null;
 
   return (
     <div className="flex flex-col items-center justify-center gap-8 rounded-xl border-2 border-black bg-info p-8 transition-all duration-200 ease-in-out">
       <div className="relative flex w-full items-center justify-center">
-        <p className="absolute left-0 top-[50%] m-0 translate-y-[-50%] font-press text-xs">
-          Pools:{pools.length}
+        <p className="absolute left-0 top-[50%] m-0 translate-y-[-50%] font-bold">
+          Community Pools:{pools.length}
         </p>
         <h3 className="m-0 font-press text-lg text-info-content">{name}</h3>
-        <p className="absolute right-0 top-[50%] m-0 translate-y-[-50%] font-press text-xs">
-          {address}
+        <p className="absolute right-0 top-[50%] m-0 translate-y-[-50%] font-bold">
+          {formatAddress(address)}
         </p>
       </div>
-
+      {accountAddress && registerStakeAmount && (
+        <RegisterMember
+          gardenToken={gardenToken}
+          registerStakeAmount={registerStakeAmount}
+        />
+      )}
       {/* pools */}
       <div
         className={`flex transform flex-wrap items-center justify-center gap-4 overflow-hidden p-4 transition-height duration-200 ease-in-out ${
           !open && "max-h-[290px]"
         } `}
       >
-        {pools?.map((pool: any, i: number) => <PoolCard {...pool} key={i} />)}
+        {pools.map((pool, i) => (
+          <PoolCard {...pool} key={i} />
+        ))}
       </div>
       {pools.length > 2 && (
         <Button

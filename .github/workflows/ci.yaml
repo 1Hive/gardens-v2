@@ -37,10 +37,18 @@ jobs:
           cache: "pnpm"
 
       - name: Cache pnpm modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: "**/node_modules"
           key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Cache turbo build
+        uses: actions/cache@v3
+        with:
+          path: ".turbo"
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
 
       - name: Install dependencies
         run: pnpm install

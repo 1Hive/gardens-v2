@@ -9,6 +9,8 @@ import {
   createClient,
 } from "@urql/next";
 
+import { graphExchange } from "@graphprotocol/client-urql";
+import * as GraphClient from "#/subgraph/.graphclient";
 // urql provider for client components
 
 // urql docs: https://formidable.com/open-source/urql/docs/advanced/server-side-rendering/#nextjs
@@ -16,12 +18,19 @@ import {
 //Subgraph URL
 const subgraphURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL || "";
 
+console.log("subgraphURL", subgraphURL);
+
 export default function UrqlProvider({ children }: React.PropsWithChildren) {
   const [client, ssr] = useMemo(() => {
     const ssr = ssrExchange();
     const client = createClient({
       url: subgraphURL,
-      exchanges: [cacheExchange, ssr, fetchExchange],
+      exchanges: [
+        graphExchange(GraphClient),
+        cacheExchange,
+        ssr,
+        fetchExchange,
+      ],
       suspense: true,
     });
 

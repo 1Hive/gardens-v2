@@ -1,46 +1,54 @@
 "use client";
 import { flowers } from "@/assets";
-import React, { FC } from "react";
+import React, { FC, useEffect } from "react";
 import Image from "next/image";
 import { StatusBadge } from "./Badge";
 import { ActivePointsChart } from "@/components";
 import { PoolTokenPriceChart } from "@/components";
-import { ActivateMember } from "./ActivateMember";
+import { ActivatePoints } from "./ActivatePoints";
 import { useAccount, useContractRead } from "wagmi";
-import { contractsAddresses } from "@/constants/contracts";
+// import { contractsAddresses } from "@/constants/contracts";
 import { registryCommunityABI, cvStrategyABI, alloABI } from "@/src/generated";
 
-type poolStatsProps = {
+type PoolStatsProps = {
   balance?: string | number;
   strategyAddress: `0x${string}`;
   poolId: number;
+  communityAddress: `0x${string}`;
 };
 
-export const PoolStats: FC<poolStatsProps> = ({
+export const PoolStats: FC<PoolStatsProps> = ({
   balance,
   strategyAddress,
   poolId,
+  communityAddress,
 }) => {
-  const { address: mainConnectedAccount } = useAccount();
+  const { address } = useAccount();
+  const [isMemberActived, setIsMemberActived] = React.useState(false);
 
   const {
-    data: isMemberActived,
+    data: __isMemberActived,
     error: errorMemberActivated,
     status,
   } = useContractRead({
-    address: contractsAddresses.registryCommunity,
+    address: communityAddress,
     abi: registryCommunityABI,
     functionName: "memberActivatedInStrategies",
-    args: [mainConnectedAccount as `0x${string}`, strategyAddress],
+    args: [address as `0x${string}`, strategyAddress],
     watch: true,
     cacheOnBlock: true,
   });
+
+  useEffect(() => {
+    if (__isMemberActived === undefined) return;
+    setIsMemberActived(__isMemberActived);
+  }, [__isMemberActived]);
 
   const { data: voterStakePct } = useContractRead({
     address: strategyAddress,
     abi: cvStrategyABI,
     functionName: "getTotalVoterStakePct",
-    args: [mainConnectedAccount as `0x${string}`],
+    args: [address as `0x${string}`],
     watch: true,
     cacheOnBlock: true,
   });
@@ -89,7 +97,7 @@ export const PoolStats: FC<poolStatsProps> = ({
 
             {/* Activate - Deactivate/ points */}
             <div className="flex w-full justify-center">
-              <ActivateMember
+              <ActivatePoints
                 strategyAddress={strategyAddress}
                 isMemberActived={isMemberActived}
                 errorMemberActivated={errorMemberActivated}

@@ -2,7 +2,6 @@
 import { readContract, readContracts } from "@wagmi/core";
 import { alloABI, cvStrategyABI } from "@/src/generated";
 import { Abi } from "viem";
-import { contractsAddresses } from "@/constants/contracts";
 
 const proposalsIds = [1, 2, 3];
 

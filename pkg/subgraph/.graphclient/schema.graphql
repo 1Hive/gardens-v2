@@ -1,0 +1,1335 @@
+schema {
+  query: Query
+  subscription: Subscription
+}
+
+"Marks the GraphQL type as indexable entity.  Each type that should be an entity is required to be annotated with this directive."
+directive @entity on OBJECT
+
+"Defined a Subgraph ID for an object type"
+directive @subgraphId(id: String!) on OBJECT
+
+"creates a virtual field on the entity that may be queried but cannot be set manually through the mappings API."
+directive @derivedFrom(field: String!) on FIELD_DEFINITION
+
+scalar BigDecimal
+
+scalar BigInt
+
+input BlockChangedFilter {
+  number_gte: Int!
+}
+
+input Block_height {
+  hash: Bytes
+  number: Int
+  number_gte: Int
+}
+
+scalar Bytes
+
+type CVProposal {
+  id: ID!
+  metadata: String!
+  version: BigInt
+  strategy: CVStrategy!
+  beneficiary: String!
+  requestedAmount: BigInt!
+  requestedToken: String!
+  proposalStatus: BigInt!
+  blockLast: BigInt!
+  convictionLast: BigInt!
+  threshold: BigInt!
+  proposalType: BigInt!
+  stakedTokens: BigInt!
+  submitter: String!
+  voterStakedPointsPct: BigInt!
+  agreementActionId: BigInt!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+input CVProposal_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  metadata: String
+  metadata_not: String
+  metadata_gt: String
+  metadata_lt: String
+  metadata_gte: String
+  metadata_lte: String
+  metadata_in: [String!]
+  metadata_not_in: [String!]
+  metadata_contains: String
+  metadata_contains_nocase: String
+  metadata_not_contains: String
+  metadata_not_contains_nocase: String
+  metadata_starts_with: String
+  metadata_starts_with_nocase: String
+  metadata_not_starts_with: String
+  metadata_not_starts_with_nocase: String
+  metadata_ends_with: String
+  metadata_ends_with_nocase: String
+  metadata_not_ends_with: String
+  metadata_not_ends_with_nocase: String
+  version: BigInt
+  version_not: BigInt
+  version_gt: BigInt
+  version_lt: BigInt
+  version_gte: BigInt
+  version_lte: BigInt
+  version_in: [BigInt!]
+  version_not_in: [BigInt!]
+  strategy: String
+  strategy_not: String
+  strategy_gt: String
+  strategy_lt: String
+  strategy_gte: String
+  strategy_lte: String
+  strategy_in: [String!]
+  strategy_not_in: [String!]
+  strategy_contains: String
+  strategy_contains_nocase: String
+  strategy_not_contains: String
+  strategy_not_contains_nocase: String
+  strategy_starts_with: String
+  strategy_starts_with_nocase: String
+  strategy_not_starts_with: String
+  strategy_not_starts_with_nocase: String
+  strategy_ends_with: String
+  strategy_ends_with_nocase: String
+  strategy_not_ends_with: String
+  strategy_not_ends_with_nocase: String
+  strategy_: CVStrategy_filter
+  beneficiary: String
+  beneficiary_not: String
+  beneficiary_gt: String
+  beneficiary_lt: String
+  beneficiary_gte: String
+  beneficiary_lte: String
+  beneficiary_in: [String!]
+  beneficiary_not_in: [String!]
+  beneficiary_contains: String
+  beneficiary_contains_nocase: String
+  beneficiary_not_contains: String
+  beneficiary_not_contains_nocase: String
+  beneficiary_starts_with: String
+  beneficiary_starts_with_nocase: String
+  beneficiary_not_starts_with: String
+  beneficiary_not_starts_with_nocase: String
+  beneficiary_ends_with: String
+  beneficiary_ends_with_nocase: String
+  beneficiary_not_ends_with: String
+  beneficiary_not_ends_with_nocase: String
+  requestedAmount: BigInt
+  requestedAmount_not: BigInt
+  requestedAmount_gt: BigInt
+  requestedAmount_lt: BigInt
+  requestedAmount_gte: BigInt
+  requestedAmount_lte: BigInt
+  requestedAmount_in: [BigInt!]
+  requestedAmount_not_in: [BigInt!]
+  requestedToken: String
+  requestedToken_not: String
+  requestedToken_gt: String
+  requestedToken_lt: String
+  requestedToken_gte: String
+  requestedToken_lte: String
+  requestedToken_in: [String!]
+  requestedToken_not_in: [String!]
+  requestedToken_contains: String
+  requestedToken_contains_nocase: String
+  requestedToken_not_contains: String
+  requestedToken_not_contains_nocase: String
+  requestedToken_starts_with: String
+  requestedToken_starts_with_nocase: String
+  requestedToken_not_starts_with: String
+  requestedToken_not_starts_with_nocase: String
+  requestedToken_ends_with: String
+  requestedToken_ends_with_nocase: String
+  requestedToken_not_ends_with: String
+  requestedToken_not_ends_with_nocase: String
+  proposalStatus: BigInt
+  proposalStatus_not: BigInt
+  proposalStatus_gt: BigInt
+  proposalStatus_lt: BigInt
+  proposalStatus_gte: BigInt
+  proposalStatus_lte: BigInt
+  proposalStatus_in: [BigInt!]
+  proposalStatus_not_in: [BigInt!]
+  blockLast: BigInt
+  blockLast_not: BigInt
+  blockLast_gt: BigInt
+  blockLast_lt: BigInt
+  blockLast_gte: BigInt
+  blockLast_lte: BigInt
+  blockLast_in: [BigInt!]
+  blockLast_not_in: [BigInt!]
+  convictionLast: BigInt
+  convictionLast_not: BigInt
+  convictionLast_gt: BigInt
+  convictionLast_lt: BigInt
+  convictionLast_gte: BigInt
+  convictionLast_lte: BigInt
+  convictionLast_in: [BigInt!]
+  convictionLast_not_in: [BigInt!]
+  threshold: BigInt
+  threshold_not: BigInt
+  threshold_gt: BigInt
+  threshold_lt: BigInt
+  threshold_gte: BigInt
+  threshold_lte: BigInt
+  threshold_in: [BigInt!]
+  threshold_not_in: [BigInt!]
+  proposalType: BigInt
+  proposalType_not: BigInt
+  proposalType_gt: BigInt
+  proposalType_lt: BigInt
+  proposalType_gte: BigInt
+  proposalType_lte: BigInt
+  proposalType_in: [BigInt!]
+  proposalType_not_in: [BigInt!]
+  stakedTokens: BigInt
+  stakedTokens_not: BigInt
+  stakedTokens_gt: BigInt
+  stakedTokens_lt: BigInt
+  stakedTokens_gte: BigInt
+  stakedTokens_lte: BigInt
+  stakedTokens_in: [BigInt!]
+  stakedTokens_not_in: [BigInt!]
+  submitter: String
+  submitter_not: String
+  submitter_gt: String
+  submitter_lt: String
+  submitter_gte: String
+  submitter_lte: String
+  submitter_in: [String!]
+  submitter_not_in: [String!]
+  submitter_contains: String
+  submitter_contains_nocase: String
+  submitter_not_contains: String
+  submitter_not_contains_nocase: String
+  submitter_starts_with: String
+  submitter_starts_with_nocase: String
+  submitter_not_starts_with: String
+  submitter_not_starts_with_nocase: String
+  submitter_ends_with: String
+  submitter_ends_with_nocase: String
+  submitter_not_ends_with: String
+  submitter_not_ends_with_nocase: String
+  voterStakedPointsPct: BigInt
+  voterStakedPointsPct_not: BigInt
+  voterStakedPointsPct_gt: BigInt
+  voterStakedPointsPct_lt: BigInt
+  voterStakedPointsPct_gte: BigInt
+  voterStakedPointsPct_lte: BigInt
+  voterStakedPointsPct_in: [BigInt!]
+  voterStakedPointsPct_not_in: [BigInt!]
+  agreementActionId: BigInt
+  agreementActionId_not: BigInt
+  agreementActionId_gt: BigInt
+  agreementActionId_lt: BigInt
+  agreementActionId_gte: BigInt
+  agreementActionId_lte: BigInt
+  agreementActionId_in: [BigInt!]
+  agreementActionId_not_in: [BigInt!]
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+  createdAt_in: [BigInt!]
+  createdAt_not_in: [BigInt!]
+  updatedAt: BigInt
+  updatedAt_not: BigInt
+  updatedAt_gt: BigInt
+  updatedAt_lt: BigInt
+  updatedAt_gte: BigInt
+  updatedAt_lte: BigInt
+  updatedAt_in: [BigInt!]
+  updatedAt_not_in: [BigInt!]
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [CVProposal_filter]
+  or: [CVProposal_filter]
+}
+
+enum CVProposal_orderBy {
+  id
+  metadata
+  version
+  strategy
+  strategy__id
+  strategy__poolId
+  beneficiary
+  requestedAmount
+  requestedToken
+  proposalStatus
+  blockLast
+  convictionLast
+  threshold
+  proposalType
+  stakedTokens
+  submitter
+  voterStakedPointsPct
+  agreementActionId
+  createdAt
+  updatedAt
+}
+
+type CVStrategy {
+  id: ID!
+  poolId: BigInt!
+  registryCommunity: RegistryCommunity!
+  config: CVStrategyConfig
+  proposals(skip: Int = 0, first: Int = 100, orderBy: CVProposal_orderBy, orderDirection: OrderDirection, where: CVProposal_filter): [CVProposal!]!
+}
+
+type CVStrategyConfig {
+  id: ID!
+  decay: BigInt!
+  maxRatio: BigInt!
+  weight: BigInt!
+}
+
+input CVStrategyConfig_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  decay: BigInt
+  decay_not: BigInt
+  decay_gt: BigInt
+  decay_lt: BigInt
+  decay_gte: BigInt
+  decay_lte: BigInt
+  decay_in: [BigInt!]
+  decay_not_in: [BigInt!]
+  maxRatio: BigInt
+  maxRatio_not: BigInt
+  maxRatio_gt: BigInt
+  maxRatio_lt: BigInt
+  maxRatio_gte: BigInt
+  maxRatio_lte: BigInt
+  maxRatio_in: [BigInt!]
+  maxRatio_not_in: [BigInt!]
+  weight: BigInt
+  weight_not: BigInt
+  weight_gt: BigInt
+  weight_lt: BigInt
+  weight_gte: BigInt
+  weight_lte: BigInt
+  weight_in: [BigInt!]
+  weight_not_in: [BigInt!]
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [CVStrategyConfig_filter]
+  or: [CVStrategyConfig_filter]
+}
+
+enum CVStrategyConfig_orderBy {
+  id
+  decay
+  maxRatio
+  weight
+}
+
+input CVStrategy_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  poolId: BigInt
+  poolId_not: BigInt
+  poolId_gt: BigInt
+  poolId_lt: BigInt
+  poolId_gte: BigInt
+  poolId_lte: BigInt
+  poolId_in: [BigInt!]
+  poolId_not_in: [BigInt!]
+  registryCommunity: String
+  registryCommunity_not: String
+  registryCommunity_gt: String
+  registryCommunity_lt: String
+  registryCommunity_gte: String
+  registryCommunity_lte: String
+  registryCommunity_in: [String!]
+  registryCommunity_not_in: [String!]
+  registryCommunity_contains: String
+  registryCommunity_contains_nocase: String
+  registryCommunity_not_contains: String
+  registryCommunity_not_contains_nocase: String
+  registryCommunity_starts_with: String
+  registryCommunity_starts_with_nocase: String
+  registryCommunity_not_starts_with: String
+  registryCommunity_not_starts_with_nocase: String
+  registryCommunity_ends_with: String
+  registryCommunity_ends_with_nocase: String
+  registryCommunity_not_ends_with: String
+  registryCommunity_not_ends_with_nocase: String
+  registryCommunity_: RegistryCommunity_filter
+  config: String
+  config_not: String
+  config_gt: String
+  config_lt: String
+  config_gte: String
+  config_lte: String
+  config_in: [String!]
+  config_not_in: [String!]
+  config_contains: String
+  config_contains_nocase: String
+  config_not_contains: String
+  config_not_contains_nocase: String
+  config_starts_with: String
+  config_starts_with_nocase: String
+  config_not_starts_with: String
+  config_not_starts_with_nocase: String
+  config_ends_with: String
+  config_ends_with_nocase: String
+  config_not_ends_with: String
+  config_not_ends_with_nocase: String
+  config_: CVStrategyConfig_filter
+  proposals_: CVProposal_filter
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [CVStrategy_filter]
+  or: [CVStrategy_filter]
+}
+
+enum CVStrategy_orderBy {
+  id
+  poolId
+  registryCommunity
+  registryCommunity__id
+  registryCommunity__chainId
+  registryCommunity__profileId
+  registryCommunity__protocolFee
+  registryCommunity__communityName
+  registryCommunity__covenantIpfsHash
+  registryCommunity__councilSafe
+  registryCommunity__isKickEnabled
+  registryCommunity__registerStakeAmount
+  registryCommunity__registerToken
+  registryCommunity__alloAddress
+  config
+  config__id
+  config__decay
+  config__maxRatio
+  config__weight
+  proposals
+}
+
+"""
+8 bytes signed integer
+
+"""
+scalar Int8
+
+type Member {
+  id: ID!
+  registryCommunity(skip: Int = 0, first: Int = 100, orderBy: RegistryCommunity_orderBy, orderDirection: OrderDirection, where: RegistryCommunity_filter): [RegistryCommunity!]
+  memberAddress: String
+  stakedAmount: BigInt
+  isRegistered: Boolean
+}
+
+input Member_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  registryCommunity: [String!]
+  registryCommunity_not: [String!]
+  registryCommunity_contains: [String!]
+  registryCommunity_contains_nocase: [String!]
+  registryCommunity_not_contains: [String!]
+  registryCommunity_not_contains_nocase: [String!]
+  registryCommunity_: RegistryCommunity_filter
+  memberAddress: String
+  memberAddress_not: String
+  memberAddress_gt: String
+  memberAddress_lt: String
+  memberAddress_gte: String
+  memberAddress_lte: String
+  memberAddress_in: [String!]
+  memberAddress_not_in: [String!]
+  memberAddress_contains: String
+  memberAddress_contains_nocase: String
+  memberAddress_not_contains: String
+  memberAddress_not_contains_nocase: String
+  memberAddress_starts_with: String
+  memberAddress_starts_with_nocase: String
+  memberAddress_not_starts_with: String
+  memberAddress_not_starts_with_nocase: String
+  memberAddress_ends_with: String
+  memberAddress_ends_with_nocase: String
+  memberAddress_not_ends_with: String
+  memberAddress_not_ends_with_nocase: String
+  stakedAmount: BigInt
+  stakedAmount_not: BigInt
+  stakedAmount_gt: BigInt
+  stakedAmount_lt: BigInt
+  stakedAmount_gte: BigInt
+  stakedAmount_lte: BigInt
+  stakedAmount_in: [BigInt!]
+  stakedAmount_not_in: [BigInt!]
+  isRegistered: Boolean
+  isRegistered_not: Boolean
+  isRegistered_in: [Boolean!]
+  isRegistered_not_in: [Boolean!]
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [Member_filter]
+  or: [Member_filter]
+}
+
+enum Member_orderBy {
+  id
+  registryCommunity
+  memberAddress
+  stakedAmount
+  isRegistered
+}
+
+"""Defines the order direction, either ascending or descending"""
+enum OrderDirection {
+  asc
+  desc
+}
+
+type Query {
+  cvstrategy(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): CVStrategy
+  cvstrategies(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: CVStrategy_orderBy
+    orderDirection: OrderDirection
+    where: CVStrategy_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [CVStrategy!]!
+  cvstrategyConfig(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): CVStrategyConfig
+  cvstrategyConfigs(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: CVStrategyConfig_orderBy
+    orderDirection: OrderDirection
+    where: CVStrategyConfig_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [CVStrategyConfig!]!
+  cvproposal(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): CVProposal
+  cvproposals(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: CVProposal_orderBy
+    orderDirection: OrderDirection
+    where: CVProposal_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [CVProposal!]!
+  registryFactory(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): RegistryFactory
+  registryFactories(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: RegistryFactory_orderBy
+    orderDirection: OrderDirection
+    where: RegistryFactory_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [RegistryFactory!]!
+  registryCommunity(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): RegistryCommunity
+  registryCommunities(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: RegistryCommunity_orderBy
+    orderDirection: OrderDirection
+    where: RegistryCommunity_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [RegistryCommunity!]!
+  member(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): Member
+  members(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: Member_orderBy
+    orderDirection: OrderDirection
+    where: Member_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [Member!]!
+  tokenGarden(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): TokenGarden
+  tokenGardens(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: TokenGarden_orderBy
+    orderDirection: OrderDirection
+    where: TokenGarden_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [TokenGarden!]!
+  """Access to subgraph metadata"""
+  _meta(block: Block_height): _Meta_
+}
+
+type RegistryCommunity {
+  id: ID!
+  chainId: BigInt!
+  profileId: String
+  protocolFee: BigInt
+  communityName: String
+  covenantIpfsHash: String
+  registryFactory: RegistryFactory
+  strategies(skip: Int = 0, first: Int = 100, orderBy: CVStrategy_orderBy, orderDirection: OrderDirection, where: CVStrategy_filter): [CVStrategy!]
+  councilSafe: String
+  isKickEnabled: Boolean
+  registerStakeAmount: BigInt
+  registerToken: String
+  alloAddress: String
+  members(skip: Int = 0, first: Int = 100, orderBy: Member_orderBy, orderDirection: OrderDirection, where: Member_filter): [Member!]
+  garden: TokenGarden!
+}
+
+input RegistryCommunity_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  chainId: BigInt
+  chainId_not: BigInt
+  chainId_gt: BigInt
+  chainId_lt: BigInt
+  chainId_gte: BigInt
+  chainId_lte: BigInt
+  chainId_in: [BigInt!]
+  chainId_not_in: [BigInt!]
+  profileId: String
+  profileId_not: String
+  profileId_gt: String
+  profileId_lt: String
+  profileId_gte: String
+  profileId_lte: String
+  profileId_in: [String!]
+  profileId_not_in: [String!]
+  profileId_contains: String
+  profileId_contains_nocase: String
+  profileId_not_contains: String
+  profileId_not_contains_nocase: String
+  profileId_starts_with: String
+  profileId_starts_with_nocase: String
+  profileId_not_starts_with: String
+  profileId_not_starts_with_nocase: String
+  profileId_ends_with: String
+  profileId_ends_with_nocase: String
+  profileId_not_ends_with: String
+  profileId_not_ends_with_nocase: String
+  protocolFee: BigInt
+  protocolFee_not: BigInt
+  protocolFee_gt: BigInt
+  protocolFee_lt: BigInt
+  protocolFee_gte: BigInt
+  protocolFee_lte: BigInt
+  protocolFee_in: [BigInt!]
+  protocolFee_not_in: [BigInt!]
+  communityName: String
+  communityName_not: String
+  communityName_gt: String
+  communityName_lt: String
+  communityName_gte: String
+  communityName_lte: String
+  communityName_in: [String!]
+  communityName_not_in: [String!]
+  communityName_contains: String
+  communityName_contains_nocase: String
+  communityName_not_contains: String
+  communityName_not_contains_nocase: String
+  communityName_starts_with: String
+  communityName_starts_with_nocase: String
+  communityName_not_starts_with: String
+  communityName_not_starts_with_nocase: String
+  communityName_ends_with: String
+  communityName_ends_with_nocase: String
+  communityName_not_ends_with: String
+  communityName_not_ends_with_nocase: String
+  covenantIpfsHash: String
+  covenantIpfsHash_not: String
+  covenantIpfsHash_gt: String
+  covenantIpfsHash_lt: String
+  covenantIpfsHash_gte: String
+  covenantIpfsHash_lte: String
+  covenantIpfsHash_in: [String!]
+  covenantIpfsHash_not_in: [String!]
+  covenantIpfsHash_contains: String
+  covenantIpfsHash_contains_nocase: String
+  covenantIpfsHash_not_contains: String
+  covenantIpfsHash_not_contains_nocase: String
+  covenantIpfsHash_starts_with: String
+  covenantIpfsHash_starts_with_nocase: String
+  covenantIpfsHash_not_starts_with: String
+  covenantIpfsHash_not_starts_with_nocase: String
+  covenantIpfsHash_ends_with: String
+  covenantIpfsHash_ends_with_nocase: String
+  covenantIpfsHash_not_ends_with: String
+  covenantIpfsHash_not_ends_with_nocase: String
+  registryFactory: String
+  registryFactory_not: String
+  registryFactory_gt: String
+  registryFactory_lt: String
+  registryFactory_gte: String
+  registryFactory_lte: String
+  registryFactory_in: [String!]
+  registryFactory_not_in: [String!]
+  registryFactory_contains: String
+  registryFactory_contains_nocase: String
+  registryFactory_not_contains: String
+  registryFactory_not_contains_nocase: String
+  registryFactory_starts_with: String
+  registryFactory_starts_with_nocase: String
+  registryFactory_not_starts_with: String
+  registryFactory_not_starts_with_nocase: String
+  registryFactory_ends_with: String
+  registryFactory_ends_with_nocase: String
+  registryFactory_not_ends_with: String
+  registryFactory_not_ends_with_nocase: String
+  registryFactory_: RegistryFactory_filter
+  strategies_: CVStrategy_filter
+  councilSafe: String
+  councilSafe_not: String
+  councilSafe_gt: String
+  councilSafe_lt: String
+  councilSafe_gte: String
+  councilSafe_lte: String
+  councilSafe_in: [String!]
+  councilSafe_not_in: [String!]
+  councilSafe_contains: String
+  councilSafe_contains_nocase: String
+  councilSafe_not_contains: String
+  councilSafe_not_contains_nocase: String
+  councilSafe_starts_with: String
+  councilSafe_starts_with_nocase: String
+  councilSafe_not_starts_with: String
+  councilSafe_not_starts_with_nocase: String
+  councilSafe_ends_with: String
+  councilSafe_ends_with_nocase: String
+  councilSafe_not_ends_with: String
+  councilSafe_not_ends_with_nocase: String
+  isKickEnabled: Boolean
+  isKickEnabled_not: Boolean
+  isKickEnabled_in: [Boolean!]
+  isKickEnabled_not_in: [Boolean!]
+  registerStakeAmount: BigInt
+  registerStakeAmount_not: BigInt
+  registerStakeAmount_gt: BigInt
+  registerStakeAmount_lt: BigInt
+  registerStakeAmount_gte: BigInt
+  registerStakeAmount_lte: BigInt
+  registerStakeAmount_in: [BigInt!]
+  registerStakeAmount_not_in: [BigInt!]
+  registerToken: String
+  registerToken_not: String
+  registerToken_gt: String
+  registerToken_lt: String
+  registerToken_gte: String
+  registerToken_lte: String
+  registerToken_in: [String!]
+  registerToken_not_in: [String!]
+  registerToken_contains: String
+  registerToken_contains_nocase: String
+  registerToken_not_contains: String
+  registerToken_not_contains_nocase: String
+  registerToken_starts_with: String
+  registerToken_starts_with_nocase: String
+  registerToken_not_starts_with: String
+  registerToken_not_starts_with_nocase: String
+  registerToken_ends_with: String
+  registerToken_ends_with_nocase: String
+  registerToken_not_ends_with: String
+  registerToken_not_ends_with_nocase: String
+  alloAddress: String
+  alloAddress_not: String
+  alloAddress_gt: String
+  alloAddress_lt: String
+  alloAddress_gte: String
+  alloAddress_lte: String
+  alloAddress_in: [String!]
+  alloAddress_not_in: [String!]
+  alloAddress_contains: String
+  alloAddress_contains_nocase: String
+  alloAddress_not_contains: String
+  alloAddress_not_contains_nocase: String
+  alloAddress_starts_with: String
+  alloAddress_starts_with_nocase: String
+  alloAddress_not_starts_with: String
+  alloAddress_not_starts_with_nocase: String
+  alloAddress_ends_with: String
+  alloAddress_ends_with_nocase: String
+  alloAddress_not_ends_with: String
+  alloAddress_not_ends_with_nocase: String
+  members_: Member_filter
+  garden: String
+  garden_not: String
+  garden_gt: String
+  garden_lt: String
+  garden_gte: String
+  garden_lte: String
+  garden_in: [String!]
+  garden_not_in: [String!]
+  garden_contains: String
+  garden_contains_nocase: String
+  garden_not_contains: String
+  garden_not_contains_nocase: String
+  garden_starts_with: String
+  garden_starts_with_nocase: String
+  garden_not_starts_with: String
+  garden_not_starts_with_nocase: String
+  garden_ends_with: String
+  garden_ends_with_nocase: String
+  garden_not_ends_with: String
+  garden_not_ends_with_nocase: String
+  garden_: TokenGarden_filter
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [RegistryCommunity_filter]
+  or: [RegistryCommunity_filter]
+}
+
+enum RegistryCommunity_orderBy {
+  id
+  chainId
+  profileId
+  protocolFee
+  communityName
+  covenantIpfsHash
+  registryFactory
+  registryFactory__id
+  registryFactory__chainId
+  strategies
+  councilSafe
+  isKickEnabled
+  registerStakeAmount
+  registerToken
+  alloAddress
+  members
+  garden
+  garden__id
+  garden__name
+  garden__chainId
+  garden__totalBalance
+  garden__symbol
+  garden__decimals
+  garden__address
+}
+
+type RegistryFactory {
+  id: ID!
+  chainId: BigInt!
+  registryCommunities(skip: Int = 0, first: Int = 100, orderBy: RegistryCommunity_orderBy, orderDirection: OrderDirection, where: RegistryCommunity_filter): [RegistryCommunity!]
+}
+
+input RegistryFactory_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  chainId: BigInt
+  chainId_not: BigInt
+  chainId_gt: BigInt
+  chainId_lt: BigInt
+  chainId_gte: BigInt
+  chainId_lte: BigInt
+  chainId_in: [BigInt!]
+  chainId_not_in: [BigInt!]
+  registryCommunities_: RegistryCommunity_filter
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [RegistryFactory_filter]
+  or: [RegistryFactory_filter]
+}
+
+enum RegistryFactory_orderBy {
+  id
+  chainId
+  registryCommunities
+}
+
+type Subscription {
+  cvstrategy(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): CVStrategy
+  cvstrategies(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: CVStrategy_orderBy
+    orderDirection: OrderDirection
+    where: CVStrategy_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [CVStrategy!]!
+  cvstrategyConfig(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): CVStrategyConfig
+  cvstrategyConfigs(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: CVStrategyConfig_orderBy
+    orderDirection: OrderDirection
+    where: CVStrategyConfig_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [CVStrategyConfig!]!
+  cvproposal(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): CVProposal
+  cvproposals(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: CVProposal_orderBy
+    orderDirection: OrderDirection
+    where: CVProposal_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [CVProposal!]!
+  registryFactory(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): RegistryFactory
+  registryFactories(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: RegistryFactory_orderBy
+    orderDirection: OrderDirection
+    where: RegistryFactory_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [RegistryFactory!]!
+  registryCommunity(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): RegistryCommunity
+  registryCommunities(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: RegistryCommunity_orderBy
+    orderDirection: OrderDirection
+    where: RegistryCommunity_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [RegistryCommunity!]!
+  member(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): Member
+  members(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: Member_orderBy
+    orderDirection: OrderDirection
+    where: Member_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [Member!]!
+  tokenGarden(
+    id: ID!
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): TokenGarden
+  tokenGardens(
+    skip: Int = 0
+    first: Int = 100
+    orderBy: TokenGarden_orderBy
+    orderDirection: OrderDirection
+    where: TokenGarden_filter
+    """
+    The block at which the query should be executed. Can either be a `{ hash: Bytes }` value containing a block hash, a `{ number: Int }` containing the block number, or a `{ number_gte: Int }` containing the minimum block number. In the case of `number_gte`, the query will be executed on the latest block only if the subgraph has progressed to or past the minimum block number. Defaults to the latest block when omitted.
+    """
+    block: Block_height
+    """
+    Set to `allow` to receive data even if the subgraph has skipped over errors while syncing.
+    """
+    subgraphError: _SubgraphErrorPolicy_! = deny
+  ): [TokenGarden!]!
+  """Access to subgraph metadata"""
+  _meta(block: Block_height): _Meta_
+}
+
+type TokenGarden {
+  id: ID!
+  name: String!
+  chainId: BigInt!
+  totalBalance: BigInt!
+  symbol: String!
+  decimals: BigInt!
+  address: String!
+  communities(skip: Int = 0, first: Int = 100, orderBy: RegistryCommunity_orderBy, orderDirection: OrderDirection, where: RegistryCommunity_filter): [RegistryCommunity!]
+}
+
+input TokenGarden_filter {
+  id: ID
+  id_not: ID
+  id_gt: ID
+  id_lt: ID
+  id_gte: ID
+  id_lte: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  name: String
+  name_not: String
+  name_gt: String
+  name_lt: String
+  name_gte: String
+  name_lte: String
+  name_in: [String!]
+  name_not_in: [String!]
+  name_contains: String
+  name_contains_nocase: String
+  name_not_contains: String
+  name_not_contains_nocase: String
+  name_starts_with: String
+  name_starts_with_nocase: String
+  name_not_starts_with: String
+  name_not_starts_with_nocase: String
+  name_ends_with: String
+  name_ends_with_nocase: String
+  name_not_ends_with: String
+  name_not_ends_with_nocase: String
+  chainId: BigInt
+  chainId_not: BigInt
+  chainId_gt: BigInt
+  chainId_lt: BigInt
+  chainId_gte: BigInt
+  chainId_lte: BigInt
+  chainId_in: [BigInt!]
+  chainId_not_in: [BigInt!]
+  totalBalance: BigInt
+  totalBalance_not: BigInt
+  totalBalance_gt: BigInt
+  totalBalance_lt: BigInt
+  totalBalance_gte: BigInt
+  totalBalance_lte: BigInt
+  totalBalance_in: [BigInt!]
+  totalBalance_not_in: [BigInt!]
+  symbol: String
+  symbol_not: String
+  symbol_gt: String
+  symbol_lt: String
+  symbol_gte: String
+  symbol_lte: String
+  symbol_in: [String!]
+  symbol_not_in: [String!]
+  symbol_contains: String
+  symbol_contains_nocase: String
+  symbol_not_contains: String
+  symbol_not_contains_nocase: String
+  symbol_starts_with: String
+  symbol_starts_with_nocase: String
+  symbol_not_starts_with: String
+  symbol_not_starts_with_nocase: String
+  symbol_ends_with: String
+  symbol_ends_with_nocase: String
+  symbol_not_ends_with: String
+  symbol_not_ends_with_nocase: String
+  decimals: BigInt
+  decimals_not: BigInt
+  decimals_gt: BigInt
+  decimals_lt: BigInt
+  decimals_gte: BigInt
+  decimals_lte: BigInt
+  decimals_in: [BigInt!]
+  decimals_not_in: [BigInt!]
+  address: String
+  address_not: String
+  address_gt: String
+  address_lt: String
+  address_gte: String
+  address_lte: String
+  address_in: [String!]
+  address_not_in: [String!]
+  address_contains: String
+  address_contains_nocase: String
+  address_not_contains: String
+  address_not_contains_nocase: String
+  address_starts_with: String
+  address_starts_with_nocase: String
+  address_not_starts_with: String
+  address_not_starts_with_nocase: String
+  address_ends_with: String
+  address_ends_with_nocase: String
+  address_not_ends_with: String
+  address_not_ends_with_nocase: String
+  communities_: RegistryCommunity_filter
+  """Filter for the block changed event."""
+  _change_block: BlockChangedFilter
+  and: [TokenGarden_filter]
+  or: [TokenGarden_filter]
+}
+
+enum TokenGarden_orderBy {
+  id
+  name
+  chainId
+  totalBalance
+  symbol
+  decimals
+  address
+  communities
+}
+
+type _Block_ {
+  """The hash of the block"""
+  hash: Bytes
+  """The block number"""
+  number: Int!
+  """Integer representation of the timestamp stored in blocks for the chain"""
+  timestamp: Int
+}
+
+"""The type for the top-level _meta field"""
+type _Meta_ {
+  """
+  Information about a specific subgraph block. The hash of the block
+  will be null if the _meta field has a block constraint that asks for
+  a block number. It will be filled if the _meta field has no block constraint
+  and therefore asks for the latest  block
+  
+  """
+  block: _Block_!
+  """The deployment ID"""
+  deployment: String!
+  """If `true`, the subgraph encountered indexing errors at some past block"""
+  hasIndexingErrors: Boolean!
+}
+
+enum _SubgraphErrorPolicy_ {
+  """Data will be returned even if the subgraph has indexing errors"""
+  allow
+  """
+  If the subgraph has indexing errors, data will be omitted. The default.
+  """
+  deny
+}

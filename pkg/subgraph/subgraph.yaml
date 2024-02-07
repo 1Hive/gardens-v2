@@ -4,22 +4,9 @@ features:
 schema:
   file: ./src/schema.graphql
 templates:
-  - kind: file/ipfs
-    name: ProposalMetadata
-    mapping:
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      file: ./src/mappings/proposalMetadata.ts
-      handler: handleProposalMetadata
-      entities:
-        - ProposalMeta
-        - CVProposal
-      abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
   - kind: ethereum/contract
     name: CVStrategy
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: CVStrategy
     mapping:
@@ -39,7 +26,7 @@ templates:
       file: ./src/mappings/cv-strategy.ts
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunity
     mapping:
@@ -48,9 +35,12 @@ templates:
       language: wasm/assemblyscript
       entities:
         - RegistryCommunity
+        - ERC20
       abis:
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: ERC20
+          file: ../contracts/out/ERC20.sol/ERC20.json
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -84,11 +74,15 @@ templates:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: localhost
+    network: arbitrum-sepolia
+    context:
+      chainId: 
+        type: Int
+        data: 421614
     source:
-      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      address: "0xA7A94292413644DE53792597E28eDEF71D02bb7a"
       abi: RegistryFactory
-      startBlock: 0
+      startBlock: 11371411
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

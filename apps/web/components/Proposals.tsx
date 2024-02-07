@@ -3,13 +3,18 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAccount, useContractWrite } from "wagmi";
-import { contractsAddresses } from "@/constants/contracts";
+import { useAccount, useContractRead, useContractWrite } from "wagmi";
+import {
+  ContractsAddresses,
+  confirmationsRequired,
+} from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { cvStrategyABI, alloABI } from "@/src/generated";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
+import { toast } from "react-toastify";
+import { useViemClient } from "@/hooks/useViemClient";
 
 type ProposalsMock = {
   title: string;
@@ -45,9 +50,11 @@ type InputItem = {
 export function Proposals({
   poolId,
   strategyAddress,
+  addrs,
 }: {
   poolId: number;
   strategyAddress: `0x${string}`;
+  addrs: ContractsAddresses;
 }) {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
@@ -55,8 +62,10 @@ export function Proposals({
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const { address } = useAccount();
+  const pathname = usePathname();
+  const router = useRouter();
 
-  useEffect(() => {
+  const triggerRenderProposals = () => {
     if (address !== undefined) {
       getProposals(address as `0x${string}`, strategyAddress, poolId).then(
         (res) => {
@@ -64,10 +73,11 @@ export function Proposals({
         },
       );
     }
-  }, [address]);
+  };
 
-  const pathname = usePathname();
-  const router = useRouter();
+  useEffect(() => {
+    triggerRenderProposals();
+  }, [address]);
 
   useEffect(() => {
     const newInputs = proposals.map(({ id, voterStakedPointsPct }) => ({
@@ -82,41 +92,74 @@ export function Proposals({
   }, [inputs]);
 
   const {
+    data: isMemberActived,
+    error: errorMemberActivated,
+    status,
+  } = useContractRead({
+    address: addrs.registryCommunity,
+    abi: registryCommunityABI,
+    functionName: "memberActivatedInStrategies",
+    args: [address as `0x${string}`, strategyAddress],
+    watch: true,
+    cacheOnBlock: true,
+  });
+
+  useEffect(() => {
+    if (isMemberActived === undefined) return;
+    if (isMemberActived !== true) setEditView(false);
+  }, [isMemberActived]);
+
+  const {
     data: contractWriteData,
     write: writeAllocate,
     error: errorAllocate,
     isSuccess: isSuccessAllocate,
-    status,
+    status: contractStatus,
   } = useContractWrite({
-    address: contractsAddresses.allo,
+    address: addrs.allo,
     abi: alloABI,
     functionName: "allocate",
   });
 
-  const { errorName } = useErrorDetails(errorAllocate, "errorAllocate");
+  useErrorDetails(errorAllocate, "errorAllocate");
 
   useEffect(() => {
     if (isSuccessAllocate) {
       setMessage("Transaction sent, hash: " + contractWriteData?.hash);
+
+      const receipt = transactionReceipt();
+
+      toast
+        .promise(receipt, {
+          pending: "Transaction in progress",
+          success: "Transaction Success",
+          error: "Something went wrong",
+        })
+        .then((data) => {
+          console.log(data);
+          triggerRenderProposals();
+        })
+        .catch((error: any) => {
+          console.error(`Tx failure: ${error}`);
+        });
     }
   }, [isSuccessAllocate, contractWriteData]);
 
-  // const { data: txSettledData, status } = useWaitForTransactionReceipt({
-  //   hash: contractWriteData,
-  // });
+  const viemClient = useViemClient();
 
-  const submit = () => {
+  const transactionReceipt = async () =>
+    await viemClient.waitForTransactionReceipt({
+      confirmations: confirmationsRequired,
+      hash: contractWriteData?.hash || "0x",
+    });
+
+  const submit = async () => {
     const encodedData = getEncodedProposals(inputs, proposals);
-    const poolId = Number(contractsAddresses.poolID);
+    // const poolId = Number(poolID);
+    const poolId = Number(1); //@todo fix this using subgraph instead
 
     writeAllocate({
       args: [BigInt(poolId), encodedData as `0x${string}`],
-      // onError: (err: any) => {
-      //   console.log(err);
-      // },
-      // onSuccess: (data: any) => {
-      //   setMessage("Transaction sent, hash: " + data.hash);
-      // },
     });
   };
 
@@ -134,7 +177,6 @@ export function Proposals({
       });
     });
 
-    // console.log(resultArr, currentData);
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
@@ -232,20 +274,16 @@ export function Proposals({
             </div>
           ))}
         </div>
-        {/*  PROPOSALS STATS  ///// */}
-        <ProposalStats
-          proposals={proposals}
-          distributedPoints={distributedPoints}
-        />
-        {/* */}
         <div className="flex justify-center gap-8">
-          <Button className="bg-primary">Create Proposal</Button>
-          <Button
-            className="bg-accent"
-            onClick={() => setEditView((prev) => !prev)}
-          >
-            Manage support
-          </Button>
+          <Button className={`bg-primary`}>Create Proposal</Button>
+          {isMemberActived && (
+            <Button
+              className={`${editView ? "bg-red text-white" : "bg-primary"}`}
+              onClick={() => setEditView((prev) => !prev)}
+            >
+              {editView ? "Cancel" : "Manage support"}
+            </Button>
+          )}
           {editView && (
             <Button
               className="min-w-[200px] bg-secondary"
@@ -259,6 +297,11 @@ export function Proposals({
         <div className="">
           <p className="font-semibold">{message}</p>
         </div>
+        {/*  PROPOSALS STATS  ///// */}
+        <ProposalStats
+          proposals={proposals}
+          distributedPoints={distributedPoints}
+        />
       </div>
     </section>
   );

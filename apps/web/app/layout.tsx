@@ -3,6 +3,9 @@ import React from "react";
 import { Press_Start_2P, Chakra_Petch } from "next/font/google";
 import Providers from "@/providers/Providers";
 import { Metadata } from "next";
+import { Bounce, ToastContainer } from "react-toastify";
+
+import "react-toastify/dist/ReactToastify.css";
 
 const press = Press_Start_2P({
   variable: "--font-press",
@@ -34,6 +37,19 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-white font-chakra">
         <Providers>{children}</Providers>
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+          transition={Bounce}
+        />
       </body>
     </html>
   );
