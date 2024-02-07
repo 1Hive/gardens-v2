@@ -130,6 +130,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
     //    uint256 public constant ABSTAIN_PROPOSAL_ID = 1;
     uint256 public constant MAX_STAKED_PROPOSALS = 10; //@todo not allow stake more than 10 proposals per user
+    uint256 public constant PRECISE_PERCENTAGE = 100 * 10 ** 4;
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -503,7 +504,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     function convertTokensToPct(uint256 _tokens) internal view returns (uint256) {
-        return _tokens * 100 / getBasisPoint();
+        return _tokens * PRECISE_PERCENTAGE/ getBasisPoint();
     }
 
     function getBasisPoint() internal view returns (uint256) {
@@ -575,18 +576,19 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
                 }
             }
             int256 delta = _proposalSupport[i].deltaSupport;
-
+            console.log("DELTA:");
+            console.logInt(delta);
             Proposal storage proposal = proposals[proposalId];
 
             uint256 beforeStakedPointsPct = proposal.voterStakedPointsPct[_sender];
             uint256 previousStakedAmount = proposal.voterStake[_sender];
-            // console.log("beforeStakedPointsPct", beforeStakedPointsPct);
-            // console.log("previousStakedAmount", previousStakedAmount);
+             console.log("beforeStakedPointsPct", beforeStakedPointsPct);
+            //console.log("previousStakedAmount", previousStakedAmount);
 
             uint256 stakedPointsPct = _applyDelta(beforeStakedPointsPct, delta);
 
             // console.log("proposalID", proposalId);
-            // console.log("stakedPointsPct%", stakedPointsPct);
+             console.log("stakedPointsPct%", stakedPointsPct);
 
             proposal.voterStakedPointsPct[_sender] = stakedPointsPct;
 

@@ -132,7 +132,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     mapping(address => mapping(address => bool)) public memberActivatedInStrategies;
     mapping(address => uint256) public totalPointsActivatedInStrategy;
 
-    uint256 public constant DEFAULT_POINTS = 100;
+    uint256 public constant DEFAULT_POINTS = 100 * 10 ** 4;
 
     constructor() {
         // _grantRole(DEFAULT_ADMIN_ROLE, address(this));
