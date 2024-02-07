@@ -1418,6 +1418,10 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getTokenGardens(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
+    isMember(variables: Exact<{
+        me: string;
+        comm: string;
+    }>, options?: TOperationContext): Promise<isMemberQuery>;
     getCommunityByGarden(variables: Exact<{
         addr: string;
     }>, options?: TOperationContext): Promise<getCommunityByGardenQuery>;
@@ -1445,6 +1449,15 @@ export type getTokenGardensQuery = {
         })>>;
     })>;
 };
+export type isMemberQueryVariables = Exact<{
+    me: Scalars['ID'];
+    comm: Scalars['String'];
+}>;
+export type isMemberQuery = {
+    members: Array<(Pick<Member, 'id'> & {
+        registryCommunity?: Maybe<Array<Pick<RegistryCommunity, 'id'>>>;
+    })>;
+};
 export type getCommunityByGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
 }>;
@@ -1464,6 +1477,10 @@ export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact
 export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery, Exact<{
     [key: string]: never;
 }>>;
+export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
+    me: Scalars['ID'];
+    comm: Scalars['String'];
+}>>;
 export declare const getCommunityByGardenDocument: DocumentNode<getCommunityByGardenQuery, Exact<{
     addr: Scalars['ID'];
 }>>;
@@ -1471,6 +1488,7 @@ export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V,
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
     getTokenGardens(variables?: getTokenGardensQueryVariables, options?: C): Promise<getTokenGardensQuery>;
+    isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getCommunityByGarden(variables: getCommunityByGardenQueryVariables, options?: C): Promise<getCommunityByGardenQuery>;
 };
 export type Sdk = ReturnType<typeof getSdk>;

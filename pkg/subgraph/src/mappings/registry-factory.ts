@@ -21,18 +21,14 @@ export function handleCommunityCreated(event: CommunityCreated): void {
   let factory = RegistryFactory.load(addr_id);
   if (factory == null) {
     factory = new RegistryFactory(addr_id);
-
-    let context = new DataSourceContext();
-    context.setString(CTX_FACTORY_ADDRESS, addr_id);
-    const chainId = dataSource.context().getI32(CTX_CHAIN_ID);
-
-    factory.chainId = BigInt.fromI32(chainId);
-
-    context.setI32(CTX_CHAIN_ID, chainId);
-    CommunityTemplate.createWithContext(
-      event.params._registryCommunity,
-      context,
-    );
-    factory.save();
   }
+  let context = new DataSourceContext();
+  context.setString(CTX_FACTORY_ADDRESS, addr_id);
+  const chainId = dataSource.context().getI32(CTX_CHAIN_ID);
+
+  factory.chainId = BigInt.fromI32(chainId);
+
+  context.setI32(CTX_CHAIN_ID, chainId);
+  CommunityTemplate.createWithContext(event.params._registryCommunity, context);
+  factory.save();
 }

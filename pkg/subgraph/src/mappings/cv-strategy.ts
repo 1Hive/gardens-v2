@@ -32,6 +32,7 @@ export function handleInitialized(event: InitializedCV): void {
   const decay = event.params.data.decay;
   const maxRatio = event.params.data.maxRatio;
   const weight = event.params.data.weight;
+  const pType = event.params.data.proposalType;
 
   log.debug(
     "handleInitialized registryCommunity:{} decay:{} maxRatio:{} weight:{}",
@@ -53,6 +54,7 @@ export function handleInitialized(event: InitializedCV): void {
   config.decay = decay;
   config.maxRatio = maxRatio;
   config.weight = weight;
+  config.proposalType = BigInt.fromI32(pType);
 
   config.save();
 
@@ -73,7 +75,8 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.strategy = cvsId;
 
   newProposal.beneficiary = p.getBeneficiary().toHex();
-  newProposal.requestedToken = p.getRequestedToken().toHex();
+  let requestedToken = p.getRequestedToken();
+  newProposal.requestedToken = requestedToken.toHex();
 
   newProposal.blockLast = p.getBlockLast();
   newProposal.convictionLast = p.getConvictionLast();
@@ -83,10 +86,10 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.requestedAmount = p.getRequestedAmount();
 
   newProposal.proposalStatus = BigInt.fromI32(p.getProposalStatus());
-  newProposal.proposalType = BigInt.fromI32(p.getProposalType());
+  // newProposal.proposalType = BigInt.fromI32(p.proposalType());
   newProposal.submitter = p.getSubmitter().toHex();
   newProposal.voterStakedPointsPct = p.getVoterStakedPointsPct();
-  newProposal.agreementActionId = p.getAgreementActionId();
+  // newProposal.agreementActionId = p.getAgreementActionId();
 
   const pointer = cvc.getMetadata(event.params.proposalId).pointer;
 

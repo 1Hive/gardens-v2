@@ -3,27 +3,11 @@ features:
   - nonFatalErrors
 schema:
   file: ./src/schema.graphql
+dataSources:
+{{#dataSources}}
+  {{&subTemplate}}
+{{/dataSources}}
 templates:
-  - kind: ethereum/contract
-    name: CVStrategy
-    network: {{network}}
-    source:
-      abi: CVStrategy
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      entities:
-        - CVStrategy
-      abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
-      eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256))
-          handler: handleInitialized
-        - event: ProposalCreated(uint256,uint256)
-          handler: handleProposalCreated
-      file: ./src/mappings/cv-strategy.ts
   - kind: ethereum/contract
     name: RegistryCommunity
     network: {{network}}
@@ -36,11 +20,17 @@ templates:
       entities:
         - RegistryCommunity
         - ERC20
+        - CVStrategy
+        - TokenGarden
+        - Member
       abis:
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+     
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -71,7 +61,29 @@ templates:
         # - event: AlloSet(address)
         #   handler: handleAlloSet
       file: ./src/mappings/registry-community.ts
-dataSources:
-{{#dataSources}}
-  {{&subTemplate}}
-{{/dataSources}}
+
+  - kind: ethereum/contract
+    name: CVStrategy
+    network: {{network}}
+    source:
+      abi: CVStrategy
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CVStrategy
+        - CVStrategyConfig
+        - CVProposal
+      abis:
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+      eventHandlers:
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8))
+          handler: handleInitialized
+        - event: ProposalCreated(uint256,uint256)
+          handler: handleProposalCreated
+      file: ./src/mappings/cv-strategy.ts
+  

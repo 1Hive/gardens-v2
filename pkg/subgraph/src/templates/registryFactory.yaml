@@ -15,9 +15,12 @@
       language: wasm/assemblyscript
       entities:
         - {{name}}
+        - RegistryCommunity
       abis:
         - name: {{name}}
           file: ../contracts/out/{{name}}.sol/{{name}}.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated

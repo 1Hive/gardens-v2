@@ -43,6 +43,15 @@ query getTokenGardens {
   }
 }
 
+query isMember($me: ID!, $comm: String!) {
+  members(where: { id: $me, registryCommunity_contains: [$comm] }) {
+    id
+    registryCommunity {
+      id
+    }
+  }
+}
+
 # query getCommunity($addr: ID!) {
 #   registryCommunity(id: $addr) {
 #     id

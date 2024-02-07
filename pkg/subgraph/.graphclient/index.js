@@ -94,6 +94,12 @@ export async function getMeshOptions() {
                     },
                     location: 'GetTokenGardensDocument.graphql'
                 }, {
+                    document: IsMemberDocument,
+                    get rawSDL() {
+                        return printWithCache(IsMemberDocument);
+                    },
+                    location: 'IsMemberDocument.graphql'
+                }, {
                     document: GetCommunityByGardenDocument,
                     get rawSDL() {
                         return printWithCache(GetCommunityByGardenDocument);
@@ -178,6 +184,16 @@ export const getTokenGardensDocument = gql `
   }
 }
     `;
+export const isMemberDocument = gql `
+    query isMember($me: ID!, $comm: String!) {
+  members(where: {id: $me, registryCommunity_contains: [$comm]}) {
+    id
+    registryCommunity {
+      id
+    }
+  }
+}
+    `;
 export const getCommunityByGardenDocument = gql `
     query getCommunityByGarden($addr: ID!) {
   tokenGarden(id: $addr) {
@@ -210,6 +226,9 @@ export function getSdk(requester) {
         },
         getTokenGardens(variables, options) {
             return requester(getTokenGardensDocument, variables, options);
+        },
+        isMember(variables, options) {
+            return requester(isMemberDocument, variables, options);
         },
         getCommunityByGarden(variables, options) {
             return requester(getCommunityByGardenDocument, variables, options);

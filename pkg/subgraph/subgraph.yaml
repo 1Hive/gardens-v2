@@ -3,27 +3,36 @@ features:
   - nonFatalErrors
 schema:
   file: ./src/schema.graphql
-templates:
+dataSources:
   - kind: ethereum/contract
-    name: CVStrategy
+    name: RegistryFactory
     network: arbitrum-sepolia
+    context:
+      chainId: 
+        type: Int
+        data: 421614
     source:
-      abi: CVStrategy
+      address: "0xA7A94292413644DE53792597E28eDEF71D02bb7a"
+      abi: RegistryFactory
+      startBlock: 11371411
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - CVStrategy
+        - RegistryFactory
+        - RegistryCommunity
       abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: RegistryFactory
+          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256))
-          handler: handleInitialized
-        - event: ProposalCreated(uint256,uint256)
-          handler: handleProposalCreated
-      file: ./src/mappings/cv-strategy.ts
+        - event: CommunityCreated(address)
+          handler: handleCommunityCreated
+      file: ./src/mappings/registry-factory.ts
+
+templates:
   - kind: ethereum/contract
     name: RegistryCommunity
     network: arbitrum-sepolia
@@ -36,11 +45,17 @@ templates:
       entities:
         - RegistryCommunity
         - ERC20
+        - CVStrategy
+        - TokenGarden
+        - Member
       abis:
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+     
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -71,29 +86,29 @@ templates:
         # - event: AlloSet(address)
         #   handler: handleAlloSet
       file: ./src/mappings/registry-community.ts
-dataSources:
+
   - kind: ethereum/contract
-    name: RegistryFactory
+    name: CVStrategy
     network: arbitrum-sepolia
-    context:
-      chainId: 
-        type: Int
-        data: 421614
     source:
-      address: "0xA7A94292413644DE53792597E28eDEF71D02bb7a"
-      abi: RegistryFactory
-      startBlock: 11371411
+      abi: CVStrategy
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - RegistryFactory
+        - CVStrategy
+        - CVStrategyConfig
+        - CVProposal
       abis:
-        - name: RegistryFactory
-          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
       eventHandlers:
-        - event: CommunityCreated(address)
-          handler: handleCommunityCreated
-      file: ./src/mappings/registry-factory.ts
-
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8))
+          handler: handleInitialized
+        - event: ProposalCreated(uint256,uint256)
+          handler: handleProposalCreated
+      file: ./src/mappings/cv-strategy.ts
+  

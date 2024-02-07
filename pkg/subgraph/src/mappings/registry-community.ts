@@ -7,18 +7,17 @@ import {
   RegistryCommunity as RegistryCommunityContract,
   MemberRegistered,
   StrategyAdded,
+  StakeAndRegisterMemberCall,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 
 import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
 import { CTX_CHAIN_ID, CTX_FACTORY_ADDRESS } from "./registry-factory";
 
 export function handleInitialized(event: RegistryInitialized): void {
-  log.debug("RegistryCommunity: handleInitialized1", []);
   const communityAddr = event.address.toHexString();
   log.debug("RegistryCommunity: handleInitialized/* : {}", [communityAddr]);
   const rc = RegistryCommunity.load(communityAddr);
   const ctx = dataSource.context();
-  log.debug("ctx1", []);
   if (ctx != null && rc == null) {
     const factoryAddress = ctx.getString(CTX_FACTORY_ADDRESS) as string | null;
     log.debug("factoryAddress: {}", [factoryAddress ? factoryAddress : "0x"]);
@@ -28,10 +27,11 @@ export function handleInitialized(event: RegistryInitialized): void {
 
     newRC.communityName = event.params._communityName;
     newRC.profileId = event.params._profileId.toHexString();
-    newRC.covenantIpfsHash = event.params._metadata.pointer;
+    // newRC.covenantIpfsHash = event.params._metadata.pointer;
 
     const rcc = RegistryCommunityContract.bind(event.address);
 
+    newRC.covenantIpfsHash = rcc.covenantIpfsHash();
     newRC.registerStakeAmount = rcc.registerStakeAmount();
     newRC.councilSafe = rcc.councilSafe().toHexString();
 
@@ -63,20 +63,15 @@ export function handleInitialized(event: RegistryInitialized): void {
 
 // // handleMemberRegistered
 export function handleMemberRegistered(event: MemberRegistered): void {
-  const communityAddr = event.address.toHexString();
-  const rc = RegistryCommunity.load(communityAddr);
-  const memberLen = rc
-    ? rc.members.entries.length
-      ? rc.members.entries.length
-      : 0
-    : 0;
-  log.debug("handleMemberRegistered: memberLen: {}", [memberLen.toString()]);
   const memberAddress = event.params._member.toHexString();
-  log.debug("handleMemberRegistered: {}", [memberAddress]);
+  log.debug("handleMemberRegistered: {} logIndex: {} hash:{}", [
+    memberAddress,
+    event.logIndex.toHexString(),
+    event.transaction.hash.toHexString(),
+  ]);
+
   const community = event.address.toHex();
-  // const id = `${memberAddress}-${community}`;
   let member = Member.load(memberAddress);
-  // const memberC = MembersCommunity.load(id);
   if (member == null) {
     member = new Member(memberAddress);
     member.memberAddress = memberAddress;
@@ -114,4 +109,10 @@ export function handleStrategyAdded(event: StrategyAdded): void {
   const strategyAddress = event.params._strategy;
 
   CVStrategyTemplate.create(strategyAddress);
+}
+
+// handleCallStake
+export function handleCallStake(call: StakeAndRegisterMemberCall): void {
+  const memberAddr = call.from.toHexString();
+  log.debug("handleCallStake: from:{}", [memberAddr]);
 }
