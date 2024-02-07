@@ -11,7 +11,7 @@ export function formatAddress(
   }
   return (
     address.slice(0, charsLength + prefixLength) +
-    " … " +
+    "…" +
     address.slice(-charsLength)
   );
 }

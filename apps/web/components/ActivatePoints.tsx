@@ -21,7 +21,7 @@ type ActiveMemberProps = {
   errorMemberActivated: Error | null;
 };
 
-export function ActivateMember({
+export function ActivatePoints({
   strategyAddress,
   isMemberActived,
   errorMemberActivated,

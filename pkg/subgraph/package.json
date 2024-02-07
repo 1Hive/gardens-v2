@@ -14,7 +14,8 @@
     "deploy:arbsep": "pnpm manifest:arbsep && graph deploy --studio gv2-arbsepolia",
     "local": "pnpm create-local && pnpm build && pnpm deploy-local",
     "last-addr": "ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-addr.ts",
-    "build-client": "graphclient build --fileType js"
+    "build-client": "graphclient build --fileType js",
+    "build-all": "pnpm create-local && pnpm build && pnpm deploy-local"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.67.2",
@@ -28,6 +29,7 @@
     "graphql": "^16.8.1",
     "minimist": "^1.2.8",
     "mustache": "^4.2.0",
+    "ts-node": "^10.9.2",
     "viem": "~1.21.4"
   }
 }

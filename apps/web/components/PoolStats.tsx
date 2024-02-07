@@ -5,7 +5,7 @@ import Image from "next/image";
 import { StatusBadge } from "./Badge";
 import { ActivePointsChart } from "@/components";
 import { PoolTokenPriceChart } from "@/components";
-import { ActivateMember } from "./ActivateMember";
+import { ActivatePoints } from "./ActivatePoints";
 import { useAccount, useContractRead } from "wagmi";
 // import { contractsAddresses } from "@/constants/contracts";
 import { registryCommunityABI, cvStrategyABI, alloABI } from "@/src/generated";
@@ -23,7 +23,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
   poolId,
   communityAddress,
 }) => {
-  const { address: mainConnectedAccount } = useAccount();
+  const { address } = useAccount();
   const [isMemberActived, setIsMemberActived] = React.useState(false);
 
   const {
@@ -34,7 +34,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
     address: communityAddress,
     abi: registryCommunityABI,
     functionName: "memberActivatedInStrategies",
-    args: [mainConnectedAccount as `0x${string}`, strategyAddress],
+    args: [address as `0x${string}`, strategyAddress],
     watch: true,
     cacheOnBlock: true,
   });
@@ -48,7 +48,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
     address: strategyAddress,
     abi: cvStrategyABI,
     functionName: "getTotalVoterStakePct",
-    args: [mainConnectedAccount as `0x${string}`],
+    args: [address as `0x${string}`],
     watch: true,
     cacheOnBlock: true,
   });
@@ -97,7 +97,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
 
             {/* Activate - Deactivate/ points */}
             <div className="flex w-full justify-center">
-              <ActivateMember
+              <ActivatePoints
                 strategyAddress={strategyAddress}
                 isMemberActived={isMemberActived}
                 errorMemberActivated={errorMemberActivated}
