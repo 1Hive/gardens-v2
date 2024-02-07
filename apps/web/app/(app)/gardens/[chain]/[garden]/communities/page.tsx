@@ -20,7 +20,7 @@ export default async function Garden({
   const result = await sdk.getCommunityByGarden({ addr: garden });
   const communities = result.tokenGarden?.communities || [];
 
-  console.log("communities", communities);
+  // console.log("communities", communities);
   return (
     <div className=" relative mx-auto max-w-5xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
       {/* header: honey logo +stats */}
@@ -49,6 +49,7 @@ export default async function Garden({
         {/* communites */}
         {communities.map((community, i) => (
           <CommunityCard
+            gardenToken={garden as `0x${string}`}
             {...community}
             key={`${community.communityName}_${i}`}
           />

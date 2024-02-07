@@ -10,15 +10,24 @@ import { formatAddress } from "@/utils/formatAddress";
 type CommunityQuery = NonNullable<
   NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
 >[number];
+type CommunityCardProps = CommunityQuery & { gardenToken: `0x${string}` };
+
 export function CommunityCard({
   communityName: name,
   id: address,
   strategies,
-}: CommunityQuery) {
+  gardenToken,
+}: CommunityCardProps) {
   const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
 
   const pools = strategies ?? [];
+
+  const registerStakeAmount =
+    pools?.length > 0
+      ? Number(pools[0].registryCommunity.registerStakeAmount)
+      : null;
+
   return (
     <div className="flex flex-col items-center justify-center gap-8 rounded-xl border-2 border-black bg-info p-8 transition-all duration-200 ease-in-out">
       <div className="relative flex w-full items-center justify-center">
@@ -30,7 +39,12 @@ export function CommunityCard({
           {formatAddress(address)}
         </p>
       </div>
-
+      {accountAddress && registerStakeAmount && (
+        <RegisterMember
+          gardenToken={gardenToken}
+          registerStakeAmount={registerStakeAmount}
+        />
+      )}
       {/* pools */}
       <div
         className={`flex transform flex-wrap items-center justify-center gap-4 overflow-hidden p-4 transition-height duration-200 ease-in-out ${
@@ -41,7 +55,6 @@ export function CommunityCard({
           <PoolCard {...pool} key={i} />
         ))}
       </div>
-      {accountAddress && <RegisterMember />}
       {pools.length > 2 && (
         <Button
           // style="outline"

@@ -6,6 +6,7 @@ import { getContractsAddrByChain } from "@/constants/contracts";
 import { createPublicClient, http } from "viem";
 import { getChain } from "@/configs/chainServer";
 import { gardenLand } from "@/assets";
+import { getBuiltGraphSDK } from "#/subgraph/.graphclient";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,15 @@ export default async function Pool({
   if (!addrs) {
     return <div>Chain ID: {chain} not supported</div>;
   }
+
+  const sdk = getBuiltGraphSDK();
+
+  // const result = await sdk.getPool({ poolId: poolId });
+
+  // const pool = result.cvstrategies.length > 0 ? result.cvstrategies[0] : null;
+
+  // console.log(pool);
+
   const poolData = (await client.readContract({
     abi: alloABI,
     address: addrs.allo,

@@ -42,6 +42,24 @@ query getTokenGardens {
     }
   }
 }
+query getPool($poolId: BigInt!) {
+  cvstrategies(where: { poolId: $poolId }) {
+    id
+    poolId
+    proposals {
+      id
+      requestedAmount
+      requestedToken
+      stakedTokens
+      proposalType
+      proposalStatus
+      submitter
+      voterStakedPointsPct
+      metadata
+      beneficiary
+    }
+  }
+}
 
 # query getCommunity($addr: ID!) {
 #   registryCommunity(id: $addr) {
@@ -70,12 +88,24 @@ query getCommunityByGarden($addr: ID!) {
         id
       }
       strategies {
+        registryCommunity {
+          registerStakeAmount
+        }
         id
         poolId
         proposals {
           id
         }
       }
+    }
+  }
+}
+
+query getMembers($me: ID!, $comm: String!) {
+  members(where: { id: $me, registryCommunity_contains: [$comm] }) {
+    id
+    registryCommunity {
+      id
     }
   }
 }

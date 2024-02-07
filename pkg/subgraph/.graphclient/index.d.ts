@@ -1418,9 +1418,16 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getTokenGardens(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
+    getPool(variables: Exact<{
+        poolId: any;
+    }>, options?: TOperationContext): Promise<getPoolQuery>;
     getCommunityByGarden(variables: Exact<{
         addr: string;
     }>, options?: TOperationContext): Promise<getCommunityByGardenQuery>;
+    getMembers(variables: Exact<{
+        me: string;
+        comm: string;
+    }>, options?: TOperationContext): Promise<getMembersQuery>;
 };
 export type getFactoriesQueryVariables = Exact<{
     [key: string]: never;
@@ -1445,6 +1452,14 @@ export type getTokenGardensQuery = {
         })>>;
     })>;
 };
+export type getPoolQueryVariables = Exact<{
+    poolId: Scalars['BigInt'];
+}>;
+export type getPoolQuery = {
+    cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
+        proposals: Array<Pick<CVProposal, 'id' | 'requestedAmount' | 'requestedToken' | 'stakedTokens' | 'proposalType' | 'proposalStatus' | 'submitter' | 'voterStakedPointsPct' | 'metadata' | 'beneficiary'>>;
+    })>;
+};
 export type getCommunityByGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
 }>;
@@ -1453,9 +1468,19 @@ export type getCommunityByGardenQuery = {
         communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityName'> & {
             members?: Maybe<Array<Pick<Member, 'id'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
+                registryCommunity: Pick<RegistryCommunity, 'registerStakeAmount'>;
                 proposals: Array<Pick<CVProposal, 'id'>>;
             })>>;
         })>>;
+    })>;
+};
+export type getMembersQueryVariables = Exact<{
+    me: Scalars['ID'];
+    comm: Scalars['String'];
+}>;
+export type getMembersQuery = {
+    members: Array<(Pick<Member, 'id'> & {
+        registryCommunity?: Maybe<Array<Pick<RegistryCommunity, 'id'>>>;
     })>;
 };
 export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact<{
@@ -1464,13 +1489,22 @@ export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact
 export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery, Exact<{
     [key: string]: never;
 }>>;
+export declare const getPoolDocument: DocumentNode<getPoolQuery, Exact<{
+    poolId: Scalars['BigInt'];
+}>>;
 export declare const getCommunityByGardenDocument: DocumentNode<getCommunityByGardenQuery, Exact<{
     addr: Scalars['ID'];
+}>>;
+export declare const getMembersDocument: DocumentNode<getMembersQuery, Exact<{
+    me: Scalars['ID'];
+    comm: Scalars['String'];
 }>>;
 export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V, options?: C) => Promise<R> | AsyncIterable<R>;
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
     getTokenGardens(variables?: getTokenGardensQueryVariables, options?: C): Promise<getTokenGardensQuery>;
+    getPool(variables: getPoolQueryVariables, options?: C): Promise<getPoolQuery>;
     getCommunityByGarden(variables: getCommunityByGardenQueryVariables, options?: C): Promise<getCommunityByGardenQuery>;
+    getMembers(variables: getMembersQueryVariables, options?: C): Promise<getMembersQuery>;
 };
 export type Sdk = ReturnType<typeof getSdk>;
