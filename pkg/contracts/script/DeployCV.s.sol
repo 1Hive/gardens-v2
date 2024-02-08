@@ -11,7 +11,8 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
-import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
+// import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
+import {TERC20} from "../test/shared/TERC20.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -20,7 +21,7 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;
 
-    AMockERC20 public token;
+    TERC20 public token;
 
     Allo _allo_;
     Registry _registry_;
@@ -38,7 +39,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         Allo allo = Allo(deployAllo());
 
-        token = new AMockERC20();
+        token = new TERC20("HNY from Gnosis", "arbHNY", 18);
 
         IRegistry registry = allo.getRegistry();
 

@@ -91,3 +91,11 @@ query getCommunityByGarden($addr: ID!) {
     }
   }
 }
+
+query getAllo {
+  allos {
+    id
+    chainId
+    tokenNative
+  }
+}

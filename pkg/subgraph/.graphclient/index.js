@@ -105,6 +105,12 @@ export async function getMeshOptions() {
                         return printWithCache(GetCommunityByGardenDocument);
                     },
                     location: 'GetCommunityByGardenDocument.graphql'
+                }, {
+                    document: GetAlloDocument,
+                    get rawSDL() {
+                        return printWithCache(GetAlloDocument);
+                    },
+                    location: 'GetAlloDocument.graphql'
                 }
             ];
         },
@@ -222,6 +228,15 @@ export const getCommunityByGardenDocument = gql `
   }
 }
     `;
+export const getAlloDocument = gql `
+    query getAllo {
+  allos {
+    id
+    chainId
+    tokenNative
+  }
+}
+    `;
 export function getSdk(requester) {
     return {
         getFactories(variables, options) {
@@ -235,6 +250,9 @@ export function getSdk(requester) {
         },
         getCommunityByGarden(variables, options) {
             return requester(getCommunityByGardenDocument, variables, options);
+        },
+        getAllo(variables, options) {
+            return requester(getAlloDocument, variables, options);
         }
     };
 }

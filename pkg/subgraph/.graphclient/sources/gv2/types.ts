@@ -22,6 +22,60 @@ export type Scalars = {
   Int8: any;
 };
 
+export type Allo = {
+  id: Scalars['ID'];
+  chainId: Scalars['BigInt'];
+  tokenNative: Scalars['String'];
+};
+
+export type Allo_filter = {
+  id?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  chainId?: InputMaybe<Scalars['BigInt']>;
+  chainId_not?: InputMaybe<Scalars['BigInt']>;
+  chainId_gt?: InputMaybe<Scalars['BigInt']>;
+  chainId_lt?: InputMaybe<Scalars['BigInt']>;
+  chainId_gte?: InputMaybe<Scalars['BigInt']>;
+  chainId_lte?: InputMaybe<Scalars['BigInt']>;
+  chainId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  chainId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  tokenNative?: InputMaybe<Scalars['String']>;
+  tokenNative_not?: InputMaybe<Scalars['String']>;
+  tokenNative_gt?: InputMaybe<Scalars['String']>;
+  tokenNative_lt?: InputMaybe<Scalars['String']>;
+  tokenNative_gte?: InputMaybe<Scalars['String']>;
+  tokenNative_lte?: InputMaybe<Scalars['String']>;
+  tokenNative_in?: InputMaybe<Array<Scalars['String']>>;
+  tokenNative_not_in?: InputMaybe<Array<Scalars['String']>>;
+  tokenNative_contains?: InputMaybe<Scalars['String']>;
+  tokenNative_contains_nocase?: InputMaybe<Scalars['String']>;
+  tokenNative_not_contains?: InputMaybe<Scalars['String']>;
+  tokenNative_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  tokenNative_starts_with?: InputMaybe<Scalars['String']>;
+  tokenNative_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  tokenNative_not_starts_with?: InputMaybe<Scalars['String']>;
+  tokenNative_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  tokenNative_ends_with?: InputMaybe<Scalars['String']>;
+  tokenNative_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  tokenNative_not_ends_with?: InputMaybe<Scalars['String']>;
+  tokenNative_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<Allo_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<Allo_filter>>>;
+};
+
+export type Allo_orderBy =
+  | 'id'
+  | 'chainId'
+  | 'tokenNative';
+
 export type BlockChangedFilter = {
   number_gte: Scalars['Int'];
 };
@@ -649,6 +703,8 @@ export type Query = {
   memberCommunities: Array<MemberCommunity>;
   tokenGarden?: Maybe<TokenGarden>;
   tokenGardens: Array<TokenGarden>;
+  allo?: Maybe<Allo>;
+  allos: Array<Allo>;
   /** Access to subgraph metadata */
   _meta?: Maybe<_Meta_>;
 };
@@ -793,6 +849,24 @@ export type QuerytokenGardensArgs = {
   orderBy?: InputMaybe<TokenGarden_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<TokenGarden_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryalloArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryallosArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<Allo_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<Allo_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1134,6 +1208,8 @@ export type Subscription = {
   memberCommunities: Array<MemberCommunity>;
   tokenGarden?: Maybe<TokenGarden>;
   tokenGardens: Array<TokenGarden>;
+  allo?: Maybe<Allo>;
+  allos: Array<Allo>;
   /** Access to subgraph metadata */
   _meta?: Maybe<_Meta_>;
 };
@@ -1278,6 +1354,24 @@ export type SubscriptiontokenGardensArgs = {
   orderBy?: InputMaybe<TokenGarden_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<TokenGarden_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionalloArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionallosArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<Allo_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<Allo_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1525,6 +1619,10 @@ export type _SubgraphErrorPolicy_ =
   tokenGarden: InContextSdkMethod<Query['tokenGarden'], QuerytokenGardenArgs, MeshContext>,
   /** null **/
   tokenGardens: InContextSdkMethod<Query['tokenGardens'], QuerytokenGardensArgs, MeshContext>,
+  /** null **/
+  allo: InContextSdkMethod<Query['allo'], QueryalloArgs, MeshContext>,
+  /** null **/
+  allos: InContextSdkMethod<Query['allos'], QueryallosArgs, MeshContext>,
   /** Access to subgraph metadata **/
   _meta: InContextSdkMethod<Query['_meta'], Query_metaArgs, MeshContext>
   };
@@ -1566,6 +1664,10 @@ export type _SubgraphErrorPolicy_ =
   tokenGarden: InContextSdkMethod<Subscription['tokenGarden'], SubscriptiontokenGardenArgs, MeshContext>,
   /** null **/
   tokenGardens: InContextSdkMethod<Subscription['tokenGardens'], SubscriptiontokenGardensArgs, MeshContext>,
+  /** null **/
+  allo: InContextSdkMethod<Subscription['allo'], SubscriptionalloArgs, MeshContext>,
+  /** null **/
+  allos: InContextSdkMethod<Subscription['allos'], SubscriptionallosArgs, MeshContext>,
   /** Access to subgraph metadata **/
   _meta: InContextSdkMethod<Subscription['_meta'], Subscription_metaArgs, MeshContext>
   };

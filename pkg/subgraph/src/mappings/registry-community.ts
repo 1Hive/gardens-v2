@@ -4,9 +4,10 @@ import {
   RegistryCommunity,
   TokenGarden,
   MemberCommunity,
+  Allo,
 } from "../../generated/schema";
 
-import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   RegistryInitialized,
   RegistryCommunity as RegistryCommunityContract,
@@ -17,6 +18,8 @@ import {
 
 import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
 import { CTX_CHAIN_ID, CTX_FACTORY_ADDRESS } from "./registry-factory";
+
+const TOKEN_NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 
 export function handleInitialized(event: RegistryInitialized): void {
   const communityAddr = event.address.toHexString();
@@ -63,6 +66,15 @@ export function handleInitialized(event: RegistryInitialized): void {
     newRC.garden = tg.id;
 
     newRC.save();
+
+    const alloId = rcc.allo();
+    let allo = Allo.load(alloId.toHexString());
+    if (allo == null) {
+      allo = new Allo(alloId.toHexString());
+      allo.chainId = newRC.chainId;
+      allo.tokenNative = TOKEN_NATIVE;
+      allo.save();
+    }
   }
 }
 

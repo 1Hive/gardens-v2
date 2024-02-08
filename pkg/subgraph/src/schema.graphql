@@ -100,3 +100,9 @@ type TokenGarden @entity(immutable: false) {
   address: String!
   communities: [RegistryCommunity!] @derivedFrom(field: "garden")
 }
+
+type Allo @entity(immutable: false) {
+  id: ID!
+  chainId: BigInt!
+  tokenNative: String!
+}

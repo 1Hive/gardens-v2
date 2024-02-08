@@ -11,9 +11,6 @@ import { getChain } from "@/configs/chainServer";
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
 export function GardenCard({ garden }: { garden: TokenGarden }) {
-  // const { chain } = useNetwork();
-
-  // const { imageSrc, title, subtitle, description, link: linkReplace } = garden;
   const { id, name, decimals, symbol, communities, totalBalance, chainId } =
     garden;
   const link = `/gardens/${chainId}/${id}/communities`;

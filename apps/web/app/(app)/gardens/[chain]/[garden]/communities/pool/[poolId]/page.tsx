@@ -6,6 +6,15 @@ import { getContractsAddrByChain } from "@/constants/contracts";
 import { createPublicClient, http } from "viem";
 import { getChain } from "@/configs/chainServer";
 import { gardenLand } from "@/assets";
+import { initUrqlClient, queryByChain } from "@/providers/urql";
+import {
+  getAlloDocument,
+  getAlloQuery,
+  getBuiltGraphSDK,
+  getSdk,
+} from "#/subgraph/.graphclient";
+import { DocumentInput } from "urql";
+import { Address } from "#/subgraph/src/scripts/last-addr";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +41,9 @@ type PoolData = {
   managerRole: `0x${string}`;
   adminRole: `0x${string}`;
 };
+type AlloQuery = getAlloQuery["allos"][number];
+
+const { urqlClient } = initUrqlClient();
 
 export default async function Pool({
   params: { chain, poolId, garden },
@@ -43,13 +55,26 @@ export default async function Pool({
     transport: http(),
   });
 
+  const { data } = await queryByChain<getAlloQuery>(
+    urqlClient,
+    chain,
+    getAlloDocument,
+  );
+  let alloInfo: AlloQuery | null = null;
+  if (data && data.allos?.length > 0) {
+    alloInfo = data.allos[0];
+  }
+  if (!alloInfo) {
+    return <div>Allo not found</div>;
+  }
+  console.log("alloInfo", alloInfo);
   const addrs = getContractsAddrByChain(chain);
   if (!addrs) {
     return <div>Chain ID: {chain} not supported</div>;
   }
   const poolData = (await client.readContract({
     abi: alloABI,
-    address: addrs.allo,
+    address: alloInfo.id as Address,
     functionName: "getPool",
     args: [BigInt(poolId)],
   })) as PoolData;
@@ -126,12 +151,12 @@ export default async function Pool({
           </section>
           {/* Stats section */}
 
-          <PoolStats
+          {/* <PoolStats
             balance={POOL_BALANCE}
             strategyAddress={poolData.strategy}
             poolId={poolId}
             communityAddress={addrs.registryCommunity}
-          />
+          /> */}
 
           {/* Proposals section */}
 

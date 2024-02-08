@@ -33,6 +33,54 @@ export type Scalars = {
     Bytes: any;
     Int8: any;
 };
+export type Allo = {
+    id: Scalars['ID'];
+    chainId: Scalars['BigInt'];
+    tokenNative: Scalars['String'];
+};
+export type Allo_filter = {
+    id?: InputMaybe<Scalars['ID']>;
+    id_not?: InputMaybe<Scalars['ID']>;
+    id_gt?: InputMaybe<Scalars['ID']>;
+    id_lt?: InputMaybe<Scalars['ID']>;
+    id_gte?: InputMaybe<Scalars['ID']>;
+    id_lte?: InputMaybe<Scalars['ID']>;
+    id_in?: InputMaybe<Array<Scalars['ID']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+    chainId?: InputMaybe<Scalars['BigInt']>;
+    chainId_not?: InputMaybe<Scalars['BigInt']>;
+    chainId_gt?: InputMaybe<Scalars['BigInt']>;
+    chainId_lt?: InputMaybe<Scalars['BigInt']>;
+    chainId_gte?: InputMaybe<Scalars['BigInt']>;
+    chainId_lte?: InputMaybe<Scalars['BigInt']>;
+    chainId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    chainId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    tokenNative?: InputMaybe<Scalars['String']>;
+    tokenNative_not?: InputMaybe<Scalars['String']>;
+    tokenNative_gt?: InputMaybe<Scalars['String']>;
+    tokenNative_lt?: InputMaybe<Scalars['String']>;
+    tokenNative_gte?: InputMaybe<Scalars['String']>;
+    tokenNative_lte?: InputMaybe<Scalars['String']>;
+    tokenNative_in?: InputMaybe<Array<Scalars['String']>>;
+    tokenNative_not_in?: InputMaybe<Array<Scalars['String']>>;
+    tokenNative_contains?: InputMaybe<Scalars['String']>;
+    tokenNative_contains_nocase?: InputMaybe<Scalars['String']>;
+    tokenNative_not_contains?: InputMaybe<Scalars['String']>;
+    tokenNative_not_contains_nocase?: InputMaybe<Scalars['String']>;
+    tokenNative_starts_with?: InputMaybe<Scalars['String']>;
+    tokenNative_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    tokenNative_not_starts_with?: InputMaybe<Scalars['String']>;
+    tokenNative_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    tokenNative_ends_with?: InputMaybe<Scalars['String']>;
+    tokenNative_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    tokenNative_not_ends_with?: InputMaybe<Scalars['String']>;
+    tokenNative_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<Allo_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<Allo_filter>>>;
+};
+export type Allo_orderBy = 'id' | 'chainId' | 'tokenNative';
 export type BlockChangedFilter = {
     number_gte: Scalars['Int'];
 };
@@ -564,6 +612,8 @@ export type Query = {
     memberCommunities: Array<MemberCommunity>;
     tokenGarden?: Maybe<TokenGarden>;
     tokenGardens: Array<TokenGarden>;
+    allo?: Maybe<Allo>;
+    allos: Array<Allo>;
     /** Access to subgraph metadata */
     _meta?: Maybe<_Meta_>;
 };
@@ -676,6 +726,20 @@ export type QuerytokenGardensArgs = {
     orderBy?: InputMaybe<TokenGarden_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
     where?: InputMaybe<TokenGarden_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QueryalloArgs = {
+    id: Scalars['ID'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QueryallosArgs = {
+    skip?: InputMaybe<Scalars['Int']>;
+    first?: InputMaybe<Scalars['Int']>;
+    orderBy?: InputMaybe<Allo_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<Allo_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -973,6 +1037,8 @@ export type Subscription = {
     memberCommunities: Array<MemberCommunity>;
     tokenGarden?: Maybe<TokenGarden>;
     tokenGardens: Array<TokenGarden>;
+    allo?: Maybe<Allo>;
+    allos: Array<Allo>;
     /** Access to subgraph metadata */
     _meta?: Maybe<_Meta_>;
 };
@@ -1085,6 +1151,20 @@ export type SubscriptiontokenGardensArgs = {
     orderBy?: InputMaybe<TokenGarden_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
     where?: InputMaybe<TokenGarden_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptionalloArgs = {
+    id: Scalars['ID'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptionallosArgs = {
+    skip?: InputMaybe<Scalars['Int']>;
+    first?: InputMaybe<Scalars['Int']>;
+    orderBy?: InputMaybe<Allo_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<Allo_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1317,6 +1397,9 @@ export type NextResolverFn<T> = () => Promise<T>;
 export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs = {}> = (next: NextResolverFn<TResult>, parent: TParent, args: TArgs, context: TContext, info: GraphQLResolveInfo) => TResult | Promise<TResult>;
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
+    Allo: ResolverTypeWrapper<Allo>;
+    Allo_filter: Allo_filter;
+    Allo_orderBy: Allo_orderBy;
     BigDecimal: ResolverTypeWrapper<Scalars['BigDecimal']>;
     BigInt: ResolverTypeWrapper<Scalars['BigInt']>;
     BlockChangedFilter: BlockChangedFilter;
@@ -1361,6 +1444,8 @@ export type ResolversTypes = ResolversObject<{
 }>;
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
+    Allo: Allo;
+    Allo_filter: Allo_filter;
     BigDecimal: Scalars['BigDecimal'];
     BigInt: Scalars['BigInt'];
     BlockChangedFilter: BlockChangedFilter;
@@ -1403,6 +1488,12 @@ export type derivedFromDirectiveArgs = {
     field: Scalars['String'];
 };
 export type derivedFromDirectiveResolver<Result, Parent, ContextType = MeshContext, Args = derivedFromDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+export type AlloResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Allo'] = ResolversParentTypes['Allo']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    chainId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    tokenNative?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
 export interface BigDecimalScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['BigDecimal'], any> {
     name: 'BigDecimal';
 }
@@ -1484,6 +1575,8 @@ export type QueryResolvers<ContextType = MeshContext, ParentType extends Resolve
     memberCommunities?: Resolver<Array<ResolversTypes['MemberCommunity']>, ParentType, ContextType, RequireFields<QuerymemberCommunitiesArgs, 'skip' | 'first' | 'subgraphError'>>;
     tokenGarden?: Resolver<Maybe<ResolversTypes['TokenGarden']>, ParentType, ContextType, RequireFields<QuerytokenGardenArgs, 'id' | 'subgraphError'>>;
     tokenGardens?: Resolver<Array<ResolversTypes['TokenGarden']>, ParentType, ContextType, RequireFields<QuerytokenGardensArgs, 'skip' | 'first' | 'subgraphError'>>;
+    allo?: Resolver<Maybe<ResolversTypes['Allo']>, ParentType, ContextType, RequireFields<QueryalloArgs, 'id' | 'subgraphError'>>;
+    allos?: Resolver<Array<ResolversTypes['Allo']>, ParentType, ContextType, RequireFields<QueryallosArgs, 'skip' | 'first' | 'subgraphError'>>;
     _meta?: Resolver<Maybe<ResolversTypes['_Meta_']>, ParentType, ContextType, Partial<Query_metaArgs>>;
 }>;
 export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['RegistryCommunity'] = ResolversParentTypes['RegistryCommunity']> = ResolversObject<{
@@ -1527,6 +1620,8 @@ export type SubscriptionResolvers<ContextType = MeshContext, ParentType extends 
     memberCommunities?: SubscriptionResolver<Array<ResolversTypes['MemberCommunity']>, "memberCommunities", ParentType, ContextType, RequireFields<SubscriptionmemberCommunitiesArgs, 'skip' | 'first' | 'subgraphError'>>;
     tokenGarden?: SubscriptionResolver<Maybe<ResolversTypes['TokenGarden']>, "tokenGarden", ParentType, ContextType, RequireFields<SubscriptiontokenGardenArgs, 'id' | 'subgraphError'>>;
     tokenGardens?: SubscriptionResolver<Array<ResolversTypes['TokenGarden']>, "tokenGardens", ParentType, ContextType, RequireFields<SubscriptiontokenGardensArgs, 'skip' | 'first' | 'subgraphError'>>;
+    allo?: SubscriptionResolver<Maybe<ResolversTypes['Allo']>, "allo", ParentType, ContextType, RequireFields<SubscriptionalloArgs, 'id' | 'subgraphError'>>;
+    allos?: SubscriptionResolver<Array<ResolversTypes['Allo']>, "allos", ParentType, ContextType, RequireFields<SubscriptionallosArgs, 'skip' | 'first' | 'subgraphError'>>;
     _meta?: SubscriptionResolver<Maybe<ResolversTypes['_Meta_']>, "_meta", ParentType, ContextType, Partial<Subscription_metaArgs>>;
 }>;
 export type TokenGardenResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['TokenGarden'] = ResolversParentTypes['TokenGarden']> = ResolversObject<{
@@ -1555,6 +1650,7 @@ export type _Meta_Resolvers<ContextType = MeshContext, ParentType extends Resolv
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type Resolvers<ContextType = MeshContext> = ResolversObject<{
+    Allo?: AlloResolvers<ContextType>;
     BigDecimal?: GraphQLScalarType;
     BigInt?: GraphQLScalarType;
     Bytes?: GraphQLScalarType;
@@ -1598,6 +1694,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getCommunityByGarden(variables: Exact<{
         addr: string;
     }>, options?: TOperationContext): Promise<getCommunityByGardenQuery>;
+    getAllo(variables?: Exact<{
+        [key: string]: never;
+    }>, options?: TOperationContext): Promise<getAlloQuery>;
 };
 export type getFactoriesQueryVariables = Exact<{
     [key: string]: never;
@@ -1646,6 +1745,12 @@ export type getCommunityByGardenQuery = {
         })>>;
     })>;
 };
+export type getAlloQueryVariables = Exact<{
+    [key: string]: never;
+}>;
+export type getAlloQuery = {
+    allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
+};
 export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact<{
     [key: string]: never;
 }>>;
@@ -1659,11 +1764,15 @@ export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
 export declare const getCommunityByGardenDocument: DocumentNode<getCommunityByGardenQuery, Exact<{
     addr: Scalars['ID'];
 }>>;
+export declare const getAlloDocument: DocumentNode<getAlloQuery, Exact<{
+    [key: string]: never;
+}>>;
 export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V, options?: C) => Promise<R> | AsyncIterable<R>;
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
     getTokenGardens(variables?: getTokenGardensQueryVariables, options?: C): Promise<getTokenGardensQuery>;
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getCommunityByGarden(variables: getCommunityByGardenQueryVariables, options?: C): Promise<getCommunityByGardenQuery>;
+    getAllo(variables?: getAlloQueryVariables, options?: C): Promise<getAlloQuery>;
 };
 export type Sdk = ReturnType<typeof getSdk>;
