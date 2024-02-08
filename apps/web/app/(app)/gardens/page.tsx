@@ -64,7 +64,7 @@ export default async function Gardens() {
               </div>
             ))
           ) : (
-            <div>Can't find token gardens</div>
+            <div>{"Can't find token gardens"}</div>
           )}
         </div>
       </section>
