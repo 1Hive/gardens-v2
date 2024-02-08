@@ -1,24 +1,31 @@
 import { CVStrategy as CVStrategyTemplate } from "../../generated/templates";
-import { Member, RegistryCommunity, TokenGarden } from "../../generated/schema";
+import {
+  Member,
+  RegistryCommunity,
+  TokenGarden,
+  MemberCommunity,
+  Allo,
+} from "../../generated/schema";
 
-import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   RegistryInitialized,
   RegistryCommunity as RegistryCommunityContract,
   MemberRegistered,
   StrategyAdded,
+  StakeAndRegisterMemberCall,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 
 import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
 import { CTX_CHAIN_ID, CTX_FACTORY_ADDRESS } from "./registry-factory";
 
+const TOKEN_NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+
 export function handleInitialized(event: RegistryInitialized): void {
-  log.debug("RegistryCommunity: handleInitialized1", []);
   const communityAddr = event.address.toHexString();
   log.debug("RegistryCommunity: handleInitialized/* : {}", [communityAddr]);
   const rc = RegistryCommunity.load(communityAddr);
   const ctx = dataSource.context();
-  log.debug("ctx1", []);
   if (ctx != null && rc == null) {
     const factoryAddress = ctx.getString(CTX_FACTORY_ADDRESS) as string | null;
     log.debug("factoryAddress: {}", [factoryAddress ? factoryAddress : "0x"]);
@@ -28,10 +35,11 @@ export function handleInitialized(event: RegistryInitialized): void {
 
     newRC.communityName = event.params._communityName;
     newRC.profileId = event.params._profileId.toHexString();
-    newRC.covenantIpfsHash = event.params._metadata.pointer;
+    // newRC.covenantIpfsHash = event.params._metadata.pointer;
 
     const rcc = RegistryCommunityContract.bind(event.address);
 
+    newRC.covenantIpfsHash = rcc.covenantIpfsHash();
     newRC.registerStakeAmount = rcc.registerStakeAmount();
     newRC.councilSafe = rcc.councilSafe().toHexString();
 
@@ -58,40 +66,48 @@ export function handleInitialized(event: RegistryInitialized): void {
     newRC.garden = tg.id;
 
     newRC.save();
+
+    const alloId = rcc.allo();
+    let allo = Allo.load(alloId.toHexString());
+    if (allo == null) {
+      allo = new Allo(alloId.toHexString());
+      allo.chainId = newRC.chainId;
+      allo.tokenNative = TOKEN_NATIVE;
+      allo.save();
+    }
   }
 }
 
 // // handleMemberRegistered
 export function handleMemberRegistered(event: MemberRegistered): void {
-  const communityAddr = event.address.toHexString();
-  const rc = RegistryCommunity.load(communityAddr);
-  const memberLen = rc
-    ? rc.members.entries.length
-      ? rc.members.entries.length
-      : 0
-    : 0;
-  log.debug("handleMemberRegistered: memberLen: {}", [memberLen.toString()]);
-  const memberAddress = event.params._member.toHexString();
-  log.debug("handleMemberRegistered: {}", [memberAddress]);
   const community = event.address.toHex();
-  // const id = `${memberAddress}-${community}`;
+  const memberAddress = event.params._member.toHexString();
+  const id = `${memberAddress}-${community}`;
+  log.debug("handleMemberRegistered: {}", [memberAddress]);
+
   let member = Member.load(memberAddress);
-  // const memberC = MembersCommunity.load(id);
+
   if (member == null) {
     member = new Member(memberAddress);
-    member.memberAddress = memberAddress;
+    // member.memberAddress = memberAddress;
   }
-  let communities = member.registryCommunity;
-  if (communities == null) {
-    communities = [];
-  }
-  communities.push(community);
-  log.debug("handleMemberRegistered: communities: {}", [
-    communities.length.toString(),
+  log.debug("totalStakedAmount: ", [
+    member.totalStakedAmount ? member.totalStakedAmount!.toString() : "",
   ]);
-  member.registryCommunity = communities;
-  member.isRegistered = true;
-  member.stakedAmount = event.params._amountStaked;
+  member.totalStakedAmount = member.totalStakedAmount
+    ? member.totalStakedAmount!.plus(event.params._amountStaked)
+    : event.params._amountStaked;
+  // let communities = member.registryCommunity;
+  // if (communities == null) {
+  //   communities = [];
+  // }
+  // communities.push(community);
+  // log.debug("handleMemberRegistered: communities: {}", [
+  //   communities.length.toString(),
+  // ]);
+  // member.registryCommunity = communities;
+  // member.isRegistered = true;
+  // member.stakedAmount = event.params._amountStaked;
   member.save();
 
   const rcc = RegistryCommunityContract.bind(event.address);
@@ -106,6 +122,18 @@ export function handleMemberRegistered(event: MemberRegistered): void {
 
   tg.totalBalance = erc20.balanceOf(event.address);
   tg.save();
+
+  let newMember = MemberCommunity.load(id);
+
+  if (newMember == null) {
+    newMember = new MemberCommunity(id);
+    newMember.member = memberAddress;
+    newMember.registryCommunity = community;
+    newMember.memberAddress = memberAddress;
+  }
+  newMember.stakedAmount = event.params._amountStaked;
+  newMember.isRegistered = true;
+  newMember.save();
 }
 
 // //  handleStrategyAdded
@@ -114,4 +142,10 @@ export function handleStrategyAdded(event: StrategyAdded): void {
   const strategyAddress = event.params._strategy;
 
   CVStrategyTemplate.create(strategyAddress);
+}
+
+// handleCallStake
+export function handleCallStake(call: StakeAndRegisterMemberCall): void {
+  const memberAddr = call.from.toHexString();
+  log.debug("handleCallStake: from:{}", [memberAddr]);
 }

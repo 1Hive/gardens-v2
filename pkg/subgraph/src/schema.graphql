@@ -1,6 +1,7 @@
 type CVStrategy @entity(immutable: false) {
   id: ID!
   poolId: BigInt!
+  metadata: String
   registryCommunity: RegistryCommunity!
   config: CVStrategyConfig
   proposals: [CVProposal!]! @derivedFrom(field: "strategy")
@@ -8,9 +9,11 @@ type CVStrategy @entity(immutable: false) {
 
 type CVStrategyConfig @entity(immutable: false) {
   id: ID!
+  strategy: CVStrategy! @derivedFrom(field: "config")
   decay: BigInt!
   maxRatio: BigInt!
   weight: BigInt!
+  proposalType: BigInt!
 }
 
 type CVProposal @entity(immutable: false) {
@@ -26,11 +29,11 @@ type CVProposal @entity(immutable: false) {
   blockLast: BigInt!
   convictionLast: BigInt!
   threshold: BigInt!
-  proposalType: BigInt!
+  # proposalType: BigInt!
   stakedTokens: BigInt!
   submitter: String!
   voterStakedPointsPct: BigInt!
-  agreementActionId: BigInt!
+  # agreementActionId: BigInt!
   createdAt: BigInt!
   updatedAt: BigInt!
 }
@@ -63,25 +66,43 @@ type RegistryCommunity @entity(immutable: false) {
   registerStakeAmount: BigInt
   registerToken: String
   alloAddress: String
-  members: [Member!] @derivedFrom(field: "registryCommunity")
+  members: [MemberCommunity!] @derivedFrom(field: "registryCommunity")
+  # members: [Member!] @derivedFrom(field: "registryCommunity")
   garden: TokenGarden!
 }
 
 type Member @entity(immutable: false) {
   id: ID!
-  registryCommunity: [RegistryCommunity!]
+  # registryCommunity: [RegistryCommunity!]
+  memberCommunity: [MemberCommunity!] @derivedFrom(field: "member")
+  totalStakedAmount: BigInt
+  # isRegistered: Boolean
+}
+
+type MemberCommunity @entity(immutable: false) {
+  id: ID!
   memberAddress: String
   stakedAmount: BigInt
   isRegistered: Boolean
+  member: Member!
+  registryCommunity: RegistryCommunity!
 }
 
 type TokenGarden @entity(immutable: false) {
   id: ID!
   name: String!
+  description: String
   chainId: BigInt!
   totalBalance: BigInt!
+  ipfsCovenant: String
   symbol: String!
   decimals: BigInt!
   address: String!
   communities: [RegistryCommunity!] @derivedFrom(field: "garden")
+}
+
+type Allo @entity(immutable: false) {
+  id: ID!
+  chainId: BigInt!
+  tokenNative: String!
 }

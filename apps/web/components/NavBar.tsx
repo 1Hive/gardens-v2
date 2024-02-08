@@ -1,39 +1,13 @@
 "use client";
-import React, { useEffect } from "react";
+import React from "react";
 import { GardensLogo } from "@/assets";
 import Link from "next/link";
 import { navItems } from "@/constants/navigation";
-import { Disclosure, Menu, Transition } from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useAccount, useChainId } from "wagmi";
-import { formatAddress } from "@/utils/formatAddress";
+import { Disclosure } from "@headlessui/react";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useParams, useRouter } from "next/navigation";
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
 
 export function NavBar() {
-  const account = useAccount();
-  const { address, isConnected } = account;
-  const formattedAddress = formatAddress(address ?? "");
-  const chainId = useChainId();
-  const params = useParams<{ chain: string }>();
-  const router = useRouter();
-
-  useEffect(() => {
-    // if wallet is connected to a different chain than the displayed it redirects to home page
-    if (
-      isConnected &&
-      params?.chain !== undefined &&
-      chainId !== undefined &&
-      chainId !== Number(params.chain)
-    ) {
-      router.push("/");
-    }
-  }, [chainId, params]);
-
   return (
     <Disclosure as="nav" className="bg-surface shadow">
       {({ open }) => (

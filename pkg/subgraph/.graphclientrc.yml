@@ -2,8 +2,9 @@ sources:
   - name: gv2
     handler:
       graphql:
-        # endpoint: http://localhost:8000/subgraphs/name/kamikazebr/gv2/
         endpoint: ${SUBGRAPH_URL}
-
+# plugins:
+#   - pollingLive:
+#       defaultInterval: 1000
 documents:
   - ./src/query/factory.graphql
