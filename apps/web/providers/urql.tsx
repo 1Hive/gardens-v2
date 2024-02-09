@@ -95,5 +95,7 @@ export async function queryByChain<
       url: addrs.subgraphUrl,
       ...context,
     })
-    .toPromise();
+    // .subscribe((value) => {
+    //   console.log("value", value);
+    // });
 }
