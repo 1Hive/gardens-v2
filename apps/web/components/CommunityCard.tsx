@@ -22,18 +22,18 @@ export function CommunityCard({
 }: CommunityQuery) {
   const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
-  const [isMember, setIsMember] = useState<boolean | undefined>(undefined);
+  // const [isMember, setIsMember] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (accountAddress && members) {
-      const findMember = members.some(
-        (m) => m.memberAddress == accountAddress.toLowerCase(),
-      );
-      setIsMember(findMember);
-    } else {
-      setIsMember(false);
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (accountAddress && members) {
+  //     const findMember = members.some(
+  //       (m) => m.memberAddress == accountAddress.toLowerCase(),
+  //     );
+  //     setIsMember(findMember);
+  //   } else {
+  //     setIsMember(false);
+  //   }
+  // }, []);
 
   const pools = strategies ?? [];
   members = members ?? [];
@@ -50,9 +50,9 @@ export function CommunityCard({
           {formatAddress(communityAddress)}
         </p>
       </div>
-      {accountAddress && isMember != undefined && (
+      {accountAddress &&  (
         <RegisterMember
-          isMember={isMember}
+          // isMember={isMember}
           communityAddress={communityAddress as Address}
           registerToken={registerToken as Address}
           registerStakeAmount={registerStakeAmount}

@@ -64,7 +64,6 @@ export default async function Garden({
         {/* communites */}
         {communities.map((community, i) => (
           <CommunityCard
-            gardenToken={garden as `0x${string}`}
             {...community}
             key={`${community.communityName}_${i}`}
           />

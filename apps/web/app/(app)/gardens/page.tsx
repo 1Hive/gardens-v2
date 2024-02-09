@@ -17,10 +17,20 @@ export default async function Gardens() {
   const r2 = await getTokenGardens(localhost.id);
   // marge r.data and rl.data to gardens
   let gardens: getTokenGardensQuery | null = null;
-  if (r1.data && r2.data) {
+  if (r1.data) {
     gardens = {
-      tokenGardens: [...r1.data.tokenGardens, ...r2.data.tokenGardens],
+      tokenGardens: [...r1.data.tokenGardens],
     };
+  }
+
+  if (r2.data) {
+    if (gardens) {
+      gardens.tokenGardens.push(...r2.data.tokenGardens);
+    } else {
+      gardens = {
+        tokenGardens: [...r2.data.tokenGardens],
+      };
+    }
   }
   return (
     <div className="flex flex-col items-center justify-center gap-12">
