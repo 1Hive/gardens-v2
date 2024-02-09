@@ -49,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "http://localhost:8000/subgraphs/name/kamikazebr/gv2" },
+        config: { "endpoint": "https://api.studio.thegraph.com/query/29898/gv2-arbsepolia/version/latest" },
         baseDir,
         cache,
         pubsub,
@@ -93,6 +93,12 @@ export async function getMeshOptions() {
                         return printWithCache(GetTokenGardensDocument);
                     },
                     location: 'GetTokenGardensDocument.graphql'
+                }, {
+                    document: GetPoolDocument,
+                    get rawSDL() {
+                        return printWithCache(GetPoolDocument);
+                    },
+                    location: 'GetPoolDocument.graphql'
                 }, {
                     document: IsMemberDocument,
                     get rawSDL() {
@@ -196,6 +202,24 @@ export const getTokenGardensDocument = gql `
   }
 }
     `;
+export const getPoolDocument = gql `
+    query getPool($poolId: BigInt!) {
+  cvstrategies(where: {poolId: $poolId}) {
+    id
+    poolId
+    proposals {
+      id
+      requestedAmount
+      requestedToken
+      stakedTokens
+      proposalStatus
+      submitter
+      metadata
+      beneficiary
+    }
+  }
+}
+    `;
 export const isMemberDocument = gql `
     query isMember($me: ID!, $comm: String!) {
   members(where: {id: $me}) {
@@ -227,6 +251,9 @@ export const getCommunityByGardenDocument = gql `
         memberAddress
       }
       strategies {
+        registryCommunity {
+          registerStakeAmount
+        }
         id
         poolId
         poolAmount
@@ -282,6 +309,9 @@ export function getSdk(requester) {
         },
         getTokenGardens(variables, options) {
             return requester(getTokenGardensDocument, variables, options);
+        },
+        getPool(variables, options) {
+            return requester(getPoolDocument, variables, options);
         },
         isMember(variables, options) {
             return requester(isMemberDocument, variables, options);
