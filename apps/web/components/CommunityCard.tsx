@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, RegisterMember } from "@/components";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
-import { useAccount } from "wagmi";
+import { Address, useAccount } from "wagmi";
 import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
 import { formatAddress } from "@/utils/formatAddress";
 
@@ -14,20 +14,31 @@ type CommunityCardProps = CommunityQuery & { gardenToken: `0x${string}` };
 
 export function CommunityCard({
   communityName: name,
-  id: address,
+  id: communityAddress,
   strategies,
-  gardenToken,
-}: CommunityCardProps) {
+  members,
+  registerToken,
+  registerStakeAmount,
+}: CommunityQuery) {
   const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
+  const [isMember, setIsMember] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    if (accountAddress && members) {
+      const findMember = members.some(
+        (m) => m.memberAddress == accountAddress.toLowerCase(),
+      );
+      setIsMember(findMember);
+    } else {
+      setIsMember(false);
+    }
+  }, []);
 
   const pools = strategies ?? [];
-
-  const registerStakeAmount =
-    pools?.length > 0
-      ? Number(pools[0].registryCommunity.registerStakeAmount)
-      : null;
-
+  members = members ?? [];
+  registerToken = registerToken ?? "0x0";
+  registerStakeAmount = registerStakeAmount ?? 0;
   return (
     <div className="flex flex-col items-center justify-center gap-8 rounded-xl border-2 border-black bg-info p-8 transition-all duration-200 ease-in-out">
       <div className="relative flex w-full items-center justify-center">
@@ -36,12 +47,14 @@ export function CommunityCard({
         </p>
         <h3 className="m-0 font-press text-lg text-info-content">{name}</h3>
         <p className="absolute right-0 top-[50%] m-0 translate-y-[-50%] font-bold">
-          {formatAddress(address)}
+          {formatAddress(communityAddress)}
         </p>
       </div>
-      {accountAddress && registerStakeAmount && (
+      {accountAddress && isMember != undefined && (
         <RegisterMember
-          gardenToken={gardenToken}
+          isMember={isMember}
+          communityAddress={communityAddress as Address}
+          registerToken={registerToken as Address}
           registerStakeAmount={registerStakeAmount}
         />
       )}

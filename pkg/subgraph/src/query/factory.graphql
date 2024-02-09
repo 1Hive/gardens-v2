@@ -96,8 +96,11 @@ query getCommunityByGarden($addr: ID!) {
       id
       chainId
       communityName
+      registerToken
+      registerStakeAmount
       members {
         id
+        memberAddress
       }
       strategies {
         registryCommunity {
@@ -105,6 +108,11 @@ query getCommunityByGarden($addr: ID!) {
         }
         id
         poolId
+        poolAmount
+        config {
+          id
+          proposalType
+        }
         proposals {
           id
         }
@@ -118,5 +126,27 @@ query getAllo {
     id
     chainId
     tokenNative
+  }
+}
+query getStrategyByPool($poolId: BigInt!) {
+  cvstrategies(where: { poolId: $poolId }) {
+    id
+    poolId
+    config {
+      id
+      proposalType
+    }
+    registryCommunity {
+      id
+    }
+    proposals {
+      id
+      metadata
+      beneficiary
+      requestedAmount
+      requestedToken
+      proposalStatus
+      stakedTokens
+    }
   }
 }

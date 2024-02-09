@@ -29,7 +29,8 @@ export function RegisterMember({
   const { address } = useAccount();
   const viemClient = useViemClient();
   const chainId = useChainId();
-  const contractsAddresses = getContractsAddrByChain(chainId);
+  const contractsAddr = getContractsAddrByChain(chainId);
+
   // const [isMember, setIsMember] = useState();
 
   // const sdk = getBuiltGraphSDK();
@@ -40,8 +41,9 @@ export function RegisterMember({
   //     comm: contractsAddresses?.registryCommunity as `0x${string}`,
   //   });
 
+  console.log(contractsAddr);
   const registryContractCallConfig = {
-    address: contractsAddresses?.registryCommunity,
+    address: "0x" as `0x${string}`,
     abi: abiWithErrors(registryCommunityABI),
   };
 
@@ -84,7 +86,7 @@ export function RegisterMember({
   } = useContractWrite({
     address: gardenToken as `0x${string}`,
     abi: abiWithErrors(erc20ABI),
-    args: [contractsAddresses?.registryCommunity, BigInt(registerStakeAmount)],
+    args: ["0x" as `0x${string}`, BigInt(registerStakeAmount)],
     functionName: "approve",
   });
 
