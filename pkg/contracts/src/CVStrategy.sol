@@ -43,6 +43,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     event InitializedCV(uint256 poolId, InitializeParams data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
     event ProposalCreated(uint256 poolId, uint256 proposalId);
+    event PoolAmountIncreased(uint256 amount);
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -336,7 +337,12 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         return PayoutSummary(_recipientId, 0);
     }
 
+    function _afterIncreasePoolAmount(uint256 _amount) internal virtual override {
+        emit PoolAmountIncreased(_amount);
+    }
+
     // simply returns whether a allocator is valid or not, will usually be true for all
+
     function _isValidAllocator(address _allocator) internal view override returns (bool) {
         surpressStateMutabilityWarning;
         return _allocator == address(0) ? false : true;

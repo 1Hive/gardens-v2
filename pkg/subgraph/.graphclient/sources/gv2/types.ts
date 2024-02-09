@@ -100,7 +100,6 @@ export type CVProposal = {
   threshold: Scalars['BigInt'];
   stakedTokens: Scalars['BigInt'];
   submitter: Scalars['String'];
-  voterStakedPointsPct: Scalars['BigInt'];
   createdAt: Scalars['BigInt'];
   updatedAt: Scalars['BigInt'];
 };
@@ -271,14 +270,6 @@ export type CVProposal_filter = {
   submitter_ends_with_nocase?: InputMaybe<Scalars['String']>;
   submitter_not_ends_with?: InputMaybe<Scalars['String']>;
   submitter_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
-  voterStakedPointsPct?: InputMaybe<Scalars['BigInt']>;
-  voterStakedPointsPct_not?: InputMaybe<Scalars['BigInt']>;
-  voterStakedPointsPct_gt?: InputMaybe<Scalars['BigInt']>;
-  voterStakedPointsPct_lt?: InputMaybe<Scalars['BigInt']>;
-  voterStakedPointsPct_gte?: InputMaybe<Scalars['BigInt']>;
-  voterStakedPointsPct_lte?: InputMaybe<Scalars['BigInt']>;
-  voterStakedPointsPct_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  voterStakedPointsPct_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   createdAt?: InputMaybe<Scalars['BigInt']>;
   createdAt_not?: InputMaybe<Scalars['BigInt']>;
   createdAt_gt?: InputMaybe<Scalars['BigInt']>;
@@ -308,6 +299,7 @@ export type CVProposal_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
+  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'beneficiary'
   | 'requestedAmount'
@@ -318,17 +310,18 @@ export type CVProposal_orderBy =
   | 'threshold'
   | 'stakedTokens'
   | 'submitter'
-  | 'voterStakedPointsPct'
   | 'createdAt'
   | 'updatedAt';
 
 export type CVStrategy = {
   id: Scalars['ID'];
   poolId: Scalars['BigInt'];
+  poolAmount?: Maybe<Scalars['BigInt']>;
   metadata?: Maybe<Scalars['String']>;
   registryCommunity: RegistryCommunity;
   config?: Maybe<CVStrategyConfig>;
   proposals: Array<CVProposal>;
+  memberActive?: Maybe<Array<Member>>;
 };
 
 
@@ -338,6 +331,15 @@ export type CVStrategyproposalsArgs = {
   orderBy?: InputMaybe<CVProposal_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<CVProposal_filter>;
+};
+
+
+export type CVStrategymemberActiveArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<Member_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<Member_filter>;
 };
 
 export type CVStrategyConfig = {
@@ -402,6 +404,7 @@ export type CVStrategyConfig_orderBy =
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
+  | 'strategy__poolAmount'
   | 'strategy__metadata'
   | 'decay'
   | 'maxRatio'
@@ -425,6 +428,14 @@ export type CVStrategy_filter = {
   poolId_lte?: InputMaybe<Scalars['BigInt']>;
   poolId_in?: InputMaybe<Array<Scalars['BigInt']>>;
   poolId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  poolAmount?: InputMaybe<Scalars['BigInt']>;
+  poolAmount_not?: InputMaybe<Scalars['BigInt']>;
+  poolAmount_gt?: InputMaybe<Scalars['BigInt']>;
+  poolAmount_lt?: InputMaybe<Scalars['BigInt']>;
+  poolAmount_gte?: InputMaybe<Scalars['BigInt']>;
+  poolAmount_lte?: InputMaybe<Scalars['BigInt']>;
+  poolAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  poolAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   metadata?: InputMaybe<Scalars['String']>;
   metadata_not?: InputMaybe<Scalars['String']>;
   metadata_gt?: InputMaybe<Scalars['String']>;
@@ -488,6 +499,13 @@ export type CVStrategy_filter = {
   config_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
   config_?: InputMaybe<CVStrategyConfig_filter>;
   proposals_?: InputMaybe<CVProposal_filter>;
+  memberActive?: InputMaybe<Array<Scalars['String']>>;
+  memberActive_not?: InputMaybe<Array<Scalars['String']>>;
+  memberActive_contains?: InputMaybe<Array<Scalars['String']>>;
+  memberActive_contains_nocase?: InputMaybe<Array<Scalars['String']>>;
+  memberActive_not_contains?: InputMaybe<Array<Scalars['String']>>;
+  memberActive_not_contains_nocase?: InputMaybe<Array<Scalars['String']>>;
+  memberActive_?: InputMaybe<Member_filter>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
@@ -497,6 +515,7 @@ export type CVStrategy_filter = {
 export type CVStrategy_orderBy =
   | 'id'
   | 'poolId'
+  | 'poolAmount'
   | 'metadata'
   | 'registryCommunity'
   | 'registryCommunity__id'
@@ -516,7 +535,8 @@ export type CVStrategy_orderBy =
   | 'config__maxRatio'
   | 'config__weight'
   | 'config__proposalType'
-  | 'proposals';
+  | 'proposals'
+  | 'memberActive';
 
 export type Member = {
   id: Scalars['ID'];

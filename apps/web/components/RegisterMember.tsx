@@ -5,6 +5,7 @@ import {
   useContractWrite,
   useAccount,
   useChainId,
+  Address,
 } from "wagmi";
 import { Button } from "./Button";
 import { toast } from "react-toastify";
@@ -18,59 +19,23 @@ import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getBuiltGraphSDK } from "#/subgraph/.graphclient";
 
-export function RegisterMember() {
-  const { address } = useAccount();
+export function RegisterMember({
+  communityAddress,
+  isMember,
+  registerToken,
+  registerStakeAmount,
+}: {
+  communityAddress: Address;
+  isMember: boolean;
+  registerToken: Address;
+  registerStakeAmount: number;
+}) {
   const viemClient = useViemClient();
-  const chainId = useChainId();
-  const contractsAddresses = getContractsAddrByChain(chainId);
-  const [isMemberRegistered, setIsMemberRegistered] = useState<
-    boolean | undefined
-  >(undefined);
-  const [registerStakeAmount, setRegisterStakeAmount] = useState<number>(0);
-  const [gardenToken, setGardenToken] = useState<`0x${string}` | undefined>(
-    undefined,
-  );
 
   const registryContractCallConfig = {
-    address: contractsAddresses?.registryCommunity,
+    address: communityAddress,
     abi: abiWithErrors(registryCommunityABI),
   };
-
-  const {
-    data: contractsData,
-    error,
-    isSuccess,
-  } = useContractReads({
-    contracts: [
-      {
-        ...registryContractCallConfig,
-        functionName: "isMember",
-        args: [address || "0x"],
-      },
-      {
-        ...registryContractCallConfig,
-        functionName: "registerStakeAmount",
-      },
-      {
-        ...registryContractCallConfig,
-        functionName: "gardenToken",
-      },
-    ],
-  });
-
-  useEffect(() => {
-    if (isSuccess && contractsData !== undefined) {
-      if (contractsData[0]?.status === "success") {
-        setIsMemberRegistered(contractsData[0]?.result as boolean);
-      }
-      if (contractsData[1]?.status === "success") {
-        setRegisterStakeAmount(Number(contractsData[1]?.result as BigInt));
-      }
-      if (contractsData[2]?.status === "success") {
-        setGardenToken(contractsData[2]?.result as `0x${string}`);
-      }
-    }
-  }, [contractsData]);
 
   const {
     data: registerMemberData,
@@ -98,9 +63,9 @@ export function RegisterMember() {
     error: errorAllowToken,
     isSuccess: isSuccessAllowToken,
   } = useContractWrite({
-    address: gardenToken as `0x${string}`,
+    address: registerToken,
     abi: abiWithErrors(erc20ABI),
-    args: [contractsAddresses?.registryCommunity, BigInt(registerStakeAmount)], // allowed spender address, amount
+    args: [communityAddress, BigInt(registerStakeAmount)], // allowed spender address, amount
     functionName: "approve",
   });
 
@@ -113,13 +78,13 @@ export function RegisterMember() {
   const transactionReceipt = async () =>
     await viemClient.waitForTransactionReceipt({
       confirmations: confirmationsRequired,
-      hash: isMemberRegistered
+      hash: isMember
         ? unregisterMemberData?.hash || "0x"
         : registerMemberData?.hash || "0x",
     });
 
   async function handleChange() {
-    isMemberRegistered ? writeUnregisterMember?.() : registerMember();
+    isMember ? writeUnregisterMember?.() : registerMember();
   }
 
   const registerMember = () => {
@@ -150,12 +115,10 @@ export function RegisterMember() {
     }
   }, [isSuccessRegisterMember, isSuccessUnregisterMember]);
 
-  if (isMemberRegistered === undefined) return;
+  if (isMember === undefined) return;
   return (
     <Button onClick={handleChange} className="w-fit bg-primary">
-      {isMemberRegistered
-        ? "Unregister from community"
-        : "Register in community"}
+      {isMember ? "Leave community" : "Register in community"}
     </Button>
   );
 }

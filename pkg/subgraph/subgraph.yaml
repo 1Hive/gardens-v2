@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: arbitrum-sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 421614
+        data: 1337
     source:
-      address: "0x44b7C275Ef20dc76b4F14147EB71368579944149"
+      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
       abi: RegistryFactory
-      startBlock: 12522044
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -35,7 +35,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: arbitrum-sepolia
+    network: localhost
     source:
       abi: RegistryCommunity
     mapping:
@@ -61,8 +61,8 @@ templates:
           handler: handleInitialized
         - event: MemberRegistered(address,uint256)
           handler: handleMemberRegistered
-        # - event: MemberUnregistered(address,uint256)
-        #   handler: handleMemberUnregistered
+        - event: MemberUnregistered(address,uint256)
+          handler: handleMemberUnregistered
         # - event: MemberKicked(address,address,uint256)
         #   handler: handleMemberKicked
         # - event: ProtocolFeeUpdated(uint256)
@@ -71,10 +71,10 @@ templates:
           handler: handleStrategyAdded
         # - event: StrategyRemoved(address)
         #   handler: handleStrategyRemoved
-        # - event: MemberActivatedStrategy(address,address)
-        #   handler: handleMemberActivatedStrategy
-        # - event: MemberDeactivatedStrategy(address,address)
-        #   handler: handleMemberDeactivatedStrategy
+        - event: MemberActivatedStrategy(address,address)
+          handler: handleMemberActivatedStrategy
+        - event: MemberDeactivatedStrategy(address,address)
+          handler: handleMemberDeactivatedStrategy
         # - event: StakeAmountUpdated(address,uint256)
         #   handler: handleStakeAmountUpdated
         # - event: BasisStakedAmountSet(uint256)
@@ -89,7 +89,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: arbitrum-sepolia
+    network: localhost
     source:
       abi: CVStrategy
     mapping:
@@ -110,5 +110,8 @@ templates:
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
+        - event: PoolAmountIncreased(uint256)
+          handler: handlePoolAmountIncreased
+
       file: ./src/mappings/cv-strategy.ts
   

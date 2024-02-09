@@ -36,8 +36,8 @@ templates:
           handler: handleInitialized
         - event: MemberRegistered(address,uint256)
           handler: handleMemberRegistered
-        # - event: MemberUnregistered(address,uint256)
-        #   handler: handleMemberUnregistered
+        - event: MemberUnregistered(address,uint256)
+          handler: handleMemberUnregistered
         # - event: MemberKicked(address,address,uint256)
         #   handler: handleMemberKicked
         # - event: ProtocolFeeUpdated(uint256)
@@ -46,10 +46,10 @@ templates:
           handler: handleStrategyAdded
         # - event: StrategyRemoved(address)
         #   handler: handleStrategyRemoved
-        # - event: MemberActivatedStrategy(address,address)
-        #   handler: handleMemberActivatedStrategy
-        # - event: MemberDeactivatedStrategy(address,address)
-        #   handler: handleMemberDeactivatedStrategy
+        - event: MemberActivatedStrategy(address,address)
+          handler: handleMemberActivatedStrategy
+        - event: MemberDeactivatedStrategy(address,address)
+          handler: handleMemberDeactivatedStrategy
         # - event: StakeAmountUpdated(address,uint256)
         #   handler: handleStakeAmountUpdated
         # - event: BasisStakedAmountSet(uint256)
@@ -85,5 +85,8 @@ templates:
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
+        - event: PoolAmountIncreased(uint256)
+          handler: handlePoolAmountIncreased
+
       file: ./src/mappings/cv-strategy.ts
   

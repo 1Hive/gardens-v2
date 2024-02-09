@@ -10,38 +10,15 @@ import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
   getAlloDocument,
   getAlloQuery,
-  getBuiltGraphSDK,
-  getSdk,
+  getStrategyByPoolDocument,
+  getStrategyByPoolQuery,
 } from "#/subgraph/.graphclient";
-import { DocumentInput } from "urql";
 import { Address } from "#/subgraph/src/scripts/last-addr";
+import { abiWithErrors } from "@/utils/abiWithErrors";
 
 export const dynamic = "force-dynamic";
 
-//some metadata for each pool
-// @todo add this to IPFS to be fetched
-// const poolInfo = [
-//   {
-//     title: "Arbitrum Grants Conviction Voting Pool",
-//     description:
-//       "This Funding Pool uses conviction voting to distribute funds for the best public goods providers on our network. Stake your support in your favorite proposals below - the longer you stake, the more conviction your support grows. if a proposal reaches enough conviction to pass, funds will be distributed.",
-//   },
-//   {
-//     title: "1Hive Hackaton Signaling Pool",
-//     description:
-//       "Signaling pool for the 1hive Platform. Which most commonly used to signal support for a proposal or idea. The funds in this pool are not used for funding proposals, but rather to signal support for proposals in other pools.",
-//   },
-// ];
-
-type PoolData = {
-  profileId: `0x${string}`;
-  strategy: `0x${string}`;
-  token: `0x${string}`;
-  metadata: { protocol: bigint; pointer: string };
-  managerRole: `0x${string}`;
-  adminRole: `0x${string}`;
-};
-type AlloQuery = getAlloQuery["allos"][number];
+export type AlloQuery = getAlloQuery["allos"][number];
 
 const { urqlClient } = initUrqlClient();
 
@@ -72,24 +49,39 @@ export default async function Pool({
   if (!addrs) {
     return <div>Chain ID: {chain} not supported</div>;
   }
-  const poolData = (await client.readContract({
-    abi: alloABI,
-    address: alloInfo.id as Address,
-    functionName: "getPool",
-    args: [BigInt(poolId)],
-  })) as PoolData;
 
-  console.log("poolData", poolData);
-  if (poolData.strategy === "0x0000000000000000000000000000000000000000") {
-    return <div>Pool not found</div>;
+  const { data: poolData } = await queryByChain<getStrategyByPoolQuery>(
+    urqlClient,
+    chain,
+    getStrategyByPoolDocument,
+    { poolId: poolId },
+  );
+
+  if (!poolData) {
+    return <div>{`Pool ${poolId} not found`}</div>;
   }
 
+  console.log("poolData", poolData);
+
+  const strategyObj = poolData.cvstrategies[0];
+
+  const strategyAddr = strategyObj.id as Address;
+  const communityAddress = strategyObj.registryCommunity.id as Address;
+
+  if (!strategyObj.config) {
+    return <div>Strategy Config not found</div>;
+  }
+  const proposalType = strategyObj.config.proposalType as number;
+
+  console.log("proposaLType", proposalType);
+
   const poolBalance = await client.readContract({
-    address: poolData.strategy,
-    abi: cvStrategyABI,
+    address: strategyAddr,
+    abi: abiWithErrors(cvStrategyABI),
     functionName: "getPoolAmount",
   });
 
+  console.log("poolBalance", poolBalance);
   const POOL_BALANCE = Number(poolBalance);
 
   return (
@@ -150,21 +142,18 @@ export default async function Pool({
             </div>
           </section>
           {/* Stats section */}
-
-          {/* <PoolStats
-            balance={POOL_BALANCE}
-            strategyAddress={poolData.strategy}
-            poolId={poolId}
-            communityAddress={addrs.registryCommunity}
-          /> */}
-
+          {proposalType == 1 ? (
+            <PoolStats
+              balance={POOL_BALANCE}
+              strategyAddress={strategyAddr}
+              strategy={strategyObj}
+            />
+          ) : (
+            <div>Signaling Proposal type</div>
+          )}
           {/* Proposals section */}
 
-          <Proposals
-            poolId={poolId}
-            strategyAddress={poolData.strategy}
-            addrs={addrs}
-          />
+          <Proposals strategy={strategyObj} alloInfo={alloInfo} />
         </main>
       </div>
     </div>

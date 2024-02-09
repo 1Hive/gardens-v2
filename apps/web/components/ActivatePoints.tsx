@@ -1,34 +1,29 @@
 "use client";
 import React, { useEffect } from "react";
 import { Button } from "./Button";
-import {
-  useContractRead,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
-import { registryCommunityABI, cvStrategyABI } from "@/src/generated";
+import { useContractWrite } from "wagmi";
+import { cvStrategyABI } from "@/src/generated";
 import { useAccount } from "wagmi";
-import useErrorDetails, { getErrorName } from "@/utils/getErrorName";
+import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import cn from "classnames";
+// import cn from "classnames";
 import { toast } from "react-toastify";
 import { confirmationsRequired } from "@/constants/contracts";
 import { useViemClient } from "@/hooks/useViemClient";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 type ActiveMemberProps = {
   strategyAddress: `0x${string}`;
   isMemberActived: boolean | undefined;
-  errorMemberActivated: Error | null;
 };
 
 export function ActivatePoints({
   strategyAddress,
   isMemberActived,
-  errorMemberActivated,
 }: ActiveMemberProps) {
   const { address } = useAccount();
   const viemClient = useViemClient();
-
+  const { openConnectModal } = useConnectModal();
   const {
     data: activePointsData,
     write: writeActivatePoints,
@@ -51,19 +46,8 @@ export function ActivatePoints({
     functionName: "deactivatePoints",
   });
 
-  // useEffect(() => {
-  //   console.log("status", status);
-  // }, [status]);
-
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
-  useErrorDetails(errorMemberActivated, "memberActivatedInStrategies");
-
-  // useEffect(() => {
-  //   console.log("isMemberActived", isMemberActived);
-  //   console.log("mainConnectedAccount", mainConnectedAccount);
-  //   console.log("strategyAddress", strategyAddress);
-  // }, [isMemberActived, mainConnectedAccount, strategyAddress]);
 
   const transactionReceipt = async () =>
     await viemClient.waitForTransactionReceipt({
@@ -74,9 +58,17 @@ export function ActivatePoints({
     });
 
   async function handleChange() {
-    isMemberActived ? writeDeactivatePoints?.() : writeActivatePoints?.();
+    if (address) {
+      if (isMemberActived) {
+        writeDeactivatePoints?.();
+      } else {
+        writeActivatePoints?.();
+      }
+    } else {
+      openConnectModal?.();
+    }
   }
-  
+
   useEffect(() => {
     if (isSuccessActivatePoints || isSuccessDeactivatePoints) {
       const receipt = transactionReceipt();
@@ -97,7 +89,11 @@ export function ActivatePoints({
 
   return (
     <Button onClick={handleChange} className="w-fit bg-primary">
-      {isMemberActived ? "Deactivate Points" : "Activate Points"}
+      {address
+        ? isMemberActived
+          ? "Deactivate Points"
+          : "Activate Points"
+        : "Connect Wallet"}
     </Button>
   );
 }
