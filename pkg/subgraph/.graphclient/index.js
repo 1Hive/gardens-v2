@@ -49,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "https://api.studio.thegraph.com/query/29898/gv2-arbsepolia/version/latest" },
+        config: { "endpoint": "http://localhost:8000/subgraphs/name/kamikazebr/gv2" },
         baseDir,
         cache,
         pubsub,
@@ -94,11 +94,29 @@ export async function getMeshOptions() {
                     },
                     location: 'GetTokenGardensDocument.graphql'
                 }, {
+                    document: IsMemberDocument,
+                    get rawSDL() {
+                        return printWithCache(IsMemberDocument);
+                    },
+                    location: 'IsMemberDocument.graphql'
+                }, {
                     document: GetCommunityByGardenDocument,
                     get rawSDL() {
                         return printWithCache(GetCommunityByGardenDocument);
                     },
                     location: 'GetCommunityByGardenDocument.graphql'
+                }, {
+                    document: GetAlloDocument,
+                    get rawSDL() {
+                        return printWithCache(GetAlloDocument);
+                    },
+                    location: 'GetAlloDocument.graphql'
+                }, {
+                    document: GetStrategyByPoolDocument,
+                    get rawSDL() {
+                        return printWithCache(GetStrategyByPoolDocument);
+                    },
+                    location: 'GetStrategyByPoolDocument.graphql'
                 }
             ];
         },
@@ -178,6 +196,19 @@ export const getTokenGardensDocument = gql `
   }
 }
     `;
+export const isMemberDocument = gql `
+    query isMember($me: ID!, $comm: String!) {
+  members(where: {id: $me}) {
+    id
+    memberCommunity(where: {registryCommunity_contains: $comm}) {
+      id
+      registryCommunity {
+        id
+      }
+    }
+  }
+}
+    `;
 export const getCommunityByGardenDocument = gql `
     query getCommunityByGarden($addr: ID!) {
   tokenGarden(id: $addr) {
@@ -189,16 +220,57 @@ export const getCommunityByGardenDocument = gql `
       id
       chainId
       communityName
+      registerToken
+      registerStakeAmount
       members {
         id
+        memberAddress
       }
       strategies {
         id
         poolId
+        poolAmount
+        config {
+          id
+          proposalType
+        }
         proposals {
           id
         }
       }
+    }
+  }
+}
+    `;
+export const getAlloDocument = gql `
+    query getAllo {
+  allos {
+    id
+    chainId
+    tokenNative
+  }
+}
+    `;
+export const getStrategyByPoolDocument = gql `
+    query getStrategyByPool($poolId: BigInt!) {
+  cvstrategies(where: {poolId: $poolId}) {
+    id
+    poolId
+    config {
+      id
+      proposalType
+    }
+    registryCommunity {
+      id
+    }
+    proposals {
+      id
+      metadata
+      beneficiary
+      requestedAmount
+      requestedToken
+      proposalStatus
+      stakedTokens
     }
   }
 }
@@ -211,8 +283,17 @@ export function getSdk(requester) {
         getTokenGardens(variables, options) {
             return requester(getTokenGardensDocument, variables, options);
         },
+        isMember(variables, options) {
+            return requester(isMemberDocument, variables, options);
+        },
         getCommunityByGarden(variables, options) {
             return requester(getCommunityByGardenDocument, variables, options);
+        },
+        getAllo(variables, options) {
+            return requester(getAlloDocument, variables, options);
+        },
+        getStrategyByPool(variables, options) {
+            return requester(getStrategyByPoolDocument, variables, options);
         }
     };
 }

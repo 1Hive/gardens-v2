@@ -52,17 +52,17 @@ const envOrDefaultAddr = (env: string | undefined, def: Address) =>
 
 console.log("isProd", isProd);
 function getContractsAddresses(runLatest: any) {
-  let addrs = extractAddr(runLatest);
+  // let addrs = extractAddr(runLatest);
 
   let __contractsAddresses = {
-    ...addrs,
-    allo: `${envAlloAddress}` as Address,
-    tokenNative: `${envTokenNativeAddressArbSepolia}` as Address,
-    token: envOrDefaultAddr(envTokenAddressArbSepolia, addrs.token),
-    registryCommunity: envOrDefaultAddr(
-      envRegistryGardensAddArbSep,
-      addrs.registryCommunity,
-    ),
+    // ...addrs,
+    // allo: `${envAlloAddress}` as Address,
+    // tokenNative: `${envTokenNativeAddressArbSepolia}` as Address,
+    // token: envOrDefaultAddr(envTokenAddressArbSepolia, addrs.token),
+    // registryCommunity: envOrDefaultAddr(
+    //   envRegistryGardensAddArbSep,
+    //   addrs.registryCommunity,
+    // ),
     // registry: `${envAlloRegistryAddArbSep}` as `0x${string}`,
     // poolID: `${envPoolId}`,
   };
@@ -73,10 +73,12 @@ let __contractsAddresses = {
   [localhost.id as number]: {
     ...getContractsAddresses(runLatestLocal),
     rpcUrl: `http://127.0.0.1:8545`,
+    subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
   },
   [arbitrumSepolia.id as number]: {
     ...getContractsAddresses(runLatestArpSepolia),
     rpcUrl: envRpcUrlArbTestnet,
+    subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL || "",
   },
 };
 
@@ -88,7 +90,7 @@ function __getContractsAddrByChain(chain: number | string) {
 }
 
 console.log("env", ENV);
-console.log("envs", __contractsAddresses);
+// console.log("envs", __contractsAddresses);
 export type ContractsAddresses = (typeof __contractsAddresses)[number];
-export const getContractsAddrByChain = __getContractsAddrByChain;
+export const getContractsAddrByChain = __getContractsAddrByChain; //@todo rename to configByChain instead
 // export const contractsAddresses = __contractsAddresses;

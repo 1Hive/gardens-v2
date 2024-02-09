@@ -6,6 +6,7 @@ import {
   useAccount,
   useChainId,
   useContractRead,
+  Address,
 } from "wagmi";
 import { Button } from "./Button";
 import { toast } from "react-toastify";
@@ -20,16 +21,21 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getBuiltGraphSDK } from "#/subgraph/.graphclient";
 
 export function RegisterMember({
+  communityAddress,
+  // isMember,
+  registerToken,
   registerStakeAmount,
-  gardenToken,
 }: {
+  communityAddress: Address;
+  // isMember: boolean;
+  registerToken: Address;
   registerStakeAmount: number;
-  gardenToken: `0x${string}`;
 }) {
   const { address } = useAccount();
   const viemClient = useViemClient();
   const chainId = useChainId();
-  const contractsAddresses = getContractsAddrByChain(chainId);
+  const contractsAddr = getContractsAddrByChain(chainId);
+
   // const [isMember, setIsMember] = useState();
 
   // const sdk = getBuiltGraphSDK();
@@ -41,12 +47,12 @@ export function RegisterMember({
   //   });
 
   const registryContractCallConfig = {
-    address: contractsAddresses?.registryCommunity,
+    address: communityAddress,
     abi: abiWithErrors(registryCommunityABI),
   };
 
   const {
-    data: isMemberRegistered,
+    data: isMember,
     error,
     isSuccess,
   } = useContractRead({
@@ -82,9 +88,9 @@ export function RegisterMember({
     error: errorAllowToken,
     isSuccess: isSuccessAllowToken,
   } = useContractWrite({
-    address: gardenToken as `0x${string}`,
+    address: registerToken,
     abi: abiWithErrors(erc20ABI),
-    args: [contractsAddresses?.registryCommunity, BigInt(registerStakeAmount)],
+    args: [communityAddress, BigInt(registerStakeAmount)], // allowed spender address, amount
     functionName: "approve",
   });
 
@@ -94,10 +100,12 @@ export function RegisterMember({
   useErrorDetails(errorAllowToken, "approve");
   // useErrorDetails(errorGardenToken, "gardenToken");
 
+  console.log(confirmationsRequired);
+
   const registerMemberTransactionReceipt = async () =>
     await viemClient.waitForTransactionReceipt({
       confirmations: confirmationsRequired,
-      hash: isMemberRegistered
+      hash: isMember
         ? unregisterMemberData?.hash || "0x"
         : registerMemberData?.hash || "0x",
     });
@@ -109,7 +117,7 @@ export function RegisterMember({
     });
 
   async function handleChange() {
-    isMemberRegistered ? writeUnregisterMember?.() : writeAllowToken?.();
+    isMember ? writeUnregisterMember?.() : writeAllowToken?.();
   }
 
   useEffect(() => {
@@ -156,12 +164,10 @@ export function RegisterMember({
     }
   }, [isSuccessAllowToken]);
 
-  if (isMemberRegistered === undefined) return;
+  if (isMember === undefined) return;
   return (
     <Button onClick={handleChange} className="w-fit bg-primary">
-      {isMemberRegistered
-        ? "Unregister from community"
-        : "Register in community"}
+      {isMember ? "Leave community" : "Register in community"}
     </Button>
   );
 }

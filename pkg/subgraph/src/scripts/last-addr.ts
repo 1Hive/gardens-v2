@@ -55,6 +55,11 @@ export function extractAddr(runLatest?: RunLatest) {
     for (const tx of txs) {
       if (tx.contractName == "RegistryCommunity") {
         registryCommunity = tx.contractAddress as Address;
+      } else if (
+        tx.contractName ==
+        "pkg/contracts/src/RegistryCommunity.sol:RegistryCommunity"
+      ) {
+        registryCommunity = tx.contractAddress as Address;
       } else if (tx.contractName == "RegistryFactory") {
         factory = tx.contractAddress as Address;
       } else if (tx.contractName == "SafeProxy") {
@@ -79,4 +84,5 @@ export function extractAddr(runLatest?: RunLatest) {
   };
 }
 
-extractAddr(runLatest);
+const data = extractAddr(runLatest);
+console.log(data);

@@ -10,7 +10,9 @@ import {
   InitializedCV,
   ProposalCreated,
   CVStrategy as CVStrategyContract,
+  PoolAmountIncreased,
 } from "../../generated/templates/CVStrategy/CVStrategy";
+
 import {
   BigInt,
   log,
@@ -32,6 +34,7 @@ export function handleInitialized(event: InitializedCV): void {
   const decay = event.params.data.decay;
   const maxRatio = event.params.data.maxRatio;
   const weight = event.params.data.weight;
+  const pType = event.params.data.proposalType;
 
   log.debug(
     "handleInitialized registryCommunity:{} decay:{} maxRatio:{} weight:{}",
@@ -43,6 +46,8 @@ export function handleInitialized(event: InitializedCV): void {
     ],
   );
 
+  const cvc = CVStrategyContract.bind(event.address);
+
   let cvs = new CVStrategy(event.address.toHex());
   cvs.poolId = poolId;
   cvs.registryCommunity = registryCommunity;
@@ -50,9 +55,12 @@ export function handleInitialized(event: InitializedCV): void {
     `${event.address.toHex()}-${poolId.toString()}-config`,
   );
 
+  cvs.poolAmount = cvc.getPoolAmount();
+
   config.decay = decay;
   config.maxRatio = maxRatio;
   config.weight = weight;
+  config.proposalType = BigInt.fromI32(pType);
 
   config.save();
 
@@ -73,7 +81,8 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.strategy = cvsId;
 
   newProposal.beneficiary = p.getBeneficiary().toHex();
-  newProposal.requestedToken = p.getRequestedToken().toHex();
+  let requestedToken = p.getRequestedToken();
+  newProposal.requestedToken = requestedToken.toHex();
 
   newProposal.blockLast = p.getBlockLast();
   newProposal.convictionLast = p.getConvictionLast();
@@ -83,10 +92,10 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.requestedAmount = p.getRequestedAmount();
 
   newProposal.proposalStatus = BigInt.fromI32(p.getProposalStatus());
-  newProposal.proposalType = BigInt.fromI32(p.getProposalType());
+  // newProposal.proposalType = BigInt.fromI32(p.proposalType());
   newProposal.submitter = p.getSubmitter().toHex();
-  newProposal.voterStakedPointsPct = p.getVoterStakedPointsPct();
-  newProposal.agreementActionId = p.getAgreementActionId();
+  // newProposal.voterStakedPointsPct = p.getVoterStakedPointsPct();
+  // newProposal.agreementActionId = p.getAgreementActionId();
 
   const pointer = cvc.getMetadata(event.params.proposalId).pointer;
 
@@ -107,4 +116,19 @@ export function handleProposalCreated(event: ProposalCreated): void {
   // }
 
   newProposal.save();
+}
+// handlePoolAmountIncreased
+export function handlePoolAmountIncreased(event: PoolAmountIncreased): void {
+  log.debug("handlePoolAmountIncreased: amount: {}", [
+    event.params.amount.toString(),
+  ]);
+  let cvs = CVStrategy.load(event.address.toHex());
+  if (cvs == null) {
+    log.debug("handlePoolAmountIncreased cvs not found: {}", [
+      event.address.toHexString(),
+    ]);
+    return;
+  }
+  cvs.poolAmount = event.params.amount;
+  cvs.save();
 }

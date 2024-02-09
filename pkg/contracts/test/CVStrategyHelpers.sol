@@ -34,10 +34,14 @@ contract CVStrategyHelpers is Native, Accounts {
         return _poolProfileId1_;
     }
 
-    function createPool(Allo allo, address strategy, address registryCommunity, IRegistry registry, address token)
-        public
-        returns (uint256 poolId)
-    {
+    function createPool(
+        Allo allo,
+        address strategy,
+        address registryCommunity,
+        IRegistry registry,
+        address token,
+        CVStrategy.ProposalType proposalType
+    ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         CVStrategy.InitializeParams memory params;
         params.decay = _etherToFloat(0.9999799 ether); // alpha = decay
@@ -46,6 +50,7 @@ contract CVStrategyHelpers is Native, Accounts {
         params.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
         // params.minThresholdStakePercentage = 0.2 ether; // 20%
         params.registryCommunity = registryCommunity;
+        params.proposalType = proposalType;
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
@@ -69,6 +74,8 @@ contract CVStrategyHelpers is Native, Accounts {
             metadata,
             _pool_managers
         );
+
+        assert(CVStrategy(payable(strategy)).proposalType() == proposalType);
     }
 
     function _etherToFloat(uint256 _amount) internal pure returns (uint256) {

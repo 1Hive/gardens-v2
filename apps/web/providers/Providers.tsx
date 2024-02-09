@@ -43,11 +43,13 @@ const Providers = ({ children }: Props) => {
     // if mounted UrlqProvider will be rendered
     // if not, null will be rendered
     mounted && (
-      <WagmiConfig config={wagmiConfig}>
-        <RainbowKitProvider modalSize="compact" chains={chains}>
-          <ThemeProvider>{mounted && children}</ThemeProvider>
-        </RainbowKitProvider>
-      </WagmiConfig>
+      <UrqlProvider>
+        <WagmiConfig config={wagmiConfig}>
+          <RainbowKitProvider modalSize="compact" chains={chains}>
+            <ThemeProvider>{mounted && children}</ThemeProvider>
+          </RainbowKitProvider>
+        </WagmiConfig>
+      </UrqlProvider>
     )
   );
 };
