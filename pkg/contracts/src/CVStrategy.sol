@@ -500,14 +500,14 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     function convertPctToTokens(uint256 _pct) internal view returns (uint256) {
-        return _pct * getBasisPoint() / 100;
+        return _pct * getBasisStakedAmount() / PRECISE_PERCENTAGE;
     }
 
     function convertTokensToPct(uint256 _tokens) internal view returns (uint256) {
-        return _tokens * PRECISE_PERCENTAGE/ getBasisPoint();
+        return _tokens * PRECISE_PERCENTAGE/ getBasisStakedAmount();
     }
 
-    function getBasisPoint() internal view returns (uint256) {
+    function getBasisStakedAmount() internal view returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
 
@@ -528,7 +528,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
             if (!proposalExists(proposalId)) {
                 revert ProposalNotInList(proposalId); //@TODO: maybe we should skip emitting a event instead of revert
             }
-            deltaSupportSum += _proposalSupport[i].deltaSupport;
+            deltaSupportSum += _proposalSupport[i].deltaSupport * 10 ** 4;
         }
         // console.log("deltaSupportSum");
         // console.logInt(deltaSupportSum);
@@ -575,7 +575,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
                     proposalsIds = temp;
                 }
             }
-            int256 delta = _proposalSupport[i].deltaSupport;
+            int256 delta = _proposalSupport[i].deltaSupport * 10 ** 4;
             console.log("DELTA:");
             console.logInt(delta);
             Proposal storage proposal = proposals[proposalId];

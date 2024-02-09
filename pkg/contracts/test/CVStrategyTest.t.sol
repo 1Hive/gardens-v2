@@ -411,7 +411,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         safeHelper(
             address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45000)
+            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45 ether)
         );
         /**
          * ASSERTS
@@ -423,19 +423,28 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().allocate(poolId, data);
         // stopMeasuringGas();
 
-        uint256 AMOUNT_STAKED = 45000 ether;
+        uint256 AMOUNT_STAKED = 45 ether;
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         assertEq(cv.getProposalVoterStake(1, address(this)), AMOUNT_STAKED);
-        assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED);
+        assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED );
 
-        votes[0] = CVStrategy.ProposalSupport(1, -100);
+        votes[0] = CVStrategy.ProposalSupport(1, -80);
         data = abi.encode(votes);
         allo().allocate(poolId, data);
 
-        assertEq(cv.getProposalVoterStake(1, address(this)), 0, "VoterStake");
-        assertEq(cv.getProposalStakedAmount(1), 0, "StakedAmount");
+        assertEq(cv.getProposalVoterStake(1, address(this)), (20 * AMOUNT_STAKED)/100, "VoterStake");
+        assertEq(cv.getProposalStakedAmount(1), (20 * AMOUNT_STAKED)/100, "StakedAmount");
 
-        assertEq(cv.totalStaked(), 0, "TotalStaked");
+        assertEq(cv.totalStaked(), (20 * AMOUNT_STAKED)/100, "TotalStaked");
+
+        votes[0] = CVStrategy.ProposalSupport(1, -5);
+        data = abi.encode(votes);
+        allo().allocate(poolId, data);
+
+        assertEq(cv.getProposalVoterStake(1, address(this)), (15 * AMOUNT_STAKED)/100, "VoterStake");
+        assertEq(cv.getProposalStakedAmount(1), (15 * AMOUNT_STAKED)/100, "StakedAmount");
+
+        assertEq(cv.totalStaked(), (15 * AMOUNT_STAKED)/100, "TotalStaked");
 
         // registryCommunity.setBasisStakedAmount(MINIMUM_STAKE);
         safeHelper(
@@ -468,7 +477,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalStakedAmount(1), MINIMUM_STAKE);
     }
     function test_allocate_proposalSupport_precision() public {
-        uint256 TWO_POINT_FIVE_PERCENT = 2.5 ether / 10 ** (18-4);
+        uint256 TWO_POINT_FIVE_TOKENS = 2.5 ether ;
+        uint256 PRECISE_FIVE_PERCENT = 5 * 10 ** 4;
+
         (IAllo.Pool memory pool, uint256 poolId) = _createProposal(NATIVE, 0, 0);
 
         /**
@@ -486,9 +497,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-        assertEq(cv.getTotalVoterStakePct(address(this)),TWO_POINT_FIVE_PERCENT);
+        assertEq(cv.getTotalVoterStakePct(address(this)),PRECISE_FIVE_PERCENT);
         //assertEq(cv.getProposalVoterStake(1, address(this)), MINIMUM_STAKE); // 100% of 50 = 50
-        assertEq(cv.getProposalStakedAmount(1), MINIMUM_STAKE);
+        //assertEq(cv.getProposalStakedAmount(1), (MINIMUM_STAKE * PRECISE_FIVE_PERCENT)/PRECISE_HUNDRED_PERCENT);
+        assertEq(cv.getProposalStakedAmount(1), TWO_POINT_FIVE_TOKENS);
     }
 
     function test_proposalSupported_conviction_threshold_2_users() public {
@@ -516,7 +528,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().allocate(poolId, data);
         stopMeasuringGas();
 
-        uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT) * MINIMUM_STAKE / 100;
+        uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT) * MINIMUM_STAKE / (100 * 10 ** 4);
         assertEq(cv.getProposalVoterStake(1, address(this)), STAKED_AMOUNT); // 80% of 50 = 40
         assertEq(cv.getProposalStakedAmount(1), STAKED_AMOUNT); // 80% of 50 = 40
 
@@ -538,7 +550,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().allocate(poolId, data);
         vm.stopPrank();
 
-        uint256 STAKED_AMOUNT2 = uint256(SUPPORT_PCT2) * MINIMUM_STAKE / 100;
+        uint256 STAKED_AMOUNT2 = uint256(SUPPORT_PCT2) * MINIMUM_STAKE / (100 * 10 ** 4);
 
         assertEq(cv.getProposalVoterStake(1, address(pool_admin())), STAKED_AMOUNT2); // 100% of 50 = 50
         assertEq(cv.getProposalStakedAmount(1), STAKED_AMOUNT + STAKED_AMOUNT2);
@@ -587,8 +599,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("Conviction Last: %s", convictionLast);
         console.log("Voter points pct %s", voterPointsPct);
         assertEq(threshold, 57806, "threshold");
-        assertEq(convictionLast, 9093, "convictionLast");
-        assertEq(voterPointsPct, 100, "voterPointsPct");
+        assertEq(convictionLast, 9093 , "convictionLast");
+        assertEq(voterPointsPct, 100 * 10 ** 4, "voterPointsPct");
     }
 
     function test_1_proposalSupported() public {
