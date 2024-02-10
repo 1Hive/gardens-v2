@@ -10,6 +10,8 @@ import { formatAddress } from "@/utils/formatAddress";
 type CommunityQuery = NonNullable<
   NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
 >[number];
+type CommunityCardProps = CommunityQuery & { gardenToken: `0x${string}` };
+
 export function CommunityCard({
   communityName: name,
   id: communityAddress,
@@ -20,18 +22,18 @@ export function CommunityCard({
 }: CommunityQuery) {
   const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
-  const [isMember, setIsMember] = useState<boolean | undefined>(undefined);
+  // const [isMember, setIsMember] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (accountAddress && members) {
-      const findMember = members.some(
-        (m) => m.memberAddress == accountAddress.toLowerCase(),
-      );
-      setIsMember(findMember);
-    } else {
-      setIsMember(false);
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (accountAddress && members) {
+  //     const findMember = members.some(
+  //       (m) => m.memberAddress == accountAddress.toLowerCase(),
+  //     );
+  //     setIsMember(findMember);
+  //   } else {
+  //     setIsMember(false);
+  //   }
+  // }, []);
 
   const pools = strategies ?? [];
   members = members ?? [];
@@ -48,9 +50,9 @@ export function CommunityCard({
           {formatAddress(communityAddress)}
         </p>
       </div>
-      {accountAddress && isMember != undefined && (
+      {accountAddress &&  (
         <RegisterMember
-          isMember={isMember}
+          // isMember={isMember}
           communityAddress={communityAddress as Address}
           registerToken={registerToken as Address}
           registerStakeAmount={registerStakeAmount}
@@ -66,7 +68,6 @@ export function CommunityCard({
           <PoolCard {...pool} key={i} />
         ))}
       </div>
-
       {pools.length > 2 && (
         <Button
           // style="outline"

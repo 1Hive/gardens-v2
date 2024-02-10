@@ -1751,6 +1751,14 @@ export type isMemberQuery = {
         })>>;
     })>;
 };
+export type getPoolQueryVariables = Exact<{
+    poolId: Scalars['BigInt'];
+}>;
+export type getPoolQuery = {
+    cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
+        proposals: Array<Pick<CVProposal, 'id' | 'requestedAmount' | 'requestedToken' | 'stakedTokens' | 'proposalType' | 'proposalStatus' | 'submitter' | 'voterStakedPointsPct' | 'metadata' | 'beneficiary'>>;
+    })>;
+};
 export type getCommunityByGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
 }>;
