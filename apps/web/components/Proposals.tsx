@@ -3,13 +3,10 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAccount, useContractRead, useContractWrite } from "wagmi";
-import {
-  ContractsAddresses,
-  confirmationsRequired,
-} from "@/constants/contracts";
+import { useAccount, useContractWrite } from "wagmi";
+import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { alloABI, cvStrategyABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
@@ -74,6 +71,7 @@ export function Proposals({
     // if (address !== undefined) {
     getProposals(address as Address, strategy).then((res) => {
       if (res !== undefined) {
+        // console.log("res", res);
         setProposals(res);
       } else {
         console.log("no proposals");

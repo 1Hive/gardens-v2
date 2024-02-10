@@ -48,11 +48,15 @@ export async function getProposals(
       });
 
       proposalsReadsContract.forEach((proposal, i) => {
+        // console.log("proposalReadcontractg", proposal);
+
         if (proposal !== undefined) {
           transformedProposals.push(
             transformData(
               strategy.proposals[i],
-              proposal.result as bigint,
+              proposal.result === undefined
+                ? BigInt(0)
+                : (proposal.result as bigint),
               proposalTypeStr,
             ),
           );

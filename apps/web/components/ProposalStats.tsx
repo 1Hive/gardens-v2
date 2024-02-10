@@ -15,11 +15,15 @@ export const ProposalStats: FC<ProposalStatsProps> = ({
   proposals,
   distributedPoints,
 }) => {
+  // console.log("proposals", proposals);
   const proposalsDistributionPoints = proposals.map(
-    ({ title, voterStakedPointsPct }) => ({
-      value: Number(voterStakedPointsPct.toString()),
-      name: title,
-    }),
+    ({ title, voterStakedPointsPct }) => {
+      // console.log("voterStakedPointsPct", voterStakedPointsPct);
+      return {
+        value: Number(BigInt(voterStakedPointsPct).toString()),
+        name: title,
+      };
+    },
   ) as Proposals[];
 
   const proposalsTotalSupport = proposals.map(({ title, stakedTokens }) => ({
