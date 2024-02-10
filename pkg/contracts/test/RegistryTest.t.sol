@@ -32,7 +32,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
     CVStrategy public strategy;
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * 10 ** 18;
-    uint256 public constant MINIMUM_STAKE = 1000;
+    uint256 public constant MINIMUM_STAKE = 1000 * 10 ** 18;
     uint256 public constant PROTOCOL_FEE_PERCENTAGE = 1;
     uint256 public constant COMMUNITY_FEE_PERCENTAGE = 3;
     uint256 public constant STAKE_WITH_FEES =

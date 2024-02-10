@@ -120,12 +120,14 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     uint256 public maxRatio;
     uint256 public weight;
     ProposalType public proposalType;
-    // uint256 public minThresholdStakePercentage;
+    
     uint256 public proposalCounter = 0;
     uint256 public totalStaked;
-    uint256 public minPointsActivated = 100 * 10;
+    uint256 public minPointsActivated = 100 * 10 * PRECISION_SCALE;
 
+    uint256 public constant PRECISION_SCALE = 10 ** 4;
     uint256 public constant D = 10000000; //10**7
+    uint256 public constant PRECISION_PERCENTAGE = 100 * PRECISION_SCALE;
     // uint256 public constant ONE_HUNDRED_PERCENT = 1e18;
     uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
@@ -494,14 +496,14 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     }
 
     function convertPctToTokens(uint256 _pct) internal view returns (uint256) {
-        return _pct * getBasisPoint() / 100;
+        return _pct * getBasisStakedAmount() / PRECISION_PERCENTAGE;
     }
 
     function convertTokensToPct(uint256 _tokens) internal view returns (uint256) {
-        return _tokens * 100 / getBasisPoint();
+        return _tokens * PRECISION_PERCENTAGE / getBasisStakedAmount();
     }
 
-    function getBasisPoint() internal view returns (uint256) {
+    function getBasisStakedAmount() internal view returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
 
