@@ -22,14 +22,14 @@ export async function getProposals(
       (p) => {
         return {
           ...p,
-          voterStakedPointsPct: 0,
+          voterStakedPointsPct: BigInt(0),
           title: "title", //@todo get from IPFS using p.metadata
           type: proposalTypeStr,
         };
       },
     );
 
-    console.log("transformedProposals", transformedProposals);
+    // console.log("transformedProposals", transformedProposals);
     if (accountAddress) {
       transformedProposals = [];
       const alloContractReadProps = {
@@ -48,14 +48,15 @@ export async function getProposals(
       });
 
       proposalsReadsContract.forEach((proposal, i) => {
-        if (proposal !== undefined)
+        if (proposal !== undefined) {
           transformedProposals.push(
             transformData(
               strategy.proposals[i],
-              proposal.result as any[],
+              proposal.result as bigint,
               proposalTypeStr,
             ),
           );
+        }
       });
     }
 
@@ -67,12 +68,12 @@ export async function getProposals(
 
 function transformData(
   p: Proposal,
-  data: any[],
+  voterStakedPointsPct: bigint,
   proposalTypeStr: string,
 ): ProposalTypeVoter {
   return {
     ...p,
-    voterStakedPointsPct: Number(data[0]),
+    voterStakedPointsPct,
     title: "title", //@todo get from IPFS using p.metadata
     type: proposalTypeStr,
   };

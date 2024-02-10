@@ -3,10 +3,12 @@ import React, { FC, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { ProposalTotalStakedChart } from "./Charts";
 import { ProposalDistributionPointsChart } from "./Charts";
+import { Proposals } from "./Charts/ProposalDistributionPointsChart";
+import { ProposalTypeVoter } from "./Proposals";
 
 type ProposalStatsProps = {
-  proposals: any[];
-  distributedPoints: number;
+  proposals: ProposalTypeVoter[];
+  distributedPoints: bigint;
 };
 
 export const ProposalStats: FC<ProposalStatsProps> = ({
@@ -15,10 +17,10 @@ export const ProposalStats: FC<ProposalStatsProps> = ({
 }) => {
   const proposalsDistributionPoints = proposals.map(
     ({ title, voterStakedPointsPct }) => ({
-      value: voterStakedPointsPct,
+      value: Number(voterStakedPointsPct.toString()),
       name: title,
     }),
-  );
+  ) as Proposals[];
 
   const proposalsTotalSupport = proposals.map(({ title, stakedTokens }) => ({
     value: stakedTokens,

@@ -20,20 +20,31 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/communities/pool/[poolId]/page";
 import { Type } from "./Badge";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+
+export const convertBigIntToNumberFraction = (bigInt: bigint) => {
+  return Number(bigInt.toString()) / 10 ** 4;
+};
+
+export const convertNumberFractionToBigInt = (number: number) => {
+  return BigInt(number * 10 ** 4);
+};
 
 type InputItem = {
   id: string;
-  value: number;
+  value: bigint;
 };
 
 export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 export type Proposal = Strategy["proposals"][number];
 
 export type ProposalTypeVoter = Proposal & {
-  voterStakedPointsPct: number;
+  voterStakedPointsPct: bigint;
   title: string;
   type: string;
 };
+
+const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
 
 //!POOL == STRATEGY
 export function Proposals({
@@ -44,7 +55,7 @@ export function Proposals({
   alloInfo: AlloQuery;
 }) {
   const [editView, setEditView] = useState(false);
-  const [distributedPoints, setDistributedPoints] = useState(0);
+  const [distributedPoints, setDistributedPoints] = useState(BigInt(0));
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
@@ -80,6 +91,7 @@ export function Proposals({
       id: id,
       value: voterStakedPointsPct,
     }));
+    console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
 
@@ -100,7 +112,7 @@ export function Proposals({
     status: contractStatus,
   } = useContractWrite({
     address: alloInfo.id as Address,
-    abi: alloABI,
+    abi: abiWithErrors(alloABI),
     functionName: "allocate",
   });
 
@@ -139,7 +151,8 @@ export function Proposals({
   const submit = async () => {
     const encodedData = getEncodedProposals(inputs, proposals);
     // const poolId = Number(poolID);
-    const poolId = Number(1); //@todo fix this using subgraph instead
+    const poolId = Number(strategy.poolId);
+    // console.log("poolId", poolId);
 
     writeAllocate({
       args: [BigInt(poolId), encodedData as `0x${string}`],
@@ -155,34 +168,41 @@ export function Proposals({
       currentData.forEach((current) => {
         if (input.id === current.id) {
           const dif = input.value - current.voterStakedPointsPct;
-          if (dif !== 0) resultArr.push([Number(input.id), dif]);
+          if (dif !== BigInt(0)) {
+            resultArr.push([Number(input.id), Number(dif)]);
+          }
         }
       });
     });
 
+    console.log("resultArr", resultArr);
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
     return encodedData;
   };
 
-  const inputHandler = (i: number, value: number) => {
+  const inputHandler = (i: number, value: bigint) => {
     const currentPoints = calculatePoints(i);
-    if (currentPoints + value <= 100) {
+    console.log("currentPoints", currentPoints);
+    console.log("value", value);
+    if (currentPoints + value <= BIGINT_100_SCALED) {
       setInputs(
         inputs.map((input, index) =>
           index === i ? { ...input, value: value } : input,
         ),
       );
       setDistributedPoints(currentPoints + value);
-    } else console.log("can't exceed 100% points");
+    } else {
+      console.log("can't exceed 100% points");
+    }
   };
 
   const calculatePoints = (exceptIndex?: number) =>
     inputs.reduce((acc, curr, i) => {
       if (exceptIndex !== undefined && exceptIndex === i) return acc;
       else return acc + curr.value;
-    }, 0);
+    }, BigInt(0));
 
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
@@ -193,13 +213,14 @@ export function Proposals({
           {editView && (
             <span
               className={`${
-                distributedPoints >= 100 && "scale-110 font-semibold text-red"
+                distributedPoints >= BIGINT_100_SCALED &&
+                "scale-110 font-semibold text-red"
               } transition-all`}
             >
-              {distributedPoints >= 100
+              {distributedPoints >= BIGINT_100_SCALED
                 ? "Max points reached: "
                 : "Total distributed: "}
-              {distributedPoints} pts
+              {convertBigIntToNumberFraction(distributedPoints).toString()} pts
             </span>
           )}
         </header>
@@ -232,11 +253,16 @@ export function Proposals({
                         type="range"
                         min={0}
                         max={100}
-                        value={inputs[i]?.value}
+                        value={convertBigIntToNumberFraction(inputs[i]?.value)}
                         className={`range-aja range range-sm min-w-[420px]`}
                         step="5"
                         onChange={(e) =>
-                          inputHandler(i, Number(e.target.value))
+                          inputHandler(
+                            i,
+                            convertNumberFractionToBigInt(
+                              Number(e.target.value),
+                            ),
+                          )
                         }
                       />
                       <div className="flex w-full justify-between px-[10px] text-[4px]">
@@ -245,7 +271,9 @@ export function Proposals({
                         ))}
                       </div>
                     </div>
-                    <div className="mb-2">{inputs[i].value} %</div>
+                    <div className="mb-2">
+                      {convertBigIntToNumberFraction(inputs[i].value)} %
+                    </div>
                   </div>
                   <Link href={`${pathname}/proposals/${id}`}>
                     <Button className="h-[38px] bg-slate-200">
@@ -271,7 +299,7 @@ export function Proposals({
             <Button
               className="min-w-[200px] bg-secondary"
               onClick={() => submit()}
-              isLoading={status === "loading"}
+              isLoading={contractStatus === "loading"}
             >
               Save changes
             </Button>
