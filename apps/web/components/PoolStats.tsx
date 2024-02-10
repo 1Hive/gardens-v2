@@ -90,7 +90,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
       {/* right  */}
       <div className="flex-1 space-y-8 rounded-xl border-2 border-black bg-white p-4">
         <div>
-          <h4 className="text-center text-xl font-bold">Governance</h4>
+          <h4 className="text-center text-xl font-bold">Active Points</h4>
         </div>
         <div>
           {/* Testing styles and Data */}
