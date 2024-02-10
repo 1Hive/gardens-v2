@@ -26,7 +26,7 @@ export default function useErrorDetails(error: Error | null, name?: string) {
     if (!error) return;
 
     const { errorName, args } = getErrorName(error);
-    console.log(name ?? "errorName", errorName);
+    console.log(name ? `ErrorDetails:${name}` : "errorName", errorName);
   }, [error]);
 
   return { errorName, args };

@@ -5,45 +5,29 @@ import Image from "next/image";
 import { StatusBadge } from "./Badge";
 import { ActivePointsChart } from "@/components";
 import { PoolTokenPriceChart } from "@/components";
-import { ActivateMember } from "./ActivateMember";
-import { useAccount, useContractRead } from "wagmi";
-import { contractsAddresses } from "@/constants/contracts";
-import { registryCommunityABI, cvStrategyABI, alloABI } from "@/src/generated";
+import { ActivatePoints } from "./ActivatePoints";
+import { Strategy } from "./Proposals";
+import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
+import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
+import { useAccount } from "wagmi";
 
-type poolStatsProps = {
+type PoolStatsProps = {
   balance?: string | number;
   strategyAddress: `0x${string}`;
-  poolId: number;
+  strategy: Strategy;
+  // poolId: number;
+  // communityAddress: `0x${string}`;
 };
 
-export const PoolStats: FC<poolStatsProps> = ({
+export const PoolStats: FC<PoolStatsProps> = ({
   balance,
   strategyAddress,
-  poolId,
+  strategy,
 }) => {
-  const { address: mainConnectedAccount } = useAccount();
+  const { isMemberActived } = useIsMemberActivated(strategy);
+  const { isConnected } = useAccount();
 
-  const {
-    data: isMemberActived,
-    error: errorMemberActivated,
-    status,
-  } = useContractRead({
-    address: contractsAddresses.registryCommunity,
-    abi: registryCommunityABI,
-    functionName: "memberActivatedInStrategies",
-    args: [mainConnectedAccount as `0x${string}`, strategyAddress],
-    watch: true,
-    cacheOnBlock: true,
-  });
-
-  const { data: voterStakePct } = useContractRead({
-    address: strategyAddress,
-    abi: cvStrategyABI,
-    functionName: "getTotalVoterStakePct",
-    args: [mainConnectedAccount as `0x${string}`],
-    watch: true,
-    cacheOnBlock: true,
-  });
+  const { voterStakePct } = useTotalVoterStakedPct(strategy);
 
   return (
     <section className="flex h-fit w-full gap-8 rounded-xl bg-none">
@@ -75,13 +59,17 @@ export const PoolStats: FC<poolStatsProps> = ({
               <div className="flex flex-1 flex-col items-center">
                 <p>Points</p>
                 <div className="badge w-20 min-w-16 bg-inherit p-4 text-xl text-black">
-                  {isMemberActived ? "100" : "0"}
+                  {isConnected ? (isMemberActived ? "100" : "0") : ":("}
                 </div>
               </div>
               <div className="flex flex-1 flex-col items-center">
                 <p>Status</p>
                 <StatusBadge
-                  status={`${isMemberActived ? "active" : "inactive"}`}
+                  status={
+                    !isConnected
+                      ? `inactive`
+                      : `${isMemberActived ? "active" : "inactive"}`
+                  }
                   classNames=""
                 />
               </div>
@@ -89,10 +77,10 @@ export const PoolStats: FC<poolStatsProps> = ({
 
             {/* Activate - Deactivate/ points */}
             <div className="flex w-full justify-center">
-              <ActivateMember
+              <ActivatePoints
                 strategyAddress={strategyAddress}
                 isMemberActived={isMemberActived}
-                errorMemberActivated={errorMemberActivated}
+                // errorMemberActivated={errorMemberActivated}
               />
             </div>
           </div>
@@ -102,11 +90,12 @@ export const PoolStats: FC<poolStatsProps> = ({
       {/* right  */}
       <div className="flex-1 space-y-8 rounded-xl border-2 border-black bg-white p-4">
         <div>
-          <h4 className="text-center text-xl font-bold">Governance</h4>
+          <h4 className="text-center text-xl font-bold">Active Points</h4>
         </div>
         <div>
           {/* Testing styles and Data */}
           <ActivePointsChart stakedPoints={Number(voterStakePct)} />
+          {/* <ActivePointsChart stakedPoints={Number(0)} /> */}
         </div>
       </div>
     </section>

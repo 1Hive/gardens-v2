@@ -105,6 +105,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         address payable _councilSafe;
         string _communityName;
         bool _isKickEnabled;
+        string covenantIpfsHash;
     }
 
     //TODO: can change to uint32 with optimized storage order
@@ -122,8 +123,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     address payable public pendingCouncilSafe; //@todo write test for change owner in 2 step
     Safe public councilSafe;
 
-    string public communityName; //@todo comunityName is never defined, need be get from metadata probably.
-    string private covenantIpfsHash;
+    string public communityName;
+    string public covenantIpfsHash; //@todo maybe should be bytes32
 
     mapping(address => bool) public tribunalMembers;
 
@@ -154,6 +155,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         communityFee = params._communityFee;
         isKickEnabled = params._isKickEnabled;
         communityName = params._communityName;
+        covenantIpfsHash = params.covenantIpfsHash;
         registryFactory = params._registryFactory;
         feeReceiver = params._feeReceiver;
         councilSafe = Safe(params._councilSafe);
@@ -163,19 +165,24 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         address[] memory owners = councilSafe.getOwners();
         console.log("owners length", owners.length);
-        address[] memory initialMembers = new address[](owners.length + 1);
+        address[] memory initialMembers = new address[](owners.length + 2);
 
         for (uint256 i = 0; i < owners.length; i++) {
             initialMembers[i] = owners[i];
         }
 
         initialMembers[initialMembers.length - 1] = address(councilSafe);
+        initialMembers[initialMembers.length - 2] = address(this);
 
         console.log("initialMembers length", initialMembers.length);
         profileId =
             registry.createProfile(params._nonce, communityName, params._metadata, address(this), initialMembers);
 
         emit RegistryInitialized(profileId, communityName, params._metadata);
+    }
+
+    function createPool() public {
+        // @todo create params
     }
 
     function activateMemberInStrategy(address _member, address _strategy)
@@ -257,29 +264,31 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         return newMember.isRegistered;
     }
     //Todo: add protocol fee logic
+
     function stakeAndRegisterMember() public nonReentrant {
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
         RegistryFactory gardensFactory = RegistryFactory(registryFactory);
-        uint256 communityFeeAmount = (registerStakeAmount * communityFee)/100;
-        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this)))/100;
+        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / 100;
+        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / 100;
         if (!isMember(_member)) {
             newMember.isRegistered = true;
 
             newMember.stakedAmount = registerStakeAmount;
-            gardenToken.transferFrom(_member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount);
+            gardenToken.transferFrom(
+                _member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
+            );
             //TODO: Test if revert because of approve on contract, if doesnt work, transfer all to this contract, and then transfer to each receiver
             //individually. Check vulnerabilites for that with Felipe
             // gardenToken.approve(feeReceiver,communityFeeAmount);
             //Error: ProtocolFee is equal to zero
-            if(communityFeeAmount > 0){
-            gardenToken.transfer(feeReceiver, communityFeeAmount);
+            if (communityFeeAmount > 0) {
+                gardenToken.transfer(feeReceiver, communityFeeAmount);
             }
             // gardenToken.approve(gardensFactory.getGardensFeeReceiver(),gardensFeeAmount);
-            if(gardensFeeAmount > 0){
-            gardenToken.transfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
+            if (gardensFeeAmount > 0) {
+                gardenToken.transfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
             }
-
 
             emit MemberRegistered(_member, registerStakeAmount);
         }

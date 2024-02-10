@@ -1,11 +1,12 @@
 {
   "network": "arbitrum-sepolia",
+  "chainId": 421614,
   "dataSources": [
     {
-      "name": "CVStrategy",
-      "startBlock": 0,
-      "address": "0x7Abd120939C029a71077973c6422e9b3afe5f011",
-      "customTemplate": "cvStrategy"
+      "name": "RegistryFactory",
+      "startBlock": 12733820,
+      "address": "0xFbe59fE1a2630311C98B3F3A917BaB764397A72b",
+      "customTemplate": "registryFactory"
     }
   ]
 }

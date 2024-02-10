@@ -3,43 +3,14 @@ features:
   - nonFatalErrors
 schema:
   file: ./src/schema.graphql
+dataSources:
+{{#dataSources}}
+  {{&subTemplate}}
+{{/dataSources}}
 templates:
-  - kind: file/ipfs
-    name: ProposalMetadata
-    mapping:
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      file: ./src/mappings/proposalMetadata.ts
-      handler: handleProposalMetadata
-      entities:
-        - ProposalMeta
-        - CVProposal
-      abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
-  - kind: ethereum/contract
-    name: CVStrategy
-    network: localhost
-    source:
-      abi: CVStrategy
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      entities:
-        - CVStrategy
-      abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
-      eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256))
-          handler: handleInitialized
-        - event: ProposalCreated(uint256,uint256)
-          handler: handleProposalCreated
-      file: ./src/mappings/cv-strategy.ts
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: localhost
+    network: {{network}}
     source:
       abi: RegistryCommunity
     mapping:
@@ -48,16 +19,25 @@ templates:
       language: wasm/assemblyscript
       entities:
         - RegistryCommunity
+        - ERC20
+        - CVStrategy
+        - TokenGarden
+        - Member
       abis:
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: ERC20
+          file: ../contracts/out/ERC20.sol/ERC20.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+     
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
         - event: MemberRegistered(address,uint256)
           handler: handleMemberRegistered
-        # - event: MemberUnregistered(address,uint256)
-        #   handler: handleMemberUnregistered
+        - event: MemberUnregistered(address,uint256)
+          handler: handleMemberUnregistered
         # - event: MemberKicked(address,address,uint256)
         #   handler: handleMemberKicked
         # - event: ProtocolFeeUpdated(uint256)
@@ -66,10 +46,10 @@ templates:
           handler: handleStrategyAdded
         # - event: StrategyRemoved(address)
         #   handler: handleStrategyRemoved
-        # - event: MemberActivatedStrategy(address,address)
-        #   handler: handleMemberActivatedStrategy
-        # - event: MemberDeactivatedStrategy(address,address)
-        #   handler: handleMemberDeactivatedStrategy
+        - event: MemberActivatedStrategy(address,address)
+          handler: handleMemberActivatedStrategy
+        - event: MemberDeactivatedStrategy(address,address)
+          handler: handleMemberDeactivatedStrategy
         # - event: StakeAmountUpdated(address,uint256)
         #   handler: handleStakeAmountUpdated
         # - event: BasisStakedAmountSet(uint256)
@@ -81,7 +61,32 @@ templates:
         # - event: AlloSet(address)
         #   handler: handleAlloSet
       file: ./src/mappings/registry-community.ts
-dataSources:
-{{#dataSources}}
-  {{&subTemplate}}
-{{/dataSources}}
+
+  - kind: ethereum/contract
+    name: CVStrategy
+    network: {{network}}
+    source:
+      abi: CVStrategy
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CVStrategy
+        - CVStrategyConfig
+        - CVProposal
+      abis:
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+      eventHandlers:
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8))
+          handler: handleInitialized
+        - event: ProposalCreated(uint256,uint256)
+          handler: handleProposalCreated
+        - event: PoolAmountIncreased(uint256)
+          handler: handlePoolAmountIncreased
+
+      file: ./src/mappings/cv-strategy.ts
+  

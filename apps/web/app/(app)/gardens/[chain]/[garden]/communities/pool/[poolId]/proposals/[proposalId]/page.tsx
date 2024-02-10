@@ -3,11 +3,15 @@ import { formatAddress } from "@/utils/formatAddress";
 import { honeyIcon } from "@/assets";
 import Image from "next/image";
 import { alloABI, cvStrategyABI } from "@/src/generated";
-import { Abi, createPublicClient, http } from "viem";
-import { contractsAddresses } from "@/constants/contracts";
+import { Abi, Address, createPublicClient, http } from "viem";
+import { getContractsAddrByChain } from "@/constants/contracts";
 import { proposalsMockData } from "@/constants/proposalsMockData";
 import { getChain } from "@/configs/chainServer";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { initUrqlClient, queryByChain } from "@/providers/urql";
+import { getAlloDocument, getAlloQuery } from "#/subgraph/.graphclient";
+
+export const dynamic = "force-dynamic";
 
 type ProposalsMock = {
   title: string;
@@ -43,19 +47,32 @@ type PoolData = {
   adminRole: `0x${string}`;
 };
 
+const { urqlClient } = initUrqlClient();
+
 export default async function Proposal({
-  params: { proposalId, poolId, chain },
+  params: { proposalId, poolId, chain, garden },
 }: {
-  params: { proposalId: number; poolId: number; chain: number };
+  params: { proposalId: number; poolId: number; chain: number; garden: string };
 }) {
+  console.log(proposalId, poolId, chain, garden);
   const client = createPublicClient({
     chain: getChain(chain),
     transport: http(),
   });
 
+  const { data: alloInfo } = await queryByChain<getAlloQuery>(
+    urqlClient,
+    chain,
+    getAlloDocument,
+  );
+  const alloAddress = alloInfo?.allos[0].id as Address;
+  // const addrs = getContractsAddrByChain(chain);
+  // if (!addrs) {
+  // return <div>Chain ID: {chain} not supported</div>;
+  // }//@todo create a function to check suuported chains and return a message with error or redirect
   const poolData = (await client.readContract({
     abi: alloABI,
-    address: contractsAddresses.allo,
+    address: alloAddress,
     functionName: "getPool",
     args: [BigInt(poolId)],
   })) as PoolData;

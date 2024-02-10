@@ -29,7 +29,7 @@ export const ChartWrapper = ({
           {children}
         </div>
         <header
-          className={`w-full bg-surface p-4 text-center font-semibold text-black last:rounded-b-lg ${cn(
+          className={`w-full p-4 text-center font-semibold text-black last:rounded-b-lg ${cn(
             {
               "text-xs": size === "sm",
             },
