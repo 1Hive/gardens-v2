@@ -3,43 +3,39 @@ features:
   - nonFatalErrors
 schema:
   file: ./src/schema.graphql
-templates:
-  - kind: file/ipfs
-    name: ProposalMetadata
-    mapping:
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      file: ./src/mappings/proposalMetadata.ts
-      handler: handleProposalMetadata
-      entities:
-        - ProposalMeta
-        - CVProposal
-      abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+dataSources:
   - kind: ethereum/contract
-    name: CVStrategy
-    network: localhost
+    name: RegistryFactory
+    network: arbitrum-sepolia
+    context:
+      chainId: 
+        type: Int
+        data: 421614
     source:
-      abi: CVStrategy
+      address: "0xFbe59fE1a2630311C98B3F3A917BaB764397A72b"
+      abi: RegistryFactory
+      startBlock: 12733820
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - CVStrategy
+        - RegistryFactory
+        - RegistryCommunity
       abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: RegistryFactory
+          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256))
-          handler: handleInitialized
-        - event: ProposalCreated(uint256,uint256)
-          handler: handleProposalCreated
-      file: ./src/mappings/cv-strategy.ts
+        - event: CommunityCreated(address)
+          handler: handleCommunityCreated
+      file: ./src/mappings/registry-factory.ts
+
+templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunity
     mapping:
@@ -48,16 +44,25 @@ templates:
       language: wasm/assemblyscript
       entities:
         - RegistryCommunity
+        - ERC20
+        - CVStrategy
+        - TokenGarden
+        - Member
       abis:
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: ERC20
+          file: ../contracts/out/ERC20.sol/ERC20.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+     
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
         - event: MemberRegistered(address,uint256)
           handler: handleMemberRegistered
-        # - event: MemberUnregistered(address,uint256)
-        #   handler: handleMemberUnregistered
+        - event: MemberUnregistered(address,uint256)
+          handler: handleMemberUnregistered
         # - event: MemberKicked(address,address,uint256)
         #   handler: handleMemberKicked
         # - event: ProtocolFeeUpdated(uint256)
@@ -66,10 +71,10 @@ templates:
           handler: handleStrategyAdded
         # - event: StrategyRemoved(address)
         #   handler: handleStrategyRemoved
-        # - event: MemberActivatedStrategy(address,address)
-        #   handler: handleMemberActivatedStrategy
-        # - event: MemberDeactivatedStrategy(address,address)
-        #   handler: handleMemberDeactivatedStrategy
+        - event: MemberActivatedStrategy(address,address)
+          handler: handleMemberActivatedStrategy
+        - event: MemberDeactivatedStrategy(address,address)
+          handler: handleMemberDeactivatedStrategy
         # - event: StakeAmountUpdated(address,uint256)
         #   handler: handleStakeAmountUpdated
         # - event: BasisStakedAmountSet(uint256)
@@ -81,25 +86,32 @@ templates:
         # - event: AlloSet(address)
         #   handler: handleAlloSet
       file: ./src/mappings/registry-community.ts
-dataSources:
+
   - kind: ethereum/contract
-    name: RegistryFactory
-    network: localhost
+    name: CVStrategy
+    network: arbitrum-sepolia
     source:
-      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
-      abi: RegistryFactory
-      startBlock: 0
+      abi: CVStrategy
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - RegistryFactory
+        - CVStrategy
+        - CVStrategyConfig
+        - CVProposal
       abis:
-        - name: RegistryFactory
-          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+        - name: CVStrategy
+          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
       eventHandlers:
-        - event: CommunityCreated(address)
-          handler: handleCommunityCreated
-      file: ./src/mappings/registry-factory.ts
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8))
+          handler: handleInitialized
+        - event: ProposalCreated(uint256,uint256)
+          handler: handleProposalCreated
+        - event: PoolAmountIncreased(uint256)
+          handler: handlePoolAmountIncreased
 
+      file: ./src/mappings/cv-strategy.ts
+  

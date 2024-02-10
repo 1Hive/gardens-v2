@@ -23,7 +23,7 @@
   "overrides": [
     {
       "files": [
-        "*.yaml"
+        "*.yaml|*.yml"
       ],
       "options": {
         "bracketSpacing": false

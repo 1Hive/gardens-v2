@@ -1,94 +1,96 @@
 // read env variables
-// const envPoolIdSignaling = process.env.POOL_ID_SIGNALING || "";
-// const envStrat2Address = process.env.STRAT2_ADDR_ARB_SEPOLIA || "";
-// const envTokenAddressArbSepolia = process.env.TOKEN_ADDR_ARB_SEPOLIA || "";
-// const envTokenNativeAddressArbSepolia =
-// process.env.TOKEN_NATIVE_ADDR_ARB_SEPOLIA || "";
-const ENV = process.env.NEXT_PUBLIC_ENV_GARDENS || "";
+const ENV = process.env.NEXT_PUBLIC_ENV_GARDENS;
 
-const envAlloAddress = process.env.NEXT_PUBLIC_ALLO_ADDRESS_ARB_SEPOLIA || "";
-
-const envPoolId = process.env.NEXT_PUBLIC_POOL_ID || "1";
-
-const envStrat1Address = process.env.NEXT_PUBLIC_STRAT1_ADDR_ARB_SEPOLIA || "";
+const envAlloAddress = process.env.NEXT_PUBLIC_ALLO_ADDRESS_ARB_SEPOLIA;
 
 const envRegistryGardensAddArbSep =
-  process.env.NEXT_PUBLIC_REGISTRY_GARDENS_ADDR_ARB_SEPOLIA || "";
+  process.env.NEXT_PUBLIC_REGISTRY_GARDENS_ADDR_ARB_SEPOLIA;
 
 const envAlloRegistryAddArbSep =
-  process.env.NEXT_PUBLIC_ALLO_REGISTRY_ADDR_ARB_SEPOLIA || "";
+  process.env.NEXT_PUBLIC_ALLO_REGISTRY_ADDR_ARB_SEPOLIA;
 
 const envPoolAdminAddressArbSepolia =
-  process.env.NEXT_PUBLIC_POOL_ADMIN_ADDR_ARB_SEPOLIA || "";
+  process.env.NEXT_PUBLIC_POOL_ADMIN_ADDR_ARB_SEPOLIA;
 
 const envCouncilSafeAddressArbSepolia =
-  process.env.NEXT_PUBLIC_COUNCIL_SAFE_ADDR_ARB_SEPOLIA || "";
+  process.env.NEXT_PUBLIC_COUNCIL_SAFE_ADDR_ARB_SEPOLIA;
 
-const envRpcUrlArbTestnet = process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "";
+const envRpcUrlArbTestnet = process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET;
 
-let runLatest = undefined as any;
+const envTokenAddressArbSepolia =
+  process.env.NEXT_PUBLIC_TOKEN_ADDR_ARB_SEPOLIA;
+
+const envTokenNativeAddressArbSepolia =
+  process.env.NEXT_PUBLIC_TOKEN_NATIVE_ADDR_ARB_SEPOLIA;
+
+const envConfirmationsRequired =
+  process.env.NEXT_PUBLIC_CONFIRMATIONS_REQUIRED || 5;
+
+import {
+  Address,
+  // AddressOrUndefined as AddressOrUndefined,
+  extractAddr,
+} from "#/subgraph/src/scripts/last-addr";
+import { chains, getChain } from "@/configs/chainServer";
+import { arbitrumSepolia, localhost } from "viem/chains";
+
+let runLatestLocal = undefined as any;
+let runLatestArpSepolia = undefined as any;
 try {
-  runLatest = require("#/../broadcast/DeployCV.s.sol/1337/run-latest.json");
+  runLatestLocal = require("#/../broadcast/DeployCV.s.sol/1337/run-latest.json");
+  runLatestArpSepolia = require("#/../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json");
 } catch (error) {
   console.log("error ignored");
 }
 export const isProd = ENV === "prod";
-export const confirmationsRequired = ENV === "prod" ? 5 : 1;
+export const confirmationsRequired = isProd
+  ? Number(envConfirmationsRequired) ?? 1
+  : 1;
+
+const envOrDefaultAddr = (env: string | undefined, def: Address) =>
+  env ? (env as Address) : def;
 
 console.log("isProd", isProd);
-// import runLatest from "#/../broadcast/DeployC@V.s.sol/31337/run-latest.json";
-function getContractsAddresses() {
+function getContractsAddresses(runLatest: any) {
+  // let addrs = extractAddr(runLatest);
+
   let __contractsAddresses = {
-    allo: `${envAlloAddress}` as `0x${string}`,
-    // strategy: `${envStrat1Address}` as `0x${string}`,
-    registryCommunity: `${envRegistryGardensAddArbSep}` as `0x${string}`,
-    registry: `${envAlloRegistryAddArbSep}` as `0x${string}`,
-    poolID: `${envPoolId}`,
-    rpcUrl: `${envRpcUrlArbTestnet}`,
+    // ...addrs,
+    // allo: `${envAlloAddress}` as Address,
+    // tokenNative: `${envTokenNativeAddressArbSepolia}` as Address,
+    // token: envOrDefaultAddr(envTokenAddressArbSepolia, addrs.token),
+    // registryCommunity: envOrDefaultAddr(
+    //   envRegistryGardensAddArbSep,
+    //   addrs.registryCommunity,
+    // ),
+    // registry: `${envAlloRegistryAddArbSep}` as `0x${string}`,
+    // poolID: `${envPoolId}`,
   };
-  // let __contractsAddresses = {
-  //   allo: `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` as `0x${string}`,
-  //   strategy: `0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e` as `0x${string}`,
-  //   registryGardens:
-  //     `0x61c36a8d610163660E21a8b7359e1Cac0C9133e1` as `0x${string}`,
-  //   registry: `0x5FbDB2315678afecb367f032d93F642f64180aa3` as `0x${string}`,
-  //   poolID: `1`,
-  //   rpcUrl: `http://127.0.0.1:8545`,
-  // };
-  if (!isProd && runLatest) {
-    const txs = runLatest.transactions;
-    let registryCommunity;
-    let token;
-    let allo;
-    let registry;
-    for (const tx of txs) {
-      if (tx.contractName == "RegistryCommunity") {
-        registryCommunity = tx.contractAddress;
-      } else if (
-        tx.contractName == "lib/allo-v2/test/utils/MockERC20.sol:MockERC20"
-      ) {
-        token = tx.contractAddress;
-      } else if (tx.contractName == "Allo") {
-        allo = tx.contractAddress;
-      } else if (tx.contractName == "Registry") {
-        registry = tx.contractAddress;
-      }
-    }
-    __contractsAddresses = {
-      allo: `${allo}` as `0x${string}`,
-      // strategy: `` as `0x${string}`,
-      registryCommunity: `${registryCommunity}` as `0x${string}`,
-      registry: `${registry}` as `0x${string}`,
-      poolID: `1`,
-      rpcUrl: `http://127.0.0.1:8545`,
-    };
-  }
   return __contractsAddresses;
 }
 
-let __contractsAddresses = getContractsAddresses();
+let __contractsAddresses = {
+  [localhost.id as number]: {
+    ...getContractsAddresses(runLatestLocal),
+    rpcUrl: `http://127.0.0.1:8545`,
+    subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
+  },
+  [arbitrumSepolia.id as number]: {
+    ...getContractsAddresses(runLatestArpSepolia),
+    rpcUrl: envRpcUrlArbTestnet,
+    subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL || "",
+  },
+};
+
+function __getContractsAddrByChain(chain: number | string) {
+  const currentChain = getChain(chain);
+  if (currentChain?.id) {
+    return __contractsAddresses[currentChain.id];
+  }
+}
 
 console.log("env", ENV);
-console.log("envs", __contractsAddresses);
-
-export const contractsAddresses = __contractsAddresses;
+// console.log("envs", __contractsAddresses);
+export type ContractsAddresses = (typeof __contractsAddresses)[number];
+export const getContractsAddrByChain = __getContractsAddrByChain; //@todo rename to configByChain instead
+// export const contractsAddresses = __contractsAddresses;

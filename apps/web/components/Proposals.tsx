@@ -3,79 +3,72 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useAccount, useContractRead, useContractWrite } from "wagmi";
 import {
-  useAccount,
-  useContractRead,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
-import {
-  contractsAddresses,
+  ContractsAddresses,
   confirmationsRequired,
 } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { cvStrategyABI, alloABI, registryCommunityABI } from "@/src/generated";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
 import { toast } from "react-toastify";
 import { useViemClient } from "@/hooks/useViemClient";
-
-type ProposalsMock = {
-  title: string;
-  type: "funding" | "streaming" | "signaling";
-  description: string;
-  value: number;
-  id: number;
-};
-
-type UnparsedProposal = {
-  submitter: `0x${string}`;
-  beneficiary: `0x${string}`;
-  requestedToken: `0x${string}`;
-  requestedAmount: number;
-  stakedTokens: number;
-  proposalType: any;
-  proposalStatus: any;
-  blockLast: number;
-  convictionLast: number;
-  agreementActionId: number;
-  threshold: number;
-  voterStakedPointsPct: number;
-};
-
-type Proposal = UnparsedProposal & ProposalsMock;
+import { getStrategyByPoolQuery } from "#/subgraph/.graphclient";
+import { Address } from "#/subgraph/src/scripts/last-addr";
+import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/communities/pool/[poolId]/page";
+import { Type } from "./Badge";
+import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 
 type InputItem = {
+  id: string;
   value: number;
-  id: number;
+};
+
+export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
+export type Proposal = Strategy["proposals"][number];
+
+export type ProposalTypeVoter = Proposal & {
+  voterStakedPointsPct: number;
+  title: string;
+  type: string;
 };
 
 //!POOL == STRATEGY
 export function Proposals({
-  poolId,
-  strategyAddress,
+  strategy,
+  alloInfo,
 }: {
-  poolId: number;
-  strategyAddress: `0x${string}`;
+  strategy: Strategy;
+  alloInfo: AlloQuery;
 }) {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
-  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
   const { address } = useAccount();
   const pathname = usePathname();
   const router = useRouter();
+  const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
+
+  const { isMemberActived } = useIsMemberActivated(strategy);
+
+  useEffect(() => {
+    setStrategyAddress(strategy.id as Address);
+  }, [strategy.id]);
 
   const triggerRenderProposals = () => {
-    if (address !== undefined) {
-      getProposals(address as `0x${string}`, strategyAddress, poolId).then(
-        (res) => {
-          if (res !== undefined) setProposals(res);
-        },
-      );
-    }
+    // if (address !== undefined) {
+    getProposals(address as Address, strategy).then((res) => {
+      if (res !== undefined) {
+        setProposals(res);
+      } else {
+        console.log("no proposals");
+      }
+    });
+    // }
   };
 
   useEffect(() => {
@@ -94,20 +87,8 @@ export function Proposals({
     setDistributedPoints(calculatePoints());
   }, [inputs]);
 
-  const {
-    data: isMemberActived,
-    error: errorMemberActivated,
-    status,
-  } = useContractRead({
-    address: contractsAddresses.registryCommunity,
-    abi: registryCommunityABI,
-    functionName: "memberActivatedInStrategies",
-    args: [address as `0x${string}`, strategyAddress],
-    watch: true,
-    cacheOnBlock: true,
-  });
-
   useEffect(() => {
+    if (isMemberActived === undefined) return;
     if (isMemberActived !== true) setEditView(false);
   }, [isMemberActived]);
 
@@ -118,7 +99,7 @@ export function Proposals({
     isSuccess: isSuccessAllocate,
     status: contractStatus,
   } = useContractWrite({
-    address: contractsAddresses.allo,
+    address: alloInfo.id as Address,
     abi: alloABI,
     functionName: "allocate",
   });
@@ -157,7 +138,8 @@ export function Proposals({
 
   const submit = async () => {
     const encodedData = getEncodedProposals(inputs, proposals);
-    const poolId = Number(contractsAddresses.poolID);
+    // const poolId = Number(poolID);
+    const poolId = Number(1); //@todo fix this using subgraph instead
 
     writeAllocate({
       args: [BigInt(poolId), encodedData as `0x${string}`],
@@ -166,14 +148,14 @@ export function Proposals({
 
   const getEncodedProposals = (
     inputData: InputItem[],
-    currentData: Proposal[],
+    currentData: ProposalTypeVoter[],
   ) => {
     const resultArr: number[][] = [];
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
           const dif = input.value - current.voterStakedPointsPct;
-          if (dif !== 0) resultArr.push([input.id, dif]);
+          if (dif !== 0) resultArr.push([Number(input.id), dif]);
         }
       });
     });
@@ -222,7 +204,7 @@ export function Proposals({
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposals?.map(({ title, type, id, stakedTokens }, i) => (
+          {proposals.map(({ title, type, id, stakedTokens }, i) => (
             <div
               className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
               key={title + "_" + id}
@@ -230,7 +212,7 @@ export function Proposals({
               <div className="flex w-full items-center justify-between">
                 <h4 className="font-semibold">{title}</h4>
                 <div>
-                  <Badge type={type} />
+                  <Badge type={type as Type} />
                   {!editView && (
                     <Link href={`${pathname}/proposals/${id}`} className="ml-8">
                       <button className="btn btn-outline btn-info px-3 py-[6px]">

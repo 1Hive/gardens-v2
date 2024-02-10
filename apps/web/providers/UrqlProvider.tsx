@@ -1,14 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  UrqlProvider as Provider,
-  ssrExchange,
-  cacheExchange,
-  fetchExchange,
-  createClient,
-} from "@urql/next";
-
+import { UrqlProvider as Provider } from "@urql/next";
+import { initUrqlClient } from "./urql";
 // urql provider for client components
 
 // urql docs: https://formidable.com/open-source/urql/docs/advanced/server-side-rendering/#nextjs
@@ -16,14 +10,11 @@ import {
 //Subgraph URL
 const subgraphURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL || "";
 
+console.log("subgraphURL", subgraphURL);
+
 export default function UrqlProvider({ children }: React.PropsWithChildren) {
   const [client, ssr] = useMemo(() => {
-    const ssr = ssrExchange();
-    const client = createClient({
-      url: subgraphURL,
-      exchanges: [cacheExchange, ssr, fetchExchange],
-      suspense: true,
-    });
+    const { urqlClient: client, ssrCache: ssr } = initUrqlClient();
 
     return [client, ssr];
   }, []);

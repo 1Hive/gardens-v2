@@ -1,0 +1,7 @@
+sources:
+  - name: gv2
+    handler:
+      graphql:
+        endpoint: http://localhost:8000/subgraphs/name/kamikazebr/gv2
+documents:
+  - ./src/query/factory.graphql

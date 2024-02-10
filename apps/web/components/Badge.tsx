@@ -2,7 +2,7 @@ import React from "react";
 import type { HTMLAttributes } from "react";
 import cn from "classnames";
 
-type Type = "funding" | "streaming" | "signaling";
+export type Type = "signaling" | "funding" | "streaming";
 type Status =
   | "active"
   | "paused"
