@@ -2,6 +2,7 @@ import {
   Abi,
   AbiFunctionNotFoundError,
   AbiItem,
+  Address,
   GetAbiItemParameters,
   getAbiItem,
 } from "viem";
@@ -11,7 +12,7 @@ export const encodeFunctionParams = function (
   abi: Abi,
   functionName: string,
   args: readonly unknown[] = [],
-) {
+): Address | undefined {
   const abiItem = getAbiItem({
     abi,
     args,
