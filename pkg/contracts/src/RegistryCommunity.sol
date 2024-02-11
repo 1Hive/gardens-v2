@@ -8,11 +8,14 @@ import {IAllo, Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {RegistryFactory} from "./RegistryFactory.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
-
 import "forge-std/console.sol";
+import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+
+import {IPointSystem} from "./CVStrategy.sol";
 
 contract RegistryCommunity is ReentrancyGuard, AccessControl {
-    // todo rename all RegistryCommunity to RegistryCommunity
+    using ERC165Checker for address;
+
     /*|--------------------------------------------|*/
     /*|                 ROLES                      |*/
     /*|--------------------------------------------|*/
@@ -35,6 +38,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     event MemberDeactivatedStrategy(address _member, address _strategy);
     event StakeAmountUpdated(address _member, uint256 _newAmount);
     event BasisStakedAmountSet(uint256 _newAmount);
+    event MemberPowerIncreased(address _member, address _strategy, uint256 _power);
+    event MemberPowerDecreased(address _member, address _strategy, uint256 _power);
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
@@ -131,7 +136,10 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     mapping(address => Member) public addressToMemberInfo;
     mapping(address => bool) public enabledStrategies;
     mapping(address => mapping(address => bool)) public memberActivatedInStrategies;
+    mapping(address => address[]) strategiesByMember;
     mapping(address => uint256) public totalPointsActivatedInStrategy;
+    //      strategy           member     power
+    mapping(address => mapping(address => uint256)) public memberPowerInStrategy;
 
     uint256 public constant DEFAULT_POINTS = 100 * 10 ** 4;
 
@@ -215,6 +223,17 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         // emit StrategyRemoved(_strategy);
         emit MemberDeactivatedStrategy(_member, _strategy);
     }
+    //TODO Increase and decrease power 
+    function increasePower(address _strategy, uint256 _power) public onlyRegistryMemberSender{
+        
+        //token.trasn
+        emit MemberPowerIncreased(msg.sender, _strategy, _power);
+    }
+
+    function decreasePower(address _strategy, uint256 _power) public onlyRegistryMemberSender{
+        memberPowerInStrategy[_strategy][msg.sender] -= _power;
+        emit MemberPowerDecreased(msg.sender, _strategy, _power);
+    }
 
     function addStrategy(address _newStrategy) public onlyCouncilSafe {
         if (enabledStrategies[_newStrategy]) {
@@ -263,7 +282,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         Member memory newMember = addressToMemberInfo[_member];
         return newMember.isRegistered;
     }
-    //Todo: add protocol fee logic
 
     function stakeAndRegisterMember() public nonReentrant {
         address _member = msg.sender;
@@ -294,21 +312,21 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
     }
 
-    function modifyStakeAmount(uint256 newTotalAmount) public payable nonReentrant onlyRegistryMemberSender {
-        Member storage member = addressToMemberInfo[msg.sender];
-        uint256 oldAmount = member.stakedAmount;
-        member.stakedAmount = newTotalAmount;
-        //if the user increases his staking amount he will receive GARD tokens as a reward
-        if (oldAmount < newTotalAmount) {
-            gardenToken.transfer(msg.sender, newTotalAmount - oldAmount);
-        }
-        //if the user reduce his staking amount he will lose some GARD tokens
-        else {
-            gardenToken.transferFrom(address(this), msg.sender, oldAmount - newTotalAmount);
-        }
+    // function modifyStakeAmount(uint256 newTotalAmount) public payable nonReentrant onlyRegistryMemberSender {
+    //     Member storage member = addressToMemberInfo[msg.sender];
+    //     uint256 oldAmount = member.stakedAmount;
+    //     member.stakedAmount = newTotalAmount;
+    //     //if the user increases his staking amount he will receive GARD tokens as a reward
+    //     if (oldAmount < newTotalAmount) {
+    //         gardenToken.transfer(msg.sender, newTotalAmount - oldAmount);
+    //     }
+    //     //if the user reduce his staking amount he will lose some GARD tokens
+    //     else {
+    //         gardenToken.transferFrom(address(this), msg.sender, oldAmount - newTotalAmount);
+    //     }
 
-        emit StakeAmountUpdated(msg.sender, newTotalAmount);
-    }
+    //     emit StakeAmountUpdated(msg.sender, newTotalAmount);
+    // }
 
     function getBasisStakedAmount() external view returns (uint256) {
         return registerStakeAmount; //@todo need consider adding protocol fee or not here
@@ -350,7 +368,14 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
         Member memory member = addressToMemberInfo[_member];
         delete addressToMemberInfo[_member];
-
+        address memberStrategies = memberStrategiesActivated[_member];
+        bytes4 interfaceId = IPointSystem.withdraw.selector;
+        for(uint256 i = 0; i < memberStrategies.length; i++){
+            if(memberStrategies[i].supportsInterface()){
+                IPointSystem(memberStrategies[i]).deactivatePoints();
+            }
+        }
+        
         gardenToken.transfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }

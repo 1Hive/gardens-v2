@@ -6,12 +6,15 @@ import {BaseStrategy} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {RegistryCommunity} from "./RegistryCommunity.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-interface IWithdrawMember {
+interface IPointSystem {
     function withdraw(address _member) external;
+    function deactivate(address _member) external;
 }
 
-contract CVStrategy is BaseStrategy, IWithdrawMember {
+
+contract CVStrategy is BaseStrategy, IWithdrawMember , ERC165{
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -54,6 +57,13 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         Streaming
     }
 
+    enum PointSystem {
+        Fixed,
+        Capped,
+        Unlimited,
+        Quadratic
+    }
+
     struct CreateProposal {
         // uint256 proposalId;
         uint256 poolId;
@@ -83,8 +93,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         address requestedToken;
         uint256 blockLast;
         ProposalStatus proposalStatus;
-        mapping(address => uint256) voterStakedPointsPct; // voter staked percentage
-        mapping(address => uint256) voterStake; // voter staked percentage
+        mapping(address => uint256) voterStakedPointsPct; // voter staked points
+        mapping(address => uint256) voterStake; // voter staked tokens
         Metadata metadata;
     }
 
@@ -103,6 +113,8 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         uint256 weight;
         // Proposal Type
         ProposalType proposalType;
+
+        PointSystem pointSystem;
     }
     /*|--------------------------------------------|*/
     /*|                VARIABLES                   |*/
@@ -115,6 +127,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     mapping(uint256 => Proposal) public proposals;
     mapping(address => uint256) public totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
     mapping(address => uint256[]) public voterStakedProposals; // voter
+    mapping(address => uint256) public memberPointsBalance;
 
     uint256 public decay;
     uint256 public maxRatio;
@@ -531,10 +544,14 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
         uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
         // console.log("newTotalVotingSupport", newTotalVotingSupport);
         uint256 participantBalance = convertTokensToPct(registryCommunity.getBasisStakedAmount());
+
+        // if(pointSystem = 1){
+        //     participantBalance+ = 
+        // }
         // console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
         // require(newTotalVotingSupport <= participantBalance, "NOT_ENOUGH_BALANCE");
-        if (newTotalVotingSupport > participantBalance) {
+        if (newTotalVotingSupport > participantBalance ) {
             revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
         }
 
