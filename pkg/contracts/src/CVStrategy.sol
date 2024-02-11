@@ -120,7 +120,7 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     uint256 public maxRatio;
     uint256 public weight;
     ProposalType public proposalType;
-    
+
     uint256 public proposalCounter = 0;
     uint256 public totalStaked;
     uint256 public minPointsActivated = 100 * 10 * PRECISION_SCALE;

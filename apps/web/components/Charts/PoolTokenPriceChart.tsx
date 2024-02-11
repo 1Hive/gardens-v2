@@ -17,7 +17,7 @@ export const PoolTokenPriceChart = () => {
     },
     series: [
       {
-        data: ["12", 10, 8, 7, 11, 10.5, 9.4],
+        data: ["0", 0, 0, 0, 0, 1800, 1000],
         type: "line",
         //line view more "swingy"
         smooth: true,
@@ -29,7 +29,7 @@ export const PoolTokenPriceChart = () => {
 
   return (
     <>
-      <ChartWrapper title="Funding Token Price" size="sm">
+      <ChartWrapper title="Tokens in Pool" size="sm">
         <ChartSetup options={OPTION_TEST} />
       </ChartWrapper>
     </>

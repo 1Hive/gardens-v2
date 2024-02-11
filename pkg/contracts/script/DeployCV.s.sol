@@ -19,7 +19,7 @@ import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
-    uint256 public constant MINIMUM_STAKE = 50;
+    uint256 public constant MINIMUM_STAKE = 50 ether;
 
     TERC20 public token;
 
@@ -59,7 +59,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
-        token.mint(address(pool_admin()), 10_000);
+        token.mint(address(pool_admin()), 10_000 ether);
 
         CVStrategy strategy1 = new CVStrategy(address(allo));
 
@@ -123,18 +123,18 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         vm.startBroadcast(pool_admin());
 
         token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 1_000); // ether
+        allo.fundPool(poolId, 1_000 ether); // ether
 
         CVStrategy.CreateProposal memory proposal =
-            CVStrategy.CreateProposal(poolId, membersStaked[0], 50, address(token), metadata);
+            CVStrategy.CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = CVStrategy.CreateProposal(poolId, membersStaked[1], 25, address(token), metadata);
+        proposal = CVStrategy.CreateProposal(poolId, membersStaked[1], 25 ether, address(token), metadata);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = CVStrategy.CreateProposal(poolId, membersStaked[2], 10, address(token), metadata);
+        proposal = CVStrategy.CreateProposal(poolId, membersStaked[2], 10 ether, address(token), metadata);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 

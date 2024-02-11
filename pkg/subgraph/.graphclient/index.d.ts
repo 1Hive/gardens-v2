@@ -1703,6 +1703,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getTokenGardens(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
+    getPool(variables: Exact<{
+        poolId: any;
+    }>, options?: TOperationContext): Promise<getPoolQuery>;
     isMember(variables: Exact<{
         me: string;
         comm: string;
@@ -1740,6 +1743,14 @@ export type getTokenGardensQuery = {
         })>>;
     })>;
 };
+export type getPoolQueryVariables = Exact<{
+    poolId: Scalars['BigInt'];
+}>;
+export type getPoolQuery = {
+    cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
+        proposals: Array<Pick<CVProposal, 'id' | 'requestedAmount' | 'requestedToken' | 'stakedTokens' | 'proposalStatus' | 'submitter' | 'metadata' | 'beneficiary'>>;
+    })>;
+};
 export type isMemberQueryVariables = Exact<{
     me: Scalars['ID'];
     comm: Scalars['String'];
@@ -1751,14 +1762,6 @@ export type isMemberQuery = {
         })>>;
     })>;
 };
-export type getPoolQueryVariables = Exact<{
-    poolId: Scalars['BigInt'];
-}>;
-export type getPoolQuery = {
-    cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
-        proposals: Array<Pick<CVProposal, 'id' | 'requestedAmount' | 'requestedToken' | 'stakedTokens' | 'proposalType' | 'proposalStatus' | 'submitter' | 'voterStakedPointsPct' | 'metadata' | 'beneficiary'>>;
-    })>;
-};
 export type getCommunityByGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
 }>;
@@ -1767,6 +1770,7 @@ export type getCommunityByGardenQuery = {
         communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityName' | 'registerToken' | 'registerStakeAmount'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId' | 'poolAmount'> & {
+                registryCommunity: Pick<RegistryCommunity, 'registerStakeAmount'>;
                 config?: Maybe<Pick<CVStrategyConfig, 'id' | 'proposalType'>>;
                 proposals: Array<Pick<CVProposal, 'id'>>;
             })>>;
@@ -1795,6 +1799,9 @@ export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact
 export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery, Exact<{
     [key: string]: never;
 }>>;
+export declare const getPoolDocument: DocumentNode<getPoolQuery, Exact<{
+    poolId: Scalars['BigInt'];
+}>>;
 export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
     me: Scalars['ID'];
     comm: Scalars['String'];
@@ -1812,6 +1819,7 @@ export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V,
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
     getTokenGardens(variables?: getTokenGardensQueryVariables, options?: C): Promise<getTokenGardensQuery>;
+    getPool(variables: getPoolQueryVariables, options?: C): Promise<getPoolQuery>;
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getCommunityByGarden(variables: getCommunityByGardenQueryVariables, options?: C): Promise<getCommunityByGardenQuery>;
     getAllo(variables?: getAlloQueryVariables, options?: C): Promise<getAlloQuery>;
