@@ -8,7 +8,7 @@ import {
   getCommunityByGardenQuery,
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
-import { init } from "next/dist/compiled/webpack/webpack";
+import { CommunityForm } from "@/components/Forms";
 
 export const dynamic = "force-dynamic";
 
@@ -37,28 +37,17 @@ export default async function Garden({
   const communities = result?.tokenGarden?.communities || [];
 
   return (
-    <div className=" relative mx-auto max-w-5xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
+    <div className="relative mx-auto max-w-5xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
       {/* header: honey logo +stats */}
-      <header className="flex items-center justify-between gap-4  py-6">
+      <header className=" flex items-center justify-between gap-4 px-3 py-6">
         <div className="flex w-44 items-center justify-center gap-2">
           <Image src={honeyIcon} alt="honey icon" className="h-20 w-20" />
           <span className="text-2xl font-bold">
             {result?.tokenGarden?.symbol}
           </span>
         </div>
-        <div className="flex flex-1">
-          {/* {stats.map((stat, i) => (
-            <div
-              className="flex w-full flex-col items-center justify-center gap-2"
-              key={stat.label + i}
-            >
-              <span className="text-3xl font-semibold text-info">
-                {stat.label}
-              </span>
-              <span className="text-xl font-bold">{stat.value}</span>
-            </div>
-          ))} */}
-        </div>
+
+        <CommunityForm />
       </header>
       <section className="mx-auto flex flex-col gap-8">
         {/* communites */}

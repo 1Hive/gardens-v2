@@ -14,3 +14,4 @@ export { PoolTokenPriceChart } from "./Charts/PoolTokenPriceChart";
 export { ProposalStats } from "./ProposalStats";
 export { PoolStats } from "./PoolStats";
 export { RegisterMember } from "./RegisterMember";
+export { FormModal } from "./Forms/FormModal";
