@@ -22,7 +22,7 @@ export async function getProposals(
       (p) => {
         return {
           ...p,
-          voterStakedPointsPct: BigInt(0),
+          voterStakedPointsPct: 0,
           title: "title", //@todo get from IPFS using p.metadata
           type: proposalTypeStr,
         };
@@ -54,9 +54,7 @@ export async function getProposals(
           transformedProposals.push(
             transformData(
               strategy.proposals[i],
-              proposal.result === undefined
-                ? BigInt(0)
-                : (proposal.result as bigint),
+              proposal.result === undefined ? 0 : Number(proposal.result),
               proposalTypeStr,
             ),
           );
@@ -72,7 +70,7 @@ export async function getProposals(
 
 function transformData(
   p: Proposal,
-  voterStakedPointsPct: bigint,
+  voterStakedPointsPct: number,
   proposalTypeStr: string,
 ): ProposalTypeVoter {
   return {
