@@ -19,6 +19,9 @@ import { useViemClient } from "@/hooks/useViemClient";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getBuiltGraphSDK } from "#/subgraph/.graphclient";
+import { WriteContractResult } from "wagmi/actions";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 export function RegisterMember({
   communityAddress,
@@ -32,9 +35,8 @@ export function RegisterMember({
   registerStakeAmount: number;
 }) {
   const { address } = useAccount();
-  const viemClient = useViemClient();
   const chainId = useChainId();
-  const contractsAddr = getContractsAddrByChain(chainId);
+  const { openConnectModal } = useConnectModal();
 
   // const [isMember, setIsMember] = useState();
 
@@ -65,8 +67,8 @@ export function RegisterMember({
   const {
     data: registerMemberData,
     write: writeRegisterMember,
-    error: errorRegisterMember,
-    isSuccess: isSuccessRegisterMember,
+    error: registerMemberError,
+    status: registerMemberStatus,
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "stakeAndRegisterMember",
@@ -75,8 +77,8 @@ export function RegisterMember({
   const {
     data: unregisterMemberData,
     write: writeUnregisterMember,
-    error: errorUnregisterMember,
-    isSuccess: isSuccessUnregisterMember,
+    error: unregisterMemberError,
+    status: unregisterMemberStatus,
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
@@ -85,8 +87,8 @@ export function RegisterMember({
   const {
     data: allowTokenData,
     write: writeAllowToken,
-    error: errorAllowToken,
-    isSuccess: isSuccessAllowToken,
+    error: allowTokenError,
+    status: allowTokenStatus,
   } = useContractWrite({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
@@ -94,80 +96,51 @@ export function RegisterMember({
     functionName: "approve",
   });
 
-  useErrorDetails(errorRegisterMember, "stakeAndRegisterMember");
-  useErrorDetails(errorUnregisterMember, "unregisterMember");
+  useErrorDetails(registerMemberError, "stakeAndRegisterMember");
+  useErrorDetails(unregisterMemberError, "unregisterMember");
   // useErrorDetails(errorMemberRegistered, "isMember");
-  useErrorDetails(errorAllowToken, "approve");
+  useErrorDetails(allowTokenError, "approve");
   // useErrorDetails(errorGardenToken, "gardenToken");
 
-  console.log(confirmationsRequired);
-
-  const registerMemberTransactionReceipt = async () =>
-    await viemClient.waitForTransactionReceipt({
-      confirmations: confirmationsRequired,
-      hash: isMember
-        ? unregisterMemberData?.hash || "0x"
-        : registerMemberData?.hash || "0x",
-    });
-
-  const allowTokenTransactionReceipt = async () =>
-    await viemClient.waitForTransactionReceipt({
-      confirmations: confirmationsRequired,
-      hash: allowTokenData?.hash as `0x${string}`,
-    });
-
   async function handleChange() {
-    isMember ? writeUnregisterMember?.() : writeAllowToken?.();
+    if (address) {
+      isMember ? writeUnregisterMember() : writeAllowToken();
+    } else {
+      openConnectModal?.();
+    }
   }
 
-  useEffect(() => {
-    if (isSuccessAllowToken) {
-      writeRegisterMember?.();
-    }
-  }, [allowTokenData]);
+  const { updateTransactionStatus: updateAllowTokenTransactionStatus } =
+    useTransactionNotification(allowTokenData);
+
+  const { updateTransactionStatus: updateRegisterMemberTransactionStatus } =
+    useTransactionNotification(registerMemberData);
+
+  const { updateTransactionStatus: updateUnregisterMemberTransactionStatus } =
+    useTransactionNotification(unregisterMemberData);
 
   useEffect(() => {
-    if (isSuccessRegisterMember || isSuccessUnregisterMember) {
-      const receipt = registerMemberTransactionReceipt();
-      toast
-        .promise(receipt, {
-          pending: "Transaction in progress",
-          success: "Transaction Success",
-          error: "Something went wrong",
-        })
-        .then((data) => {
-          console.log(data);
-          // getIsMember().then((data) => console.log(data.members.length));
-          // console.log(isMember);
-        })
-        .catch((error: any) => {
-          console.error(`Tx failure: ${error}`);
-        });
+    updateAllowTokenTransactionStatus(allowTokenStatus);
+    if (allowTokenStatus === "success") {
+      writeRegisterMember();
     }
-  }, [isSuccessRegisterMember, isSuccessUnregisterMember]);
+  }, [allowTokenStatus]);
 
   useEffect(() => {
-    if (isSuccessAllowToken) {
-      const receipt = allowTokenTransactionReceipt();
-      toast
-        .promise(receipt, {
-          pending: "Transaction in progress",
-          success: "Transaction Success",
-          error: "Something went wrong",
-        })
-        .then((data) => {
-          console.log(data);
-        })
-        .catch((error: any) => {
-          console.error(`Tx failure: ${error}`);
-        });
-    }
-  }, [isSuccessAllowToken]);
+    updateRegisterMemberTransactionStatus(registerMemberStatus);
+  }, [registerMemberStatus]);
 
-  if (isMember === undefined) return;
+  useEffect(() => {
+    updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
+  }, [unregisterMemberStatus]);
+
   return (
     <Button onClick={handleChange} className="w-fit bg-primary">
-      {isMember ? "Leave community" : "Register in community"}
+      {address
+        ? isMember
+          ? "Leave community"
+          : "Register in community"
+        : "Connect Wallet"}
     </Button>
   );
 }

@@ -9,20 +9,21 @@ import { ActivatePoints } from "./ActivatePoints";
 import { Strategy } from "./Proposals";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { useAccount } from "wagmi";
+import { Address, useAccount } from "wagmi";
 
 type PoolStatsProps = {
   balance?: string | number;
   strategyAddress: `0x${string}`;
   strategy: Strategy;
   // poolId: number;
-  // communityAddress: `0x${string}`;
+  communityAddress: Address;
 };
 
 export const PoolStats: FC<PoolStatsProps> = ({
   balance,
   strategyAddress,
   strategy,
+  communityAddress
 }) => {
   const { isMemberActived } = useIsMemberActivated(strategy);
   const { isConnected } = useAccount();
@@ -80,6 +81,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
               <ActivatePoints
                 strategyAddress={strategyAddress}
                 isMemberActived={isMemberActived}
+                communityAddress={communityAddress}
                 // errorMemberActivated={errorMemberActivated}
               />
             </div>
@@ -95,7 +97,6 @@ export const PoolStats: FC<PoolStatsProps> = ({
         <div>
           {/* Testing styles and Data */}
           <ActivePointsChart stakedPoints={Number(voterStakePct)} />
-          {/* <ActivePointsChart stakedPoints={Number(0)} /> */}
         </div>
       </div>
     </section>

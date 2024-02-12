@@ -43,21 +43,19 @@ export function CommunityCard({
     <div className="flex flex-col items-center justify-center gap-8 rounded-xl border-2 border-black bg-info p-8 transition-all duration-200 ease-in-out">
       <div className="relative flex w-full items-center justify-center">
         <p className="absolute left-0 top-[50%] m-0 translate-y-[-50%] font-bold">
-          Community Pools:{pools.length}
+          Community Pools: {pools.length}
         </p>
         <h3 className="m-0 font-press text-lg text-info-content">{name}</h3>
         <p className="absolute right-0 top-[50%] m-0 translate-y-[-50%] font-bold">
           {formatAddress(communityAddress)}
         </p>
       </div>
-      {accountAddress &&  (
-        <RegisterMember
-          // isMember={isMember}
-          communityAddress={communityAddress as Address}
-          registerToken={registerToken as Address}
-          registerStakeAmount={registerStakeAmount}
-        />
-      )}
+      <RegisterMember
+        // isMember={isMember}
+        communityAddress={communityAddress as Address}
+        registerToken={registerToken as Address}
+        registerStakeAmount={registerStakeAmount}
+      />
       {/* pools */}
       <div
         className={`flex transform flex-wrap items-center justify-center gap-4 overflow-hidden p-4 transition-height duration-200 ease-in-out ${
