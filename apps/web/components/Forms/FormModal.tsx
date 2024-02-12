@@ -1,13 +1,15 @@
 "use client";
 import React, { Fragment, useState, FC } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 type FormModalProps = {
   label: string;
+  title: string;
   children: any;
 };
 
-export const FormModal: FC<FormModalProps> = ({ label, children }) => {
+export const FormModal: FC<FormModalProps> = ({ label, title, children }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -45,27 +47,24 @@ export const FormModal: FC<FormModalProps> = ({ label, children }) => {
                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               >
-                <Dialog.Panel className="relative  max-w-3xl transform overflow-hidden rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all">
+                <Dialog.Panel className="relative max-w-4xl transform overflow-hidden rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all">
                   <div>
-                    <div className="mt-3 text-center sm:mt-5">
+                    <div className="text-center sm:mt-5">
                       <Dialog.Title
                         as="h3"
                         className="text-base font-semibold leading-6 text-gray-900"
                       >
-                        {label} Form
+                        {title}
                       </Dialog.Title>
-                      <div className="mt-2">
+                      <div className="mt-1">
                         <p className="text-sm text-gray-500">
-                          Lorem ipsum dolor sit amet consectetur adipisicing
-                          elit.Lorem ipsum dolor sit amet consectetur
-                          adipisicing elit.Lorem ipsum dolor sit amet
-                          consectetur adipisicing elit. Consequatur amet labore.
-                          Description if neccesary.
+                          Create a vibrant community around the Mock Token by
+                          providing the necessary details below.
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="mt-10">{children}</div>
+                  <div className="mt-10 h-fit">{children}</div>
                 </Dialog.Panel>
               </Transition.Child>
             </div>

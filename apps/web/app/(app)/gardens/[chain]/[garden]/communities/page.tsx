@@ -47,7 +47,7 @@ export default async function Garden({
           </span>
         </div>
 
-        <CommunityForm />
+        <CommunityForm tokenGarden={result?.tokenGarden} />
       </header>
       <section className="mx-auto flex flex-col gap-8">
         {/* communites */}
