@@ -1,27 +1,29 @@
 "use client";
 import React, { Fragment, useState, FC } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import { Button } from "@/components";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 type FormModalProps = {
   label: string;
   title: string;
+  description: string;
   children: any;
 };
 
-export const FormModal: FC<FormModalProps> = ({ label, title, children }) => {
+export const FormModal: FC<FormModalProps> = ({
+  label,
+  title,
+  description,
+  children,
+}) => {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="hover:bg-black/30 focus-visible:ring-white/75 btn btn-info rounded-md px-4 py-2 text-sm font-bold text-black focus:outline-none focus-visible:ring-2"
-      >
+      <Button type="button" onClick={() => setOpen(!open)} variant="fill">
         {label}
-      </button>
-
+      </Button>
       <Transition.Root show={open} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={setOpen}>
           <Transition.Child
@@ -47,20 +49,17 @@ export const FormModal: FC<FormModalProps> = ({ label, title, children }) => {
                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               >
-                <Dialog.Panel className="relative max-w-4xl transform overflow-hidden rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all">
+                <Dialog.Panel className="border2 relative min-w-[50%] transform overflow-hidden rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all">
                   <div>
                     <div className="text-center sm:mt-5">
                       <Dialog.Title
-                        as="h3"
-                        className="text-base font-semibold leading-6 text-gray-900"
+                        as="h2"
+                        className="text-xl font-semibold leading-6 text-gray-900"
                       >
                         {title}
                       </Dialog.Title>
                       <div className="mt-1">
-                        <p className="text-sm text-gray-500">
-                          Create a vibrant community around the Mock Token by
-                          providing the necessary details below.
-                        </p>
+                        <p className="text-sm">{description}</p>
                       </div>
                     </div>
                   </div>
