@@ -1,5 +1,5 @@
 "use client";
-import React, { HTMLInputTypeAttribute, useState } from "react";
+import React, { HTMLInputTypeAttribute, useEffect, useState } from "react";
 import {
   useForm,
   SubmitHandler,
@@ -12,22 +12,33 @@ import {
 import { FormModal } from "./FormModal";
 import { registryFactoryABI } from "@/src/generated";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-
+import {
+  encodeAbiParameters,
+  parseAbiParameters,
+  getAbiItem,
+  formatUnits,
+  parseUnits,
+} from "viem";
+import { usePrepareContractWrite, useContractWrite } from "wagmi";
+import { abiWithErrors } from "@/utils/abiWithErrors";
 // Params to pass to the form:
-// params._allo = address(allo());
-// params._gardenToken = IERC20(address(token));
+// params._allo = address(allo()); // 0x1133ea7af70876e64665ecd07c0a0476d09465a1
+// params._gardenToken = IERC20(address(token)); // > taken form props
 
-// registerStakeAmount = params._registerStakeAmount; //@todo can be zero? // number
+// registerStakeAmount = params._registerStakeAmount; // number
 // communityFee = params._communityFee; //number
 // isKickEnabled = params._isKickEnabled; //boolean
 // communityName = params._communityName; //string
 // covenantIpfsHash = params.covenantIpfsHash; // Image + Covenant ???
-// councilSafe = Safe(params._councilSafe); //address
-// feeReceiver = params._feeReceiver; // address
+// councilSafe = Safe(params._councilSafe); address =>0xa872c9fda78f9211758e79fdb651a00d54b8f08e
+// feeReceiver = params._feeReceiver; // address =>
+//0x98d1d9413176413c25fe306bcdb2614bb2976e69
 
-// registryFactory = params._registryFactory; //
+// registryFactory = params._registryFactory; => 0xfbe59fe1a2630311c98b3f3a917bab764397a72b
 
 //docs link: https://react-hook-form.com/
+
+//protocol : 1 => means ipfs!, to do some checks later
 
 type FormInputs = {
   name: string;
@@ -45,49 +56,97 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
     handleSubmit,
     formState: { errors, isSubmitting, isSubmitted },
     getValues,
+    setValue,
     reset,
     watch,
   } = useForm<FormInputs>();
 
-  const [registryParams, setRegistryParams] = useState();
+  const [registryParams, setRegistryParams] = useState(undefined) as any;
 
-  console.log("tokenGarden", tokenGarden);
+  const { config } = usePrepareContractWrite({
+    address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+    abi: abiWithErrors(registryFactoryABI),
+    functionName: "createRegistry",
+    chainId: 1337,
+    onError: (err) => {
+      console.log(err);
+    },
+    onSettled: (data) => {
+      console.log(data?.result);
+    },
+    args: [registryParams],
+  });
 
-  //TODO 1) handle IPFS submit
-  //TODO: 2) encode parameters
-  //TODO:  3) write to contracts > func: "createRegistry" , address: ""
-  const onSubmit: SubmitHandler<FormInputs> = async (data: any) => {
-    const {
-      name,
-      stake,
-      isKickMemberEnabled,
-      feeReceiver,
-      feeAmount,
-      councilSafe,
-      ipfsHash,
-    } = data;
+  const { write, error, isError, data } = useContractWrite(config);
 
-    setRegistryParams(data);
+  //TODO: 1)use custom button for submit and create community
+  //TODO   2) handle IPFS submit
+  //TODO:   3) write to contracts > func: "createRegistry" , address: ""
 
-    console.log("Community Name", name);
-    console.log("Stake Amount ", stake);
-    console.log("isKickMemberEnabled ", isKickMemberEnabled);
-    console.log("feeReceiver Address", feeReceiver);
-    console.log("feeAmount", feeAmount);
-    console.log("councilSafe Address", councilSafe);
-    console.log("ipfshash", ipfsHash);
+  const handleInputData = async (data: any) => {
+    setRegistryParams([
+      "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      data.stake,
+      1n,
+      0n,
+      "0x0000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000",
+      [1n, "Example"],
+      "0xc05301902A91DcA455Bff2B9beBeE28A4830E3EC",
+      data.name,
+      false,
+      "",
+    ]);
   };
+
+  const handleCreateNewCommunity: SubmitHandler<FormInputs> = async (
+    data: any,
+  ) => {
+    try {
+      if (!registryParams) {
+        console.log("Parameters currently undefined");
+      }
+
+      await handleInputData(data);
+
+      const { name, stake } = data;
+      console.log("Community Name:", name);
+      console.log("Stake Amount:", stake);
+    } catch (error) {
+      console.error("An error occurred:", error);
+    }
+
+    //"0xc05301902A91DcA455Bff2B9beBeE28A4830E3EC",
+    // const parameters = [];
+    // for (const key in data) {
+    //   if (data.hasOwnProperty(key)) {
+    //     parameters.push(data[key]);
+    //   }
+    // }
+  };
+
+  useEffect(() => {
+    // Ensure the contract write is prepared when registryParams changes
+    if (registryParams) {
+      // You may need to adjust the arguments depending on the specific requirements of your use case
+      write?.();
+    }
+  }, [registryParams]);
 
   const ethereumAddressRegExp = /^(0x)?[0-9a-fA-F]{40}$/;
   const isKickMemberEnabled = watch("isKickMemberEnabled");
+  console.log(registryParams);
 
   return (
     <>
+      <button onClick={() => write?.()}>write</button>
+
       <FormModal
         label="Create Community"
         title={`Welcome to the ${tokenGarden?.symbol}  Creation Form!`}
       >
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(handleCreateNewCommunity)}>
           <div className="flex flex-col space-y-6 overflow-hidden px-1">
             <input
               type="text"
@@ -97,6 +156,7 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
                 required: true,
               })}
             />
+            {errors.name && <p className="text-black">{errors.name.message}</p>}
 
             <input
               type="number"
@@ -116,18 +176,22 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
               <option>1</option>
               <option>2</option>
             </select>
+
             <input
               type="text"
               placeholder="Protocol Fee Reciever Address"
               className="input input-bordered input-info w-full max-w-md"
               {...register("feeReceiver", {
-                required: true,
+                required: "required field",
                 pattern: {
                   value: ethereumAddressRegExp,
                   message: "Invalid Eth Address",
                 },
               })}
             />
+            {errors.feeReceiver && (
+              <p className="text-error">{errors.feeReceiver.message}</p>
+            )}
             <input
               type="text"
               placeholder="Council Safe Address"
@@ -159,13 +223,13 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
               />
               <label htmlFor="checkbox-1" className="ms-2 text-sm font-medium ">
                 {isKickMemberEnabled
-                  ? "Enable admin to kick members"
-                  : "Disabled admin tokick members"}
+                  ? "Grant admin kick members permission"
+                  : "Not allow admin kick members"}
               </label>
             </div>
 
             <button type="submit" className="btn btn-primary">
-              Submit
+              {isSubmitting ? "loading" : "submit"}
             </button>
           </div>
         </form>
