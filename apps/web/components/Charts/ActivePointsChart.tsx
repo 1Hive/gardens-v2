@@ -21,8 +21,8 @@ export const ActivePointsChart = ({
     const inactivePoints = 100 - activeStakedPoints;
 
     return [
-      { value: activeStakedPoints, name: "Points Active & Staked" },
-      { value: inactivePoints, name: "Points Active & Not Staked" },
+      { value: activeStakedPoints, name: "Staked" },
+      { value: inactivePoints, name: "Not Staked" },
     ];
   }, [stakedPoints]);
 
@@ -43,7 +43,7 @@ export const ActivePointsChart = ({
 
   return (
     <>
-      <ChartWrapper title="Active: Staked vs Unstaked points - %">
+      <ChartWrapper title="">
         <ChartSetup options={OPTIONS} />
       </ChartWrapper>
     </>

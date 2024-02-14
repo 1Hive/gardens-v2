@@ -4,9 +4,10 @@ import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
 import type { EChartsOption } from "echarts";
 
-type Proposals = {
-  value: number;
+export type Proposals = {
   name: string;
+  value: number;
+  valueBigInt?: bigint;
 };
 type ProposalDistributionPointsChartProps = {
   proposals: Proposals[];
@@ -23,7 +24,8 @@ export const ProposalDistributionPointsChart = ({
   const chartData = useMemo(() => {
     // Calculate the sum of all values from proposals
     const sumOfProposalValues = proposals.reduce(
-      (total, proposal) => total + proposal.value,
+      (total, proposal) =>
+        Number(total) + Number(BigInt(proposal.value).toString()),
       0,
     );
     // Calculate the initial difference
@@ -31,7 +33,10 @@ export const ProposalDistributionPointsChart = ({
 
     const TotalPointsDistribution = [
       ...proposals,
-      { value: unstakePoints, name: "Unsupported Points" },
+      {
+        value: Number(BigInt(unstakePoints) / BigInt(10 ** 4)),
+        name: "Unsupported Points",
+      },
     ];
 
     return TotalPointsDistribution;
