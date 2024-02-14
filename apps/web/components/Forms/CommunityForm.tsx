@@ -15,7 +15,7 @@ import { parseUnits } from "viem";
 import { usePrepareContractWrite, useContractWrite } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
-//import { FormInput } from "@/components/Forms"
+// import { FormInput } from "@/components/Forms"
 
 //docs link: https://react-hook-form.com/
 
@@ -230,7 +230,7 @@ type FormInputProps<T extends FieldValues> = {
   registerOptions?: RegisterOptions;
 };
 
-//TODO: handle errors for each input
+// TODO: handle errors for each input
 
 const FormInput = <T extends FieldValues>({
   type,

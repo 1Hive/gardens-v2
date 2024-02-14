@@ -100,8 +100,6 @@ export function RegisterMember({
   useErrorDetails(errorAllowToken, "approve");
   // useErrorDetails(errorGardenToken, "gardenToken");
 
-  console.log(confirmationsRequired);
-
   const registerMemberTransactionReceipt = async () =>
     await viemClient.waitForTransactionReceipt({
       confirmations: confirmationsRequired,

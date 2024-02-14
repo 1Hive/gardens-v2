@@ -1,4 +1,3 @@
-// "use client";
 import { honeyIcon } from "@/assets";
 import Image from "next/image";
 import { CommunityCard } from "@/components";
@@ -46,8 +45,7 @@ export default async function Garden({
             {result?.tokenGarden?.symbol}
           </span>
         </div>
-
-        <CommunityForm tokenGarden={result?.tokenGarden} />
+        {result && <CommunityForm tokenGarden={result.tokenGarden} />}
       </header>
       <section className="mx-auto flex flex-col gap-8">
         {/* communites */}
