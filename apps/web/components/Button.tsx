@@ -14,7 +14,7 @@ type ButtonProps = {
     | "reset"
     | (undefined & ButtonHTMLAttributes<HTMLButtonElement>["type"]);
   variant?: keyof VariantStyles;
-  onClick?: DOMAttributes<HTMLButtonElement>["onClick"];
+  onClick?: DOMAttributes<HTMLButtonElement>["onClick"] | void;
   className?: string;
   disabled?: boolean;
   children: React.ReactNode;
