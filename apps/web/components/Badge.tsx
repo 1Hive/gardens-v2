@@ -4,7 +4,7 @@ import cn from "classnames";
 
 export type Type = "signaling" | "funding" | "streaming";
 type Status =
-  | "active"
+  | "1"
   | "paused"
   | "cancelled"
   | "executed"
@@ -27,7 +27,7 @@ interface StatusBadgeProps {
   classNames?: string;
 }
 
-// TODO!: add real styles, this is just a placeholder
+// TODO: add real styles, this is just a placeholder
 //variant for common badge
 const TYPE_STYLES: TypeStyles = {
   funding: "bg-primary text-black",
@@ -37,7 +37,7 @@ const TYPE_STYLES: TypeStyles = {
 
 //variants for Statys Badge
 const STATUS_STYLES: StatusStyles = {
-  active: "badge-success",
+  1: "badge-success",
   paused: "bg-primary",
   cancelled: "bg-warning",
   executed: "bg-primary",
