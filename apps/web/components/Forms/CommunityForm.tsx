@@ -1,10 +1,5 @@
 "use client";
-import React, {
-  HTMLInputTypeAttribute,
-  useEffect,
-  useState,
-  ChangeEvent,
-} from "react";
+import React, { useEffect, useState, ChangeEvent } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FormModal } from "./FormModal";
 import { registryFactoryABI } from "@/src/generated";
@@ -58,31 +53,12 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
 
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   // TODO: add types
-  const [previewData, setPreviewData] = useState<any>(null);
+  const [previewData, setPreviewData] = useState<any>(null); // preview data
   const [file, setFile] = useState<File>(); //banner image
+  const [fileHashIpfs, setFileHastIpfs] = useState<string>(); // image(ipfs) hash
   const [covenant, setCovenant] = useState<string>();
-
-  const handlePreview = () => {
-    // if (!file) {
-    //   console.log("no attached data");
-    //   return;
-    // }
-
-    const data = {
-      name: getValues("name"),
-      stake: getValues("stake"),
-      isKickMemberEnabled: getValues("isKickMemberEnabled"),
-      feeAmount: getValues("feeAmount"),
-      feeReceiver: getValues("feeReceiver"),
-      councilSafe: getValues("councilSafe"),
-      covenant,
-      file,
-    };
-
-    setPreviewData(data);
-    setIsEditMode(true);
-  };
-  console.log(previewData);
+  const [metadataIpfs, setMetadataIpfs] = useState<string>(); // ipfs hash to get fileHashIpfs + covenant description
+  const [formData, setFormData] = useState(undefined) as any; // args for contract write
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -99,6 +75,7 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
       .then((data) => {
         console.log("https://ipfs.io/ipfs/" + data);
         setFile(selectedFile);
+        setFileHastIpfs(data);
       })
       .catch((error: any) => {
         console.error(error);
@@ -107,12 +84,12 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
 
   const handleJsonUpload = () => {
     const sampleJson = {
-      imagen: file,
+      imagen: fileHashIpfs,
       descripcion: covenant,
     };
 
     if (!file) {
-      console.log("no image attached");
+      alert("please attach a banner image");
       return;
     }
 
@@ -126,24 +103,36 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
       })
       .then((data) => {
         console.log("https://ipfs.io/ipfs/" + data);
+        setMetadataIpfs(data);
       })
       .catch((error: any) => {
         console.error(error);
       });
   };
 
-  const hanldePreview = () => {
+  const handlePreview = () => {
     if (!file) {
-      console.log("no attached data");
+      alert("please attach an image");
+      return;
     }
 
-    console.log(file);
-    console.log(covenant);
+    handleJsonUpload();
+
+    const data = {
+      name: getValues("name"),
+      stake: getValues("stake"),
+      isKickMemberEnabled: getValues("isKickMemberEnabled"),
+      feeAmount: getValues("feeAmount"),
+      feeReceiver: getValues("feeReceiver"),
+      councilSafe: getValues("councilSafe"),
+      covenant,
+      file,
+    };
+
+    setPreviewData(data);
+    setIsEditMode(true);
   };
 
-  const [formData, setFormData] = useState(undefined) as any;
-
-  //TODO: cleanUp
   const { config } = usePrepareContractWrite({
     //contract for localhost deploy
     address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
@@ -151,27 +140,21 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
     // address: "0xfbe59fe1a2630311c98b3f3a917bab764397a72b",
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-
-    onError: (err) => {
-      console.log(err);
-    },
-    onSuccess: (data) => {
-      console.log(data?.result);
-    },
     args: [formData],
   });
 
   const { write, error, isError, data } = useContractWrite(config);
-
-  //TODO: 1)use custom button for submit and create community
-  //TODO   2) handle IPFS submit
 
   const handleInputData = async (data: any) => {
     if (!data) {
       console.log("data not provided");
     }
 
-    let decimals = 18;
+    if (!metadataIpfs) {
+      console.log("not metadata provided");
+    }
+
+    const decimals = 18;
 
     //contract for localhost deploy:
     const alloContractAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
@@ -180,12 +163,12 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
     const gardenTokenAddress = tokenGarden?.id;
     const communityName = data?.name;
     const stakeAmount = parseUnits(data?.stake, decimals);
-    const protocolFeeAmount = parseUnits(data?.feeReceiver, decimals);
+    const protocolFeeAmount = parseUnits(data?.feeAmount, decimals);
     const protocolFeeReceiver =
       data?.feeReceiver || "0x0000000000000000000000000000000000000000";
     const councilSafeAddress =
       data?.councilSafe || "0xc05301902A91DcA455Bff2B9beBeE28A4830E3EC";
-    const metadata = [1n, "example"];
+    const metadata = [1n, metadataIpfs];
     const isKickMemberEnabled = data?.isKickMemberEnabled;
     const ipfsHash = "";
 
@@ -193,7 +176,7 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
       alloContractAddress,
       gardenTokenAddress,
       stakeAmount,
-      0n,
+      protocolFeeAmount,
       0n,
       "0x0000000000000000000000000000000000000000",
       protocolFeeReceiver,
@@ -205,11 +188,9 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
     ]);
   };
 
-  const handleCreateNewCommunity: SubmitHandler<FormInputs> = async (
-    data: any,
-  ) => {
+  const handleCreateNewCommunity: SubmitHandler<FormInputs> = (data: any) => {
     try {
-      await handleInputData(data);
+      handleInputData(data);
 
       console.log(formData);
     } catch (error) {
@@ -274,10 +255,9 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
                   className="select select-accent w-full max-w-md"
                   {...register("feeAmount", { required: true })}
                 >
-                  <option>Select %</option>
-                  <option>0</option>
-                  <option>1</option>
-                  <option>2</option>
+                  <option value={0}>0%</option>
+                  <option value={1}>1%</option>
+                  <option value={2}>2%</option>
                 </select>
               </div>
 
@@ -369,18 +349,17 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
                           aria-hidden="true"
                         />
                         <label
-                          // htmlFor={name}
+                          htmlFor={"image"}
                           className="relative cursor-pointer rounded-lg bg-surface font-semibold transition-colors duration-200 ease-in-out focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-200 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 hover:text-primary"
                         >
                           <span className="text-secondary">Upload a file</span>
                           <input
-                            // id={name}
-                            // name={name}
+                            id={"image"}
+                            name={"image"}
                             type="file"
                             className="sr-only"
                             accept="image/*"
                             onChange={handleFileChange}
-                            // required={required}
                           />
                         </label>
 
@@ -423,10 +402,6 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
     </>
   );
 };
-
-// interface PreviewProps {
-//   onEdit: any;
-// }
 
 const CommunityOverview: React.FC<PreviewDataProps> = (data) => {
   const {
