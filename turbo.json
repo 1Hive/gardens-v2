@@ -26,7 +26,8 @@
         "generated/**"
       ],
       "env": [
-        "NEXT_PUBLIC_SUBGRAPH_URL"
+        "NEXT_PUBLIC_SUBGRAPH_URL",
+        "PINATA_JWT"
       ]
     },
     "test": {
