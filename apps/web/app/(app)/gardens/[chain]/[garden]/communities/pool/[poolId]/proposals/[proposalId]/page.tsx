@@ -9,7 +9,12 @@ import { proposalsMockData } from "@/constants/proposalsMockData";
 import { getChain } from "@/configs/chainServer";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
-import { getAlloDocument, getAlloQuery } from "#/subgraph/.graphclient";
+import {
+  getAlloDocument,
+  getAlloQuery,
+  getProposalDataDocument,
+  getProposalDataQuery,
+} from "#/subgraph/.graphclient";
 
 export const dynamic = "force-dynamic";
 
@@ -54,74 +59,59 @@ export default async function Proposal({
 }: {
   params: { proposalId: number; poolId: number; chain: number; garden: string };
 }) {
-  console.log(proposalId, poolId, chain, garden);
+  const { data: getProposalQuery } = await queryByChain<getProposalDataQuery>(
+    urqlClient,
+    chain,
+    getProposalDataDocument,
+    { poolId: poolId, proposalId: proposalId, garden: garden },
+  );
+
+  if (
+    !getProposalQuery?.tokenGarden?.communities?.[0].strategies?.[0]
+      .proposals?.[0]
+  ) {
+    return <div>{`Proposal ${proposalId} not found`}</div>;
+  }
+
+  const proposalData =
+    getProposalQuery?.tokenGarden?.communities?.[0].strategies?.[0]
+      .proposals?.[0];
+  console.log("proposalData", proposalData);
+
+  const convictionLast = proposalData.convictionLast;
+  const totalStakedTokens = proposalData.stakedTokens;
+  // const maxCVSupply = proposalData.
+  // const totalEffectiveActivePoints = proposalData.
+  const threshold = proposalData.threshold;
+  const type = proposalData.strategy.config?.proposalType;
+  const requestedAmount = proposalData.requestedAmount;
+  const beneficiary = proposalData.beneficiary;
+  const submitter = proposalData.submitter;
+  const status = proposalData.proposalStatus;
+  const metadata = proposalData.metadata;
+
+  console.log(metadata);
+  //@todo: ipfs fetch
+
   const client = createPublicClient({
     chain: getChain(chain),
     transport: http(),
   });
 
-  const { data: alloInfo } = await queryByChain<getAlloQuery>(
-    urqlClient,
-    chain,
-    getAlloDocument,
-  );
-  const alloAddress = alloInfo?.allos[0].id as Address;
   // const addrs = getContractsAddrByChain(chain);
   // if (!addrs) {
   // return <div>Chain ID: {chain} not supported</div>;
   // }//@todo create a function to check suuported chains and return a message with error or redirect
-  const poolData = (await client.readContract({
-    abi: alloABI,
-    address: alloAddress,
-    functionName: "getPool",
-    args: [BigInt(poolId)],
-  })) as PoolData;
 
+  console.log("strategyAddr", proposalData.strategy.id);
   const cvStrategyContract = {
-    address: poolData.strategy,
+    address: proposalData.strategy.id as Address,
     abi: cvStrategyABI as Abi,
   };
-
-  const rawProposal = (await client.readContract({
-    address: poolData.strategy,
-    abi: cvStrategyABI as Abi,
-    functionName: "getProposal",
-    args: [proposalId],
-  })) as any[];
-
-  const proposal = {
-    ...transformData(rawProposal),
-    ...proposalsMockData[proposalId],
-  };
-
-  const {
-    title,
-    type,
-    description,
-    requestedAmount,
-    beneficiary,
-    submitter: createdBy,
-    threshold,
-    convictionLast,
-  } = proposal as Proposal;
 
   const totalEffectiveActivePoints = (await client.readContract({
     ...cvStrategyContract,
     functionName: "totalEffectiveActivePoints",
-  })) as bigint;
-
-  const getProposalStakedAmount = await client.readContract({
-    ...cvStrategyContract,
-    functionName: "getProposalStakedAmount",
-    args: [proposalId],
-    //blockNumber: 1303n,
-  });
-
-  const convictionLastResult = (await client.readContract({
-    ...cvStrategyContract,
-    functionName: "updateProposalConviction",
-    args: [proposalId],
-    //blockNumber: 1303n,
   })) as bigint;
 
   const maxCVSupply = (await client.readContract({
@@ -130,50 +120,30 @@ export default async function Proposal({
     args: [totalEffectiveActivePoints],
   })) as bigint;
 
-  // => d
+  // // => D = 10**7
 
   const maxCVStaked = (await client.readContract({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
-    args: [getProposalStakedAmount],
+    args: [totalStakedTokens],
   })) as bigint;
 
-  //Params from contracts:
-  console.log("staked Amount", getProposalStakedAmount);
-  console.log("maxCVSupply", maxCVSupply);
-  console.log("maxCVStaked", maxCVStaked);
-  console.log("convictionLast", convictionLastResult);
-  console.log("rawThreshold", threshold);
-
-  const { status, points, supporters } = proposalsMockData?.filter(
-    (proposal) => proposal.id === Number(proposalId),
-  )[0];
-
-  const sumSupportersAmount = () => {
-    let sum = 0;
-    supporters.forEach((supporter: any) => {
-      sum += supporter.amount;
-    });
-    return sum;
-  };
-
-  const supportersTotalAmount = sumSupportersAmount();
   //function to get all other function results
   const calcThreshold = calcThresholdPoints(
     threshold,
     maxCVSupply,
     totalEffectiveActivePoints as bigint,
   );
-  //
+
   const calcsResults = executeAllFunctions(
-    convictionLastResult, // convictionLast
-    maxCVStaked, // maxCVStaked
-    maxCVSupply, // maxCVSupply
-    totalEffectiveActivePoints, // totalEffectiveActivePoints
-    threshold, // threshold
+    convictionLast,
+    maxCVStaked,
+    maxCVSupply,
+    totalEffectiveActivePoints,
+    threshold,
     calcThreshold,
   );
-  const proposalSupport = Number(getProposalStakedAmount) * 2;
+  const proposalSupport = Number(totalStakedTokens) * 2;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
@@ -189,11 +159,11 @@ export default async function Proposal({
           <StatusBadge status={status} />
           <div className=" flex items-baseline justify-end space-x-4 ">
             <h3 className="w-full text-center text-2xl font-semibold">
-              {title}
+              {/* {title} */}
             </h3>
           </div>
           <div className="">
-            <p className="text-md text-justify">{description}</p>
+            {/* <p className="text-md text-justify">{description}</p> */}
           </div>
           <div>
             {/* reqAmount - bene - creatBy */}
@@ -217,10 +187,10 @@ export default async function Proposal({
                   <span className="text-md">{formatAddress(beneficiary)}</span>
                 </div>
               )}
-              {createdBy && (
+              {submitter && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
                   <span className="text-md underline">Created By</span>
-                  <span className="text-md">{formatAddress(createdBy)}</span>
+                  <span className="text-md">{formatAddress(submitter)}</span>
                 </div>
               )}
             </div>
@@ -237,7 +207,7 @@ export default async function Proposal({
       </main>
 
       {/* aside - supporters info address + amount */}
-      <aside className="sapce-y-4 sticky top-3 flex h-fit w-[320px] flex-col rounded-xl border-2 border-black bg-base-100 bg-surface px-[38px] py-6">
+      {/* <aside className="sapce-y-4 sticky top-3 flex h-fit w-[320px] flex-col rounded-xl border-2 border-black bg-base-100 bg-surface px-[38px] py-6">
         <h4 className="border-b-2 border-dashed py-4 text-center text-xl font-semibold">
           Supporters
         </h4>
@@ -253,7 +223,7 @@ export default async function Proposal({
             <span>{supportersTotalAmount ?? ""}</span>
           </div>
         </div>
-      </aside>
+      </aside> */}
     </div>
   );
 }
@@ -401,44 +371,42 @@ function executeAllFunctions(
   maxCVStaked: number | bigint,
   maxCVSupply: number | bigint,
   totalEffectiveActivePoints: number | bigint,
-  threshold: number | bigint,
+  threshold: number,
   calcThreshold: number,
 ) {
   // Initialize an object to store all results
   const results: ExecutionResults = {};
 
-  try {
-    // Call each function and store the results
-    results.currentConviction = calcCurrentConviction(
-      convictionLast,
-      maxCVSupply,
-      totalEffectiveActivePoints,
-    );
-    results.maxConviction = calcMaxConviction(
-      maxCVStaked,
-      maxCVSupply,
-      totalEffectiveActivePoints,
-    );
-    results.futureConviction = calcFutureConviction(
-      convictionLast,
-      maxCVStaked,
-      maxCVSupply,
-      totalEffectiveActivePoints,
-    );
-    results.thresholdPoints = calcThresholdPoints(
-      threshold,
-      maxCVSupply,
-      totalEffectiveActivePoints,
-    );
-    results.pointsNeeded = calcPointsNeeded(
-      calcThreshold,
-      maxCVStaked,
-      maxCVSupply,
-      totalEffectiveActivePoints,
-    );
-  } catch (error) {
-    console.error(`Error executing functions`);
-  }
+  // Call each function and store the results
+  results.currentConviction = calcCurrentConviction(
+    convictionLast,
+    maxCVSupply,
+    totalEffectiveActivePoints,
+  );
+  results.maxConviction = calcMaxConviction(
+    maxCVStaked,
+    maxCVSupply,
+    totalEffectiveActivePoints,
+  );
+  results.futureConviction = calcFutureConviction(
+    convictionLast,
+    maxCVStaked,
+    maxCVSupply,
+    totalEffectiveActivePoints,
+  );
+  results.thresholdPoints = calcThresholdPoints(
+    threshold,
+    maxCVSupply,
+    totalEffectiveActivePoints,
+  );
+  results.pointsNeeded = threshold;
+
+  // calcPointsNeeded(
+  //   calcThreshold,
+  //   maxCVStaked,
+  //   maxCVSupply,
+  //   totalEffectiveActivePoints,
+  // );
 
   // Return the results object
   return results;
@@ -447,19 +415,19 @@ function executeAllFunctions(
 // Example usage
 
 //
-function transformData(data: any[]): UnparsedProposal {
-  return {
-    submitter: data[0],
-    beneficiary: data[1],
-    requestedToken: data[2],
-    requestedAmount: Number(data[3]),
-    stakedTokens: Number(data[4]),
-    proposalType: data[5],
-    proposalStatus: data[6],
-    blockLast: Number(data[7]),
-    convictionLast: Number(data[8]),
-    agreementActionId: Number(data[9]),
-    threshold: Number(data[10]),
-    voterStakedPointsPct: Number(data[11]),
-  };
-}
+// function transformData(data: any[]): UnparsedProposal {
+//   return {
+//     submitter: data[0],
+//     beneficiary: data[1],
+//     requestedToken: data[2],
+//     requestedAmount: Number(data[3]),
+//     stakedTokens: Number(data[4]),
+//     proposalType: data[5],
+//     proposalStatus: data[6],
+//     blockLast: Number(data[7]),
+//     convictionLast: Number(data[8]),
+//     agreementActionId: Number(data[9]),
+//     threshold: Number(data[10]),
+//     voterStakedPointsPct: Number(data[11]),
+//   };
+// }

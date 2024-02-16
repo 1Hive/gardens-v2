@@ -112,6 +112,12 @@ export async function getMeshOptions() {
                     },
                     location: 'GetCommunityByGardenDocument.graphql'
                 }, {
+                    document: GetProposalDataDocument,
+                    get rawSDL() {
+                        return printWithCache(GetProposalDataDocument);
+                    },
+                    location: 'GetProposalDataDocument.graphql'
+                }, {
                     document: GetAlloDocument,
                     get rawSDL() {
                         return printWithCache(GetAlloDocument);
@@ -269,6 +275,39 @@ export const getCommunityByGardenDocument = gql `
   }
 }
     `;
+export const getProposalDataDocument = gql `
+    query getProposalData($garden: ID!, $poolId: BigInt!, $proposalId: ID!) {
+  tokenGarden(id: $garden) {
+    name
+    symbol
+    communities {
+      strategies(where: {poolId: $poolId}) {
+        proposals(where: {id: $proposalId}) {
+          beneficiary
+          blockLast
+          convictionLast
+          createdAt
+          metadata
+          proposalStatus
+          requestedAmount
+          requestedToken
+          stakedTokens
+          submitter
+          threshold
+          updatedAt
+          version
+          strategy {
+            id
+            config {
+              proposalType
+            }
+          }
+        }
+      }
+    }
+  }
+}
+    `;
 export const getAlloDocument = gql `
     query getAllo {
   allos {
@@ -318,6 +357,9 @@ export function getSdk(requester) {
         },
         getCommunityByGarden(variables, options) {
             return requester(getCommunityByGardenDocument, variables, options);
+        },
+        getProposalData(variables, options) {
+            return requester(getProposalDataDocument, variables, options);
         },
         getAllo(variables, options) {
             return requester(getAlloDocument, variables, options);
