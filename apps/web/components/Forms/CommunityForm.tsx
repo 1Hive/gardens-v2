@@ -134,6 +134,7 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
   };
 
   const { config } = usePrepareContractWrite({
+    //TODO: add dynamic address
     //contract for localhost deploy
     address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
     //contract for arb sepolia
@@ -145,7 +146,7 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
 
   const { write, error, isError, data } = useContractWrite(config);
 
-  const handleInputData = async (data: any) => {
+  const handleInputData = (data: any) => {
     if (!data) {
       console.log("data not provided");
     }
@@ -156,6 +157,7 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
 
     const decimals = 18;
 
+    //TODO: add dynamic contract addresses
     //contract for localhost deploy:
     const alloContractAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
     //contract for arb sepolia:
@@ -188,11 +190,13 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
     ]);
   };
 
+  //TODO: hanldle this with lucho
   const handleCreateNewCommunity: SubmitHandler<FormInputs> = (data: any) => {
     try {
       handleInputData(data);
 
       console.log(formData);
+      // write?.();
     } catch (error) {
       console.error("An error occurred:", error);
     }
