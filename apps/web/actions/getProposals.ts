@@ -13,53 +13,53 @@ export async function getProposals(
   strategy: Strategy,
 ) {
   try {
-    const proposalsIds = strategy.proposals.map((proposal) => proposal.id);
     const proposalTypeStr = getProposalTypeString(
       strategy.config?.proposalType as number,
     );
 
-    let transformedProposals: ProposalTypeVoter[] = strategy.proposals.map(
-      (p) => {
+    let transformedProposals: ProposalTypeVoter[] = await Promise.all(
+      strategy.proposals.map(async (p) => {
+        const ipfsRawData = await fetch(`https://ipfs.io/ipfs/${p.metadata}`, {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+          },
+        });
+        const ipfsData = await ipfsRawData.json();
+        const title = ipfsData.title;
+
         return {
           ...p,
           voterStakedPointsPct: BigInt(0),
-          title: "title", //@todo get from IPFS using p.metadata
+          title: title,
           type: proposalTypeStr,
         };
-      },
+      }),
     );
 
-    // console.log("transformedProposals", transformedProposals);
     if (accountAddress) {
-      transformedProposals = [];
       const alloContractReadProps = {
         address: strategy.id as Address,
         abi: cvStrategyABI as Abi,
         functionName: "getProposalVoterStakedPointsPct",
       };
 
-      const contractsToRead = proposalsIds.map((proposalId) => ({
+      const contractsToRead = transformedProposals.map((proposal) => ({
         ...alloContractReadProps,
-        args: [proposalId, accountAddress],
+        args: [proposal.id, accountAddress],
       }));
 
       const proposalsReadsContract = await readContracts({
         contracts: contractsToRead,
       });
 
-      proposalsReadsContract.forEach((proposal, i) => {
-        // console.log("proposalReadcontractg", proposal);
-
-        if (proposal !== undefined) {
-          transformedProposals.push(
-            transformData(
-              strategy.proposals[i],
-              proposal.result === undefined
-                ? BigInt(0)
-                : (proposal.result as bigint),
-              proposalTypeStr,
-            ),
-          );
+      transformedProposals.map((proposal, i) => {
+        if (proposalsReadsContract[i]?.result !== undefined) {
+          const result = proposalsReadsContract[i].result as {
+            voterStakedPoints: bigint;
+          };
+          const voterStakedPointsPct = result?.voterStakedPoints;
+          return { ...proposal, voterStakedPointsPct: voterStakedPointsPct };
         }
       });
     }
@@ -68,17 +68,4 @@ export async function getProposals(
   } catch (error) {
     console.log(error);
   }
-}
-
-function transformData(
-  p: Proposal,
-  voterStakedPointsPct: bigint,
-  proposalTypeStr: string,
-): ProposalTypeVoter {
-  return {
-    ...p,
-    voterStakedPointsPct,
-    title: "title", //@todo get from IPFS using p.metadata
-    type: proposalTypeStr,
-  };
 }
