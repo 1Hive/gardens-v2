@@ -89,7 +89,7 @@ export function Proposals({
       id: id,
       value: voterStakedPointsPct,
     }));
-    console.log("newInputs", newInputs);
+    // console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
 

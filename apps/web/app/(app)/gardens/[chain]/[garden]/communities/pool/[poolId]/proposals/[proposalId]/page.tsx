@@ -52,6 +52,11 @@ type PoolData = {
   adminRole: `0x${string}`;
 };
 
+type ProposalMetadata = {
+  title: string;
+  description: string;
+};
+
 const { urqlClient } = initUrqlClient();
 
 export default async function Proposal({
@@ -83,15 +88,35 @@ export default async function Proposal({
   // const maxCVSupply = proposalData.
   // const totalEffectiveActivePoints = proposalData.
   const threshold = proposalData.threshold;
-  const type = proposalData.strategy.config?.proposalType;
+  const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount;
   const beneficiary = proposalData.beneficiary;
   const submitter = proposalData.submitter;
-  const status = proposalData.proposalStatus;
+  const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
 
   console.log(metadata);
   //@todo: ipfs fetch
+
+  const getIpfsData = (ipfsHash: string) =>
+    fetch(`https://ipfs.io/ipfs/${ipfsHash}`, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+      },
+    });
+
+  let title = "";
+  let description = "";
+
+  try {
+    const rawProposalMetadata = await getIpfsData(metadata);
+    const proposalMetadata: ProposalMetadata = await rawProposalMetadata.json();
+    title = proposalMetadata.title;
+    description = proposalMetadata.description;
+  } catch (error) {
+    console.log(error);
+  }
 
   const client = createPublicClient({
     chain: getChain(chain),
@@ -159,11 +184,11 @@ export default async function Proposal({
           <StatusBadge status={status} />
           <div className=" flex items-baseline justify-end space-x-4 ">
             <h3 className="w-full text-center text-2xl font-semibold">
-              {/* {title} */}
+              {title}
             </h3>
           </div>
           <div className="">
-            {/* <p className="text-md text-justify">{description}</p> */}
+            <p className="text-md text-justify">{description}</p>
           </div>
           <div>
             {/* reqAmount - bene - creatBy */}
