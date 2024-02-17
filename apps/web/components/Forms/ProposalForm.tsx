@@ -43,6 +43,7 @@ export const ProposalForm = () => {
   const [previewData, setPreviewData] = useState<any>(null); // preview data
   const [metadataIpfs, setMetadataIpfs] = useState<string>(); // ipfs hash of proposal title and description
   const [formData, setFormData] = useState(undefined) as any; // args for contract write
+  const tokenSymbol = "MTK";
 
   const handleJsonUpload = () => {
     const sampleJson = {
@@ -54,8 +55,8 @@ export const ProposalForm = () => {
 
     toast
       .promise(ipfsUpload, {
-        pending: "Uploading to IPFS...",
-        success: "Successfully uploaded!",
+        pending: "Validating Proposal Form...",
+        success: "Validation Succesfull!",
         error: "Something went wrong",
       })
       .then((data) => {
@@ -113,10 +114,10 @@ export const ProposalForm = () => {
     }
   }, [isSubmitting, isSubmitted]);
 
-  const inputClassname = "input input-bordered input-accent w-full max-w-md";
-  const labelClassname = "mb-2 text-xs text-black";
+  const proposalType = watch("type") ?? "1";
 
-  const proposalType = watch("type");
+  const inputClassname = "input input-bordered input-accent w-full";
+  const labelClassname = "mb-2 text-xs text-black";
 
   return (
     <>
@@ -127,14 +128,14 @@ export const ProposalForm = () => {
       >
         <form onSubmit={handleSubmit(handleCreateNewCommunity)}>
           {!isEditMode ? (
-            <div className="flex flex-col space-y-6 overflow-hidden px-1">
+            <div className="flex flex-col space-y-6 overflow-hidden p-1">
               <div className="flex flex-col">
                 <label htmlFor="type" className={labelClassname}>
                   Select Proposal Type
                 </label>
                 <select
                   itemType="number"
-                  className="select select-accent w-full max-w-md"
+                  className="select select-accent w-full"
                   {...register("type", { required: true })}
                 >
                   <option value={"1"}>Funding</option>
@@ -145,7 +146,7 @@ export const ProposalForm = () => {
 
               {proposalType === "1" && (
                 <>
-                  <div className="flex flex-col">
+                  <div className="relative flex flex-col">
                     <label htmlFor="stake" className={labelClassname}>
                       Requested Amount
                     </label>
@@ -157,6 +158,9 @@ export const ProposalForm = () => {
                         required: true,
                       })}
                     />
+                    <span className="absolute right-10 top-10 text-black">
+                      {tokenSymbol}
+                    </span>
                   </div>
                 </>
               )}
@@ -199,14 +203,14 @@ export const ProposalForm = () => {
               <textarea
                 className="textarea textarea-accent line-clamp-5"
                 placeholder="Add proposal description"
-                rows={7}
+                rows={10}
                 {...register("description", {
                   required: true,
                 })}
               ></textarea>
             </div>
           ) : (
-            <CommunityOverview data={previewData} />
+            <ProposalOverview data={previewData} />
           )}
 
           <div className="flex w-full items-center justify-center py-6">
@@ -233,13 +237,13 @@ export const ProposalForm = () => {
   );
 };
 
-const CommunityOverview: React.FC<PreviewDataProps> = (data) => {
+const ProposalOverview: React.FC<PreviewDataProps> = (data) => {
   const { type, title, amount, beneficiary, description } = data.data;
 
   const proposalType = {
-    0: "Funding",
-    1: "Signaling",
-    2: "Streaming",
+    1: "Funding",
+    2: "Signaling",
+    3: "Streaming",
   } as any;
 
   return (
@@ -252,12 +256,13 @@ const CommunityOverview: React.FC<PreviewDataProps> = (data) => {
       <div>
         {data && (
           <div className="relative">
+            <PreviewData label="Strategy" data="Conviction voting" />
             <PreviewData label="Proposal Type" data={proposalType[type]} />
-            {amount && beneficiary && (
-              <>
-                <PreviewData label="Requested Amount" data={amount} />
-                <PreviewData label="Beneficiary" data={beneficiary} />
-              </>
+            {type === "1" && (
+              <PreviewData label="Requested Amount" data={amount} />
+            )}
+            {(type === "1" || type === "3") && (
+              <PreviewData label="Beneficiary" data={beneficiary} />
             )}
 
             <div className="divider-default divider"></div>
