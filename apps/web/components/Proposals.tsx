@@ -284,7 +284,7 @@ export function Proposals({
           ))}
         </div>
         <div className="flex justify-center gap-8">
-          <Button className={`bg-primary`}>Create Proposal</Button>
+          {/* <Button className={`bg-primary`}>Create Proposal</Button> */}
           {isMemberActived && (
             <Button
               className={`${editView ? "bg-red text-white" : "bg-primary"}`}
