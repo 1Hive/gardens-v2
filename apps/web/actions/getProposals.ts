@@ -3,20 +3,11 @@ import { cvStrategyABI } from "@/src/generated";
 import { Abi, Address } from "viem";
 import { Proposal, ProposalTypeVoter, Strategy } from "@/components/Proposals";
 
-export const getProposalTypeString = (proposalType: number) => {
-  const types = ["signaling", "funding", "streaming"];
-  return types[proposalType];
-};
-
 export async function getProposals(
   accountAddress: Address | undefined,
   strategy: Strategy,
 ) {
   try {
-    const proposalTypeStr = getProposalTypeString(
-      strategy.config?.proposalType as number,
-    );
-
     let transformedProposals: ProposalTypeVoter[] = await Promise.all(
       strategy.proposals.map(async (p) => {
         const ipfsRawData = await fetch(`https://ipfs.io/ipfs/${p.metadata}`, {
@@ -32,7 +23,7 @@ export async function getProposals(
           ...p,
           voterStakedPointsPct: BigInt(0),
           title: title,
-          type: proposalTypeStr,
+          type: strategy.config?.proposalType as number,
         };
       }),
     );

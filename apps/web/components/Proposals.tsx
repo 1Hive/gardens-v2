@@ -15,7 +15,6 @@ import { useViemClient } from "@/hooks/useViemClient";
 import { getStrategyByPoolQuery } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/communities/pool/[poolId]/page";
-import { Type } from "./Badge";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 
@@ -38,7 +37,7 @@ export type Proposal = Strategy["proposals"][number];
 export type ProposalTypeVoter = Proposal & {
   voterStakedPointsPct: bigint;
   title: string;
-  type: string;
+  type: number;
 };
 
 const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
@@ -231,7 +230,7 @@ export function Proposals({
               <div className="flex w-full items-center justify-between">
                 <h4 className="font-semibold">{title}</h4>
                 <div>
-                  <Badge type={type as Type} />
+                  <Badge type={Number(type)} />
                   {!editView && (
                     <Link href={`${pathname}/proposals/${id}`} className="ml-8">
                       <button className="btn btn-outline btn-info px-3 py-[6px]">

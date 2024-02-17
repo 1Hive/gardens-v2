@@ -81,7 +81,7 @@ export default async function Proposal({
   const proposalData =
     getProposalQuery?.tokenGarden?.communities?.[0].strategies?.[0]
       .proposals?.[0];
-  console.log("proposalData", proposalData);
+  // console.log("proposalData", proposalData);
 
   const convictionLast = proposalData.convictionLast;
   const totalStakedTokens = proposalData.stakedTokens;
@@ -95,7 +95,7 @@ export default async function Proposal({
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
 
-  console.log(metadata);
+  // console.log(metadata);
   //@todo: ipfs fetch
 
   const getIpfsData = (ipfsHash: string) =>
@@ -128,7 +128,7 @@ export default async function Proposal({
   // return <div>Chain ID: {chain} not supported</div>;
   // }//@todo create a function to check suuported chains and return a message with error or redirect
 
-  console.log("strategyAddr", proposalData.strategy.id);
+  // console.log("strategyAddr", proposalData.strategy.id);
   const cvStrategyContract = {
     address: proposalData.strategy.id as Address,
     abi: cvStrategyABI as Abi,

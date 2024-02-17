@@ -65,6 +65,6 @@ const getTypeName = (type: number) => {
 };
 
 const getStatusName = (status: number) => {
-  const statusArray = ["active", "paused", "cancelled", "executed", "inactive"];
+  const statusArray = ["active", "inactive", "paused", "cancelled", "executed"];
   return statusArray[status];
 };

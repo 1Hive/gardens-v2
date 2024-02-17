@@ -44,7 +44,7 @@ export default async function Pool({
   if (!alloInfo) {
     return <div>Allo not found</div>;
   }
-  console.log("alloInfo", alloInfo);
+  // console.log("alloInfo", alloInfo);
   const addrs = getContractsAddrByChain(chain);
   if (!addrs) {
     return <div>Chain ID: {chain} not supported</div>;
@@ -61,7 +61,7 @@ export default async function Pool({
     return <div>{`Pool ${poolId} not found`}</div>;
   }
 
-  console.log("poolData", poolData);
+  // console.log("poolData", poolData);
 
   const strategyObj = poolData.cvstrategies[0];
 
@@ -73,7 +73,7 @@ export default async function Pool({
   }
   const proposalType = strategyObj.config.proposalType as number;
 
-  console.log("proposaLType", proposalType);
+  // console.log("proposaLType", proposalType);
 
   const poolBalance = await client.readContract({
     address: strategyAddr,
@@ -81,7 +81,7 @@ export default async function Pool({
     functionName: "getPoolAmount",
   });
 
-  console.log("poolBalance", poolBalance);
+  // console.log("poolBalance", poolBalance);
   const POOL_BALANCE = Number(poolBalance);
 
   return (
