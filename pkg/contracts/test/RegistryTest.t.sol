@@ -26,9 +26,12 @@ import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
+import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
+
+import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
 
-contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, GasHelpers2, SafeSetup {
+contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
     CVStrategy public strategy;
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * 10 ** 18;
@@ -38,7 +41,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
     uint256 public constant STAKE_WITH_FEES =
         MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / 100;
 
-    Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
+    // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
     RegistryFactory internal registryFactory;
     RegistryCommunity internal registryCommunity;
@@ -65,13 +68,16 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
         token.mint(gardenMember, mintAmount);
         token.approve(address(allo()), mintAmount);
 
-        vm.prank(pool_admin());
+        vm.startPrank(pool_admin());
         token.approve(address(allo()), mintAmount);
 
         //        strategy = address(new CVMockStrategy(address(allo())));
         strategy = new CVStrategy(address(allo()));
         //        strategy = address(new MockStrategy(address(allo())));
-
+        // uint256 poolId = createPool(
+        //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, CVStrategy.ProposalType(0)
+        // );
+        vm.stopPrank();
         vm.startPrank(allo_owner());
         allo().transferOwnership(local());
         vm.stopPrank();
@@ -177,17 +183,40 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
         assertEq(_registryFactory().getProtocolFee(address(registryCommunity)), 2);
         vm.stopPrank();
     }
+    
 
     function test_kickMember() public {
         startMeasuringGas("Registering and kicking member");
+        
+        //TODO: fix createProposal
+        //(IAllo.Pool memory pool,,) = _createProposal(NATIVE, 0, 0);
+
+        //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, CVStrategy.ProposalType(0)
+        );
+        vm.stopPrank();
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+        strategy.activatePoints();
         vm.stopPrank();
+        assertEq(_registryCommunity().memberPowerInStrategy(gardenMember,address(strategy)),100 * 10 ** 4);
+        assertEq(strategy.memberPointsBalance(gardenMember), 100 * 10 ** 4);
+        //assertEq(strategy.activatedPointsIn)
         vm.startPrank(address(councilSafe));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         assertTrue(!_registryCommunity().isMember(gardenMember));
         assertEq(token.balanceOf(address(councilSafe)), MINIMUM_STAKE);
+        assertEq(_registryCommunity().memberPowerInStrategy(gardenMember,address(strategy)),0);
+        assertEq(strategy.memberPointsBalance(gardenMember),0);
+        // assertTrue(!_registryCommunity().memberActivatedInStrategies(gardenMember,address(strategy)));
         vm.stopPrank();
         stopMeasuringGas();
     }

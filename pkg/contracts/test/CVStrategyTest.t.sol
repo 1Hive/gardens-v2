@@ -139,7 +139,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         );
 
         vm.stopPrank();
-
         _registryCommunity().gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
         strategy.activatePoints();
@@ -903,7 +902,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyActivated.selector));
         cv.activatePoints();
 
-        cv.deactivatePoints();
+        cv.deactivatePoints(local());
         // assertEq(registryCommunity.isMember(local()), false, "isMember");
 
         vm.startPrank(pool_admin());
@@ -913,7 +912,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         cv.activatePoints();
         assertEq(registryCommunity.totalPointsActivatedInStrategy(address(cv)), 100 * PRECISION_SCALE);
 
-        cv.deactivatePoints();
+        cv.deactivatePoints(pool_admin());
         assertEq(registryCommunity.totalPointsActivatedInStrategy(address(cv)), 0);
 
         vm.stopPrank();

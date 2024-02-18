@@ -136,7 +136,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     mapping(address => Member) public addressToMemberInfo;
     mapping(address => bool) public enabledStrategies;
     mapping(address => mapping(address => bool)) public memberActivatedInStrategies;
-    mapping(address => address[]) strategiesByMember;
+    mapping(address => address[]) public strategiesByMember;
     mapping(address => uint256) public totalPointsActivatedInStrategy;
     //      strategy           member     power
     mapping(address => mapping(address => uint256)) public memberPowerInStrategy;
@@ -205,7 +205,9 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
 
         memberActivatedInStrategies[_member][_strategy] = true;
+        strategiesByMember[_member].push(_strategy);
         totalPointsActivatedInStrategy[_strategy] += DEFAULT_POINTS;
+        memberPowerInStrategy[_member][_strategy] += DEFAULT_POINTS;
 
         emit MemberActivatedStrategy(_member, _strategy);
     }
@@ -219,7 +221,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         memberActivatedInStrategies[_member][_strategy] = false;
         totalPointsActivatedInStrategy[_strategy] -= DEFAULT_POINTS;
-
+        memberPowerInStrategy[_member][_strategy] = 0;
         // emit StrategyRemoved(_strategy);
         emit MemberDeactivatedStrategy(_member, _strategy);
     }
@@ -367,14 +369,17 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             revert UserNotInRegistry();
         }
         Member memory member = addressToMemberInfo[_member];
-        delete addressToMemberInfo[_member];
-        address memberStrategies = memberStrategiesActivated[_member];
+        address [] memory memberStrategies = strategiesByMember[_member];
         bytes4 interfaceId = IPointSystem.withdraw.selector;
         for(uint256 i = 0; i < memberStrategies.length; i++){
-            if(memberStrategies[i].supportsInterface()){
-                IPointSystem(memberStrategies[i]).deactivatePoints();
-            }
+            //FIX support interface check 
+            //if(memberStrategies[i].supportsInterface(interfaceId)){
+                IPointSystem(memberStrategies[i]).deactivatePoints(_member);
+                
+
+            // }
         }
+        delete addressToMemberInfo[_member];
         
         gardenToken.transfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
