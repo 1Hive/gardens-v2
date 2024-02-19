@@ -151,7 +151,10 @@ export default async function Pool({
 
           <Proposals strategy={strategyObj} alloInfo={alloInfo} />
         </main>
-        <ProposalForm />
+        <ProposalForm
+          poolId={poolId}
+          proposalType={proposalType as unknown as string}
+        />
       </div>
     </div>
   );
