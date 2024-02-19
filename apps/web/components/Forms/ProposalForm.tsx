@@ -1,10 +1,12 @@
 "use client";
-import React, { useEffect, useState, ChangeEvent } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FormModal } from "./FormModal";
-import { registryFactoryABI } from "@/src/generated";
+import { alloABI } from "@/src/generated";
 import { parseUnits } from "viem";
 import { usePrepareContractWrite, useContractWrite } from "wagmi";
+import { encodeAbiParameters, parseAbiParameters } from "viem";
+
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUpload";
@@ -27,6 +29,40 @@ type PreviewDataProps = {
 };
 const ethereumAddressRegExp = /^(0x)?[0-9a-fA-F]{40}$/;
 
+// struct of the proposal for encoding:
+//     uint poolId
+//     address beneficiary;
+//     uint256 amountRequested;
+//     address requestedToken;
+//     Metadata metadata;
+
+//address token => "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
+//token native => "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
+
+const abiParameters = [
+  { name: "poolId", type: "uint" },
+  { name: "beneficiaryAddress", type: "address" },
+  { name: "requestedAmount", type: "uint" },
+  { name: "requestedTokenAddress", type: "address" },
+  {
+    name: "metadata",
+    type: "tuple",
+    components: [
+      { name: "pointer", type: "uint" },
+      { name: "ipfsHash", type: "string" },
+    ],
+  },
+];
+const values = [
+  2,
+  "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  50000000000000000000n,
+  "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
+  [1, "QmW4zFLFJRN7J67EzNmdC2r2M9u2iJDha2fj5Gee6hJzSY"],
+];
+const dataFromDeploy =
+  "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000000000000000000000000002b5e3af16b1880000000000000000000000000000dc64a140aa3e981100a9beca4e685f962f0cf6c900000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000002e516d57347a464c464a524e374a3637457a4e6d64433272324d397532694a44686132666a3547656536684a7a5359000000000000000000000000000000000000";
+
 export const ProposalForm = () => {
   const {
     register,
@@ -39,7 +75,7 @@ export const ProposalForm = () => {
   } = useForm<FormInputs>();
 
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  // TODO: add types pr
+  // TODO: ADD TYPES
   const [previewData, setPreviewData] = useState<any>(null); // preview data
   const [metadataIpfs, setMetadataIpfs] = useState<string>(); // ipfs hash of proposal title and description
   const [formData, setFormData] = useState(undefined) as any; // args for contract write
@@ -82,39 +118,76 @@ export const ProposalForm = () => {
     setPreviewData(data);
     setIsEditMode(true);
   };
+  const { config } = usePrepareContractWrite({
+    //TODO: add dynamic address
+    //contract for localhost deploy
+    address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    //contract for arb sepolia
+    // address: "",
+    abi: abiWithErrors(alloABI),
+    functionName: "registerRecipient",
+    args: [1, dataFromDeploy],
+    onError: (error) => {
+      console.log("error", error);
+    },
+    onSuccess: (data) => {
+      console.log(data?.result);
+    },
+  });
 
-  // const { config } = usePrepareContractWrite({
-  //   //TODO: add dynamic address
-  //   //contract for localhost deploy
-  //   address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-  //   //contract for arb sepolia
-  //   // address: "0xfbe59fe1a2630311c98b3f3a917bab764397a72b",
-  //   abi: abiWithErrors(registryFactoryABI),
-  //   functionName: "createRegistry",
-  //   args: [formData],
-  // });
+  const { write, error, isError, data } = useContractWrite(config);
 
-  // const { write, error, isError, data } = useContractWrite(config);
+  // ... (Previous code)
 
-  const handleInputData = (data: any) => {
-    setFormData([]);
+  // ... (Previous code)
+
+  const handleEncodeData = (data: any) => {
+    const poolId = 1;
+    let proposalData;
+
+    // Check if proposal type is not equal to "1":
+    //TODO: check when it is streaming
+    proposalData =
+      data.type !== "1"
+        ? {
+            beneficiary: "0x0000000000000000000000000000000000000000",
+            requestedAmount: 0,
+            tokenAddress: "0x0000000000000000000000000000000000000000",
+          }
+        : {
+            beneficiary: data.beneficiary,
+            requestedAmount: parseUnits(data.amount, 18),
+            tokenAddress: "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
+          };
+
+    const metadata = [1, metadataIpfs];
+
+    const encodedData = encodeAbiParameters(abiParameters, [
+      poolId,
+      proposalData.beneficiary,
+      proposalData.requestedAmount,
+      proposalData.tokenAddress,
+      metadata,
+    ]);
+
+    // Log the values
+    console.log("poolId", poolId);
+    console.log("beneficiary", proposalData.beneficiary);
+    console.log("requestedAmount", proposalData.requestedAmount);
+    console.log("tokenAddress", proposalData.tokenAddress);
+    console.log(metadata);
+    console.log("encodedData", encodedData);
   };
-
-  const handleCreateNewCommunity: SubmitHandler<FormInputs> = (data: any) => {
-    try {
-      handleInputData(data);
-    } catch (error) {
-      console.error("An error occurred:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (!isSubmitting && isSubmitted) {
-      //write?.();
-    }
-  }, [isSubmitting, isSubmitted]);
 
   const proposalType = watch("type") ?? "1";
+
+  const handleCreateNewCommunity: SubmitHandler<FormInputs> = (data: any) => {
+    // try {
+    handleEncodeData(data);
+    // } catch (error) {
+    //   console.error("An error occurred:", error);
+    // }
+  };
 
   const inputClassname = "input input-bordered input-accent w-full";
   const labelClassname = "mb-2 text-xs text-black";
