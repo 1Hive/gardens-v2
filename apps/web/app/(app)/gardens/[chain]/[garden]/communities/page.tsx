@@ -8,6 +8,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { CommunityForm } from "@/components/Forms";
+import { Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +17,6 @@ export default async function Garden({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const addrs = getContractsAddrByChain(chain);
-  if (!addrs) {
-    return <div>Chain ID: {chain} not supported</div>;
-  }
-  // const sdk = getBuiltGraphSDK();
   const { urqlClient } = initUrqlClient();
 
   const { data: result } = await queryByChain<getCommunityByGardenQuery>(
@@ -30,10 +26,13 @@ export default async function Garden({
     { addr: garden },
   );
 
-  console.log("result", result);
+  // console.log("result", result);
 
   // const result = await sdk.getCommunityByGarden({ addr: garden });
   const communities = result?.tokenGarden?.communities || [];
+  const registryFactoryAddr = result?.registryFactories?.[0].id as Address;
+  const alloContractAddr = result?.tokenGarden?.communities?.[0]
+    .alloAddress as Address;
 
   return (
     <div className="relative mx-auto max-w-5xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
@@ -45,7 +44,13 @@ export default async function Garden({
             {result?.tokenGarden?.symbol}
           </span>
         </div>
-        {result && <CommunityForm tokenGarden={result.tokenGarden} />}
+        {result && (
+          <CommunityForm
+            tokenGarden={result.tokenGarden}
+            registryFactoryAddr={registryFactoryAddr}
+            alloContractAddr={alloContractAddr}
+          />
+        )}
       </header>
       <section className="mx-auto flex flex-col gap-8">
         {/* communites */}
