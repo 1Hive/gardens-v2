@@ -345,6 +345,7 @@ export type CVStrategymemberActiveArgs = {
 export type CVStrategyConfig = {
   id: Scalars['ID'];
   strategy: CVStrategy;
+  D: Scalars['BigInt'];
   decay: Scalars['BigInt'];
   maxRatio: Scalars['BigInt'];
   weight: Scalars['BigInt'];
@@ -361,6 +362,14 @@ export type CVStrategyConfig_filter = {
   id_in?: InputMaybe<Array<Scalars['ID']>>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
   strategy_?: InputMaybe<CVStrategy_filter>;
+  D?: InputMaybe<Scalars['BigInt']>;
+  D_not?: InputMaybe<Scalars['BigInt']>;
+  D_gt?: InputMaybe<Scalars['BigInt']>;
+  D_lt?: InputMaybe<Scalars['BigInt']>;
+  D_gte?: InputMaybe<Scalars['BigInt']>;
+  D_lte?: InputMaybe<Scalars['BigInt']>;
+  D_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  D_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   decay?: InputMaybe<Scalars['BigInt']>;
   decay_not?: InputMaybe<Scalars['BigInt']>;
   decay_gt?: InputMaybe<Scalars['BigInt']>;
@@ -406,6 +415,7 @@ export type CVStrategyConfig_orderBy =
   | 'strategy__poolId'
   | 'strategy__poolAmount'
   | 'strategy__metadata'
+  | 'D'
   | 'decay'
   | 'maxRatio'
   | 'weight'
@@ -531,6 +541,7 @@ export type CVStrategy_orderBy =
   | 'registryCommunity__alloAddress'
   | 'config'
   | 'config__id'
+  | 'config__D'
   | 'config__decay'
   | 'config__maxRatio'
   | 'config__weight'
