@@ -325,6 +325,7 @@ type CVStrategy {
 type CVStrategyConfig {
   id: ID!
   strategy: CVStrategy!
+  D: BigInt!
   decay: BigInt!
   maxRatio: BigInt!
   weight: BigInt!
@@ -341,6 +342,14 @@ input CVStrategyConfig_filter {
   id_in: [ID!]
   id_not_in: [ID!]
   strategy_: CVStrategy_filter
+  D: BigInt
+  D_not: BigInt
+  D_gt: BigInt
+  D_lt: BigInt
+  D_gte: BigInt
+  D_lte: BigInt
+  D_in: [BigInt!]
+  D_not_in: [BigInt!]
   decay: BigInt
   decay_not: BigInt
   decay_gt: BigInt
@@ -386,6 +395,7 @@ enum CVStrategyConfig_orderBy {
   strategy__poolId
   strategy__poolAmount
   strategy__metadata
+  D
   decay
   maxRatio
   weight
@@ -512,6 +522,7 @@ enum CVStrategy_orderBy {
   registryCommunity__alloAddress
   config
   config__id
+  config__D
   config__decay
   config__maxRatio
   config__weight
