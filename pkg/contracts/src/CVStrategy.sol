@@ -8,13 +8,14 @@ import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {RegistryCommunity} from "./RegistryCommunity.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-interface IPointSystem {
+interface IPointStrategy {
     function withdraw(address _member) external;
     function deactivatePoints(address _member) external;
+    function increasePower(address _member, uint256 _power) external returns (uint256);
+    function decreasePower(address _member, uint256 _power) external returns (uint256);
 }
 
-
-contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
+contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -31,10 +32,10 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
     error AddressCannotBeZero(); //0xe622e040
     error RegistryCannotBeZero(); // 0x5df4b1ef
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
-    error NotEnoughPointsToSupport(
-        uint256 pointsSupport,
-        uint256 pointsBalance
-    ); // 0xd64182fe
+    error MaxPointsReached();
+    error CantIncreaseFixedSystem();
+    error DecreaseUnderMinimum();
+    error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
     error ProposalDataIsEmpty(); //0xc5f7c4c0
     error ProposalIdCannotBeZero(); //0xf881a10d
@@ -83,6 +84,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         Paused, // A vote that is being challenged by Agreements
         Cancelled, // A vote that has been cancelled
         Executed // A vote that has been executed
+
     }
 
     struct Proposal {
@@ -105,6 +107,17 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         int256 deltaSupport; // use int256 to allow negative values
     }
 
+    struct PointSystemConfig {
+        //Unlimited and Capped systems
+        uint256 pointsPerTokenStaked;
+        //Capped point system
+        uint256 maxAmount;
+        //Fixed point system
+        uint256 pointsPerMember;
+        //Quadratic point system
+        uint256 tokensPerPoint;
+    }
+
     struct InitializeParams {
         address registryCommunity;
         // Alpha | Decay | a
@@ -115,7 +128,9 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         uint256 weight;
         // Proposal Type
         ProposalType proposalType;
+        //NEXT: use this for tests
         PointSystem pointSystem;
+        PointSystemConfig pointConfig;
     }
     /*|--------------------------------------------|*/
     /*|                VARIABLES                   |*/
@@ -128,7 +143,8 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
     mapping(uint256 => Proposal) public proposals;
     mapping(address => uint256) public totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
     mapping(address => uint256[]) public voterStakedProposals; // voter
-    mapping(address => uint256) public memberPointsBalance;
+    //Extra power per member
+    mapping(address => uint256) public memberPowerBalance;
 
     uint256 public decay;
     uint256 public maxRatio;
@@ -137,7 +153,11 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
 
     uint256 public proposalCounter = 0;
     uint256 public totalStaked;
+    uint256 public totalPointsActivated;
+
     uint256 public minPointsActivated = 100 * 10 * PRECISION_SCALE;
+    PointSystem public pointSystem;
+    PointSystemConfig public pointConfig;
 
     uint256 public constant PRECISION_SCALE = 10 ** 4;
     uint256 public constant D = 10000000; //10**7
@@ -157,6 +177,9 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
     function initialize(uint256 _poolId, bytes memory _data) external {
         __BaseStrategy_init(_poolId);
         InitializeParams memory ip = abi.decode(_data, (InitializeParams));
+        // PointSystemConfig memory pc = abi.decode(_data,(PointSystemConfig));
+        PointSystemConfig memory pc = ip.pointConfig;
+        console.log("AMOUNTTTTTTTT", pc.pointsPerTokenStaked);
         // console.log("InitializeParams.decay", ip.decay);
         // console.log("InitializeParams.maxRatio", ip.maxRatio);
         // console.log("InitializeParams.weight", ip.weight);
@@ -166,11 +189,12 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         }
 
         registryCommunity = RegistryCommunity(ip.registryCommunity);
-
         decay = ip.decay;
         maxRatio = ip.maxRatio;
         weight = ip.weight;
         proposalType = ip.proposalType;
+        pointSystem = ip.pointSystem;
+        pointConfig = pc;
 
         emit InitializedCV(_poolId, ip);
     }
@@ -211,10 +235,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
     // if there are more steps, additional functions should be added to allow the owner to check
     // this could also check attestations directly and then Accept
 
-    function _registerRecipient(
-        bytes memory _data,
-        address _sender
-    ) internal override returns (address) {
+    function _registerRecipient(bytes memory _data, address _sender) internal override returns (address) {
         surpressStateMutabilityWarning++;
         _data;
         CreateProposal memory proposal = abi.decode(_data, (CreateProposal));
@@ -263,16 +284,72 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
     function activatePoints() external {
         address member = msg.sender;
         registryCommunity.activateMemberInStrategy(member, address(this));
-        memberPointsBalance[member] = registryCommunity.DEFAULT_POINTS();
+        totalPointsActivated += pointConfig.pointsPerMember;
+        memberPowerBalance[member] = pointConfig.pointsPerMember;
     }
 
     function deactivatePoints(address _member) external {
         //address member = msg.sender; //@todo wip
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
-        memberPointsBalance[_member] = 0;
+        totalPointsActivated -= memberPowerBalance[_member];
+        memberPowerBalance[_member] = 0;
         // remove support from all proposals
         this.withdraw(_member);
     }
+
+    function increasePower(address _member, uint256 _power) external returns (uint256) {
+        //requireMemberActivatedInStrategies
+
+        uint256 amountToStake;
+        if (pointSystem == PointSystem.Fixed) {
+            revert CantIncreaseFixedSystem();
+        } else if (pointSystem == PointSystem.Unlimited) {
+            amountToStake = increasePowerUnlimited(_power);
+        } else if (pointSystem == PointSystem.Capped) {
+            amountToStake = increasePowerCapped(_member, _power);
+        }
+        memberPowerBalance[_member] += _power;
+        return amountToStake;
+    }
+
+    function decreasePower(address _member, uint256 _power) external returns (uint256) {
+        //requireMemberActivatedInStrategies
+
+        uint256 amountToUnstake;
+        if (pointSystem == PointSystem.Fixed) {
+            revert CantIncreaseFixedSystem();
+        } else if (pointSystem == PointSystem.Unlimited || pointSystem == PointSystem.Capped) {
+            amountToUnstake = decreasePowerCappedUnlimited(_member, _power);
+        }
+
+        memberPowerBalance[_member] -= _power;
+        return amountToUnstake;
+    }
+
+    //todo: increase/decrease for all systems, 8 total
+    function increasePowerUnlimited(uint256 _power) internal view returns (uint256) {
+        uint256 amountToStake = _power / pointConfig.pointsPerTokenStaked;
+        return amountToStake * (10 ** 18);
+    }
+
+    function increasePowerCapped(address _member, uint256 _power) internal view returns (uint256) {
+        if (memberPowerBalance[_member] + _power > pointConfig.maxAmount) {
+            revert MaxPointsReached();
+        }
+        return _power * pointConfig.pointsPerTokenStaked;
+    }
+
+    function decreasePowerCappedUnlimited(address _member, uint256 _power) internal view returns (uint256) {
+        uint256 currentBalance = memberPowerBalance[_member];
+        if (currentBalance - _power < pointConfig.pointsPerMember) {
+            revert DecreaseUnderMinimum();
+        }
+        return _power * pointConfig.pointsPerTokenStaked;
+    }
+
+    // function increasePowerQuadratic(uint256 _power) internal {
+
+    // }
 
     // [[[proposalId, delta],[proposalId, delta]]]
     // layout.txs -> console.log(data)
@@ -285,15 +362,11 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
 
     // only called via allo.sol by users to allocate to a recipient
     // this will update some data in this contract to store votes, etc.
-    function _allocate(
-        bytes memory _data,
-        address _sender
-    ) internal override checkSenderIsMember(_sender) {
+    function _allocate(bytes memory _data, address _sender) internal override checkSenderIsMember(_sender) {
         //@todo test for not member
         surpressStateMutabilityWarning++;
 
-        bool isMemberActivatedPoints = registryCommunity
-            .memberActivatedInStrategies(_sender, address(this));
+        bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
         if (!isMemberActivatedPoints) {
             revert UserIsInactive();
         }
@@ -305,11 +378,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
     // this will distribute tokens to recipients
     // most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
     // this contract will need to track the amount paid already, so that it doesn't double pay
-    function _distribute(
-        address[] memory,
-        bytes memory _data,
-        address
-    ) internal override {
+    function _distribute(address[] memory, bytes memory _data, address) internal override {
         surpressStateMutabilityWarning++;
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty();
@@ -333,17 +402,9 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
             }
             IAllo.Pool memory pool = allo.getPool(poolId);
 
-            _transferAmount(
-                pool.token,
-                proposal.beneficiary,
-                proposal.requestedAmount
-            );
+            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
 
-            emit Distributed(
-                proposalId,
-                proposal.beneficiary,
-                proposal.requestedAmount
-            );
+            emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
         } //signaling do nothing @todo write tests @todo add end date
     }
 
@@ -351,44 +412,37 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
     // probably tracked in a mapping, but will depend on the implementation
     // for example, the OpenSelfRegistration only maps users to bool, and then assumes Accepted for those
     // since there is no need for Pending or Rejected
-    function _getRecipientStatus(
-        address _recipientId
-    ) internal view override returns (Status) {
+    function _getRecipientStatus(address _recipientId) internal view override returns (Status) {
         surpressStateMutabilityWarning;
         return _recipientId == address(0) ? Status.Rejected : Status.Accepted;
     }
 
     /// @return Input the values you would send to distribute(), get the amounts each recipient in the array would receive
-    function getPayouts(
-        address[] memory,
-        bytes[] memory
-    ) external view override returns (PayoutSummary[] memory) {
+    function getPayouts(address[] memory, bytes[] memory) external view override returns (PayoutSummary[] memory) {
         surpressStateMutabilityWarning;
         revert NotImplemented();
         // PayoutSummary[] memory payouts = new PayoutSummary[](0);
         // return payouts;
     }
 
-    function _getPayout(
-        address _recipientId,
-        bytes memory _data
-    ) internal view override returns (PayoutSummary memory) {
+    function _getPayout(address _recipientId, bytes memory _data)
+        internal
+        view
+        override
+        returns (PayoutSummary memory)
+    {
         surpressStateMutabilityWarning;
         _data;
         return PayoutSummary(_recipientId, 0);
     }
 
-    function _afterIncreasePoolAmount(
-        uint256 _amount
-    ) internal virtual override {
+    function _afterIncreasePoolAmount(uint256 _amount) internal virtual override {
         emit PoolAmountIncreased(_amount);
     }
 
     // simply returns whether a allocator is valid or not, will usually be true for all
 
-    function _isValidAllocator(
-        address _allocator
-    ) internal view override returns (bool) {
+    function _isValidAllocator(address _allocator) internal view override returns (bool) {
         surpressStateMutabilityWarning;
         return _allocator == address(0) ? false : true;
     }
@@ -428,9 +482,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
      * @return convictionLast Last conviction calculated
      * @return threshold Proposal threshold
      */
-    function getProposal(
-        uint256 _proposalId
-    )
+    function getProposal(uint256 _proposalId)
         external
         view
         returns (
@@ -447,9 +499,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         )
     {
         Proposal storage proposal = proposals[_proposalId];
-        threshold = proposal.requestedAmount == 0
-            ? 0
-            : calculateThreshold(proposal.requestedAmount);
+        threshold = proposal.requestedAmount == 0 ? 0 : calculateThreshold(proposal.requestedAmount);
         return (
             proposal.submitter,
             proposal.beneficiary,
@@ -464,84 +514,57 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         );
     }
 
-    function getMetadata(
-        uint256 _proposalId
-    ) external view returns (Metadata memory) {
+    function getMetadata(uint256 _proposalId) external view returns (Metadata memory) {
         Proposal storage proposal = proposals[_proposalId];
         return proposal.metadata;
     }
 
-    function getProposalStatus(
-        uint256 _proposalId
-    ) external view returns (ProposalStatus) {
+    function getProposalStatus(uint256 _proposalId) external view returns (ProposalStatus) {
         Proposal storage proposal = proposals[_proposalId];
         return proposal.proposalStatus;
     }
 
-    function getProposalRequestedAmount(
-        uint256 _proposalId
-    ) external view returns (uint256) {
+    function getProposalRequestedAmount(uint256 _proposalId) external view returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         return proposal.requestedAmount;
     }
 
-    function getProposalRequestedToken(
-        uint256 _proposalId
-    ) external view returns (address) {
+    function getProposalRequestedToken(uint256 _proposalId) external view returns (address) {
         Proposal storage proposal = proposals[_proposalId];
         return proposal.requestedToken;
     }
 
-    function getProposalBeneficiary(
-        uint256 _proposalId
-    ) external view returns (address) {
+    function getProposalBeneficiary(uint256 _proposalId) external view returns (address) {
         Proposal storage proposal = proposals[_proposalId];
         return proposal.beneficiary;
     }
 
-    function getProposalSubmitter(
-        uint256 _proposalId
-    ) external view returns (address) {
+    function getProposalSubmitter(uint256 _proposalId) external view returns (address) {
         Proposal storage proposal = proposals[_proposalId];
         return proposal.submitter;
     }
 
-    function getProposalThreshold(
-        uint256 _proposalId
-    ) external view returns (uint256) {
+    function getProposalThreshold(uint256 _proposalId) external view returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
-        return
-            proposal.requestedAmount == 0
-                ? 0
-                : calculateThreshold(proposal.requestedAmount);
+        return proposal.requestedAmount == 0 ? 0 : calculateThreshold(proposal.requestedAmount);
     }
 
-    function getProposalBlockLast(
-        uint256 _proposalId
-    ) external view returns (uint256) {
+    function getProposalBlockLast(uint256 _proposalId) external view returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         return proposal.blockLast;
     }
 
-    function getProposalConvictionLast(
-        uint256 _proposalId
-    ) external view returns (uint256) {
+    function getProposalConvictionLast(uint256 _proposalId) external view returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         return proposal.convictionLast;
     }
 
-    function getProposalVoterStakedPointsPct(
-        uint256 _proposalId,
-        address _voter
-    ) external view returns (uint256) {
+    function getProposalVoterStakedPointsPct(uint256 _proposalId, address _voter) external view returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         return proposal.voterStakedPointsPct[_voter];
     }
 
-    function getProposalVoterStakedAmount(
-        uint256 _proposalId,
-        address _voter
-    ) external view returns (uint256) {
+    function getProposalVoterStakedAmount(uint256 _proposalId, address _voter) external view returns (uint256) {
         Proposal storage proposal = proposals[_proposalId];
         return proposal.voterStake[_voter];
     }
@@ -552,31 +575,21 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
      * @param _voter Voter address
      * @return Proposal voter stake
      */
-    function getProposalVoterStake(
-        uint256 _proposalId,
-        address _voter
-    ) external view returns (uint256) {
+    function getProposalVoterStake(uint256 _proposalId, address _voter) external view returns (uint256) {
         return _internal_getProposalVoterStake(_proposalId, _voter);
     }
 
-    function getProposalStakedAmount(
-        uint256 _proposalId
-    ) external view returns (uint256) {
+    function getProposalStakedAmount(uint256 _proposalId) external view returns (uint256) {
         return proposals[_proposalId].stakedAmount;
     }
 
     //    do a internal function to get the total voter stake
 
-    function getTotalVoterStakePct(
-        address _voter
-    ) public view returns (uint256) {
+    function getTotalVoterStakePct(address _voter) public view returns (uint256) {
         return totalVoterStakePct[_voter];
     }
 
-    function _internal_getProposalVoterStake(
-        uint256 _proposalId,
-        address _voter
-    ) internal view returns (uint256) {
+    function _internal_getProposalVoterStake(uint256 _proposalId, address _voter) internal view returns (uint256) {
         return proposals[_proposalId].voterStake[_voter];
     }
 
@@ -584,9 +597,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         return (_pct * getBasisStakedAmount()) / PRECISION_PERCENTAGE;
     }
 
-    function convertTokensToPct(
-        uint256 _tokens
-    ) internal view returns (uint256) {
+    function convertTokensToPct(uint256 _tokens) internal view returns (uint256) {
         return (_tokens * PRECISION_PERCENTAGE) / getBasisStakedAmount();
     }
 
@@ -595,15 +606,10 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
     }
 
     function proposalExists(uint256 _proposalID) internal view returns (bool) {
-        return
-            proposals[_proposalID].proposalId > 0 &&
-            proposals[_proposalID].submitter != address(0);
+        return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
     }
 
-    function _check_before_addSupport(
-        address _sender,
-        ProposalSupport[] memory _proposalSupport
-    ) internal {
+    function _check_before_addSupport(address _sender, ProposalSupport[] memory _proposalSupport) internal {
         int256 deltaSupportSum = 0;
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             // check if _proposalSupport index i exist
@@ -620,14 +626,9 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         }
         // console.log("deltaSupportSum");
         // console.logInt(deltaSupportSum);
-        uint256 newTotalVotingSupport = _applyDelta(
-            getTotalVoterStakePct(_sender),
-            deltaSupportSum
-        );
+        uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
         // console.log("newTotalVotingSupport", newTotalVotingSupport);
-        uint256 participantBalance = convertTokensToPct(
-            registryCommunity.getBasisStakedAmount()
-        );
+        uint256 participantBalance = convertTokensToPct(registryCommunity.getBasisStakedAmount());
 
         // if(pointSystem = 1){
         //     participantBalance+ =
@@ -636,10 +637,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         // Check that the sum of support is not greater than the participant balance
         // require(newTotalVotingSupport <= participantBalance, "NOT_ENOUGH_BALANCE");
         if (newTotalVotingSupport > participantBalance) {
-            revert NotEnoughPointsToSupport(
-                newTotalVotingSupport,
-                participantBalance
-            );
+            revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
         }
 
         totalVoterStakePct[_sender] = newTotalVotingSupport;
@@ -648,10 +646,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         //        totalSupportAt[currentRound] = _applyDelta(getTotalSupport(), deltaSupportSum);
     }
 
-    function _addSupport(
-        address _sender,
-        ProposalSupport[] memory _proposalSupport
-    ) internal {
+    function _addSupport(address _sender, ProposalSupport[] memory _proposalSupport) internal {
         uint256[] memory proposalsIds;
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             uint256 proposalId = _proposalSupport[i].proposalId;
@@ -670,9 +665,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
                     }
                 }
                 if (!exist) {
-                    uint256[] memory temp = new uint256[](
-                        proposalsIds.length + 1
-                    );
+                    uint256[] memory temp = new uint256[](proposalsIds.length + 1);
                     for (uint256 j = 0; j < proposalsIds.length; j++) {
                         temp[j] = proposalsIds[j];
                     }
@@ -684,9 +677,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
 
             Proposal storage proposal = proposals[proposalId];
 
-            uint256 beforeStakedPointsPct = proposal.voterStakedPointsPct[
-                _sender
-            ];
+            uint256 beforeStakedPointsPct = proposal.voterStakedPointsPct[_sender];
             uint256 previousStakedAmount = proposal.voterStake[_sender];
             // console.log("beforeStakedPointsPct", beforeStakedPointsPct);
             // console.log("previousStakedAmount", previousStakedAmount);
@@ -720,10 +711,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         }
     }
 
-    function _applyDelta(
-        uint256 _support,
-        int256 _delta
-    ) internal pure returns (uint256) {
+    function _applyDelta(uint256 _support, int256 _delta) internal pure returns (uint256) {
         int256 result = int256(_support) + _delta;
 
         if (result < 0) {
@@ -740,11 +728,11 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
      * @param _oldAmount Amount of tokens staked until now
      * @return Current conviction
      */
-    function calculateConviction(
-        uint256 _timePassed,
-        uint256 _lastConv,
-        uint256 _oldAmount
-    ) public view returns (uint256) {
+    function calculateConviction(uint256 _timePassed, uint256 _lastConv, uint256 _oldAmount)
+        public
+        view
+        returns (uint256)
+    {
         uint256 t = _timePassed;
         // atTWO_128 = 2^128 * a^t
         //        @audit-issue why that _pow require that need be less than TWO_128? why dont use 256?
@@ -758,10 +746,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         //            >> 128;
         //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
         //            >> 128;
-        return
-            (((atTWO_128 * _lastConv) +
-                ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - decay))) +
-                TWO_127) >> 128;
+        return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - decay))) + TWO_127) >> 128;
     }
 
     /**
@@ -775,9 +760,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
      * @return _threshold Threshold a proposal's conviction should surpass in order to be able to
      * executed it.
      */
-    function calculateThreshold(
-        uint256 _requestedAmount
-    ) public view returns (uint256 _threshold) {
+    function calculateThreshold(uint256 _requestedAmount) public view returns (uint256 _threshold) {
         //       @todo: we should replace it with
         //        uint256 funds = fundsManager.balance(requestToken);
         if (poolAmount <= 0) {
@@ -796,10 +779,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
             revert AmountOverMaxRatio();
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
-        uint256 denom = (maxRatio * 2 ** 64) /
-            D -
-            (_requestedAmount * 2 ** 64) /
-            funds;
+        uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / funds;
         // console.log("denom", denom);
         //        uint256 denom = (maxRatio << 64).div(D).sub((_requestedAmount << 64).div(funds));
         // _threshold = (weight * 2 ** 128 / D) / (denom ** 2 / 2 ** 64) * totalStaked * D / 2 ** 128
@@ -822,10 +802,9 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
 
         console.log("totalEffectiveActivePoints", totalEffectiveActivePoints());
 
-        _threshold =
-            ((((((weight << 128) / D) / ((denom * denom) >> 64)) * D) /
-                (D - decay)) * totalEffectiveActivePoints()) >>
-            64;
+        _threshold = (
+            (((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * totalEffectiveActivePoints()
+        ) >> 64;
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
     }
@@ -837,10 +816,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
      * @param _b right argument
      * @return _result _a * _b / 2^128
      */
-    function _mul(
-        uint256 _a,
-        uint256 _b
-    ) internal pure returns (uint256 _result) {
+    function _mul(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {
         require(_a <= TWO_128, "_a should be less than or equal to 2^128");
         require(_b < TWO_128, "_b should be less than 2^128");
         return ((_a * _b) + TWO_127) >> 128;
@@ -853,10 +829,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
      * @param _b right argument
      * @return _result (_a / 2^128)^_b * 2^128
      */
-    function _pow(
-        uint256 _a,
-        uint256 _b
-    ) internal pure returns (uint256 _result) {
+    function _pow(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {
         require(_a < TWO_128, "_a should be less than 2^128");
         uint256 a = _a;
         uint256 b = _b;
@@ -873,16 +846,10 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
     }
 
     function totalEffectiveActivePoints() public view returns (uint256) {
-        //@todo ignore totalStaked here
-        // return pointsActivated > totalStaked ? pointsActivated : totalStaked;
-        uint256 totalPointsActivated = registryCommunity
-            .totalPointsActivatedInStrategy(address(this));
+        //@todo ignore totalStaked her
         console.log("totalPointsActivated", totalPointsActivated);
         console.log("minPointsActivated", minPointsActivated);
-        return
-            totalPointsActivated > minPointsActivated
-                ? totalPointsActivated
-                : minPointsActivated;
+        return totalPointsActivated > minPointsActivated ? totalPointsActivated : minPointsActivated;
     }
 
     /**
@@ -890,11 +857,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
      * @param _proposal Proposal
      * @param _oldStaked Amount of tokens staked on a proposal until now
      */
-
-    function _calculateAndSetConviction(
-        Proposal storage _proposal,
-        uint256 _oldStaked
-    ) internal {
+    function _calculateAndSetConviction(Proposal storage _proposal, uint256 _oldStaked) internal {
         uint256 blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
@@ -911,9 +874,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         _proposal.convictionLast = conviction;
     }
 
-    function updateProposalConviction(
-        uint256 proposalId
-    ) public returns (uint256) {
+    function updateProposalConviction(uint256 proposalId) public returns (uint256) {
         Proposal storage proposal = proposals[proposalId];
 
         if (proposal.proposalId != proposalId) {
@@ -936,9 +897,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         decay = _decay;
     }
 
-    function setMaxRatio(
-        uint256 _maxRatio
-    ) external onlyPoolManager(msg.sender) {
+    function setMaxRatio(uint256 _maxRatio) external onlyPoolManager(msg.sender) {
         maxRatio = _maxRatio;
     }
 
@@ -946,9 +905,7 @@ contract CVStrategy is BaseStrategy, IPointSystem, ERC165 {
         weight = _weight;
     }
 
-    function setRegistryCommunity(
-        address _registryCommunity
-    ) external onlyPoolManager(msg.sender) {
+    function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
         registryCommunity = RegistryCommunity(_registryCommunity);
     }
 }

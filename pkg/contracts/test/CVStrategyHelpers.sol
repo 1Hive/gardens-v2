@@ -40,7 +40,8 @@ contract CVStrategyHelpers is Native, Accounts {
         address registryCommunity,
         IRegistry registry,
         address token,
-        CVStrategy.ProposalType proposalType
+        CVStrategy.ProposalType proposalType,
+        CVStrategy.PointSystem pointSystem
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         CVStrategy.InitializeParams memory params;
@@ -51,7 +52,17 @@ contract CVStrategyHelpers is Native, Accounts {
         // params.minThresholdStakePercentage = 0.2 ether; // 20%
         params.registryCommunity = registryCommunity;
         params.proposalType = proposalType;
+        params.pointSystem = pointSystem;
 
+        CVStrategy.PointSystemConfig memory pointConfig;
+        //Capped point system
+        pointConfig.maxAmount = 200 * (10 ** 4);
+        //Fixed point system
+        pointConfig.pointsPerMember = 100 * (10 ** 4);
+        //Quadratic point system
+        pointConfig.tokensPerPoint = 2 * (10 ** 18);
+        pointConfig.pointsPerTokenStaked = 5 * (10 ** 4);
+        params.pointConfig = pointConfig;
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
         _pool_managers[1] = address(msg.sender);

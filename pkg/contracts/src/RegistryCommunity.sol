@@ -11,7 +11,7 @@ import {Safe} from "safe-contracts/contracts/Safe.sol";
 import "forge-std/console.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-import {IPointSystem} from "./CVStrategy.sol";
+import {IPointStrategy} from "./CVStrategy.sol";
 
 contract RegistryCommunity is ReentrancyGuard, AccessControl {
     using ERC165Checker for address;
@@ -71,6 +71,13 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
         _;
     }
+
+    modifier onlyActivatedInStrategy(address _strategy) {
+        if (!memberActivatedInStrategies[msg.sender][_strategy]) {
+            revert PointsDeactivated();
+        }
+        _;
+    }
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -88,6 +95,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     error CallerIsNotNewOnwer();
     error ValueCannotBeZero();
     error KickNotEnabled();
+    error PointsDeactivated();
 
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -137,9 +145,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     mapping(address => bool) public enabledStrategies;
     mapping(address => mapping(address => bool)) public memberActivatedInStrategies;
     mapping(address => address[]) public strategiesByMember;
-    mapping(address => uint256) public totalPointsActivatedInStrategy;
+
     //      strategy           member     power
-    mapping(address => mapping(address => uint256)) public memberPowerInStrategy;
 
     uint256 public constant DEFAULT_POINTS = 100 * 10 ** 4;
 
@@ -206,8 +213,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         memberActivatedInStrategies[_member][_strategy] = true;
         strategiesByMember[_member].push(_strategy);
-        totalPointsActivatedInStrategy[_strategy] += DEFAULT_POINTS;
-        memberPowerInStrategy[_member][_strategy] += DEFAULT_POINTS;
+        // totalPointsActivatedInStrategy[_strategy] += DEFAULT_POINTS;
 
         emit MemberActivatedStrategy(_member, _strategy);
     }
@@ -220,21 +226,53 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
 
         memberActivatedInStrategies[_member][_strategy] = false;
-        totalPointsActivatedInStrategy[_strategy] -= DEFAULT_POINTS;
-        memberPowerInStrategy[_member][_strategy] = 0;
+        //totalPointsActivatedInStrategy[_strategy] -= DEFAULT_POINTS;
         // emit StrategyRemoved(_strategy);
         emit MemberDeactivatedStrategy(_member, _strategy);
     }
-    //TODO Increase and decrease power 
-    function increasePower(address _strategy, uint256 _power) public onlyRegistryMemberSender{
-        
-        //token.trasn
-        emit MemberPowerIncreased(msg.sender, _strategy, _power);
+
+    function increasePowerInStrategy(address _strategy, uint256 _power)
+        public
+        nonReentrant
+        onlyRegistryMemberSender
+        onlyActivatedInStrategy(_strategy)
+        onlyStrategyEnabled(_strategy)
+    {
+        address member = msg.sender;
+        address[] memory memberStrategies = strategiesByMember[member];
+
+        uint256 amountToStake;
+        for (uint256 i = 0; i < memberStrategies.length; i++) {
+            //FIX support interface check
+            if (address(memberStrategies[i]) == _strategy) {
+                amountToStake = IPointStrategy(memberStrategies[i]).increasePower(member, _power);
+                console.log("AMOUNT TO STAKE", amountToStake);
+
+                gardenToken.transferFrom(member, address(this), amountToStake);
+                addressToMemberInfo[member].stakedAmount += amountToStake;
+            }
+        }
     }
 
-    function decreasePower(address _strategy, uint256 _power) public onlyRegistryMemberSender{
-        memberPowerInStrategy[_strategy][msg.sender] -= _power;
-        emit MemberPowerDecreased(msg.sender, _strategy, _power);
+    function decreasePowerInStrategy(address _strategy, uint256 _power)
+        public
+        nonReentrant
+        onlyRegistryMemberSender
+        onlyActivatedInStrategy(_strategy)
+        onlyStrategyEnabled(_strategy)
+    {
+        address member = msg.sender;
+        address[] memory memberStrategies = strategiesByMember[member];
+
+        uint256 amountToUnstake;
+        for (uint256 i = 0; i < memberStrategies.length; i++) {
+            //FIX support interface check
+            if (address(memberStrategies[i]) == _strategy) {
+                amountToUnstake = IPointStrategy(memberStrategies[i]).increasePower(member, _power);
+                gardenToken.transferFrom(member, address(this), amountToUnstake);
+                addressToMemberInfo[member].stakedAmount -= amountToUnstake;
+            }
+        }
     }
 
     function addStrategy(address _newStrategy) public onlyCouncilSafe {
@@ -354,11 +392,22 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         if (!isMember(_member)) {
             revert UserNotInRegistry();
         }
+        deactivateAllStrategies(_member);
         Member memory member = addressToMemberInfo[_member];
         delete addressToMemberInfo[_member];
 
         gardenToken.transfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
+    }
+
+    function deactivateAllStrategies(address _member) internal {
+        address[] memory memberStrategies = strategiesByMember[_member];
+        bytes4 interfaceId = IPointStrategy.withdraw.selector;
+        for (uint256 i = 0; i < memberStrategies.length; i++) {
+            //FIX support interface check
+            //if(memberStrategies[i].supportsInterface(interfaceId)){
+            IPointStrategy(memberStrategies[i]).deactivatePoints(_member);
+        }
     }
 
     function kickMember(address _member, address _transferAddress) public nonReentrant onlyCouncilSafe {
@@ -369,18 +418,9 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             revert UserNotInRegistry();
         }
         Member memory member = addressToMemberInfo[_member];
-        address [] memory memberStrategies = strategiesByMember[_member];
-        bytes4 interfaceId = IPointSystem.withdraw.selector;
-        for(uint256 i = 0; i < memberStrategies.length; i++){
-            //FIX support interface check 
-            //if(memberStrategies[i].supportsInterface(interfaceId)){
-                IPointSystem(memberStrategies[i]).deactivatePoints(_member);
-                
-
-            // }
-        }
+        deactivateAllStrategies(_member);
         delete addressToMemberInfo[_member];
-        
+
         gardenToken.transfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }

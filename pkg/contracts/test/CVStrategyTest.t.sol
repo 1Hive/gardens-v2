@@ -135,7 +135,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         );
 
         poolId = createPool(
-            allo(), address(strategy), address(_registryCommunity()), registry(), address(useTokenPool), proposalType
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(useTokenPool),
+            proposalType,
+            CVStrategy.PointSystem.Unlimited
         );
 
         vm.stopPrank();
@@ -910,10 +916,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         registryCommunity.stakeAndRegisterMember();
         assertEq(registryCommunity.isMember(pool_admin()), true, "isMember");
         cv.activatePoints();
-        assertEq(registryCommunity.totalPointsActivatedInStrategy(address(cv)), 100 * PRECISION_SCALE);
+        assertEq(cv.totalPointsActivated(), 100 * PRECISION_SCALE);
 
         cv.deactivatePoints(pool_admin());
-        assertEq(registryCommunity.totalPointsActivatedInStrategy(address(cv)), 0);
+        assertEq(cv.totalPointsActivated(), 0);
 
         vm.stopPrank();
 

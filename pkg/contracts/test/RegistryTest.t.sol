@@ -183,19 +183,79 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         assertEq(_registryFactory().getProtocolFee(address(registryCommunity)), 2);
         vm.stopPrank();
     }
-    
+
+    function test_increasePower() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            CVStrategy.ProposalType(0),
+            CVStrategy.PointSystem.Unlimited
+        );
+        vm.stopPrank();
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+        strategy.activatePoints();
+
+        token.approve(address(registryCommunity), 20 * (10 ** 18));
+        _registryCommunity().increasePowerInStrategy(address(strategy), 100 * (10 ** 4));
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (20 * (10 ** 18)));
+
+        vm.stopPrank();
+        assertEq(strategy.memberPowerBalance(gardenMember), 200 * 10 ** 4);
+    }
+
+    function test_revertIncreasePowerCapped() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            CVStrategy.ProposalType(0),
+            CVStrategy.PointSystem.Capped
+        );
+        vm.stopPrank();
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+        strategy.activatePoints();
+
+        token.approve(address(registryCommunity), 20 * (10 ** 18));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.MaxPointsReached.selector));
+        _registryCommunity().increasePowerInStrategy(address(strategy), 110 * (10 ** 4));
+    }
 
     function test_kickMember() public {
         startMeasuringGas("Registering and kicking member");
-        
+
         //TODO: fix createProposal
         //(IAllo.Pool memory pool,,) = _createProposal(NATIVE, 0, 0);
 
         //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-        
+
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
-            allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, CVStrategy.ProposalType(0)
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            CVStrategy.ProposalType(0),
+            CVStrategy.PointSystem.Unlimited
         );
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -207,15 +267,13 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //vm.expectRevert("error");
         strategy.activatePoints();
         vm.stopPrank();
-        assertEq(_registryCommunity().memberPowerInStrategy(gardenMember,address(strategy)),100 * 10 ** 4);
-        assertEq(strategy.memberPointsBalance(gardenMember), 100 * 10 ** 4);
+        assertEq(strategy.memberPowerBalance(gardenMember), 100 * 10 ** 4);
         //assertEq(strategy.activatedPointsIn)
         vm.startPrank(address(councilSafe));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         assertTrue(!_registryCommunity().isMember(gardenMember));
         assertEq(token.balanceOf(address(councilSafe)), MINIMUM_STAKE);
-        assertEq(_registryCommunity().memberPowerInStrategy(gardenMember,address(strategy)),0);
-        assertEq(strategy.memberPointsBalance(gardenMember),0);
+        assertEq(strategy.memberPowerBalance(gardenMember), 0);
         // assertTrue(!_registryCommunity().memberActivatedInStrategies(gardenMember,address(strategy)));
         vm.stopPrank();
         stopMeasuringGas();
