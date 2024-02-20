@@ -17,30 +17,31 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/communities/pool/[poolId]/page";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 
-export const convertBigIntToNumberFraction = (bigInt: bigint) => {
-  return Number(bigInt.toString()) / 10 ** 4;
-};
+// export const convertBigIntToNumberFraction = (bigInt: bigint) => {
+//   return Number(bigInt.toString()) / 10 ** 4;
+// };
 
-export const convertNumberFractionToBigInt = (number: number) => {
-  return BigInt(number * 10 ** 4);
-};
+// export const convertNumberFractionToBigInt = (number: number) => {
+//   return BigInt(number * 10 ** 4);
+// };
 
 type InputItem = {
   id: string;
-  value: bigint;
+  value: number;
 };
 
 export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 export type Proposal = Strategy["proposals"][number];
 
 export type ProposalTypeVoter = Proposal & {
-  voterStakedPointsPct: bigint;
+  voterStakedPointsPct: number;
   title: string;
   type: number;
 };
 
-const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
+// const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
 
 //!POOL == STRATEGY
 export function Proposals({
@@ -51,7 +52,7 @@ export function Proposals({
   alloInfo: AlloQuery;
 }) {
   const [editView, setEditView] = useState(false);
-  const [distributedPoints, setDistributedPoints] = useState(BigInt(0));
+  const [distributedPoints, setDistributedPoints] = useState(0);
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
@@ -67,16 +68,13 @@ export function Proposals({
   }, [strategy.id]);
 
   const triggerRenderProposals = () => {
-    // if (address !== undefined) {
     getProposals(address as Address, strategy).then((res) => {
       if (res !== undefined) {
-        // console.log("res", res);
         setProposals(res);
       } else {
         console.log("no proposals");
       }
     });
-    // }
   };
 
   useEffect(() => {
@@ -102,11 +100,11 @@ export function Proposals({
   }, [isMemberActived]);
 
   const {
-    data: contractWriteData,
+    data: allocateData,
     write: writeAllocate,
     error: errorAllocate,
     isSuccess: isSuccessAllocate,
-    status: contractStatus,
+    status: allocateStatus,
   } = useContractWrite({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
@@ -115,35 +113,16 @@ export function Proposals({
 
   useErrorDetails(errorAllocate, "errorAllocate");
 
+  const { updateTransactionStatus, txConfirmationHash } =
+    useTransactionNotification(allocateData);
+
   useEffect(() => {
-    if (isSuccessAllocate) {
-      setMessage("Transaction sent, hash: " + contractWriteData?.hash);
+    triggerRenderProposals();
+  }, [txConfirmationHash]);
 
-      const receipt = transactionReceipt();
-
-      toast
-        .promise(receipt, {
-          pending: "Transaction in progress",
-          success: "Transaction Success",
-          error: "Something went wrong",
-        })
-        .then((data) => {
-          console.log(data);
-          triggerRenderProposals();
-        })
-        .catch((error: any) => {
-          console.error(`Tx failure: ${error}`);
-        });
-    }
-  }, [isSuccessAllocate, contractWriteData]);
-
-  const viemClient = useViemClient();
-
-  const transactionReceipt = async () =>
-    await viemClient.waitForTransactionReceipt({
-      confirmations: confirmationsRequired,
-      hash: contractWriteData?.hash || "0x",
-    });
+  useEffect(() => {
+    updateTransactionStatus(allocateStatus);
+  }, [allocateStatus]);
 
   const submit = async () => {
     const encodedData = getEncodedProposals(inputs, proposals);
@@ -165,25 +144,25 @@ export function Proposals({
       currentData.forEach((current) => {
         if (input.id === current.id) {
           const dif = input.value - current.voterStakedPointsPct;
-          if (dif !== BigInt(0)) {
-            resultArr.push([Number(input.id), Number(dif)]);
+          if (dif !== 0) {
+            resultArr.push([Number(input.id), dif]);
           }
         }
       });
     });
 
-    console.log("resultArr", resultArr);
+    // console.log("resultArr", resultArr);
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
     return encodedData;
   };
 
-  const inputHandler = (i: number, value: bigint) => {
+  const inputHandler = (i: number, value: number) => {
     const currentPoints = calculatePoints(i);
-    console.log("currentPoints", currentPoints);
-    console.log("value", value);
-    if (currentPoints + value <= BIGINT_100_SCALED) {
+    // console.log("currentPoints", currentPoints);
+    // console.log("value", value);
+    if (currentPoints + value <= 100) {
       setInputs(
         inputs.map((input, index) =>
           index === i ? { ...input, value: value } : input,
@@ -199,7 +178,7 @@ export function Proposals({
     inputs.reduce((acc, curr, i) => {
       if (exceptIndex !== undefined && exceptIndex === i) return acc;
       else return acc + curr.value;
-    }, BigInt(0));
+    }, 0);
 
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
@@ -210,14 +189,13 @@ export function Proposals({
           {editView && (
             <span
               className={`${
-                distributedPoints >= BIGINT_100_SCALED &&
-                "scale-110 font-semibold text-red"
+                distributedPoints >= 100 && "scale-110 font-semibold text-red"
               } transition-all`}
             >
-              {distributedPoints >= BIGINT_100_SCALED
+              {distributedPoints >= 100
                 ? "Max points reached: "
                 : "Total distributed: "}
-              {convertBigIntToNumberFraction(distributedPoints).toString()} pts
+              {distributedPoints} pts
             </span>
           )}
         </header>
@@ -250,16 +228,11 @@ export function Proposals({
                         type="range"
                         min={0}
                         max={100}
-                        value={convertBigIntToNumberFraction(inputs[i]?.value)}
+                        value={inputs[i]?.value}
                         className={`range-aja range range-sm min-w-[420px]`}
                         step="5"
                         onChange={(e) =>
-                          inputHandler(
-                            i,
-                            convertNumberFractionToBigInt(
-                              Number(e.target.value),
-                            ),
-                          )
+                          inputHandler(i, Number(e.target.value))
                         }
                       />
                       <div className="flex w-full justify-between px-[10px] text-[4px]">
@@ -268,9 +241,7 @@ export function Proposals({
                         ))}
                       </div>
                     </div>
-                    <div className="mb-2">
-                      {convertBigIntToNumberFraction(inputs[i].value)} %
-                    </div>
+                    <div className="mb-2">{inputs[i].value} %</div>
                   </div>
                   <Link href={`${pathname}/proposals/${id}`}>
                     <Button className="h-[38px] bg-slate-200">
@@ -283,7 +254,7 @@ export function Proposals({
           ))}
         </div>
         <div className="flex justify-center gap-8">
-          <Button className={`bg-primary`}>Create Proposal</Button>
+          {/* <Button className={`bg-primary`}>Create Proposal</Button> */}
           {isMemberActived && (
             <Button
               className={`${editView ? "bg-red text-white" : "bg-primary"}`}
@@ -296,7 +267,7 @@ export function Proposals({
             <Button
               className="min-w-[200px] bg-secondary"
               onClick={() => submit()}
-              isLoading={contractStatus === "loading"}
+              isLoading={allocateStatus === "loading"}
             >
               Save changes
             </Button>

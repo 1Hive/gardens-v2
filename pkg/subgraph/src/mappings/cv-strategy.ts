@@ -61,7 +61,7 @@ export function handleInitialized(event: InitializedCV): void {
   config.maxRatio = maxRatio;
   config.weight = weight;
   config.proposalType = BigInt.fromI32(pType);
-
+  config.D = cvc.D();
   config.save();
 
   cvs.config = config.id;

@@ -36,7 +36,7 @@ const VARIANT_STYLES: VariantStyles = {
 };
 
 export function Button({
-  onClick: handleOnClick,
+  onClick,
   className,
   disabled = false,
   children,
@@ -58,7 +58,7 @@ export function Button({
         "border-2": type === "button",
       })} 
       flex cursor-pointer items-center justify-center rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95 ${className}`}
-      onClick={handleOnClick}
+      onClick={onClick}
       disabled={disabled || isLoading}
     >
       {isLoading ? <span className="loading loading-spinner"></span> : children}
