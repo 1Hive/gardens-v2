@@ -69,6 +69,8 @@ export function extractAddr(runLatest?: RunLatest) {
         tx.contractName == "lib/allo-v2/test/utils/MockERC20.sol:MockERC20"
       ) {
         token = tx.contractAddress as Address;
+      } else if (tx.contractName == "TERC20") {
+        token = tx.contractAddress as Address;
       }
     }
 

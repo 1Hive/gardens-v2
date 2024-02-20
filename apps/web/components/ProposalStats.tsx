@@ -8,19 +8,18 @@ import { ProposalTypeVoter } from "./Proposals";
 
 type ProposalStatsProps = {
   proposals: ProposalTypeVoter[];
-  distributedPoints: bigint;
+  distributedPoints: number;
 };
 
 export const ProposalStats: FC<ProposalStatsProps> = ({
   proposals,
   distributedPoints,
 }) => {
-  // console.log("proposals", proposals);
   const proposalsDistributionPoints = proposals.map(
     ({ title, voterStakedPointsPct }) => {
       // console.log("voterStakedPointsPct", voterStakedPointsPct);
       return {
-        value: Number(BigInt(voterStakedPointsPct).toString()),
+        value: voterStakedPointsPct,
         name: title,
       };
     },
@@ -30,6 +29,8 @@ export const ProposalStats: FC<ProposalStatsProps> = ({
     value: stakedTokens,
     name: title,
   }));
+
+  console.log(proposalsTotalSupport, proposalsDistributionPoints);
 
   return (
     <div className="w-full space-y-8 p-2">

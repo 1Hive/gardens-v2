@@ -12,6 +12,7 @@ type CVStrategy @entity(immutable: false) {
 type CVStrategyConfig @entity(immutable: false) {
   id: ID!
   strategy: CVStrategy! @derivedFrom(field: "config")
+  D: BigInt!
   decay: BigInt!
   maxRatio: BigInt!
   weight: BigInt!

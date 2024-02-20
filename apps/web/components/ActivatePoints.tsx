@@ -1,34 +1,44 @@
 "use client";
 import React, { useEffect } from "react";
 import { Button } from "./Button";
-import { useContractWrite } from "wagmi";
-import { cvStrategyABI } from "@/src/generated";
-import { useAccount } from "wagmi";
+import { Address, useContractRead, useContractWrite, useAccount } from "wagmi";
+import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-// import cn from "classnames";
-import { toast } from "react-toastify";
-import { confirmationsRequired } from "@/constants/contracts";
-import { useViemClient } from "@/hooks/useViemClient";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 
 type ActiveMemberProps = {
   strategyAddress: `0x${string}`;
   isMemberActived: boolean | undefined;
+  communityAddress: Address;
 };
 
 export function ActivatePoints({
   strategyAddress,
-  isMemberActived,
+  // isMemberActived,
+  communityAddress,
 }: ActiveMemberProps) {
   const { address } = useAccount();
-  const viemClient = useViemClient();
   const { openConnectModal } = useConnectModal();
+
   const {
-    data: activePointsData,
+    data: isMemberActivated,
+    error,
+    isSuccess,
+  } = useContractRead({
+    address: communityAddress as Address,
+    abi: abiWithErrors(registryCommunityABI),
+    functionName: "memberActivatedInStrategies",
+    args: [address as Address, strategyAddress],
+    watch: true,
+  });
+
+  const {
+    data: activatePointsData,
     write: writeActivatePoints,
     error: errorActivatePoints,
-    isSuccess: isSuccessActivatePoints,
+    status: activatePointsStatus,
   } = useContractWrite({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
@@ -36,10 +46,10 @@ export function ActivatePoints({
   });
 
   const {
-    data: deactivePointsData,
+    data: deactivatePointsData,
     write: writeDeactivatePoints,
     error: errorDeactivatePoints,
-    isSuccess: isSuccessDeactivatePoints,
+    status: deactivatePointsStatus,
   } = useContractWrite({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
@@ -49,17 +59,9 @@ export function ActivatePoints({
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
 
-  const transactionReceipt = async () =>
-    await viemClient.waitForTransactionReceipt({
-      confirmations: confirmationsRequired,
-      hash: isMemberActived
-        ? deactivePointsData?.hash || "0x"
-        : activePointsData?.hash || "0x",
-    });
-
   async function handleChange() {
     if (address) {
-      if (isMemberActived) {
+      if (isMemberActivated) {
         writeDeactivatePoints?.();
       } else {
         writeActivatePoints?.();
@@ -69,28 +71,24 @@ export function ActivatePoints({
     }
   }
 
+  const { updateTransactionStatus: updateActivePointsStatus } =
+    useTransactionNotification(activatePointsData);
+
+  const { updateTransactionStatus: updateDeactivePointsStatus } =
+    useTransactionNotification(deactivatePointsData);
+
   useEffect(() => {
-    if (isSuccessActivatePoints || isSuccessDeactivatePoints) {
-      const receipt = transactionReceipt();
-      toast
-        .promise(receipt, {
-          pending: "Transaction in progress",
-          success: "Transaction Success",
-          error: "Something went wrong",
-        })
-        .then((data) => {
-          console.log(data);
-        })
-        .catch((error: any) => {
-          console.error(`Tx failure: ${error}`);
-        });
-    }
-  }, [isSuccessActivatePoints, isSuccessDeactivatePoints]);
+    updateActivePointsStatus(activatePointsStatus);
+  }, [activatePointsStatus]);
+
+  useEffect(() => {
+    updateDeactivePointsStatus(deactivatePointsStatus);
+  }, [deactivatePointsStatus]);
 
   return (
     <Button onClick={handleChange} className="w-fit bg-primary">
       {address
-        ? isMemberActived
+        ? isMemberActivated
           ? "Deactivate Points"
           : "Activate Points"
         : "Connect Wallet"}

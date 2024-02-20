@@ -136,6 +136,7 @@ export default async function Pool({
               balance={POOL_BALANCE}
               strategyAddress={strategyAddr}
               strategy={strategyObj}
+              communityAddress={communityAddress}
             />
           ) : (
             <div>Signaling Proposal type</div>
