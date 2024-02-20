@@ -15,6 +15,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { abiWithErrors } from "@/utils/abiWithErrors";
+import { ProposalForm } from "@/components/Forms";
 
 export const dynamic = "force-dynamic";
 
@@ -58,8 +59,6 @@ export default async function Pool({
     return <div>{`Pool ${poolId} not found`}</div>;
   }
 
-  // console.log("poolData", poolData);
-
   const strategyObj = poolData.cvstrategies[0];
 
   const strategyAddr = strategyObj.id as Address;
@@ -70,15 +69,12 @@ export default async function Pool({
   }
   const proposalType = strategyObj.config.proposalType as number;
 
-  // console.log("proposaLType", proposalType);
-
   const poolBalance = await client.readContract({
     address: strategyAddr,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "getPoolAmount",
   });
 
-  // console.log("poolBalance", poolBalance);
   const POOL_BALANCE = Number(poolBalance);
 
   return (
@@ -148,6 +144,10 @@ export default async function Pool({
 
           <Proposals strategy={strategyObj} alloInfo={alloInfo} />
         </main>
+        <ProposalForm
+          poolId={poolId}
+          proposalType={proposalType as unknown as string}
+        />
       </div>
     </div>
   );
