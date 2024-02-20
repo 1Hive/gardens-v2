@@ -1713,6 +1713,11 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getCommunityByGarden(variables: Exact<{
         addr: string;
     }>, options?: TOperationContext): Promise<getCommunityByGardenQuery>;
+    getProposalData(variables: Exact<{
+        garden: string;
+        poolId: any;
+        proposalId: string;
+    }>, options?: TOperationContext): Promise<getProposalDataQuery>;
     getAllo(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getAlloQuery>;
@@ -1766,8 +1771,9 @@ export type getCommunityByGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
 }>;
 export type getCommunityByGardenQuery = {
+    registryFactories: Array<Pick<RegistryFactory, 'id'>>;
     tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'chainId'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityName' | 'registerToken' | 'registerStakeAmount'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityName' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId' | 'poolAmount'> & {
                 registryCommunity: Pick<RegistryCommunity, 'registerStakeAmount'>;
@@ -1775,6 +1781,24 @@ export type getCommunityByGardenQuery = {
                 proposals: Array<Pick<CVProposal, 'id'>>;
             })>>;
         })>>;
+    })>;
+};
+export type getProposalDataQueryVariables = Exact<{
+    garden: Scalars['ID'];
+    poolId: Scalars['BigInt'];
+    proposalId: Scalars['ID'];
+}>;
+export type getProposalDataQuery = {
+    tokenGarden?: Maybe<(Pick<TokenGarden, 'name' | 'symbol'> & {
+        communities?: Maybe<Array<{
+            strategies?: Maybe<Array<{
+                proposals: Array<(Pick<CVProposal, 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadata' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedTokens' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
+                    strategy: (Pick<CVStrategy, 'id'> & {
+                        config?: Maybe<Pick<CVStrategyConfig, 'proposalType'>>;
+                    });
+                })>;
+            }>>;
+        }>>;
     })>;
 };
 export type getAlloQueryVariables = Exact<{
@@ -1809,6 +1833,11 @@ export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
 export declare const getCommunityByGardenDocument: DocumentNode<getCommunityByGardenQuery, Exact<{
     addr: Scalars['ID'];
 }>>;
+export declare const getProposalDataDocument: DocumentNode<getProposalDataQuery, Exact<{
+    garden: Scalars['ID'];
+    poolId: Scalars['BigInt'];
+    proposalId: Scalars['ID'];
+}>>;
 export declare const getAlloDocument: DocumentNode<getAlloQuery, Exact<{
     [key: string]: never;
 }>>;
@@ -1822,6 +1851,7 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getPool(variables: getPoolQueryVariables, options?: C): Promise<getPoolQuery>;
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getCommunityByGarden(variables: getCommunityByGardenQueryVariables, options?: C): Promise<getCommunityByGardenQuery>;
+    getProposalData(variables: getProposalDataQueryVariables, options?: C): Promise<getProposalDataQuery>;
     getAllo(variables?: getAlloQueryVariables, options?: C): Promise<getAlloQuery>;
     getStrategyByPool(variables: getStrategyByPoolQueryVariables, options?: C): Promise<getStrategyByPoolQuery>;
 };

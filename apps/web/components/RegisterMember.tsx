@@ -102,6 +102,20 @@ export function RegisterMember({
   useErrorDetails(allowTokenError, "approve");
   // useErrorDetails(errorGardenToken, "gardenToken");
 
+  const registerMemberTransactionReceipt = async () =>
+    await viemClient.waitForTransactionReceipt({
+      confirmations: confirmationsRequired,
+      hash: isMember
+        ? unregisterMemberData?.hash || "0x"
+        : registerMemberData?.hash || "0x",
+    });
+
+  const allowTokenTransactionReceipt = async () =>
+    await viemClient.waitForTransactionReceipt({
+      confirmations: confirmationsRequired,
+      hash: allowTokenData?.hash as `0x${string}`,
+    });
+
   async function handleChange() {
     if (address) {
       isMember ? writeUnregisterMember() : writeAllowToken();

@@ -44,11 +44,8 @@ export default async function Pool({
   if (!alloInfo) {
     return <div>Allo not found</div>;
   }
+
   console.log("alloInfo", alloInfo);
-  const addrs = getContractsAddrByChain(chain);
-  if (!addrs) {
-    return <div>Chain ID: {chain} not supported</div>;
-  }
 
   const { data: poolData } = await queryByChain<getStrategyByPoolQuery>(
     urqlClient,
@@ -61,7 +58,7 @@ export default async function Pool({
     return <div>{`Pool ${poolId} not found`}</div>;
   }
 
-  console.log("poolData", poolData);
+  // console.log("poolData", poolData);
 
   const strategyObj = poolData.cvstrategies[0];
 
@@ -73,7 +70,7 @@ export default async function Pool({
   }
   const proposalType = strategyObj.config.proposalType as number;
 
-  console.log("proposaLType", proposalType);
+  // console.log("proposaLType", proposalType);
 
   const poolBalance = await client.readContract({
     address: strategyAddr,
@@ -81,7 +78,7 @@ export default async function Pool({
     functionName: "getPoolAmount",
   });
 
-  console.log("poolBalance", poolBalance);
+  // console.log("poolBalance", poolBalance);
   const POOL_BALANCE = Number(poolBalance);
 
   return (
@@ -100,11 +97,7 @@ export default async function Pool({
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
               <p className="max-w-2xl  text-center text-lg font-semibold">
                 {/* {poolInfo[(poolId as unknown as number) - 1].description} */}
-                Description placeholder: ipsum dolor sit amet consectetur
-                adipisicing elit. In corporis itaque placeat voluptatem
-                consectetur temporibus autem commodi, unde accusantium magni
-                error, laborum saepe! Ipsum, cum id dolor dolorum blanditiis
-                ipsa!
+                Mocked data description
               </p>
               <div className="flex w-full  p-4">
                 <div className="flex flex-1 flex-col space-y-4 text-xl font-semibold">
