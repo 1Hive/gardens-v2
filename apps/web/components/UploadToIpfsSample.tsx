@@ -18,7 +18,8 @@ export default function UploadToIpfsSample() {
         error: "Something went wrong",
       })
       .then((data) => {
-        console.log("ipfs hash: " + data);
+        console.log("https://ipfs.io/ipfs/" + data);
+        // setIpfsHash(data)
       })
       .catch((error: any) => {
         console.error(error);
@@ -27,8 +28,8 @@ export default function UploadToIpfsSample() {
 
   const handleJsonUpload = async () => {
     const sampleJson = {
-      title: "Sample title",
-      message: "sample message",
+      imagen: "ipfshash de la imagen",
+      descripcion: "sample descripcion",
     };
 
     const ipfsUpload = ipfsJsonUpload(sampleJson);
@@ -40,7 +41,7 @@ export default function UploadToIpfsSample() {
         error: "Something went wrong",
       })
       .then((data) => {
-        console.log("ipfs hash: " + data);
+        console.log("https://ipfs.io/ipfs/" + data);
       })
       .catch((error: any) => {
         console.error(error);

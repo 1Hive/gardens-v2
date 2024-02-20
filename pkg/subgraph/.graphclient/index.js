@@ -241,6 +241,9 @@ export const isMemberDocument = gql `
     `;
 export const getCommunityByGardenDocument = gql `
     query getCommunityByGarden($addr: ID!) {
+  registryFactories {
+    id
+  }
   tokenGarden(id: $addr) {
     id
     name
@@ -252,6 +255,7 @@ export const getCommunityByGardenDocument = gql `
       communityName
       registerToken
       registerStakeAmount
+      alloAddress
       members {
         id
         memberAddress
