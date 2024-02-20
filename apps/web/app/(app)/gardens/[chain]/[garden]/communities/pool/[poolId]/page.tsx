@@ -45,7 +45,7 @@ export default async function Pool({
   if (!alloInfo) {
     return <div>Allo not found</div>;
   }
-  console.log("alloInfo", alloInfo);
+  // console.log("alloInfo", alloInfo);
   const addrs = getContractsAddrByChain(chain);
   if (!addrs) {
     return <div>Chain ID: {chain} not supported</div>;

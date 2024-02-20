@@ -65,11 +65,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
               <div className="flex flex-1 flex-col items-center">
                 <p>Status</p>
                 <StatusBadge
-                  status={
-                    !isConnected
-                      ? `inactive`
-                      : `${isMemberActived ? "active" : "inactive"}`
-                  }
+                  status={isConnected && isMemberActived ? 1 : 2}
                   classNames=""
                 />
               </div>

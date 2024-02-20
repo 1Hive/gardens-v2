@@ -1,10 +1,10 @@
 "use client";
 import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
-import { getProposalTypeString } from "@/actions/getProposals";
 import { gardenLand } from "@/assets";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Badge } from ".";
 
 type StrategyQuery = NonNullable<
   NonNullable<
@@ -19,7 +19,6 @@ export function PoolCard({
 }: StrategyQuery) {
   const pathname = usePathname();
 
-  const proposalTypeStr = getProposalTypeString(config?.proposalType as number);
   poolAmount = poolAmount || 0;
   return (
     <Link
@@ -30,7 +29,8 @@ export function PoolCard({
       <div className="flex w-full flex-col p-4">
         <div className="flex justify-between text-xs">
           <p className="font-semibold">type:</p>
-          <p className="font-semibold">{proposalTypeStr}</p>
+          <Badge type={config?.proposalType as number}/>
+          {/* <p className="font-semibold">{}</p> */}
         </div>
         <div className="flex justify-between ">
           <p className="font-semibold">amount:</p>
