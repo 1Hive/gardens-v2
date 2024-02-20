@@ -124,6 +124,38 @@ query getCommunityByGarden($addr: ID!) {
   }
 }
 
+query getProposalData($garden: ID!, $poolId: BigInt!, $proposalId: ID!) {
+  tokenGarden(id: $garden) {
+    name
+    symbol
+    communities {
+      strategies(where: { poolId: $poolId }) {
+        proposals(where: { id: $proposalId }) {
+          beneficiary
+          blockLast
+          convictionLast
+          createdAt
+          metadata
+          proposalStatus
+          requestedAmount
+          requestedToken
+          stakedTokens
+          submitter
+          threshold
+          updatedAt
+          version
+          strategy {
+            id
+            config {
+              proposalType
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 query getAllo {
   allos {
     id
@@ -131,6 +163,7 @@ query getAllo {
     tokenNative
   }
 }
+
 query getStrategyByPool($poolId: BigInt!) {
   cvstrategies(where: { poolId: $poolId }) {
     id

@@ -12,8 +12,8 @@ export const ConvictionBarChart = ({
   data: any;
   proposalSupport: number;
 }) => {
-  console.log(data);
-  console.log(proposalSupport);
+  // console.log(data);
+  // console.log(proposalSupport);
 
   const { currentConviction, futureConviction, thresholdPoints, pointsNeeded } =
     data;
