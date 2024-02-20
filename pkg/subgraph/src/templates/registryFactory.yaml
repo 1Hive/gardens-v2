@@ -1,0 +1,27 @@
+- kind: ethereum/contract
+    name: {{name}}
+    network: {{network}}
+    context:
+      chainId: 
+        type: Int
+        data: {{chainId}}
+    source:
+      address: "{{address}}"
+      abi: {{name}}
+      startBlock: {{startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - {{name}}
+        - RegistryCommunity
+      abis:
+        - name: {{name}}
+          file: ../contracts/out/{{name}}.sol/{{name}}.json
+        - name: RegistryCommunity
+          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+      eventHandlers:
+        - event: CommunityCreated(address)
+          handler: handleCommunityCreated
+      file: ./src/mappings/registry-factory.ts

@@ -2,6 +2,7 @@ import {
   Abi,
   AbiFunctionNotFoundError,
   AbiItem,
+  Address,
   GetAbiItemParameters,
   getAbiItem,
 } from "viem";
@@ -11,21 +12,17 @@ export const encodeFunctionParams = function (
   abi: Abi,
   functionName: string,
   args: readonly unknown[] = [],
-) {
-  let abiItem = abi[0] as AbiItem;
+): Address | undefined {
+  const abiItem = getAbiItem({
+    abi,
+    args,
+    name: functionName,
+  } as GetAbiItemParameters);
 
-  if (functionName) {
-    abiItem = getAbiItem({
-      abi,
-      args,
-      name: functionName,
-    } as GetAbiItemParameters);
-
-    if (!abiItem) {
-      throw new AbiFunctionNotFoundError(functionName, {
-        docsPath: "/docs/contract/encodeFunctionData",
-      });
-    }
+  if (!abiItem) {
+    throw new AbiFunctionNotFoundError(functionName, {
+      docsPath: "/docs/contract/encodeFunctionData",
+    });
   }
 
   if (abiItem.type !== "function") {
@@ -37,5 +34,6 @@ export const encodeFunctionParams = function (
     "inputs" in abiItem && abiItem.inputs
       ? encodeAbiParameters(abiItem.inputs, (args ?? []) as readonly unknown[])
       : undefined;
+
   return data;
 };

@@ -1,35 +1,44 @@
 import { defineConfig } from "@wagmi/cli";
-import { react, foundry } from "@wagmi/cli/plugins";
-// import {  erc20Abi } from 'viem'
+import { react, foundry, actions } from "@wagmi/cli/plugins";
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
-import { abi as RegistryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
-import { abi as RegistryGardensABI } from "#/contracts/out/RegistryGardens.sol/RegistryGardens.json";
-import { abi as AlloABI } from "#/contracts/out/Allo.sol/Allo.json";
-
-import { mainnet, sepolia } from "wagmi/chains";
+import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
+import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunity.sol/RegistryCommunity.json";
+import { abi as mockERC20ABI } from "#/contracts/out/utils/MockERC20.sol/MockERC20.json";
+import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
 import { Abi } from "viem";
 
 export default defineConfig({
   out: "src/generated.ts",
   contracts: [
     {
+      name: "ERC20",
+      abi: mockERC20ABI as Abi,
+    },
+    {
       name: "CVStrategy",
       abi: CVStrategyABI as Abi,
     },
     {
       name: "RegistryFactory",
-      abi: RegistryFactoryABI as Abi,
+      abi: registryFactoryABI as Abi,
     },
     {
-      name: "RegistryGardens",
-      abi: RegistryGardensABI as Abi,
+      name: "RegistryCommunity",
+      abi: registryCommunityABI as Abi,
     },
     {
       name: "Allo",
-      abi: AlloABI as Abi,
+      abi: alloABI as Abi,
     },
   ],
   plugins: [
+    actions({
+      watchContractEvent: false,
+      readContract: true,
+      writeContract: true,
+      prepareWriteContract: true,
+      getContract: true,
+    }),
     // etherscan({
     //   apiKey: process.env.ETHERSCAN_API_KEY!,
     //   chainId: mainnet.id,
@@ -52,6 +61,6 @@ export default defineConfig({
     //     "Allo.sol",
     //   ],
     // }),
-    react(),
+    // react(),
   ],
 });

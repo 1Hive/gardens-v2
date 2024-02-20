@@ -1,3 +1,110 @@
-type CVStrategy @entity {
-    id: ID!
+type CVStrategy @entity(immutable: false) {
+  id: ID!
+  poolId: BigInt!
+  poolAmount: BigInt
+  metadata: String
+  registryCommunity: RegistryCommunity!
+  config: CVStrategyConfig
+  proposals: [CVProposal!]! @derivedFrom(field: "strategy")
+  memberActive: [Member!]
+}
+
+type CVStrategyConfig @entity(immutable: false) {
+  id: ID!
+  strategy: CVStrategy! @derivedFrom(field: "config")
+  decay: BigInt!
+  maxRatio: BigInt!
+  weight: BigInt!
+  proposalType: BigInt!
+}
+
+type CVProposal @entity(immutable: false) {
+  id: ID!
+  # proposalMeta: ProposalMeta!
+  metadata: String!
+  version: BigInt
+  strategy: CVStrategy!
+  beneficiary: String!
+  requestedAmount: BigInt!
+  requestedToken: String!
+  proposalStatus: BigInt!
+  blockLast: BigInt!
+  convictionLast: BigInt!
+  threshold: BigInt!
+  # proposalType: BigInt!
+  stakedTokens: BigInt!
+  submitter: String!
+  # voterStakedPointsPct: BigInt!
+  # agreementActionId: BigInt!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+# type ProposalMeta @entity(immutable: false) {
+#   id: ID!
+#   proposal: [CVProposal!]! @derivedFrom(field: "proposalMeta")
+#   version: BigInt
+#   title: String
+#   content: String
+# }
+
+type RegistryFactory @entity(immutable: false) {
+  id: ID!
+  chainId: BigInt!
+  registryCommunities: [RegistryCommunity!]
+    @derivedFrom(field: "registryFactory")
+}
+type RegistryCommunity @entity(immutable: false) {
+  id: ID!
+  chainId: BigInt!
+  profileId: String
+  protocolFee: BigInt
+  communityName: String
+  covenantIpfsHash: String
+  registryFactory: RegistryFactory
+  strategies: [CVStrategy!] @derivedFrom(field: "registryCommunity")
+  councilSafe: String
+  isKickEnabled: Boolean
+  registerStakeAmount: BigInt
+  registerToken: String
+  alloAddress: String
+  members: [MemberCommunity!] @derivedFrom(field: "registryCommunity")
+  # members: [Member!] @derivedFrom(field: "registryCommunity")
+  garden: TokenGarden!
+}
+
+type Member @entity(immutable: false) {
+  id: ID!
+  # registryCommunity: [RegistryCommunity!]
+  memberCommunity: [MemberCommunity!] @derivedFrom(field: "member")
+  totalStakedAmount: BigInt
+  # isRegistered: Boolean
+}
+
+type MemberCommunity @entity(immutable: false) {
+  id: ID!
+  memberAddress: String
+  stakedAmount: BigInt
+  isRegistered: Boolean
+  member: Member!
+  registryCommunity: RegistryCommunity!
+}
+
+type TokenGarden @entity(immutable: false) {
+  id: ID!
+  name: String!
+  description: String
+  chainId: BigInt!
+  totalBalance: BigInt!
+  ipfsCovenant: String
+  symbol: String!
+  decimals: BigInt!
+  address: String!
+  communities: [RegistryCommunity!] @derivedFrom(field: "garden")
+}
+
+type Allo @entity(immutable: false) {
+  id: ID!
+  chainId: BigInt!
+  tokenNative: String!
 }

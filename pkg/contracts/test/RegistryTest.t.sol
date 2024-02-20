@@ -22,8 +22,8 @@ import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {CVStrategy} from "../src/CVStrategy.sol";
-import {RegistryGardens} from "../src/RegistryGardens.sol";
-
+import {RegistryCommunity} from "../src/RegistryCommunity.sol";
+import {Safe} from "safe-contracts/contracts/Safe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
 // @dev Run forge test --mc RegistryTest -vvvvv
@@ -32,12 +32,22 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
     CVStrategy public strategy;
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * 10 ** 18;
-    uint256 public constant MINIMUM_STAKE = 1000;
+    uint256 public constant MINIMUM_STAKE = 1000 * 10 ** 18;
+    uint256 public constant PROTOCOL_FEE_PERCENTAGE = 1;
+    uint256 public constant COMMUNITY_FEE_PERCENTAGE = 3;
+    uint256 public constant STAKE_WITH_FEES =
+        MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / 100;
+
     Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
-    RegistryGardens internal registryGardens;
+    RegistryFactory internal registryFactory;
+    RegistryCommunity internal registryCommunity;
+    RegistryCommunity internal nonKickableCommunity;
 
     address gardenOwner = makeAddr("communityGardenOwner");
+    address gardenMember = makeAddr("communityGardenMember");
+    address protocolFeeReceiver = makeAddr("multisigReceiver");
+    address daoFeeReceiver = makeAddr("daoFeeReceiver");
 
     function setUp() public {
         __RegistrySetupFull();
@@ -52,6 +62,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
         token.mint(local(), mintAmount);
         token.mint(allo_owner(), mintAmount);
         token.mint(gardenOwner, mintAmount);
+        token.mint(gardenMember, mintAmount);
         token.approve(address(allo()), mintAmount);
 
         vm.prank(pool_admin());
@@ -64,30 +75,219 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, Native, Errors, Gas
         vm.startPrank(allo_owner());
         allo().transferOwnership(local());
         vm.stopPrank();
-        RegistryFactory registryFactory = new RegistryFactory();
-        RegistryGardens.InitializeParams memory params;
+        vm.startPrank(gardenOwner);
+        registryFactory = new RegistryFactory();
+        _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
+        vm.stopPrank();
+        RegistryCommunity.InitializeParams memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
-        params._minimumStakeAmount = MINIMUM_STAKE;
-        params._protocolFee = 2;
+        params._registerStakeAmount = MINIMUM_STAKE;
+        params._communityFee = COMMUNITY_FEE_PERCENTAGE;
         params._metadata = metadata;
+        params._feeReceiver = address(daoFeeReceiver);
         params._councilSafe = payable(address(_councilSafe()));
-        registryGardens = RegistryGardens(registryFactory.createRegistry(params));
+
+        params._isKickEnabled = true;
+        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+        vm.startPrank(gardenOwner);
+        _registryFactory().setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
+        vm.stopPrank();
+        params._isKickEnabled = false;
+        nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
     }
 
-    function _registryGardens() internal view returns (RegistryGardens) {
-        return registryGardens;
+    function _registryCommunity() internal view returns (RegistryCommunity) {
+        return registryCommunity;
+    }
+
+    function _registryFactory() internal view returns (RegistryFactory) {
+        return registryFactory;
+    }
+
+    function _nonKickableCommunity() internal view returns (RegistryCommunity) {
+        return nonKickableCommunity;
     }
 
     function test_stakeAndRegisterMember() public {
         startMeasuringGas("createProposal");
         allo().addToCloneableStrategies(address(strategy));
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
 
+        _registryCommunity().stakeAndRegisterMember();
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE);
+        assertEq(token.balanceOf(address(gardenMember)), mintAmount - STAKE_WITH_FEES);
+        uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE) / 100;
+        uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE) / 100;
+        assertEq(token.balanceOf(address(protocolFeeReceiver)), protocolAmount);
+        assertEq(token.balanceOf(address(daoFeeReceiver)), feeAmount);
+
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_stakeAndRegisterMember_4_times() public {
+        startMeasuringGas("createProposal");
+        allo().addToCloneableStrategies(address(strategy));
+        address[] memory members = new address[](4);
+        members[0] = address(0x1);
+        members[1] = address(0x2);
+        members[2] = address(0x3);
+        members[3] = address(0x4);
+
+        for (uint256 i = 0; i < members.length; i++) {
+            vm.startPrank(members[i]);
+            token.mint(members[i], mintAmount);
+            token.approve(address(registryCommunity), STAKE_WITH_FEES);
+
+            _registryCommunity().stakeAndRegisterMember();
+            vm.stopPrank();
+
+            assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE * (i + 1), "Registry balance");
+            assertEq(token.balanceOf(members[i]), mintAmount - STAKE_WITH_FEES, "Member balance");
+
+            uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE * (i + 1)) / 100;
+            uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE * (i + 1)) / 100;
+            assertEq(token.balanceOf(address(protocolFeeReceiver)), protocolAmount, "Protocol balance");
+            assertEq(token.balanceOf(address(daoFeeReceiver)), feeAmount, "DAO balance");
+        }
+
+        stopMeasuringGas();
+    }
+
+    function test_unregisterMember() public {
+        startMeasuringGas("Registering and unregistering member");
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        _registryCommunity().unregisterMember();
+        assertTrue(!_registryCommunity().isMember(gardenMember));
+        uint256 feesAmount = (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / 100;
+        assertEq(token.balanceOf(address(registryCommunity)), 0);
+        assertEq(token.balanceOf(address(gardenMember)), mintAmount - feesAmount);
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_setProtocolFee() public {
+        startMeasuringGas("Setting protocol fee");
         vm.startPrank(gardenOwner);
-        token.approve(address(registryGardens), MINIMUM_STAKE);
-        _registryGardens().stakeAndRegisterMember();
-        assertEq(token.balanceOf(address(registryGardens)), 0);
+        _registryFactory().setProtocolFee(address(registryCommunity), 2);
+        assertEq(_registryFactory().getProtocolFee(address(registryCommunity)), 2);
+        vm.stopPrank();
+    }
 
+    function test_kickMember() public {
+        startMeasuringGas("Registering and kicking member");
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        vm.stopPrank();
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().kickMember(gardenMember, address(councilSafe));
+        assertTrue(!_registryCommunity().isMember(gardenMember));
+        assertEq(token.balanceOf(address(councilSafe)), MINIMUM_STAKE);
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_revertKickMemberBool() public {
+        startMeasuringGas("Registering and kicking member");
+        vm.startPrank(gardenMember);
+        token.approve(address(nonKickableCommunity), STAKE_WITH_FEES);
+        _nonKickableCommunity().stakeAndRegisterMember();
+        vm.stopPrank();
+        vm.startPrank(address(councilSafe));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.KickNotEnabled.selector));
+        _nonKickableCommunity().kickMember(gardenMember, address(councilSafe));
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_revertKickUnregisteredMember() public {
+        startMeasuringGas("Registering and kicking member");
+        vm.startPrank(address(councilSafe));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
+        _registryCommunity().kickMember(gardenMember, address(councilSafe));
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_revertKickNotCouncil() public {
+        startMeasuringGas("Registering and kicking member");
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        vm.stopPrank();
+        vm.startPrank(gardenOwner);
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        _registryCommunity().kickMember(gardenMember, address(councilSafe));
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_updateCommunityFee() public {
+        startMeasuringGas("Updating protocol fee");
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().updateCommunityFee(5);
+        assertEq(_registryCommunity().communityFee(), 5);
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_addStrategy() public {
+        startMeasuringGas("Adding strategy");
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_removeStrategy() public {
+        startMeasuringGas("Testing strategy removal");
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
+        _registryCommunity().removeStrategy(address(strategy));
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_setBasisStake() public {
+        startMeasuringGas("Testing strategy removal");
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().setBasisStakedAmount(500);
+        assertEq(_registryCommunity().registerStakeAmount(), 500);
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_revertUnregisterMember() public {
+        startMeasuringGas("Testing kick member revert");
+        vm.startPrank(gardenOwner);
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
+        _registryCommunity().unregisterMember();
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_revertUpdateCommunityFee() public {
+        startMeasuringGas("Testing update protocol revert");
+        vm.startPrank(gardenOwner);
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        _registryCommunity().updateCommunityFee(5);
+        vm.stopPrank();
+        stopMeasuringGas();
+    }
+
+    function test_revertSetBasisStakeAmount() public {
+        startMeasuringGas("Testing setBasisStake revert");
+        vm.startPrank(gardenOwner);
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        _registryCommunity().setBasisStakedAmount(500);
         vm.stopPrank();
         stopMeasuringGas();
     }

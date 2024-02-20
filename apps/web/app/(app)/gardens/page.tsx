@@ -3,59 +3,35 @@ import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import Link from "next/link";
 import { Button, GardenCard } from "@/components";
+import {
+  getTokenGardensDocument,
+  getTokenGardensQuery,
+} from "#/subgraph/.graphclient";
+import { initUrqlClient, queryByChain } from "@/providers/urql";
+import { localhost, arbitrumSepolia } from "viem/chains";
+export const dynamic = "force-dynamic";
 
-const gardens = [
-  {
-    imageSrc: "/blank",
-    title: "HNY",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/gardens/communities",
-  },
-  {
-    imageSrc: "/blank",
-    title: "OP",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/#",
-  },
-  {
-    imageSrc: "/blank",
-    title: "GIV",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/#",
-  },
-  {
-    imageSrc: "/blank",
-    title: "ETH",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/#",
-  },
-  {
-    imageSrc: "/blank",
-    title: "UNI",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/#",
-  },
-  {
-    imageSrc: "/blank",
-    title: "ADA",
-    subtitle: "Lorem ipsum dolor sit amet, consectetur",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor",
-    link: "/#",
-  },
-];
+const { urqlClient } = initUrqlClient();
+export default async function Gardens() {
+  const r1 = await getTokenGardens(arbitrumSepolia.id);
+  const r2 = await getTokenGardens(localhost.id);
+  // marge r.data and rl.data to gardens
+  let gardens: getTokenGardensQuery | null = null;
+  if (r1.data) {
+    gardens = {
+      tokenGardens: [...r1.data.tokenGardens],
+    };
+  }
 
-export default function Gardens() {
+  if (r2.data) {
+    if (gardens) {
+      gardens.tokenGardens.push(...r2.data.tokenGardens);
+    } else {
+      gardens = {
+        tokenGardens: [...r2.data.tokenGardens],
+      };
+    }
+  }
   return (
     <div className="flex flex-col items-center justify-center gap-12">
       <header className="flex flex-col items-center gap-12">
@@ -91,13 +67,21 @@ export default function Gardens() {
       <section className="my-10 flex justify-center">
         {/* <div className="grid max-w-[1216px] grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(360px,1fr))]"> */}
         <div className="flex max-w-[1216px] flex-wrap justify-center gap-6">
-          {gardens.map((garden, id) => (
-            <div key={id}>
-              <GardenCard garden={garden} />
-            </div>
-          ))}
+          {gardens ? (
+            gardens.tokenGardens.map((garden, id) => (
+              <div key={`${garden.id}-${id}`}>
+                <GardenCard garden={garden} />
+              </div>
+            ))
+          ) : (
+            <div>{"Can't find token gardens"}</div>
+          )}
         </div>
       </section>
     </div>
   );
+}
+
+async function getTokenGardens(chainId: string | number) {
+  return await queryByChain(urqlClient, chainId, getTokenGardensDocument, {});
 }

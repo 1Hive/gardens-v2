@@ -1,0 +1,156 @@
+"use client";
+import React from "react";
+import { ChartSetup } from "./ChartSetup";
+import { ChartWrapper } from "./ChartWrapper";
+import type { EChartsOption } from "echarts";
+import EChartsReact from "echarts-for-react";
+
+export const ConvictionBarChart = ({
+  data,
+  proposalSupport,
+}: {
+  data: any;
+  proposalSupport: number;
+}) => {
+  // console.log(data);
+  // console.log(proposalSupport);
+
+  const { currentConviction, futureConviction, thresholdPoints, pointsNeeded } =
+    data;
+
+  const OPTION_TEST: EChartsOption = {
+    tooltip: {
+      trigger: "axis",
+      axisPointer: {
+        type: "shadow",
+      },
+    },
+    legend: {},
+    grid: {
+      left: "5%",
+      right: "4%",
+      bottom: "3%",
+      containLabel: true,
+    },
+    xAxis: {
+      type: "value",
+    },
+    yAxis: {
+      type: "category",
+      data: ["Proposal"],
+    },
+
+    barWidth: "20%",
+
+    series: [
+      {
+        name: "Conviction",
+        type: "bar",
+        stack: "total",
+        color: "rgb(93, 143, 216)",
+
+        showBackground: false,
+
+        label: {
+          show: false,
+          formatter: "CV: {@score} pts",
+          fontSize: 10,
+          color: "white",
+          ellipsis: "...",
+          // fontWeight: "",
+        },
+        emphasis: {
+          focus: "series",
+        },
+        data: [currentConviction],
+      },
+      {
+        name: "Future Convcition",
+        type: "bar",
+        stack: "total",
+        itemStyle: {
+          borderRadius: [0, 20, 20, 0],
+        },
+        color: "rgb(93, 143, 216, 0.3)",
+        showBackground: true,
+        backgroundStyle: {
+          color: "rgb(93, 143, 216, 0.1)",
+          // borderRadius: [20, 20, 0, 0],
+        },
+        //   itemStyle:{
+        //   borderRadius: 20
+        // },
+
+        label: {
+          show: false,
+        },
+        emphasis: {
+          focus: "series",
+        },
+        data: [futureConviction],
+      },
+      {
+        name: "Support",
+        type: "bar",
+        stack: "points",
+        color: "#AFE3B2",
+        itemStyle: {
+          borderRadius: [0, 20, 20, 0],
+        },
+        // markLine: {
+        //   data: [{ type: 'max', name: 'max' }]
+        // },
+        label: {
+          show: false,
+          formatter: "{a}: {@score} pts",
+          fontSize: 10,
+          // fontWeight: "",
+          color: "black",
+        },
+        emphasis: {
+          focus: "series",
+        },
+
+        data: [proposalSupport],
+      },
+      {
+        name: "Points Needed",
+        type: "bar",
+        stack: "points",
+
+        color: "rgb(205, 250, 225, 0.3)",
+        showBackground: true,
+        backgroundStyle: {
+          // borderRadius: [0, 20, 20, 0],
+        },
+
+        label: {
+          show: true,
+          formatter: "{a}: {@score}",
+          fontSize: 12,
+          // fontWeight: "",
+          // fontFamily: "",
+          color: "black",
+        },
+        emphasis: {
+          focus: "series",
+        },
+        data: [pointsNeeded],
+        markLine: {
+          data: [{ type: "max", name: "threshold" }],
+          lineStyle: {
+            width: 1,
+            color: "#5D8FD8",
+          },
+        },
+      },
+    ],
+  };
+
+  // animationEasing: "elasticOut"
+  return (
+    <ChartWrapper title="" size="lg">
+      <EChartsReact option={OPTION_TEST} />
+    </ChartWrapper>
+  );
+};

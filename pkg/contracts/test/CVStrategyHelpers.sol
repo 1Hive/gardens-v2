@@ -12,7 +12,7 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 contract CVStrategyHelpers is Native, Accounts {
-    Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"}); //@todo CID from IPFS
+    Metadata public metadata = Metadata({protocol: 1, pointer: "QmW4zFLFJRN7J67EzNmdC2r2M9u2iJDha2fj5Gee6hJzSY"}); //@todo CID from IPFS
 
     bytes32 internal _poolProfileId1_;
 
@@ -20,23 +20,28 @@ contract CVStrategyHelpers is Native, Accounts {
     uint256 internal constant TWO_128 = 2 ** 128;
     uint256 internal constant D = 10 ** 7;
 
-    // function poolProfile_id1(RegistryGardens registryGardens) public virtual returns (bytes32) {
-    function poolProfile_id1(IRegistry registry) public virtual returns (bytes32) {
+    // function poolProfile_id1(RegistryCommunity registryCommunity) public virtual returns (bytes32) {
+    function poolProfile_id1(IRegistry registry, address pool_admin, address[] memory pool_managers)
+        public
+        virtual
+        returns (bytes32)
+    {
         if (_poolProfileId1_ == bytes32(0)) {
             _poolProfileId1_ = registry.createProfile(
-                2, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
+                2, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin, pool_managers
             );
         }
         return _poolProfileId1_;
-        // bytes32 profileId = registryGardens.profileId();
-        // console.logBytes32(profileId);
-        // return profileId;
     }
 
-    function createPool(Allo allo, address strategy, address registryGardens, IRegistry registry, address token)
-        public
-        returns (uint256 poolId)
-    {
+    function createPool(
+        Allo allo,
+        address strategy,
+        address registryCommunity,
+        IRegistry registry,
+        address token,
+        CVStrategy.ProposalType proposalType
+    ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         CVStrategy.InitializeParams memory params;
         params.decay = _etherToFloat(0.9999799 ether); // alpha = decay
@@ -44,7 +49,8 @@ contract CVStrategyHelpers is Native, Accounts {
         params.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
         params.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
         // params.minThresholdStakePercentage = 0.2 ether; // 20%
-        params.registryGardens = registryGardens;
+        params.registryCommunity = registryCommunity;
+        params.proposalType = proposalType;
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
@@ -60,7 +66,7 @@ contract CVStrategyHelpers is Native, Accounts {
         }
         poolId = allo.createPoolWithCustomStrategy(
             // poolId = allo.createPool(
-            poolProfile_id1(registry),
+            poolProfile_id1(registry, pool_admin(), _pool_managers),
             address(strategy),
             abi.encode(params),
             _token,
@@ -68,6 +74,8 @@ contract CVStrategyHelpers is Native, Accounts {
             metadata,
             _pool_managers
         );
+
+        assert(CVStrategy(payable(strategy)).proposalType() == proposalType);
     }
 
     function _etherToFloat(uint256 _amount) internal pure returns (uint256) {
