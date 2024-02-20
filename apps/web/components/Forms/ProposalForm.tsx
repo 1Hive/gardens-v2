@@ -68,12 +68,14 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
   const tokenSymbol = "MTK";
 
   const proposalTypeNames: Record<string, string> = {
+    0: "Signaling",
     1: "Funding",
-    2: "Signaling",
-    3: "Streaming",
+    2: "Streaming",
   };
 
+  console.log(proposalType);
   const typeOfProposal = proposalTypeNames[proposalType];
+  console.log(typeOfProposal);
 
   const handleJsonUpload = () => {
     const sampleJson = {
@@ -134,6 +136,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
     //TODO: remove cl, add dynamic poolId from props
     const poolId = 1;
     const metadata = [1, metadataIpfs];
+
     let proposalData;
 
     // Check if proposal type is not equal to "Funding"
@@ -141,7 +144,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
     proposalData =
       typeOfProposal !== "Funding"
         ? {
-            beneficiary: "0x0000000000000000000000000000000000000000",
+            beneficiary: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
             requestedAmount: 0,
             tokenAddress: "0x0000000000000000000000000000000000000000",
           }
@@ -257,7 +260,7 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
               ></textarea>
             </div>
           ) : (
-            <ProposalOverview data={previewData} proposalType={proposalType} />
+            <ProposalOverview data={previewData} proposalType={"Funding"} />
           )}
 
           <div className="flex w-full items-center justify-center py-6">
@@ -284,9 +287,10 @@ export const ProposalForm: React.FC<ProposalFormProps> = ({
   );
 };
 
-const ProposalOverview: React.FC<PreviewDataProps> = (data, proposalType) => {
+const ProposalOverview: React.FC<PreviewDataProps> = (data) => {
   const { title, amount, beneficiary, description } = data.data;
 
+  const proposalType = "Funding";
   return (
     <>
       <div className="px-4 sm:px-0">
@@ -298,10 +302,7 @@ const ProposalOverview: React.FC<PreviewDataProps> = (data, proposalType) => {
         {data && (
           <div className="relative">
             <PreviewData label="Strategy" data="Conviction voting" />
-            <PreviewData
-              label="Proposal Type"
-              data={proposalType ?? "no type"}
-            />
+            <PreviewData label="Proposal Type" data={"no type"} />
             {proposalType === "Funding" && (
               <PreviewData label="Requested Amount" data={amount} />
             )}
