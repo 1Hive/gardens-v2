@@ -3,7 +3,7 @@ import React, { useEffect, useState, ChangeEvent } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FormModal } from "./FormModal";
 import { registryFactoryABI } from "@/src/generated";
-import { parseUnits } from "viem";
+import { Address, parseUnits } from "viem";
 import { usePrepareContractWrite, useContractWrite } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
@@ -38,9 +38,33 @@ type PreviewDataProps = {
     file: any;
   };
 };
+
+type FormData = {
+  alloContractAddr: Address;
+  gardenTokenAddr: Address;
+  registerStakeAmount: bigint;
+  communityFee: bigint;
+  nonce: bigint;
+  registryFactory: Address;
+  feeReceiver: Address;
+  metadata: [bigint, string]; // [protocol: bigint, pointer: string]
+  councilSafeAddr: Address;
+  communityName: string;
+  isKickEnable: boolean;
+  covenantIpfsHash: string;
+};
+
 const ethereumAddressRegExp = /^(0x)?[0-9a-fA-F]{40}$/;
 
-export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
+export const CommunityForm = ({
+  tokenGarden,
+  registryFactoryAddr,
+  alloContractAddr,
+}: {
+  tokenGarden: any;
+  registryFactoryAddr: Address;
+  alloContractAddr: Address;
+}) => {
   const {
     register,
     handleSubmit,
@@ -55,10 +79,10 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
   // TODO: add types
   const [previewData, setPreviewData] = useState<any>(null); // preview data
   const [file, setFile] = useState<File>(); //banner image
-  const [fileHashIpfs, setFileHastIpfs] = useState<string>(); // image(ipfs) hash
+  const [ipfsFileHash, setIpfsFileHash] = useState<string>(); // image(ipfs) hash
+  const [ipfsMetadataHash, setIpfsMetadataHash] = useState<string>(""); // ipfs hash to get fileHashIpfs + covenant description
   const [covenant, setCovenant] = useState<string>();
-  const [metadataIpfs, setMetadataIpfs] = useState<string>(); // ipfs hash to get fileHashIpfs + covenant description
-  const [formData, setFormData] = useState(undefined) as any; // args for contract write
+  const [formData, setFormData] = useState<FormData | undefined>(undefined); // args for contract write
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -75,7 +99,7 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
       .then((data) => {
         console.log("https://ipfs.io/ipfs/" + data);
         setFile(selectedFile);
-        setFileHastIpfs(data);
+        setIpfsFileHash(data);
       })
       .catch((error: any) => {
         console.error(error);
@@ -83,9 +107,9 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
   };
 
   const handleJsonUpload = () => {
-    const sampleJson = {
-      imagen: fileHashIpfs,
-      descripcion: covenant,
+    const json = {
+      logo: ipfsFileHash,
+      covenant: covenant,
     };
 
     if (!file) {
@@ -93,7 +117,7 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
       return;
     }
 
-    const ipfsUpload = ipfsJsonUpload(sampleJson);
+    const ipfsUpload = ipfsJsonUpload(json);
 
     toast
       .promise(ipfsUpload, {
@@ -103,7 +127,7 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
       })
       .then((data) => {
         console.log("https://ipfs.io/ipfs/" + data);
-        setMetadataIpfs(data);
+        setIpfsMetadataHash(data);
       })
       .catch((error: any) => {
         console.error(error);
@@ -133,35 +157,30 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
     setIsEditMode(true);
   };
 
-  const { config } = usePrepareContractWrite({
-    //TODO: add dynamic address
-    //contract for localhost deploy
-    address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-    //contract for arb sepolia
-    // address: "0xfbe59fe1a2630311c98b3f3a917bab764397a72b",
+  // const { config } = usePrepareContractWrite({
+  //   address: registryFactoryAddr,
+  //   abi: abiWithErrors(registryFactoryABI),
+  //   functionName: "createRegistry",
+  //   args: [formData],
+  // });
+
+  const { write, error, isError, data } = useContractWrite({
+    address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-    args: [formData],
   });
 
-  const { write, error, isError, data } = useContractWrite(config);
-
-  const handleInputData = (data: any) => {
+  const handleInputData: SubmitHandler<FormInputs> = (data: any) => {
     if (!data) {
       console.log("data not provided");
     }
 
-    if (!metadataIpfs) {
-      console.log("not metadata provided");
+    if (!ipfsMetadataHash) {
+      console.log("no metadata provided");
     }
 
     const decimals = 18;
 
-    //TODO: add dynamic contract addresses
-    //contract for localhost deploy:
-    const alloContractAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
-    //contract for arb sepolia:
-    //const alloContractAddress = "0x1133ea7af70876e64665ecd07c0a0476d09465a1";
     const gardenTokenAddress = tokenGarden?.id;
     const communityName = data?.name;
     const stakeAmount = parseUnits(data?.stake, decimals);
@@ -170,240 +189,224 @@ export const CommunityForm = ({ tokenGarden }: { tokenGarden: any }) => {
       data?.feeReceiver || "0x0000000000000000000000000000000000000000";
     const councilSafeAddress =
       data?.councilSafe || "0xc05301902A91DcA455Bff2B9beBeE28A4830E3EC";
-    const metadata = [1n, metadataIpfs];
+    const metadata = [1n, "ipfs hash"];
     const isKickMemberEnabled = data?.isKickMemberEnabled;
-    const ipfsHash = "";
 
-    setFormData([
-      alloContractAddress,
-      gardenTokenAddress,
-      stakeAmount,
-      protocolFeeAmount,
-      0n,
-      "0x0000000000000000000000000000000000000000",
-      protocolFeeReceiver,
-      metadata,
-      councilSafeAddress,
-      communityName,
-      isKickMemberEnabled,
-      ipfsHash,
-    ]);
+    setFormData({
+      alloContractAddr: alloContractAddr,
+      gardenTokenAddr: gardenTokenAddress,
+      registerStakeAmount: stakeAmount,
+      communityFee: protocolFeeAmount,
+      nonce: 0n,
+      registryFactory: registryFactoryAddr,
+      feeReceiver: protocolFeeReceiver,
+      metadata: metadata as [bigint, string],
+      councilSafeAddr: councilSafeAddress,
+      communityName: communityName,
+      isKickEnable: isKickMemberEnabled,
+      covenantIpfsHash: ipfsMetadataHash,
+    });
   };
 
-  //TODO: hanldle this with lucho
-  const handleCreateNewCommunity: SubmitHandler<FormInputs> = (data: any) => {
-    try {
-      handleInputData(data);
-
-      console.log(formData);
-      // write?.();
-    } catch (error) {
-      console.error("An error occurred:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (!isSubmitting && isSubmitted) {
-      write?.();
-    }
-  }, [isSubmitting, isSubmitted]);
 
   const isKickMemberEnabled = watch("isKickMemberEnabled");
   const inputClassname = "input input-bordered input-info w-full max-w-md";
   const labelClassname = "mb-2 text-xs text-secondary";
 
+  useEffect(() => {
+    if (formData === undefined) return;
+    const argsArray = Object.entries(formData).map(([key, value]) => value);
+    console.log(argsArray);
+    write?.({ args: [argsArray] });
+  }, [formData]);
+
   return (
-    <>
-      <FormModal
-        label="Create Community"
-        title={`Welcome to the ${tokenGarden?.symbol} Community Form!`}
-        description={`Create a vibrant community around the ${tokenGarden.name} by
+    <FormModal
+      label="Create Community"
+      title={`Welcome to the ${tokenGarden?.symbol} Community Form!`}
+      description={`Create a vibrant community around the ${tokenGarden.name} by
         providing the necessary details below.`}
-      >
-        <form onSubmit={handleSubmit(handleCreateNewCommunity)}>
-          {!isEditMode ? (
-            <div className="flex flex-col space-y-6 overflow-hidden px-1">
-              <div className="flex flex-col">
-                <label htmlFor="Community Name" className={labelClassname}>
-                  Community Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="1hive"
-                  className={inputClassname}
-                  {...register("name", {
-                    required: true,
-                  })}
-                />
-              </div>
+    >
+      <form onSubmit={handleSubmit(handleInputData)}>
+        {!isEditMode ? (
+          <div className="flex flex-col space-y-6 overflow-hidden px-1">
+            <div className="flex flex-col">
+              <label htmlFor="Community Name" className={labelClassname}>
+                Community Name
+              </label>
+              <input
+                type="text"
+                placeholder="1hive"
+                className={inputClassname}
+                {...register("name", {
+                  required: true,
+                })}
+              />
+            </div>
 
-              <div className="flex flex-col">
-                <label htmlFor="stake" className={labelClassname}>
-                  {`Membership Stake Amount ( ${tokenGarden.symbol} tokens )`}
-                </label>
-                <input
-                  type="number"
-                  placeholder=""
-                  className={inputClassname}
-                  {...register("stake", {
-                    required: true,
-                  })}
-                />
-              </div>
+            <div className="flex flex-col">
+              <label htmlFor="stake" className={labelClassname}>
+                {`Membership Stake Amount ( ${tokenGarden.symbol} tokens )`}
+              </label>
+              <input
+                type="number"
+                placeholder=""
+                className={inputClassname}
+                {...register("stake", {
+                  required: true,
+                })}
+              />
+            </div>
 
-              <div className="flex flex-col">
-                <label htmlFor="feeAmount" className={labelClassname}>
-                  Protocol fee %
-                </label>
-                <select
-                  className="select select-accent w-full max-w-md"
-                  {...register("feeAmount", { required: true })}
-                >
-                  <option value={0}>0%</option>
-                  <option value={1}>1%</option>
-                  <option value={2}>2%</option>
-                </select>
-              </div>
+            <div className="flex flex-col">
+              <label htmlFor="feeAmount" className={labelClassname}>
+                Protocol fee %
+              </label>
+              <select
+                className="select select-accent w-full max-w-md"
+                {...register("feeAmount", { required: true })}
+              >
+                <option value={0}>0%</option>
+                <option value={1}>1%</option>
+                <option value={2}>2%</option>
+              </select>
+            </div>
 
-              <div className="flex flex-col">
-                <label htmlFor="feeReceiver" className={labelClassname}>
-                  Protocol fee Receiver address
-                </label>
-                <input
-                  type="text"
-                  placeholder="0x.."
-                  className={inputClassname}
-                  {...register("feeReceiver", {
-                    required: true,
-                    pattern: {
-                      value: ethereumAddressRegExp,
-                      message: "Invalid Eth Address",
-                    },
-                  })}
-                />
-              </div>
+            <div className="flex flex-col">
+              <label htmlFor="feeReceiver" className={labelClassname}>
+                Protocol fee Receiver address
+              </label>
+              <input
+                type="text"
+                placeholder="0x.."
+                className={inputClassname}
+                {...register("feeReceiver", {
+                  required: true,
+                  pattern: {
+                    value: ethereumAddressRegExp,
+                    message: "Invalid Eth Address",
+                  },
+                })}
+              />
+            </div>
 
-              <div className="flex flex-col">
-                <label htmlFor="councilSafe" className={labelClassname}>
-                  Council safe address
-                </label>
-                <input
-                  type="text"
-                  placeholder="0x.."
-                  className={inputClassname}
-                  {...register("councilSafe", {
-                    required: true,
-                    pattern: {
-                      value: ethereumAddressRegExp,
-                      message: "Invalid Eth Address",
-                    },
-                  })}
-                />
-              </div>
-
-              <div className="mb-4 flex items-center">
-                <input
-                  defaultChecked
-                  id="checkbox-1"
-                  type="checkbox"
-                  value=""
-                  {...register("isKickMemberEnabled")}
-                  className="checkbox-accent checkbox"
-                />
-                <label
-                  htmlFor="checkbox-1"
-                  className="ms-2 text-sm font-medium "
-                >
-                  {isKickMemberEnabled
-                    ? "Admins can expel members"
-                    : "Admins can not expel members"}
-                </label>
-              </div>
-
-              {/* Covenant text */}
+            <div className="flex flex-col">
               <label htmlFor="councilSafe" className={labelClassname}>
-                Covenant descrition
+                Council safe address
               </label>
-              <textarea
-                className="textarea textarea-info line-clamp-5"
-                placeholder="1Hive is a community of ...The goal of the 1Hive protocol is to foster a healthy community Our Standards...
+              <input
+                type="text"
+                placeholder="0x.."
+                className={inputClassname}
+                {...register("councilSafe", {
+                  required: true,
+                  pattern: {
+                    value: ethereumAddressRegExp,
+                    message: "Invalid Eth Address",
+                  },
+                })}
+              />
+            </div>
+
+            <div className="mb-4 flex items-center">
+              <input
+                defaultChecked
+                id="checkbox-1"
+                type="checkbox"
+                value=""
+                {...register("isKickMemberEnabled")}
+                className="checkbox-accent checkbox"
+              />
+              <label htmlFor="checkbox-1" className="ms-2 text-sm font-medium ">
+                {isKickMemberEnabled
+                  ? "Admins can expel members"
+                  : "Admins can not expel members"}
+              </label>
+            </div>
+
+            {/* Covenant text */}
+            <label htmlFor="councilSafe" className={labelClassname}>
+              Covenant descrition
+            </label>
+            <textarea
+              className="textarea textarea-info line-clamp-5"
+              placeholder="1Hive is a community of ...The goal of the 1Hive protocol is to foster a healthy community Our Standards...
               Examples of behavior that contributes to a positive environment ..."
-                rows={7}
-                onChange={(e) => setCovenant(e.target.value)}
-              ></textarea>
+              rows={7}
+              onChange={(e) => setCovenant(e.target.value)}
+            ></textarea>
 
-              {/* Upload image */}
-              <label htmlFor="cover-photo" className={labelClassname}>
-                Banner Image
-              </label>
-              <div className="mt-2  flex justify-center rounded-lg border border-dashed border-secondary px-6 py-10">
-                <div className="text-center">
-                  {file ? (
-                    <Image
-                      src={URL.createObjectURL(file)}
-                      alt="Project cover photo"
-                      width={100}
-                      height={100}
-                    />
-                  ) : (
-                    <>
-                      <div className="mt-4 flex flex-col text-sm leading-6 text-gray-400 ">
-                        <PhotoIcon
-                          className="mx-auto h-12 w-12 text-secondary"
-                          aria-hidden="true"
+            {/* Upload image */}
+            <label htmlFor="cover-photo" className={labelClassname}>
+              Banner Image
+            </label>
+            <div className="mt-2  flex justify-center rounded-lg border border-dashed border-secondary px-6 py-10">
+              <div className="text-center">
+                {file ? (
+                  <Image
+                    src={URL.createObjectURL(file)}
+                    alt="Project cover photo"
+                    width={100}
+                    height={100}
+                  />
+                ) : (
+                  <>
+                    <div className="mt-4 flex flex-col text-sm leading-6 text-gray-400 ">
+                      <PhotoIcon
+                        className="mx-auto h-12 w-12 text-secondary"
+                        aria-hidden="true"
+                      />
+                      <label
+                        htmlFor={"image"}
+                        className="relative cursor-pointer rounded-lg bg-surface font-semibold transition-colors duration-200 ease-in-out focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-200 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 hover:text-primary"
+                      >
+                        <span className="text-secondary">Upload a file</span>
+                        <input
+                          id={"image"}
+                          name={"image"}
+                          type="file"
+                          className="sr-only"
+                          accept="image/*"
+                          onChange={handleFileChange}
                         />
-                        <label
-                          htmlFor={"image"}
-                          className="relative cursor-pointer rounded-lg bg-surface font-semibold transition-colors duration-200 ease-in-out focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-200 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 hover:text-primary"
-                        >
-                          <span className="text-secondary">Upload a file</span>
-                          <input
-                            id={"image"}
-                            name={"image"}
-                            type="file"
-                            className="sr-only"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                          />
-                        </label>
+                      </label>
 
-                        <div className="mt-1 space-y-1">
-                          <p className="pl-1 text-black">or drag and drop</p>
-                          <p className="text-xs leading-5 text-black">
-                            PNG, JPG, GIF up to 10MB
-                          </p>
-                        </div>
+                      <div className="mt-1 space-y-1">
+                        <p className="pl-1 text-black">or drag and drop</p>
+                        <p className="text-xs leading-5 text-black">
+                          PNG, JPG, GIF up to 10MB
+                        </p>
                       </div>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
-          ) : (
-            <CommunityOverview data={previewData} />
-          )}
-
-          <div className="flex w-full items-center justify-center py-6">
-            {!isEditMode ? (
-              <Button type="button" onClick={handlePreview} variant="fill">
-                Preview
-              </Button>
-            ) : (
-              <div className="flex items-center gap-10">
-                <Button type="submit">Submit</Button>
-                <Button
-                  type="button"
-                  onClick={() => setIsEditMode(false)}
-                  variant="fill"
-                >
-                  Edit
-                </Button>
-              </div>
-            )}
           </div>
-        </form>
-      </FormModal>
-    </>
+        ) : (
+          <CommunityOverview data={previewData} />
+        )}
+
+        <div className="flex w-full items-center justify-center py-6">
+          {!isEditMode ? (
+            <Button type="button" onClick={handlePreview} variant="fill">
+              Preview
+            </Button>
+          ) : (
+            <div className="flex items-center gap-10">
+              <Button type="submit">Submit</Button>
+              <Button
+                type="button"
+                onClick={() => setIsEditMode(false)}
+                variant="fill"
+              >
+                Edit
+              </Button>
+            </div>
+          )}
+        </div>
+      </form>
+    </FormModal>
   );
 };
 

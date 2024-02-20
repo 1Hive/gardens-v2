@@ -49,7 +49,7 @@ export const FormModal: FC<FormModalProps> = ({
                 leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               >
-                <Dialog.Panel className="border2 relative min-w-[50%] max-w-[80%] transform overflow-hidden rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all">
+                <Dialog.Panel className="border2 relative my-8 min-w-[50%] max-w-[80%] transform overflow-hidden rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all">
                   <div>
                     <div className="text-center sm:mt-5">
                       <Dialog.Title
