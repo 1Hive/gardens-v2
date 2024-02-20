@@ -5,6 +5,9 @@ import ThemeProvider from "./ThemeProvider";
 import {
   connectorsForWallets,
   RainbowKitProvider,
+  midnightTheme,
+  darkTheme,
+  lightTheme,
 } from "@rainbow-me/rainbowkit";
 import {
   rabbyWallet,
@@ -45,7 +48,15 @@ const Providers = ({ children }: Props) => {
     mounted && (
       <UrqlProvider>
         <WagmiConfig config={wagmiConfig}>
-          <RainbowKitProvider modalSize="compact" chains={chains}>
+          <RainbowKitProvider
+            modalSize="compact"
+            chains={chains}
+            theme={midnightTheme({
+              accentColor: "var(--color-primary)",
+              accentColorForeground: "var(--color-black)",
+              borderRadius: "large",
+            })}
+          >
             <ThemeProvider>{mounted && children}</ThemeProvider>
           </RainbowKitProvider>
         </WagmiConfig>
