@@ -208,7 +208,6 @@ export const CommunityForm = ({
     });
   };
 
-
   const isKickMemberEnabled = watch("isKickMemberEnabled");
   const inputClassname = "input input-bordered input-info w-full max-w-md";
   const labelClassname = "mb-2 text-xs text-secondary";

@@ -21,7 +21,7 @@ export async function getProposals(
 
         return {
           ...p,
-          voterStakedPointsPct: BigInt(0),
+          voterStakedPointsPct: 0,
           title: title,
           type: strategy.config?.proposalType as number,
         };

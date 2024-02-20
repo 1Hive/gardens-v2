@@ -24,7 +24,7 @@ const envTokenNativeAddressArbSepolia =
   process.env.NEXT_PUBLIC_TOKEN_NATIVE_ADDR_ARB_SEPOLIA;
 
 const envConfirmationsRequired =
-  process.env.NEXT_PUBLIC_CONFIRMATIONS_REQUIRED || 5;
+  process.env.NEXT_PUBLIC_CONFIRMATIONS_REQUIRED || 1;
 
 import {
   Address,
@@ -43,9 +43,7 @@ try {
   console.log("error ignored");
 }
 export const isProd = ENV === "prod";
-export const confirmationsRequired = isProd
-  ? Number(envConfirmationsRequired) ?? 1
-  : 1;
+export const confirmationsRequired = Number(envConfirmationsRequired);
 
 const envOrDefaultAddr = (env: string | undefined, def: Address) =>
   env ? (env as Address) : def;
