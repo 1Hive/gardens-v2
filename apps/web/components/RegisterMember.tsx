@@ -135,7 +135,7 @@ export function RegisterMember({
   }, [unregisterMemberStatus]);
 
   return (
-    <Button onClick={handleChange} className="w-fit bg-primary">
+    <Button onClick={handleChange} className="w-full bg-primary">
       {address
         ? isMember
           ? "Leave community"

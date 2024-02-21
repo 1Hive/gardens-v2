@@ -44,7 +44,7 @@ export default async function Garden({
           <p className="max-w-lg text-center font-semibold leading-7">
             Discover communities in the
             <span className="text-primary"> Mock Token Garden</span>, where you
-            connect and support like-minded individuals bound by a shared
+            connect with people and support proposals bound by a shared
             covenant. Cant find the perfect community ? Click below to forge a
             new space tailored by your interests.
           </p>
@@ -66,6 +66,9 @@ export default async function Garden({
         />
       </header>
       <section className="mx-auto flex flex-col gap-8">
+        <h4 className="sticky top-0  z-10 rounded-xl bg-surface py-6 text-center font-press shadow">
+          {tokenName} Communities
+        </h4>
         {/* communites */}
         {communities.map((community, i) => (
           <CommunityCard
