@@ -59,6 +59,8 @@ export default async function Pool({
     return <div>{`Pool ${poolId} not found`}</div>;
   }
 
+  console.log(poolData);
+
   const strategyObj = poolData.cvstrategies[0];
 
   const strategyAddr = strategyObj.id as Address;
@@ -93,6 +95,7 @@ export default async function Pool({
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
               <p className="max-w-2xl  text-center text-lg font-semibold">
                 {/* {poolInfo[(poolId as unknown as number) - 1].description} */}
+                {/* TODO:  fetch data ipfs */}
                 Mocked data description
               </p>
               <div className="flex w-full  p-4">
@@ -100,19 +103,13 @@ export default async function Pool({
                   <div className="flex flex-col items-center justify-center"></div>
 
                   <span>Strategy type: Conviction Voting</span>
-                  <span>Funding Token: Honey</span>
+                  <span>Funding Token: </span>
                 </div>
                 <div className="flex flex-1 flex-col items-center space-y-4 font-bold">
                   <span>Proposals type accepted:</span>
                   <div className="flex w-full items-center justify-evenly">
                     <span className="badge w-28 bg-primary p-4 tracking-wide">
                       Funding
-                    </span>
-                    <span className="badge w-28 bg-secondary p-4 opacity-30">
-                      Streaming
-                    </span>
-                    <span className="badge w-28 bg-accent p-4 opacity-40">
-                      Signaling
                     </span>
                   </div>
                 </div>

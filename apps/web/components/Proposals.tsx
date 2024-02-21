@@ -208,7 +208,6 @@ export function Proposals({
               <div className="flex w-full items-center justify-between">
                 <h4 className="font-semibold">{title}</h4>
                 <div>
-                  <Badge type={Number(type)} />
                   {!editView && (
                     <Link href={`${pathname}/proposals/${id}`} className="ml-8">
                       <button className="btn btn-outline btn-info px-3 py-[6px]">

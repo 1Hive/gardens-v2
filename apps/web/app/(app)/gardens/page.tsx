@@ -39,12 +39,12 @@ export default async function Gardens() {
           <div className="relative flex-1">
             <Image src={clouds1} alt="clouds" />
           </div>
-          <div className="mx-10 flex flex-col gap-10">
-            <div>
-              <h1 className="text-[#084D21]">Find your tribe</h1>
-              <p className="text-xl">
-                Gardens are digital economies that anyone can help shape
-              </p>
+          <div className="mx-10 flex flex-col items-center gap-5">
+            <div className="flex flex-col items-center">
+              <h1 className="max-w-md text-center text-[#084D21]">
+                Find Your Token Ecosystem
+              </h1>
+              <p className="text-xl">A space to shape digital economies</p>
             </div>
           </div>
           <div className="relative flex-1">
