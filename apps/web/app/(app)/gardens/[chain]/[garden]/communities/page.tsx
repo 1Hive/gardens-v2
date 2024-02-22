@@ -40,13 +40,14 @@ export default async function Garden({
     <div className="relative mx-auto max-w-5xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
       <header className="relative flex min-h-[500px] flex-col items-center justify-between gap-6 px-3">
         <div className="flex h-full min-h-96 max-w-xl flex-col items-center justify-between p-1">
-          <h3 className="text-center font-press">{tokenSymbol} Ecosystem</h3>
+          <h3 className="text-center font-press">
+            {tokenSymbol} Token Ecosystem
+          </h3>
           <p className="max-w-lg text-center font-semibold leading-7">
             Discover communities in the
             <span className="text-primary"> Mock Token Garden</span>, where you
-            connect with people and support proposals bound by a shared
-            covenant. Cant find the perfect community ? Click below to forge a
-            new space tailored by your interests.
+            connect with people and support proposals bounded by a shared
+            <span className="text-primary"> covenant.</span>
           </p>
 
           {result && (

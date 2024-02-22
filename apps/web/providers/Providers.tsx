@@ -51,7 +51,7 @@ const Providers = ({ children }: Props) => {
           <RainbowKitProvider
             modalSize="compact"
             chains={chains}
-            theme={midnightTheme({
+            theme={lightTheme({
               accentColor: "var(--color-primary)",
               accentColorForeground: "var(--color-black)",
               borderRadius: "large",

@@ -41,10 +41,12 @@ export default async function Gardens() {
           </div>
           <div className="mx-10 flex flex-col items-center gap-5">
             <div className="flex flex-col items-center">
-              <h1 className="max-w-md text-center text-[#084D21]">
-                Find Your Token Ecosystem
+              <h1 className="max-w-xl text-center text-[#084D21]">
+                Explore Your Token Ecosystem
               </h1>
-              <p className="text-xl">A space to shape digital economies</p>
+              <p className="text-xl">
+                A place where you help shape digital economies
+              </p>
             </div>
           </div>
           <div className="relative flex-1">

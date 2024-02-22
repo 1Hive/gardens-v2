@@ -7,6 +7,7 @@ import {
   BuildingOffice2Icon,
 } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
+import { CovenantSlider } from "@/components";
 import { Address, useAccount } from "wagmi";
 import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
 import { formatAddress } from "@/utils/formatAddress";
@@ -45,26 +46,24 @@ export function CommunityCard({
   registerStakeAmount = registerStakeAmount ?? 0;
   return (
     <>
-      <div className="card card-side bg-white shadow-xl">
+      <div className="border2 card card-side bg-white">
         <aside className="flex min-h-[300px] w-[280px] flex-col justify-between rounded-xl bg-base-100 p-2">
           {/* <div className=""> */}
           <h3 className="text-center font-press text-xl text-info-content">
             {name}
           </h3>
-          <div className="flex flex-1 flex-col items-center justify-center gap-4">
-            <h4>Address:</h4>
-            <p className="font-bold">{formatAddress(communityAddress)}</p>
-          </div>
-          <RegisterMember
+          <div className="flex flex-1 flex-col items-center justify-center gap-4"></div>
+          <CovenantSlider />
+          {/* <RegisterMember
             // isMember={isMember}
             communityAddress={communityAddress as Address}
             registerToken={registerToken as Address}
             registerStakeAmount={registerStakeAmount}
-          />
+          /> */}
           {/* </div> */}
         </aside>
         <main className="card-body">
-          <div className="stats flex shadow">
+          <div className="stats flex">
             <div className="stat flex-1">
               <div className="stat-figure text-primary">
                 <UserGroupIcon className="inline-block h-8 w-8 text-primary" />
