@@ -1,8 +1,8 @@
 # Gardens v2
 
-Gardens is a **coordination platform** 
-that fosters **vibrant ecosystems of shared wealth**.
-by providing **healthy funding mechanisms to communities in web3** 
+> Gardens is a **coordination platform** 
+> that fosters **vibrant ecosystems of shared wealth**
+> by providing **healthy funding mechanisms to communities in web3** 
 
 As a modular governance mechanism, Gardens strategically mixes centralized and decentralized components to take advantage of the efficiency and security benefits of both when needed.
 
