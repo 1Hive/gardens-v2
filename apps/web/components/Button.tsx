@@ -46,6 +46,7 @@ export function Button({
   type = "button",
 }: ButtonProps) {
   return (
+    // TODO: delete this last cn (is just a to check changes in "type" placeholder
     <button
       type={type}
       className={`${VARIANT_STYLES[variant ?? "primary"]} ${cn({
@@ -53,11 +54,10 @@ export function Button({
         "h-9": size === "md",
         "h-14": size === "lg",
       })}
-      // TODO: delete this last cn (is just a to check changes in "type" placeholder
       ${cn({
         "border-2": type === "button",
       })} 
-      flex cursor-pointer items-center justify-center rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95 ${className}`}
+      flex cursor-pointer items-center w-fit justify-center rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95 ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >

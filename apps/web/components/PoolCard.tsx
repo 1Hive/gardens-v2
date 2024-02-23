@@ -1,5 +1,5 @@
 "use client";
-import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
+import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
 import { gardenLand } from "@/assets";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,7 +8,7 @@ import { Badge } from ".";
 
 type StrategyQuery = NonNullable<
   NonNullable<
-    NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
+    NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
   >[number]["strategies"]
 >[number];
 export function PoolCard({
@@ -25,7 +25,7 @@ export function PoolCard({
       className="relative flex min-w-56 snap-center flex-col items-start rounded-md border-2 border-black bg-white transition-all duration-150 ease-out hover:scale-105"
       href={`${pathname}/pool/${poolId}`}
     >
-      <h4 className="my-3 w-full text-center font-press">{poolId}</h4>
+      <h4 className="my-3 w-full text-center font-press">Pool {poolId}</h4>
       <div className="flex w-full flex-col p-4">
         <div className="flex justify-between text-xs">
           <p className="font-semibold">type:</p>

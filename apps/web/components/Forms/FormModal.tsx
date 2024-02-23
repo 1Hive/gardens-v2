@@ -20,7 +20,7 @@ export const FormModal: FC<FormModalProps> = ({
   const [open, setOpen] = useState(false);
 
   return (
-    <>
+    <div className="flex items-center justify-center">
       <Button type="button" onClick={() => setOpen(!open)} variant="fill">
         {label}
       </Button>
@@ -70,6 +70,6 @@ export const FormModal: FC<FormModalProps> = ({
           </div>
         </Dialog>
       </Transition.Root>
-    </>
+    </div>
   );
 };

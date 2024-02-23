@@ -3,8 +3,8 @@ import Image from "next/image";
 import { CommunityCard } from "@/components";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import {
-  getCommunityByGardenDocument,
-  getCommunityByGardenQuery,
+  getCommunitiesByGardenDocument,
+  getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { CommunityForm } from "@/components/Forms";
@@ -19,10 +19,10 @@ export default async function Garden({
 }) {
   const { urqlClient } = initUrqlClient();
 
-  const { data: result } = await queryByChain<getCommunityByGardenQuery>(
+  const { data: result } = await queryByChain<getCommunitiesByGardenQuery>(
     urqlClient,
     chain,
-    getCommunityByGardenDocument,
+    getCommunitiesByGardenDocument,
     { addr: garden },
   );
 
