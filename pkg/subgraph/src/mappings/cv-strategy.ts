@@ -79,7 +79,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
     cvsId,
   ]);
 
-  let p = cvc.try_getProposal(event.params.proposalId);
+  let p = cvc.try_proposals(event.params.proposalId);
   if (p.reverted) {
     log.error("handleProposalCreated proposal reverted:{}", [proposalIdString]);
     return;
@@ -95,8 +95,10 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   newProposal.blockLast = proposal.getBlockLast();
   newProposal.convictionLast = proposal.getConvictionLast();
-  newProposal.threshold = proposal.getThreshold();
-  newProposal.stakedTokens = proposal.getStakedTokens();
+
+  newProposal.threshold = BigInt.zero(); //@todo should fix it
+
+  newProposal.stakedTokens = proposal.getStakedAmount();
 
   newProposal.requestedAmount = proposal.getRequestedAmount();
 

@@ -113,7 +113,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             requestAmount = REQUESTED_AMOUNT;
         }
 
-        if (poolAmount == 0) {
+        if (poolAmount == 0 && proposalType == CVStrategy.ProposalType.Funding) {
             poolAmount = POOL_AMOUNT;
         }
         address useTokenPool = _tokenPool;
@@ -145,14 +145,15 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         strategy.activatePoints();
 
         pool = allo().getPool(poolId);
-
-        vm.deal(address(this), poolAmount);
-        if (useTokenPool == NATIVE) {
-            allo().fundPool{value: poolAmount}(poolId, poolAmount);
-        } else {
-            MockERC20(useTokenPool).mint(address(this), poolAmount);
-            MockERC20(useTokenPool).approve(address(allo()), poolAmount);
-            allo().fundPool(poolId, poolAmount);
+        if (poolAmount > 0) {
+            vm.deal(address(this), poolAmount);
+            if (useTokenPool == NATIVE) {
+                allo().fundPool{value: poolAmount}(poolId, poolAmount);
+            } else {
+                MockERC20(useTokenPool).mint(address(this), poolAmount);
+                MockERC20(useTokenPool).approve(address(allo()), poolAmount);
+                allo().fundPool(poolId, poolAmount);
+            }
         }
 
         assertEq(pool.profileId, poolProfile_id1(registry(), local(), pool_managers()), "poolProfileID");
@@ -519,6 +520,105 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         //assertEq(cv.getProposalVoterStake(1, address(this)), MINIMUM_STAKE); // 100% of 50 = 50
         //assertEq(cv.getProposalStakedAmount(1), (MINIMUM_STAKE * PRECISE_FIVE_PERCENT)/PRECISE_HUNDRED_PERCENT);
         assertEq(cv.getProposalStakedAmount(1), TWO_POINT_FIVE_TOKENS);
+    }
+
+    function test_proposalSupported_conviction_threshold_poolempty() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
+            _createProposal(address(0), 0 ether, 0 ether, CVStrategy.ProposalType.Signaling);
+
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        // cv.setDecay(_etherToFloat(0.9999987 ether)); // alpha = decay
+        // cv.setMaxRatio(_etherToFloat(0.7 ether)); // beta = maxRatio
+        // cv.setWeight(_etherToFloat(0.049 ether)); // RHO = p  = weight
+
+        // FAST 1 MIN GROWTH
+        cv.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
+        cv.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        cv.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        /**
+         * ASSERTS
+         *
+         */
+        // startMeasuringGas("Support a Proposal");
+        int256 SUPPORT_PCT = 100;
+        CVStrategy.ProposalSupport[] memory votes = new CVStrategy.ProposalSupport[](1);
+        votes[0] = CVStrategy.ProposalSupport(proposalId, SUPPORT_PCT * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
+        bytes memory data = abi.encode(votes);
+        allo().allocate(poolId, data);
+        // stopMeasuringGas();
+
+        uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT) * MINIMUM_STAKE / (100);
+        assertEq(cv.getProposalVoterStake(1, address(this)), STAKED_AMOUNT, "ProposalVoterStake:"); // 80% of 50 = 40
+        assertEq(cv.getProposalStakedAmount(1), STAKED_AMOUNT, " ProposalStakeAmount:"); // 80% of 50 = 40
+
+        /**
+         * ASSERTS
+         *
+         */
+        vm.startPrank(pool_admin());
+
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember();
+        cv.activatePoints();
+
+        CVStrategy.ProposalSupport[] memory votes2 = new CVStrategy.ProposalSupport[](1);
+        int256 SUPPORT_PCT2 = 100;
+        votes2[0] = CVStrategy.ProposalSupport(proposalId, SUPPORT_PCT2 * int256(PRECISION_SCALE));
+        data = abi.encode(votes2);
+        // vm.expectEmit(true, true, true, false);
+        allo().allocate(poolId, data);
+        vm.stopPrank();
+
+        uint256 STAKED_AMOUNT2 = uint256(SUPPORT_PCT2) * MINIMUM_STAKE / (100);
+
+        assertEq(cv.getProposalVoterStake(proposalId, address(pool_admin())), STAKED_AMOUNT2); // 100% of 50 = 50
+        assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT + STAKED_AMOUNT2);
+
+        /**
+         * ASSERTS
+         *
+         */
+        console.log("before block.number", block.number);
+        uint256 totalEffectiveActivePoints = cv.totalEffectiveActivePoints();
+        console.log("totalEffectiveActivePoints", totalEffectiveActivePoints);
+        console.log("maxCVSupply", cv.getMaxConviction(totalEffectiveActivePoints));
+        console.log("maxCVStaked", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
+
+        assertEq(cv.getMaxConviction(totalEffectiveActivePoints), 2890340482, "maxCVSupply");
+        assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 28903404821087924157465, "maxCVStaked");
+
+        vm.roll(110);
+        console.log("after block.number", block.number);
+        // x = 8731 / 149253
+        // x = 0.174 current tokens growth
+
+        // convictionLast / maxConviction(effectivestaked) * 100 = stakedConviction in percetage of the effetiveSupply
+        // threshold / maxConviction(effectivestaked)
+
+        cv.updateProposalConviction(proposalId);
+
+        (
+            , // address submitter,
+            , // address beneficiary,
+            , // address requestedToken,
+            , // uint256 requestedAmount,
+            , // uint256 stakedTokens,
+            , // ProposalStatus proposalStatus,
+            , // uint256 blockLast,
+            uint256 convictionLast,
+            uint256 threshold,
+            uint256 voterPointsPct
+        ) = cv.getProposal(proposalId);
+
+        // console.log("Requested Amount: %s", requestedAmount);
+        // console.log("Staked Tokens: %s", stakedTokens);
+        // console.log("Threshold: %s", threshold);
+        // console.log("Conviction Last: %s", convictionLast);
+        // console.log("Voter points pct %s", voterPointsPct);
+        assertEq(threshold, 578068096, "threshold");
+        assertEq(convictionLast, 9093395789141241168273, "convictionLast");
+        assertEq(voterPointsPct, cv.PRECISION_PERCENTAGE(), "voterPointsPct");
     }
 
     function test_proposalSupported_conviction_threshold_2_users() public {

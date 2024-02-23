@@ -661,13 +661,14 @@ contract CVStrategy is BaseStrategy, IWithdrawMember {
     function calculateThreshold(uint256 _requestedAmount) public view returns (uint256 _threshold) {
         //       @todo: we should replace it with
         //        uint256 funds = fundsManager.balance(requestToken);
+
         if (poolAmount <= 0) {
             revert PoolIsEmpty();
         }
         uint256 funds = poolAmount;
         //        require(maxRatio.mul(funds) > _requestedAmount.mul(D), ERROR_AMOUNT_OVER_MAX_RATIO);
         // console.log("maxRatio", maxRatio);
-        // console.log("funds=poolAmount", funds);
+        console.log("funds=poolAmount", funds);
         // console.log("_requestedAmount", _requestedAmount);
         // console.log("D", D);
         // console.log("maxRatio * funds", maxRatio * funds);
