@@ -2,31 +2,67 @@ import { readContracts } from "@wagmi/core";
 import { cvStrategyABI } from "@/src/generated";
 import { Abi, Address } from "viem";
 import { Proposal, ProposalTypeVoter, Strategy } from "@/components/Proposals";
+import { CVProposal } from "#/subgraph/.graphclient";
 
 export async function getProposals(
   accountAddress: Address | undefined,
   strategy: Strategy,
 ) {
   try {
-    let transformedProposals: ProposalTypeVoter[] = await Promise.all(
-      strategy.proposals.map(async (p) => {
-        const ipfsRawData = await fetch(`https://ipfs.io/ipfs/${p.metadata}`, {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-          },
-        });
-        const ipfsData = await ipfsRawData.json();
-        const title = ipfsData.title;
+    async function fetchIPFSDataBatch(
+      proposals: Proposal[],
+      batchSize = 5,
+      delay = 1000,
+    ) {
+      // Fetch data for a batch of proposals
+      const fetchBatch = async (batch: any) =>
+        Promise.all(
+          batch.map((p: Proposal) =>
+            fetch(`https://ipfs.io/ipfs/${p.metadata}`, {
+              method: "GET",
+              headers: { "content-type": "application/json" },
+            }).then((res) => res.json()),
+          ),
+        );
 
+      // Introduce a delay
+      const sleep = (ms: number) =>
+        new Promise((resolve) => setTimeout(resolve, ms));
+
+      // Create proposal chunks
+      const chunks = Array.from(
+        { length: Math.ceil(proposals.length / batchSize) },
+        (_, i) => proposals.slice(i * batchSize, i * batchSize + batchSize),
+      );
+
+      // Process each chunk
+      let results = [];
+      for (const chunk of chunks) {
+        const batchResults = await fetchBatch(chunk);
+        results.push(...batchResults);
+        await sleep(delay);
+      }
+
+      return results;
+    }
+
+    async function transformProposals(strategy: Strategy) {
+      const proposalsData = await fetchIPFSDataBatch(strategy.proposals);
+      const transformedProposals = proposalsData.map((data, index) => {
+        const p = strategy.proposals[index];
         return {
           ...p,
           voterStakedPointsPct: 0,
-          title: title,
+          title: data.title,
           type: strategy.config?.proposalType as number,
         };
-      }),
-    );
+      });
+
+      return transformedProposals;
+    }
+
+    let transformedProposals: ProposalTypeVoter[] =
+      await transformProposals(strategy);
 
     if (accountAddress) {
       const alloContractReadProps = {

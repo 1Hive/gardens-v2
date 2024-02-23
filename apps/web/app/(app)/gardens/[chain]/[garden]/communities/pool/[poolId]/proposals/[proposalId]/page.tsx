@@ -71,17 +71,11 @@ export default async function Proposal({
     { poolId: poolId, proposalId: proposalId, garden: garden },
   );
 
-  if (
-    !getProposalQuery?.tokenGarden?.communities?.[0].strategies?.[0]
-      .proposals?.[0]
-  ) {
+  const proposalData = getProposalQuery?.cvproposal;
+
+  if (!proposalData) {
     return <div>{`Proposal ${proposalId} not found`}</div>;
   }
-
-  const proposalData =
-    getProposalQuery?.tokenGarden?.communities?.[0].strategies?.[0]
-      .proposals?.[0];
-  // console.log("proposalData", proposalData);
 
   const convictionLast = proposalData.convictionLast;
   const totalStakedTokens = proposalData.stakedTokens;
@@ -112,8 +106,8 @@ export default async function Proposal({
   try {
     const rawProposalMetadata = await getIpfsData(metadata);
     const proposalMetadata: ProposalMetadata = await rawProposalMetadata.json();
-    title = proposalMetadata.title;
-    description = proposalMetadata.description;
+    title = proposalMetadata?.title || "No title found";
+    description = proposalMetadata?.description || "No description found";
   } catch (error) {
     console.log(error);
   }
@@ -433,26 +427,7 @@ function executeAllFunctions(
   //   totalEffectiveActivePoints,
   // );
 
-  // Return the results object
   return results;
 }
 
-// Example usage
 
-//
-// function transformData(data: any[]): UnparsedProposal {
-//   return {
-//     submitter: data[0],
-//     beneficiary: data[1],
-//     requestedToken: data[2],
-//     requestedAmount: Number(data[3]),
-//     stakedTokens: Number(data[4]),
-//     proposalType: data[5],
-//     proposalStatus: data[6],
-//     blockLast: Number(data[7]),
-//     convictionLast: Number(data[8]),
-//     agreementActionId: Number(data[9]),
-//     threshold: Number(data[10]),
-//     voterStakedPointsPct: Number(data[11]),
-//   };
-// }

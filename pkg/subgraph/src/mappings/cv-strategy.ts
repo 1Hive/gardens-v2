@@ -70,32 +70,41 @@ export function handleInitialized(event: InitializedCV): void {
 }
 
 export function handleProposalCreated(event: ProposalCreated): void {
-  // log.debug("handleProposalCreated", []);
   const proposalIdString = event.params.proposalId.toHex();
   const cvsId = event.address.toHex();
   const cvc = CVStrategyContract.bind(event.address);
 
-  let p = cvc.getProposal(event.params.proposalId);
+  log.debug("handleProposalCreated proposalIdString:{} cvsId:{} ", [
+    proposalIdString,
+    cvsId,
+  ]);
+
+  let p = cvc.try_getProposal(event.params.proposalId);
+  if (p.reverted) {
+    log.error("handleProposalCreated proposal reverted:{}", [proposalIdString]);
+    return;
+  }
+  let proposal = p.value;
 
   let newProposal = new CVProposal(proposalIdString);
   newProposal.strategy = cvsId;
 
-  newProposal.beneficiary = p.getBeneficiary().toHex();
-  let requestedToken = p.getRequestedToken();
+  newProposal.beneficiary = proposal.getBeneficiary().toHex();
+  let requestedToken = proposal.getRequestedToken();
   newProposal.requestedToken = requestedToken.toHex();
 
-  newProposal.blockLast = p.getBlockLast();
-  newProposal.convictionLast = p.getConvictionLast();
-  newProposal.threshold = p.getThreshold();
-  newProposal.stakedTokens = p.getStakedTokens();
+  newProposal.blockLast = proposal.getBlockLast();
+  newProposal.convictionLast = proposal.getConvictionLast();
+  newProposal.threshold = proposal.getThreshold();
+  newProposal.stakedTokens = proposal.getStakedTokens();
 
-  newProposal.requestedAmount = p.getRequestedAmount();
+  newProposal.requestedAmount = proposal.getRequestedAmount();
 
-  newProposal.proposalStatus = BigInt.fromI32(p.getProposalStatus());
-  // newProposal.proposalType = BigInt.fromI32(p.proposalType());
-  newProposal.submitter = p.getSubmitter().toHex();
-  // newProposal.voterStakedPointsPct = p.getVoterStakedPointsPct();
-  // newProposal.agreementActionId = p.getAgreementActionId();
+  newProposal.proposalStatus = BigInt.fromI32(proposal.getProposalStatus());
+  // newProposal.proposalType = BigInt.fromI32(proposal.proposalType());
+  newProposal.submitter = proposal.getSubmitter().toHex();
+  // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
+  // newProposal.agreementActionId = proposal.getAgreementActionId();
 
   const pointer = cvc.getMetadata(event.params.proposalId).pointer;
 

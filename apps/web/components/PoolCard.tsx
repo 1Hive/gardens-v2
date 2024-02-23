@@ -1,5 +1,5 @@
 "use client";
-import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
+import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
 import { gardenLand } from "@/assets";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { Badge } from "@/components";
 
 type StrategyQuery = NonNullable<
   NonNullable<
-    NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
+    NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
   >[number]["strategies"]
 >[number];
 export function PoolCard({

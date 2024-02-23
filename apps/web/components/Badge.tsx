@@ -1,14 +1,5 @@
+import { proposalStatus, proposalTypes } from "@/types";
 import React from "react";
-
-const proposalTypes = ["signaling", "funding", "streaming"];
-
-const proposalStatus = [
-  "inactive",
-  "active",
-  "paused",
-  "cancelled",
-  "executed",
-];
 
 interface BadgeProps {
   type: number;
