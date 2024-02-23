@@ -20,8 +20,8 @@ export const FormModal: FC<FormModalProps> = ({
   const [open, setOpen] = useState(false);
 
   return (
-    <>
-      <Button type="button" onClick={() => setOpen(!open)} variant="fill">
+    <div className="flex items-center justify-center">
+      <Button type="button" onClick={() => setOpen(!open)}>
         {label}
       </Button>
       <Transition.Root show={open} as={Fragment}>
@@ -70,6 +70,6 @@ export const FormModal: FC<FormModalProps> = ({
           </div>
         </Dialog>
       </Transition.Root>
-    </>
+    </div>
   );
 };

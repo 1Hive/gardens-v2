@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAccount, useContractWrite } from "wagmi";
+import { useAccount, useContractWrite, Address as AddressType } from "wagmi";
 import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI } from "@/src/generated";
@@ -131,7 +131,7 @@ export function Proposals({
     // console.log("poolId", poolId);
 
     writeAllocate({
-      args: [BigInt(poolId), encodedData as `0x${string}`],
+      args: [BigInt(poolId), encodedData as AddressType],
     });
   };
 
@@ -208,12 +208,9 @@ export function Proposals({
               <div className="flex w-full items-center justify-between">
                 <h4 className="font-semibold">{title}</h4>
                 <div>
-                  <Badge type={Number(type)} />
                   {!editView && (
                     <Link href={`${pathname}/proposals/${id}`} className="ml-8">
-                      <button className="btn btn-outline btn-info px-3 py-[6px]">
-                        View Proposal
-                      </button>
+                      <Button variant="outline">View Proposal</Button>
                     </Link>
                   )}
                 </div>
@@ -244,9 +241,7 @@ export function Proposals({
                     <div className="mb-2">{inputs[i].value} %</div>
                   </div>
                   <Link href={`${pathname}/proposals/${id}`}>
-                    <Button className="h-[38px] bg-slate-200">
-                      View Proposal
-                    </Button>
+                    <Button variant="outline">View Proposal</Button>
                   </Link>
                 </div>
               )}
@@ -255,17 +250,19 @@ export function Proposals({
         </div>
         <div className="flex justify-center gap-8">
           {/* <Button className={`bg-primary`}>Create Proposal</Button> */}
-          {isMemberActived && (
-            <Button
-              className={`${editView ? "bg-red text-white" : "bg-primary"}`}
-              onClick={() => setEditView((prev) => !prev)}
-            >
-              {editView ? "Cancel" : "Manage support"}
-            </Button>
-          )}
+
+          <Button
+            className={`${editView ? "bg-red text-white" : "bg-primary"}`}
+            onClick={() => setEditView((prev) => !prev)}
+            disabled={!isMemberActived}
+            tooltip="Activate your points to support proposals"
+          >
+            {editView ? "Cancel" : "Manage support"}
+          </Button>
+
           {editView && (
             <Button
-              className="min-w-[200px] bg-secondary"
+              className="min-w-[200px]"
               onClick={() => submit()}
               isLoading={allocateStatus === "loading"}
             >

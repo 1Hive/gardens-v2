@@ -10,6 +10,8 @@ import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
   getAlloDocument,
   getAlloQuery,
+  getPoolDataDocument,
+  getPoolDataQuery,
   getStrategyByPoolDocument,
   getStrategyByPoolQuery,
 } from "#/subgraph/.graphclient";
@@ -33,49 +35,62 @@ export default async function Pool({
     transport: http(),
   });
 
-  const { data } = await queryByChain<getAlloQuery>(
+  // const { data: alloData } = await queryByChain<getAlloQuery>(
+  //   urqlClient,
+  //   chain,
+  //   getAlloDocument,
+  // );
+  // let alloInfo: AlloQuery | null = null;
+  // if (alloData && alloData.allos?.length > 0) {
+  //   alloInfo = alloData.allos[0];
+  // }
+  // if (!alloInfo) {
+  //   return <div>Allo not found</div>;
+  // }
+
+  // console.log("alloInfo", alloInfo);
+
+  // const { data: poolData } = await queryByChain<getStrategyByPoolQuery>(
+  //   urqlClient,
+  //   chain,
+  //   getStrategyByPoolDocument,
+  //   { poolId: poolId },
+  // );
+
+  // if (!poolData) {
+  //   return <div>{`Pool ${poolId} not found`}</div>;
+  // }
+
+  const { data } = await queryByChain<getPoolDataQuery>(
     urqlClient,
     chain,
-    getAlloDocument,
+    getPoolDataDocument,
+    { poolId: poolId, garden: garden },
   );
-  let alloInfo: AlloQuery | null = null;
-  if (data && data.allos?.length > 0) {
-    alloInfo = data.allos[0];
-  }
-  if (!alloInfo) {
-    return <div>Allo not found</div>;
-  }
+  const strategyObj = data?.cvstrategies?.[0];
 
-  console.log("alloInfo", alloInfo);
-
-  const { data: poolData } = await queryByChain<getStrategyByPoolQuery>(
-    urqlClient,
-    chain,
-    getStrategyByPoolDocument,
-    { poolId: poolId },
-  );
-
-  if (!poolData) {
+  if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;
   }
 
-  const strategyObj = poolData.cvstrategies[0];
-
   const strategyAddr = strategyObj.id as Address;
   const communityAddress = strategyObj.registryCommunity.id as Address;
+  const alloInfo = data?.allos[0];
+  const proposalType = strategyObj?.config?.proposalType as number;
+  const poolAmount = strategyObj?.poolAmount as number;
+  const tokenGarden = data.tokenGarden;
 
-  if (!strategyObj.config) {
-    return <div>Strategy Config not found</div>;
-  }
-  const proposalType = strategyObj.config.proposalType as number;
+  // if (!strategyObj.config) {
+  //   return <div>Strategy Config not found</div>;
+  // }
 
-  const poolBalance = await client.readContract({
-    address: strategyAddr,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "getPoolAmount",
-  });
+  // const poolBalance = await client.readContract({
+  //   address: strategyAddr,
+  //   abi: abiWithErrors(cvStrategyABI),
+  //   functionName: "getPoolAmount",
+  // });
 
-  const POOL_BALANCE = Number(poolBalance);
+  // const POOL_BALANCE = Number(poolBalance);
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -93,26 +108,21 @@ export default async function Pool({
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
               <p className="max-w-2xl  text-center text-lg font-semibold">
                 {/* {poolInfo[(poolId as unknown as number) - 1].description} */}
+                {/* TODO:  fetch data ipfs */}
                 Mocked data description
               </p>
               <div className="flex w-full  p-4">
                 <div className="flex flex-1 flex-col space-y-4 text-xl font-semibold">
                   <div className="flex flex-col items-center justify-center"></div>
 
-                  <span>Strategy type: Conviction Voting</span>
-                  <span>Funding Token: Honey</span>
+                  <span>Strategy: Conviction Voting</span>
+                  <span>Funding Token: </span>
                 </div>
                 <div className="flex flex-1 flex-col items-center space-y-4 font-bold">
                   <span>Proposals type accepted:</span>
                   <div className="flex w-full items-center justify-evenly">
                     <span className="badge w-28 bg-primary p-4 tracking-wide">
                       Funding
-                    </span>
-                    <span className="badge w-28 bg-secondary p-4 opacity-30">
-                      Streaming
-                    </span>
-                    <span className="badge w-28 bg-accent p-4 opacity-40">
-                      Signaling
                     </span>
                   </div>
                 </div>
@@ -133,7 +143,7 @@ export default async function Pool({
           {/* Stats section */}
           {proposalType == 1 ? (
             <PoolStats
-              balance={POOL_BALANCE}
+              balance={poolAmount}
               strategyAddress={strategyAddr}
               strategy={strategyObj}
               communityAddress={communityAddress}
@@ -147,7 +157,10 @@ export default async function Pool({
         </main>
         <ProposalForm
           poolId={poolId}
-          proposalType={proposalType as unknown as string}
+          proposalType={proposalType}
+          alloInfo={alloInfo}
+          tokenGarden={tokenGarden}
+          tokenAddress={garden as Address}
         />
       </div>
     </div>
