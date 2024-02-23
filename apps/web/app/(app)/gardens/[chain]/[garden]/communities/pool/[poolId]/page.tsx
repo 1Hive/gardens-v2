@@ -46,8 +46,6 @@ export default async function Pool({
     return <div>Allo not found</div>;
   }
 
-  console.log("alloInfo", alloInfo);
-
   const { data: poolData } = await queryByChain<getStrategyByPoolQuery>(
     urqlClient,
     chain,
@@ -58,8 +56,6 @@ export default async function Pool({
   if (!poolData) {
     return <div>{`Pool ${poolId} not found`}</div>;
   }
-
-  console.log(poolData);
 
   const strategyObj = poolData.cvstrategies[0];
 
@@ -102,7 +98,7 @@ export default async function Pool({
                 <div className="flex flex-1 flex-col space-y-4 text-xl font-semibold">
                   <div className="flex flex-col items-center justify-center"></div>
 
-                  <span>Strategy type: Conviction Voting</span>
+                  <span>Strategy: Conviction Voting</span>
                   <span>Funding Token: </span>
                 </div>
                 <div className="flex flex-1 flex-col items-center space-y-4 font-bold">
@@ -142,10 +138,12 @@ export default async function Pool({
 
           <Proposals strategy={strategyObj} alloInfo={alloInfo} />
         </main>
-        <ProposalForm
-          poolId={poolId}
-          proposalType={proposalType as unknown as string}
-        />
+        <div className="mt-4 flex justify-center">
+          <ProposalForm
+            poolId={poolId}
+            proposalType={proposalType as unknown as string}
+          />
+        </div>
       </div>
     </div>
   );

@@ -254,14 +254,16 @@ export function Proposals({
         </div>
         <div className="flex justify-center gap-8">
           {/* <Button className={`bg-primary`}>Create Proposal</Button> */}
-          {isMemberActived && (
-            <Button
-              className={`${editView ? "bg-red text-white" : "bg-primary"}`}
-              onClick={() => setEditView((prev) => !prev)}
-            >
-              {editView ? "Cancel" : "Manage support"}
-            </Button>
-          )}
+
+          <Button
+            className={`${editView ? "bg-red text-white" : "bg-primary"}`}
+            onClick={() => setEditView((prev) => !prev)}
+            disabled={!isMemberActived}
+            tooltip="Activate your points to support proposals"
+          >
+            {editView ? "Cancel" : "Manage support"}
+          </Button>
+
           {editView && (
             <Button
               className="min-w-[200px] bg-secondary"

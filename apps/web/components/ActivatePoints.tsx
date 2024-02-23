@@ -86,12 +86,14 @@ export function ActivatePoints({
   }, [deactivatePointsStatus]);
 
   return (
-    <Button onClick={handleChange} className="w-fit bg-primary">
-      {address
-        ? isMemberActivated
-          ? "Deactivate Points"
-          : "Activate Points"
-        : "Connect Wallet"}
-    </Button>
+    <>
+      <Button onClick={handleChange} className="w-fit bg-primary">
+        {address
+          ? isMemberActivated
+            ? "Deactivate Points"
+            : "Activate Points"
+          : "Connect Wallet"}
+      </Button>
+    </>
   );
 }

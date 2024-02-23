@@ -10,7 +10,6 @@ import { PoolCard } from "@/components";
 import { CovenantSlider } from "@/components";
 import { Address, useAccount } from "wagmi";
 import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
-import { formatAddress } from "@/utils/formatAddress";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
@@ -44,33 +43,31 @@ export function CommunityCard({
   members = members ?? [];
   registerToken = registerToken ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
+
+  console.log(registerStakeAmount);
   return (
     <>
       <div className="border2 card card-side bg-white">
-        <aside className="flex min-h-[300px] w-[280px] flex-col justify-between rounded-xl bg-base-100 p-2">
-          {/* <div className=""> */}
+        {/* aside:  community name + btn to access profile */}
+        <aside className="flex min-h-[300px] w-[280px] flex-col items-center justify-center gap-10 rounded-xl bg-base-100 p-2">
           <h3 className="text-center font-press text-xl text-info-content">
             {name}
           </h3>
-          <div className="flex flex-1 flex-col items-center justify-center gap-4"></div>
-          <CovenantSlider />
-          {/* <RegisterMember
-            // isMember={isMember}
-            communityAddress={communityAddress as Address}
-            registerToken={registerToken as Address}
-            registerStakeAmount={registerStakeAmount}
-          /> */}
-          {/* </div> */}
+          <CovenantSlider communityAddress={communityAddress} name={name} />
         </aside>
-        <main className="card-body">
+
+        {/* main: stats, action buttons, dsiplay pools */}
+        <main className="card-body space-y-10">
           <div className="stats flex">
             <div className="stat flex-1">
               <div className="stat-figure text-primary">
                 <UserGroupIcon className="inline-block h-8 w-8 text-primary" />
               </div>
-              <div className="stat-title">Register Members</div>
+              <div className="stat-title">Members</div>
               <div className="stat-value text-primary">{members.length}</div>
-              <div className="stat-desc">50 token membership</div>
+              <div className="stat-desc">
+                {registerStakeAmount} stake token membership
+              </div>
             </div>
 
             <div className="stat flex-1">
@@ -79,10 +76,22 @@ export function CommunityCard({
               </div>
               <div className="stat-title">Pools</div>
               <div className="stat-value text-secondary">{pools.length}</div>
-              <div className="stat-desc">2100k in total funds</div>
+              {/* TODO: add this parameter */}
+              <div className="stat-desc"> # in total funds</div>
             </div>
           </div>
-          <div className="card-actions mt-10 justify-end">
+          <div className="flex h-fit w-full gap-4">
+            <div className="flex-1 border-2">
+              <RegisterMember
+                communityAddress={communityAddress as Address}
+                registerToken={registerToken as Address}
+                registerStakeAmount={registerStakeAmount}
+              />
+            </div>
+
+            <div className="flex-1"> {/* TODO: add pool btn here! */}</div>
+          </div>
+          <div className=" justify-end">
             <div
               className={`flex w-full transform flex-wrap gap-4 overflow-hidden transition-height duration-200 ease-in-out ${
                 !open && "max-h-[290px]"

@@ -4,13 +4,24 @@ import { Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components";
+import { formatAddress } from "@/utils/formatAddress";
+import { Addreth } from "addreth";
 
-export const CovenantSlider: React.FC = () => {
+type CovenanSliderProps = {
+  communityAddress: string;
+  name: any;
+};
+
+export const CovenantSlider: React.FC<CovenanSliderProps> = ({ ...props }) => {
+  const { communityAddress, name } = props;
+
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Community Profile</Button>
+      <Button onClick={() => setOpen(true)} variant="outline">
+        Community Profile
+      </Button>
       <Transition.Root show={open} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={setOpen}>
           <Transition.Child
@@ -77,10 +88,19 @@ export const CovenantSlider: React.FC = () => {
                               <div className="mt-6 sm:ml-6 sm:flex-1">
                                 <div>
                                   <div className="flex flex-col items-start">
-                                    <h3 className="font-press text-sm font-bold text-gray-900">
-                                      Community Name
+                                    <h3 className="font-press text-xl text-info-content">
+                                      {name}
                                     </h3>
-                                    <p className="font-bold">Address full</p>
+                                    <Addreth
+                                      address={
+                                        communityAddress as `0x${string}`
+                                      }
+                                      explorer={(address) => ({
+                                        name: "Base",
+                                        url: `https://sepolia.arbiscan.io/address/${address}`,
+                                        accountUrl: `https://sepolia.arbiscan.io/address/${address}`,
+                                      })}
+                                    />
                                   </div>
                                 </div>
                               </div>
