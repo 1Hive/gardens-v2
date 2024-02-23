@@ -42,7 +42,7 @@ export default async function Gardens() {
           <div className="mx-10 flex flex-col items-center gap-5">
             <div className="flex flex-col items-center">
               <h1 className="max-w-xl text-center text-[#084D21]">
-                Explore and Join Tokens Ecosystems
+                Explore and Join Gardens Ecosystems
               </h1>
               <p className="text-xl">
                 A place where you help shape digital economies

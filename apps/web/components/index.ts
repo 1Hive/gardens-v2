@@ -14,4 +14,4 @@ export { PoolTokenPriceChart } from "./Charts/PoolTokenPriceChart";
 export { ProposalStats } from "./ProposalStats";
 export { PoolStats } from "./PoolStats";
 export { RegisterMember } from "./RegisterMember";
-export { CovenantSlider } from "./CovenantSlider";
+export { CommunityProfile } from "./CommunityProfile";
