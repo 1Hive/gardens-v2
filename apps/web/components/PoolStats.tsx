@@ -23,7 +23,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
   balance,
   strategyAddress,
   strategy,
-  communityAddress
+  communityAddress,
 }) => {
   const { isMemberActived } = useIsMemberActivated(strategy);
   const { isConnected } = useAccount();
@@ -38,8 +38,10 @@ export const PoolStats: FC<PoolStatsProps> = ({
         <div className="flex-flex-col max-h-44 w-full space-y-4 rounded-xl border-2 border-black bg-white p-4">
           <div>
             <div className="flex items-center justify-around">
-              <h4 className="text-center text-xl font-bold">Funding Pool</h4>
-              <h4 className="text-center text-2xl font-bold">{balance} HNY</h4>
+              <h4 className="text-center text-xl font-bold">
+                Funds Available:
+              </h4>
+              <h4 className="text-center text-2xl font-bold">{balance}</h4>
             </div>
           </div>
           <div className="max-h-30 flex items-center gap-3 ">
@@ -65,10 +67,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
               </div>
               <div className="flex flex-1 flex-col items-center">
                 <p>Status</p>
-                <StatusBadge
-                  status={isConnected && isMemberActived ? 1 : 0}
-                  classNames=""
-                />
+                <StatusBadge status={isMemberActived ? 1 : 0} classNames="" />
               </div>
             </div>
 
