@@ -51,7 +51,7 @@ export const CommunityProfile: React.FC<CovenanSliderProps> = ({
                   leaveFrom="translate-x-0"
                   leaveTo="-translate-x-full"
                 >
-                  <Dialog.Panel className="pointer-events-auto relative w-[50vw] max-w-2xl">
+                  <Dialog.Panel className="pointer-events-auto relative max-w-2xl">
                     <Transition.Child
                       as={Fragment}
                       enter="ease-in-out duration-500"
@@ -61,10 +61,10 @@ export const CommunityProfile: React.FC<CovenanSliderProps> = ({
                       leaveFrom="opacity-100"
                       leaveTo="opacity-0"
                     >
-                      <div className="absolute right-0 top-0 -mr-12 flex pl-2 pt-4 sm:-ml-10 sm:pr-4">
+                      <div className="absolute right-1 top-1 z-10 flex ">
                         <button
                           type="button"
-                          className="relative rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+                          className="btn-square btn-sm p-1"
                           onClick={() => setOpen(false)}
                         >
                           <span className="absolute -inset-2.5" />

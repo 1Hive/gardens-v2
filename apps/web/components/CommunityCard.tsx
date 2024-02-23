@@ -81,16 +81,14 @@ export function CommunityCard({
               <div className="stat-desc"> # in total funds</div>
             </div>
           </div>
-          <div className="flex h-fit w-full gap-4">
-            <div className="flex-1 border-2">
-              <RegisterMember
-                communityAddress={communityAddress as Address}
-                registerToken={registerToken as Address}
-                registerStakeAmount={registerStakeAmount}
-              />
-            </div>
+          <div className="flex w-fit gap-4">
+            <RegisterMember
+              communityAddress={communityAddress as Address}
+              registerToken={registerToken as Address}
+              registerStakeAmount={registerStakeAmount}
+            />
 
-            <div className="flex-1"> {/* TODO: add pool btn here! */}</div>
+            <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
           </div>
           <div className=" justify-end">
             <div
