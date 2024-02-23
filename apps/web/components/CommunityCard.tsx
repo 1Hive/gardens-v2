@@ -4,11 +4,11 @@ import { Button, RegisterMember } from "@/components";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
 import { Address, useAccount } from "wagmi";
-import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
+import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
 import { formatAddress } from "@/utils/formatAddress";
 
 type CommunityQuery = NonNullable<
-  NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
+  NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
 >[number];
 type CommunityCardProps = CommunityQuery & { gardenToken: `0x${string}` };
 
