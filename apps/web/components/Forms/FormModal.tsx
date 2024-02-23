@@ -21,7 +21,7 @@ export const FormModal: FC<FormModalProps> = ({
 
   return (
     <div className="flex items-center justify-center">
-      <Button type="button" onClick={() => setOpen(!open)} variant="fill">
+      <Button type="button" onClick={() => setOpen(!open)}>
         {label}
       </Button>
       <Transition.Root show={open} as={Fragment}>

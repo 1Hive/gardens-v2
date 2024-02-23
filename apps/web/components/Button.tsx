@@ -27,7 +27,7 @@ type VariantStyles = Record<
 // TODO: add real styles, this is just a placeholder
 const VARIANT_STYLES: VariantStyles = {
   primary: "bg-primary text-black",
-  outline: "bg-white text-primary",
+  outline: "btn btn-info",
   fill: "bg-secondary text-white",
 };
 

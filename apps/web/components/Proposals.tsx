@@ -210,9 +210,7 @@ export function Proposals({
                 <div>
                   {!editView && (
                     <Link href={`${pathname}/proposals/${id}`} className="ml-8">
-                      <button className="btn btn-outline btn-info px-3 py-[6px]">
-                        View Proposal
-                      </button>
+                      <Button variant="outline">View Proposal</Button>
                     </Link>
                   )}
                 </div>
@@ -243,9 +241,7 @@ export function Proposals({
                     <div className="mb-2">{inputs[i].value} %</div>
                   </div>
                   <Link href={`${pathname}/proposals/${id}`}>
-                    <Button className="h-[38px] bg-slate-200">
-                      View Proposal
-                    </Button>
+                    <Button variant="outline">View Proposal</Button>
                   </Link>
                 </div>
               )}
@@ -266,7 +262,7 @@ export function Proposals({
 
           {editView && (
             <Button
-              className="min-w-[200px] bg-secondary"
+              className="min-w-[200px]"
               onClick={() => submit()}
               isLoading={allocateStatus === "loading"}
             >
