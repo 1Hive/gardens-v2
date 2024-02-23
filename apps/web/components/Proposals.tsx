@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAccount, useContractWrite } from "wagmi";
+import { useAccount, useContractWrite, Address as AddressType } from "wagmi";
 import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI } from "@/src/generated";
@@ -131,7 +131,7 @@ export function Proposals({
     // console.log("poolId", poolId);
 
     writeAllocate({
-      args: [BigInt(poolId), encodedData as `0x${string}`],
+      args: [BigInt(poolId), encodedData as AddressType],
     });
   };
 

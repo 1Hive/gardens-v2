@@ -25,9 +25,9 @@ type ProposalsMock = {
 };
 
 type UnparsedProposal = {
-  submitter: `0x${string}`;
-  beneficiary: `0x${string}`;
-  requestedToken: `0x${string}`;
+  submitter: Address;
+  beneficiary: Address;
+  requestedToken: Address;
   requestedAmount: number;
   stakedTokens: number;
   proposalType: any;
@@ -42,12 +42,12 @@ type UnparsedProposal = {
 type Proposal = UnparsedProposal & ProposalsMock;
 
 type PoolData = {
-  profileId: `0x${string}`;
-  strategy: `0x${string}`;
-  token: `0x${string}`;
+  profileId: Address;
+  strategy: Address;
+  token: Address;
   metadata: { protocol: bigint; pointer: string };
-  managerRole: `0x${string}`;
-  adminRole: `0x${string}`;
+  managerRole: Address;
+  adminRole: Address;
 };
 
 type ProposalMetadata = {
@@ -82,8 +82,8 @@ export default async function Proposal({
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount;
-  const beneficiary = proposalData.beneficiary as `0x${string}`;
-  const submitter = proposalData.submitter as `0x${string}`;
+  const beneficiary = proposalData.beneficiary as Address;
+  const submitter = proposalData.submitter as Address;
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
 

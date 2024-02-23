@@ -1,11 +1,12 @@
 "use client";
 import React from "react";
 import { Addreth } from "addreth";
+import { Address } from "viem";
 
 type EthAddressProps = {
-  address: `0x${string}`;
+  address: Address;
   actions?: "all" | "copy" | "explorer" | "none";
-  icon?: false | "ens" | "identicon" | ((address: `0x${string}`) => string);
+  icon?: false | "ens" | "identicon" | ((address: Address) => string);
 };
 
 //TODO: handle if more than one chain is used

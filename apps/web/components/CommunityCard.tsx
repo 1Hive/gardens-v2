@@ -15,7 +15,7 @@ import { formatAddress } from "@/utils/formatAddress";
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
 >[number];
-type CommunityCardProps = CommunityQuery & { gardenToken: `0x${string}` };
+type CommunityCardProps = CommunityQuery & { gardenToken: Address };
 
 export function CommunityCard({
   communityName: name,
@@ -54,7 +54,10 @@ export function CommunityCard({
           <h3 className="text-center font-press text-xl text-info-content">
             {name}
           </h3>
-          <CommunityProfile communityAddress={communityAddress} name={name} />
+          <CommunityProfile
+            communityAddress={communityAddress as Address}
+            name={name}
+          />
         </aside>
 
         {/* main: stats, action buttons, dsiplay pools */}

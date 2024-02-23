@@ -1,16 +1,16 @@
 "use client";
 import React from "react";
-import { Addreth } from "addreth";
 import { EthAddress } from "@/components";
 import { Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components";
+import { Address } from "viem";
 import { tree1, tree4, grassBrown } from "@/assets";
 
 type CommunityProfileProps = {
-  communityAddress: `0x${string}`;
+  communityAddress: Address;
   name: any;
 };
 

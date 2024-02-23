@@ -13,7 +13,7 @@ import { Address, useAccount } from "wagmi";
 
 type PoolStatsProps = {
   balance?: string | number;
-  strategyAddress: `0x${string}`;
+  strategyAddress: Address;
   strategy: Strategy;
   // poolId: number;
   communityAddress: Address;

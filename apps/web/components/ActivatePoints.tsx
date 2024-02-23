@@ -9,7 +9,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 
 type ActiveMemberProps = {
-  strategyAddress: `0x${string}`;
+  strategyAddress: Address;
   isMemberActived: boolean | undefined;
   communityAddress: Address;
 };
