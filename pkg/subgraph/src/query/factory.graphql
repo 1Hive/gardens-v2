@@ -42,23 +42,6 @@ query getTokenGardens {
     }
   }
 }
-query getPool($poolId: BigInt!) {
-  cvstrategies(where: { poolId: $poolId }) {
-    id
-    poolId
-    proposals {
-      id
-      requestedAmount
-      requestedToken
-      stakedTokens
-      # proposalType
-      proposalStatus
-      submitter
-      metadata
-      beneficiary
-    }
-  }
-}
 
 query isMember($me: ID!, $comm: String!) {
   members(where: { id: $me }) {
@@ -72,20 +55,7 @@ query isMember($me: ID!, $comm: String!) {
   }
 }
 
-# query getCommunity($addr: ID!) {
-#   registryCommunity(id: $addr) {
-#     id
-#     strategies {
-#       id
-#       poolId
-#       proposals {
-#         id
-#       }
-#     }
-#   }
-# }
-
-query getCommunityByGarden($addr: ID!) {
+query getCommunitiesByGarden($addr: ID!) {
   registryFactories {
     id
   }
@@ -124,33 +94,67 @@ query getCommunityByGarden($addr: ID!) {
   }
 }
 
-query getProposalData($garden: ID!, $poolId: BigInt!, $proposalId: ID!) {
+query getPoolData($garden: ID!, $poolId: BigInt!) {
+  allos {
+    id
+    chainId
+    tokenNative
+  }
   tokenGarden(id: $garden) {
     name
     symbol
-    communities {
-      strategies(where: { poolId: $poolId }) {
-        proposals(where: { id: $proposalId }) {
-          beneficiary
-          blockLast
-          convictionLast
-          createdAt
-          metadata
-          proposalStatus
-          requestedAmount
-          requestedToken
-          stakedTokens
-          submitter
-          threshold
-          updatedAt
-          version
-          strategy {
-            id
-            config {
-              proposalType
-            }
-          }
-        }
+    description
+    totalBalance
+    ipfsCovenant
+    decimals
+  }
+  cvstrategies(where: { poolId: $poolId }) {
+    poolAmount
+    metadata
+    id
+    poolId
+    config {
+      id
+      proposalType
+    }
+    registryCommunity {
+      id
+    }
+    proposals {
+      id
+      metadata
+      beneficiary
+      requestedAmount
+      requestedToken
+      proposalStatus
+      stakedTokens
+    }
+  }
+}
+
+query getProposalData($garden: ID!, $proposalId: ID!) {
+  tokenGarden(id: $garden) {
+    name
+    symbol
+  }
+  cvproposal(id: $proposalId) {
+    beneficiary
+    blockLast
+    convictionLast
+    createdAt
+    metadata
+    proposalStatus
+    requestedAmount
+    requestedToken
+    stakedTokens
+    submitter
+    threshold
+    updatedAt
+    version
+    strategy {
+      id
+      config {
+        proposalType
       }
     }
   }
