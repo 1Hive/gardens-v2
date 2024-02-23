@@ -7,7 +7,7 @@ import {
   BuildingOffice2Icon,
 } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
-import { CovenantSlider } from "@/components";
+import { CommunityProfile } from "@/components";
 import { Address, useAccount } from "wagmi";
 import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
 import { formatAddress } from "@/utils/formatAddress";
@@ -54,7 +54,7 @@ export function CommunityCard({
           <h3 className="text-center font-press text-xl text-info-content">
             {name}
           </h3>
-          <CovenantSlider communityAddress={communityAddress} name={name} />
+          <CommunityProfile communityAddress={communityAddress} name={name} />
         </aside>
 
         {/* main: stats, action buttons, dsiplay pools */}
