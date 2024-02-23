@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { Addreth } from "addreth";
+import { EthAddress } from "@/components";
 import { Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
@@ -8,14 +9,12 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components";
 import { tree1, tree4, grassBrown } from "@/assets";
 
-type CovenanSliderProps = {
-  communityAddress: string;
+type CommunityProfileProps = {
+  communityAddress: `0x${string}`;
   name: any;
 };
 
-export const CommunityProfile: React.FC<CovenanSliderProps> = ({
-  ...props
-}) => {
+export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
   const { communityAddress, name } = props;
 
   const [open, setOpen] = useState(false);
@@ -107,15 +106,9 @@ export const CommunityProfile: React.FC<CovenanSliderProps> = ({
                                     <h3 className="font-press text-xl text-info-content">
                                       {name}
                                     </h3>
-                                    <Addreth
-                                      address={
-                                        communityAddress as `0x${string}`
-                                      }
-                                      explorer={(address) => ({
-                                        name: "Base",
-                                        url: `https://sepolia.arbiscan.io/address/${address}`,
-                                        accountUrl: `https://sepolia.arbiscan.io/address/${address}`,
-                                      })}
+                                    <EthAddress
+                                      address={communityAddress}
+                                      icon="identicon"
                                     />
                                   </div>
                                 </div>

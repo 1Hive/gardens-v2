@@ -1,11 +1,9 @@
 import { Badge, StatusBadge } from "@/components";
-import { formatAddress } from "@/utils/formatAddress";
-import { honeyIcon } from "@/assets";
+import { EthAddress } from "@/components";
 import Image from "next/image";
-import { alloABI, cvStrategyABI } from "@/src/generated";
+import { cvStrategyABI } from "@/src/generated";
 import { Abi, Address, createPublicClient, http } from "viem";
 import { getContractsAddrByChain } from "@/constants/contracts";
-import { proposalsMockData } from "@/constants/proposalsMockData";
 import { getChain } from "@/configs/chainServer";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
@@ -84,13 +82,13 @@ export default async function Proposal({
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount;
-  const beneficiary = proposalData.beneficiary;
-  const submitter = proposalData.submitter;
+  const beneficiary = proposalData.beneficiary as `0x${string}`;
+  const submitter = proposalData.submitter as `0x${string}`;
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
 
   // console.log(metadata);
-  //@todo: ipfs fetch
+  //TODO: get token symbol from query
 
   const getIpfsData = (ipfsHash: string) =>
     fetch(`https://ipfs.io/ipfs/${ipfsHash}`, {
@@ -174,8 +172,10 @@ export default async function Proposal({
         </div>
 
         {/* title - description - status */}
-        <div className="relative space-y-12 rounded-xl border-2 border-black bg-white px-8 py-4">
-          <StatusBadge status={status} />
+        <div className="border2 relative space-y-12 rounded-xl bg-white px-8 py-4">
+          <div className="flex justify-end">
+            <StatusBadge status={status} />
+          </div>
           <div className=" flex items-baseline justify-end space-x-4 ">
             <h3 className="w-full text-center text-2xl font-semibold">
               {title}
@@ -191,25 +191,20 @@ export default async function Proposal({
                 <div className="flex flex-1 flex-col items-center space-y-4">
                   <span className="text-md underline">Requested Amount</span>
                   <span className="text-md flex items-center gap-2">
-                    <Image
-                      src={honeyIcon}
-                      alt="honey icon"
-                      className="h-8 w-8"
-                    />
-                    {requestedAmount} <span>HNY</span>
+                    {requestedAmount} <span>token symbol</span>
                   </span>
                 </div>
               )}
               {beneficiary && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
                   <span className="text-md underline">Beneficiary</span>
-                  <span className="text-md">{formatAddress(beneficiary)}</span>
+                  <EthAddress address={beneficiary} actions="copy" />
                 </div>
               )}
               {submitter && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
                   <span className="text-md underline">Created By</span>
-                  <span className="text-md">{formatAddress(submitter)}</span>
+                  <EthAddress address={submitter} actions="copy" />
                 </div>
               )}
             </div>
@@ -429,5 +424,3 @@ function executeAllFunctions(
 
   return results;
 }
-
-
