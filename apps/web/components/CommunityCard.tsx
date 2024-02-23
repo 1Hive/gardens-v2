@@ -45,7 +45,6 @@ export function CommunityCard({
   registerToken = registerToken ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
 
-  console.log(registerStakeAmount);
   return (
     <>
       <div className="border2 card card-side bg-white">

@@ -45,7 +45,7 @@ export default async function Garden({
           </h3>
           <p className="max-w-lg text-center font-semibold leading-7">
             Discover communities in the
-            <span className="text-primary"> Mock Token Garden</span>, where you
+            <span className="text-primary"> {tokenName} Garden</span>, where you
             connect with people and support proposals bounded by a shared
             <span className="text-primary"> covenant.</span>
           </p>

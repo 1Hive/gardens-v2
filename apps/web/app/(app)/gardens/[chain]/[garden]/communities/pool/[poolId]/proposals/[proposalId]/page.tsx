@@ -87,6 +87,8 @@ export default async function Proposal({
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
 
+  console.log(metadata);
+
   // console.log(metadata);
   //TODO: get token symbol from query
 
