@@ -10,6 +10,8 @@ import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
   getAlloDocument,
   getAlloQuery,
+  getPoolDataDocument,
+  getPoolDataQuery,
   getStrategyByPoolDocument,
   getStrategyByPoolQuery,
 } from "#/subgraph/.graphclient";
@@ -33,49 +35,62 @@ export default async function Pool({
     transport: http(),
   });
 
-  const { data } = await queryByChain<getAlloQuery>(
+  // const { data: alloData } = await queryByChain<getAlloQuery>(
+  //   urqlClient,
+  //   chain,
+  //   getAlloDocument,
+  // );
+  // let alloInfo: AlloQuery | null = null;
+  // if (alloData && alloData.allos?.length > 0) {
+  //   alloInfo = alloData.allos[0];
+  // }
+  // if (!alloInfo) {
+  //   return <div>Allo not found</div>;
+  // }
+
+  // console.log("alloInfo", alloInfo);
+
+  // const { data: poolData } = await queryByChain<getStrategyByPoolQuery>(
+  //   urqlClient,
+  //   chain,
+  //   getStrategyByPoolDocument,
+  //   { poolId: poolId },
+  // );
+
+  // if (!poolData) {
+  //   return <div>{`Pool ${poolId} not found`}</div>;
+  // }
+
+  const { data } = await queryByChain<getPoolDataQuery>(
     urqlClient,
     chain,
-    getAlloDocument,
+    getPoolDataDocument,
+    { poolId: poolId, garden: garden },
   );
-  let alloInfo: AlloQuery | null = null;
-  if (data && data.allos?.length > 0) {
-    alloInfo = data.allos[0];
-  }
-  if (!alloInfo) {
-    return <div>Allo not found</div>;
-  }
+  const strategyObj = data?.cvstrategies?.[0];
 
-  console.log("alloInfo", alloInfo);
-
-  const { data: poolData } = await queryByChain<getStrategyByPoolQuery>(
-    urqlClient,
-    chain,
-    getStrategyByPoolDocument,
-    { poolId: poolId },
-  );
-
-  if (!poolData) {
+  if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;
   }
 
-  const strategyObj = poolData.cvstrategies[0];
-
   const strategyAddr = strategyObj.id as Address;
   const communityAddress = strategyObj.registryCommunity.id as Address;
+  const alloInfo = data?.allos[0];
+  const proposalType = strategyObj?.config?.proposalType as number;
+  const poolAmount = strategyObj?.poolAmount as number;
+  const tokenGarden = data.tokenGarden;
 
-  if (!strategyObj.config) {
-    return <div>Strategy Config not found</div>;
-  }
-  const proposalType = strategyObj.config.proposalType as number;
+  // if (!strategyObj.config) {
+  //   return <div>Strategy Config not found</div>;
+  // }
 
-  const poolBalance = await client.readContract({
-    address: strategyAddr,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "getPoolAmount",
-  });
+  // const poolBalance = await client.readContract({
+  //   address: strategyAddr,
+  //   abi: abiWithErrors(cvStrategyABI),
+  //   functionName: "getPoolAmount",
+  // });
 
-  const POOL_BALANCE = Number(poolBalance);
+  // const POOL_BALANCE = Number(poolBalance);
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -133,7 +148,7 @@ export default async function Pool({
           {/* Stats section */}
           {proposalType == 1 ? (
             <PoolStats
-              balance={POOL_BALANCE}
+              balance={poolAmount}
               strategyAddress={strategyAddr}
               strategy={strategyObj}
               communityAddress={communityAddress}
@@ -147,7 +162,10 @@ export default async function Pool({
         </main>
         <ProposalForm
           poolId={poolId}
-          proposalType={proposalType as unknown as string}
+          proposalType={proposalType}
+          alloInfo={alloInfo}
+          tokenGarden={tokenGarden}
+          tokenAddress={garden as Address}
         />
       </div>
     </div>
