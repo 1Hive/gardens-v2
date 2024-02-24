@@ -42,7 +42,7 @@ export function NavBar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                <ConnectButton accountStatus="full" chainStatus={"none"} />
+                <ConnectButton accountStatus="full" />
                 {/* <w3m-button balance="show" label="Connect Wallet" size="md" />{" "} */}
                 {/* <Button
                   disabled={connecting}

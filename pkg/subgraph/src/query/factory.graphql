@@ -66,6 +66,7 @@ query getCommunitiesByGarden($addr: ID!) {
     chainId
     communities {
       id
+      covenantIpfsHash
       chainId
       communityName
       registerToken

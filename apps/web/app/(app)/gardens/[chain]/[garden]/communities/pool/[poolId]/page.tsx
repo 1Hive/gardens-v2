@@ -113,13 +113,19 @@ export default async function Pool({
               </p>
               <div className="flex w-full  p-4">
                 <div className="flex flex-1 flex-col space-y-4 text-xl font-semibold">
-                  <div className="flex flex-col items-center justify-center"></div>
-
-                  <span>Strategy: Conviction Voting</span>
-                  <span>Funding Token: </span>
+                  <div className="flex flex-col items-start justify-center gap-5">
+                    <p className="text-md">
+                      Strategy:{" "}
+                      <span className="text-xl"> Conviction Voting</span>
+                    </p>
+                    <p className="text-md">
+                      Funding Token:{" "}
+                      <span className="text-xl"> {tokenGarden?.symbol}</span>
+                    </p>
+                  </div>
                 </div>
                 <div className="flex flex-1 flex-col items-center space-y-4 font-bold">
-                  <span>Proposals type accepted:</span>
+                  <p className="text-md">Proposals type accepted:</p>
                   <div className="flex w-full items-center justify-evenly">
                     <span className="badge w-28 bg-primary p-4 tracking-wide">
                       Funding
@@ -140,6 +146,7 @@ export default async function Pool({
               ))}
             </div>
           </section>
+
           {/* Stats section */}
           {proposalType == 1 ? (
             <PoolStats
@@ -151,8 +158,8 @@ export default async function Pool({
           ) : (
             <div>Signaling Proposal type</div>
           )}
-          {/* Proposals section */}
 
+          {/* Proposals section */}
           <Proposals strategy={strategyObj} alloInfo={alloInfo} />
         </main>
         <ProposalForm

@@ -18,6 +18,7 @@ type CommunityQuery = NonNullable<
 type CommunityCardProps = CommunityQuery & { gardenToken: Address };
 
 export function CommunityCard({
+  covenantIpfsHash,
   communityName: name,
   id: communityAddress,
   strategies,
@@ -83,6 +84,7 @@ export function CommunityCard({
               <div className="stat-desc"> # in total funds</div>
             </div>
           </div>
+          <h5>{covenantIpfsHash}</h5>
           <div className="flex w-fit gap-4">
             <RegisterMember
               communityAddress={communityAddress as Address}
