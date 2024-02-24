@@ -352,24 +352,16 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
     }
 
-    // function modifyStakeAmount(uint256 newTotalAmount) public payable nonReentrant onlyRegistryMemberSender {
-    //     Member storage member = addressToMemberInfo[msg.sender];
-    //     uint256 oldAmount = member.stakedAmount;
-    //     member.stakedAmount = newTotalAmount;
-    //     //if the user increases his staking amount he will receive GARD tokens as a reward
-    //     if (oldAmount < newTotalAmount) {
-    //         gardenToken.transfer(msg.sender, newTotalAmount - oldAmount);
-    //     }
-    //     //if the user reduce his staking amount he will lose some GARD tokens
-    //     else {
-    //         gardenToken.transferFrom(address(this), msg.sender, oldAmount - newTotalAmount);
-    //     }
+    function getStakeAmountWithFees() public view returns (uint256) {
+        RegistryFactory gardensFactory = RegistryFactory(registryFactory);
+        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / 100;
+        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / 100;
 
-    //     emit StakeAmountUpdated(msg.sender, newTotalAmount);
-    // }
+        return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
+    }
 
     function getBasisStakedAmount() external view returns (uint256) {
-        return registerStakeAmount; //@todo need consider adding protocol fee or not here
+        return registerStakeAmount;
     }
 
     function setBasisStakedAmount(uint256 _newAmount) external onlyCouncilSafe {

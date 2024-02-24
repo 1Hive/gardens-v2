@@ -378,4 +378,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
         stopMeasuringGas();
     }
+
+    function test_getStakeAmountWithFees() public {
+        uint256 stakeFees = _registryCommunity().getStakeAmountWithFees();
+        assertEq(stakeFees, STAKE_WITH_FEES);
+    }
 }
