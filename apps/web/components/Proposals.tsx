@@ -213,12 +213,10 @@ export function Proposals({
               className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
               key={title + "_" + id}
             >
-              <div className="flex w-full items-start justify-between">
-                <div className="flex flex-col items-start gap-0">
-                  <span className="stat-title text-sm">
-                    #{getProposalId(id)}
-                  </span>
-                  <h4 className="text-xl font-semibold">{title}</h4>
+              <div className="flex w-full items-center justify-between font-bold">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-sm">{getProposalId(id)} -</span>
+                  <h4 className="text-xl">{title}</h4>
                 </div>
 
                 <div className="flex items-center gap-8">

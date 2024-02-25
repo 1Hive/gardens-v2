@@ -57,6 +57,16 @@ type ProposalMetadata = {
 
 const { urqlClient } = initUrqlClient();
 
+const prettyTimestamp = (timestamp: number) => {
+  const date = new Date(timestamp * 1000);
+
+  const day = date.getDate();
+  const month = date.toLocaleString("default", { month: "short" });
+  const year = date.getFullYear();
+
+  return `${day} ${month} ${year}`;
+};
+
 export default async function Proposal({
   params: { proposalId, poolId, chain, garden },
 }: {
@@ -162,8 +172,17 @@ export default async function Proposal({
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
       <main className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 bg-surface p-16">
         {/* main content */}
-        <div className="flex items-center justify-between">
-          <Badge type={type} />
+        <div className="flex justify-between">
+          <div className="flex items-center gap-2">
+            <Badge type={type} />
+            <h4 className="font-sm font-bold">
+              <span className="">
+                {" "}
+                {prettyTimestamp(proposalData?.createdAt || 0)}
+              </span>
+            </h4>
+          </div>
+
           <h4 className="font-press">Pool: {poolId}</h4>
         </div>
 
