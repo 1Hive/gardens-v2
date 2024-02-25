@@ -75,10 +75,9 @@ export default async function Proposal({
     return <div>{`Proposal ${proposalId} not found`}</div>;
   }
 
+  const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
   const convictionLast = proposalData.convictionLast;
   const totalStakedTokens = proposalData.stakedTokens;
-  // const maxCVSupply = proposalData.
-  // const totalEffectiveActivePoints = proposalData.
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount;
@@ -86,11 +85,6 @@ export default async function Proposal({
   const submitter = proposalData.submitter as Address;
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
-
-  console.log(metadata);
-
-  // console.log(metadata);
-  //TODO: get token symbol from query
 
   const getIpfsData = (ipfsHash: string) =>
     fetch(`https://ipfs.io/ipfs/${ipfsHash}`, {
@@ -188,24 +182,30 @@ export default async function Proposal({
           </div>
           <div>
             {/* reqAmount - bene - creatBy */}
-            <div className="flex justify-between">
+            <div className="flex justify-between ">
               {requestedAmount && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md underline">Requested Amount</span>
-                  <span className="text-md flex items-center gap-2">
-                    {requestedAmount} <span>token symbol</span>
+                  <span className="text-md font-bold underline">
+                    Requested Amount
+                  </span>
+                  <span className="flex items-center gap-2 text-lg">
+                    {requestedAmount} <span>{tokenSymbol}</span>
                   </span>
                 </div>
               )}
               {beneficiary && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md underline">Beneficiary</span>
+                  <span className="text-md font-bold underline">
+                    Beneficiary
+                  </span>
                   <EthAddress address={beneficiary} actions="copy" />
                 </div>
               )}
               {submitter && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md underline">Created By</span>
+                  <span className="text-md font-bold underline">
+                    Created By
+                  </span>
                   <EthAddress address={submitter} actions="copy" />
                 </div>
               )}

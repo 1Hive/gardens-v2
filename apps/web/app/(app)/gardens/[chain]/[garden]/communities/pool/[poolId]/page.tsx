@@ -1,4 +1,4 @@
-import { Proposals } from "@/components";
+import { Badge, Proposals } from "@/components";
 import { PoolStats } from "@/components";
 import Image from "next/image";
 import { cvStrategyABI, alloABI } from "@/src/generated";
@@ -112,24 +112,27 @@ export default async function Pool({
                 Mocked data description
               </p>
               <div className="flex w-full  p-4">
-                <div className="flex flex-1 flex-col space-y-4 text-xl font-semibold">
-                  <div className="flex flex-col items-start justify-center gap-5">
+                <div className="flex flex-1  text-xl font-semibold">
+                  <div className="mx-auto flex max-w-fit flex-col items-start justify-center">
                     <p className="text-md">
                       Strategy:{" "}
-                      <span className="text-xl"> Conviction Voting</span>
+                      <span className="ml-2 text-xl"> Conviction Voting</span>
                     </p>
-                    <p className="text-md">
-                      Funding Token:{" "}
-                      <span className="text-xl"> {tokenGarden?.symbol}</span>
-                    </p>
+                    {proposalType == 1 && (
+                      <p className="text-md">
+                        Funding Token:{" "}
+                        <span className="ml-2 text-xl">
+                          {" "}
+                          {tokenGarden?.symbol}
+                        </span>
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col items-center space-y-4 font-bold">
                   <p className="text-md">Proposals type accepted:</p>
                   <div className="flex w-full items-center justify-evenly">
-                    <span className="badge w-28 bg-primary p-4 tracking-wide">
-                      Funding
-                    </span>
+                    <Badge type={proposalType} />
                   </div>
                 </div>
               </div>
@@ -148,16 +151,12 @@ export default async function Pool({
           </section>
 
           {/* Stats section */}
-          {proposalType == 1 ? (
-            <PoolStats
-              balance={poolAmount}
-              strategyAddress={strategyAddr}
-              strategy={strategyObj}
-              communityAddress={communityAddress}
-            />
-          ) : (
-            <div>Signaling Proposal type</div>
-          )}
+          <PoolStats
+            balance={poolAmount}
+            strategyAddress={strategyAddr}
+            strategy={strategyObj}
+            communityAddress={communityAddress}
+          />
 
           {/* Proposals section */}
           <Proposals strategy={strategyObj} alloInfo={alloInfo} />

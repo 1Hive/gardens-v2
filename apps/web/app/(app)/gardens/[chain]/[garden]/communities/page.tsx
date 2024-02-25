@@ -73,6 +73,7 @@ export default async function Garden({
           <CommunityCard
             {...community}
             key={`${community.communityName}_${i}`}
+            tokenSymbol={tokenSymbol}
           />
         ))}
       </section>

@@ -36,7 +36,7 @@ export function PoolCard({
       </div>
       <div className="flex w-full flex-col p-1">
         <div className="flex items-center justify-between text-xs">
-          <p className="stat-title">strategy type:</p>
+          <p className="stat-title">pool type:</p>
 
           <Badge type={config?.proposalType as number} classNames="scale-75" />
         </div>
