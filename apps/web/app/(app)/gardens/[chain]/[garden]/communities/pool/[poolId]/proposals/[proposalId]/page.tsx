@@ -57,6 +57,16 @@ type ProposalMetadata = {
 
 const { urqlClient } = initUrqlClient();
 
+const prettyTimestamp = (timestamp: number) => {
+  const date = new Date(timestamp * 1000);
+
+  const day = date.getDate();
+  const month = date.toLocaleString("default", { month: "short" });
+  const year = date.getFullYear();
+
+  return `${day} ${month} ${year}`;
+};
+
 export default async function Proposal({
   params: { proposalId, poolId, chain, garden },
 }: {
@@ -75,10 +85,9 @@ export default async function Proposal({
     return <div>{`Proposal ${proposalId} not found`}</div>;
   }
 
+  const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
   const convictionLast = proposalData.convictionLast;
   const totalStakedTokens = proposalData.stakedTokens;
-  // const maxCVSupply = proposalData.
-  // const totalEffectiveActivePoints = proposalData.
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount;
@@ -86,11 +95,6 @@ export default async function Proposal({
   const submitter = proposalData.submitter as Address;
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
-
-  console.log(metadata);
-
-  // console.log(metadata);
-  //TODO: get token symbol from query
 
   const getIpfsData = (ipfsHash: string) =>
     fetch(`https://ipfs.io/ipfs/${ipfsHash}`, {
@@ -168,8 +172,17 @@ export default async function Proposal({
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
       <main className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 bg-surface p-16">
         {/* main content */}
-        <div className="flex items-center justify-between">
-          <Badge type={type} />
+        <div className="flex justify-between">
+          <div className="flex items-center gap-2">
+            <Badge type={type} />
+            <h4 className="font-sm font-bold">
+              <span className="">
+                {" "}
+                {prettyTimestamp(proposalData?.createdAt || 0)}
+              </span>
+            </h4>
+          </div>
+
           <h4 className="font-press">Pool: {poolId}</h4>
         </div>
 
@@ -188,24 +201,30 @@ export default async function Proposal({
           </div>
           <div>
             {/* reqAmount - bene - creatBy */}
-            <div className="flex justify-between">
+            <div className="flex justify-between ">
               {requestedAmount && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md underline">Requested Amount</span>
-                  <span className="text-md flex items-center gap-2">
-                    {requestedAmount} <span>token symbol</span>
+                  <span className="text-md font-bold underline">
+                    Requested Amount
+                  </span>
+                  <span className="flex items-center gap-2 text-lg">
+                    {requestedAmount} <span>{tokenSymbol}</span>
                   </span>
                 </div>
               )}
               {beneficiary && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md underline">Beneficiary</span>
+                  <span className="text-md font-bold underline">
+                    Beneficiary
+                  </span>
                   <EthAddress address={beneficiary} actions="copy" />
                 </div>
               )}
               {submitter && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md underline">Created By</span>
+                  <span className="text-md font-bold underline">
+                    Created By
+                  </span>
                   <EthAddress address={submitter} actions="copy" />
                 </div>
               )}

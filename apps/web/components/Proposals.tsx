@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Button, Badge } from "@/components";
+import { Button, StatusBadge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAccount, useContractWrite, Address as AddressType } from "wagmi";
@@ -180,6 +180,14 @@ export function Proposals({
       else return acc + curr.value;
     }, 0);
 
+  const getProposalId = (inputString: string) => {
+    if (inputString.length >= 2) {
+      return inputString.substring(2);
+    } else {
+      return "0x0";
+    }
+  };
+
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
       {/* proposals: title - proposals -create Button */}
@@ -202,17 +210,24 @@ export function Proposals({
         <div className="flex flex-col gap-6">
           {proposals.map(({ title, type, id, stakedTokens }, i) => (
             <div
-              className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
+              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
               key={title + "_" + id}
             >
-              <div className="flex w-full items-center justify-between">
-                <h4 className="font-semibold">{title}</h4>
-                <div>
-                  {!editView && (
-                    <Link href={`${pathname}/proposals/${id}`} className="ml-8">
+              <div className="flex w-full items-center justify-between font-bold">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-sm">{getProposalId(id)} -</span>
+                  <h4 className="text-xl">{title}</h4>
+                </div>
+
+                <div className="flex items-center gap-8">
+                  <StatusBadge status={1} />
+                  {/* {!editView && ( */}
+                  <>
+                    <Link href={`${pathname}/proposals/${id}`}>
                       <Button variant="outline">View Proposal</Button>
                     </Link>
-                  )}
+                  </>
+                  {/* )} */}
                 </div>
               </div>
 
@@ -240,17 +255,15 @@ export function Proposals({
                     </div>
                     <div className="mb-2">{inputs[i].value} %</div>
                   </div>
-                  <Link href={`${pathname}/proposals/${id}`}>
+                  {/* <Link href={`${pathname}/proposals/${id}`}>
                     <Button variant="outline">View Proposal</Button>
-                  </Link>
+                  </Link> */}
                 </div>
               )}
             </div>
           ))}
         </div>
         <div className="flex justify-center gap-8">
-          {/* <Button className={`bg-primary`}>Create Proposal</Button> */}
-
           <Button
             className={`${editView ? "bg-red text-white" : "bg-primary"}`}
             onClick={() => setEditView((prev) => !prev)}
@@ -274,10 +287,10 @@ export function Proposals({
           <p className="font-semibold">{message}</p>
         </div>
         {/*  PROPOSALS STATS  ///// */}
-        <ProposalStats
+        {/* <ProposalStats
           proposals={proposals}
           distributedPoints={distributedPoints}
-        />
+        /> */}
       </div>
     </section>
   );

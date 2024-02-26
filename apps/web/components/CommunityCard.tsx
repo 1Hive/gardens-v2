@@ -10,7 +10,6 @@ import { PoolCard } from "@/components";
 import { CommunityProfile } from "@/components";
 import { Address, useAccount } from "wagmi";
 import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
-import { formatAddress } from "@/utils/formatAddress";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -18,13 +17,15 @@ type CommunityQuery = NonNullable<
 type CommunityCardProps = CommunityQuery & { gardenToken: Address };
 
 export function CommunityCard({
+  // covenantIpfsHash,
   communityName: name,
   id: communityAddress,
   strategies,
   members,
   registerToken,
   registerStakeAmount,
-}: CommunityQuery) {
+  tokenSymbol,
+}: CommunityQuery & { tokenSymbol: string | undefined }) {
   const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
   // const [isMember, setIsMember] = useState<boolean>(false);
@@ -44,6 +45,8 @@ export function CommunityCard({
   members = members ?? [];
   registerToken = registerToken ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
+
+  //TODO: check decimals format for stake amounts
 
   return (
     <>
@@ -69,7 +72,7 @@ export function CommunityCard({
               <div className="stat-title">Members</div>
               <div className="stat-value text-primary">{members.length}</div>
               <div className="stat-desc">
-                {registerStakeAmount} stake token membership
+                {registerStakeAmount} {tokenSymbol} membership
               </div>
             </div>
 
@@ -83,6 +86,7 @@ export function CommunityCard({
               <div className="stat-desc"> # in total funds</div>
             </div>
           </div>
+
           <div className="flex w-fit gap-4">
             <RegisterMember
               communityAddress={communityAddress as Address}
@@ -103,7 +107,6 @@ export function CommunityCard({
               ))}
               {pools.length > 2 && (
                 <Button
-                  // style="outline"
                   className="!rounded-full bg-white !p-3"
                   onClick={() => setOpen((prev) => !prev)}
                 >

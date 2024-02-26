@@ -26,8 +26,6 @@ export default async function Garden({
     { addr: garden },
   );
 
-  console.log("result", result);
-
   // const result = await sdk.getCommunityByGarden({ addr: garden });
   const communities = result?.tokenGarden?.communities || [];
   const registryFactoryAddr = result?.registryFactories?.[0].id as Address;
@@ -75,6 +73,7 @@ export default async function Garden({
           <CommunityCard
             {...community}
             key={`${community.communityName}_${i}`}
+            tokenSymbol={tokenSymbol}
           />
         ))}
       </section>
