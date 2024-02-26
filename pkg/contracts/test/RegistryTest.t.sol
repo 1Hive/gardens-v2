@@ -35,11 +35,13 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     CVStrategy public strategy;
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * 10 ** 18;
-    uint256 public constant MINIMUM_STAKE = 1000 * 10 ** 18;
-    uint256 public constant PROTOCOL_FEE_PERCENTAGE = 1;
-    uint256 public constant COMMUNITY_FEE_PERCENTAGE = 3;
+    uint256 public constant MINIMUM_STAKE = 1000 * DECIMALS;
+    uint256 public constant PRECISION = 10 ** 4;
+    uint256 public constant DECIMALS = 10 ** 18;
+    uint256 public constant PROTOCOL_FEE_PERCENTAGE = 22525; // 2.2525  * 10 ** 4
+    uint256 public constant COMMUNITY_FEE_PERCENTAGE = 3 * PRECISION;
     uint256 public constant STAKE_WITH_FEES =
-        MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / 100;
+        MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / (100 * PRECISION);
 
     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
@@ -124,11 +126,10 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().stakeAndRegisterMember();
         assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE);
         assertEq(token.balanceOf(address(gardenMember)), mintAmount - STAKE_WITH_FEES);
-        uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE) / 100;
-        uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE) / 100;
+        uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE) / (100 * PRECISION);
+        uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE) / (100 * PRECISION);
         assertEq(token.balanceOf(address(protocolFeeReceiver)), protocolAmount);
         assertEq(token.balanceOf(address(daoFeeReceiver)), feeAmount);
-
         vm.stopPrank();
         stopMeasuringGas();
     }
@@ -153,8 +154,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE * (i + 1), "Registry balance");
             assertEq(token.balanceOf(members[i]), mintAmount - STAKE_WITH_FEES, "Member balance");
 
-            uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE * (i + 1)) / 100;
-            uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE * (i + 1)) / 100;
+            uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE * (i + 1)) / (100 * PRECISION);
+            uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE * (i + 1)) / (100 * PRECISION);
             assertEq(token.balanceOf(address(protocolFeeReceiver)), protocolAmount, "Protocol balance");
             assertEq(token.balanceOf(address(daoFeeReceiver)), feeAmount, "DAO balance");
         }
@@ -169,9 +170,10 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().stakeAndRegisterMember();
         _registryCommunity().unregisterMember();
         assertTrue(!_registryCommunity().isMember(gardenMember));
-        uint256 feesAmount = (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / 100;
+        uint256 feesAmount = (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / (100 * PRECISION);
         assertEq(token.balanceOf(address(registryCommunity)), 0);
         assertEq(token.balanceOf(address(gardenMember)), mintAmount - feesAmount);
+        assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)),0);
         vm.stopPrank();
         stopMeasuringGas();
     }
@@ -205,15 +207,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //vm.expectRevert("error");
         strategy.activatePoints();
 
-        token.approve(address(registryCommunity), 20 * (10 ** 18));
-        _registryCommunity().increasePowerInStrategy(address(strategy), 100 * (10 ** 4));
-        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (20 * (10 ** 18)));
+        token.approve(address(registryCommunity), 20 * DECIMALS);
+        _registryCommunity().increasePower(20 * DECIMALS);
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (20 * DECIMALS));
 
         vm.stopPrank();
-        assertEq(strategy.memberPowerBalance(gardenMember), 200 * 10 ** 4);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 200 * 10 ** 4);
     }
 
-    function test_revertIncreasePowerCapped() public {
+    function test_increasePowerCapped() public {
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
             allo(),
@@ -234,9 +236,39 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //vm.expectRevert("error");
         strategy.activatePoints();
 
-        token.approve(address(registryCommunity), 20 * (10 ** 18));
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.MaxPointsReached.selector));
-        _registryCommunity().increasePowerInStrategy(address(strategy), 110 * (10 ** 4));
+        token.approve(address(registryCommunity), 2000 * DECIMALS);
+        _registryCommunity().increasePower( 2000 * DECIMALS);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember,address(strategy)),200 * PRECISION);
+    }
+
+    function test_activateAfterIncreasePower() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            CVStrategy.ProposalType(0),
+            CVStrategy.PointSystem.Unlimited
+        );
+        vm.stopPrank();
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+
+        token.approve(address(registryCommunity), 20 * DECIMALS);
+        _registryCommunity().increasePower(20 * DECIMALS);
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (20 * DECIMALS));
+
+        strategy.activatePoints();
+        
+        vm.stopPrank();
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 200 * 10 ** 4);
     }
 
     function test_kickMember() public {
@@ -267,13 +299,13 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //vm.expectRevert("error");
         strategy.activatePoints();
         vm.stopPrank();
-        assertEq(strategy.memberPowerBalance(gardenMember), 100 * 10 ** 4);
+        assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)), 100 * 10 ** 4);
         //assertEq(strategy.activatedPointsIn)
         vm.startPrank(address(councilSafe));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         assertTrue(!_registryCommunity().isMember(gardenMember));
         assertEq(token.balanceOf(address(councilSafe)), MINIMUM_STAKE);
-        assertEq(strategy.memberPowerBalance(gardenMember), 0);
+        assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)), 0);
         // assertTrue(!_registryCommunity().memberActivatedInStrategies(gardenMember,address(strategy)));
         vm.stopPrank();
         stopMeasuringGas();
@@ -290,6 +322,35 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _nonKickableCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
+    }
+    function test_revertDecreasePower() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            CVStrategy.ProposalType(0),
+            CVStrategy.PointSystem.Unlimited
+        );
+        vm.stopPrank();
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+        strategy.activatePoints();
+
+        token.approve(address(registryCommunity), 100 * DECIMALS);
+        _registryCommunity().increasePower( 100 * DECIMALS);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember,address(strategy)),600 * PRECISION);
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
+        _registryCommunity().decreasePower(101 * DECIMALS);
+        vm.stopPrank();
+
     }
 
     function test_revertKickUnregisteredMember() public {

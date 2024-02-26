@@ -96,6 +96,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     error ValueCannotBeZero();
     error KickNotEnabled();
     error PointsDeactivated();
+    error DecreaseUnderMinimum();
 
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -104,6 +105,9 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         address member;
         uint256 stakedAmount;
         bool isRegistered;
+    }
+    struct Strategies {
+        address[] strategies;
     }
 
     struct InitializeParams {
@@ -145,10 +149,11 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     mapping(address => bool) public enabledStrategies;
     mapping(address => mapping(address => bool)) public memberActivatedInStrategies;
     mapping(address => address[]) public strategiesByMember;
+    mapping(address => mapping(address => uint256)) public memberPowerInStrategy;
 
     //      strategy           member     power
 
-    uint256 public constant DEFAULT_POINTS = 100 * 10 ** 4;
+    uint256 public constant PRECISION_SCALE = 10 ** 4;    
 
     constructor() {
         // _grantRole(DEFAULT_ADMIN_ROLE, address(this));
@@ -179,7 +184,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         registry = IRegistry(allo.getRegistry());
 
         address[] memory owners = councilSafe.getOwners();
-        console.log("owners length", owners.length);
         address[] memory initialMembers = new address[](owners.length + 2);
 
         for (uint256 i = 0; i < owners.length; i++) {
@@ -210,10 +214,13 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         if (memberActivatedInStrategies[_member][_strategy]) {
             revert UserAlreadyActivated();
         }
-
+        uint256 pointsPerMember = IPointStrategy(_strategy).getPointsPerMember();
+        Member memory member = addressToMemberInfo[_member];
+        uint256 extraStakedAmount = member.stakedAmount - registerStakeAmount;
+        uint256 pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, extraStakedAmount);
+        memberPowerInStrategy[_member][_strategy] = pointsPerMember + pointsToIncrease;
         memberActivatedInStrategies[_member][_strategy] = true;
         strategiesByMember[_member].push(_strategy);
-        // totalPointsActivatedInStrategy[_strategy] += DEFAULT_POINTS;
 
         emit MemberActivatedStrategy(_member, _strategy);
     }
@@ -226,54 +233,92 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
 
         memberActivatedInStrategies[_member][_strategy] = false;
+        memberPowerInStrategy[_member][_strategy] = 0;
+        removeStrategyFromMember(_member,_strategy);
         //totalPointsActivatedInStrategy[_strategy] -= DEFAULT_POINTS;
         // emit StrategyRemoved(_strategy);
         emit MemberDeactivatedStrategy(_member, _strategy);
     }
 
-    function increasePowerInStrategy(address _strategy, uint256 _power)
-        public
-        nonReentrant
-        onlyRegistryMemberSender
-        onlyActivatedInStrategy(_strategy)
-        onlyStrategyEnabled(_strategy)
-    {
-        address member = msg.sender;
-        address[] memory memberStrategies = strategiesByMember[member];
-
-        uint256 amountToStake;
+    function removeStrategyFromMember(address _member, address _strategy) internal {
+        address[] storage memberStrategies = strategiesByMember[_member];
         for (uint256 i = 0; i < memberStrategies.length; i++) {
-            //FIX support interface check
-            if (address(memberStrategies[i]) == _strategy) {
-                amountToStake = IPointStrategy(memberStrategies[i]).increasePower(member, _power);
-                console.log("AMOUNT TO STAKE", amountToStake);
-
-                gardenToken.transferFrom(member, address(this), amountToStake);
-                addressToMemberInfo[member].stakedAmount += amountToStake;
+            if(memberStrategies[i] == _strategy){
+                memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
+                memberStrategies.pop();
             }
         }
     }
 
-    function decreasePowerInStrategy(address _strategy, uint256 _power)
+    // function increasePowerInStrategy(address _strategy, uint256 _power)
+    //     public
+    //     nonReentrant
+    //     onlyRegistryMemberSender
+    //     onlyActivatedInStrategy(_strategy)
+    //     onlyStrategyEnabled(_strategy)
+    // {
+    //     address member = msg.sender;
+    //     address[] memory memberStrategies = strategiesByMember[member];
+
+    //     uint256 amountToStake;
+    //     for (uint256 i = 0; i < memberStrategies.length; i++) {
+    //         //FIX support interface check
+    //         if (address(memberStrategies[i]) == _strategy) {
+    //             amountToStake = IPointStrategy(memberStrategies[i]).increasePower(member, _power);
+    //             gardenToken.transferFrom(member, address(this), amountToStake);
+    //             addressToMemberInfo[member].stakedAmount += amountToStake;
+    //         }
+    //     }
+    // }
+
+    function increasePower(uint256 _amountStaked)
         public
         nonReentrant
         onlyRegistryMemberSender
-        onlyActivatedInStrategy(_strategy)
-        onlyStrategyEnabled(_strategy)
+        {
+        address member = msg.sender;
+        address[] memory memberStrategies = strategiesByMember[member];
+
+        uint256 pointsToIncrease;
+        gardenToken.transferFrom(member, address(this), _amountStaked);
+        addressToMemberInfo[member].stakedAmount += _amountStaked;
+        for (uint256 i = 0; i < memberStrategies.length; i++) {
+            //FIX support interface check
+            //if (address(memberStrategies[i]) == _strategy) {
+                pointsToIncrease = IPointStrategy(memberStrategies[i]).increasePower(member, _amountStaked);
+                if(pointsToIncrease != 0 ){
+                memberPowerInStrategy[member][memberStrategies[i]] += pointsToIncrease ;
+                }
+            //}
+        }
+    }
+
+    function decreasePower(uint256 _amountUnstaked)
+        public
+        nonReentrant
+        onlyRegistryMemberSender
     {
         address member = msg.sender;
         address[] memory memberStrategies = strategiesByMember[member];
 
-        uint256 amountToUnstake;
+        uint256 pointsToDecrease;
+
+        if(addressToMemberInfo[member].stakedAmount- _amountUnstaked < registerStakeAmount){
+            revert DecreaseUnderMinimum();
+        }
+        gardenToken.transferFrom(member, address(this), _amountUnstaked);
+        addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
         for (uint256 i = 0; i < memberStrategies.length; i++) {
-            //FIX support interface check
-            if (address(memberStrategies[i]) == _strategy) {
-                amountToUnstake = IPointStrategy(memberStrategies[i]).increasePower(member, _power);
-                gardenToken.transferFrom(member, address(this), amountToUnstake);
-                addressToMemberInfo[member].stakedAmount -= amountToUnstake;
-            }
+            // if (address(memberStrategies[i]) == _strategy) {
+                pointsToDecrease = IPointStrategy(memberStrategies[i]).decreasePower(member, _amountUnstaked);
+                memberPowerInStrategy[member][memberStrategies[i]] = pointsToDecrease;
+            // }
         }
     }
+
+    function getMemberPowerInStrategy(address _member, address _strategy) public view returns(uint256){
+        return memberPowerInStrategy[_member][_strategy];
+    } 
 
     function addStrategy(address _newStrategy) public onlyCouncilSafe {
         if (enabledStrategies[_newStrategy]) {
@@ -327,8 +372,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
         RegistryFactory gardensFactory = RegistryFactory(registryFactory);
-        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / 100;
-        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / 100;
+        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
+        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 *  PRECISION_SCALE);
         if (!isMember(_member)) {
             newMember.isRegistered = true;
 
@@ -354,8 +399,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
     function getStakeAmountWithFees() public view returns (uint256) {
         RegistryFactory gardensFactory = RegistryFactory(registryFactory);
-        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / 100;
-        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / 100;
+        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
+        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
 
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
@@ -387,6 +432,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         deactivateAllStrategies(_member);
         Member memory member = addressToMemberInfo[_member];
         delete addressToMemberInfo[_member];
+        delete strategiesByMember[_member];
 
         gardenToken.transfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
