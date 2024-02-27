@@ -13,16 +13,7 @@ import {
   PoolAmountIncreased,
 } from "../../generated/templates/CVStrategy/CVStrategy";
 
-import {
-  BigInt,
-  log,
-  Bytes,
-  json,
-  dataSource,
-  DataSourceTemplate,
-  ethereum,
-  Value,
-} from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
@@ -35,6 +26,9 @@ export function handleInitialized(event: InitializedCV): void {
   const maxRatio = event.params.data.maxRatio;
   const weight = event.params.data.weight;
   const pType = event.params.data.proposalType;
+  const pointsPerMember = event.params.data.pointConfig.pointsPerMember;
+  const tokensPerPoint = event.params.data.pointConfig.tokensPerPoint;
+  //@todo kev save it in entity
 
   log.debug(
     "handleInitialized registryCommunity:{} decay:{} maxRatio:{} weight:{}",

@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: arbitrum-sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 421614
+        data: 1337
     source:
-      address: "0x7236CB3d0cDCb2E5f8EE58AE851c12fc71C95348"
+      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
       abi: RegistryFactory
-      startBlock: 15734716
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -35,7 +35,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: arbitrum-sepolia
+    network: localhost
     source:
       abi: RegistryCommunity
     mapping:
@@ -89,7 +89,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: arbitrum-sepolia
+    network: localhost
     source:
       abi: CVStrategy
     mapping:
@@ -106,7 +106,7 @@ templates:
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8))
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8,uint8,(uint256,uint256,uint256,uint256))) 
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
