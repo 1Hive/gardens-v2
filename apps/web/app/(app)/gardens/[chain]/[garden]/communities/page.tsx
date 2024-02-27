@@ -1,4 +1,4 @@
-import { tree1, tree2, tree3, grass, grassLarge } from "@/assets";
+import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
 import { CommunityCard } from "@/components";
 import { getContractsAddrByChain } from "@/constants/contracts";
@@ -25,6 +25,8 @@ export default async function Garden({
     getCommunitiesByGardenDocument,
     { addr: garden },
   );
+
+  console.log("result", result);
 
   // const result = await sdk.getCommunityByGarden({ addr: garden });
   const communities = result?.tokenGarden?.communities || [];

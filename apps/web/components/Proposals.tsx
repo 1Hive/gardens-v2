@@ -41,7 +41,14 @@ export type ProposalTypeVoter = Proposal & {
   type: number;
 };
 
-// const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
+//const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
+
+//Fixed System
+// for NOT 18 decimales stake, like gardensDAO example:
+// 100% points = BIGINT_100_SCALED = 1,000,000
+
+// for 1hive example, 18 decimales stake:
+// 100% = 1000000000000000000000000" = 1e24
 
 //!POOL == STRATEGY
 export function Proposals({
@@ -62,6 +69,8 @@ export function Proposals({
   const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
 
   const { isMemberActived } = useIsMemberActivated(strategy);
+
+  //console.log(strategy);
 
   useEffect(() => {
     setStrategyAddress(strategy.id as Address);
@@ -143,7 +152,7 @@ export function Proposals({
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = input.value - current.voterStakedPointsPct;
+          const dif = (input.value - current.voterStakedPointsPct) * 10000;
           if (dif !== 0) {
             resultArr.push([Number(input.id), dif]);
           }
@@ -160,8 +169,8 @@ export function Proposals({
 
   const inputHandler = (i: number, value: number) => {
     const currentPoints = calculatePoints(i);
-    // console.log("currentPoints", currentPoints);
-    // console.log("value", value);
+    console.log("currentPoints", currentPoints);
+    console.log("value", value);
     if (currentPoints + value <= 100) {
       setInputs(
         inputs.map((input, index) =>
