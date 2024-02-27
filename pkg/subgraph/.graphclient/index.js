@@ -233,12 +233,13 @@ export const getCommunitiesByGardenDocument = gql `
     chainId
     communities {
       id
+      covenantIpfsHash
       chainId
       communityName
       registerToken
       registerStakeAmount
       alloAddress
-      members {
+      members(where: {stakedAmount_gt: "0"}) {
         id
         memberAddress
       }

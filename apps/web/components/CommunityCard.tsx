@@ -9,27 +9,35 @@ import {
 import { PoolCard } from "@/components";
 import { CommunityProfile } from "@/components";
 import { Address, useAccount } from "wagmi";
-import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
+import {
+  TokenGarden,
+  getCommunitiesByGardenQuery,
+} from "#/subgraph/.graphclient";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
 >[number];
-type CommunityCardProps = CommunityQuery & { gardenToken: Address };
+
+type CommunityCardProps = CommunityQuery & {
+  tokenGarden: TokenGarden | undefined;
+} & {
+  covenantData?: { logo: string; covenant: string };
+};
 
 export function CommunityCard({
-  // covenantIpfsHash,
+  covenantData,
   communityName: name,
   id: communityAddress,
   strategies,
   members,
   registerToken,
   registerStakeAmount,
-  tokenSymbol,
-}: CommunityQuery & { tokenSymbol: string | undefined }) {
-  const [open, setOpen] = useState(false);
+  tokenGarden,
+}: CommunityCardProps) {
+  // const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
-  // const [isMember, setIsMember] = useState<boolean>(false);
 
+  // const [isMember, setIsMember] = useState<boolean>(false);
   // useEffect(() => {
   //   if (accountAddress && members) {
   //     const findMember = members.some(
@@ -58,7 +66,8 @@ export function CommunityCard({
           </h3>
           <CommunityProfile
             communityAddress={communityAddress as Address}
-            name={name}
+            name={name as string}
+            covenantData={covenantData}
           />
         </aside>
 
@@ -72,7 +81,7 @@ export function CommunityCard({
               <div className="stat-title">Members</div>
               <div className="stat-value text-primary">{members.length}</div>
               <div className="stat-desc">
-                {registerStakeAmount} {tokenSymbol} membership
+                {registerStakeAmount} {tokenGarden?.symbol} membership
               </div>
             </div>
 
@@ -98,14 +107,14 @@ export function CommunityCard({
           </div>
           <div className=" justify-end">
             <div
-              className={`flex w-full transform flex-wrap gap-4 overflow-hidden transition-height duration-200 ease-in-out ${
+              className={`flex w-full overflow-x-auto transform gap-4 transition-height duration-200 ease-in-out ${
                 !open && "max-h-[290px]"
               } `}
             >
               {pools.map((pool, i) => (
                 <PoolCard {...pool} key={i} />
               ))}
-              {pools.length > 2 && (
+              {/* {pools.length > 2 && (
                 <Button
                   className="!rounded-full bg-white !p-3"
                   onClick={() => setOpen((prev) => !prev)}
@@ -115,7 +124,7 @@ export function CommunityCard({
                     aria-hidden="true"
                   />
                 </Button>
-              )}
+              )} */}
             </div>
           </div>
         </main>

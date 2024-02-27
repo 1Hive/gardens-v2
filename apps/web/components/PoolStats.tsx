@@ -10,6 +10,7 @@ import { Strategy } from "./Proposals";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { Address, useAccount } from "wagmi";
+import { PRECISION_SCALE } from "@/actions/getProposals";
 
 type PoolStatsProps = {
   balance?: string | number;
@@ -98,7 +99,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
         {voterStakePct && Number(voterStakePct) !== 0 ? (
           <div className="flex h-48 flex-col items-center justify-center">
             <p>voterStakePct</p>
-            <p className="text-5xl font-semibold">{Number(voterStakePct)}</p>
+            <p className="text-5xl font-semibold">{Number(voterStakePct / PRECISION_SCALE)} %</p>
           </div>
         ) : (
           // <ActivePointsChart stakedPoints={Number(voterStakePct)} />

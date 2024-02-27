@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { EthAddress } from "@/components";
 import { Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
@@ -9,14 +9,16 @@ import { Button } from "@/components";
 import { Address } from "viem";
 import { tree1, tree4, grassBrown } from "@/assets";
 
+type ConvenantData = { logo: string; covenant: string } | undefined;
+
 type CommunityProfileProps = {
   communityAddress: Address;
-  name: any;
+  name: string;
+  covenantData: ConvenantData;
 };
 
 export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
-  const { communityAddress, name } = props;
-
+  const { communityAddress, name, covenantData } = props;
   const [open, setOpen] = useState(false);
 
   return (
@@ -72,65 +74,62 @@ export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
                         </button>
                       </div>
                     </Transition.Child>
-                    <div className="relative h-full w-full overflow-y-auto bg-white p-8">
-                      <div className="space-y-6 pb-16">
+                    <div className="relative h-full overflow-y-auto bg-white p-8">
+                      {/* <div className="space-y-6 pb-16">
                         <div className="divide-y divide-gray-200">
-                          <div className="pb-6">
-                            <div className="relative h-24 rounded-xl bg-surface sm:h-20 lg:h-28">
+                          <div className="pb-6"> */}
+                      {/* <div className="relative h-24 rounded-xl bg-surface sm:h-20 lg:h-28">
                               <div className=" flex">
                                 {[...Array(6)].map((_, i) => (
                                   <Image
                                     key={i}
                                     src={grassBrown}
                                     alt="garden land"
-                                    className="absolute bottom-0 left-0 w-full rounded-xl object-cover"
+                                    // className="absolute bottom-0 left-0 w-full rounded-xl object-cover"
                                     fill={true}
                                     objectFit="cover"
                                   />
                                 ))}
                               </div>
-                            </div>
-                            <div className="-mt-12 flow-root px-4 sm:-mt-8 sm:flex sm:items-end sm:px-6 lg:-mt-16">
-                              <div>
-                                <div className="-m-1 flex">
-                                  <div className="inline-flex overflow-hidden rounded-lg border-4 border-white">
-                                    <div className="border2 z-10 h-36 w-36 rounded-xl bg-slate-600">
-                                      ipfs pic
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="mt-6 sm:ml-6 sm:flex-1">
-                                <div>
-                                  <div className="flex flex-col items-start">
-                                    <h3 className="font-press text-xl text-info-content">
-                                      {name}
-                                    </h3>
-                                    <EthAddress
-                                      address={communityAddress}
-                                      icon="identicon"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="mt-10 w-full p-4">
-                              <h3 className="bg-white py-2">Covenant</h3>
-                              <p className="text-pretty leading-7">
-                                Lullam, quam incidunt iusto libero modi nemo
-                                aspernatur. Ullam libero consequuntur esse
-                                dolores? In veritatis doloremque excepturi saepe
-                                qui, dignissimos quia! Laudantium quam possimus
-                                accusamus error, architecto eligendi placeat
-                                sint blanditiis optio? Aliquam neque, beatae et
-                                dolores necessitatibus sequi. Ipsam adipisci
-                                nostrum suscipit porro.
-                              </p>
-                            </div>
-                          </div>
+                            </div> */}
+                      {/* <div className="-mt-12 flow-root px-4 sm:-mt-8 sm:flex sm:items-end sm:px-6 lg:-mt-16"> */}
+                      <div className="flex gap-8">
+                        {/* <div className="-m-1 flex">
+                            <div className="inline-flex overflow-hidden rounded-lg border-4 border-white"> */}
+                        <div className=" aspect-square h-[76px] overflow-hidden">
+                          {covenantData?.logo && (
+                            <img
+                              src={"https://ipfs.io/ipfs/" + covenantData?.logo}
+                              alt={`${name} community logo`}
+                              className="h-full w-full object-cover"
+                            />
+                          )}
+                          {/* </div>
+                            </div> */}
+                        </div>
+                        {/* </div> */}
+                        <div className="flex flex-col items-start">
+                          <h3 className="font-press text-xl text-info-content">
+                            {name}
+                          </h3>
+                          <EthAddress
+                            address={communityAddress}
+                            icon="identicon"
+                          />
                         </div>
                       </div>
+                      <div className="mt-10 w-full">
+                        <h3 className="bg-white py-2">Covenant</h3>
+                        <p className="text-pretty leading-7">
+                          {covenantData?.covenant
+                            ? covenantData?.covenant
+                            : "No covenant found"}
+                        </p>
+                      </div>
                     </div>
+                    {/* </div>
+                      </div>
+                    </div> */}
                   </Dialog.Panel>
                 </Transition.Child>
               </div>

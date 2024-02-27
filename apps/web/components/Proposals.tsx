@@ -7,7 +7,7 @@ import { useAccount, useContractWrite, Address as AddressType } from "wagmi";
 import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI } from "@/src/generated";
-import { getProposals } from "@/actions/getProposals";
+import { PRECISION_SCALE, getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
 import { toast } from "react-toastify";
@@ -26,6 +26,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 // export const convertNumberFractionToBigInt = (number: number) => {
 //   return BigInt(number * 10 ** 4);
 // };
+
 
 type InputItem = {
   id: string;
@@ -94,7 +95,7 @@ export function Proposals({
     const newInputs = proposals.map(({ id, voterStakedPointsPct }) => ({
       id: id,
       value: voterStakedPointsPct,
-    }));
+    }));   // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
     // console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
@@ -148,12 +149,12 @@ export function Proposals({
     inputData: InputItem[],
     currentData: ProposalTypeVoter[],
   ) => {
-    const resultArr: number[][] = [];
+    const resultArr: [number, BigInt][] = [];
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = (input.value - current.voterStakedPointsPct) * 10000;
-          if (dif !== 0) {
+          const dif = BigInt(input.value - current.voterStakedPointsPct) * PRECISION_SCALE;
+          if (dif !== BigInt(0)) {
             resultArr.push([Number(input.id), dif]);
           }
         }
