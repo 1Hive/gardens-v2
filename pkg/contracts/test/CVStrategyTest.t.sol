@@ -123,28 +123,22 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         startMeasuringGas("createProposal");
         // allo().addToCloneableStrategies(address(strategy));
+        CVStrategy.InitializeParams memory params =
+            getParams(address(registryCommunity), proposalType, CVStrategy.PointSystem.Unlimited);
+
+        (uint256 _poolId, address strat) = _registryCommunity().createPool(useTokenPool, params, metadata);
+        console.log("strat: %s", strat);
+        poolId = _poolId;
+        CVStrategy strategy = CVStrategy(payable(strat));
 
         vm.startPrank(pool_admin());
-
-        CVStrategy strategy = new CVStrategy(address(allo()));
-
         safeHelper(
             address(registryCommunity),
             0,
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy))
         );
-
-        poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            address(useTokenPool),
-            proposalType,
-            CVStrategy.PointSystem.Unlimited
-        );
-
         vm.stopPrank();
+
         _registryCommunity().gardenToken().approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
         strategy.activatePoints();
@@ -160,7 +154,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             allo().fundPool(poolId, poolAmount);
         }
 
-        assertEq(pool.profileId, poolProfile_id1(registry(), local(), pool_managers()), "poolProfileID");
+        assertEq(pool.profileId, _registryCommunity().profileId(), "poolProfileID");
+        // assertEq(pool.profileId, poolProfile_id1(registry(), local(), pool_managers()), "poolProfileID");
         // assertNotEq(address(pool.strategy), address(strategy), "Strategy Clones");
 
         startMeasuringGas("createProposal");
@@ -312,10 +307,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        cv.setDecay(_etherToFloat(0.9 ether)); // alpha = decay
-        cv.setMaxRatio(_etherToFloat(0.2 ether)); // beta = maxRatio
-        cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
+        // cv.setDecay(_etherToFloat(0.9 ether)); // alpha = decay
+        // cv.setMaxRatio(_etherToFloat(0.2 ether)); // beta = maxRatio
+        // cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
 
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.2 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setWeight.selector, _etherToFloat(0.002 ether)));
         /**
          * ASSERTS
          */
@@ -342,9 +340,14 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        cv.setDecay(_etherToFloat(0.9 ether)); // alpha = decay
-        cv.setMaxRatio(_etherToFloat(0.2 ether)); // beta = maxRatio
-        cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
+        // cv.setDecay(_etherToFloat(0.9 ether)); // alpha = decay
+        // cv.setMaxRatio(_etherToFloat(0.2 ether)); // beta = maxRatio
+        // cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
+
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.2 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setWeight.selector, _etherToFloat(0.002 ether)));
+
         uint256 AMOUNT_STAKED = 45000;
 
         // registryCommunity.setBasisStakedAmount(AMOUNT_STAKED);
@@ -391,9 +394,14 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        cv.setDecay(_etherToFloat(0.9 ether)); // alpha = decay
-        cv.setMaxRatio(_etherToFloat(0.2 ether)); // beta = maxRatio
-        cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
+        // cv.setDecay(_etherToFloat(0.9 ether)); // alpha = decay
+        // cv.setMaxRatio(_etherToFloat(0.2 ether)); // beta = maxRatio
+        // cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
+
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.2 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setWeight.selector, _etherToFloat(0.002 ether)));
+
         // registryCommunity.setBasisStakedAmount(45000);
         safeHelper(
             address(registryCommunity),
@@ -531,15 +539,15 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             _createProposal(address(0), 50 ether, 1_000 ether);
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-
-        // cv.setDecay(_etherToFloat(0.9999987 ether)); // alpha = decay
-        // cv.setMaxRatio(_etherToFloat(0.7 ether)); // beta = maxRatio
-        // cv.setWeight(_etherToFloat(0.049 ether)); // RHO = p  = weight
-
         // FAST 1 MIN GROWTH
-        cv.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
-        cv.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
-        cv.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        // cv.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
+        // cv.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        // cv.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9965402 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.1 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setWeight.selector, _etherToFloat(0.0005 ether)));
+
         /**
          * ASSERTS
          *

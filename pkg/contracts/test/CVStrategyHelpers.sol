@@ -34,17 +34,12 @@ contract CVStrategyHelpers is Native, Accounts {
         return _poolProfileId1_;
     }
 
-    function createPool(
-        Allo allo,
-        address strategy,
+    function getParams(
         address registryCommunity,
-        IRegistry registry,
-        address token,
         CVStrategy.ProposalType proposalType,
         CVStrategy.PointSystem pointSystem
-    ) public returns (uint256 poolId) {
+    ) public pure returns (CVStrategy.InitializeParams memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        CVStrategy.InitializeParams memory params;
         params.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         // params.decay = _etherToFloat(0.9999 ether); // alpha = decay
         params.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
@@ -63,6 +58,20 @@ contract CVStrategyHelpers is Native, Accounts {
         pointConfig.tokensPerPoint = 2 * (10 ** 18);
         pointConfig.pointsPerTokenStaked = 5 * (10 ** 4);
         params.pointConfig = pointConfig;
+    }
+
+    function createPool(
+        Allo allo,
+        address strategy,
+        address registryCommunity,
+        IRegistry registry,
+        address token,
+        CVStrategy.ProposalType proposalType,
+        CVStrategy.PointSystem pointSystem
+    ) public returns (uint256 poolId) {
+        // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
+        CVStrategy.InitializeParams memory params = getParams(registryCommunity, proposalType, pointSystem);
+
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
         _pool_managers[1] = address(msg.sender);

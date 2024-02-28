@@ -4,16 +4,19 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {IAllo, Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
+import {Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
+import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {RegistryFactory} from "./RegistryFactory.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 import "forge-std/console.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-import {IPointStrategy} from "./CVStrategy.sol";
+import {IPointStrategy, CVStrategy} from "./CVStrategy.sol";
 
-contract RegistryCommunity is ReentrancyGuard, AccessControl {
+import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
+
+contract RegistryCommunity is ReentrancyGuard, AccessControl, Native {
     using ERC165Checker for address;
 
     /*|--------------------------------------------|*/
@@ -40,6 +43,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     event BasisStakedAmountSet(uint256 _newAmount);
     event MemberPowerIncreased(address _member, address _strategy, uint256 _power);
     event MemberPowerDecreased(address _member, address _strategy, uint256 _power);
+    event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata);
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
@@ -106,6 +110,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         uint256 stakedAmount;
         bool isRegistered;
     }
+
     struct Strategies {
         address[] strategies;
     }
@@ -126,7 +131,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     }
 
     //TODO: can change to uint32 with optimized storage order
-    IAllo public allo;
+    Allo public allo;
     IRegistry public registry;
     IERC20 public gardenToken;
 
@@ -149,11 +154,12 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     mapping(address => bool) public enabledStrategies;
     mapping(address => mapping(address => bool)) public memberActivatedInStrategies;
     mapping(address => address[]) public strategiesByMember;
+    //      strategy           member     power
     mapping(address => mapping(address => uint256)) public memberPowerInStrategy;
 
-    //      strategy           member     power
+    address[] initialMembers;
 
-    uint256 public constant PRECISION_SCALE = 10 ** 4;    
+    uint256 public constant PRECISION_SCALE = 10 ** 4;
 
     constructor() {
         // _grantRole(DEFAULT_ADMIN_ROLE, address(this));
@@ -166,7 +172,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         revertZeroAddress(params._allo);
         revertZeroAddress(params._registryFactory);
 
-        allo = IAllo(params._allo);
+        allo = Allo(params._allo);
         gardenToken = params._gardenToken;
         if (params._registerStakeAmount == 0) {
             revert ValueCannotBeZero();
@@ -184,24 +190,41 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         registry = IRegistry(allo.getRegistry());
 
         address[] memory owners = councilSafe.getOwners();
-        address[] memory initialMembers = new address[](owners.length + 2);
+        address[] memory pool_initialMembers = new address[](owners.length + 2);
 
         for (uint256 i = 0; i < owners.length; i++) {
-            initialMembers[i] = owners[i];
+            pool_initialMembers[i] = owners[i];
         }
 
-        initialMembers[initialMembers.length - 1] = address(councilSafe);
-        initialMembers[initialMembers.length - 2] = address(this);
+        pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);
+        pool_initialMembers[pool_initialMembers.length - 2] = address(this);
 
-        console.log("initialMembers length", initialMembers.length);
+        console.log("initialMembers length", pool_initialMembers.length);
         profileId =
-            registry.createProfile(params._nonce, communityName, params._metadata, address(this), initialMembers);
+            registry.createProfile(params._nonce, communityName, params._metadata, address(this), pool_initialMembers);
+
+        initialMembers = pool_initialMembers;
 
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
-    function createPool() public {
-        // @todo create params
+    function createPool(address _token, CVStrategy.InitializeParams memory _params, Metadata memory _metadata)
+        public
+        returns (uint256 poolId, address strategy)
+    {
+        address token = NATIVE;
+        if (_token != address(0)) {
+            token = _token;
+        }
+        strategy = address(new CVStrategy(address(allo)));
+
+        address[] memory _pool_managers = initialMembers;
+
+        poolId = allo.createPoolWithCustomStrategy(
+            profileId, strategy, abi.encode(_params), token, 0, _metadata, _pool_managers
+        );
+
+        emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
     }
 
     function activateMemberInStrategy(address _member, address _strategy)
@@ -234,7 +257,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         memberActivatedInStrategies[_member][_strategy] = false;
         memberPowerInStrategy[_member][_strategy] = 0;
-        removeStrategyFromMember(_member,_strategy);
+        removeStrategyFromMember(_member, _strategy);
         //totalPointsActivatedInStrategy[_strategy] -= DEFAULT_POINTS;
         // emit StrategyRemoved(_strategy);
         emit MemberDeactivatedStrategy(_member, _strategy);
@@ -243,7 +266,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     function removeStrategyFromMember(address _member, address _strategy) internal {
         address[] storage memberStrategies = strategiesByMember[_member];
         for (uint256 i = 0; i < memberStrategies.length; i++) {
-            if(memberStrategies[i] == _strategy){
+            if (memberStrategies[i] == _strategy) {
                 memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
                 memberStrategies.pop();
             }
@@ -271,11 +294,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     //     }
     // }
 
-    function increasePower(uint256 _amountStaked)
-        public
-        nonReentrant
-        onlyRegistryMemberSender
-        {
+    function increasePower(uint256 _amountStaked) public nonReentrant onlyRegistryMemberSender {
         address member = msg.sender;
         address[] memory memberStrategies = strategiesByMember[member];
 
@@ -285,40 +304,36 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             //FIX support interface check
             //if (address(memberStrategies[i]) == _strategy) {
-                pointsToIncrease = IPointStrategy(memberStrategies[i]).increasePower(member, _amountStaked);
-                if(pointsToIncrease != 0 ){
-                memberPowerInStrategy[member][memberStrategies[i]] += pointsToIncrease ;
-                }
+            pointsToIncrease = IPointStrategy(memberStrategies[i]).increasePower(member, _amountStaked);
+            if (pointsToIncrease != 0) {
+                memberPowerInStrategy[member][memberStrategies[i]] += pointsToIncrease;
+            }
             //}
         }
     }
 
-    function decreasePower(uint256 _amountUnstaked)
-        public
-        nonReentrant
-        onlyRegistryMemberSender
-    {
+    function decreasePower(uint256 _amountUnstaked) public nonReentrant onlyRegistryMemberSender {
         address member = msg.sender;
         address[] memory memberStrategies = strategiesByMember[member];
 
         uint256 pointsToDecrease;
 
-        if(addressToMemberInfo[member].stakedAmount- _amountUnstaked < registerStakeAmount){
+        if (addressToMemberInfo[member].stakedAmount - _amountUnstaked < registerStakeAmount) {
             revert DecreaseUnderMinimum();
         }
         gardenToken.transferFrom(member, address(this), _amountUnstaked);
         addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             // if (address(memberStrategies[i]) == _strategy) {
-                pointsToDecrease = IPointStrategy(memberStrategies[i]).decreasePower(member, _amountUnstaked);
-                memberPowerInStrategy[member][memberStrategies[i]] = pointsToDecrease;
+            pointsToDecrease = IPointStrategy(memberStrategies[i]).decreasePower(member, _amountUnstaked);
+            memberPowerInStrategy[member][memberStrategies[i]] = pointsToDecrease;
             // }
         }
     }
 
-    function getMemberPowerInStrategy(address _member, address _strategy) public view returns(uint256){
+    function getMemberPowerInStrategy(address _member, address _strategy) public view returns (uint256) {
         return memberPowerInStrategy[_member][_strategy];
-    } 
+    }
 
     function addStrategy(address _newStrategy) public onlyCouncilSafe {
         if (enabledStrategies[_newStrategy]) {
@@ -340,7 +355,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     }
 
     function setAllo(address _allo) public {
-        allo = IAllo(_allo); //@todo if used, write tests
+        allo = Allo(_allo); //@todo if used, write tests
         emit AlloSet(_allo);
     }
 
@@ -373,7 +388,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         Member storage newMember = addressToMemberInfo[_member];
         RegistryFactory gardensFactory = RegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
-        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 *  PRECISION_SCALE);
+        uint256 gardensFeeAmount =
+            (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
         if (!isMember(_member)) {
             newMember.isRegistered = true;
 
@@ -400,7 +416,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     function getStakeAmountWithFees() public view returns (uint256) {
         RegistryFactory gardensFactory = RegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
-        uint256 gardensFeeAmount = (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
+        uint256 gardensFeeAmount =
+            (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
 
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
