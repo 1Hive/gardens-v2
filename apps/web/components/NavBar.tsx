@@ -44,24 +44,12 @@ export function NavBar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                {/* <ConnectWallet /> */}
-                <ConnectButton
+                <ConnectWallet />
+                {/* <ConnectButton
                   accountStatus="full"
                   showBalance={false}
                   chainStatus={"none"}
-                />
-                {/* <w3m-button balance="show" label="Connect Wallet" size="md" />{" "} */}
-                {/* <Button
-                  disabled={connecting}
-                  onClick={() => (wallet ? disconnect(wallet) : connect())}
-                  className="bg-primary"
-                >
-                  {connecting
-                    ? "Connecting"
-                    : wallet
-                      ? "Disconnect"
-                      : "Connect"}
-                </Button> */}
+                /> */}
               </div>
               <div className="-mr-2 flex items-center sm:hidden">
                 {/* Mobile menu button */}
