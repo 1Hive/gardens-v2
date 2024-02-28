@@ -27,16 +27,23 @@ export function handleInitialized(event: InitializedCV): void {
   const weight = event.params.data.weight;
   const pType = event.params.data.proposalType;
   const pointsPerMember = event.params.data.pointConfig.pointsPerMember;
+  const pointsPerTokenStaked =
+    event.params.data.pointConfig.pointsPerTokenStaked;
   const tokensPerPoint = event.params.data.pointConfig.tokensPerPoint;
-  //@todo kev save it in entity
+  const maxAmount = event.params.data.pointConfig.maxAmount;
 
   log.debug(
-    "handleInitialized registryCommunity:{} decay:{} maxRatio:{} weight:{}",
+    "handleInitialized registryCommunity:{} decay:{} maxRatio:{} weight:{} pType:{} pointsPerMember:{} pointsPerTokenStaked:{} tokensPerPoint:{} maxAmount:{}",
     [
       registryCommunity,
       decay.toString(),
       maxRatio.toString(),
       weight.toString(),
+      pType.toString(),
+      pointsPerMember.toString(),
+      pointsPerTokenStaked.toString(),
+      tokensPerPoint.toString(),
+      maxAmount.toString(),
     ],
   );
 
@@ -55,6 +62,11 @@ export function handleInitialized(event: InitializedCV): void {
   config.maxRatio = maxRatio;
   config.weight = weight;
   config.proposalType = BigInt.fromI32(pType);
+  config.pointsPerMember = pointsPerMember;
+  config.pointsPerTokenStaked = pointsPerTokenStaked;
+  config.tokensPerPoint = tokensPerPoint;
+  config.maxAmount = maxAmount;
+
   config.D = cvc.D();
   config.save();
 

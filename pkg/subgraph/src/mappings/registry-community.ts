@@ -17,6 +17,7 @@ import {
   StrategyAdded,
   StakeAndRegisterMemberCall,
   MemberDeactivatedStrategy,
+  PoolCreated,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 
 import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
@@ -242,4 +243,18 @@ export function handleMemberDeactivatedStrategy(
   }
   strategy.memberActive = membersActive;
   strategy.save();
+}
+
+// handlePoolCreated
+export function handlePoolCreated(event: PoolCreated): void {
+  log.debug("handlePoolCreated: address:{} poolid: {}", [
+    event.params._strategy.toHexString(),
+    event.params._poolId.toHexString(),
+  ]);
+
+  const strategyAddress = event.params._strategy;
+  // const poolId = event.params._poolId;
+  // const community = event.params._community;
+
+  CVStrategyTemplate.create(strategyAddress);
 }
