@@ -82,7 +82,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             address(registryCommunity),
             registry,
             address(token),
-            CVStrategy.ProposalType.Funding
+            CVStrategy.ProposalType.Funding,
+            CVStrategy.PointSystem.Unlimited
         );
 
         uint256 poolIdSignaling = createPool(
@@ -91,7 +92,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             address(registryCommunity),
             registry,
             address(0),
-            CVStrategy.ProposalType.Signaling
+            CVStrategy.ProposalType.Signaling,
+            CVStrategy.PointSystem.Unlimited
         );
 
         strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay

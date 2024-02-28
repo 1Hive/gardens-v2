@@ -38,6 +38,8 @@ templates:
           handler: handleMemberRegistered
         - event: MemberUnregistered(address,uint256)
           handler: handleMemberUnregistered
+        - event: PoolCreated(uint256,address,address,address,(uint256,string))
+          handler: handlePoolCreated
         # - event: MemberKicked(address,address,uint256)
         #   handler: handleMemberKicked
         # - event: ProtocolFeeUpdated(uint256)
@@ -81,7 +83,7 @@ templates:
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8))
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8,uint8,(uint256,uint256,uint256,uint256))) 
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
