@@ -286,3 +286,42 @@ export function handlePoolCreated(event: PoolCreated): void {
 
   CVStrategyTemplate.create(strategyAddress);
 }
+
+// handler: handleMemberPowerDecreased
+// export function handleMemberPowerDecreased(event: MemberPowerDecreased): void {
+//   log.debug("handleMemberPowerDecreased: member:{} power:{} strategy:{} ", [
+//     event.params._member.toHexString(),
+//     event.params._power.toString(),
+//     event.params._strategy.toHexString(),
+//   ]);
+
+//   const memberAddress = event.params._member;
+//   const strategyAddress = event.params._strategy;
+
+//   const strategy = CVStrategy.load(strategyAddress.toHexString());
+
+//   const member = Member.load(memberAddress.toHexString());
+
+//   if (member == null) {
+//     log.error("Member not found: {}", [memberAddress.toHexString()]);
+//     return;
+//   }
+
+//   if (!strategy) {
+//     log.error("Strategy not found: {}", [strategyAddress.toHexString()]);
+//     return;
+//   }
+
+//   let membersPower: string[] = [];
+//   if (strategy.memberPower) {
+//     membersPower = strategy.memberPower!;
+//   }
+//   const index = membersPower.indexOf(memberAddress.toHexString());
+//   if (index > -1) {
+//     membersPower.splice(index, 1);
+//   }
+//   strategy.memberPower = membersPower;
+//   strategy.save();
+// }
+// handler: handleMemberPowerIncreased
+// handler: handleBasisStakedAmountSet
