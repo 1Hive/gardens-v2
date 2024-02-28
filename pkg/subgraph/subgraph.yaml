@@ -65,8 +65,8 @@ templates:
           handler: handleMemberUnregistered
         - event: PoolCreated(uint256,address,address,address,(uint256,string))
           handler: handlePoolCreated
-        # - event: MemberKicked(address,address,uint256)
-        #   handler: handleMemberKicked
+        - event: MemberKicked(address,address,uint256)
+          handler: handleMemberKicked
         # - event: ProtocolFeeUpdated(uint256)
         #   handler: handleProtocolFeeUpdated
         - event: StrategyAdded(address)

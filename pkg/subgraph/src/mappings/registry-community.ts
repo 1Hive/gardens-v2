@@ -18,6 +18,7 @@ import {
   StakeAndRegisterMemberCall,
   MemberDeactivatedStrategy,
   PoolCreated,
+  MemberKicked,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 
 import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
@@ -156,6 +157,33 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
   member.totalStakedAmount = member.totalStakedAmount
     ? member.totalStakedAmount!.minus(event.params._amountStaked)
     : event.params._amountStaked;
+
+  member.save();
+}
+
+// handleMemberKicked
+export function handleMemberKicked(event: MemberKicked): void {
+  log.debug("handleMemberKicked: {}", [event.params._member.toHexString()]);
+  const memberAddress = event.params._member.toHexString();
+  const idMemberCommunity = `${memberAddress}-${event.address.toHexString()}`;
+  const member = Member.load(memberAddress);
+  if (member == null) {
+    log.error("Member not found: {}", [memberAddress]);
+    return;
+  }
+
+  const memberCommunity = MemberCommunity.load(idMemberCommunity);
+  if (memberCommunity == null) {
+    log.error("MemberCommunity not found: {}", [idMemberCommunity]);
+    return;
+  }
+  memberCommunity.isRegistered = false;
+  memberCommunity.stakedAmount = BigInt.fromI32(0);
+  memberCommunity.save();
+
+  member.totalStakedAmount = member.totalStakedAmount
+    ? member.totalStakedAmount!.minus(event.params._amountReturned)
+    : event.params._amountReturned;
 
   member.save();
 }
