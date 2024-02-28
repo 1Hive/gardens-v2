@@ -25,28 +25,14 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 export function RegisterMember({
   communityAddress,
-  // isMember,
   registerToken,
-  registerStakeAmount,
 }: {
   communityAddress: Address;
-  // isMember: boolean;
   registerToken: Address;
-  registerStakeAmount: number;
 }) {
   const { address } = useAccount();
   const chainId = useChainId();
   const { openConnectModal } = useConnectModal();
-
-  // const [isMember, setIsMember] = useState();
-
-  // const sdk = getBuiltGraphSDK();
-
-  // const getIsMember = async () =>
-  //   sdk.getMembers({
-  //     me: address as `0x${string}`,
-  //     comm: contractsAddresses?.registryCommunity as `0x${string}`,
-  //   });
 
   const registryContractCallConfig = {
     address: communityAddress,
@@ -60,11 +46,17 @@ export function RegisterMember({
   } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
-    args: [address || "0x"],
+    args: [address],
     watch: true,
   });
 
-  const {
+  const { data: registerStakeAmount, error: stakeAmountError } =
+    useContractRead({
+      ...registryContractCallConfig,
+      functionName: "getStakeAmountWithFees",
+    });
+
+    const {
     data: registerMemberData,
     write: writeRegisterMember,
     error: registerMemberError,
@@ -92,7 +84,7 @@ export function RegisterMember({
   } = useContractWrite({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, BigInt(registerStakeAmount)], // allowed spender address, amount
+    args: [communityAddress, registerStakeAmount as bigint], // allowed spender address, amount
     functionName: "approve",
   });
 
