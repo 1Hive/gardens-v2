@@ -21,7 +21,7 @@ import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
-import {CVStrategy} from "../src/CVStrategy.sol";
+import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
@@ -77,7 +77,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         strategy = new CVStrategy(address(allo()));
         //        strategy = address(new MockStrategy(address(allo())));
         // uint256 poolId = createPool(
-        //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, CVStrategy.ProposalType(0)
+        //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, StrategyStruct.ProposalType(0)
         // );
         vm.stopPrank();
         vm.startPrank(allo_owner());
@@ -173,7 +173,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         uint256 feesAmount = (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / (100 * PRECISION);
         assertEq(token.balanceOf(address(registryCommunity)), 0);
         assertEq(token.balanceOf(address(gardenMember)), mintAmount - feesAmount);
-        assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)),0);
+        assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)), 0);
         vm.stopPrank();
         stopMeasuringGas();
     }
@@ -194,8 +194,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            CVStrategy.ProposalType(0),
-            CVStrategy.PointSystem.Unlimited
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
         );
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -223,8 +223,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            CVStrategy.ProposalType(0),
-            CVStrategy.PointSystem.Capped
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Capped
         );
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -237,8 +237,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         strategy.activatePoints();
 
         token.approve(address(registryCommunity), 2000 * DECIMALS);
-        _registryCommunity().increasePower( 2000 * DECIMALS);
-        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember,address(strategy)),200 * PRECISION);
+        _registryCommunity().increasePower(2000 * DECIMALS);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 200 * PRECISION);
     }
 
     function test_activateAfterIncreasePower() public {
@@ -249,8 +249,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            CVStrategy.ProposalType(0),
-            CVStrategy.PointSystem.Unlimited
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
         );
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -266,7 +266,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (20 * DECIMALS));
 
         strategy.activatePoints();
-        
+
         vm.stopPrank();
         assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 200 * 10 ** 4);
     }
@@ -286,8 +286,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            CVStrategy.ProposalType(0),
-            CVStrategy.PointSystem.Unlimited
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
         );
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -323,6 +323,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
         stopMeasuringGas();
     }
+
     function test_revertDecreasePower() public {
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
@@ -331,8 +332,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            CVStrategy.ProposalType(0),
-            CVStrategy.PointSystem.Unlimited
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
         );
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -345,12 +346,11 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         strategy.activatePoints();
 
         token.approve(address(registryCommunity), 100 * DECIMALS);
-        _registryCommunity().increasePower( 100 * DECIMALS);
-        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember,address(strategy)),600 * PRECISION);
+        _registryCommunity().increasePower(100 * DECIMALS);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 600 * PRECISION);
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(101 * DECIMALS);
         vm.stopPrank();
-
     }
 
     function test_revertKickUnregisteredMember() public {

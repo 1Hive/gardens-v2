@@ -40,8 +40,10 @@ templates:
           handler: handleMemberUnregistered
         - event: PoolCreated(uint256,address,address,address,(uint256,string))
           handler: handlePoolCreated
-        # - event: MemberKicked(address,address,uint256)
-        #   handler: handleMemberKicked
+        - event: MemberKicked(address,address,uint256)
+          handler: handleMemberKicked
+        # - event: CommunityFeeUpdated(uint256)
+        #   handler: handleCommunityFeeUpdated
         # - event: ProtocolFeeUpdated(uint256)
         #   handler: handleProtocolFeeUpdated
         - event: StrategyAdded(address)
@@ -52,10 +54,12 @@ templates:
           handler: handleMemberActivatedStrategy
         - event: MemberDeactivatedStrategy(address,address)
           handler: handleMemberDeactivatedStrategy
-        # - event: StakeAmountUpdated(address,uint256)
-        #   handler: handleStakeAmountUpdated
+        # - event: MemberPowerDecreased(address,address,uint256)
+          # handler: handleMemberPowerDecreased
+        # - event: MemberPowerIncreased(address,address,uint256)
+          # handler: handleMemberPowerIncreased
         # - event: BasisStakedAmountSet(uint256)
-        #   handler: handleBasisStakedAmountSet
+          # handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
         #   handler: handleCouncilSafeSet
         # - event: CouncilSafeChangeStarted(address,address)

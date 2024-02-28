@@ -18,6 +18,7 @@ import {
   StakeAndRegisterMemberCall,
   MemberDeactivatedStrategy,
   PoolCreated,
+  MemberKicked,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 
 import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
@@ -160,6 +161,33 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
   member.save();
 }
 
+// handleMemberKicked
+export function handleMemberKicked(event: MemberKicked): void {
+  log.debug("handleMemberKicked: {}", [event.params._member.toHexString()]);
+  const memberAddress = event.params._member.toHexString();
+  const idMemberCommunity = `${memberAddress}-${event.address.toHexString()}`;
+  const member = Member.load(memberAddress);
+  if (member == null) {
+    log.error("Member not found: {}", [memberAddress]);
+    return;
+  }
+
+  const memberCommunity = MemberCommunity.load(idMemberCommunity);
+  if (memberCommunity == null) {
+    log.error("MemberCommunity not found: {}", [idMemberCommunity]);
+    return;
+  }
+  memberCommunity.isRegistered = false;
+  memberCommunity.stakedAmount = BigInt.fromI32(0);
+  memberCommunity.save();
+
+  member.totalStakedAmount = member.totalStakedAmount
+    ? member.totalStakedAmount!.minus(event.params._amountReturned)
+    : event.params._amountReturned;
+
+  member.save();
+}
+
 // //  handleStrategyAdded
 export function handleStrategyAdded(event: StrategyAdded): void {
   log.debug("handleStrategyAdded", [event.params._strategy.toHexString()]);
@@ -258,3 +286,42 @@ export function handlePoolCreated(event: PoolCreated): void {
 
   CVStrategyTemplate.create(strategyAddress);
 }
+
+// handler: handleMemberPowerDecreased
+// export function handleMemberPowerDecreased(event: MemberPowerDecreased): void {
+//   log.debug("handleMemberPowerDecreased: member:{} power:{} strategy:{} ", [
+//     event.params._member.toHexString(),
+//     event.params._power.toString(),
+//     event.params._strategy.toHexString(),
+//   ]);
+
+//   const memberAddress = event.params._member;
+//   const strategyAddress = event.params._strategy;
+
+//   const strategy = CVStrategy.load(strategyAddress.toHexString());
+
+//   const member = Member.load(memberAddress.toHexString());
+
+//   if (member == null) {
+//     log.error("Member not found: {}", [memberAddress.toHexString()]);
+//     return;
+//   }
+
+//   if (!strategy) {
+//     log.error("Strategy not found: {}", [strategyAddress.toHexString()]);
+//     return;
+//   }
+
+//   let membersPower: string[] = [];
+//   if (strategy.memberPower) {
+//     membersPower = strategy.memberPower!;
+//   }
+//   const index = membersPower.indexOf(memberAddress.toHexString());
+//   if (index > -1) {
+//     membersPower.splice(index, 1);
+//   }
+//   strategy.memberPower = membersPower;
+//   strategy.save();
+// }
+// handler: handleMemberPowerIncreased
+// handler: handleBasisStakedAmountSet
