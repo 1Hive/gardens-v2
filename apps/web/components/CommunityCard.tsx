@@ -100,7 +100,6 @@ export function CommunityCard({
             <RegisterMember
               communityAddress={communityAddress as Address}
               registerToken={registerToken as Address}
-              registerStakeAmount={registerStakeAmount}
             />
 
             <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
