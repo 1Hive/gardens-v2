@@ -16,9 +16,10 @@ type ButtonProps = {
   children: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
+  icon?: React.ReactNode;
 };
 
-type Variant = "primary" | "outline" | "fill";
+type Variant = "primary" | "outline" | "fill" | "error";
 type VariantStyles = Record<
   Variant,
   React.HTMLAttributes<HTMLButtonElement>["className"]
@@ -29,6 +30,7 @@ const VARIANT_STYLES: VariantStyles = {
   primary: "bg-primary text-black",
   outline: "btn btn-info",
   fill: "bg-secondary text-white",
+  error: "bg-error text-white",
 };
 
 export function Button({
@@ -40,6 +42,7 @@ export function Button({
   size,
   variant,
   isLoading = false,
+  icon,
   type = "button",
 }: ButtonProps) {
   const buttonContent = isLoading ? (
@@ -62,7 +65,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled || isLoading}
     >
-      {buttonContent}
+      {icon && icon} {buttonContent}
     </button>
   );
 

@@ -11,9 +11,9 @@ type EthAddressProps = {
 };
 
 //TODO: handle if more than one chain is used
-//TODO: handle theme change, create a theme object and pass it to Addre
+//TODO: handle theme change by create a theme object and pass it to Addre
 
-//check docs: https://github.com/bpierre/addreth?tab=readme-ov-file
+//docs: https://github.com/bpierre/addreth?tab=readme-ov-file
 
 export const EthAddress = ({
   address,

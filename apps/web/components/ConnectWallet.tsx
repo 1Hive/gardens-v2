@@ -1,97 +1,42 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { useState, useEffect } from "react";
-import {
-  useBalance,
-  useChainId,
-  useSwitchNetwork,
-  useNetwork,
-  Address,
-} from "wagmi";
+import React from "react";
+import { useBalance, useSwitchNetwork } from "wagmi";
 import { usePathname } from "next/navigation";
 import { getChain } from "@/configs/chainServer";
 import Image from "next/image";
 import { walletIcon } from "@/assets";
 import {
-  useConnectModal,
   useAccountModal,
   useChainModal,
   ConnectButton,
-  useAddRecentTransaction,
 } from "@rainbow-me/rainbowkit";
-import { useDisconnect } from "wagmi";
+import { useDisconnect, useConnect } from "wagmi";
 import cn from "classnames";
-import { EthAddress } from "@/components";
-import { Fragment, useRef } from "react";
-import type { ReactNode } from "react";
-import { useHover } from "@/hooks/useIsHover";
+import { Button, EthAddress } from "@/components";
+import { Fragment } from "react";
 
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
-function classNames(...classes: any) {
-  return classes.filter(Boolean).join(" ");
-}
-
 export const ConnectWallet = () => {
-  return (
-    <>
-      {/* {networkWagmi?.id == 1 ? (
-        <div className="border2">wrong network</div>
-      ) : (
-        <button
-          //with this function we can switch to the arbitrumSep network
-          onClick={() => switchNetwork && switchNetwork(urlChainId)}
-          className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
-        >
-          <div>switch to arbitrumSep - connected to {chainId}</div>
-          {network.chain && (
-            <div>Wallet frame is connected to {network.chain.name}</div>
-          )}
-          <div>balance: {!token ? "0" : data?.formatted.toString()}</div>
-        </button>
-      )} */}
-      <YourButton />
-    </>
-  );
-};
-
-const YourButton = () => {
   const path = usePathname();
-  const chainId = useChainId();
-  const result = useBalance({
-    address: "0xcc6c8b9f745db2277f7aac1bc026d5c2ea7bd88d",
-  });
+
   const urlChainId = Number(path.split("/")[2]);
-  const token = path.split("/")[3];
-
-  console.log("token", token);
-
-  const {
-    data: tokenBalance,
-    isError,
-    isLoading,
-  } = useBalance({
-    address: "0x5BE8Bb8d7923879c3DDc9c551C5Aa85Ad0Fa4dE3",
-    token: token as `0x${string}` | undefined,
-    chainId: urlChainId || 0,
-  });
+  const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
 
   const { disconnect } = useDisconnect();
+  const { connectors } = useConnect();
 
-  const network = useNetwork();
-  console.log("my wallet is connect to", network);
+  const wallet = connectors[0].name;
 
-  console.log("the chain urlPath:", urlChainId);
-  console.log("wagmiChainId:", chainId);
-  console.log("urlChainId:", urlChainId);
-
-  console.log("getChainUsingUrl", getChain(urlChainId));
-  console.log("getChainUsingchainId", getChain(chainId));
-  const networkWagmi = getChain(network?.chain?.id as string | number);
-  console.log("networkWagmi", networkWagmi);
+  const { data: token } = useBalance({
+    address: "0x5BE8Bb8d7923879c3DDc9c551C5Aa85Ad0Fa4dE3",
+    token: tokenUrlAddress as `0x${string}` | undefined,
+    chainId: urlChainId || 0,
+  });
 
   return (
     <ConnectButton.Custom>
@@ -108,7 +53,7 @@ const YourButton = () => {
         return (
           <>
             {(() => {
-              //CONNECT button if not connected
+              //CONNECT button to connect wallet
               if (!connected) {
                 return (
                   <div className="relative flex text-black hover:brightness-90 active:scale-95">
@@ -129,7 +74,7 @@ const YourButton = () => {
                   </div>
                 );
               }
-              //WRONG NETWORK button if wallet connected to unsupported chains
+              //WRONG NETWORK! button if wallet is connected to unsupported chains
               if (chain.unsupported) {
                 return (
                   <button
@@ -141,16 +86,24 @@ const YourButton = () => {
                   </button>
                 );
               }
-              //IS CONNECTED to the supported chains and condition => urlChainId === chainId(network)
+              //IS CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
               return (
-                <div className="relative flex w-fit items-center gap-2 rounded-lg px-2 py-1">
+                <div
+                  className={`relative flex w-fit cursor-pointer items-center gap-1 rounded-lg border-[1px] border-success px-2 py-1 ${cn(
+                    {
+                      "border-success ": urlChainId === chain.id,
+                      "border-error":
+                        urlChainId !== chain.id && !isNaN(urlChainId),
+                    },
+                  )} `}
+                >
                   <img
                     alt={"Chain icon"}
                     src={`https://effigy.im/a/${account.address}.png`}
                     className="h-10 w-10 rounded-full"
                   />
                   <div className="flex flex-col">
-                    <h4 className="">{account.displayName}</h4>
+                    <h4>{account.displayName}</h4>
                     <div className="flex items-center justify-end text-xs font-semibold text-success">
                       {isNaN(urlChainId) ? (
                         <>
@@ -192,70 +145,69 @@ const YourButton = () => {
                       )}
                     </div>
                   </div>
-                  <Dropdown>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <div
-                          className={classNames(
-                            active
-                              ? "bg-gray-100 text-gray-900"
-                              : "text-gray-700",
-                            "block px-4 py-2 text-sm",
-                          )}
-                        >
-                          Wallet:
+                  <Menu as="div" className="inline-block text-left">
+                    <div>
+                      <Menu.Button>
+                        <ChevronDownIcon
+                          className="h-4 w-4 text-black "
+                          aria-hidden="true"
+                        />
+                      </Menu.Button>
+                    </div>
+                    <Transition
+                      as={Fragment}
+                      enter="transition ease-out duration-100"
+                      enterFrom="transform opacity-0 scale-95"
+                      enterTo="transform opacity-100 scale-100"
+                      leave="transition ease-in duration-75"
+                      leaveFrom="transform opacity-100 scale-100"
+                      leaveTo="transform opacity-0 scale-95"
+                    >
+                      <Menu.Items className="absolute left-0  top-0 z-10  mt-14 w-[270px] rounded-md bg-white focus:outline-none">
+                        <div className="border2 flex flex-col gap-4 rounded-lg p-4">
+                          {/* wallet and token balance info */}
+                          <Menu.Item as="div" className="flex flex-col gap-2">
+                            <div className="flex justify-between py-1">
+                              <span className="stat-title">Wallet</span>{" "}
+                              <span className="text-sm">{wallet}</span>
+                            </div>
+                            <div className="flex justify-between py-1">
+                              <span className="stat-title">Balance</span>
+                              <span className="text-sm">
+                                {" "}
+                                {!tokenUrlAddress
+                                  ? "Unknow garden"
+                                  : Number(token?.formatted).toFixed(0)}{" "}
+                                {token?.symbol === "ETH" ? "" : token?.symbol}
+                              </span>
+                            </div>
+                          </Menu.Item>
+
+                          {/* Switch network and Disconnect buttons */}
+                          <Menu.Item as="div" className="flex flex-col gap-2">
+                            {chain.id !== urlChainId && !isNaN(urlChainId) && (
+                              <Button
+                                className="overflow-hidden truncate text-sm"
+                                onClick={() =>
+                                  switchNetwork && switchNetwork(urlChainId)
+                                }
+                              >
+                                Switch to {getChain(urlChainId)?.name}
+                              </Button>
+                            )}
+
+                            <Button
+                              onClick={() => disconnect()}
+                              variant="error"
+                              className="text-sm"
+                            >
+                              Disconnect
+                            </Button>
+                          </Menu.Item>
                         </div>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <div
-                          className={classNames(
-                            active
-                              ? "bg-gray-100 text-gray-900"
-                              : "text-gray-700",
-                            "block px-4 py-2 text-sm",
-                          )}
-                        >
-                          Balance:{" "}
-                          {!token
-                            ? "unknow garden token"
-                            : tokenBalance?.formatted}
-                        </div>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <button
-                          onClick={() =>
-                            switchNetwork && switchNetwork(urlChainId)
-                          }
-                          className="btn btn-info"
-                        >
-                          Switch to {getChain(urlChainId)?.name}
-                        </button>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <div
-                          className={classNames(
-                            active
-                              ? "bg-gray-100 text-gray-900"
-                              : "text-gray-700",
-                            "block px-4 py-2 text-sm",
-                          )}
-                        >
-                          <button
-                            className="btn btn-warning"
-                            onClick={() => disconnect()}
-                          >
-                            Disconnect
-                          </button>
-                        </div>
-                      )}
-                    </Menu.Item>
-                  </Dropdown>
+                      </Menu.Items>
+                    </Transition>
+                  </Menu>
                 </div>
               );
             })()}
@@ -265,29 +217,3 @@ const YourButton = () => {
     </ConnectButton.Custom>
   );
 };
-
-function Dropdown({ children }: { children: ReactNode }) {
-  return (
-    <Menu as="div" className="inline-block text-left">
-      <div>
-        <Menu.Button>
-          <ChevronDownIcon className="-mr-1 h-4 w-4" aria-hidden="true" />
-        </Menu.Button>
-      </div>
-
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
-      >
-        <Menu.Items className="border2 w-inherit absolute left-0 right-5 top-0  z-10 mt-14 rounded-md bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
-          <div className="py-1">{children}</div>
-        </Menu.Items>
-      </Transition>
-    </Menu>
-  );
-}
