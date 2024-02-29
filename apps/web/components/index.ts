@@ -17,3 +17,4 @@ export { RegisterMember } from "./RegisterMember";
 export { CommunityProfile } from "./CommunityProfile";
 export { EthAddress } from "./EthAddress";
 export { ConnectWallet } from "./ConnectWallet";
+export { GoBackButton } from "./GoBack";
