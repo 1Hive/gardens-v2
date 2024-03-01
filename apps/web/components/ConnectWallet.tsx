@@ -55,7 +55,7 @@ export const ConnectWallet = () => {
         return (
           <>
             {(() => {
-              //CONNECT button to connect wallet
+              //CONNECT button to connect the wallet
               if (!connected) {
                 return (
                   <div className="relative flex text-black hover:brightness-90 active:scale-95">
@@ -79,13 +79,14 @@ export const ConnectWallet = () => {
               //WRONG NETWORK! button if wallet is connected to unsupported chains
               if (chain.unsupported) {
                 return (
-                  <button
+                  <Button
                     onClick={openChainModal}
                     type="button"
-                    className="btn btn-error px-4 py-2 font-bold text-white"
+                    className="btn btn-error px-4 py-2 font-bold"
+                    variant="error"
                   >
                     Wrong network
-                  </button>
+                  </Button>
                 );
               }
               //IS CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)

@@ -82,9 +82,9 @@ export default async function Garden({
     });
 
   return (
-    <div className="relative mx-auto max-w-5xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
+    <div className="relative mx-auto max-w-6xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
       <header className="relative flex min-h-[500px] flex-col items-center justify-between gap-6 px-3">
-        <div className="flex h-full min-h-96 max-w-xl flex-col items-center justify-between p-1">
+        <div className="flex h-full min-h-96 flex-col items-center justify-between p-1">
           <h3 className="text-center font-press">
             {tokenGarden?.symbol} Token Ecosystem
           </h3>

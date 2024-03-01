@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import React, { useEffect } from "react";
 import { EthAddress } from "@/components";
@@ -75,61 +76,65 @@ export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
                       </div>
                     </Transition.Child>
                     <div className="relative h-full overflow-y-auto bg-white p-8">
-                      {/* <div className="space-y-6 pb-16">
-                        <div className="divide-y divide-gray-200">
-                          <div className="pb-6"> */}
-                      {/* <div className="relative h-24 rounded-xl bg-surface sm:h-20 lg:h-28">
-                              <div className=" flex">
-                                {[...Array(6)].map((_, i) => (
-                                  <Image
-                                    key={i}
-                                    src={grassBrown}
-                                    alt="garden land"
-                                    // className="absolute bottom-0 left-0 w-full rounded-xl object-cover"
-                                    fill={true}
-                                    objectFit="cover"
-                                  />
-                                ))}
-                              </div>
-                            </div> */}
-                      {/* <div className="-mt-12 flow-root px-4 sm:-mt-8 sm:flex sm:items-end sm:px-6 lg:-mt-16"> */}
-                      <div className="flex gap-8">
-                        {/* <div className="-m-1 flex">
-                            <div className="inline-flex overflow-hidden rounded-lg border-4 border-white"> */}
-                        <div className=" aspect-square h-[76px] overflow-hidden">
-                          {covenantData?.logo && (
-                            <img
-                              src={"https://ipfs.io/ipfs/" + covenantData?.logo}
-                              alt={`${name} community logo`}
-                              className="h-full w-full object-cover"
-                            />
-                          )}
-                          {/* </div>
-                            </div> */}
+                      <div className="relative h-40 min-w-[500px]">
+                        <div>
+                          <div className="flex h-full">
+                            {/* TODO: look for better image here */}
+                            {[...Array(6)].map((_, i) => (
+                              <Image
+                                key={i}
+                                src={grassBrown}
+                                alt="garden land"
+                                className="absolute bottom-0 left-0 w-full rounded-xl object-cover"
+                                fill={true}
+                                objectFit="cover"
+                              />
+                            ))}
+                          </div>
                         </div>
-                        {/* </div> */}
-                        <div className="flex flex-col items-start">
-                          <h3 className="font-press text-xl text-info-content">
-                            {name}
-                          </h3>
-                          <EthAddress
-                            address={communityAddress}
-                            icon="identicon"
-                          />
+                        <div className="absolute top-28 flex w-full bg-white">
+                          <div className="border2 h-20 w-20 overflow-hidden rounded-full">
+                            {/* logo image */}
+                            {covenantData?.logo && covenantData?.logo !== "" ? (
+                              <img
+                                src={
+                                  "https://ipfs.io/ipfs/" + covenantData?.logo
+                                }
+                                alt={`${name} community logo`}
+                                className="h-full w-full rounded-full object-cover"
+                              />
+                            ) : (
+                              <Image
+                                src={tree1} // or any other image
+                                alt={`${name} community logo`}
+                                className="h-full w-full object-cover"
+                              />
+                            )}
+                          </div>
+
+                          {/* commuity name + Addrr */}
+                          <div className="flex flex-1 items-start justify-between gap-2 p-2">
+                            <span className="font-press text-xl text-info-content">
+                              {name}
+                            </span>
+                            <EthAddress
+                              address={communityAddress}
+                              icon="identicon"
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div className="mt-10 w-full">
+
+                      {/* covenant */}
+                      <div className="mt-20 w-full">
                         <h3 className="bg-white py-2">Covenant</h3>
-                        <p className="text-pretty leading-7">
+                        <p className="text-pretty leading-4">
                           {covenantData?.covenant
                             ? covenantData?.covenant
-                            : "No covenant found"}
+                            : "No covenent was submitted for this community."}
                         </p>
                       </div>
                     </div>
-                    {/* </div>
-                      </div>
-                    </div> */}
                   </Dialog.Panel>
                 </Transition.Child>
               </div>
