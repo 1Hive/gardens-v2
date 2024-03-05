@@ -13,6 +13,7 @@ import {
   TokenGarden,
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
+import * as dn from "dnum";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -54,6 +55,8 @@ export function CommunityCard({
   registerToken = registerToken ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
 
+  console.log(registerStakeAmount, "registerStakeAmount");
+
   //TODO: check decimals format for stake amounts
 
   return (
@@ -71,7 +74,7 @@ export function CommunityCard({
           />
         </aside>
 
-        {/* main: stats, action buttons, dsiplay pools */}
+        {/* main: stats, action buttons, display pools */}
         <main className="card-body space-y-10">
           <div className="stats flex">
             <div className="stat flex-1">
@@ -106,7 +109,7 @@ export function CommunityCard({
           </div>
           <div className=" justify-end">
             <div
-              className={`flex w-full overflow-x-auto transform gap-4 transition-height duration-200 ease-in-out ${
+              className={`flex w-full transform gap-4 overflow-x-auto transition-height duration-200 ease-in-out ${
                 !open && "max-h-[290px]"
               } `}
             >

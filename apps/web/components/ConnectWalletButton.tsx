@@ -90,6 +90,7 @@ export const ConnectWallet = () => {
                 );
               }
               //IS CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
+              //+ Dropdown menu with wallet, balance, switch network and disconnect buttons
               return (
                 <Menu as="div" className="relative inline-block text-left">
                   {({ open }) => (

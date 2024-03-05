@@ -13,6 +13,8 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
+import * as dn from "dnum";
+import { Dnum } from "dnum";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +59,7 @@ type ProposalMetadata = {
 
 const { urqlClient } = initUrqlClient();
 
+//TODO: move to utils file
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
 
@@ -95,6 +98,8 @@ export default async function Proposal({
   const submitter = proposalData.submitter as Address;
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
+
+  console.log(requestedAmount);
 
   const getIpfsData = (ipfsHash: string) =>
     fetch(`https://ipfs.io/ipfs/${ipfsHash}`, {
