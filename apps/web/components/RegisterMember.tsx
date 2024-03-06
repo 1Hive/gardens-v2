@@ -91,8 +91,6 @@ export function RegisterMember({
     functionName: "approve",
   });
 
-  const approveToken = allowTokenStatus === "success";
-
   useErrorDetails(registerMemberError, "stakeAndRegisterMember");
   useErrorDetails(unregisterMemberError, "unregisterMember");
   // useErrorDetails(errorMemberRegistered, "isMember");
@@ -124,7 +122,7 @@ export function RegisterMember({
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
-    if (allowTokenStatus === "success") {
+    if (approveToken) {
       writeRegisterMember();
     }
   }, [allowTokenStatus]);
@@ -140,75 +138,67 @@ export function RegisterMember({
     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
   }, [unregisterMemberStatus]);
 
-  //TODO: reusable classnames: commonClassesnames, circleClassesnames, textClassesnames
   //TODO: handle error states
-  //TODO: refacotr useEffects
-
+  //modal variables
+  const approveToken = allowTokenStatus === "success";
+  const commonClassname =
+    "relative flex flex-1 flex-col items-center justify-start transition-all duration-200 ease-out";
+  const circleClassname = `relative flex h-28 w-28 items-center rounded-full border-8  p-1 text-center `;
+  const textClassname = `absolute top-9 max-w-min text-center leading-5 text-white ${approveToken && "text-success"}`;
+  const messageClassname = `absolute bottom-0 text-sm `;
   return (
     <>
+      {/* Modal */}
       <dialog id="transaction_modal" className="modal" ref={modalRef}>
         <div className="modal-box max-w-xl bg-surface">
           {/* title and close btn */}
           <div className="flex items-start justify-between pb-10">
             <h4 className="text-lg font-bold">Register in 1hive</h4>
-
             <Button size="sm" onClick={() => modalRef.current?.close()}>
               X
             </Button>
           </div>
-          <div className="flex h-48 overflow-hidden px-10 ">
-            <div
-              className={`relative flex flex-1 flex-col items-center justify-start transition-all duration-200 ease-out`}
-            >
+
+          {/* Approve token transaction step */}
+          <div className="flex h-48 overflow-hidden px-6 ">
+            <div className={commonClassname}>
               <div
-                className={`relative flex h-28 w-28  animate-pulse items-center rounded-full border-8 border-secondary p-1 text-center ${cn(
-                  {
-                    "animate-none border-4 border-success ": approveToken,
-                  },
-                )}`}
-              />
-              <span
-                className={`absolute top-9 max-w-min text-center leading-5 text-secondary ${approveToken && "text-success"}`}
+                className={`rounded-full first:bg-secondary ${approveToken && "border-[1px] border-success first:bg-success"}`}
               >
-                Approve arbHNY
-              </span>
-              <span
-                className={`absolute bottom-2 text-xs ${approveToken && "text-success"}`}
+                <div
+                  className={`${circleClassname} ${!approveToken && "animate-pulse border-white"}`}
+                />
+              </div>
+              <span className={textClassname}>Approve arbHNY</span>
+              <p
+                className={`${messageClassname} ${approveToken && "text-success"}`}
               >
                 {approveToken
                   ? "Transaction sent succesfull !"
                   : "Waiting for signature "}
-              </span>
+              </p>
             </div>
 
-            <div
-              className={`relative flex flex-1  flex-col items-center justify-start transition-all duration-200 ease-in ${cn(
-                {
-                  "": approveToken,
-                },
-              )}`}
-            >
+            {/* Register transaction step  */}
+            <div className={commonClassname}>
               <div
-                className={`relative flex h-28 w-28 items-center rounded-full border-8 p-1 text-center ${cn(
-                  {
-                    "animate-pulse border-secondary": approveToken,
-                    "animate-none border-4 border-success ":
-                      registerMemberStatus === "success",
-                  },
-                )}`}
-              />
-              <span className="absolute top-9 max-w-min text-center leading-5 text-secondary">
-                Register in 1hive
-              </span>
-              <span className={`absolute bottom-2 text-xs`}>
+                className={`rounded-full first:bg-secondary ${approveToken ? "first:bg-secondary" : "scale-90"}`}
+              >
+                <div
+                  className={`${circleClassname} ${approveToken ? "animate-pulse" : "border-surface"}`}
+                />
+              </div>
+              <span className={textClassname}>Register in 1hive</span>
+              <p className={`${messageClassname}`}>
                 {approveToken
                   ? "Waiting for signature"
                   : "Waiting for signature"}
-              </span>
+              </p>
             </div>
           </div>
         </div>
       </dialog>
+
       <Button onClick={handleChange} className="w-full bg-primary">
         {address
           ? isMember
