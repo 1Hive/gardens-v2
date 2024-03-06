@@ -22,7 +22,6 @@ import { getBuiltGraphSDK } from "#/subgraph/.graphclient";
 import { WriteContractResult } from "wagmi/actions";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import cn from "classnames";
 
 export function RegisterMember({
   communityAddress,
@@ -141,58 +140,80 @@ export function RegisterMember({
   //TODO: handle error states
   //modal variables
   const approveToken = allowTokenStatus === "success";
+  const allowanceFailed = allowTokenStatus === "error" && !approveToken;
+  const registerMemberFailed = registerMemberStatus === "error";
+
   const commonClassname =
-    "relative flex flex-1 flex-col items-center justify-start transition-all duration-200 ease-out";
-  const circleClassname = `relative flex h-28 w-28 items-center rounded-full border-8  p-1 text-center `;
+    "relative flex flex-1 flex-col items-center justify-start transition-all duration-300 ease-in-out";
+  const circleClassname = `relative flex h-28 w-28 items-center rounded-full border-8 p-1 text-center`;
   const textClassname = `absolute top-9 max-w-min text-center leading-5 text-white ${approveToken && "text-success"}`;
-  const messageClassname = `absolute bottom-0 text-sm `;
+  const messageClassname = `absolute bottom-0 text-sm max-w-xs px-10 text-center `;
+
   return (
     <>
       {/* Modal */}
       <dialog id="transaction_modal" className="modal" ref={modalRef}>
         <div className="modal-box max-w-xl bg-surface">
-          {/* title and close btn */}
+          {/* modal title and close btn */}
           <div className="flex items-start justify-between pb-10">
             <h4 className="text-lg font-bold">Register in 1hive</h4>
             <Button size="sm" onClick={() => modalRef.current?.close()}>
               X
             </Button>
           </div>
-
-          {/* Approve token transaction step */}
-          <div className="flex h-48 overflow-hidden px-6 ">
+          <div className="flex h-48 overflow-hidden px-6">
+            {/* modal approve token transaction step */}
             <div className={commonClassname}>
               <div
-                className={`rounded-full first:bg-secondary ${approveToken && "border-[1px] border-success first:bg-success"}`}
+                className={`rounded-full first:bg-secondary ${
+                  allowanceFailed
+                    ? "border-[1px] border-error first:bg-error"
+                    : approveToken &&
+                      "border-[1px] border-success first:bg-success"
+                }`}
               >
                 <div
-                  className={`${circleClassname} ${!approveToken && "animate-pulse border-white"}`}
+                  className={`${circleClassname} border-white ${allowanceFailed ? "animate-none" : !approveToken && "animate-pulse"}`}
                 />
               </div>
               <span className={textClassname}>Approve arbHNY</span>
               <p
                 className={`${messageClassname} ${approveToken && "text-success"}`}
               >
-                {approveToken
-                  ? "Transaction sent succesfull !"
-                  : "Waiting for signature "}
+                {allowanceFailed
+                  ? "An error has occurred, please try again!"
+                  : approveToken
+                    ? "Transaction sent successful!"
+                    : "Waiting for signature"}
               </p>
             </div>
 
-            {/* Register transaction step  */}
+            {/* modal register transaction step  */}
             <div className={commonClassname}>
               <div
-                className={`rounded-full first:bg-secondary ${approveToken ? "first:bg-secondary" : "scale-90"}`}
+                className={`rounded-full first:bg-secondary ${
+                  registerMemberFailed
+                    ? "border-[1px] border-error first:bg-error"
+                    : approveToken
+                      ? "first:bg-secondary"
+                      : "scale-90"
+                }`}
               >
                 <div
-                  className={`${circleClassname} ${approveToken ? "animate-pulse" : "border-surface"}`}
+                  className={`${circleClassname} border-white ${registerMemberFailed ? "animate-none" : approveToken ? "animate-pulse" : ""}`}
                 />
               </div>
-              <span className={textClassname}>Register in 1hive</span>
-              <p className={`${messageClassname}`}>
-                {approveToken
-                  ? "Waiting for signature"
-                  : "Waiting for signature"}
+              <span
+                className={`${textClassname} ${!approveToken && "text-sm"}`}
+              >
+                Register in 1hive
+              </span>
+              <p className={messageClassname}>
+                {registerMemberFailed
+                  ? "An error has occurred, please try again!"
+                  : approveToken
+                    ? "Waiting for signature"
+                    : "Waiting for signature"}
               </p>
             </div>
           </div>
