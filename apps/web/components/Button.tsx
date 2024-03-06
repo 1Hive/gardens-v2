@@ -55,7 +55,7 @@ export function Button({
     <button
       type={type}
       className={`${VARIANT_STYLES[variant ?? "primary"]} ${cn({
-        "h-7": size === "sm",
+        "h-7 px-6": size === "sm",
         "h-9": size === "md",
         "h-14": size === "lg",
       })} ${cn({
