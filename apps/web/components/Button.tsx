@@ -16,9 +16,10 @@ type ButtonProps = {
   children: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
+  icon?: React.ReactNode;
 };
 
-type Variant = "primary" | "outline" | "fill";
+type Variant = "primary" | "outline" | "fill" | "error";
 type VariantStyles = Record<
   Variant,
   React.HTMLAttributes<HTMLButtonElement>["className"]
@@ -29,6 +30,7 @@ const VARIANT_STYLES: VariantStyles = {
   primary: "bg-primary text-black",
   outline: "btn btn-info",
   fill: "bg-secondary text-white",
+  error: "bg-error text-white",
 };
 
 export function Button({
@@ -40,6 +42,7 @@ export function Button({
   size,
   variant,
   isLoading = false,
+  icon,
   type = "button",
 }: ButtonProps) {
   const buttonContent = isLoading ? (
@@ -52,17 +55,17 @@ export function Button({
     <button
       type={type}
       className={`${VARIANT_STYLES[variant ?? "primary"]} ${cn({
-        "h-7": size === "sm",
+        "h-7 px-6": size === "sm",
         "h-9": size === "md",
         "h-14": size === "lg",
       })} ${cn({
         "border-2": type === "button",
       })} 
-      disabled:scale-1 flex cursor-pointer items-center justify-center rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed disabled:bg-gray-300 ${className}`}
+      disabled:scale-1 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed disabled:bg-gray-300 ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
-      {buttonContent}
+      {icon && icon} {buttonContent}
     </button>
   );
 

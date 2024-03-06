@@ -326,6 +326,10 @@ export type CVStrategyConfig = {
     maxRatio: Scalars['BigInt'];
     weight: Scalars['BigInt'];
     proposalType: Scalars['BigInt'];
+    pointsPerMember?: Maybe<Scalars['BigInt']>;
+    pointsPerTokenStaked?: Maybe<Scalars['BigInt']>;
+    tokensPerPoint?: Maybe<Scalars['BigInt']>;
+    maxAmount?: Maybe<Scalars['BigInt']>;
 };
 export type CVStrategyConfig_filter = {
     id?: InputMaybe<Scalars['ID']>;
@@ -377,12 +381,44 @@ export type CVStrategyConfig_filter = {
     proposalType_lte?: InputMaybe<Scalars['BigInt']>;
     proposalType_in?: InputMaybe<Array<Scalars['BigInt']>>;
     proposalType_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    pointsPerMember?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_not?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_gt?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_lt?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_gte?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_lte?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    pointsPerMember_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    pointsPerTokenStaked?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_not?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_gt?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_lt?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_gte?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_lte?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    pointsPerTokenStaked_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    tokensPerPoint?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_not?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_gt?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_lt?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_gte?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_lte?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    tokensPerPoint_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    maxAmount?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_not?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_gt?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_lt?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_gte?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_lte?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    maxAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
 };
-export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'D' | 'decay' | 'maxRatio' | 'weight' | 'proposalType';
+export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'D' | 'decay' | 'maxRatio' | 'weight' | 'proposalType' | 'pointsPerMember' | 'pointsPerTokenStaked' | 'tokensPerPoint' | 'maxAmount';
 export type CVStrategy_filter = {
     id?: InputMaybe<Scalars['ID']>;
     id_not?: InputMaybe<Scalars['ID']>;
@@ -483,7 +519,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__weight' | 'config__proposalType' | 'proposals' | 'memberActive';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__weight' | 'config__proposalType' | 'config__pointsPerMember' | 'config__pointsPerTokenStaked' | 'config__tokensPerPoint' | 'config__maxAmount' | 'proposals' | 'memberActive';
 export type Member = {
     id: Scalars['ID'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -1564,6 +1600,10 @@ export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType exte
     maxRatio?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     weight?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     proposalType?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    pointsPerMember?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    pointsPerTokenStaked?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    tokensPerPoint?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    maxAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export interface Int8ScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Int8'], any> {

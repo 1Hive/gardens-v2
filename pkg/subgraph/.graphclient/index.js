@@ -239,7 +239,7 @@ export const getCommunitiesByGardenDocument = gql `
       registerToken
       registerStakeAmount
       alloAddress
-      members {
+      members(where: {stakedAmount_gt: "0"}) {
         id
         memberAddress
       }

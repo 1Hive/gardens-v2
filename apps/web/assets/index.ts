@@ -13,6 +13,7 @@ import tree4_ from "./LongTree.svg";
 import grass_ from "./Grass.svg";
 import grassLarge_ from "./GrassLarge.svg";
 import grassBrown_ from "./GrassBrown.svg";
+import walletIcon_ from "./WalletIcon.svg";
 
 export const clouds1 = clouds1_;
 export const clouds2 = clouds2_;
@@ -29,5 +30,6 @@ export const tree4 = tree4_;
 export const grass = grass_;
 export const grassLarge = grassLarge_;
 export const grassBrown = grassBrown_;
+export const walletIcon = walletIcon_;
 
 export { GardensLogo } from "./GardensLogo";

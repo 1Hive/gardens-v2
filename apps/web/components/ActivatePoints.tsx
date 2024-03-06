@@ -16,7 +16,7 @@ type ActiveMemberProps = {
 
 export function ActivatePoints({
   strategyAddress,
-  // isMemberActived,
+  isMemberActived,
   communityAddress,
 }: ActiveMemberProps) {
   const { address } = useAccount();
