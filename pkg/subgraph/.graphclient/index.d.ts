@@ -326,6 +326,10 @@ export type CVStrategyConfig = {
     maxRatio: Scalars['BigInt'];
     weight: Scalars['BigInt'];
     proposalType: Scalars['BigInt'];
+    pointsPerMember?: Maybe<Scalars['BigInt']>;
+    pointsPerTokenStaked?: Maybe<Scalars['BigInt']>;
+    tokensPerPoint?: Maybe<Scalars['BigInt']>;
+    maxAmount?: Maybe<Scalars['BigInt']>;
 };
 export type CVStrategyConfig_filter = {
     id?: InputMaybe<Scalars['ID']>;
@@ -377,12 +381,44 @@ export type CVStrategyConfig_filter = {
     proposalType_lte?: InputMaybe<Scalars['BigInt']>;
     proposalType_in?: InputMaybe<Array<Scalars['BigInt']>>;
     proposalType_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    pointsPerMember?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_not?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_gt?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_lt?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_gte?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_lte?: InputMaybe<Scalars['BigInt']>;
+    pointsPerMember_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    pointsPerMember_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    pointsPerTokenStaked?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_not?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_gt?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_lt?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_gte?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_lte?: InputMaybe<Scalars['BigInt']>;
+    pointsPerTokenStaked_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    pointsPerTokenStaked_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    tokensPerPoint?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_not?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_gt?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_lt?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_gte?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_lte?: InputMaybe<Scalars['BigInt']>;
+    tokensPerPoint_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    tokensPerPoint_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    maxAmount?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_not?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_gt?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_lt?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_gte?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_lte?: InputMaybe<Scalars['BigInt']>;
+    maxAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    maxAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
 };
-export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'D' | 'decay' | 'maxRatio' | 'weight' | 'proposalType';
+export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'D' | 'decay' | 'maxRatio' | 'weight' | 'proposalType' | 'pointsPerMember' | 'pointsPerTokenStaked' | 'tokensPerPoint' | 'maxAmount';
 export type CVStrategy_filter = {
     id?: InputMaybe<Scalars['ID']>;
     id_not?: InputMaybe<Scalars['ID']>;
@@ -483,7 +519,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__weight' | 'config__proposalType' | 'proposals' | 'memberActive';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__weight' | 'config__proposalType' | 'config__pointsPerMember' | 'config__pointsPerTokenStaked' | 'config__tokensPerPoint' | 'config__maxAmount' | 'proposals' | 'memberActive';
 export type Member = {
     id: Scalars['ID'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -1564,6 +1600,10 @@ export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType exte
     maxRatio?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     weight?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     proposalType?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    pointsPerMember?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    pointsPerTokenStaked?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    tokensPerPoint?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    maxAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export interface Int8ScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Int8'], any> {
@@ -1713,19 +1753,19 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getTokenGardens(variables?: Exact<{
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
-    getPool(variables: Exact<{
-        poolId: any;
-    }>, options?: TOperationContext): Promise<getPoolQuery>;
     isMember(variables: Exact<{
         me: string;
         comm: string;
     }>, options?: TOperationContext): Promise<isMemberQuery>;
-    getCommunityByGarden(variables: Exact<{
+    getCommunitiesByGarden(variables: Exact<{
         addr: string;
-    }>, options?: TOperationContext): Promise<getCommunityByGardenQuery>;
-    getProposalData(variables: Exact<{
+    }>, options?: TOperationContext): Promise<getCommunitiesByGardenQuery>;
+    getPoolData(variables: Exact<{
         garden: string;
         poolId: any;
+    }>, options?: TOperationContext): Promise<getPoolDataQuery>;
+    getProposalData(variables: Exact<{
+        garden: string;
         proposalId: string;
     }>, options?: TOperationContext): Promise<getProposalDataQuery>;
     getAllo(variables?: Exact<{
@@ -1758,14 +1798,6 @@ export type getTokenGardensQuery = {
         })>>;
     })>;
 };
-export type getPoolQueryVariables = Exact<{
-    poolId: Scalars['BigInt'];
-}>;
-export type getPoolQuery = {
-    cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
-        proposals: Array<Pick<CVProposal, 'id' | 'requestedAmount' | 'requestedToken' | 'stakedTokens' | 'proposalStatus' | 'submitter' | 'metadata' | 'beneficiary'>>;
-    })>;
-};
 export type isMemberQueryVariables = Exact<{
     me: Scalars['ID'];
     comm: Scalars['String'];
@@ -1777,13 +1809,13 @@ export type isMemberQuery = {
         })>>;
     })>;
 };
-export type getCommunityByGardenQueryVariables = Exact<{
+export type getCommunitiesByGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
 }>;
-export type getCommunityByGardenQuery = {
+export type getCommunitiesByGardenQuery = {
     registryFactories: Array<Pick<RegistryFactory, 'id'>>;
     tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'chainId'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityName' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'covenantIpfsHash' | 'chainId' | 'communityName' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId' | 'poolAmount'> & {
                 registryCommunity: Pick<RegistryCommunity, 'registerStakeAmount'>;
@@ -1793,22 +1825,29 @@ export type getCommunityByGardenQuery = {
         })>>;
     })>;
 };
-export type getProposalDataQueryVariables = Exact<{
+export type getPoolDataQueryVariables = Exact<{
     garden: Scalars['ID'];
     poolId: Scalars['BigInt'];
+}>;
+export type getPoolDataQuery = {
+    allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
+    tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
+    cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId'> & {
+        config?: Maybe<Pick<CVStrategyConfig, 'id' | 'proposalType'>>;
+        registryCommunity: Pick<RegistryCommunity, 'id'>;
+        proposals: Array<Pick<CVProposal, 'id' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedTokens'>>;
+    })>;
+};
+export type getProposalDataQueryVariables = Exact<{
+    garden: Scalars['ID'];
     proposalId: Scalars['ID'];
 }>;
 export type getProposalDataQuery = {
-    tokenGarden?: Maybe<(Pick<TokenGarden, 'name' | 'symbol'> & {
-        communities?: Maybe<Array<{
-            strategies?: Maybe<Array<{
-                proposals: Array<(Pick<CVProposal, 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadata' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedTokens' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
-                    strategy: (Pick<CVStrategy, 'id'> & {
-                        config?: Maybe<Pick<CVStrategyConfig, 'proposalType'>>;
-                    });
-                })>;
-            }>>;
-        }>>;
+    tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol'>>;
+    cvproposal?: Maybe<(Pick<CVProposal, 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadata' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedTokens' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
+        strategy: (Pick<CVStrategy, 'id'> & {
+            config?: Maybe<Pick<CVStrategyConfig, 'proposalType'>>;
+        });
     })>;
 };
 export type getAlloQueryVariables = Exact<{
@@ -1833,19 +1872,19 @@ export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact
 export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery, Exact<{
     [key: string]: never;
 }>>;
-export declare const getPoolDocument: DocumentNode<getPoolQuery, Exact<{
-    poolId: Scalars['BigInt'];
-}>>;
 export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
     me: Scalars['ID'];
     comm: Scalars['String'];
 }>>;
-export declare const getCommunityByGardenDocument: DocumentNode<getCommunityByGardenQuery, Exact<{
+export declare const getCommunitiesByGardenDocument: DocumentNode<getCommunitiesByGardenQuery, Exact<{
     addr: Scalars['ID'];
+}>>;
+export declare const getPoolDataDocument: DocumentNode<getPoolDataQuery, Exact<{
+    garden: Scalars['ID'];
+    poolId: Scalars['BigInt'];
 }>>;
 export declare const getProposalDataDocument: DocumentNode<getProposalDataQuery, Exact<{
     garden: Scalars['ID'];
-    poolId: Scalars['BigInt'];
     proposalId: Scalars['ID'];
 }>>;
 export declare const getAlloDocument: DocumentNode<getAlloQuery, Exact<{
@@ -1858,9 +1897,9 @@ export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V,
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
     getTokenGardens(variables?: getTokenGardensQueryVariables, options?: C): Promise<getTokenGardensQuery>;
-    getPool(variables: getPoolQueryVariables, options?: C): Promise<getPoolQuery>;
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
-    getCommunityByGarden(variables: getCommunityByGardenQueryVariables, options?: C): Promise<getCommunityByGardenQuery>;
+    getCommunitiesByGarden(variables: getCommunitiesByGardenQueryVariables, options?: C): Promise<getCommunitiesByGardenQuery>;
+    getPoolData(variables: getPoolDataQueryVariables, options?: C): Promise<getPoolDataQuery>;
     getProposalData(variables: getProposalDataQueryVariables, options?: C): Promise<getProposalDataQuery>;
     getAllo(variables?: getAlloQueryVariables, options?: C): Promise<getAlloQuery>;
     getStrategyByPool(variables: getStrategyByPoolQueryVariables, options?: C): Promise<getStrategyByPoolQuery>;

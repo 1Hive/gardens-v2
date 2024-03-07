@@ -33,7 +33,7 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="en"
-      className={`${press.variable} ${chakra.variable} font-sans`}
+      className={`${press.variable} ${chakra.variable} bg-white`}
     >
       <body className="min-h-screen bg-white font-chakra">
         <Providers>{children}</Providers>

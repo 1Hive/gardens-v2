@@ -10,10 +10,11 @@ import { Strategy } from "./Proposals";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { Address, useAccount } from "wagmi";
+import { PRECISION_SCALE } from "@/actions/getProposals";
 
 type PoolStatsProps = {
   balance?: string | number;
-  strategyAddress: `0x${string}`;
+  strategyAddress: Address;
   strategy: Strategy;
   // poolId: number;
   communityAddress: Address;
@@ -23,23 +24,28 @@ export const PoolStats: FC<PoolStatsProps> = ({
   balance,
   strategyAddress,
   strategy,
-  communityAddress
+  communityAddress,
 }) => {
   const { isMemberActived } = useIsMemberActivated(strategy);
   const { isConnected } = useAccount();
 
   const { voterStakePct } = useTotalVoterStakedPct(strategy);
 
+  console.log("voteStakePct", voterStakePct);
+  console.log("startegy - pool", strategy);
+
   return (
-    <section className="flex h-fit w-full gap-8 rounded-xl bg-none">
+    <section className="flex max-h-96 w-full gap-8 rounded-xl bg-none">
       <div className="flex flex-1 flex-col gap-8">
         {/*  */}
         {/* left-top */}
         <div className="flex-flex-col max-h-44 w-full space-y-4 rounded-xl border-2 border-black bg-white p-4">
           <div>
             <div className="flex items-center justify-around">
-              <h4 className="text-center text-xl font-bold">Funding Pool</h4>
-              <h4 className="text-center text-2xl font-bold">{balance} HNY</h4>
+              <h4 className="text-center text-xl font-bold">
+                Funds Available:
+              </h4>
+              <h4 className="text-center text-2xl font-bold">{balance}</h4>
             </div>
           </div>
           <div className="max-h-30 flex items-center gap-3 ">
@@ -65,10 +71,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
               </div>
               <div className="flex flex-1 flex-col items-center">
                 <p>Status</p>
-                <StatusBadge
-                  status={isConnected && isMemberActived ? 1 : 2}
-                  classNames=""
-                />
+                <StatusBadge status={isMemberActived ? 1 : 0} classNames="" />
               </div>
             </div>
 
@@ -87,13 +90,23 @@ export const PoolStats: FC<PoolStatsProps> = ({
 
       {/* right  */}
       <div className="flex-1 space-y-8 rounded-xl border-2 border-black bg-white p-4">
-        <div>
-          <h4 className="text-center text-xl font-bold">Active Points</h4>
+        <div className="flex flex-col items-center gap-2">
+          <h4 className="text-center text-xl font-bold">
+            Active Points Distribution
+          </h4>
+          <p className="text-md stat">Points System: Fixed</p>
         </div>
-        <div>
-          {/* Testing styles and Data */}
-          <ActivePointsChart stakedPoints={Number(voterStakePct)} />
-        </div>
+        {voterStakePct && Number(voterStakePct) !== 0 ? (
+          <div className="flex h-48 flex-col items-center justify-center">
+            <p>voterStakePct</p>
+            <p className="text-5xl font-semibold">{Number(voterStakePct / PRECISION_SCALE)} %</p>
+          </div>
+        ) : (
+          // <ActivePointsChart stakedPoints={Number(voterStakePct)} />
+          <div className="flex h-48 items-center justify-center">
+            <p className="text-lg font-semibold">No Points Activated</p>
+          </div>
+        )}
       </div>
     </section>
   );
