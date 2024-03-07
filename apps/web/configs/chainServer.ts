@@ -16,9 +16,5 @@ export function getChain(chainId: number | string): Chain | undefined {
   if (found) {
     chainResult = found;
   }
-  // else {
-  //   //set to mainnet because we don't deploy here
-  //   chainResult = mainnet;
-  // }
   return chainResult;
 }

@@ -45,11 +45,6 @@ export function NavBar() {
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
                 <ConnectWallet />
-                {/* <ConnectButton
-                  accountStatus="full"
-                  showBalance={false}
-                  chainStatus={"none"}
-                /> */}
               </div>
               <div className="-mr-2 flex items-center sm:hidden">
                 {/* Mobile menu button */}
