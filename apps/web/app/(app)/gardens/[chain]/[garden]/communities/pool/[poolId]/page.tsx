@@ -69,6 +69,8 @@ export default async function Pool({
   );
   const strategyObj = data?.cvstrategies?.[0];
 
+  console.log(data);
+
   if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;
   }

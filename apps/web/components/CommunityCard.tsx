@@ -9,27 +9,36 @@ import {
 import { PoolCard } from "@/components";
 import { CommunityProfile } from "@/components";
 import { Address, useAccount } from "wagmi";
-import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
+import {
+  TokenGarden,
+  getCommunitiesByGardenQuery,
+} from "#/subgraph/.graphclient";
+import * as dn from "dnum";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
 >[number];
-type CommunityCardProps = CommunityQuery & { gardenToken: Address };
+
+type CommunityCardProps = CommunityQuery & {
+  tokenGarden: TokenGarden | undefined;
+} & {
+  covenantData?: { logo: string; covenant: string };
+};
 
 export function CommunityCard({
-  // covenantIpfsHash,
+  covenantData,
   communityName: name,
   id: communityAddress,
   strategies,
   members,
   registerToken,
   registerStakeAmount,
-  tokenSymbol,
-}: CommunityQuery & { tokenSymbol: string | undefined }) {
-  const [open, setOpen] = useState(false);
+  tokenGarden,
+}: CommunityCardProps) {
+  // const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
-  // const [isMember, setIsMember] = useState<boolean>(false);
 
+  // const [isMember, setIsMember] = useState<boolean>(false);
   // useEffect(() => {
   //   if (accountAddress && members) {
   //     const findMember = members.some(
@@ -46,6 +55,8 @@ export function CommunityCard({
   registerToken = registerToken ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
 
+  console.log(registerStakeAmount, "registerStakeAmount");
+
   //TODO: check decimals format for stake amounts
 
   return (
@@ -58,11 +69,12 @@ export function CommunityCard({
           </h3>
           <CommunityProfile
             communityAddress={communityAddress as Address}
-            name={name}
+            name={name as string}
+            covenantData={covenantData}
           />
         </aside>
 
-        {/* main: stats, action buttons, dsiplay pools */}
+        {/* main: stats, action buttons, display pools */}
         <main className="card-body space-y-10">
           <div className="stats flex">
             <div className="stat flex-1">
@@ -72,7 +84,7 @@ export function CommunityCard({
               <div className="stat-title">Members</div>
               <div className="stat-value text-primary">{members.length}</div>
               <div className="stat-desc">
-                {registerStakeAmount} {tokenSymbol} membership
+                {registerStakeAmount} {tokenGarden?.symbol} membership
               </div>
             </div>
 
@@ -89,23 +101,24 @@ export function CommunityCard({
 
           <div className="flex w-fit gap-4">
             <RegisterMember
+              name={name as string}
+              tokenSymbol={tokenGarden?.symbol as string}
               communityAddress={communityAddress as Address}
               registerToken={registerToken as Address}
-              registerStakeAmount={registerStakeAmount}
             />
 
             <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
           </div>
           <div className=" justify-end">
             <div
-              className={`flex w-full transform flex-wrap gap-4 overflow-hidden transition-height duration-200 ease-in-out ${
+              className={`flex w-full transform gap-4 overflow-x-auto transition-height duration-200 ease-in-out ${
                 !open && "max-h-[290px]"
               } `}
             >
               {pools.map((pool, i) => (
                 <PoolCard {...pool} key={i} />
               ))}
-              {pools.length > 2 && (
+              {/* {pools.length > 2 && (
                 <Button
                   className="!rounded-full bg-white !p-3"
                   onClick={() => setOpen((prev) => !prev)}
@@ -115,7 +128,7 @@ export function CommunityCard({
                     aria-hidden="true"
                   />
                 </Button>
-              )}
+              )} */}
             </div>
           </div>
         </main>

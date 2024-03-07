@@ -350,6 +350,10 @@ export type CVStrategyConfig = {
   maxRatio: Scalars['BigInt'];
   weight: Scalars['BigInt'];
   proposalType: Scalars['BigInt'];
+  pointsPerMember?: Maybe<Scalars['BigInt']>;
+  pointsPerTokenStaked?: Maybe<Scalars['BigInt']>;
+  tokensPerPoint?: Maybe<Scalars['BigInt']>;
+  maxAmount?: Maybe<Scalars['BigInt']>;
 };
 
 export type CVStrategyConfig_filter = {
@@ -402,6 +406,38 @@ export type CVStrategyConfig_filter = {
   proposalType_lte?: InputMaybe<Scalars['BigInt']>;
   proposalType_in?: InputMaybe<Array<Scalars['BigInt']>>;
   proposalType_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointsPerMember?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_not?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_gt?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_lt?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_gte?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_lte?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointsPerMember_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointsPerTokenStaked?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_not?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_gt?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_lt?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_gte?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_lte?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointsPerTokenStaked_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  tokensPerPoint?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_not?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_gt?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_lt?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_gte?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_lte?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  tokensPerPoint_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  maxAmount?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_not?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_gt?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_lt?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_gte?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_lte?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  maxAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
@@ -419,7 +455,11 @@ export type CVStrategyConfig_orderBy =
   | 'decay'
   | 'maxRatio'
   | 'weight'
-  | 'proposalType';
+  | 'proposalType'
+  | 'pointsPerMember'
+  | 'pointsPerTokenStaked'
+  | 'tokensPerPoint'
+  | 'maxAmount';
 
 export type CVStrategy_filter = {
   id?: InputMaybe<Scalars['ID']>;
@@ -546,6 +586,10 @@ export type CVStrategy_orderBy =
   | 'config__maxRatio'
   | 'config__weight'
   | 'config__proposalType'
+  | 'config__pointsPerMember'
+  | 'config__pointsPerTokenStaked'
+  | 'config__tokensPerPoint'
+  | 'config__maxAmount'
   | 'proposals'
   | 'memberActive';
 

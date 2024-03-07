@@ -10,6 +10,7 @@ import { Strategy } from "./Proposals";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { Address, useAccount } from "wagmi";
+import { PRECISION_SCALE } from "@/actions/getProposals";
 
 type PoolStatsProps = {
   balance?: string | number;
@@ -30,8 +31,11 @@ export const PoolStats: FC<PoolStatsProps> = ({
 
   const { voterStakePct } = useTotalVoterStakedPct(strategy);
 
+  console.log("voteStakePct", voterStakePct);
+  console.log("startegy - pool", strategy);
+
   return (
-    <section className="flex h-fit w-full gap-8 rounded-xl bg-none">
+    <section className="flex max-h-96 w-full gap-8 rounded-xl bg-none">
       <div className="flex flex-1 flex-col gap-8">
         {/*  */}
         {/* left-top */}
@@ -86,13 +90,23 @@ export const PoolStats: FC<PoolStatsProps> = ({
 
       {/* right  */}
       <div className="flex-1 space-y-8 rounded-xl border-2 border-black bg-white p-4">
-        <div>
-          <h4 className="text-center text-xl font-bold">Active Points</h4>
+        <div className="flex flex-col items-center gap-2">
+          <h4 className="text-center text-xl font-bold">
+            Active Points Distribution
+          </h4>
+          <p className="text-md stat">Points System: Fixed</p>
         </div>
-        <div>
-          {/* Testing styles and Data */}
-          <ActivePointsChart stakedPoints={Number(voterStakePct)} />
-        </div>
+        {voterStakePct && Number(voterStakePct) !== 0 ? (
+          <div className="flex h-48 flex-col items-center justify-center">
+            <p>voterStakePct</p>
+            <p className="text-5xl font-semibold">{Number(voterStakePct / PRECISION_SCALE)} %</p>
+          </div>
+        ) : (
+          // <ActivePointsChart stakedPoints={Number(voterStakePct)} />
+          <div className="flex h-48 items-center justify-center">
+            <p className="text-lg font-semibold">No Points Activated</p>
+          </div>
+        )}
       </div>
     </section>
   );
