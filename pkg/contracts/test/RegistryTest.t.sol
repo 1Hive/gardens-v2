@@ -209,6 +209,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         token.approve(address(registryCommunity), 20 * DECIMALS);
         _registryCommunity().increasePower(20 * DECIMALS);
+
         assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (20 * DECIMALS));
 
         vm.stopPrank();
