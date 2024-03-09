@@ -1,13 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Button, StatusBadge } from "@/components";
+import { Button, Badge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAccount, useContractWrite, Address as AddressType } from "wagmi";
+import { useAccount, useContractWrite } from "wagmi";
 import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI } from "@/src/generated";
-import { PRECISION_SCALE, getProposals } from "@/actions/getProposals";
+import { getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
 import { toast } from "react-toastify";
@@ -27,7 +27,6 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 //   return BigInt(number * 10 ** 4);
 // };
 
-
 type InputItem = {
   id: string;
   value: number;
@@ -42,14 +41,7 @@ export type ProposalTypeVoter = Proposal & {
   type: number;
 };
 
-//const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
-
-//Fixed System
-// for NOT 18 decimales stake, like gardensDAO example:
-// 100% points = BIGINT_100_SCALED = 1,000,000
-
-// for 1hive example, 18 decimales stake:
-// 100% = 1000000000000000000000000" = 1e24
+// const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
 
 //!POOL == STRATEGY
 export function Proposals({
@@ -70,8 +62,6 @@ export function Proposals({
   const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-
-  //console.log(strategy);
 
   useEffect(() => {
     setStrategyAddress(strategy.id as Address);
@@ -95,7 +85,7 @@ export function Proposals({
     const newInputs = proposals.map(({ id, voterStakedPointsPct }) => ({
       id: id,
       value: voterStakedPointsPct,
-    }));   // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
+    }));
     // console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
@@ -141,7 +131,7 @@ export function Proposals({
     // console.log("poolId", poolId);
 
     writeAllocate({
-      args: [BigInt(poolId), encodedData as AddressType],
+      args: [BigInt(poolId), encodedData as `0x${string}`],
     });
   };
 
@@ -149,12 +139,12 @@ export function Proposals({
     inputData: InputItem[],
     currentData: ProposalTypeVoter[],
   ) => {
-    const resultArr: [number, BigInt][] = [];
+    const resultArr: number[][] = [];
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = BigInt(input.value - current.voterStakedPointsPct) * PRECISION_SCALE;
-          if (dif !== BigInt(0)) {
+          const dif = input.value - current.voterStakedPointsPct;
+          if (dif !== 0) {
             resultArr.push([Number(input.id), dif]);
           }
         }
@@ -170,8 +160,8 @@ export function Proposals({
 
   const inputHandler = (i: number, value: number) => {
     const currentPoints = calculatePoints(i);
-    console.log("currentPoints", currentPoints);
-    console.log("value", value);
+    // console.log("currentPoints", currentPoints);
+    // console.log("value", value);
     if (currentPoints + value <= 100) {
       setInputs(
         inputs.map((input, index) =>
@@ -189,14 +179,6 @@ export function Proposals({
       if (exceptIndex !== undefined && exceptIndex === i) return acc;
       else return acc + curr.value;
     }, 0);
-
-  const getProposalId = (inputString: string) => {
-    if (inputString.length >= 2) {
-      return inputString.substring(2);
-    } else {
-      return "0x0";
-    }
-  };
 
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
@@ -220,24 +202,20 @@ export function Proposals({
         <div className="flex flex-col gap-6">
           {proposals.map(({ title, type, id, stakedTokens }, i) => (
             <div
-              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
+              className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
               key={title + "_" + id}
             >
-              <div className="flex w-full items-center justify-between font-bold">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-sm">{getProposalId(id)} -</span>
-                  <h4 className="text-xl">{title}</h4>
-                </div>
-
-                <div className="flex items-center gap-8">
-                  <StatusBadge status={1} />
-                  {/* {!editView && ( */}
-                  <>
-                    <Link href={`${pathname}/proposals/${id}`}>
-                      <Button variant="outline">View Proposal</Button>
+              <div className="flex w-full items-center justify-between">
+                <h4 className="font-semibold">{title}</h4>
+                <div>
+                  <Badge type={Number(type)} />
+                  {!editView && (
+                    <Link href={`${pathname}/proposals/${id}`} className="ml-8">
+                      <button className="btn btn-outline btn-info px-3 py-[6px]">
+                        View Proposal
+                      </button>
                     </Link>
-                  </>
-                  {/* )} */}
+                  )}
                 </div>
               </div>
 
@@ -265,27 +243,29 @@ export function Proposals({
                     </div>
                     <div className="mb-2">{inputs[i].value} %</div>
                   </div>
-                  {/* <Link href={`${pathname}/proposals/${id}`}>
-                    <Button variant="outline">View Proposal</Button>
-                  </Link> */}
+                  <Link href={`${pathname}/proposals/${id}`}>
+                    <Button className="h-[38px] bg-slate-200">
+                      View Proposal
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
           ))}
         </div>
         <div className="flex justify-center gap-8">
-          <Button
-            className={`${editView ? "bg-red text-white" : "bg-primary"}`}
-            onClick={() => setEditView((prev) => !prev)}
-            disabled={!isMemberActived}
-            tooltip="Activate your points to support proposals"
-          >
-            {editView ? "Cancel" : "Manage support"}
-          </Button>
-
+          {/* <Button className={`bg-primary`}>Create Proposal</Button> */}
+          {isMemberActived && (
+            <Button
+              className={`${editView ? "bg-red text-white" : "bg-primary"}`}
+              onClick={() => setEditView((prev) => !prev)}
+            >
+              {editView ? "Cancel" : "Manage support"}
+            </Button>
+          )}
           {editView && (
             <Button
-              className="min-w-[200px]"
+              className="min-w-[200px] bg-secondary"
               onClick={() => submit()}
               isLoading={allocateStatus === "loading"}
             >
@@ -297,10 +277,10 @@ export function Proposals({
           <p className="font-semibold">{message}</p>
         </div>
         {/*  PROPOSALS STATS  ///// */}
-        {/* <ProposalStats
+        <ProposalStats
           proposals={proposals}
           distributedPoints={distributedPoints}
-        /> */}
+        />
       </div>
     </section>
   );

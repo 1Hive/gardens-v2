@@ -38,12 +38,8 @@ templates:
           handler: handleMemberRegistered
         - event: MemberUnregistered(address,uint256)
           handler: handleMemberUnregistered
-        - event: PoolCreated(uint256,address,address,address,(uint256,string))
-          handler: handlePoolCreated
-        - event: MemberKicked(address,address,uint256)
-          handler: handleMemberKicked
-        # - event: CommunityFeeUpdated(uint256)
-        #   handler: handleCommunityFeeUpdated
+        # - event: MemberKicked(address,address,uint256)
+        #   handler: handleMemberKicked
         # - event: ProtocolFeeUpdated(uint256)
         #   handler: handleProtocolFeeUpdated
         - event: StrategyAdded(address)
@@ -54,12 +50,10 @@ templates:
           handler: handleMemberActivatedStrategy
         - event: MemberDeactivatedStrategy(address,address)
           handler: handleMemberDeactivatedStrategy
-        # - event: MemberPowerDecreased(address,address,uint256)
-          # handler: handleMemberPowerDecreased
-        # - event: MemberPowerIncreased(address,address,uint256)
-          # handler: handleMemberPowerIncreased
+        # - event: StakeAmountUpdated(address,uint256)
+        #   handler: handleStakeAmountUpdated
         # - event: BasisStakedAmountSet(uint256)
-          # handler: handleBasisStakedAmountSet
+        #   handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
         #   handler: handleCouncilSafeSet
         # - event: CouncilSafeChangeStarted(address,address)
@@ -87,7 +81,7 @@ templates:
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8,uint8,(uint256,uint256,uint256,uint256))) 
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8))
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated

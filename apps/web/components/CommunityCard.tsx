@@ -1,44 +1,29 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, RegisterMember } from "@/components";
-import {
-  ChevronDownIcon,
-  UserGroupIcon,
-  BuildingOffice2Icon,
-} from "@heroicons/react/24/outline";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
-import { CommunityProfile } from "@/components";
 import { Address, useAccount } from "wagmi";
-import {
-  TokenGarden,
-  getCommunitiesByGardenQuery,
-} from "#/subgraph/.graphclient";
-import * as dn from "dnum";
+import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
+import { formatAddress } from "@/utils/formatAddress";
 
 type CommunityQuery = NonNullable<
-  NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
+  NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
 >[number];
-
-type CommunityCardProps = CommunityQuery & {
-  tokenGarden: TokenGarden | undefined;
-} & {
-  covenantData?: { logo: string; covenant: string };
-};
+type CommunityCardProps = CommunityQuery & { gardenToken: `0x${string}` };
 
 export function CommunityCard({
-  covenantData,
   communityName: name,
   id: communityAddress,
   strategies,
   members,
   registerToken,
   registerStakeAmount,
-  tokenGarden,
-}: CommunityCardProps) {
-  // const [open, setOpen] = useState(false);
+}: CommunityQuery) {
+  const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
-
   // const [isMember, setIsMember] = useState<boolean>(false);
+
   // useEffect(() => {
   //   if (accountAddress && members) {
   //     const findMember = members.some(
@@ -54,85 +39,45 @@ export function CommunityCard({
   members = members ?? [];
   registerToken = registerToken ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
-
-  console.log(registerStakeAmount, "registerStakeAmount");
-
-  //TODO: check decimals format for stake amounts
-
   return (
-    <>
-      <div className="border2 card card-side bg-white">
-        {/* aside:  community name + btn to access profile */}
-        <aside className="flex min-h-[300px] w-[280px] flex-col items-center justify-center gap-10 rounded-xl bg-base-100 p-2">
-          <h3 className="text-center font-press text-xl text-info-content">
-            {name}
-          </h3>
-          <CommunityProfile
-            communityAddress={communityAddress as Address}
-            name={name as string}
-            covenantData={covenantData}
-          />
-        </aside>
-
-        {/* main: stats, action buttons, display pools */}
-        <main className="card-body space-y-10">
-          <div className="stats flex">
-            <div className="stat flex-1">
-              <div className="stat-figure text-primary">
-                <UserGroupIcon className="inline-block h-8 w-8 text-primary" />
-              </div>
-              <div className="stat-title">Members</div>
-              <div className="stat-value text-primary">{members.length}</div>
-              <div className="stat-desc">
-                {registerStakeAmount} {tokenGarden?.symbol} membership
-              </div>
-            </div>
-
-            <div className="stat flex-1">
-              <div className="stat-figure text-secondary">
-                <BuildingOffice2Icon className="inline-block h-8 w-8 text-secondary" />
-              </div>
-              <div className="stat-title">Pools</div>
-              <div className="stat-value text-secondary">{pools.length}</div>
-              {/* TODO: add this parameter */}
-              <div className="stat-desc"> # in total funds</div>
-            </div>
-          </div>
-
-          <div className="flex w-fit gap-4">
-            <RegisterMember
-              name={name as string}
-              tokenSymbol={tokenGarden?.symbol as string}
-              communityAddress={communityAddress as Address}
-              registerToken={registerToken as Address}
-            />
-
-            <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
-          </div>
-          <div className=" justify-end">
-            <div
-              className={`flex w-full transform gap-4 overflow-x-auto transition-height duration-200 ease-in-out ${
-                !open && "max-h-[290px]"
-              } `}
-            >
-              {pools.map((pool, i) => (
-                <PoolCard {...pool} key={i} />
-              ))}
-              {/* {pools.length > 2 && (
-                <Button
-                  className="!rounded-full bg-white !p-3"
-                  onClick={() => setOpen((prev) => !prev)}
-                >
-                  <ChevronDownIcon
-                    className={`block h-6 w-6 stroke-2 ${open && "rotate-180"}`}
-                    aria-hidden="true"
-                  />
-                </Button>
-              )} */}
-            </div>
-          </div>
-        </main>
+    <div className="flex flex-col items-center justify-center gap-8 rounded-xl border-2 border-black bg-info p-8 transition-all duration-200 ease-in-out">
+      <div className="relative flex w-full items-center justify-center">
+        <p className="absolute left-0 top-[50%] m-0 translate-y-[-50%] font-bold">
+          Community Pools: {pools.length}
+        </p>
+        <h3 className="m-0 font-press text-lg text-info-content">{name}</h3>
+        <p className="absolute right-0 top-[50%] m-0 translate-y-[-50%] font-bold">
+          {formatAddress(communityAddress)}
+        </p>
       </div>
-    </>
+      <RegisterMember
+        // isMember={isMember}
+        communityAddress={communityAddress as Address}
+        registerToken={registerToken as Address}
+        registerStakeAmount={registerStakeAmount}
+      />
+      {/* pools */}
+      <div
+        className={`flex transform flex-wrap items-center justify-center gap-4 overflow-hidden p-4 transition-height duration-200 ease-in-out ${
+          !open && "max-h-[290px]"
+        } `}
+      >
+        {pools.map((pool, i) => (
+          <PoolCard {...pool} key={i} />
+        ))}
+      </div>
+      {pools.length > 2 && (
+        <Button
+          // style="outline"
+          className="!rounded-full bg-white !p-3"
+          onClick={() => setOpen((prev) => !prev)}
+        >
+          <ChevronDownIcon
+            className={`block h-6 w-6 stroke-2 ${open && "rotate-180"}`}
+            aria-hidden="true"
+          />
+        </Button>
+      )}
+    </div>
   );
 }

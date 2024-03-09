@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
-import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
+import {CVStrategy} from "../src/CVStrategy.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 
@@ -34,12 +34,16 @@ contract CVStrategyHelpers is Native, Accounts {
         return _poolProfileId1_;
     }
 
-    function getParams(
+    function createPool(
+        Allo allo,
+        address strategy,
         address registryCommunity,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem
-    ) public pure returns (StrategyStruct.InitializeParams memory params) {
+        IRegistry registry,
+        address token,
+        CVStrategy.ProposalType proposalType
+    ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
+        CVStrategy.InitializeParams memory params;
         params.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         // params.decay = _etherToFloat(0.9999 ether); // alpha = decay
         params.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
@@ -47,30 +51,6 @@ contract CVStrategyHelpers is Native, Accounts {
         // params.minThresholdStakePercentage = 0.2 ether; // 20%
         params.registryCommunity = registryCommunity;
         params.proposalType = proposalType;
-        params.pointSystem = pointSystem;
-
-        StrategyStruct.PointSystemConfig memory pointConfig;
-        //Capped point system
-        pointConfig.maxAmount = 200 * (10 ** 4);
-        //Fixed point system
-        pointConfig.pointsPerMember = 100 * (10 ** 4);
-        //Quadratic point system
-        pointConfig.tokensPerPoint = 2 * (10 ** 18);
-        pointConfig.pointsPerTokenStaked = 5 * (10 ** 4);
-        params.pointConfig = pointConfig;
-    }
-
-    function createPool(
-        Allo allo,
-        address strategy,
-        address registryCommunity,
-        IRegistry registry,
-        address token,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem
-    ) public returns (uint256 poolId) {
-        // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        StrategyStruct.InitializeParams memory params = getParams(registryCommunity, proposalType, pointSystem);
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);

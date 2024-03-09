@@ -1,15 +1,14 @@
 "use client";
-import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
+import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
 import { gardenLand } from "@/assets";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BuildingOffice2Icon } from "@heroicons/react/24/outline";
-import { Badge } from "@/components";
+import { Badge } from ".";
 
 type StrategyQuery = NonNullable<
   NonNullable<
-    NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
+    NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
   >[number]["strategies"]
 >[number];
 export function PoolCard({
@@ -23,32 +22,23 @@ export function PoolCard({
   poolAmount = poolAmount || 0;
   return (
     <Link
-      className="border2 relative flex min-w-56 snap-center flex-col items-start rounded-md bg-white shadow transition-all duration-150 ease-out hover:border-2 hover:border-secondary "
+      className="relative flex min-w-56 snap-center flex-col items-start rounded-md border-2 border-black bg-white transition-all duration-150 ease-out hover:scale-105"
       href={`${pathname}/pool/${poolId}`}
     >
-      <div className="flex w-full items-baseline justify-around py-2">
-        <div className="text-xs">
-          <BuildingOffice2Icon className="h-7 w-7 text-secondary" />
+      <h4 className="my-3 w-full text-center font-press">{poolId}</h4>
+      <div className="flex w-full flex-col p-4">
+        <div className="flex justify-between text-xs">
+          <p className="font-semibold">type:</p>
+          <Badge type={config?.proposalType as number}/>
+          {/* <p className="font-semibold">{}</p> */}
         </div>
-        <h4 className="w-fit text-center font-press text-secondary">
-          {poolId}
-        </h4>
-      </div>
-      <div className="flex w-full flex-col p-1">
-        <div className="flex items-center justify-between text-xs">
-          <p className="stat-title">pool type:</p>
-
-          <Badge type={config?.proposalType as number} classNames="scale-75" />
+        <div className="flex justify-between ">
+          <p className="font-semibold">amount:</p>
+          <p className="font-semibold">{poolAmount}</p>
         </div>
-        <div className="flex items-baseline justify-between">
-          <p className="stat-title">funds available:</p>
-          <p className="px-2 text-right text-lg font-semibold">{poolAmount}</p>
-        </div>
-        <div className="flex items-baseline justify-between">
-          <p className="stat-title">proposals:</p>
-          <p className="px-2 text-right text-lg font-semibold">
-            {proposals.length}
-          </p>
+        <div className="flex justify-between ">
+          <p className="font-semibold">proposals:</p>
+          <p className="font-semibold">{proposals.length}</p>
         </div>
       </div>
       <Image

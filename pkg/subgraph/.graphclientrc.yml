@@ -4,4 +4,4 @@ sources:
       graphql:
         endpoint: ${SUBGRAPH_URL:http://localhost:8000/subgraphs/name/kamikazebr/gv2}
 documents:
-  - ./src/query/queries.graphql
+  - ./src/query/factory.graphql

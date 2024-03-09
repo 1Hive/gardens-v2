@@ -6,5 +6,4 @@ module.exports = {
     config.externals.push("pino-pretty", "lokijs", "encoding");
     return config;
   },
-  images: { domains: ["ipfs.io"] },
 };

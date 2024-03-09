@@ -9,14 +9,14 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 
 type ActiveMemberProps = {
-  strategyAddress: Address;
+  strategyAddress: `0x${string}`;
   isMemberActived: boolean | undefined;
   communityAddress: Address;
 };
 
 export function ActivatePoints({
   strategyAddress,
-  isMemberActived,
+  // isMemberActived,
   communityAddress,
 }: ActiveMemberProps) {
   const { address } = useAccount();
@@ -86,14 +86,12 @@ export function ActivatePoints({
   }, [deactivatePointsStatus]);
 
   return (
-    <>
-      <Button onClick={handleChange} className="w-fit bg-primary">
-        {address
-          ? isMemberActivated
-            ? "Deactivate Points"
-            : "Activate Points"
-          : "Connect Wallet"}
-      </Button>
-    </>
+    <Button onClick={handleChange} className="w-fit bg-primary">
+      {address
+        ? isMemberActivated
+          ? "Deactivate Points"
+          : "Activate Points"
+        : "Connect Wallet"}
+    </Button>
   );
 }

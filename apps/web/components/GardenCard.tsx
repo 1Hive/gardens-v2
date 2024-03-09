@@ -20,27 +20,26 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
       ?.map((comm) => comm.members?.length ?? 0)
       .reduce((a, b) => a + b, 0) ?? 0; //@todo temporary, that can be take from the subgraph
   return (
-    <div className="border2 relative flex max-w-[320px] flex-col overflow-hidden rounded-lg border-black bg-surface shadow">
-      <div className="flex flex-col gap-2 p-2">
-        <div className="card relative"></div>
-        <div className="flex flex-col items-center">
-          <h4 className="text-2xl font-bold">{name} Garden</h4>
-          <p className="text-center">{symbol}</p>
-          <p className="text-center text-xs">
-            Network: {getChain(chainId)?.name}
+    <div className="relative flex max-w-[320px] flex-col overflow-hidden rounded-lg border-2 border-black bg-surface">
+      <div className="flex flex-col gap-4 p-4">
+        <div className="relative">
+          {/* <Image fill src={imageSrc} alt="garden main image" /> */}
+        </div>
+        <div>
+          <h3 className="text-center">{symbol}</h3>
+          <h4 className="text-center">Network: {getChain(chainId)?.name}</h4>
+          <p>
+            {name} - {decimals} decimals
           </p>
         </div>
-        <InfoData
-          label={`Communit${commLength > 1 ? "ies" : "y"}`}
-          data={commLength}
-        />
-        <InfoData label={"Members"} data={totalMembers} />
-        <InfoData
-          label="Staked Tokens"
-          data={formatUnits(totalBalance, decimals)}
-        />
-
+        <div>
+          {commLength} Communit{commLength > 1 ? "ies" : "y"}
+        </div>
+        <div>{formatUnits(totalBalance, decimals)} Tokens Staked</div>
+        <div>{totalMembers} Total Members</div>
         <div className="mb-2 mt-4">
+          {/* <Link href={link}> */}
+          {/* </Link> */}
           <Link href={link}>
             <Button className="w-full bg-primary">Check Garden</Button>
           </Link>
@@ -50,14 +49,3 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
     </div>
   );
 }
-
-const InfoData = ({ label, data }: { label: string; data: any }) => {
-  return (
-    <dl className="flex items-center justify-between rounded-xl px-3 shadow">
-      <dt className="truncate text-sm font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 max-w-10 overflow-hidden truncate text-2xl font-semibold tracking-tight text-gray-900">
-        {data}
-      </dd>
-    </dl>
-  );
-};

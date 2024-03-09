@@ -1,5 +1,14 @@
-import { proposalStatus, proposalTypes } from "@/types";
 import React from "react";
+
+const proposalTypes = ["signaling", "funding", "streaming"];
+
+const proposalStatus = [
+  "inactive",
+  "active",
+  "paused",
+  "cancelled",
+  "executed",
+];
 
 interface BadgeProps {
   type: number;
@@ -20,7 +29,13 @@ const TYPE_STYLES = [
 ];
 
 //variants for Statys Badge
-const STATUS_STYLES = ["badge-error", "bg-success", "bg-warning"];
+const STATUS_STYLES = [
+  "badge-success",
+  "bg-primary",
+  "bg-warning",
+  "bg-primary",
+  "bg-error",
+];
 
 const BASE_STYLES = "badge w-28 p-4 font-semibold";
 const BASE_STYLES_STATUS = "badge text-white min-w-20 p-4 text-center";
