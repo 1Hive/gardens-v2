@@ -42,6 +42,8 @@ export default async function Garden({
   // const result = await sdk.getCommunityByGarden({ addr: garden });
   let communities = result?.tokenGarden?.communities || [];
 
+  console.log("communities ", communities);
+
   const registryFactoryAddr = result?.registryFactories?.[0].id as Address;
   const tokenGarden = result?.tokenGarden as TokenGarden;
   const alloContractAddr = result?.tokenGarden?.communities?.[0]
