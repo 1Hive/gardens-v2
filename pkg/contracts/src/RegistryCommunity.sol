@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-// import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 // import {Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 // import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
@@ -37,7 +37,7 @@ library DeployCVStrategy {
     }
 }
 
-contract RegistryCommunity is AccessControl {
+contract RegistryCommunity is ReentrancyGuard, AccessControl {
     // using ERC165Checker for address;
     using DeployCVStrategy for address;
 
@@ -304,7 +304,7 @@ contract RegistryCommunity is AccessControl {
         }
     }
 
-    function increasePower(uint256 _amountStaked) public /*nonReentrant*/ {
+    function increasePower(uint256 _amountStaked) public nonReentrant {
         onlyRegistryMemberSender();
         address member = msg.sender;
         address[] memory memberStrategies = strategiesByMember[member];
@@ -326,7 +326,11 @@ contract RegistryCommunity is AccessControl {
         gardenToken.transferFrom(member, address(this), _amountStaked);
     }
 
-    function decreasePower(uint256 _amountUnstaked) public /*nonReentrant*/ {
+    /*
+    * @notice Decrease the power of a member in a strategy
+    * @param _amountUnstaked The amount of tokens to unstake
+    */
+    function decreasePower(uint256 _amountUnstaked) public nonReentrant {
         onlyRegistryMemberSender();
         address member = msg.sender;
         address[] memory memberStrategies = strategiesByMember[member];
@@ -400,7 +404,7 @@ contract RegistryCommunity is AccessControl {
         return newMember.isRegistered;
     }
 
-    function stakeAndRegisterMember() public /*nonReentrant*/ {
+    function stakeAndRegisterMember() public nonReentrant {
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
         RegistryFactory gardensFactory = RegistryFactory(registryFactory);
@@ -460,7 +464,7 @@ contract RegistryCommunity is AccessControl {
         return hasRole(COUNCIL_MEMBER_CHANGE, _member);
     }
 
-    function unregisterMember() public /*nonReentrant*/ {
+    function unregisterMember() public nonReentrant {
         address _member = msg.sender;
         onlyRegistryMemberAddress(_member);
         deactivateAllStrategies(_member);
@@ -482,7 +486,7 @@ contract RegistryCommunity is AccessControl {
         }
     }
 
-    function kickMember(address _member, address _transferAddress) public /*nonReentrant*/ {
+    function kickMember(address _member, address _transferAddress) public nonReentrant {
         onlyCouncilSafe();
         if (!isKickEnabled) {
             revert KickNotEnabled();

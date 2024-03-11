@@ -101,6 +101,8 @@ export function CommunityCard({
 
           <div className="flex w-fit gap-4">
             <RegisterMember
+              name={name as string}
+              tokenSymbol={tokenGarden?.symbol as string}
               communityAddress={communityAddress as Address}
               registerToken={registerToken as Address}
             />
