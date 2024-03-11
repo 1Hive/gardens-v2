@@ -12,11 +12,6 @@ directive @subgraphId(id: String!) on OBJECT
 "creates a virtual field on the entity that may be queried but cannot be set manually through the mappings API."
 directive @derivedFrom(field: String!) on FIELD_DEFINITION
 
-enum Aggregation_interval {
-  hour
-  day
-}
-
 type Allo {
   id: ID!
   chainId: BigInt!
@@ -335,6 +330,10 @@ type CVStrategyConfig {
   maxRatio: BigInt!
   weight: BigInt!
   proposalType: BigInt!
+  pointsPerMember: BigInt
+  pointsPerTokenStaked: BigInt
+  tokensPerPoint: BigInt
+  maxAmount: BigInt
 }
 
 input CVStrategyConfig_filter {
@@ -387,6 +386,38 @@ input CVStrategyConfig_filter {
   proposalType_lte: BigInt
   proposalType_in: [BigInt!]
   proposalType_not_in: [BigInt!]
+  pointsPerMember: BigInt
+  pointsPerMember_not: BigInt
+  pointsPerMember_gt: BigInt
+  pointsPerMember_lt: BigInt
+  pointsPerMember_gte: BigInt
+  pointsPerMember_lte: BigInt
+  pointsPerMember_in: [BigInt!]
+  pointsPerMember_not_in: [BigInt!]
+  pointsPerTokenStaked: BigInt
+  pointsPerTokenStaked_not: BigInt
+  pointsPerTokenStaked_gt: BigInt
+  pointsPerTokenStaked_lt: BigInt
+  pointsPerTokenStaked_gte: BigInt
+  pointsPerTokenStaked_lte: BigInt
+  pointsPerTokenStaked_in: [BigInt!]
+  pointsPerTokenStaked_not_in: [BigInt!]
+  tokensPerPoint: BigInt
+  tokensPerPoint_not: BigInt
+  tokensPerPoint_gt: BigInt
+  tokensPerPoint_lt: BigInt
+  tokensPerPoint_gte: BigInt
+  tokensPerPoint_lte: BigInt
+  tokensPerPoint_in: [BigInt!]
+  tokensPerPoint_not_in: [BigInt!]
+  maxAmount: BigInt
+  maxAmount_not: BigInt
+  maxAmount_gt: BigInt
+  maxAmount_lt: BigInt
+  maxAmount_gte: BigInt
+  maxAmount_lte: BigInt
+  maxAmount_in: [BigInt!]
+  maxAmount_not_in: [BigInt!]
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [CVStrategyConfig_filter]
@@ -405,6 +436,10 @@ enum CVStrategyConfig_orderBy {
   maxRatio
   weight
   proposalType
+  pointsPerMember
+  pointsPerTokenStaked
+  tokensPerPoint
+  maxAmount
 }
 
 input CVStrategy_filter {
@@ -517,6 +552,7 @@ enum CVStrategy_orderBy {
   registryCommunity__id
   registryCommunity__chainId
   registryCommunity__profileId
+  registryCommunity__communityFee
   registryCommunity__protocolFee
   registryCommunity__communityName
   registryCommunity__covenantIpfsHash
@@ -532,6 +568,10 @@ enum CVStrategy_orderBy {
   config__maxRatio
   config__weight
   config__proposalType
+  config__pointsPerMember
+  config__pointsPerTokenStaked
+  config__tokensPerPoint
+  config__maxAmount
   proposals
   memberActive
 }
@@ -658,6 +698,7 @@ enum MemberCommunity_orderBy {
   registryCommunity__id
   registryCommunity__chainId
   registryCommunity__profileId
+  registryCommunity__communityFee
   registryCommunity__protocolFee
   registryCommunity__communityName
   registryCommunity__covenantIpfsHash
@@ -947,6 +988,7 @@ type RegistryCommunity {
   id: ID!
   chainId: BigInt!
   profileId: String
+  communityFee: BigInt
   protocolFee: BigInt
   communityName: String
   covenantIpfsHash: String
@@ -998,6 +1040,14 @@ input RegistryCommunity_filter {
   profileId_ends_with_nocase: String
   profileId_not_ends_with: String
   profileId_not_ends_with_nocase: String
+  communityFee: BigInt
+  communityFee_not: BigInt
+  communityFee_gt: BigInt
+  communityFee_lt: BigInt
+  communityFee_gte: BigInt
+  communityFee_lte: BigInt
+  communityFee_in: [BigInt!]
+  communityFee_not_in: [BigInt!]
   protocolFee: BigInt
   protocolFee_not: BigInt
   protocolFee_gt: BigInt
@@ -1172,6 +1222,7 @@ enum RegistryCommunity_orderBy {
   id
   chainId
   profileId
+  communityFee
   protocolFee
   communityName
   covenantIpfsHash
@@ -1645,8 +1696,6 @@ type _Block_ {
   number: Int!
   """Integer representation of the timestamp stored in blocks for the chain"""
   timestamp: Int
-  """The hash of the parent block"""
-  parentHash: Bytes
 }
 
 """The type for the top-level _meta field"""
