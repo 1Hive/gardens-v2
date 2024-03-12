@@ -63,6 +63,7 @@ type RegistryCommunity @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
   profileId: String
+  communityFee: BigInt
   protocolFee: BigInt
   communityName: String
   covenantIpfsHash: String

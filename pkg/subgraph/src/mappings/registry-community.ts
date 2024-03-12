@@ -50,7 +50,7 @@ export function handleInitialized(event: RegistryInitialized): void {
 
     newRC.alloAddress = rcc.allo().toHexString();
     newRC.isKickEnabled = rcc.isKickEnabled();
-    newRC.protocolFee = rcc.communityFee();
+    newRC.communityFee = rcc.communityFee();
     const token = rcc.gardenToken();
     newRC.registerToken = token.toHexString();
     newRC.registryFactory = factoryAddress;
