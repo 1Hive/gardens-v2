@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  useBalance,
   useContractReads,
   useContractWrite,
   useAccount,
-  useChainId,
   useContractRead,
   Address,
 } from "wagmi";
@@ -22,8 +22,8 @@ import { WriteContractResult } from "wagmi/actions";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
-import { calculateFees, formatTokenAmount } from "@/utils/numbers";
-import cn from "classnames";
+import { calculateFees, formatTokenAmount, gte, dn } from "@/utils/numbers";
+import { getChainIdFromPath } from "@/utils/path";
 
 export function RegisterMember({
   name: communityName,
@@ -44,8 +44,8 @@ export function RegisterMember({
   protocolFee: string;
   communityFee: string;
 }) {
-  const { address } = useAccount();
-  const chainId = useChainId();
+  const { address: connectedAccount } = useAccount();
+  const chainId = getChainIdFromPath();
   const { openConnectModal } = useConnectModal();
 
   const modalRef = useRef<HTMLDialogElement | null>(null);
@@ -62,7 +62,7 @@ export function RegisterMember({
   } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
-    args: [address],
+    args: [connectedAccount],
     watch: true,
   });
 
@@ -72,7 +72,17 @@ export function RegisterMember({
       functionName: "getStakeAmountWithFees",
     });
 
-  console.log("getStakeAmountWithFees ", registerStakeAmount);
+  const { data: accountTokenBalance } = useBalance({
+    address: connectedAccount,
+    token: registerToken as `0x${string}` | undefined,
+    chainId: chainId || 0,
+  });
+
+  const accountHasBalance = gte(
+    accountTokenBalance?.value,
+    registerStakeAmount as bigint,
+    registerTokenDecimals,
+  );
 
   const {
     data: registerMemberData,
@@ -114,7 +124,7 @@ export function RegisterMember({
   // useErrorDetails(errorGardenToken, "gardenToken");
 
   async function handleChange() {
-    if (address) {
+    if (connectedAccount) {
       if (isMember) {
         writeUnregisterMember();
       } else {
@@ -287,8 +297,10 @@ export function RegisterMember({
               onClick={handleChange}
               className="w-full bg-primary"
               size="md"
+              disabled={!accountHasBalance}
+              tooltip={`Connected account has not enough ${tokenSymbol}`}
             >
-              {address
+              {connectedAccount
                 ? isMember
                   ? "Leave community"
                   : "Register in community"

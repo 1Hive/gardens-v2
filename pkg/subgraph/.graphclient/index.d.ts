@@ -1803,7 +1803,7 @@ export type getTokenGardensQueryVariables = Exact<{
 }>;
 export type getTokenGardensQuery = {
     tokenGardens: Array<(Pick<TokenGarden, 'id' | 'chainId' | 'name' | 'symbol' | 'decimals' | 'totalBalance'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityFee'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'id'>>>;
         })>>;
     })>;

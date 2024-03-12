@@ -36,6 +36,7 @@ query getTokenGardens {
     communities {
       id
       chainId
+      communityFee
       members {
         id
       }
