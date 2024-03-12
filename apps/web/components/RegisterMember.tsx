@@ -1,12 +1,12 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import {
-  useContractReads,
   useContractWrite,
   useAccount,
   useChainId,
   useContractRead,
   Address,
+  useWaitForTransaction,
 } from "wagmi";
 import { Button } from "./Button";
 import { toast } from "react-toastify";
@@ -18,11 +18,9 @@ import {
 import { useViemClient } from "@/hooks/useViemClient";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { WriteContractResult } from "wagmi/actions";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
-import cn from "classnames";
 
 export function RegisterMember({
   name: communityName,
@@ -92,8 +90,27 @@ export function RegisterMember({
   } = useContractWrite({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, registerStakeAmount as bigint], // allowed spender address, amount
+    args: [communityAddress, registerStakeAmount as bigint], // [allowed spender address, amount ]
     functionName: "approve",
+  });
+
+  const {
+    data,
+    isError,
+    isLoading,
+    isSuccess: isWaitSuccess,
+    status: waitAllowTokenStatus,
+  } = useWaitForTransaction({
+    confirmations: 1,
+    hash: allowTokenData?.hash,
+  });
+
+  const { data: allowance } = useContractRead({
+    address: registerToken,
+    abi: abiWithErrors(erc20ABI),
+    args: [address, communityAddress], // [ owner,  spender address ]
+    functionName: "allowance",
+    watch: true,
   });
 
   useErrorDetails(registerMemberError, "stakeAndRegisterMember");
@@ -107,9 +124,15 @@ export function RegisterMember({
       if (isMember) {
         writeUnregisterMember();
       } else {
-        // Only open the modal when writeAllowToken is called
-        writeAllowToken();
-        modalRef.current?.showModal();
+        // Check if allowance is equal to registerStakeAmount
+        if (allowance !== registerStakeAmount) {
+          writeAllowToken();
+          modalRef.current?.showModal();
+        } else {
+          // Handle the case where allowance is already equal to registerStakeAmount
+          modalRef.current?.showModal();
+          writeRegisterMember();
+        }
       }
     } else {
       openConnectModal?.();
@@ -125,12 +148,18 @@ export function RegisterMember({
   const { updateTransactionStatus: updateUnregisterMemberTransactionStatus } =
     useTransactionNotification(unregisterMemberData);
 
+  const approveToken = allowTokenStatus === "success";
+  const allowanceFailed = allowTokenStatus === "error";
+  const registerMemberFailed = approveToken && registerMemberStatus === "error";
+  const allowanceIsSet =
+    allowance === registerStakeAmount && registerMemberFailed;
+
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
-    if (approveToken) {
+    if (waitAllowTokenStatus === "success") {
       writeRegisterMember();
     }
-  }, [allowTokenStatus]);
+  }, [waitAllowTokenStatus]);
 
   useEffect(() => {
     updateRegisterMemberTransactionStatus(registerMemberStatus);
@@ -144,19 +173,6 @@ export function RegisterMember({
   }, [unregisterMemberStatus]);
 
   //TODO: check behavior => arb sepolia
-  //TODO: adjust modal state when approve token is succes and register member is error ??
-
-  const approveToken = allowTokenStatus === "success"; // false when status === idle || loading || error
-  const allowanceFailed = allowTokenStatus === "error";
-  const registerMemberFailed = approveToken && registerMemberStatus === "error";
-
-  const commonClassname =
-    "relative flex flex-1 flex-col items-center justify-start transition-all duration-300 ease-in-out";
-  const circleClassname =
-    "relative flex h-28 w-28 items-center rounded-full border-8 p-1 text-center border-white";
-  const textClassname = `absolute top-9 max-w-min text-center leading-5 text-white ${approveToken && "text-success"}`;
-  const messageClassname =
-    "absolute bottom-0 text-sm max-w-xs px-10 text-center";
 
   return (
     <>
@@ -171,60 +187,33 @@ export function RegisterMember({
               />
             ))}
           </div>
+
           {/* modal title and close btn */}
           <div className="flex items-start justify-between pb-10">
-            <h4 className="text-xl">Register in {communityName}</h4>
+            <h4 className="text-2xl">Register in {communityName}</h4>
             <Button size="sm" onClick={() => modalRef.current?.close()}>
               X
             </Button>
           </div>
 
           {/* modal approve token transaction step */}
-          <div className="flex h-48 overflow-hidden px-6 ">
-            <div className={commonClassname}>
-              <div
-                className={`rounded-full bg-secondary ${allowanceFailed ? "border-[1px] border-error first:bg-error" : approveToken && "border-[1px] border-success first:bg-success"}`}
-              >
-                <div
-                  className={`${circleClassname} ${allowanceFailed ? "animate-none" : !approveToken && "animate-pulse"}`}
-                />
-              </div>
-              <span className={textClassname}>Approve {tokenSymbol}</span>
-              <p
-                className={`${messageClassname} ${approveToken ? "text-success" : allowanceFailed ? "text-error" : ""}`}
-              >
-                {allowanceFailed
-                  ? "An error has ocurred, please try again !"
-                  : approveToken
-                    ? "Transaction sent succesfull !"
-                    : "Waiting for signature "}
-              </p>
-            </div>
+          <div className="flex h-48 overflow-hidden px-6">
+            <TransactionModalStep
+              tokenSymbol={`Approve ${tokenSymbol}`}
+              status={allowTokenStatus}
+              isLoading={allowTokenStatus === "loading"}
+              failedMessage="An error has occurred, please try again!"
+              successMessage="Transaction sent successfully!"
+            />
 
-            {/* modal register transaction step  */}
-            <div className={commonClassname}>
-              <div
-                className={`rounded-full bg-secondary ${registerMemberIsLoading ? "first:bg-secondary" : registerMemberFailed ? "border-[1px] border-error first:bg-error" : ""}`}
-              >
-                <div
-                  className={`${circleClassname} ${registerMemberFailed ? "animate-none" : approveToken ? "animate-pulse" : ""}`}
-                />
-              </div>
-              <span
-                className={`${textClassname} ${!approveToken && "text-sm"}`}
-              >
-                Register in 1hive
-              </span>
-              <p
-                className={`${messageClassname} ${registerMemberFailed && "text-error"}`}
-              >
-                {registerMemberFailed
-                  ? "An error has ocurred, please try again !"
-                  : approveToken
-                    ? "Waiting for signature"
-                    : "Waiting for signature"}
-              </p>
-            </div>
+            <TransactionModalStep
+              tokenSymbol={`Register in ${communityName}`}
+              status={registerMemberStatus}
+              isLoading={registerMemberIsLoading}
+              failedMessage="An error has occurred, please try again!"
+              successMessage="Waiting for signature"
+              type="register"
+            />
           </div>
         </div>
       </dialog>
@@ -239,3 +228,53 @@ export function RegisterMember({
     </>
   );
 }
+
+type TransactionModalStepProps = {
+  tokenSymbol?: string;
+  status: "success" | "error" | "idle" | "loading";
+  isLoading: boolean;
+  failedMessage: string;
+  successMessage: string;
+  type?: string;
+};
+
+const TransactionModalStep = ({
+  tokenSymbol,
+  status,
+  isLoading,
+  failedMessage,
+  successMessage,
+  type,
+}: TransactionModalStepProps) => {
+  const isSuccess = status === "success";
+  const isFailed = status === "error";
+  const loadingClass = isLoading ? "animate-pulse" : "animate-none";
+  const successClass = isSuccess ? "text-success" : "";
+  const errorClass = isFailed ? "text-error" : "";
+
+  return (
+    <div className="relative flex flex-1 flex-col items-center justify-start transition-all duration-300 ease-in-out">
+      <div
+        className={`rounded-full bg-secondary ${isFailed ? "border-[1px] border-error first:bg-error" : isSuccess ? "border-[1px] border-success first:bg-success" : ""}`}
+      >
+        <div
+          className={`relative flex h-28 w-28 items-center rounded-full border-8 border-white p-1 text-center ${loadingClass}`}
+        />
+      </div>
+      <span
+        className={`absolute top-9 max-w-min text-center leading-5 text-white ${successClass}`}
+      >
+        {tokenSymbol}
+      </span>
+      <p
+        className={`absolute bottom-0 max-w-xs px-10 text-center text-sm ${successClass} ${errorClass}`}
+      >
+        {isFailed
+          ? failedMessage
+          : isSuccess
+            ? successMessage
+            : "Waiting for signature"}
+      </p>
+    </div>
+  );
+};

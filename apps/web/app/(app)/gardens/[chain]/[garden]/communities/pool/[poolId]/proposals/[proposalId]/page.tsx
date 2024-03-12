@@ -99,8 +99,6 @@ export default async function Proposal({
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
 
-  console.log(requestedAmount);
-
   const getIpfsData = (ipfsHash: string) =>
     fetch(`https://ipfs.io/ipfs/${ipfsHash}`, {
       method: "GET",
@@ -126,12 +124,6 @@ export default async function Proposal({
     transport: http(),
   });
 
-  // const addrs = getContractsAddrByChain(chain);
-  // if (!addrs) {
-  // return <div>Chain ID: {chain} not supported</div>;
-  // }//@todo create a function to check suuported chains and return a message with error or redirect
-
-  // console.log("strategyAddr", proposalData.strategy.id);
   const cvStrategyContract = {
     address: proposalData.strategy.id as Address,
     abi: cvStrategyABI as Abi,
@@ -155,6 +147,29 @@ export default async function Proposal({
     functionName: "getMaxConviction",
     args: [totalStakedTokens],
   })) as bigint;
+  const getProposalStakedAmount = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getProposalStakedAmount",
+    args: [proposalId],
+  })) as bigint;
+
+  console.log(getProposalStakedAmount);
+
+  const getProposalVoterStake = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getProposalVoterStake",
+    args: [proposalId, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
+  })) as bigint;
+
+  console.log(getProposalVoterStake);
+
+  const getTotalVoterStakePct = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getTotalVoterStakePct",
+    args: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
+  })) as bigint;
+
+  console.log(getTotalVoterStakePct);
 
   //function to get all other function results
   const calcThreshold = calcThresholdPoints(
@@ -162,6 +177,14 @@ export default async function Proposal({
     maxCVSupply,
     totalEffectiveActivePoints as bigint,
   );
+
+  console.log(requestedAmount);
+
+  console.log(totalEffectiveActivePoints);
+  console.log(maxCVSupply);
+  console.log(maxCVStaked);
+  console.log(totalStakedTokens);
+  console.log(threshold);
 
   const calcsResults = executeAllFunctions(
     convictionLast,
