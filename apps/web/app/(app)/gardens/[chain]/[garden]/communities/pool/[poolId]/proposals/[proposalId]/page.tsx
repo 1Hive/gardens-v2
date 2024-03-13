@@ -15,6 +15,8 @@ import {
 } from "#/subgraph/.graphclient";
 import * as dn from "dnum";
 import { Dnum } from "dnum";
+import { PRECISION_SCALE } from "@/actions/getProposals";
+import { get } from "https";
 
 export const dynamic = "force-dynamic";
 
@@ -134,34 +136,32 @@ export default async function Proposal({
     functionName: "totalEffectiveActivePoints",
   })) as bigint;
 
-  const maxCVSupply = (await client.readContract({
-    ...cvStrategyContract,
-    functionName: "getMaxConviction",
-    args: [totalEffectiveActivePoints],
-  })) as bigint;
+  console.log(totalEffectiveActivePoints);
 
-  // // => D = 10**7
-
-  const maxCVStaked = (await client.readContract({
-    ...cvStrategyContract,
-    functionName: "getMaxConviction",
-    args: [totalStakedTokens],
-  })) as bigint;
   const getProposalStakedAmount = (await client.readContract({
     ...cvStrategyContract,
     functionName: "getProposalStakedAmount",
     args: [proposalId],
   })) as bigint;
 
-  console.log(getProposalStakedAmount);
-
-  const getProposalVoterStake = (await client.readContract({
+  const thresholdFromContract = (await client.readContract({
     ...cvStrategyContract,
-    functionName: "getProposalVoterStake",
-    args: [proposalId, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
+    functionName: "calculateThreshold",
+    args: [requestedAmount],
   })) as bigint;
 
-  console.log(getProposalVoterStake);
+  //amount in token the proposal was staked 1token = 2% in points
+  //in the example each memeber staked 50 tokens = 100%
+  console.log(getProposalStakedAmount);
+
+  const updateConvictionLast = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "updateProposalConviction",
+    args: [proposalId],
+    blockTag: "latest",
+  })) as bigint;
+
+  console.log(updateConvictionLast);
 
   const getTotalVoterStakePct = (await client.readContract({
     ...cvStrategyContract,
@@ -169,32 +169,89 @@ export default async function Proposal({
     args: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
   })) as bigint;
 
+  //manually added address of voter
   console.log(getTotalVoterStakePct);
 
-  //function to get all other function results
-  const calcThreshold = calcThresholdPoints(
-    threshold,
-    maxCVSupply,
-    totalEffectiveActivePoints as bigint,
-  );
+  const maxCVSupply = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getMaxConviction",
+    args: [totalEffectiveActivePoints],
+  })) as bigint;
+
+  const getProposalAllStaked =
+    Number(getProposalStakedAmount * BigInt(2) * PRECISION_SCALE) / 10 ** 18;
+  console.log(getProposalAllStaked);
+
+  const maxCVStaked = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getMaxConviction",
+    args: [getProposalAllStaked],
+  })) as bigint;
+
+  console.log(maxCVStaked);
+
+  const getProposalVoterStake = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getProposalVoterStake",
+    args: [proposalId, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
+  })) as bigint;
+
+  //the amount of points of the voter manuelly added
+  console.log(getProposalVoterStake);
 
   console.log(requestedAmount);
-
+  console.log(thresholdFromContract);
   console.log(totalEffectiveActivePoints);
   console.log(maxCVSupply);
   console.log(maxCVStaked);
-  console.log(totalStakedTokens);
   console.log(threshold);
+  console.log(updateConvictionLast);
 
-  const calcsResults = executeAllFunctions(
-    convictionLast,
-    maxCVStaked,
+  //Working Numbers
+  //unlimited 100 tokens = 1_000_00
+  //500 tokens = 5_000_000
+
+  //return string, to show in UI
+
+  const maxCVSupplyNum = Number(maxCVSupply / PRECISION_SCALE);
+  const maxCVStakedNum = Number(maxCVStaked / PRECISION_SCALE);
+  const convictionLastNum = Number(
+    updateConvictionLast / BigInt(10 ** 18),
+  ).toFixed(0);
+
+  console.log("ConvictionLast", Number(updateConvictionLast) / 10 ** 18);
+  console.log("tokenStaked", Number(getProposalStakedAmount) / 10 ** 18);
+  console.log("maxCVSupply", maxCVSupply / PRECISION_SCALE);
+  console.log("maxCVStaked", maxCVStaked / PRECISION_SCALE);
+
+  //Formulas
+  const calcThreshold = calcThresholdPoints(
+    thresholdFromContract,
     maxCVSupply,
-    totalEffectiveActivePoints,
-    threshold,
-    calcThreshold,
+    totalEffectiveActivePoints as bigint,
   );
-  const proposalSupport = Number(totalStakedTokens) * 2;
+  const calcMaxConv = calcMaxConviction(maxCVStakedNum, maxCVSupplyNum, 1000);
+  const calcCurrCon = calcCurrentConviction(
+    convictionLastNum as unknown as number,
+    maxCVSupplyNum,
+    1000,
+  );
+
+  console.log("Threshold", BigInt(calcThreshold) / PRECISION_SCALE);
+  console.log("MaxConviction", calcMaxConv);
+  console.log("currentConviction", calcCurrCon);
+
+  // const calcsResults = executeAllFunctions(
+  //   convictionLast,
+  //   maxCVStaked,
+  //   maxCVSupply,
+  //   totalEffectiveActivePoints,
+  //   threshold,
+  //   calcThreshold,
+  // );
+
+  // console.log(calcsResults);
+  // const proposalSupport = Number(totalStakedTokens) * 2;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
@@ -262,10 +319,10 @@ export default async function Proposal({
 
         {/* PROPOSAL CHART  */}
         <div className="mt-10 flex justify-evenly">
-          <ConvictionBarChart
+          {/* <ConvictionBarChart
             data={calcsResults}
             proposalSupport={proposalSupport}
-          />
+          /> */}
         </div>
       </main>
 
@@ -340,9 +397,10 @@ function calcMaxConviction(
     );
   }
   if (maxCVSupply === 0 || maxCVStaked === 0) {
-    throw new Error(
-      "Invalid input. maxCVSupply and maxCVStaked must be non-zero.",
-    );
+    return 0;
+    // throw new Error(
+    //   "Invalid input. maxCVSupply and maxCVStaked must be non-zero.",
+    // );
   }
   const futureConvictionStakedPct = Number(maxCVStaked) / Number(maxCVSupply);
   const result =

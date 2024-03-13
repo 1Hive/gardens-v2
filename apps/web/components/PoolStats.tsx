@@ -94,12 +94,15 @@ export const PoolStats: FC<PoolStatsProps> = ({
           <h4 className="text-center text-xl font-bold">
             Active Points Distribution
           </h4>
-          <p className="text-md stat">Points System: Fixed</p>
+          {/* <p className="text-md stat">Points System: Fixed</p> */}
         </div>
         {voterStakePct && Number(voterStakePct) !== 0 ? (
           <div className="flex h-48 flex-col items-center justify-center">
-            <p>voterStakePct</p>
-            <p className="text-5xl font-semibold">{Number(voterStakePct / PRECISION_SCALE)} %</p>
+            <p>voterStakePct:</p>
+            <p className="text-5xl font-semibold">
+              {Number(voterStakePct / PRECISION_SCALE)} %
+            </p>
+            <p>{Number(voterStakePct)}</p>
           </div>
         ) : (
           // <ActivePointsChart stakedPoints={Number(voterStakePct)} />
