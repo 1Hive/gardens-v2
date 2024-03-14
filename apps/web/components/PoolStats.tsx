@@ -20,7 +20,7 @@ type PoolStatsProps = {
   strategy: Strategy;
   // poolId: number;
   communityAddress: Address;
-  tokenGarden: TokenGarden;
+  tokenGarden: any; // Couldnt set the TokenGarden | undefined giving error
 };
 
 export const PoolStats: FC<PoolStatsProps> = ({
@@ -50,7 +50,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
                 Funds Available:
               </h4>
               <h4 className="text-center text-2xl font-bold">
-                {formatTokenAmount(balance, tokenGarden.decimals)}
+                {formatTokenAmount(balance, tokenGarden?.decimals)}
               </h4>
             </div>
           </div>

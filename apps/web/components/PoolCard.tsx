@@ -21,7 +21,7 @@ export function PoolCard({
   poolAmount,
   poolId,
   tokenGarden,
-}: StrategyQuery & { tokenGarden: TokenGarden }) {
+}: StrategyQuery & { tokenGarden: TokenGarden | undefined }) {
   const pathname = usePathname();
 
   poolAmount = poolAmount || 0;
@@ -47,7 +47,7 @@ export function PoolCard({
         <div className="flex items-baseline justify-between">
           <p className="stat-title">funds available:</p>
           <p className="px-2 text-right text-lg font-semibold">
-            {formatTokenAmount(poolAmount, tokenGarden.decimals)}
+            {formatTokenAmount(poolAmount, tokenGarden?.decimals)}
           </p>
         </div>
         <div className="flex items-baseline justify-between">
