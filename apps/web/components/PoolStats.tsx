@@ -9,7 +9,7 @@ import { ActivatePoints } from "./ActivatePoints";
 import { Strategy } from "./Proposals";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { Address, useAccount } from "wagmi";
+import { Address, useAccount, useBalance } from "wagmi";
 import { PRECISION_SCALE } from "@/actions/getProposals";
 
 type PoolStatsProps = {
@@ -31,6 +31,13 @@ export const PoolStats: FC<PoolStatsProps> = ({
 
   const { voterStakePct } = useTotalVoterStakedPct(strategy);
 
+  const { data: poolBalance } = useBalance({
+    address: strategyAddress,
+    token: "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
+    chainId: 1337,
+    watch: true,
+  });
+
   console.log("voteStakePct", voterStakePct);
   console.log("startegy - pool", strategy);
 
@@ -43,14 +50,16 @@ export const PoolStats: FC<PoolStatsProps> = ({
           <div>
             <div className="flex items-center justify-around">
               <h4 className="text-center text-xl font-bold">
-                Funds Available:
+                Funds Available LocalHost Chain:
               </h4>
-              <h4 className="text-center text-2xl font-bold">{balance}</h4>
+              <h4 className="text-center text-2xl font-bold">
+                {poolBalance?.formatted}
+              </h4>
             </div>
           </div>
           <div className="max-h-30 flex items-center gap-3 ">
             <div className="border-1 flex h-24 flex-1 items-center justify-center">
-              <PoolTokenPriceChart />
+              {/* <PoolTokenPriceChart /> */}
             </div>
           </div>
         </div>

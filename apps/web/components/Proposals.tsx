@@ -18,6 +18,7 @@ import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/communities/pool
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { encodeAbiParameters } from "viem";
 
 // export const convertBigIntToNumberFraction = (bigInt: bigint) => {
 //   return Number(bigInt.toString()) / 10 ** 4;
@@ -26,7 +27,6 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 // export const convertNumberFractionToBigInt = (number: number) => {
 //   return BigInt(number * 10 ** 4);
 // };
-
 
 type InputItem = {
   id: string;
@@ -95,7 +95,7 @@ export function Proposals({
     const newInputs = proposals.map(({ id, voterStakedPointsPct }) => ({
       id: id,
       value: voterStakedPointsPct,
-    }));   // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
+    })); // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
     // console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
@@ -119,6 +119,30 @@ export function Proposals({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
+  });
+
+  const encodedProposalId = encodeAbiParameters(
+    [{ name: "proposalId", type: "uint" }],
+    [2n],
+  );
+  const {
+    data: distributeData,
+    write: writeDistribute,
+    error: errorDistribute,
+    isSuccess: isSuccessDistribute,
+    status: distributeStatus,
+  } = useContractWrite({
+    address: alloInfo.id as Address,
+    abi: abiWithErrors(alloABI),
+    functionName: "distribute",
+    //[ pool id, [], encoded proposal id]
+    args: [strategy.poolId, [strategy.id], encodedProposalId],
+    onError: (error) => {
+      console.log("error", error);
+    },
+    onSuccess: (data) => {
+      console.log("data", data);
+    },
   });
 
   useErrorDetails(errorAllocate, "errorAllocate");
@@ -153,7 +177,9 @@ export function Proposals({
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = BigInt(input.value - current.voterStakedPointsPct) * PRECISION_SCALE;
+          const dif =
+            BigInt(input.value - current.voterStakedPointsPct) *
+            PRECISION_SCALE;
           if (dif !== BigInt(0)) {
             resultArr.push([Number(input.id), dif]);
           }
@@ -201,6 +227,7 @@ export function Proposals({
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
       {/* proposals: title - proposals -create Button */}
+      <Button onClick={() => writeDistribute?.()}>Test Execute Proposal</Button>
       <div className="mx-auto max-w-3xl space-y-10">
         <header className="flex items-center justify-between">
           <h3 className="">Proposals</h3>
