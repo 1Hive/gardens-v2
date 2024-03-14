@@ -42,16 +42,14 @@ export type ProposalTypeVoter = Proposal & {
   type: number;
 };
 
-//const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
+const getProposalId = (inputString: string) => {
+  if (inputString.length >= 2) {
+    return inputString.substring(2);
+  } else {
+    return "0x0";
+  }
+};
 
-//Fixed System
-// for NOT 18 decimales stake, like gardensDAO example:
-// 100% points = BIGINT_100_SCALED = 1,000,000
-
-// for 1hive example, 18 decimales stake:
-// 100% = 1000000000000000000000000" = 1e24
-
-//!POOL == STRATEGY
 export function Proposals({
   strategy,
   alloInfo,
@@ -121,10 +119,18 @@ export function Proposals({
     functionName: "allocate",
   });
 
-  const encodedProposalId = encodeAbiParameters(
-    [{ name: "proposalId", type: "uint" }],
-    [2n],
-  );
+  //encode function
+  const encodedDataProposalId = (proposalId: string) => {
+    const getproposalId = getProposalId(proposalId);
+    const encodedProposalId = encodeAbiParameters(
+      [{ name: "proposalId", type: "uint" }],
+      [BigInt(getproposalId)],
+    );
+
+    return encodedProposalId;
+  };
+
+  //distribute write contract
   const {
     data: distributeData,
     write: writeDistribute,
@@ -136,7 +142,7 @@ export function Proposals({
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
     //[ pool id, [], encoded proposal id]
-    args: [strategy.poolId, [strategy.id], encodedProposalId],
+    // args: [strategy.poolId, [strategy.id], encodedProposalId],
     onError: (error) => {
       console.log("error", error);
     },
@@ -216,18 +222,10 @@ export function Proposals({
       else return acc + curr.value;
     }, 0);
 
-  const getProposalId = (inputString: string) => {
-    if (inputString.length >= 2) {
-      return inputString.substring(2);
-    } else {
-      return "0x0";
-    }
-  };
-
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
       {/* proposals: title - proposals -create Button */}
-      <Button onClick={() => writeDistribute?.()}>Test Execute Proposal</Button>
+      {/* <Button onClick={() => writeDistribute?.()}>Test Execute Proposal</Button> */}
       <div className="mx-auto max-w-3xl space-y-10">
         <header className="flex items-center justify-between">
           <h3 className="">Proposals</h3>
@@ -257,6 +255,19 @@ export function Proposals({
                 </div>
 
                 <div className="flex items-center gap-8">
+                  <Button
+                    onClick={() =>
+                      writeDistribute?.({
+                        args: [
+                          strategy.poolId,
+                          [strategy.id],
+                          encodedDataProposalId(id),
+                        ],
+                      })
+                    }
+                  >
+                    Execute proposal {getProposalId(id)}
+                  </Button>
                   <StatusBadge status={1} />
                   {/* {!editView && ( */}
                   <>
