@@ -11,13 +11,16 @@ import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { Address, useAccount } from "wagmi";
 import { PRECISION_SCALE } from "@/actions/getProposals";
+import { formatTokenAmount } from "@/utils/numbers";
+import { TokenGarden } from "#/subgraph/.graphclient";
 
 type PoolStatsProps = {
-  balance?: string | number;
+  balance: string | number;
   strategyAddress: Address;
   strategy: Strategy;
   // poolId: number;
   communityAddress: Address;
+  tokenGarden: TokenGarden;
 };
 
 export const PoolStats: FC<PoolStatsProps> = ({
@@ -25,6 +28,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
   strategyAddress,
   strategy,
   communityAddress,
+  tokenGarden,
 }) => {
   const { isMemberActived } = useIsMemberActivated(strategy);
   const { isConnected } = useAccount();
@@ -45,7 +49,9 @@ export const PoolStats: FC<PoolStatsProps> = ({
               <h4 className="text-center text-xl font-bold">
                 Funds Available:
               </h4>
-              <h4 className="text-center text-2xl font-bold">{balance}</h4>
+              <h4 className="text-center text-2xl font-bold">
+                {formatTokenAmount(balance, tokenGarden.decimals)}
+              </h4>
             </div>
           </div>
           <div className="max-h-30 flex items-center gap-3 ">
@@ -99,7 +105,9 @@ export const PoolStats: FC<PoolStatsProps> = ({
         {voterStakePct && Number(voterStakePct) !== 0 ? (
           <div className="flex h-48 flex-col items-center justify-center">
             <p>voterStakePct</p>
-            <p className="text-5xl font-semibold">{Number(voterStakePct / PRECISION_SCALE)} %</p>
+            <p className="text-5xl font-semibold">
+              {Number(voterStakePct / PRECISION_SCALE)} %
+            </p>
           </div>
         ) : (
           // <ActivePointsChart stakedPoints={Number(voterStakePct)} />

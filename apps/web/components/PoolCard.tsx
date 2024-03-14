@@ -6,18 +6,22 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BuildingOffice2Icon } from "@heroicons/react/24/outline";
 import { Badge } from "@/components";
+import { TokenGarden } from "#/subgraph/.graphclient";
+import { formatTokenAmount } from "@/utils/numbers";
 
 type StrategyQuery = NonNullable<
   NonNullable<
     NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
   >[number]["strategies"]
 >[number];
+
 export function PoolCard({
   proposals,
   config,
   poolAmount,
   poolId,
-}: StrategyQuery) {
+  tokenGarden,
+}: StrategyQuery & { tokenGarden: TokenGarden }) {
   const pathname = usePathname();
 
   poolAmount = poolAmount || 0;
@@ -42,7 +46,9 @@ export function PoolCard({
         </div>
         <div className="flex items-baseline justify-between">
           <p className="stat-title">funds available:</p>
-          <p className="px-2 text-right text-lg font-semibold">{poolAmount}</p>
+          <p className="px-2 text-right text-lg font-semibold">
+            {formatTokenAmount(poolAmount, tokenGarden.decimals)}
+          </p>
         </div>
         <div className="flex items-baseline justify-between">
           <p className="stat-title">proposals:</p>

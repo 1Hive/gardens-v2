@@ -158,6 +158,7 @@ export default async function Pool({
             strategyAddress={strategyAddr}
             strategy={strategyObj}
             communityAddress={communityAddress}
+            tokenGarden={tokenGarden}
           />
 
           {/* Proposals section */}
