@@ -450,6 +450,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             IAllo.Pool memory pool = allo.getPool(poolId);
 
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
+            
+            proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
 
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
         } //signaling do nothing @todo write tests @todo add end date
