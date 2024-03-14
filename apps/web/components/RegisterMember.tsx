@@ -131,7 +131,7 @@ export function RegisterMember({
   const { data: allowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
-    args: [address, communityAddress], // [ owner,  spender address ]
+    args: [connectedAccount, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
     watch: true,
   });

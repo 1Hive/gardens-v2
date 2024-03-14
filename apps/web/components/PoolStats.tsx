@@ -52,15 +52,17 @@ export const PoolStats: FC<PoolStatsProps> = ({
         {/* left-top */}
         <div className="flex-flex-col max-h-44 w-full space-y-4 rounded-xl border-2 border-black bg-white p-4">
           <div>
-            <div className="flex items-center justify-around">
-              <h4 className="text-center text-xl font-bold">
-                Funds Available LocalHost Chain:
-              </h4>
+            <div className="flex flex-col items-start">
+              <div className="border2 w-full">
+                <h4 className="text-center text-xl font-bold">
+                  Funds from contract:
+                </h4>
+                <h4 className="text-center text-2xl font-bold">
+                  {poolBalance?.formatted}
+                </h4>
+              </div>
               <h4 className="text-center text-2xl font-bold">
-                {poolBalance?.formatted}
-              </h4>
-              <h4 className="text-center text-2xl font-bold">
-                {formatTokenAmount(balance, tokenGarden?.decimals)}
+                from sub: {formatTokenAmount(balance, tokenGarden?.decimals)}
               </h4>
             </div>
           </div>
@@ -122,7 +124,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
         ) : (
           // <ActivePointsChart stakedPoints={Number(voterStakePct)} />
           <div className="flex h-48 items-center justify-center">
-            <p className="text-lg font-semibold">No Points Activated</p>
+            <p className="text-lg font-semibold">No points used</p>
           </div>
         )}
       </div>

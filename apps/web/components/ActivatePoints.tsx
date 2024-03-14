@@ -19,7 +19,7 @@ export function ActivatePoints({
   isMemberActived,
   communityAddress,
 }: ActiveMemberProps) {
-  const { address } = useAccount();
+  const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
 
   const {
@@ -30,7 +30,7 @@ export function ActivatePoints({
     address: communityAddress as Address,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "memberActivatedInStrategies",
-    args: [address as Address, strategyAddress],
+    args: [connectedAccount as Address, strategyAddress],
     watch: true,
   });
 
@@ -54,13 +54,14 @@ export function ActivatePoints({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
+    args: [connectedAccount as Address],
   });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
 
   async function handleChange() {
-    if (address) {
+    if (connectedAccount) {
       if (isMemberActivated) {
         writeDeactivatePoints?.();
       } else {
@@ -88,7 +89,7 @@ export function ActivatePoints({
   return (
     <>
       <Button onClick={handleChange} className="w-fit bg-primary">
-        {address
+        {connectedAccount
           ? isMemberActivated
             ? "Deactivate Points"
             : "Activate Points"

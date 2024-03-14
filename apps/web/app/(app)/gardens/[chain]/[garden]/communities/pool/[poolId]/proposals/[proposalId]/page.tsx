@@ -182,6 +182,8 @@ export default async function Proposal({
     Number(getProposalStakedAmount * BigInt(2) * PRECISION_SCALE) / 10 ** 18;
   console.log(getProposalAllStaked);
 
+  const manualStakedTokens = 1_000_000n;
+
   const maxCVStaked = (await client.readContract({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
