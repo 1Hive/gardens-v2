@@ -119,7 +119,7 @@ export function CommunityCard({
               } `}
             >
               {pools.map((pool, i) => (
-                <PoolCard {...pool} key={i} />
+                <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
               {/* {pools.length > 2 && (
                 <Button

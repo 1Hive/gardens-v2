@@ -201,6 +201,7 @@ export const getTokenGardensDocument = gql `
     communities {
       id
       chainId
+      communityFee
       members {
         id
       }
