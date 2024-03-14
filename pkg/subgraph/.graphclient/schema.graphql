@@ -552,6 +552,7 @@ enum CVStrategy_orderBy {
   registryCommunity__id
   registryCommunity__chainId
   registryCommunity__profileId
+  registryCommunity__communityFee
   registryCommunity__protocolFee
   registryCommunity__communityName
   registryCommunity__covenantIpfsHash
@@ -697,6 +698,7 @@ enum MemberCommunity_orderBy {
   registryCommunity__id
   registryCommunity__chainId
   registryCommunity__profileId
+  registryCommunity__communityFee
   registryCommunity__protocolFee
   registryCommunity__communityName
   registryCommunity__covenantIpfsHash
@@ -986,6 +988,7 @@ type RegistryCommunity {
   id: ID!
   chainId: BigInt!
   profileId: String
+  communityFee: BigInt
   protocolFee: BigInt
   communityName: String
   covenantIpfsHash: String
@@ -1037,6 +1040,14 @@ input RegistryCommunity_filter {
   profileId_ends_with_nocase: String
   profileId_not_ends_with: String
   profileId_not_ends_with_nocase: String
+  communityFee: BigInt
+  communityFee_not: BigInt
+  communityFee_gt: BigInt
+  communityFee_lt: BigInt
+  communityFee_gte: BigInt
+  communityFee_lte: BigInt
+  communityFee_in: [BigInt!]
+  communityFee_not_in: [BigInt!]
   protocolFee: BigInt
   protocolFee_not: BigInt
   protocolFee_gt: BigInt
@@ -1211,6 +1222,7 @@ enum RegistryCommunity_orderBy {
   id
   chainId
   profileId
+  communityFee
   protocolFee
   communityName
   covenantIpfsHash

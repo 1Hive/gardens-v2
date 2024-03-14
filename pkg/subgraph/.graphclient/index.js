@@ -230,12 +230,15 @@ export const getCommunitiesByGardenDocument = gql `
     id
     name
     symbol
+    decimals
     chainId
     communities {
       id
       covenantIpfsHash
       chainId
       communityName
+      protocolFee
+      communityFee
       registerToken
       registerStakeAmount
       alloAddress

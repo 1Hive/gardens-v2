@@ -571,6 +571,7 @@ export type CVStrategy_orderBy =
   | 'registryCommunity__id'
   | 'registryCommunity__chainId'
   | 'registryCommunity__profileId'
+  | 'registryCommunity__communityFee'
   | 'registryCommunity__protocolFee'
   | 'registryCommunity__communityName'
   | 'registryCommunity__covenantIpfsHash'
@@ -718,6 +719,7 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity__id'
   | 'registryCommunity__chainId'
   | 'registryCommunity__profileId'
+  | 'registryCommunity__communityFee'
   | 'registryCommunity__protocolFee'
   | 'registryCommunity__communityName'
   | 'registryCommunity__covenantIpfsHash'
@@ -955,6 +957,7 @@ export type RegistryCommunity = {
   id: Scalars['ID'];
   chainId: Scalars['BigInt'];
   profileId?: Maybe<Scalars['String']>;
+  communityFee?: Maybe<Scalars['BigInt']>;
   protocolFee?: Maybe<Scalars['BigInt']>;
   communityName?: Maybe<Scalars['String']>;
   covenantIpfsHash?: Maybe<Scalars['String']>;
@@ -1024,6 +1027,14 @@ export type RegistryCommunity_filter = {
   profileId_ends_with_nocase?: InputMaybe<Scalars['String']>;
   profileId_not_ends_with?: InputMaybe<Scalars['String']>;
   profileId_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  communityFee?: InputMaybe<Scalars['BigInt']>;
+  communityFee_not?: InputMaybe<Scalars['BigInt']>;
+  communityFee_gt?: InputMaybe<Scalars['BigInt']>;
+  communityFee_lt?: InputMaybe<Scalars['BigInt']>;
+  communityFee_gte?: InputMaybe<Scalars['BigInt']>;
+  communityFee_lte?: InputMaybe<Scalars['BigInt']>;
+  communityFee_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  communityFee_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   protocolFee?: InputMaybe<Scalars['BigInt']>;
   protocolFee_not?: InputMaybe<Scalars['BigInt']>;
   protocolFee_gt?: InputMaybe<Scalars['BigInt']>;
@@ -1198,6 +1209,7 @@ export type RegistryCommunity_orderBy =
   | 'id'
   | 'chainId'
   | 'profileId'
+  | 'communityFee'
   | 'protocolFee'
   | 'communityName'
   | 'covenantIpfsHash'

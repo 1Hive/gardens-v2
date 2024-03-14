@@ -266,11 +266,14 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         Member memory member = addressToMemberInfo[_member];
 
         uint256 extraStakedAmount = member.stakedAmount - registerStakeAmount;
+        uint256 pointsToIncrease = 0;
+        if(extraStakedAmount>0){
+            pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, extraStakedAmount);
+        }
 
-        uint256 pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, extraStakedAmount);
-
+        if (pointsPerMember > 0 || pointsToIncrease>0){
         memberPowerInStrategy[_member][_strategy] = pointsPerMember + pointsToIncrease; // can be all zero
-
+        }
         memberActivatedInStrategies[_member][_strategy] = true;
 
         strategiesByMember[_member].push(_strategy);
@@ -311,7 +314,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         uint256 pointsToIncrease;
 
-        addressToMemberInfo[member].stakedAmount += _amountStaked;
 
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             //FIX support interface check
@@ -322,8 +324,9 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             }
             //}
         }
-
         gardenToken.transferFrom(member, address(this), _amountStaked);
+        addressToMemberInfo[member].stakedAmount += _amountStaked;
+    
     }
 
     /*
@@ -345,7 +348,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             // if (address(memberStrategies[i]) == _strategy) {
             pointsToDecrease = IPointStrategy(memberStrategies[i]).decreasePower(member, _amountUnstaked);
-            memberPowerInStrategy[member][memberStrategies[i]] = pointsToDecrease;
+            memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
             // }
         }
     }
@@ -353,6 +356,14 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     function getMemberPowerInStrategy(address _member, address _strategy) public view returns (uint256) {
         return memberPowerInStrategy[_member][_strategy];
     }
+
+    function getMemberStakedAmount(address _member) public view returns (uint256) {
+        return addressToMemberInfo[_member].stakedAmount;
+    }
+
+    // function getGardenTokenDecimals() public view returns (uint256){
+    //     return gardenToken.decimals();
+    // }
 
     function addStrategy(address _newStrategy) public {
         onlyCouncilSafe();

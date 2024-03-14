@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-// import "forge-std/console.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 // import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -297,7 +296,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         this.withdraw(_member);
     }
 
-    function increasePower(address _member, uint256 _amountToStake) external view returns (uint256) {
+    function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
         //requireMemberActivatedInStrategies
 
         uint256 pointsToIncrease = 0;
@@ -305,18 +304,24 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             pointsToIncrease = increasePowerUnlimited(_amountToStake);
         } else if (pointSystem == StrategyStruct.PointSystem.Capped) {
             pointsToIncrease = increasePowerCapped(_member, _amountToStake);
+        } else if (pointSystem == StrategyStruct.PointSystem.Quadratic) {
+            pointsToIncrease = increasePowerQuadratic(_member, _amountToStake);
         }
+        totalPointsActivated = pointsToIncrease;
         return pointsToIncrease;
     }
 
-    function decreasePower(address _member, uint256 _amountToUnstake) external view returns (uint256) {
+    function decreasePower(address _member, uint256 _amountToUnstake) external returns (uint256) {
         //requireMemberActivatedInStrategies
 
         uint256 pointsToDecrease = 0;
         if (pointSystem == StrategyStruct.PointSystem.Unlimited || pointSystem == StrategyStruct.PointSystem.Capped) {
             pointsToDecrease = decreasePowerCappedUnlimited(_member, _amountToUnstake);
         }
-
+        else {
+            pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
+        }
+        totalPointsActivated -= pointsToDecrease;
         return pointsToDecrease;
     }
 
@@ -335,17 +340,63 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         return pointsToIncrease;
     }
 
+    function increasePowerQuadratic(address _member, uint256 _amountToStake) public view returns (uint256) {
+        uint256 totalExtraStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake - registryCommunity.registerStakeAmount();
+        
+        //                                                      9 for token.decimals/2, 4 for precision
+        uint256 newTotalPoints = sqrt((totalExtraStake/pointConfig.tokensPerPoint)* (10 ** 18)) / (10 ** (9-4)) ;
+        uint256 pointsToIncrease =  (pointConfig.pointsPerMember + newTotalPoints) - registryCommunity.getMemberPowerInStrategy(_member,address(this));
+        return pointsToIncrease;
+    }
+
     function decreasePowerCappedUnlimited(address _member, uint256 _amountToUnstake) internal view returns (uint256) {
         return (_amountToUnstake * pointConfig.pointsPerTokenStaked);
+    }
+
+    function decreasePowerQuadratic(address _member, uint256 _amountToUnstake) internal view returns (uint256) {
+        uint256 newTotalPoints = (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake - registryCommunity.registerStakeAmount())/ pointConfig.tokensPerPoint;
+        uint256 pointsToDecrease = newTotalPoints - registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        
+        return pointsToDecrease;
+    }
+
+    // function sqrt(uint y) internal pure returns (uint z) {
+    // if (y > 3) {
+    //     z = y;
+    //     uint x = y / 2 + 1;
+    //     while (x < z) {
+    //         z = x;
+    //         x = (y / x + x) / 2;
+    //     }
+    // } else if (y != 0) {
+    //     z = 1;
+    // }
+    // }
+    
+
+    function sqrt(uint256 y) internal pure returns (uint256 z) {
+        if (y > 3) {
+            z = y;
+            uint256 x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+        // else z = 0 (default value)
     }
 
     function getPointsPerMember() external view returns (uint256) {
         return pointConfig.pointsPerMember;
     }
 
-    // function increasePowerQuadratic(uint256 _amountToStake) internal {
+    function getPointsPerTokenStaked() external view returns (uint256) {
+        return pointConfig.pointsPerTokenStaked;
+    }
 
-    // }
+    
 
     // [[[proposalId, delta],[proposalId, delta]]]
     // layout.txs -> console.log(data)
@@ -399,6 +450,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             IAllo.Pool memory pool = allo.getPool(poolId);
 
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
+            
+            proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
 
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
         } //signaling do nothing @todo write tests @todo add end date

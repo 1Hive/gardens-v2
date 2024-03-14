@@ -86,15 +86,25 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             StrategyStruct.PointSystem.Unlimited
         );
 
-        uint256 poolIdSignaling = createPool(
+        uint256 poolIdQuadratic = createPool(
             Allo(address(allo)),
             address(strategy2),
             address(registryCommunity),
             registry,
-            address(0),
-            StrategyStruct.ProposalType.Signaling,
-            StrategyStruct.PointSystem.Unlimited
+            address(token),
+            StrategyStruct.ProposalType.Funding,
+            StrategyStruct.PointSystem.Quadratic
         );
+
+        // uint256 poolIdSignaling = createPool(
+        //     Allo(address(allo)),
+        //     address(strategy2),
+        //     address(registryCommunity),
+        //     registry,
+        //     address(0),
+        //     StrategyStruct.ProposalType.Signaling,
+        //     StrategyStruct.PointSystem.Unlimited
+        // );
 
         strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
         strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
@@ -143,15 +153,15 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
         StrategyStruct.CreateProposal memory proposal2 =
-            StrategyStruct.CreateProposal(poolIdSignaling, membersStaked[0], 0, address(0), metadata);
+            StrategyStruct.CreateProposal(poolIdQuadratic, membersStaked[0], 0, address(token), metadata);
         bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
+        allo.registerRecipient(poolIdQuadratic, data2);
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);
         console2.log("Strategy1 Addr: %s", address(strategy1));
 
-        console2.log("poolIdSignaling: %s", poolIdSignaling);
+        console2.log("poolIdQuadratic: %s", poolIdQuadratic);
         console2.log("Strategy2 Addr: %s", address(strategy2));
 
         console2.log("Allo Addr: %s", address(allo));
