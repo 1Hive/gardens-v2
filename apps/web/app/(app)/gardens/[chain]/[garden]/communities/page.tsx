@@ -32,12 +32,13 @@ export default async function Garden({
 }) {
   const { urqlClient } = initUrqlClient();
 
-  const { data: result } = await queryByChain<getCommunitiesByGardenQuery>(
-    urqlClient,
-    chain,
-    getCommunitiesByGardenDocument,
-    { addr: garden },
-  );
+  const { data: result, error: error } =
+    await queryByChain<getCommunitiesByGardenQuery>(
+      urqlClient,
+      chain,
+      getCommunitiesByGardenDocument,
+      { addr: garden },
+    );
 
   // const result = await sdk.getCommunityByGarden({ addr: garden });
   let communities = result?.tokenGarden?.communities || [];

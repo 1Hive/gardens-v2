@@ -14,6 +14,7 @@ import {
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import * as dn from "dnum";
+import { formatTokenAmount } from "@/utils/numbers";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -31,8 +32,9 @@ export function CommunityCard({
   id: communityAddress,
   strategies,
   members,
-  registerToken,
   registerStakeAmount,
+  protocolFee,
+  communityFee,
   tokenGarden,
 }: CommunityCardProps) {
   // const [open, setOpen] = useState(false);
@@ -52,12 +54,8 @@ export function CommunityCard({
 
   const pools = strategies ?? [];
   members = members ?? [];
-  registerToken = registerToken ?? "0x0";
+  let registerToken = tokenGarden?.id ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
-
-  console.log(registerStakeAmount, "registerStakeAmount");
-
-  //TODO: check decimals format for stake amounts
 
   return (
     <>
@@ -84,7 +82,8 @@ export function CommunityCard({
               <div className="stat-title">Members</div>
               <div className="stat-value text-primary">{members.length}</div>
               <div className="stat-desc">
-                {registerStakeAmount} {tokenGarden?.symbol} membership
+                {formatTokenAmount(registerStakeAmount, tokenGarden?.decimals)}{" "}
+                {tokenGarden?.symbol} membership
               </div>
             </div>
 
@@ -99,24 +98,28 @@ export function CommunityCard({
             </div>
           </div>
 
-          <div className="flex w-fit gap-4">
+          <div>
             <RegisterMember
               name={name as string}
               tokenSymbol={tokenGarden?.symbol as string}
               communityAddress={communityAddress as Address}
               registerToken={registerToken as Address}
+              registerTokenDecimals={tokenGarden?.decimals as number}
+              membershipAmount={registerStakeAmount}
+              protocolFee={protocolFee}
+              communityFee={communityFee}
             />
 
             <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
           </div>
-          <div className=" justify-end">
+          <div className="justify-end">
             <div
               className={`flex w-full transform gap-4 overflow-x-auto transition-height duration-200 ease-in-out ${
                 !open && "max-h-[290px]"
               } `}
             >
               {pools.map((pool, i) => (
-                <PoolCard {...pool} key={i} />
+                <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
               {/* {pools.length > 2 && (
                 <Button

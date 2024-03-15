@@ -90,12 +90,11 @@ export async function queryByChain<
   if (!addrs) {
     throw new Error("Chain not supported");
   }
-  return await urqlClient
-    .query<Data>(query, variables, {
-      url: addrs.subgraphUrl,
-      ...context,
-    })
-    // .subscribe((value) => {
-    //   console.log("value", value);
-    // });
+  return await urqlClient.query<Data>(query, variables, {
+    url: addrs.subgraphUrl,
+    ...context,
+  });
+  // .subscribe((value) => {
+  //   console.log("value", value);
+  // });
 }

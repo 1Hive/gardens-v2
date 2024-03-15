@@ -36,6 +36,7 @@ query getTokenGardens {
     communities {
       id
       chainId
+      communityFee
       members {
         id
       }
@@ -63,12 +64,15 @@ query getCommunitiesByGarden($addr: ID!) {
     id
     name
     symbol
+    decimals
     chainId
     communities {
       id
       covenantIpfsHash
       chainId
       communityName
+      protocolFee
+      communityFee
       registerToken
       registerStakeAmount
       alloAddress

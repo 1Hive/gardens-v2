@@ -30,6 +30,8 @@ dataSources:
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
+        - event: ProtocolFeeSet(address,uint256)
+          handler: handleProtocolFeeSet
       file: ./src/mappings/registry-factory.ts
 
 templates:
