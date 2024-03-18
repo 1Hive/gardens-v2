@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 // import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
+
 import {RegistryCommunity, Metadata} from "./RegistryCommunity.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
@@ -450,7 +451,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             IAllo.Pool memory pool = allo.getPool(poolId);
 
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
-            
+
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
 
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
@@ -499,7 +500,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     function setPoolActive(bool _active) external {
         _setPoolActive(_active);
     }
-
+    
     //    @TODO: onlyOnwer onlyRegistryCommunity{
     function withdraw(address _member) external override {
         // remove all proposals from the member
@@ -744,6 +745,17 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             uint256 stakedAmount = convertPctToTokens(stakedPointsPct);
             // console.log("stakedAmount", stakedAmount);
             proposal.voterStake[_sender] = stakedAmount;
+
+            bool hasProposal = false;
+            for (uint256 k = 0; k<voterStakedProposals[_sender].length;k++){
+                if(voterStakedProposals[_sender][k] == proposal.proposalId){
+                    hasProposal = true;
+                    break;
+                }
+            }
+            if(!hasProposal){   
+            voterStakedProposals[_sender].push(proposal.proposalId);
+            }
             // proposal.stakedAmount += stakedAmount;
             // uint256 diff =_diffStakedTokens(previousStakedAmount, stakedAmount);
             if (previousStakedAmount <= stakedAmount) {
