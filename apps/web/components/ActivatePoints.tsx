@@ -33,6 +33,13 @@ export function ActivatePoints({
     args: [connectedAccount as Address, strategyAddress],
     watch: true,
   });
+  const { data } = useContractRead({
+    address: strategyAddress as Address,
+    abi: abiWithErrors(cvStrategyABI),
+    functionName: "getPointsPerMember",
+
+    watch: true,
+  });
 
   const {
     data: activatePointsData,
@@ -55,6 +62,26 @@ export function ActivatePoints({
     abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
     args: [connectedAccount as Address],
+  });
+
+  const powerAmount = 50000000000000000000n;
+
+  const {
+    data: increasePowerData,
+    write: writeIncreasePower,
+    error: errorIncreasePower,
+    status: increasePowerStatus,
+  } = useContractWrite({
+    address: strategyAddress,
+    abi: abiWithErrors(cvStrategyABI),
+    functionName: "increasePower",
+    args: [connectedAccount as Address, powerAmount],
+    onError: (error) => {
+      console.log("error", error);
+    },
+    onSuccess: (data) => {
+      console.log("data", data);
+    },
   });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
@@ -88,13 +115,18 @@ export function ActivatePoints({
 
   return (
     <>
-      <Button onClick={handleChange} className="w-fit bg-primary">
-        {connectedAccount
-          ? isMemberActivated
-            ? "Deactivate Points"
-            : "Activate Points"
-          : "Connect Wallet"}
-      </Button>
+      <div className="flex flex-col gap-4">
+        <Button onClick={handleChange} className="w-fit bg-primary">
+          {connectedAccount
+            ? isMemberActivated
+              ? "Deactivate Points"
+              : "Activate Points"
+            : "Connect Wallet"}
+        </Button>
+        <Button onClick={() => writeIncreasePower?.()}>
+          increase power 50 tokens
+        </Button>
+      </div>
     </>
   );
 }
