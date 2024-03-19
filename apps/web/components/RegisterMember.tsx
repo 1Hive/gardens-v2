@@ -117,6 +117,17 @@ export function RegisterMember({
     functionName: "approve",
   });
 
+  console.log(registerStakeAmount);
+
+  const powerAmount = 50000000000000000000n;
+
+  const { data: allowMock, write: writeMockallow } = useContractWrite({
+    address: registerToken,
+    abi: abiWithErrors(erc20ABI),
+    args: [communityAddress, powerAmount as bigint], // [allowed spender address, amount ]
+    functionName: "approve",
+  });
+
   const {
     data,
     isError,
@@ -194,6 +205,8 @@ export function RegisterMember({
   useEffect(() => {
     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
   }, [unregisterMemberStatus]);
+
+  console.log(allowance);
 
   //TODO: check behavior => arb sepolia
 
@@ -282,8 +295,9 @@ export function RegisterMember({
               </div>
             </div>
           </div>
+          <h4>allowance: {formatTokenAmount(allowance as string, 18)}</h4>
 
-          <div className="stat flex-1 items-center">
+          <div className="stat flex-1 items-center gap-2">
             <Button
               onClick={handleChange}
               className="w-full bg-primary"
@@ -297,6 +311,7 @@ export function RegisterMember({
                   : "Register in community"
                 : "Connect Wallet"}
             </Button>
+            <Button onClick={() => writeMockallow?.()}>Allow Tokens</Button>
           </div>
         </div>
       </div>

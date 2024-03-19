@@ -33,13 +33,6 @@ export function ActivatePoints({
     args: [connectedAccount as Address, strategyAddress],
     watch: true,
   });
-  const { data } = useContractRead({
-    address: strategyAddress as Address,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "getPointsPerMember",
-
-    watch: true,
-  });
 
   const {
     data: activatePointsData,
@@ -64,24 +57,25 @@ export function ActivatePoints({
     args: [connectedAccount as Address],
   });
 
-  const powerAmount = 50000000000000000000n;
+  const { data: powerIncrease } = useContractRead({
+    address: communityAddress as Address,
+    abi: abiWithErrors(registryCommunityABI),
+    functionName: "getMemberPowerInStrategy",
+    args: [connectedAccount as Address, strategyAddress],
+    watch: true,
+  });
 
+  //manually testing the input for increasePower
   const {
-    data: increasePowerData,
+    data: increaseStakeData,
     write: writeIncreasePower,
-    error: errorIncreasePower,
-    status: increasePowerStatus,
+    error: errorIncreaseStake,
+    status: increaseStakeStatus,
   } = useContractWrite({
-    address: strategyAddress,
-    abi: abiWithErrors(cvStrategyABI),
+    address: communityAddress as Address,
+    abi: abiWithErrors(registryCommunityABI),
     functionName: "increasePower",
-    args: [connectedAccount as Address, powerAmount],
-    onError: (error) => {
-      console.log("error", error);
-    },
-    onSuccess: (data) => {
-      console.log("data", data);
-    },
+    args: [10000000000000000000n],
   });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
@@ -115,7 +109,7 @@ export function ActivatePoints({
 
   return (
     <>
-      <div className="flex flex-col gap-4">
+      <div className="z-50 flex flex-col gap-4">
         <Button onClick={handleChange} className="w-fit bg-primary">
           {connectedAccount
             ? isMemberActivated
@@ -124,7 +118,7 @@ export function ActivatePoints({
             : "Connect Wallet"}
         </Button>
         <Button onClick={() => writeIncreasePower?.()}>
-          increase power 50 tokens
+          Test Increase Power
         </Button>
       </div>
     </>
