@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-<<<<<<< HEAD
-import "forge-std/console.sol";
-=======
->>>>>>> origin/quadratic-system
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 // import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -708,7 +704,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function _addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport) internal {
-        console.log('SUPPOOOOOORT');
         uint256[] memory proposalsIds;
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             uint256 proposalId = _proposalSupport[i].proposalId;
