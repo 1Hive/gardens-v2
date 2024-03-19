@@ -7,6 +7,7 @@ import {
 // import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
 
 import {
+  Distributed,
   InitializedCV,
   ProposalCreated,
   CVStrategy as CVStrategyContract,
@@ -167,3 +168,20 @@ export function handleSupportAdded(event: SupportAdded): void {
   cvp.convictionLast = event.params.convictionLast;
   cvp.save();
 }
+
+export function handleDistributed(event: Distributed): void {
+  log.debug("handleDistributed: amount: {}", [
+    event.params.amount.toString(),
+  ]);
+
+  let cvp = CVProposal.load(event.params.proposalId.toHexString());
+  if (cvp == null) {
+    log.debug("handleDistributed cvp not found: {}", [
+      event.params.proposalId.toString(),
+    ]);
+    return;
+  }
+  cvp.proposalStatus = BigInt.fromI32(4); // Executed
+  cvp.save();
+}  
+
