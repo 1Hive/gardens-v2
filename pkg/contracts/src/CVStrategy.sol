@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-// import "forge-std/console.sol";
+import "forge-std/console.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 // import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -131,6 +131,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
     event ProposalCreated(uint256 poolId, uint256 proposalId);
     event PoolAmountIncreased(uint256 amount);
+    event SupportAdded(address from, uint256 proposalId, uint256 amount, uint256 totalStakedPoints, uint256 convictionLast);
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -645,6 +646,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function _addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport) internal {
+        console.log('SUPPOOOOOORT');
         uint256[] memory proposalsIds;
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             uint256 proposalId = _proposalSupport[i].proposalId;
@@ -705,6 +707,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 proposal.blockLast = block.number;
             } else {
                 _calculateAndSetConviction(proposal, previousStakedAmount);
+                emit SupportAdded(_sender, proposalId, stakedAmount, proposal.stakedAmount, proposal.convictionLast);
             }
         }
     }
