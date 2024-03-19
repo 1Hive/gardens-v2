@@ -11,6 +11,7 @@ import {
   ProposalCreated,
   CVStrategy as CVStrategyContract,
   PoolAmountIncreased,
+  SupportAdded
 } from "../../generated/templates/CVStrategy/CVStrategy";
 
 import { BigInt, log } from "@graphprotocol/graph-ts";
@@ -31,6 +32,7 @@ export function handleInitialized(event: InitializedCV): void {
     event.params.data.pointConfig.pointsPerTokenStaked;
   const tokensPerPoint = event.params.data.pointConfig.tokensPerPoint;
   const maxAmount = event.params.data.pointConfig.maxAmount;
+  const pointSystem = event.params.data.pointSystem;
 
   log.debug(
     "handleInitialized registryCommunity:{} decay:{} maxRatio:{} weight:{} pType:{} pointsPerMember:{} pointsPerTokenStaked:{} tokensPerPoint:{} maxAmount:{}",
@@ -62,6 +64,7 @@ export function handleInitialized(event: InitializedCV): void {
   config.maxRatio = maxRatio;
   config.weight = weight;
   config.proposalType = BigInt.fromI32(pType);
+  config.pointSystem = BigInt.fromI32(pointSystem);
   config.pointsPerMember = pointsPerMember;
   config.pointsPerTokenStaked = pointsPerTokenStaked;
   config.tokensPerPoint = tokensPerPoint;
@@ -137,7 +140,7 @@ export function handlePoolAmountIncreased(event: PoolAmountIncreased): void {
   log.debug("handlePoolAmountIncreased: amount: {}", [
     event.params.amount.toString(),
   ]);
-  let cvs = CVStrategy.load(event.address.toHex());
+  let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
     log.debug("handlePoolAmountIncreased cvs not found: {}", [
       event.address.toHexString(),
@@ -146,4 +149,21 @@ export function handlePoolAmountIncreased(event: PoolAmountIncreased): void {
   }
   cvs.poolAmount = event.params.amount;
   cvs.save();
+}
+
+export function handleSupportAdded(event: SupportAdded): void {
+  log.debug("handleSupportAdded: amount: {}", [
+    event.params.amount.toString(),
+  ]);
+
+  let cvp = CVProposal.load(event.params.proposalId.toHexString());
+  if (cvp == null) {
+    log.debug("handleSupportAdded cvp not found: {}", [
+      event.params.proposalId.toString(),
+    ]);
+    return;
+  }
+  cvp.stakedTokens = event.params.totalStakedPoints;
+  cvp.convictionLast = event.params.convictionLast;
+  cvp.save();
 }

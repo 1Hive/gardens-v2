@@ -326,6 +326,7 @@ export type CVStrategyConfig = {
     maxRatio: Scalars['BigInt'];
     weight: Scalars['BigInt'];
     proposalType: Scalars['BigInt'];
+    pointSystem: Scalars['BigInt'];
     pointsPerMember?: Maybe<Scalars['BigInt']>;
     pointsPerTokenStaked?: Maybe<Scalars['BigInt']>;
     tokensPerPoint?: Maybe<Scalars['BigInt']>;
@@ -381,6 +382,14 @@ export type CVStrategyConfig_filter = {
     proposalType_lte?: InputMaybe<Scalars['BigInt']>;
     proposalType_in?: InputMaybe<Array<Scalars['BigInt']>>;
     proposalType_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    pointSystem?: InputMaybe<Scalars['BigInt']>;
+    pointSystem_not?: InputMaybe<Scalars['BigInt']>;
+    pointSystem_gt?: InputMaybe<Scalars['BigInt']>;
+    pointSystem_lt?: InputMaybe<Scalars['BigInt']>;
+    pointSystem_gte?: InputMaybe<Scalars['BigInt']>;
+    pointSystem_lte?: InputMaybe<Scalars['BigInt']>;
+    pointSystem_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    pointSystem_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     pointsPerMember?: InputMaybe<Scalars['BigInt']>;
     pointsPerMember_not?: InputMaybe<Scalars['BigInt']>;
     pointsPerMember_gt?: InputMaybe<Scalars['BigInt']>;
@@ -418,7 +427,7 @@ export type CVStrategyConfig_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
 };
-export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'D' | 'decay' | 'maxRatio' | 'weight' | 'proposalType' | 'pointsPerMember' | 'pointsPerTokenStaked' | 'tokensPerPoint' | 'maxAmount';
+export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'D' | 'decay' | 'maxRatio' | 'weight' | 'proposalType' | 'pointSystem' | 'pointsPerMember' | 'pointsPerTokenStaked' | 'tokensPerPoint' | 'maxAmount';
 export type CVStrategy_filter = {
     id?: InputMaybe<Scalars['ID']>;
     id_not?: InputMaybe<Scalars['ID']>;
@@ -519,7 +528,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__weight' | 'config__proposalType' | 'config__pointsPerMember' | 'config__pointsPerTokenStaked' | 'config__tokensPerPoint' | 'config__maxAmount' | 'proposals' | 'memberActive';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__pointsPerMember' | 'config__pointsPerTokenStaked' | 'config__tokensPerPoint' | 'config__maxAmount' | 'proposals' | 'memberActive';
 export type Member = {
     id: Scalars['ID'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -1609,6 +1618,7 @@ export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType exte
     maxRatio?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     weight?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     proposalType?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    pointSystem?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     pointsPerMember?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     pointsPerTokenStaked?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     tokensPerPoint?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
@@ -1829,7 +1839,7 @@ export type getCommunitiesByGardenQuery = {
             members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId' | 'poolAmount'> & {
                 registryCommunity: Pick<RegistryCommunity, 'registerStakeAmount'>;
-                config?: Maybe<Pick<CVStrategyConfig, 'id' | 'proposalType'>>;
+                config?: Maybe<Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem'>>;
                 proposals: Array<Pick<CVProposal, 'id'>>;
             })>>;
         })>>;
@@ -1843,7 +1853,7 @@ export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId'> & {
-        config?: Maybe<Pick<CVStrategyConfig, 'id' | 'proposalType'>>;
+        config?: Maybe<Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem'>>;
         registryCommunity: Pick<RegistryCommunity, 'id'>;
         proposals: Array<Pick<CVProposal, 'id' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedTokens'>>;
     })>;
@@ -1856,7 +1866,7 @@ export type getProposalDataQuery = {
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol'>>;
     cvproposal?: Maybe<(Pick<CVProposal, 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadata' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedTokens' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
         strategy: (Pick<CVStrategy, 'id'> & {
-            config?: Maybe<Pick<CVStrategyConfig, 'proposalType'>>;
+            config?: Maybe<Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>>;
         });
     })>;
 };
@@ -1871,7 +1881,7 @@ export type getStrategyByPoolQueryVariables = Exact<{
 }>;
 export type getStrategyByPoolQuery = {
     cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
-        config?: Maybe<Pick<CVStrategyConfig, 'id' | 'proposalType'>>;
+        config?: Maybe<Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem'>>;
         registryCommunity: Pick<RegistryCommunity, 'id'>;
         proposals: Array<Pick<CVProposal, 'id' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedTokens'>>;
     })>;

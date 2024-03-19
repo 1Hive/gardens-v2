@@ -17,6 +17,7 @@ type CVStrategyConfig @entity(immutable: false) {
   maxRatio: BigInt!
   weight: BigInt!
   proposalType: BigInt!
+  pointSystem: BigInt!
   pointsPerMember: BigInt
   pointsPerTokenStaked: BigInt
   tokensPerPoint: BigInt

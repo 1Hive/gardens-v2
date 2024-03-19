@@ -120,6 +120,8 @@ templates:
           handler: handleProposalCreated
         - event: PoolAmountIncreased(uint256)
           handler: handlePoolAmountIncreased
+        - event: SupportAdded(address,uint256,uint256,uint256,uint256)
+          handler: handleSupportAdded
 
       file: ./src/mappings/cv-strategy.ts
   
