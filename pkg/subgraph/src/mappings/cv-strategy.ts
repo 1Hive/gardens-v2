@@ -218,6 +218,8 @@ export function handlePowerIncreased(event: PowerIncreased): void {
   const cvc = CVStrategyContract.bind(event.address);
   const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
+
+  cvs.save();
 }
 
 // Regardless both handlers do the same decided to let here both just in case
@@ -234,4 +236,6 @@ export function handlePowerDecreased(event: PowerDecreased): void {
   const cvc = CVStrategyContract.bind(event.address);
   const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
+
+  cvs.save();
 }
