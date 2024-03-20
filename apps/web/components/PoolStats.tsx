@@ -20,7 +20,8 @@ type PoolStatsProps = {
   strategy: Strategy;
   // poolId: number;
   communityAddress: Address;
-  tokenGarden: any; // Couldnt set the TokenGarden | undefined giving error
+  tokenGarden: any;
+  pointSystem: string; // Couldnt set the TokenGarden | undefined giving error
 };
 
 export const PoolStats: FC<PoolStatsProps> = ({
@@ -29,6 +30,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
   strategy,
   communityAddress,
   tokenGarden,
+  pointSystem,
 }) => {
   const { isMemberActived } = useIsMemberActivated(strategy);
   const { isConnected } = useAccount();
@@ -42,6 +44,14 @@ export const PoolStats: FC<PoolStatsProps> = ({
     watch: true,
   });
 
+  const pointSystemObject = {
+    "0": "Fixed",
+    "1": "Capped",
+    "2": "Unlimited",
+    "3": "Quadratic",
+  };
+
+  console.log(pointSystem);
   console.log("voteStakePct", voterStakePct);
   console.log("startegy - pool", strategy);
 
@@ -50,20 +60,20 @@ export const PoolStats: FC<PoolStatsProps> = ({
       <div className="flex flex-1 flex-col gap-8">
         {/*  */}
         {/* left-top */}
-        <div className="flex-flex-col max-h-44 w-full space-y-4 rounded-xl border-2 border-black bg-white p-4">
+        <div className="flex-flex-col flex max-h-44 w-full items-center justify-center space-y-4 rounded-xl border-2 border-black bg-white p-4">
           <div>
-            <div className="flex flex-col items-start">
-              <div className="border2 w-full">
-                <h4 className="text-center text-xl font-bold">
-                  Funds from contract:
+            <div className="flex h-full flex-col items-start">
+              <div className="flex w-full items-baseline gap-8">
+                <h4 className="stat-title text-center text-xl font-bold">
+                  Funds Available:
                 </h4>
-                <h4 className="text-center text-2xl font-bold">
-                  {poolBalance?.formatted}
+                <h4 className="stat-value text-center text-2xl font-bold ">
+                  {poolBalance?.formatted} {tokenGarden?.symbol}
                 </h4>
               </div>
-              <h4 className="text-center text-2xl font-bold">
+              {/* <h4 className="text-center text-2xl font-bold">
                 from sub: {formatTokenAmount(balance, tokenGarden?.decimals)}
-              </h4>
+              </h4> */}
             </div>
           </div>
           <div className="max-h-30 flex items-center gap-3 ">
@@ -112,19 +122,29 @@ export const PoolStats: FC<PoolStatsProps> = ({
           <h4 className="text-center text-xl font-bold">
             Active Points Distribution
           </h4>
-          {/* <p className="text-md stat">Points System: Fixed</p> */}
+          <div className="text-md stat-title font-bold">
+            Points System:{" "}
+            <span className="text-md pl-2 text-black">
+              {pointSystemObject[pointSystem as keyof typeof pointSystemObject]}
+            </span>
+          </div>
         </div>
         {voterStakePct && Number(voterStakePct) !== 0 ? (
           <div className="flex h-48 flex-col items-center justify-center">
-            <p>voterStakePct</p>
+            <p className="rounded-xl bg-surface px-8 py-3 text-lg font-semibold">
+              You have distributed:
+            </p>
             <p className="text-5xl font-semibold">
-              {Number(voterStakePct / PRECISION_SCALE)} %
+              {Number(voterStakePct / PRECISION_SCALE)} %{" "}
+              <span className="text-sm">of your points</span>
             </p>
           </div>
         ) : (
           // <ActivePointsChart stakedPoints={Number(voterStakePct)} />
           <div className="flex h-48 items-center justify-center">
-            <p className="text-lg font-semibold">No points used</p>
+            <p className="rounded-xl bg-warning p-2 text-lg font-semibold">
+              No points distributed yet
+            </p>
           </div>
         )}
       </div>

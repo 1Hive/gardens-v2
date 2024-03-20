@@ -117,9 +117,9 @@ export function ActivatePoints({
               : "Activate Points"
             : "Connect Wallet"}
         </Button>
-        <Button onClick={() => writeIncreasePower?.()}>
+        {/* <Button onClick={() => writeIncreasePower?.()}>
           Test Increase Power
-        </Button>
+        </Button> */}
       </div>
     </>
   );

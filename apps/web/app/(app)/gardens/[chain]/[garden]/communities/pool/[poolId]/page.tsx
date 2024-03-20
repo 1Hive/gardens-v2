@@ -69,7 +69,14 @@ export default async function Pool({
   );
   const strategyObj = data?.cvstrategies?.[0];
 
-  console.log(data);
+  //   enum PointSystem {
+  //     Fixed,
+  //     Capped,
+  //     Unlimited,
+  //     Quadratic
+  // }
+
+  const pointSystem = data?.cvstrategies?.[0].config?.pointSystem;
 
   if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;
@@ -108,11 +115,11 @@ export default async function Pool({
 
           <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
-              <p className="max-w-2xl  text-center text-lg font-semibold">
+              <h3 className="max-w-2xl  text-center font-semibold">
                 {/* {poolInfo[(poolId as unknown as number) - 1].description} */}
                 {/* TODO:  fetch data ipfs */}
-                Mocked data description
-              </p>
+                Open Source Software Grants Pool
+              </h3>
               <div className="flex w-full  p-4">
                 <div className="flex flex-1  text-xl font-semibold">
                   <div className="mx-auto flex max-w-fit flex-col items-start justify-center">
@@ -159,6 +166,7 @@ export default async function Pool({
             strategy={strategyObj}
             communityAddress={communityAddress}
             tokenGarden={tokenGarden}
+            pointSystem={pointSystem}
           />
 
           {/* Proposals section */}

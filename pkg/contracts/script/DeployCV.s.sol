@@ -39,7 +39,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         Allo allo = Allo(deployAllo());
 
-        token = new TERC20("HNY from Gnosis", "arbHNY", 18);
+        token = new TERC20("sepolia Honey", "sepHNY", 18);
 
         IRegistry registry = allo.getRegistry();
 
@@ -55,7 +55,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         params._communityFee = 0;
         params._metadata = metadata; // convenant ipfs
         params._councilSafe = payable(address(_councilSafe()));
-        params._communityName = "Allo";
+        params._communityName = "Pioneers of Sepolia";
 
         RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
 
@@ -86,14 +86,14 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             StrategyStruct.PointSystem.Unlimited
         );
 
-        uint256 poolIdQuadratic = createPool(
+        uint256 poolIdFixed = createPool(
             Allo(address(allo)),
             address(strategy2),
             address(registryCommunity),
             registry,
             address(token),
             StrategyStruct.ProposalType.Funding,
-            StrategyStruct.PointSystem.Quadratic
+            StrategyStruct.PointSystem.Fixed
         );
 
         // uint256 poolIdSignaling = createPool(
@@ -135,33 +135,34 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         vm.startBroadcast(pool_admin());
 
         token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 1_000 ether); // ether
+        allo.fundPool(poolId, 3_000 ether); // ether
+        allo.fundPool(poolIdFixed, 1_000 ether); // ether
 
-        StrategyStruct.CreateProposal memory proposal =
-            StrategyStruct.CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
-        bytes memory data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        // StrategyStruct.CreateProposal memory proposal =
+        //     StrategyStruct.CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
+        // bytes memory data = abi.encode(proposal);
+        // allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, membersStaked[1], 25 ether, address(token), metadata);
-        data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        // proposal = StrategyStruct.CreateProposal(poolId, membersStaked[1], 25 ether, address(token), metadata);
+        // data = abi.encode(proposal);
+        // allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, membersStaked[2], 10 ether, address(token), metadata);
-        data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        // proposal = StrategyStruct.CreateProposal(poolId, membersStaked[2], 10 ether, address(token), metadata);
+        // data = abi.encode(proposal);
+        // allo.registerRecipient(poolId, data);
 
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
         StrategyStruct.CreateProposal memory proposal2 =
-            StrategyStruct.CreateProposal(poolIdQuadratic, membersStaked[0], 0, address(token), metadata);
+            StrategyStruct.CreateProposal(poolIdFixed, membersStaked[0], 0, address(token), metadata);
         bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdQuadratic, data2);
+        allo.registerRecipient(poolIdFixed, data2);
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);
         console2.log("Strategy1 Addr: %s", address(strategy1));
 
-        console2.log("poolIdQuadratic: %s", poolIdQuadratic);
+        console2.log("poolIdQuadratic: %s", poolIdFixed);
         console2.log("Strategy2 Addr: %s", address(strategy2));
 
         console2.log("Allo Addr: %s", address(allo));

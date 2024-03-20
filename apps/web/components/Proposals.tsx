@@ -255,7 +255,7 @@ export function Proposals({
                 </div>
 
                 <div className="flex items-center gap-8">
-                  <Button
+                  {/* <Button
                     onClick={() =>
                       writeDistribute?.({
                         args: [
@@ -267,7 +267,7 @@ export function Proposals({
                     }
                   >
                     Execute proposal {getProposalId(id)}
-                  </Button>
+                  </Button> */}
                   <StatusBadge status={1} />
                   {/* {!editView && ( */}
                   <>

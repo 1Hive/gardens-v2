@@ -14,6 +14,7 @@ import {
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
 import { PRECISION_SCALE } from "@/actions/getProposals";
+import { formatTokenAmount } from "@/utils/numbers";
 import * as dn from "dnum";
 
 export const dynamic = "force-dynamic";
@@ -259,21 +260,23 @@ export default async function Proposal({
 
   console.log(calcThreshold);
 
+  //values
   const th = BigInt(calcThreshold) / PRECISION_SCALE;
+  console.log("Threshold", th);
   console.log("MaxConviction", calcMaxConv);
   console.log("currentConviction", calcCurrCon);
+  console.log("support", tokenStakedNum);
 
   // const calcsResults = executeAllFunctions(
-  //   convictionLast,
-  //   maxCVStaked,
-  //   maxCVSupply,
-  //   totalEffectiveActivePoints,
-  //   threshold,
+  //   convictionLastNum as unknown as number,
+  //   maxCVStakedNum,
+  //   maxCVSupplyNum,
+  //   effPointsNum,
   //   calcThreshold,
   // );
 
   // console.log(calcsResults);
-  // const proposalSupport = Number(totalStakedTokens) * 2;
+  const proposalSupport = tokenStakedNum * 2;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
@@ -315,7 +318,8 @@ export default async function Proposal({
                     Requested Amount
                   </span>
                   <span className="flex items-center gap-2 text-lg">
-                    {requestedAmount} <span>{tokenSymbol}</span>
+                    {formatTokenAmount(requestedAmount, 18)}{" "}
+                    <span>{tokenSymbol}</span>
                   </span>
                 </div>
               )}
@@ -341,62 +345,13 @@ export default async function Proposal({
 
         {/* PROPOSAL NUMBERS CHART  */}
         <div className="mt-10 flex justify-evenly">
-          <div className="border2 flex overflow-x-auto">
-            <table className="table">
-              <tbody>
-                {/* row 1 */}
-                <tr>
-                  <td>Eff Active Points </td>
-                  <td>{effPointsNum}</td>
-                </tr>
-                {/* row 2 */}
-                <tr>
-                  <td>TokensStaked</td>
-                  <td>{tokenStakedNum}</td>
-                </tr>
-                {/* row 3 */}
-                <tr>
-                  <td>maxCVSupply</td>
-                  <td>{maxCVSupplyNum}</td>
-                </tr>
-                {/* row 4 */}
-                <tr>
-                  <td>maxCVStaked</td>
-                  <td>{maxCVStakedNum}</td>
-                </tr>
-                {/* row 5 */}
-                <tr>
-                  <td>ConvictionLast</td>
-                  <td>{convictionLastNum}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            {/* CALCULATIONS */}
-            <table className="table">
-              <tbody>
-                {/* row 1 */}
-                <tr>
-                  <td>Current Conviction </td>
-                  <td>{calcCurrCon.toString()}</td>
-                </tr>
-                <tr>
-                  {/* row 2 */}
-                  <td>Max Conviction</td>
-                  <td>{calcMaxConv.toString()}</td>
-                </tr>
-                {/* row 3 */}
-                <tr>
-                  <td>Threshold</td>
-                  <td>{th.toString()}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          {/* <ConvictionBarChart
-            data={calcsResults}
+          <ConvictionBarChart
+            currentConviction={calcCurrCon as number}
+            maxConviction={calcMaxConv.toString() as unknown as number}
+            threshold={th as unknown as number}
+            // data={calcsResults}
             proposalSupport={proposalSupport}
-          /> */}
+          />
         </div>
       </main>
 
@@ -571,7 +526,6 @@ function executeAllFunctions(
   maxCVSupply: number | bigint,
   totalEffectiveActivePoints: number | bigint,
   threshold: number,
-  calcThreshold: number,
 ) {
   // Initialize an object to store all results
   const results: ExecutionResults = {};
