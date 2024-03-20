@@ -330,6 +330,7 @@ type CVStrategyConfig {
   maxRatio: BigInt!
   weight: BigInt!
   proposalType: BigInt!
+  pointSystem: BigInt!
   pointsPerMember: BigInt
   pointsPerTokenStaked: BigInt
   tokensPerPoint: BigInt
@@ -386,6 +387,14 @@ input CVStrategyConfig_filter {
   proposalType_lte: BigInt
   proposalType_in: [BigInt!]
   proposalType_not_in: [BigInt!]
+  pointSystem: BigInt
+  pointSystem_not: BigInt
+  pointSystem_gt: BigInt
+  pointSystem_lt: BigInt
+  pointSystem_gte: BigInt
+  pointSystem_lte: BigInt
+  pointSystem_in: [BigInt!]
+  pointSystem_not_in: [BigInt!]
   pointsPerMember: BigInt
   pointsPerMember_not: BigInt
   pointsPerMember_gt: BigInt
@@ -436,6 +445,7 @@ enum CVStrategyConfig_orderBy {
   maxRatio
   weight
   proposalType
+  pointSystem
   pointsPerMember
   pointsPerTokenStaked
   tokensPerPoint
@@ -568,6 +578,7 @@ enum CVStrategy_orderBy {
   config__maxRatio
   config__weight
   config__proposalType
+  config__pointSystem
   config__pointsPerMember
   config__pointsPerTokenStaked
   config__tokensPerPoint

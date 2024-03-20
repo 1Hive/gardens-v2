@@ -90,6 +90,7 @@ query getCommunitiesByGarden($addr: ID!) {
         config {
           id
           proposalType
+          pointSystem
         }
         proposals {
           id
@@ -121,6 +122,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     config {
       id
       proposalType
+      pointSystem
     }
     registryCommunity {
       id
@@ -160,6 +162,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
       id
       config {
         proposalType
+        pointSystem
       }
     }
   }
@@ -180,6 +183,7 @@ query getStrategyByPool($poolId: BigInt!) {
     config {
       id
       proposalType
+      pointSystem
     }
     registryCommunity {
       id

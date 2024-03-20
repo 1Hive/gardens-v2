@@ -131,6 +131,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
     event ProposalCreated(uint256 poolId, uint256 proposalId);
     event PoolAmountIncreased(uint256 amount);
+    event SupportAdded(address from, uint256 proposalId, uint256 amount, uint256 totalStakedPoints, uint256 convictionLast);
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -770,6 +771,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 proposal.blockLast = block.number;
             } else {
                 _calculateAndSetConviction(proposal, previousStakedAmount);
+                emit SupportAdded(_sender, proposalId, stakedAmount, proposal.stakedAmount, proposal.convictionLast);
             }
         }
     }
