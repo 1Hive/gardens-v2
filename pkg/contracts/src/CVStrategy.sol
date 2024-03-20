@@ -686,20 +686,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         // console.log("newTotalVotingSupport", newTotalVotingSupport);
         uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
 
-        // if(pointSystem = 1){
-        //     participantBalance+ =
-        // }
         // console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
-        // require(newTotalVotingSupport <= participantBalance, "NOT_ENOUGH_BALANCE");
         if (newTotalVotingSupport > participantBalance) {
             revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
         }
 
         totalVoterStakePct[_sender] = newTotalVotingSupport;
-        //        totalParticipantSupportAt[currentRound][_sender] = newTotalVotingSupport;
-
-        //        totalSupportAt[currentRound] = _applyDelta(getTotalSupport(), deltaSupportSum);
     }
 
     function _addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport) internal {
