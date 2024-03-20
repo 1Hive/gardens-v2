@@ -12,7 +12,9 @@ import {
   ProposalCreated,
   CVStrategy as CVStrategyContract,
   PoolAmountIncreased,
-  SupportAdded
+  SupportAdded,
+  PowerIncreased,
+  PowerDecreased,
 } from "../../generated/templates/CVStrategy/CVStrategy";
 
 import { BigInt, log } from "@graphprotocol/graph-ts";
@@ -62,7 +64,7 @@ export function handleInitialized(event: InitializedCV): void {
   cvs.poolAmount = cvc.getPoolAmount();
   cvs.maxCVSupply = BigInt.fromI32(0);
   cvs.maxCVStaked = BigInt.fromI32(0);
-  cvs.totalEffectiveActivePoints = BigInt.fromI32(0)
+  cvs.totalEffectiveActivePoints = BigInt.fromI32(0);
 
   config.decay = decay;
   config.maxRatio = maxRatio;
@@ -156,9 +158,7 @@ export function handlePoolAmountIncreased(event: PoolAmountIncreased): void {
 }
 
 export function handleSupportAdded(event: SupportAdded): void {
-  log.debug("handleSupportAdded: amount: {}", [
-    event.params.amount.toString(),
-  ]);
+  log.debug("handleSupportAdded: amount: {}", [event.params.amount.toString()]);
 
   let cvp = CVProposal.load(event.params.proposalId.toHexString());
   if (cvp == null) {
@@ -168,31 +168,27 @@ export function handleSupportAdded(event: SupportAdded): void {
     return;
   }
   const cvc = CVStrategyContract.bind(event.address);
-  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints()
-  const proposalStakedAmount = cvc.getProposalStakedAmount(event.params.proposalId)
-  const maxConviction = cvc.getMaxConviction(proposalStakedAmount)
+  const proposalStakedAmount = cvc.getProposalStakedAmount(
+    event.params.proposalId,
+  );
+  const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
+  const cvs = CVStrategy.load(cvp.strategy);
 
-  const cvs = CVStrategy.load(cvp.strategy)
-  
   if (cvs == null) {
-    log.debug("handleDistributed cvs not found: {}", [
-      cvp.strategy,
-    ]);
+    log.debug("handleDistributed cvs not found: {}", [cvp.strategy]);
     return;
   }
 
-  cvs.maxCVStaked = maxConviction
+  cvs.maxCVStaked = maxConviction;
 
-  cvp.stakedTokens = event.params.totalStakedPoints;
+  cvp.stakedTokens = event.params.totalStakedAmount;
   cvp.convictionLast = event.params.convictionLast;
   cvp.save();
-  cvs.save()
+  cvs.save();
 }
 
 export function handleDistributed(event: Distributed): void {
-  log.debug("handleDistributed: amount: {}", [
-    event.params.amount.toString(),
-  ]);
+  log.debug("handleDistributed: amount: {}", [event.params.amount.toString()]);
 
   let cvp = CVProposal.load(event.params.proposalId.toHexString());
   if (cvp == null) {
@@ -201,8 +197,41 @@ export function handleDistributed(event: Distributed): void {
     ]);
     return;
   }
+  const cvc = CVStrategyContract.bind(event.address);
+  const proposalStatus = cvc
+    .getProposal(event.params.proposalId)
+    .getProposalStatus();
 
-  cvp.proposalStatus = BigInt.fromI32(4); // Executed
+  cvp.proposalStatus = BigInt.fromI32(proposalStatus);
   cvp.save();
-}  
+}
 
+export function handlePowerIncreased(event: PowerIncreased): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.debug("handlePowerIncreased cvs not found: {}", [
+      event.address.toHexString(),
+    ]);
+    return;
+  }
+
+  const cvc = CVStrategyContract.bind(event.address);
+  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
+}
+
+// Regardless both handlers do the same decided to let here both just in case
+// we need to do something different on each of them on the future
+export function handlePowerDecreased(event: PowerDecreased): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.debug("handlePowerDecreased cvs not found: {}", [
+      event.address.toHexString(),
+    ]);
+    return;
+  }
+
+  const cvc = CVStrategyContract.bind(event.address);
+  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
+}

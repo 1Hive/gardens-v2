@@ -20,10 +20,11 @@ import {
   PoolCreated,
   MemberKicked,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
+("../../generated/RegistryFactory/RegistryFactory");
 
-import {
-  CVStrategy as CVStrategyContract,
-} from "../../generated/templates/CVStrategy/CVStrategy";
+import { RegistryFactory as RegistryFactoryContract } from "../../generated/RegistryFactory/RegistryFactory";
+
+import { CVStrategy as CVStrategyContract } from "../../generated/templates/CVStrategy/CVStrategy";
 
 import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
 import { CTX_CHAIN_ID, CTX_FACTORY_ADDRESS } from "./registry-factory";
@@ -48,6 +49,9 @@ export function handleInitialized(event: RegistryInitialized): void {
 
     const rcc = RegistryCommunityContract.bind(event.address);
 
+    rcc.registryFactory();
+    const rfc = RegistryFactoryContract.bind(rcc.registryFactory());
+
     newRC.covenantIpfsHash = rcc.covenantIpfsHash();
     newRC.registerStakeAmount = rcc.registerStakeAmount();
     newRC.councilSafe = rcc.councilSafe().toHexString();
@@ -55,7 +59,7 @@ export function handleInitialized(event: RegistryInitialized): void {
     newRC.alloAddress = rcc.allo().toHexString();
     newRC.isKickEnabled = rcc.isKickEnabled();
     newRC.communityFee = rcc.communityFee();
-    newRC.protocolFee = BigInt.fromI32(0);
+    newRC.protocolFee = rfc.getProtocolFee(event.address);
     const token = rcc.gardenToken();
     newRC.registerToken = token.toHexString();
     newRC.registryFactory = factoryAddress;
@@ -232,10 +236,10 @@ export function handleMemberActivatedStrategy(
     return;
   }
   const cvc = CVStrategyContract.bind(strategyAddress);
-  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints()
-  strategy.totalEffectiveActivePoints = totalEffectiveActivePoints
-  const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints)
-  strategy.maxCVSupply  =maxCVSupply
+  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  strategy.totalEffectiveActivePoints = totalEffectiveActivePoints;
+  const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
+  strategy.maxCVSupply = maxCVSupply;
 
   let membersActive: string[] = [];
   if (strategy.memberActive) {
@@ -280,6 +284,12 @@ export function handleMemberDeactivatedStrategy(
   if (index > -1) {
     membersActive.splice(index, 1);
   }
+  const cvc = CVStrategyContract.bind(strategyAddress);
+  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  strategy.totalEffectiveActivePoints = totalEffectiveActivePoints;
+  const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
+  strategy.maxCVSupply = maxCVSupply;
+
   strategy.memberActive = membersActive;
   strategy.save();
 }
