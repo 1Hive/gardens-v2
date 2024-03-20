@@ -267,12 +267,12 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         uint256 extraStakedAmount = member.stakedAmount - registerStakeAmount;
         uint256 pointsToIncrease = 0;
-        if(extraStakedAmount>0){
+        if (extraStakedAmount > 0) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, extraStakedAmount);
         }
 
-        if (pointsPerMember > 0 || pointsToIncrease>0){
-        memberPowerInStrategy[_member][_strategy] = pointsPerMember + pointsToIncrease; // can be all zero
+        if (pointsPerMember > 0 || pointsToIncrease > 0) {
+            memberPowerInStrategy[_member][_strategy] = pointsPerMember + pointsToIncrease; // can be all zero
         }
         memberActivatedInStrategies[_member][_strategy] = true;
 
@@ -314,7 +314,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         uint256 pointsToIncrease;
 
-
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             //FIX support interface check
             //if (address(memberStrategies[i]) == _strategy) {
@@ -326,7 +325,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
         gardenToken.transferFrom(member, address(this), _amountStaked);
         addressToMemberInfo[member].stakedAmount += _amountStaked;
-    
     }
 
     /*
