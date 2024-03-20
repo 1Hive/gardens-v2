@@ -231,8 +231,8 @@ export function handlePowerIncreased(event: PowerIncreased): void {
   }
 
   member.totalStakedAmount = member.totalStakedAmount
-    ? member.totalStakedAmount!.plus(event.params.amount)
-    : event.params.amount;
+    ? member.totalStakedAmount!.plus(event.params.tokensStaked)
+    : event.params.tokensStaked;
 
   member.save();
 }
@@ -261,7 +261,7 @@ export function handlePowerDecreased(event: PowerDecreased): void {
   }
 
   member.totalStakedAmount = member.totalStakedAmount
-    ? member.totalStakedAmount!.minus(event.params.amount)
+    ? member.totalStakedAmount!.minus(event.params.tokensUnStaked)
     : BigInt.fromI32(0);
 
   member.save();

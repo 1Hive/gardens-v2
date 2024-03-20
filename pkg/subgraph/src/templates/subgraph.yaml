@@ -99,9 +99,9 @@ templates:
           handler: handleSupportAdded
         - event: Distributed(uint256,address,uint256)
           handler: handleDistributed
-        - event: PowerIncreased(address,uint256)
+        - event: PowerIncreased(address,uint256,uint256)
           handler: handlePowerIncreased
-        - event: PowerDecreased(address,uint256)
+        - event: PowerDecreased(address,uint256,uint256)
           handler: handlePowerDecreased
  
       file: ./src/mappings/cv-strategy.ts
