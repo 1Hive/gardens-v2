@@ -7,6 +7,9 @@ type CVStrategy @entity(immutable: false) {
   config: CVStrategyConfig
   proposals: [CVProposal!]! @derivedFrom(field: "strategy")
   memberActive: [Member!]
+  maxCVSupply: BigInt!
+  totalEffectiveActivePoints: BigInt!
+  maxCVStaked: BigInt!
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -64,8 +67,8 @@ type RegistryCommunity @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
   profileId: String
-  communityFee: BigInt
-  protocolFee: BigInt
+  communityFee: BigInt!
+  protocolFee: BigInt!
   communityName: String
   covenantIpfsHash: String
   registryFactory: RegistryFactory

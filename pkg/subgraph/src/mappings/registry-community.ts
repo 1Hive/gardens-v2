@@ -21,6 +21,10 @@ import {
   MemberKicked,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 
+import {
+  CVStrategy as CVStrategyContract,
+} from "../../generated/templates/CVStrategy/CVStrategy";
+
 import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunity/ERC20";
 import { CTX_CHAIN_ID, CTX_FACTORY_ADDRESS } from "./registry-factory";
 
@@ -51,6 +55,7 @@ export function handleInitialized(event: RegistryInitialized): void {
     newRC.alloAddress = rcc.allo().toHexString();
     newRC.isKickEnabled = rcc.isKickEnabled();
     newRC.communityFee = rcc.communityFee();
+    newRC.protocolFee = BigInt.fromI32(0);
     const token = rcc.gardenToken();
     newRC.registerToken = token.toHexString();
     newRC.registryFactory = factoryAddress;
@@ -226,6 +231,12 @@ export function handleMemberActivatedStrategy(
     log.error("Strategy not found: {}", [strategyAddress.toHexString()]);
     return;
   }
+  const cvc = CVStrategyContract.bind(strategyAddress);
+  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints()
+  strategy.totalEffectiveActivePoints = totalEffectiveActivePoints
+  const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints)
+  strategy.maxCVSupply  =maxCVSupply
+
   let membersActive: string[] = [];
   if (strategy.memberActive) {
     membersActive = strategy.memberActive!;

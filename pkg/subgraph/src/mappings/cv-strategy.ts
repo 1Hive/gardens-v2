@@ -60,6 +60,9 @@ export function handleInitialized(event: InitializedCV): void {
   );
 
   cvs.poolAmount = cvc.getPoolAmount();
+  cvs.maxCVSupply = BigInt.fromI32(0);
+  cvs.maxCVStaked = BigInt.fromI32(0);
+  cvs.totalEffectiveActivePoints = BigInt.fromI32(0)
 
   config.decay = decay;
   config.maxRatio = maxRatio;
@@ -164,9 +167,26 @@ export function handleSupportAdded(event: SupportAdded): void {
     ]);
     return;
   }
+  const cvc = CVStrategyContract.bind(event.address);
+  const totalEffectiveActivePoints = cvc.totalEffectiveActivePoints()
+  const proposalStakedAmount = cvc.getProposalStakedAmount(event.params.proposalId)
+  const maxConviction = cvc.getMaxConviction(proposalStakedAmount)
+
+  const cvs = CVStrategy.load(cvp.strategy)
+  
+  if (cvs == null) {
+    log.debug("handleDistributed cvs not found: {}", [
+      cvp.strategy,
+    ]);
+    return;
+  }
+
+  cvs.maxCVStaked = maxConviction
+
   cvp.stakedTokens = event.params.totalStakedPoints;
   cvp.convictionLast = event.params.convictionLast;
   cvp.save();
+  cvs.save()
 }
 
 export function handleDistributed(event: Distributed): void {
@@ -181,6 +201,7 @@ export function handleDistributed(event: Distributed): void {
     ]);
     return;
   }
+
   cvp.proposalStatus = BigInt.fromI32(4); // Executed
   cvp.save();
 }  
