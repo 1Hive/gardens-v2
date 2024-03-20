@@ -2,6 +2,7 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
+  Member,
   // ProposalMeta as ProposalMetadata,
 } from "../../generated/schema";
 // import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
@@ -220,10 +221,22 @@ export function handlePowerIncreased(event: PowerIncreased): void {
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
 
   cvs.save();
+
+  const member = Member.load(event.params.member.toHexString());
+  if (member == null) {
+    log.debug("handlePowerIncreased member not found: {}", [
+      event.params.member.toHexString(),
+    ]);
+    return;
+  }
+
+  member.totalStakedAmount = member.totalStakedAmount
+    ? member.totalStakedAmount!.plus(event.params.amount)
+    : event.params.amount;
+
+  member.save();
 }
 
-// Regardless both handlers do the same decided to let here both just in case
-// we need to do something different on each of them on the future
 export function handlePowerDecreased(event: PowerDecreased): void {
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
@@ -238,4 +251,18 @@ export function handlePowerDecreased(event: PowerDecreased): void {
   cvs.totalEffectiveActivePoints = totalEffectiveActivePoints;
 
   cvs.save();
+
+  const member = Member.load(event.params.member.toHexString());
+  if (member == null) {
+    log.debug("handlePowerIncreased member not found: {}", [
+      event.params.member.toHexString(),
+    ]);
+    return;
+  }
+
+  member.totalStakedAmount = member.totalStakedAmount
+    ? member.totalStakedAmount!.minus(event.params.amount)
+    : BigInt.fromI32(0);
+
+  member.save();
 }
