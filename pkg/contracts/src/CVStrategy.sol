@@ -131,6 +131,11 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
     event ProposalCreated(uint256 poolId, uint256 proposalId);
     event PoolAmountIncreased(uint256 amount);
+    event PowerIncreased(address member, uint256 tokensStaked, uint256 pointsToIncrease);
+    event PowerDecreased(address member, uint256 tokensUnStaked, uint256 pointsToDecrease);
+    event SupportAdded(
+        address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
+    );
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -144,10 +149,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     RegistryCommunity public registryCommunity;
 
     mapping(uint256 => StrategyStruct.Proposal) public proposals;
-    mapping(address => uint256) public totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
-    mapping(address => uint256[]) public voterStakedProposals; // voter
-    //Extra power per member
-    // mapping(address => uint256) public memberPowerBalance;
+    mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
+    mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
 
     uint256 public decay;
     uint256 public maxRatio;
@@ -308,7 +311,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         } else if (pointSystem == StrategyStruct.PointSystem.Quadratic) {
             pointsToIncrease = increasePowerQuadratic(_member, _amountToStake);
         }
-        totalPointsActivated = pointsToIncrease;
+        totalPointsActivated += pointsToIncrease;
+        emit PowerIncreased(_member, _amountToStake, pointsToIncrease);
         return pointsToIncrease;
     }
 
@@ -322,6 +326,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
         }
         totalPointsActivated -= pointsToDecrease;
+        emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
         return pointsToDecrease;
     }
 
@@ -767,6 +772,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 proposal.blockLast = block.number;
             } else {
                 _calculateAndSetConviction(proposal, previousStakedAmount);
+                emit SupportAdded(_sender, proposalId, stakedAmount, proposal.stakedAmount, proposal.convictionLast);
             }
         }
     }

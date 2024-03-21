@@ -57,6 +57,8 @@ templates:
           file: ../contracts/out/ERC20.sol/ERC20.json
         - name: CVStrategy
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: RegistryFactory
+          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
      
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
@@ -120,6 +122,14 @@ templates:
           handler: handleProposalCreated
         - event: PoolAmountIncreased(uint256)
           handler: handlePoolAmountIncreased
-
+        - event: SupportAdded(address,uint256,uint256,uint256,uint256)
+          handler: handleSupportAdded
+        - event: Distributed(uint256,address,uint256)
+          handler: handleDistributed
+        - event: PowerIncreased(address,uint256,uint256)
+          handler: handlePowerIncreased
+        - event: PowerDecreased(address,uint256,uint256)
+          handler: handlePowerDecreased
+ 
       file: ./src/mappings/cv-strategy.ts
   
