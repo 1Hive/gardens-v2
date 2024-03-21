@@ -350,6 +350,7 @@ export type CVStrategyConfig = {
   maxRatio: Scalars['BigInt'];
   weight: Scalars['BigInt'];
   proposalType: Scalars['BigInt'];
+  pointSystem: Scalars['BigInt'];
   pointsPerMember?: Maybe<Scalars['BigInt']>;
   pointsPerTokenStaked?: Maybe<Scalars['BigInt']>;
   tokensPerPoint?: Maybe<Scalars['BigInt']>;
@@ -406,6 +407,14 @@ export type CVStrategyConfig_filter = {
   proposalType_lte?: InputMaybe<Scalars['BigInt']>;
   proposalType_in?: InputMaybe<Array<Scalars['BigInt']>>;
   proposalType_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointSystem?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_not?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_gt?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_lt?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_gte?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_lte?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointSystem_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   pointsPerMember?: InputMaybe<Scalars['BigInt']>;
   pointsPerMember_not?: InputMaybe<Scalars['BigInt']>;
   pointsPerMember_gt?: InputMaybe<Scalars['BigInt']>;
@@ -456,6 +465,7 @@ export type CVStrategyConfig_orderBy =
   | 'maxRatio'
   | 'weight'
   | 'proposalType'
+  | 'pointSystem'
   | 'pointsPerMember'
   | 'pointsPerTokenStaked'
   | 'tokensPerPoint'
@@ -587,6 +597,7 @@ export type CVStrategy_orderBy =
   | 'config__maxRatio'
   | 'config__weight'
   | 'config__proposalType'
+  | 'config__pointSystem'
   | 'config__pointsPerMember'
   | 'config__pointsPerTokenStaked'
   | 'config__tokensPerPoint'

@@ -20,7 +20,6 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50 ether;
-    uint256 public constant PRECISION_SCALE = 10 ** 4;
 
     TERC20 public token;
 
@@ -45,7 +44,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         IRegistry registry = allo.getRegistry();
 
         RegistryFactory registryFactory = new RegistryFactory();
-        
 
         console2.log("Registry Factory Addr: %s", address(registryFactory));
 
@@ -54,13 +52,12 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
-        params._communityFee = 3 * PRECISION_SCALE;
+        params._communityFee = 0;
         params._metadata = metadata; // convenant ipfs
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "Allo";
 
         RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params)); //@todo rename To RegistryCOmmunity
-        registryFactory.setProtocolFee(address(registryCommunity), 1 * PRECISION_SCALE);
 
         token.mint(address(pool_admin()), 10_000 ether);
 
@@ -89,15 +86,25 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             StrategyStruct.PointSystem.Unlimited
         );
 
-        uint256 poolIdSignaling = createPool(
+        uint256 poolIdQuadratic = createPool(
             Allo(address(allo)),
             address(strategy2),
             address(registryCommunity),
             registry,
-            address(0),
-            StrategyStruct.ProposalType.Signaling,
-            StrategyStruct.PointSystem.Unlimited
+            address(token),
+            StrategyStruct.ProposalType.Funding,
+            StrategyStruct.PointSystem.Quadratic
         );
+
+        // uint256 poolIdSignaling = createPool(
+        //     Allo(address(allo)),
+        //     address(strategy2),
+        //     address(registryCommunity),
+        //     registry,
+        //     address(0),
+        //     StrategyStruct.ProposalType.Signaling,
+        //     StrategyStruct.PointSystem.Unlimited
+        // );
 
         strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
         strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
@@ -109,24 +116,19 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
         vm.stopBroadcast();
 
-        address[] memory membersStaked = new address[](7);
+        address[] memory membersStaked = new address[](4);
         membersStaked[0] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
         membersStaked[1] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
         membersStaked[2] = address(0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC);
         membersStaked[3] = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
-        membersStaked[4] = address(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
-        membersStaked[5] = address(0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc);
-        membersStaked[6] = address(0x976EA74026E726554dB657fA54763abd0C3a0aa9);
 
         for (uint256 i = 0; i < membersStaked.length; i++) {
             vm.startBroadcast(address(membersStaked[i]));
             token.mint(address(membersStaked[i]), MINIMUM_STAKE * 2);
-            token.approve(address(registryCommunity), registryCommunity.getStakeAmountWithFees());
-            if(i < 4){
-                registryCommunity.stakeAndRegisterMember();
-                strategy1.activatePoints();
-                strategy2.activatePoints();
-            }
+            token.approve(address(registryCommunity), MINIMUM_STAKE);
+            registryCommunity.stakeAndRegisterMember();
+            strategy1.activatePoints();
+            strategy2.activatePoints();
 
             vm.stopBroadcast();
         }
@@ -151,15 +153,15 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
         StrategyStruct.CreateProposal memory proposal2 =
-            StrategyStruct.CreateProposal(poolIdSignaling, membersStaked[0], 0, address(0), metadata);
+            StrategyStruct.CreateProposal(poolIdQuadratic, membersStaked[0], 0, address(token), metadata);
         bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
+        allo.registerRecipient(poolIdQuadratic, data2);
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);
         console2.log("Strategy1 Addr: %s", address(strategy1));
 
-        console2.log("poolIdSignaling: %s", poolIdSignaling);
+        console2.log("poolIdQuadratic: %s", poolIdQuadratic);
         console2.log("Strategy2 Addr: %s", address(strategy2));
 
         console2.log("Allo Addr: %s", address(allo));
