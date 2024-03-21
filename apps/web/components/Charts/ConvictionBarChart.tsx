@@ -25,14 +25,12 @@ export const ConvictionBarChart = ({
   //   data;
 
   console.log("currentConviction", currentConviction);
-  console.log("threshold", threshold);
+  console.log("threshold", Number(threshold));
   console.log("proposalSupport", proposalSupport);
   console.log("maxConviction", maxConviction);
 
   const futureConviction = (maxConviction as number) - currentConviction;
   console.log("futureConviction", futureConviction);
-
-  const pointsNeeded = 225;
 
   const OPTION_TEST: EChartsOption = {
     tooltip: {
@@ -78,33 +76,33 @@ export const ConvictionBarChart = ({
         emphasis: {
           focus: "series",
         },
-        data: [20],
+        data: [currentConviction],
       },
-      {
-        name: "Future Convcition",
-        type: "bar",
-        stack: "total",
-        itemStyle: {
-          borderRadius: [0, 20, 20, 0],
-        },
-        color: "#0496DE",
-        showBackground: true,
-        backgroundStyle: {
-          color: "rgb(93, 143, 216, 0.1)",
-          // borderRadius: [20, 20, 0, 0],
-        },
-        //   itemStyle:{
-        //   borderRadius: 20
-        // },
+      // {
+      //   name: "Future Convcition",
+      //   type: "bar",
+      //   stack: "total",
+      //   itemStyle: {
+      //     borderRadius: [0, 20, 20, 0],
+      //   },
+      //   color: "#0496DE",
+      //   showBackground: true,
+      //   backgroundStyle: {
+      //     color: "rgb(93, 143, 216, 0.1)",
+      //     // borderRadius: [20, 20, 0, 0],
+      //   },
+      //   //   itemStyle:{
+      //   //   borderRadius: 20
+      //   // },
 
-        label: {
-          show: false,
-        },
-        emphasis: {
-          focus: "series",
-        },
-        data: [futureConviction],
-      },
+      //   label: {
+      //     show: false,
+      //   },
+      //   emphasis: {
+      //     focus: "series",
+      //   },
+      //   data: [futureConviction],
+      // },
       {
         name: "Support",
         type: "bar",
@@ -151,7 +149,7 @@ export const ConvictionBarChart = ({
         emphasis: {
           focus: "series",
         },
-        data: [175],
+        data: [Number(threshold)],
         markLine: {
           data: [{ type: "max", name: "threshold" }],
           lineStyle: {

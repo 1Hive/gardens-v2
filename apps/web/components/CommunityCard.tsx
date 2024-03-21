@@ -8,13 +8,15 @@ import {
 } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
 import { CommunityProfile } from "@/components";
-import { Address, useAccount } from "wagmi";
+import { Address, useAccount, useContractWrite } from "wagmi";
 import {
   TokenGarden,
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import * as dn from "dnum";
 import { formatTokenAmount } from "@/utils/numbers";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { registryCommunityABI } from "@/src/generated";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -51,6 +53,17 @@ export function CommunityCard({
   //     setIsMember(false);
   //   }
   // }, []);
+  const {
+    data: increaseStakeData,
+    write: writeIncreasePower,
+    error: errorIncreaseStake,
+    status: increaseStakeStatus,
+  } = useContractWrite({
+    address: communityAddress as Address,
+    abi: abiWithErrors(registryCommunityABI),
+    functionName: "increasePower",
+    args: [10000000000000000000n],
+  });
 
   const pools = strategies ?? [];
   members = members ?? [];
@@ -121,6 +134,12 @@ export function CommunityCard({
               {pools.map((pool, i) => (
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
+              <Button
+                onClick={() => writeIncreasePower?.()}
+                className="max-h-[50px] w-full"
+              >
+                Stake 50 more tokens
+              </Button>
               {/* {pools.length > 2 && (
                 <Button
                   className="!rounded-full bg-white !p-3"
