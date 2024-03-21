@@ -109,7 +109,7 @@ export function ActivatePoints({
 
   return (
     <>
-      <div className="z-50 flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <Button onClick={handleChange} className="w-fit bg-primary">
           {connectedAccount
             ? isMemberActivated

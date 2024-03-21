@@ -78,55 +78,55 @@ export const ConvictionBarChart = ({
         },
         data: [currentConviction],
       },
-      // {
-      //   name: "Future Convcition",
-      //   type: "bar",
-      //   stack: "total",
-      //   itemStyle: {
-      //     borderRadius: [0, 20, 20, 0],
-      //   },
-      //   color: "#0496DE",
-      //   showBackground: true,
-      //   backgroundStyle: {
-      //     color: "rgb(93, 143, 216, 0.1)",
-      //     // borderRadius: [20, 20, 0, 0],
-      //   },
-      //   //   itemStyle:{
-      //   //   borderRadius: 20
-      //   // },
-
-      //   label: {
-      //     show: false,
-      //   },
-      //   emphasis: {
-      //     focus: "series",
-      //   },
-      //   data: [futureConviction],
-      // },
       {
-        name: "Support",
+        name: "Total Support",
         type: "bar",
-        stack: "points",
-        color: "#05FA81",
+        stack: "total",
         itemStyle: {
           borderRadius: [0, 20, 20, 0],
         },
-        // markLine: {
-        //   data: [{ type: 'max', name: 'max' }]
+        color: "#94D7F2",
+        showBackground: true,
+        backgroundStyle: {
+          color: "rgb(93, 143, 216, 0.1)",
+          // borderRadius: [20, 20, 0, 0],
+        },
+        //   itemStyle:{
+        //   borderRadius: 20
         // },
+
         label: {
           show: false,
-          formatter: "{a}: {@score} pts",
-          fontSize: 10,
-          // fontWeight: "",
-          color: "black",
         },
         emphasis: {
           focus: "series",
         },
-
         data: [proposalSupport],
       },
+      // {
+      //   name: "Support",
+      //   type: "bar",
+      //   stack: "points",
+      //   color: "#05FA81",
+      //   itemStyle: {
+      //     borderRadius: [0, 20, 20, 0],
+      //   },
+      //   // markLine: {
+      //   //   data: [{ type: 'max', name: 'max' }]
+      //   // },
+      //   label: {
+      //     show: false,
+      //     formatter: "{a}: {@score} pts",
+      //     fontSize: 10,
+      //     // fontWeight: "",
+      //     color: "black",
+      //   },
+      //   emphasis: {
+      //     focus: "series",
+      //   },
+
+      //   data: [0],
+      // },
       {
         name: "Points Needed",
         type: "bar",
@@ -139,7 +139,7 @@ export const ConvictionBarChart = ({
         },
 
         label: {
-          show: true,
+          show: false,
           formatter: "{a}: {@score}",
           fontSize: 12,
           // fontWeight: "",
