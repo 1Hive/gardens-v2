@@ -1,1 +1,1375 @@
-{"abi":[{"type":"function","name":"IS_TEST","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"type":"function","name":"excludeArtifacts","inputs":[],"outputs":[{"name":"excludedArtifacts_","type":"string[]","internalType":"string[]"}],"stateMutability":"view"},{"type":"function","name":"excludeContracts","inputs":[],"outputs":[{"name":"excludedContracts_","type":"address[]","internalType":"address[]"}],"stateMutability":"view"},{"type":"function","name":"excludeSenders","inputs":[],"outputs":[{"name":"excludedSenders_","type":"address[]","internalType":"address[]"}],"stateMutability":"view"},{"type":"function","name":"failed","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"},{"type":"function","name":"setEnableGasLog","inputs":[{"name":"enable","type":"bool","internalType":"bool"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"targetArtifactSelectors","inputs":[],"outputs":[{"name":"targetedArtifactSelectors_","type":"tuple[]","internalType":"struct StdInvariant.FuzzSelector[]","components":[{"name":"addr","type":"address","internalType":"address"},{"name":"selectors","type":"bytes4[]","internalType":"bytes4[]"}]}],"stateMutability":"view"},{"type":"function","name":"targetArtifacts","inputs":[],"outputs":[{"name":"targetedArtifacts_","type":"string[]","internalType":"string[]"}],"stateMutability":"view"},{"type":"function","name":"targetContracts","inputs":[],"outputs":[{"name":"targetedContracts_","type":"address[]","internalType":"address[]"}],"stateMutability":"view"},{"type":"function","name":"targetInterfaces","inputs":[],"outputs":[{"name":"targetedInterfaces_","type":"tuple[]","internalType":"struct StdInvariant.FuzzInterface[]","components":[{"name":"addr","type":"address","internalType":"address"},{"name":"artifacts","type":"string[]","internalType":"string[]"}]}],"stateMutability":"view"},{"type":"function","name":"targetSelectors","inputs":[],"outputs":[{"name":"targetedSelectors_","type":"tuple[]","internalType":"struct StdInvariant.FuzzSelector[]","components":[{"name":"addr","type":"address","internalType":"address"},{"name":"selectors","type":"bytes4[]","internalType":"bytes4[]"}]}],"stateMutability":"view"},{"type":"function","name":"targetSenders","inputs":[],"outputs":[{"name":"targetedSenders_","type":"address[]","internalType":"address[]"}],"stateMutability":"view"},{"type":"event","name":"log","inputs":[{"name":"","type":"string","indexed":false,"internalType":"string"}],"anonymous":false},{"type":"event","name":"log_address","inputs":[{"name":"","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"log_array","inputs":[{"name":"val","type":"uint256[]","indexed":false,"internalType":"uint256[]"}],"anonymous":false},{"type":"event","name":"log_array","inputs":[{"name":"val","type":"int256[]","indexed":false,"internalType":"int256[]"}],"anonymous":false},{"type":"event","name":"log_array","inputs":[{"name":"val","type":"address[]","indexed":false,"internalType":"address[]"}],"anonymous":false},{"type":"event","name":"log_bytes","inputs":[{"name":"","type":"bytes","indexed":false,"internalType":"bytes"}],"anonymous":false},{"type":"event","name":"log_bytes32","inputs":[{"name":"","type":"bytes32","indexed":false,"internalType":"bytes32"}],"anonymous":false},{"type":"event","name":"log_int","inputs":[{"name":"","type":"int256","indexed":false,"internalType":"int256"}],"anonymous":false},{"type":"event","name":"log_named_address","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"log_named_array","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"uint256[]","indexed":false,"internalType":"uint256[]"}],"anonymous":false},{"type":"event","name":"log_named_array","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"int256[]","indexed":false,"internalType":"int256[]"}],"anonymous":false},{"type":"event","name":"log_named_array","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"address[]","indexed":false,"internalType":"address[]"}],"anonymous":false},{"type":"event","name":"log_named_bytes","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"bytes","indexed":false,"internalType":"bytes"}],"anonymous":false},{"type":"event","name":"log_named_bytes32","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"bytes32","indexed":false,"internalType":"bytes32"}],"anonymous":false},{"type":"event","name":"log_named_decimal_int","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"int256","indexed":false,"internalType":"int256"},{"name":"decimals","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"log_named_decimal_uint","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"uint256","indexed":false,"internalType":"uint256"},{"name":"decimals","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"log_named_int","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"int256","indexed":false,"internalType":"int256"}],"anonymous":false},{"type":"event","name":"log_named_string","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"string","indexed":false,"internalType":"string"}],"anonymous":false},{"type":"event","name":"log_named_uint","inputs":[{"name":"key","type":"string","indexed":false,"internalType":"string"},{"name":"val","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"log_string","inputs":[{"name":"","type":"string","indexed":false,"internalType":"string"}],"anonymous":false},{"type":"event","name":"log_uint","inputs":[{"name":"","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"logs","inputs":[{"name":"","type":"bytes","indexed":false,"internalType":"bytes"}],"anonymous":false}],"bytecode":{"object":"0x608060405260078054600160ff199182168117909255600b8054821683179055601d91909155601e8054909116905534801561003a57600080fd5b50610d078061004a6000396000f3fe608060405234801561001057600080fd5b50600436106100d45760003560e01c806385226c8111610081578063ba414fa61161005b578063ba414fa614610179578063e20c9f7114610191578063fa7626d41461019957600080fd5b806385226c8114610154578063916a17c614610169578063b5508aa91461017157600080fd5b80633e5e3c23116100b25780633e5e3c231461012f5780633f7286f41461013757806366d9a9a01461013f57600080fd5b80631ed7831c146100d95780632ade3880146100f75780632d0e67311461010c575b600080fd5b6100e16101a6565b6040516100ee9190610944565b60405180910390f35b6100ff610208565b6040516100ee91906109b5565b61012d61011a366004610aa1565b601e805460ff1916911515919091179055565b005b6100e161034a565b6100e16103aa565b61014761040a565b6040516100ee9190610ac5565b61015c610505565b6040516100ee9190610b90565b6101476105d5565b61015c6106d0565b6101816107a0565b60405190151581526020016100ee565b6100e16108e4565b6007546101819060ff1681565b606060148054806020026020016040519081016040528092919081815260200182805480156101fe57602002820191906000526020600020905b81546001600160a01b031681526001909101906020018083116101e0575b5050505050905090565b6060601b805480602002602001604051908101604052809291908181526020016000905b8282101561034157600084815260208082206040805180820182526002870290920180546001600160a01b03168352600181018054835181870281018701909452808452939591948681019491929084015b8282101561032a57838290600052602060002001805461029d90610bfd565b80601f01602080910402602001604051908101604052809291908181526020018280546102c990610bfd565b80156103165780601f106102eb57610100808354040283529160200191610316565b820191906000526020600020905b8154815290600101906020018083116102f957829003601f168201915b50505050508152602001906001019061027e565b50505050815250508152602001906001019061022c565b50505050905090565b606060168054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b606060158054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b60606019805480602002602001604051908101604052809291908181526020016000905b828210156103415760008481526020908190206040805180820182526002860290920180546001600160a01b031683526001810180548351818702810187019094528084529394919385830193928301828280156104ed57602002820191906000526020600020906000905b82829054906101000a900460e01b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19168152602001906004019060208260030104928301926001038202915080841161049a5790505b5050505050815250508152602001906001019061042e565b60606018805480602002602001604051908101604052809291908181526020016000905b8282101561034157838290600052602060002001805461054890610bfd565b80601f016020809104026020016040519081016040528092919081815260200182805461057490610bfd565b80156105c15780601f10610596576101008083540402835291602001916105c1565b820191906000526020600020905b8154815290600101906020018083116105a457829003601f168201915b505050505081526020019060010190610529565b6060601a805480602002602001604051908101604052809291908181526020016000905b828210156103415760008481526020908190206040805180820182526002860290920180546001600160a01b031683526001810180548351818702810187019094528084529394919385830193928301828280156106b857602002820191906000526020600020906000905b82829054906101000a900460e01b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff1916815260200190600401906020826003010492830192600103820291508084116106655790505b505050505081525050815260200190600101906105f9565b60606017805480602002602001604051908101604052809291908181526020016000905b8282101561034157838290600052602060002001805461071390610bfd565b80601f016020809104026020016040519081016040528092919081815260200182805461073f90610bfd565b801561078c5780601f106107615761010080835404028352916020019161078c565b820191906000526020600020905b81548152906001019060200180831161076f57829003601f168201915b5050505050815260200190600101906106f4565b600754600090610100900460ff16156107c25750600754610100900460ff1690565b6000737109709ecfa91a80626ff3989d68f67f5b1dd12d3b156108df5760408051737109709ecfa91a80626ff3989d68f67f5b1dd12d602082018190527f6661696c6564000000000000000000000000000000000000000000000000000082840152825180830384018152606083019093526000929091610867917f667f9d70ca411d70ead50d8d5c22070dafc36ad75f3dcf5e7237b22ade9aecc491608001610c50565b60408051601f198184030181529082905261088191610c98565b6000604051808303816000865af19150503d80600081146108be576040519150601f19603f3d011682016040523d82523d6000602084013e6108c3565b606091505b50915050808060200190518101906108db9190610cb4565b9150505b919050565b606060138054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b6020808252825182820181905260009190848201906040850190845b818110156109855783516001600160a01b031683529284019291840191600101610960565b50909695505050505050565b60005b838110156109ac578181015183820152602001610994565b50506000910152565b6000602080830181845280855180835260408601915060408160051b870101925083870160005b82811015610a8357603f19888603018452815180516001600160a01b0316865286015160408787018190528151908701819052908701906060600582901b88018101919088019060005b81811015610a6c57898403605f1901835284518051808652610a4d818e88018f8501610991565b958c0195601f01601f1916949094018b019350918a0191600101610a26565b5091975050509386019350908501906001016109dc565b5092979650505050505050565b8015158114610a9e57600080fd5b50565b600060208284031215610ab357600080fd5b8135610abe81610a90565b9392505050565b60006020808301818452808551808352604092508286019150828160051b8701018488016000805b84811015610b8157898403603f19018652825180516001600160a01b03168552880151888501889052805188860181905290890190839060608701905b80831015610b6c5783517fffffffff00000000000000000000000000000000000000000000000000000000168252928b019260019290920191908b0190610b2a565b50978a01979550505091870191600101610aed565b50919998505050505050505050565b6000602080830181845280855180835260408601915060408160051b870101925083870160005b82811015610a8357878503603f1901845281518051808752610bde818989018a8501610991565b601f01601f191695909501860194509285019290850190600101610bb7565b600181811c90821680610c1157607f821691505b602082108103610c4a577f4e487b7100000000000000000000000000000000000000000000000000000000600052602260045260246000fd5b50919050565b7fffffffff000000000000000000000000000000000000000000000000000000008316815260008251610c8a816004850160208701610991565b919091016004019392505050565b60008251610caa818460208701610991565b9190910192915050565b600060208284031215610cc657600080fd5b8151610abe81610a9056fea264697066735822122093b6af91f6a76c8b10ac90fa31864f4f0f28f1d77a35a5ced03cd1f013b7e3cb64736f6c63430008130033","sourceMap":"87:866:101:-:0;;;1572:26:45;;;1594:4;-1:-1:-1;;1572:26:45;;;;;;;;3126:44:49;;;;;;;;;158:37:101;;;;;226:34;;;;;;;;87:866;;;;;;;;;;;;;;;;","linkReferences":{}},"deployedBytecode":{"object":"0x608060405234801561001057600080fd5b50600436106100d45760003560e01c806385226c8111610081578063ba414fa61161005b578063ba414fa614610179578063e20c9f7114610191578063fa7626d41461019957600080fd5b806385226c8114610154578063916a17c614610169578063b5508aa91461017157600080fd5b80633e5e3c23116100b25780633e5e3c231461012f5780633f7286f41461013757806366d9a9a01461013f57600080fd5b80631ed7831c146100d95780632ade3880146100f75780632d0e67311461010c575b600080fd5b6100e16101a6565b6040516100ee9190610944565b60405180910390f35b6100ff610208565b6040516100ee91906109b5565b61012d61011a366004610aa1565b601e805460ff1916911515919091179055565b005b6100e161034a565b6100e16103aa565b61014761040a565b6040516100ee9190610ac5565b61015c610505565b6040516100ee9190610b90565b6101476105d5565b61015c6106d0565b6101816107a0565b60405190151581526020016100ee565b6100e16108e4565b6007546101819060ff1681565b606060148054806020026020016040519081016040528092919081815260200182805480156101fe57602002820191906000526020600020905b81546001600160a01b031681526001909101906020018083116101e0575b5050505050905090565b6060601b805480602002602001604051908101604052809291908181526020016000905b8282101561034157600084815260208082206040805180820182526002870290920180546001600160a01b03168352600181018054835181870281018701909452808452939591948681019491929084015b8282101561032a57838290600052602060002001805461029d90610bfd565b80601f01602080910402602001604051908101604052809291908181526020018280546102c990610bfd565b80156103165780601f106102eb57610100808354040283529160200191610316565b820191906000526020600020905b8154815290600101906020018083116102f957829003601f168201915b50505050508152602001906001019061027e565b50505050815250508152602001906001019061022c565b50505050905090565b606060168054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b606060158054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b60606019805480602002602001604051908101604052809291908181526020016000905b828210156103415760008481526020908190206040805180820182526002860290920180546001600160a01b031683526001810180548351818702810187019094528084529394919385830193928301828280156104ed57602002820191906000526020600020906000905b82829054906101000a900460e01b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19168152602001906004019060208260030104928301926001038202915080841161049a5790505b5050505050815250508152602001906001019061042e565b60606018805480602002602001604051908101604052809291908181526020016000905b8282101561034157838290600052602060002001805461054890610bfd565b80601f016020809104026020016040519081016040528092919081815260200182805461057490610bfd565b80156105c15780601f10610596576101008083540402835291602001916105c1565b820191906000526020600020905b8154815290600101906020018083116105a457829003601f168201915b505050505081526020019060010190610529565b6060601a805480602002602001604051908101604052809291908181526020016000905b828210156103415760008481526020908190206040805180820182526002860290920180546001600160a01b031683526001810180548351818702810187019094528084529394919385830193928301828280156106b857602002820191906000526020600020906000905b82829054906101000a900460e01b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff1916815260200190600401906020826003010492830192600103820291508084116106655790505b505050505081525050815260200190600101906105f9565b60606017805480602002602001604051908101604052809291908181526020016000905b8282101561034157838290600052602060002001805461071390610bfd565b80601f016020809104026020016040519081016040528092919081815260200182805461073f90610bfd565b801561078c5780601f106107615761010080835404028352916020019161078c565b820191906000526020600020905b81548152906001019060200180831161076f57829003601f168201915b5050505050815260200190600101906106f4565b600754600090610100900460ff16156107c25750600754610100900460ff1690565b6000737109709ecfa91a80626ff3989d68f67f5b1dd12d3b156108df5760408051737109709ecfa91a80626ff3989d68f67f5b1dd12d602082018190527f6661696c6564000000000000000000000000000000000000000000000000000082840152825180830384018152606083019093526000929091610867917f667f9d70ca411d70ead50d8d5c22070dafc36ad75f3dcf5e7237b22ade9aecc491608001610c50565b60408051601f198184030181529082905261088191610c98565b6000604051808303816000865af19150503d80600081146108be576040519150601f19603f3d011682016040523d82523d6000602084013e6108c3565b606091505b50915050808060200190518101906108db9190610cb4565b9150505b919050565b606060138054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b6020808252825182820181905260009190848201906040850190845b818110156109855783516001600160a01b031683529284019291840191600101610960565b50909695505050505050565b60005b838110156109ac578181015183820152602001610994565b50506000910152565b6000602080830181845280855180835260408601915060408160051b870101925083870160005b82811015610a8357603f19888603018452815180516001600160a01b0316865286015160408787018190528151908701819052908701906060600582901b88018101919088019060005b81811015610a6c57898403605f1901835284518051808652610a4d818e88018f8501610991565b958c0195601f01601f1916949094018b019350918a0191600101610a26565b5091975050509386019350908501906001016109dc565b5092979650505050505050565b8015158114610a9e57600080fd5b50565b600060208284031215610ab357600080fd5b8135610abe81610a90565b9392505050565b60006020808301818452808551808352604092508286019150828160051b8701018488016000805b84811015610b8157898403603f19018652825180516001600160a01b03168552880151888501889052805188860181905290890190839060608701905b80831015610b6c5783517fffffffff00000000000000000000000000000000000000000000000000000000168252928b019260019290920191908b0190610b2a565b50978a01979550505091870191600101610aed565b50919998505050505050505050565b6000602080830181845280855180835260408601915060408160051b870101925083870160005b82811015610a8357878503603f1901845281518051808752610bde818989018a8501610991565b601f01601f191695909501860194509285019290850190600101610bb7565b600181811c90821680610c1157607f821691505b602082108103610c4a577f4e487b7100000000000000000000000000000000000000000000000000000000600052602260045260246000fd5b50919050565b7fffffffff000000000000000000000000000000000000000000000000000000008316815260008251610c8a816004850160208701610991565b919091016004019392505050565b60008251610caa818460208701610991565b9190910192915050565b600060208284031215610cc657600080fd5b8151610abe81610a9056fea264697066735822122093b6af91f6a76c8b10ac90fa31864f4f0f28f1d77a35a5ced03cd1f013b7e3cb64736f6c63430008130033","sourceMap":"87:866:101:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2452:134:52;;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;;3360:151;;;:::i;:::-;;;;;;;:::i;267:84:101:-;;;;;;:::i;:::-;322:13;:22;;-1:-1:-1;;322:22:101;;;;;;;;;;267:84;;;3221:133:52;;;:::i;2922:141::-;;;:::i;2738:178::-;;;:::i;:::-;;;;;;;:::i;2592:140::-;;;:::i;:::-;;;;;;;:::i;3069:146::-;;;:::i;2157:141::-;;;:::i;1819:584:45:-;;;:::i;:::-;;;6080:14:104;;6073:22;6055:41;;6043:2;6028:18;1819:584:45;5915:187:104;2304:142:52;;;:::i;1572:26:45:-;;;;;;;;;2452:134:52;2499:33;2563:16;2544:35;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;2544:35:52;;;;;;;;;;;;;;;;;;;;;;;2452:134;:::o;3360:151::-;3409:42;3485:19;3463:41;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;3463:41:52;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;3360:151;:::o;3221:133::-;3267:33;3331:16;3312:35;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;3312:35:52;;;;;;;;;;;;;;;;;;;;;;3221:133;:::o;2922:141::-;2970:35;3038:18;3017:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;3017:39:52;;;;;;;;;;;;;;;;;;;;;;2922:141;:::o;2738:178::-;2794:48;2883:26;2854:55;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;2854:55:52;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2592:140;2640:34;2707:18;2686:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;3069:146;3117:40;3190:18;3169:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;3169:39:52;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2157:141;2206:34;2273:18;2252:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1819:584:45;1873:7;;1853:4;;1873:7;;;;;1869:528;;;-1:-1:-1;1903:7:45;;;;;;;;1819:584::o;1869:528::-;1941:17;2997:42;2985:55;3066:16;1980:374;;2196:43;;;1671:64;2196:43;;;6723:74:104;;;2221:17:45;6813:18:104;;;6806:34;2196:43:45;;;;;;;;;6696:18:104;;;2196:43:45;;;-1:-1:-1;;1671:64:45;;2086:175;;2135:34;;2086:175;;;:::i;:::-;;;;-1:-1:-1;;2086:175:45;;;;;;;;;;2047:232;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2020:259;;;2323:7;2312:27;;;;;;;;;;;;:::i;:::-;2297:42;;2002:352;1980:374;2374:12;1819:584;-1:-1:-1;1819:584:45:o;2304:142:52:-;2353:35;2421:18;2400:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;2400:39:52;;;;;;;;;;;;;;;;;;;;;;2304:142;:::o;14:681:104:-;185:2;237:21;;;307:13;;210:18;;;329:22;;;156:4;;185:2;408:15;;;;382:2;367:18;;;156:4;451:218;465:6;462:1;459:13;451:218;;;530:13;;-1:-1:-1;;;;;526:62:104;514:75;;644:15;;;;609:12;;;;487:1;480:9;451:218;;;-1:-1:-1;686:3:104;;14:681;-1:-1:-1;;;;;;14:681:104:o;700:250::-;785:1;795:113;809:6;806:1;803:13;795:113;;;885:11;;;879:18;866:11;;;859:39;831:2;824:10;795:113;;;-1:-1:-1;;942:1:104;924:16;;917:27;700:250::o;955:1924::-;1161:4;1190:2;1230;1219:9;1215:18;1260:2;1249:9;1242:21;1283:6;1318;1312:13;1349:6;1341;1334:22;1387:2;1376:9;1372:18;1365:25;;1449:2;1439:6;1436:1;1432:14;1421:9;1417:30;1413:39;1399:53;;1487:2;1479:6;1475:15;1508:1;1518:1332;1532:6;1529:1;1526:13;1518:1332;;;-1:-1:-1;;1597:22:104;;;1593:36;1581:49;;1653:13;;1740:9;;-1:-1:-1;;;;;1736:58:104;1721:74;;1834:11;;1828:18;1705:2;1866:15;;;1859:27;;;1947:19;;1693:15;;;1979:24;;;2159:21;;;;2026:2;2112:1;2108:16;;;2096:29;;2092:38;;;2050:15;;;;2204:1;2218:523;2234:8;2229:3;2226:17;2218:523;;;2315:19;;;-1:-1:-1;;2311:33:104;2297:48;;2372:15;;2420:9;;2446:24;;;2487:74;2420:9;2535:15;;;2522:11;;;2487:74;:::i;:::-;2670:17;;;;2631:2;2608:17;-1:-1:-1;;2604:31:104;2592:44;;;;2588:53;;;-1:-1:-1;2713:14:104;;;;2262:1;2253:11;2218:523;;;-1:-1:-1;2764:6:104;;-1:-1:-1;;;2828:12:104;;;;-1:-1:-1;2793:15:104;;;;1554:1;1547:9;1518:1332;;;-1:-1:-1;2867:6:104;;955:1924;-1:-1:-1;;;;;;;955:1924:104:o;2884:118::-;2970:5;2963:13;2956:21;2949:5;2946:32;2936:60;;2992:1;2989;2982:12;2936:60;2884:118;:::o;3007:241::-;3063:6;3116:2;3104:9;3095:7;3091:23;3087:32;3084:52;;;3132:1;3129;3122:12;3084:52;3171:9;3158:23;3190:28;3212:5;3190:28;:::i;:::-;3237:5;3007:241;-1:-1:-1;;;3007:241:104:o;3253:1638::-;3457:4;3486:2;3526;3515:9;3511:18;3556:2;3545:9;3538:21;3579:6;3614;3608:13;3645:6;3637;3630:22;3671:2;3661:12;;3704:2;3693:9;3689:18;3682:25;;3766:2;3756:6;3753:1;3749:14;3738:9;3734:30;3730:39;3804:2;3796:6;3792:15;3825:1;3846;3856:1006;3872:6;3867:3;3864:15;3856:1006;;;3941:22;;;-1:-1:-1;;3937:36:104;3925:49;;3997:13;;4084:9;;-1:-1:-1;;;;;4080:58:104;4065:74;;4178:11;;4172:18;4210:15;;;4203:27;;;4291:19;;4037:15;;;4323:24;;;4413:21;;;;4458:1;;4381:2;4369:15;;;4472:282;4488:8;4483:3;4480:17;4472:282;;;4569:15;;4586:66;4565:88;4551:103;;4723:17;;;;4516:1;4507:11;;;;;4680:14;;;;4472:282;;;-1:-1:-1;4840:12:104;;;;4777:5;-1:-1:-1;;;4805:15:104;;;;3898:1;3889:11;3856:1006;;;-1:-1:-1;4879:6:104;;3253:1638;-1:-1:-1;;;;;;;;;3253:1638:104:o;4896:1014::-;5058:4;5087:2;5127;5116:9;5112:18;5157:2;5146:9;5139:21;5180:6;5215;5209:13;5246:6;5238;5231:22;5284:2;5273:9;5269:18;5262:25;;5346:2;5336:6;5333:1;5329:14;5318:9;5314:30;5310:39;5296:53;;5384:2;5376:6;5372:15;5405:1;5415:466;5429:6;5426:1;5423:13;5415:466;;;5494:22;;;-1:-1:-1;;5490:36:104;5478:49;;5550:13;;5592:9;;5614:24;;;5651:74;5592:9;5699:15;;;5686:11;;;5651:74;:::i;:::-;5791:2;5768:17;-1:-1:-1;;5764:31:104;5752:44;;;;5748:53;;;-1:-1:-1;5859:12:104;;;;5824:15;;;;5451:1;5444:9;5415:466;;6107:437;6186:1;6182:12;;;;6229;;;6250:61;;6304:4;6296:6;6292:17;6282:27;;6250:61;6357:2;6349:6;6346:14;6326:18;6323:38;6320:218;;6394:77;6391:1;6384:88;6495:4;6492:1;6485:15;6523:4;6520:1;6513:15;6320:218;;6107:437;;;:::o;6851:430::-;7048:66;7040:6;7036:79;7031:3;7024:92;7006:3;7145:6;7139:13;7161:74;7228:6;7224:1;7219:3;7215:11;7208:4;7200:6;7196:17;7161:74;:::i;:::-;7255:16;;;;7273:1;7251:24;;6851:430;-1:-1:-1;;;6851:430:104:o;7286:287::-;7415:3;7453:6;7447:13;7469:66;7528:6;7523:3;7516:4;7508:6;7504:17;7469:66;:::i;:::-;7551:16;;;;;7286:287;-1:-1:-1;;7286:287:104:o;7578:245::-;7645:6;7698:2;7686:9;7677:7;7673:23;7669:32;7666:52;;;7714:1;7711;7704:12;7666:52;7746:9;7740:16;7765:28;7787:5;7765:28;:::i","linkReferences":{}},"methodIdentifiers":{"IS_TEST()":"fa7626d4","excludeArtifacts()":"b5508aa9","excludeContracts()":"e20c9f71","excludeSenders()":"1ed7831c","failed()":"ba414fa6","setEnableGasLog(bool)":"2d0e6731","targetArtifactSelectors()":"66d9a9a0","targetArtifacts()":"85226c81","targetContracts()":"3f7286f4","targetInterfaces()":"2ade3880","targetSelectors()":"916a17c6","targetSenders()":"3e5e3c23"},"rawMetadata":"{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"log\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"log_address\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"val\",\"type\":\"uint256[]\"}],\"name\":\"log_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"int256[]\",\"name\":\"val\",\"type\":\"int256[]\"}],\"name\":\"log_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address[]\",\"name\":\"val\",\"type\":\"address[]\"}],\"name\":\"log_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"log_bytes\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"log_bytes32\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"int256\",\"name\":\"\",\"type\":\"int256\"}],\"name\":\"log_int\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"val\",\"type\":\"address\"}],\"name\":\"log_named_address\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"val\",\"type\":\"uint256[]\"}],\"name\":\"log_named_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"int256[]\",\"name\":\"val\",\"type\":\"int256[]\"}],\"name\":\"log_named_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address[]\",\"name\":\"val\",\"type\":\"address[]\"}],\"name\":\"log_named_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"val\",\"type\":\"bytes\"}],\"name\":\"log_named_bytes\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"val\",\"type\":\"bytes32\"}],\"name\":\"log_named_bytes32\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"int256\",\"name\":\"val\",\"type\":\"int256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"}],\"name\":\"log_named_decimal_int\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"val\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"}],\"name\":\"log_named_decimal_uint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"int256\",\"name\":\"val\",\"type\":\"int256\"}],\"name\":\"log_named_int\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"val\",\"type\":\"string\"}],\"name\":\"log_named_string\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"val\",\"type\":\"uint256\"}],\"name\":\"log_named_uint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"log_string\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"log_uint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"logs\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"IS_TEST\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"excludeArtifacts\",\"outputs\":[{\"internalType\":\"string[]\",\"name\":\"excludedArtifacts_\",\"type\":\"string[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"excludeContracts\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"excludedContracts_\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"excludeSenders\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"excludedSenders_\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"failed\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"enable\",\"type\":\"bool\"}],\"name\":\"setEnableGasLog\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetArtifactSelectors\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bytes4[]\",\"name\":\"selectors\",\"type\":\"bytes4[]\"}],\"internalType\":\"struct StdInvariant.FuzzSelector[]\",\"name\":\"targetedArtifactSelectors_\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetArtifacts\",\"outputs\":[{\"internalType\":\"string[]\",\"name\":\"targetedArtifacts_\",\"type\":\"string[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetContracts\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"targetedContracts_\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetInterfaces\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"string[]\",\"name\":\"artifacts\",\"type\":\"string[]\"}],\"internalType\":\"struct StdInvariant.FuzzInterface[]\",\"name\":\"targetedInterfaces_\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetSelectors\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bytes4[]\",\"name\":\"selectors\",\"type\":\"bytes4[]\"}],\"internalType\":\"struct StdInvariant.FuzzSelector[]\",\"name\":\"targetedSelectors_\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetSenders\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"targetedSenders_\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"pkg/contracts/test/shared/GasHelpers2.sol\":\"GasHelpers2\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":1000},\"remappings\":[\":@openzeppelin/contracts/=lib/allo-v2/lib/openzeppelin-contracts/contracts/\",\":@prb/math/=lib/allo-v2/lib/v2-core/lib/prb-math/\",\":@prb/test/=lib/allo-v2/lib/v2-core/lib/prb-test/src/\",\":@sablier/v2-core/=lib/allo-v2/lib/v2-core/\",\":ERC1155/=lib/allo-v2/lib/hats-protocol/lib/ERC1155/\",\":allo-v2-contracts/=lib/allo-v2/contracts/\",\":allo-v2-test/=lib/allo-v2/test/\",\":allo-v2/=lib/allo-v2/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":eas-contracts/=lib/allo-v2/lib/eas-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-gas-snapshot/=lib/allo-v2/lib/permit2/lib/forge-gas-snapshot/src/\",\":forge-std/=lib/forge-std/src/\",\":hats-protocol/=lib/allo-v2/lib/hats-protocol/\",\":openzeppelin-contracts-upgradeable/=lib/allo-v2/lib/openzeppelin-contracts-upgradeable/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\",\":permit2/=lib/allo-v2/lib/permit2/\",\":prb-math/=lib/allo-v2/lib/v2-core/lib/prb-math/src/\",\":prb-test/=lib/allo-v2/lib/v2-core/lib/prb-test/src/\",\":safe-contracts/=lib/safe-contracts/\",\":solady/=lib/allo-v2/lib/solady/\",\":solarray/=lib/allo-v2/lib/v2-core/lib/solarray/src/\",\":solbase/=lib/allo-v2/lib/hats-protocol/lib/solbase/src/\",\":solmate/=lib/allo-v2/lib/permit2/lib/solmate/\",\":utils/=lib/allo-v2/lib/hats-protocol/lib/utils/\",\":v2-core/=lib/allo-v2/lib/v2-core/\"]},\"sources\":{\"lib/forge-std/lib/ds-test/src/test.sol\":{\"keccak256\":\"0x8758531bbac3972efcf1fa46383dbe1d276406fe527bc7abb2f236486278e83b\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://1f64264d61506847acf8761e84aff690cebe830958eac00bac7924d8be569240\",\"dweb:/ipfs/QmSekDJvJ82MZAmr63n7YvfLzQ7gS4NLSHPmHL3GN3rw8k\"]},\"lib/forge-std/src/Base.sol\":{\"keccak256\":\"0x4ff1a785311017d1eedb1b4737956fa383067ad34eb439abfec1d989754dde1c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f553622969b9fdb930246704a4c10dfaee6b1a4468c142fa7eb9dc292a438224\",\"dweb:/ipfs/QmcxqHnqdQsMVtgsfH9VNLmZ3g7GhgNagfq7yvNCDcCHFK\"]},\"lib/forge-std/src/StdAssertions.sol\":{\"keccak256\":\"0x1a0dee4d8b2c81e9318e87dd85ef009467ebf7dba6575530d1fce94d34dbae60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ddd790c86ddde1013d1f7a552a80168eacf2e9244077f96799180644ad523a5b\",\"dweb:/ipfs/QmYinBFt9uEVFXP9ytT9CDoNpzWieQVgLWRFRNiypMzJaL\"]},\"lib/forge-std/src/StdChains.sol\":{\"keccak256\":\"0x1419991b2a8eb2de79b9bd2b3c5a0ceb5d7636ab9bcddde0b71701fd6ad47273\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7afc962ec6e60e1ff749cd0d4c671bc3b85386c68d26b824d4a6c6e6e8255e85\",\"dweb:/ipfs/QmWwfj6Qk8QBcnGD45seGnDXtUmC9CYKuPNJCApSjLyPSj\"]},\"lib/forge-std/src/StdCheats.sol\":{\"keccak256\":\"0xb72f3519e0bf7d31df5d68557525f4fc55d861c3fb3b0f7793144ef7c94cbeb7\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f3456d0f78e6f61203fa7871ba2df0d35925f10db3baee14be623ce2a35b84e2\",\"dweb:/ipfs/QmWE6QQSBvJifHMraisBTrf1x4WCwrDoTPLX8UKajTiApc\"]},\"lib/forge-std/src/StdError.sol\":{\"keccak256\":\"0xbf477b11a42d7611696956546bcfaa29317d1166bf65e402344599c05943fc77\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bc2e117d1135e030862b96a6526a43feb38d396cc79857f1fb696d4eff0e5fd6\",\"dweb:/ipfs/QmdSuQ5RrQudTLsNmWXGEeVJX8gR5U9XPm6m4dwwuQnJrj\"]},\"lib/forge-std/src/StdInvariant.sol\":{\"keccak256\":\"0x67299bfacd77fddfa2a67b8e2b901e0e333618a4975fb94850b07475e51f6de6\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b61121d310f4053ce344b345b4a9ccf43b059daf9097ec2647f594beaca896d\",\"dweb:/ipfs/QmZUCoTtXBM9zfAZVbj2dFPPnKaV1CSZzXE7zictyg3Gfz\"]},\"lib/forge-std/src/StdJson.sol\":{\"keccak256\":\"0x8f914dbd016bd0e318fe2b8bd556fbc8256c7cddc24e3e4fcb9f3c1c1935592d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://19e704df493dde38323303b07d18cadfeb4dcadf1ddc2301add4aea9474fbb5e\",\"dweb:/ipfs/QmZasuGiLK8LHwWtvpqEBxUR6QFY6GdzLMTJ9q7CMf8PNZ\"]},\"lib/forge-std/src/StdMath.sol\":{\"keccak256\":\"0xd90ad4fd8aeaeb8929964e686e769fdedd5eded3fc3815df194a0ab9f91a3fb2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7919b70f636c7b805223992f28ad1ad0145d6c1385b5931a3589aface5fe6c92\",\"dweb:/ipfs/QmY7FRaULwoGgFteF8GawjQJRfasNgpWnU2aiMsFrYpuTC\"]},\"lib/forge-std/src/StdStorage.sol\":{\"keccak256\":\"0x4298f3f4cedaedb07029820b1daad2c03af45379559392201f7bf3ec71105811\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6e062f36d8d1ae3c383ef8975757926eaa9c4de3a92b5f1fe2d12748bcd8db32\",\"dweb:/ipfs/QmcWkv3ia5Ew4DZNcudMNSTNXZ3W2QiXTZunRd44e9BT8z\"]},\"lib/forge-std/src/StdStyle.sol\":{\"keccak256\":\"0x43e2a8a9b9c2574dabe74f11adf6f782df218f463540e3b5b563609fe108597d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://51363ca97404cf4128e1141428949768c31929e75e014b02c85e887fbbb4f1b8\",\"dweb:/ipfs/QmVhtbQc2fU4rRmbcfBtz34mAgG4BAZBsbna1Ca4SkoPsK\"]},\"lib/forge-std/src/StdUtils.sol\":{\"keccak256\":\"0x502b18a4becda6ecd91fa8b419d8034946bfa80e6cc7f6497f51f8565bfadae0\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bf499ee483a1dfd02023d4ce78ed4029a49794ccd5b849aaab912faea0d2ba61\",\"dweb:/ipfs/QmP6hwNZW7sYbQK9fBzuZWxfLm6Swx2nKzvZ54qWNqQkzX\"]},\"lib/forge-std/src/Test.sol\":{\"keccak256\":\"0x39b1729d5868c8e94ab8af16751eb500a17fe3870dc627d2b7ddcd5df18d7ad0\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1568c82aff125cc4b0fc168be9d67ac313f469a3c7405c5493caecaaaecfb765\",\"dweb:/ipfs/QmXByuZReJsdu1jDcxj1FcmpcUnzoBcqybn9kWgDAECWri\"]},\"lib/forge-std/src/Vm.sol\":{\"keccak256\":\"0x7c6be780decc2c54d0c65990b2f0a66d6d25778a3840a55977344290ef544fce\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ae80141e1208d1c5a7c3417d79a09aa510c5b6ecaaa08884ca45e42583daed90\",\"dweb:/ipfs/Qmc6MwPwwDC242vwEJWyGhwUbKLKc7ab9hUau2JCmuHrTT\"]},\"lib/forge-std/src/console.sol\":{\"keccak256\":\"0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70\",\"dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec\"]},\"lib/forge-std/src/console2.sol\":{\"keccak256\":\"0x954646445d1014c3cd85c7918f5e7adeeca5ee44b68c00bafa237e597a4e35ea\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://516fa3be52da4763147175bfba4be0aa011fadbb0c1afb01f97265bd4cee7973\",\"dweb:/ipfs/QmdixAyMJefx7qePChgdxcBH5MxhmN7vsqPuPLx3CgrVmF\"]},\"lib/forge-std/src/interfaces/IMulticall3.sol\":{\"keccak256\":\"0x7aac1389150499a922d1f9ef5749c908cef127cb2075b92fa17e9cb611263d0a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d95ebb7c7c463e08ebc12dab639945752fb2480acfc6e86da32f72732a7fd0c0\",\"dweb:/ipfs/QmNXK8P8oPWwajsQHvAHw3JPyQidPLCGQN3hWu1Lk6PBL2\"]},\"lib/forge-std/src/mocks/MockERC20.sol\":{\"keccak256\":\"0xd8703f49411737ecf8d411f8fa66b2bf0ef972ba28b7a4adf1748c63df1bf682\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b7c10a6b8112f6fe3cdccb6240ecd382765216b1a82e9a86a0fec8f5e09eadd1\",\"dweb:/ipfs/QmdRvPCU4RkjMHsTu3Ric1ZEF1AWDNLp78unFC5aWP17xq\"]},\"lib/forge-std/src/mocks/MockERC721.sol\":{\"keccak256\":\"0xa24468244abb66e663fb7eee6463cb518eb9a7c14e1071548ff564cca825bbca\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://145585a2194aa6e2d30edfe709ef2814e20b1b4540469aa6a8f50c841fcb9070\",\"dweb:/ipfs/QmZrwbvtpbtTxqbW5phUrwb3F1tBiPSQc6jZJAXBfsBsAh\"]},\"lib/forge-std/src/safeconsole.sol\":{\"keccak256\":\"0xbaf41fdc6c54297e7cd8250e48b0f20eaac918e342a1028cef3f9a52ac086381\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a500ad81dea226f9910e6b50f99a9ff930105e393a692cbfb2185e4cdb4424ae\",\"dweb:/ipfs/QmVbUQpXNMmMWRiy4FvBNczzq46BMGfUoBikvSHNiCxVTq\"]},\"pkg/contracts/test/shared/GasHelpers2.sol\":{\"keccak256\":\"0x99d4f66e98d4965ec3388a695b8bea71ebeea1137e611644dee70fd934e615e5\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://102f407d8f588e70647166997533a3d677e3051716091afc3877d08940ddcf4c\",\"dweb:/ipfs/QmdDmEBhmJE4zhySTYQXof4aEo59srqb68yGmEg5UC7NBk\"]}},\"version\":1}","metadata":{"compiler":{"version":"0.8.19+commit.7dd6d404"},"language":"Solidity","output":{"abi":[{"inputs":[{"internalType":"string","name":"","type":"string","indexed":false}],"type":"event","name":"log","anonymous":false},{"inputs":[{"internalType":"address","name":"","type":"address","indexed":false}],"type":"event","name":"log_address","anonymous":false},{"inputs":[{"internalType":"uint256[]","name":"val","type":"uint256[]","indexed":false}],"type":"event","name":"log_array","anonymous":false},{"inputs":[{"internalType":"int256[]","name":"val","type":"int256[]","indexed":false}],"type":"event","name":"log_array","anonymous":false},{"inputs":[{"internalType":"address[]","name":"val","type":"address[]","indexed":false}],"type":"event","name":"log_array","anonymous":false},{"inputs":[{"internalType":"bytes","name":"","type":"bytes","indexed":false}],"type":"event","name":"log_bytes","anonymous":false},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32","indexed":false}],"type":"event","name":"log_bytes32","anonymous":false},{"inputs":[{"internalType":"int256","name":"","type":"int256","indexed":false}],"type":"event","name":"log_int","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"address","name":"val","type":"address","indexed":false}],"type":"event","name":"log_named_address","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"uint256[]","name":"val","type":"uint256[]","indexed":false}],"type":"event","name":"log_named_array","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"int256[]","name":"val","type":"int256[]","indexed":false}],"type":"event","name":"log_named_array","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"address[]","name":"val","type":"address[]","indexed":false}],"type":"event","name":"log_named_array","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"bytes","name":"val","type":"bytes","indexed":false}],"type":"event","name":"log_named_bytes","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"bytes32","name":"val","type":"bytes32","indexed":false}],"type":"event","name":"log_named_bytes32","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"int256","name":"val","type":"int256","indexed":false},{"internalType":"uint256","name":"decimals","type":"uint256","indexed":false}],"type":"event","name":"log_named_decimal_int","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"uint256","name":"val","type":"uint256","indexed":false},{"internalType":"uint256","name":"decimals","type":"uint256","indexed":false}],"type":"event","name":"log_named_decimal_uint","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"int256","name":"val","type":"int256","indexed":false}],"type":"event","name":"log_named_int","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"string","name":"val","type":"string","indexed":false}],"type":"event","name":"log_named_string","anonymous":false},{"inputs":[{"internalType":"string","name":"key","type":"string","indexed":false},{"internalType":"uint256","name":"val","type":"uint256","indexed":false}],"type":"event","name":"log_named_uint","anonymous":false},{"inputs":[{"internalType":"string","name":"","type":"string","indexed":false}],"type":"event","name":"log_string","anonymous":false},{"inputs":[{"internalType":"uint256","name":"","type":"uint256","indexed":false}],"type":"event","name":"log_uint","anonymous":false},{"inputs":[{"internalType":"bytes","name":"","type":"bytes","indexed":false}],"type":"event","name":"logs","anonymous":false},{"inputs":[],"stateMutability":"view","type":"function","name":"IS_TEST","outputs":[{"internalType":"bool","name":"","type":"bool"}]},{"inputs":[],"stateMutability":"view","type":"function","name":"excludeArtifacts","outputs":[{"internalType":"string[]","name":"excludedArtifacts_","type":"string[]"}]},{"inputs":[],"stateMutability":"view","type":"function","name":"excludeContracts","outputs":[{"internalType":"address[]","name":"excludedContracts_","type":"address[]"}]},{"inputs":[],"stateMutability":"view","type":"function","name":"excludeSenders","outputs":[{"internalType":"address[]","name":"excludedSenders_","type":"address[]"}]},{"inputs":[],"stateMutability":"nonpayable","type":"function","name":"failed","outputs":[{"internalType":"bool","name":"","type":"bool"}]},{"inputs":[{"internalType":"bool","name":"enable","type":"bool"}],"stateMutability":"nonpayable","type":"function","name":"setEnableGasLog"},{"inputs":[],"stateMutability":"view","type":"function","name":"targetArtifactSelectors","outputs":[{"internalType":"struct StdInvariant.FuzzSelector[]","name":"targetedArtifactSelectors_","type":"tuple[]","components":[{"internalType":"address","name":"addr","type":"address"},{"internalType":"bytes4[]","name":"selectors","type":"bytes4[]"}]}]},{"inputs":[],"stateMutability":"view","type":"function","name":"targetArtifacts","outputs":[{"internalType":"string[]","name":"targetedArtifacts_","type":"string[]"}]},{"inputs":[],"stateMutability":"view","type":"function","name":"targetContracts","outputs":[{"internalType":"address[]","name":"targetedContracts_","type":"address[]"}]},{"inputs":[],"stateMutability":"view","type":"function","name":"targetInterfaces","outputs":[{"internalType":"struct StdInvariant.FuzzInterface[]","name":"targetedInterfaces_","type":"tuple[]","components":[{"internalType":"address","name":"addr","type":"address"},{"internalType":"string[]","name":"artifacts","type":"string[]"}]}]},{"inputs":[],"stateMutability":"view","type":"function","name":"targetSelectors","outputs":[{"internalType":"struct StdInvariant.FuzzSelector[]","name":"targetedSelectors_","type":"tuple[]","components":[{"internalType":"address","name":"addr","type":"address"},{"internalType":"bytes4[]","name":"selectors","type":"bytes4[]"}]}]},{"inputs":[],"stateMutability":"view","type":"function","name":"targetSenders","outputs":[{"internalType":"address[]","name":"targetedSenders_","type":"address[]"}]}],"devdoc":{"kind":"dev","methods":{},"version":1},"userdoc":{"kind":"user","methods":{},"version":1}},"settings":{"remappings":["@openzeppelin/contracts/=lib/allo-v2/lib/openzeppelin-contracts/contracts/","@prb/math/=lib/allo-v2/lib/v2-core/lib/prb-math/","@prb/test/=lib/allo-v2/lib/v2-core/lib/prb-test/src/","@sablier/v2-core/=lib/allo-v2/lib/v2-core/","ERC1155/=lib/allo-v2/lib/hats-protocol/lib/ERC1155/","allo-v2-contracts/=lib/allo-v2/contracts/","allo-v2-test/=lib/allo-v2/test/","allo-v2/=lib/allo-v2/","ds-test/=lib/forge-std/lib/ds-test/src/","eas-contracts/=lib/allo-v2/lib/eas-contracts/contracts/","erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/","forge-gas-snapshot/=lib/allo-v2/lib/permit2/lib/forge-gas-snapshot/src/","forge-std/=lib/forge-std/src/","hats-protocol/=lib/allo-v2/lib/hats-protocol/","openzeppelin-contracts-upgradeable/=lib/allo-v2/lib/openzeppelin-contracts-upgradeable/","openzeppelin-contracts/=lib/openzeppelin-contracts/","openzeppelin/=lib/openzeppelin-contracts/contracts/","permit2/=lib/allo-v2/lib/permit2/","prb-math/=lib/allo-v2/lib/v2-core/lib/prb-math/src/","prb-test/=lib/allo-v2/lib/v2-core/lib/prb-test/src/","safe-contracts/=lib/safe-contracts/","solady/=lib/allo-v2/lib/solady/","solarray/=lib/allo-v2/lib/v2-core/lib/solarray/src/","solbase/=lib/allo-v2/lib/hats-protocol/lib/solbase/src/","solmate/=lib/allo-v2/lib/permit2/lib/solmate/","utils/=lib/allo-v2/lib/hats-protocol/lib/utils/","v2-core/=lib/allo-v2/lib/v2-core/"],"optimizer":{"enabled":true,"runs":1000},"metadata":{"bytecodeHash":"ipfs"},"compilationTarget":{"pkg/contracts/test/shared/GasHelpers2.sol":"GasHelpers2"},"evmVersion":"paris","libraries":{}},"sources":{"lib/forge-std/lib/ds-test/src/test.sol":{"keccak256":"0x8758531bbac3972efcf1fa46383dbe1d276406fe527bc7abb2f236486278e83b","urls":["bzz-raw://1f64264d61506847acf8761e84aff690cebe830958eac00bac7924d8be569240","dweb:/ipfs/QmSekDJvJ82MZAmr63n7YvfLzQ7gS4NLSHPmHL3GN3rw8k"],"license":"GPL-3.0-or-later"},"lib/forge-std/src/Base.sol":{"keccak256":"0x4ff1a785311017d1eedb1b4737956fa383067ad34eb439abfec1d989754dde1c","urls":["bzz-raw://f553622969b9fdb930246704a4c10dfaee6b1a4468c142fa7eb9dc292a438224","dweb:/ipfs/QmcxqHnqdQsMVtgsfH9VNLmZ3g7GhgNagfq7yvNCDcCHFK"],"license":"MIT"},"lib/forge-std/src/StdAssertions.sol":{"keccak256":"0x1a0dee4d8b2c81e9318e87dd85ef009467ebf7dba6575530d1fce94d34dbae60","urls":["bzz-raw://ddd790c86ddde1013d1f7a552a80168eacf2e9244077f96799180644ad523a5b","dweb:/ipfs/QmYinBFt9uEVFXP9ytT9CDoNpzWieQVgLWRFRNiypMzJaL"],"license":"MIT"},"lib/forge-std/src/StdChains.sol":{"keccak256":"0x1419991b2a8eb2de79b9bd2b3c5a0ceb5d7636ab9bcddde0b71701fd6ad47273","urls":["bzz-raw://7afc962ec6e60e1ff749cd0d4c671bc3b85386c68d26b824d4a6c6e6e8255e85","dweb:/ipfs/QmWwfj6Qk8QBcnGD45seGnDXtUmC9CYKuPNJCApSjLyPSj"],"license":"MIT"},"lib/forge-std/src/StdCheats.sol":{"keccak256":"0xb72f3519e0bf7d31df5d68557525f4fc55d861c3fb3b0f7793144ef7c94cbeb7","urls":["bzz-raw://f3456d0f78e6f61203fa7871ba2df0d35925f10db3baee14be623ce2a35b84e2","dweb:/ipfs/QmWE6QQSBvJifHMraisBTrf1x4WCwrDoTPLX8UKajTiApc"],"license":"MIT"},"lib/forge-std/src/StdError.sol":{"keccak256":"0xbf477b11a42d7611696956546bcfaa29317d1166bf65e402344599c05943fc77","urls":["bzz-raw://bc2e117d1135e030862b96a6526a43feb38d396cc79857f1fb696d4eff0e5fd6","dweb:/ipfs/QmdSuQ5RrQudTLsNmWXGEeVJX8gR5U9XPm6m4dwwuQnJrj"],"license":"MIT"},"lib/forge-std/src/StdInvariant.sol":{"keccak256":"0x67299bfacd77fddfa2a67b8e2b901e0e333618a4975fb94850b07475e51f6de6","urls":["bzz-raw://1b61121d310f4053ce344b345b4a9ccf43b059daf9097ec2647f594beaca896d","dweb:/ipfs/QmZUCoTtXBM9zfAZVbj2dFPPnKaV1CSZzXE7zictyg3Gfz"],"license":"MIT"},"lib/forge-std/src/StdJson.sol":{"keccak256":"0x8f914dbd016bd0e318fe2b8bd556fbc8256c7cddc24e3e4fcb9f3c1c1935592d","urls":["bzz-raw://19e704df493dde38323303b07d18cadfeb4dcadf1ddc2301add4aea9474fbb5e","dweb:/ipfs/QmZasuGiLK8LHwWtvpqEBxUR6QFY6GdzLMTJ9q7CMf8PNZ"],"license":"MIT"},"lib/forge-std/src/StdMath.sol":{"keccak256":"0xd90ad4fd8aeaeb8929964e686e769fdedd5eded3fc3815df194a0ab9f91a3fb2","urls":["bzz-raw://7919b70f636c7b805223992f28ad1ad0145d6c1385b5931a3589aface5fe6c92","dweb:/ipfs/QmY7FRaULwoGgFteF8GawjQJRfasNgpWnU2aiMsFrYpuTC"],"license":"MIT"},"lib/forge-std/src/StdStorage.sol":{"keccak256":"0x4298f3f4cedaedb07029820b1daad2c03af45379559392201f7bf3ec71105811","urls":["bzz-raw://6e062f36d8d1ae3c383ef8975757926eaa9c4de3a92b5f1fe2d12748bcd8db32","dweb:/ipfs/QmcWkv3ia5Ew4DZNcudMNSTNXZ3W2QiXTZunRd44e9BT8z"],"license":"MIT"},"lib/forge-std/src/StdStyle.sol":{"keccak256":"0x43e2a8a9b9c2574dabe74f11adf6f782df218f463540e3b5b563609fe108597d","urls":["bzz-raw://51363ca97404cf4128e1141428949768c31929e75e014b02c85e887fbbb4f1b8","dweb:/ipfs/QmVhtbQc2fU4rRmbcfBtz34mAgG4BAZBsbna1Ca4SkoPsK"],"license":"MIT"},"lib/forge-std/src/StdUtils.sol":{"keccak256":"0x502b18a4becda6ecd91fa8b419d8034946bfa80e6cc7f6497f51f8565bfadae0","urls":["bzz-raw://bf499ee483a1dfd02023d4ce78ed4029a49794ccd5b849aaab912faea0d2ba61","dweb:/ipfs/QmP6hwNZW7sYbQK9fBzuZWxfLm6Swx2nKzvZ54qWNqQkzX"],"license":"MIT"},"lib/forge-std/src/Test.sol":{"keccak256":"0x39b1729d5868c8e94ab8af16751eb500a17fe3870dc627d2b7ddcd5df18d7ad0","urls":["bzz-raw://1568c82aff125cc4b0fc168be9d67ac313f469a3c7405c5493caecaaaecfb765","dweb:/ipfs/QmXByuZReJsdu1jDcxj1FcmpcUnzoBcqybn9kWgDAECWri"],"license":"MIT"},"lib/forge-std/src/Vm.sol":{"keccak256":"0x7c6be780decc2c54d0c65990b2f0a66d6d25778a3840a55977344290ef544fce","urls":["bzz-raw://ae80141e1208d1c5a7c3417d79a09aa510c5b6ecaaa08884ca45e42583daed90","dweb:/ipfs/Qmc6MwPwwDC242vwEJWyGhwUbKLKc7ab9hUau2JCmuHrTT"],"license":"MIT"},"lib/forge-std/src/console.sol":{"keccak256":"0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba","urls":["bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70","dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"],"license":"MIT"},"lib/forge-std/src/console2.sol":{"keccak256":"0x954646445d1014c3cd85c7918f5e7adeeca5ee44b68c00bafa237e597a4e35ea","urls":["bzz-raw://516fa3be52da4763147175bfba4be0aa011fadbb0c1afb01f97265bd4cee7973","dweb:/ipfs/QmdixAyMJefx7qePChgdxcBH5MxhmN7vsqPuPLx3CgrVmF"],"license":"MIT"},"lib/forge-std/src/interfaces/IMulticall3.sol":{"keccak256":"0x7aac1389150499a922d1f9ef5749c908cef127cb2075b92fa17e9cb611263d0a","urls":["bzz-raw://d95ebb7c7c463e08ebc12dab639945752fb2480acfc6e86da32f72732a7fd0c0","dweb:/ipfs/QmNXK8P8oPWwajsQHvAHw3JPyQidPLCGQN3hWu1Lk6PBL2"],"license":"MIT"},"lib/forge-std/src/mocks/MockERC20.sol":{"keccak256":"0xd8703f49411737ecf8d411f8fa66b2bf0ef972ba28b7a4adf1748c63df1bf682","urls":["bzz-raw://b7c10a6b8112f6fe3cdccb6240ecd382765216b1a82e9a86a0fec8f5e09eadd1","dweb:/ipfs/QmdRvPCU4RkjMHsTu3Ric1ZEF1AWDNLp78unFC5aWP17xq"],"license":"MIT"},"lib/forge-std/src/mocks/MockERC721.sol":{"keccak256":"0xa24468244abb66e663fb7eee6463cb518eb9a7c14e1071548ff564cca825bbca","urls":["bzz-raw://145585a2194aa6e2d30edfe709ef2814e20b1b4540469aa6a8f50c841fcb9070","dweb:/ipfs/QmZrwbvtpbtTxqbW5phUrwb3F1tBiPSQc6jZJAXBfsBsAh"],"license":"MIT"},"lib/forge-std/src/safeconsole.sol":{"keccak256":"0xbaf41fdc6c54297e7cd8250e48b0f20eaac918e342a1028cef3f9a52ac086381","urls":["bzz-raw://a500ad81dea226f9910e6b50f99a9ff930105e393a692cbfb2185e4cdb4424ae","dweb:/ipfs/QmVbUQpXNMmMWRiy4FvBNczzq46BMGfUoBikvSHNiCxVTq"],"license":"MIT"},"pkg/contracts/test/shared/GasHelpers2.sol":{"keccak256":"0x99d4f66e98d4965ec3388a695b8bea71ebeea1137e611644dee70fd934e615e5","urls":["bzz-raw://102f407d8f588e70647166997533a3d677e3051716091afc3877d08940ddcf4c","dweb:/ipfs/QmdDmEBhmJE4zhySTYQXof4aEo59srqb68yGmEg5UC7NBk"],"license":"MIT"}},"version":1},"ast":{"absolutePath":"pkg/contracts/test/shared/GasHelpers2.sol","id":71269,"exportedSymbols":{"DSTest":[12628],"GasHelpers2":[71268],"StdAssertions":[14160],"StdChains":[14924],"StdCheats":[17777],"StdInvariant":[18102],"StdStorage":[18868],"StdStyle":[21718],"StdUtils":[22504],"Test":[22555],"TestBase":[12694],"Vm":[24406],"console":[32470],"console2":[40595],"safeconsole":[54935],"stdError":[17843],"stdJson":[18694],"stdMath":[18836],"stdStorage":[20507]},"nodeType":"SourceUnit","src":"32:922:101","nodes":[{"id":71196,"nodeType":"PragmaDirective","src":"32:23:101","nodes":[],"literals":["solidity","0.8",".19"]},{"id":71197,"nodeType":"ImportDirective","src":"57:28:101","nodes":[],"absolutePath":"lib/forge-std/src/Test.sol","file":"forge-std/Test.sol","nameLocation":"-1:-1:-1","scope":71269,"sourceUnit":22556,"symbolAliases":[],"unitAlias":""},{"id":71268,"nodeType":"ContractDefinition","src":"87:866:101","nodes":[{"id":71201,"nodeType":"VariableDeclaration","src":"122:30:101","nodes":[],"constant":false,"mutability":"mutable","name":"checkpointLabel","nameLocation":"137:15:101","scope":71268,"stateVariable":true,"storageLocation":"default","typeDescriptions":{"typeIdentifier":"t_string_storage","typeString":"string"},"typeName":{"id":71200,"name":"string","nodeType":"ElementaryTypeName","src":"122:6:101","typeDescriptions":{"typeIdentifier":"t_string_storage_ptr","typeString":"string"}},"visibility":"private"},{"id":71204,"nodeType":"VariableDeclaration","src":"158:37:101","nodes":[],"constant":false,"mutability":"mutable","name":"checkpointGasLeft","nameLocation":"174:17:101","scope":71268,"stateVariable":true,"storageLocation":"default","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"},"typeName":{"id":71202,"name":"uint256","nodeType":"ElementaryTypeName","src":"158:7:101","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"value":{"hexValue":"31","id":71203,"isConstant":false,"isLValue":false,"isPure":true,"kind":"number","lValueRequested":false,"nodeType":"Literal","src":"194:1:101","typeDescriptions":{"typeIdentifier":"t_rational_1_by_1","typeString":"int_const 1"},"value":"1"},"visibility":"private"},{"id":71207,"nodeType":"VariableDeclaration","src":"226:34:101","nodes":[],"constant":false,"mutability":"mutable","name":"_enableGasLog","nameLocation":"239:13:101","scope":71268,"stateVariable":true,"storageLocation":"default","typeDescriptions":{"typeIdentifier":"t_bool","typeString":"bool"},"typeName":{"id":71205,"name":"bool","nodeType":"ElementaryTypeName","src":"226:4:101","typeDescriptions":{"typeIdentifier":"t_bool","typeString":"bool"}},"value":{"hexValue":"66616c7365","id":71206,"isConstant":false,"isLValue":false,"isPure":true,"kind":"bool","lValueRequested":false,"nodeType":"Literal","src":"255:5:101","typeDescriptions":{"typeIdentifier":"t_bool","typeString":"bool"},"value":"false"},"visibility":"private"},{"id":71217,"nodeType":"FunctionDefinition","src":"267:84:101","nodes":[],"body":{"id":71216,"nodeType":"Block","src":"312:39:101","nodes":[],"statements":[{"expression":{"id":71214,"isConstant":false,"isLValue":false,"isPure":false,"lValueRequested":false,"leftHandSide":{"id":71212,"name":"_enableGasLog","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71207,"src":"322:13:101","typeDescriptions":{"typeIdentifier":"t_bool","typeString":"bool"}},"nodeType":"Assignment","operator":"=","rightHandSide":{"id":71213,"name":"enable","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71209,"src":"338:6:101","typeDescriptions":{"typeIdentifier":"t_bool","typeString":"bool"}},"src":"322:22:101","typeDescriptions":{"typeIdentifier":"t_bool","typeString":"bool"}},"id":71215,"nodeType":"ExpressionStatement","src":"322:22:101"}]},"functionSelector":"2d0e6731","implemented":true,"kind":"function","modifiers":[],"name":"setEnableGasLog","nameLocation":"276:15:101","parameters":{"id":71210,"nodeType":"ParameterList","parameters":[{"constant":false,"id":71209,"mutability":"mutable","name":"enable","nameLocation":"297:6:101","nodeType":"VariableDeclaration","scope":71217,"src":"292:11:101","stateVariable":false,"storageLocation":"default","typeDescriptions":{"typeIdentifier":"t_bool","typeString":"bool"},"typeName":{"id":71208,"name":"bool","nodeType":"ElementaryTypeName","src":"292:4:101","typeDescriptions":{"typeIdentifier":"t_bool","typeString":"bool"}},"visibility":"internal"}],"src":"291:13:101"},"returnParameters":{"id":71211,"nodeType":"ParameterList","parameters":[],"src":"312:0:101"},"scope":71268,"stateMutability":"nonpayable","virtual":false,"visibility":"public"},{"id":71235,"nodeType":"FunctionDefinition","src":"357:192:101","nodes":[],"body":{"id":71234,"nodeType":"Block","src":"422:127:101","nodes":[],"statements":[{"condition":{"id":71222,"name":"_enableGasLog","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71207,"src":"436:13:101","typeDescriptions":{"typeIdentifier":"t_bool","typeString":"bool"}},"id":71233,"nodeType":"IfStatement","src":"432:111:101","trueBody":{"id":71232,"nodeType":"Block","src":"451:92:101","statements":[{"expression":{"id":71225,"isConstant":false,"isLValue":false,"isPure":false,"lValueRequested":false,"leftHandSide":{"id":71223,"name":"checkpointLabel","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71201,"src":"465:15:101","typeDescriptions":{"typeIdentifier":"t_string_storage","typeString":"string storage ref"}},"nodeType":"Assignment","operator":"=","rightHandSide":{"id":71224,"name":"label","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71219,"src":"483:5:101","typeDescriptions":{"typeIdentifier":"t_string_memory_ptr","typeString":"string memory"}},"src":"465:23:101","typeDescriptions":{"typeIdentifier":"t_string_storage","typeString":"string storage ref"}},"id":71226,"nodeType":"ExpressionStatement","src":"465:23:101"},{"expression":{"id":71230,"isConstant":false,"isLValue":false,"isPure":false,"lValueRequested":false,"leftHandSide":{"id":71227,"name":"checkpointGasLeft","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71204,"src":"503:17:101","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"nodeType":"Assignment","operator":"=","rightHandSide":{"arguments":[],"expression":{"argumentTypes":[],"id":71228,"name":"gasleft","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":-7,"src":"523:7:101","typeDescriptions":{"typeIdentifier":"t_function_gasleft_view$__$returns$_t_uint256_$","typeString":"function () view returns (uint256)"}},"id":71229,"isConstant":false,"isLValue":false,"isPure":false,"kind":"functionCall","lValueRequested":false,"nameLocations":[],"names":[],"nodeType":"FunctionCall","src":"523:9:101","tryCall":false,"typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"src":"503:29:101","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"id":71231,"nodeType":"ExpressionStatement","src":"503:29:101"}]}}]},"implemented":true,"kind":"function","modifiers":[],"name":"startMeasuringGas","nameLocation":"366:17:101","parameters":{"id":71220,"nodeType":"ParameterList","parameters":[{"constant":false,"id":71219,"mutability":"mutable","name":"label","nameLocation":"398:5:101","nodeType":"VariableDeclaration","scope":71235,"src":"384:19:101","stateVariable":false,"storageLocation":"memory","typeDescriptions":{"typeIdentifier":"t_string_memory_ptr","typeString":"string"},"typeName":{"id":71218,"name":"string","nodeType":"ElementaryTypeName","src":"384:6:101","typeDescriptions":{"typeIdentifier":"t_string_storage_ptr","typeString":"string"}},"visibility":"internal"}],"src":"383:21:101"},"returnParameters":{"id":71221,"nodeType":"ParameterList","parameters":[],"src":"422:0:101"},"scope":71268,"stateMutability":"nonpayable","virtual":true,"visibility":"internal"},{"id":71267,"nodeType":"FunctionDefinition","src":"555:396:101","nodes":[],"body":{"id":71266,"nodeType":"Block","src":"600:351:101","nodes":[],"statements":[{"condition":{"id":71238,"name":"_enableGasLog","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71207,"src":"614:13:101","typeDescriptions":{"typeIdentifier":"t_bool","typeString":"bool"}},"id":71265,"nodeType":"IfStatement","src":"610:335:101","trueBody":{"id":71264,"nodeType":"Block","src":"629:316:101","statements":[{"assignments":[71240],"declarations":[{"constant":false,"id":71240,"mutability":"mutable","name":"checkpointGasLeft2","nameLocation":"651:18:101","nodeType":"VariableDeclaration","scope":71264,"src":"643:26:101","stateVariable":false,"storageLocation":"default","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"},"typeName":{"id":71239,"name":"uint256","nodeType":"ElementaryTypeName","src":"643:7:101","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"visibility":"internal"}],"id":71243,"initialValue":{"arguments":[],"expression":{"argumentTypes":[],"id":71241,"name":"gasleft","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":-7,"src":"672:7:101","typeDescriptions":{"typeIdentifier":"t_function_gasleft_view$__$returns$_t_uint256_$","typeString":"function () view returns (uint256)"}},"id":71242,"isConstant":false,"isLValue":false,"isPure":false,"kind":"functionCall","lValueRequested":false,"nameLocations":[],"names":[],"nodeType":"FunctionCall","src":"672:9:101","tryCall":false,"typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"nodeType":"VariableDeclarationStatement","src":"643:38:101"},{"assignments":[71245],"declarations":[{"constant":false,"id":71245,"mutability":"mutable","name":"gasDelta","nameLocation":"784:8:101","nodeType":"VariableDeclaration","scope":71264,"src":"776:16:101","stateVariable":false,"storageLocation":"default","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"},"typeName":{"id":71244,"name":"uint256","nodeType":"ElementaryTypeName","src":"776:7:101","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"visibility":"internal"}],"id":71251,"initialValue":{"commonType":{"typeIdentifier":"t_uint256","typeString":"uint256"},"id":71250,"isConstant":false,"isLValue":false,"isPure":false,"lValueRequested":false,"leftExpression":{"commonType":{"typeIdentifier":"t_uint256","typeString":"uint256"},"id":71248,"isConstant":false,"isLValue":false,"isPure":false,"lValueRequested":false,"leftExpression":{"id":71246,"name":"checkpointGasLeft","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71204,"src":"795:17:101","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"nodeType":"BinaryOperation","operator":"-","rightExpression":{"id":71247,"name":"checkpointGasLeft2","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71240,"src":"815:18:101","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"src":"795:38:101","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"nodeType":"BinaryOperation","operator":"-","rightExpression":{"hexValue":"313030","id":71249,"isConstant":false,"isLValue":false,"isPure":true,"kind":"number","lValueRequested":false,"nodeType":"Literal","src":"836:3:101","typeDescriptions":{"typeIdentifier":"t_rational_100_by_1","typeString":"int_const 100"},"value":"100"},"src":"795:44:101","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}},"nodeType":"VariableDeclarationStatement","src":"776:63:101"},{"eventCall":{"arguments":[{"arguments":[{"arguments":[{"id":71257,"name":"checkpointLabel","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71201,"src":"898:15:101","typeDescriptions":{"typeIdentifier":"t_string_storage","typeString":"string storage ref"}},{"hexValue":"20476173","id":71258,"isConstant":false,"isLValue":false,"isPure":true,"kind":"string","lValueRequested":false,"nodeType":"Literal","src":"915:6:101","typeDescriptions":{"typeIdentifier":"t_stringliteral_d32bf99f62e77a448bf1067f7f4320599d1a06c08c18674dc6734f2eda0a1032","typeString":"literal_string \" Gas\""},"value":" Gas"}],"expression":{"argumentTypes":[{"typeIdentifier":"t_string_storage","typeString":"string storage ref"},{"typeIdentifier":"t_stringliteral_d32bf99f62e77a448bf1067f7f4320599d1a06c08c18674dc6734f2eda0a1032","typeString":"literal_string \" Gas\""}],"expression":{"id":71255,"name":"abi","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":-1,"src":"881:3:101","typeDescriptions":{"typeIdentifier":"t_magic_abi","typeString":"abi"}},"id":71256,"isConstant":false,"isLValue":false,"isPure":true,"lValueRequested":false,"memberLocation":"885:12:101","memberName":"encodePacked","nodeType":"MemberAccess","src":"881:16:101","typeDescriptions":{"typeIdentifier":"t_function_abiencodepacked_pure$__$returns$_t_bytes_memory_ptr_$","typeString":"function () pure returns (bytes memory)"}},"id":71259,"isConstant":false,"isLValue":false,"isPure":false,"kind":"functionCall","lValueRequested":false,"nameLocations":[],"names":[],"nodeType":"FunctionCall","src":"881:41:101","tryCall":false,"typeDescriptions":{"typeIdentifier":"t_bytes_memory_ptr","typeString":"bytes memory"}}],"expression":{"argumentTypes":[{"typeIdentifier":"t_bytes_memory_ptr","typeString":"bytes memory"}],"id":71254,"isConstant":false,"isLValue":false,"isPure":true,"lValueRequested":false,"nodeType":"ElementaryTypeNameExpression","src":"874:6:101","typeDescriptions":{"typeIdentifier":"t_type$_t_string_storage_ptr_$","typeString":"type(string storage pointer)"},"typeName":{"id":71253,"name":"string","nodeType":"ElementaryTypeName","src":"874:6:101","typeDescriptions":{}}},"id":71260,"isConstant":false,"isLValue":false,"isPure":false,"kind":"typeConversion","lValueRequested":false,"nameLocations":[],"names":[],"nodeType":"FunctionCall","src":"874:49:101","tryCall":false,"typeDescriptions":{"typeIdentifier":"t_string_memory_ptr","typeString":"string memory"}},{"id":71261,"name":"gasDelta","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":71245,"src":"925:8:101","typeDescriptions":{"typeIdentifier":"t_uint256","typeString":"uint256"}}],"expression":{"argumentTypes":[{"typeIdentifier":"t_string_memory_ptr","typeString":"string memory"},{"typeIdentifier":"t_uint256","typeString":"uint256"}],"id":71252,"name":"log_named_uint","nodeType":"Identifier","overloadedDeclarations":[],"referencedDeclaration":10410,"src":"859:14:101","typeDescriptions":{"typeIdentifier":"t_function_event_nonpayable$_t_string_memory_ptr_$_t_uint256_$returns$__$","typeString":"function (string memory,uint256)"}},"id":71262,"isConstant":false,"isLValue":false,"isPure":false,"kind":"functionCall","lValueRequested":false,"nameLocations":[],"names":[],"nodeType":"FunctionCall","src":"859:75:101","tryCall":false,"typeDescriptions":{"typeIdentifier":"t_tuple$__$","typeString":"tuple()"}},"id":71263,"nodeType":"EmitStatement","src":"854:80:101"}]}}]},"implemented":true,"kind":"function","modifiers":[],"name":"stopMeasuringGas","nameLocation":"564:16:101","parameters":{"id":71236,"nodeType":"ParameterList","parameters":[],"src":"580:2:101"},"returnParameters":{"id":71237,"nodeType":"ParameterList","parameters":[],"src":"600:0:101"},"scope":71268,"stateMutability":"nonpayable","virtual":true,"visibility":"internal"}],"abstract":false,"baseContracts":[{"baseName":{"id":71198,"name":"Test","nameLocations":["111:4:101"],"nodeType":"IdentifierPath","referencedDeclaration":22555,"src":"111:4:101"},"id":71199,"nodeType":"InheritanceSpecifier","src":"111:4:101"}],"canonicalName":"GasHelpers2","contractDependencies":[],"contractKind":"contract","fullyImplemented":true,"linearizedBaseContracts":[71268,22555,22504,18102,17777,16984,14924,14160,12628,12694,12691],"name":"GasHelpers2","nameLocation":"96:11:101","scope":71269,"usedErrors":[]}],"license":"MIT"},"id":101}
+{
+  "abi": [
+    {
+      "type": "function",
+      "name": "IS_TEST",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "excludeArtifacts",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "excludedArtifacts_",
+          "type": "string[]",
+          "internalType": "string[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "excludeContracts",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "excludedContracts_",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "excludeSenders",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "excludedSenders_",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "failed",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setEnableGasLog",
+      "inputs": [
+        {
+          "name": "enable",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "targetArtifactSelectors",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "targetedArtifactSelectors_",
+          "type": "tuple[]",
+          "internalType": "struct StdInvariant.FuzzSelector[]",
+          "components": [
+            {
+              "name": "addr",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "selectors",
+              "type": "bytes4[]",
+              "internalType": "bytes4[]"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "targetArtifacts",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "targetedArtifacts_",
+          "type": "string[]",
+          "internalType": "string[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "targetContracts",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "targetedContracts_",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "targetInterfaces",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "targetedInterfaces_",
+          "type": "tuple[]",
+          "internalType": "struct StdInvariant.FuzzInterface[]",
+          "components": [
+            {
+              "name": "addr",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "artifacts",
+              "type": "string[]",
+              "internalType": "string[]"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "targetSelectors",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "targetedSelectors_",
+          "type": "tuple[]",
+          "internalType": "struct StdInvariant.FuzzSelector[]",
+          "components": [
+            {
+              "name": "addr",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "selectors",
+              "type": "bytes4[]",
+              "internalType": "bytes4[]"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "targetSenders",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "targetedSenders_",
+          "type": "address[]",
+          "internalType": "address[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "event",
+      "name": "log",
+      "inputs": [
+        {
+          "name": "",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_address",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_array",
+      "inputs": [
+        {
+          "name": "val",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_array",
+      "inputs": [
+        {
+          "name": "val",
+          "type": "int256[]",
+          "indexed": false,
+          "internalType": "int256[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_array",
+      "inputs": [
+        {
+          "name": "val",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_bytes",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes",
+          "indexed": false,
+          "internalType": "bytes"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_bytes32",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "indexed": false,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_int",
+      "inputs": [
+        {
+          "name": "",
+          "type": "int256",
+          "indexed": false,
+          "internalType": "int256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_address",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_array",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_array",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "int256[]",
+          "indexed": false,
+          "internalType": "int256[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_array",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "address[]",
+          "indexed": false,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_bytes",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "bytes",
+          "indexed": false,
+          "internalType": "bytes"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_bytes32",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "bytes32",
+          "indexed": false,
+          "internalType": "bytes32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_decimal_int",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "int256",
+          "indexed": false,
+          "internalType": "int256"
+        },
+        {
+          "name": "decimals",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_decimal_uint",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "decimals",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_int",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "int256",
+          "indexed": false,
+          "internalType": "int256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_string",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_named_uint",
+      "inputs": [
+        {
+          "name": "key",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        },
+        {
+          "name": "val",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_string",
+      "inputs": [
+        {
+          "name": "",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "log_uint",
+      "inputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "logs",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes",
+          "indexed": false,
+          "internalType": "bytes"
+        }
+      ],
+      "anonymous": false
+    }
+  ],
+  "bytecode": {
+    "object": "0x608060405260078054600160ff199182168117909255600b8054821683179055601d91909155601e8054909116905534801561003a57600080fd5b50610d078061004a6000396000f3fe608060405234801561001057600080fd5b50600436106100d45760003560e01c806385226c8111610081578063ba414fa61161005b578063ba414fa614610179578063e20c9f7114610191578063fa7626d41461019957600080fd5b806385226c8114610154578063916a17c614610169578063b5508aa91461017157600080fd5b80633e5e3c23116100b25780633e5e3c231461012f5780633f7286f41461013757806366d9a9a01461013f57600080fd5b80631ed7831c146100d95780632ade3880146100f75780632d0e67311461010c575b600080fd5b6100e16101a6565b6040516100ee9190610944565b60405180910390f35b6100ff610208565b6040516100ee91906109b5565b61012d61011a366004610aa1565b601e805460ff1916911515919091179055565b005b6100e161034a565b6100e16103aa565b61014761040a565b6040516100ee9190610ac5565b61015c610505565b6040516100ee9190610b90565b6101476105d5565b61015c6106d0565b6101816107a0565b60405190151581526020016100ee565b6100e16108e4565b6007546101819060ff1681565b606060148054806020026020016040519081016040528092919081815260200182805480156101fe57602002820191906000526020600020905b81546001600160a01b031681526001909101906020018083116101e0575b5050505050905090565b6060601b805480602002602001604051908101604052809291908181526020016000905b8282101561034157600084815260208082206040805180820182526002870290920180546001600160a01b03168352600181018054835181870281018701909452808452939591948681019491929084015b8282101561032a57838290600052602060002001805461029d90610bfd565b80601f01602080910402602001604051908101604052809291908181526020018280546102c990610bfd565b80156103165780601f106102eb57610100808354040283529160200191610316565b820191906000526020600020905b8154815290600101906020018083116102f957829003601f168201915b50505050508152602001906001019061027e565b50505050815250508152602001906001019061022c565b50505050905090565b606060168054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b606060158054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b60606019805480602002602001604051908101604052809291908181526020016000905b828210156103415760008481526020908190206040805180820182526002860290920180546001600160a01b031683526001810180548351818702810187019094528084529394919385830193928301828280156104ed57602002820191906000526020600020906000905b82829054906101000a900460e01b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19168152602001906004019060208260030104928301926001038202915080841161049a5790505b5050505050815250508152602001906001019061042e565b60606018805480602002602001604051908101604052809291908181526020016000905b8282101561034157838290600052602060002001805461054890610bfd565b80601f016020809104026020016040519081016040528092919081815260200182805461057490610bfd565b80156105c15780601f10610596576101008083540402835291602001916105c1565b820191906000526020600020905b8154815290600101906020018083116105a457829003601f168201915b505050505081526020019060010190610529565b6060601a805480602002602001604051908101604052809291908181526020016000905b828210156103415760008481526020908190206040805180820182526002860290920180546001600160a01b031683526001810180548351818702810187019094528084529394919385830193928301828280156106b857602002820191906000526020600020906000905b82829054906101000a900460e01b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff1916815260200190600401906020826003010492830192600103820291508084116106655790505b505050505081525050815260200190600101906105f9565b60606017805480602002602001604051908101604052809291908181526020016000905b8282101561034157838290600052602060002001805461071390610bfd565b80601f016020809104026020016040519081016040528092919081815260200182805461073f90610bfd565b801561078c5780601f106107615761010080835404028352916020019161078c565b820191906000526020600020905b81548152906001019060200180831161076f57829003601f168201915b5050505050815260200190600101906106f4565b600754600090610100900460ff16156107c25750600754610100900460ff1690565b6000737109709ecfa91a80626ff3989d68f67f5b1dd12d3b156108df5760408051737109709ecfa91a80626ff3989d68f67f5b1dd12d602082018190527f6661696c6564000000000000000000000000000000000000000000000000000082840152825180830384018152606083019093526000929091610867917f667f9d70ca411d70ead50d8d5c22070dafc36ad75f3dcf5e7237b22ade9aecc491608001610c50565b60408051601f198184030181529082905261088191610c98565b6000604051808303816000865af19150503d80600081146108be576040519150601f19603f3d011682016040523d82523d6000602084013e6108c3565b606091505b50915050808060200190518101906108db9190610cb4565b9150505b919050565b606060138054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b6020808252825182820181905260009190848201906040850190845b818110156109855783516001600160a01b031683529284019291840191600101610960565b50909695505050505050565b60005b838110156109ac578181015183820152602001610994565b50506000910152565b6000602080830181845280855180835260408601915060408160051b870101925083870160005b82811015610a8357603f19888603018452815180516001600160a01b0316865286015160408787018190528151908701819052908701906060600582901b88018101919088019060005b81811015610a6c57898403605f1901835284518051808652610a4d818e88018f8501610991565b958c0195601f01601f1916949094018b019350918a0191600101610a26565b5091975050509386019350908501906001016109dc565b5092979650505050505050565b8015158114610a9e57600080fd5b50565b600060208284031215610ab357600080fd5b8135610abe81610a90565b9392505050565b60006020808301818452808551808352604092508286019150828160051b8701018488016000805b84811015610b8157898403603f19018652825180516001600160a01b03168552880151888501889052805188860181905290890190839060608701905b80831015610b6c5783517fffffffff00000000000000000000000000000000000000000000000000000000168252928b019260019290920191908b0190610b2a565b50978a01979550505091870191600101610aed565b50919998505050505050505050565b6000602080830181845280855180835260408601915060408160051b870101925083870160005b82811015610a8357878503603f1901845281518051808752610bde818989018a8501610991565b601f01601f191695909501860194509285019290850190600101610bb7565b600181811c90821680610c1157607f821691505b602082108103610c4a577f4e487b7100000000000000000000000000000000000000000000000000000000600052602260045260246000fd5b50919050565b7fffffffff000000000000000000000000000000000000000000000000000000008316815260008251610c8a816004850160208701610991565b919091016004019392505050565b60008251610caa818460208701610991565b9190910192915050565b600060208284031215610cc657600080fd5b8151610abe81610a9056fea264697066735822122093b6af91f6a76c8b10ac90fa31864f4f0f28f1d77a35a5ced03cd1f013b7e3cb64736f6c63430008130033",
+    "sourceMap": "87:866:101:-:0;;;1572:26:45;;;1594:4;-1:-1:-1;;1572:26:45;;;;;;;;3126:44:49;;;;;;;;;158:37:101;;;;;226:34;;;;;;;;87:866;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x608060405234801561001057600080fd5b50600436106100d45760003560e01c806385226c8111610081578063ba414fa61161005b578063ba414fa614610179578063e20c9f7114610191578063fa7626d41461019957600080fd5b806385226c8114610154578063916a17c614610169578063b5508aa91461017157600080fd5b80633e5e3c23116100b25780633e5e3c231461012f5780633f7286f41461013757806366d9a9a01461013f57600080fd5b80631ed7831c146100d95780632ade3880146100f75780632d0e67311461010c575b600080fd5b6100e16101a6565b6040516100ee9190610944565b60405180910390f35b6100ff610208565b6040516100ee91906109b5565b61012d61011a366004610aa1565b601e805460ff1916911515919091179055565b005b6100e161034a565b6100e16103aa565b61014761040a565b6040516100ee9190610ac5565b61015c610505565b6040516100ee9190610b90565b6101476105d5565b61015c6106d0565b6101816107a0565b60405190151581526020016100ee565b6100e16108e4565b6007546101819060ff1681565b606060148054806020026020016040519081016040528092919081815260200182805480156101fe57602002820191906000526020600020905b81546001600160a01b031681526001909101906020018083116101e0575b5050505050905090565b6060601b805480602002602001604051908101604052809291908181526020016000905b8282101561034157600084815260208082206040805180820182526002870290920180546001600160a01b03168352600181018054835181870281018701909452808452939591948681019491929084015b8282101561032a57838290600052602060002001805461029d90610bfd565b80601f01602080910402602001604051908101604052809291908181526020018280546102c990610bfd565b80156103165780601f106102eb57610100808354040283529160200191610316565b820191906000526020600020905b8154815290600101906020018083116102f957829003601f168201915b50505050508152602001906001019061027e565b50505050815250508152602001906001019061022c565b50505050905090565b606060168054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b606060158054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b60606019805480602002602001604051908101604052809291908181526020016000905b828210156103415760008481526020908190206040805180820182526002860290920180546001600160a01b031683526001810180548351818702810187019094528084529394919385830193928301828280156104ed57602002820191906000526020600020906000905b82829054906101000a900460e01b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff19168152602001906004019060208260030104928301926001038202915080841161049a5790505b5050505050815250508152602001906001019061042e565b60606018805480602002602001604051908101604052809291908181526020016000905b8282101561034157838290600052602060002001805461054890610bfd565b80601f016020809104026020016040519081016040528092919081815260200182805461057490610bfd565b80156105c15780601f10610596576101008083540402835291602001916105c1565b820191906000526020600020905b8154815290600101906020018083116105a457829003601f168201915b505050505081526020019060010190610529565b6060601a805480602002602001604051908101604052809291908181526020016000905b828210156103415760008481526020908190206040805180820182526002860290920180546001600160a01b031683526001810180548351818702810187019094528084529394919385830193928301828280156106b857602002820191906000526020600020906000905b82829054906101000a900460e01b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff1916815260200190600401906020826003010492830192600103820291508084116106655790505b505050505081525050815260200190600101906105f9565b60606017805480602002602001604051908101604052809291908181526020016000905b8282101561034157838290600052602060002001805461071390610bfd565b80601f016020809104026020016040519081016040528092919081815260200182805461073f90610bfd565b801561078c5780601f106107615761010080835404028352916020019161078c565b820191906000526020600020905b81548152906001019060200180831161076f57829003601f168201915b5050505050815260200190600101906106f4565b600754600090610100900460ff16156107c25750600754610100900460ff1690565b6000737109709ecfa91a80626ff3989d68f67f5b1dd12d3b156108df5760408051737109709ecfa91a80626ff3989d68f67f5b1dd12d602082018190527f6661696c6564000000000000000000000000000000000000000000000000000082840152825180830384018152606083019093526000929091610867917f667f9d70ca411d70ead50d8d5c22070dafc36ad75f3dcf5e7237b22ade9aecc491608001610c50565b60408051601f198184030181529082905261088191610c98565b6000604051808303816000865af19150503d80600081146108be576040519150601f19603f3d011682016040523d82523d6000602084013e6108c3565b606091505b50915050808060200190518101906108db9190610cb4565b9150505b919050565b606060138054806020026020016040519081016040528092919081815260200182805480156101fe576020028201919060005260206000209081546001600160a01b031681526001909101906020018083116101e0575050505050905090565b6020808252825182820181905260009190848201906040850190845b818110156109855783516001600160a01b031683529284019291840191600101610960565b50909695505050505050565b60005b838110156109ac578181015183820152602001610994565b50506000910152565b6000602080830181845280855180835260408601915060408160051b870101925083870160005b82811015610a8357603f19888603018452815180516001600160a01b0316865286015160408787018190528151908701819052908701906060600582901b88018101919088019060005b81811015610a6c57898403605f1901835284518051808652610a4d818e88018f8501610991565b958c0195601f01601f1916949094018b019350918a0191600101610a26565b5091975050509386019350908501906001016109dc565b5092979650505050505050565b8015158114610a9e57600080fd5b50565b600060208284031215610ab357600080fd5b8135610abe81610a90565b9392505050565b60006020808301818452808551808352604092508286019150828160051b8701018488016000805b84811015610b8157898403603f19018652825180516001600160a01b03168552880151888501889052805188860181905290890190839060608701905b80831015610b6c5783517fffffffff00000000000000000000000000000000000000000000000000000000168252928b019260019290920191908b0190610b2a565b50978a01979550505091870191600101610aed565b50919998505050505050505050565b6000602080830181845280855180835260408601915060408160051b870101925083870160005b82811015610a8357878503603f1901845281518051808752610bde818989018a8501610991565b601f01601f191695909501860194509285019290850190600101610bb7565b600181811c90821680610c1157607f821691505b602082108103610c4a577f4e487b7100000000000000000000000000000000000000000000000000000000600052602260045260246000fd5b50919050565b7fffffffff000000000000000000000000000000000000000000000000000000008316815260008251610c8a816004850160208701610991565b919091016004019392505050565b60008251610caa818460208701610991565b9190910192915050565b600060208284031215610cc657600080fd5b8151610abe81610a9056fea264697066735822122093b6af91f6a76c8b10ac90fa31864f4f0f28f1d77a35a5ced03cd1f013b7e3cb64736f6c63430008130033",
+    "sourceMap": "87:866:101:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2452:134:52;;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;;3360:151;;;:::i;:::-;;;;;;;:::i;267:84:101:-;;;;;;:::i;:::-;322:13;:22;;-1:-1:-1;;322:22:101;;;;;;;;;;267:84;;;3221:133:52;;;:::i;2922:141::-;;;:::i;2738:178::-;;;:::i;:::-;;;;;;;:::i;2592:140::-;;;:::i;:::-;;;;;;;:::i;3069:146::-;;;:::i;2157:141::-;;;:::i;1819:584:45:-;;;:::i;:::-;;;6080:14:104;;6073:22;6055:41;;6043:2;6028:18;1819:584:45;5915:187:104;2304:142:52;;;:::i;1572:26:45:-;;;;;;;;;2452:134:52;2499:33;2563:16;2544:35;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;2544:35:52;;;;;;;;;;;;;;;;;;;;;;;2452:134;:::o;3360:151::-;3409:42;3485:19;3463:41;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;3463:41:52;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;3360:151;:::o;3221:133::-;3267:33;3331:16;3312:35;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;3312:35:52;;;;;;;;;;;;;;;;;;;;;;3221:133;:::o;2922:141::-;2970:35;3038:18;3017:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;3017:39:52;;;;;;;;;;;;;;;;;;;;;;2922:141;:::o;2738:178::-;2794:48;2883:26;2854:55;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;2854:55:52;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2592:140;2640:34;2707:18;2686:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;3069:146;3117:40;3190:18;3169:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;3169:39:52;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2157:141;2206:34;2273:18;2252:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1819:584:45;1873:7;;1853:4;;1873:7;;;;;1869:528;;;-1:-1:-1;1903:7:45;;;;;;;;1819:584::o;1869:528::-;1941:17;2997:42;2985:55;3066:16;1980:374;;2196:43;;;1671:64;2196:43;;;6723:74:104;;;2221:17:45;6813:18:104;;;6806:34;2196:43:45;;;;;;;;;6696:18:104;;;2196:43:45;;;-1:-1:-1;;1671:64:45;;2086:175;;2135:34;;2086:175;;;:::i;:::-;;;;-1:-1:-1;;2086:175:45;;;;;;;;;;2047:232;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2020:259;;;2323:7;2312:27;;;;;;;;;;;;:::i;:::-;2297:42;;2002:352;1980:374;2374:12;1819:584;-1:-1:-1;1819:584:45:o;2304:142:52:-;2353:35;2421:18;2400:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-1:-1:-1;;;;;2400:39:52;;;;;;;;;;;;;;;;;;;;;;2304:142;:::o;14:681:104:-;185:2;237:21;;;307:13;;210:18;;;329:22;;;156:4;;185:2;408:15;;;;382:2;367:18;;;156:4;451:218;465:6;462:1;459:13;451:218;;;530:13;;-1:-1:-1;;;;;526:62:104;514:75;;644:15;;;;609:12;;;;487:1;480:9;451:218;;;-1:-1:-1;686:3:104;;14:681;-1:-1:-1;;;;;;14:681:104:o;700:250::-;785:1;795:113;809:6;806:1;803:13;795:113;;;885:11;;;879:18;866:11;;;859:39;831:2;824:10;795:113;;;-1:-1:-1;;942:1:104;924:16;;917:27;700:250::o;955:1924::-;1161:4;1190:2;1230;1219:9;1215:18;1260:2;1249:9;1242:21;1283:6;1318;1312:13;1349:6;1341;1334:22;1387:2;1376:9;1372:18;1365:25;;1449:2;1439:6;1436:1;1432:14;1421:9;1417:30;1413:39;1399:53;;1487:2;1479:6;1475:15;1508:1;1518:1332;1532:6;1529:1;1526:13;1518:1332;;;-1:-1:-1;;1597:22:104;;;1593:36;1581:49;;1653:13;;1740:9;;-1:-1:-1;;;;;1736:58:104;1721:74;;1834:11;;1828:18;1705:2;1866:15;;;1859:27;;;1947:19;;1693:15;;;1979:24;;;2159:21;;;;2026:2;2112:1;2108:16;;;2096:29;;2092:38;;;2050:15;;;;2204:1;2218:523;2234:8;2229:3;2226:17;2218:523;;;2315:19;;;-1:-1:-1;;2311:33:104;2297:48;;2372:15;;2420:9;;2446:24;;;2487:74;2420:9;2535:15;;;2522:11;;;2487:74;:::i;:::-;2670:17;;;;2631:2;2608:17;-1:-1:-1;;2604:31:104;2592:44;;;;2588:53;;;-1:-1:-1;2713:14:104;;;;2262:1;2253:11;2218:523;;;-1:-1:-1;2764:6:104;;-1:-1:-1;;;2828:12:104;;;;-1:-1:-1;2793:15:104;;;;1554:1;1547:9;1518:1332;;;-1:-1:-1;2867:6:104;;955:1924;-1:-1:-1;;;;;;;955:1924:104:o;2884:118::-;2970:5;2963:13;2956:21;2949:5;2946:32;2936:60;;2992:1;2989;2982:12;2936:60;2884:118;:::o;3007:241::-;3063:6;3116:2;3104:9;3095:7;3091:23;3087:32;3084:52;;;3132:1;3129;3122:12;3084:52;3171:9;3158:23;3190:28;3212:5;3190:28;:::i;:::-;3237:5;3007:241;-1:-1:-1;;;3007:241:104:o;3253:1638::-;3457:4;3486:2;3526;3515:9;3511:18;3556:2;3545:9;3538:21;3579:6;3614;3608:13;3645:6;3637;3630:22;3671:2;3661:12;;3704:2;3693:9;3689:18;3682:25;;3766:2;3756:6;3753:1;3749:14;3738:9;3734:30;3730:39;3804:2;3796:6;3792:15;3825:1;3846;3856:1006;3872:6;3867:3;3864:15;3856:1006;;;3941:22;;;-1:-1:-1;;3937:36:104;3925:49;;3997:13;;4084:9;;-1:-1:-1;;;;;4080:58:104;4065:74;;4178:11;;4172:18;4210:15;;;4203:27;;;4291:19;;4037:15;;;4323:24;;;4413:21;;;;4458:1;;4381:2;4369:15;;;4472:282;4488:8;4483:3;4480:17;4472:282;;;4569:15;;4586:66;4565:88;4551:103;;4723:17;;;;4516:1;4507:11;;;;;4680:14;;;;4472:282;;;-1:-1:-1;4840:12:104;;;;4777:5;-1:-1:-1;;;4805:15:104;;;;3898:1;3889:11;3856:1006;;;-1:-1:-1;4879:6:104;;3253:1638;-1:-1:-1;;;;;;;;;3253:1638:104:o;4896:1014::-;5058:4;5087:2;5127;5116:9;5112:18;5157:2;5146:9;5139:21;5180:6;5215;5209:13;5246:6;5238;5231:22;5284:2;5273:9;5269:18;5262:25;;5346:2;5336:6;5333:1;5329:14;5318:9;5314:30;5310:39;5296:53;;5384:2;5376:6;5372:15;5405:1;5415:466;5429:6;5426:1;5423:13;5415:466;;;5494:22;;;-1:-1:-1;;5490:36:104;5478:49;;5550:13;;5592:9;;5614:24;;;5651:74;5592:9;5699:15;;;5686:11;;;5651:74;:::i;:::-;5791:2;5768:17;-1:-1:-1;;5764:31:104;5752:44;;;;5748:53;;;-1:-1:-1;5859:12:104;;;;5824:15;;;;5451:1;5444:9;5415:466;;6107:437;6186:1;6182:12;;;;6229;;;6250:61;;6304:4;6296:6;6292:17;6282:27;;6250:61;6357:2;6349:6;6346:14;6326:18;6323:38;6320:218;;6394:77;6391:1;6384:88;6495:4;6492:1;6485:15;6523:4;6520:1;6513:15;6320:218;;6107:437;;;:::o;6851:430::-;7048:66;7040:6;7036:79;7031:3;7024:92;7006:3;7145:6;7139:13;7161:74;7228:6;7224:1;7219:3;7215:11;7208:4;7200:6;7196:17;7161:74;:::i;:::-;7255:16;;;;7273:1;7251:24;;6851:430;-1:-1:-1;;;6851:430:104:o;7286:287::-;7415:3;7453:6;7447:13;7469:66;7528:6;7523:3;7516:4;7508:6;7504:17;7469:66;:::i;:::-;7551:16;;;;;7286:287;-1:-1:-1;;7286:287:104:o;7578:245::-;7645:6;7698:2;7686:9;7677:7;7673:23;7669:32;7666:52;;;7714:1;7711;7704:12;7666:52;7746:9;7740:16;7765:28;7787:5;7765:28;:::i",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "IS_TEST()": "fa7626d4",
+    "excludeArtifacts()": "b5508aa9",
+    "excludeContracts()": "e20c9f71",
+    "excludeSenders()": "1ed7831c",
+    "failed()": "ba414fa6",
+    "setEnableGasLog(bool)": "2d0e6731",
+    "targetArtifactSelectors()": "66d9a9a0",
+    "targetArtifacts()": "85226c81",
+    "targetContracts()": "3f7286f4",
+    "targetInterfaces()": "2ade3880",
+    "targetSelectors()": "916a17c6",
+    "targetSenders()": "3e5e3c23"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"log\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"log_address\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"val\",\"type\":\"uint256[]\"}],\"name\":\"log_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"int256[]\",\"name\":\"val\",\"type\":\"int256[]\"}],\"name\":\"log_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address[]\",\"name\":\"val\",\"type\":\"address[]\"}],\"name\":\"log_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"log_bytes\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"log_bytes32\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"int256\",\"name\":\"\",\"type\":\"int256\"}],\"name\":\"log_int\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"val\",\"type\":\"address\"}],\"name\":\"log_named_address\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256[]\",\"name\":\"val\",\"type\":\"uint256[]\"}],\"name\":\"log_named_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"int256[]\",\"name\":\"val\",\"type\":\"int256[]\"}],\"name\":\"log_named_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address[]\",\"name\":\"val\",\"type\":\"address[]\"}],\"name\":\"log_named_array\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"val\",\"type\":\"bytes\"}],\"name\":\"log_named_bytes\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"val\",\"type\":\"bytes32\"}],\"name\":\"log_named_bytes32\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"int256\",\"name\":\"val\",\"type\":\"int256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"}],\"name\":\"log_named_decimal_int\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"val\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"decimals\",\"type\":\"uint256\"}],\"name\":\"log_named_decimal_uint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"int256\",\"name\":\"val\",\"type\":\"int256\"}],\"name\":\"log_named_int\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"val\",\"type\":\"string\"}],\"name\":\"log_named_string\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"key\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"val\",\"type\":\"uint256\"}],\"name\":\"log_named_uint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"log_string\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"log_uint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"logs\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"IS_TEST\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"excludeArtifacts\",\"outputs\":[{\"internalType\":\"string[]\",\"name\":\"excludedArtifacts_\",\"type\":\"string[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"excludeContracts\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"excludedContracts_\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"excludeSenders\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"excludedSenders_\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"failed\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bool\",\"name\":\"enable\",\"type\":\"bool\"}],\"name\":\"setEnableGasLog\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetArtifactSelectors\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bytes4[]\",\"name\":\"selectors\",\"type\":\"bytes4[]\"}],\"internalType\":\"struct StdInvariant.FuzzSelector[]\",\"name\":\"targetedArtifactSelectors_\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetArtifacts\",\"outputs\":[{\"internalType\":\"string[]\",\"name\":\"targetedArtifacts_\",\"type\":\"string[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetContracts\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"targetedContracts_\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetInterfaces\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"string[]\",\"name\":\"artifacts\",\"type\":\"string[]\"}],\"internalType\":\"struct StdInvariant.FuzzInterface[]\",\"name\":\"targetedInterfaces_\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetSelectors\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bytes4[]\",\"name\":\"selectors\",\"type\":\"bytes4[]\"}],\"internalType\":\"struct StdInvariant.FuzzSelector[]\",\"name\":\"targetedSelectors_\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"targetSenders\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"targetedSenders_\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"pkg/contracts/test/shared/GasHelpers2.sol\":\"GasHelpers2\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":1000},\"remappings\":[\":@openzeppelin/contracts/=lib/allo-v2/lib/openzeppelin-contracts/contracts/\",\":@prb/math/=lib/allo-v2/lib/v2-core/lib/prb-math/\",\":@prb/test/=lib/allo-v2/lib/v2-core/lib/prb-test/src/\",\":@sablier/v2-core/=lib/allo-v2/lib/v2-core/\",\":ERC1155/=lib/allo-v2/lib/hats-protocol/lib/ERC1155/\",\":allo-v2-contracts/=lib/allo-v2/contracts/\",\":allo-v2-test/=lib/allo-v2/test/\",\":allo-v2/=lib/allo-v2/\",\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":eas-contracts/=lib/allo-v2/lib/eas-contracts/contracts/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-gas-snapshot/=lib/allo-v2/lib/permit2/lib/forge-gas-snapshot/src/\",\":forge-std/=lib/forge-std/src/\",\":hats-protocol/=lib/allo-v2/lib/hats-protocol/\",\":openzeppelin-contracts-upgradeable/=lib/allo-v2/lib/openzeppelin-contracts-upgradeable/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":openzeppelin/=lib/openzeppelin-contracts/contracts/\",\":permit2/=lib/allo-v2/lib/permit2/\",\":prb-math/=lib/allo-v2/lib/v2-core/lib/prb-math/src/\",\":prb-test/=lib/allo-v2/lib/v2-core/lib/prb-test/src/\",\":safe-contracts/=lib/safe-contracts/\",\":solady/=lib/allo-v2/lib/solady/\",\":solarray/=lib/allo-v2/lib/v2-core/lib/solarray/src/\",\":solbase/=lib/allo-v2/lib/hats-protocol/lib/solbase/src/\",\":solmate/=lib/allo-v2/lib/permit2/lib/solmate/\",\":utils/=lib/allo-v2/lib/hats-protocol/lib/utils/\",\":v2-core/=lib/allo-v2/lib/v2-core/\"]},\"sources\":{\"lib/forge-std/lib/ds-test/src/test.sol\":{\"keccak256\":\"0x8758531bbac3972efcf1fa46383dbe1d276406fe527bc7abb2f236486278e83b\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://1f64264d61506847acf8761e84aff690cebe830958eac00bac7924d8be569240\",\"dweb:/ipfs/QmSekDJvJ82MZAmr63n7YvfLzQ7gS4NLSHPmHL3GN3rw8k\"]},\"lib/forge-std/src/Base.sol\":{\"keccak256\":\"0x4ff1a785311017d1eedb1b4737956fa383067ad34eb439abfec1d989754dde1c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f553622969b9fdb930246704a4c10dfaee6b1a4468c142fa7eb9dc292a438224\",\"dweb:/ipfs/QmcxqHnqdQsMVtgsfH9VNLmZ3g7GhgNagfq7yvNCDcCHFK\"]},\"lib/forge-std/src/StdAssertions.sol\":{\"keccak256\":\"0x1a0dee4d8b2c81e9318e87dd85ef009467ebf7dba6575530d1fce94d34dbae60\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ddd790c86ddde1013d1f7a552a80168eacf2e9244077f96799180644ad523a5b\",\"dweb:/ipfs/QmYinBFt9uEVFXP9ytT9CDoNpzWieQVgLWRFRNiypMzJaL\"]},\"lib/forge-std/src/StdChains.sol\":{\"keccak256\":\"0x1419991b2a8eb2de79b9bd2b3c5a0ceb5d7636ab9bcddde0b71701fd6ad47273\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7afc962ec6e60e1ff749cd0d4c671bc3b85386c68d26b824d4a6c6e6e8255e85\",\"dweb:/ipfs/QmWwfj6Qk8QBcnGD45seGnDXtUmC9CYKuPNJCApSjLyPSj\"]},\"lib/forge-std/src/StdCheats.sol\":{\"keccak256\":\"0xb72f3519e0bf7d31df5d68557525f4fc55d861c3fb3b0f7793144ef7c94cbeb7\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://f3456d0f78e6f61203fa7871ba2df0d35925f10db3baee14be623ce2a35b84e2\",\"dweb:/ipfs/QmWE6QQSBvJifHMraisBTrf1x4WCwrDoTPLX8UKajTiApc\"]},\"lib/forge-std/src/StdError.sol\":{\"keccak256\":\"0xbf477b11a42d7611696956546bcfaa29317d1166bf65e402344599c05943fc77\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bc2e117d1135e030862b96a6526a43feb38d396cc79857f1fb696d4eff0e5fd6\",\"dweb:/ipfs/QmdSuQ5RrQudTLsNmWXGEeVJX8gR5U9XPm6m4dwwuQnJrj\"]},\"lib/forge-std/src/StdInvariant.sol\":{\"keccak256\":\"0x67299bfacd77fddfa2a67b8e2b901e0e333618a4975fb94850b07475e51f6de6\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1b61121d310f4053ce344b345b4a9ccf43b059daf9097ec2647f594beaca896d\",\"dweb:/ipfs/QmZUCoTtXBM9zfAZVbj2dFPPnKaV1CSZzXE7zictyg3Gfz\"]},\"lib/forge-std/src/StdJson.sol\":{\"keccak256\":\"0x8f914dbd016bd0e318fe2b8bd556fbc8256c7cddc24e3e4fcb9f3c1c1935592d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://19e704df493dde38323303b07d18cadfeb4dcadf1ddc2301add4aea9474fbb5e\",\"dweb:/ipfs/QmZasuGiLK8LHwWtvpqEBxUR6QFY6GdzLMTJ9q7CMf8PNZ\"]},\"lib/forge-std/src/StdMath.sol\":{\"keccak256\":\"0xd90ad4fd8aeaeb8929964e686e769fdedd5eded3fc3815df194a0ab9f91a3fb2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7919b70f636c7b805223992f28ad1ad0145d6c1385b5931a3589aface5fe6c92\",\"dweb:/ipfs/QmY7FRaULwoGgFteF8GawjQJRfasNgpWnU2aiMsFrYpuTC\"]},\"lib/forge-std/src/StdStorage.sol\":{\"keccak256\":\"0x4298f3f4cedaedb07029820b1daad2c03af45379559392201f7bf3ec71105811\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://6e062f36d8d1ae3c383ef8975757926eaa9c4de3a92b5f1fe2d12748bcd8db32\",\"dweb:/ipfs/QmcWkv3ia5Ew4DZNcudMNSTNXZ3W2QiXTZunRd44e9BT8z\"]},\"lib/forge-std/src/StdStyle.sol\":{\"keccak256\":\"0x43e2a8a9b9c2574dabe74f11adf6f782df218f463540e3b5b563609fe108597d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://51363ca97404cf4128e1141428949768c31929e75e014b02c85e887fbbb4f1b8\",\"dweb:/ipfs/QmVhtbQc2fU4rRmbcfBtz34mAgG4BAZBsbna1Ca4SkoPsK\"]},\"lib/forge-std/src/StdUtils.sol\":{\"keccak256\":\"0x502b18a4becda6ecd91fa8b419d8034946bfa80e6cc7f6497f51f8565bfadae0\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bf499ee483a1dfd02023d4ce78ed4029a49794ccd5b849aaab912faea0d2ba61\",\"dweb:/ipfs/QmP6hwNZW7sYbQK9fBzuZWxfLm6Swx2nKzvZ54qWNqQkzX\"]},\"lib/forge-std/src/Test.sol\":{\"keccak256\":\"0x39b1729d5868c8e94ab8af16751eb500a17fe3870dc627d2b7ddcd5df18d7ad0\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://1568c82aff125cc4b0fc168be9d67ac313f469a3c7405c5493caecaaaecfb765\",\"dweb:/ipfs/QmXByuZReJsdu1jDcxj1FcmpcUnzoBcqybn9kWgDAECWri\"]},\"lib/forge-std/src/Vm.sol\":{\"keccak256\":\"0x7c6be780decc2c54d0c65990b2f0a66d6d25778a3840a55977344290ef544fce\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ae80141e1208d1c5a7c3417d79a09aa510c5b6ecaaa08884ca45e42583daed90\",\"dweb:/ipfs/Qmc6MwPwwDC242vwEJWyGhwUbKLKc7ab9hUau2JCmuHrTT\"]},\"lib/forge-std/src/console.sol\":{\"keccak256\":\"0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70\",\"dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec\"]},\"lib/forge-std/src/console2.sol\":{\"keccak256\":\"0x954646445d1014c3cd85c7918f5e7adeeca5ee44b68c00bafa237e597a4e35ea\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://516fa3be52da4763147175bfba4be0aa011fadbb0c1afb01f97265bd4cee7973\",\"dweb:/ipfs/QmdixAyMJefx7qePChgdxcBH5MxhmN7vsqPuPLx3CgrVmF\"]},\"lib/forge-std/src/interfaces/IMulticall3.sol\":{\"keccak256\":\"0x7aac1389150499a922d1f9ef5749c908cef127cb2075b92fa17e9cb611263d0a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d95ebb7c7c463e08ebc12dab639945752fb2480acfc6e86da32f72732a7fd0c0\",\"dweb:/ipfs/QmNXK8P8oPWwajsQHvAHw3JPyQidPLCGQN3hWu1Lk6PBL2\"]},\"lib/forge-std/src/mocks/MockERC20.sol\":{\"keccak256\":\"0xd8703f49411737ecf8d411f8fa66b2bf0ef972ba28b7a4adf1748c63df1bf682\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b7c10a6b8112f6fe3cdccb6240ecd382765216b1a82e9a86a0fec8f5e09eadd1\",\"dweb:/ipfs/QmdRvPCU4RkjMHsTu3Ric1ZEF1AWDNLp78unFC5aWP17xq\"]},\"lib/forge-std/src/mocks/MockERC721.sol\":{\"keccak256\":\"0xa24468244abb66e663fb7eee6463cb518eb9a7c14e1071548ff564cca825bbca\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://145585a2194aa6e2d30edfe709ef2814e20b1b4540469aa6a8f50c841fcb9070\",\"dweb:/ipfs/QmZrwbvtpbtTxqbW5phUrwb3F1tBiPSQc6jZJAXBfsBsAh\"]},\"lib/forge-std/src/safeconsole.sol\":{\"keccak256\":\"0xbaf41fdc6c54297e7cd8250e48b0f20eaac918e342a1028cef3f9a52ac086381\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://a500ad81dea226f9910e6b50f99a9ff930105e393a692cbfb2185e4cdb4424ae\",\"dweb:/ipfs/QmVbUQpXNMmMWRiy4FvBNczzq46BMGfUoBikvSHNiCxVTq\"]},\"pkg/contracts/test/shared/GasHelpers2.sol\":{\"keccak256\":\"0x99d4f66e98d4965ec3388a695b8bea71ebeea1137e611644dee70fd934e615e5\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://102f407d8f588e70647166997533a3d677e3051716091afc3877d08940ddcf4c\",\"dweb:/ipfs/QmdDmEBhmJE4zhySTYQXof4aEo59srqb68yGmEg5UC7NBk\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.19+commit.7dd6d404"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_address",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "val",
+              "type": "uint256[]",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_array",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int256[]",
+              "name": "val",
+              "type": "int256[]",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_array",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address[]",
+              "name": "val",
+              "type": "address[]",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_array",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "",
+              "type": "bytes",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_bytes",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_bytes32",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int256",
+              "name": "",
+              "type": "int256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_int",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "address",
+              "name": "val",
+              "type": "address",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_address",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "val",
+              "type": "uint256[]",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_array",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "int256[]",
+              "name": "val",
+              "type": "int256[]",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_array",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "address[]",
+              "name": "val",
+              "type": "address[]",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_array",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "bytes",
+              "name": "val",
+              "type": "bytes",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_bytes",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "bytes32",
+              "name": "val",
+              "type": "bytes32",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_bytes32",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "int256",
+              "name": "val",
+              "type": "int256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "decimals",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_decimal_int",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "val",
+              "type": "uint256",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "decimals",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_decimal_uint",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "int256",
+              "name": "val",
+              "type": "int256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_int",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "string",
+              "name": "val",
+              "type": "string",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_string",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "key",
+              "type": "string",
+              "indexed": false
+            },
+            {
+              "internalType": "uint256",
+              "name": "val",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_named_uint",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_string",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "log_uint",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "",
+              "type": "bytes",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "logs",
+          "anonymous": false
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "IS_TEST",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "excludeArtifacts",
+          "outputs": [
+            {
+              "internalType": "string[]",
+              "name": "excludedArtifacts_",
+              "type": "string[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "excludeContracts",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "excludedContracts_",
+              "type": "address[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "excludeSenders",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "excludedSenders_",
+              "type": "address[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "failed",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bool",
+              "name": "enable",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "setEnableGasLog"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "targetArtifactSelectors",
+          "outputs": [
+            {
+              "internalType": "struct StdInvariant.FuzzSelector[]",
+              "name": "targetedArtifactSelectors_",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "addr",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes4[]",
+                  "name": "selectors",
+                  "type": "bytes4[]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "targetArtifacts",
+          "outputs": [
+            {
+              "internalType": "string[]",
+              "name": "targetedArtifacts_",
+              "type": "string[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "targetContracts",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "targetedContracts_",
+              "type": "address[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "targetInterfaces",
+          "outputs": [
+            {
+              "internalType": "struct StdInvariant.FuzzInterface[]",
+              "name": "targetedInterfaces_",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "addr",
+                  "type": "address"
+                },
+                {
+                  "internalType": "string[]",
+                  "name": "artifacts",
+                  "type": "string[]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "targetSelectors",
+          "outputs": [
+            {
+              "internalType": "struct StdInvariant.FuzzSelector[]",
+              "name": "targetedSelectors_",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "addr",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes4[]",
+                  "name": "selectors",
+                  "type": "bytes4[]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "targetSenders",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "targetedSenders_",
+              "type": "address[]"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/contracts/=lib/allo-v2/lib/openzeppelin-contracts/contracts/",
+        "@prb/math/=lib/allo-v2/lib/v2-core/lib/prb-math/",
+        "@prb/test/=lib/allo-v2/lib/v2-core/lib/prb-test/src/",
+        "@sablier/v2-core/=lib/allo-v2/lib/v2-core/",
+        "ERC1155/=lib/allo-v2/lib/hats-protocol/lib/ERC1155/",
+        "allo-v2-contracts/=lib/allo-v2/contracts/",
+        "allo-v2-test/=lib/allo-v2/test/",
+        "allo-v2/=lib/allo-v2/",
+        "ds-test/=lib/forge-std/lib/ds-test/src/",
+        "eas-contracts/=lib/allo-v2/lib/eas-contracts/contracts/",
+        "erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-gas-snapshot/=lib/allo-v2/lib/permit2/lib/forge-gas-snapshot/src/",
+        "forge-std/=lib/forge-std/src/",
+        "hats-protocol/=lib/allo-v2/lib/hats-protocol/",
+        "openzeppelin-contracts-upgradeable/=lib/allo-v2/lib/openzeppelin-contracts-upgradeable/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "openzeppelin/=lib/openzeppelin-contracts/contracts/",
+        "permit2/=lib/allo-v2/lib/permit2/",
+        "prb-math/=lib/allo-v2/lib/v2-core/lib/prb-math/src/",
+        "prb-test/=lib/allo-v2/lib/v2-core/lib/prb-test/src/",
+        "safe-contracts/=lib/safe-contracts/",
+        "solady/=lib/allo-v2/lib/solady/",
+        "solarray/=lib/allo-v2/lib/v2-core/lib/solarray/src/",
+        "solbase/=lib/allo-v2/lib/hats-protocol/lib/solbase/src/",
+        "solmate/=lib/allo-v2/lib/permit2/lib/solmate/",
+        "utils/=lib/allo-v2/lib/hats-protocol/lib/utils/",
+        "v2-core/=lib/allo-v2/lib/v2-core/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 1000
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "pkg/contracts/test/shared/GasHelpers2.sol": "GasHelpers2"
+      },
+      "evmVersion": "paris",
+      "libraries": {}
+    },
+    "sources": {
+      "lib/forge-std/lib/ds-test/src/test.sol": {
+        "keccak256": "0x8758531bbac3972efcf1fa46383dbe1d276406fe527bc7abb2f236486278e83b",
+        "urls": [
+          "bzz-raw://1f64264d61506847acf8761e84aff690cebe830958eac00bac7924d8be569240",
+          "dweb:/ipfs/QmSekDJvJ82MZAmr63n7YvfLzQ7gS4NLSHPmHL3GN3rw8k"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "lib/forge-std/src/Base.sol": {
+        "keccak256": "0x4ff1a785311017d1eedb1b4737956fa383067ad34eb439abfec1d989754dde1c",
+        "urls": [
+          "bzz-raw://f553622969b9fdb930246704a4c10dfaee6b1a4468c142fa7eb9dc292a438224",
+          "dweb:/ipfs/QmcxqHnqdQsMVtgsfH9VNLmZ3g7GhgNagfq7yvNCDcCHFK"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/StdAssertions.sol": {
+        "keccak256": "0x1a0dee4d8b2c81e9318e87dd85ef009467ebf7dba6575530d1fce94d34dbae60",
+        "urls": [
+          "bzz-raw://ddd790c86ddde1013d1f7a552a80168eacf2e9244077f96799180644ad523a5b",
+          "dweb:/ipfs/QmYinBFt9uEVFXP9ytT9CDoNpzWieQVgLWRFRNiypMzJaL"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/StdChains.sol": {
+        "keccak256": "0x1419991b2a8eb2de79b9bd2b3c5a0ceb5d7636ab9bcddde0b71701fd6ad47273",
+        "urls": [
+          "bzz-raw://7afc962ec6e60e1ff749cd0d4c671bc3b85386c68d26b824d4a6c6e6e8255e85",
+          "dweb:/ipfs/QmWwfj6Qk8QBcnGD45seGnDXtUmC9CYKuPNJCApSjLyPSj"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/StdCheats.sol": {
+        "keccak256": "0xb72f3519e0bf7d31df5d68557525f4fc55d861c3fb3b0f7793144ef7c94cbeb7",
+        "urls": [
+          "bzz-raw://f3456d0f78e6f61203fa7871ba2df0d35925f10db3baee14be623ce2a35b84e2",
+          "dweb:/ipfs/QmWE6QQSBvJifHMraisBTrf1x4WCwrDoTPLX8UKajTiApc"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/StdError.sol": {
+        "keccak256": "0xbf477b11a42d7611696956546bcfaa29317d1166bf65e402344599c05943fc77",
+        "urls": [
+          "bzz-raw://bc2e117d1135e030862b96a6526a43feb38d396cc79857f1fb696d4eff0e5fd6",
+          "dweb:/ipfs/QmdSuQ5RrQudTLsNmWXGEeVJX8gR5U9XPm6m4dwwuQnJrj"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/StdInvariant.sol": {
+        "keccak256": "0x67299bfacd77fddfa2a67b8e2b901e0e333618a4975fb94850b07475e51f6de6",
+        "urls": [
+          "bzz-raw://1b61121d310f4053ce344b345b4a9ccf43b059daf9097ec2647f594beaca896d",
+          "dweb:/ipfs/QmZUCoTtXBM9zfAZVbj2dFPPnKaV1CSZzXE7zictyg3Gfz"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/StdJson.sol": {
+        "keccak256": "0x8f914dbd016bd0e318fe2b8bd556fbc8256c7cddc24e3e4fcb9f3c1c1935592d",
+        "urls": [
+          "bzz-raw://19e704df493dde38323303b07d18cadfeb4dcadf1ddc2301add4aea9474fbb5e",
+          "dweb:/ipfs/QmZasuGiLK8LHwWtvpqEBxUR6QFY6GdzLMTJ9q7CMf8PNZ"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/StdMath.sol": {
+        "keccak256": "0xd90ad4fd8aeaeb8929964e686e769fdedd5eded3fc3815df194a0ab9f91a3fb2",
+        "urls": [
+          "bzz-raw://7919b70f636c7b805223992f28ad1ad0145d6c1385b5931a3589aface5fe6c92",
+          "dweb:/ipfs/QmY7FRaULwoGgFteF8GawjQJRfasNgpWnU2aiMsFrYpuTC"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/StdStorage.sol": {
+        "keccak256": "0x4298f3f4cedaedb07029820b1daad2c03af45379559392201f7bf3ec71105811",
+        "urls": [
+          "bzz-raw://6e062f36d8d1ae3c383ef8975757926eaa9c4de3a92b5f1fe2d12748bcd8db32",
+          "dweb:/ipfs/QmcWkv3ia5Ew4DZNcudMNSTNXZ3W2QiXTZunRd44e9BT8z"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/StdStyle.sol": {
+        "keccak256": "0x43e2a8a9b9c2574dabe74f11adf6f782df218f463540e3b5b563609fe108597d",
+        "urls": [
+          "bzz-raw://51363ca97404cf4128e1141428949768c31929e75e014b02c85e887fbbb4f1b8",
+          "dweb:/ipfs/QmVhtbQc2fU4rRmbcfBtz34mAgG4BAZBsbna1Ca4SkoPsK"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/StdUtils.sol": {
+        "keccak256": "0x502b18a4becda6ecd91fa8b419d8034946bfa80e6cc7f6497f51f8565bfadae0",
+        "urls": [
+          "bzz-raw://bf499ee483a1dfd02023d4ce78ed4029a49794ccd5b849aaab912faea0d2ba61",
+          "dweb:/ipfs/QmP6hwNZW7sYbQK9fBzuZWxfLm6Swx2nKzvZ54qWNqQkzX"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/Test.sol": {
+        "keccak256": "0x39b1729d5868c8e94ab8af16751eb500a17fe3870dc627d2b7ddcd5df18d7ad0",
+        "urls": [
+          "bzz-raw://1568c82aff125cc4b0fc168be9d67ac313f469a3c7405c5493caecaaaecfb765",
+          "dweb:/ipfs/QmXByuZReJsdu1jDcxj1FcmpcUnzoBcqybn9kWgDAECWri"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/Vm.sol": {
+        "keccak256": "0x7c6be780decc2c54d0c65990b2f0a66d6d25778a3840a55977344290ef544fce",
+        "urls": [
+          "bzz-raw://ae80141e1208d1c5a7c3417d79a09aa510c5b6ecaaa08884ca45e42583daed90",
+          "dweb:/ipfs/Qmc6MwPwwDC242vwEJWyGhwUbKLKc7ab9hUau2JCmuHrTT"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/console.sol": {
+        "keccak256": "0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba",
+        "urls": [
+          "bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70",
+          "dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/console2.sol": {
+        "keccak256": "0x954646445d1014c3cd85c7918f5e7adeeca5ee44b68c00bafa237e597a4e35ea",
+        "urls": [
+          "bzz-raw://516fa3be52da4763147175bfba4be0aa011fadbb0c1afb01f97265bd4cee7973",
+          "dweb:/ipfs/QmdixAyMJefx7qePChgdxcBH5MxhmN7vsqPuPLx3CgrVmF"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/interfaces/IMulticall3.sol": {
+        "keccak256": "0x7aac1389150499a922d1f9ef5749c908cef127cb2075b92fa17e9cb611263d0a",
+        "urls": [
+          "bzz-raw://d95ebb7c7c463e08ebc12dab639945752fb2480acfc6e86da32f72732a7fd0c0",
+          "dweb:/ipfs/QmNXK8P8oPWwajsQHvAHw3JPyQidPLCGQN3hWu1Lk6PBL2"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/mocks/MockERC20.sol": {
+        "keccak256": "0xd8703f49411737ecf8d411f8fa66b2bf0ef972ba28b7a4adf1748c63df1bf682",
+        "urls": [
+          "bzz-raw://b7c10a6b8112f6fe3cdccb6240ecd382765216b1a82e9a86a0fec8f5e09eadd1",
+          "dweb:/ipfs/QmdRvPCU4RkjMHsTu3Ric1ZEF1AWDNLp78unFC5aWP17xq"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/mocks/MockERC721.sol": {
+        "keccak256": "0xa24468244abb66e663fb7eee6463cb518eb9a7c14e1071548ff564cca825bbca",
+        "urls": [
+          "bzz-raw://145585a2194aa6e2d30edfe709ef2814e20b1b4540469aa6a8f50c841fcb9070",
+          "dweb:/ipfs/QmZrwbvtpbtTxqbW5phUrwb3F1tBiPSQc6jZJAXBfsBsAh"
+        ],
+        "license": "MIT"
+      },
+      "lib/forge-std/src/safeconsole.sol": {
+        "keccak256": "0xbaf41fdc6c54297e7cd8250e48b0f20eaac918e342a1028cef3f9a52ac086381",
+        "urls": [
+          "bzz-raw://a500ad81dea226f9910e6b50f99a9ff930105e393a692cbfb2185e4cdb4424ae",
+          "dweb:/ipfs/QmVbUQpXNMmMWRiy4FvBNczzq46BMGfUoBikvSHNiCxVTq"
+        ],
+        "license": "MIT"
+      },
+      "pkg/contracts/test/shared/GasHelpers2.sol": {
+        "keccak256": "0x99d4f66e98d4965ec3388a695b8bea71ebeea1137e611644dee70fd934e615e5",
+        "urls": [
+          "bzz-raw://102f407d8f588e70647166997533a3d677e3051716091afc3877d08940ddcf4c",
+          "dweb:/ipfs/QmdDmEBhmJE4zhySTYQXof4aEo59srqb68yGmEg5UC7NBk"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "id": 101
+}

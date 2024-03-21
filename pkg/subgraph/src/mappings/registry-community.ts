@@ -20,7 +20,6 @@ import {
   PoolCreated,
   MemberKicked,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
-("../../generated/RegistryFactory/RegistryFactory");
 
 import { RegistryFactory as RegistryFactoryContract } from "../../generated/RegistryFactory/RegistryFactory";
 
