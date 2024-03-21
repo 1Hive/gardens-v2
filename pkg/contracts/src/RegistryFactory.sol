@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import "../src/RegistryCommunity.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity.sol";
+
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract RegistryFactory is Ownable {
     uint256 public nonce = 0;

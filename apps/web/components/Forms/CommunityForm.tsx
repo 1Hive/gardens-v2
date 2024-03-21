@@ -209,7 +209,7 @@ export const CommunityForm = ({
   };
 
   const isKickMemberEnabled = watch("isKickMemberEnabled");
-  const inputClassname = "input input-bordered input-info w-full max-w-md";
+  const inputClassname = "input input-bordered input-info w-full";
   const labelClassname = "mb-2 text-xs text-secondary";
 
   useEffect(() => {
@@ -262,7 +262,7 @@ export const CommunityForm = ({
                 Protocol fee %
               </label>
               <select
-                className="select select-accent w-full max-w-md"
+                className="select select-accent w-full"
                 {...register("feeAmount", { required: true })}
               >
                 <option value={0}>0%</option>

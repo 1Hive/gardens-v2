@@ -1,11 +1,9 @@
 import { Badge, StatusBadge } from "@/components";
-import { formatAddress } from "@/utils/formatAddress";
-import { honeyIcon } from "@/assets";
+import { EthAddress } from "@/components";
 import Image from "next/image";
-import { alloABI, cvStrategyABI } from "@/src/generated";
+import { cvStrategyABI } from "@/src/generated";
 import { Abi, Address, createPublicClient, http } from "viem";
 import { getContractsAddrByChain } from "@/constants/contracts";
-import { proposalsMockData } from "@/constants/proposalsMockData";
 import { getChain } from "@/configs/chainServer";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
@@ -15,6 +13,8 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
+import * as dn from "dnum";
+import { Dnum } from "dnum";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +27,9 @@ type ProposalsMock = {
 };
 
 type UnparsedProposal = {
-  submitter: `0x${string}`;
-  beneficiary: `0x${string}`;
-  requestedToken: `0x${string}`;
+  submitter: Address;
+  beneficiary: Address;
+  requestedToken: Address;
   requestedAmount: number;
   stakedTokens: number;
   proposalType: any;
@@ -44,12 +44,12 @@ type UnparsedProposal = {
 type Proposal = UnparsedProposal & ProposalsMock;
 
 type PoolData = {
-  profileId: `0x${string}`;
-  strategy: `0x${string}`;
-  token: `0x${string}`;
+  profileId: Address;
+  strategy: Address;
+  token: Address;
   metadata: { protocol: bigint; pointer: string };
-  managerRole: `0x${string}`;
-  adminRole: `0x${string}`;
+  managerRole: Address;
+  adminRole: Address;
 };
 
 type ProposalMetadata = {
@@ -58,6 +58,17 @@ type ProposalMetadata = {
 };
 
 const { urqlClient } = initUrqlClient();
+
+//TODO: move to utils file
+const prettyTimestamp = (timestamp: number) => {
+  const date = new Date(timestamp * 1000);
+
+  const day = date.getDate();
+  const month = date.toLocaleString("default", { month: "short" });
+  const year = date.getFullYear();
+
+  return `${day} ${month} ${year}`;
+};
 
 export default async function Proposal({
   params: { proposalId, poolId, chain, garden },
@@ -71,32 +82,24 @@ export default async function Proposal({
     { poolId: poolId, proposalId: proposalId, garden: garden },
   );
 
-  if (
-    !getProposalQuery?.tokenGarden?.communities?.[0].strategies?.[0]
-      .proposals?.[0]
-  ) {
+  const proposalData = getProposalQuery?.cvproposal;
+
+  if (!proposalData) {
     return <div>{`Proposal ${proposalId} not found`}</div>;
   }
 
-  const proposalData =
-    getProposalQuery?.tokenGarden?.communities?.[0].strategies?.[0]
-      .proposals?.[0];
-  // console.log("proposalData", proposalData);
-
+  const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
   const convictionLast = proposalData.convictionLast;
   const totalStakedTokens = proposalData.stakedTokens;
-  // const maxCVSupply = proposalData.
-  // const totalEffectiveActivePoints = proposalData.
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount;
-  const beneficiary = proposalData.beneficiary;
-  const submitter = proposalData.submitter;
+  const beneficiary = proposalData.beneficiary as Address;
+  const submitter = proposalData.submitter as Address;
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
 
-  // console.log(metadata);
-  //@todo: ipfs fetch
+  console.log(requestedAmount);
 
   const getIpfsData = (ipfsHash: string) =>
     fetch(`https://ipfs.io/ipfs/${ipfsHash}`, {
@@ -112,8 +115,8 @@ export default async function Proposal({
   try {
     const rawProposalMetadata = await getIpfsData(metadata);
     const proposalMetadata: ProposalMetadata = await rawProposalMetadata.json();
-    title = proposalMetadata.title;
-    description = proposalMetadata.description;
+    title = proposalMetadata?.title || "No title found";
+    description = proposalMetadata?.description || "No description found";
   } catch (error) {
     console.log(error);
   }
@@ -174,14 +177,25 @@ export default async function Proposal({
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
       <main className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 bg-surface p-16">
         {/* main content */}
-        <div className="flex items-center justify-between">
-          <Badge type={type} />
+        <div className="flex justify-between">
+          <div className="flex items-center gap-2">
+            <Badge type={type} />
+            <h4 className="font-sm font-bold">
+              <span className="">
+                {" "}
+                {prettyTimestamp(proposalData?.createdAt || 0)}
+              </span>
+            </h4>
+          </div>
+
           <h4 className="font-press">Pool: {poolId}</h4>
         </div>
 
         {/* title - description - status */}
-        <div className="relative space-y-12 rounded-xl border-2 border-black bg-white px-8 py-4">
-          <StatusBadge status={status} />
+        <div className="border2 relative space-y-12 rounded-xl bg-white px-8 py-4">
+          <div className="flex justify-end">
+            <StatusBadge status={status} />
+          </div>
           <div className=" flex items-baseline justify-end space-x-4 ">
             <h3 className="w-full text-center text-2xl font-semibold">
               {title}
@@ -192,30 +206,31 @@ export default async function Proposal({
           </div>
           <div>
             {/* reqAmount - bene - creatBy */}
-            <div className="flex justify-between">
+            <div className="flex justify-between ">
               {requestedAmount && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md underline">Requested Amount</span>
-                  <span className="text-md flex items-center gap-2">
-                    <Image
-                      src={honeyIcon}
-                      alt="honey icon"
-                      className="h-8 w-8"
-                    />
-                    {requestedAmount} <span>HNY</span>
+                  <span className="text-md font-bold underline">
+                    Requested Amount
+                  </span>
+                  <span className="flex items-center gap-2 text-lg">
+                    {requestedAmount} <span>{tokenSymbol}</span>
                   </span>
                 </div>
               )}
               {beneficiary && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md underline">Beneficiary</span>
-                  <span className="text-md">{formatAddress(beneficiary)}</span>
+                  <span className="text-md font-bold underline">
+                    Beneficiary
+                  </span>
+                  <EthAddress address={beneficiary} actions="copy" />
                 </div>
               )}
               {submitter && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md underline">Created By</span>
-                  <span className="text-md">{formatAddress(submitter)}</span>
+                  <span className="text-md font-bold underline">
+                    Created By
+                  </span>
+                  <EthAddress address={submitter} actions="copy" />
                 </div>
               )}
             </div>
@@ -433,26 +448,5 @@ function executeAllFunctions(
   //   totalEffectiveActivePoints,
   // );
 
-  // Return the results object
   return results;
 }
-
-// Example usage
-
-//
-// function transformData(data: any[]): UnparsedProposal {
-//   return {
-//     submitter: data[0],
-//     beneficiary: data[1],
-//     requestedToken: data[2],
-//     requestedAmount: Number(data[3]),
-//     stakedTokens: Number(data[4]),
-//     proposalType: data[5],
-//     proposalStatus: data[6],
-//     blockLast: Number(data[7]),
-//     convictionLast: Number(data[8]),
-//     agreementActionId: Number(data[9]),
-//     threshold: Number(data[10]),
-//     voterStakedPointsPct: Number(data[11]),
-//   };
-// }

@@ -350,6 +350,11 @@ export type CVStrategyConfig = {
   maxRatio: Scalars['BigInt'];
   weight: Scalars['BigInt'];
   proposalType: Scalars['BigInt'];
+  pointSystem: Scalars['BigInt'];
+  pointsPerMember?: Maybe<Scalars['BigInt']>;
+  pointsPerTokenStaked?: Maybe<Scalars['BigInt']>;
+  tokensPerPoint?: Maybe<Scalars['BigInt']>;
+  maxAmount?: Maybe<Scalars['BigInt']>;
 };
 
 export type CVStrategyConfig_filter = {
@@ -402,6 +407,46 @@ export type CVStrategyConfig_filter = {
   proposalType_lte?: InputMaybe<Scalars['BigInt']>;
   proposalType_in?: InputMaybe<Array<Scalars['BigInt']>>;
   proposalType_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointSystem?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_not?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_gt?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_lt?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_gte?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_lte?: InputMaybe<Scalars['BigInt']>;
+  pointSystem_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointSystem_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointsPerMember?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_not?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_gt?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_lt?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_gte?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_lte?: InputMaybe<Scalars['BigInt']>;
+  pointsPerMember_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointsPerMember_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointsPerTokenStaked?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_not?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_gt?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_lt?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_gte?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_lte?: InputMaybe<Scalars['BigInt']>;
+  pointsPerTokenStaked_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  pointsPerTokenStaked_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  tokensPerPoint?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_not?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_gt?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_lt?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_gte?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_lte?: InputMaybe<Scalars['BigInt']>;
+  tokensPerPoint_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  tokensPerPoint_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  maxAmount?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_not?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_gt?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_lt?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_gte?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_lte?: InputMaybe<Scalars['BigInt']>;
+  maxAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  maxAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
@@ -419,7 +464,12 @@ export type CVStrategyConfig_orderBy =
   | 'decay'
   | 'maxRatio'
   | 'weight'
-  | 'proposalType';
+  | 'proposalType'
+  | 'pointSystem'
+  | 'pointsPerMember'
+  | 'pointsPerTokenStaked'
+  | 'tokensPerPoint'
+  | 'maxAmount';
 
 export type CVStrategy_filter = {
   id?: InputMaybe<Scalars['ID']>;
@@ -531,6 +581,7 @@ export type CVStrategy_orderBy =
   | 'registryCommunity__id'
   | 'registryCommunity__chainId'
   | 'registryCommunity__profileId'
+  | 'registryCommunity__communityFee'
   | 'registryCommunity__protocolFee'
   | 'registryCommunity__communityName'
   | 'registryCommunity__covenantIpfsHash'
@@ -546,6 +597,11 @@ export type CVStrategy_orderBy =
   | 'config__maxRatio'
   | 'config__weight'
   | 'config__proposalType'
+  | 'config__pointSystem'
+  | 'config__pointsPerMember'
+  | 'config__pointsPerTokenStaked'
+  | 'config__tokensPerPoint'
+  | 'config__maxAmount'
   | 'proposals'
   | 'memberActive';
 
@@ -674,6 +730,7 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity__id'
   | 'registryCommunity__chainId'
   | 'registryCommunity__profileId'
+  | 'registryCommunity__communityFee'
   | 'registryCommunity__protocolFee'
   | 'registryCommunity__communityName'
   | 'registryCommunity__covenantIpfsHash'
@@ -911,6 +968,7 @@ export type RegistryCommunity = {
   id: Scalars['ID'];
   chainId: Scalars['BigInt'];
   profileId?: Maybe<Scalars['String']>;
+  communityFee?: Maybe<Scalars['BigInt']>;
   protocolFee?: Maybe<Scalars['BigInt']>;
   communityName?: Maybe<Scalars['String']>;
   covenantIpfsHash?: Maybe<Scalars['String']>;
@@ -980,6 +1038,14 @@ export type RegistryCommunity_filter = {
   profileId_ends_with_nocase?: InputMaybe<Scalars['String']>;
   profileId_not_ends_with?: InputMaybe<Scalars['String']>;
   profileId_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  communityFee?: InputMaybe<Scalars['BigInt']>;
+  communityFee_not?: InputMaybe<Scalars['BigInt']>;
+  communityFee_gt?: InputMaybe<Scalars['BigInt']>;
+  communityFee_lt?: InputMaybe<Scalars['BigInt']>;
+  communityFee_gte?: InputMaybe<Scalars['BigInt']>;
+  communityFee_lte?: InputMaybe<Scalars['BigInt']>;
+  communityFee_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  communityFee_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   protocolFee?: InputMaybe<Scalars['BigInt']>;
   protocolFee_not?: InputMaybe<Scalars['BigInt']>;
   protocolFee_gt?: InputMaybe<Scalars['BigInt']>;
@@ -1154,6 +1220,7 @@ export type RegistryCommunity_orderBy =
   | 'id'
   | 'chainId'
   | 'profileId'
+  | 'communityFee'
   | 'protocolFee'
   | 'communityName'
   | 'covenantIpfsHash'

@@ -90,9 +90,15 @@ importers:
       '@wagmi/core':
         specifier: ~1
         version: 1.4.13(@types/react@18.2.48)(react@18.2.0)(typescript@5.2.2)(viem@1.21.4)
+      addreth:
+        specifier: ^2.0.0
+        version: 2.0.0(react-dom@18.2.0)(react@18.2.0)(wagmi@1.4.13)
       classnames:
         specifier: ^2.5.1
         version: 2.5.1
+      dnum:
+        specifier: ^2.11.0
+        version: 2.11.0
       echarts:
         specifier: ^5.4.2
         version: 5.4.3
@@ -239,7 +245,7 @@ importers:
         version: 8.10.0(eslint@8.56.0)
       eslint-config-turbo:
         specifier: latest
-        version: 1.12.3(eslint@8.56.0)
+        version: 1.12.4(eslint@8.56.0)
       eslint-plugin-html:
         specifier: ^7.1.0
         version: 7.1.0
@@ -6322,6 +6328,18 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
+  /addreth@2.0.0(react-dom@18.2.0)(react@18.2.0)(wagmi@1.4.13):
+    resolution: {integrity: sha512-Ni87wC0+3FAwuIlE37M7uFD+VxHoWFeUUljj6OwLGz8qzNQZCG1BXQ5d0b5aJxuhTQaA6EVuoFPyCXSCfJEL/A==}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+      wagmi: '>=2.0.0'
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      wagmi: 1.4.13(@types/react@18.2.48)(react-dom@18.2.0)(react-native@0.73.3)(react@18.2.0)(typescript@5.2.2)(viem@1.21.4)
+    dev: false
+
   /aes-js@3.1.2:
     resolution: {integrity: sha512-e5pEa2kBnBOgR4Y/p20pskXI74UEz7de8ZGVo58asOtvSVG5YAbJeELPZxOmt+Bnz3rX753YKhfIn4X4l1PPRQ==}
 
@@ -7903,6 +7921,12 @@ packages:
       lodash.clone: 4.5.0
     dev: true
 
+  /dnum@2.11.0:
+    resolution: {integrity: sha512-JaVo6HlaVC3xHqoKmiiqTqk2/z2khBmkQTaPw78WkDsJESVX0zPPAhQ3Zv/QKx4L18LkbbPHg6pKl5vdQA5YEA==}
+    dependencies:
+      from-exponential: 1.1.1
+    dev: false
+
   /docker-compose@0.23.19:
     resolution: {integrity: sha512-v5vNLIdUqwj4my80wxFDkNH+4S85zsRuH29SO7dCWVWPCMt/ohZBsGN6g6KXWifT0pzQ7uOxqEKCYCDPJ8Vz4g==}
     engines: {node: '>= 6.0.0'}
@@ -8391,13 +8415,13 @@ packages:
       eslint: 8.56.0
     dev: true
 
-  /eslint-config-turbo@1.12.3(eslint@8.56.0):
-    resolution: {integrity: sha512-Q46MEOiNJpJWC3Et5/YEuIYYhbOieS04yZwQOinO2hpZw3folEXV+hbwVo8M+ap/q8gtpjIWiRMZ1A4QxmhEqQ==}
+  /eslint-config-turbo@1.12.4(eslint@8.56.0):
+    resolution: {integrity: sha512-5hqEaV6PNmAYLL4RTmq74OcCt8pgzOLnfDVPG/7PUXpQ0Mpz0gr926oCSFukywKKXjdum3VHD84S7Z9A/DqTAw==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
       eslint: 8.56.0
-      eslint-plugin-turbo: 1.12.3(eslint@8.56.0)
+      eslint-plugin-turbo: 1.12.4(eslint@8.56.0)
     dev: true
 
   /eslint-import-resolver-node@0.3.9:
@@ -8600,8 +8624,8 @@ packages:
       string.prototype.matchall: 4.0.10
     dev: true
 
-  /eslint-plugin-turbo@1.12.3(eslint@8.56.0):
-    resolution: {integrity: sha512-7hEyxa+oP898EFNoxVenHlH8jtBwV1hbbIkdQWgqDcB0EmVNGVEZkYRo5Hm6BuMAjR433B+NISBJdj0bQo4/Lg==}
+  /eslint-plugin-turbo@1.12.4(eslint@8.56.0):
+    resolution: {integrity: sha512-3AGmXvH7E4i/XTWqBrcgu+G7YKZJV/8FrEn79kTd50ilNsv+U3nS2IlcCrQB6Xm2m9avGD9cadLzKDR1/UF2+g==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
@@ -9256,6 +9280,10 @@ packages:
   /fresh@0.5.2:
     resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
     engines: {node: '>= 0.6'}
+
+  /from-exponential@1.1.1:
+    resolution: {integrity: sha512-VBE7f5OVnYwdgB3LHa+Qo29h8qVpxhVO9Trlc+AWm+/XNAgks1tAwMFHb33mjeiof77GglsJzeYF7OqXrROP/A==}
+    dev: false
 
   /fs-constants@1.0.0:
     resolution: {integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==}

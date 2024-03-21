@@ -30,7 +30,7 @@ export const ProposalStats: FC<ProposalStatsProps> = ({
     name: title,
   }));
 
-  console.log(proposalsTotalSupport, proposalsDistributionPoints);
+  // console.log(proposalsTotalSupport, proposalsDistributionPoints);
 
   return (
     <div className="w-full space-y-8 p-2">
