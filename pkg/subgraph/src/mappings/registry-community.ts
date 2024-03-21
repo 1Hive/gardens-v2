@@ -49,7 +49,6 @@ export function handleInitialized(event: RegistryInitialized): void {
 
     const rcc = RegistryCommunityContract.bind(event.address);
 
-    rcc.registryFactory();
     const rfc = RegistryFactoryContract.bind(rcc.registryFactory());
 
     newRC.covenantIpfsHash = rcc.covenantIpfsHash();
