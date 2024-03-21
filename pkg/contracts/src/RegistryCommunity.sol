@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 // import {Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 // import {Allo} from "allo-v2-contracts/core/Allo.sol";
@@ -31,15 +32,9 @@ interface FAllo {
     function getRegistry() external view returns (address);
 }
 
-library DeployCVStrategy {
-    function deployCVStrategy(address allo) public returns (address strategy) {
-        strategy = address(new CVStrategy(address(allo)));
-    }
-}
-
 contract RegistryCommunity is ReentrancyGuard, AccessControl {
     // using ERC165Checker for address;
-    using DeployCVStrategy for address;
+    using SafeERC20 for IERC20;
 
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     /*|--------------------------------------------|*/
@@ -236,8 +231,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         if (_token != address(0)) {
             token = _token;
         }
-        // strategy = address(new CVStrategy(address(allo)));
-        // strategy = address(allo).deployCVStrategy();
         strategy = _strategy;
 
         address[] memory _pool_managers = initialMembers;
@@ -267,12 +260,12 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         uint256 extraStakedAmount = member.stakedAmount - registerStakeAmount;
         uint256 pointsToIncrease = 0;
-        if(extraStakedAmount>0){
+        if (extraStakedAmount > 0) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, extraStakedAmount);
         }
 
-        if (pointsPerMember > 0 || pointsToIncrease>0){
-        memberPowerInStrategy[_member][_strategy] = pointsPerMember + pointsToIncrease; // can be all zero
+        if (pointsPerMember > 0 || pointsToIncrease > 0) {
+            memberPowerInStrategy[_member][_strategy] = pointsPerMember + pointsToIncrease; // can be all zero
         }
         memberActivatedInStrategies[_member][_strategy] = true;
 
@@ -314,7 +307,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         uint256 pointsToIncrease;
 
-
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             //FIX support interface check
             //if (address(memberStrategies[i]) == _strategy) {
@@ -324,9 +316,9 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             }
             //}
         }
-        gardenToken.transferFrom(member, address(this), _amountStaked);
+
+        gardenToken.safeTransferFrom(member, address(this), _amountStaked);
         addressToMemberInfo[member].stakedAmount += _amountStaked;
-    
     }
 
     /*
@@ -343,7 +335,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         if (addressToMemberInfo[member].stakedAmount - _amountUnstaked < registerStakeAmount) {
             revert DecreaseUnderMinimum();
         }
-        gardenToken.transferFrom(member, address(this), _amountUnstaked);
+        gardenToken.safeTransferFrom(member, address(this), _amountUnstaked);
         addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             // if (address(memberStrategies[i]) == _strategy) {
@@ -426,7 +418,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             newMember.isRegistered = true;
 
             newMember.stakedAmount = registerStakeAmount;
-            gardenToken.transferFrom(
+            gardenToken.safeTransferFrom(
                 _member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
             );
             //TODO: Test if revert because of approve on contract, if doesnt work, transfer all to this contract, and then transfer to each receiver
@@ -434,11 +426,11 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             // gardenToken.approve(feeReceiver,communityFeeAmount);
             //Error: ProtocolFee is equal to zero
             if (communityFeeAmount > 0) {
-                gardenToken.transfer(feeReceiver, communityFeeAmount);
+                gardenToken.safeTransfer(feeReceiver, communityFeeAmount);
             }
             // gardenToken.approve(gardensFactory.getGardensFeeReceiver(),gardensFeeAmount);
             if (gardensFeeAmount > 0) {
-                gardenToken.transfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
+                gardenToken.safeTransfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
             }
 
             emit MemberRegistered(_member, registerStakeAmount);

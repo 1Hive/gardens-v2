@@ -133,7 +133,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event PoolAmountIncreased(uint256 amount);
     event PowerIncreased(address member, uint256 tokensStaked, uint256 pointsToIncrease);
     event PowerDecreased(address member, uint256 tokensUnStaked, uint256 pointsToDecrease);
-    event SupportAdded(address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast);
+    event SupportAdded(
+        address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
+    );
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -147,10 +149,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     RegistryCommunity public registryCommunity;
 
     mapping(uint256 => StrategyStruct.Proposal) public proposals;
-    mapping(address => uint256) public totalVoterStakePct; // maybe should be replace to fixed max amount like 100 points
-    mapping(address => uint256[]) public voterStakedProposals; // voter
-    //Extra power per member
-    // mapping(address => uint256) public memberPowerBalance;
+    mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
+    mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
 
     uint256 public decay;
     uint256 public maxRatio;
@@ -687,20 +687,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         // console.log("newTotalVotingSupport", newTotalVotingSupport);
         uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
 
-        // if(pointSystem = 1){
-        //     participantBalance+ =
-        // }
         // console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
-        // require(newTotalVotingSupport <= participantBalance, "NOT_ENOUGH_BALANCE");
         if (newTotalVotingSupport > participantBalance) {
             revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
         }
 
         totalVoterStakePct[_sender] = newTotalVotingSupport;
-        //        totalParticipantSupportAt[currentRound][_sender] = newTotalVotingSupport;
-
-        //        totalSupportAt[currentRound] = _applyDelta(getTotalSupport(), deltaSupportSum);
     }
 
     function _addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport) internal {
