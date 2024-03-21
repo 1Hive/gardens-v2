@@ -295,7 +295,7 @@ export function RegisterMember({
               </div>
             </div>
           </div>
-          {/* <h4>allowance: {formatTokenAmount(allowance as string, 18)}</h4> */}
+          <h4>allowance: {formatTokenAmount(allowance as string, 18)}</h4>
 
           <div className="stat flex-1 items-center gap-2">
             <Button
@@ -311,7 +311,7 @@ export function RegisterMember({
                   : "Register in community"
                 : "Connect Wallet"}
             </Button>
-            {/* <Button onClick={() => writeMockallow?.()}>Allow Tokens</Button> */}
+            <Button onClick={() => writeMockallow?.()}>Allow Tokens</Button>
           </div>
         </div>
       </div>

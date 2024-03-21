@@ -7,6 +7,7 @@ import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { PRECISION_SCALE } from "@/utils/numbers";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -57,7 +58,9 @@ export function ActivatePoints({
     args: [connectedAccount as Address],
   });
 
-  const { data: powerIncrease } = useContractRead({
+  console.log(connectedAccount, "connectedAccount");
+
+  const { data: pointsVotingPower } = useContractRead({
     address: communityAddress as Address,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "getMemberPowerInStrategy",
@@ -65,18 +68,7 @@ export function ActivatePoints({
     watch: true,
   });
 
-  //manually testing the input for increasePower
-  const {
-    data: increaseStakeData,
-    write: writeIncreasePower,
-    error: errorIncreaseStake,
-    status: increaseStakeStatus,
-  } = useContractWrite({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
-    functionName: "increasePower",
-    args: [10000000000000000000n],
-  });
+  console.log("pointsVotingPower", pointsVotingPower);
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
@@ -109,7 +101,10 @@ export function ActivatePoints({
 
   return (
     <>
-      <div className="flex flex-col gap-4">
+      <p>
+        Power: {((pointsVotingPower as bigint) / PRECISION_SCALE).toString()}
+      </p>
+      <div className="flex flex-col gap-4 pl-4">
         <Button onClick={handleChange} className="w-fit bg-primary">
           {connectedAccount
             ? isMemberActivated
@@ -117,9 +112,6 @@ export function ActivatePoints({
               : "Activate Points"
             : "Connect Wallet"}
         </Button>
-        {/* <Button onClick={() => writeIncreasePower?.()}>
-          Test Increase Power
-        </Button> */}
       </div>
     </>
   );

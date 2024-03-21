@@ -69,13 +69,6 @@ export default async function Pool({
   );
   const strategyObj = data?.cvstrategies?.[0];
 
-  //   enum PointSystem {
-  //     Fixed,
-  //     Capped,
-  //     Unlimited,
-  //     Quadratic
-  // }
-
   const pointSystem = data?.cvstrategies?.[0].config?.pointSystem;
 
   if (!strategyObj) {

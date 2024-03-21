@@ -62,7 +62,7 @@ export function CommunityCard({
     address: communityAddress as Address,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "increasePower",
-    args: [10000000000000000000n],
+    args: [50000000000000000000n],
   });
 
   const pools = strategies ?? [];
@@ -138,7 +138,7 @@ export function CommunityCard({
                 onClick={() => writeIncreasePower?.()}
                 className="max-h-[50px] w-full"
               >
-                Stake 50 more tokens
+                Stake more
               </Button>
               {/* {pools.length > 2 && (
                 <Button
