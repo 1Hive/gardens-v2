@@ -18,6 +18,8 @@ import {
   PowerDecreased,
 } from "../../generated/templates/CVStrategy/CVStrategy";
 
+import { Allo as AlloContract } from "../../generated/templates/CVStrategy/Allo";
+
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
 // export const CTX_PROPOSAL_ID = "proposalId";
@@ -56,6 +58,16 @@ export function handleInitialized(event: InitializedCV): void {
   const cvc = CVStrategyContract.bind(event.address);
 
   let cvs = new CVStrategy(event.address.toHex());
+  let alloAddr = cvc.getAllo();
+
+  const allo = AlloContract.bind(alloAddr);
+
+  let metadata = allo.getPool(poolId).metadata;
+  if (metadata) {
+    log.debug("metadata:{}", [metadata.toString()]);
+    cvs.metadata = metadata ? metadata.toString() : null;
+  }
+
   cvs.poolId = poolId;
   cvs.registryCommunity = registryCommunity;
   let config = new CVStrategyConfig(
