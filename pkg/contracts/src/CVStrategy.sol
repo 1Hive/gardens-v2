@@ -322,8 +322,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         uint256 pointsToDecrease = 0;
         if (pointSystem == StrategyStruct.PointSystem.Unlimited || pointSystem == StrategyStruct.PointSystem.Capped) {
             pointsToDecrease = decreasePowerCappedUnlimited(_member, _amountToUnstake);
-        }
-        else {
+        } else {
             pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
         }
         totalPointsActivated -= pointsToDecrease;
@@ -347,11 +346,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function increasePowerQuadratic(address _member, uint256 _amountToStake) public view returns (uint256) {
-        uint256 totalExtraStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake - registryCommunity.registerStakeAmount();
-        
+        uint256 totalExtraStake =
+            registryCommunity.getMemberStakedAmount(_member) + _amountToStake - registryCommunity.registerStakeAmount();
+
         //                                                      9 for token.decimals/2, 4 for precision
-        uint256 newTotalPoints = sqrt((totalExtraStake/pointConfig.tokensPerPoint)* (10 ** 18)) / (10 ** (9-4)) ;
-        uint256 pointsToIncrease =  (pointConfig.pointsPerMember + newTotalPoints) - registryCommunity.getMemberPowerInStrategy(_member,address(this));
+        uint256 newTotalPoints = sqrt((totalExtraStake / pointConfig.tokensPerPoint) * (10 ** 18)) / (10 ** (9 - 4));
+        uint256 pointsToIncrease = (pointConfig.pointsPerMember + newTotalPoints)
+            - registryCommunity.getMemberPowerInStrategy(_member, address(this));
         return pointsToIncrease;
     }
 
@@ -360,9 +361,12 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function decreasePowerQuadratic(address _member, uint256 _amountToUnstake) internal view returns (uint256) {
-        uint256 newTotalPoints = (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake - registryCommunity.registerStakeAmount())/ pointConfig.tokensPerPoint;
+        uint256 newTotalPoints = (
+            registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake
+                - registryCommunity.registerStakeAmount()
+        ) / pointConfig.tokensPerPoint;
         uint256 pointsToDecrease = newTotalPoints - registryCommunity.getMemberPowerInStrategy(_member, address(this));
-        
+
         return pointsToDecrease;
     }
 
@@ -378,7 +382,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     //     z = 1;
     // }
     // }
-    
 
     function sqrt(uint256 y) internal pure returns (uint256 z) {
         if (y > 3) {
@@ -401,8 +404,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     function getPointsPerTokenStaked() external view returns (uint256) {
         return pointConfig.pointsPerTokenStaked;
     }
-
-    
 
     // [[[proposalId, delta],[proposalId, delta]]]
     // layout.txs -> console.log(data)
@@ -505,7 +506,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     function setPoolActive(bool _active) external {
         _setPoolActive(_active);
     }
-    
+
     //    @TODO: onlyOnwer onlyRegistryCommunity{
     function withdraw(address _member) external override {
         // remove all proposals from the member
@@ -554,6 +555,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         )
     {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
+
         threshold = proposal.requestedAmount == 0 ? 0 : calculateThreshold(proposal.requestedAmount);
         return (
             proposal.submitter,
@@ -745,14 +747,14 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             proposal.voterStake[_sender] = stakedAmount;
 
             bool hasProposal = false;
-            for (uint256 k = 0; k<voterStakedProposals[_sender].length;k++){
-                if(voterStakedProposals[_sender][k] == proposal.proposalId){
+            for (uint256 k = 0; k < voterStakedProposals[_sender].length; k++) {
+                if (voterStakedProposals[_sender][k] == proposal.proposalId) {
                     hasProposal = true;
                     break;
                 }
             }
-            if(!hasProposal){   
-            voterStakedProposals[_sender].push(proposal.proposalId);
+            if (!hasProposal) {
+                voterStakedProposals[_sender].push(proposal.proposalId);
             }
             // proposal.stakedAmount += stakedAmount;
             // uint256 diff =_diffStakedTokens(previousStakedAmount, stakedAmount);

@@ -284,8 +284,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), STAKED_AMOUNT); // 80% of 50 = 40
         assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT); // 80% of 50 = 40
-        
-
 
         /**
          * ASSERTS
@@ -334,8 +332,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), MINIMUM_STAKE); // 100% of 50 = 50
         assertEq(cv.getProposalStakedAmount(proposalId), MINIMUM_STAKE);
         cv.deactivatePoints(address(this));
-        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0); 
-        assertEq(cv.getProposalStakedAmount(proposalId),0);
+        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0);
+        assertEq(cv.getProposalStakedAmount(proposalId), 0);
     }
 
     function test_proposalVoterStake_after_unregister() public {
@@ -365,8 +363,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), MINIMUM_STAKE); // 100% of 50 = 50
         assertEq(cv.getProposalStakedAmount(proposalId), MINIMUM_STAKE);
         registryCommunity.unregisterMember();
-        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0); 
-        assertEq(cv.getProposalStakedAmount(proposalId),0);
+        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0);
+        assertEq(cv.getProposalStakedAmount(proposalId), 0);
     }
 
     function test_conviction_check_function() public {
