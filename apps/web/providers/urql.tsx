@@ -90,11 +90,30 @@ export async function queryByChain<
   if (!addrs) {
     throw new Error("Chain not supported");
   }
+
   return await urqlClient.query<Data>(query, variables, {
     url: addrs.subgraphUrl,
     ...context,
   });
-  // .subscribe((value) => {
-  //   console.log("value", value);
-  // });
+}
+
+export async function subscribeByChain<
+  Data = any,
+  Variables extends AnyVariables = AnyVariables,
+>(
+  urqlClient: Client,
+  chainId: string | number,
+  query: DocumentInput<any, Variables>,
+  variables: Variables = {} as Variables,
+  context?: Partial<OperationContext>,
+) {
+  const addrs = getContractsAddrByChain(chainId);
+  if (!addrs) {
+    throw new Error("Chain not supported");
+  }
+
+  return await urqlClient.subscription<Data>(query, variables, {
+    url: addrs.subgraphUrl,
+    ...context,
+  });
 }

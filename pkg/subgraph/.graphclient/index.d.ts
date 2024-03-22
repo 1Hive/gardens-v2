@@ -1802,7 +1802,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     }>, options?: TOperationContext): Promise<getFactoriesQuery>;
     getTokenGardens(variables?: Exact<{
         [key: string]: never;
-    }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
+    }>, options?: TOperationContext): AsyncIterable<getTokenGardensQuery>;
     isMember(variables: Exact<{
         me: string;
         comm: string;
@@ -1946,7 +1946,7 @@ export declare const getStrategyByPoolDocument: DocumentNode<getStrategyByPoolQu
 export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V, options?: C) => Promise<R> | AsyncIterable<R>;
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
-    getTokenGardens(variables?: getTokenGardensQueryVariables, options?: C): Promise<getTokenGardensQuery>;
+    getTokenGardens(variables?: getTokenGardensQueryVariables, options?: C): AsyncIterable<getTokenGardensQuery>;
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getCommunitiesByGarden(variables: getCommunitiesByGardenQueryVariables, options?: C): Promise<getCommunitiesByGardenQuery>;
     getPoolData(variables: getPoolDataQueryVariables, options?: C): Promise<getPoolDataQuery>;

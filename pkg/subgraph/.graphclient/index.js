@@ -190,7 +190,7 @@ export const getFactoriesDocument = gql `
 }
     `;
 export const getTokenGardensDocument = gql `
-    query getTokenGardens {
+    query getTokenGardens @live {
   tokenGardens {
     id
     chainId

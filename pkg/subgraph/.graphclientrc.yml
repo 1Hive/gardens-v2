@@ -3,5 +3,10 @@ sources:
     handler:
       graphql:
         endpoint: ${SUBGRAPH_URL:http://localhost:8000/subgraphs/name/kamikazebr/gv2}
+
+plugins:
+  - pollingLive:
+      defaultInterval: 1000
+
 documents:
   - ./src/query/queries.graphql
