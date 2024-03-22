@@ -62,7 +62,7 @@ export function handleInitialized(event: InitializedCV): void {
 
   const allo = AlloContract.bind(alloAddr);
 
-  let metadata = allo.getPool(poolId).metadata;
+  let metadata = allo.getPool(poolId).metadata.pointer;
   if (metadata) {
     log.debug("metadata:{}", [metadata.toString()]);
     cvs.metadata = metadata ? metadata.toString() : null;
