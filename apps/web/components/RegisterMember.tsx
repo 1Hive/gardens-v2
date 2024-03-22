@@ -18,7 +18,7 @@ import {
 } from "@/constants/contracts";
 import { useViemClient } from "@/hooks/useViemClient";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
@@ -34,6 +34,7 @@ export function RegisterMember({
   membershipAmount,
   protocolFee,
   communityFee,
+  connectedAccount,
 }: {
   name: string;
   tokenSymbol: string;
@@ -43,8 +44,8 @@ export function RegisterMember({
   membershipAmount: string;
   protocolFee: string;
   communityFee: string;
+  connectedAccount: Address;
 }) {
-  const { address: connectedAccount } = useAccount();
   const chainId = getChainIdFromPath();
   const { openConnectModal } = useConnectModal();
 
@@ -52,7 +53,7 @@ export function RegisterMember({
 
   const registryContractCallConfig = {
     address: communityAddress,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: abiWithErrors2(registryCommunityABI),
   };
 
   const {
@@ -139,9 +140,9 @@ export function RegisterMember({
     hash: allowTokenData?.hash,
   });
 
-  const { data: allowance } = useContractRead({
+  const { data: dataAllowance } = useContractRead({
     address: registerToken,
-    abi: abiWithErrors(erc20ABI),
+    abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
     args: [connectedAccount, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
     watch: true,
@@ -159,7 +160,7 @@ export function RegisterMember({
         writeUnregisterMember();
       } else {
         // Check if allowance is equal to registerStakeAmount
-        if (allowance !== registerStakeAmount) {
+        if (dataAllowance !== registerStakeAmount) {
           writeAllowToken();
           modalRef.current?.showModal();
         } else {
@@ -186,7 +187,7 @@ export function RegisterMember({
   const allowanceFailed = allowTokenStatus === "error";
   const registerMemberFailed = approveToken && registerMemberStatus === "error";
   const allowanceIsSet =
-    allowance === registerStakeAmount && registerMemberFailed;
+    dataAllowance === registerStakeAmount && registerMemberFailed;
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
@@ -206,7 +207,7 @@ export function RegisterMember({
     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
   }, [unregisterMemberStatus]);
 
-  console.log(allowance);
+  console.log(dataAllowance);
 
   //TODO: check behavior => arb sepolia
 
@@ -295,7 +296,7 @@ export function RegisterMember({
               </div>
             </div>
           </div>
-          <h4>allowance: {formatTokenAmount(allowance as string, 18)}</h4>
+          <h4>allowance: {formatTokenAmount(dataAllowance, 18)}</h4>
 
           <div className="stat flex-1 items-center gap-2">
             <Button

@@ -2,7 +2,13 @@ import * as dn from "dnum";
 
 export const PRECISION_SCALE = BigInt(10 ** 4);
 
-function formatTokenAmount(value: string | number, decimals: number) {
+function formatTokenAmount(
+  value: string | number | bigint | undefined,
+  decimals: number,
+) {
+  if (!value) {
+    return "0";
+  }
   const num = [BigInt(value), decimals] as const;
 
   return dn.format(num);

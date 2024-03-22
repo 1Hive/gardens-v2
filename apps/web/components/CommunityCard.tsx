@@ -17,6 +17,7 @@ import * as dn from "dnum";
 import { formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -41,18 +42,8 @@ export function CommunityCard({
 }: CommunityCardProps) {
   // const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
+  const { openConnectModal } = useConnectModal();
 
-  // const [isMember, setIsMember] = useState<boolean>(false);
-  // useEffect(() => {
-  //   if (accountAddress && members) {
-  //     const findMember = members.some(
-  //       (m) => m.memberAddress == accountAddress.toLowerCase(),
-  //     );
-  //     setIsMember(findMember);
-  //   } else {
-  //     setIsMember(false);
-  //   }
-  // }, []);
   const {
     data: increaseStakeData,
     write: writeIncreasePower,
@@ -112,16 +103,23 @@ export function CommunityCard({
           </div>
 
           <div>
-            <RegisterMember
-              name={name as string}
-              tokenSymbol={tokenGarden?.symbol as string}
-              communityAddress={communityAddress as Address}
-              registerToken={registerToken as Address}
-              registerTokenDecimals={tokenGarden?.decimals as number}
-              membershipAmount={registerStakeAmount}
-              protocolFee={protocolFee}
-              communityFee={communityFee}
-            />
+            {accountAddress ? (
+              <RegisterMember
+                name={name as string}
+                connectedAccount={accountAddress as Address}
+                tokenSymbol={tokenGarden?.symbol as string}
+                communityAddress={communityAddress as Address}
+                registerToken={registerToken as Address}
+                registerTokenDecimals={tokenGarden?.decimals as number}
+                membershipAmount={registerStakeAmount}
+                protocolFee={protocolFee}
+                communityFee={communityFee}
+              />
+            ) : (
+              <Button onClick={openConnectModal} className="w-full">
+                Connect Wallet
+              </Button>
+            )}
 
             <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
           </div>
