@@ -122,6 +122,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     error ProposalNotActive(uint256 _proposalId); // 0x44980d8f
     error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
+    error ConvictionUnderMinimumThreshold();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -443,8 +444,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         if (proposalId == 0) {
             revert ProposalIdCannotBeZero();
         }
-
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
+
 
         if (proposalType == StrategyStruct.ProposalType.Funding) {
             if (proposal.proposalId != proposalId) {
@@ -454,6 +455,14 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
                 revert ProposalNotActive(proposalId);
             }
+
+            uint256 convictionLast = updateProposalConviction(proposalId);
+            uint256 threshold = calculateThreshold(proposal.requestedAmount);
+            
+            if (convictionLast < threshold && proposal.requestedAmount > 0 ) { 
+                revert ConvictionUnderMinimumThreshold();
+            }
+
             IAllo.Pool memory pool = allo.getPool(poolId);
 
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
@@ -570,6 +579,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             proposal.voterStakedPointsPct[msg.sender]
         );
     }
+
 
     function getMetadata(uint256 _proposalId) external view returns (Metadata memory) {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
