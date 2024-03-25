@@ -660,13 +660,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         return proposals[_proposalId].voterStake[_voter];
     }
 
-    function convertPctToTokens(uint256 _pct) internal view returns (uint256) {
-        return (_pct * getBasisStakedAmount()) / PRECISION_PERCENTAGE;
-    }
+    // function convertPctToTokens(uint256 _pct) internal view returns (uint256) {
+    //     return (_pct * getBasisStakedAmount()) / PRECISION_PERCENTAGE;
+    // }
 
-    function convertTokensToPct(uint256 _tokens) internal view returns (uint256) {
-        return (_tokens * PRECISION_PERCENTAGE) / getBasisStakedAmount();
-    }
+    // function convertTokensToPct(uint256 _tokens) internal view returns (uint256) {
+    //     return (_tokens * PRECISION_PERCENTAGE) / getBasisStakedAmount();
+    // }
 
     function getBasisStakedAmount() internal view returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
@@ -752,7 +752,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             proposal.voterStakedPointsPct[_sender] = stakedPointsPct;
 
             // console.log("_sender", _sender);
-            uint256 stakedAmount = convertPctToTokens(stakedPointsPct);
+            uint256 stakedAmount = stakedPointsPct;
             // console.log("stakedAmount", stakedAmount);
             proposal.voterStake[_sender] = stakedAmount;
 
