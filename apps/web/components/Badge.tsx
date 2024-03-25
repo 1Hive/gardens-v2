@@ -19,7 +19,7 @@ const TYPE_STYLES = [
   "bg-secondary text-white",
 ];
 
-//variants for Statys Badge
+//variants for Status Badge
 const STATUS_STYLES = ["badge-error", "bg-success", "bg-warning"];
 
 const BASE_STYLES = "badge w-28 p-4 font-semibold";

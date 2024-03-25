@@ -1,8 +1,6 @@
 "use client";
-import { useState } from "react";
 import { Button, RegisterMember } from "@/components";
 import {
-  ChevronDownIcon,
   UserGroupIcon,
   BuildingOffice2Icon,
 } from "@heroicons/react/24/outline";
@@ -13,7 +11,6 @@ import {
   TokenGarden,
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
-import * as dn from "dnum";
 import { formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";

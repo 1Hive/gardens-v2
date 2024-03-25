@@ -7,7 +7,6 @@ import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { PRECISION_SCALE } from "@/utils/numbers";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -17,7 +16,6 @@ type ActiveMemberProps = {
 
 export function ActivatePoints({
   strategyAddress,
-  isMemberActived,
   communityAddress,
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
@@ -58,8 +56,6 @@ export function ActivatePoints({
     args: [connectedAccount as Address],
   });
 
-  console.log(connectedAccount, "connectedAccount");
-
   const { data: pointsVotingPower } = useContractRead({
     address: communityAddress as Address,
     abi: abiWithErrors(registryCommunityABI),
@@ -67,8 +63,6 @@ export function ActivatePoints({
     args: [connectedAccount as Address, strategyAddress],
     watch: true,
   });
-
-  console.log("pointsVotingPower", pointsVotingPower);
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
@@ -101,9 +95,6 @@ export function ActivatePoints({
 
   return (
     <>
-      <p>
-        Power: {((pointsVotingPower as bigint) / PRECISION_SCALE).toString()}
-      </p>
       <div className="flex flex-col gap-4 pl-4">
         <Button onClick={handleChange} className="w-fit bg-primary">
           {connectedAccount

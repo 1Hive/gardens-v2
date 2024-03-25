@@ -2,9 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import {
   useBalance,
-  useContractReads,
   useContractWrite,
-  useAccount,
   useContractRead,
   Address,
   useWaitForTransaction,
@@ -12,11 +10,6 @@ import {
 import { Button } from "./Button";
 import { toast } from "react-toastify";
 import useErrorDetails from "@/utils/getErrorName";
-import {
-  confirmationsRequired,
-  getContractsAddrByChain,
-} from "@/constants/contracts";
-import { useViemClient } from "@/hooks/useViemClient";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
@@ -24,6 +17,18 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { calculateFees, formatTokenAmount, gte, dn } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
+
+type RegisterMemberProps = {
+  name: string;
+  tokenSymbol: string;
+  communityAddress: Address;
+  registerToken: Address;
+  registerTokenDecimals: number;
+  membershipAmount: string;
+  protocolFee: string;
+  communityFee: string;
+  connectedAccount: Address;
+};
 
 export function RegisterMember({
   name: communityName,
@@ -35,17 +40,7 @@ export function RegisterMember({
   protocolFee,
   communityFee,
   connectedAccount,
-}: {
-  name: string;
-  tokenSymbol: string;
-  communityAddress: Address;
-  registerToken: Address;
-  registerTokenDecimals: number;
-  membershipAmount: string;
-  protocolFee: string;
-  communityFee: string;
-  connectedAccount: Address;
-}) {
+}: RegisterMemberProps) {
   const chainId = getChainIdFromPath();
   const { openConnectModal } = useConnectModal();
 
