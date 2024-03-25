@@ -168,13 +168,11 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     uint256 public constant PRECISION_SCALE = 10 ** 4;
     uint256 public constant D = 10000000; //10**7
-    uint256 public constant PRECISION_PERCENTAGE = 100 * PRECISION_SCALE;
-    // uint256 public constant ONE_HUNDRED_PERCENT = 1e18;
+    // uint256 public constant PRECISION_PERCENTAGE = 100 * PRECISION_SCALE;
     uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
     uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
-    //    uint256 public constant ABSTAIN_PROPOSAL_ID = 1;
-    uint256 public constant MAX_STAKED_PROPOSALS = 10; //@todo not allow stake more than 10 proposals per user
+    uint256 public constant MAX_STAKED_PROPOSALS = 10; //@todo not allow stake more than 10 proposals per user, dont count executed?
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -446,7 +444,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         }
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
-
         if (proposalType == StrategyStruct.ProposalType.Funding) {
             if (proposal.proposalId != proposalId) {
                 revert ProposalNotInList(proposalId);
@@ -458,8 +455,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
             uint256 convictionLast = updateProposalConviction(proposalId);
             uint256 threshold = calculateThreshold(proposal.requestedAmount);
-            
-            if (convictionLast < threshold && proposal.requestedAmount > 0 ) { 
+
+            if (convictionLast < threshold && proposal.requestedAmount > 0) {
                 revert ConvictionUnderMinimumThreshold();
             }
 
@@ -580,61 +577,10 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         );
     }
 
-
     function getMetadata(uint256 _proposalId) external view returns (Metadata memory) {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
         return proposal.metadata;
     }
-
-    // function getProposalStatus(uint256 _proposalId) external view returns (StrategyStruct.ProposalStatus) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.proposalStatus;
-    // }
-
-    // function getProposalRequestedAmount(uint256 _proposalId) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.requestedAmount;
-    // }
-
-    // function getProposalRequestedToken(uint256 _proposalId) external view returns (address) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.requestedToken;
-    // }
-
-    // function getProposalBeneficiary(uint256 _proposalId) external view returns (address) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.beneficiary;
-    // }
-
-    // function getProposalSubmitter(uint256 _proposalId) external view returns (address) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.submitter;
-    // }
-
-    // function getProposalThreshold(uint256 _proposalId) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.requestedAmount == 0 ? 0 : calculateThreshold(proposal.requestedAmount);
-    // }
-
-    // function getProposalBlockLast(uint256 _proposalId) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.blockLast;
-    // }
-
-    // function getProposalConvictionLast(uint256 _proposalId) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.convictionLast;
-    // }
-
-    // function getProposalVoterStakedPointsPct(uint256 _proposalId, address _voter) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.voterStakedPointsPct[_voter];
-    // }
-
-    // function getProposalVoterStakedAmount(uint256 _proposalId, address _voter) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.voterStake[_voter];
-    // }
 
     /**
      * @notice Get stake of voter `_voter` on proposal #`_proposalId`
@@ -659,14 +605,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     function _internal_getProposalVoterStake(uint256 _proposalId, address _voter) internal view returns (uint256) {
         return proposals[_proposalId].voterStake[_voter];
     }
-
-    // function convertPctToTokens(uint256 _pct) internal view returns (uint256) {
-    //     return (_pct * getBasisStakedAmount()) / PRECISION_PERCENTAGE;
-    // }
-
-    // function convertTokensToPct(uint256 _tokens) internal view returns (uint256) {
-    //     return (_tokens * PRECISION_PERCENTAGE) / getBasisStakedAmount();
-    // }
 
     function getBasisStakedAmount() internal view returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
