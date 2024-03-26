@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { forwardRef, useEffect, useRef } from "react";
 import {
   useBalance,
   useContractWrite,
@@ -181,8 +181,6 @@ export function RegisterMember({
   const approveToken = allowTokenStatus === "success";
   const allowanceFailed = allowTokenStatus === "error";
   const registerMemberFailed = approveToken && registerMemberStatus === "error";
-  const allowanceIsSet =
-    dataAllowance === registerStakeAmount && registerMemberFailed;
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
@@ -209,46 +207,29 @@ export function RegisterMember({
   return (
     <>
       {/* Modal */}
-      <dialog id="transaction_modal" className="modal" ref={modalRef}>
-        <div className="modal-box relative max-w-xl bg-surface">
-          <div className="-px-2 absolute left-0 top-[45%] flex w-full items-center justify-center -space-x-2">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <ChevronRightIcon
-                key={i}
-                className={`h-4 w-4 transition-colors duration-200 ease-in ${approveToken ? "text-success" : allowanceFailed ? "text-error" : "text-secondary"}`}
-              />
-            ))}
-          </div>
+      <TransactionModal
+        ref={modalRef}
+        label="Register in community"
+        isSuccess={approveToken}
+        isFailed={allowanceFailed}
+      >
+        <TransactionModalStep
+          tokenSymbol={`Approve ${tokenSymbol}`}
+          status={allowTokenStatus}
+          isLoading={allowTokenStatus === "loading"}
+          failedMessage="An error has occurred, please try again!"
+          successMessage="Transaction sent successfully!"
+        />
 
-          {/* modal title and close btn */}
-          <div className="flex items-start justify-between pb-10">
-            <h4 className="text-2xl">Register in {communityName}</h4>
-            <Button size="sm" onClick={() => modalRef.current?.close()}>
-              X
-            </Button>
-          </div>
-
-          {/* modal approve token transaction step */}
-          <div className="flex h-48 overflow-hidden px-6">
-            <TransactionModalStep
-              tokenSymbol={`Approve ${tokenSymbol}`}
-              status={allowTokenStatus}
-              isLoading={allowTokenStatus === "loading"}
-              failedMessage="An error has occurred, please try again!"
-              successMessage="Transaction sent successfully!"
-            />
-
-            <TransactionModalStep
-              tokenSymbol={`Register in ${communityName}`}
-              status={registerMemberStatus}
-              isLoading={registerMemberIsLoading}
-              failedMessage="An error has occurred, please try again!"
-              successMessage="Waiting for signature"
-              type="register"
-            />
-          </div>
-        </div>
-      </dialog>
+        <TransactionModalStep
+          tokenSymbol={`Register in ${communityName}`}
+          status={registerMemberStatus}
+          isLoading={registerMemberIsLoading}
+          failedMessage="An error has occurred, please try again!"
+          successMessage="Waiting for signature"
+          type="register"
+        />
+      </TransactionModal>
 
       <div className="space-y-4">
         <div className="stats flex">
@@ -314,6 +295,50 @@ export function RegisterMember({
     </>
   );
 }
+
+type TransactionModalProps = {
+  label: string;
+  children: React.ReactNode;
+  isSuccess: boolean;
+  isFailed: boolean;
+};
+
+const TransactionModal = forwardRef<HTMLDialogElement, TransactionModalProps>(
+  function TransactionModal({ label, children, isSuccess, isFailed }, ref) {
+    const dialogRef = typeof ref === "function" ? { current: null } : ref;
+
+    return (
+      <dialog id="transaction_modal" className="modal" ref={ref}>
+        <div className="modal-box relative max-w-xl bg-surface">
+          {/* Content */}
+          <div className="-px-2 absolute left-0 top-[45%] flex w-full items-center justify-center -space-x-2">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <ChevronRightIcon
+                key={i}
+                className={`h-4 w-4 transition-colors duration-200 ease-in ${
+                  isSuccess
+                    ? "text-success"
+                    : isFailed
+                      ? "text-error"
+                      : "text-secondary"
+                }`}
+              />
+            ))}
+          </div>
+
+          <div className="flex items-start justify-between pb-10">
+            <h4 className="text-2xl">{label}</h4>
+            <Button size="sm" onClick={() => dialogRef?.current?.close()}>
+              close
+            </Button>
+          </div>
+
+          <div className="flex h-48 overflow-hidden px-6">{children}</div>
+        </div>
+      </dialog>
+    );
+  },
+);
 
 type TransactionModalStepProps = {
   tokenSymbol?: string;
