@@ -2,18 +2,14 @@ import { Badge, Proposals } from "@/components";
 import { PoolStats } from "@/components";
 import Image from "next/image";
 import { cvStrategyABI, alloABI } from "@/src/generated";
-import { getContractsAddrByChain } from "@/constants/contracts";
 import { createPublicClient, http } from "viem";
 import { getChain } from "@/configs/chainServer";
 import { gardenLand } from "@/assets";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
-  getAlloDocument,
   getAlloQuery,
   getPoolDataDocument,
   getPoolDataQuery,
-  getStrategyByPoolDocument,
-  getStrategyByPoolQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -34,32 +30,6 @@ export default async function Pool({
     chain: getChain(chain),
     transport: http(),
   });
-
-  // const { data: alloData } = await queryByChain<getAlloQuery>(
-  //   urqlClient,
-  //   chain,
-  //   getAlloDocument,
-  // );
-  // let alloInfo: AlloQuery | null = null;
-  // if (alloData && alloData.allos?.length > 0) {
-  //   alloInfo = alloData.allos[0];
-  // }
-  // if (!alloInfo) {
-  //   return <div>Allo not found</div>;
-  // }
-
-  // console.log("alloInfo", alloInfo);
-
-  // const { data: poolData } = await queryByChain<getStrategyByPoolQuery>(
-  //   urqlClient,
-  //   chain,
-  //   getStrategyByPoolDocument,
-  //   { poolId: poolId },
-  // );
-
-  // if (!poolData) {
-  //   return <div>{`Pool ${poolId} not found`}</div>;
-  // }
 
   const { data } = await queryByChain<getPoolDataQuery>(
     urqlClient,
@@ -82,18 +52,6 @@ export default async function Pool({
   const poolAmount = strategyObj?.poolAmount as number;
   const tokenGarden = data.tokenGarden;
 
-  // if (!strategyObj.config) {
-  //   return <div>Strategy Config not found</div>;
-  // }
-
-  // const poolBalance = await client.readContract({
-  //   address: strategyAddr,
-  //   abi: abiWithErrors(cvStrategyABI),
-  //   functionName: "getPoolAmount",
-  // });
-
-  // const POOL_BALANCE = Number(poolBalance);
-
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
@@ -109,8 +67,6 @@ export default async function Pool({
           <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
               <h3 className="max-w-2xl  text-center font-semibold">
-                {/* {poolInfo[(poolId as unknown as number) - 1].description} */}
-                {/* TODO:  fetch data ipfs */}
                 Open Source Software Grants Pool
               </h3>
               <div className="flex w-full  p-4">

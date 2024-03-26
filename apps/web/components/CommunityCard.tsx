@@ -1,19 +1,16 @@
 "use client";
-import { useState } from "react";
 import { Button, RegisterMember } from "@/components";
 import {
-  ChevronDownIcon,
   UserGroupIcon,
   BuildingOffice2Icon,
 } from "@heroicons/react/24/outline";
-import { PoolCard } from "@/components";
+import { PoolCard, IncreasePower } from "@/components";
 import { CommunityProfile } from "@/components";
 import { Address, useAccount, useContractWrite } from "wagmi";
 import {
   TokenGarden,
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
-import * as dn from "dnum";
 import { formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
@@ -132,12 +129,7 @@ export function CommunityCard({
               {pools.map((pool, i) => (
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
-              <Button
-                onClick={() => writeIncreasePower?.()}
-                className="max-h-[50px] w-full"
-              >
-                Stake more
-              </Button>
+              <IncreasePower communityAddress={communityAddress as string} />
               {/* {pools.length > 2 && (
                 <Button
                   className="!rounded-full bg-white !p-3"

@@ -3,25 +3,28 @@ import { flowers } from "@/assets";
 import React, { FC } from "react";
 import Image from "next/image";
 import { StatusBadge } from "./Badge";
-import { ActivePointsChart } from "@/components";
-import { PoolTokenPriceChart } from "@/components";
 import { ActivatePoints } from "./ActivatePoints";
 import { Strategy } from "./Proposals";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { Address, useAccount, useBalance } from "wagmi";
+import { Address, useAccount, useContractRead } from "wagmi";
 import { PRECISION_SCALE } from "@/actions/getProposals";
 import { formatTokenAmount } from "@/utils/numbers";
-import { TokenGarden } from "#/subgraph/.graphclient";
 
 type PoolStatsProps = {
   balance: string | number;
   strategyAddress: Address;
   strategy: Strategy;
-  // poolId: number;
   communityAddress: Address;
   tokenGarden: any;
-  pointSystem: string; // Couldnt set the TokenGarden | undefined giving error
+  pointSystem: string;
+};
+
+const pointSystemObject = {
+  0: "Fixed",
+  1: "Capped",
+  2: "Unlimited",
+  3: "Quadratic",
 };
 
 export const PoolStats: FC<PoolStatsProps> = ({
@@ -34,26 +37,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
 }) => {
   const { isMemberActived } = useIsMemberActivated(strategy);
   const { isConnected } = useAccount();
-
   const { voterStakePct } = useTotalVoterStakedPct(strategy);
-
-  const { data: poolBalance } = useBalance({
-    address: strategyAddress,
-    token: "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
-    chainId: 1337,
-    watch: true,
-  });
-
-  const pointSystemObject = {
-    "0": "Fixed",
-    "1": "Capped",
-    "2": "Unlimited",
-    "3": "Quadratic",
-  };
-
-  console.log(pointSystem);
-  console.log("voteStakePct", voterStakePct);
-  console.log("startegy - pool", strategy);
 
   return (
     <section className="flex max-h-96 w-full gap-8 rounded-xl bg-none">
@@ -68,12 +52,11 @@ export const PoolStats: FC<PoolStatsProps> = ({
                   Funds Available:
                 </h4>
                 <h4 className="stat-value text-center text-2xl font-bold ">
-                  {poolBalance?.formatted} {tokenGarden?.symbol}
+                  {balance
+                    ? formatTokenAmount(balance, tokenGarden?.decimals)
+                    : "0"}
                 </h4>
               </div>
-              {/* <h4 className="text-center text-2xl font-bold">
-                from sub: {formatTokenAmount(balance, tokenGarden?.decimals)}
-              </h4> */}
             </div>
           </div>
           <div className="max-h-30 flex items-center gap-3 ">
@@ -125,7 +108,11 @@ export const PoolStats: FC<PoolStatsProps> = ({
           <div className="text-md stat-title font-bold">
             Points System:{" "}
             <span className="text-md pl-2 text-black">
-              {pointSystemObject[pointSystem as keyof typeof pointSystemObject]}
+              {
+                pointSystemObject[
+                  pointSystem as unknown as keyof typeof pointSystemObject
+                ]
+              }
             </span>
           </div>
         </div>

@@ -1,8 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
-import Link from "next/link";
-import { Button, GardenCard } from "@/components";
+import { GardenCard } from "@/components";
 import {
   getTokenGardensDocument,
   getTokenGardensQuery,
@@ -57,8 +56,7 @@ export default async function Gardens() {
       </header>
       {/* <div>search</div> */}
       <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8">
-        {/* <div className="grid max-w-[1216px] grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(360px,1fr))]"> */}
-        <div className="flex w-full flex-wrap justify-center gap-6">
+        <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(360px,1fr))]">
           {gardens ? (
             gardens.tokenGardens.map((garden, id) => (
               <div key={`${garden.id}-${id}`}>
