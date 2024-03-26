@@ -9,7 +9,7 @@ import {RegistryCommunity, Metadata} from "./RegistryCommunity.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 interface IPointStrategy {
-    function withdraw(address _member) external;
+    // function withdraw(address _member) external;
     function deactivatePoints(address _member) external;
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256);
     function decreasePower(address _member, uint256 _amountToUntake) external returns (uint256);
@@ -59,8 +59,7 @@ library StrategyStruct {
         address requestedToken;
         uint256 blockLast;
         ProposalStatus proposalStatus;
-        mapping(address => uint256) voterStakedPointsPct; // voter staked points
-        mapping(address => uint256) voterStake; // voter staked tokens
+        mapping(address => uint256) voterStakedPoints; // voter staked points
         Metadata metadata;
     }
 
@@ -122,6 +121,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     error ProposalNotActive(uint256 _proposalId); // 0x44980d8f
     error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
+    error ConvictionUnderMinimumThreshold();
+    error OnlyCommunityAllowed();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -136,6 +137,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
+    event DecayUpdated(uint256 decay);
+    event MaxRatioUpdated(uint256 maxRatio);
+    event WeightUpdated(uint256 weight);
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -167,13 +171,11 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     uint256 public constant PRECISION_SCALE = 10 ** 4;
     uint256 public constant D = 10000000; //10**7
-    uint256 public constant PRECISION_PERCENTAGE = 100 * PRECISION_SCALE;
-    // uint256 public constant ONE_HUNDRED_PERCENT = 1e18;
+    // uint256 public constant PRECISION_PERCENTAGE = 100 * PRECISION_SCALE;
     uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
     uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
-    //    uint256 public constant ABSTAIN_PROPOSAL_ID = 1;
-    uint256 public constant MAX_STAKED_PROPOSALS = 10; //@todo not allow stake more than 10 proposals per user
+    uint256 public constant MAX_STAKED_PROPOSALS = 10; //@todo not allow stake more than 10 proposals per user, dont count executed?
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -233,6 +235,12 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             revert UserNotInRegistry();
         }
         // _;
+    }
+
+    function onlyRegistryCommunity() private view {
+        if (msg.sender != address(registryCommunity)) {
+            revert OnlyCommunityAllowed();
+        }
     }
 
     // this is called via allo.sol to register recipients
@@ -297,7 +305,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
-        this.withdraw(_member);
+        withdraw(_member);
     }
 
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
@@ -443,7 +451,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         if (proposalId == 0) {
             revert ProposalIdCannotBeZero();
         }
-
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
         if (proposalType == StrategyStruct.ProposalType.Funding) {
@@ -454,6 +461,14 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
                 revert ProposalNotActive(proposalId);
             }
+
+            uint256 convictionLast = updateProposalConviction(proposalId);
+            uint256 threshold = calculateThreshold(proposal.requestedAmount);
+
+            if (convictionLast < threshold && proposal.requestedAmount > 0) {
+                revert ConvictionUnderMinimumThreshold();
+            }
+
             IAllo.Pool memory pool = allo.getPool(poolId);
 
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
@@ -507,20 +522,18 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         _setPoolActive(_active);
     }
 
-    //    @TODO: onlyOnwer onlyRegistryCommunity{
-    function withdraw(address _member) external override {
+    function withdraw(address _member) internal {
         // remove all proposals from the member
         uint256[] memory proposalsIds = voterStakedProposals[_member];
         for (uint256 i = 0; i < proposalsIds.length; i++) {
             uint256 proposalId = proposalsIds[i];
             StrategyStruct.Proposal storage proposal = proposals[proposalId];
             if (proposalExists(proposalId)) {
-                uint256 stakedAmount = proposal.voterStake[_member];
-                proposal.voterStake[_member] = 0;
-                proposal.voterStakedPointsPct[_member] = 0;
-                proposal.stakedAmount -= stakedAmount;
-                totalStaked -= stakedAmount;
-                _calculateAndSetConviction(proposal, stakedAmount);
+                uint256 stakedPoints = proposal.voterStakedPoints[_member];
+                proposal.voterStakedPoints[_member] = 0;
+                proposal.stakedAmount -= stakedPoints;
+                totalStaked -= stakedPoints;
+                _calculateAndSetConviction(proposal, stakedPoints);
             }
         }
     }
@@ -551,7 +564,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             uint256 blockLast,
             uint256 convictionLast,
             uint256 threshold,
-            uint256 voterStakedPointsPct
+            uint256 voterStakedPoints
         )
     {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
@@ -567,7 +580,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             proposal.blockLast,
             proposal.convictionLast,
             threshold,
-            proposal.voterStakedPointsPct[msg.sender]
+            proposal.voterStakedPoints[msg.sender]
         );
     }
 
@@ -575,56 +588,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
         return proposal.metadata;
     }
-
-    // function getProposalStatus(uint256 _proposalId) external view returns (StrategyStruct.ProposalStatus) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.proposalStatus;
-    // }
-
-    // function getProposalRequestedAmount(uint256 _proposalId) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.requestedAmount;
-    // }
-
-    // function getProposalRequestedToken(uint256 _proposalId) external view returns (address) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.requestedToken;
-    // }
-
-    // function getProposalBeneficiary(uint256 _proposalId) external view returns (address) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.beneficiary;
-    // }
-
-    // function getProposalSubmitter(uint256 _proposalId) external view returns (address) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.submitter;
-    // }
-
-    // function getProposalThreshold(uint256 _proposalId) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.requestedAmount == 0 ? 0 : calculateThreshold(proposal.requestedAmount);
-    // }
-
-    // function getProposalBlockLast(uint256 _proposalId) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.blockLast;
-    // }
-
-    // function getProposalConvictionLast(uint256 _proposalId) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.convictionLast;
-    // }
-
-    // function getProposalVoterStakedPointsPct(uint256 _proposalId, address _voter) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.voterStakedPointsPct[_voter];
-    // }
-
-    // function getProposalVoterStakedAmount(uint256 _proposalId, address _voter) external view returns (uint256) {
-    //     StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-    //     return proposal.voterStake[_voter];
-    // }
 
     /**
      * @notice Get stake of voter `_voter` on proposal #`_proposalId`
@@ -647,15 +610,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function _internal_getProposalVoterStake(uint256 _proposalId, address _voter) internal view returns (uint256) {
-        return proposals[_proposalId].voterStake[_voter];
-    }
-
-    function convertPctToTokens(uint256 _pct) internal view returns (uint256) {
-        return (_pct * getBasisStakedAmount()) / PRECISION_PERCENTAGE;
-    }
-
-    function convertTokensToPct(uint256 _tokens) internal view returns (uint256) {
-        return (_tokens * PRECISION_PERCENTAGE) / getBasisStakedAmount();
+        return proposals[_proposalId].voterStakedPoints[_voter];
     }
 
     function getBasisStakedAmount() internal view returns (uint256) {
@@ -729,22 +684,22 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
             StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
-            uint256 beforeStakedPointsPct = proposal.voterStakedPointsPct[_sender];
-            uint256 previousStakedAmount = proposal.voterStake[_sender];
+            // uint256 beforeStakedPointsPct = proposal.voterStakedPointsPct[_sender];
+            uint256 previousStakedPoints = proposal.voterStakedPoints[_sender];
             // console.log("beforeStakedPointsPct", beforeStakedPointsPct);
             // console.log("previousStakedAmount", previousStakedAmount);
 
-            uint256 stakedPointsPct = _applyDelta(beforeStakedPointsPct, delta);
+            uint256 stakedPoints = _applyDelta(previousStakedPoints, delta);
 
             // console.log("proposalID", proposalId);
             // console.log("stakedPointsPct%", stakedPointsPct);
 
-            proposal.voterStakedPointsPct[_sender] = stakedPointsPct;
+            proposal.voterStakedPoints[_sender] = stakedPoints;
 
             // console.log("_sender", _sender);
-            uint256 stakedAmount = convertPctToTokens(stakedPointsPct);
+            // uint2stakedPointsunt = stakedPoints;
             // console.log("stakedAmount", stakedAmount);
-            proposal.voterStake[_sender] = stakedAmount;
+            // proposal.voterStake[_sender]stakedPointsunt;
 
             bool hasProposal = false;
             for (uint256 k = 0; k < voterStakedProposals[_sender].length; k++) {
@@ -758,19 +713,19 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             }
             // proposal.stakedAmount += stakedAmount;
             // uint256 diff =_diffStakedTokens(previousStakedAmount, stakedAmount);
-            if (previousStakedAmount <= stakedAmount) {
-                totalStaked += stakedAmount - previousStakedAmount;
-                proposal.stakedAmount += stakedAmount - previousStakedAmount;
+            if (previousStakedPoints <= stakedPoints) {
+                totalStaked += stakedPoints - previousStakedPoints;
+                proposal.stakedAmount += stakedPoints - previousStakedPoints;
             } else {
-                totalStaked -= previousStakedAmount - stakedAmount;
-                proposal.stakedAmount -= previousStakedAmount - stakedAmount;
+                totalStaked -= previousStakedPoints - stakedPoints;
+                proposal.stakedAmount -= previousStakedPoints - stakedPoints;
             }
             //@todo: should emit event
             if (proposal.blockLast == 0) {
                 proposal.blockLast = block.number;
             } else {
-                _calculateAndSetConviction(proposal, previousStakedAmount);
-                emit SupportAdded(_sender, proposalId, stakedAmount, proposal.stakedAmount, proposal.convictionLast);
+                _calculateAndSetConviction(proposal, previousStakedPoints);
+                emit SupportAdded(_sender, proposalId, stakedPoints, proposal.stakedAmount, proposal.convictionLast);
             }
         }
     }
@@ -843,6 +798,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             revert AmountOverMaxRatio();
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
+        // denom = maxRatio / 1 - _requestedAmount / funds;
         uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / funds;
         _threshold = (
             (((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * totalEffectiveActivePoints()
@@ -936,14 +892,17 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function setDecay(uint256 _decay) external onlyPoolManager(msg.sender) {
         decay = _decay;
+        emit DecayUpdated(_decay);
     }
 
     function setMaxRatio(uint256 _maxRatio) external onlyPoolManager(msg.sender) {
         maxRatio = _maxRatio;
+        emit MaxRatioUpdated(_maxRatio);
     }
 
     function setWeight(uint256 _weight) external onlyPoolManager(msg.sender) {
         weight = _weight;
+        emit WeightUpdated(_weight);
     }
 
     function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
