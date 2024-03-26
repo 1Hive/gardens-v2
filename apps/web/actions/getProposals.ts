@@ -5,11 +5,10 @@ import { Proposal, ProposalTypeVoter, Strategy } from "@/components/Proposals";
 import { CVProposal } from "#/subgraph/.graphclient";
 
 export const PRECISION_SCALE = BigInt(10 ** 4);
+// const pts = 1_000_000 = 100% = 1M;
 // 100 * PRECISION_SCALE = 100%
 // 950.000 / PRECISION_SCALE = 95%
-
-// const pts = 100000;
-//use PRECISION_SCALE & registerStakeAmount, etc to parse data so you get a number between 0% and 100%
+// use PRECISION_SCALE & registerStakeAmount, etc to parse data so you get a number between 0% and 100%
 
 export async function getProposals(
   accountAddress: Address | undefined,

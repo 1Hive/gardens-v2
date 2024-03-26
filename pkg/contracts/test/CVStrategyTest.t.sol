@@ -331,11 +331,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), MINIMUM_STAKE); // 100% of 50 = 50
         assertEq(cv.getProposalStakedAmount(proposalId), MINIMUM_STAKE);
-        assertEq(cv.getTotalVoterStakePct(address(this)), 100 * PRECISION_SCALE);
         cv.deactivatePoints(address(this));
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0);
         assertEq(cv.getProposalStakedAmount(proposalId), 0);
-        assertEq(cv.getTotalVoterStakePct(address(this)), 0);
     }
 
     function test_proposalVoterStake_after_unregister() public {

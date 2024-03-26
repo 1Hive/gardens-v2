@@ -23,3 +23,9 @@ const errorsABI = [
 export function abiWithErrors(abi: Abi): Abi {
   return [...abi, ...errorsABI];
 }
+
+export function abiWithErrors2<Tabi extends Abi>(
+  abi: Tabi,
+): Tabi & typeof errorsABI {
+  return [...abi, ...errorsABI] as Tabi & typeof errorsABI;
+}

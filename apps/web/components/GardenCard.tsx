@@ -35,10 +35,10 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
           data={commLength}
         />
         <InfoData label={"Members"} data={totalMembers} />
-        <InfoData
+        {/* <InfoData
           label="Staked Tokens"
           data={formatUnits(totalBalance, decimals)}
-        />
+        /> */}
 
         <div className="mb-2 mt-4">
           <Link href={link}>

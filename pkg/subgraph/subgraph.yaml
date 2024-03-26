@@ -110,11 +110,14 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
+        - Allo
       abis:
         - name: CVStrategy
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: Allo
+          file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
         - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8,uint8,(uint256,uint256,uint256,uint256))) 
           handler: handleInitialized

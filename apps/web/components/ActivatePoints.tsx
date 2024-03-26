@@ -7,6 +7,7 @@ import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { PRECISION_SCALE } from "@/utils/numbers";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -19,7 +20,7 @@ export function ActivatePoints({
   isMemberActived,
   communityAddress,
 }: ActiveMemberProps) {
-  const { address } = useAccount();
+  const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
 
   const {
@@ -30,7 +31,7 @@ export function ActivatePoints({
     address: communityAddress as Address,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "memberActivatedInStrategies",
-    args: [address as Address, strategyAddress],
+    args: [connectedAccount as Address, strategyAddress],
     watch: true,
   });
 
@@ -54,13 +55,26 @@ export function ActivatePoints({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
+    args: [connectedAccount as Address],
   });
+
+  console.log(connectedAccount, "connectedAccount");
+
+  const { data: pointsVotingPower } = useContractRead({
+    address: communityAddress as Address,
+    abi: abiWithErrors(registryCommunityABI),
+    functionName: "getMemberPowerInStrategy",
+    args: [connectedAccount as Address, strategyAddress],
+    watch: true,
+  });
+
+  console.log("pointsVotingPower", pointsVotingPower);
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
 
   async function handleChange() {
-    if (address) {
+    if (connectedAccount) {
       if (isMemberActivated) {
         writeDeactivatePoints?.();
       } else {
@@ -87,13 +101,18 @@ export function ActivatePoints({
 
   return (
     <>
-      <Button onClick={handleChange} className="w-fit bg-primary">
-        {address
-          ? isMemberActivated
-            ? "Deactivate Points"
-            : "Activate Points"
-          : "Connect Wallet"}
-      </Button>
+      <p>
+        Power: {((pointsVotingPower as bigint) / PRECISION_SCALE).toString()}
+      </p>
+      <div className="flex flex-col gap-4 pl-4">
+        <Button onClick={handleChange} className="w-fit bg-primary">
+          {connectedAccount
+            ? isMemberActivated
+              ? "Deactivate Points"
+              : "Activate Points"
+            : "Connect Wallet"}
+        </Button>
+      </div>
     </>
   );
 }

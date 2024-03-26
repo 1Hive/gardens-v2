@@ -517,9 +517,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             if (proposalExists(proposalId)) {
                 uint256 stakedAmount = proposal.voterStake[_member];
                 proposal.voterStake[_member] = 0;
-                uint256 pointsPct = proposal.voterStakedPointsPct[_member];
-                totalVoterStakePct[_member] -= pointsPct;
-
                 proposal.voterStakedPointsPct[_member] = 0;
                 proposal.stakedAmount -= stakedAmount;
                 totalStaked -= stakedAmount;
@@ -558,6 +555,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         )
     {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
+
         threshold = proposal.requestedAmount == 0 ? 0 : calculateThreshold(proposal.requestedAmount);
         return (
             proposal.submitter,

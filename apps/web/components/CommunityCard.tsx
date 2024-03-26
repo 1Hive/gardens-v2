@@ -8,13 +8,16 @@ import {
 } from "@heroicons/react/24/outline";
 import { PoolCard } from "@/components";
 import { CommunityProfile } from "@/components";
-import { Address, useAccount } from "wagmi";
+import { Address, useAccount, useContractWrite } from "wagmi";
 import {
   TokenGarden,
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import * as dn from "dnum";
 import { formatTokenAmount } from "@/utils/numbers";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { registryCommunityABI } from "@/src/generated";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -39,18 +42,19 @@ export function CommunityCard({
 }: CommunityCardProps) {
   // const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
+  const { openConnectModal } = useConnectModal();
 
-  // const [isMember, setIsMember] = useState<boolean>(false);
-  // useEffect(() => {
-  //   if (accountAddress && members) {
-  //     const findMember = members.some(
-  //       (m) => m.memberAddress == accountAddress.toLowerCase(),
-  //     );
-  //     setIsMember(findMember);
-  //   } else {
-  //     setIsMember(false);
-  //   }
-  // }, []);
+  const {
+    data: increaseStakeData,
+    write: writeIncreasePower,
+    error: errorIncreaseStake,
+    status: increaseStakeStatus,
+  } = useContractWrite({
+    address: communityAddress as Address,
+    abi: abiWithErrors(registryCommunityABI),
+    functionName: "increasePower",
+    args: [50000000000000000000n],
+  });
 
   const pools = strategies ?? [];
   members = members ?? [];
@@ -99,16 +103,23 @@ export function CommunityCard({
           </div>
 
           <div>
-            <RegisterMember
-              name={name as string}
-              tokenSymbol={tokenGarden?.symbol as string}
-              communityAddress={communityAddress as Address}
-              registerToken={registerToken as Address}
-              registerTokenDecimals={tokenGarden?.decimals as number}
-              membershipAmount={registerStakeAmount}
-              protocolFee={protocolFee}
-              communityFee={communityFee}
-            />
+            {accountAddress ? (
+              <RegisterMember
+                name={name as string}
+                connectedAccount={accountAddress as Address}
+                tokenSymbol={tokenGarden?.symbol as string}
+                communityAddress={communityAddress as Address}
+                registerToken={registerToken as Address}
+                registerTokenDecimals={tokenGarden?.decimals as number}
+                membershipAmount={registerStakeAmount}
+                protocolFee={protocolFee}
+                communityFee={communityFee}
+              />
+            ) : (
+              <Button onClick={openConnectModal} className="w-full">
+                Connect Wallet
+              </Button>
+            )}
 
             <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
           </div>
@@ -121,6 +132,12 @@ export function CommunityCard({
               {pools.map((pool, i) => (
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
+              <Button
+                onClick={() => writeIncreasePower?.()}
+                className="max-h-[50px] w-full"
+              >
+                Stake more
+              </Button>
               {/* {pools.length > 2 && (
                 <Button
                   className="!rounded-full bg-white !p-3"

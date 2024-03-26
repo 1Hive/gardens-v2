@@ -7,14 +7,20 @@ import {
   getTokenGardensDocument,
   getTokenGardensQuery,
 } from "#/subgraph/.graphclient";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
+import {
+  initUrqlClient,
+  queryByChain,
+  subscribeByChain,
+} from "@/providers/urql";
 import { localhost, arbitrumSepolia } from "viem/chains";
 export const dynamic = "force-dynamic";
 
 const { urqlClient } = initUrqlClient();
+
 export default async function Gardens() {
   const r1 = await getTokenGardens(arbitrumSepolia.id);
   const r2 = await getTokenGardens(localhost.id);
+
   // marge r.data and rl.data to gardens
   let gardens: getTokenGardensQuery | null = null;
   if (r1.data) {
@@ -76,5 +82,10 @@ export default async function Gardens() {
 }
 
 async function getTokenGardens(chainId: string | number) {
-  return await queryByChain(urqlClient, chainId, getTokenGardensDocument, {});
+  return await subscribeByChain(
+    urqlClient,
+    chainId,
+    getTokenGardensDocument,
+    {},
+  );
 }
