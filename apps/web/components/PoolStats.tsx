@@ -7,7 +7,7 @@ import { ActivatePoints } from "./ActivatePoints";
 import { Strategy } from "./Proposals";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { Address, useAccount, useBalance } from "wagmi";
+import { Address, useAccount, useContractRead } from "wagmi";
 import { PRECISION_SCALE } from "@/actions/getProposals";
 import { formatTokenAmount } from "@/utils/numbers";
 
