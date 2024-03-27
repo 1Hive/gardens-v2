@@ -276,6 +276,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 // console.log("::PookToken", poolToken);
                 revert TokenNotAllowed();
             }
+            if (isOverMaxRatio(proposal.amountRequested)){
+                revert AmountOverMaxRatio();
+            }
         }
         uint256 proposalId = ++proposalCounter;
         StrategyStruct.Proposal storage p = proposals[proposalId];
@@ -551,7 +554,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
      * @return beneficiary Proposal beneficiary
      * @return requestedToken Proposal requested token
      * @return requestedAmount Proposal requested amount
-     * @return stakedTokens Proposal staked tokens
+     * @return stakedAmount Proposal staked points
      * @return proposalStatus Proposal status
      * @return blockLast Last block when conviction was calculated
      * @return convictionLast Last conviction calculated
@@ -565,7 +568,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             address beneficiary,
             address requestedToken,
             uint256 requestedAmount,
-            uint256 stakedTokens,
+            uint256 stakedAmount,
             StrategyStruct.ProposalStatus proposalStatus,
             uint256 blockLast,
             uint256 convictionLast,
@@ -625,6 +628,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function proposalExists(uint256 _proposalID) internal view returns (bool) {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
+    }
+
+    function isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool) {
+         if (maxRatio * poolAmount <= _requestedAmount * D){
+            return true;
+         }
+         return false;
     }
 
     function _check_before_addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport)
@@ -800,7 +810,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         // console.log("maxRatio * funds", maxRatio * funds);
         // console.log("_requestedAmount * D", _requestedAmount * D);
 
-        if (maxRatio * funds <= _requestedAmount * D) {
+        if (isOverMaxRatio(_requestedAmount)) {
             revert AmountOverMaxRatio();
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds

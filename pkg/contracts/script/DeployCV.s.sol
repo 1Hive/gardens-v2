@@ -182,7 +182,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     function create_community(Allo allo, RegistryFactory registryFactory) public {
         vm.startBroadcast(pool_admin());
 
-        token = new TERC20("sepolia Matias", "sepMAT", 18);
+        // token = new TERC20("sepolia Matias", "sepMAT", 18);
 
         IRegistry registry = allo.getRegistry();
 
