@@ -20,14 +20,6 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { encodeAbiParameters } from "viem";
 
-// export const convertBigIntToNumberFraction = (bigInt: bigint) => {
-//   return Number(bigInt.toString()) / 10 ** 4;
-// };
-
-// export const convertNumberFractionToBigInt = (number: number) => {
-//   return BigInt(number * 10 ** 4);
-// };
-
 type InputItem = {
   id: string;
   value: number;
@@ -68,8 +60,6 @@ export function Proposals({
   const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-
-  //console.log(strategy);
 
   useEffect(() => {
     setStrategyAddress(strategy.id as Address);
@@ -119,7 +109,7 @@ export function Proposals({
     functionName: "allocate",
   });
 
-  //encode function
+  //encode proposal id to pass as argument to distribute function
   const encodedDataProposalId = (proposalId: string) => {
     const getproposalId = getProposalId(proposalId);
     const encodedProposalId = encodeAbiParameters(
@@ -130,7 +120,7 @@ export function Proposals({
     return encodedProposalId;
   };
 
-  //distribute write contract
+  //test executing a proposal with distribute function
   const {
     data: distributeData,
     write: writeDistribute,
@@ -141,15 +131,8 @@ export function Proposals({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
-    //[ pool id, [], encoded proposal id]
-    // args: [strategy.poolId, [strategy.id], encodedProposalId],
-    onError: (error) => {
-      console.log("error", error);
-    },
-    onSuccess: (data) => {
-      console.log("data", data);
-    },
   });
+  //
 
   useErrorDetails(errorAllocate, "errorAllocate");
 
@@ -225,7 +208,6 @@ export function Proposals({
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
       {/* proposals: title - proposals -create Button */}
-      {/* <Button onClick={() => writeDistribute?.()}>Test Execute Proposal</Button> */}
       <div className="mx-auto max-w-3xl space-y-10">
         <header className="flex items-center justify-between">
           <h3 className="">Proposals</h3>
@@ -243,73 +225,78 @@ export function Proposals({
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposals.map(({ title, type, id, stakedTokens }, i) => (
-            <div
-              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
-              key={title + "_" + id}
-            >
-              <div className="flex w-full items-center justify-between font-bold">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-sm">{getProposalId(id)} -</span>
-                  <h4 className="text-xl">{title}</h4>
-                </div>
-
-                <div className="flex items-center gap-8">
-                  {/* <Button
-                    onClick={() =>
-                      writeDistribute?.({
-                        args: [
-                          strategy.poolId,
-                          [strategy.id],
-                          encodedDataProposalId(id),
-                        ],
-                      })
-                    }
-                  >
-                    Execute proposal {getProposalId(id)}
-                  </Button> */}
-                  <StatusBadge status={1} />
-                  {/* {!editView && ( */}
-                  <>
-                    <Link href={`${pathname}/proposals/${id}`}>
-                      <Button variant="outline">View Proposal</Button>
-                    </Link>
-                  </>
-                  {/* )} */}
-                </div>
-              </div>
-
-              {editView && (
-                <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                  <div className="flex items-center gap-8">
-                    <div>
-                      <input
-                        key={i}
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={inputs[i]?.value}
-                        className={`range-aja range range-sm min-w-[420px]`}
-                        step="5"
-                        onChange={(e) =>
-                          inputHandler(i, Number(e.target.value))
-                        }
-                      />
-                      <div className="flex w-full justify-between px-[10px] text-[4px]">
-                        {[...Array(21)].map((_, i) => (
-                          <span key={"span_" + i}>|</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="mb-2">{inputs[i].value} %</div>
+          {proposals.map(
+            ({ title, type, id, stakedTokens, proposalStatus }, i) => (
+              <div
+                className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
+                key={title + "_" + id}
+              >
+                <div className="flex w-full items-center justify-between font-bold">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm">{getProposalId(id)} -</span>
+                    <h4 className="text-xl">{title}</h4>
                   </div>
-                  {/* <Link href={`${pathname}/proposals/${id}`}>
+
+                  <div className="flex items-center gap-8">
+                    {/* Button to test distribute */}
+                    <Button
+                      disabled={proposalStatus == "4"}
+                      tooltip="Proposal already Executed"
+                      onClick={() =>
+                        writeDistribute?.({
+                          args: [
+                            strategy.poolId,
+                            [strategy.id],
+                            encodedDataProposalId(id),
+                          ],
+                        })
+                      }
+                    >
+                      Execute proposal {proposalStatus}
+                    </Button>
+                    <StatusBadge status={proposalStatus} />
+                    {/* {!editView && ( */}
+                    <>
+                      <Link href={`${pathname}/proposals/${id}`}>
+                        <Button variant="outline">View Proposal</Button>
+                      </Link>
+                    </>
+                    {/* )} */}
+                  </div>
+                </div>
+
+                {editView && (
+                  <div className="flex w-full flex-wrap items-center justify-between gap-6">
+                    <div className="flex items-center gap-8">
+                      <div>
+                        <input
+                          key={i}
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={inputs[i]?.value}
+                          className={`range-aja range range-sm min-w-[420px]`}
+                          step="5"
+                          onChange={(e) =>
+                            inputHandler(i, Number(e.target.value))
+                          }
+                        />
+                        <div className="flex w-full justify-between px-[10px] text-[4px]">
+                          {[...Array(21)].map((_, i) => (
+                            <span key={"span_" + i}>|</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mb-2">{inputs[i].value} %</div>
+                    </div>
+                    {/* <Link href={`${pathname}/proposals/${id}`}>
                     <Button variant="outline">View Proposal</Button>
                   </Link> */}
-                </div>
-              )}
-            </div>
-          ))}
+                  </div>
+                )}
+              </div>
+            ),
+          )}
         </div>
         <div className="flex justify-center gap-8">
           <Button
