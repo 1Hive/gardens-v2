@@ -76,7 +76,6 @@ export function handleInitialized(event: InitializedCV): void {
 
   cvs.poolAmount = cvc.getPoolAmount();
   cvs.maxCVSupply = BigInt.fromI32(0);
-  cvs.maxCVStaked = BigInt.fromI32(0);
   cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
 
   config.decay = decay;
@@ -114,6 +113,11 @@ export function handleProposalCreated(event: ProposalCreated): void {
   }
   let proposal = p.value;
 
+  const proposalStakedAmount = cvc.getProposalStakedAmount(
+    event.params.proposalId,
+  );
+  const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
+
   let newProposal = new CVProposal(proposalIdString);
   newProposal.strategy = cvsId;
 
@@ -127,6 +131,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.stakedTokens = proposal.getStakedTokens();
 
   newProposal.requestedAmount = proposal.getRequestedAmount();
+  newProposal.maxCVStaked = maxConviction;
 
   newProposal.proposalStatus = BigInt.fromI32(proposal.getProposalStatus());
   // newProposal.proposalType = BigInt.fromI32(proposal.proposalType());
@@ -185,19 +190,12 @@ export function handleSupportAdded(event: SupportAdded): void {
     event.params.proposalId,
   );
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
-  const cvs = CVStrategy.load(cvp.strategy);
 
-  if (cvs == null) {
-    log.debug("handleDistributed cvs not found: {}", [cvp.strategy]);
-    return;
-  }
-
-  cvs.maxCVStaked = maxConviction;
+  cvp.maxCVStaked = maxConviction;
 
   cvp.stakedTokens = event.params.totalStakedAmount;
   cvp.convictionLast = event.params.convictionLast;
   cvp.save();
-  cvs.save();
 }
 
 export function handleDistributed(event: Distributed): void {

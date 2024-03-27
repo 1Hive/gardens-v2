@@ -9,7 +9,6 @@ type CVStrategy @entity(immutable: false) {
   memberActive: [Member!]
   maxCVSupply: BigInt!
   totalEffectiveActivePoints: BigInt!
-  maxCVStaked: BigInt!
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -40,6 +39,7 @@ type CVProposal @entity(immutable: false) {
   blockLast: BigInt!
   convictionLast: BigInt!
   threshold: BigInt!
+  maxCVStaked: BigInt!
   # proposalType: BigInt!
   stakedTokens: BigInt!
   submitter: String!
