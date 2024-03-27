@@ -120,8 +120,6 @@ export default async function Proposal({
     functionName: "totalEffectiveActivePoints",
   })) as bigint;
 
-  console.log(totalEffectiveActivePoints);
-
   const getProposalStakedAmount = (await client.readContract({
     ...cvStrategyContract,
     functionName: "getProposalStakedAmount",
@@ -134,21 +132,10 @@ export default async function Proposal({
     args: [requestedAmount],
   })) as bigint;
 
-  //amount in token the proposal was staked 1token = 2% in points
-  //in the example each memeber staked 50 tokens = 100%
-  console.log(getProposalStakedAmount);
-
   const updateConvictionLast = (await client.readContract({
     ...cvStrategyContract,
     functionName: "updateProposalConviction",
     args: [proposalId],
-  })) as bigint;
-  console.log(updateConvictionLast);
-
-  const getTotalVoterStakePct = (await client.readContract({
-    ...cvStrategyContract,
-    functionName: "getTotalVoterStakePct",
-    args: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
   })) as bigint;
 
   const getProposal = (await client.readContract({
@@ -156,7 +143,6 @@ export default async function Proposal({
     functionName: "getProposal",
     args: [proposalId],
   })) as bigint;
-  console.log(getProposal);
 
   const maxCVSupply = (await client.readContract({
     ...cvStrategyContract,
@@ -164,18 +150,11 @@ export default async function Proposal({
     args: [totalEffectiveActivePoints],
   })) as bigint;
 
-  const getProposalAllStaked =
-    Number(getProposalStakedAmount * BigInt(2) * PRECISION_SCALE) / 10 ** 18;
-  console.log(getProposalAllStaked);
-
-  const manualStaked = 1000000n;
-
   const maxCVStaked = (await client.readContract({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
-    args: [manualStaked],
+    args: [getProposalStakedAmount],
   })) as bigint;
-  console.log(maxCVStaked);
 
   const getProposalVoterStake = (await client.readContract({
     ...cvStrategyContract,
@@ -200,13 +179,8 @@ export default async function Proposal({
   const convictionLastNum = Number(
     updateConvictionLast / PRECISION_SCALE,
   ).toFixed(0);
-
-  console.log(convictionLastNum);
-
-  const effPointsNum = Number(totalEffectiveActivePoints / PRECISION_SCALE);
+  const pointsNum = Number(totalEffectiveActivePoints / PRECISION_SCALE);
   const tokenStakedNum = getProposalStakedAmount / PRECISION_SCALE;
-
-  console.log(tokenStakedNum);
 
   console.log("ConvictionLast", convictionLastNum);
   console.log("staked tokens", tokenStakedNum);
@@ -219,11 +193,15 @@ export default async function Proposal({
     maxCVSupply,
     totalEffectiveActivePoints as bigint,
   );
-  const calcMaxConv = calcMaxConviction(maxCVStakedNum, maxCVSupplyNum, 1000);
+  const calcMaxConv = calcMaxConviction(
+    maxCVStakedNum,
+    maxCVSupplyNum,
+    pointsNum,
+  );
   const calcCurrCon = calcCurrentConviction(
     convictionLastNum as unknown as number,
     maxCVSupplyNum,
-    1000,
+    pointsNum,
   );
 
   //values
@@ -344,7 +322,7 @@ function calcCurrentConviction(
   }
   const convictionLastPct = Number(convictionLast) / Number(maxCVSupply);
   console.log(convictionLastPct);
-  const result = convictionLastPct * Number(totalEffectiveActivePoints) * 2;
+  const result = convictionLastPct * Number(totalEffectiveActivePoints);
   console.log(result);
   return Math.floor(result);
 }
@@ -373,8 +351,7 @@ function calcMaxConviction(
     // );
   }
   const futureConvictionStakedPct = Number(maxCVStaked) / Number(maxCVSupply);
-  const result =
-    futureConvictionStakedPct * Number(totalEffectiveActivePoints) * 2;
+  const result = futureConvictionStakedPct * Number(totalEffectiveActivePoints);
   return Math.floor(result);
 }
 
@@ -447,7 +424,7 @@ function calcThresholdPoints(
 
   const thresholdPct = Number(threshold) / Number(maxCVSupply);
 
-  const result = thresholdPct * Number(totalEffectiveActivePoints) * 2;
+  const result = thresholdPct * Number(totalEffectiveActivePoints);
   return Math.ceil(result);
 }
 
