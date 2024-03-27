@@ -168,10 +168,12 @@ export default async function Proposal({
     Number(getProposalStakedAmount * BigInt(2) * PRECISION_SCALE) / 10 ** 18;
   console.log(getProposalAllStaked);
 
+  const manualStaked = 1000000n;
+
   const maxCVStaked = (await client.readContract({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
-    args: [getProposalAllStaked],
+    args: [manualStaked],
   })) as bigint;
   console.log(maxCVStaked);
 
@@ -190,6 +192,8 @@ export default async function Proposal({
   console.log(maxCVStaked);
   console.log(threshold);
   console.log(updateConvictionLast);
+  console.log(convictionLast);
+  console.log(getProposalStakedAmount);
 
   const maxCVSupplyNum = Number(maxCVSupply / PRECISION_SCALE);
   const maxCVStakedNum = Number(maxCVStaked / PRECISION_SCALE);
@@ -198,7 +202,9 @@ export default async function Proposal({
   ).toFixed(0);
 
   const effPointsNum = Number(totalEffectiveActivePoints / PRECISION_SCALE);
-  const tokenStakedNum = Number(getProposalStakedAmount) / 10 ** 18;
+  const tokenStakedNum = getProposalStakedAmount / PRECISION_SCALE;
+
+  console.log(tokenStakedNum);
 
   console.log("ConvictionLast", convictionLastNum);
   console.log("staked tokens", tokenStakedNum);
@@ -226,7 +232,7 @@ export default async function Proposal({
   console.log("currentConviction", calcCurrCon);
   console.log("support", tokenStakedNum);
 
-  const proposalSupport = tokenStakedNum * 2;
+  const proposalSupport = Number(tokenStakedNum);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">

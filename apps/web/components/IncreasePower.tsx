@@ -31,10 +31,10 @@ export const IncreasePower = ({
   registerTokenDecimals,
 }: IncreasePowerProps) => {
   const modalRef = useRef<HTMLDialogElement | null>(null);
-  const [increaseInput, setIncreaseInput] = useState(0);
+  const [increaseInput, setIncreaseInput] = useState<number | undefined>();
 
   const requestedAmount = parseUnits(
-    increaseInput.toString(),
+    (increaseInput ?? 0).toString(),
     registerTokenDecimals,
   );
 
@@ -115,6 +115,7 @@ export const IncreasePower = ({
   useEffect(() => {
     if (increaseStakeStatus === "success") {
       modalRef.current?.close();
+      setIncreaseInput(0);
     }
   }, [increaseStakeStatus]);
 
@@ -147,20 +148,21 @@ export const IncreasePower = ({
           type="register"
         />
       </TransactionModal>
-      <div className="mt-10 flex max-w-lg flex-col  space-y-2">
-        <label htmlFor="stake" className="w-full text-center text-sm font-bold">
+      <div className="mt-10 flex max-w-xl flex-col  space-y-2">
+        <label htmlFor="stake" className="text-md w-full text-center font-bold">
           Stake more tokens in the community ! ...it will increase your voting
           power
         </label>
         <input
           type="number"
+          value={increaseInput}
           placeholder="0"
           className="w-full rounded-lg border-2 border-info p-2"
           onChange={(e) => handleInputChange(e)}
         />
         <Button onClick={handleChange} className="w-full">
-          {increaseInput !== 0
-            ? `Adding ${increaseInput} tokens to the Stake`
+          {increaseInput !== undefined
+            ? `Stake ${increaseInput} more tokens`
             : "Fill input with tokens to stake"}
           <span className="loading-spinner"></span>
         </Button>

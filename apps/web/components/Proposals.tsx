@@ -119,7 +119,7 @@ export function Proposals({
     functionName: "allocate",
   });
 
-  //encode function
+  //encode proposal id to pass as argument to distribute function
   const encodedDataProposalId = (proposalId: string) => {
     const getproposalId = getProposalId(proposalId);
     const encodedProposalId = encodeAbiParameters(
@@ -130,7 +130,7 @@ export function Proposals({
     return encodedProposalId;
   };
 
-  //distribute write contract
+  //test executing a proposal with distribute write contract
   const {
     data: distributeData,
     write: writeDistribute,
@@ -141,15 +141,8 @@ export function Proposals({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
-    //[ pool id, [], encoded proposal id]
-    // args: [strategy.poolId, [strategy.id], encodedProposalId],
-    onError: (error) => {
-      console.log("error", error);
-    },
-    onSuccess: (data) => {
-      console.log("data", data);
-    },
   });
+  //
 
   useErrorDetails(errorAllocate, "errorAllocate");
 
@@ -225,7 +218,6 @@ export function Proposals({
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
       {/* proposals: title - proposals -create Button */}
-      {/* <Button onClick={() => writeDistribute?.()}>Test Execute Proposal</Button> */}
       <div className="mx-auto max-w-3xl space-y-10">
         <header className="flex items-center justify-between">
           <h3 className="">Proposals</h3>
@@ -255,7 +247,8 @@ export function Proposals({
                 </div>
 
                 <div className="flex items-center gap-8">
-                  {/* <Button
+                  {/* Button to test distribute */}
+                  <Button
                     onClick={() =>
                       writeDistribute?.({
                         args: [
@@ -267,7 +260,7 @@ export function Proposals({
                     }
                   >
                     Execute proposal {getProposalId(id)}
-                  </Button> */}
+                  </Button>
                   <StatusBadge status={1} />
                   {/* {!editView && ( */}
                   <>
