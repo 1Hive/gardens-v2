@@ -61,6 +61,7 @@ export async function getProposals(
           voterStakedPointsPct: 0,
           title: data.title,
           type: strategy.config?.proposalType as number,
+          status: strategy.proposals[index].proposalStatus,
         };
       });
 

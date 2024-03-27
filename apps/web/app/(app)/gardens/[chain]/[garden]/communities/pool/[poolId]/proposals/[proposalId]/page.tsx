@@ -198,8 +198,10 @@ export default async function Proposal({
   const maxCVSupplyNum = Number(maxCVSupply / PRECISION_SCALE);
   const maxCVStakedNum = Number(maxCVStaked / PRECISION_SCALE);
   const convictionLastNum = Number(
-    updateConvictionLast / BigInt(10 ** 18),
+    updateConvictionLast / PRECISION_SCALE,
   ).toFixed(0);
+
+  console.log(convictionLastNum);
 
   const effPointsNum = Number(totalEffectiveActivePoints / PRECISION_SCALE);
   const tokenStakedNum = getProposalStakedAmount / PRECISION_SCALE;
