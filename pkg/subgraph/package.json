@@ -15,7 +15,8 @@
     "local": "pnpm create-local && pnpm build && pnpm deploy-local",
     "last-addr": "ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-addr.ts",
     "build-client": "graphclient build --fileType js",
-    "build-all": "pnpm create-local && pnpm build && pnpm deploy-local"
+    "build-all": "pnpm create-local && pnpm build && pnpm deploy-local",
+    "codegen": "graph codegen"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.67.2",

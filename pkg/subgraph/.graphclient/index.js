@@ -201,6 +201,7 @@ export const getTokenGardensDocument = gql `
     communities {
       id
       chainId
+      communityFee
       members {
         id
       }
@@ -230,15 +231,19 @@ export const getCommunitiesByGardenDocument = gql `
     id
     name
     symbol
+    decimals
     chainId
     communities {
       id
+      covenantIpfsHash
       chainId
       communityName
+      protocolFee
+      communityFee
       registerToken
       registerStakeAmount
       alloAddress
-      members {
+      members(where: {stakedAmount_gt: "0"}) {
         id
         memberAddress
       }
@@ -252,6 +257,7 @@ export const getCommunitiesByGardenDocument = gql `
         config {
           id
           proposalType
+          pointSystem
         }
         proposals {
           id
@@ -284,6 +290,7 @@ export const getPoolDataDocument = gql `
     config {
       id
       proposalType
+      pointSystem
     }
     registryCommunity {
       id
@@ -324,6 +331,7 @@ export const getProposalDataDocument = gql `
       id
       config {
         proposalType
+        pointSystem
       }
     }
   }
@@ -346,6 +354,7 @@ export const getStrategyByPoolDocument = gql `
     config {
       id
       proposalType
+      pointSystem
     }
     registryCommunity {
       id

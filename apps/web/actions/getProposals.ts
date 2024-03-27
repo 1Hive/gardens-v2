@@ -4,6 +4,12 @@ import { Abi, Address } from "viem";
 import { Proposal, ProposalTypeVoter, Strategy } from "@/components/Proposals";
 import { CVProposal } from "#/subgraph/.graphclient";
 
+export const PRECISION_SCALE = BigInt(10 ** 4);
+// const pts = 1_000_000 = 100% = 1M;
+// 100 * PRECISION_SCALE = 100%
+// 950.000 / PRECISION_SCALE = 95%
+// use PRECISION_SCALE & registerStakeAmount, etc to parse data so you get a number between 0% and 100%
+
 export async function getProposals(
   accountAddress: Address | undefined,
   strategy: Strategy,
@@ -12,7 +18,7 @@ export async function getProposals(
     async function fetchIPFSDataBatch(
       proposals: Proposal[],
       batchSize = 5,
-      delay = 1000,
+      delay = 300,
     ) {
       // Fetch data for a batch of proposals
       const fetchBatch = async (batch: any) =>
@@ -55,6 +61,7 @@ export async function getProposals(
           voterStakedPointsPct: 0,
           title: data.title,
           type: strategy.config?.proposalType as number,
+          status: strategy.proposals[index].proposalStatus,
         };
       });
 
@@ -80,12 +87,15 @@ export async function getProposals(
         contracts: contractsToRead,
       });
 
+      console.log(proposalsReadsContract);
+
       transformedProposals.map((proposal, i) => {
         if (proposalsReadsContract[i]?.result !== undefined) {
           const result = proposalsReadsContract[i].result as {
             voterStakedPoints: bigint;
           };
-          const voterStakedPointsPct = result?.voterStakedPoints;
+          const voterStakedPointsPct =
+            result?.voterStakedPoints / PRECISION_SCALE;
           return { ...proposal, voterStakedPointsPct: voterStakedPointsPct };
         }
       });

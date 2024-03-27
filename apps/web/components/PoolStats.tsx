@@ -3,20 +3,28 @@ import { flowers } from "@/assets";
 import React, { FC } from "react";
 import Image from "next/image";
 import { StatusBadge } from "./Badge";
-import { ActivePointsChart } from "@/components";
-import { PoolTokenPriceChart } from "@/components";
 import { ActivatePoints } from "./ActivatePoints";
 import { Strategy } from "./Proposals";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { Address, useAccount } from "wagmi";
+import { Address, useAccount, useContractRead } from "wagmi";
+import { PRECISION_SCALE } from "@/actions/getProposals";
+import { formatTokenAmount } from "@/utils/numbers";
 
 type PoolStatsProps = {
-  balance?: string | number;
-  strategyAddress: `0x${string}`;
+  balance: string | number;
+  strategyAddress: Address;
   strategy: Strategy;
-  // poolId: number;
   communityAddress: Address;
+  tokenGarden: any;
+  pointSystem: string;
+};
+
+const pointSystemObject = {
+  0: "Fixed",
+  1: "Capped",
+  2: "Unlimited",
+  3: "Quadratic",
 };
 
 export const PoolStats: FC<PoolStatsProps> = ({
@@ -24,29 +32,36 @@ export const PoolStats: FC<PoolStatsProps> = ({
   strategyAddress,
   strategy,
   communityAddress,
+  tokenGarden,
+  pointSystem,
 }) => {
   const { isMemberActived } = useIsMemberActivated(strategy);
   const { isConnected } = useAccount();
-
   const { voterStakePct } = useTotalVoterStakedPct(strategy);
 
   return (
-    <section className="flex h-fit w-full gap-8 rounded-xl bg-none">
+    <section className="flex max-h-96 w-full gap-8 rounded-xl bg-none">
       <div className="flex flex-1 flex-col gap-8">
         {/*  */}
         {/* left-top */}
-        <div className="flex-flex-col max-h-44 w-full space-y-4 rounded-xl border-2 border-black bg-white p-4">
+        <div className="flex-flex-col flex max-h-44 w-full items-center justify-center space-y-4 rounded-xl border-2 border-black bg-white p-4">
           <div>
-            <div className="flex items-center justify-around">
-              <h4 className="text-center text-xl font-bold">
-                Funds Available:
-              </h4>
-              <h4 className="text-center text-2xl font-bold">{balance}</h4>
+            <div className="flex h-full flex-col items-start">
+              <div className="flex w-full items-baseline gap-8">
+                <h4 className="stat-title text-center text-xl font-bold">
+                  Funds Available:
+                </h4>
+                <h4 className="stat-value text-center text-2xl font-bold ">
+                  {balance
+                    ? formatTokenAmount(balance, tokenGarden?.decimals)
+                    : "0"}
+                </h4>
+              </div>
             </div>
           </div>
           <div className="max-h-30 flex items-center gap-3 ">
             <div className="border-1 flex h-24 flex-1 items-center justify-center">
-              <PoolTokenPriceChart />
+              {/* <PoolTokenPriceChart /> */}
             </div>
           </div>
         </div>
@@ -86,13 +101,39 @@ export const PoolStats: FC<PoolStatsProps> = ({
 
       {/* right  */}
       <div className="flex-1 space-y-8 rounded-xl border-2 border-black bg-white p-4">
-        <div>
-          <h4 className="text-center text-xl font-bold">Active Points</h4>
+        <div className="flex flex-col items-center gap-2">
+          <h4 className="text-center text-xl font-bold">
+            Active Points Distribution
+          </h4>
+          <div className="text-md stat-title font-bold">
+            Points System:{" "}
+            <span className="text-md pl-2 text-black">
+              {
+                pointSystemObject[
+                  pointSystem as unknown as keyof typeof pointSystemObject
+                ]
+              }
+            </span>
+          </div>
         </div>
-        <div>
-          {/* Testing styles and Data */}
-          <ActivePointsChart stakedPoints={Number(voterStakePct)} />
-        </div>
+        {voterStakePct && Number(voterStakePct) !== 0 ? (
+          <div className="flex h-48 flex-col items-center justify-center">
+            <p className="rounded-xl bg-surface px-8 py-3 text-lg font-semibold">
+              You have distributed:
+            </p>
+            <p className="text-5xl font-semibold">
+              {Number(voterStakePct / PRECISION_SCALE)} %{" "}
+              <span className="text-sm">of your points</span>
+            </p>
+          </div>
+        ) : (
+          // <ActivePointsChart stakedPoints={Number(voterStakePct)} />
+          <div className="flex h-48 items-center justify-center">
+            <p className="rounded-xl bg-warning p-2 text-lg font-semibold">
+              No points distributed yet
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

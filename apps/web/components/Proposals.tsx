@@ -1,13 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Button, Badge } from "@/components";
+import { Button, StatusBadge } from "@/components";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAccount, useContractWrite } from "wagmi";
+import { useAccount, useContractWrite, Address as AddressType } from "wagmi";
 import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI } from "@/src/generated";
-import { getProposals } from "@/actions/getProposals";
+import { PRECISION_SCALE, getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
 import { toast } from "react-toastify";
@@ -18,14 +18,7 @@ import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/communities/pool
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-
-// export const convertBigIntToNumberFraction = (bigInt: bigint) => {
-//   return Number(bigInt.toString()) / 10 ** 4;
-// };
-
-// export const convertNumberFractionToBigInt = (number: number) => {
-//   return BigInt(number * 10 ** 4);
-// };
+import { encodeAbiParameters } from "viem";
 
 type InputItem = {
   id: string;
@@ -41,9 +34,14 @@ export type ProposalTypeVoter = Proposal & {
   type: number;
 };
 
-// const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
+const getProposalId = (inputString: string) => {
+  if (inputString.length >= 2) {
+    return inputString.substring(2);
+  } else {
+    return "0x0";
+  }
+};
 
-//!POOL == STRATEGY
 export function Proposals({
   strategy,
   alloInfo,
@@ -85,7 +83,7 @@ export function Proposals({
     const newInputs = proposals.map(({ id, voterStakedPointsPct }) => ({
       id: id,
       value: voterStakedPointsPct,
-    }));
+    })); // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
     // console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
@@ -111,6 +109,31 @@ export function Proposals({
     functionName: "allocate",
   });
 
+  //encode proposal id to pass as argument to distribute function
+  const encodedDataProposalId = (proposalId: string) => {
+    const getproposalId = getProposalId(proposalId);
+    const encodedProposalId = encodeAbiParameters(
+      [{ name: "proposalId", type: "uint" }],
+      [BigInt(getproposalId)],
+    );
+
+    return encodedProposalId;
+  };
+
+  //test executing a proposal with distribute function
+  const {
+    data: distributeData,
+    write: writeDistribute,
+    error: errorDistribute,
+    isSuccess: isSuccessDistribute,
+    status: distributeStatus,
+  } = useContractWrite({
+    address: alloInfo.id as Address,
+    abi: abiWithErrors(alloABI),
+    functionName: "distribute",
+  });
+  //
+
   useErrorDetails(errorAllocate, "errorAllocate");
 
   const { updateTransactionStatus, txConfirmationHash } =
@@ -131,7 +154,7 @@ export function Proposals({
     // console.log("poolId", poolId);
 
     writeAllocate({
-      args: [BigInt(poolId), encodedData as `0x${string}`],
+      args: [BigInt(poolId), encodedData as AddressType],
     });
   };
 
@@ -139,12 +162,14 @@ export function Proposals({
     inputData: InputItem[],
     currentData: ProposalTypeVoter[],
   ) => {
-    const resultArr: number[][] = [];
+    const resultArr: [number, BigInt][] = [];
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = input.value - current.voterStakedPointsPct;
-          if (dif !== 0) {
+          const dif =
+            BigInt(input.value - current.voterStakedPointsPct) *
+            PRECISION_SCALE;
+          if (dif !== BigInt(0)) {
             resultArr.push([Number(input.id), dif]);
           }
         }
@@ -160,8 +185,8 @@ export function Proposals({
 
   const inputHandler = (i: number, value: number) => {
     const currentPoints = calculatePoints(i);
-    // console.log("currentPoints", currentPoints);
-    // console.log("value", value);
+    console.log("currentPoints", currentPoints);
+    console.log("value", value);
     if (currentPoints + value <= 100) {
       setInputs(
         inputs.map((input, index) =>
@@ -200,57 +225,80 @@ export function Proposals({
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposals.map(({ title, type, id, stakedTokens }, i) => (
-            <div
-              className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
-              key={title + "_" + id}
-            >
-              <div className="flex w-full items-center justify-between">
-                <h4 className="font-semibold">{title}</h4>
-                <div>
-                  {!editView && (
-                    <Link href={`${pathname}/proposals/${id}`} className="ml-8">
-                      <Button variant="outline">View Proposal</Button>
-                    </Link>
-                  )}
-                </div>
-              </div>
-
-              {editView && (
-                <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                  <div className="flex items-center gap-8">
-                    <div>
-                      <input
-                        key={i}
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={inputs[i]?.value}
-                        className={`range-aja range range-sm min-w-[420px]`}
-                        step="5"
-                        onChange={(e) =>
-                          inputHandler(i, Number(e.target.value))
-                        }
-                      />
-                      <div className="flex w-full justify-between px-[10px] text-[4px]">
-                        {[...Array(21)].map((_, i) => (
-                          <span key={"span_" + i}>|</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="mb-2">{inputs[i].value} %</div>
+          {proposals.map(
+            ({ title, type, id, stakedTokens, proposalStatus }, i) => (
+              <div
+                className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
+                key={title + "_" + id}
+              >
+                <div className="flex w-full items-center justify-between font-bold">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-sm">{getProposalId(id)} -</span>
+                    <h4 className="text-xl">{title}</h4>
                   </div>
-                  <Link href={`${pathname}/proposals/${id}`}>
-                    <Button variant="outline">View Proposal</Button>
-                  </Link>
+
+                  <div className="flex items-center gap-8">
+                    {/* Button to test distribute */}
+                    <Button
+                      disabled={proposalStatus == "4"}
+                      tooltip="Proposal already Executed"
+                      onClick={() =>
+                        writeDistribute?.({
+                          args: [
+                            strategy.poolId,
+                            [strategy.id],
+                            encodedDataProposalId(id),
+                          ],
+                        })
+                      }
+                    >
+                      Execute proposal {proposalStatus}
+                    </Button>
+                    <StatusBadge status={proposalStatus} />
+                    {/* {!editView && ( */}
+                    <>
+                      <Link href={`${pathname}/proposals/${id}`}>
+                        <Button variant="outline">View Proposal</Button>
+                      </Link>
+                    </>
+                    {/* )} */}
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {editView && (
+                  <div className="flex w-full flex-wrap items-center justify-between gap-6">
+                    <div className="flex items-center gap-8">
+                      <div>
+                        <input
+                          key={i}
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={inputs[i]?.value}
+                          className={`range-aja range range-sm min-w-[420px]`}
+                          step="5"
+                          onChange={(e) =>
+                            inputHandler(i, Number(e.target.value))
+                          }
+                        />
+                        <div className="flex w-full justify-between px-[10px] text-[4px]">
+                          {[...Array(21)].map((_, i) => (
+                            <span key={"span_" + i}>|</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mb-2">{inputs[i].value} %</div>
+                    </div>
+                    {/* <Link href={`${pathname}/proposals/${id}`}>
+                    <Button variant="outline">View Proposal</Button>
+                  </Link> */}
+                  </div>
+                )}
+              </div>
+            ),
+          )}
         </div>
         <div className="flex justify-center gap-8">
-          {/* <Button className={`bg-primary`}>Create Proposal</Button> */}
-
           <Button
             className={`${editView ? "bg-red text-white" : "bg-primary"}`}
             onClick={() => setEditView((prev) => !prev)}
@@ -274,10 +322,10 @@ export function Proposals({
           <p className="font-semibold">{message}</p>
         </div>
         {/*  PROPOSALS STATS  ///// */}
-        <ProposalStats
+        {/* <ProposalStats
           proposals={proposals}
           distributedPoints={distributedPoints}
-        />
+        /> */}
       </div>
     </section>
   );
