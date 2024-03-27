@@ -189,6 +189,17 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
      *    TESTS
      */
 
+      function testRevert_createProposal_OverMaxRation() public {
+
+        (, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+
+        StrategyStruct.CreateProposal memory proposal =
+            StrategyStruct.CreateProposal(poolId, pool_admin(), 11000 ether, NATIVE, metadata);
+        bytes memory data = abi.encode(proposal);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.AmountOverMaxRatio.selector));
+        allo().registerRecipient(poolId, data);
+    }
+
     function testRevert_allocate_ProposalIdDuplicated() public {
         ( /*IAllo.Pool memory pool*/ , uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 

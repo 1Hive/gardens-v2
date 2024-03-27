@@ -182,7 +182,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     function create_community(Allo allo, RegistryFactory registryFactory) public {
         vm.startBroadcast(pool_admin());
 
-        token = new TERC20("sepolia Matias", "sepMAT", 18);
+        // token = new TERC20("sepolia Matias", "sepMAT", 18);
 
         IRegistry registry = allo.getRegistry();
 
@@ -282,15 +282,15 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         allo.fundPool(poolIdFixed, 1_000 ether); // ether
 
         StrategyStruct.CreateProposal memory proposal =
-            StrategyStruct.CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
+            StrategyStruct.CreateProposal(poolId, membersStaked[0], 600 ether, address(token), metadata);
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, membersStaked[1], 25 ether, address(token), metadata);
+        proposal = StrategyStruct.CreateProposal(poolId, membersStaked[1], 700 ether, address(token), metadata);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, membersStaked[2], 10 ether, address(token), metadata);
+        proposal = StrategyStruct.CreateProposal(poolId, membersStaked[2], 800 ether, address(token), metadata);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
