@@ -41,18 +41,6 @@ export function CommunityCard({
   const { address: accountAddress } = useAccount();
   const { openConnectModal } = useConnectModal();
 
-  const {
-    data: increaseStakeData,
-    write: writeIncreasePower,
-    error: errorIncreaseStake,
-    status: increaseStakeStatus,
-  } = useContractWrite({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
-    functionName: "increasePower",
-    args: [50000000000000000000n],
-  });
-
   const pools = strategies ?? [];
   members = members ?? [];
   let registerToken = tokenGarden?.id ?? "0x0";
@@ -129,7 +117,7 @@ export function CommunityCard({
               {pools.map((pool, i) => (
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
-              <IncreasePower communityAddress={communityAddress as string} />
+
               {/* {pools.length > 2 && (
                 <Button
                   className="!rounded-full bg-white !p-3"
@@ -142,6 +130,13 @@ export function CommunityCard({
                 </Button>
               )} */}
             </div>
+            <IncreasePower
+              communityAddress={communityAddress as Address}
+              registerToken={registerToken as Address}
+              connectedAccount={accountAddress as Address}
+              tokenSymbol={tokenGarden?.symbol as string}
+              registerTokenDecimals={tokenGarden?.decimals as number}
+            />
           </div>
         </main>
       </div>

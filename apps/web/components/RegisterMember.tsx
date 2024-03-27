@@ -113,15 +113,6 @@ export function RegisterMember({
     functionName: "approve",
   });
 
-  const powerAmount = 50000000000000000000n;
-
-  const { data: allowMock, write: writeMockallow } = useContractWrite({
-    address: registerToken,
-    abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, powerAmount as bigint], // [allowed spender address, amount ]
-    functionName: "approve",
-  });
-
   const {
     data,
     isError,
@@ -266,8 +257,6 @@ export function RegisterMember({
               </div>
             </div>
           </div>
-          <h4>allowance: {formatTokenAmount(dataAllowance, 18)}</h4>
-
           <div className="stat flex-1 items-center gap-2">
             <Button
               onClick={handleChange}
@@ -282,7 +271,6 @@ export function RegisterMember({
                   : "Register in community"
                 : "Connect Wallet"}
             </Button>
-            <Button onClick={() => writeMockallow?.()}>Allow Tokens</Button>
           </div>
         </div>
       </div>
