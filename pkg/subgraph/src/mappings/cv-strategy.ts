@@ -16,6 +16,9 @@ import {
   SupportAdded,
   PowerIncreased,
   PowerDecreased,
+  DecayUpdated,
+  MaxRatioUpdated,
+  WeightUpdated,
 } from "../../generated/templates/CVStrategy/CVStrategy";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategy/Allo";
@@ -128,7 +131,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.blockLast = proposal.getBlockLast();
   newProposal.convictionLast = proposal.getConvictionLast();
   newProposal.threshold = proposal.getThreshold();
-  newProposal.stakedTokens = proposal.getStakedTokens();
+  newProposal.stakedAmount = proposal.getStakedAmount();
 
   newProposal.requestedAmount = proposal.getRequestedAmount();
   newProposal.maxCVStaked = maxConviction;
@@ -193,7 +196,7 @@ export function handleSupportAdded(event: SupportAdded): void {
 
   cvp.maxCVStaked = maxConviction;
 
-  cvp.stakedTokens = event.params.totalStakedAmount;
+  cvp.stakedAmount = event.params.totalStakedAmount;
   cvp.convictionLast = event.params.convictionLast;
   cvp.save();
 }
@@ -275,4 +278,70 @@ export function handlePowerDecreased(event: PowerDecreased): void {
     : BigInt.fromI32(0);
 
   member.save();
+}
+
+export function handleDecayUpdated(event: DecayUpdated): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.debug("handleDecayUpdated cvs not found: {}", [
+      event.address.toHexString(),
+    ]);
+    return;
+  }
+  if (cvs.config) {
+    let config = CVStrategyConfig.load(cvs.config);
+    if (config == null) {
+      log.debug("handleDecayUpdated config not found: {}", [
+        event.address.toHexString(),
+      ]);
+      return;
+    }
+    config.decay = event.params.decay;
+    config.save();
+  }
+  return;
+}
+
+export function handleMaxRatioUpdated(event: MaxRatioUpdated): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.debug("handleMaxRatioUpdated cvs not found: {}", [
+      event.address.toHexString(),
+    ]);
+    return;
+  }
+  if (cvs.config) {
+    let config = CVStrategyConfig.load(cvs.config);
+    if (config == null) {
+      log.debug("handleMaxRatioUpdated config not found: {}", [
+        event.address.toHexString(),
+      ]);
+      return;
+    }
+    config.maxRatio = event.params.maxRatio;
+    config.save();
+  }
+  return;
+}
+
+export function handleWeightUpdated(event: WeightUpdated): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.debug("handleWeightUpdated cvs not found: {}", [
+      event.address.toHexString(),
+    ]);
+    return;
+  }
+  if (cvs.config) {
+    let config = CVStrategyConfig.load(cvs.config);
+    if (config == null) {
+      log.debug("handleWeightUpdated config not found: {}", [
+        event.address.toHexString(),
+      ]);
+      return;
+    }
+    config.weight = event.params.weight;
+    config.save();
+  }
+  return;
 }
