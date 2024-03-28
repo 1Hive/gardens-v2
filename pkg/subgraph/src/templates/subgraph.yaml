@@ -106,6 +106,12 @@ templates:
           handler: handlePowerIncreased
         - event: PowerDecreased(address,uint256,uint256)
           handler: handlePowerDecreased
+        - event: DecayUpdated(uint256)
+          handler: handleDecayUpdated
+        - event: MaxRatioUpdated(uint256)
+          handler: handleMaxRatioUpdated
+        - event: WeightUpdated(uint256)
+          handler: handleWeightUpdated
  
       file: ./src/mappings/cv-strategy.ts
   

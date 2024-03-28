@@ -253,7 +253,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         if (memberActivatedInStrategies[_member][_strategy]) {
             revert UserAlreadyActivated();
         }
-
+  
         uint256 pointsPerMember = IPointStrategy(_strategy).getPointsPerMember(); //@kev can be zero for some kind strategies
 
         Member memory member = addressToMemberInfo[_member];
