@@ -15,6 +15,8 @@ import { formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -40,6 +42,7 @@ export function CommunityCard({
   // const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const pathname = usePathname();
 
   const pools = strategies ?? [];
   members = members ?? [];
@@ -117,6 +120,11 @@ export function CommunityCard({
               {pools.map((pool, i) => (
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
+              <div className="relative flex min-w-56 snap-center items-center rounded-md">
+                <Link href={`${pathname}/${communityAddress}/create-pool`} className="w-full">
+                  <Button className="w-full">Create Pool</Button>
+                </Link>
+              </div>
 
               {/* {pools.length > 2 && (
                 <Button
