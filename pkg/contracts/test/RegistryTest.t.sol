@@ -445,6 +445,44 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
     }
 
+    function test_DecreasePower_after_increasePower() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+
+        token.approve(address(registryCommunity), 150 * DECIMALS);
+
+        _registryCommunity().increasePower(100 * DECIMALS);
+        _registryCommunity().increasePower(50 * DECIMALS);
+        // token.approve(address(registryCommunity), 100 * DECIMALS);
+        _registryCommunity().decreasePower(150 * DECIMALS);
+
+        strategy.activatePoints();
+
+        uint256 pointsPerMember = strategy.getPointsPerMember();
+
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), pointsPerMember);
+        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
+        vm.stopPrank();
+    }
+
     function test_revertKickUnregisteredMember() public {
         startMeasuringGas("Registering and kicking member");
         vm.startPrank(address(councilSafe));

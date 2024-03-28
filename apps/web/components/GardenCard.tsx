@@ -5,7 +5,6 @@ import React from "react";
 import { Button } from ".";
 import { gardenLand } from "@/assets";
 import { getTokenGardensQuery } from "#/subgraph/.graphclient";
-import { formatUnits } from "viem/utils";
 import { getChain } from "@/configs/chainServer";
 
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
@@ -13,7 +12,7 @@ type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 export function GardenCard({ garden }: { garden: TokenGarden }) {
   const { id, name, decimals, symbol, communities, totalBalance, chainId } =
     garden;
-  const link = `/gardens/${chainId}/${id}/communities`;
+  const link = `/gardens/${chainId}/${id}`;
   const commLength = communities?.length ?? 0;
   const totalMembers =
     communities
@@ -35,10 +34,6 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
           data={commLength}
         />
         <InfoData label={"Members"} data={totalMembers} />
-        <InfoData
-          label="Staked Tokens"
-          data={formatUnits(totalBalance, decimals)}
-        />
 
         <div className="mb-2 mt-4">
           <Link href={link}>

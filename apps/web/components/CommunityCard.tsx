@@ -1,20 +1,22 @@
 "use client";
-import { useState } from "react";
 import { Button, RegisterMember } from "@/components";
 import {
-  ChevronDownIcon,
   UserGroupIcon,
   BuildingOffice2Icon,
 } from "@heroicons/react/24/outline";
-import { PoolCard } from "@/components";
+import { PoolCard, IncreasePower } from "@/components";
 import { CommunityProfile } from "@/components";
-import { Address, useAccount } from "wagmi";
+import { Address, useAccount, useContractWrite } from "wagmi";
 import {
   TokenGarden,
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
-import * as dn from "dnum";
 import { formatTokenAmount } from "@/utils/numbers";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { registryCommunityABI } from "@/src/generated";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -39,18 +41,8 @@ export function CommunityCard({
 }: CommunityCardProps) {
   // const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
-
-  // const [isMember, setIsMember] = useState<boolean>(false);
-  // useEffect(() => {
-  //   if (accountAddress && members) {
-  //     const findMember = members.some(
-  //       (m) => m.memberAddress == accountAddress.toLowerCase(),
-  //     );
-  //     setIsMember(findMember);
-  //   } else {
-  //     setIsMember(false);
-  //   }
-  // }, []);
+  const { openConnectModal } = useConnectModal();
+  const pathname = usePathname();
 
   const pools = strategies ?? [];
   members = members ?? [];
@@ -99,16 +91,23 @@ export function CommunityCard({
           </div>
 
           <div>
-            <RegisterMember
-              name={name as string}
-              tokenSymbol={tokenGarden?.symbol as string}
-              communityAddress={communityAddress as Address}
-              registerToken={registerToken as Address}
-              registerTokenDecimals={tokenGarden?.decimals as number}
-              membershipAmount={registerStakeAmount}
-              protocolFee={protocolFee}
-              communityFee={communityFee}
-            />
+            {accountAddress ? (
+              <RegisterMember
+                name={name as string}
+                connectedAccount={accountAddress as Address}
+                tokenSymbol={tokenGarden?.symbol as string}
+                communityAddress={communityAddress as Address}
+                registerToken={registerToken as Address}
+                registerTokenDecimals={tokenGarden?.decimals as number}
+                membershipAmount={registerStakeAmount}
+                protocolFee={protocolFee}
+                communityFee={communityFee}
+              />
+            ) : (
+              <Button onClick={openConnectModal} className="w-full">
+                Connect Wallet
+              </Button>
+            )}
 
             <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
           </div>
@@ -121,6 +120,12 @@ export function CommunityCard({
               {pools.map((pool, i) => (
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
+              <div className="relative flex min-w-56 snap-center items-center rounded-md">
+                <Link href={`${pathname}/${communityAddress}/create-pool`} className="w-full">
+                  <Button className="w-full">Create Pool</Button>
+                </Link>
+              </div>
+
               {/* {pools.length > 2 && (
                 <Button
                   className="!rounded-full bg-white !p-3"
@@ -133,6 +138,13 @@ export function CommunityCard({
                 </Button>
               )} */}
             </div>
+            <IncreasePower
+              communityAddress={communityAddress as Address}
+              registerToken={registerToken as Address}
+              connectedAccount={accountAddress as Address}
+              tokenSymbol={tokenGarden?.symbol as string}
+              registerTokenDecimals={tokenGarden?.decimals as number}
+            />
           </div>
         </main>
       </div>

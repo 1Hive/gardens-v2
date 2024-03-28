@@ -16,10 +16,9 @@ type ActiveMemberProps = {
 
 export function ActivatePoints({
   strategyAddress,
-  isMemberActived,
   communityAddress,
 }: ActiveMemberProps) {
-  const { address } = useAccount();
+  const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
 
   const {
@@ -30,7 +29,7 @@ export function ActivatePoints({
     address: communityAddress as Address,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "memberActivatedInStrategies",
-    args: [address as Address, strategyAddress],
+    args: [connectedAccount as Address, strategyAddress],
     watch: true,
   });
 
@@ -54,13 +53,22 @@ export function ActivatePoints({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
+    args: [connectedAccount as Address],
+  });
+
+  const { data: pointsVotingPower } = useContractRead({
+    address: communityAddress as Address,
+    abi: abiWithErrors(registryCommunityABI),
+    functionName: "getMemberPowerInStrategy",
+    args: [connectedAccount as Address, strategyAddress],
+    watch: true,
   });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
 
   async function handleChange() {
-    if (address) {
+    if (connectedAccount) {
       if (isMemberActivated) {
         writeDeactivatePoints?.();
       } else {
@@ -87,13 +95,15 @@ export function ActivatePoints({
 
   return (
     <>
-      <Button onClick={handleChange} className="w-fit bg-primary">
-        {address
-          ? isMemberActivated
-            ? "Deactivate Points"
-            : "Activate Points"
-          : "Connect Wallet"}
-      </Button>
+      <div className="flex flex-col gap-4 pl-4">
+        <Button onClick={handleChange} className="w-fit bg-primary">
+          {connectedAccount
+            ? isMemberActivated
+              ? "Deactivate Points"
+              : "Activate Points"
+            : "Connect Wallet"}
+        </Button>
+      </div>
     </>
   );
 }

@@ -442,18 +442,18 @@ const CommunityOverview: React.FC<PreviewDataProps> = (data) => {
                 />
               </div>
             )}
-            <PreviewData label="CommunityName" data={name} />
-            <PreviewData label="Member Stake Amount" data={stake} />
-            <PreviewData
+            <PreviewDataRow label="CommunityName" data={name} />
+            <PreviewDataRow label="Member Stake Amount" data={stake} />
+            <PreviewDataRow
               label="Council can expel members"
               data={isKickMemberEnabled ? "Yes" : "No"}
             />
-            <PreviewData
+            <PreviewDataRow
               label="Protocol Fee Amount"
               data={`${feeAmount ?? "0"} %`}
             />
-            <PreviewData label="Fee Receiver" data={feeReceiver} />
-            <PreviewData label="Council Safe" data={councilSafe} />
+            <PreviewDataRow label="Fee Receiver" data={feeReceiver} />
+            <PreviewDataRow label="Council Safe" data={councilSafe} />
 
             <h3 className="text-sm font-medium leading-6 text-gray-900">
               Covenant
@@ -468,7 +468,7 @@ const CommunityOverview: React.FC<PreviewDataProps> = (data) => {
   );
 };
 
-const PreviewData = ({ label, data }: { label: string; data: any }) => {
+const PreviewDataRow = ({ label, data }: { label: string; data: any }) => {
   return (
     <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
       <dt className="text-sm font-medium leading-6 text-gray-900">{label}</dt>
