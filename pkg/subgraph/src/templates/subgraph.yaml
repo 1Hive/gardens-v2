@@ -83,11 +83,14 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
+        - Allo
       abis:
         - name: CVStrategy
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: Allo
+          file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
         - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8,uint8,(uint256,uint256,uint256,uint256))) 
           handler: handleInitialized
@@ -103,6 +106,12 @@ templates:
           handler: handlePowerIncreased
         - event: PowerDecreased(address,uint256,uint256)
           handler: handlePowerDecreased
+        - event: DecayUpdated(uint256)
+          handler: handleDecayUpdated
+        - event: MaxRatioUpdated(uint256)
+          handler: handleMaxRatioUpdated
+        - event: WeightUpdated(uint256)
+          handler: handleWeightUpdated
  
       file: ./src/mappings/cv-strategy.ts
   

@@ -302,7 +302,7 @@ export const getPoolDataDocument = gql `
       requestedAmount
       requestedToken
       proposalStatus
-      stakedTokens
+      stakedAmount
     }
   }
 }
@@ -322,7 +322,7 @@ export const getProposalDataDocument = gql `
     proposalStatus
     requestedAmount
     requestedToken
-    stakedTokens
+    stakedAmount
     submitter
     threshold
     updatedAt
@@ -366,7 +366,7 @@ export const getStrategyByPoolDocument = gql `
       requestedAmount
       requestedToken
       proposalStatus
-      stakedTokens
+      stakedAmount
     }
   }
 }

@@ -4,12 +4,11 @@ type CVStrategy @entity(immutable: false) {
   poolAmount: BigInt
   metadata: String
   registryCommunity: RegistryCommunity!
-  config: CVStrategyConfig
+  config: CVStrategyConfig!
   proposals: [CVProposal!]! @derivedFrom(field: "strategy")
   memberActive: [Member!]
   maxCVSupply: BigInt!
   totalEffectiveActivePoints: BigInt!
-  maxCVStaked: BigInt!
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -40,8 +39,9 @@ type CVProposal @entity(immutable: false) {
   blockLast: BigInt!
   convictionLast: BigInt!
   threshold: BigInt!
+  maxCVStaked: BigInt!
   # proposalType: BigInt!
-  stakedTokens: BigInt!
+  stakedAmount: BigInt!
   submitter: String!
   # voterStakedPointsPct: BigInt!
   # agreementActionId: BigInt!
