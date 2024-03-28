@@ -274,7 +274,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 // console.log("::PookToken", poolToken);
                 revert TokenNotAllowed();
             }
-            if (isOverMaxRatio(proposal.amountRequested)){
+            if (_isOverMaxRatio(proposal.amountRequested)){
                 revert AmountOverMaxRatio();
             }
         }
@@ -624,7 +624,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
     }
 
-    function isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool) {
+    function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool) {
          if (maxRatio * poolAmount <= _requestedAmount * D){
             return true;
          }
@@ -795,7 +795,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         if (poolAmount <= 0) {
             revert PoolIsEmpty();
         }
-        uint256 funds = poolAmount;
         //        require(maxRatio.mul(funds) > _requestedAmount.mul(D), ERROR_AMOUNT_OVER_MAX_RATIO);
         // console.log("maxRatio", maxRatio);
         // console.log("funds=poolAmount", funds);
@@ -804,12 +803,12 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         // console.log("maxRatio * funds", maxRatio * funds);
         // console.log("_requestedAmount * D", _requestedAmount * D);
 
-        if (isOverMaxRatio(_requestedAmount)) {
+        if (_isOverMaxRatio(_requestedAmount)) {
             revert AmountOverMaxRatio();
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
         // denom = maxRatio / 1 - _requestedAmount / funds;
-        uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / funds;
+        uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
         _threshold = (
             (((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * totalEffectiveActivePoints()
         ) >> 64;
