@@ -1,20 +1,17 @@
 import { Badge, StatusBadge } from "@/components";
 import { EthAddress } from "@/components";
-import Image from "next/image";
 import { cvStrategyABI } from "@/src/generated";
 import { Abi, Address, createPublicClient, http } from "viem";
-import { getContractsAddrByChain } from "@/constants/contracts";
 import { getChain } from "@/configs/chainServer";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
-  getAlloDocument,
-  getAlloQuery,
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
+import { PRECISION_SCALE } from "@/actions/getProposals";
+import { formatTokenAmount } from "@/utils/numbers";
 import * as dn from "dnum";
-import { Dnum } from "dnum";
 
 export const dynamic = "force-dynamic";
 
@@ -42,16 +39,6 @@ type UnparsedProposal = {
 };
 
 type Proposal = UnparsedProposal & ProposalsMock;
-
-type PoolData = {
-  profileId: Address;
-  strategy: Address;
-  token: Address;
-  metadata: { protocol: bigint; pointer: string };
-  managerRole: Address;
-  adminRole: Address;
-};
-
 type ProposalMetadata = {
   title: string;
   description: string;
@@ -59,7 +46,6 @@ type ProposalMetadata = {
 
 const { urqlClient } = initUrqlClient();
 
-//TODO: move to utils file
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
 
@@ -90,7 +76,6 @@ export default async function Proposal({
 
   const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
   const convictionLast = proposalData.convictionLast;
-  const totalStakedTokens = proposalData.stakedTokens;
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount;
@@ -98,8 +83,6 @@ export default async function Proposal({
   const submitter = proposalData.submitter as Address;
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
-
-  console.log(requestedAmount);
 
   const getIpfsData = (ipfsHash: string) =>
     fetch(`https://ipfs.io/ipfs/${ipfsHash}`, {
@@ -126,12 +109,6 @@ export default async function Proposal({
     transport: http(),
   });
 
-  // const addrs = getContractsAddrByChain(chain);
-  // if (!addrs) {
-  // return <div>Chain ID: {chain} not supported</div>;
-  // }//@todo create a function to check suuported chains and return a message with error or redirect
-
-  // console.log("strategyAddr", proposalData.strategy.id);
   const cvStrategyContract = {
     address: proposalData.strategy.id as Address,
     abi: cvStrategyABI as Abi,
@@ -142,36 +119,99 @@ export default async function Proposal({
     functionName: "totalEffectiveActivePoints",
   })) as bigint;
 
+  const getProposalStakedAmount = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getProposalStakedAmount",
+    args: [proposalId],
+  })) as bigint;
+
+  const rawThresholdFromContract = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "calculateThreshold",
+    args: [requestedAmount],
+  })) as bigint;
+
+  const updateConvictionLast = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "updateProposalConviction",
+    args: [proposalId],
+  })) as bigint;
+
+  const getProposal = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getProposal",
+    args: [proposalId],
+  })) as bigint;
+
   const maxCVSupply = (await client.readContract({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
     args: [totalEffectiveActivePoints],
   })) as bigint;
 
-  // // => D = 10**7
-
   const maxCVStaked = (await client.readContract({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
-    args: [totalStakedTokens],
+    args: [getProposalStakedAmount],
   })) as bigint;
 
-  //function to get all other function results
+  const getProposalVoterStake = (await client.readContract({
+    ...cvStrategyContract,
+    functionName: "getProposalVoterStake",
+    args: [proposalId, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
+  })) as bigint;
+
+  //the amount of points of the voter manuelly added
+  console.log(getProposalVoterStake);
+  console.log(requestedAmount);
+  console.log(rawThresholdFromContract);
+  console.log(totalEffectiveActivePoints);
+  console.log(maxCVSupply);
+  console.log(maxCVStaked);
+  console.log(threshold);
+  console.log(updateConvictionLast);
+  console.log(convictionLast);
+  console.log(getProposalStakedAmount);
+
+  const maxCVSupplyNum = Number(maxCVSupply / PRECISION_SCALE);
+  const maxCVStakedNum = Number(maxCVStaked / PRECISION_SCALE);
+  const convictionLastNum = Number(
+    updateConvictionLast / PRECISION_SCALE,
+  ).toFixed(0);
+  const pointsNum = Number(totalEffectiveActivePoints / PRECISION_SCALE);
+  const tokenStakedNum = getProposalStakedAmount / PRECISION_SCALE;
+
+  console.log("ConvictionLast", convictionLastNum);
+  console.log("staked tokens", tokenStakedNum);
+  console.log("maxCVSupply", maxCVSupplyNum);
+  console.log("maxCVStaked", maxCVStakedNum);
+
+  //Formulas
   const calcThreshold = calcThresholdPoints(
-    threshold,
+    rawThresholdFromContract,
     maxCVSupply,
     totalEffectiveActivePoints as bigint,
   );
-
-  const calcsResults = executeAllFunctions(
-    convictionLast,
-    maxCVStaked,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-    threshold,
-    calcThreshold,
+  const calcMaxConv = calcMaxConviction(
+    maxCVStakedNum,
+    maxCVSupplyNum,
+    pointsNum,
   );
-  const proposalSupport = Number(totalStakedTokens) * 2;
+  const calcCurrCon = calcCurrentConviction(
+    convictionLastNum as unknown as number,
+    maxCVSupplyNum,
+    pointsNum,
+  );
+
+  //values
+  const th = BigInt(calcThreshold) / PRECISION_SCALE;
+  console.log(calcThreshold);
+  console.log("Threshold", th);
+  console.log("MaxConviction", calcMaxConv);
+  console.log("currentConviction", calcCurrCon);
+  console.log("support", tokenStakedNum);
+
+  const proposalSupport = Number(tokenStakedNum);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
@@ -213,7 +253,8 @@ export default async function Proposal({
                     Requested Amount
                   </span>
                   <span className="flex items-center gap-2 text-lg">
-                    {requestedAmount} <span>{tokenSymbol}</span>
+                    {formatTokenAmount(requestedAmount, 18)}{" "}
+                    <span>{tokenSymbol}</span>
                   </span>
                 </div>
               )}
@@ -237,33 +278,17 @@ export default async function Proposal({
           </div>
         </div>
 
-        {/* PROPOSAL CHART  */}
+        {/* PROPOSAL NUMBERS CHART  */}
         <div className="mt-10 flex justify-evenly">
           <ConvictionBarChart
-            data={calcsResults}
+            currentConviction={calcCurrCon as number}
+            maxConviction={calcMaxConv.toString() as unknown as number}
+            threshold={th as unknown as number}
+            // data={calcsResults}
             proposalSupport={proposalSupport}
           />
         </div>
       </main>
-
-      {/* aside - supporters info address + amount */}
-      {/* <aside className="sapce-y-4 sticky top-3 flex h-fit w-[320px] flex-col rounded-xl border-2 border-black bg-base-100 bg-surface px-[38px] py-6">
-        <h4 className="border-b-2 border-dashed py-4 text-center text-xl font-semibold">
-          Supporters
-        </h4>
-        <div className="mt-10 space-y-8">
-          {supporters.map((supporter: any) => (
-            <div className="flex justify-between" key={supporter.address}>
-              <span>{formatAddress(supporter.address)}</span>
-              <span>{supporter.amount}</span>
-            </div>
-          ))}
-          <div className="flex justify-between py-6">
-            <span>Total</span>
-            <span>{supportersTotalAmount ?? ""}</span>
-          </div>
-        </div>
-      </aside> */}
     </div>
   );
 }
@@ -295,7 +320,9 @@ function calcCurrentConviction(
     );
   }
   const convictionLastPct = Number(convictionLast) / Number(maxCVSupply);
-  const result = convictionLastPct * Number(totalEffectiveActivePoints) * 2;
+  console.log(convictionLastPct);
+  const result = convictionLastPct * Number(totalEffectiveActivePoints);
+  console.log(result);
   return Math.floor(result);
 }
 
@@ -317,13 +344,13 @@ function calcMaxConviction(
     );
   }
   if (maxCVSupply === 0 || maxCVStaked === 0) {
-    throw new Error(
-      "Invalid input. maxCVSupply and maxCVStaked must be non-zero.",
-    );
+    return 0;
+    // throw new Error(
+    //   "Invalid input. maxCVSupply and maxCVStaked must be non-zero.",
+    // );
   }
   const futureConvictionStakedPct = Number(maxCVStaked) / Number(maxCVSupply);
-  const result =
-    futureConvictionStakedPct * Number(totalEffectiveActivePoints) * 2;
+  const result = futureConvictionStakedPct * Number(totalEffectiveActivePoints);
   return Math.floor(result);
 }
 
@@ -393,8 +420,10 @@ function calcThresholdPoints(
       "Invalid input. maxCVSupply must be greater than threshold.",
     );
   }
+
   const thresholdPct = Number(threshold) / Number(maxCVSupply);
-  const result = thresholdPct * Number(totalEffectiveActivePoints) * 2;
+
+  const result = thresholdPct * Number(totalEffectiveActivePoints);
   return Math.ceil(result);
 }
 
@@ -412,7 +441,6 @@ function executeAllFunctions(
   maxCVSupply: number | bigint,
   totalEffectiveActivePoints: number | bigint,
   threshold: number,
-  calcThreshold: number,
 ) {
   // Initialize an object to store all results
   const results: ExecutionResults = {};
@@ -440,13 +468,6 @@ function executeAllFunctions(
     totalEffectiveActivePoints,
   );
   results.pointsNeeded = threshold;
-
-  // calcPointsNeeded(
-  //   calcThreshold,
-  //   maxCVStaked,
-  //   maxCVSupply,
-  //   totalEffectiveActivePoints,
-  // );
 
   return results;
 }

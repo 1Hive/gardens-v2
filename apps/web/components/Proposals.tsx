@@ -18,15 +18,7 @@ import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/communities/pool
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-
-// export const convertBigIntToNumberFraction = (bigInt: bigint) => {
-//   return Number(bigInt.toString()) / 10 ** 4;
-// };
-
-// export const convertNumberFractionToBigInt = (number: number) => {
-//   return BigInt(number * 10 ** 4);
-// };
-
+import { encodeAbiParameters } from "viem";
 
 type InputItem = {
   id: string;
@@ -42,16 +34,14 @@ export type ProposalTypeVoter = Proposal & {
   type: number;
 };
 
-//const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
+const getProposalId = (inputString: string) => {
+  if (inputString.length >= 2) {
+    return inputString.substring(2);
+  } else {
+    return "0x0";
+  }
+};
 
-//Fixed System
-// for NOT 18 decimales stake, like gardensDAO example:
-// 100% points = BIGINT_100_SCALED = 1,000,000
-
-// for 1hive example, 18 decimales stake:
-// 100% = 1000000000000000000000000" = 1e24
-
-//!POOL == STRATEGY
 export function Proposals({
   strategy,
   alloInfo,
@@ -70,8 +60,6 @@ export function Proposals({
   const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-
-  //console.log(strategy);
 
   useEffect(() => {
     setStrategyAddress(strategy.id as Address);
@@ -95,7 +83,7 @@ export function Proposals({
     const newInputs = proposals.map(({ id, voterStakedPointsPct }) => ({
       id: id,
       value: voterStakedPointsPct,
-    }));   // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
+    })); // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
     // console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
@@ -120,6 +108,31 @@ export function Proposals({
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
   });
+
+  //encode proposal id to pass as argument to distribute function
+  const encodedDataProposalId = (proposalId: string) => {
+    const getproposalId = getProposalId(proposalId);
+    const encodedProposalId = encodeAbiParameters(
+      [{ name: "proposalId", type: "uint" }],
+      [BigInt(getproposalId)],
+    );
+
+    return encodedProposalId;
+  };
+
+  //test executing a proposal with distribute function
+  const {
+    data: distributeData,
+    write: writeDistribute,
+    error: errorDistribute,
+    isSuccess: isSuccessDistribute,
+    status: distributeStatus,
+  } = useContractWrite({
+    address: alloInfo.id as Address,
+    abi: abiWithErrors(alloABI),
+    functionName: "distribute",
+  });
+  //
 
   useErrorDetails(errorAllocate, "errorAllocate");
 
@@ -153,7 +166,9 @@ export function Proposals({
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = BigInt(input.value - current.voterStakedPointsPct) * PRECISION_SCALE;
+          const dif =
+            BigInt(input.value - current.voterStakedPointsPct) *
+            PRECISION_SCALE;
           if (dif !== BigInt(0)) {
             resultArr.push([Number(input.id), dif]);
           }
@@ -190,14 +205,6 @@ export function Proposals({
       else return acc + curr.value;
     }, 0);
 
-  const getProposalId = (inputString: string) => {
-    if (inputString.length >= 2) {
-      return inputString.substring(2);
-    } else {
-      return "0x0";
-    }
-  };
-
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
       {/* proposals: title - proposals -create Button */}
@@ -218,7 +225,7 @@ export function Proposals({
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposals.map(({ title, type, id, stakedTokens }, i) => (
+          {proposals.map(({ title, type, id, proposalStatus }, i) => (
             <div
               className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
               key={title + "_" + id}
@@ -230,7 +237,23 @@ export function Proposals({
                 </div>
 
                 <div className="flex items-center gap-8">
-                  <StatusBadge status={1} />
+                  {/* Button to test distribute */}
+                  <Button
+                    disabled={proposalStatus == "4"}
+                    tooltip="Proposal already Executed"
+                    onClick={() =>
+                      writeDistribute?.({
+                        args: [
+                          strategy.poolId,
+                          [strategy.id],
+                          encodedDataProposalId(id),
+                        ],
+                      })
+                    }
+                  >
+                    Execute proposal {proposalStatus}
+                  </Button>
+                  <StatusBadge status={proposalStatus} />
                   {/* {!editView && ( */}
                   <>
                     <Link href={`${pathname}/proposals/${id}`}>

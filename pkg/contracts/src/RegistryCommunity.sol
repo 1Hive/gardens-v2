@@ -253,7 +253,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         if (memberActivatedInStrategies[_member][_strategy]) {
             revert UserAlreadyActivated();
         }
-
+  
         uint256 pointsPerMember = IPointStrategy(_strategy).getPointsPerMember(); //@kev can be zero for some kind strategies
 
         Member memory member = addressToMemberInfo[_member];
@@ -335,7 +335,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         if (addressToMemberInfo[member].stakedAmount - _amountUnstaked < registerStakeAmount) {
             revert DecreaseUnderMinimum();
         }
-        gardenToken.safeTransferFrom(member, address(this), _amountUnstaked);
+        gardenToken.safeTransfer(member, _amountUnstaked);
         addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             // if (address(memberStrategies[i]) == _strategy) {
