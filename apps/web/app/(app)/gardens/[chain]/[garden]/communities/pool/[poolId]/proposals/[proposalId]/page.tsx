@@ -76,7 +76,6 @@ export default async function Proposal({
 
   const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
   const convictionLast = proposalData.convictionLast;
-  const totalStakedTokens = proposalData.stakedTokens;
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount;
