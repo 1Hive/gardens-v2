@@ -34,10 +34,10 @@ import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
     CVStrategy public strategy;
     MockERC20 public token;
-    uint256 public mintAmount = 1_000_000 * 10 ** 18;
+    uint256 public mintAmount = 1_000_000 * DECIMALS;
+
     uint256 public constant MINIMUM_STAKE = 1000 * DECIMALS;
     uint256 public constant PRECISION = 10 ** 4;
-    uint256 public constant DECIMALS = 10 ** 18;
     uint256 public constant PROTOCOL_FEE_PERCENTAGE = 22525; // 2.2525  * 10 ** 4
     uint256 public constant COMMUNITY_FEE_PERCENTAGE = 3 * PRECISION;
     uint256 public constant STAKE_WITH_FEES =
@@ -318,13 +318,24 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //vm.expectRevert("error");
         strategy.activatePoints();
 
+        // DECIMALS = 10 ** 6;
         token.approve(address(registryCommunity), 100 * DECIMALS);
+
         _registryCommunity().increasePower(100 * DECIMALS);
-        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (100 * DECIMALS));
-        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), (110 * (10 ** 4)));
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (100 * DECIMALS), "100 * decimals");
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            (110 * (10 ** 4)),
+            "power for 110"
+        );
+
         token.approve(address(registryCommunity), 300 * DECIMALS);
         _registryCommunity().increasePower(300 * DECIMALS);
-        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 120 * (10 ** 4));
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            120 * (10 ** 4),
+            "power for 120"
+        );
         vm.stopPrank();
     }
 
@@ -365,9 +376,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_kickMember() public {
         startMeasuringGas("Registering and kicking member");
-
-        //TODO: fix createProposal
-        //(IAllo.Pool memory pool,,) = _createProposal(NATIVE, 0, 0);
 
         //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
