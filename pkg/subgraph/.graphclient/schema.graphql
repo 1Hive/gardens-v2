@@ -95,7 +95,8 @@ type CVProposal {
   blockLast: BigInt!
   convictionLast: BigInt!
   threshold: BigInt!
-  stakedTokens: BigInt!
+  maxCVStaked: BigInt!
+  stakedAmount: BigInt!
   submitter: String!
   createdAt: BigInt!
   updatedAt: BigInt!
@@ -239,14 +240,22 @@ input CVProposal_filter {
   threshold_lte: BigInt
   threshold_in: [BigInt!]
   threshold_not_in: [BigInt!]
-  stakedTokens: BigInt
-  stakedTokens_not: BigInt
-  stakedTokens_gt: BigInt
-  stakedTokens_lt: BigInt
-  stakedTokens_gte: BigInt
-  stakedTokens_lte: BigInt
-  stakedTokens_in: [BigInt!]
-  stakedTokens_not_in: [BigInt!]
+  maxCVStaked: BigInt
+  maxCVStaked_not: BigInt
+  maxCVStaked_gt: BigInt
+  maxCVStaked_lt: BigInt
+  maxCVStaked_gte: BigInt
+  maxCVStaked_lte: BigInt
+  maxCVStaked_in: [BigInt!]
+  maxCVStaked_not_in: [BigInt!]
+  stakedAmount: BigInt
+  stakedAmount_not: BigInt
+  stakedAmount_gt: BigInt
+  stakedAmount_lt: BigInt
+  stakedAmount_gte: BigInt
+  stakedAmount_lte: BigInt
+  stakedAmount_in: [BigInt!]
+  stakedAmount_not_in: [BigInt!]
   submitter: String
   submitter_not: String
   submitter_gt: String
@@ -298,6 +307,8 @@ enum CVProposal_orderBy {
   strategy__poolId
   strategy__poolAmount
   strategy__metadata
+  strategy__maxCVSupply
+  strategy__totalEffectiveActivePoints
   beneficiary
   requestedAmount
   requestedToken
@@ -305,7 +316,8 @@ enum CVProposal_orderBy {
   blockLast
   convictionLast
   threshold
-  stakedTokens
+  maxCVStaked
+  stakedAmount
   submitter
   createdAt
   updatedAt
@@ -317,9 +329,11 @@ type CVStrategy {
   poolAmount: BigInt
   metadata: String
   registryCommunity: RegistryCommunity!
-  config: CVStrategyConfig
+  config: CVStrategyConfig!
   proposals(skip: Int = 0, first: Int = 100, orderBy: CVProposal_orderBy, orderDirection: OrderDirection, where: CVProposal_filter): [CVProposal!]!
   memberActive(skip: Int = 0, first: Int = 100, orderBy: Member_orderBy, orderDirection: OrderDirection, where: Member_filter): [Member!]
+  maxCVSupply: BigInt!
+  totalEffectiveActivePoints: BigInt!
 }
 
 type CVStrategyConfig {
@@ -330,6 +344,7 @@ type CVStrategyConfig {
   maxRatio: BigInt!
   weight: BigInt!
   proposalType: BigInt!
+  pointSystem: BigInt!
   pointsPerMember: BigInt
   pointsPerTokenStaked: BigInt
   tokensPerPoint: BigInt
@@ -386,6 +401,14 @@ input CVStrategyConfig_filter {
   proposalType_lte: BigInt
   proposalType_in: [BigInt!]
   proposalType_not_in: [BigInt!]
+  pointSystem: BigInt
+  pointSystem_not: BigInt
+  pointSystem_gt: BigInt
+  pointSystem_lt: BigInt
+  pointSystem_gte: BigInt
+  pointSystem_lte: BigInt
+  pointSystem_in: [BigInt!]
+  pointSystem_not_in: [BigInt!]
   pointsPerMember: BigInt
   pointsPerMember_not: BigInt
   pointsPerMember_gt: BigInt
@@ -431,11 +454,14 @@ enum CVStrategyConfig_orderBy {
   strategy__poolId
   strategy__poolAmount
   strategy__metadata
+  strategy__maxCVSupply
+  strategy__totalEffectiveActivePoints
   D
   decay
   maxRatio
   weight
   proposalType
+  pointSystem
   pointsPerMember
   pointsPerTokenStaked
   tokensPerPoint
@@ -537,6 +563,22 @@ input CVStrategy_filter {
   memberActive_not_contains: [String!]
   memberActive_not_contains_nocase: [String!]
   memberActive_: Member_filter
+  maxCVSupply: BigInt
+  maxCVSupply_not: BigInt
+  maxCVSupply_gt: BigInt
+  maxCVSupply_lt: BigInt
+  maxCVSupply_gte: BigInt
+  maxCVSupply_lte: BigInt
+  maxCVSupply_in: [BigInt!]
+  maxCVSupply_not_in: [BigInt!]
+  totalEffectiveActivePoints: BigInt
+  totalEffectiveActivePoints_not: BigInt
+  totalEffectiveActivePoints_gt: BigInt
+  totalEffectiveActivePoints_lt: BigInt
+  totalEffectiveActivePoints_gte: BigInt
+  totalEffectiveActivePoints_lte: BigInt
+  totalEffectiveActivePoints_in: [BigInt!]
+  totalEffectiveActivePoints_not_in: [BigInt!]
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [CVStrategy_filter]
@@ -568,12 +610,15 @@ enum CVStrategy_orderBy {
   config__maxRatio
   config__weight
   config__proposalType
+  config__pointSystem
   config__pointsPerMember
   config__pointsPerTokenStaked
   config__tokensPerPoint
   config__maxAmount
   proposals
   memberActive
+  maxCVSupply
+  totalEffectiveActivePoints
 }
 
 """
@@ -988,8 +1033,8 @@ type RegistryCommunity {
   id: ID!
   chainId: BigInt!
   profileId: String
-  communityFee: BigInt
-  protocolFee: BigInt
+  communityFee: BigInt!
+  protocolFee: BigInt!
   communityName: String
   covenantIpfsHash: String
   registryFactory: RegistryFactory

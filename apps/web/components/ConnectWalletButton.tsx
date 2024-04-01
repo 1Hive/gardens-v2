@@ -21,14 +21,11 @@ import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
 
 export const ConnectWallet = () => {
   const path = usePathname();
-
   const account = useAccount();
-
   const urlChainId = Number(path.split("/")[2]);
   const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
-
   const { disconnect } = useDisconnect();
   const { connectors } = useConnect();
 
@@ -55,7 +52,7 @@ export const ConnectWallet = () => {
         return (
           <>
             {(() => {
-              //CONNECT button to connect the wallet
+              //button to connect wallet
               if (!connected) {
                 return (
                   <div className="relative flex text-black hover:brightness-90 active:scale-95">
@@ -89,8 +86,8 @@ export const ConnectWallet = () => {
                   </Button>
                 );
               }
-              //IS CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
-              //+ Dropdown menu with wallet, balance, switch network and disconnect buttons
+              //Is CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
+              //Dropdown menu with wallet, balance, switch network and disconnect buttons
               return (
                 <Menu as="div" className="relative inline-block text-left">
                   {({ open }) => (
@@ -99,7 +96,6 @@ export const ConnectWallet = () => {
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
-                        // "border-[1px] border-success": urlChainId === chain.id,
                         "border-2 border-error":
                           urlChainId !== chain.id && !isNaN(urlChainId),
                       })} `}

@@ -55,7 +55,7 @@ contract CVStrategyHelpers is Native, Accounts {
         //Fixed point system
         pointConfig.pointsPerMember = 100 * (10 ** 4);
         //Quadratic point system
-        pointConfig.tokensPerPoint = 2 * (10 ** 18);
+        pointConfig.tokensPerPoint = 1 * (10 ** 18);
         pointConfig.pointsPerTokenStaked = 5 * (10 ** 4);
         params.pointConfig = pointConfig;
     }
