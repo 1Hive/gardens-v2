@@ -8,6 +8,8 @@ import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol
 import {RegistryCommunity, Metadata} from "./RegistryCommunity.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
+import {console} from "forge-std/console.sol";
+
 interface IPointStrategy {
     // function withdraw(address _member) external;
     function deactivatePoints(address _member) external;
@@ -360,8 +362,12 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         uint256 totalExtraStake =
             registryCommunity.getMemberStakedAmount(_member) + _amountToStake - registryCommunity.registerStakeAmount();
 
-        //                                                      9 for token.decimals/2, 4 for precision
-        uint256 newTotalPoints = sqrt((totalExtraStake / pointConfig.tokensPerPoint) * (10 ** 18)) / (10 ** (9 - 4));
+
+        uint256 newTotalPoints = sqrt((totalExtraStake / pointConfig.tokensPerPoint) * 1e18) / 1e5;
+        console.log("totalExtraStake", totalExtraStake);
+        console.log("pointConfig.tokensPerPoint", pointConfig.tokensPerPoint);
+        console.log("newTotalPoints", newTotalPoints);
+
         uint256 pointsToIncrease = (pointConfig.pointsPerMember + newTotalPoints)
             - registryCommunity.getMemberPowerInStrategy(_member, address(this));
         return pointsToIncrease;
