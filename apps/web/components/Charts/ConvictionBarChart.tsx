@@ -7,16 +7,30 @@ import EChartsReact from "echarts-for-react";
 
 export const ConvictionBarChart = ({
   data,
+  currentConviction,
+  threshold,
   proposalSupport,
+  maxConviction,
 }: {
-  data: any;
+  data?: any;
+  currentConviction: number;
+  threshold: number;
   proposalSupport: number;
+  maxConviction: number;
 }) => {
   // console.log(data);
   // console.log(proposalSupport);
 
-  const { currentConviction, futureConviction, thresholdPoints, pointsNeeded } =
-    data;
+  // const { currentConviction, futureConviction, thresholdPoints, pointsNeeded } =
+  //   data;
+
+  console.log("currentConviction", currentConviction);
+  console.log("threshold", Number(threshold));
+  console.log("proposalSupport", proposalSupport);
+  console.log("maxConviction", maxConviction);
+
+  const futureConviction = (maxConviction as number) - currentConviction;
+  console.log("futureConviction", futureConviction);
 
   const OPTION_TEST: EChartsOption = {
     tooltip: {
@@ -47,7 +61,7 @@ export const ConvictionBarChart = ({
         name: "Conviction",
         type: "bar",
         stack: "total",
-        color: "rgb(93, 143, 216)",
+        color: "#0569FA",
 
         showBackground: false,
 
@@ -65,13 +79,13 @@ export const ConvictionBarChart = ({
         data: [currentConviction],
       },
       {
-        name: "Future Convcition",
+        name: "Total Support",
         type: "bar",
         stack: "total",
         itemStyle: {
           borderRadius: [0, 20, 20, 0],
         },
-        color: "rgb(93, 143, 216, 0.3)",
+        color: "#94D7F2",
         showBackground: true,
         backgroundStyle: {
           color: "rgb(93, 143, 216, 0.1)",
@@ -87,32 +101,32 @@ export const ConvictionBarChart = ({
         emphasis: {
           focus: "series",
         },
-        data: [futureConviction],
-      },
-      {
-        name: "Support",
-        type: "bar",
-        stack: "points",
-        color: "#AFE3B2",
-        itemStyle: {
-          borderRadius: [0, 20, 20, 0],
-        },
-        // markLine: {
-        //   data: [{ type: 'max', name: 'max' }]
-        // },
-        label: {
-          show: false,
-          formatter: "{a}: {@score} pts",
-          fontSize: 10,
-          // fontWeight: "",
-          color: "black",
-        },
-        emphasis: {
-          focus: "series",
-        },
-
         data: [proposalSupport],
       },
+      // {
+      //   name: "Support",
+      //   type: "bar",
+      //   stack: "points",
+      //   color: "#05FA81",
+      //   itemStyle: {
+      //     borderRadius: [0, 20, 20, 0],
+      //   },
+      //   // markLine: {
+      //   //   data: [{ type: 'max', name: 'max' }]
+      //   // },
+      //   label: {
+      //     show: false,
+      //     formatter: "{a}: {@score} pts",
+      //     fontSize: 10,
+      //     // fontWeight: "",
+      //     color: "black",
+      //   },
+      //   emphasis: {
+      //     focus: "series",
+      //   },
+
+      //   data: [0],
+      // },
       {
         name: "Points Needed",
         type: "bar",
@@ -125,7 +139,7 @@ export const ConvictionBarChart = ({
         },
 
         label: {
-          show: true,
+          show: false,
           formatter: "{a}: {@score}",
           fontSize: 12,
           // fontWeight: "",
@@ -135,7 +149,7 @@ export const ConvictionBarChart = ({
         emphasis: {
           focus: "series",
         },
-        data: [pointsNeeded],
+        data: [Number(threshold)],
         markLine: {
           data: [{ type: "max", name: "threshold" }],
           lineStyle: {

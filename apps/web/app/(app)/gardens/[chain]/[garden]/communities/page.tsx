@@ -1,7 +1,6 @@
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
 import { CommunityCard } from "@/components";
-import { getContractsAddrByChain } from "@/constants/contracts";
 import {
   RegistryCommunity,
   TokenGarden,
@@ -40,7 +39,6 @@ export default async function Garden({
       { addr: garden },
     );
 
-  // const result = await sdk.getCommunityByGarden({ addr: garden });
   let communities = result?.tokenGarden?.communities || [];
 
   const registryFactoryAddr = result?.registryFactories?.[0].id as Address;
@@ -113,9 +111,10 @@ export default async function Garden({
         />
       </header>
       <section className="mx-auto flex flex-col gap-8">
-        <h4 className="sticky top-0 z-10 rounded-b-xl bg-surface py-6 text-center font-press shadow">
+        <h4 className="rounded-b-xl bg-surface py-6 text-center font-press shadow">
           {tokenGarden?.name} Communities
         </h4>
+
         {/* communites */}
         {communities.map((community, i) => (
           <CommunityCard

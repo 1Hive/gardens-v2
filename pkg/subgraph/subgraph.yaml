@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: localhost
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
-      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      address: "0x408a4e7a6efC7E331FE7D3Bb02708D49fE12eB8F"
       abi: RegistryFactory
-      startBlock: 0
+      startBlock: 29317993
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -37,7 +37,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunity
     mapping:
@@ -99,7 +99,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: CVStrategy
     mapping:
@@ -110,11 +110,14 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
+        - Allo
       abis:
         - name: CVStrategy
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: Allo
+          file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
         - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8,uint8,(uint256,uint256,uint256,uint256))) 
           handler: handleInitialized
@@ -130,6 +133,12 @@ templates:
           handler: handlePowerIncreased
         - event: PowerDecreased(address,uint256,uint256)
           handler: handlePowerDecreased
+        - event: DecayUpdated(uint256)
+          handler: handleDecayUpdated
+        - event: MaxRatioUpdated(uint256)
+          handler: handleMaxRatioUpdated
+        - event: WeightUpdated(uint256)
+          handler: handleWeightUpdated
  
       file: ./src/mappings/cv-strategy.ts
   

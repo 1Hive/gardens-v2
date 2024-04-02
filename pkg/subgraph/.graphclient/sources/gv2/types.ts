@@ -20,7 +20,12 @@ export type Scalars = {
   BigInt: any;
   Bytes: any;
   Int8: any;
+  Timestamp: any;
 };
+
+export type Aggregation_interval =
+  | 'hour'
+  | 'day';
 
 export type Allo = {
   id: Scalars['ID'];
@@ -98,7 +103,8 @@ export type CVProposal = {
   blockLast: Scalars['BigInt'];
   convictionLast: Scalars['BigInt'];
   threshold: Scalars['BigInt'];
-  stakedTokens: Scalars['BigInt'];
+  maxCVStaked: Scalars['BigInt'];
+  stakedAmount: Scalars['BigInt'];
   submitter: Scalars['String'];
   createdAt: Scalars['BigInt'];
   updatedAt: Scalars['BigInt'];
@@ -242,14 +248,22 @@ export type CVProposal_filter = {
   threshold_lte?: InputMaybe<Scalars['BigInt']>;
   threshold_in?: InputMaybe<Array<Scalars['BigInt']>>;
   threshold_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  stakedTokens?: InputMaybe<Scalars['BigInt']>;
-  stakedTokens_not?: InputMaybe<Scalars['BigInt']>;
-  stakedTokens_gt?: InputMaybe<Scalars['BigInt']>;
-  stakedTokens_lt?: InputMaybe<Scalars['BigInt']>;
-  stakedTokens_gte?: InputMaybe<Scalars['BigInt']>;
-  stakedTokens_lte?: InputMaybe<Scalars['BigInt']>;
-  stakedTokens_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  stakedTokens_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  maxCVStaked?: InputMaybe<Scalars['BigInt']>;
+  maxCVStaked_not?: InputMaybe<Scalars['BigInt']>;
+  maxCVStaked_gt?: InputMaybe<Scalars['BigInt']>;
+  maxCVStaked_lt?: InputMaybe<Scalars['BigInt']>;
+  maxCVStaked_gte?: InputMaybe<Scalars['BigInt']>;
+  maxCVStaked_lte?: InputMaybe<Scalars['BigInt']>;
+  maxCVStaked_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  maxCVStaked_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  stakedAmount?: InputMaybe<Scalars['BigInt']>;
+  stakedAmount_not?: InputMaybe<Scalars['BigInt']>;
+  stakedAmount_gt?: InputMaybe<Scalars['BigInt']>;
+  stakedAmount_lt?: InputMaybe<Scalars['BigInt']>;
+  stakedAmount_gte?: InputMaybe<Scalars['BigInt']>;
+  stakedAmount_lte?: InputMaybe<Scalars['BigInt']>;
+  stakedAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  stakedAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   submitter?: InputMaybe<Scalars['String']>;
   submitter_not?: InputMaybe<Scalars['String']>;
   submitter_gt?: InputMaybe<Scalars['String']>;
@@ -301,6 +315,8 @@ export type CVProposal_orderBy =
   | 'strategy__poolId'
   | 'strategy__poolAmount'
   | 'strategy__metadata'
+  | 'strategy__maxCVSupply'
+  | 'strategy__totalEffectiveActivePoints'
   | 'beneficiary'
   | 'requestedAmount'
   | 'requestedToken'
@@ -308,7 +324,8 @@ export type CVProposal_orderBy =
   | 'blockLast'
   | 'convictionLast'
   | 'threshold'
-  | 'stakedTokens'
+  | 'maxCVStaked'
+  | 'stakedAmount'
   | 'submitter'
   | 'createdAt'
   | 'updatedAt';
@@ -319,9 +336,11 @@ export type CVStrategy = {
   poolAmount?: Maybe<Scalars['BigInt']>;
   metadata?: Maybe<Scalars['String']>;
   registryCommunity: RegistryCommunity;
-  config?: Maybe<CVStrategyConfig>;
+  config: CVStrategyConfig;
   proposals: Array<CVProposal>;
   memberActive?: Maybe<Array<Member>>;
+  maxCVSupply: Scalars['BigInt'];
+  totalEffectiveActivePoints: Scalars['BigInt'];
 };
 
 
@@ -460,6 +479,8 @@ export type CVStrategyConfig_orderBy =
   | 'strategy__poolId'
   | 'strategy__poolAmount'
   | 'strategy__metadata'
+  | 'strategy__maxCVSupply'
+  | 'strategy__totalEffectiveActivePoints'
   | 'D'
   | 'decay'
   | 'maxRatio'
@@ -566,6 +587,22 @@ export type CVStrategy_filter = {
   memberActive_not_contains?: InputMaybe<Array<Scalars['String']>>;
   memberActive_not_contains_nocase?: InputMaybe<Array<Scalars['String']>>;
   memberActive_?: InputMaybe<Member_filter>;
+  maxCVSupply?: InputMaybe<Scalars['BigInt']>;
+  maxCVSupply_not?: InputMaybe<Scalars['BigInt']>;
+  maxCVSupply_gt?: InputMaybe<Scalars['BigInt']>;
+  maxCVSupply_lt?: InputMaybe<Scalars['BigInt']>;
+  maxCVSupply_gte?: InputMaybe<Scalars['BigInt']>;
+  maxCVSupply_lte?: InputMaybe<Scalars['BigInt']>;
+  maxCVSupply_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  maxCVSupply_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalEffectiveActivePoints?: InputMaybe<Scalars['BigInt']>;
+  totalEffectiveActivePoints_not?: InputMaybe<Scalars['BigInt']>;
+  totalEffectiveActivePoints_gt?: InputMaybe<Scalars['BigInt']>;
+  totalEffectiveActivePoints_lt?: InputMaybe<Scalars['BigInt']>;
+  totalEffectiveActivePoints_gte?: InputMaybe<Scalars['BigInt']>;
+  totalEffectiveActivePoints_lte?: InputMaybe<Scalars['BigInt']>;
+  totalEffectiveActivePoints_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalEffectiveActivePoints_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
@@ -603,7 +640,9 @@ export type CVStrategy_orderBy =
   | 'config__tokensPerPoint'
   | 'config__maxAmount'
   | 'proposals'
-  | 'memberActive';
+  | 'memberActive'
+  | 'maxCVSupply'
+  | 'totalEffectiveActivePoints';
 
 export type Member = {
   id: Scalars['ID'];
@@ -968,8 +1007,8 @@ export type RegistryCommunity = {
   id: Scalars['ID'];
   chainId: Scalars['BigInt'];
   profileId?: Maybe<Scalars['String']>;
-  communityFee?: Maybe<Scalars['BigInt']>;
-  protocolFee?: Maybe<Scalars['BigInt']>;
+  communityFee: Scalars['BigInt'];
+  protocolFee: Scalars['BigInt'];
   communityName?: Maybe<Scalars['String']>;
   covenantIpfsHash?: Maybe<Scalars['String']>;
   registryFactory?: Maybe<RegistryFactory>;
@@ -1660,6 +1699,8 @@ export type _Block_ = {
   number: Scalars['Int'];
   /** Integer representation of the timestamp stored in blocks for the chain */
   timestamp?: Maybe<Scalars['Int']>;
+  /** The hash of the parent block */
+  parentHash?: Maybe<Scalars['Bytes']>;
 };
 
 /** The type for the top-level _meta field */
