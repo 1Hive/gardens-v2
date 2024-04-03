@@ -198,6 +198,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             StrategyStruct.ProposalType(0),
             StrategyStruct.PointSystem.Unlimited
         );
+        console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -232,6 +233,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             StrategyStruct.ProposalType(0),
             StrategyStruct.PointSystem.Capped
         );
+        console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -267,6 +269,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             StrategyStruct.ProposalType(0),
             StrategyStruct.PointSystem.Quadratic
         );
+        console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -308,6 +311,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             StrategyStruct.ProposalType(0),
             StrategyStruct.PointSystem.Quadratic
         );
+        console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -352,6 +356,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             StrategyStruct.ProposalType(0),
             StrategyStruct.PointSystem.Unlimited
         );
+        console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -389,6 +394,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             StrategyStruct.ProposalType(0),
             StrategyStruct.PointSystem.Unlimited
         );
+        console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -435,6 +441,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             StrategyStruct.ProposalType(0),
             StrategyStruct.PointSystem.Unlimited
         );
+        console.log("PoolId: %s", poolId);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -464,6 +471,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             StrategyStruct.ProposalType(0),
             StrategyStruct.PointSystem.Unlimited
         );
+        console.log("PoolId: %s", poolId);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
