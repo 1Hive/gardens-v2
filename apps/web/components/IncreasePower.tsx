@@ -5,6 +5,7 @@ import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   Address,
   useBalance,
+  useBalance,
   useContractRead,
   useContractWrite,
   useWaitForTransaction,
@@ -15,6 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
+import { getChainIdFromPath } from "@/utils/path";
 import { getChainIdFromPath } from "@/utils/path";
 
 type IncreasePowerProps = {
@@ -158,6 +160,7 @@ export const IncreasePower = ({
         />
 
         <TransactionModalStep
+          tokenSymbol={`Stake ${tokenSymbol}`}
           tokenSymbol={`Stake ${tokenSymbol}`}
           status={increaseStakeStatus === "success" ? "success" : "loading"}
           isLoading={increasePowerIsLoading}
