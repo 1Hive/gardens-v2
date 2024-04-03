@@ -20,6 +20,7 @@ type PoolStatsProps = {
   communityAddress: Address;
   tokenGarden: any;
   pointSystem: string;
+  spendingLimit?: number;
 };
 
 const pointSystemObject = {
@@ -36,6 +37,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
   communityAddress,
   tokenGarden,
   pointSystem,
+  spendingLimit,
 }) => {
   const { isMemberActived } = useIsMemberActivated(strategy);
   const { address: connectedAccount } = useAccount();
@@ -65,21 +67,28 @@ export const PoolStats: FC<PoolStatsProps> = ({
       <div className="flex flex-1 flex-col gap-8">
         {/*  */}
         {/* left-top */}
-        <div className="flex-flex-col flex max-h-44 w-full items-center justify-center space-y-4 rounded-xl border-2 border-black bg-white p-4">
-          <div>
-            <div className="flex h-full flex-col items-start">
-              <div className="flex w-full items-baseline gap-8">
-                <h4 className="stat-title text-center text-xl font-bold">
-                  Funds Available:
-                </h4>
-                <h4 className="stat-value text-center text-2xl font-bold ">
-                  {balance
-                    ? formatTokenAmount(balance, tokenGarden?.decimals)
-                    : "0"}
-                </h4>
-              </div>
+        <div className="flex-flex-col border2 flex max-h-44 w-full items-center justify-center gap-8 rounded-xl bg-white p-4">
+          <div className="flex h-full flex-col items-start">
+            <div className="flex w-full items-baseline gap-8">
+              <h4 className="stat-title text-center text-xl font-bold">
+                Funds Available:
+              </h4>
+              <span className="stat-value text-center text-2xl font-bold">
+                {balance
+                  ? formatTokenAmount(balance, tokenGarden?.decimals)
+                  : "0"}
+              </span>
+            </div>
+            <div className="mt-4 flex w-full items-baseline gap-8">
+              <h4 className="stat-title text-center text-lg font-bold">
+                Spendig Limit:
+              </h4>
+              <span className="stat-value ml-8 text-center text-xl font-bold">
+                {`${spendingLimit} %`}
+              </span>
             </div>
           </div>
+
           <div className="max-h-30 flex items-center gap-3 ">
             <div className="border-1 flex h-24 flex-1 items-center justify-center">
               {/* <PoolTokenPriceChart /> */}

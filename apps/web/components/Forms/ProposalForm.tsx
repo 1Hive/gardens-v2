@@ -12,6 +12,7 @@ import { ipfsJsonUpload } from "@/utils/ipfsUpload";
 import { toast } from "react-toastify";
 import { proposalTypes } from "@/types";
 import { Allo, Maybe, TokenGarden } from "#/subgraph/.graphclient";
+import { formatTokenAmount } from "@/utils/numbers";
 
 //docs link: https://react-hook-form.com/
 //protocol : 1 => means ipfs!, to do some checks later
@@ -49,6 +50,9 @@ type ProposalFormProps = {
       >
     | undefined;
   tokenAddress: Address;
+  spendingLimit: number;
+  spendingLimitPct: number;
+  poolAmount: number;
 };
 
 const abiParameters = [
@@ -79,6 +83,9 @@ export const ProposalForm = ({
   alloInfo,
   tokenGarden,
   tokenAddress,
+  spendingLimit,
+  spendingLimitPct,
+  poolAmount,
 }: ProposalFormProps) => {
   const {
     register,
@@ -93,6 +100,19 @@ export const ProposalForm = ({
   const [previewData, setPreviewData] = useState<any>(null); // preview data
   const [metadataIpfs, setMetadataIpfs] = useState<string>(); // ipfs hash of proposal title and description
   const tokenSymbol = tokenGarden?.symbol || "";
+
+  const formatSpendingLimit = formatTokenAmount(
+    spendingLimit,
+    tokenGarden?.decimals as number,
+  );
+
+  const formatPoolAmount = formatTokenAmount(
+    poolAmount,
+    tokenGarden?.decimals as number,
+  );
+
+  console.log(spendingLimit);
+  console.log(formatSpendingLimit);
 
   const proposalName = proposalTypes[proposalType];
 
@@ -120,7 +140,7 @@ export const ProposalForm = ({
   };
 
   const handlePreview = () => {
-    handleJsonUpload();
+    //handleJsonUpload();
 
     const data = {
       title: getValues("title"),
@@ -132,19 +152,6 @@ export const ProposalForm = ({
     setPreviewData(data);
     setIsEditMode(true);
   };
-
-  // const { config } = usePrepareContractWrite({
-  // address: alloInfo.id as Address,
-  // abi: abiWithErrors(alloABI),
-  // functionName: "registerRecipient",
-  //   args: [1, formEncodeData],
-  //   onError: (error) => {
-  //     console.log("error", error);
-  //   },
-  //   onSuccess: (data) => {
-  //     console.log(data?.result);
-  //   },
-  // });
 
   const { write, error, isError, data } = useContractWrite({
     address: alloInfo.id as Address,
@@ -160,28 +167,6 @@ export const ProposalForm = ({
 
   const getEncodeData = (data: FormInputs) => {
     const metadata = [1, metadataIpfs as string];
-
-    let proposalData;
-
-    // streaming
-    // requestAmount: 0
-
-    // signaling
-    // requestAmount: 0
-    // tokenAddress: "0x0000000000000000000000000000000000000000"
-
-    // proposalData =
-    //   proposalName !== "funding"
-    //     ? {
-    //         beneficiary: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-    //         requestedAmount: 0,
-    //         tokenAddress: "0x0000000000000000000000000000000000000000",
-    //       }
-    //     : {
-    //         beneficiary: data.beneficiary,
-    //         requestedAmount: parseUnits(data.amount.toString(), 18),
-    //         tokenAddress: "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
-    //       };
 
     const requestedAmount = parseUnits(
       data.amount.toString(),
@@ -215,7 +200,7 @@ export const ProposalForm = ({
     <FormModal
       label="Create proposal"
       title={`Create ${proposalName} proposal`}
-      description={`Propose and request funds for pool enhancements. Share your vision and request funds for upgrades that benefit the entire community`}
+      description={`Propose and Share your vision for requesting funds that benefit the entire community`}
     >
       <form onSubmit={handleSubmit(createProposal)}>
         {!isEditMode ? (
@@ -223,8 +208,9 @@ export const ProposalForm = ({
             {proposalName === "funding" && (
               <>
                 <div className="relative flex flex-col">
-                  <label htmlFor="stake" className={labelClassname}>
-                    Requested amount
+                  <label htmlFor="amount" className={labelClassname}>
+                    Requested amount ( Limited to {spendingLimitPct}% of Pool
+                    Funds )
                   </label>
                   <input
                     type="number"
@@ -238,6 +224,9 @@ export const ProposalForm = ({
                     {tokenSymbol}
                   </span>
                 </div>
+                {errors.amount?.type === "required" && (
+                  <p role="alert">Amount required</p>
+                )}
               </>
             )}
             {proposalName !== "signaling" && (

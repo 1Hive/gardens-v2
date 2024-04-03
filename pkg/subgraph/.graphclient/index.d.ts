@@ -1895,7 +1895,7 @@ export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId'> & {
-        config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem'>;
+        config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'maxRatio'>;
         registryCommunity: Pick<RegistryCommunity, 'id'>;
         proposals: Array<Pick<CVProposal, 'id' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount'>>;
     })>;

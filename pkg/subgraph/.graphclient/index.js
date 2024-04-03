@@ -49,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "https://api.studio.thegraph.com/proxy/29898/gv2-arbsepolia/version/latest" },
+        config: { "endpoint": "https://api.studio.thegraph.com/query/29898/gv2-arbsepolia/version/latest/" },
         baseDir,
         cache,
         pubsub,
@@ -291,6 +291,7 @@ export const getPoolDataDocument = gql `
       id
       proposalType
       pointSystem
+      maxRatio
     }
     registryCommunity {
       id

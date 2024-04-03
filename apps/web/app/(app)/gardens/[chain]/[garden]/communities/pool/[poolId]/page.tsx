@@ -1,7 +1,6 @@
 import { Badge, Proposals } from "@/components";
 import { PoolStats } from "@/components";
 import Image from "next/image";
-import { cvStrategyABI, alloABI } from "@/src/generated";
 import { createPublicClient, http } from "viem";
 import { getChain } from "@/configs/chainServer";
 import { gardenLand } from "@/assets";
@@ -12,7 +11,6 @@ import {
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { abiWithErrors } from "@/utils/abiWithErrors";
 import { ProposalForm } from "@/components/Forms";
 
 export const dynamic = "force-dynamic";
@@ -39,18 +37,30 @@ export default async function Pool({
   );
   const strategyObj = data?.cvstrategies?.[0];
 
-  const pointSystem = data?.cvstrategies?.[0].config?.pointSystem;
-
   if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;
   }
 
+  const pointSystem = data?.cvstrategies?.[0].config?.pointSystem;
   const strategyAddr = strategyObj.id as Address;
   const communityAddress = strategyObj.registryCommunity.id as Address;
   const alloInfo = data?.allos[0];
   const proposalType = strategyObj?.config?.proposalType as number;
   const poolAmount = strategyObj?.poolAmount as number;
   const tokenGarden = data.tokenGarden;
+
+  //calcs for spending limit
+  const PRECISON_OF_7 = 10 ** 7;
+  const maxRatioDivPrecision =
+    Number(strategyObj?.config?.maxRatio) / PRECISON_OF_7;
+
+  const spendingLimitPct = maxRatioDivPrecision * 100;
+
+  const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
+
+  console.log("maxRatioDivPrecision", maxRatioDivPrecision);
+  console.log("poolAmountSpendingLimit", poolAmountSpendingLimit);
+  //
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -116,6 +126,7 @@ export default async function Pool({
             communityAddress={communityAddress}
             tokenGarden={tokenGarden}
             pointSystem={pointSystem}
+            spendingLimit={spendingLimitPct}
           />
 
           {/* Proposals section */}
@@ -127,6 +138,9 @@ export default async function Pool({
           alloInfo={alloInfo}
           tokenGarden={tokenGarden}
           tokenAddress={garden as Address}
+          spendingLimit={poolAmountSpendingLimit}
+          spendingLimitPct={spendingLimitPct}
+          poolAmount={poolAmount}
         />
       </div>
     </div>
