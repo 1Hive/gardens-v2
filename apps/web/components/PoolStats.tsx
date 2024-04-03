@@ -10,6 +10,8 @@ import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { Address, useAccount, useContractRead } from "wagmi";
 import { PRECISION_SCALE } from "@/actions/getProposals";
 import { formatTokenAmount } from "@/utils/numbers";
+import { abiWithErrors2 } from "@/utils/abiWithErrors";
+import { registryCommunityABI } from "@/src/generated";
 
 type PoolStatsProps = {
   balance: string | number;
@@ -36,8 +38,27 @@ export const PoolStats: FC<PoolStatsProps> = ({
   pointSystem,
 }) => {
   const { isMemberActived } = useIsMemberActivated(strategy);
+  const { address: connectedAccount } = useAccount();
+
   const { isConnected } = useAccount();
   const { voterStakePct } = useTotalVoterStakedPct(strategy);
+
+  const registryContractCallConfig = {
+    address: communityAddress,
+    abi: abiWithErrors2(registryCommunityABI),
+  };
+
+  //TODO: create a hook for this
+  const {
+    data: isMember,
+    error,
+    isSuccess,
+  } = useContractRead({
+    ...registryContractCallConfig,
+    functionName: "isMember",
+    args: [connectedAccount as Address],
+    watch: true,
+  });
 
   return (
     <section className="flex max-h-96 w-full gap-8 rounded-xl bg-none">
@@ -92,6 +113,7 @@ export const PoolStats: FC<PoolStatsProps> = ({
                 strategyAddress={strategyAddress}
                 isMemberActived={isMemberActived}
                 communityAddress={communityAddress}
+                isMember={isMember}
                 // errorMemberActivated={errorMemberActivated}
               />
             </div>

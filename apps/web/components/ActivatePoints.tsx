@@ -12,11 +12,13 @@ type ActiveMemberProps = {
   strategyAddress: Address;
   isMemberActived: boolean | undefined;
   communityAddress: Address;
+  isMember: boolean | undefined;
 };
 
 export function ActivatePoints({
   strategyAddress,
   communityAddress,
+  isMember,
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -98,7 +100,12 @@ export function ActivatePoints({
   return (
     <>
       <div className="flex flex-col gap-4 pl-4">
-        <Button onClick={handleChange} className="w-fit bg-primary">
+        <Button
+          onClick={handleChange}
+          className="w-fit bg-primary"
+          disabled={connectedAccount && isMember === false}
+          tooltip="Join the community to activate points"
+        >
           {connectedAccount
             ? isMemberActivated
               ? "Deactivate Points"
