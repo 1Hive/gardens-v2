@@ -4,6 +4,7 @@ import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   Address,
+  useBalance,
   useContractRead,
   useContractWrite,
   useWaitForTransaction,
@@ -14,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
+import { getChainIdFromPath } from "@/utils/path";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -122,6 +124,22 @@ export const IncreasePower = ({
   //   useEffect(() => {
   //     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
   //   }, [unregisterMemberStatus]);
+  const chainId = getChainIdFromPath();
+
+  const { data: accountTokenBalance } = useBalance({
+    address: connectedAccount,
+    token: registerToken as `0x${string}` | undefined,
+    chainId: chainId || 0,
+  });
+
+  const isInputIncreaseGreaterThanBalance =
+    Number(increaseInput as unknown as number) >
+    Number(
+      formatTokenAmount(
+        accountTokenBalance?.value as unknown as number,
+        registerTokenDecimals,
+      ),
+    );
 
   return (
     <>
@@ -140,7 +158,7 @@ export const IncreasePower = ({
         />
 
         <TransactionModalStep
-          tokenSymbol="Stake more tokens"
+          tokenSymbol={`Stake ${tokenSymbol}`}
           status={increaseStakeStatus === "success" ? "success" : "loading"}
           isLoading={increasePowerIsLoading}
           failedMessage="An error has occurred, please try again!"
@@ -148,10 +166,13 @@ export const IncreasePower = ({
           type="register"
         />
       </TransactionModal>
-      <div className="flex max-w-xl flex-col  space-y-2">
-        <label htmlFor="stake" className="text-md w-full text-center font-bold">
-          Stake more tokens in the community ! ...it will increase your voting
-          power
+      <div className="flex max-w-3xl flex-col  space-y-2">
+        <label
+          htmlFor="stake"
+          className="text-md w-full py-1 text-start font-bold"
+        >
+          Staking more tokens in the community will increase your voting power
+          to support proposals
         </label>
         <input
           type="number"
@@ -160,8 +181,18 @@ export const IncreasePower = ({
           className="w-full rounded-lg border-2 border-info p-2"
           onChange={(e) => handleInputChange(e)}
         />
-        <Button onClick={handleChange} className="w-full">
-          {increaseInput !== undefined
+        <Button
+          onClick={handleChange}
+          className="w-full"
+          disabled={
+            increaseInput == 0 ||
+            increaseInput == undefined ||
+            increaseInput < 0 ||
+            isInputIncreaseGreaterThanBalance
+          }
+          tooltip={`${isInputIncreaseGreaterThanBalance ? `not enough ${tokenSymbol} balance to stake` : "input cannot be empty or less than 0"}`}
+        >
+          {increaseInput !== undefined && increaseInput > 0
             ? `Stake ${increaseInput} more tokens`
             : "Fill input with tokens to stake"}
           <span className="loading-spinner"></span>
