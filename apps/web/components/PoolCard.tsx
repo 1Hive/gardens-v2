@@ -27,7 +27,7 @@ export function PoolCard({
   poolAmount = poolAmount || 0;
   return (
     <Link
-      className="border2 relative flex min-w-56 snap-center flex-col items-start rounded-md bg-white shadow transition-all duration-150 ease-out hover:border-2 hover:border-secondary "
+      className="border2 relative flex max-w-56 flex-1 snap-center flex-col items-start rounded-md bg-white shadow transition-all duration-150 ease-out hover:border-2 hover:border-secondary"
       href={`${pathname}/pool/${poolId}`}
     >
       <div className="flex w-full items-baseline justify-around py-2">
@@ -46,7 +46,7 @@ export function PoolCard({
         </div>
         <div className="flex items-baseline justify-between">
           <p className="stat-title">funds available:</p>
-          <p className="px-2 text-right text-lg font-semibold">
+          <p className="overflow-hidden truncate px-2 text-right text-lg font-semibold">
             {formatTokenAmount(poolAmount, tokenGarden?.decimals)}
           </p>
         </div>

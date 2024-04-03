@@ -148,7 +148,7 @@ export const IncreasePower = ({
           type="register"
         />
       </TransactionModal>
-      <div className="mt-10 flex max-w-xl flex-col  space-y-2">
+      <div className="flex max-w-xl flex-col  space-y-2">
         <label htmlFor="stake" className="text-md w-full text-center font-bold">
           Stake more tokens in the community ! ...it will increase your voting
           power
