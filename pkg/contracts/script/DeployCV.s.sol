@@ -305,7 +305,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("PoolId: %s", poolId);
         console2.log("Strategy1 Addr: %s", address(strategy1));
 
-        console2.log("poolIdQuadratic: %s", poolIdFixed);
+        console2.log("poolIdFixed: %s", poolIdFixed);
         console2.log("Strategy2 Addr: %s", address(strategy2));
 
         console2.log("Allo Addr: %s", address(allo));

@@ -25,8 +25,8 @@ export const ProposalStats: FC<ProposalStatsProps> = ({
     },
   ) as Proposals[];
 
-  const proposalsTotalSupport = proposals.map(({ title, stakedTokens }) => ({
-    value: stakedTokens,
+  const proposalsTotalSupport = proposals.map(({ title }) => ({
+    value: 0,
     name: title,
   }));
 

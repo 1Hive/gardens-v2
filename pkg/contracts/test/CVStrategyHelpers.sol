@@ -14,6 +14,7 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 contract CVStrategyHelpers is Native, Accounts {
     Metadata public metadata = Metadata({protocol: 1, pointer: "QmW4zFLFJRN7J67EzNmdC2r2M9u2iJDha2fj5Gee6hJzSY"}); //@todo CID from IPFS
 
+    uint256 public constant DECIMALS = 10 ** 18;
     bytes32 internal _poolProfileId1_;
 
     uint256 internal constant TWO_127 = 2 ** 127;
@@ -55,7 +56,7 @@ contract CVStrategyHelpers is Native, Accounts {
         //Fixed point system
         pointConfig.pointsPerMember = 100 * (10 ** 4);
         //Quadratic point system
-        pointConfig.tokensPerPoint = 1 * (10 ** 18);
+        pointConfig.tokensPerPoint = 1 * (DECIMALS);
         pointConfig.pointsPerTokenStaked = 5 * (10 ** 4);
         params.pointConfig = pointConfig;
     }

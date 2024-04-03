@@ -49,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "http://localhost:8000/subgraphs/name/kamikazebr/gv2" },
+        config: { "endpoint": "https://api.studio.thegraph.com/proxy/29898/gv2-arbsepolia/version/latest" },
         baseDir,
         cache,
         pubsub,
@@ -302,7 +302,7 @@ export const getPoolDataDocument = gql `
       requestedAmount
       requestedToken
       proposalStatus
-      stakedTokens
+      stakedAmount
     }
   }
 }
@@ -322,7 +322,7 @@ export const getProposalDataDocument = gql `
     proposalStatus
     requestedAmount
     requestedToken
-    stakedTokens
+    stakedAmount
     submitter
     threshold
     updatedAt
@@ -366,7 +366,7 @@ export const getStrategyByPoolDocument = gql `
       requestedAmount
       requestedToken
       proposalStatus
-      stakedTokens
+      stakedAmount
     }
   }
 }

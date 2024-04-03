@@ -8,6 +8,8 @@ import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol
 import {RegistryCommunity, Metadata} from "./RegistryCommunity.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
+import {console} from "forge-std/console.sol";
+
 interface IPointStrategy {
     // function withdraw(address _member) external;
     function deactivatePoints(address _member) external;
@@ -274,6 +276,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 // console.log("::PookToken", poolToken);
                 revert TokenNotAllowed();
             }
+            if (_isOverMaxRatio(proposal.amountRequested)){
+                revert AmountOverMaxRatio();
+            }
         }
         uint256 proposalId = ++proposalCounter;
         StrategyStruct.Proposal storage p = proposals[proposalId];
@@ -357,8 +362,12 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         uint256 totalExtraStake =
             registryCommunity.getMemberStakedAmount(_member) + _amountToStake - registryCommunity.registerStakeAmount();
 
-        //                                                      9 for token.decimals/2, 4 for precision
-        uint256 newTotalPoints = sqrt((totalExtraStake / pointConfig.tokensPerPoint) * (10 ** 18)) / (10 ** (9 - 4));
+
+        uint256 newTotalPoints = sqrt((totalExtraStake / pointConfig.tokensPerPoint) * 1e18) / 1e5;
+        console.log("totalExtraStake", totalExtraStake);
+        console.log("pointConfig.tokensPerPoint", pointConfig.tokensPerPoint);
+        console.log("newTotalPoints", newTotalPoints);
+
         uint256 pointsToIncrease = (pointConfig.pointsPerMember + newTotalPoints)
             - registryCommunity.getMemberPowerInStrategy(_member, address(this));
         return pointsToIncrease;
@@ -545,7 +554,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
      * @return beneficiary Proposal beneficiary
      * @return requestedToken Proposal requested token
      * @return requestedAmount Proposal requested amount
-     * @return stakedTokens Proposal staked tokens
+     * @return stakedAmount Proposal staked points
      * @return proposalStatus Proposal status
      * @return blockLast Last block when conviction was calculated
      * @return convictionLast Last conviction calculated
@@ -559,7 +568,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             address beneficiary,
             address requestedToken,
             uint256 requestedAmount,
-            uint256 stakedTokens,
+            uint256 stakedAmount,
             StrategyStruct.ProposalStatus proposalStatus,
             uint256 blockLast,
             uint256 convictionLast,
@@ -619,6 +628,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function proposalExists(uint256 _proposalID) internal view returns (bool) {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
+    }
+
+    function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool) {
+         if (maxRatio * poolAmount <= _requestedAmount * D){
+            return true;
+         }
+         return false;
     }
 
     function _check_before_addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport)
@@ -785,7 +801,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         if (poolAmount <= 0) {
             revert PoolIsEmpty();
         }
-        uint256 funds = poolAmount;
         //        require(maxRatio.mul(funds) > _requestedAmount.mul(D), ERROR_AMOUNT_OVER_MAX_RATIO);
         // console.log("maxRatio", maxRatio);
         // console.log("funds=poolAmount", funds);
@@ -794,12 +809,12 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         // console.log("maxRatio * funds", maxRatio * funds);
         // console.log("_requestedAmount * D", _requestedAmount * D);
 
-        if (maxRatio * funds <= _requestedAmount * D) {
+        if (_isOverMaxRatio(_requestedAmount)) {
             revert AmountOverMaxRatio();
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
         // denom = maxRatio / 1 - _requestedAmount / funds;
-        uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / funds;
+        uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
         _threshold = (
             (((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * totalEffectiveActivePoints()
         ) >> 64;

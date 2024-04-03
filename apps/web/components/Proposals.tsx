@@ -225,78 +225,76 @@ export function Proposals({
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposals.map(
-            ({ title, type, id, stakedTokens, proposalStatus }, i) => (
-              <div
-                className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
-                key={title + "_" + id}
-              >
-                <div className="flex w-full items-center justify-between font-bold">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-sm">{getProposalId(id)} -</span>
-                    <h4 className="text-xl">{title}</h4>
-                  </div>
-
-                  <div className="flex items-center gap-8">
-                    {/* Button to test distribute */}
-                    <Button
-                      disabled={proposalStatus == "4"}
-                      tooltip="Proposal already Executed"
-                      onClick={() =>
-                        writeDistribute?.({
-                          args: [
-                            strategy.poolId,
-                            [strategy.id],
-                            encodedDataProposalId(id),
-                          ],
-                        })
-                      }
-                    >
-                      Execute proposal {proposalStatus}
-                    </Button>
-                    <StatusBadge status={proposalStatus} />
-                    {/* {!editView && ( */}
-                    <>
-                      <Link href={`${pathname}/proposals/${id}`}>
-                        <Button variant="outline">View Proposal</Button>
-                      </Link>
-                    </>
-                    {/* )} */}
-                  </div>
+          {proposals.map(({ title, type, id, proposalStatus }, i) => (
+            <div
+              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
+              key={title + "_" + id}
+            >
+              <div className="flex w-full items-center justify-between font-bold">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-sm">{getProposalId(id)} -</span>
+                  <h4 className="text-xl">{title}</h4>
                 </div>
 
-                {editView && (
-                  <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                    <div className="flex items-center gap-8">
-                      <div>
-                        <input
-                          key={i}
-                          type="range"
-                          min={0}
-                          max={100}
-                          value={inputs[i]?.value}
-                          className={`range-aja range range-sm min-w-[420px]`}
-                          step="5"
-                          onChange={(e) =>
-                            inputHandler(i, Number(e.target.value))
-                          }
-                        />
-                        <div className="flex w-full justify-between px-[10px] text-[4px]">
-                          {[...Array(21)].map((_, i) => (
-                            <span key={"span_" + i}>|</span>
-                          ))}
-                        </div>
+                <div className="flex items-center gap-8">
+                  {/* Button to test distribute */}
+                  <Button
+                    disabled={proposalStatus == "4"}
+                    tooltip="Proposal already Executed"
+                    onClick={() =>
+                      writeDistribute?.({
+                        args: [
+                          strategy.poolId,
+                          [strategy.id],
+                          encodedDataProposalId(id),
+                        ],
+                      })
+                    }
+                  >
+                    Execute proposal {proposalStatus}
+                  </Button>
+                  <StatusBadge status={proposalStatus} />
+                  {/* {!editView && ( */}
+                  <>
+                    <Link href={`${pathname}/proposals/${id}`}>
+                      <Button variant="outline">View Proposal</Button>
+                    </Link>
+                  </>
+                  {/* )} */}
+                </div>
+              </div>
+
+              {editView && (
+                <div className="flex w-full flex-wrap items-center justify-between gap-6">
+                  <div className="flex items-center gap-8">
+                    <div>
+                      <input
+                        key={i}
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={inputs[i]?.value}
+                        className={`range-aja range range-sm min-w-[420px]`}
+                        step="5"
+                        onChange={(e) =>
+                          inputHandler(i, Number(e.target.value))
+                        }
+                      />
+                      <div className="flex w-full justify-between px-[10px] text-[4px]">
+                        {[...Array(21)].map((_, i) => (
+                          <span key={"span_" + i}>|</span>
+                        ))}
                       </div>
-                      <div className="mb-2">{inputs[i].value} %</div>
                     </div>
-                    {/* <Link href={`${pathname}/proposals/${id}`}>
+                    <div className="mb-2">{inputs[i].value} %</div>
+                  </div>
+                  {/* <Link href={`${pathname}/proposals/${id}`}>
                     <Button variant="outline">View Proposal</Button>
                   </Link> */}
-                  </div>
-                )}
-              </div>
-            ),
-          )}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
         <div className="flex justify-center gap-8">
           <Button
