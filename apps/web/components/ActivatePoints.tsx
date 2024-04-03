@@ -64,6 +64,8 @@ export function ActivatePoints({
     watch: true,
   });
 
+  console.log(pointsVotingPower);
+
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
 
