@@ -1048,18 +1048,19 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        (
-            , // address submitter,
-            address beneficiary,
-            , // address requestedToken,
-            uint256 requestedAmount,
-            , // uint256 stakedTokens,
-            , // ProposalStatus proposalStatus,
-            , // uint256 blockLast,
-            , // uint256 convictionLast,
-            , // uint256 threshold,
-                // uint256 voterPointsPct
-        ) = cv.getProposal(proposalId);
+        // (
+        //     , // address submitter,
+        //     address beneficiary,
+        //     , // address requestedToken,
+        //     uint256 requestedAmount,
+        //     , // uint256 stakedTokens,
+        //     , // ProposalStatus proposalStatus,
+        //     , // uint256 blockLast,
+        //     , // uint256 convictionLast,
+        //     , // uint256 threshold,
+        //         // uint256 voterPointsPct
+        // ) = cv.getProposal(proposalId);
+        cv.updateProposalConviction(proposalId);
         address[] memory recipients = new address[](0);
         bytes memory dataProposal = abi.encode(proposalId);
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.ConvictionUnderMinimumThreshold.selector));

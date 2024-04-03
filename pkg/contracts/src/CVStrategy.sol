@@ -150,7 +150,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     /*|                VARIABLES                   |*/
     /*|--------------------------------------------|*/
 
-    // uint256 internal // surpressStateMutabilityWarning;
+    uint256 internal surpressStateMutabilityWarning;
 
     RegistryCommunity public registryCommunity;
 
@@ -276,7 +276,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 // console.log("::PookToken", poolToken);
                 revert TokenNotAllowed();
             }
-            if (_isOverMaxRatio(proposal.amountRequested)){
+            if (_isOverMaxRatio(proposal.amountRequested)) {
                 revert AmountOverMaxRatio();
             }
         }
@@ -334,7 +334,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
         uint256 pointsToDecrease = 0;
         if (pointSystem == StrategyStruct.PointSystem.Unlimited || pointSystem == StrategyStruct.PointSystem.Capped) {
-            pointsToDecrease = decreasePowerCappedUnlimited(_member, _amountToUnstake);
+            pointsToDecrease = decreasePowerCappedUnlimited(_amountToUnstake);
         } else {
             pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
         }
@@ -362,7 +362,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         uint256 totalExtraStake =
             registryCommunity.getMemberStakedAmount(_member) + _amountToStake - registryCommunity.registerStakeAmount();
 
-
         uint256 newTotalPoints = sqrt((totalExtraStake / pointConfig.tokensPerPoint) * 1e18) / 1e5;
         console.log("totalExtraStake", totalExtraStake);
         console.log("pointConfig.tokensPerPoint", pointConfig.tokensPerPoint);
@@ -373,7 +372,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         return pointsToIncrease;
     }
 
-    function decreasePowerCappedUnlimited(address _member, uint256 _amountToUnstake) internal view returns (uint256) {
+    function decreasePowerCappedUnlimited(uint256 _amountToUnstake) internal view returns (uint256) {
         return (_amountToUnstake * pointConfig.pointsPerTokenStaked);
     }
 
@@ -425,7 +424,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     // [[[proposalId, delta],[proposalId, delta]]]
     // layout.txs -> console.log(data)
     // data = bytes
-    function supportProposal(StrategyStruct.ProposalSupport[] memory) public {
+    function supportProposal(StrategyStruct.ProposalSupport[] memory) public pure {
         // // surpressStateMutabilityWarning++;
         revert NotImplemented();
         // allo().allocate(poolId, abi.encode(proposalId));
@@ -492,13 +491,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     // probably tracked in a mapping, but will depend on the implementation
     // for example, the OpenSelfRegistration only maps users to bool, and then assumes Accepted for those
     // since there is no need for Pending or Rejected
-    function _getRecipientStatus(address _recipientId) internal view override returns (Status) {
+    function _getRecipientStatus(address _recipientId) internal pure override returns (Status) {
         // surpressStateMutabilityWarning;
         return _recipientId == address(0) ? Status.Rejected : Status.Accepted;
     }
 
     /// @return Input the values you would send to distribute(), get the amounts each recipient in the array would receive
-    function getPayouts(address[] memory, bytes[] memory) external view override returns (PayoutSummary[] memory) {
+    function getPayouts(address[] memory, bytes[] memory) external pure override returns (PayoutSummary[] memory) {
         // surpressStateMutabilityWarning;
         revert NotImplemented();
         // PayoutSummary[] memory payouts = new PayoutSummary[](0);
@@ -507,7 +506,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function _getPayout(address _recipientId, bytes memory _data)
         internal
-        view
+        pure
         override
         returns (PayoutSummary memory)
     {
@@ -522,7 +521,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     // simply returns whether a allocator is valid or not, will usually be true for all
 
-    function _isValidAllocator(address _allocator) internal view override returns (bool) {
+    function _isValidAllocator(address _allocator) internal pure override returns (bool) {
         // surpressStateMutabilityWarning;
         return _allocator == address(0) ? false : true;
     }
@@ -631,10 +630,10 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool) {
-         if (maxRatio * poolAmount <= _requestedAmount * D){
+        if (maxRatio * poolAmount <= _requestedAmount * D) {
             return true;
-         }
-         return false;
+        }
+        return false;
     }
 
     function _check_before_addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport)
