@@ -106,13 +106,8 @@ export const ProposalForm = ({
     tokenGarden?.decimals as number,
   );
 
-  const formatPoolAmount = formatTokenAmount(
-    poolAmount,
-    tokenGarden?.decimals as number,
-  );
-
-  console.log(spendingLimit);
-  console.log(formatSpendingLimit);
+  const checksRequestedAmount =
+    Number(getValues("amount")) < Number(formatSpendingLimit);
 
   const proposalName = proposalTypes[proposalType];
 
@@ -140,7 +135,7 @@ export const ProposalForm = ({
   };
 
   const handlePreview = () => {
-    //handleJsonUpload();
+    handleJsonUpload();
 
     const data = {
       title: getValues("title"),
@@ -285,7 +280,13 @@ export const ProposalForm = ({
             </Button>
           ) : (
             <div className="flex items-center gap-10">
-              <Button type="submit">Submit</Button>
+              <Button
+                type="submit"
+                disabled={!checksRequestedAmount}
+                tooltip="Request amount exceeds pool spending limit"
+              >
+                Submit
+              </Button>
               <Button
                 type="button"
                 onClick={() => setIsEditMode(false)}
