@@ -1819,6 +1819,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         me: string;
         comm: string;
     }>, options?: TOperationContext): Promise<isMemberQuery>;
+    getPoolCreationData(variables: Exact<{
+        communityAddr: string;
+    }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
     getCommunitiesByGarden(variables: Exact<{
         addr: string;
     }>, options?: TOperationContext): Promise<getCommunitiesByGardenQuery>;
@@ -1870,6 +1873,13 @@ export type isMemberQuery = {
             registryCommunity: Pick<RegistryCommunity, 'id'>;
         })>>;
     })>;
+};
+export type getPoolCreationDataQueryVariables = Exact<{
+    communityAddr: Scalars['ID'];
+}>;
+export type getPoolCreationDataQuery = {
+    allos: Array<Pick<Allo, 'id'>>;
+    registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName'>>;
 };
 export type getCommunitiesByGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
@@ -1938,6 +1948,9 @@ export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
     me: Scalars['ID'];
     comm: Scalars['String'];
 }>>;
+export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDataQuery, Exact<{
+    communityAddr: Scalars['ID'];
+}>>;
 export declare const getCommunitiesByGardenDocument: DocumentNode<getCommunitiesByGardenQuery, Exact<{
     addr: Scalars['ID'];
 }>>;
@@ -1960,6 +1973,7 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
     getTokenGardens(variables?: getTokenGardensQueryVariables, options?: C): Promise<getTokenGardensQuery>;
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
+    getPoolCreationData(variables: getPoolCreationDataQueryVariables, options?: C): Promise<getPoolCreationDataQuery>;
     getCommunitiesByGarden(variables: getCommunitiesByGardenQueryVariables, options?: C): Promise<getCommunitiesByGardenQuery>;
     getPoolData(variables: getPoolDataQueryVariables, options?: C): Promise<getPoolDataQuery>;
     getProposalData(variables: getProposalDataQueryVariables, options?: C): Promise<getProposalDataQuery>;

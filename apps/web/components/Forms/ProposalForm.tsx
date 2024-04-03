@@ -161,28 +161,6 @@ export const ProposalForm = ({
   const getEncodeData = (data: FormInputs) => {
     const metadata = [1, metadataIpfs as string];
 
-    let proposalData;
-
-    // streaming
-    // requestAmount: 0
-
-    // signaling
-    // requestAmount: 0
-    // tokenAddress: "0x0000000000000000000000000000000000000000"
-
-    // proposalData =
-    //   proposalName !== "funding"
-    //     ? {
-    //         beneficiary: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-    //         requestedAmount: 0,
-    //         tokenAddress: "0x0000000000000000000000000000000000000000",
-    //       }
-    //     : {
-    //         beneficiary: data.beneficiary,
-    //         requestedAmount: parseUnits(data.amount.toString(), 18),
-    //         tokenAddress: "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
-    //       };
-
     const requestedAmount = parseUnits(
       data.amount.toString(),
       tokenGarden?.decimals as number,

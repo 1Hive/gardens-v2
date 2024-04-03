@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import { useViemClient } from "@/hooks/useViemClient";
 import { getStrategyByPoolQuery } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/communities/pool/[poolId]/page";
+import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/pool/[poolId]/page";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
