@@ -18,6 +18,13 @@ deploy:
 	--broadcast -vv
 	
 
+deploy-pool-testnet: 
+	-forge script script/DeployCVArbSepoliaPool.s.sol:DeployCVArbSepoliaPool \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--verify \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast -vv
 deploy-testnet: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \

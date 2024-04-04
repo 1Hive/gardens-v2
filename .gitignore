@@ -47,3 +47,4 @@ cache/
 # subgraph
 pkg/subgraph/generated
 pkg/**/data
+cookies.json

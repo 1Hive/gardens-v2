@@ -132,6 +132,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       id
       proposalType
       pointSystem
+      maxRatio
     }
     registryCommunity {
       id

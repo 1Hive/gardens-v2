@@ -45,10 +45,6 @@ contract SafeSetup is Test {
         return councilSafe;
     }
 
-    function safeHelper(address to_, uint256 value_, bytes memory data_) public {
-        safeHelper(councilSafe, councilMemberPK, to_, data_);
-    }
-
     function getHash(address to_, bytes memory data_, Safe councilSafe_) private view returns (bytes32 txData) {
         txData = keccak256(
             councilSafe_.encodeTransactionData(
@@ -75,7 +71,17 @@ contract SafeSetup is Test {
         signature = abi.encodePacked(r, s, v);
     }
 
+    function safeHelper(address to_, uint256 value_, bytes memory data_) public {
+        safeHelper(councilSafe, councilMemberPK, to_, data_, value_);
+    }
+
     function safeHelper(Safe councilSafe_, uint256 councilMemberPK_, address to_, bytes memory data_) public {
+        safeHelper(councilSafe_, councilMemberPK_, to_, data_, 0);
+    }
+
+    function safeHelper(Safe councilSafe_, uint256 councilMemberPK_, address to_, bytes memory data_, uint256 value_)
+        public
+    {
         bytes memory sign;
         {
             sign = getSignature(to_, data_, councilSafe_, councilMemberPK_);
@@ -83,7 +89,7 @@ contract SafeSetup is Test {
 
         assertTrue(
             councilSafe_.execTransaction(
-                to_, 0, data_, Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), sign
+                to_, value_, data_, Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), sign
             ),
             "execTransaction failed"
         );
