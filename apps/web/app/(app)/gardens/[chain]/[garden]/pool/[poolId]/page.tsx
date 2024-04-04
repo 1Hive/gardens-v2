@@ -57,9 +57,6 @@ export default async function Pool({
   const spendingLimitPct = maxRatioDivPrecision * 100;
 
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
-
-  console.log("maxRatioDivPrecision", maxRatioDivPrecision);
-  console.log("poolAmountSpendingLimit", poolAmountSpendingLimit);
   //
 
   return (
@@ -118,6 +115,8 @@ export default async function Pool({
             </div>
           </section>
 
+          {/* Proposals section */}
+          <Proposals strategy={strategyObj} alloInfo={alloInfo} />
           {/* Stats section */}
           <PoolStats
             balance={poolAmount}
@@ -128,9 +127,6 @@ export default async function Pool({
             pointSystem={pointSystem}
             spendingLimit={spendingLimitPct}
           />
-
-          {/* Proposals section */}
-          <Proposals strategy={strategyObj} alloInfo={alloInfo} />
         </main>
         <ProposalForm
           poolId={poolId}

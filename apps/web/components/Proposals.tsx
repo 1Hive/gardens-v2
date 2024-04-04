@@ -19,6 +19,7 @@ import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { encodeAbiParameters } from "viem";
+import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 
 type InputItem = {
   id: string;
@@ -205,12 +206,24 @@ export function Proposals({
     }, 0);
 
   return (
-    <section className="rounded-lg border-2 border-black bg-white p-16">
+    <section className="rounded-lg border-2 border-black bg-white p-12">
       {/* proposals: title - proposals -create Button */}
       <div className="mx-auto max-w-5xl space-y-10">
         <header className="flex items-center justify-between">
-          <h3 className="">Proposals</h3>
-          {editView && (
+          <div className="flex w-full items-baseline justify-between">
+            <h3 className="font-semibold">Proposals</h3>
+            {!editView && (
+              <Button
+                icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                onClick={() => setEditView((prev) => !prev)}
+                disabled={!isMemberActived}
+                tooltip="Activate your points to support proposals"
+              >
+                Manage support
+              </Button>
+            )}
+          </div>
+          {/* {editView && (
             <span
               className={`${
                 distributedPoints >= 100 && "scale-110 font-semibold text-red"
@@ -221,38 +234,41 @@ export function Proposals({
                 : "Total distributed: "}
               {distributedPoints} pts
             </span>
-          )}
+          )} */}
         </header>
         <div className="flex flex-col gap-6">
           {proposals.map(({ title, type, id, proposalStatus }, i) => (
             <div
-              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
+              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
               key={title + "_" + id}
             >
-              <div className="flex w-full items-center justify-between font-bold">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-sm">{getProposalId(id)} -</span>
-                  <h4 className="text-xl">{title}</h4>
+              <div className="flex w-full items-center justify-between ">
+                <div className="flex flex-[30%] flex-col items-baseline gap-2">
+                  <h4 className="text-2xl font-bold">{title}</h4>
+                  <span className="text-md">ID {getProposalId(id)}</span>
                 </div>
 
                 <div className="flex items-center gap-8">
-                  {/* Button to test distribute */}
-                  <Button
-                    disabled={proposalStatus == "4"}
-                    tooltip="Proposal already Executed"
-                    onClick={() =>
-                      writeDistribute?.({
-                        args: [
-                          strategy.poolId,
-                          [strategy.id],
-                          encodedDataProposalId(id),
-                        ],
-                      })
-                    }
-                  >
-                    Execute proposal {proposalStatus}
-                  </Button>
                   <StatusBadge status={proposalStatus} />
+                  {/* Button to test distribute */}
+                  {!editView && (
+                    <Button
+                      disabled={proposalStatus == "4"}
+                      tooltip="Proposal already Executed"
+                      onClick={() =>
+                        writeDistribute?.({
+                          args: [
+                            strategy.poolId,
+                            [strategy.id],
+                            encodedDataProposalId(id),
+                          ],
+                        })
+                      }
+                    >
+                      Execute proposal {proposalStatus}
+                    </Button>
+                  )}
+
                   {/* {!editView && ( */}
                   <>
                     <Link href={`${pathname}/proposals/${id}`}>
@@ -273,7 +289,7 @@ export function Proposals({
                         min={0}
                         max={100}
                         value={inputs[i]?.value}
-                        className={`range-aja range range-sm min-w-[420px]`}
+                        className={`range range-success range-sm min-w-[420px]`}
                         step="5"
                         onChange={(e) =>
                           inputHandler(i, Number(e.target.value))
@@ -292,24 +308,23 @@ export function Proposals({
             </div>
           ))}
         </div>
-        <div className="flex justify-center gap-8">
-          <Button
-            className={`${editView ? "bg-red text-white" : "bg-primary"}`}
-            onClick={() => setEditView((prev) => !prev)}
-            disabled={!isMemberActived}
-            tooltip="Activate your points to support proposals"
-          >
-            {editView ? "Cancel" : "Manage support"}
-          </Button>
-
+        <div className="flex justify-end gap-8">
           {editView && (
-            <Button
-              className="min-w-[200px]"
-              onClick={() => submit()}
-              isLoading={allocateStatus === "loading"}
-            >
-              Save changes
-            </Button>
+            <>
+              <Button
+                variant="error"
+                onClick={() => setEditView((prev) => !prev)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="min-w-[200px]"
+                onClick={() => submit()}
+                isLoading={allocateStatus === "loading"}
+              >
+                Save changes
+              </Button>
+            </>
           )}
         </div>
         <div className="">
