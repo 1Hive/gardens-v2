@@ -49,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "https://api.studio.thegraph.com/proxy/29898/gv2-arbsepolia/version/latest" },
+        config: { "endpoint": "https://api.studio.thegraph.com/query/29898/gv2-arbsepolia/version/latest/" },
         baseDir,
         cache,
         pubsub,
@@ -99,6 +99,12 @@ export async function getMeshOptions() {
                         return printWithCache(IsMemberDocument);
                     },
                     location: 'IsMemberDocument.graphql'
+                }, {
+                    document: GetPoolCreationDataDocument,
+                    get rawSDL() {
+                        return printWithCache(GetPoolCreationDataDocument);
+                    },
+                    location: 'GetPoolCreationDataDocument.graphql'
                 }, {
                     document: GetCommunitiesByGardenDocument,
                     get rawSDL() {
@@ -222,6 +228,16 @@ export const isMemberDocument = gql `
   }
 }
     `;
+export const getPoolCreationDataDocument = gql `
+    query getPoolCreationData($communityAddr: ID!) {
+  allos {
+    id
+  }
+  registryCommunity(id: $communityAddr) {
+    communityName
+  }
+}
+    `;
 export const getCommunitiesByGardenDocument = gql `
     query getCommunitiesByGarden($addr: ID!) {
   registryFactories {
@@ -291,6 +307,7 @@ export const getPoolDataDocument = gql `
       id
       proposalType
       pointSystem
+      maxRatio
     }
     registryCommunity {
       id
@@ -381,6 +398,9 @@ export function getSdk(requester) {
         },
         isMember(variables, options) {
             return requester(isMemberDocument, variables, options);
+        },
+        getPoolCreationData(variables, options) {
+            return requester(getPoolCreationDataDocument, variables, options);
         },
         getCommunitiesByGarden(variables, options) {
             return requester(getCommunitiesByGardenDocument, variables, options);

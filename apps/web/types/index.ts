@@ -6,6 +6,13 @@ export const proposalTypes: Record<string, string> = {
   2: "streaming",
 };
 
+export const pointSystems: Record<string, string> = {
+  0: "fixed",
+  1: "capped",
+  2: "unlimited",
+  3: "quadratic",
+};
+
 export const proposalStatus: Record<string, string> = {
   0: "inactive",
   1: "active",
