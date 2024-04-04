@@ -113,7 +113,7 @@ export function CommunityCard({
           </div>
           <div className="justify-end">
             <div
-              className={`flex w-full transform gap-4 overflow-x-auto transition-height duration-200 ease-in-out ${
+              className={`flex w-full flex-wrap transform gap-4 overflow-x-auto transition-height duration-200 ease-in-out ${
                 !open && "max-h-[290px]"
               } `}
             >

@@ -5,6 +5,8 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import {
   Address,
+  Chain,
+  createPublicClient,
   createWalletClient,
   custom,
   encodeAbiParameters,
@@ -20,11 +22,14 @@ import {
   useWaitForTransaction,
 } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { alloABI, registryCommunityABI } from "@/src/generated";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { pointSystems, proposalTypes } from "@/types";
 import { localhost } from "viem/chains";
 import cvStrategyJson from "../../../../pkg/contracts/out/CVStrategy.sol/CVStrategy.json" assert { type: "json" };
 import "viem/window";
+import { chains } from "@/configs/wagmiConfig";
+import { getChainIdFromPath } from "@/utils/path";
+import { getChain } from "@/configs/chainServer";
 
 type FormProps = {
   strategyType: number;
@@ -134,34 +139,39 @@ export default function PoolForm({
   // console.log(config);
 
   const walletClient = createWalletClient({
-    chain: localhost, // use dinamic chain
+    chain: getChain(getChainIdFromPath()) as Chain,
     transport: custom(window.ethereum!),
-    // transport: http(),
+  });
+
+  const publicClient = createPublicClient({
+    chain: getChain(getChainIdFromPath()) as Chain,
+    transport: http(),
   });
 
   async function triggerDeployContract() {
     const hash = await walletClient.deployContract({
-      abi: abiWithErrors(registryCommunityABI),
+      abi: abiWithErrors(cvStrategyABI),
       account: address as Address,
-      bytecode: cvStrategyJson.bytecode.object as `0x${string}`,
+      bytecode: cvStrategyJson.bytecode.object as Address,
+      args: [alloAddr],
     });
-    setTxHash(hash);
-    console.log(hash);
+
+    const transaction = await publicClient.waitForTransactionReceipt({
+      hash: hash,
+    });
+    return transaction.contractAddress;
   }
-
-  const { data: txData, isError: txError } = useWaitForTransaction({
-    hash: txHash,
-  });
-
-  console.log(txData);
 
   const createPool = async (data: FormInputs) => {
     if (!ipfsMetadataHash) {
-      alert("wait for files upload to complete");
+      console.log("wait for files upload to complete");
       return;
     }
-    await triggerDeployContract();
-    const strategyAddr = "0x998abeb3e57409262ae5b751f60747921b33613e";
+    const strategyAddr = await triggerDeployContract();
+    if (strategyAddr == null) {
+      console.log("error deploying cvStrategy");
+      return;
+    }
     // pointConfig
     const pointsPerTokenStaked = BigInt(1);
     const maxAmount = BigInt(200);
@@ -201,6 +211,7 @@ export default function PoolForm({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "createPool",
+    onSuccess: () => alert("Pool created successfully"),
   });
 
   return (

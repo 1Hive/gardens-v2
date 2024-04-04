@@ -8,7 +8,7 @@ import {
   getAbiItem,
 } from "viem";
 import { publicClient } from "@/configs/wagmiConfig";
-
+import "viem/window";
 import { createWalletClient, custom } from "viem";
 import { arbitrumSepolia, localhost, mainnet, sepolia } from "viem/chains";
 
@@ -25,7 +25,7 @@ export const deployContract = async function (
 
   const client = createWalletClient({
     chain: localhost,
-    transport: custom(window.ethereum),
+    transport: custom(window.ethereum!),
   });
 
   const abi: Abi = [
