@@ -117,7 +117,16 @@ export function CommunityCard({
             <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
           </div>
           <div className="flex flex-col justify-end gap-2">
-            <h3>Pools</h3>
+            <div className="flex items-center justify-between">
+              <h3>Pools</h3>
+              <Link
+                href={`${pathname}/${communityAddress}/create-pool`}
+                className=""
+              >
+                <Button className="">Create Pool</Button>
+              </Link>
+            </div>
+
             <h5 className="font-bold">
               Signaling pools ( {SiganlingPools.length} ){" "}
             </h5>
@@ -127,6 +136,18 @@ export function CommunityCard({
               {SiganlingPools.map((pool, i) => (
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
+
+              {/* {pools.length > 2 && (
+                <Button
+                  className="!rounded-full bg-white !p-3"
+                  onClick={() => setOpen((prev) => !prev)}
+                >
+                  <ChevronDownIcon
+                    className={`block h-6 w-6 stroke-2 ${open && "rotate-180"}`}
+                    aria-hidden="true"
+                  />
+                </Button>
+              )} */}
             </div>
             <h5 className="mt-4 font-bold">
               Funding pools ( {FundingPools.length} )
