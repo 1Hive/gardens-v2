@@ -1,5 +1,5 @@
 import { Badge, Proposals } from "@/components";
-import { PoolStats } from "@/components";
+import { PoolMetrics } from "@/components";
 import Image from "next/image";
 import { createPublicClient, http } from "viem";
 import { getChain } from "@/configs/chainServer";
@@ -12,12 +12,20 @@ import {
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { ProposalForm } from "@/components/Forms";
+import { PointsComponent } from "@/components";
 
 export const dynamic = "force-dynamic";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
 const { urqlClient } = initUrqlClient();
+
+const pointSystemObject = {
+  0: "Fixed",
+  1: "Capped",
+  2: "Unlimited",
+  3: "Quadratic",
+};
 
 export default async function Pool({
   params: { chain, poolId, garden },
@@ -78,24 +86,39 @@ export default async function Pool({
               </h3>
               <div className="flex w-full  p-4">
                 <div className="flex flex-1  text-xl font-semibold">
-                  <div className="mx-auto flex max-w-fit flex-col items-start justify-center">
-                    <p className="text-md">
+                  <div className="mx-auto flex max-w-fit flex-col items-start justify-center space-y-4">
+                    <div className="text-md stat-title">
                       Strategy:{" "}
-                      <span className="ml-2 text-xl"> Conviction Voting</span>
-                    </p>
+                      <span className="text-md pl-2 text-black">
+                        {" "}
+                        Conviction Voting
+                      </span>
+                    </div>
                     {proposalType == 1 && (
-                      <p className="text-md">
+                      <div className="text-md stat-title">
                         Funding Token:{" "}
-                        <span className="ml-2 text-xl">
+                        <span className="text-md pl-2 text-black">
                           {" "}
                           {tokenGarden?.symbol}
                         </span>
-                      </p>
+                      </div>
                     )}
+                    <div className="text-md stat-title">
+                      Points System:{" "}
+                      <span className="text-md pl-2 text-black">
+                        {
+                          pointSystemObject[
+                            pointSystem as unknown as keyof typeof pointSystemObject
+                          ]
+                        }
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-1 flex-col items-center space-y-4 font-bold">
-                  <p className="text-md">Proposals type accepted:</p>
+                <div className="flex flex-1 flex-col items-center space-y-2">
+                  <p className="text-md stat-title text-xl font-semibold">
+                    Proposals type accepted:
+                  </p>
                   <div className="flex w-full items-center justify-evenly">
                     <Badge type={proposalType} />
                   </div>
@@ -114,11 +137,17 @@ export default async function Pool({
               ))}
             </div>
           </section>
+          {/* Activate - Deactivate/ points */}
+          <PointsComponent
+            strategyAddress={strategyAddr}
+            strategy={strategyObj}
+            communityAddress={communityAddress}
+          />
 
           {/* Proposals section */}
           <Proposals strategy={strategyObj} alloInfo={alloInfo} />
           {/* Stats section */}
-          <PoolStats
+          <PoolMetrics
             balance={poolAmount}
             strategyAddress={strategyAddr}
             strategy={strategyObj}
