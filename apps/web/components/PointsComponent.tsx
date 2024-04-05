@@ -6,8 +6,7 @@ import { Strategy } from "./Proposals";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { Address, useAccount, useContractRead } from "wagmi";
-import { PRECISION_SCALE } from "@/actions/getProposals";
-import { formatTokenAmount } from "@/utils/numbers";
+import { formatTokenAmount, PRECISION_SCALE } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
 
@@ -36,7 +35,7 @@ export const PointsComponent: FC<PoolStatsProps> = ({
   });
 
   const memberPointsInPool = (
-    (memberPointsVotingPower as unknown as bigint) / PRECISION_SCALE
+    ((memberPointsVotingPower as bigint) ?? 0n) / PRECISION_SCALE
   ).toString();
 
   const registryContractCallConfig = {

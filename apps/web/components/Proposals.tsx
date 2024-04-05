@@ -12,7 +12,8 @@ import {
 import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
-import { PRECISION_SCALE, getProposals } from "@/actions/getProposals";
+import { getProposals } from "@/actions/getProposals";
+import { PRECISION_SCALE } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
 import { toast } from "react-toastify";
@@ -69,6 +70,10 @@ export function Proposals({
     number | undefined
   >(undefined);
 
+  console.log(strategy);
+
+  console.log(voterStake);
+
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
@@ -78,15 +83,19 @@ export function Proposals({
 
   const { isMemberActived } = useIsMemberActivated(strategy);
 
+  console.log(proposals);
+
   //TODO: make hook for this
   const { data: memberPointsVotingPower } = useContractRead({
     address: communityAddress as Address,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "getMemberPowerInStrategy",
     args: [connectedAccount as Address, strategyAddress],
-    blockTag: "latest",
-    // watch: true,
   });
+
+  const memberPointsInPool = Number(
+    ((memberPointsVotingPower as unknown as bigint) ?? 0n) / PRECISION_SCALE,
+  );
 
   // const numberMemberPointsVotinPower = dnum.divide(
   //   memberPointsVotingPower as unknown as bigint,
@@ -97,7 +106,7 @@ export function Proposals({
   // console.log(numberMemberPointsVotinPower);
 
   // const numberMemberPointsVotinPower =
-  //   (memberPointsVotingPower as unknown as bigint) / PRECISION_SCALE;
+  //   memberPointsVotingPower / PRECISION_SCALE;
   // console.log(numberMemberPointsVotinPower);
 
   // const memberPointsInPool =
@@ -130,8 +139,7 @@ export function Proposals({
         value: voterStakedPointsPct,
         stakedAmount: stakedAmount,
       }),
-    ); // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
-    // console.log("newInputs", newInputs);
+    );
     console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
@@ -242,7 +250,7 @@ export function Proposals({
     console.log("p distrubuted", pointsDistributed);
     console.log("currentPoints", currentPoints);
     console.log("value", value);
-    if (pointsDistributed + value <= 110) {
+    if (pointsDistributed + value <= memberPointsInPool) {
       setInputs(
         inputs.map((input, index) =>
           index === i ? { ...input, value: value } : input,
@@ -260,15 +268,21 @@ export function Proposals({
         <header className="flex items-center justify-between">
           <div className="flex w-full items-baseline justify-between">
             <h3 className="font-semibold">Proposals</h3>
-            {!editView && (
-              <Button
-                icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                onClick={() => setEditView((prev) => !prev)}
-                disabled={!isMemberActived}
-                tooltip="Activate your points to support proposals"
-              >
-                Manage support
-              </Button>
+            {proposals.length === 0 ? (
+              <h4 className="text-lg font-semibold">
+                No submitted proposals to support
+              </h4>
+            ) : (
+              !editView && (
+                <Button
+                  icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                  onClick={() => setEditView((prev) => !prev)}
+                  disabled={!isMemberActived || proposals.length === 0}
+                  tooltip={`Activate your points to support proposals`}
+                >
+                  Manage support
+                </Button>
+              )
             )}
           </div>
           {editView && (
@@ -276,17 +290,17 @@ export function Proposals({
               <div className="w-full text-right text-3xl">
                 <span
                   className={`${
-                    (pointsDistrubutedSum ?? Number(voterStake)) >= 110 &&
-                    "scale-110 font-semibold text-red"
+                    (pointsDistrubutedSum ?? Number(voterStake)) >=
+                      memberPointsInPool && "scale-110 font-semibold text-red"
                   } transition-all`}
                 >
                   Assigned points:{" "}
                   <span
-                    className={`text-4xl font-bold  ${(pointsDistrubutedSum ?? Number(voterStake)) >= 110 ? "text-red" : "text-success"} `}
+                    className={`text-4xl font-bold  ${(pointsDistrubutedSum ?? Number(voterStake)) >= memberPointsInPool ? "text-red" : "text-success"} `}
                   >
                     {pointsDistrubutedSum ?? Number(voterStake)}
                   </span>{" "}
-                  / 110
+                  / {Number(memberPointsInPool)}
                 </span>
               </div>
             </>
@@ -321,7 +335,7 @@ export function Proposals({
                         })
                       }
                     >
-                      Execute proposal {proposalStatus}
+                      Execute proposal
                     </Button>
                   )}
                   <>
@@ -340,7 +354,7 @@ export function Proposals({
                         key={i}
                         type="range"
                         min={0}
-                        max={500}
+                        max={100}
                         value={inputs[i]?.value}
                         className={`range range-success range-sm min-w-[420px]`}
                         step="5"
@@ -354,7 +368,7 @@ export function Proposals({
                         ))}
                       </div>
                     </div>
-                    <div className="mb-2">{inputs[i].value} pts add</div>
+                    <div className="mb-2">{inputs[i].value} pts</div>
                   </div>
                 </div>
               )}
@@ -383,6 +397,7 @@ export function Proposals({
         <div className="">
           <p className="font-semibold">{message}</p>
         </div>
+
         {/*  PROPOSALS STATS  ///// */}
         {/* <ProposalStats
           proposals={proposals}

@@ -150,7 +150,7 @@ export default async function Pool({
             alloInfo={alloInfo}
             communityAddress={communityAddress}
           />
-          {/* Stats section */}
+          {/* Metrics section (only funds available & spending limit for alpha) */}
           <PoolMetrics
             balance={poolAmount}
             strategyAddress={strategyAddr}
