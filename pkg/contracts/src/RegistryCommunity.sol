@@ -261,7 +261,14 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         uint256 extraStakedAmount = member.stakedAmount - registerStakeAmount;
         uint256 pointsToIncrease = 0;
         if (extraStakedAmount > 0) {
+            
+            if(IPointStrategy(_strategy).getPointSystem() == 3){
+            memberPowerInStrategy[_member][_strategy] = pointsPerMember;
+            pointsToIncrease = IPointStrategy(_strategy).increasePower(_member,0);
+            }
+            else{
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, extraStakedAmount);
+            }
         }
 
         if (pointsPerMember > 0 || pointsToIncrease > 0) {
@@ -306,7 +313,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         address[] memory memberStrategies = strategiesByMember[member];
 
         uint256 pointsToIncrease;
-
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             //FIX support interface check
             //if (address(memberStrategies[i]) == _strategy) {
@@ -335,14 +341,14 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         if (addressToMemberInfo[member].stakedAmount - _amountUnstaked < registerStakeAmount) {
             revert DecreaseUnderMinimum();
         }
-        gardenToken.safeTransfer(member, _amountUnstaked);
-        addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             // if (address(memberStrategies[i]) == _strategy) {
             pointsToDecrease = IPointStrategy(memberStrategies[i]).decreasePower(member, _amountUnstaked);
             memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
             // }
         }
+        gardenToken.safeTransfer(member, _amountUnstaked);
+        addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
     }
 
     function getMemberPowerInStrategy(address _member, address _strategy) public view returns (uint256) {

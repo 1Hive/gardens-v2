@@ -16,6 +16,7 @@ interface IPointStrategy {
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256);
     function decreasePower(address _member, uint256 _amountToUntake) external returns (uint256);
     function getPointsPerMember() external view returns (uint256);
+    function getPointSystem() external view returns (uint256);
 }
 
 library StrategyStruct {
@@ -337,6 +338,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             pointsToDecrease = decreasePowerCappedUnlimited(_amountToUnstake);
         } else {
             pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
+            // console.log("POINTS TO DECREASE", pointsToDecrease);
         }
         totalPointsActivated -= pointsToDecrease;
         emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
@@ -363,9 +365,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             registryCommunity.getMemberStakedAmount(_member) + _amountToStake - registryCommunity.registerStakeAmount();
 
         uint256 newTotalPoints = sqrt((totalExtraStake / pointConfig.tokensPerPoint) * 1e18) / 1e5;
-        console.log("totalExtraStake", totalExtraStake);
-        console.log("pointConfig.tokensPerPoint", pointConfig.tokensPerPoint);
-        console.log("newTotalPoints", newTotalPoints);
 
         uint256 pointsToIncrease = (pointConfig.pointsPerMember + newTotalPoints)
             - registryCommunity.getMemberPowerInStrategy(_member, address(this));
@@ -377,11 +376,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function decreasePowerQuadratic(address _member, uint256 _amountToUnstake) internal view returns (uint256) {
-        uint256 newTotalPoints = (
+
+        uint256 newTotalExtraStake = (
             registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake
                 - registryCommunity.registerStakeAmount()
-        ) / pointConfig.tokensPerPoint;
-        uint256 pointsToDecrease = newTotalPoints - registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        ) ;
+        uint256 newTotalPoints = sqrt((newTotalExtraStake / pointConfig.tokensPerPoint) * 1e18) / 1e5;
+        uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - (newTotalPoints + pointConfig.pointsPerMember);
 
         return pointsToDecrease;
     }
@@ -419,6 +420,10 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function getPointsPerTokenStaked() external view returns (uint256) {
         return pointConfig.pointsPerTokenStaked;
+    }
+
+    function getPointSystem() external view returns (uint256){
+        return uint256(pointSystem);
     }
 
     // [[[proposalId, delta],[proposalId, delta]]]
