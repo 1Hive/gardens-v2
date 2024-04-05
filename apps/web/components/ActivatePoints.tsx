@@ -58,16 +58,6 @@ export function ActivatePoints({
     args: [connectedAccount as Address],
   });
 
-  const { data: pointsVotingPower } = useContractRead({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
-    functionName: "getMemberPowerInStrategy",
-    args: [connectedAccount as Address, strategyAddress],
-    watch: true,
-  });
-
-  console.log("pointsPower", pointsVotingPower);
-
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
 

@@ -59,6 +59,7 @@ export async function getProposals(
         return {
           ...p,
           voterStakedPointsPct: 0,
+          stakedAmount: strategy.proposals[index].stakedAmount,
           title: data.title,
           type: strategy.config?.proposalType as number,
           status: strategy.proposals[index].proposalStatus,

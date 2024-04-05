@@ -8,7 +8,7 @@ import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { Address, useAccount, useContractRead } from "wagmi";
 import { PRECISION_SCALE } from "@/actions/getProposals";
 import { formatTokenAmount } from "@/utils/numbers";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
 
 type PoolStatsProps = {
@@ -26,7 +26,18 @@ export const PointsComponent: FC<PoolStatsProps> = ({
   const { address: connectedAccount } = useAccount();
 
   const { isConnected } = useAccount();
-  const { voterStakePct } = useTotalVoterStakedPct(strategy);
+
+  const { data: memberPointsVotingPower } = useContractRead({
+    address: communityAddress as Address,
+    abi: abiWithErrors(registryCommunityABI),
+    functionName: "getMemberPowerInStrategy",
+    args: [connectedAccount as Address, strategyAddress],
+    watch: true,
+  });
+
+  const memberPointsInPool = (
+    (memberPointsVotingPower as unknown as bigint) / PRECISION_SCALE
+  ).toString();
 
   const registryContractCallConfig = {
     address: communityAddress,
@@ -52,7 +63,11 @@ export const PointsComponent: FC<PoolStatsProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-10">
             <span className="text-4xl">
-              {isConnected ? (isMemberActived ? "100 pts" : "0 pts") : ""}
+              {isConnected
+                ? isMemberActived
+                  ? `${memberPointsInPool} pts`
+                  : "0 pts"
+                : ""}
             </span>
 
             <div className="flex flex-col items-center">

@@ -3,10 +3,15 @@ import React, { useState, useEffect } from "react";
 import { Button, StatusBadge } from "@/components";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAccount, useContractWrite, Address as AddressType } from "wagmi";
+import {
+  useAccount,
+  useContractWrite,
+  Address as AddressType,
+  useContractRead,
+} from "wagmi";
 import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { alloABI, cvStrategyABI } from "@/src/generated";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { PRECISION_SCALE, getProposals } from "@/actions/getProposals";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
@@ -20,6 +25,8 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { encodeAbiParameters } from "viem";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
+import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
+import { number } from "echarts";
 
 type InputItem = {
   id: string;
@@ -52,6 +59,8 @@ export function Proposals({
 }) {
   const [editView, setEditView] = useState(false);
   const [distributedPoints, setDistributedPoints] = useState(0);
+
+  const [pointsDistrubutedSum, setPointsDistrubutedSum] = useState(0);
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
@@ -60,6 +69,21 @@ export function Proposals({
   const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
 
   const { isMemberActived } = useIsMemberActivated(strategy);
+
+  const { voterStake } = useTotalVoterStakedPct(strategy);
+
+  //TODO: all total member points
+  // const { data: memberPointsVotingPower } = useContractRead({
+  //   address: communityAddress as Address,
+  //   abi: abiWithErrors(registryCommunityABI),
+  //   functionName: "getMemberPowerInStrategy",
+  //   args: [connectedAccount as Address, strategyAddress],
+  //   watch: true,
+  // });
+
+  // const memberPointsInPool = (
+  //   (memberPointsVotingPower as unknown as bigint) / PRECISION_SCALE
+  // ).toString();
 
   useEffect(() => {
     setStrategyAddress(strategy.id as Address);
@@ -80,11 +104,15 @@ export function Proposals({
   }, [address]);
 
   useEffect(() => {
-    const newInputs = proposals.map(({ id, voterStakedPointsPct }) => ({
-      id: id,
-      value: voterStakedPointsPct,
-    })); // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
+    const newInputs = proposals.map(
+      ({ id, voterStakedPointsPct, stakedAmount }) => ({
+        id: id,
+        value: voterStakedPointsPct,
+        stakedAmount: stakedAmount,
+      }),
+    ); // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
     // console.log("newInputs", newInputs);
+    console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
 
@@ -183,8 +211,24 @@ export function Proposals({
     return encodedData;
   };
 
+  // const inputHandler = (i: number, value: number) => {
+  //   const currentPoints = calculatePoints(i);
+  //   console.log("currentPoints", currentPoints);
+  //   console.log("value", value);
+  //   if (currentPoints + value <= 100) {
+  //     setInputs(
+  //       inputs.map((input, index) =>
+  //         index === i ? { ...input, value: value } : input,
+  //       ),
+  //     );
+  //     setDistributedPoints(currentPoints + value);
+  //   } else {
+  //     console.log("can't exceed 100% points");
+  //   }
+  // };
   const inputHandler = (i: number, value: number) => {
     const currentPoints = calculatePoints(i);
+    const pointsDistributed = Number(voterStake);
     console.log("currentPoints", currentPoints);
     console.log("value", value);
     if (currentPoints + value <= 100) {
@@ -193,7 +237,8 @@ export function Proposals({
           index === i ? { ...input, value: value } : input,
         ),
       );
-      setDistributedPoints(currentPoints + value);
+      console.log("Sum", pointsDistrubutedSum + pointsDistributed);
+      setPointsDistrubutedSum(currentPoints + value);
     } else {
       console.log("can't exceed 100% points");
     }
@@ -223,18 +268,21 @@ export function Proposals({
               </Button>
             )}
           </div>
-          {/* {editView && (
-            <span
-              className={`${
-                distributedPoints >= 100 && "scale-110 font-semibold text-red"
-              } transition-all`}
-            >
-              {distributedPoints >= 100
-                ? "Max points reached: "
-                : "Total distributed: "}
-              {distributedPoints} pts
-            </span>
-          )} */}
+          {editView && (
+            <>
+              <div className="w-full text-right text-3xl">
+                <span
+                  className={`${
+                    distributedPoints >= 100 &&
+                    "scale-110 font-semibold text-red"
+                  } transition-all`}
+                >
+                  Total distributed: {voterStake.toString()} pts
+                </span>
+              </div>
+              <div>{distributedPoints}</div>
+            </>
+          )}
         </header>
         <div className="flex flex-col gap-6">
           {proposals.map(({ title, type, id, proposalStatus }, i) => (
@@ -338,4 +386,25 @@ export function Proposals({
       </div>
     </section>
   );
+}
+
+{
+  /* {voterStakePct && Number(voterStakePct) !== 0 ? (
+          <div className="flex h-48 flex-col items-center justify-center">
+            <p className="rounded-xl bg-surface px-8 py-3 text-lg font-semibold">
+              You have distributed:
+            </p>
+            <p className="text-5xl font-semibold">
+              {Number(voterStakePct / PRECISION_SCALE)} %{" "}
+              <span className="text-sm">of your points</span>
+            </p>
+          </div>
+        ) : (
+          // <ActivePointsChart stakedPoints={Number(voterStakePct)} />
+          <div className="flex h-48 items-center justify-center">
+            <p className="rounded-xl bg-warning p-2 text-lg font-semibold">
+              No points distributed yet
+            </p>
+          </div>
+        )} */
 }

@@ -71,24 +71,6 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
           </div>
         </div>
       </section>
-      {/* {voterStakePct && Number(voterStakePct) !== 0 ? (
-          <div className="flex h-48 flex-col items-center justify-center">
-            <p className="rounded-xl bg-surface px-8 py-3 text-lg font-semibold">
-              You have distributed:
-            </p>
-            <p className="text-5xl font-semibold">
-              {Number(voterStakePct / PRECISION_SCALE)} %{" "}
-              <span className="text-sm">of your points</span>
-            </p>
-          </div>
-        ) : (
-          // <ActivePointsChart stakedPoints={Number(voterStakePct)} />
-          <div className="flex h-48 items-center justify-center">
-            <p className="rounded-xl bg-warning p-2 text-lg font-semibold">
-              No points distributed yet
-            </p>
-          </div>
-        )} */}
     </>
   );
 };
