@@ -56,6 +56,15 @@ query isMember($me: ID!, $comm: String!) {
   }
 }
 
+query getPoolCreationData($communityAddr: ID!) {
+  allos {
+    id
+  }
+  registryCommunity(id: $communityAddr) {
+    communityName
+  }
+}
+
 query getCommunitiesByGarden($addr: ID!) {
   registryFactories {
     id

@@ -12,7 +12,7 @@ type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 export function GardenCard({ garden }: { garden: TokenGarden }) {
   const { id, name, decimals, symbol, communities, totalBalance, chainId } =
     garden;
-  const link = `/gardens/${chainId}/${id}/communities`;
+  const link = `/gardens/${chainId}/${id}`;
   const commLength = communities?.length ?? 0;
   const totalMembers =
     communities

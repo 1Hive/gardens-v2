@@ -190,7 +190,13 @@ export const IncreasePower = ({
             increaseInput < 0 ||
             isInputIncreaseGreaterThanBalance
           }
-          tooltip={`${isInputIncreaseGreaterThanBalance ? `not enough ${tokenSymbol} balance to stake` : "input cannot be empty or less than 0"}`}
+          tooltip={
+            isInputIncreaseGreaterThanBalance
+              ? `Not enough ${tokenSymbol} balance to stake`
+              : connectedAccount
+                ? "Input cannot be empty or <= 0"
+                : "Connect your wallet to stake more tokens"
+          }
         >
           {increaseInput !== undefined && increaseInput > 0
             ? `Stake ${increaseInput} more tokens`
