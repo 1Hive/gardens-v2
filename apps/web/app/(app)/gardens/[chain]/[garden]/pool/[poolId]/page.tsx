@@ -145,7 +145,11 @@ export default async function Pool({
           />
 
           {/* Proposals section */}
-          <Proposals strategy={strategyObj} alloInfo={alloInfo} />
+          <Proposals
+            strategy={strategyObj}
+            alloInfo={alloInfo}
+            communityAddress={communityAddress}
+          />
           {/* Stats section */}
           <PoolMetrics
             balance={poolAmount}
