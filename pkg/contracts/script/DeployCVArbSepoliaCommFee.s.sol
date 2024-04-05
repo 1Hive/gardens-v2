@@ -69,7 +69,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
-        params._communityFee = 1 ether;
+        params._communityFee = 1e4;
         // params._metadata = metadata; // convenant ipfs
         params._metadata = metadata2; // BitcoinDAO metadata QmdRrdzXkxb9LSKVxJUmAkYzqqboo3aAjbnzVUdrbX6VSd
         params._councilSafe = payable(address(councilSafeDeploy));
@@ -185,15 +185,15 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
         allo.fundPool(poolId, 1_000_000 ether);
 
         StrategyStruct.CreateProposal memory proposal =
-            StrategyStruct.CreateProposal(poolId, pool_admin(), 100 ether, address(token), metadata);
+            StrategyStruct.CreateProposal(poolId, pool_admin(), 100 ether, address(token), metadata2);
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
         // StrategyStruct.ProposalType.Funding
-        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 1_000 ether, address(token), metadata);
+        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 1_000 ether, address(token), metadata2);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 10_000 ether, address(token), metadata);
+        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 10_000 ether, address(token), metadata2);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
@@ -205,7 +205,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
 
         vm.stopBroadcast();
 
-        // console2.log("PoolId: %s", poolId);
+        console2.log("PoolId: %s", poolId);
         // console2.log("Strategy1 Addr: %s", address(strategy1));
 
         // console2.log("PoolIdSignaling: %s", poolIdSignaling);
