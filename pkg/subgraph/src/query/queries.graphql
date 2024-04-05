@@ -56,6 +56,29 @@ query isMember($me: ID!, $comm: String!) {
   }
 }
 
+query getMember($me: ID!) {
+  member(id: $me) {
+    id
+    memberCommunity {
+      id
+      stakedAmount
+      isRegistered
+      registryCommunity {
+        id
+      }
+    }
+    totalStakedAmount
+    stakes {
+      id
+      proposal {
+        id
+      }
+      amount
+      createdAt
+    }
+  }
+}
+
 query getPoolCreationData($communityAddr: ID!) {
   allos {
     id
