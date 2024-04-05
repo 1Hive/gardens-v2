@@ -6,15 +6,16 @@ import {
 } from "@heroicons/react/24/outline";
 import { PoolCard, IncreasePower } from "@/components";
 import { CommunityProfile } from "@/components";
-import { Address, useAccount, useContractWrite } from "wagmi";
+import { Address, useAccount } from "wagmi";
 import {
   TokenGarden,
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { registryCommunityABI } from "@/src/generated";
+
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -37,29 +38,36 @@ export function CommunityCard({
   communityFee,
   tokenGarden,
 }: CommunityCardProps) {
-  // const [open, setOpen] = useState(false);
   const { address: accountAddress } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const pathname = usePathname();
 
   const pools = strategies ?? [];
   members = members ?? [];
   let registerToken = tokenGarden?.id ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
 
+  const SiganlingPools = pools.filter(
+    (pool) => pool.config?.proposalType === "0",
+  );
+
+  const FundingPools = pools.filter(
+    (pool) => pool.config?.proposalType === "1",
+  );
+
   return (
     <>
-      <div className="border2 card card-side bg-white">
-        {/* aside:  community name + btn to access profile */}
-        <aside className="flex min-h-[300px] w-[280px] flex-col items-center justify-center gap-10 rounded-xl bg-base-100 p-2">
-          <h3 className="text-center font-press text-xl text-info-content">
+      <div className="border2 rounded-lg bg-white p-4">
+        <div className="flex w-full flex-col items-center justify-center gap-10 rounded-xl bg-base-100 py-4">
+          <h2 className="text-center font-press text-3xl text-info-content">
             {name}
-          </h3>
+          </h2>
           <CommunityProfile
             communityAddress={communityAddress as Address}
             name={name as string}
             covenantData={covenantData}
           />
-        </aside>
+        </div>
 
         {/* main: stats, action buttons, display pools */}
         <main className="card-body space-y-10">
@@ -108,13 +116,24 @@ export function CommunityCard({
 
             <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
           </div>
-          <div className="justify-end">
+          <div className="flex flex-col justify-end gap-2">
+            <div className="flex items-center justify-between">
+              <h3>Pools</h3>
+              <Link
+                href={`${pathname}/${communityAddress}/create-pool`}
+                className=""
+              >
+                <Button className="">Create Pool</Button>
+              </Link>
+            </div>
+
+            <h5 className="font-bold">
+              Signaling pools ( {SiganlingPools.length} ){" "}
+            </h5>
             <div
-              className={`flex w-full transform gap-4 overflow-x-auto transition-height duration-200 ease-in-out ${
-                !open && "max-h-[290px]"
-              } `}
+              className={`flex w-full transform flex-wrap gap-4 overflow-x-auto transition-height duration-200 ease-in-out  `}
             >
-              {pools.map((pool, i) => (
+              {SiganlingPools.map((pool, i) => (
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
 
@@ -130,6 +149,19 @@ export function CommunityCard({
                 </Button>
               )} */}
             </div>
+            <h5 className="mt-4 font-bold">
+              Funding pools ( {FundingPools.length} )
+            </h5>
+            <div
+              className={`flex w-full transform flex-wrap gap-4 overflow-x-auto transition-height duration-200 ease-in-out  `}
+            >
+              {FundingPools.map((pool, i) => (
+                <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
+              ))}
+            </div>
+
+            {/* IncreasePower funcionality - alpha test */}
+            <h3 className="mt-10">Increase Voting Power</h3>
             <IncreasePower
               communityAddress={communityAddress as Address}
               registerToken={registerToken as Address}

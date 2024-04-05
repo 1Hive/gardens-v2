@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, StatusBadge } from "@/components";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAccount, useContractWrite, Address as AddressType } from "wagmi";
 import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import { useViemClient } from "@/hooks/useViemClient";
 import { getStrategyByPoolQuery } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/communities/pool/[poolId]/page";
+import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/pool/[poolId]/page";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
@@ -56,7 +56,6 @@ export function Proposals({
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
   const { address } = useAccount();
   const pathname = usePathname();
-  const router = useRouter();
   const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
 
   const { isMemberActived } = useIsMemberActivated(strategy);
@@ -208,7 +207,7 @@ export function Proposals({
   return (
     <section className="rounded-lg border-2 border-black bg-white p-16">
       {/* proposals: title - proposals -create Button */}
-      <div className="mx-auto max-w-3xl space-y-10">
+      <div className="mx-auto max-w-5xl space-y-10">
         <header className="flex items-center justify-between">
           <h3 className="">Proposals</h3>
           {editView && (
@@ -288,9 +287,6 @@ export function Proposals({
                     </div>
                     <div className="mb-2">{inputs[i].value} %</div>
                   </div>
-                  {/* <Link href={`${pathname}/proposals/${id}`}>
-                    <Button variant="outline">View Proposal</Button>
-                  </Link> */}
                 </div>
               )}
             </div>
