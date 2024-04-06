@@ -12,6 +12,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { ProposalForm } from "@/components/Forms";
+import { getIpfsMetadata } from "@/utils/ipfsUtils";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,7 @@ export default async function Pool({
   const proposalType = strategyObj?.config?.proposalType as number;
   const poolAmount = strategyObj?.poolAmount as number;
   const tokenGarden = data.tokenGarden;
+  const metadata = data?.cvstrategies?.[0]?.metadata as string;
 
   //calcs for spending limit
   const PRECISON_OF_7 = 10 ** 7;
@@ -58,9 +60,10 @@ export default async function Pool({
 
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
 
+  const { title, description } = await getIpfsMetadata(metadata);
+
   console.log("maxRatioDivPrecision", maxRatioDivPrecision);
   console.log("poolAmountSpendingLimit", poolAmountSpendingLimit);
-  //
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -76,9 +79,8 @@ export default async function Pool({
 
           <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
-              <h3 className="max-w-2xl  text-center font-semibold">
-                Open Source Software Grants Pool
-              </h3>
+              <h3 className="max-w-2xl  text-center font-semibold">{title}</h3>
+              <p>{description}</p>
               <div className="flex w-full  p-4">
                 <div className="flex flex-1  text-xl font-semibold">
                   <div className="mx-auto flex max-w-fit flex-col items-start justify-center">
