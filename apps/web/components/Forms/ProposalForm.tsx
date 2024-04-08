@@ -8,7 +8,7 @@ import { usePrepareContractWrite, useContractWrite } from "wagmi";
 import { encodeAbiParameters, isAddress } from "viem";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
-import { ipfsJsonUpload } from "@/utils/ipfsUpload";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { toast } from "react-toastify";
 import { proposalTypes } from "@/types";
 import { Allo, Maybe, TokenGarden } from "#/subgraph/.graphclient";
