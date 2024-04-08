@@ -1,7 +1,7 @@
 "use client";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components";
-import { ArrowUturnLeftIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 export const GoBackButton = () => {
   const router = useRouter();
@@ -18,10 +18,10 @@ export const GoBackButton = () => {
       {path === "/gardens" ? null : (
         <Button
           onClick={goBack}
-          className="fixed left-2 top-20 px-8 text-xs"
-          icon={<ArrowUturnLeftIcon className="h-4 w-4" />}
+          className="fixed left-24 top-28 px-8 text-xs"
+          icon={<ArrowLeftIcon className="h-4 w-4" />}
         >
-          {""}
+          Go Back
         </Button>
       )}
     </>
