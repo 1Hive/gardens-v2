@@ -7,7 +7,7 @@ import { Address, parseUnits } from "viem";
 import { usePrepareContractWrite, useContractWrite } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
-import { ipfsFileUpload, ipfsJsonUpload } from "@/utils/ipfsUpload";
+import { ipfsFileUpload, ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { toast } from "react-toastify";
 import { PhotoIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
