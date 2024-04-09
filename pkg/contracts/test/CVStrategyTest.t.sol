@@ -130,8 +130,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         startMeasuringGas("createProposal");
         // allo().addToCloneableStrategies(address(strategy));
-        StrategyStruct.InitializeParams memory params =
-            getParams(address(registryCommunity), proposalType, StrategyStruct.PointSystem.Unlimited);
+
+        StrategyStruct.InitializeParams memory params = getParams(
+            address(registryCommunity),
+            proposalType,
+            StrategyStruct.PointSystem.Unlimited,
+            StrategyStruct.PointSystemConfig(0, 0, 0, 0)
+        );
 
         CVStrategy strategy = new CVStrategy(address(allo()));
 

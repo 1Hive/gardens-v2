@@ -85,8 +85,17 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
 
+        StrategyStruct.PointSystemConfig memory pointConfig;
+        pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
+        pointConfig.pointsPerMember = MINIMUM_STAKE * (10 ** 4);
+        pointConfig.tokensPerPoint = 1 * (DECIMALS);
+        pointConfig.pointsPerTokenStaked = 1 * (10 ** 4);
+
         StrategyStruct.InitializeParams memory paramsCV = getParams(
-            address(registryCommunity), StrategyStruct.ProposalType.Funding, StrategyStruct.PointSystem.Capped
+            address(registryCommunity),
+            StrategyStruct.ProposalType.Funding,
+            StrategyStruct.PointSystem.Capped,
+            pointConfig
         );
 
         paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay

@@ -82,18 +82,26 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
 
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
+        StrategyStruct.PointSystemConfig memory pointConfig;
+        pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
+        pointConfig.pointsPerMember = MINIMUM_STAKE * (10 ** 4);
+        pointConfig.tokensPerPoint = 1 ether;
+        pointConfig.pointsPerTokenStaked = 1 ether * (10 ** 4);
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
-            address(registryCommunity), StrategyStruct.ProposalType.Funding, StrategyStruct.PointSystem.Unlimited
+            address(registryCommunity),
+            StrategyStruct.ProposalType.Funding,
+            StrategyStruct.PointSystem.Unlimited,
+            pointConfig
         );
 
         //Capped point system
-        paramsCV.pointConfig.maxAmount = 200 ether * (10 ** 4);
-        //Fixed point system
-        paramsCV.pointConfig.pointsPerMember = 100 ether * (10 ** 4);
-        //Quadratic point system
-        paramsCV.pointConfig.tokensPerPoint = 1 ether;
-        paramsCV.pointConfig.pointsPerTokenStaked = 5 ether * (10 ** 4);
+        // paramsCV.pointConfig.maxAmount = 200 ether * (10 ** 4);
+        // //Fixed point system
+        // paramsCV.pointConfig.pointsPerMember = 100 ether * (10 ** 4);
+        // //Quadratic point system
+        // paramsCV.pointConfig.tokensPerPoint = 1 ether;
+        // paramsCV.pointConfig.pointsPerTokenStaked = 5 ether * (10 ** 4);
 
         paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
         paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
