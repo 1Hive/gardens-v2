@@ -6,6 +6,7 @@ import {
   useContractRead,
   Address,
   useWaitForTransaction,
+  useAccount,
 } from "wagmi";
 import { Button } from "./Button";
 import { toast } from "react-toastify";
@@ -13,7 +14,6 @@ import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { calculateFees, formatTokenAmount, gte, dn } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal, TransactionModalStep } from "./TransactionModal";
@@ -42,7 +42,7 @@ export function RegisterMember({
   connectedAccount,
 }: RegisterMemberProps) {
   const chainId = getChainIdFromPath();
-  const { openConnectModal } = useConnectModal();
+  const { isConnected } = useAccount();
 
   const modalRef = useRef<HTMLDialogElement | null>(null);
 
@@ -139,22 +139,18 @@ export function RegisterMember({
   // useErrorDetails(errorGardenToken, "gardenToken");
 
   async function handleChange() {
-    if (connectedAccount) {
-      if (isMember) {
-        writeUnregisterMember();
-      } else {
-        // Check if allowance is equal to registerStakeAmount
-        if (dataAllowance !== registerStakeAmount) {
-          writeAllowToken();
-          modalRef.current?.showModal();
-        } else {
-          // Handle the case where allowance is already equal to registerStakeAmount
-          modalRef.current?.showModal();
-          writeRegisterMember();
-        }
-      }
+    if (isMember) {
+      writeUnregisterMember();
     } else {
-      openConnectModal?.();
+      // Check if allowance is equal to registerStakeAmount
+      if (dataAllowance !== registerStakeAmount) {
+        writeAllowToken();
+        modalRef.current?.showModal();
+      } else {
+        // Handle the case where allowance is already equal to registerStakeAmount
+        modalRef.current?.showModal();
+        writeRegisterMember();
+      }
     }
   }
 
@@ -263,13 +259,10 @@ export function RegisterMember({
               className="w-full bg-primary"
               size="md"
               disabled={!accountHasBalance}
+              walletConnected
               tooltip={`Connected account has not enough ${tokenSymbol}`}
             >
-              {connectedAccount
-                ? isMember
-                  ? "Leave community"
-                  : "Register in community"
-                : "Connect Wallet"}
+              {isMember ? "Leave community" : "Register in community"}
             </Button>
           </div>
         </div>

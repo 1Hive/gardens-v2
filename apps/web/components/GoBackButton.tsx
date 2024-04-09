@@ -18,10 +18,10 @@ export const GoBackButton = () => {
       {path === "/gardens" ? null : (
         <Button
           onClick={goBack}
-          className="fixed left-24 top-28 px-8 text-xs"
+          className="fixed left-2 top-28 px-4 text-xs"
           icon={<ArrowLeftIcon className="h-4 w-4" />}
         >
-          Go Back
+          {"Back"}
         </Button>
       )}
     </>

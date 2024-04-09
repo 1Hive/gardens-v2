@@ -39,7 +39,6 @@ export function CommunityCard({
   tokenGarden,
 }: CommunityCardProps) {
   const { address: accountAddress } = useAccount();
-  const { openConnectModal } = useConnectModal();
   const pathname = usePathname();
 
   const pools = strategies ?? [];
@@ -96,23 +95,17 @@ export function CommunityCard({
           </div>
 
           <div>
-            {accountAddress ? (
-              <RegisterMember
-                name={name as string}
-                connectedAccount={accountAddress as Address}
-                tokenSymbol={tokenGarden?.symbol as string}
-                communityAddress={communityAddress as Address}
-                registerToken={registerToken as Address}
-                registerTokenDecimals={tokenGarden?.decimals as number}
-                membershipAmount={registerStakeAmount}
-                protocolFee={protocolFee}
-                communityFee={communityFee}
-              />
-            ) : (
-              <Button onClick={openConnectModal} className="w-full">
-                Connect Wallet
-              </Button>
-            )}
+            <RegisterMember
+              name={name as string}
+              connectedAccount={accountAddress as Address}
+              tokenSymbol={tokenGarden?.symbol as string}
+              communityAddress={communityAddress as Address}
+              registerToken={registerToken as Address}
+              registerTokenDecimals={tokenGarden?.decimals as number}
+              membershipAmount={registerStakeAmount}
+              protocolFee={protocolFee}
+              communityFee={communityFee}
+            />
 
             <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
           </div>
@@ -123,7 +116,7 @@ export function CommunityCard({
                 href={`${pathname}/${communityAddress}/create-pool`}
                 className=""
               >
-                <Button className="">Create Pool</Button>
+                <Button walletConnected>Create Pool</Button>
               </Link>
             </div>
 

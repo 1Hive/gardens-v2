@@ -93,14 +93,11 @@ export function ActivatePoints({
         <Button
           onClick={handleChange}
           className="w-fit bg-primary"
-          disabled={connectedAccount && isMember === false}
+          disabled={!isMember}
           tooltip="Join the community to activate points"
+          walletConnected
         >
-          {connectedAccount
-            ? isMemberActivated
-              ? "Deactivate Points"
-              : "Activate Points"
-            : "Connect Wallet"}
+          {isMemberActivated ? "Deactivate Points" : "Activate Points"}
         </Button>
       </div>
     </>

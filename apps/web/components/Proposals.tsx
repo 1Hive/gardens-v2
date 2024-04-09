@@ -279,6 +279,7 @@ export function Proposals({
                   onClick={() => setEditView((prev) => !prev)}
                   disabled={!isMemberActived || proposals.length === 0}
                   tooltip={`Activate your points to support proposals`}
+                  walletConnected
                 >
                   Manage support
                 </Button>
