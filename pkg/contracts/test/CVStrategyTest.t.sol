@@ -194,7 +194,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
      *    TESTS
      */
 
-    function testRevert_createProposal_OverMaxRation() public {
+    function testRevert_createProposal_OverMaxRatio() public {
         (, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
 
         StrategyStruct.CreateProposal memory proposal =
@@ -1053,92 +1053,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        // (
-        //     , // address submitter,
-        //     address beneficiary,
-        //     , // address requestedToken,
-        //     uint256 requestedAmount,
-        //     , // uint256 stakedTokens,
-        //     , // ProposalStatus proposalStatus,
-        //     , // uint256 blockLast,
-        //     , // uint256 convictionLast,
-        //     , // uint256 threshold,
-        //         // uint256 voterPointsPct
-        // ) = cv.getProposal(proposalId);
         cv.updateProposalConviction(proposalId);
         address[] memory recipients = new address[](0);
         bytes memory dataProposal = abi.encode(proposalId);
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.ConvictionUnderMinimumThreshold.selector));
         allo().distribute(poolId, recipients, dataProposal);
     }
-
-    // function test_revert_time_distribute() public {
-    //     uint256 request = 150 ether;
-    //     (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, request, 0);
-    //     CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-    //     uint256 extraStakeAmount = 280 ether;
-    //     token.approve(address(registryCommunity),extraStakeAmount);
-    //     registryCommunity.increasePower(extraStakeAmount);
-    //     assertEq(registryCommunity.getMemberPowerInStrategy(address(this),address(cv)),1500 * PRECISION_SCALE);
-    //     // uint256 threshold = cv.calculateThreshold(requestedAmount);
-    //     /**
-    //      * ASSERTS
-    //      *
-    //      */
-    //     startMeasuringGas("Support a Proposal");
-    //     int256 SUPPORT_PCT = 1500;
-    //     StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
-    //     votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
-    //     // bytes memory data = ;
-    //     allo().allocate(poolId, abi.encode(votes));
-    //     stopMeasuringGas();
-
-    //     uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT) * (MINIMUM_STAKE + extraStakeAmount)  / 100;
-    //     // assertEq(cv.getProposalVoterStake(proposalId, address(this)), STAKED_AMOUNT); // 80% of 50 = 40
-    //     assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT); // 80% of 50 = 40
-
-    //     (
-    //         , // address submitter,
-    //         address beneficiary,
-    //         , // address requestedToken,
-    //         uint256 requestedAmount,
-    //         , // uint256 stakedTokens,
-    //         , // ProposalStatus proposalStatus,
-    //         , // uint256 blockLast,
-    //         , // uint256 convictionLast,
-    //         uint256 threshold,
-    //             // uint256 voterPointsPct
-    //     ) = cv.getProposal(proposalId);
-
-    //     console.log("THRESHOLDDDDD", threshold);
-
-    //     // console.log("Proposal Status: %s", proposalStatus);
-    //     // console.log("Proposal Type: %s", proposalType);
-    //     // console.log("Requested Token: %s", requestedToken);
-    //     // console.log("Requested Amount: %s", requestedAmount);
-    //     // console.log("Staked Tokens: %s", stakedTokens);
-    //     // console.log("Threshold: %s", threshold);
-    //     // console.log("Agreement Action Id: %s", agreementActionId);
-    //     // console.log("Block Last: %s", blockLast);
-    //     // console.log("Conviction Last: %s", convictionLast);
-    //     // console.log("Voter points pct %s", voterPointsPct);
-    //     // console.log("Beneficiary: %s", beneficiary);
-    //     // console.log("Submitter: %s", submitter);
-    //     address[] memory recipients = new address[](0);
-    //     // recipients[0] = address(1);
-    //     bytes memory dataProposal = abi.encode(proposalId);
-
-    //     uint256 amount = getBalance(pool.token, beneficiary);
-    //     // console.log("Beneficienry Before amount: %s", amount);
-
-    //     assertEq(amount, 0);
-
-    //     // allo().distribute(poolId, recipients, dataProposal);
-    //     // amount = getBalance(pool.token, beneficiary);
-    //     // // console.log("Beneficienry After amount: %s", amount);
-    //     // assertEq(amount, requestedAmount);
-
-    // }
 
     function test_distribute_signaling_proposal() public {
         (IAllo.Pool memory pool, uint256 poolId,) =
