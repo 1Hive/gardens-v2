@@ -38,7 +38,8 @@ contract CVStrategyHelpers is Native, Accounts {
     function getParams(
         address registryCommunity,
         StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem
+        StrategyStruct.PointSystem pointSystem,
+        StrategyStruct.PointSystemConfig memory pointConfig
     ) public pure returns (StrategyStruct.InitializeParams memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         params.decay = _etherToFloat(0.9999799 ether); // alpha = decay
@@ -50,14 +51,22 @@ contract CVStrategyHelpers is Native, Accounts {
         params.proposalType = proposalType;
         params.pointSystem = pointSystem;
 
-        StrategyStruct.PointSystemConfig memory pointConfig;
-        //Capped point system
-        pointConfig.maxAmount = 200 * (10 ** 4);
-        //Fixed point system
-        pointConfig.pointsPerMember = 100 * (10 ** 4);
-        //Quadratic point system
-        pointConfig.tokensPerPoint = 1 * (DECIMALS);
-        pointConfig.pointsPerTokenStaked = 5 * (10 ** 4);
+        if (pointConfig.maxAmount == 0) {
+            // StrategyStruct.PointSystemConfig memory pointConfig;
+            //Capped point system
+            pointConfig.maxAmount = 200 * (10 ** 4);
+        }
+        if (pointConfig.pointsPerMember == 0) {
+            //Fixed point system
+            pointConfig.pointsPerMember = 100 * (10 ** 4);
+        }
+        if (pointConfig.tokensPerPoint == 0) {
+            //Quadratic point system
+            pointConfig.tokensPerPoint = 1 * (DECIMALS);
+        }
+        if (pointConfig.pointsPerTokenStaked == 0) {
+            pointConfig.pointsPerTokenStaked = 5 * (10 ** 4);
+        }
         params.pointConfig = pointConfig;
     }
 
@@ -71,7 +80,8 @@ contract CVStrategyHelpers is Native, Accounts {
         StrategyStruct.PointSystem pointSystem
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        StrategyStruct.InitializeParams memory params = getParams(registryCommunity, proposalType, pointSystem);
+        StrategyStruct.InitializeParams memory params =
+            getParams(registryCommunity, proposalType, pointSystem, StrategyStruct.PointSystemConfig(0, 0, 0, 0));
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
