@@ -219,6 +219,12 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         );
         // FAST 1 MIN GROWTH
 
+        StrategyStruct.PointSystemConfig memory pointConfig;
+        pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
+        pointConfig.pointsPerMember = MINIMUM_STAKE * (10 ** 4);
+        pointConfig.tokensPerPoint = 1 * (DECIMALS);
+        pointConfig.pointsPerTokenStaked = 1 * (10 ** 4);
+
         uint256 poolId = createPool(
             Allo(address(allo)),
             address(strategy1),
@@ -226,7 +232,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             registry,
             address(token),
             StrategyStruct.ProposalType.Funding,
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            pointConfig
         );
 
         uint256 poolIdFixed = createPool(
@@ -236,7 +243,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             registry,
             address(token),
             StrategyStruct.ProposalType.Funding,
-            StrategyStruct.PointSystem.Fixed
+            StrategyStruct.PointSystem.Fixed,
+            pointConfig
         );
 
         // uint256 poolIdSignaling = createPool(

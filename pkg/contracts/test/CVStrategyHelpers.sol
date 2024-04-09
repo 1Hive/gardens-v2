@@ -77,11 +77,12 @@ contract CVStrategyHelpers is Native, Accounts {
         IRegistry registry,
         address token,
         StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem
+        StrategyStruct.PointSystem pointSystem,
+        StrategyStruct.PointSystemConfig memory pointConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         StrategyStruct.InitializeParams memory params =
-            getParams(registryCommunity, proposalType, pointSystem, StrategyStruct.PointSystemConfig(0, 0, 0, 0));
+            getParams(registryCommunity, proposalType, pointSystem, pointConfig);
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
@@ -107,6 +108,27 @@ contract CVStrategyHelpers is Native, Accounts {
         );
 
         assert(CVStrategy(payable(strategy)).proposalType() == proposalType);
+    }
+
+    function createPool(
+        Allo allo,
+        address strategy,
+        address registryCommunity,
+        IRegistry registry,
+        address token,
+        StrategyStruct.ProposalType proposalType,
+        StrategyStruct.PointSystem pointSystem
+    ) public returns (uint256 poolId) {
+        return createPool(
+            allo,
+            strategy,
+            registryCommunity,
+            registry,
+            token,
+            proposalType,
+            pointSystem,
+            StrategyStruct.PointSystemConfig(0, 0, 0, 0)
+        );
     }
 
     function _etherToFloat(uint256 _amount) internal pure returns (uint256) {
