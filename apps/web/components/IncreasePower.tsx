@@ -178,12 +178,12 @@ export const IncreasePower = ({
           type="number"
           value={increaseInput}
           placeholder="0"
-          className="w-full rounded-lg border-2 border-info p-2"
+          className="input input-bordered input-info w-full max-w-[420px]"
           onChange={(e) => handleInputChange(e)}
         />
         <Button
           onClick={handleChange}
-          className="w-full"
+          className="w-full max-w-[420px]"
           disabled={
             increaseInput == 0 ||
             increaseInput == undefined ||

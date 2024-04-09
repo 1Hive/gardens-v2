@@ -14,7 +14,7 @@ import {
   parseEther,
 } from "viem";
 import { Button } from "@/components/Button";
-import { ipfsJsonUpload } from "@/utils/ipfsUpload";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
   useAccount,
   useConfig,
@@ -31,16 +31,25 @@ import { chains } from "@/configs/wagmiConfig";
 import { getChainIdFromPath } from "@/utils/path";
 import { getChain } from "@/configs/chainServer";
 
+const PRECISION_SCALE = 10 ** 4;
+
+type PoolSettings = {
+  spendingLimit?: number;
+  minimumConviction?: number;
+  convictionGrowth?: number;
+};
+
 type FormProps = {
   strategyType: number;
   pointSystemType: number;
   poolSettings: string;
 };
 
-type FormInputs = FormProps & {
-  name: string;
-  description: string;
-};
+type FormInputs = FormProps &
+  PoolSettings & {
+    name: string;
+    description: string;
+  };
 
 type FormData = FormProps & {
   metadata: [bigint, string]; // [protocol: bigint, pointer: string]
@@ -69,6 +78,24 @@ type Props = {
   tokenAddr: Address;
 };
 
+const pointConfigValues: Record<string, PoolSettings> = {
+  1: { spendingLimit: 25, minimumConviction: 10, convictionGrowth: 10 }, //recommended
+  2: { spendingLimit: 20, minimumConviction: 2.5, convictionGrowth: 2 }, //1Hive
+  3: { spendingLimit: 25, minimumConviction: 10, convictionGrowth: 0.0005 }, //Testing
+};
+
+const ARB_BLOCK_TIME = 0.3;
+
+function calculateDecay(blockTime: number, convictionGrowth: number) {
+  const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
+
+  const result = Math.floor(
+    Math.pow(10, 7) * Math.pow(1 / 2, blockTime / halfLifeInSeconds),
+  );
+
+  return result;
+}
+
 export default function PoolForm({
   alloAddr,
   communityName,
@@ -90,12 +117,23 @@ export default function PoolForm({
       pointSystemType: 0,
     },
   });
-  const [txHash, setTxHash] = useState<Address>();
+
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<any>(null); // preview data
   const [ipfsMetadataHash, setIpfsMetadataHash] = useState<string | null>(null); // ipfs metadata hash
-  const [formData, setFormData] = useState<FormData | undefined>(undefined); // args for contract write
+  // const [formData, setFormData] = useState<FormData | undefined>(undefined); // args for contract write
+  const [showCustomInputs, setShowCustomInputs] = useState(false);
   const { address, connector } = useAccount();
+
+  const radioButtonValue = watch("poolSettings");
+
+  useEffect(() => {
+    if (radioButtonValue === "0") {
+      setShowCustomInputs(true);
+    } else {
+      setShowCustomInputs(false);
+    }
+  }, [radioButtonValue]);
 
   const handleJsonUpload = () => {
     const json = {
@@ -135,9 +173,6 @@ export default function PoolForm({
     setIsEditMode(true);
   };
 
-  // const config = useConfig();
-  // console.log(config);
-
   const walletClient = createWalletClient({
     chain: getChain(getChainIdFromPath()) as Chain,
     transport: custom(window.ethereum!),
@@ -167,20 +202,40 @@ export default function PoolForm({
       console.log("wait for files upload to complete");
       return;
     }
+
     const strategyAddr = await triggerDeployContract();
     if (strategyAddr == null) {
       console.log("error deploying cvStrategy");
       return;
     }
-    // pointConfig
-    const pointsPerTokenStaked = BigInt(1);
-    const maxAmount = BigInt(200);
-    const pointsPerMember = BigInt(50);
-    const tokensPerPoint = BigInt(100);
+
+    let spendingLimit: number;
+    let minimumConviction;
+    let convictionGrowth;
+
+    if (data.poolSettings === "0") {
+      spendingLimit = data.spendingLimit as number;
+      minimumConviction = data.minimumConviction as number;
+      convictionGrowth = data.convictionGrowth as number;
+    } else {
+      spendingLimit = pointConfigValues[data.poolSettings]
+        .spendingLimit as number;
+      minimumConviction = pointConfigValues[data.poolSettings]
+        .minimumConviction as number;
+      convictionGrowth = pointConfigValues[data.poolSettings]
+        .convictionGrowth as number;
+    }
+
     // pool settings 1Hive
-    const decay = parseEther((0.9982686).toString());
-    const maxRatio = parseEther((0.2575825874).toString());
-    const weight = parseEther((0.001658719734).toString());
+    const maxRatio = BigInt(spendingLimit * PRECISION_SCALE);
+    const weight = BigInt(minimumConviction * spendingLimit ** 2);
+    const decay = BigInt(calculateDecay(ARB_BLOCK_TIME, convictionGrowth));
+
+    // pointConfig
+    const pointsPerTokenStaked = BigInt(5 * PRECISION_SCALE);
+    const maxAmount = BigInt(200 * PRECISION_SCALE);
+    const pointsPerMember = BigInt(100 * PRECISION_SCALE);
+    const tokensPerPoint = parseEther((1).toString());
 
     const metadata: Metadata = [BigInt(1), ipfsMetadataHash];
 
@@ -202,7 +257,6 @@ export default function PoolForm({
     ];
 
     const args: CreatePoolParams = [strategyAddr, tokenAddr, params, metadata];
-    console.log(args);
 
     write({ args: args });
   };
@@ -257,7 +311,21 @@ export default function PoolForm({
               <label htmlFor="poolSettings" className={labelClassname}>
                 Select pool settings
               </label>
-              <div className="flex gap-12">
+              <div className="flex gap-8">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      {...register("poolSettings", { required: true })}
+                      type="radio"
+                      value="0"
+                      className="radio"
+                      name="poolSettings"
+                    />
+                    <h4 className="text-md font-bold">Custom</h4>
+                  </div>
+                  <p className="text-sm">If you know what you are doing</p>
+                </div>
+
                 <div className="flex flex-col gap-2 ">
                   <div className="flex items-center gap-2">
                     <input
@@ -267,11 +335,11 @@ export default function PoolForm({
                       className="radio"
                       name="poolSettings"
                     />
-                    <h4 className="text-md font-bold">Default</h4>
+                    <h4 className="text-md font-bold">Recommended</h4>
                   </div>
-                  <p>1Hive original settings</p>
+                  <p className="text-sm">Recommended default settings</p>
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 ">
                   <div className="flex items-center gap-2">
                     <input
                       {...register("poolSettings", { required: true })}
@@ -280,10 +348,73 @@ export default function PoolForm({
                       className="radio"
                       name="poolSettings"
                     />
-                    <h4 className="text-md font-bold">Custom</h4>
+                    <h4 className="text-md font-bold">1Hive</h4>
                   </div>
+                  <p className="text-sm">1Hive original settings</p>
+                </div>
+                <div className="flex flex-col gap-2 ">
+                  <div className="flex items-center gap-2">
+                    <input
+                      {...register("poolSettings", { required: true })}
+                      type="radio"
+                      value="3"
+                      className="radio"
+                      name="poolSettings"
+                    />
+                    <h4 className="text-md font-bold">Testing</h4>
+                  </div>
+                  <p className="text-sm">Conviction grows very fast</p>
                 </div>
               </div>
+              {showCustomInputs && (
+                <div className="mb-6 flex flex-col gap-2">
+                  <div className="flex flex-col">
+                    <label htmlFor="spendingLimit" className={labelClassname}>
+                      Spending limit
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="25"
+                      className={inputClassname}
+                      {...register("spendingLimit", {
+                        required: true,
+                      })}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="minimumConviction"
+                      className={labelClassname}
+                    >
+                      Minimum conviction
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="10"
+                      className={inputClassname}
+                      {...register("minimumConviction", {
+                        required: true,
+                      })}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label
+                      htmlFor="convictionGrowth"
+                      className={labelClassname}
+                    >
+                      Conviction growth
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="10"
+                      className={inputClassname}
+                      {...register("convictionGrowth", {
+                        required: true,
+                      })}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex flex-col">
               <label htmlFor="strategyType" className={labelClassname}>

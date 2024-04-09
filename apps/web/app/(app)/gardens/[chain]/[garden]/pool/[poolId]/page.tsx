@@ -1,5 +1,5 @@
 import { Badge, Proposals } from "@/components";
-import { PoolStats } from "@/components";
+import { PoolMetrics } from "@/components";
 import Image from "next/image";
 import { createPublicClient, http } from "viem";
 import { getChain } from "@/configs/chainServer";
@@ -12,12 +12,21 @@ import {
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { ProposalForm } from "@/components/Forms";
+import { PointsComponent } from "@/components";
+import { getIpfsMetadata } from "@/utils/ipfsUtils";
 
 export const dynamic = "force-dynamic";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
 const { urqlClient } = initUrqlClient();
+
+const pointSystemObject = {
+  0: "Fixed",
+  1: "Capped",
+  2: "Unlimited",
+  3: "Quadratic",
+};
 
 export default async function Pool({
   params: { chain, poolId, garden },
@@ -48,6 +57,7 @@ export default async function Pool({
   const proposalType = strategyObj?.config?.proposalType as number;
   const poolAmount = strategyObj?.poolAmount as number;
   const tokenGarden = data.tokenGarden;
+  const metadata = data?.cvstrategies?.[0]?.metadata as string;
 
   //calcs for spending limit
   const PRECISON_OF_7 = 10 ** 7;
@@ -58,9 +68,10 @@ export default async function Pool({
 
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
 
+  const { title, description } = await getIpfsMetadata(metadata);
+
   console.log("maxRatioDivPrecision", maxRatioDivPrecision);
   console.log("poolAmountSpendingLimit", poolAmountSpendingLimit);
-  //
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -76,29 +87,43 @@ export default async function Pool({
 
           <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
-              <h3 className="max-w-2xl  text-center font-semibold">
-                Open Source Software Grants Pool
-              </h3>
+              <h3 className="max-w-2xl  text-center font-semibold">{title}</h3>
+              <p>{description}</p>
               <div className="flex w-full  p-4">
                 <div className="flex flex-1  text-xl font-semibold">
-                  <div className="mx-auto flex max-w-fit flex-col items-start justify-center">
-                    <p className="text-md">
+                  <div className="mx-auto flex max-w-fit flex-col items-start justify-center space-y-4">
+                    <div className="text-md stat-title">
                       Strategy:{" "}
-                      <span className="ml-2 text-xl"> Conviction Voting</span>
-                    </p>
+                      <span className="text-md pl-2 text-black">
+                        {" "}
+                        Conviction Voting
+                      </span>
+                    </div>
                     {proposalType == 1 && (
-                      <p className="text-md">
+                      <div className="text-md stat-title">
                         Funding Token:{" "}
-                        <span className="ml-2 text-xl">
+                        <span className="text-md pl-2 text-black">
                           {" "}
                           {tokenGarden?.symbol}
                         </span>
-                      </p>
+                      </div>
                     )}
+                    <div className="text-md stat-title">
+                      Points System:{" "}
+                      <span className="text-md pl-2 text-black">
+                        {
+                          pointSystemObject[
+                            pointSystem as unknown as keyof typeof pointSystemObject
+                          ]
+                        }
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-1 flex-col items-center space-y-4 font-bold">
-                  <p className="text-md">Proposals type accepted:</p>
+                <div className="flex flex-1 flex-col items-center space-y-2">
+                  <p className="text-md stat-title text-xl font-semibold">
+                    Proposals type accepted:
+                  </p>
                   <div className="flex w-full items-center justify-evenly">
                     <Badge type={proposalType} />
                   </div>
@@ -117,9 +142,21 @@ export default async function Pool({
               ))}
             </div>
           </section>
+          {/* Activate - Deactivate/ points */}
+          <PointsComponent
+            strategyAddress={strategyAddr}
+            strategy={strategyObj}
+            communityAddress={communityAddress}
+          />
 
-          {/* Stats section */}
-          <PoolStats
+          {/* Proposals section */}
+          <Proposals
+            strategy={strategyObj}
+            alloInfo={alloInfo}
+            communityAddress={communityAddress}
+          />
+          {/* Metrics section (only funds available & spending limit for alpha) */}
+          <PoolMetrics
             balance={poolAmount}
             strategyAddress={strategyAddr}
             strategy={strategyObj}
@@ -128,9 +165,6 @@ export default async function Pool({
             pointSystem={pointSystem}
             spendingLimit={spendingLimitPct}
           />
-
-          {/* Proposals section */}
-          <Proposals strategy={strategyObj} alloInfo={alloInfo} />
         </main>
         <ProposalForm
           poolId={poolId}

@@ -49,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "https://api.studio.thegraph.com/query/29898/gv2-arbsepolia/version/latest/" },
+        config: { "endpoint": "http://localhost:8000/subgraphs/name/kamikazebr/gv2" },
         baseDir,
         cache,
         pubsub,
@@ -99,6 +99,12 @@ export async function getMeshOptions() {
                         return printWithCache(IsMemberDocument);
                     },
                     location: 'IsMemberDocument.graphql'
+                }, {
+                    document: GetMemberDocument,
+                    get rawSDL() {
+                        return printWithCache(GetMemberDocument);
+                    },
+                    location: 'GetMemberDocument.graphql'
                 }, {
                     document: GetPoolCreationDataDocument,
                     get rawSDL() {
@@ -219,11 +225,50 @@ export const isMemberDocument = gql `
     query isMember($me: ID!, $comm: String!) {
   members(where: {id: $me}) {
     id
-    memberCommunity(where: {registryCommunity_contains: $comm}) {
+    stakes {
       id
+      amount
+      proposal {
+        id
+        stakedAmount
+        strategy {
+          id
+          poolId
+          registryCommunity {
+            id
+          }
+        }
+      }
+    }
+    memberCommunity(where: {registryCommunity_contains: $comm}) {
+      stakedAmount
       registryCommunity {
         id
       }
+    }
+  }
+}
+    `;
+export const getMemberDocument = gql `
+    query getMember($me: ID!) {
+  member(id: $me) {
+    id
+    memberCommunity {
+      id
+      stakedAmount
+      isRegistered
+      registryCommunity {
+        id
+      }
+    }
+    totalStakedAmount
+    stakes {
+      id
+      proposal {
+        id
+      }
+      amount
+      createdAt
     }
   }
 }
@@ -398,6 +443,9 @@ export function getSdk(requester) {
         },
         isMember(variables, options) {
             return requester(isMemberDocument, variables, options);
+        },
+        getMember(variables, options) {
+            return requester(getMemberDocument, variables, options);
         },
         getPoolCreationData(variables, options) {
             return requester(getPoolCreationDataDocument, variables, options);

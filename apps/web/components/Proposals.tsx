@@ -1,24 +1,40 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button, StatusBadge } from "@/components";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAccount, useContractWrite, Address as AddressType } from "wagmi";
+import {
+  useAccount,
+  useContractWrite,
+  Address as AddressType,
+  useContractRead,
+} from "wagmi";
 import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { alloABI, cvStrategyABI } from "@/src/generated";
-import { PRECISION_SCALE, getProposals } from "@/actions/getProposals";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { getProposals } from "@/actions/getProposals";
+import { PRECISION_SCALE } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
 import { toast } from "react-toastify";
 import { useViemClient } from "@/hooks/useViemClient";
-import { getStrategyByPoolQuery } from "#/subgraph/.graphclient";
+import {
+  getStrategyByPoolQuery,
+  isMemberDocument,
+  isMemberQuery,
+} from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/pool/[poolId]/page";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { encodeAbiParameters } from "viem";
+import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
+import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
+import * as dnum from "dnum";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { queryByChain } from "@/providers/urql";
+import { getChainIdFromPath } from "@/utils/path";
 
 type InputItem = {
   id: string;
@@ -27,6 +43,7 @@ type InputItem = {
 
 export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 export type Proposal = Strategy["proposals"][number];
+export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
 
 export type ProposalTypeVoter = Proposal & {
   voterStakedPointsPct: number;
@@ -45,24 +62,99 @@ const getProposalId = (inputString: string) => {
 export function Proposals({
   strategy,
   alloInfo,
+  communityAddress,
 }: {
   strategy: Strategy;
   alloInfo: AlloQuery;
+  communityAddress: Address;
 }) {
   const [editView, setEditView] = useState(false);
-  const [distributedPoints, setDistributedPoints] = useState(0);
+  // const [distributedPoints, setDistributedPoints] = useState(0);
   const [message, setMessage] = useState("");
+  const [pointsDistributedSum, setPointsDistributedSum] = useState<
+    number | undefined
+  >(undefined);
+
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
+  //using this for test alpha
+  const { address: connectedAccount } = useAccount();
+  // const { voterStake } = useTotalVoterStakedPct(strategy);
+  const [voterStake, setVoterStake] = useState<bigint | undefined>(undefined);
+
+  const [memberPointsInPool, setMemberPointsInPool] = useState<number>(100);
+  const [stakedFilteres, setStakedFilteres] = useState<StakesMemberType>([]);
+
   const { address } = useAccount();
   const pathname = usePathname();
-  const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
 
   const { isMemberActived } = useIsMemberActivated(strategy);
 
+  const urqlClient = useUrqlClient();
+
+  const chainId = getChainIdFromPath();
+
+  const runIsMemberQuery = useCallback(async () => {
+    if (address === undefined) {
+      console.error("address is undefined");
+      return;
+    }
+    console.log("address", address);
+    console.log("strategy.registryCommunity.id", strategy.registryCommunity.id);
+    const { data: result, error } = await queryByChain<isMemberQuery>(
+      urqlClient,
+      chainId,
+      isMemberDocument,
+      {
+        me: address.toLowerCase(),
+        comm: strategy.registryCommunity.id.toLowerCase(),
+      },
+    );
+    console.log("result IsMemberNew", result);
+
+    let _stakesFilteres: StakesMemberType = [];
+    let totalStakedAmount: bigint = 0n;
+
+    if (result && result.members.length > 0) {
+      totalStakedAmount =
+        result.members[0].memberCommunity?.[0].stakedAmount ?? 0n;
+
+      console.log("totalStakedAmount", totalStakedAmount);
+      // setVoterStake(Number(totalStakedAmount));
+      setMemberPointsInPool(Number(totalStakedAmount));
+
+      const stakes = result.members[0].stakes;
+      if (stakes && stakes.length > 0) {
+        _stakesFilteres = stakes.filter((stake) => {
+          return (
+            stake.proposal.strategy.id.toLowerCase() ===
+            strategy.id.toLowerCase()
+          );
+        });
+      }
+    }
+    console.log("stakesFilteres", _stakesFilteres);
+    const totalStaked = _stakesFilteres.reduce((acc, curr) => {
+      return acc + BigInt(curr.amount);
+    }, 0n);
+
+    setVoterStake(totalStaked);
+    setStakedFilteres(_stakesFilteres);
+  }, [
+    address,
+    strategy.registryCommunity.id,
+    urqlClient,
+    chainId,
+    isMemberDocument,
+  ]);
+
   useEffect(() => {
-    setStrategyAddress(strategy.id as Address);
-  }, [strategy.id]);
+    runIsMemberQuery();
+  }, []);
+
+  useEffect(() => {
+    runIsMemberQuery();
+  }, [address, runIsMemberQuery]);
 
   const triggerRenderProposals = () => {
     getProposals(address as Address, strategy).then((res) => {
@@ -79,17 +171,20 @@ export function Proposals({
   }, [address]);
 
   useEffect(() => {
-    const newInputs = proposals.map(({ id, voterStakedPointsPct }) => ({
-      id: id,
-      value: voterStakedPointsPct,
-    })); // [] -> parseas -> handeleas lo que quieras -> parsear ->  envias
-    // console.log("newInputs", newInputs);
+    const newInputs = proposals.map(
+      ({ id, voterStakedPointsPct, stakedAmount }) => ({
+        id: id,
+        value: stakedAmount,
+        // stakedAmount: stakedAmount,
+      }),
+    );
+    console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
 
-  useEffect(() => {
-    setDistributedPoints(calculatePoints());
-  }, [inputs]);
+  // useEffect(() => {
+  //   setDistributedPoints(calculatePoints());
+  // }, [inputs]);
 
   useEffect(() => {
     if (isMemberActived === undefined) return;
@@ -151,7 +246,6 @@ export function Proposals({
     // const poolId = Number(poolID);
     const poolId = Number(strategy.poolId);
     // console.log("poolId", poolId);
-
     writeAllocate({
       args: [BigInt(poolId), encodedData as AddressType],
     });
@@ -182,84 +276,111 @@ export function Proposals({
     return encodedData;
   };
 
-  const inputHandler = (i: number, value: number) => {
-    const currentPoints = calculatePoints(i);
-    console.log("currentPoints", currentPoints);
-    console.log("value", value);
-    if (currentPoints + value <= 100) {
-      setInputs(
-        inputs.map((input, index) =>
-          index === i ? { ...input, value: value } : input,
-        ),
-      );
-      setDistributedPoints(currentPoints + value);
-    } else {
-      console.log("can't exceed 100% points");
-    }
-  };
-
   const calculatePoints = (exceptIndex?: number) =>
     inputs.reduce((acc, curr, i) => {
       if (exceptIndex !== undefined && exceptIndex === i) return acc;
       else return acc + curr.value;
     }, 0);
 
+  const inputHandler = (i: number, value: number) => {
+    // const currentPoints = calculatePoints(i);
+    const pointsDistributed = Number(voterStake);
+    console.log("p distrubuted", pointsDistributed);
+    // console.log("currentPoints", currentPoints);
+    console.log("value", value);
+    if (pointsDistributed + value <= memberPointsInPool) {
+      setInputs(
+        inputs.map((input, index) =>
+          index === i ? { ...input, value: value } : input,
+        ),
+      );
+      setPointsDistributedSum(pointsDistributed + value);
+    } else {
+      console.log("can't exceed 100% points");
+    }
+  };
+
   return (
-    <section className="rounded-lg border-2 border-black bg-white p-16">
-      {/* proposals: title - proposals -create Button */}
+    <section className="rounded-lg border-2 border-black bg-white p-12">
       <div className="mx-auto max-w-5xl space-y-10">
         <header className="flex items-center justify-between">
-          <h3 className="">Proposals</h3>
+          <div className="flex w-full items-baseline justify-between">
+            <h3 className="font-semibold">Proposals</h3>
+            {proposals.length === 0 ? (
+              <h4 className="text-lg font-semibold">
+                No submitted proposals to support
+              </h4>
+            ) : (
+              !editView && (
+                <Button
+                  icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                  onClick={() => setEditView((prev) => !prev)}
+                  disabled={!isMemberActived || proposals.length === 0}
+                  tooltip={`Activate your points to support proposals`}
+                >
+                  Manage support
+                </Button>
+              )
+            )}
+          </div>
           {editView && (
-            <span
-              className={`${
-                distributedPoints >= 100 && "scale-110 font-semibold text-red"
-              } transition-all`}
-            >
-              {distributedPoints >= 100
-                ? "Max points reached: "
-                : "Total distributed: "}
-              {distributedPoints} pts
-            </span>
+            <>
+              <div className="w-full text-right text-3xl">
+                <span
+                  className={`${
+                    (pointsDistributedSum ?? Number(voterStake)) >=
+                      memberPointsInPool && "scale-110 font-semibold text-red"
+                  } transition-all`}
+                >
+                  Assigned:{" "}
+                  <span
+                    className={`text-4xl font-bold  ${(pointsDistributedSum ?? Number(voterStake)) >= memberPointsInPool ? "text-red" : "text-success"} `}
+                  >
+                    {pointsDistributedSum ?? Number(voterStake)}
+                  </span>{" "}
+                  / {Number(memberPointsInPool)}
+                </span>
+              </div>
+            </>
           )}
         </header>
         <div className="flex flex-col gap-6">
           {proposals.map(({ title, type, id, proposalStatus }, i) => (
             <div
-              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-4"
+              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
               key={title + "_" + id}
             >
-              <div className="flex w-full items-center justify-between font-bold">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-sm">{getProposalId(id)} -</span>
-                  <h4 className="text-xl">{title}</h4>
+              <div className="flex w-full items-center justify-between ">
+                <div className="flex flex-[30%] flex-col items-baseline gap-2">
+                  <h4 className="text-2xl font-bold">{title}</h4>
+                  <span className="text-md">ID {getProposalId(id)}</span>
                 </div>
 
                 <div className="flex items-center gap-8">
-                  {/* Button to test distribute */}
-                  <Button
-                    disabled={proposalStatus == "4"}
-                    tooltip="Proposal already Executed"
-                    onClick={() =>
-                      writeDistribute?.({
-                        args: [
-                          strategy.poolId,
-                          [strategy.id],
-                          encodedDataProposalId(id),
-                        ],
-                      })
-                    }
-                  >
-                    Execute proposal {proposalStatus}
-                  </Button>
                   <StatusBadge status={proposalStatus} />
-                  {/* {!editView && ( */}
+                  {/* Button to test distribute */}
+                  {!editView && (
+                    <Button
+                      disabled={proposalStatus == "4"}
+                      tooltip="Proposal already Executed"
+                      onClick={() =>
+                        writeDistribute?.({
+                          args: [
+                            strategy.poolId,
+                            [strategy.id],
+                            encodedDataProposalId(id),
+                          ],
+                        })
+                      }
+                    >
+                      Execute proposal
+                    </Button>
+                  )}
                   <>
                     <Link href={`${pathname}/proposals/${id}`}>
                       <Button variant="outline">View Proposal</Button>
                     </Link>
                   </>
-                  {/* )} */}
                 </div>
               </div>
 
@@ -271,9 +392,9 @@ export function Proposals({
                         key={i}
                         type="range"
                         min={0}
-                        max={100}
+                        max={memberPointsInPool}
                         value={inputs[i]?.value}
-                        className={`range-aja range range-sm min-w-[420px]`}
+                        className={`range range-success range-sm min-w-[420px]`}
                         step="5"
                         onChange={(e) =>
                           inputHandler(i, Number(e.target.value))
@@ -285,36 +406,41 @@ export function Proposals({
                         ))}
                       </div>
                     </div>
-                    <div className="mb-2">{inputs[i].value} %</div>
+                    <div className="mb-2">
+                      {Number(
+                        (inputs[i].value / memberPointsInPool) * 100,
+                      ).toFixed(1)}
+                      %
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           ))}
         </div>
-        <div className="flex justify-center gap-8">
-          <Button
-            className={`${editView ? "bg-red text-white" : "bg-primary"}`}
-            onClick={() => setEditView((prev) => !prev)}
-            disabled={!isMemberActived}
-            tooltip="Activate your points to support proposals"
-          >
-            {editView ? "Cancel" : "Manage support"}
-          </Button>
-
+        <div className="flex justify-end gap-8">
           {editView && (
-            <Button
-              className="min-w-[200px]"
-              onClick={() => submit()}
-              isLoading={allocateStatus === "loading"}
-            >
-              Save changes
-            </Button>
+            <>
+              <Button
+                variant="error"
+                onClick={() => setEditView((prev) => !prev)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="min-w-[200px]"
+                onClick={() => submit()}
+                isLoading={allocateStatus === "loading"}
+              >
+                Save changes
+              </Button>
+            </>
           )}
         </div>
         <div className="">
           <p className="font-semibold">{message}</p>
         </div>
+
         {/*  PROPOSALS STATS  ///// */}
         {/* <ProposalStats
           proposals={proposals}
