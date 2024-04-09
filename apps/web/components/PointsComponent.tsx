@@ -3,8 +3,6 @@ import React, { FC } from "react";
 import { StatusBadge } from "./Badge";
 import { ActivatePoints } from "./ActivatePoints";
 import { Strategy } from "./Proposals";
-import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
-import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { Address, useAccount, useContractRead } from "wagmi";
 import { formatTokenAmount, PRECISION_SCALE } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -21,15 +19,21 @@ export const PointsComponent: FC<PoolStatsProps> = ({
   strategy,
   communityAddress,
 }) => {
-  const { isMemberActived } = useIsMemberActivated(strategy);
   const { address: connectedAccount } = useAccount();
-
   const { isConnected } = useAccount();
 
   const { data: memberPointsVotingPower } = useContractRead({
     address: communityAddress as Address,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "getMemberPowerInStrategy",
+    args: [connectedAccount as Address, strategyAddress],
+    watch: true,
+  });
+
+  const { data: isMemberActivated } = useContractRead({
+    address: communityAddress as Address,
+    abi: abiWithErrors(registryCommunityABI),
+    functionName: "memberActivatedInStrategies",
     args: [connectedAccount as Address, strategyAddress],
     watch: true,
   });
@@ -63,20 +67,19 @@ export const PointsComponent: FC<PoolStatsProps> = ({
           <div className="flex items-center space-x-10">
             <span className="text-4xl">
               {isConnected
-                ? isMemberActived
+                ? isMember
                   ? `${memberPointsInPool} pts`
                   : "0 pts"
                 : ""}
             </span>
 
             <div className="flex flex-col items-center">
-              <StatusBadge status={isMemberActived ? 1 : 0} classNames="" />
+              <StatusBadge status={isMemberActivated ? 1 : 0} classNames="" />
             </div>
           </div>
           <ActivatePoints
             strategyAddress={strategyAddress}
-            isMemberActived={isMemberActived}
-            communityAddress={communityAddress}
+            isMemberActivated={isMemberActivated as boolean | undefined}
             isMember={isMember}
             // errorMemberActivated={errorMemberActivated}
           />
