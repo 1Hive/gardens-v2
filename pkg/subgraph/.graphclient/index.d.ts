@@ -2000,7 +2000,14 @@ export type isMemberQueryVariables = Exact<{
 }>;
 export type isMemberQuery = {
     members: Array<(Pick<Member, 'id'> & {
-        memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'id'> & {
+        stakes?: Maybe<Array<(Pick<Stake, 'id' | 'amount'> & {
+            proposal: (Pick<CVProposal, 'id' | 'stakedAmount'> & {
+                strategy: (Pick<CVStrategy, 'id' | 'poolId'> & {
+                    registryCommunity: Pick<RegistryCommunity, 'id'>;
+                });
+            });
+        })>>;
+        memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'stakedAmount'> & {
             registryCommunity: Pick<RegistryCommunity, 'id'>;
         })>>;
     })>;

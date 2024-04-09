@@ -225,8 +225,23 @@ export const isMemberDocument = gql `
     query isMember($me: ID!, $comm: String!) {
   members(where: {id: $me}) {
     id
-    memberCommunity(where: {registryCommunity_contains: $comm}) {
+    stakes {
       id
+      amount
+      proposal {
+        id
+        stakedAmount
+        strategy {
+          id
+          poolId
+          registryCommunity {
+            id
+          }
+        }
+      }
+    }
+    memberCommunity(where: {registryCommunity_contains: $comm}) {
+      stakedAmount
       registryCommunity {
         id
       }
