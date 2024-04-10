@@ -28,11 +28,27 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         return address(SENDER);
     }
 
-    // function allo_owner() public virtual override returns (address) {
-    //     return address(SENDER);
-    // }
+    function executeJq(string memory command) internal returns (bytes memory) {
+        string[] memory inputs = new string[](3);
+
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = command;
+
+        bytes memory result = vm.ffi(inputs);
+        console2.log(string(result));
+
+        return result;
+    }
 
     function run() public {
+        string memory cmd = "jq '.networks[] | select(.name==arbsepolia) | .ENVS | .SENDER' networks.json";
+        // string memory cmd = "echo oi";
+
+        address ENV_SENDER = address(uint160(uint256(bytes32(executeJq(cmd)))));
+
+        console2.log("Sender: %s", ENV_SENDER);
+
         address allo_proxy = vm.envAddress("ALLO_PROXY");
         if (allo_proxy == address(0)) {
             revert("ALLO_PROXY not set");

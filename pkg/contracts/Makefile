@@ -42,6 +42,12 @@ deploy-testnet:
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast -vv
 	
+deploy-testnet2: 
+	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--ffi \
+	-vvv
 deploy-verify: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
