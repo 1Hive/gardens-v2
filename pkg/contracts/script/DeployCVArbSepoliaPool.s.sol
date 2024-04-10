@@ -22,11 +22,11 @@ import {Safe} from "safe-contracts/contracts/Safe.sol";
 contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;
 
-    address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
+    address public SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
 
-    address public constant TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
-    address public constant SAFE = 0xdA7BdeBD79833a5e0C027fAb1b1B9b874DdcbD10;
-    address public constant COMMUNITY = 0x422b8cf2358d80A9B6cD9E67dfB69D89Bb77c46b;
+    address public TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
+    address public SAFE = 0xdA7BdeBD79833a5e0C027fAb1b1B9b874DdcbD10;
+    address public COMMUNITY = 0x422b8cf2358d80A9B6cD9E67dfB69D89Bb77c46b;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
