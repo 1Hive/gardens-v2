@@ -64,9 +64,9 @@ export const PointsComponent: FC<PoolStatsProps> = ({
             <span className="text-4xl">
               {isConnected
                 ? isMemberActived
-                  ? `${memberPointsInPool} pts`
-                  : "0 pts"
-                : ""}
+                  ? `${formatTokenAmount(memberPointsInPool, strategy.registryCommunity.garden.decimals)} ${strategy.registryCommunity.garden.symbol}`
+                  : "0"
+                : "Connect to see"}
             </span>
 
             <div className="flex flex-col items-center">

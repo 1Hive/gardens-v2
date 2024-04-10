@@ -13,7 +13,7 @@ import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
-import { PRECISION_SCALE } from "@/utils/numbers";
+import { formatTokenAmount } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
 import { toast } from "react-toastify";
@@ -259,9 +259,8 @@ export function Proposals({
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif =
-            BigInt(input.value - current.voterStakedPointsPct) *
-            PRECISION_SCALE;
+          const dif = BigInt(input.value - current.stakedAmount);
+          // console.log("dif", dif);
           if (dif !== BigInt(0)) {
             resultArr.push([Number(input.id), dif]);
           }
@@ -269,7 +268,7 @@ export function Proposals({
       });
     });
 
-    // console.log("resultArr", resultArr);
+    console.log("resultArr", resultArr);
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
@@ -336,9 +335,17 @@ export function Proposals({
                   <span
                     className={`text-4xl font-bold  ${(pointsDistributedSum ?? Number(voterStake)) >= memberPointsInPool ? "text-red" : "text-success"} `}
                   >
-                    {pointsDistributedSum ?? Number(voterStake)}
+                    {formatTokenAmount(
+                      pointsDistributedSum ?? Number(voterStake),
+                      strategy.registryCommunity.garden.decimals,
+                    )}
                   </span>{" "}
-                  / {Number(memberPointsInPool)}
+                  /{" "}
+                  {formatTokenAmount(
+                    memberPointsInPool,
+                    strategy.registryCommunity.garden.decimals,
+                  )}
+                  {" " + strategy.registryCommunity.garden.symbol}
                 </span>
               </div>
             </>
