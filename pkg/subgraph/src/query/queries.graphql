@@ -56,7 +56,11 @@ query isMember($me: ID!, $comm: String!) {
   }
 }
 
-query getPoolCreationData($communityAddr: ID!) {
+query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
+  tokenGarden(id: $tokenAddr) {
+    decimals
+    id
+  }
   allos {
     id
   }

@@ -32,9 +32,7 @@ export type Scalars = {
     BigInt: any;
     Bytes: any;
     Int8: any;
-    Timestamp: any;
 };
-export type Aggregation_interval = 'hour' | 'day';
 export type Allo = {
     id: Scalars['ID'];
     chainId: Scalars['BigInt'];
@@ -1444,8 +1442,6 @@ export type _Block_ = {
     number: Scalars['Int'];
     /** Integer representation of the timestamp stored in blocks for the chain */
     timestamp?: Maybe<Scalars['Int']>;
-    /** The hash of the parent block */
-    parentHash?: Maybe<Scalars['Bytes']>;
 };
 /** The type for the top-level _meta field */
 export type _Meta_ = {
@@ -1506,7 +1502,6 @@ export type NextResolverFn<T> = () => Promise<T>;
 export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs = {}> = (next: NextResolverFn<TResult>, parent: TParent, args: TArgs, context: TContext, info: GraphQLResolveInfo) => TResult | Promise<TResult>;
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
-    Aggregation_interval: Aggregation_interval;
     Allo: ResolverTypeWrapper<Allo>;
     Allo_filter: Allo_filter;
     Allo_orderBy: Allo_orderBy;
@@ -1545,7 +1540,6 @@ export type ResolversTypes = ResolversObject<{
     RegistryFactory_orderBy: RegistryFactory_orderBy;
     String: ResolverTypeWrapper<Scalars['String']>;
     Subscription: ResolverTypeWrapper<{}>;
-    Timestamp: ResolverTypeWrapper<Scalars['Timestamp']>;
     TokenGarden: ResolverTypeWrapper<TokenGarden>;
     TokenGarden_filter: TokenGarden_filter;
     TokenGarden_orderBy: TokenGarden_orderBy;
@@ -1584,7 +1578,6 @@ export type ResolversParentTypes = ResolversObject<{
     RegistryFactory_filter: RegistryFactory_filter;
     String: Scalars['String'];
     Subscription: {};
-    Timestamp: Scalars['Timestamp'];
     TokenGarden: TokenGarden;
     TokenGarden_filter: TokenGarden_filter;
     _Block_: _Block_;
@@ -1747,9 +1740,6 @@ export type SubscriptionResolvers<ContextType = MeshContext, ParentType extends 
     allos?: SubscriptionResolver<Array<ResolversTypes['Allo']>, "allos", ParentType, ContextType, RequireFields<SubscriptionallosArgs, 'skip' | 'first' | 'subgraphError'>>;
     _meta?: SubscriptionResolver<Maybe<ResolversTypes['_Meta_']>, "_meta", ParentType, ContextType, Partial<Subscription_metaArgs>>;
 }>;
-export interface TimestampScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Timestamp'], any> {
-    name: 'Timestamp';
-}
 export type TokenGardenResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['TokenGarden'] = ResolversParentTypes['TokenGarden']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -1767,7 +1757,6 @@ export type _Block_Resolvers<ContextType = MeshContext, ParentType extends Resol
     hash?: Resolver<Maybe<ResolversTypes['Bytes']>, ParentType, ContextType>;
     number?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
     timestamp?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-    parentHash?: Resolver<Maybe<ResolversTypes['Bytes']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type _Meta_Resolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['_Meta_'] = ResolversParentTypes['_Meta_']> = ResolversObject<{
@@ -1791,7 +1780,6 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     RegistryCommunity?: RegistryCommunityResolvers<ContextType>;
     RegistryFactory?: RegistryFactoryResolvers<ContextType>;
     Subscription?: SubscriptionResolvers<ContextType>;
-    Timestamp?: GraphQLScalarType;
     TokenGarden?: TokenGardenResolvers<ContextType>;
     _Block_?: _Block_Resolvers<ContextType>;
     _Meta_?: _Meta_Resolvers<ContextType>;
@@ -1821,6 +1809,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     }>, options?: TOperationContext): Promise<isMemberQuery>;
     getPoolCreationData(variables: Exact<{
         communityAddr: string;
+        tokenAddr: string;
     }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
     getCommunitiesByGarden(variables: Exact<{
         addr: string;
@@ -1876,8 +1865,10 @@ export type isMemberQuery = {
 };
 export type getPoolCreationDataQueryVariables = Exact<{
     communityAddr: Scalars['ID'];
+    tokenAddr: Scalars['ID'];
 }>;
 export type getPoolCreationDataQuery = {
+    tokenGarden?: Maybe<Pick<TokenGarden, 'decimals' | 'id'>>;
     allos: Array<Pick<Allo, 'id'>>;
     registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName'>>;
 };
@@ -1950,6 +1941,7 @@ export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
 }>>;
 export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDataQuery, Exact<{
     communityAddr: Scalars['ID'];
+    tokenAddr: Scalars['ID'];
 }>>;
 export declare const getCommunitiesByGardenDocument: DocumentNode<getCommunitiesByGardenQuery, Exact<{
     addr: Scalars['ID'];
