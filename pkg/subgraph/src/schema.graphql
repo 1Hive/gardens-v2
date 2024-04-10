@@ -95,6 +95,7 @@ type Member @entity(immutable: false) {
 type Stake @entity {
   id: ID!
   member: Member!
+  poolId: BigInt!
   proposal: CVProposal!
   amount: BigInt!
   createdAt: BigInt!
