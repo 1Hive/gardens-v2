@@ -2000,7 +2000,16 @@ export type isMemberQueryVariables = Exact<{
 }>;
 export type isMemberQuery = {
     members: Array<(Pick<Member, 'id'> & {
-        memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'id'> & {
+        stakes?: Maybe<Array<(Pick<Stake, 'id' | 'amount'> & {
+            proposal: (Pick<CVProposal, 'id' | 'stakedAmount'> & {
+                strategy: (Pick<CVStrategy, 'id' | 'poolId'> & {
+                    registryCommunity: (Pick<RegistryCommunity, 'id'> & {
+                        garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
+                    });
+                });
+            });
+        })>>;
+        memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'stakedAmount'> & {
             registryCommunity: Pick<RegistryCommunity, 'id'>;
         })>>;
     })>;
@@ -2050,7 +2059,9 @@ export type getPoolDataQuery = {
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId'> & {
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'maxRatio'>;
-        registryCommunity: Pick<RegistryCommunity, 'id'>;
+        registryCommunity: (Pick<RegistryCommunity, 'id'> & {
+            garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
+        });
         proposals: Array<Pick<CVProposal, 'id' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount'>>;
     })>;
 };
@@ -2078,7 +2089,9 @@ export type getStrategyByPoolQueryVariables = Exact<{
 export type getStrategyByPoolQuery = {
     cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem'>;
-        registryCommunity: Pick<RegistryCommunity, 'id'>;
+        registryCommunity: (Pick<RegistryCommunity, 'id'> & {
+            garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
+        });
         proposals: Array<Pick<CVProposal, 'id' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount'>>;
     })>;
 };

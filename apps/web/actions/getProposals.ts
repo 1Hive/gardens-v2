@@ -72,36 +72,6 @@ export async function getProposals(
     let transformedProposals: ProposalTypeVoter[] =
       await transformProposals(strategy);
 
-    if (accountAddress) {
-      const alloContractReadProps = {
-        address: strategy.id as Address,
-        abi: cvStrategyABI as Abi,
-        functionName: "getProposalVoterStakedPointsPct",
-      };
-
-      const contractsToRead = transformedProposals.map((proposal) => ({
-        ...alloContractReadProps,
-        args: [proposal.id, accountAddress],
-      }));
-
-      const proposalsReadsContract = await readContracts({
-        contracts: contractsToRead,
-      });
-
-      console.log(proposalsReadsContract);
-
-      transformedProposals.map((proposal, i) => {
-        if (proposalsReadsContract[i]?.result !== undefined) {
-          const result = proposalsReadsContract[i].result as {
-            voterStakedPoints: bigint;
-          };
-          const voterStakedPointsPct =
-            result?.voterStakedPoints / PRECISION_SCALE;
-          return { ...proposal, voterStakedPointsPct: voterStakedPointsPct };
-        }
-      });
-    }
-
     return transformedProposals;
   } catch (error) {
     console.log(error);

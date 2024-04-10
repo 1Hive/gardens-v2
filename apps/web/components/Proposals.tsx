@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button, StatusBadge } from "@/components";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,12 +13,16 @@ import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
-import { PRECISION_SCALE } from "@/utils/numbers";
+import { formatTokenAmount } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
 import { toast } from "react-toastify";
 import { useViemClient } from "@/hooks/useViemClient";
-import { getStrategyByPoolQuery } from "#/subgraph/.graphclient";
+import {
+  getStrategyByPoolQuery,
+  isMemberDocument,
+  isMemberQuery,
+} from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/pool/[poolId]/page";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
@@ -28,6 +32,9 @@ import { encodeAbiParameters } from "viem";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import * as dnum from "dnum";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { queryByChain } from "@/providers/urql";
+import { getChainIdFromPath } from "@/utils/path";
 
 type InputItem = {
   id: string;
@@ -36,6 +43,7 @@ type InputItem = {
 
 export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 export type Proposal = Strategy["proposals"][number];
+export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
 
 export type ProposalTypeVoter = Proposal & {
   voterStakedPointsPct: number;
@@ -61,62 +69,92 @@ export function Proposals({
   communityAddress: Address;
 }) {
   const [editView, setEditView] = useState(false);
-  const [distributedPoints, setDistributedPoints] = useState(0);
-
-  //using this for test alpha
-  const { address: connectedAccount } = useAccount();
-  const { voterStake } = useTotalVoterStakedPct(strategy);
-  const [pointsDistrubutedSum, setPointsDistrubutedSum] = useState<
+  // const [distributedPoints, setDistributedPoints] = useState(0);
+  const [message, setMessage] = useState("");
+  const [pointsDistributedSum, setPointsDistributedSum] = useState<
     number | undefined
   >(undefined);
 
-  console.log(strategy);
-
-  console.log(voterStake);
-
-  const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
+  //using this for test alpha
+  const { address: connectedAccount } = useAccount();
+  // const { voterStake } = useTotalVoterStakedPct(strategy);
+  const [voterStake, setVoterStake] = useState<bigint | undefined>(undefined);
+
+  const [memberPointsInPool, setMemberPointsInPool] = useState<number>(100);
+  const [stakedFilteres, setStakedFilteres] = useState<StakesMemberType>([]);
+
   const { address } = useAccount();
   const pathname = usePathname();
-  const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
 
   const { isMemberActived } = useIsMemberActivated(strategy);
 
-  console.log(proposals);
+  const urqlClient = useUrqlClient();
 
-  //TODO: make hook for this
-  const { data: memberPointsVotingPower } = useContractRead({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
-    functionName: "getMemberPowerInStrategy",
-    args: [connectedAccount as Address, strategyAddress],
-  });
+  const chainId = getChainIdFromPath();
 
-  const memberPointsInPool = Number(
-    ((memberPointsVotingPower as unknown as bigint) ?? 0n) / PRECISION_SCALE,
-  );
+  const runIsMemberQuery = useCallback(async () => {
+    if (address === undefined) {
+      console.error("address is undefined");
+      return;
+    }
+    console.log("address", address);
+    console.log("strategy.registryCommunity.id", strategy.registryCommunity.id);
+    const { data: result, error } = await queryByChain<isMemberQuery>(
+      urqlClient,
+      chainId,
+      isMemberDocument,
+      {
+        me: address.toLowerCase(),
+        comm: strategy.registryCommunity.id.toLowerCase(),
+      },
+    );
+    console.log("result IsMemberNew", result);
 
-  // const numberMemberPointsVotinPower = dnum.divide(
-  //   memberPointsVotingPower as unknown as bigint,
-  //   PRECISION_SCALE,
-  //   2,
-  // );
+    let _stakesFilteres: StakesMemberType = [];
+    let totalStakedAmount: bigint = 0n;
 
-  // console.log(numberMemberPointsVotinPower);
+    if (result && result.members.length > 0) {
+      totalStakedAmount =
+        result.members[0].memberCommunity?.[0].stakedAmount ?? 0n;
 
-  // const numberMemberPointsVotinPower =
-  //   memberPointsVotingPower / PRECISION_SCALE;
-  // console.log(numberMemberPointsVotinPower);
+      console.log("totalStakedAmount", totalStakedAmount);
+      // setVoterStake(Number(totalStakedAmount));
+      setMemberPointsInPool(Number(totalStakedAmount));
 
-  // const memberPointsInPool =
-  //   (memberPointsVotingPower as unknown as bigint) / PRECISION_SCALE;
+      const stakes = result.members[0].stakes;
+      if (stakes && stakes.length > 0) {
+        _stakesFilteres = stakes.filter((stake) => {
+          return (
+            stake.proposal.strategy.id.toLowerCase() ===
+            strategy.id.toLowerCase()
+          );
+        });
+      }
+    }
+    console.log("stakesFilteres", _stakesFilteres);
+    const totalStaked = _stakesFilteres.reduce((acc, curr) => {
+      return acc + BigInt(curr.amount);
+    }, 0n);
 
-  // console.log(memberPointsInPool);
+    setVoterStake(totalStaked);
+    setStakedFilteres(_stakesFilteres);
+  }, [
+    address,
+    strategy.registryCommunity.id,
+    urqlClient,
+    chainId,
+    isMemberDocument,
+  ]);
 
   useEffect(() => {
-    setStrategyAddress(strategy.id as Address);
-  }, [strategy.id]);
+    runIsMemberQuery();
+  }, []);
+
+  useEffect(() => {
+    runIsMemberQuery();
+  }, [address, runIsMemberQuery]);
 
   const triggerRenderProposals = () => {
     getProposals(address as Address, strategy).then((res) => {
@@ -136,17 +174,17 @@ export function Proposals({
     const newInputs = proposals.map(
       ({ id, voterStakedPointsPct, stakedAmount }) => ({
         id: id,
-        value: voterStakedPointsPct,
-        stakedAmount: stakedAmount,
+        value: stakedAmount,
+        // stakedAmount: stakedAmount,
       }),
     );
     console.log("newInputs", newInputs);
     setInputs(newInputs);
   }, [proposals]);
 
-  useEffect(() => {
-    setDistributedPoints(calculatePoints());
-  }, [inputs]);
+  // useEffect(() => {
+  //   setDistributedPoints(calculatePoints());
+  // }, [inputs]);
 
   useEffect(() => {
     if (isMemberActived === undefined) return;
@@ -221,9 +259,8 @@ export function Proposals({
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif =
-            BigInt(input.value - current.voterStakedPointsPct) *
-            PRECISION_SCALE;
+          const dif = BigInt(input.value - current.stakedAmount);
+          // console.log("dif", dif);
           if (dif !== BigInt(0)) {
             resultArr.push([Number(input.id), dif]);
           }
@@ -231,7 +268,7 @@ export function Proposals({
       });
     });
 
-    // console.log("resultArr", resultArr);
+    console.log("resultArr", resultArr);
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
@@ -245,10 +282,10 @@ export function Proposals({
     }, 0);
 
   const inputHandler = (i: number, value: number) => {
-    const currentPoints = calculatePoints(i);
+    // const currentPoints = calculatePoints(i);
     const pointsDistributed = Number(voterStake);
     console.log("p distrubuted", pointsDistributed);
-    console.log("currentPoints", currentPoints);
+    // console.log("currentPoints", currentPoints);
     console.log("value", value);
     if (pointsDistributed + value <= memberPointsInPool) {
       setInputs(
@@ -256,7 +293,7 @@ export function Proposals({
           index === i ? { ...input, value: value } : input,
         ),
       );
-      setPointsDistrubutedSum(pointsDistributed + value);
+      setPointsDistributedSum(pointsDistributed + value);
     } else {
       console.log("can't exceed 100% points");
     }
@@ -290,17 +327,25 @@ export function Proposals({
               <div className="w-full text-right text-3xl">
                 <span
                   className={`${
-                    (pointsDistrubutedSum ?? Number(voterStake)) >=
+                    (pointsDistributedSum ?? Number(voterStake)) >=
                       memberPointsInPool && "scale-110 font-semibold text-red"
                   } transition-all`}
                 >
-                  Assigned points:{" "}
+                  Assigned:{" "}
                   <span
-                    className={`text-4xl font-bold  ${(pointsDistrubutedSum ?? Number(voterStake)) >= memberPointsInPool ? "text-red" : "text-success"} `}
+                    className={`text-4xl font-bold  ${(pointsDistributedSum ?? Number(voterStake)) >= memberPointsInPool ? "text-red" : "text-success"} `}
                   >
-                    {pointsDistrubutedSum ?? Number(voterStake)}
+                    {formatTokenAmount(
+                      pointsDistributedSum ?? Number(voterStake),
+                      strategy.registryCommunity.garden.decimals,
+                    )}
                   </span>{" "}
-                  / {Number(memberPointsInPool)}
+                  /{" "}
+                  {formatTokenAmount(
+                    memberPointsInPool,
+                    strategy.registryCommunity.garden.decimals,
+                  )}
+                  {" " + strategy.registryCommunity.garden.symbol}
                 </span>
               </div>
             </>
@@ -354,7 +399,7 @@ export function Proposals({
                         key={i}
                         type="range"
                         min={0}
-                        max={100}
+                        max={memberPointsInPool}
                         value={inputs[i]?.value}
                         className={`range range-success range-sm min-w-[420px]`}
                         step="5"
@@ -368,7 +413,12 @@ export function Proposals({
                         ))}
                       </div>
                     </div>
-                    <div className="mb-2">{inputs[i].value} pts</div>
+                    <div className="mb-2">
+                      {Number(
+                        (inputs[i].value / memberPointsInPool) * 100,
+                      ).toFixed(1)}
+                      %
+                    </div>
                   </div>
                 </div>
               )}

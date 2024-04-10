@@ -487,6 +487,23 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         } //signaling do nothing @todo write tests @todo add end date
     }
 
+    function canExecuteProposal(uint256 proposalId) public view returns (bool canBeExecuted) {
+        StrategyStruct.Proposal storage proposal = proposals[proposalId];
+
+        // uint256 convictionLast = updateProposalConviction(proposalId);
+        (uint256 convictionLast, uint256 blockNumber) =
+            _checkBlockAndCalculateConviction(proposal, proposal.stakedAmount);
+
+        if (convictionLast == 0 && blockNumber == 0) {
+            convictionLast = proposal.convictionLast;
+        }
+        uint256 threshold = calculateThreshold(proposal.requestedAmount);
+
+        // console.log("convictionLast", convictionLast);
+        // console.log("threshold", threshold);
+        canBeExecuted = convictionLast >= threshold;
+    }
+
     // simply returns the status of a recipient
     // probably tracked in a mapping, but will depend on the implementation
     // for example, the OpenSelfRegistration only maps users to bool, and then assumes Accepted for those
@@ -869,20 +886,31 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
      * @param _oldStaked Amount of tokens staked on a proposal until now
      */
     function _calculateAndSetConviction(StrategyStruct.Proposal storage _proposal, uint256 _oldStaked) internal {
-        uint256 blockNumber = block.number;
+        (uint256 conviction, uint256 blockNumber) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
+        if (conviction == 0 && blockNumber == 0) {
+            return;
+        }
+        _proposal.blockLast = blockNumber;
+        _proposal.convictionLast = conviction;
+    }
+
+    function _checkBlockAndCalculateConviction(StrategyStruct.Proposal storage _proposal, uint256 _oldStaked)
+        internal
+        view
+        returns (uint256 conviction, uint256 blockNumber)
+    {
+        blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
             // console.log("blockNumber == _proposal.blockLast");
-            return; // Conviction already stored
+            return (0, 0); // Conviction already stored
         }
         // calculateConviction and store it
-        uint256 conviction = calculateConviction(
+        conviction = calculateConviction(
             blockNumber - _proposal.blockLast, // we assert it doesn't overflow above
             _proposal.convictionLast,
             _oldStaked
         );
-        _proposal.blockLast = blockNumber;
-        _proposal.convictionLast = conviction;
     }
 
     function updateProposalConviction(uint256 proposalId) public returns (uint256) {
