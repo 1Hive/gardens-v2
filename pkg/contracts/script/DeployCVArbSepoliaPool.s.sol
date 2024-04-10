@@ -24,6 +24,10 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
 
     address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
 
+    address public constant TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
+    address public constant SAFE = 0xdA7BdeBD79833a5e0C027fAb1b1B9b874DdcbD10;
+    address public constant COMMUNITY = 0x422b8cf2358d80A9B6cD9E67dfB69D89Bb77c46b;
+
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
     }
@@ -46,7 +50,7 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         Allo allo = Allo(allo_proxy);
 
         // console2.log("Allo Addr: %s", address(allo));
-        AMockERC20 token = AMockERC20(0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D);
+        AMockERC20 token = AMockERC20(TOKEN);
 
         // IRegistry registry = allo.getRegistry();
         // console2.log("Registry Addr: %s", address(registry));
@@ -58,7 +62,7 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         // AMockERC20 token = new AMockERC20();
         // console2.log("Token Addr: %s", address(token));
         // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
-        Safe councilSafeDeploy = Safe(payable(0xEf5769BB4a3b0927595b01Fccf8F9acABe8C3618));
+        Safe councilSafeDeploy = Safe(payable(SAFE));
 
         // RegistryFactory registryFactory = new RegistryFactory();
         // RegistryFactory registryFactory = RegistryFactory(0xeE8B920641210e26d4D18BD285A862156f31556f);
@@ -75,7 +79,7 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         // params._communityName = "GardensDAO";
 
         // RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
-        RegistryCommunity registryCommunity = RegistryCommunity(0xBe665Ca945316f27e853d430251DC12FD7A8e755);
+        RegistryCommunity registryCommunity = RegistryCommunity(COMMUNITY);
 
         console2.log("Comm Safe Addr: %s", address(registryCommunity.councilSafe()));
 
@@ -88,8 +92,8 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
         pointConfig.pointsPerMember = MINIMUM_STAKE * (10 ** 4);
-        pointConfig.tokensPerPoint = 1 * (DECIMALS);
-        pointConfig.pointsPerTokenStaked = 1 * (10 ** 4);
+        pointConfig.tokensPerPoint = 1 * DECIMALS;
+        pointConfig.pointsPerTokenStaked = 1 * DECIMALS * (10 ** 4);
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),

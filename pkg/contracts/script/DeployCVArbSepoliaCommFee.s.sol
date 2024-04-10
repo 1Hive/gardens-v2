@@ -24,6 +24,11 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
 
     address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
 
+    address public constant TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
+    address public constant SAFE = 0xdA7BdeBD79833a5e0C027fAb1b1B9b874DdcbD10;
+    address public constant COMMUNITY = 0x422b8cf2358d80A9B6cD9E67dfB69D89Bb77c46b;
+    address public constant FACTORY = 0x01702BE1D40F6B241c9CB0296a3E49aDb9d41f48;
+
     Metadata metadata2 = Metadata({protocol: 1, pointer: "QmdRrdzXkxb9LSKVxJUmAkYzqqboo3aAjbnzVUdrbX6VSd"}); // BitcoinDAO metadata QmdRrdzXkxb9LSKVxJUmAkYzqqboo3aAjbnzVUdrbX6VSd
 
     function pool_admin() public virtual override returns (address) {
@@ -48,7 +53,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
         Allo allo = Allo(allo_proxy);
 
         // console2.log("Allo Addr: %s", address(allo));
-        AMockERC20 token = AMockERC20(0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D);
+        AMockERC20 token = AMockERC20(TOKEN);
 
         // IRegistry registry = allo.getRegistry();
         // console2.log("Registry Addr: %s", address(registry));
@@ -61,7 +66,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
         // console2.log("Token Addr: %s", address(token));
         Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
 
-        RegistryFactory registryFactory = RegistryFactory(0xeE8B920641210e26d4D18BD285A862156f31556f);
+        RegistryFactory registryFactory = RegistryFactory(FACTORY);
         // RegistryFactory registryFactory = new RegistryFactory();
 
         RegistryCommunity.InitializeParams memory params;
@@ -85,8 +90,8 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
         pointConfig.pointsPerMember = MINIMUM_STAKE * (10 ** 4);
-        pointConfig.tokensPerPoint = 1 ether;
-        pointConfig.pointsPerTokenStaked = 1 ether * (10 ** 4);
+        pointConfig.tokensPerPoint = 1 * DECIMALS;
+        pointConfig.pointsPerTokenStaked = 1 * DECIMALS * (10 ** 4);
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
