@@ -113,6 +113,22 @@ query getCommunitiesByGarden($addr: ID!) {
   }
 }
 
+query getCommunityCreationData($addr: ID!) {
+  registryFactories {
+    id
+  }
+  tokenGarden(id: $addr) {
+    id
+    name
+    symbol
+    decimals
+    chainId
+    communities {
+      alloAddress
+    }
+  }
+}
+
 query getPoolData($garden: ID!, $poolId: BigInt!) {
   allos {
     id

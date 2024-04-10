@@ -54,14 +54,11 @@ export default async function Gardens() {
         </div>
         <div className="relative"></div>
       </header>
-      {/* <div>search</div> */}
       <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8">
-        <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(360px,1fr))]">
+        <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
           {gardens ? (
             gardens.tokenGardens.map((garden, id) => (
-              <div key={`${garden.id}-${id}`}>
-                <GardenCard garden={garden} />
-              </div>
+              <GardenCard garden={garden} key={`${garden.id}-${id}`} />
             ))
           ) : (
             <div>{"Can't find token gardens"}</div>

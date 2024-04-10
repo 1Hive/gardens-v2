@@ -1,4 +1,4 @@
-import { Badge, Proposals } from "@/components";
+import { Badge, Button, Proposals } from "@/components";
 import { PoolStats } from "@/components";
 import Image from "next/image";
 import { createPublicClient, http } from "viem";
@@ -13,6 +13,7 @@ import {
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { ProposalForm } from "@/components/Forms";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -25,11 +26,6 @@ export default async function Pool({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const client = createPublicClient({
-    chain: getChain(chain),
-    transport: http(),
-  });
-
   const { data } = await queryByChain<getPoolDataQuery>(
     urqlClient,
     chain,
@@ -61,9 +57,6 @@ export default async function Pool({
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
 
   const { title, description } = await getIpfsMetadata(metadata);
-
-  console.log("maxRatioDivPrecision", maxRatioDivPrecision);
-  console.log("poolAmountSpendingLimit", poolAmountSpendingLimit);
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -134,16 +127,14 @@ export default async function Pool({
           {/* Proposals section */}
           <Proposals strategy={strategyObj} alloInfo={alloInfo} />
         </main>
-        <ProposalForm
-          poolId={poolId}
-          proposalType={proposalType}
-          alloInfo={alloInfo}
-          tokenGarden={tokenGarden}
-          tokenAddress={garden as Address}
-          spendingLimit={poolAmountSpendingLimit}
-          spendingLimitPct={spendingLimitPct}
-          poolAmount={poolAmount}
-        />
+        <div className="mt-4 flex justify-center">
+          <Link
+            href={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
+            className=""
+          >
+            <Button className="">Create Proposal</Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

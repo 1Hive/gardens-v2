@@ -1814,6 +1814,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getCommunitiesByGarden(variables: Exact<{
         addr: string;
     }>, options?: TOperationContext): Promise<getCommunitiesByGardenQuery>;
+    getCommunityCreationData(variables: Exact<{
+        addr: string;
+    }>, options?: TOperationContext): Promise<getCommunityCreationDataQuery>;
     getPoolData(variables: Exact<{
         garden: string;
         poolId: any;
@@ -1888,6 +1891,15 @@ export type getCommunitiesByGardenQuery = {
         })>>;
     })>;
 };
+export type getCommunityCreationDataQueryVariables = Exact<{
+    addr: Scalars['ID'];
+}>;
+export type getCommunityCreationDataQuery = {
+    registryFactories: Array<Pick<RegistryFactory, 'id'>>;
+    tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'decimals' | 'chainId'> & {
+        communities?: Maybe<Array<Pick<RegistryCommunity, 'alloAddress'>>>;
+    })>;
+};
 export type getPoolDataQueryVariables = Exact<{
     garden: Scalars['ID'];
     poolId: Scalars['BigInt'];
@@ -1946,6 +1958,9 @@ export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDa
 export declare const getCommunitiesByGardenDocument: DocumentNode<getCommunitiesByGardenQuery, Exact<{
     addr: Scalars['ID'];
 }>>;
+export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, Exact<{
+    addr: Scalars['ID'];
+}>>;
 export declare const getPoolDataDocument: DocumentNode<getPoolDataQuery, Exact<{
     garden: Scalars['ID'];
     poolId: Scalars['BigInt'];
@@ -1967,6 +1982,7 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getPoolCreationData(variables: getPoolCreationDataQueryVariables, options?: C): Promise<getPoolCreationDataQuery>;
     getCommunitiesByGarden(variables: getCommunitiesByGardenQueryVariables, options?: C): Promise<getCommunitiesByGardenQuery>;
+    getCommunityCreationData(variables: getCommunityCreationDataQueryVariables, options?: C): Promise<getCommunityCreationDataQuery>;
     getPoolData(variables: getPoolDataQueryVariables, options?: C): Promise<getPoolDataQuery>;
     getProposalData(variables: getProposalDataQueryVariables, options?: C): Promise<getProposalDataQuery>;
     getAllo(variables?: getAlloQueryVariables, options?: C): Promise<getAlloQuery>;
