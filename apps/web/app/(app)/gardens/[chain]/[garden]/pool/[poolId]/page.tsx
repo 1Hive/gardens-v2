@@ -142,6 +142,16 @@ export default async function Pool({
               ))}
             </div>
           </section>
+          {/* Pool metrics: for now we have funds available and spending limit */}
+          <PoolMetrics
+            balance={poolAmount}
+            strategyAddress={strategyAddr}
+            strategy={strategyObj}
+            communityAddress={communityAddress}
+            tokenGarden={tokenGarden}
+            pointSystem={pointSystem}
+            spendingLimit={spendingLimitPct}
+          />
           {/* Activate - Deactivate/ points */}
           <PointsComponent
             strategyAddress={strategyAddr}
@@ -156,15 +166,6 @@ export default async function Pool({
             communityAddress={communityAddress}
           />
           {/* Metrics section (only funds available & spending limit for alpha) */}
-          <PoolMetrics
-            balance={poolAmount}
-            strategyAddress={strategyAddr}
-            strategy={strategyObj}
-            communityAddress={communityAddress}
-            tokenGarden={tokenGarden}
-            pointSystem={pointSystem}
-            spendingLimit={spendingLimitPct}
-          />
         </main>
         <ProposalForm
           poolId={poolId}
