@@ -16,6 +16,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
 import { getChainIdFromPath } from "@/utils/path";
+import { Show, When, Else } from "./Show";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -39,6 +40,32 @@ export const IncreasePower = ({
     (increaseInput ?? 0).toString(),
     registerTokenDecimals,
   );
+
+  const chainId = getChainIdFromPath();
+
+  const { data: accountTokenBalance } = useBalance({
+    address: connectedAccount,
+    token: registerToken as `0x${string}` | undefined,
+    chainId: chainId || 0,
+  });
+
+  //TODO: create a hook for this
+  const registryContractCallConfig = {
+    address: communityAddress,
+    abi: abiWithErrors2(registryCommunityABI),
+  };
+
+  const {
+    data: isMember,
+    error,
+    isSuccess,
+  } = useContractRead({
+    ...registryContractCallConfig,
+    functionName: "isMember",
+    args: [connectedAccount as Address],
+    watch: true,
+  });
+  //
 
   const {
     data: allowTokenData,
@@ -78,13 +105,10 @@ export const IncreasePower = ({
     status: increaseStakeStatus,
     isLoading: increasePowerIsLoading,
   } = useContractWrite({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
+    ...registryContractCallConfig,
     functionName: "increasePower",
     args: [requestedAmount ?? dataAllowance],
   });
-
-  console.log(dataAllowance);
 
   async function handleChange() {
     if (dataAllowance !== 0n) {
@@ -94,8 +118,6 @@ export const IncreasePower = ({
       writeAllowToken?.();
       modalRef.current?.showModal();
     }
-    // writeAllowToken?.();
-    // modalRef.current?.showModal();
   }
 
   const handleInputChange = (e: any) => {
@@ -121,25 +143,19 @@ export const IncreasePower = ({
     }
   }, [increaseStakeStatus]);
 
-  //   useEffect(() => {
-  //     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
-  //   }, [unregisterMemberStatus]);
-  const chainId = getChainIdFromPath();
+  const { updateTransactionStatus: updateIncreaseStakeTransactionStatus } =
+    useTransactionNotification(increasePowerData);
 
-  const { data: accountTokenBalance } = useBalance({
-    address: connectedAccount,
-    token: registerToken as `0x${string}` | undefined,
-    chainId: chainId || 0,
-  });
+  useEffect(() => {
+    updateIncreaseStakeTransactionStatus(increaseStakeStatus);
+  }, [increaseStakeStatus]);
 
   const isInputIncreaseGreaterThanBalance =
     Number(increaseInput as unknown as number) >
-    Number(
-      formatTokenAmount(
-        accountTokenBalance?.value as unknown as number,
-        registerTokenDecimals,
-      ),
-    );
+    Number(accountTokenBalance?.formatted);
+
+  console.log(dataAllowance, "dataAllowance");
+  console.log(increasePowerData);
 
   return (
     <>
@@ -149,6 +165,8 @@ export const IncreasePower = ({
         isSuccess={waitAllowTokenStatus === "success"}
         isFailed={waitAllowTokenStatus === "error"}
       >
+        {/* <Show>
+          <Show.When isTrue={dataAllowance === 0n || dataAllowance > 0n}> */}
         <TransactionModalStep
           tokenSymbol={`Approve ${tokenSymbol}`}
           status={allowTokenStatus}
@@ -156,7 +174,6 @@ export const IncreasePower = ({
           failedMessage="An error has occurred, please try again!"
           successMessage="Transaction sent successfully!"
         />
-
         <TransactionModalStep
           tokenSymbol={`Stake ${tokenSymbol}`}
           status={increaseStakeStatus === "success" ? "success" : "loading"}
@@ -165,22 +182,31 @@ export const IncreasePower = ({
           successMessage="Waiting for signature"
           type="register"
         />
+        {/* </Show.When>
+        </Show> */}
       </TransactionModal>
-      <div className="flex max-w-3xl flex-col  space-y-2">
+
+      {/* input */}
+      <div className="flex max-w-md flex-col space-y-2">
         <label
           htmlFor="stake"
-          className="text-md w-full py-1 text-start font-bold"
+          className="text-md max-w-[420px] rounded-lg bg-info px-4 py-1 text-start font-semibold text-white"
         >
           Staking more tokens in the community will increase your voting power
           to support proposals
         </label>
-        <input
-          type="number"
-          value={increaseInput}
-          placeholder="0"
-          className="input input-bordered input-info w-full max-w-[420px]"
-          onChange={(e) => handleInputChange(e)}
-        />
+        <div className="relative max-w-[420px]">
+          <input
+            type="number"
+            value={increaseInput}
+            placeholder="0"
+            className="input input-bordered  input-info w-full "
+            onChange={(e) => handleInputChange(e)}
+          />
+          <span className="absolute right-10 top-3.5 text-black">
+            {tokenSymbol}
+          </span>
+        </div>
         <Button
           onClick={handleChange}
           className="w-full max-w-[420px]"
@@ -188,18 +214,21 @@ export const IncreasePower = ({
             increaseInput == 0 ||
             increaseInput == undefined ||
             increaseInput < 0 ||
-            isInputIncreaseGreaterThanBalance
+            isInputIncreaseGreaterThanBalance ||
+            !isMember
           }
           walletConnected
           tooltip={
-            isInputIncreaseGreaterThanBalance
-              ? `Not enough ${tokenSymbol} balance to stake`
-              : "Input cannot be empty or <= 0"
+            !isMember
+              ? "You are not a member of this community"
+              : isInputIncreaseGreaterThanBalance
+                ? `Not enough ${tokenSymbol} balance to stake`
+                : "Input cannot be empty or <= 0"
           }
         >
           {increaseInput !== undefined && increaseInput > 0
-            ? `Stake ${increaseInput} more tokens`
-            : "Fill input with tokens to stake"}
+            ? `Stake ${increaseInput} ${tokenSymbol}`
+            : "Select amount to increase stake"}
           <span className="loading-spinner"></span>
         </Button>
       </div>

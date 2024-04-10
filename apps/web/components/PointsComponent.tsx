@@ -42,12 +42,12 @@ export const PointsComponent: FC<PoolStatsProps> = ({
     ((memberPointsVotingPower as bigint) ?? 0n) / PRECISION_SCALE
   ).toString();
 
+  //TODO: create a hook for this
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
   };
 
-  //TODO: create a hook for this
   const {
     data: isMember,
     error,

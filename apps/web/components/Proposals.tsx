@@ -70,10 +70,6 @@ export function Proposals({
     number | undefined
   >(undefined);
 
-  console.log(strategy);
-
-  console.log(voterStake);
-
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
