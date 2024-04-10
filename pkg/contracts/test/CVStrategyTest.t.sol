@@ -194,7 +194,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
      *    TESTS
      */
 
-    function testRevert_createProposal_OverMaxRation() public {
+    function testRevert_createProposal_OverMaxRatio() public {
         (, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
 
         StrategyStruct.CreateProposal memory proposal =
@@ -1164,18 +1164,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
-        // (
-        //     , // address submitter,
-        //     address beneficiary,
-        //     , // address requestedToken,
-        //     uint256 requestedAmount,
-        //     , // uint256 stakedTokens,
-        //     , // ProposalStatus proposalStatus,
-        //     , // uint256 blockLast,
-        //     , // uint256 convictionLast,
-        //     , // uint256 threshold,
-        //         // uint256 voterPointsPct
-        // ) = cv.getProposal(proposalId);
         cv.updateProposalConviction(proposalId);
         address[] memory recipients = new address[](0);
         bytes memory dataProposal = abi.encode(proposalId);

@@ -179,6 +179,15 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("Council Safe Addr: %s", address(_councilSafe()));
     }
 
+    function _getPointConfig() internal pure returns (StrategyStruct.PointSystemConfig memory) {
+        StrategyStruct.PointSystemConfig memory pointConfig;
+        pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
+        pointConfig.pointsPerMember = MINIMUM_STAKE * (10 ** 4);
+        pointConfig.tokensPerPoint = 1 * DECIMALS;
+        pointConfig.pointsPerTokenStaked = 1 * DECIMALS * (10 ** 4);
+        return pointConfig;
+    }
+
     function create_community(Allo allo, RegistryFactory registryFactory) public {
         vm.startBroadcast(pool_admin());
 
@@ -226,7 +235,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             registry,
             address(token),
             StrategyStruct.ProposalType.Funding,
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            _getPointConfig()
         );
 
         uint256 poolIdFixed = createPool(
@@ -236,7 +246,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             registry,
             address(token),
             StrategyStruct.ProposalType.Funding,
-            StrategyStruct.PointSystem.Fixed
+            StrategyStruct.PointSystem.Fixed,
+            _getPointConfig()
         );
 
         // uint256 poolIdSignaling = createPool(

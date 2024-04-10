@@ -84,7 +84,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
         pointConfig.pointsPerMember = MINIMUM_STAKE * (10 ** 4);
         pointConfig.tokensPerPoint = 1 * (DECIMALS);
-        pointConfig.pointsPerTokenStaked = 1 * (10 ** 4);
+        pointConfig.pointsPerTokenStaked = 1 * DECIMALS * (10 ** 4);
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
