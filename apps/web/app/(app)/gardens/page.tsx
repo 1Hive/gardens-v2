@@ -11,6 +11,7 @@ import { localhost, arbitrumSepolia } from "viem/chains";
 export const dynamic = "force-dynamic";
 
 const { urqlClient } = initUrqlClient();
+
 export default async function Gardens() {
   const r1 = await getTokenGardens(arbitrumSepolia.id);
   const r2 = await getTokenGardens(localhost.id);

@@ -48,3 +48,5 @@ cache/
 pkg/subgraph/generated
 pkg/**/data
 cookies.json
+
+lcov.info

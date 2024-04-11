@@ -32,15 +32,25 @@ import {
   extractAddr,
 } from "#/subgraph/src/scripts/last-addr";
 import { chains, getChain } from "@/configs/chainServer";
-import { arbitrumSepolia, localhost } from "viem/chains";
+import { arbitrumSepolia, localhost, optimismSepolia } from "viem/chains";
 
 let runLatestLocal = undefined as any;
-let runLatestArpSepolia = undefined as any;
+let runLatestArbSepolia = undefined as any;
+let runLatestOpSepolia = undefined as any;
 try {
   runLatestLocal = require("#/../broadcast/DeployCV.s.sol/1337/run-latest.json");
-  runLatestArpSepolia = require("#/../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json");
 } catch (error) {
-  console.log("error ignored");
+  console.log("error LatestLocal ignored");
+}
+try {
+  runLatestArbSepolia = require("#/../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json");
+} catch (error) {
+  console.log("error ArbSepolia ignored");
+}
+try {
+  runLatestOpSepolia = require("#/../broadcast/DeployCVOpSepolia.s.sol/11155420/run-latest.json");
+} catch (error) {
+  console.log("error OpSepolia ignored");
 }
 export const isProd = ENV === "prod";
 export const confirmationsRequired = Number(envConfirmationsRequired);
@@ -74,8 +84,13 @@ let __contractsAddresses = {
     subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
   },
   [arbitrumSepolia.id as number]: {
-    ...getContractsAddresses(runLatestArpSepolia),
+    ...getContractsAddresses(runLatestArbSepolia),
     rpcUrl: envRpcUrlArbTestnet,
+    subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL || "",
+  },
+  [optimismSepolia.id as number]: {
+    ...getContractsAddresses(runLatestOpSepolia),
+    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_OP_TESTNET || "",
     subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL || "",
   },
 };

@@ -100,6 +100,12 @@ export async function getMeshOptions() {
                     },
                     location: 'IsMemberDocument.graphql'
                 }, {
+                    document: GetMemberDocument,
+                    get rawSDL() {
+                        return printWithCache(GetMemberDocument);
+                    },
+                    location: 'GetMemberDocument.graphql'
+                }, {
                     document: GetPoolCreationDataDocument,
                     get rawSDL() {
                         return printWithCache(GetPoolCreationDataDocument);
@@ -225,11 +231,55 @@ export const isMemberDocument = gql `
     query isMember($me: ID!, $comm: String!) {
   members(where: {id: $me}) {
     id
-    memberCommunity(where: {registryCommunity_contains: $comm}) {
+    stakes {
       id
+      amount
+      proposal {
+        id
+        stakedAmount
+        strategy {
+          id
+          poolId
+          registryCommunity {
+            id
+            garden {
+              id
+              symbol
+              decimals
+            }
+          }
+        }
+      }
+    }
+    memberCommunity(where: {registryCommunity_contains: $comm}) {
+      stakedAmount
       registryCommunity {
         id
       }
+    }
+  }
+}
+    `;
+export const getMemberDocument = gql `
+    query getMember($me: ID!) {
+  member(id: $me) {
+    id
+    memberCommunity {
+      id
+      stakedAmount
+      isRegistered
+      registryCommunity {
+        id
+      }
+    }
+    totalStakedAmount
+    stakes {
+      id
+      proposal {
+        id
+      }
+      amount
+      createdAt
     }
   }
 }
@@ -338,6 +388,11 @@ export const getPoolDataDocument = gql `
     }
     registryCommunity {
       id
+      garden {
+        id
+        symbol
+        decimals
+      }
     }
     proposals {
       id
@@ -402,6 +457,11 @@ export const getStrategyByPoolDocument = gql `
     }
     registryCommunity {
       id
+      garden {
+        id
+        symbol
+        decimals
+      }
     }
     proposals {
       id
@@ -425,6 +485,9 @@ export function getSdk(requester) {
         },
         isMember(variables, options) {
             return requester(isMemberDocument, variables, options);
+        },
+        getMember(variables, options) {
+            return requester(getMemberDocument, variables, options);
         },
         getPoolCreationData(variables, options) {
             return requester(getPoolCreationDataDocument, variables, options);
