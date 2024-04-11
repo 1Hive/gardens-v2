@@ -13,7 +13,7 @@ import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
-import { PRECISION_SCALE } from "@/utils/numbers";
+import { formatTokenAmount } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
 import { ProposalStats } from "@/components";
 import { toast } from "react-toastify";
@@ -82,7 +82,7 @@ export function Proposals({
   // const { voterStake } = useTotalVoterStakedPct(strategy);
   const [voterStake, setVoterStake] = useState<bigint | undefined>(undefined);
 
-  const [memberPointsInPool, setMemberPointsInPool] = useState<number>(100);
+  const [memberPointsInPool, setMemberPointsInPool] = useState<number>(0);
   const [stakedFilteres, setStakedFilteres] = useState<StakesMemberType>([]);
 
   const { address } = useAccount();
@@ -110,6 +110,7 @@ export function Proposals({
         comm: strategy.registryCommunity.id.toLowerCase(),
       },
     );
+
     console.log("result IsMemberNew", result);
 
     let _stakesFilteres: StakesMemberType = [];
@@ -133,6 +134,7 @@ export function Proposals({
         });
       }
     }
+
     console.log("stakesFilteres", _stakesFilteres);
     const totalStaked = _stakesFilteres.reduce((acc, curr) => {
       return acc + BigInt(curr.amount);
@@ -259,9 +261,8 @@ export function Proposals({
     inputData.forEach((input) => {
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif =
-            BigInt(input.value - current.voterStakedPointsPct) *
-            PRECISION_SCALE;
+          const dif = BigInt(input.value - current.stakedAmount);
+          // console.log("dif", dif);
           if (dif !== BigInt(0)) {
             resultArr.push([Number(input.id), dif]);
           }
@@ -269,7 +270,7 @@ export function Proposals({
       });
     });
 
-    // console.log("resultArr", resultArr);
+    console.log("resultArr", resultArr);
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
@@ -300,6 +301,7 @@ export function Proposals({
     }
   };
 
+  const DECIMALS = strategy.registryCommunity.garden.decimals;
   return (
     <section className="rounded-lg border-2 border-black bg-white p-12">
       <div className="mx-auto max-w-5xl space-y-10">
@@ -336,87 +338,113 @@ export function Proposals({
                   <span
                     className={`text-4xl font-bold  ${(pointsDistributedSum ?? Number(voterStake)) >= memberPointsInPool ? "text-red" : "text-success"} `}
                   >
-                    {pointsDistributedSum ?? Number(voterStake)}
+                    {formatTokenAmount(
+                      pointsDistributedSum ?? Number(voterStake),
+                      DECIMALS,
+                    )}
                   </span>{" "}
-                  / {Number(memberPointsInPool)}
+                  / {formatTokenAmount(memberPointsInPool, DECIMALS)}
+                  {" " + strategy.registryCommunity.garden.symbol}
                 </span>
               </div>
             </>
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposals.map(({ title, type, id, proposalStatus }, i) => (
-            <div
-              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
-              key={title + "_" + id}
-            >
-              <div className="flex w-full items-center justify-between ">
-                <div className="flex flex-[30%] flex-col items-baseline gap-2">
-                  <h4 className="text-2xl font-bold">{title}</h4>
-                  <span className="text-md">ID {getProposalId(id)}</span>
-                </div>
+          {proposals.map(
+            ({ title, type, id, proposalStatus, stakedAmount }, i) => (
+              <div
+                className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
+                key={title + "_" + id}
+              >
+                <div className="flex w-full items-center justify-between ">
+                  <div className="flex flex-[30%] flex-col items-baseline gap-2">
+                    <h4 className="text-2xl font-bold">{title}</h4>
+                    <span className="text-md">ID {getProposalId(id)}</span>
+                  </div>
 
-                <div className="flex items-center gap-8">
-                  <StatusBadge status={proposalStatus} />
-                  {/* Button to test distribute */}
-                  {!editView && (
-                    <Button
-                      disabled={proposalStatus == "4"}
-                      tooltip="Proposal already Executed"
-                      onClick={() =>
-                        writeDistribute?.({
-                          args: [
-                            strategy.poolId,
-                            [strategy.id],
-                            encodedDataProposalId(id),
-                          ],
-                        })
-                      }
-                    >
-                      Execute proposal
-                    </Button>
-                  )}
-                  <>
-                    <Link href={`${pathname}/proposals/${id}`}>
-                      <Button variant="outline">View Proposal</Button>
-                    </Link>
-                  </>
-                </div>
-              </div>
-
-              {editView && (
-                <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                  <div className="flex items-center gap-8">
-                    <div>
-                      <input
-                        key={i}
-                        type="range"
-                        min={0}
-                        max={memberPointsInPool}
-                        value={inputs[i]?.value}
-                        className={`range range-success range-sm min-w-[420px]`}
-                        step="5"
-                        onChange={(e) =>
-                          inputHandler(i, Number(e.target.value))
-                        }
-                      />
-                      <div className="flex w-full justify-between px-[10px] text-[4px]">
-                        {[...Array(21)].map((_, i) => (
-                          <span key={"span_" + i}>|</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="mb-2">
-                      {Number(
-                        (inputs[i].value / memberPointsInPool) * 100,
-                      ).toFixed(1)}
-                      %
+                  <div className="flex flex-col items-center gap-8">
+                    <div className="flex items-center gap-8">
+                      <StatusBadge status={proposalStatus} />
+                      {/* Button to test distribute */}
+                      {!editView && (
+                        <Button
+                          disabled={proposalStatus == "4"}
+                          tooltip="Proposal already Executed"
+                          onClick={() =>
+                            writeDistribute?.({
+                              args: [
+                                strategy.poolId,
+                                [strategy.id],
+                                encodedDataProposalId(id),
+                              ],
+                            })
+                          }
+                        >
+                          Execute proposal
+                        </Button>
+                      )}
+                      <>
+                        <Link href={`${pathname}/proposals/${id}`}>
+                          <Button variant="outline">View Proposal</Button>
+                        </Link>
+                      </>
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {editView && (
+                  <div className="flex w-full flex-wrap items-center justify-between gap-6">
+                    <div className="flex items-center gap-8">
+                      <div>
+                        <input
+                          key={i}
+                          type="range"
+                          min={0}
+                          max={memberPointsInPool}
+                          value={inputs[i]?.value}
+                          className={`range range-success range-sm min-w-[420px]`}
+                          step={5}
+                          onChange={(e) =>
+                            inputHandler(i, Number(e.target.value))
+                          }
+                        />
+                        <div className="flex w-full justify-between px-[10px] text-[4px]">
+                          {[...Array(21)].map((_, i) => (
+                            <span key={"span_" + i}>|</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mb-2">
+                        {Number(
+                          (inputs[i].value / memberPointsInPool) * 100,
+                        ).toFixed(2)}
+                        %
+                      </div>
+                    </div>
+                    <div className="flex max-w-xs flex-1 items-baseline justify-center gap-2">
+                      {stakedAmount > 0n ? (
+                        <p className="text-success">
+                          You Assigned{" "}
+                          <span className="text-2xl font-bold">
+                            {formatTokenAmount(
+                              stakedAmount.toString(),
+                              DECIMALS,
+                            )}
+                          </span>{" "}
+                          tokens
+                        </p>
+                      ) : (
+                        <p className="text-gray-400">
+                          You have not support this proposal yet
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ),
+          )}
         </div>
         <div className="flex justify-end gap-8">
           {editView && (

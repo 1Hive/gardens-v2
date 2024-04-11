@@ -236,6 +236,11 @@ export const isMemberDocument = gql `
           poolId
           registryCommunity {
             id
+            garden {
+              id
+              symbol
+              decimals
+            }
           }
         }
       }
@@ -356,6 +361,11 @@ export const getPoolDataDocument = gql `
     }
     registryCommunity {
       id
+      garden {
+        id
+        symbol
+        decimals
+      }
     }
     proposals {
       id
@@ -420,6 +430,11 @@ export const getStrategyByPoolDocument = gql `
     }
     registryCommunity {
       id
+      garden {
+        id
+        symbol
+        decimals
+      }
     }
     proposals {
       id

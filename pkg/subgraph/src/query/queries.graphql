@@ -58,6 +58,11 @@ query isMember($me: ID!, $comm: String!) {
           poolId
           registryCommunity {
             id
+            garden {
+              id
+              symbol
+              decimals
+            }
           }
         }
       }
@@ -174,6 +179,11 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     registryCommunity {
       id
+      garden {
+        id
+        symbol
+        decimals
+      }
     }
     proposals {
       id
@@ -235,6 +245,11 @@ query getStrategyByPool($poolId: BigInt!) {
     }
     registryCommunity {
       id
+      garden {
+        id
+        symbol
+        decimals
+      }
     }
     proposals {
       id

@@ -11,7 +11,7 @@ function formatTokenAmount(
   }
   const num = [BigInt(value), decimals] as const;
 
-  return dn.format(num);
+  return dn.format(num, { digits: 2 });
 }
 
 function calculateFees(

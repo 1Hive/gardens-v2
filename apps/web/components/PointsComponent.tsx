@@ -57,17 +57,25 @@ export const PointsComponent: FC<PoolStatsProps> = ({
 
   return (
     <section className="border2 flex  w-full flex-col rounded-xl bg-white px-12 py-4">
-      <h3 className="font-semibold">Your Points</h3>
+      <h3 className="font-semibold">Your Tokens</h3>
       <div className="flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-10">
-            <span className="text-4xl">
-              {isConnected
-                ? isMemberActived
-                  ? `${memberPointsInPool} pts`
-                  : "0 pts"
-                : ""}
-            </span>
+            <div className="flex items-center gap-2 font-semibold">
+              {isMemberActived && (
+                <>
+                  <p className="text-4xl">
+                    {formatTokenAmount(
+                      memberPointsInPool,
+                      strategy.registryCommunity.garden.decimals,
+                    )}
+                  </p>
+                  <span className="text-lg">
+                    {strategy.registryCommunity.garden.symbol}
+                  </span>
+                </>
+              )}
+            </div>
 
             <div className="flex flex-col items-center">
               <StatusBadge status={isMemberActived ? 1 : 0} classNames="" />
