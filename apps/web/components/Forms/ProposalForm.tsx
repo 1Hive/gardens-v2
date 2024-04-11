@@ -192,113 +192,107 @@ export const ProposalForm = ({
   const labelClassname = "mb-2 text-xs text-black";
 
   return (
-    <FormModal
-      label="Create proposal"
-      title={`Create ${proposalName} proposal`}
-      description={`Propose and Share your vision for requesting funds that benefit the entire community`}
-    >
-      <form onSubmit={handleSubmit(createProposal)}>
-        {!isEditMode ? (
-          <div className="flex flex-col space-y-6 overflow-hidden p-1">
-            {proposalName === "funding" && (
-              <>
-                <div className="relative flex flex-col">
-                  <label htmlFor="amount" className={labelClassname}>
-                    Requested amount ( Limited to {spendingLimitPct}% of Pool
-                    Funds )
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    className={inputClassname}
-                    {...register("amount", {
-                      required: true,
-                    })}
-                  />
-                  <span className="absolute right-10 top-10 text-black">
-                    {tokenSymbol}
-                  </span>
-                </div>
-                {errors.amount?.type === "required" && (
-                  <p role="alert">Amount required</p>
-                )}
-              </>
-            )}
-            {proposalName !== "signaling" && (
-              <div className="flex flex-col">
-                <label htmlFor="beneficiary" className={labelClassname}>
-                  Beneficary address
+    <form onSubmit={handleSubmit(createProposal)} className="w-full">
+      {!isEditMode ? (
+        <div className="flex flex-col space-y-6 overflow-hidden p-1">
+          {proposalName === "funding" && (
+            <>
+              <div className="relative flex flex-col">
+                <label htmlFor="amount" className={labelClassname}>
+                  Requested amount ( Limited to {spendingLimitPct}% of Pool
+                  Funds )
                 </label>
                 <input
-                  type="text"
-                  placeholder="Add the beneficiary's address"
+                  type="number"
+                  placeholder="0"
                   className={inputClassname}
-                  {...register("beneficiary", {
+                  {...register("amount", {
                     required: true,
-                    pattern: {
-                      value: ethereumAddressRegEx,
-                      message: "Invalid Eth Address",
-                    },
                   })}
                 />
+                <span className="absolute right-10 top-10 text-black">
+                  {tokenSymbol}
+                </span>
               </div>
-            )}
+              {errors.amount?.type === "required" && (
+                <p role="alert">Amount required</p>
+              )}
+            </>
+          )}
+          {proposalName !== "signaling" && (
             <div className="flex flex-col">
-              <label htmlFor="title" className={labelClassname}>
-                Title
+              <label htmlFor="beneficiary" className={labelClassname}>
+                Beneficary address
               </label>
               <input
                 type="text"
-                placeholder="Add the title of the proposal"
+                placeholder="Add the beneficiary's address"
                 className={inputClassname}
-                {...register("title", {
+                {...register("beneficiary", {
                   required: true,
+                  pattern: {
+                    value: ethereumAddressRegEx,
+                    message: "Invalid Eth Address",
+                  },
                 })}
               />
             </div>
-
-            <label htmlFor="description" className={labelClassname}>
-              Proposal description
+          )}
+          <div className="flex flex-col">
+            <label htmlFor="title" className={labelClassname}>
+              Title
             </label>
-            <textarea
-              className="textarea textarea-accent line-clamp-5"
-              placeholder="Add proposal description"
-              rows={10}
-              {...register("description", {
+            <input
+              type="text"
+              placeholder="Add the title of the proposal"
+              className={inputClassname}
+              {...register("title", {
                 required: true,
               })}
-            ></textarea>
+            />
           </div>
-        ) : (
-          <ProposalOverview data={previewData} proposalType={proposalType} />
-        )}
 
-        <div className="flex w-full items-center justify-center py-6">
-          {!isEditMode ? (
-            <Button type="button" onClick={handlePreview} variant="fill">
-              Preview
-            </Button>
-          ) : (
-            <div className="flex items-center gap-10">
-              <Button
-                type="submit"
-                disabled={!checksRequestedAmount}
-                tooltip="Request amount exceeds pool spending limit"
-              >
-                Submit
-              </Button>
-              <Button
-                type="button"
-                onClick={() => setIsEditMode(false)}
-                variant="fill"
-              >
-                Edit
-              </Button>
-            </div>
-          )}
+          <label htmlFor="description" className={labelClassname}>
+            Proposal description
+          </label>
+          <textarea
+            className="textarea textarea-accent line-clamp-5"
+            placeholder="Add proposal description"
+            rows={10}
+            {...register("description", {
+              required: true,
+            })}
+          ></textarea>
         </div>
-      </form>
-    </FormModal>
+      ) : (
+        <ProposalOverview data={previewData} proposalType={proposalType} />
+      )}
+
+      <div className="flex w-full items-center justify-center py-6">
+        {!isEditMode ? (
+          <Button type="button" onClick={handlePreview} variant="fill">
+            Preview
+          </Button>
+        ) : (
+          <div className="flex items-center gap-10">
+            <Button
+              type="submit"
+              disabled={!checksRequestedAmount}
+              tooltip="Request amount exceeds pool spending limit"
+            >
+              Submit
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setIsEditMode(false)}
+              variant="fill"
+            >
+              Edit
+            </Button>
+          </div>
+        )}
+      </div>
+    </form>
   );
 };
 
