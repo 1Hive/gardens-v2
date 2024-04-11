@@ -118,6 +118,12 @@ export async function getMeshOptions() {
                     },
                     location: 'GetCommunitiesByGardenDocument.graphql'
                 }, {
+                    document: GetCommunityCreationDataDocument,
+                    get rawSDL() {
+                        return printWithCache(GetCommunityCreationDataDocument);
+                    },
+                    location: 'GetCommunityCreationDataDocument.graphql'
+                }, {
                     document: GetPoolDataDocument,
                     get rawSDL() {
                         return printWithCache(GetPoolDataDocument);
@@ -279,7 +285,11 @@ export const getMemberDocument = gql `
 }
     `;
 export const getPoolCreationDataDocument = gql `
-    query getPoolCreationData($communityAddr: ID!) {
+    query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
+  tokenGarden(id: $tokenAddr) {
+    decimals
+    id
+  }
   allos {
     id
   }
@@ -329,6 +339,23 @@ export const getCommunitiesByGardenDocument = gql `
           id
         }
       }
+    }
+  }
+}
+    `;
+export const getCommunityCreationDataDocument = gql `
+    query getCommunityCreationData($addr: ID!) {
+  registryFactories {
+    id
+  }
+  tokenGarden(id: $addr) {
+    id
+    name
+    symbol
+    decimals
+    chainId
+    communities {
+      alloAddress
     }
   }
 }
@@ -467,6 +494,9 @@ export function getSdk(requester) {
         },
         getCommunitiesByGarden(variables, options) {
             return requester(getCommunitiesByGardenDocument, variables, options);
+        },
+        getCommunityCreationData(variables, options) {
+            return requester(getCommunityCreationDataDocument, variables, options);
         },
         getPoolData(variables, options) {
             return requester(getPoolDataDocument, variables, options);

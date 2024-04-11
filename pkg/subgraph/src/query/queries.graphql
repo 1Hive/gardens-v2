@@ -99,7 +99,11 @@ query getMember($me: ID!) {
   }
 }
 
-query getPoolCreationData($communityAddr: ID!) {
+query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
+  tokenGarden(id: $tokenAddr) {
+    decimals
+    id
+  }
   allos {
     id
   }
@@ -148,6 +152,22 @@ query getCommunitiesByGarden($addr: ID!) {
           id
         }
       }
+    }
+  }
+}
+
+query getCommunityCreationData($addr: ID!) {
+  registryFactories {
+    id
+  }
+  tokenGarden(id: $addr) {
+    id
+    name
+    symbol
+    decimals
+    chainId
+    communities {
+      alloAddress
     }
   }
 }
