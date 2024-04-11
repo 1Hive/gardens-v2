@@ -1358,6 +1358,7 @@ export type RegistryFactory_orderBy =
 export type Stake = {
   id: Scalars['ID'];
   member: Member;
+  poolId: Scalars['BigInt'];
   proposal: CVProposal;
   amount: Scalars['BigInt'];
   createdAt: Scalars['BigInt'];
@@ -1393,6 +1394,14 @@ export type Stake_filter = {
   member_not_ends_with?: InputMaybe<Scalars['String']>;
   member_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
   member_?: InputMaybe<Member_filter>;
+  poolId?: InputMaybe<Scalars['BigInt']>;
+  poolId_not?: InputMaybe<Scalars['BigInt']>;
+  poolId_gt?: InputMaybe<Scalars['BigInt']>;
+  poolId_lt?: InputMaybe<Scalars['BigInt']>;
+  poolId_gte?: InputMaybe<Scalars['BigInt']>;
+  poolId_lte?: InputMaybe<Scalars['BigInt']>;
+  poolId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  poolId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   proposal?: InputMaybe<Scalars['String']>;
   proposal_not?: InputMaybe<Scalars['String']>;
   proposal_gt?: InputMaybe<Scalars['String']>;
@@ -1441,6 +1450,7 @@ export type Stake_orderBy =
   | 'member'
   | 'member__id'
   | 'member__totalStakedAmount'
+  | 'poolId'
   | 'proposal'
   | 'proposal__id'
   | 'proposal__metadata'
