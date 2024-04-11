@@ -12,8 +12,6 @@ import {
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
-
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -38,8 +36,7 @@ export function CommunityCard({
   communityFee,
   tokenGarden,
 }: CommunityCardProps) {
-  const { address: accountAddress } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { address: accountAddress, isConnected } = useAccount();
   const pathname = usePathname();
 
   const pools = strategies ?? [];
@@ -96,23 +93,17 @@ export function CommunityCard({
           </div>
 
           <div>
-            {accountAddress ? (
-              <RegisterMember
-                name={name as string}
-                connectedAccount={accountAddress as Address}
-                tokenSymbol={tokenGarden?.symbol as string}
-                communityAddress={communityAddress as Address}
-                registerToken={registerToken as Address}
-                registerTokenDecimals={tokenGarden?.decimals as number}
-                membershipAmount={registerStakeAmount}
-                protocolFee={protocolFee}
-                communityFee={communityFee}
-              />
-            ) : (
-              <Button onClick={openConnectModal} className="w-full">
-                Connect Wallet
-              </Button>
-            )}
+            <RegisterMember
+              name={name as string}
+              connectedAccount={accountAddress as Address}
+              tokenSymbol={tokenGarden?.symbol as string}
+              communityAddress={communityAddress as Address}
+              registerToken={registerToken as Address}
+              registerTokenDecimals={tokenGarden?.decimals as number}
+              membershipAmount={registerStakeAmount}
+              protocolFee={protocolFee}
+              communityFee={communityFee}
+            />
 
             <div className="flex-1"> {/* TODO: add pool btn here ???*/}</div>
           </div>
@@ -123,7 +114,7 @@ export function CommunityCard({
                 href={`${pathname}/${communityAddress}/create-pool`}
                 className=""
               >
-                <Button className="">Create Pool</Button>
+                <Button disabled={!isConnected}>Create Pool</Button>
               </Link>
             </div>
 
