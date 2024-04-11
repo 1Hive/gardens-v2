@@ -7,6 +7,7 @@ import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -74,15 +75,28 @@ export function ActivatePoints({
     updateDeactivePointsStatus(deactivatePointsStatus);
   }, [deactivatePointsStatus]);
 
+  // Activate Tooltip condition => message mapping
+  const disableActiveBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMember,
+      message: "Join community to activate points",
+    },
+  ];
+
+  const disableActiveBtn = disableActiveBtnCondition.some(
+    (cond) => cond.condition,
+  );
+
+  const tooltipMessage = useTooltipMessage(disableActiveBtnCondition);
+
   return (
     <>
       <div className="flex flex-col gap-4 pl-4">
         <Button
           onClick={handleChange}
           className="w-fit bg-primary"
-          disabled={!isMember}
-          tooltip="Join the community to activate points"
-          walletConnected
+          disabled={disableActiveBtn}
+          tooltip={tooltipMessage}
         >
           {isMemberActivated ? "Deactivate Points" : "Activate Points"}
         </Button>

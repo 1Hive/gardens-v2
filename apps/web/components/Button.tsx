@@ -2,7 +2,6 @@
 import React from "react";
 import cn from "classnames";
 import { Size } from "@/types";
-import { useAccount } from "wagmi";
 
 type ButtonProps = {
   type?:
@@ -40,21 +39,14 @@ export function Button({
   onClick,
   className,
   disabled = false,
-  tooltip,
+  tooltip = "Connect wallet",
   children,
   size,
   variant,
   isLoading = false,
   icon,
   type = "button",
-  walletConnected,
 }: ButtonProps) {
-  const { isConnected } = useAccount();
-
-  const disabledButton = !isConnected && walletConnected;
-
-  const tooltipText = disabledButton ? "Connect Wallet" : tooltip;
-
   const buttonContent = isLoading ? (
     <span className="loading loading-spinner"></span>
   ) : (
@@ -73,14 +65,14 @@ export function Button({
       })} 
       disabled:scale-1 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed disabled:bg-gray-300 ${className}`}
       onClick={onClick}
-      disabled={disabled || isLoading || disabledButton}
+      disabled={disabled || isLoading}
     >
       {icon && icon} {buttonContent}
     </button>
   );
 
   return disabled ? (
-    <div className="tooltip" data-tip={tooltipText}>
+    <div className="tooltip" data-tip={tooltip}>
       {buttonElement}
     </div>
   ) : (

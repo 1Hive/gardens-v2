@@ -17,6 +17,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { calculateFees, formatTokenAmount, gte, dn } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal, TransactionModalStep } from "./TransactionModal";
+import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
 
 type RegisterMemberProps = {
   name: string;
@@ -185,6 +186,18 @@ export function RegisterMember({
     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
   }, [unregisterMemberStatus]);
 
+  //RegisterMember Tooltip condition => message mapping
+  const disableRegMemberBtnCondition: ConditionObject[] = [
+    {
+      condition: !accountHasBalance,
+      message: "Connected account has insufficient balance",
+    },
+  ];
+  const disabledRegMemberButton = disableRegMemberBtnCondition.some(
+    (cond) => cond.condition,
+  );
+  const tooltipMessage = useTooltipMessage(disableRegMemberBtnCondition);
+
   return (
     <>
       {/* Modal */}
@@ -258,9 +271,8 @@ export function RegisterMember({
               onClick={handleChange}
               className="w-full bg-primary"
               size="md"
-              disabled={!accountHasBalance}
-              walletConnected
-              tooltip={`Connected account has not enough ${tokenSymbol}`}
+              disabled={disabledRegMemberButton}
+              tooltip={tooltipMessage}
             >
               {isMember ? "Leave community" : "Register in community"}
             </Button>

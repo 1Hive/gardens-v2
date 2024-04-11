@@ -17,6 +17,7 @@ import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
 import { getChainIdFromPath } from "@/utils/path";
 import { Show, When, Else } from "./Show";
+import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -157,6 +158,27 @@ export const IncreasePower = ({
   console.log(dataAllowance, "dataAllowance");
   console.log(increasePowerData);
 
+  //IncreasePower Tooltip condition => message mapping
+  const disableIncPowerBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMember,
+      message: "Join community to increase power",
+    },
+    {
+      condition: isInputIncreaseGreaterThanBalance,
+      message: `Not enough ${tokenSymbol} balance to stake`,
+    },
+    {
+      condition:
+        increaseInput == 0 || increaseInput == undefined || increaseInput < 0,
+      message: "Input can not be zero or negtive",
+    },
+  ];
+  const disabledIncPowerButton = disableIncPowerBtnCondition.some(
+    (cond) => cond.condition,
+  );
+  const tooltipMessage = useTooltipMessage(disableIncPowerBtnCondition);
+
   return (
     <>
       <TransactionModal
@@ -210,25 +232,12 @@ export const IncreasePower = ({
         <Button
           onClick={handleChange}
           className="w-full max-w-[420px]"
-          disabled={
-            increaseInput == 0 ||
-            increaseInput == undefined ||
-            increaseInput < 0 ||
-            isInputIncreaseGreaterThanBalance ||
-            !isMember
-          }
-          walletConnected
-          tooltip={
-            !isMember
-              ? "You are not a member of this community"
-              : isInputIncreaseGreaterThanBalance
-                ? `Not enough ${tokenSymbol} balance to stake`
-                : "Input cannot be empty or <= 0"
-          }
+          disabled={disabledIncPowerButton}
+          tooltip={tooltipMessage}
         >
           {increaseInput !== undefined && increaseInput > 0
-            ? `Stake ${increaseInput} ${tokenSymbol}`
-            : "Select amount to increase stake"}
+            ? `Stake ${tokenSymbol}`
+            : "Increase stake"}
           <span className="loading-spinner"></span>
         </Button>
       </div>

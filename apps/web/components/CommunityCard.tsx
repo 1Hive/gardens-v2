@@ -12,8 +12,6 @@ import {
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
-
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -38,7 +36,7 @@ export function CommunityCard({
   communityFee,
   tokenGarden,
 }: CommunityCardProps) {
-  const { address: accountAddress } = useAccount();
+  const { address: accountAddress, isConnected } = useAccount();
   const pathname = usePathname();
 
   const pools = strategies ?? [];
@@ -116,7 +114,7 @@ export function CommunityCard({
                 href={`${pathname}/${communityAddress}/create-pool`}
                 className=""
               >
-                <Button walletConnected>Create Pool</Button>
+                <Button disabled={!isConnected}>Create Pool</Button>
               </Link>
             </div>
 

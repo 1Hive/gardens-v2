@@ -27,7 +27,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { encodeAbiParameters } from "viem";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
-import * as dnum from "dnum";
+import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
 
 type InputItem = {
   id: string;
@@ -78,8 +78,6 @@ export function Proposals({
   const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-
-  console.log(proposals);
 
   //TODO: make hook for this
   const { data: memberPointsVotingPower } = useContractRead({
@@ -258,6 +256,32 @@ export function Proposals({
     }
   };
 
+  //ManageSupport Tooltip condition => message mapping
+  const disableManageSupportBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMemberActived,
+      message: "Activate your points to support proposals",
+    },
+  ];
+  const disableManSupportButton = disableManageSupportBtnCondition.some(
+    (cond) => cond.condition,
+  );
+  const tooltipMessage = useTooltipMessage(disableManageSupportBtnCondition);
+
+  //Execute Tooltip condition => message mapping
+  // const disableExecuteBtnCondition: ConditionObject[] = [
+  //   {
+  //     condition: proposals.some((proposal) => proposal.proposalStatus == "4"),
+  //     message: "Proposal already executed",
+  //   },
+  // ];
+  // const disableExecuteButton = disableExecuteBtnCondition.some(
+  //   (cond) => cond.condition,
+  // );
+  // const tooltipMessageExecuteBtn = useTooltipMessage(
+  //   disableExecuteBtnCondition,
+  // );
+
   return (
     <section className="rounded-lg border-2 border-black bg-white p-12">
       <div className="mx-auto max-w-5xl space-y-10">
@@ -273,9 +297,8 @@ export function Proposals({
                 <Button
                   icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
                   onClick={() => setEditView((prev) => !prev)}
-                  disabled={!isMemberActived || proposals.length === 0}
-                  tooltip={`Activate your points to support proposals`}
-                  walletConnected
+                  disabled={disableManSupportButton}
+                  tooltip={tooltipMessage}
                 >
                   Manage support
                 </Button>
@@ -320,8 +343,9 @@ export function Proposals({
                   {/* Button to test distribute */}
                   {!editView && (
                     <Button
+                      // TODO: add flexible tooltip and func to check executability
                       disabled={proposalStatus == "4"}
-                      tooltip="Proposal already Executed"
+                      tooltip={"Proposal already executed"}
                       onClick={() =>
                         writeDistribute?.({
                           args: [
