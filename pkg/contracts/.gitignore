@@ -3,6 +3,7 @@ out/*
 !out/*CV*
 !out/*Allo.*
 !out/*Registry*
+!out/*ERC20*
 out/*Test*
 out/*Deploy*
 
