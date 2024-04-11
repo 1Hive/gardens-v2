@@ -1962,10 +1962,14 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     }>, options?: TOperationContext): Promise<getMemberQuery>;
     getPoolCreationData(variables: Exact<{
         communityAddr: string;
+        tokenAddr: string;
     }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
     getCommunitiesByGarden(variables: Exact<{
         addr: string;
     }>, options?: TOperationContext): Promise<getCommunitiesByGardenQuery>;
+    getCommunityCreationData(variables: Exact<{
+        addr: string;
+    }>, options?: TOperationContext): Promise<getCommunityCreationDataQuery>;
     getPoolData(variables: Exact<{
         garden: string;
         poolId: any;
@@ -2039,8 +2043,10 @@ export type getMemberQuery = {
 };
 export type getPoolCreationDataQueryVariables = Exact<{
     communityAddr: Scalars['ID'];
+    tokenAddr: Scalars['ID'];
 }>;
 export type getPoolCreationDataQuery = {
+    tokenGarden?: Maybe<Pick<TokenGarden, 'decimals' | 'id'>>;
     allos: Array<Pick<Allo, 'id'>>;
     registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName'>>;
 };
@@ -2058,6 +2064,15 @@ export type getCommunitiesByGardenQuery = {
                 proposals: Array<Pick<CVProposal, 'id'>>;
             })>>;
         })>>;
+    })>;
+};
+export type getCommunityCreationDataQueryVariables = Exact<{
+    addr: Scalars['ID'];
+}>;
+export type getCommunityCreationDataQuery = {
+    registryFactories: Array<Pick<RegistryFactory, 'id'>>;
+    tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'decimals' | 'chainId'> & {
+        communities?: Maybe<Array<Pick<RegistryCommunity, 'alloAddress'>>>;
     })>;
 };
 export type getPoolDataQueryVariables = Exact<{
@@ -2120,8 +2135,12 @@ export declare const getMemberDocument: DocumentNode<getMemberQuery, Exact<{
 }>>;
 export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDataQuery, Exact<{
     communityAddr: Scalars['ID'];
+    tokenAddr: Scalars['ID'];
 }>>;
 export declare const getCommunitiesByGardenDocument: DocumentNode<getCommunitiesByGardenQuery, Exact<{
+    addr: Scalars['ID'];
+}>>;
+export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, Exact<{
     addr: Scalars['ID'];
 }>>;
 export declare const getPoolDataDocument: DocumentNode<getPoolDataQuery, Exact<{
@@ -2146,6 +2165,7 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getMember(variables: getMemberQueryVariables, options?: C): Promise<getMemberQuery>;
     getPoolCreationData(variables: getPoolCreationDataQueryVariables, options?: C): Promise<getPoolCreationDataQuery>;
     getCommunitiesByGarden(variables: getCommunitiesByGardenQueryVariables, options?: C): Promise<getCommunitiesByGardenQuery>;
+    getCommunityCreationData(variables: getCommunityCreationDataQueryVariables, options?: C): Promise<getCommunityCreationDataQuery>;
     getPoolData(variables: getPoolDataQueryVariables, options?: C): Promise<getPoolDataQuery>;
     getProposalData(variables: getProposalDataQueryVariables, options?: C): Promise<getProposalDataQuery>;
     getAllo(variables?: getAlloQueryVariables, options?: C): Promise<getAlloQuery>;
