@@ -220,192 +220,185 @@ export const CommunityForm = ({
   }, [formData]);
 
   return (
-    <FormModal
-      label="Create Community"
-      title={`Welcome to the ${tokenGarden?.symbol} Community Form!`}
-      description={`Create a vibrant community around the ${tokenGarden.name} by
-        providing the necessary details below.`}
-    >
-      <form onSubmit={handleSubmit(handleInputData)}>
-        {!isEditMode ? (
-          <div className="flex flex-col space-y-6 overflow-hidden px-1">
-            <div className="flex flex-col">
-              <label htmlFor="Community Name" className={labelClassname}>
-                Community Name
-              </label>
-              <input
-                type="text"
-                placeholder="1hive"
-                className={inputClassname}
-                {...register("name", {
-                  required: true,
-                })}
-              />
-            </div>
+    <form onSubmit={handleSubmit(handleInputData)} className="w-full">
+      {!isEditMode ? (
+        <div className="flex flex-col space-y-6 overflow-hidden px-1">
+          <div className="flex flex-col">
+            <label htmlFor="Community Name" className={labelClassname}>
+              Community Name
+            </label>
+            <input
+              type="text"
+              placeholder="1hive"
+              className={inputClassname}
+              {...register("name", {
+                required: true,
+              })}
+            />
+          </div>
 
-            <div className="flex flex-col">
-              <label htmlFor="stake" className={labelClassname}>
-                {`Membership Stake Amount ( ${tokenGarden.symbol} tokens )`}
-              </label>
-              <input
-                type="number"
-                placeholder=""
-                className={inputClassname}
-                {...register("stake", {
-                  required: true,
-                })}
-              />
-            </div>
+          <div className="flex flex-col">
+            <label htmlFor="stake" className={labelClassname}>
+              {`Membership Stake Amount ( ${tokenGarden.symbol} tokens )`}
+            </label>
+            <input
+              type="number"
+              placeholder=""
+              className={inputClassname}
+              {...register("stake", {
+                required: true,
+              })}
+            />
+          </div>
 
-            <div className="flex flex-col">
-              <label htmlFor="feeAmount" className={labelClassname}>
-                Protocol fee %
-              </label>
-              <select
-                className="select select-accent w-full"
-                {...register("feeAmount", { required: true })}
-              >
-                <option value={0}>0%</option>
-                <option value={1}>1%</option>
-                <option value={2}>2%</option>
-              </select>
-            </div>
+          <div className="flex flex-col">
+            <label htmlFor="feeAmount" className={labelClassname}>
+              Protocol fee %
+            </label>
+            <select
+              className="select select-accent w-full"
+              {...register("feeAmount", { required: true })}
+            >
+              <option value={0}>0%</option>
+              <option value={1}>1%</option>
+              <option value={2}>2%</option>
+            </select>
+          </div>
 
-            <div className="flex flex-col">
-              <label htmlFor="feeReceiver" className={labelClassname}>
-                Protocol fee Receiver address
-              </label>
-              <input
-                type="text"
-                placeholder="0x.."
-                className={inputClassname}
-                {...register("feeReceiver", {
-                  required: true,
-                  pattern: {
-                    value: ethereumAddressRegExp,
-                    message: "Invalid Eth Address",
-                  },
-                })}
-              />
-            </div>
+          <div className="flex flex-col">
+            <label htmlFor="feeReceiver" className={labelClassname}>
+              Protocol fee Receiver address
+            </label>
+            <input
+              type="text"
+              placeholder="0x.."
+              className={inputClassname}
+              {...register("feeReceiver", {
+                required: true,
+                pattern: {
+                  value: ethereumAddressRegExp,
+                  message: "Invalid Eth Address",
+                },
+              })}
+            />
+          </div>
 
-            <div className="flex flex-col">
-              <label htmlFor="councilSafe" className={labelClassname}>
-                Council safe address
-              </label>
-              <input
-                type="text"
-                placeholder="0x.."
-                className={inputClassname}
-                {...register("councilSafe", {
-                  required: true,
-                  pattern: {
-                    value: ethereumAddressRegExp,
-                    message: "Invalid Eth Address",
-                  },
-                })}
-              />
-            </div>
-
-            <div className="mb-4 flex items-center">
-              <input
-                defaultChecked
-                id="checkbox-1"
-                type="checkbox"
-                value=""
-                {...register("isKickMemberEnabled")}
-                className="checkbox-accent checkbox"
-              />
-              <label htmlFor="checkbox-1" className="ms-2 text-sm font-medium ">
-                {isKickMemberEnabled
-                  ? "Admins can expel members"
-                  : "Admins can not expel members"}
-              </label>
-            </div>
-
-            {/* Covenant text */}
+          <div className="flex flex-col">
             <label htmlFor="councilSafe" className={labelClassname}>
-              Covenant descrition
+              Council safe address
             </label>
-            <textarea
-              className="textarea textarea-info line-clamp-5"
-              placeholder="1Hive is a community of ...The goal of the 1Hive protocol is to foster a healthy community Our Standards...
+            <input
+              type="text"
+              placeholder="0x.."
+              className={inputClassname}
+              {...register("councilSafe", {
+                required: true,
+                pattern: {
+                  value: ethereumAddressRegExp,
+                  message: "Invalid Eth Address",
+                },
+              })}
+            />
+          </div>
+
+          <div className="mb-4 flex items-center">
+            <input
+              defaultChecked
+              id="checkbox-1"
+              type="checkbox"
+              value=""
+              {...register("isKickMemberEnabled")}
+              className="checkbox-accent checkbox"
+            />
+            <label htmlFor="checkbox-1" className="ms-2 text-sm font-medium ">
+              {isKickMemberEnabled
+                ? "Admins can expel members"
+                : "Admins can not expel members"}
+            </label>
+          </div>
+
+          {/* Covenant text */}
+          <label htmlFor="councilSafe" className={labelClassname}>
+            Covenant descrition
+          </label>
+          <textarea
+            className="textarea textarea-info line-clamp-5"
+            placeholder="1Hive is a community of ...The goal of the 1Hive protocol is to foster a healthy community Our Standards...
               Examples of behavior that contributes to a positive environment ..."
-              rows={7}
-              onChange={(e) => setCovenant(e.target.value)}
-            ></textarea>
+            rows={7}
+            onChange={(e) => setCovenant(e.target.value)}
+          ></textarea>
 
-            {/* Upload image */}
-            <label htmlFor="cover-photo" className={labelClassname}>
-              Banner Image
-            </label>
-            <div className="mt-2  flex justify-center rounded-lg border border-dashed border-secondary px-6 py-10">
-              <div className="text-center">
-                {file ? (
-                  <Image
-                    src={URL.createObjectURL(file)}
-                    alt="Project cover photo"
-                    width={100}
-                    height={100}
-                  />
-                ) : (
-                  <>
-                    <div className="mt-4 flex flex-col text-sm leading-6 text-gray-400 ">
-                      <PhotoIcon
-                        className="mx-auto h-12 w-12 text-secondary"
-                        aria-hidden="true"
+          {/* Upload image */}
+          <label htmlFor="cover-photo" className={labelClassname}>
+            Banner Image
+          </label>
+          <div className="mt-2  flex justify-center rounded-lg border border-dashed border-secondary px-6 py-10">
+            <div className="text-center">
+              {file ? (
+                <Image
+                  src={URL.createObjectURL(file)}
+                  alt="Project cover photo"
+                  width={100}
+                  height={100}
+                />
+              ) : (
+                <>
+                  <div className="mt-4 flex flex-col text-sm leading-6 text-gray-400 ">
+                    <PhotoIcon
+                      className="mx-auto h-12 w-12 text-secondary"
+                      aria-hidden="true"
+                    />
+                    <label
+                      htmlFor={"image"}
+                      className="relative cursor-pointer rounded-lg bg-surface font-semibold transition-colors duration-200 ease-in-out focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-200 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 hover:text-primary"
+                    >
+                      <span className="text-secondary">Upload a file</span>
+                      <input
+                        id={"image"}
+                        name={"image"}
+                        type="file"
+                        className="sr-only"
+                        accept="image/*"
+                        onChange={handleFileChange}
                       />
-                      <label
-                        htmlFor={"image"}
-                        className="relative cursor-pointer rounded-lg bg-surface font-semibold transition-colors duration-200 ease-in-out focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-200 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 hover:text-primary"
-                      >
-                        <span className="text-secondary">Upload a file</span>
-                        <input
-                          id={"image"}
-                          name={"image"}
-                          type="file"
-                          className="sr-only"
-                          accept="image/*"
-                          onChange={handleFileChange}
-                        />
-                      </label>
+                    </label>
 
-                      <div className="mt-1 space-y-1">
-                        <p className="pl-1 text-black">or drag and drop</p>
-                        <p className="text-xs leading-5 text-black">
-                          PNG, JPG, GIF up to 10MB
-                        </p>
-                      </div>
+                    <div className="mt-1 space-y-1">
+                      <p className="pl-1 text-black">or drag and drop</p>
+                      <p className="text-xs leading-5 text-black">
+                        PNG, JPG, GIF up to 10MB
+                      </p>
                     </div>
-                  </>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        ) : (
-          <CommunityOverview data={previewData} />
-        )}
-
-        <div className="flex w-full items-center justify-center py-6">
-          {!isEditMode ? (
-            <Button type="button" onClick={handlePreview} variant="fill">
-              Preview
-            </Button>
-          ) : (
-            <div className="flex items-center gap-10">
-              <Button type="submit">Submit</Button>
-              <Button
-                type="button"
-                onClick={() => setIsEditMode(false)}
-                variant="fill"
-              >
-                Edit
-              </Button>
-            </div>
-          )}
         </div>
-      </form>
-    </FormModal>
+      ) : (
+        <CommunityOverview data={previewData} />
+      )}
+
+      <div className="flex w-full items-center justify-center py-6">
+        {!isEditMode ? (
+          <Button type="button" onClick={handlePreview} variant="fill">
+            Preview
+          </Button>
+        ) : (
+          <div className="flex items-center gap-10">
+            <Button type="submit">Submit</Button>
+            <Button
+              type="button"
+              onClick={() => setIsEditMode(false)}
+              variant="fill"
+            >
+              Edit
+            </Button>
+          </div>
+        )}
+      </div>
+    </form>
   );
 };
 
