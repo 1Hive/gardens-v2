@@ -1,0 +1,4 @@
+# some abi should be ignored
+pkg/contracts/out/**
+# !pkg/contracts/out/CVStrategy.sol/CVStrategy.json
+# pkg/contracts/out
