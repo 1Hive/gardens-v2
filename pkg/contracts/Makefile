@@ -41,11 +41,21 @@ deploy-testnet:
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast -vv
-	
+
+
+deploy-testnet2-op: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--account pk1 \
+	--sig "run(string)" 'opsepolia' \
+	--ffi \
+	-vvv
+
 deploy-testnet2: 
-	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pk1 \
+	--sig "run(string)" 'arbsepolia' \
 	--ffi \
 	-vvv
 deploy-verify: 

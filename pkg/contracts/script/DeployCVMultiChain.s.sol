@@ -3,7 +3,10 @@ pragma solidity ^0.8.13;
 
 import "forge-std/console2.sol";
 import "forge-std/Script.sol";
+import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "../src/CVStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
@@ -19,16 +22,86 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 
-contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
-    uint256 public constant MINIMUM_STAKE = 50;
+contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
+    using stdJson for string;
 
-    address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
+    uint256 public MINIMUM_STAKE = 50;
+
+    address public SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
+    address public TOKEN;
+
+    string public CURRENT_NETWORK = "arbsepolia";
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
     }
 
+    function executeJq(string memory command) internal returns (bytes memory) {
+        string[] memory inputs = new string[](3);
+
+        inputs[0] = "bash";
+        inputs[1] = "-c";
+        inputs[2] = command;
+
+        bytes memory result = vm.ffi(inputs);
+        console2.logBytes(result);
+        return result;
+    }
+
+    function getKeyNetwork(string memory key) internal view returns (string memory) {
+        string memory networkSelected = CURRENT_NETWORK;
+        string memory jqNetworkSelected = string.concat("$.networks[?(@.name=='", networkSelected, "')]");
+        return string.concat(jqNetworkSelected, key);
+    }
+
+    function getNetworkJson() internal view returns (string memory) {
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
+        string memory json = vm.readFile(path);
+        return json;
+    }
+
     function run() public {
+        string memory net = vm.prompt("Enter network name");
+        run(net);
+    }
+
+    function run(string memory network) public {
+        if (bytes(network).length != 0) {
+            CURRENT_NETWORK = network;
+        }
+        // string memory cmd =
+        //     "jq -r '.networks[] | select(.name==\"arbsepolia\") | .ENVS | .SENDER' pkg/contracts/config/networks.json";
+        // string memory cmd = "jq -r '.networks[] | select(.name==\"arbsepolia\")' pkg/contracts/config/networks.json";
+        // bytes memory json = executeJq(cmd);
+
+        string memory json = getNetworkJson();
+
+        uint256 chainId = json.readUint(getKeyNetwork(".chainId"));
+        string memory name = json.readString(getKeyNetwork(".name"));
+        SENDER = json.readAddress(getKeyNetwork(".ENVS.SENDER"));
+
+        console2.log("name: %s", name);
+        console2.log("sender: %s", SENDER);
+        // console2.log("envs");
+        // console2.log(string(nj.envs));
+
+        // uint256 chainid = string(json).readUint(".chainId");
+        // string memory cmd = "pwd";
+
+        // address ENV_SENDER = bytesToAddress(executeJq(cmd));
+
+        // console2.log("Sender: %s", ENV_SENDER);
+
+        // cmd = "jq -r '.networks[] | select(.name==\"arbsepolia\") | .chainId' pkg/contracts/config/networks.json";
+
+        // console2.logBytes32(chainid[0]);
+        // bytes memory chainid = executeJq(cmd);
+        // console2.logBytes32(chainid[1]);
+
+        // uint256 ENV_CHAINID = bytesToUint256(executeJq(cmd));
+        console2.log("chainId : %s", chainId);
+
         address allo_proxy = vm.envAddress("ALLO_PROXY");
         if (allo_proxy == address(0)) {
             revert("ALLO_PROXY not set");
@@ -41,8 +114,14 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         Allo allo = Allo(allo_proxy);
 
+        TOKEN = json.readAddress(getKeyNetwork(".ENVS.TOKEN"));
+        assertTrue(TOKEN != address(0));
         // console2.log("Allo Addr: %s", address(allo));
-        AMockERC20 token = AMockERC20(0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D);
+        AMockERC20 token = AMockERC20(TOKEN);
+        if (TOKEN == address(0)) {
+            token = new AMockERC20();
+            TOKEN = address(token);
+        }
 
         // IRegistry registry = allo.getRegistry();
         // console2.log("Registry Addr: %s", address(registry));
