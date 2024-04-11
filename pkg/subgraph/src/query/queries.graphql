@@ -90,6 +90,7 @@ query getMember($me: ID!) {
     totalStakedAmount
     stakes {
       id
+      poolId
       proposal {
         id
       }

@@ -206,7 +206,7 @@ export function handleSupportAdded(event: SupportAdded): void {
     stake.member = event.params.from.toHexString();
     stake.proposal = cvp.id;
   }
-
+  stake.poolId = cvs.poolId;
   stake.amount = event.params.amount;
   stake.createdAt = event.block.timestamp;
   stake.save();

@@ -1153,6 +1153,7 @@ export type RegistryFactory_orderBy = 'id' | 'chainId' | 'registryCommunities';
 export type Stake = {
     id: Scalars['ID'];
     member: Member;
+    poolId: Scalars['BigInt'];
     proposal: CVProposal;
     amount: Scalars['BigInt'];
     createdAt: Scalars['BigInt'];
@@ -1187,6 +1188,14 @@ export type Stake_filter = {
     member_not_ends_with?: InputMaybe<Scalars['String']>;
     member_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
     member_?: InputMaybe<Member_filter>;
+    poolId?: InputMaybe<Scalars['BigInt']>;
+    poolId_not?: InputMaybe<Scalars['BigInt']>;
+    poolId_gt?: InputMaybe<Scalars['BigInt']>;
+    poolId_lt?: InputMaybe<Scalars['BigInt']>;
+    poolId_gte?: InputMaybe<Scalars['BigInt']>;
+    poolId_lte?: InputMaybe<Scalars['BigInt']>;
+    poolId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    poolId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     proposal?: InputMaybe<Scalars['String']>;
     proposal_not?: InputMaybe<Scalars['String']>;
     proposal_gt?: InputMaybe<Scalars['String']>;
@@ -1229,7 +1238,7 @@ export type Stake_filter = {
     and?: InputMaybe<Array<InputMaybe<Stake_filter>>>;
     or?: InputMaybe<Array<InputMaybe<Stake_filter>>>;
 };
-export type Stake_orderBy = 'id' | 'member' | 'member__id' | 'member__totalStakedAmount' | 'proposal' | 'proposal__id' | 'proposal__metadata' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__threshold' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'amount' | 'createdAt';
+export type Stake_orderBy = 'id' | 'member' | 'member__id' | 'member__totalStakedAmount' | 'poolId' | 'proposal' | 'proposal__id' | 'proposal__metadata' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__threshold' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'amount' | 'createdAt';
 export type Subscription = {
     cvstrategy?: Maybe<CVStrategy>;
     cvstrategies: Array<CVStrategy>;
@@ -1851,6 +1860,7 @@ export type RegistryFactoryResolvers<ContextType = MeshContext, ParentType exten
 export type StakeResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Stake'] = ResolversParentTypes['Stake']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     member?: Resolver<ResolversTypes['Member'], ParentType, ContextType>;
+    poolId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     proposal?: Resolver<ResolversTypes['CVProposal'], ParentType, ContextType>;
     amount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     createdAt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
@@ -2022,7 +2032,7 @@ export type getMemberQuery = {
         memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'id' | 'stakedAmount' | 'isRegistered'> & {
             registryCommunity: Pick<RegistryCommunity, 'id'>;
         })>>;
-        stakes?: Maybe<Array<(Pick<Stake, 'id' | 'amount' | 'createdAt'> & {
+        stakes?: Maybe<Array<(Pick<Stake, 'id' | 'poolId' | 'amount' | 'createdAt'> & {
             proposal: Pick<CVProposal, 'id'>;
         })>>;
     })>;

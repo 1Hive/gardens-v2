@@ -269,6 +269,7 @@ export const getMemberDocument = gql `
     totalStakedAmount
     stakes {
       id
+      poolId
       proposal {
         id
       }
