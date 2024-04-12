@@ -70,10 +70,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         if (bytes(network).length != 0) {
             CURRENT_NETWORK = network;
         }
-        // string memory cmd =
-        //     "jq -r '.networks[] | select(.name==\"arbsepolia\") | .ENVS | .SENDER' pkg/contracts/config/networks.json";
-        // string memory cmd = "jq -r '.networks[] | select(.name==\"arbsepolia\")' pkg/contracts/config/networks.json";
-        // bytes memory json = executeJq(cmd);
 
         string memory json = getNetworkJson();
 
@@ -83,26 +79,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         console2.log("name: %s", name);
         console2.log("sender: %s", SENDER);
-        // console2.log("envs");
-        // console2.log(string(nj.envs));
-
-        // uint256 chainid = string(json).readUint(".chainId");
-        // string memory cmd = "pwd";
-
-        // address ENV_SENDER = bytesToAddress(executeJq(cmd));
-
-        // console2.log("Sender: %s", ENV_SENDER);
-
-        // cmd = "jq -r '.networks[] | select(.name==\"arbsepolia\") | .chainId' pkg/contracts/config/networks.json";
-
-        // console2.logBytes32(chainid[0]);
-        // bytes memory chainid = executeJq(cmd);
-        // console2.logBytes32(chainid[1]);
-
-        // uint256 ENV_CHAINID = bytesToUint256(executeJq(cmd));
         console2.log("chainId : %s", chainId);
 
-        address allo_proxy = vm.envAddress("ALLO_PROXY");
+        address allo_proxy = json.readAddress(getKeyNetwork(".ENVS.ALLO_PROXY"));
+        // address allo_proxy = vm.envAddress("ALLO_PROXY");
         if (allo_proxy == address(0)) {
             revert("ALLO_PROXY not set");
         }
@@ -115,7 +95,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         Allo allo = Allo(allo_proxy);
 
         TOKEN = json.readAddress(getKeyNetwork(".ENVS.TOKEN"));
-        assertTrue(TOKEN != address(0));
+        // assertTrue(TOKEN != address(0));
         // console2.log("Allo Addr: %s", address(allo));
         AMockERC20 token = AMockERC20(TOKEN);
         if (TOKEN == address(0)) {

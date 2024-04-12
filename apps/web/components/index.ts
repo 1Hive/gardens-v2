@@ -21,3 +21,4 @@ export { GoBackButton } from "./GoBackButton";
 export { IncreasePower } from "./IncreasePower";
 export { TransactionModal } from "./TransactionModal";
 export { PointsComponent } from "./PointsComponent";
+export { Show, When, Else } from "./Show";

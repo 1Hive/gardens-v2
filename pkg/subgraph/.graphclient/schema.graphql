@@ -1361,6 +1361,7 @@ enum RegistryFactory_orderBy {
 type Stake {
   id: ID!
   member: Member!
+  poolId: BigInt!
   proposal: CVProposal!
   amount: BigInt!
   createdAt: BigInt!
@@ -1396,6 +1397,14 @@ input Stake_filter {
   member_not_ends_with: String
   member_not_ends_with_nocase: String
   member_: Member_filter
+  poolId: BigInt
+  poolId_not: BigInt
+  poolId_gt: BigInt
+  poolId_lt: BigInt
+  poolId_gte: BigInt
+  poolId_lte: BigInt
+  poolId_in: [BigInt!]
+  poolId_not_in: [BigInt!]
   proposal: String
   proposal_not: String
   proposal_gt: String
@@ -1444,6 +1453,7 @@ enum Stake_orderBy {
   member
   member__id
   member__totalStakedAmount
+  poolId
   proposal
   proposal__id
   proposal__metadata

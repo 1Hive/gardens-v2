@@ -35,6 +35,7 @@ import * as dnum from "dnum";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { queryByChain } from "@/providers/urql";
 import { getChainIdFromPath } from "@/utils/path";
+import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
 
 type InputItem = {
   id: string;
@@ -70,11 +71,11 @@ export function Proposals({
 }) {
   const [editView, setEditView] = useState(false);
   // const [distributedPoints, setDistributedPoints] = useState(0);
-  const [message, setMessage] = useState("");
   const [pointsDistributedSum, setPointsDistributedSum] = useState<
     number | undefined
   >(undefined);
 
+  const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
   //using this for test alpha
@@ -93,6 +94,14 @@ export function Proposals({
   const urqlClient = useUrqlClient();
 
   const chainId = getChainIdFromPath();
+  //TODO: make hook for this
+
+  // const { data: memberPointsVotingPower } = useContractRead({
+  //   address: communityAddress as Address,
+  //   abi: abiWithErrors(registryCommunityABI),
+  //   functionName: "getMemberPowerInStrategy",
+  //   args: [connectedAccount as Address, strategyAddress],
+  // });
 
   const runIsMemberQuery = useCallback(async () => {
     if (address === undefined) {
@@ -302,6 +311,32 @@ export function Proposals({
   };
 
   const DECIMALS = strategy.registryCommunity.garden.decimals;
+  //ManageSupport Tooltip condition => message mapping
+  const disableManageSupportBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMemberActived,
+      message: "Activate your points to support proposals",
+    },
+  ];
+  const disableManSupportButton = disableManageSupportBtnCondition.some(
+    (cond) => cond.condition,
+  );
+  const tooltipMessage = useTooltipMessage(disableManageSupportBtnCondition);
+
+  //Execute Tooltip condition => message mapping
+  // const disableExecuteBtnCondition: ConditionObject[] = [
+  //   {
+  //     condition: proposals.some((proposal) => proposal.proposalStatus == "4"),
+  //     message: "Proposal already executed",
+  //   },
+  // ];
+  // const disableExecuteButton = disableExecuteBtnCondition.some(
+  //   (cond) => cond.condition,
+  // );
+  // const tooltipMessageExecuteBtn = useTooltipMessage(
+  //   disableExecuteBtnCondition,
+  // );
+
   return (
     <section className="rounded-lg border-2 border-black bg-white p-12">
       <div className="mx-auto max-w-5xl space-y-10">
@@ -317,8 +352,8 @@ export function Proposals({
                 <Button
                   icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
                   onClick={() => setEditView((prev) => !prev)}
-                  disabled={!isMemberActived || proposals.length === 0}
-                  tooltip={`Activate your points to support proposals`}
+                  disabled={disableManSupportButton}
+                  tooltip={tooltipMessage}
                 >
                   Manage support
                 </Button>
@@ -363,35 +398,60 @@ export function Proposals({
                     <span className="text-md">ID {getProposalId(id)}</span>
                   </div>
 
-                  <div className="flex flex-col items-center gap-8">
-                    <div className="flex items-center gap-8">
-                      <StatusBadge status={proposalStatus} />
-                      {/* Button to test distribute */}
-                      {!editView && (
-                        <Button
-                          disabled={proposalStatus == "4"}
-                          tooltip="Proposal already Executed"
-                          onClick={() =>
-                            writeDistribute?.({
-                              args: [
-                                strategy.poolId,
-                                [strategy.id],
-                                encodedDataProposalId(id),
-                              ],
-                            })
-                          }
-                        >
-                          Execute proposal
-                        </Button>
-                      )}
-                      <>
-                        <Link href={`${pathname}/proposals/${id}`}>
-                          <Button variant="outline">View Proposal</Button>
-                        </Link>
-                      </>
-                    </div>
+                  <div className="flex items-center gap-8">
+                    <StatusBadge status={proposalStatus} />
+                    {/* Button to test distribute */}
+                    {!editView && (
+                      <Button
+                        // TODO: add flexible tooltip and func to check executability
+                        disabled={proposalStatus == "4"}
+                        tooltip={"Proposal already executed"}
+                        onClick={() =>
+                          writeDistribute?.({
+                            args: [
+                              strategy.poolId,
+                              [strategy.id],
+                              encodedDataProposalId(id),
+                            ],
+                          })
+                        }
+                      >
+                        Execute proposal
+                      </Button>
+                    )}
+                    <>
+                      <Link href={`${pathname}/proposals/${id}`}>
+                        <Button variant="outline">View Proposal</Button>
+                      </Link>
+                    </>
                   </div>
                 </div>
+
+                {editView && (
+                  <div className="flex w-full flex-wrap items-center justify-between gap-6">
+                    <div className="flex items-center gap-8">
+                      <div>
+                        <input
+                          key={i}
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={inputs[i]?.value}
+                          className={`range range-success range-sm min-w-[420px]`}
+                          step="5"
+                          onChange={(e) =>
+                            inputHandler(i, Number(e.target.value))
+                          }
+                        />
+                        <div className="flex w-full justify-between px-[10px] text-[4px]">
+                          {[...Array(21)].map((_, i) => (
+                            <span key={"span_" + i}>|</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {editView && (
                   <div className="flex w-full flex-wrap items-center justify-between gap-6">
