@@ -35,7 +35,11 @@ import * as dnum from "dnum";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { queryByChain } from "@/providers/urql";
 import { getChainIdFromPath } from "@/utils/path";
-import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
+import {
+  useDisableButtons,
+  ConditionObject,
+  disableButtonsHookProps,
+} from "@/hooks/useDisableButtons";
 
 type InputItem = {
   id: string;
@@ -311,17 +315,22 @@ export function Proposals({
   };
 
   const DECIMALS = strategy.registryCommunity.garden.decimals;
+
+  console.log(isMemberActived);
+
   //ManageSupport Tooltip condition => message mapping
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
       condition: !isMemberActived,
-      message: "Activate your points to support proposals",
+      message: "Must have points activated to support proposals",
     },
   ];
   const disableManSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
   );
-  const tooltipMessage = useTooltipMessage(disableManageSupportBtnCondition);
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
+    disableManageSupportBtnCondition,
+  );
 
   //Execute Tooltip condition => message mapping
   // const disableExecuteBtnCondition: ConditionObject[] = [
@@ -333,7 +342,7 @@ export function Proposals({
   // const disableExecuteButton = disableExecuteBtnCondition.some(
   //   (cond) => cond.condition,
   // );
-  // const tooltipMessageExecuteBtn = useTooltipMessage(
+  // const tooltipMessageExecuteBtn = useDisableButtons(
   //   disableExecuteBtnCondition,
   // );
 
@@ -353,7 +362,7 @@ export function Proposals({
                   icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
                   onClick={() => setEditView((prev) => !prev)}
                   disabled={disableManSupportButton}
-                  tooltip={tooltipMessage}
+                  tooltip={String(tooltipMessage)}
                 >
                   Manage support
                 </Button>
@@ -404,8 +413,14 @@ export function Proposals({
                     {!editView && (
                       <Button
                         // TODO: add flexible tooltip and func to check executability
-                        disabled={proposalStatus == "4"}
-                        tooltip={"Proposal already executed"}
+                        disabled={
+                          proposalStatus == "4" || !isConnected || missmatchUrl
+                        }
+                        tooltip={
+                          proposalStatus == "4"
+                            ? "Proposal already executed"
+                            : tooltipMessage
+                        }
                         onClick={() =>
                           writeDistribute?.({
                             args: [
@@ -426,33 +441,6 @@ export function Proposals({
                     </>
                   </div>
                 </div>
-
-                {editView && (
-                  <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                    <div className="flex items-center gap-8">
-                      <div>
-                        <input
-                          key={i}
-                          type="range"
-                          min={0}
-                          max={100}
-                          value={inputs[i]?.value}
-                          className={`range range-success range-sm min-w-[420px]`}
-                          step="5"
-                          onChange={(e) =>
-                            inputHandler(i, Number(e.target.value))
-                          }
-                        />
-                        <div className="flex w-full justify-between px-[10px] text-[4px]">
-                          {[...Array(21)].map((_, i) => (
-                            <span key={"span_" + i}>|</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {editView && (
                   <div className="flex w-full flex-wrap items-center justify-between gap-6">
                     <div className="flex items-center gap-8">

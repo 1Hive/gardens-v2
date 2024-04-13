@@ -90,7 +90,6 @@ export default async function Garden({
             shared
             <span className="text-primary"> covenant.</span>
           </p>
-
           <Link
             href={`/gardens/${chain}/${garden}/create-community`}
             className=""

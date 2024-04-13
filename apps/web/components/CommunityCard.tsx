@@ -14,6 +14,7 @@ import {
 import { formatTokenAmount } from "@/utils/numbers";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -36,8 +37,9 @@ export function CommunityCard({
   communityFee,
   tokenGarden,
 }: CommunityCardProps) {
-  const { address: accountAddress, isConnected } = useAccount();
+  const { address: accountAddress } = useAccount();
   const pathname = usePathname();
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   const pools = strategies ?? [];
   members = members ?? [];
@@ -114,7 +116,12 @@ export function CommunityCard({
                 href={`${pathname}/${communityAddress}/create-pool`}
                 className=""
               >
-                <Button disabled={!isConnected}>Create Pool</Button>
+                <Button
+                  disabled={!isConnected || missmatchUrl}
+                  tooltip={tooltipMessage}
+                >
+                  Create Pool
+                </Button>
               </Link>
             </div>
 

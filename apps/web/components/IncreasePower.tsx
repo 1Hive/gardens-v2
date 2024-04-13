@@ -16,8 +16,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
 import { getChainIdFromPath } from "@/utils/path";
-import { Show, When, Else } from "./Show";
-import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
+import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -177,7 +176,7 @@ export const IncreasePower = ({
   const disabledIncPowerButton = disableIncPowerBtnCondition.some(
     (cond) => cond.condition,
   );
-  const tooltipMessage = useTooltipMessage(disableIncPowerBtnCondition);
+  const { tooltipMessage } = useDisableButtons(disableIncPowerBtnCondition);
 
   return (
     <>

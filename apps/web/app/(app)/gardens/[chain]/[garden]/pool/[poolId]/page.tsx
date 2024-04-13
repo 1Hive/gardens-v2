@@ -1,7 +1,6 @@
 import { Badge, Button, Proposals, PoolMetrics } from "@/components";
 import Image from "next/image";
 import { createPublicClient, http } from "viem";
-import { getChain } from "@/configs/chainServer";
 import { gardenLand } from "@/assets";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
@@ -10,10 +9,10 @@ import {
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { ProposalForm } from "@/components/Forms";
 import { PointsComponent } from "@/components";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import Link from "next/link";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +39,7 @@ export default async function Pool({
     { poolId: poolId, garden: garden },
   );
   const strategyObj = data?.cvstrategies?.[0];
+  //const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;
@@ -53,6 +53,7 @@ export default async function Pool({
   const poolAmount = strategyObj?.poolAmount as number;
   const tokenGarden = data.tokenGarden;
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
+  const { title, description } = await getIpfsMetadata(metadata);
 
   //calcs for spending limit
   const PRECISON_OF_7 = 10 ** 7;
@@ -62,8 +63,7 @@ export default async function Pool({
   const spendingLimitPct = maxRatioDivPrecision * 100;
 
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
-
-  const { title, description } = await getIpfsMetadata(metadata);
+  //
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -164,7 +164,12 @@ export default async function Pool({
             href={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
             className=""
           >
-            <Button className="">Create Proposal</Button>
+            <Button
+            // disabled={}
+            // tooltip={tooltipMessage}
+            >
+              Create Proposal
+            </Button>
           </Link>
         </div>
       </div>

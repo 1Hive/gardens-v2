@@ -17,7 +17,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { calculateFees, formatTokenAmount, gte, dn } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal, TransactionModalStep } from "./TransactionModal";
-import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
+import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 
 type RegisterMemberProps = {
   name: string;
@@ -196,7 +196,7 @@ export function RegisterMember({
   const disabledRegMemberButton = disableRegMemberBtnCondition.some(
     (cond) => cond.condition,
   );
-  const tooltipMessage = useTooltipMessage(disableRegMemberBtnCondition);
+  const { tooltipMessage } = useDisableButtons(disableRegMemberBtnCondition);
 
   return (
     <>
