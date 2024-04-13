@@ -25,13 +25,13 @@ export function useDisableButtons(
   const path = usePathname();
   const urlChainId = Number(path.split("/")[2]); // chain id from the url
   const { chain } = useNetwork(); // wallet connected chain object
-  const missmatchUrlAndWalletConnectedNetwork = chain?.id !== urlChainId;
+  const missmatchUrlAndWalletChain = chain?.id !== urlChainId;
 
   const tooltipMessage = useMemo(() => {
     if (!isConnected) {
       return "Connect Wallet";
     }
-    if (missmatchUrlAndWalletConnectedNetwork) {
+    if (missmatchUrlAndWalletChain) {
       return `Switch to ${supportedChains[urlChainId] ?? ""} Network`;
     }
     if (conditions && conditions.length > 0) {
@@ -41,16 +41,11 @@ export function useDisableButtons(
       }
     }
     return "tooltip message";
-  }, [
-    conditions,
-    isConnected,
-    missmatchUrlAndWalletConnectedNetwork,
-    urlChainId,
-  ]);
+  }, [conditions, isConnected, missmatchUrlAndWalletChain, urlChainId]);
 
   return {
     tooltipMessage,
     isConnected,
-    missmatchUrl: missmatchUrlAndWalletConnectedNetwork,
+    missmatchUrl: missmatchUrlAndWalletChain,
   };
 }

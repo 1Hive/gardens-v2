@@ -75,7 +75,7 @@ export function ActivatePoints({
     updateDeactivePointsStatus(deactivatePointsStatus);
   }, [deactivatePointsStatus]);
 
-  // Activate Tooltip condition => message mapping
+  // Activate Disable Button condition => message mapping
   const disableActiveBtnCondition: ConditionObject[] = [
     {
       condition: !isMember,

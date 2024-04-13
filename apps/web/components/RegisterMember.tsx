@@ -186,7 +186,7 @@ export function RegisterMember({
     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
   }, [unregisterMemberStatus]);
 
-  //RegisterMember Tooltip condition => message mapping
+  //RegisterMember Disable Button condition => message mapping
   const disableRegMemberBtnCondition: ConditionObject[] = [
     {
       condition: !accountHasBalance,

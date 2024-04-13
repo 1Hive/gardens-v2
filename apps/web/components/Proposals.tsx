@@ -9,15 +9,11 @@ import {
   Address as AddressType,
   useContractRead,
 } from "wagmi";
-import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
 import { formatTokenAmount } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
-import { ProposalStats } from "@/components";
-import { toast } from "react-toastify";
-import { useViemClient } from "@/hooks/useViemClient";
 import {
   getStrategyByPoolQuery,
   isMemberDocument,
@@ -30,16 +26,11 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { encodeAbiParameters } from "viem";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
-import * as dnum from "dnum";
-import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { queryByChain } from "@/providers/urql";
 import { getChainIdFromPath } from "@/utils/path";
-import {
-  useDisableButtons,
-  ConditionObject,
-  disableButtonsHookProps,
-} from "@/hooks/useDisableButtons";
+import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { FormLink } from "@/components";
 
 type InputItem = {
   id: string;
@@ -68,10 +59,12 @@ export function Proposals({
   strategy,
   alloInfo,
   communityAddress,
+  createProposalUrl,
 }: {
   strategy: Strategy;
   alloInfo: AlloQuery;
   communityAddress: Address;
+  createProposalUrl: string;
 }) {
   const [editView, setEditView] = useState(false);
   // const [distributedPoints, setDistributedPoints] = useState(0);
@@ -82,9 +75,6 @@ export function Proposals({
   const [message, setMessage] = useState("");
   const [inputs, setInputs] = useState<InputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
-  //using this for test alpha
-  const { address: connectedAccount } = useAccount();
-  // const { voterStake } = useTotalVoterStakedPct(strategy);
   const [voterStake, setVoterStake] = useState<bigint | undefined>(undefined);
 
   const [memberPointsInPool, setMemberPointsInPool] = useState<number>(0);
@@ -94,18 +84,8 @@ export function Proposals({
   const pathname = usePathname();
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-
   const urqlClient = useUrqlClient();
-
   const chainId = getChainIdFromPath();
-  //TODO: make hook for this
-
-  // const { data: memberPointsVotingPower } = useContractRead({
-  //   address: communityAddress as Address,
-  //   abi: abiWithErrors(registryCommunityABI),
-  //   functionName: "getMemberPowerInStrategy",
-  //   args: [connectedAccount as Address, strategyAddress],
-  // });
 
   const runIsMemberQuery = useCallback(async () => {
     if (address === undefined) {
@@ -316,9 +296,7 @@ export function Proposals({
 
   const DECIMALS = strategy.registryCommunity.garden.decimals;
 
-  console.log(isMemberActived);
-
-  //ManageSupport Tooltip condition => message mapping
+  //ManageSupport Disable Button condition => message mapping
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
       condition: !isMemberActived,
@@ -332,7 +310,7 @@ export function Proposals({
     disableManageSupportBtnCondition,
   );
 
-  //Execute Tooltip condition => message mapping
+  //Execute Disable Button condition => message mapping
   // const disableExecuteBtnCondition: ConditionObject[] = [
   //   {
   //     condition: proposals.some((proposal) => proposal.proposalStatus == "4"),
@@ -516,12 +494,13 @@ export function Proposals({
         <div className="">
           <p className="font-semibold">{message}</p>
         </div>
-
-        {/*  PROPOSALS STATS  ///// */}
-        {/* <ProposalStats
-          proposals={proposals}
-          distributedPoints={distributedPoints}
-        /> */}
+      </div>
+      <div>
+        <h4 className="text-2xl">Do you have a great idea?</h4>
+        <div className="flex items-center gap-6">
+          <p>Share it with the community and get support !</p>
+          <FormLink href={createProposalUrl} label="Create Proposal" />
+        </div>
       </div>
     </section>
   );

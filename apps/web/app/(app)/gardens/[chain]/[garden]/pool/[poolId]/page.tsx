@@ -1,6 +1,5 @@
-import { Badge, Button, Proposals, PoolMetrics } from "@/components";
+import { Badge, Proposals, PoolMetrics } from "@/components";
 import Image from "next/image";
-import { createPublicClient, http } from "viem";
 import { gardenLand } from "@/assets";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
@@ -11,8 +10,6 @@ import {
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { PointsComponent } from "@/components";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import Link from "next/link";
-import { useDisableButtons } from "@/hooks/useDisableButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +73,6 @@ export default async function Pool({
         </header>
         <main className="flex flex-col gap-10">
           {/* Description section */}
-
           <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
               <h3 className="max-w-2xl  text-center font-semibold">{title}</h3>
@@ -144,7 +140,7 @@ export default async function Pool({
             pointSystem={pointSystem}
             spendingLimit={spendingLimitPct}
           />
-          {/* Activate - Deactivate/ points */}
+          {/* With [Activate - Deactivate] funcionality */}
           <PointsComponent
             strategyAddress={strategyAddr}
             strategy={strategyObj}
@@ -156,22 +152,9 @@ export default async function Pool({
             strategy={strategyObj}
             alloInfo={alloInfo}
             communityAddress={communityAddress}
+            createProposalUrl={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
           />
-          {/* Metrics section (only funds available & spending limit for alpha) */}
         </main>
-        <div className="mt-4 flex justify-center">
-          <Link
-            href={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
-            className=""
-          >
-            <Button
-            // disabled={}
-            // tooltip={tooltipMessage}
-            >
-              Create Proposal
-            </Button>
-          </Link>
-        </div>
       </div>
     </div>
   );

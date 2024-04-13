@@ -157,7 +157,7 @@ export const IncreasePower = ({
   console.log(dataAllowance, "dataAllowance");
   console.log(increasePowerData);
 
-  //IncreasePower Tooltip condition => message mapping
+  //IncreasePower Disable Button condition => message mapping
   const disableIncPowerBtnCondition: ConditionObject[] = [
     {
       condition: !isMember,
