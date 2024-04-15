@@ -21,7 +21,7 @@ type ButtonProps = {
   walletConnected?: boolean;
 };
 
-type Variant = "primary" | "outline" | "fill" | "error";
+type Variant = "primary" | "outline" | "fill" | "error" | "link";
 type VariantStyles = Record<
   Variant,
   React.HTMLAttributes<HTMLButtonElement>["className"]
@@ -33,6 +33,7 @@ const VARIANT_STYLES: VariantStyles = {
   outline: "btn btn-info",
   fill: "bg-secondary text-white",
   error: "bg-error text-white",
+  link: "border-primary bg-inherit text-primary disabled:text-black disabled:border-black",
 };
 
 export function Button({

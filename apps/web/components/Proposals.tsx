@@ -331,7 +331,7 @@ export function Proposals({
           <div className="flex w-full items-baseline justify-between">
             <h3 className="font-semibold">Proposals</h3>
             {proposals.length === 0 ? (
-              <h4 className="text-lg font-semibold">
+              <h4 className="text-2xl text-info">
                 No submitted proposals to support
               </h4>
             ) : (

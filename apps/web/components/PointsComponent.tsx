@@ -20,7 +20,6 @@ export const PointsComponent: FC<PoolStatsProps> = ({
   communityAddress,
 }) => {
   const { address: connectedAccount } = useAccount();
-  const { isConnected } = useAccount();
 
   const { data: memberPointsVotingPower } = useContractRead({
     address: communityAddress as Address,
@@ -30,6 +29,9 @@ export const PointsComponent: FC<PoolStatsProps> = ({
     watch: true,
   });
 
+  const isValidAccount =
+    connectedAccount !== undefined && connectedAccount !== null;
+
   const { data: isMemberActivated } = useContractRead({
     address: communityAddress as Address,
     abi: abiWithErrors(registryCommunityABI),
@@ -37,6 +39,8 @@ export const PointsComponent: FC<PoolStatsProps> = ({
     args: [connectedAccount as Address, strategyAddress],
     watch: true,
   });
+
+  console.log(isMemberActivated, "isMemberActivated");
 
   const memberPointsInPool = (
     ((memberPointsVotingPower as bigint) ?? 0n) / PRECISION_SCALE
@@ -59,6 +63,9 @@ export const PointsComponent: FC<PoolStatsProps> = ({
     watch: true,
   });
 
+  const showTokensValue =
+    isMember && isMemberActivated !== undefined && isMemberActivated;
+
   return (
     <section className="border2 flex  w-full flex-col rounded-xl bg-white px-12 py-4">
       <h3 className="font-semibold">Your Tokens</h3>
@@ -66,15 +73,19 @@ export const PointsComponent: FC<PoolStatsProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-10">
             <div className="flex items-center gap-2 font-semibold">
-              {isMember && (
+              {showTokensValue && (
                 <>
-                  <p className="text-4xl">
+                  <p
+                    className={`text-4xl ${!isMemberActivated && "text-gray-300"}`}
+                  >
                     {formatTokenAmount(
                       memberPointsInPool,
                       strategy.registryCommunity.garden.decimals,
                     )}
                   </p>
-                  <span className="text-lg">
+                  <span
+                    className={`text-lg ${!isMemberActivated && "text-gray-300"}`}
+                  >
                     {strategy.registryCommunity.garden.symbol}
                   </span>
                 </>
