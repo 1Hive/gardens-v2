@@ -102,9 +102,6 @@ export function handleMemberRegistered(event: MemberRegistered): void {
   if (member == null) {
     member = new Member(memberAddress);
   }
-  log.debug("totalStakedAmount: ", [
-    member.totalStakedAmount ? member.totalStakedAmount!.toString() : "",
-  ]);
 
   member.save();
 
@@ -146,11 +143,6 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
 
   const memberAddress = event.params._member.toHexString();
   const id = `${memberAddress}-${event.address.toHexString()}`;
-  const member = Member.load(memberAddress);
-  if (member == null) {
-    log.error("Member not found: {}", [memberAddress]);
-    return;
-  }
 
   const memberCommunity = MemberCommunity.load(id);
   if (memberCommunity == null) {
@@ -161,11 +153,11 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
   memberCommunity.stakedAmount = BigInt.fromI32(0);
   memberCommunity.save();
 
-  member.totalStakedAmount = member.totalStakedAmount
-    ? member.totalStakedAmount!.minus(event.params._amountStaked)
+  memberCommunity.stakedAmount = memberCommunity.stakedAmount
+    ? memberCommunity.stakedAmount!.minus(event.params._amountStaked)
     : event.params._amountStaked;
 
-  member.save();
+  memberCommunity.save();
 }
 
 // handleMemberKicked
@@ -188,8 +180,8 @@ export function handleMemberKicked(event: MemberKicked): void {
   memberCommunity.stakedAmount = BigInt.fromI32(0);
   memberCommunity.save();
 
-  member.totalStakedAmount = member.totalStakedAmount
-    ? member.totalStakedAmount!.minus(event.params._amountReturned)
+  memberCommunity.stakedAmount = memberCommunity.stakedAmount
+    ? memberCommunity.stakedAmount!.minus(event.params._amountReturned)
     : event.params._amountReturned;
 
   member.save();

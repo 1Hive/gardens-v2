@@ -272,19 +272,21 @@ export function handlePowerIncreased(event: PowerIncreased): void {
 
   cvs.save();
 
-  const member = Member.load(event.params.member.toHexString());
-  if (member == null) {
-    log.debug("handlePowerIncreased member not found: {}", [
-      event.params.member.toHexString(),
+  const memberCommunityId = `${event.params.member.toHexString()}-${cvs.registryCommunity.toString()}`;
+
+  let memberCommunity = MemberCommunity.load(memberCommunityId);
+  if (memberCommunity == null) {
+    log.debug("handlePowerIncreased memberCommunity not found: {}", [
+      memberCommunityId.toString(),
     ]);
     return;
   }
 
-  member.totalStakedAmount = member.totalStakedAmount
-    ? member.totalStakedAmount!.plus(event.params.tokensStaked)
+  memberCommunity.stakedAmount = memberCommunity.stakedAmount
+    ? memberCommunity.stakedAmount!.plus(event.params.tokensStaked)
     : event.params.tokensStaked;
 
-  member.save();
+  memberCommunity.save();
 }
 
 export function handlePowerDecreased(event: PowerDecreased): void {
@@ -302,19 +304,21 @@ export function handlePowerDecreased(event: PowerDecreased): void {
 
   cvs.save();
 
-  const member = Member.load(event.params.member.toHexString());
-  if (member == null) {
-    log.debug("handlePowerIncreased member not found: {}", [
-      event.params.member.toHexString(),
+  const memberCommunityId = `${event.params.member.toHexString()}-${cvs.registryCommunity.toString()}`;
+
+  let memberCommunity = MemberCommunity.load(memberCommunityId);
+  if (memberCommunity == null) {
+    log.debug("handlePowerDecreased memberCommunity not found: {}", [
+      memberCommunityId.toString(),
     ]);
     return;
   }
 
-  member.totalStakedAmount = member.totalStakedAmount
-    ? member.totalStakedAmount!.minus(event.params.tokensUnStaked)
+  memberCommunity.stakedAmount = memberCommunity.stakedAmount
+    ? memberCommunity.stakedAmount!.minus(event.params.tokensUnStaked)
     : BigInt.fromI32(0);
 
-  member.save();
+  memberCommunity.save();
 }
 
 export function handleDecayUpdated(event: DecayUpdated): void {
