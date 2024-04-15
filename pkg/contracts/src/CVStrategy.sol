@@ -89,6 +89,7 @@ library StrategyStruct {
         uint256 maxRatio;
         // Weight | RHO | p
         uint256 weight;
+        uint256 minThresholdPoints;
         // Proposal Type
         ProposalType proposalType;
         //NEXT: use this for tests
@@ -142,6 +143,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event DecayUpdated(uint256 decay);
     event MaxRatioUpdated(uint256 maxRatio);
     event WeightUpdated(uint256 weight);
+
+    event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
+
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -166,8 +170,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     uint256 public proposalCounter = 0;
     uint256 public totalStaked;
     uint256 public totalPointsActivated;
+    uint256 public _minThresholdPoints = 0;
 
-    uint256 public minPointsActivated = 100 * 10 * PRECISION_SCALE;
     StrategyStruct.PointSystem public pointSystem;
     StrategyStruct.PointSystemConfig public pointConfig;
 
@@ -204,6 +208,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
+        _minThresholdPoints = ip.minThresholdPoints;
 
         emit InitializedCV(_poolId, ip);
     }
@@ -836,6 +841,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         ) >> 64;
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
+        _threshold = _threshold > _minThresholdPoints ? _threshold : _minThresholdPoints;
     }
 
     /**
@@ -875,9 +881,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function totalEffectiveActivePoints() public view returns (uint256) {
-        // console.log("totalPointsActivated", totalPointsActivated);
-        // console.log("minPointsActivated", minPointsActivated);
-        return totalPointsActivated > minPointsActivated ? totalPointsActivated : minPointsActivated;
+        return totalPointsActivated;
     }
 
     /**
@@ -949,5 +953,11 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
         registryCommunity = RegistryCommunity(_registryCommunity);
+        //@todo missing event, also we can change it?
+    }
+
+    function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {
+        emit MinThresholdPointsUpdated(_minThresholdPoints, minThresholdPoints_);
+        _minThresholdPoints = minThresholdPoints_;
     }
 }

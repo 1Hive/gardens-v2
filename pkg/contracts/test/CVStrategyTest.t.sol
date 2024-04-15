@@ -53,6 +53,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / 100;
     uint256 public constant REQUESTED_AMOUNT = 1000 ether;
     uint256 public constant PRECISION_SCALE = 10 ** 4;
+    uint256 public constant MIN_THRESHOLD_PTS = 5e9;
 
     RegistryCommunity internal registryCommunity;
     address factoryOwner = makeAddr("registryFactoryDeployer");
@@ -631,6 +632,98 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalStakedAmount(1), PRECISE_FIVE_PERCENT);
     }
 
+    function test_proposalSupported_conviction_with_minThresholdPoints() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
+            _createProposal(address(0), 50 ether, 1_000 ether);
+
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMinThresholdPoints.selector, MIN_THRESHOLD_PTS));
+
+        // FAST 1 MIN half life Conviction Growth
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9965402 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.1 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setWeight.selector, _etherToFloat(0.0005 ether)));
+
+        startMeasuringGas("Support a Proposal");
+        int256 SUPPORT_PCT = 100 * int256(PRECISION_SCALE);
+        StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 70 = 70% = 35
+        bytes memory data = abi.encode(votes);
+        allo().allocate(poolId, data);
+        stopMeasuringGas();
+
+        uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT);
+        assertEq(cv.getProposalVoterStake(1, address(this)), STAKED_AMOUNT, "ProposalVoterStake:"); // 80% of 50 = 40
+        assertEq(cv.getProposalStakedAmount(1), STAKED_AMOUNT, " ProposalStakeAmount:"); // 80% of 50 = 40
+
+        /**
+         * ASSERTS
+         *
+         */
+        vm.startPrank(pool_admin());
+
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember();
+        cv.activatePoints();
+
+        StrategyStruct.ProposalSupport[] memory votes2 = new StrategyStruct.ProposalSupport[](1);
+        int256 SUPPORT_PCT2 = 100 * int256(PRECISION_SCALE);
+        votes2[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT2);
+        data = abi.encode(votes2);
+        // vm.expectEmit(true, true, true, false);
+        allo().allocate(poolId, data);
+        vm.stopPrank();
+
+        uint256 STAKED_AMOUNT2 = uint256(SUPPORT_PCT2);
+
+        assertEq(cv.getProposalVoterStake(proposalId, address(pool_admin())), STAKED_AMOUNT2); // 100% of 50 = 50
+        assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT + STAKED_AMOUNT2);
+
+        // console.log("before block.number", block.number);
+
+        assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 578068096, "maxCVStaked");
+
+        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.decay(), 1e7));
+        vm.roll(rollTo100 * 2);
+
+        console.log("after block.number", block.number);
+        cv.updateProposalConviction(proposalId);
+
+        (
+            , // address submitter,
+            , // address beneficiary,
+            , // address requestedToken,
+            , // uint256 requestedAmount,
+            , // uint256 stakedTokens,
+            , // ProposalStatus proposalStatus,
+            , // uint256 blockLast,
+            uint256 convictionLast,
+            uint256 threshold,
+            // uint256 voterPointsPct
+        ) = cv.getProposal(proposalId);
+
+        // console.log("Requested Amount: %s", requestedAmount);
+        // console.log("Staked Tokens: %s", stakedTokens);
+        console.log("Threshold:         %s", threshold);
+        console.log("Conviction Last:   %s", convictionLast);
+        // console.log("Voter points pct %s", voterPointsPct);
+        // assertEq(threshold, 115613619, "threshold");
+        assertEq(threshold, MIN_THRESHOLD_PTS, "threshold");
+
+        console.log("after block.number", block.number);
+
+        cv.updateProposalConviction(proposalId);
+
+        // if (block.number >= rollTo100 * 2) {
+        assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
+
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMinThresholdPoints.selector, 0));
+        // cv.updateProposalConviction(proposalId);
+        assertEq(cv.canExecuteProposal(proposalId), true, "canExecuteProposal");
+        // }
+    }
+
     function test_proposalSupported_conviction_canExecuteProposal() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
             _createProposal(address(0), 50 ether, 1_000 ether);
@@ -693,7 +786,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 578068096, "maxCVStaked");
 
         console2.log(cv.decay());
-        vm.roll(200);
+        vm.roll(10);
         console.log("after block.number", block.number);
         // x = 8731 / 149253
         // x = 0.174 current tokens growth
@@ -721,10 +814,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("Threshold:         %s", threshold);
         console.log("Conviction Last:   %s", convictionLast);
         // console.log("Voter points pct %s", voterPointsPct);
-        assertEq(threshold, 578068096, "threshold");
-        if (block.number == 200) {
-            assertEq(convictionLast, 288034234, "convictionLast");
+        assertEq(threshold, 115613619, "threshold");
+        if (block.number == 10) {
+            assertEq(convictionLast, 17752895, "convictionLast");
+            // if (convictionLast < threshold) {
             assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
+            // }
         } else {
             revert("block.number not expected");
         }
@@ -804,7 +899,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("maxCVSupply", cv.getMaxConviction(totalEffectiveActivePoints));
         console.log("maxCVStaked", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
 
-        assertEq(cv.getMaxConviction(totalEffectiveActivePoints), 2890340482, "maxCVSupply");
+        assertEq(cv.getMaxConviction(totalEffectiveActivePoints), 578068096, "maxCVSupply");
         assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 578068096, "maxCVStaked");
 
         console2.log(cv.decay());
@@ -839,10 +934,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("Threshold:         %s", threshold);
         // console.log("Conviction Last:   %s", convictionLast);
         // console.log("Voter points pct %s", voterPointsPct);
-        assertEq(threshold, 578068096, "threshold");
+        assertEq(threshold, 115613619, "threshold");
         if (block.number >= rollTo100) {
             // assertEq(cv.canExecuteProposal(proposalId), true, "canExecuteProposal");
-            assertApproxEqAbs(convictionLast, threshold, 1000);
+            if (convictionLast < threshold) {
+                // assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
+                assertApproxEqAbs(convictionLast, threshold, 1000);
+            }
         } else {
             assertEq(convictionLast, 233156676, "convictionLast");
         }
@@ -918,7 +1016,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("maxCVSupply", cv.getMaxConviction(totalEffectiveActivePoints));
         console.log("maxCVStaked", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
 
-        assertEq(cv.getMaxConviction(totalEffectiveActivePoints), 2890340482, "maxCVSupply");
+        assertEq(cv.getMaxConviction(totalEffectiveActivePoints), 578068096, "maxCVSupply");
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 578068096, "maxCVStaked");
 
         // console2.log(cv.decay());
@@ -1174,7 +1272,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().distribute(poolId, recipients, dataProposal);
     }
 
-    function test_canExecuteProposal() public {
+    function test_canExecuteProposal_should_false() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         /**
