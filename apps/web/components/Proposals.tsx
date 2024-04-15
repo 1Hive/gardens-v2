@@ -22,7 +22,7 @@ import {
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/pool/[poolId]/page";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { encodeAbiParameters } from "viem";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
@@ -87,6 +87,25 @@ export function Proposals({
   const urqlClient = useUrqlClient();
   const chainId = getChainIdFromPath();
 
+  const registryContractCallConfig = {
+    address: communityAddress,
+    abi: abiWithErrors2(registryCommunityABI),
+  };
+
+  const { data: isMemberActivated } = useContractRead({
+    ...registryContractCallConfig,
+    functionName: "memberActivatedInStrategies",
+    args: [address as Address, strategy.id as Address],
+    watch: true,
+  });
+
+  // const { data: checking } = useContractRead({
+  //   address: strategy.id as Address,
+  //   abi: abiWithErrors(cvStrategyABI),
+  //   functionName: "canExecuteProposal",
+  //   args: [5],
+  // });
+
   const runIsMemberQuery = useCallback(async () => {
     if (address === undefined) {
       console.error("address is undefined");
@@ -103,8 +122,6 @@ export function Proposals({
         comm: strategy.registryCommunity.id.toLowerCase(),
       },
     );
-
-    console.log("result IsMemberNew", result);
 
     let _stakesFilteres: StakesMemberType = [];
     let totalStakedAmount: bigint = 0n;
@@ -299,7 +316,7 @@ export function Proposals({
   //ManageSupport Disable Button condition => message mapping
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
-      condition: !isMemberActived,
+      condition: !isMemberActivated,
       message: "Must have points activated to support proposals",
     },
   ];

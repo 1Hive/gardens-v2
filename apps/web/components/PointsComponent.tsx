@@ -21,36 +21,31 @@ export const PointsComponent: FC<PoolStatsProps> = ({
 }) => {
   const { address: connectedAccount } = useAccount();
 
-  const { data: memberPointsVotingPower } = useContractRead({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
-    functionName: "getMemberPowerInStrategy",
-    args: [connectedAccount as Address, strategyAddress],
-    watch: true,
-  });
-
   const isValidAccount =
     connectedAccount !== undefined && connectedAccount !== null;
 
+  const registryContractCallConfig = {
+    address: communityAddress,
+    abi: abiWithErrors2(registryCommunityABI),
+  };
+
+  const { data: memberPointsVotingPower } = useContractRead({
+    ...registryContractCallConfig,
+    functionName: "getMemberPowerInStrategy",
+    args: [connectedAccount as Address, strategyAddress],
+    watch: isValidAccount,
+  });
+
   const { data: isMemberActivated } = useContractRead({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
+    ...registryContractCallConfig,
     functionName: "memberActivatedInStrategies",
     args: [connectedAccount as Address, strategyAddress],
     watch: true,
   });
 
-  console.log(isMemberActivated, "isMemberActivated");
-
   const memberPointsInPool = (
     ((memberPointsVotingPower as bigint) ?? 0n) / PRECISION_SCALE
   ).toString();
-
-  //TODO: create a hook for this
-  const registryContractCallConfig = {
-    address: communityAddress,
-    abi: abiWithErrors2(registryCommunityABI),
-  };
 
   const {
     data: isMember,
