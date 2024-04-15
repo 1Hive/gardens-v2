@@ -11,7 +11,7 @@ type Props = {
   label: string;
   subLabel?: string | undefined;
   type: HTMLInputTypeAttribute;
-  registerKey: any;
+  registerKey: string;
   placeholder?: string;
   register: any;
   errors: any;
@@ -19,6 +19,9 @@ type Props = {
   registerOptions?: RegisterOptions;
   children?: any;
   rows?: number;
+  readOnly?: boolean;
+  otherProps?: any;
+  className?: string;
 };
 
 export function FormInput({
@@ -33,7 +36,12 @@ export function FormInput({
   registerOptions,
   children,
   rows,
+  readOnly,
+  otherProps,
+  className,
 }: Props) {
+  const fixedInputClassname =
+    "border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed";
   return (
     <>
       <label htmlFor={registerKey} className="my-2 text-lg text-black">
@@ -45,28 +53,34 @@ export function FormInput({
           <input
             type={type}
             placeholder={placeholder}
-            className={`hide-input-arrows input input-bordered input-${!!errors[registerKey] ? "error" : "info"} w-full`}
-            required
+            className={`${className} hide-input-arrows input input-bordered ${!!errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname}`}
+            required={required}
+            readOnly={readOnly}
             {...register(registerKey, {
               required,
               ...registerOptions,
             })}
+            {...otherProps}
           />
         ) : (
           <textarea
             placeholder={placeholder}
-            className="textarea textarea-info line-clamp-5 w-full"
-            required
+            className={`${className} textarea textarea-info line-clamp-5 w-full ${!!errors[registerKey] ? "input-error" : "input-info"}`}
+            required={required}
             rows={rows}
+            readOnly={readOnly}
             {...register(registerKey, {
               required,
               ...registerOptions,
             })}
+            {...otherProps}
           />
         )}
         {children}
       </div>
-      <p className="mt-2 text-sm text-red">{errors[registerKey]?.message || ""}</p>
+      <p className="mt-2 text-sm text-red">
+        {errors[registerKey]?.message || ""}
+      </p>
     </>
   );
 }
