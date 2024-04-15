@@ -94,21 +94,17 @@ export function handleInitialized(event: RegistryInitialized): void {
 export function handleMemberRegistered(event: MemberRegistered): void {
   const community = event.address.toHex();
   const memberAddress = event.params._member.toHexString();
-  const id = `${memberAddress}-${community}`;
+  const memberCommunityId = `${memberAddress}-${community}`;
   log.debug("handleMemberRegistered: {}", [memberAddress]);
 
   let member = Member.load(memberAddress);
 
   if (member == null) {
     member = new Member(memberAddress);
-    // member.memberAddress = memberAddress;
   }
   log.debug("totalStakedAmount: ", [
     member.totalStakedAmount ? member.totalStakedAmount!.toString() : "",
   ]);
-  member.totalStakedAmount = member.totalStakedAmount
-    ? member.totalStakedAmount!.plus(event.params._amountStaked)
-    : event.params._amountStaked;
 
   member.save();
 
@@ -125,17 +121,21 @@ export function handleMemberRegistered(event: MemberRegistered): void {
   tg.totalBalance = erc20.balanceOf(event.address);
   tg.save();
 
-  let newMember = MemberCommunity.load(id);
+  let newMemberCommunity = MemberCommunity.load(memberCommunityId);
 
-  if (newMember == null) {
-    newMember = new MemberCommunity(id);
-    newMember.member = memberAddress;
-    newMember.registryCommunity = community;
-    newMember.memberAddress = memberAddress;
+  if (newMemberCommunity == null) {
+    newMemberCommunity = new MemberCommunity(memberCommunityId);
+    newMemberCommunity.member = memberAddress;
+    newMemberCommunity.registryCommunity = community;
+    newMemberCommunity.memberAddress = memberAddress;
   }
-  newMember.stakedAmount = event.params._amountStaked;
-  newMember.isRegistered = true;
-  newMember.save();
+
+  newMemberCommunity.stakedAmount = newMemberCommunity.stakedAmount
+    ? newMemberCommunity.stakedAmount!.plus(event.params._amountStaked)
+    : event.params._amountStaked;
+
+  newMemberCommunity.isRegistered = true;
+  newMemberCommunity.save();
 }
 
 //handleMemberUnregistered

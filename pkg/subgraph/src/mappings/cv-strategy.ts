@@ -3,6 +3,7 @@ import {
   CVStrategy,
   CVStrategyConfig,
   Member,
+  MemberCommunity,
   Stake,
   // ProposalMeta as ProposalMetadata,
 } from "../../generated/schema";
@@ -217,6 +218,19 @@ export function handleSupportAdded(event: SupportAdded): void {
   );
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
+  let memberCommunity = MemberCommunity.load(memberCommunityId);
+  if (memberCommunity == null) {
+    log.debug("handleSupportAdded memberCommunity not found: {}", [
+      memberCommunityId.toString(),
+    ]);
+    return;
+  }
+
+  memberCommunity.stakedAmount = memberCommunity.stakedAmount
+    ? memberCommunity.stakedAmount!.plus(event.params.amount)
+    : event.params.amount;
+
+  memberCommunity.save();
   cvp.maxCVStaked = maxConviction;
 
   cvp.stakedAmount = event.params.totalStakedAmount;
