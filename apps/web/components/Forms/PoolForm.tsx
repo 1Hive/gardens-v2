@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { PreviewDataRow } from "./PreviewDataRow";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import {
@@ -30,6 +29,11 @@ import { chains } from "@/configs/wagmiConfig";
 import { getChainIdFromPath } from "@/utils/path";
 import { getChain } from "@/configs/chainServer";
 import { TokenGarden } from "#/subgraph/.graphclient";
+import { FormInput } from "./FormInput";
+import { FormSelect } from "./FormSelect";
+import FormPreview, { FormRow } from "./FormPreview";
+import { FormRadioButton } from "./FormRadioButton";
+import { usePathname, useRouter } from "next/navigation";
 
 const PRECISION_SCALE = 10 ** 4;
 
@@ -39,20 +43,13 @@ type PoolSettings = {
   convictionGrowth?: number;
 };
 
-type FormProps = {
+type FormInputs = {
+  title: string;
+  description: string;
   strategyType: number;
   pointSystemType: number;
-};
-
-type FormInputs = FormProps &
-  PoolSettings & {
-    name: string;
-    description: string;
-  };
-
-type FormData = FormProps & {
-  metadata: [bigint, string]; // [protocol: bigint, pointer: string]
-};
+  optionType?: number;
+} & PoolSettings;
 
 type PointSystemConfig = [BigInt, BigInt, BigInt, BigInt];
 
@@ -68,11 +65,10 @@ type InitializeParams = [
 type Metadata = [BigInt, string];
 type CreatePoolParams = [Address, Address, InitializeParams, Metadata];
 
-const inputClassname =
-  "input input-bordered input-info w-full max-w-[420px] border ";
-const labelClassname = "mb-2 text-xs text-secondary";
-const fixedInputClassname =
-  "border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed";
+type FormRowTypes = {
+  label: string;
+  parse?: (value: any) => string;
+};
 
 type Props = {
   communityAddr: Address;
@@ -80,10 +76,34 @@ type Props = {
   token: TokenGarden;
 };
 
-const poolSettingValues: Record<string, PoolSettings> = {
-  1: { spendingLimit: 25, minimumConviction: 10, convictionGrowth: 10 }, //recommended
-  2: { spendingLimit: 20, minimumConviction: 2.5, convictionGrowth: 2 }, //1Hive
-  3: { spendingLimit: 25, minimumConviction: 10, convictionGrowth: 0.0005 }, //Testing
+const poolSettingValues: Record<
+  number,
+  { label: string; description: string; values: PoolSettings }
+> = {
+  0: {
+    label: "Custom",
+    description: "If you know what you are doing",
+    values: {},
+  },
+  1: {
+    label: "Recommended",
+    description: "Recommended default settings",
+    values: { spendingLimit: 25, minimumConviction: 10, convictionGrowth: 10 },
+  },
+  2: {
+    label: "1Hive",
+    description: "1Hive original settings",
+    values: { spendingLimit: 20, minimumConviction: 2.5, convictionGrowth: 2 },
+  },
+  3: {
+    label: "Testing",
+    description: "Conviction grows very fast",
+    values: {
+      spendingLimit: 25,
+      minimumConviction: 10,
+      convictionGrowth: 0.0005,
+    },
+  },
 };
 
 const ARB_BLOCK_TIME = 0.23;
@@ -114,55 +134,48 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     },
   });
 
-  const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  const [previewData, setPreviewData] = useState<any>(null); // preview data
-  const [ipfsMetadataHash, setIpfsMetadataHash] = useState<string | null>(null); // ipfs metadata hash
-  // const [formData, setFormData] = useState<FormData | undefined>(undefined); // args for contract write
-  // const [showCustomInputs, setShowCustomInputs] = useState(false);
-  const { address, connector } = useAccount();
-  const [optionType, setOptionType] = useState("1");
+  const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [previewData, setPreviewData] = useState<FormInputs>();
+  const [optionType, setOptionType] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const { address } = useAccount();
+
+  const formRowTypes: Record<string, FormRowTypes> = {
+    optionType: {
+      label: "Pool settings:",
+      parse: (value: number) => poolSettingValues[value].label,
+    },
+    spendingLimit: {
+      label: "Spending limit:",
+    },
+    minimumConviction: {
+      label: "Minimum conviction:",
+    },
+    convictionGrowth: {
+      label: "Conviction growh:",
+    },
+    strategyType: {
+      label: "Strategy type:",
+      parse: (value: string) => proposalTypes[value],
+    },
+    pointSystemType: {
+      label: "Point system type:",
+      parse: (value: string) => pointSystems[value],
+    },
+  };
 
   useEffect(() => {
-    Object.entries(poolSettingValues["1"]).forEach(([field, value]) => {
+    Object.entries(poolSettingValues["1"]?.values).forEach(([field, value]) => {
       setValue(field as keyof FormInputs, value);
     });
   }, []);
 
-  const handleJsonUpload = () => {
-    const json = {
-      title: getValues("name"),
-      description: getValues("description"),
-    };
-
-    const ipfsUpload = ipfsJsonUpload(json);
-
-    toast
-      .promise(ipfsUpload, {
-        pending: "Uploading to IPFS...",
-        success: "Successfully uploaded!",
-        error: "Something went wrong",
-      })
-      .then((data) => {
-        console.log("https://ipfs.io/ipfs/" + data);
-        setIpfsMetadataHash(data as string);
-      })
-      .catch((error: any) => {
-        console.error(error);
-      });
-  };
-
-  const handlePreview = () => {
-    handleJsonUpload();
-
-    const data: FormInputs = {
-      name: getValues("name"),
-      description: getValues("description"),
-      strategyType: getValues("strategyType"),
-      pointSystemType: getValues("pointSystemType"),
-    };
-
+  const handlePreview = (data: FormInputs) => {
+    data.optionType = optionType;
     setPreviewData(data);
-    setIsEditMode(true);
+    setShowPreview(true);
   };
 
   const walletClient = createWalletClient({
@@ -176,25 +189,25 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
   });
 
   async function triggerDeployContract() {
-    const hash = await walletClient.deployContract({
-      abi: abiWithErrors(cvStrategyABI),
-      account: address as Address,
-      bytecode: cvStrategyJson.bytecode.object as Address,
-      args: [alloAddr],
-    });
+    try {
+      const hash = await walletClient.deployContract({
+        abi: abiWithErrors(cvStrategyABI),
+        account: address as Address,
+        bytecode: cvStrategyJson.bytecode.object as Address,
+        args: [alloAddr],
+      });
 
-    const transaction = await publicClient.waitForTransactionReceipt({
-      hash: hash,
-    });
-    return transaction.contractAddress;
+      const transaction = await publicClient.waitForTransactionReceipt({
+        hash: hash,
+      });
+      return transaction.contractAddress;
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+    }
   }
 
-  const createPool = async (data: FormInputs) => {
-    if (!ipfsMetadataHash) {
-      console.log("wait for files upload to complete");
-      return;
-    }
-
+  const contractWrite = async (ipfsHash: string) => {
     const strategyAddr = await triggerDeployContract();
     if (strategyAddr == null) {
       console.log("error deploying cvStrategy");
@@ -205,24 +218,28 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     let minimumConviction;
     let convictionGrowth;
 
-    if (optionType === "0") {
-      spendingLimit = data.spendingLimit as number;
-      minimumConviction = data.minimumConviction as number;
-      convictionGrowth = data.convictionGrowth as number;
+    if (optionType === 0) {
+      spendingLimit = previewData?.spendingLimit as number;
+      minimumConviction = previewData?.minimumConviction as number;
+      convictionGrowth = previewData?.convictionGrowth as number;
     } else {
-      spendingLimit = poolSettingValues[optionType].spendingLimit as number;
-      minimumConviction = poolSettingValues[optionType]
-        .minimumConviction as number;
-      convictionGrowth = poolSettingValues[optionType]
-        .convictionGrowth as number;
+      spendingLimit = poolSettingValues[optionType].values
+        ?.spendingLimit as number;
+      minimumConviction = poolSettingValues[optionType].values
+        ?.minimumConviction as number;
+      convictionGrowth = poolSettingValues[optionType].values
+        ?.convictionGrowth as number;
     }
     console.log(spendingLimit, minimumConviction);
 
-    const maxRatioNum = (spendingLimit / 100) * 10 ** 7;
+    const SPENDING_LIMIT_CONSTANT = 0.77645;
+
+    const maxRatioNum =
+      (spendingLimit / SPENDING_LIMIT_CONSTANT / 100) * 10 ** 7;
     const weightNum = (minimumConviction / 100) * (spendingLimit / 100) ** 2;
     // const convictionCalc = convictionGrowth / 24 / 60;
 
-    // pool settings 1Hive
+    // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum));
     const weight = BigInt(Math.round(weightNum * 10 ** 7));
     const decay = BigInt(
@@ -239,9 +256,6 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       ((1 * 10 ** token?.decimals) as number).toString(),
     );
 
-    // need to set 4 inputs
-    // custom set fixed values in inputs
-
     console.log(
       pointsPerTokenStaked,
       maxAmount,
@@ -249,7 +263,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       tokensPerPoint,
     );
 
-    const metadata: Metadata = [BigInt(1), ipfsMetadataHash];
+    const metadata: Metadata = [BigInt(1), ipfsHash];
 
     const pointConfig: PointSystemConfig = [
       pointsPerTokenStaked,
@@ -263,8 +277,8 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       decay,
       maxRatio,
       weight,
-      data.strategyType, // proposalType
-      data.pointSystemType, // pointSystem
+      previewData?.strategyType as number, // proposalType
+      previewData?.pointSystemType as number, // pointSystem
       pointConfig,
     ];
 
@@ -282,17 +296,19 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "createPool",
-    onSuccess: () => alert("Pool created successfully"),
+    onSuccess: () =>
+      router.push(pathname.replace(`/${communityAddr}/create-pool`, "")),
+    onError: () => alert("Something went wrong creating a pool"),
+    onSettled: () => setLoading(false),
   });
 
-  // Function to handle option type change
   const handleOptionTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedOptionType = e.target.value;
+    const selectedOptionType = parseInt(e.target.value);
     setOptionType(selectedOptionType);
 
     // If not custom, set preset values
-    if (selectedOptionType !== "0") {
-      Object.entries(poolSettingValues[selectedOptionType]).forEach(
+    if (selectedOptionType !== 0) {
+      Object.entries(poolSettingValues[selectedOptionType].values).forEach(
         ([field, value]) => {
           setValue(field as keyof FormInputs, value);
         },
@@ -300,234 +316,200 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     }
   };
 
+  const createPool = () => {
+    setLoading(true);
+    const json = {
+      title: getValues("title"),
+      description: getValues("description"),
+    };
+
+    const ipfsUpload = ipfsJsonUpload(json);
+
+    toast
+      .promise(ipfsUpload, {
+        pending: "Uploading data, wait a moment...",
+        success: "All ready!",
+        error: "Something went wrong",
+      })
+      .then((ipfsHash) => {
+        console.log("https://ipfs.io/ipfs/" + ipfsHash);
+        if (previewData === undefined) throw new Error("No preview data");
+        contractWrite(ipfsHash);
+      })
+      .catch((error: any) => {
+        console.error(error);
+        setLoading(false);
+      });
+  };
+
+  const formatFormRows = () => {
+    if (!previewData) return [];
+    let formattedRows: FormRow[] = [];
+
+    const reorderedData = {
+      strategyType: previewData.strategyType,
+      pointSystemType: previewData.pointSystemType,
+      optionType: previewData.optionType as number,
+      spendingLimit: previewData.spendingLimit as number,
+      minimumConviction: previewData.minimumConviction as number,
+      convictionGrowth: previewData.convictionGrowth as number,
+    };
+
+    Object.entries(reorderedData).forEach(([key, value]) => {
+      const formRow = formRowTypes[key];
+      if (formRow) {
+        const parsedValue = formRow.parse ? formRow.parse(value) : value;
+        formattedRows.push({
+          label: formRow.label,
+          data: parsedValue,
+        });
+      }
+    });
+
+    return formattedRows;
+  };
+
   return (
-    <form onSubmit={handleSubmit(createPool)} className="w-full">
-      {!isEditMode ? (
+    <form onSubmit={handleSubmit(handlePreview)} className="w-full">
+      {showPreview ? (
+        <FormPreview
+          title={previewData?.title || ""}
+          description={previewData?.description || ""}
+          formRows={formatFormRows()}
+          previewTitle="Check pool creation details"
+        />
+      ) : (
         <div className="flex flex-col gap-6">
           <div className="flex flex-col">
-            <label htmlFor="name" className={labelClassname}>
-              Pool Name
-            </label>
-            <input
+            <FormInput
+              label="Pool Name"
+              register={register}
+              required
+              errors={errors}
+              registerKey="title"
               type="text"
               placeholder="Your pool name..."
-              className={inputClassname}
-              {...register("name", {
-                required: true,
-              })}
-            />
+            ></FormInput>
           </div>
           <div className="flex flex-col">
-            <label htmlFor="councilSafe" className={labelClassname}>
-              Descrition
-            </label>
-            <textarea
-              className="textarea textarea-info line-clamp-5 w-full max-w-[620px]"
-              placeholder="Enter a description of your pool..."
+            <FormInput
+              label="Description"
+              register={register}
+              required
+              errors={errors}
+              registerKey="description"
+              type="textarea"
               rows={7}
-              {...register("description", {
-                required: true,
-              })}
-            ></textarea>
+              placeholder="Enter a description of your pool..."
+            ></FormInput>
           </div>
           <div className="flex flex-col">
-            <h4 className="my-4 text-lg underline">Select pool settings</h4>
+            <h4 className="my-4 text-xl">Select pool settings</h4>
             <div className="flex gap-8">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    checked={optionType === "0"}
-                    onChange={handleOptionTypeChange}
-                    value={"0"}
-                    type="radio"
-                    className="radio"
-                    name="poolSettings"
-                  />
-                  <h4 className="text-md font-bold">Custom</h4>
-                </div>
-                <p className="text-sm">If you know what you are doing</p>
-              </div>
-
-              <div className="flex flex-col gap-2 ">
-                <div className="flex items-center gap-2">
-                  <input
-                    checked={optionType === "1"}
-                    onChange={handleOptionTypeChange}
-                    value={"1"}
-                    type="radio"
-                    className="radio"
-                    name="poolSettings"
-                  />
-                  <h4 className="text-md font-bold">Recommended</h4>
-                </div>
-                <p className="text-sm">Recommended default settings</p>
-              </div>
-              <div className="flex flex-col gap-2 ">
-                <div className="flex items-center gap-2">
-                  <input
-                    checked={optionType === "2"}
-                    onChange={handleOptionTypeChange}
-                    value={"2"}
-                    type="radio"
-                    className="radio"
-                    name="poolSettings"
-                  />
-                  <h4 className="text-md font-bold">1Hive</h4>
-                </div>
-                <p className="text-sm">1Hive original settings</p>
-              </div>
-              <div className="flex flex-col gap-2 ">
-                <div className="flex items-center gap-2">
-                  <input
-                    checked={optionType === "3"}
-                    onChange={handleOptionTypeChange}
-                    value={"3"}
-                    type="radio"
-                    className="radio"
-                    name="poolSettings"
-                  />
-                  <h4 className="text-md font-bold">Testing</h4>
-                </div>
-                <p className="text-sm">Conviction grows very fast</p>
-              </div>
+              {Object.entries(poolSettingValues).map(
+                ([key, { label, description }]) => (
+                  <React.Fragment key={key}>
+                    <FormRadioButton
+                      label={label}
+                      description={description}
+                      value={parseInt(key)}
+                      checked={optionType === parseInt(key)}
+                      onChange={handleOptionTypeChange}
+                      registerKey="poolSettings"
+                    />
+                  </React.Fragment>
+                ),
+              )}
             </div>
-            <div className="mb-6 flex flex-col gap-2">
+            <div className="mb-6 flex flex-col">
               <div className="flex flex-col">
-                <label htmlFor="spendingLimit" className={labelClassname}>
-                  Spending limit
-                </label>
-                <input
+                <FormInput
+                  label="Spending limit"
+                  register={register}
+                  required
+                  errors={errors}
+                  registerKey="spendingLimit"
                   type="number"
-                  placeholder="25%"
-                  className={`${inputClassname} ${optionType !== "0" && fixedInputClassname}`}
-                  {...register("spendingLimit", {
-                    required: true,
-                  })}
-                  readOnly={optionType !== "0"}
-                />
+                  placeholder="20%"
+                  readOnly={optionType !== 0}
+                ></FormInput>
               </div>
               <div className="flex flex-col">
-                <label htmlFor="minimumConviction" className={labelClassname}>
-                  Minimum conviction
-                </label>
-                <input
+                <FormInput
+                  label="Minimum conviction"
+                  register={register}
+                  required
+                  errors={errors}
+                  registerKey="minimumConviction"
                   type="number"
                   placeholder="10%"
-                  className={`${inputClassname} ${optionType !== "0" && fixedInputClassname}`}
-                  {...register("minimumConviction", {
-                    required: true,
-                  })}
-                  readOnly={optionType !== "0"}
-                />
+                  readOnly={optionType !== 0}
+                ></FormInput>
               </div>
               <div className="flex flex-col">
-                <label htmlFor="convictionGrowth" className={labelClassname}>
-                  Conviction growth (in days)
-                </label>
-                <input
+                <FormInput
+                  label="Conviction growth (in days)"
+                  register={register}
+                  required
+                  errors={errors}
+                  registerKey="convictionGrowth"
                   type="number"
                   placeholder="10 days"
-                  className={`${inputClassname} ${optionType !== "0" && fixedInputClassname}`}
-                  {...register("convictionGrowth", {
-                    required: true,
-                  })}
-                  readOnly={optionType !== "0"}
-                />
+                  readOnly={optionType !== 0}
+                ></FormInput>
               </div>
             </div>
           </div>
           <div className="flex flex-col">
-            <label htmlFor="strategyType" className={labelClassname}>
-              Strategy type
-            </label>
-            <select
-              className="select select-accent w-full max-w-[420px]"
-              {...register("strategyType", { required: true })}
-            >
-              {Object.entries(proposalTypes)
+            <FormSelect
+              label="Strategy type"
+              register={register}
+              errors={errors}
+              registerKey="strategyType"
+              options={Object.entries(proposalTypes)
                 .slice(0, -1)
-                .map(([value, text]) => (
-                  <option key={value} value={value}>
-                    {text}
-                  </option>
-                ))}
-            </select>
+                .map(([value, text]) => ({ label: text, value: value }))}
+            ></FormSelect>
           </div>
           <div className="flex flex-col">
-            <label htmlFor="pointSystemType" className={labelClassname}>
-              Point system type
-            </label>
-            <select
-              className="select select-accent w-full max-w-[420px]"
-              {...register("pointSystemType", { required: true })}
-            >
-              {Object.entries(pointSystems).map(([value, text]) => (
-                <option key={value} value={value}>
-                  {text}
-                </option>
-              ))}
-            </select>
+            <FormSelect
+              label="Point system type"
+              register={register}
+              errors={errors}
+              registerKey="pointSystemType"
+              options={Object.entries(pointSystems).map(([value, text]) => ({
+                label: text,
+                value: value,
+              }))}
+            ></FormSelect>
           </div>
         </div>
-      ) : (
-        <Overview data={previewData} />
       )}
-
-      <div className="mt-8 flex w-full items-center justify-center py-6">
-        {!isEditMode ? (
-          <Button type="button" onClick={handlePreview} variant="fill">
-            Preview
-          </Button>
-        ) : (
+      <div className="flex w-full items-center justify-center py-6">
+        {showPreview ? (
           <div className="flex items-center gap-10">
-            <Button type="submit">Submit</Button>
             <Button
               type="button"
-              onClick={() => setIsEditMode(false)}
+              onClick={() => createPool()}
+              isLoading={loading}
+            >
+              Submit
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setShowPreview(false);
+                setLoading(false);
+              }}
               variant="fill"
             >
               Edit
             </Button>
           </div>
+        ) : (
+          <Button type="submit">Preview</Button>
         )}
       </div>
     </form>
   );
 }
-
-const Overview = (data: any) => {
-  const { name, description, strategyType, pointSystemType, poolSettings } =
-    data.data;
-
-  return (
-    <>
-      <div className="px-4 sm:px-0">
-        <p className="mt-0 max-w-2xl text-sm leading-6 text-gray-500">
-          Check details and covenant description
-        </p>
-      </div>
-      <div>
-        {data && (
-          <div className="relative">
-            <PreviewDataRow label="Pool name" data={name} />
-            <PreviewDataRow label="Settings options" data={poolSettings} />
-            <PreviewDataRow
-              label="Strategy type"
-              data={proposalTypes[strategyType]}
-            />
-            <PreviewDataRow
-              label="Point system type"
-              data={pointSystems[pointSystemType]}
-            />
-            <h3 className="text-sm font-medium leading-6 text-gray-900">
-              Description
-            </h3>
-            <p className="text-md max-h-56 overflow-y-auto rounded-xl border p-2 leading-7">
-              {description}
-            </p>
-          </div>
-        )}
-      </div>
-    </>
-  );
-};

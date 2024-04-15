@@ -1,4 +1,4 @@
-import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
+import { TokenGarden, getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
@@ -47,7 +47,7 @@ export default async function page({
     <div className="mx-auto flex max-w-[820px] flex-col items-center justify-center gap-4">
       <div className="text-center sm:mt-5">
         <h2 className="text-xl font-semibold leading-6 text-gray-900">
-          Create a Proposal in Pool {poolId} {title}
+          Create a Proposal in Pool {title}
         </h2>
         <div className="mt-1">
           <p className="text-sm">
@@ -60,7 +60,7 @@ export default async function page({
         poolId={poolId}
         proposalType={proposalType}
         alloInfo={alloInfo}
-        tokenGarden={tokenGarden}
+        tokenGarden={tokenGarden as TokenGarden}
         tokenAddress={garden as Address}
         spendingLimit={poolAmountSpendingLimit}
         spendingLimitPct={spendingLimitPct}
