@@ -8,7 +8,8 @@ libs = ['lib']
 
 optimizer = true
 optimizer-runs = 1_000
-
+# prompt_timeout = 120
+fs_permissions = [{ access = "read", path = "./"}]
 # auto_detect_remappings = true # recursive auto-detection of remappings
 # remappings = ["ds-test/=lib/forge-std/lib/ds-test/src/",
 # "forge-std/=lib/forge-std/src/",

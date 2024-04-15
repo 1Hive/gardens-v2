@@ -1,0 +1,12 @@
+{
+  "network": "optimism-sepolia",
+  "chainId": 11155420,
+  "dataSources": [
+    {
+      "name": "RegistryFactory",
+      "startBlock": 0,
+      "address": "",
+      "customTemplate": "registryFactory"
+    }
+  ]
+}

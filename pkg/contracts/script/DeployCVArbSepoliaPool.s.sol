@@ -22,7 +22,11 @@ import {Safe} from "safe-contracts/contracts/Safe.sol";
 contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;
 
-    address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
+    address public SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
+
+    address public TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
+    address public SAFE = 0xdA7BdeBD79833a5e0C027fAb1b1B9b874DdcbD10;
+    address public COMMUNITY = 0x422b8cf2358d80A9B6cD9E67dfB69D89Bb77c46b;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -46,7 +50,7 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         Allo allo = Allo(allo_proxy);
 
         // console2.log("Allo Addr: %s", address(allo));
-        AMockERC20 token = AMockERC20(0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D);
+        AMockERC20 token = AMockERC20(TOKEN);
 
         // IRegistry registry = allo.getRegistry();
         // console2.log("Registry Addr: %s", address(registry));
@@ -58,7 +62,7 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         // AMockERC20 token = new AMockERC20();
         // console2.log("Token Addr: %s", address(token));
         // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
-        Safe councilSafeDeploy = Safe(payable(0xEf5769BB4a3b0927595b01Fccf8F9acABe8C3618));
+        Safe councilSafeDeploy = Safe(payable(SAFE));
 
         // RegistryFactory registryFactory = new RegistryFactory();
         // RegistryFactory registryFactory = RegistryFactory(0xeE8B920641210e26d4D18BD285A862156f31556f);
@@ -75,7 +79,7 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         // params._communityName = "GardensDAO";
 
         // RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
-        RegistryCommunity registryCommunity = RegistryCommunity(0xBe665Ca945316f27e853d430251DC12FD7A8e755);
+        RegistryCommunity registryCommunity = RegistryCommunity(COMMUNITY);
 
         console2.log("Comm Safe Addr: %s", address(registryCommunity.councilSafe()));
 
@@ -85,8 +89,17 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
 
+        StrategyStruct.PointSystemConfig memory pointConfig;
+        pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
+        pointConfig.pointsPerMember = MINIMUM_STAKE * (10 ** 4);
+        pointConfig.tokensPerPoint = 1 * DECIMALS;
+        pointConfig.pointsPerTokenStaked = 1 * DECIMALS * (10 ** 4);
+
         StrategyStruct.InitializeParams memory paramsCV = getParams(
-            address(registryCommunity), StrategyStruct.ProposalType.Funding, StrategyStruct.PointSystem.Capped
+            address(registryCommunity),
+            StrategyStruct.ProposalType.Funding,
+            StrategyStruct.PointSystem.Capped,
+            pointConfig
         );
 
         paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
@@ -96,34 +109,36 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         // paramsCV.registryCommunity = address(registryCommunity);
         // paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
 
-        CVStrategy strategy1 = new CVStrategy(address(allo));
-        CVStrategy strategy2 = new CVStrategy(address(allo));
+        // CVStrategy strategy1 = new CVStrategy(address(allo));
+        // CVStrategy strategy2 = new CVStrategy(address(allo));
 
-        safeHelper(
-            councilSafeDeploy,
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
-        );
-        safeHelper(
-            councilSafeDeploy,
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
-        );
+        // safeHelper(
+        //     councilSafeDeploy,
+        //     councilMemberPKEnv,
+        //     address(registryCommunity),
+        //     abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
+        // );
+        // safeHelper(
+        //     councilSafeDeploy,
+        //     councilMemberPKEnv,
+        //     address(registryCommunity),
+        //     abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
+        // );
 
-        (uint256 poolId,) = registryCommunity.createPool(address(strategy1), address(token), paramsCV, metadata);
+        uint256 poolId = 306;
+        uint256 poolId2 = 307;
+        // (uint256 poolId,) = registryCommunity.createPool(address(strategy1), address(token), paramsCV, metadata);
         console2.log("PoolId: %s", poolId);
 
-        assertTrue(strategy1.proposalType() == StrategyStruct.ProposalType.Funding, "ProposalType not set");
+        // assertTrue(strategy1.proposalType() == StrategyStruct.ProposalType.Funding, "ProposalType not set");
 
-        paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
-        (uint256 poolId2,) = registryCommunity.createPool(address(strategy2), address(token), paramsCV, metadata);
+        // paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
+        // (uint256 poolId2,) = registryCommunity.createPool(address(strategy2), address(token), paramsCV, metadata);
 
-        token.mint(address(pool_admin()), 10_000);
-        token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 1_000);
-        allo.fundPool(poolId2, 1_500);
+        // token.mint(address(pool_admin()), 10_000);
+        // token.approve(address(allo), type(uint256).max);
+        // allo.fundPool(poolId, 1_000);
+        // allo.fundPool(poolId2, 1_500);
 
         console2.log("PoolId2: %s", poolId2);
 

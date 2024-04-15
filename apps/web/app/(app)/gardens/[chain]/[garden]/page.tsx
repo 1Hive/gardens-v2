@@ -1,6 +1,6 @@
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
-import { CommunityCard } from "@/components";
+import { Button, CommunityCard } from "@/components";
 import {
   RegistryCommunity,
   TokenGarden,
@@ -10,6 +10,7 @@ import {
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { CommunityForm } from "@/components/Forms";
 import { Address } from "viem";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -40,11 +41,7 @@ export default async function Garden({
     );
 
   let communities = result?.tokenGarden?.communities || [];
-
-  const registryFactoryAddr = result?.registryFactories?.[0].id as Address;
   const tokenGarden = result?.tokenGarden as TokenGarden;
-  const alloContractAddr = result?.tokenGarden?.communities?.[0]
-    .alloAddress as Address;
 
   const fetchAndUpdateCommunities = async (communities: any) => {
     const promises = communities.map(async (com: any) => {
@@ -94,13 +91,12 @@ export default async function Garden({
             <span className="text-primary"> covenant.</span>
           </p>
 
-          {result && (
-            <CommunityForm
-              tokenGarden={result.tokenGarden}
-              registryFactoryAddr={registryFactoryAddr}
-              alloContractAddr={alloContractAddr}
-            />
-          )}
+          <Link
+            href={`/gardens/${chain}/${garden}/create-community`}
+            className=""
+          >
+            <Button className="">Create Community</Button>
+          </Link>
         </div>
         <Image src={tree2} alt="tree" className="absolute bottom-0 left-5" />
         <Image src={tree3} alt="tree" className="absolute bottom-0 right-5" />
