@@ -196,7 +196,9 @@ export function RegisterMember({
   const disabledRegMemberButton = disableRegMemberBtnCondition.some(
     (cond) => cond.condition,
   );
-  const { tooltipMessage } = useDisableButtons(disableRegMemberBtnCondition);
+  const { tooltipMessage, missmatchUrl } = useDisableButtons(
+    disableRegMemberBtnCondition,
+  );
 
   return (
     <>
@@ -271,7 +273,7 @@ export function RegisterMember({
               onClick={handleChange}
               className="w-full bg-primary"
               size="md"
-              disabled={disabledRegMemberButton}
+              disabled={missmatchUrl || disabledRegMemberButton}
               tooltip={tooltipMessage}
             >
               {isMember ? "Leave community" : "Register in community"}

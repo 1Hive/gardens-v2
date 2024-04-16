@@ -41,7 +41,7 @@ export function useDisableButtons(
       }
     }
     return "tooltip message";
-  }, [conditions, isConnected, missmatchUrlAndWalletChain, urlChainId]);
+  }, [conditions, isConnected, missmatchUrlAndWalletChain]);
 
   return {
     tooltipMessage,

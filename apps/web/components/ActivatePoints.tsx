@@ -87,7 +87,9 @@ export function ActivatePoints({
     (cond) => cond.condition,
   );
 
-  const { tooltipMessage } = useDisableButtons(disableActiveBtnCondition);
+  const { tooltipMessage, missmatchUrl } = useDisableButtons(
+    disableActiveBtnCondition,
+  );
 
   return (
     <>
@@ -95,7 +97,7 @@ export function ActivatePoints({
         <Button
           onClick={handleChange}
           className="w-fit bg-primary"
-          disabled={disableActiveBtn}
+          disabled={missmatchUrl || disableActiveBtn}
           tooltip={String(tooltipMessage)}
         >
           {isMemberActivated ? "Deactivate Points" : "Activate Points"}

@@ -43,7 +43,6 @@ export function CommunityCard({
 }: CommunityCardProps) {
   const { address: accountAddress } = useAccount();
   const pathname = usePathname();
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   const pools = strategies ?? [];
   members = members ?? [];
