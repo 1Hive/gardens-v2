@@ -1,39 +1,27 @@
 "use client";
 import React, { useEffect } from "react";
 import { Button } from "./Button";
-import { Address, useContractRead, useContractWrite, useAccount } from "wagmi";
-import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { Address, useContractWrite, useAccount } from "wagmi";
+import { cvStrategyABI } from "@/src/generated";
 import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
-  isMemberActived: boolean | undefined;
-  communityAddress: Address;
+  isMemberActivated: boolean | undefined;
   isMember: boolean | undefined;
 };
 
 export function ActivatePoints({
   strategyAddress,
-  communityAddress,
   isMember,
+  isMemberActivated,
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
-
-  const {
-    data: isMemberActivated,
-    error,
-    isSuccess,
-  } = useContractRead({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
-    functionName: "memberActivatedInStrategies",
-    args: [connectedAccount as Address, strategyAddress],
-    watch: true,
-  });
 
   const {
     data: activatePointsData,
@@ -87,20 +75,30 @@ export function ActivatePoints({
     updateDeactivePointsStatus(deactivatePointsStatus);
   }, [deactivatePointsStatus]);
 
+  // Activate Tooltip condition => message mapping
+  const disableActiveBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMember,
+      message: "Join community to activate points",
+    },
+  ];
+
+  const disableActiveBtn = disableActiveBtnCondition.some(
+    (cond) => cond.condition,
+  );
+
+  const tooltipMessage = useTooltipMessage(disableActiveBtnCondition);
+
   return (
     <>
       <div className="flex flex-col gap-4 pl-4">
         <Button
           onClick={handleChange}
           className="w-fit bg-primary"
-          disabled={connectedAccount && isMember === false}
-          tooltip="Join the community to activate points"
+          disabled={disableActiveBtn}
+          tooltip={tooltipMessage}
         >
-          {connectedAccount
-            ? isMemberActivated
-              ? "Deactivate Points"
-              : "Activate Points"
-            : "Connect Wallet"}
+          {isMemberActivated ? "Deactivate Points" : "Activate Points"}
         </Button>
       </div>
     </>

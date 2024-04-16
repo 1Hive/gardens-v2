@@ -87,7 +87,6 @@ query getMember($me: ID!) {
         id
       }
     }
-    totalStakedAmount
     stakes {
       id
       poolId
