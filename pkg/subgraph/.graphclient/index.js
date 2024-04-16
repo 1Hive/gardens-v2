@@ -266,7 +266,6 @@ export const getMemberDocument = gql `
         id
       }
     }
-    totalStakedAmount
     stakes {
       id
       proposal {
@@ -353,6 +352,9 @@ export const getPoolDataDocument = gql `
     metadata
     id
     poolId
+    memberActive {
+      id
+    }
     config {
       id
       proposalType
@@ -427,6 +429,9 @@ export const getStrategyByPoolDocument = gql `
       id
       proposalType
       pointSystem
+    }
+    memberActive {
+      id
     }
     registryCommunity {
       id

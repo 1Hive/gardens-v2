@@ -170,6 +170,9 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     metadata
     id
     poolId
+    memberActive {
+      id
+    }
     config {
       id
       proposalType
@@ -241,6 +244,9 @@ query getStrategyByPool($poolId: BigInt!) {
       id
       proposalType
       pointSystem
+    }
+    memberActive {
+      id
     }
     registryCommunity {
       id
