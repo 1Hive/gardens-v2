@@ -40,15 +40,11 @@ export function handleInitialized(event: InitializedCV): void {
   const minThresholdPoints = event.params.data.minThresholdPoints;
   const weight = event.params.data.weight;
   const pType = event.params.data.proposalType;
-  const pointsPerMember = event.params.data.pointConfig.pointsPerMember;
-  const pointsPerTokenStaked =
-    event.params.data.pointConfig.pointsPerTokenStaked;
-  const tokensPerPoint = event.params.data.pointConfig.tokensPerPoint;
   const maxAmount = event.params.data.pointConfig.maxAmount;
   const pointSystem = event.params.data.pointSystem;
 
   log.debug(
-    "handleInitialized registryCommunity:{} decay:{} maxRatio:{} minThresholdPoints:{} weight:{} pType:{} pointsPerMember:{} pointsPerTokenStaked:{} tokensPerPoint:{} maxAmount:{}",
+    "handleInitialized registryCommunity:{} decay:{} maxRatio:{} minThresholdPoints:{} weight:{} pType:{} maxAmount:{}",
     [
       registryCommunity,
       decay.toString(),
@@ -56,9 +52,6 @@ export function handleInitialized(event: InitializedCV): void {
       minThresholdPoints.toString(),
       weight.toString(),
       pType.toString(),
-      pointsPerMember.toString(),
-      pointsPerTokenStaked.toString(),
-      tokensPerPoint.toString(),
       maxAmount.toString(),
     ],
   );
@@ -92,9 +85,6 @@ export function handleInitialized(event: InitializedCV): void {
   config.weight = weight;
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);
-  config.pointsPerMember = pointsPerMember;
-  config.pointsPerTokenStaked = pointsPerTokenStaked;
-  config.tokensPerPoint = tokensPerPoint;
   config.maxAmount = maxAmount;
 
   config.D = cvc.D();

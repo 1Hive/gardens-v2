@@ -19,6 +19,7 @@ query getFactories {
           decay
           maxRatio
           weight
+          minThresholdPoints
         }
       }
     }
@@ -147,6 +148,7 @@ query getCommunitiesByGarden($addr: ID!) {
           id
           proposalType
           pointSystem
+          minThresholdPoints
         }
         proposals {
           id
@@ -196,6 +198,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       proposalType
       pointSystem
       maxRatio
+      minThresholdPoints
     }
     registryCommunity {
       id
@@ -241,6 +244,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
       config {
         proposalType
         pointSystem
+        minThresholdPoints
       }
     }
   }
@@ -262,6 +266,7 @@ query getStrategyByPool($poolId: BigInt!) {
       id
       proposalType
       pointSystem
+      minThresholdPoints
     }
     registryCommunity {
       id
