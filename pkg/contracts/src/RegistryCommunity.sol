@@ -162,14 +162,14 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     string public communityName;
     string public covenantIpfsHash; //@todo maybe should be bytes32
 
-    mapping(address => bool) public tribunalMembers;
+    // mapping(address => bool) public tribunalMembers;
 
-    mapping(address => Member) public addressToMemberInfo;
-    mapping(address => bool) public enabledStrategies;
-    mapping(address => mapping(address => bool)) public memberActivatedInStrategies;
-    mapping(address => address[]) public strategiesByMember;
-    //      strategy           member     power
-    mapping(address => mapping(address => uint256)) public memberPowerInStrategy;
+    mapping(address strategy => bool isEnabled) public enabledStrategies;
+    mapping(address strategy => mapping(address member => uint256 power)) public memberPowerInStrategy;
+
+    mapping(address member => Member) public addressToMemberInfo;
+    mapping(address member => address[] strategiesAddresses) public strategiesByMember;
+    mapping(address member => mapping(address strategy => bool isActivated)) public memberActivatedInStrategies;
 
     address[] initialMembers;
 
@@ -243,10 +243,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
     }
 
-    function activateMemberInStrategy(address _member, address _strategy) public 
-    // onlyRegistryMemberAddress(_member)
-    // onlyStrategyEnabled(_strategy)
-    {
+    function activateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
         revertZeroAddress(_strategy);
@@ -255,20 +252,17 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             revert UserAlreadyActivated();
         }
 
-
         Member memory member = addressToMemberInfo[_member];
 
         uint256 totalStakedAmount = member.stakedAmount;
         uint256 pointsToIncrease = 0;
-        if (totalStakedAmount > 0) {
-            if(IPointStrategy(_strategy).getPointSystem() == 3){
 
-                pointsToIncrease = IPointStrategy(_strategy).increasePower(_member,0);
-            }
-            else{
+        if (IPointStrategy(_strategy).getPointSystem() == StrategyStruct.PointSystem.Quadratic) {
+            pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, 0);
+        } else {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, totalStakedAmount);
-            }
         }
+
         memberPowerInStrategy[_member][_strategy] = pointsToIncrease; // can be all zero
         memberActivatedInStrategies[_member][_strategy] = true;
 
@@ -316,7 +310,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             pointsToIncrease = IPointStrategy(memberStrategies[i]).increasePower(member, _amountStaked);
             if (pointsToIncrease != 0) {
                 memberPowerInStrategy[member][memberStrategies[i]] += pointsToIncrease;
-                console.log("Strategy power",memberPowerInStrategy[member][memberStrategies[i]]);
+                console.log("Strategy power", memberPowerInStrategy[member][memberStrategies[i]]);
             }
             //}
         }
