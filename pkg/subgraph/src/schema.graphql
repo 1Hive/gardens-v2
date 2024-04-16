@@ -17,12 +17,10 @@ type CVStrategyConfig @entity(immutable: false) {
   D: BigInt!
   decay: BigInt!
   maxRatio: BigInt!
+  minThresholdPoints: BigInt!
   weight: BigInt!
   proposalType: BigInt!
   pointSystem: BigInt!
-  pointsPerMember: BigInt
-  pointsPerTokenStaked: BigInt
-  tokensPerPoint: BigInt
   maxAmount: BigInt
 }
 
@@ -87,7 +85,6 @@ type Member @entity(immutable: false) {
   id: ID!
   # registryCommunity: [RegistryCommunity!]
   memberCommunity: [MemberCommunity!] @derivedFrom(field: "member")
-  totalStakedAmount: BigInt
   stakes: [Stake!] @derivedFrom(field: "member")
   # isRegistered: Boolean
 }

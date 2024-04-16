@@ -136,7 +136,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             address(registryCommunity),
             proposalType,
             StrategyStruct.PointSystem.Unlimited,
-            StrategyStruct.PointSystemConfig(0, 0, 0, 0)
+            StrategyStruct.PointSystemConfig(200 * DECIMALS)
         );
 
         CVStrategy strategy = new CVStrategy(address(allo()));
@@ -743,7 +743,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          *
          */
         startMeasuringGas("Support a Proposal");
-        int256 SUPPORT_PCT = 100 * int256(PRECISION_SCALE);
+        token.approve(address(this), 1000 * DECIMALS);
+        registryCommunity.increasePower(1000 * DECIMALS);
+        int256 SUPPORT_PCT = 100 * int256(DECIMALS);
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
         votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 70 = 70% = 35
         bytes memory data = abi.encode(votes);
@@ -763,9 +765,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         registryCommunity.stakeAndRegisterMember();
         cv.activatePoints();
+        token.approve(address(this), 1000 * DECIMALS);
+        registryCommunity.increasePower(1000 * DECIMALS);
 
         StrategyStruct.ProposalSupport[] memory votes2 = new StrategyStruct.ProposalSupport[](1);
-        int256 SUPPORT_PCT2 = 100 * int256(PRECISION_SCALE);
+        int256 SUPPORT_PCT2 = 100 * int256(DECIMALS);
         votes2[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT2);
         data = abi.encode(votes2);
         // vm.expectEmit(true, true, true, false);
@@ -814,7 +818,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("Threshold:         %s", threshold);
         console.log("Conviction Last:   %s", convictionLast);
         // console.log("Voter points pct %s", voterPointsPct);
-        assertEq(threshold, 115613619, "threshold");
+        assertEq(threshold, 11561361928435169671750, "threshold");
         if (block.number == 10) {
             assertEq(convictionLast, 17752895, "convictionLast");
             // if (convictionLast < threshold) {
@@ -966,7 +970,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          *
          */
         startMeasuringGas("Support a Proposal");
-        int256 SUPPORT_POINTS = 25 * int256(PRECISION_SCALE);
+        int256 SUPPORT_POINTS = 25 * int256(DECIMALS);
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
         votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_POINTS);
         bytes memory data = abi.encode(votes);
@@ -988,7 +992,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         cv.activatePoints();
 
         StrategyStruct.ProposalSupport[] memory votes2 = new StrategyStruct.ProposalSupport[](1);
-        int256 SUPPORT_POINTS2 = 25 * int256(PRECISION_SCALE);
+        int256 SUPPORT_POINTS2 = 25 * int256(DECIMALS);
         votes2[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_POINTS2);
         data = abi.encode(votes2);
         // vm.expectEmit(true, true, true, false);
@@ -1016,7 +1020,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("maxCVSupply", cv.getMaxConviction(totalEffectiveActivePoints));
         console.log("maxCVStaked", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
 
-        assertEq(cv.getMaxConviction(totalEffectiveActivePoints), 578068096, "maxCVSupply");
+        assertEq(cv.getMaxConviction(totalEffectiveActivePoints), 57806809642175848314931, "maxCVSupply");
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 578068096, "maxCVStaked");
 
         // console2.log(cv.decay());
@@ -1185,11 +1189,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         registryCommunity.increasePower(extraStakeAmount);
         assertEq(
             registryCommunity.getMemberPowerInStrategy(address(this), address(cv)),
-            (extraStakeAmount / 1 ether) * 5 * PRECISION_SCALE + cv.getPointsPerMember()
+            registryCommunity.getMemberStakedAmount(address(this))
         );
         startMeasuringGas("Support a Proposal");
-        // int256 SUPPORT_PCT = 5000;
-        int256 SUPPORT_PCT = 20100e4;
+        int256 SUPPORT_PCT = 5000;
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
         // votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
         votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 70 = 70% = 35
@@ -1484,7 +1487,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (IAllo.Pool memory pool,,) = _createProposal(address(0), 0, 0);
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-
         registryCommunity.stakeAndRegisterMember();
         assertEq(registryCommunity.isMember(local()), true, "isMember");
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyActivated.selector));
@@ -1498,10 +1500,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         registryCommunity.stakeAndRegisterMember();
         assertEq(registryCommunity.isMember(pool_admin()), true, "isMember");
         cv.activatePoints();
-        assertEq(cv.totalPointsActivated(), 100 * PRECISION_SCALE);
+        assertEq(cv.totalPointsActivated(), 150 * DECIMALS);
 
         cv.deactivatePoints(pool_admin());
-        assertEq(cv.totalPointsActivated(), 0);
+        assertEq(cv.totalPointsActivated(), 100 * DECIMALS);
 
         vm.stopPrank();
 

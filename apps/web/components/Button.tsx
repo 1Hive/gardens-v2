@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import cn from "classnames";
 import { Size } from "@/types";
@@ -17,6 +18,7 @@ type ButtonProps = {
   isLoading?: boolean;
   size?: Size;
   icon?: React.ReactNode;
+  walletConnected?: boolean;
 };
 
 type Variant = "primary" | "outline" | "fill" | "error";
@@ -37,7 +39,7 @@ export function Button({
   onClick,
   className,
   disabled = false,
-  tooltip = "Connect Wallet",
+  tooltip = "Connect wallet",
   children,
   size,
   variant,

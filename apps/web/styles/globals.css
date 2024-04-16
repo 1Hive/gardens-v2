@@ -87,3 +87,14 @@ p {
 .border2 {
   border: 2px solid black;
 }
+
+/* Hide number input arrows */
+.hide-input-arrows::-webkit-outer-spin-button,
+.hide-input-arrows::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.hide-input-arrows {
+  -moz-appearance: textfield; /* Firefox */
+}

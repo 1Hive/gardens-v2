@@ -11,7 +11,7 @@ import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.s
 import {RegistryFactory} from "./RegistryFactory.sol";
 import {ISafe} from "./ISafe.sol";
 // import {Safe} from "safe-contracts/contracts/Safe.sol";
-// import "forge-std/console.sol";
+import "forge-std/console.sol";
 // import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 import {IPointStrategy, CVStrategy, StrategyStruct} from "./CVStrategy.sol";
@@ -114,6 +114,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     error KickNotEnabled();
     error PointsDeactivated();
     error DecreaseUnderMinimum();
+    error CantIncreaseNullAmount();
 
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -254,19 +255,21 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             revert UserAlreadyActivated();
         }
 
-        uint256 pointsPerMember = IPointStrategy(_strategy).getPointsPerMember(); //@kev can be zero for some kind strategies
 
         Member memory member = addressToMemberInfo[_member];
 
-        uint256 extraStakedAmount = member.stakedAmount - registerStakeAmount;
+        uint256 totalStakedAmount = member.stakedAmount;
         uint256 pointsToIncrease = 0;
-        if (extraStakedAmount > 0) {
-            pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, extraStakedAmount);
-        }
+        if (totalStakedAmount > 0) {
+            if(IPointStrategy(_strategy).getPointSystem() == 3){
 
-        if (pointsPerMember > 0 || pointsToIncrease > 0) {
-            memberPowerInStrategy[_member][_strategy] = pointsPerMember + pointsToIncrease; // can be all zero
+                pointsToIncrease = IPointStrategy(_strategy).increasePower(_member,0);
+            }
+            else{
+            pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, totalStakedAmount);
+            }
         }
+        memberPowerInStrategy[_member][_strategy] = pointsToIncrease; // can be all zero
         memberActivatedInStrategies[_member][_strategy] = true;
 
         strategiesByMember[_member].push(_strategy);
@@ -313,6 +316,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             pointsToIncrease = IPointStrategy(memberStrategies[i]).increasePower(member, _amountStaked);
             if (pointsToIncrease != 0) {
                 memberPowerInStrategy[member][memberStrategies[i]] += pointsToIncrease;
+                console.log("Strategy power",memberPowerInStrategy[member][memberStrategies[i]]);
             }
             //}
         }
