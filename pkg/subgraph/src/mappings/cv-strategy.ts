@@ -20,6 +20,7 @@ import {
   PowerDecreased,
   DecayUpdated,
   MaxRatioUpdated,
+  MinThresholdPointsUpdated,
   WeightUpdated,
 } from "../../generated/templates/CVStrategy/CVStrategy";
 
@@ -36,6 +37,7 @@ export function handleInitialized(event: InitializedCV): void {
   const registryCommunity = event.params.data.registryCommunity.toHexString();
   const decay = event.params.data.decay;
   const maxRatio = event.params.data.maxRatio;
+  const minThresholdPoints = event.params.data.minThresholdPoints;
   const weight = event.params.data.weight;
   const pType = event.params.data.proposalType;
   const pointsPerMember = event.params.data.pointConfig.pointsPerMember;
@@ -46,11 +48,12 @@ export function handleInitialized(event: InitializedCV): void {
   const pointSystem = event.params.data.pointSystem;
 
   log.debug(
-    "handleInitialized registryCommunity:{} decay:{} maxRatio:{} weight:{} pType:{} pointsPerMember:{} pointsPerTokenStaked:{} tokensPerPoint:{} maxAmount:{}",
+    "handleInitialized registryCommunity:{} decay:{} maxRatio:{} minThresholdPoints:{} weight:{} pType:{} pointsPerMember:{} pointsPerTokenStaked:{} tokensPerPoint:{} maxAmount:{}",
     [
       registryCommunity,
       decay.toString(),
       maxRatio.toString(),
+      minThresholdPoints.toString(),
       weight.toString(),
       pType.toString(),
       pointsPerMember.toString(),
@@ -85,6 +88,7 @@ export function handleInitialized(event: InitializedCV): void {
 
   config.decay = decay;
   config.maxRatio = maxRatio;
+  config.minThresholdPoints = minThresholdPoints;
   config.weight = weight;
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);
@@ -360,6 +364,30 @@ export function handleMaxRatioUpdated(event: MaxRatioUpdated): void {
       return;
     }
     config.maxRatio = event.params.maxRatio;
+    config.save();
+  }
+  return;
+}
+
+export function handleMinThresholdPointsUpdated(
+  event: MinThresholdPointsUpdated,
+): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.debug("handleMaxRatioUpdated cvs not found: {}", [
+      event.address.toHexString(),
+    ]);
+    return;
+  }
+  if (cvs.config) {
+    let config = CVStrategyConfig.load(cvs.config);
+    if (config == null) {
+      log.debug("handleMaxRatioUpdated config not found: {}", [
+        event.address.toHexString(),
+      ]);
+      return;
+    }
+    config.minThresholdPoints = event.params.minThresholdPoints;
     config.save();
   }
   return;

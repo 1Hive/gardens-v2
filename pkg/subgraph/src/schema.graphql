@@ -17,6 +17,7 @@ type CVStrategyConfig @entity(immutable: false) {
   D: BigInt!
   decay: BigInt!
   maxRatio: BigInt!
+  minThresholdPoints: BigInt!
   weight: BigInt!
   proposalType: BigInt!
   pointSystem: BigInt!

@@ -119,7 +119,7 @@ templates:
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8,uint8,(uint256,uint256,uint256,uint256))) 
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256,uint256,uint256,uint256))) 
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
