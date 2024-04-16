@@ -109,34 +109,36 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         // paramsCV.registryCommunity = address(registryCommunity);
         // paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
 
-        CVStrategy strategy1 = new CVStrategy(address(allo));
-        CVStrategy strategy2 = new CVStrategy(address(allo));
+        // CVStrategy strategy1 = new CVStrategy(address(allo));
+        // CVStrategy strategy2 = new CVStrategy(address(allo));
 
-        safeHelper(
-            councilSafeDeploy,
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
-        );
-        safeHelper(
-            councilSafeDeploy,
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
-        );
+        // safeHelper(
+        //     councilSafeDeploy,
+        //     councilMemberPKEnv,
+        //     address(registryCommunity),
+        //     abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
+        // );
+        // safeHelper(
+        //     councilSafeDeploy,
+        //     councilMemberPKEnv,
+        //     address(registryCommunity),
+        //     abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
+        // );
 
-        (uint256 poolId,) = registryCommunity.createPool(address(strategy1), address(token), paramsCV, metadata);
+        uint256 poolId = 306;
+        uint256 poolId2 = 307;
+        // (uint256 poolId,) = registryCommunity.createPool(address(strategy1), address(token), paramsCV, metadata);
         console2.log("PoolId: %s", poolId);
 
-        assertTrue(strategy1.proposalType() == StrategyStruct.ProposalType.Funding, "ProposalType not set");
+        // assertTrue(strategy1.proposalType() == StrategyStruct.ProposalType.Funding, "ProposalType not set");
 
-        paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
-        (uint256 poolId2,) = registryCommunity.createPool(address(strategy2), address(token), paramsCV, metadata);
+        // paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
+        // (uint256 poolId2,) = registryCommunity.createPool(address(strategy2), address(token), paramsCV, metadata);
 
-        token.mint(address(pool_admin()), 10_000);
-        token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 1_000);
-        allo.fundPool(poolId2, 1_500);
+        // token.mint(address(pool_admin()), 10_000);
+        // token.approve(address(allo), type(uint256).max);
+        // allo.fundPool(poolId, 1_000);
+        // allo.fundPool(poolId2, 1_500);
 
         console2.log("PoolId2: %s", poolId2);
 

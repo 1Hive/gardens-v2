@@ -6,6 +6,7 @@ import {
   useContractRead,
   Address,
   useWaitForTransaction,
+  useAccount,
 } from "wagmi";
 import { Button } from "./Button";
 import { toast } from "react-toastify";
@@ -13,10 +14,10 @@ import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { calculateFees, formatTokenAmount, gte, dn } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal, TransactionModalStep } from "./TransactionModal";
+import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
 
 type RegisterMemberProps = {
   name: string;
@@ -42,7 +43,7 @@ export function RegisterMember({
   connectedAccount,
 }: RegisterMemberProps) {
   const chainId = getChainIdFromPath();
-  const { openConnectModal } = useConnectModal();
+  const { isConnected } = useAccount();
 
   const modalRef = useRef<HTMLDialogElement | null>(null);
 
@@ -139,22 +140,18 @@ export function RegisterMember({
   // useErrorDetails(errorGardenToken, "gardenToken");
 
   async function handleChange() {
-    if (connectedAccount) {
-      if (isMember) {
-        writeUnregisterMember();
-      } else {
-        // Check if allowance is equal to registerStakeAmount
-        if (dataAllowance !== registerStakeAmount) {
-          writeAllowToken();
-          modalRef.current?.showModal();
-        } else {
-          // Handle the case where allowance is already equal to registerStakeAmount
-          modalRef.current?.showModal();
-          writeRegisterMember();
-        }
-      }
+    if (isMember) {
+      writeUnregisterMember();
     } else {
-      openConnectModal?.();
+      // Check if allowance is equal to registerStakeAmount
+      if (dataAllowance !== registerStakeAmount) {
+        writeAllowToken();
+        modalRef.current?.showModal();
+      } else {
+        // Handle the case where allowance is already equal to registerStakeAmount
+        modalRef.current?.showModal();
+        writeRegisterMember();
+      }
     }
   }
 
@@ -188,6 +185,18 @@ export function RegisterMember({
   useEffect(() => {
     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
   }, [unregisterMemberStatus]);
+
+  //RegisterMember Tooltip condition => message mapping
+  const disableRegMemberBtnCondition: ConditionObject[] = [
+    {
+      condition: !accountHasBalance,
+      message: "Connected account has insufficient balance",
+    },
+  ];
+  const disabledRegMemberButton = disableRegMemberBtnCondition.some(
+    (cond) => cond.condition,
+  );
+  const tooltipMessage = useTooltipMessage(disableRegMemberBtnCondition);
 
   return (
     <>
@@ -262,14 +271,10 @@ export function RegisterMember({
               onClick={handleChange}
               className="w-full bg-primary"
               size="md"
-              disabled={!accountHasBalance}
-              tooltip={`Connected account has not enough ${tokenSymbol}`}
+              disabled={disabledRegMemberButton}
+              tooltip={tooltipMessage}
             >
-              {connectedAccount
-                ? isMember
-                  ? "Leave community"
-                  : "Register in community"
-                : "Connect Wallet"}
+              {isMember ? "Leave community" : "Register in community"}
             </Button>
           </div>
         </div>
