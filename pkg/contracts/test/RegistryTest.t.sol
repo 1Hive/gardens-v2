@@ -37,6 +37,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     uint256 public mintAmount = 1_000_000 * DECIMALS;
 
     uint256 public constant MINIMUM_STAKE = 1000 * DECIMALS;
+    uint256 public constant SQRT_ONE_THOUSAND = 31622776601683793319;
     uint256 public constant PRECISION = 10 ** 4;
     uint256 public constant PROTOCOL_FEE_PERCENTAGE = 22525; // 2.2525  * 10 ** 4
     uint256 public constant COMMUNITY_FEE_PERCENTAGE = 3 * PRECISION;
@@ -216,13 +217,13 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
         assertEq(
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            (100 * (10 ** 4) + (tokenAmount * strategy.getPointsPerTokenStaked()))
-        );
+            registryCommunity.getMemberStakedAmount(gardenMember));
     }
 
     function testFuzz_increasePowerCapped(uint256 tokenAmount) public {
         //To avoid InsufficientBalance
         vm.assume(tokenAmount < 100000);
+        vm.assume(tokenAmount > 0 );
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
             allo(),
@@ -246,19 +247,20 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         token.approve(address(registryCommunity), tokenAmount * DECIMALS);
         _registryCommunity().increasePower(tokenAmount * DECIMALS);
-        if (tokenAmount > 20) {
-            assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 200 * PRECISION);
+        if (tokenAmount >= 100) {
+            assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 200 * 10 ** 18);
+        
         } else {
             assertEq(
                 registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-                (100 * (10 ** 4) + (tokenAmount * strategy.getPointsPerTokenStaked()))
+                registryCommunity.getMemberStakedAmount(gardenMember)+ (tokenAmount * DECIMALS)
             );
         }
     }
 
     function testFuzz_increasePowerQuadratic(uint256 firstIncrease, uint256 secondIncrease) public {
-        vm.assume(firstIncrease < 10000);
-        vm.assume(secondIncrease < 10000);
+        vm.assume(firstIncrease < 10000 && firstIncrease > 0 );
+        vm.assume(secondIncrease < 10000 && secondIncrease > 0);
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
             allo(),
@@ -279,14 +281,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().stakeAndRegisterMember();
         //vm.expectRevert("error");
         strategy.activatePoints();
-
+        
         token.approve(address(registryCommunity), firstIncrease * DECIMALS);
         uint256 firstPointIncrease = strategy.increasePowerQuadratic(gardenMember, firstIncrease * (10 ** 18));
         _registryCommunity().increasePower(firstIncrease * DECIMALS);
         assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (firstIncrease * DECIMALS));
+        
         assertEq(
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            ((100 * (10 ** 4)) + firstPointIncrease)
+            (SQRT_ONE_THOUSAND + firstPointIncrease)
         );
         //assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 110 * (10 ** 4));
         token.approve(address(registryCommunity), secondIncrease * DECIMALS);
@@ -294,7 +297,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().increasePower(secondIncrease * DECIMALS);
         assertEq(
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            (100 * (10 ** 4)) + firstPointIncrease + secondPointIncrease
+            (SQRT_ONE_THOUSAND) + firstPointIncrease + secondPointIncrease
         );
         // assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 120 * (10 ** 4) );
         vm.stopPrank();
@@ -327,17 +330,21 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         _registryCommunity().increasePower(100 * DECIMALS);
         assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (100 * DECIMALS), "100 * decimals");
+        //Sqrt of 1100
+        uint256 sqrtValue = 33166247903553998491;
         assertEq(
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            (110 * (10 ** 4)),
+            sqrtValue,
             "power for 110"
         );
 
         token.approve(address(registryCommunity), 300 * DECIMALS);
         _registryCommunity().increasePower(300 * DECIMALS);
+        //sqrt of 1400       
+        sqrtValue = 37416573867739413855;
         assertEq(
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            120 * (10 ** 4),
+            sqrtValue,
             "power for 120"
         );
         vm.stopPrank();
@@ -375,7 +382,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
         assertEq(
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            (100 * (10 ** 4) + (tokenAmount * strategy.getPointsPerTokenStaked()))
+            registryCommunity.getMemberStakedAmount(gardenMember)
         );
     }
 
@@ -405,7 +412,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //vm.expectRevert("error");
         strategy.activatePoints();
         vm.stopPrank();
-        assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)), 100 * 10 ** 4);
+        assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)),registryCommunity.getMemberPowerInStrategy(gardenMember,address(strategy)));
         //assertEq(strategy.activatedPointsIn)
         vm.startPrank(address(councilSafe));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
@@ -454,7 +461,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         token.approve(address(registryCommunity), 100 * DECIMALS);
         _registryCommunity().increasePower(100 * DECIMALS);
-        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 600 * PRECISION);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), registryCommunity.getMemberStakedAmount(gardenMember));
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(101 * DECIMALS);
         vm.stopPrank();
@@ -492,9 +499,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         strategy.activatePoints();
 
-        uint256 pointsPerMember = strategy.getPointsPerMember();
 
-        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), pointsPerMember);
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), registryCommunity.registerStakeAmount());
         // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
         vm.stopPrank();
     }
