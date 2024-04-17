@@ -202,7 +202,7 @@ export const IncreasePower = ({
         label={`Stake ${tokenSymbol} in community`}
         initialTransactionSteps={InitialTransactionSteps}
         allowTokenStatus={allowTokenStatus}
-        increaseStakeStatus={increaseStakeStatus}
+        stepTwoStatus={increaseStakeStatus}
         token={tokenSymbol}
       ></TransactionModal>
 

@@ -18,7 +18,8 @@ type statuses = "idle" | "loading" | "success" | "error";
 export type TransactionModalProps = {
   label: string;
   allowTokenStatus: statuses;
-  increaseStakeStatus: statuses;
+  stepTwoStatus: statuses;
+  allowance?: bigint;
   token: string;
   initialTransactionSteps: TransactionStep[];
   children?: React.ReactNode;
@@ -35,7 +36,8 @@ export const TransactionModal = forwardRef<
   {
     label,
     allowTokenStatus,
-    increaseStakeStatus,
+    allowance,
+    stepTwoStatus,
     initialTransactionSteps,
     token,
     children,
@@ -90,18 +92,16 @@ export const TransactionModal = forwardRef<
 
     const updatedSecondStep = {
       ...transactionStepsState[1],
-      message: statusMessage[increaseStakeStatus] || "2",
-      dataContent: dataContent[increaseStakeStatus] || "2",
+      message: statusMessage[stepTwoStatus] || "2",
+      dataContent: dataContent[stepTwoStatus] || "2",
       current: allowTokenStatus === "success",
       stepClassName:
-        increaseStakeStatus === "success"
-          ? "idle"
-          : stepClassName[increaseStakeStatus],
-      messageClassName: messageClassName2[increaseStakeStatus],
+        stepTwoStatus === "success" ? "idle" : stepClassName[stepTwoStatus],
+      messageClassName: messageClassName2[stepTwoStatus],
     };
 
     setTransactionStepsState([updatedFirstStep, updatedSecondStep]);
-  }, [allowTokenStatus, increaseStakeStatus]);
+  }, [allowTokenStatus, stepTwoStatus]);
 
   return (
     <dialog id="transaction_modal" className="modal" ref={ref}>
@@ -116,11 +116,11 @@ export const TransactionModal = forwardRef<
             X
           </Button>
         </div>
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-info px-2 py-1 text-white">
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-info p-2 text-white">
           <ExclamationCircleIcon height={32} width={32} />
           <p className="text-sm">
-            You need to approve Gardens on the {token} contract everytime you
-            wanna use this feature.
+            You need to approve Gardens on the {token} contract. This is a two
+            step process.
           </p>
         </div>
         <div className="w-full">
@@ -150,53 +150,3 @@ export const TransactionModal = forwardRef<
     </dialog>
   );
 });
-
-type TransactionModalStepProps = {
-  tokenSymbol?: string;
-  status: "success" | "error" | "idle" | "loading";
-  isLoading: boolean;
-  failedMessage: string;
-  successMessage: string;
-  type?: string;
-};
-
-export const TransactionModalStep = ({
-  tokenSymbol,
-  status,
-  isLoading,
-  failedMessage,
-  successMessage,
-  type,
-}: TransactionModalStepProps) => {
-  const isSuccess = status === "success";
-  const isFailed = status === "error";
-  const loadingClass = isLoading ? "animate-pulse" : "animate-none";
-  const successClass = isSuccess ? "text-success" : "";
-  const errorClass = isFailed ? "text-error" : "";
-
-  return (
-    <div className="relative flex flex-1 flex-col items-center justify-start transition-all duration-300 ease-in-out">
-      <div
-        className={`rounded-full bg-secondary ${isFailed ? "border-[1px] border-error first:bg-error" : isSuccess ? "border-[1px] border-success first:bg-success" : ""}`}
-      >
-        <div
-          className={`relative flex h-28 w-28 items-center rounded-full border-8 border-white p-1 text-center ${loadingClass}`}
-        />
-      </div>
-      <span
-        className={`absolute top-9 h-fit max-w-min text-center leading-5 text-white ${successClass}`}
-      >
-        {tokenSymbol}
-      </span>
-      <p
-        className={`absolute bottom-0 max-w-xs px-10 text-center text-sm ${successClass} ${errorClass}`}
-      >
-        {isFailed
-          ? failedMessage
-          : isSuccess
-            ? successMessage
-            : "Waiting for signature"}
-      </p>
-    </div>
-  );
-};

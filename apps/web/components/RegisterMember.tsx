@@ -226,7 +226,7 @@ export function RegisterMember({
         ref={modalRef}
         label="Register in community"
         allowTokenStatus={allowTokenStatus}
-        increaseStakeStatus={registerMemberStatus}
+        stepTwoStatus={registerMemberStatus}
         initialTransactionSteps={InitialTransactionSteps}
         token={tokenSymbol}
       />
