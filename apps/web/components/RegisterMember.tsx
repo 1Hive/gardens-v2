@@ -16,7 +16,7 @@ import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { calculateFees, formatTokenAmount, gte, dn } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
-import { TransactionModal, TransactionModalStep } from "./TransactionModal";
+import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 
 type RegisterMemberProps = {
@@ -200,33 +200,36 @@ export function RegisterMember({
     disableRegMemberBtnCondition,
   );
 
+  const InitialTransactionSteps = [
+    {
+      transaction: "Approve token expenditure",
+      message: "waiting for signature",
+      current: true,
+      dataContent: "1",
+      loading: false,
+      stepClassName: "idle",
+      messageClassName: "",
+    },
+    {
+      transaction: "Register",
+      message: "waiting for approval",
+      dataContent: "2",
+      current: false,
+      stepClassName: "idle",
+      messageClassName: "",
+    },
+  ];
+
   return (
     <>
-      {/* Modal */}
       <TransactionModal
         ref={modalRef}
         label="Register in community"
-        isSuccess={approveToken}
-        isFailed={allowanceFailed}
-      >
-        <TransactionModalStep
-          tokenSymbol={`Approve ${tokenSymbol}`}
-          status={allowTokenStatus}
-          isLoading={allowTokenStatus === "loading"}
-          failedMessage="An error has occurred, please try again!"
-          successMessage="Transaction sent successfully!"
-        />
-
-        <TransactionModalStep
-          tokenSymbol="Register"
-          status={registerMemberStatus}
-          isLoading={registerMemberIsLoading}
-          failedMessage="An error has occurred, please try again!"
-          successMessage="Waiting for signature"
-          type="register"
-        />
-      </TransactionModal>
-
+        allowTokenStatus={allowTokenStatus}
+        increaseStakeStatus={registerMemberStatus}
+        initialTransactionSteps={InitialTransactionSteps}
+        token={tokenSymbol}
+      />
       <div className="space-y-4">
         <div className="stats flex">
           <div
