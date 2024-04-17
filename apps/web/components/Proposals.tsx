@@ -28,7 +28,7 @@ import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/pool/[poolId]/pa
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { encodeAbiParameters } from "viem";
+import { encodeAbiParameters, formatUnits, parseUnits } from "viem";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
 import * as dnum from "dnum";
@@ -47,7 +47,6 @@ export type Proposal = Strategy["proposals"][number];
 export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
 
 export type ProposalTypeVoter = Proposal & {
-  voterStakedPointsPct: number;
   title: string;
   type: number;
 };
@@ -69,22 +68,23 @@ export function Proposals({
   alloInfo: AlloQuery;
   communityAddress: Address;
 }) {
+  const DECIMALS = strategy.registryCommunity.garden.decimals;
+
   const [editView, setEditView] = useState(false);
   // const [distributedPoints, setDistributedPoints] = useState(0);
-  const [pointsDistributedSum, setPointsDistributedSum] = useState<
-    number | undefined
-  >(undefined);
+  const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
+  const [inputs, setInputs] = useState<InputItem[]>([]);
+
+  const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
+  const [totalAllocatedTokens, setTotalAllocatedTokens] = useState<bigint>(0n);
 
   const [message, setMessage] = useState("");
-  const [inputs, setInputs] = useState<InputItem[]>([]);
-  const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
+
   //using this for test alpha
   const { address: connectedAccount } = useAccount();
   // const { voterStake } = useTotalVoterStakedPct(strategy);
-  const [voterStake, setVoterStake] = useState<bigint | undefined>(undefined);
-
-  const [memberPointsInPool, setMemberPointsInPool] = useState<number>(0);
-  const [stakedFilteres, setStakedFilteres] = useState<StakesMemberType>([]);
+  const [memberTokensInPool, setMemberTokensInPool] = useState<number>(0);
+  const [stakedFilteres, setStakedFilteres] = useState<InputItem[]>([]);
 
   const { address } = useAccount();
   const pathname = usePathname();
@@ -108,8 +108,8 @@ export function Proposals({
       console.error("address is undefined");
       return;
     }
-    console.log("address", address);
-    console.log("strategy.registryCommunity.id", strategy.registryCommunity.id);
+    // console.log("address", address);
+    // console.log("strategy.registryCommunity.id", strategy.registryCommunity.id);
     const { data: result, error } = await queryByChain<isMemberQuery>(
       urqlClient,
       chainId,
@@ -120,18 +120,18 @@ export function Proposals({
       },
     );
 
-    console.log("result IsMemberNew", result);
+    // console.log("result IsMemberNew", result);
 
     let _stakesFilteres: StakesMemberType = [];
     let totalStakedAmount: bigint = 0n;
 
     if (result && result.members.length > 0) {
       totalStakedAmount =
-        result.members[0].memberCommunity?.[0].stakedAmount ?? 0n;
+        result.members[0].memberCommunity?.[0]?.stakedAmount ?? 0n;
 
-      console.log("totalStakedAmount", totalStakedAmount);
+      // console.log("totalStakedAmount", totalStakedAmount);
       // setVoterStake(Number(totalStakedAmount));
-      setMemberPointsInPool(Number(totalStakedAmount));
+      setMemberTokensInPool(Number(totalStakedAmount));
 
       const stakes = result.members[0].stakes;
       if (stakes && stakes.length > 0) {
@@ -144,13 +144,17 @@ export function Proposals({
       }
     }
 
-    console.log("stakesFilteres", _stakesFilteres);
     const totalStaked = _stakesFilteres.reduce((acc, curr) => {
       return acc + BigInt(curr.amount);
     }, 0n);
 
-    setVoterStake(totalStaked);
-    setStakedFilteres(_stakesFilteres);
+    const memberStakes: InputItem[] = _stakesFilteres.map((item) => ({
+      id: getProposalId(item.proposal.id),
+      value: item.amount,
+    }));
+    console.log(memberStakes);
+    setTotalAllocatedTokens(totalStaked);
+    setStakedFilteres(memberStakes);
   }, [
     address,
     strategy.registryCommunity.id,
@@ -158,10 +162,6 @@ export function Proposals({
     chainId,
     isMemberDocument,
   ]);
-
-  useEffect(() => {
-    runIsMemberQuery();
-  }, []);
 
   useEffect(() => {
     runIsMemberQuery();
@@ -182,20 +182,32 @@ export function Proposals({
   }, [address]);
 
   useEffect(() => {
-    const newInputs = proposals.map(
-      ({ id, voterStakedPointsPct, stakedAmount }) => ({
-        id: id,
-        value: stakedAmount,
-        // stakedAmount: stakedAmount,
-      }),
-    );
-    console.log("newInputs", newInputs);
+    const newInputs = proposals.map(({ id, stakedAmount }) => {
+      let returnItem = { id: getProposalId(id), value: 0 };
+      stakedFilteres.forEach((item, index) => {
+        if (getProposalId(id) === item.id) {
+          returnItem = {
+            id: getProposalId(id),
+            value: stakedFilteres[Number(index)]?.value,
+          };
+        }
+      });
+      return returnItem;
+    });
+
+    if (newInputs.length > 0) {
+      let sum = newInputs?.reduce(
+        (prev, curr) => prev + BigInt(curr.value),
+        0n,
+      );
+    }
+
     setInputs(newInputs);
   }, [proposals]);
 
-  // useEffect(() => {
-  //   setDistributedPoints(calculatePoints());
-  // }, [inputs]);
+  useEffect(() => {
+    setInputAllocatedTokens(calculateTotalTokens());
+  }, [inputs]);
 
   useEffect(() => {
     if (isMemberActived === undefined) return;
@@ -271,7 +283,13 @@ export function Proposals({
       currentData.forEach((current) => {
         if (input.id === current.id) {
           const dif = BigInt(input.value - current.stakedAmount);
-          // console.log("dif", dif);
+          console.log(
+            "dif",
+            formatUnits(
+              BigInt(current.stakedAmount) - BigInt(input.value),
+              DECIMALS,
+            ),
+          );
           if (dif !== BigInt(0)) {
             resultArr.push([Number(input.id), dif]);
           }
@@ -279,38 +297,42 @@ export function Proposals({
       });
     });
 
-    console.log("resultArr", resultArr);
+    // console.log(
+    //   "resultArr",
+    //   resultArr,
+    //   currentData[2].stakedAmount,
+    //   inputData[0].value,
+    // );
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
     return encodedData;
   };
 
-  const calculatePoints = (exceptIndex?: number) =>
+  const calculateTotalTokens = (exceptIndex?: number) =>
     inputs.reduce((acc, curr, i) => {
       if (exceptIndex !== undefined && exceptIndex === i) return acc;
-      else return acc + curr.value;
+      else return acc + Number(curr.value);
     }, 0);
 
   const inputHandler = (i: number, value: number) => {
     // const currentPoints = calculatePoints(i);
-    const pointsDistributed = Number(voterStake);
-    console.log("p distrubuted", pointsDistributed);
+    const pointsDistributed = Number(totalAllocatedTokens);
     // console.log("currentPoints", currentPoints);
     console.log("value", value);
-    if (pointsDistributed + value <= memberPointsInPool) {
-      setInputs(
-        inputs.map((input, index) =>
-          index === i ? { ...input, value: value } : input,
-        ),
-      );
-      setPointsDistributedSum(pointsDistributed + value);
-    } else {
-      console.log("can't exceed 100% points");
-    }
+
+    // if (pointsDistributed + value <= memberTokensInPool) {
+    setInputs(
+      inputs.map((input, index) =>
+        index === i ? { ...input, value: value } : input,
+      ),
+    );
+    setInputAllocatedTokens(pointsDistributed + value);
+    // } else {
+    //   console.log("can't exceed 100% points");
+    // }
   };
 
-  const DECIMALS = strategy.registryCommunity.garden.decimals;
   //ManageSupport Tooltip condition => message mapping
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
@@ -362,23 +384,20 @@ export function Proposals({
           </div>
           {editView && (
             <>
-              <div className="w-full text-right text-3xl">
+              <div className="w-full text-right text-2xl">
                 <span
                   className={`${
-                    (pointsDistributedSum ?? Number(voterStake)) >=
-                      memberPointsInPool && "scale-110 font-semibold text-red"
+                    inputAllocatedTokens >= memberTokensInPool &&
+                    "scale-110 font-semibold text-red"
                   } transition-all`}
                 >
                   Assigned:{" "}
                   <span
-                    className={`text-4xl font-bold  ${(pointsDistributedSum ?? Number(voterStake)) >= memberPointsInPool ? "text-red" : "text-success"} `}
+                    className={`text-3xl font-bold  ${inputAllocatedTokens >= memberTokensInPool ? "text-red" : "text-success"} `}
                   >
-                    {formatTokenAmount(
-                      pointsDistributedSum ?? Number(voterStake),
-                      DECIMALS,
-                    )}
+                    {formatTokenAmount(inputAllocatedTokens, DECIMALS)}
                   </span>{" "}
-                  / {formatTokenAmount(memberPointsInPool, DECIMALS)}
+                  / {formatTokenAmount(memberTokensInPool, DECIMALS)}
                   {" " + strategy.registryCommunity.garden.symbol}
                 </span>
               </div>
@@ -426,7 +445,6 @@ export function Proposals({
                     </>
                   </div>
                 </div>
-
                 {editView && (
                   <div className="flex w-full flex-wrap items-center justify-between gap-6">
                     <div className="flex items-center gap-8">
@@ -435,36 +453,14 @@ export function Proposals({
                           key={i}
                           type="range"
                           min={0}
-                          max={100}
-                          value={inputs[i]?.value}
-                          className={`range range-success range-sm min-w-[420px]`}
-                          step="5"
-                          onChange={(e) =>
-                            inputHandler(i, Number(e.target.value))
+                          max={memberTokensInPool}
+                          value={
+                            // getProposalId(id) ===
+                            inputs[i]?.value
+                            // stakedFilteres?[i].amount
                           }
-                        />
-                        <div className="flex w-full justify-between px-[10px] text-[4px]">
-                          {[...Array(21)].map((_, i) => (
-                            <span key={"span_" + i}>|</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {editView && (
-                  <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                    <div className="flex items-center gap-8">
-                      <div>
-                        <input
-                          key={i}
-                          type="range"
-                          min={0}
-                          max={memberPointsInPool}
-                          value={inputs[i]?.value}
                           className={`range range-success range-sm min-w-[420px]`}
-                          step={5}
+                          step={memberTokensInPool / 100}
                           onChange={(e) =>
                             inputHandler(i, Number(e.target.value))
                           }
@@ -477,26 +473,26 @@ export function Proposals({
                       </div>
                       <div className="mb-2">
                         {Number(
-                          (inputs[i].value / memberPointsInPool) * 100,
+                          (inputs[i].value * 100) / memberTokensInPool,
                         ).toFixed(2)}
                         %
                       </div>
                     </div>
                     <div className="flex max-w-xs flex-1 items-baseline justify-center gap-2">
-                      {stakedAmount > 0n ? (
+                      {inputs[i]?.value > 0n ? (
                         <p className="text-success">
-                          You Assigned{" "}
+                          Assigned{" "}
                           <span className="text-2xl font-bold">
                             {formatTokenAmount(
-                              stakedAmount.toString(),
+                              inputs[i]?.value.toString(),
                               DECIMALS,
                             )}
                           </span>{" "}
-                          tokens
+                          {strategy.registryCommunity.garden.symbol}
                         </p>
                       ) : (
                         <p className="text-gray-400">
-                          You have not support this proposal yet
+                          You have no support on this proposal yet
                         </p>
                       )}
                     </div>
