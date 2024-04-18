@@ -1,5 +1,5 @@
 "use client";
-import React, { forwardRef, useEffect, useRef } from "react";
+import React, { forwardRef, useEffect, useRef, useState } from "react";
 import {
   useBalance,
   useContractWrite,
@@ -43,9 +43,15 @@ export function RegisterMember({
   connectedAccount,
 }: RegisterMemberProps) {
   const chainId = getChainIdFromPath();
-  const { isConnected } = useAccount();
-
+  //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
+  const openModal = () => modalRef.current?.showModal();
+  const closeModal = () => modalRef.current?.close();
+  //
+  //new logic
+  const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
+    false,
+  );
 
   const registryContractCallConfig = {
     address: communityAddress,
@@ -143,14 +149,13 @@ export function RegisterMember({
     if (isMember) {
       writeUnregisterMember();
     } else {
-      // Check if allowance is equal to registerStakeAmount
-      if (dataAllowance !== registerStakeAmount) {
-        writeAllowToken();
-        modalRef.current?.showModal();
-      } else {
-        // Handle the case where allowance is already equal to registerStakeAmount
-        modalRef.current?.showModal();
+      if (dataAllowance !== 0n) {
         writeRegisterMember();
+        openModal();
+        setPendingAllowance(true);
+      } else {
+        writeAllowToken();
+        openModal();
       }
     }
   }
@@ -165,8 +170,6 @@ export function RegisterMember({
     useTransactionNotification(unregisterMemberData);
 
   const approveToken = allowTokenStatus === "success";
-  const allowanceFailed = allowTokenStatus === "error";
-  const registerMemberFailed = approveToken && registerMemberStatus === "error";
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
@@ -178,7 +181,8 @@ export function RegisterMember({
   useEffect(() => {
     updateRegisterMemberTransactionStatus(registerMemberStatus);
     if (registerMemberStatus === "success") {
-      modalRef.current?.close();
+      closeModal();
+      setPendingAllowance(false);
     }
   }, [registerMemberStatus]);
 
@@ -229,6 +233,8 @@ export function RegisterMember({
         stepTwoStatus={registerMemberStatus}
         initialTransactionSteps={InitialTransactionSteps}
         token={tokenSymbol}
+        pendingAllowance={pendingAllowance}
+        setPendingAllowance={setPendingAllowance}
       />
       <div className="space-y-4">
         <div className="stats flex">

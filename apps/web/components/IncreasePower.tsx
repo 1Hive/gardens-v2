@@ -54,7 +54,16 @@ export const IncreasePower = ({
   tokenSymbol,
   registerTokenDecimals,
 }: IncreasePowerProps) => {
+  //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
+  const openModal = () => modalRef.current?.showModal();
+  const closeModal = () => modalRef.current?.close();
+  //
+  //new logic
+  const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
+    false,
+  );
+
   const [increaseInput, setIncreaseInput] = useState<number | undefined>();
 
   const requestedAmount = parseUnits(
@@ -134,10 +143,11 @@ export const IncreasePower = ({
   async function handleChange() {
     if (dataAllowance !== 0n) {
       writeIncreasePower?.();
-      modalRef.current?.showModal();
+      openModal();
+      setPendingAllowance(true);
     } else {
       writeAllowToken?.();
-      modalRef.current?.showModal();
+      openModal();
     }
   }
 
@@ -157,8 +167,9 @@ export const IncreasePower = ({
 
   useEffect(() => {
     if (increaseStakeStatus === "success") {
-      modalRef.current?.close();
+      closeModal();
       setIncreaseInput(0);
+      setPendingAllowance(false);
     }
   }, [increaseStakeStatus]);
 
@@ -204,6 +215,8 @@ export const IncreasePower = ({
         allowTokenStatus={allowTokenStatus}
         stepTwoStatus={increaseStakeStatus}
         token={tokenSymbol}
+        pendingAllowance={pendingAllowance}
+        setPendingAllowance={setPendingAllowance}
       ></TransactionModal>
 
       {/* input */}
@@ -220,7 +233,7 @@ export const IncreasePower = ({
           <input
             type="number"
             value={increaseInput}
-            placeholder="0"
+            placeholder="Amount"
             className="input input-bordered input-info w-full disabled:bg-gray-300 disabled:text-black"
             onChange={(e) => handleInputChange(e)}
             disabled={!isMember}

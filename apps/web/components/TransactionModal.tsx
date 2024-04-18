@@ -20,14 +20,19 @@ export type TransactionModalProps = {
   allowTokenStatus: statuses;
   stepTwoStatus: statuses;
   allowance?: bigint;
+  pendingAllowance?: boolean;
+  setPendingAllowance?: (value: boolean) => void;
   token: string;
   initialTransactionSteps: TransactionStep[];
   children?: React.ReactNode;
 };
 
-type StepStateProps = {
-  [key: string]: string;
-};
+interface StatusConfig {
+  message: string;
+  dataContent: string;
+  className: string;
+  messageClassName: string;
+}
 
 export const TransactionModal = forwardRef<
   HTMLDialogElement,
@@ -41,67 +46,87 @@ export const TransactionModal = forwardRef<
     initialTransactionSteps,
     token,
     children,
+    pendingAllowance,
+    setPendingAllowance,
   },
   ref,
 ) {
-  const dialogRef = typeof ref === "function" ? { current: null } : ref;
-
-  const statusMessage: StepStateProps = {
-    idle: "waiting for approval",
-    loading: "waiting for signature",
-    success: "transaction sent successfull",
-    error: "an error has occurred, please try again!",
-  };
-
-  const dataContent: StepStateProps = {
-    success: "✓",
-    error: "X",
-  };
-
-  const stepClassName: StepStateProps = {
-    idle: "step",
-    loading: "step-info",
-    success: "step-success",
-    error: "step-error",
-  };
-
-  const messageClassName: StepStateProps = {
-    idle: "text-info",
-    loading: "text-info",
-    success: "text-success",
-    error: "text-error",
-  };
-
-  const messageClassName2: StepStateProps = {
-    ...messageClassName,
-    idle: "",
+  const statusConfig: Record<string, StatusConfig> = {
+    idle: {
+      message: "waiting for approval",
+      dataContent: "",
+      className: "step",
+      messageClassName: "",
+    },
+    loading: {
+      message: "waiting for signature",
+      dataContent: "",
+      className: "step-info",
+      messageClassName: "text-info",
+    },
+    success: {
+      message: "transaction sent successfully",
+      dataContent: "✓",
+      className: "step-success",
+      messageClassName: "text-success",
+    },
+    error: {
+      message: "an error has occurred, please try again!",
+      dataContent: "X",
+      className: "step-error",
+      messageClassName: "text-error",
+    },
   };
 
   const [transactionStepsState, setTransactionStepsState] = useState(
     initialTransactionSteps,
   );
 
+  const { message, dataContent, className, messageClassName } =
+    statusConfig[allowTokenStatus];
+
   useEffect(() => {
     const updatedFirstStep = {
       ...transactionStepsState[0],
-      dataContent: dataContent[allowTokenStatus] || "1",
-      message: statusMessage[allowTokenStatus] || "",
-      stepClassName: stepClassName[allowTokenStatus] || "",
-      messageClassName: messageClassName[allowTokenStatus] || "",
+      dataContent: pendingAllowance ? "✓" : dataContent || "1",
+      message: pendingAllowance
+        ? "Allowance previously approved successfully!"
+        : message,
+      stepClassName: pendingAllowance ? "step-success" : className,
+      messageClassName: pendingAllowance ? "text-success" : messageClassName,
     };
 
     const updatedSecondStep = {
       ...transactionStepsState[1],
-      message: statusMessage[stepTwoStatus] || "2",
-      dataContent: dataContent[stepTwoStatus] || "2",
+      message: statusConfig[stepTwoStatus].message || "2",
+      dataContent: statusConfig[stepTwoStatus].dataContent || "2",
       current: allowTokenStatus === "success",
       stepClassName:
-        stepTwoStatus === "success" ? "idle" : stepClassName[stepTwoStatus],
-      messageClassName: messageClassName2[stepTwoStatus],
+        stepTwoStatus === "success"
+          ? "idle"
+          : statusConfig[stepTwoStatus].className,
+      messageClassName: statusConfig[stepTwoStatus].messageClassName,
     };
+
+    if (stepTwoStatus === "success") {
+      updatedSecondStep.message = "waiting for approval";
+      updatedSecondStep.stepClassName = "idle";
+      updatedSecondStep.dataContent = "2";
+      updatedSecondStep.current = false;
+      updatedSecondStep.messageClassName = "";
+    }
 
     setTransactionStepsState([updatedFirstStep, updatedSecondStep]);
   }, [allowTokenStatus, stepTwoStatus]);
+
+  const handleModalClose = () => {
+    if (ref && "current" in ref && ref.current) {
+      ref.current.close();
+    }
+    if (setPendingAllowance) {
+      setPendingAllowance(false);
+    }
+  };
 
   return (
     <dialog id="transaction_modal" className="modal" ref={ref}>
@@ -111,7 +136,7 @@ export const TransactionModal = forwardRef<
           <Button
             className="border-none font-bold text-black"
             size="sm"
-            onClick={() => dialogRef?.current?.close()}
+            onClick={handleModalClose}
           >
             X
           </Button>
@@ -119,7 +144,9 @@ export const TransactionModal = forwardRef<
         <div className="mt-3 flex items-center gap-2 rounded-lg bg-info p-2 text-white">
           <ExclamationCircleIcon height={32} width={32} />
           <p className="text-sm">
-            You need to approve Gardens on the {token} contract. This is a two
+            {/*  Please sign two wallet transaction
+            One to allow ERC-20 tokens, the other to register  */}
+            You need to allow Gardens on the {token} contract. This is a two
             step process.
           </p>
         </div>
@@ -136,8 +163,12 @@ export const TransactionModal = forwardRef<
                     {step.transaction}
                   </span>
                   <span
-                    className={`text-left text-sm ${step.messageClassName}`}
+                    className={`flex items-center gap-2 text-left text-sm ${step.messageClassName}`}
                   >
+                    {step.stepClassName === "step-info" && (
+                      <span className="loading loading-spinner loading-xs" />
+                    )}
+
                     {step.message}
                   </span>
                 </div>
