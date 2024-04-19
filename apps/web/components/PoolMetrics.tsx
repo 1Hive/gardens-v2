@@ -9,7 +9,7 @@ import { Button } from "./Button";
 import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { parseUnits } from "viem";
 import { FormInput } from "./Forms";
-import { ConditionObject, useTooltipMessage } from "@/hooks/useTooltipMessage";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 
 type PoolStatsProps = {
   balance: string | number;
@@ -82,19 +82,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     });
   };
 
-  // Activate Tooltip condition => message mapping
-  const disableActiveBtnCondition: ConditionObject[] = [
-    // {
-    //   condition: amount ? amount > 0 : false,
-    //   message: "Join community to activate points",
-    // },
-  ];
-
-  const disableActiveBtn = disableActiveBtnCondition.some(
-    (cond) => cond.condition,
-  );
-
-  const tooltipMessage = useTooltipMessage(disableActiveBtnCondition);
+  const { tooltipMessage, missmatchUrl } = useDisableButtons();
 
   return (
     <>
@@ -139,7 +127,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
             onChange={(e) => setAmount(Number(e.target.value))}
           />
           <Button
-            disabled={!connectedAccount}
+            disabled={missmatchUrl || !connectedAccount}
             tooltip={tooltipMessage}
             onClick={() => writeContract()}
           >
