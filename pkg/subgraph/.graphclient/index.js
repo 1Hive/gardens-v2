@@ -386,6 +386,9 @@ export const getPoolDataDocument = gql `
     metadata
     id
     poolId
+    memberActive {
+      id
+    }
     config {
       id
       proposalType
@@ -463,6 +466,9 @@ export const getStrategyByPoolDocument = gql `
       proposalType
       pointSystem
       minThresholdPoints
+    }
+    memberActive {
+      id
     }
     registryCommunity {
       id

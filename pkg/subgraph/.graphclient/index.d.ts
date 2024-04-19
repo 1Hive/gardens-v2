@@ -671,7 +671,11 @@ export type MemberCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
 };
+<<<<<<< HEAD
 export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'activatedPoints' | 'stakedPoints' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress';
+=======
+export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedAmount' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress';
+>>>>>>> 98-fix-manage-support
 export type Member_filter = {
     id?: InputMaybe<Scalars['ID']>;
     id_not?: InputMaybe<Scalars['ID']>;
@@ -2023,7 +2027,11 @@ export type getMemberQueryVariables = Exact<{
 }>;
 export type getMemberQuery = {
     member?: Maybe<(Pick<Member, 'id'> & {
+<<<<<<< HEAD
         memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'id' | 'stakedPoints' | 'stakedTokens' | 'activatedPoints' | 'isRegistered'> & {
+=======
+        memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'id' | 'stakedAmount' | 'isRegistered'> & {
+>>>>>>> 98-fix-manage-support
             registryCommunity: Pick<RegistryCommunity, 'id'>;
         })>>;
         stakes?: Maybe<Array<(Pick<Stake, 'id' | 'poolId' | 'amount' | 'createdAt'> & {
@@ -2073,7 +2081,12 @@ export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId'> & {
+<<<<<<< HEAD
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'maxRatio' | 'minThresholdPoints'>;
+=======
+        memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
+        config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'maxRatio'>;
+>>>>>>> 98-fix-manage-support
         registryCommunity: (Pick<RegistryCommunity, 'id'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });
@@ -2103,7 +2116,12 @@ export type getStrategyByPoolQueryVariables = Exact<{
 }>;
 export type getStrategyByPoolQuery = {
     cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
+<<<<<<< HEAD
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;
+=======
+        config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem'>;
+        memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
+>>>>>>> 98-fix-manage-support
         registryCommunity: (Pick<RegistryCommunity, 'id'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });
