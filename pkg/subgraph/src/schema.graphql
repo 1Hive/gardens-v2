@@ -87,7 +87,6 @@ type Member @entity(immutable: false) {
   id: ID!
   # registryCommunity: [RegistryCommunity!]
   memberCommunity: [MemberCommunity!] @derivedFrom(field: "member")
-  totalStakedAmount: BigInt
   stakes: [Stake!] @derivedFrom(field: "member")
   # isRegistered: Boolean
 }

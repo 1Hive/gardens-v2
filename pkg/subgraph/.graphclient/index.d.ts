@@ -559,7 +559,6 @@ export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | '
 export type Member = {
     id: Scalars['ID'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
-    totalStakedAmount?: Maybe<Scalars['BigInt']>;
     stakes?: Maybe<Array<Stake>>;
 };
 export type MembermemberCommunityArgs = {
@@ -672,7 +671,7 @@ export type MemberCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
 };
-export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedAmount' | 'isRegistered' | 'member' | 'member__id' | 'member__totalStakedAmount' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress';
+export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedAmount' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress';
 export type Member_filter = {
     id?: InputMaybe<Scalars['ID']>;
     id_not?: InputMaybe<Scalars['ID']>;
@@ -683,21 +682,13 @@ export type Member_filter = {
     id_in?: InputMaybe<Array<Scalars['ID']>>;
     id_not_in?: InputMaybe<Array<Scalars['ID']>>;
     memberCommunity_?: InputMaybe<MemberCommunity_filter>;
-    totalStakedAmount?: InputMaybe<Scalars['BigInt']>;
-    totalStakedAmount_not?: InputMaybe<Scalars['BigInt']>;
-    totalStakedAmount_gt?: InputMaybe<Scalars['BigInt']>;
-    totalStakedAmount_lt?: InputMaybe<Scalars['BigInt']>;
-    totalStakedAmount_gte?: InputMaybe<Scalars['BigInt']>;
-    totalStakedAmount_lte?: InputMaybe<Scalars['BigInt']>;
-    totalStakedAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
-    totalStakedAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
     stakes_?: InputMaybe<Stake_filter>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<Member_filter>>>;
     or?: InputMaybe<Array<InputMaybe<Member_filter>>>;
 };
-export type Member_orderBy = 'id' | 'memberCommunity' | 'totalStakedAmount' | 'stakes';
+export type Member_orderBy = 'id' | 'memberCommunity' | 'stakes';
 /** Defines the order direction, either ascending or descending */
 export type OrderDirection = 'asc' | 'desc';
 export type Query = {
@@ -1238,7 +1229,7 @@ export type Stake_filter = {
     and?: InputMaybe<Array<InputMaybe<Stake_filter>>>;
     or?: InputMaybe<Array<InputMaybe<Stake_filter>>>;
 };
-export type Stake_orderBy = 'id' | 'member' | 'member__id' | 'member__totalStakedAmount' | 'poolId' | 'proposal' | 'proposal__id' | 'proposal__metadata' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__threshold' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'amount' | 'createdAt';
+export type Stake_orderBy = 'id' | 'member' | 'member__id' | 'poolId' | 'proposal' | 'proposal__id' | 'proposal__metadata' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__threshold' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'amount' | 'createdAt';
 export type Subscription = {
     cvstrategy?: Maybe<CVStrategy>;
     cvstrategies: Array<CVStrategy>;
@@ -1796,7 +1787,6 @@ export interface Int8ScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes
 export type MemberResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Member'] = ResolversParentTypes['Member']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     memberCommunity?: Resolver<Maybe<Array<ResolversTypes['MemberCommunity']>>, ParentType, ContextType, RequireFields<MembermemberCommunityArgs, 'skip' | 'first'>>;
-    totalStakedAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     stakes?: Resolver<Maybe<Array<ResolversTypes['Stake']>>, ParentType, ContextType, RequireFields<MemberstakesArgs, 'skip' | 'first'>>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
@@ -2032,7 +2022,7 @@ export type getMemberQueryVariables = Exact<{
     me: Scalars['ID'];
 }>;
 export type getMemberQuery = {
-    member?: Maybe<(Pick<Member, 'id' | 'totalStakedAmount'> & {
+    member?: Maybe<(Pick<Member, 'id'> & {
         memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'id' | 'stakedAmount' | 'isRegistered'> & {
             registryCommunity: Pick<RegistryCommunity, 'id'>;
         })>>;
@@ -2083,6 +2073,7 @@ export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId'> & {
+        memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'maxRatio'>;
         registryCommunity: (Pick<RegistryCommunity, 'id'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
@@ -2114,6 +2105,7 @@ export type getStrategyByPoolQueryVariables = Exact<{
 export type getStrategyByPoolQuery = {
     cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem'>;
+        memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         registryCommunity: (Pick<RegistryCommunity, 'id'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });

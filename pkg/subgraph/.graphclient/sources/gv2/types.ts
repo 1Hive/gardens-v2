@@ -642,7 +642,6 @@ export type CVStrategy_orderBy =
 export type Member = {
   id: Scalars['ID'];
   memberCommunity?: Maybe<Array<MemberCommunity>>;
-  totalStakedAmount?: Maybe<Scalars['BigInt']>;
   stakes?: Maybe<Array<Stake>>;
 };
 
@@ -769,7 +768,6 @@ export type MemberCommunity_orderBy =
   | 'isRegistered'
   | 'member'
   | 'member__id'
-  | 'member__totalStakedAmount'
   | 'registryCommunity'
   | 'registryCommunity__id'
   | 'registryCommunity__chainId'
@@ -794,14 +792,6 @@ export type Member_filter = {
   id_in?: InputMaybe<Array<Scalars['ID']>>;
   id_not_in?: InputMaybe<Array<Scalars['ID']>>;
   memberCommunity_?: InputMaybe<MemberCommunity_filter>;
-  totalStakedAmount?: InputMaybe<Scalars['BigInt']>;
-  totalStakedAmount_not?: InputMaybe<Scalars['BigInt']>;
-  totalStakedAmount_gt?: InputMaybe<Scalars['BigInt']>;
-  totalStakedAmount_lt?: InputMaybe<Scalars['BigInt']>;
-  totalStakedAmount_gte?: InputMaybe<Scalars['BigInt']>;
-  totalStakedAmount_lte?: InputMaybe<Scalars['BigInt']>;
-  totalStakedAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  totalStakedAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   stakes_?: InputMaybe<Stake_filter>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
@@ -812,7 +802,6 @@ export type Member_filter = {
 export type Member_orderBy =
   | 'id'
   | 'memberCommunity'
-  | 'totalStakedAmount'
   | 'stakes';
 
 /** Defines the order direction, either ascending or descending */
@@ -1449,7 +1438,6 @@ export type Stake_orderBy =
   | 'id'
   | 'member'
   | 'member__id'
-  | 'member__totalStakedAmount'
   | 'poolId'
   | 'proposal'
   | 'proposal__id'
