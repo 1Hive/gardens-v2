@@ -5,6 +5,7 @@ import { getChain } from "@/configs/chainServer";
 import { gardenLand } from "@/assets";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
+  TokenGarden,
   getAlloQuery,
   getPoolDataDocument,
   getPoolDataQuery,
@@ -51,7 +52,7 @@ export default async function Pool({
   const alloInfo = data?.allos[0];
   const proposalType = strategyObj?.config?.proposalType as number;
   const poolAmount = strategyObj?.poolAmount as number;
-  const tokenGarden = data.tokenGarden;
+  const tokenGarden = data.tokenGarden as TokenGarden;
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
 
   //calcs for spending limit
@@ -136,6 +137,8 @@ export default async function Pool({
           </section>
           {/* Pool metrics: for now we have funds available and spending limit */}
           <PoolMetrics
+            alloInfo={alloInfo}
+            poolId={poolId}
             balance={poolAmount}
             strategyAddress={strategyAddr}
             strategy={strategyObj}

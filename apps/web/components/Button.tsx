@@ -63,7 +63,7 @@ export function Button({
       })} ${cn({
         "border-2": type === "button",
       })} 
-      disabled:scale-1 flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed disabled:bg-gray-300 ${className}`}
+      disabled:scale-1 w-fit flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-black px-10 py-3 font-chakra font-bold transition-all ease-out hover:brightness-90 active:scale-95 disabled:scale-100 disabled:cursor-not-allowed disabled:bg-gray-300 ${className}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
