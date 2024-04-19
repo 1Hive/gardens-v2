@@ -110,6 +110,17 @@ export const IncreasePower = ({
   });
 
   const {
+    data: resetAllowance,
+    write: writeResetAllowance,
+    status: resetAllowanceStatus,
+  } = useContractWrite({
+    address: registerToken,
+    abi: abiWithErrors(erc20ABI),
+    args: [communityAddress, 0n as bigint], // [allowed spender address, amount ]
+    functionName: "approve",
+  });
+
+  const {
     data,
     isError,
     isLoading,
@@ -137,17 +148,38 @@ export const IncreasePower = ({
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "increasePower",
-    args: [requestedAmount ?? dataAllowance],
+    args: [
+      (BigInt(dataAllowance == 0n) ? requestedAmount : dataAllowance) as bigint,
+    ],
   });
 
+  const requestesMoreThanAllowance =
+    (dataAllowance ?? 0n) > 0n && requestedAmount > (dataAllowance ?? 0n);
+
   async function handleChange() {
-    if (dataAllowance !== 0n) {
+    const requestesMoreThanAllowance =
+      (dataAllowance ?? 0n) > 0n && requestedAmount > (dataAllowance ?? 0n);
+
+    if (requestesMoreThanAllowance) {
+      // Reset allowance to 0
+      writeResetAllowance?.();
+      console.log("Resetting allowance...");
+
+      // Update state or perform any necessary actions after resetting allowance
+      return; // Exit early after resetting allowance
+    }
+
+    if (dataAllowance === requestedAmount) {
+      // If allowance is exactly equal to requested amount, increase power
       writeIncreasePower?.();
       openModal();
       setPendingAllowance(true);
+      console.log("Step 3 stake...");
     } else {
+      // If allowance is less than requested amount, approve new allowance
       writeAllowToken?.();
       openModal();
+      console.log("Step 2 ...");
     }
   }
 
@@ -160,10 +192,18 @@ export const IncreasePower = ({
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
-    if (waitAllowTokenStatus === "success") {
+    if (resetAllowanceStatus === "success") {
+      writeAllowToken?.();
+    }
+
+    if (allowTokenStatus === "success") {
       writeIncreasePower?.();
     }
-  }, [waitAllowTokenStatus]);
+  }, [allowTokenStatus, resetAllowanceStatus]);
+
+  console.log(resetAllowanceStatus);
+  console.log(allowTokenStatus);
+  console.log(increaseStakeStatus);
 
   useEffect(() => {
     if (increaseStakeStatus === "success") {
