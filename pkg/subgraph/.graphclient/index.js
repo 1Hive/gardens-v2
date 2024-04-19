@@ -201,6 +201,7 @@ export const getFactoriesDocument = gql `
           decay
           maxRatio
           weight
+          minThresholdPoints
         }
       }
     }
@@ -252,7 +253,9 @@ export const isMemberDocument = gql `
       }
     }
     memberCommunity(where: {registryCommunity_contains: $comm}) {
-      stakedAmount
+      stakedPoints
+      stakedTokens
+      activatedPoints
       registryCommunity {
         id
       }
@@ -266,13 +269,14 @@ export const getMemberDocument = gql `
     id
     memberCommunity {
       id
-      stakedAmount
+      stakedPoints
+      stakedTokens
+      activatedPoints
       isRegistered
       registryCommunity {
         id
       }
     }
-    totalStakedAmount
     stakes {
       id
       poolId
@@ -320,7 +324,7 @@ export const getCommunitiesByGardenDocument = gql `
       registerToken
       registerStakeAmount
       alloAddress
-      members(where: {stakedAmount_gt: "0"}) {
+      members(where: {stakedTokens_gt: "0"}) {
         id
         memberAddress
       }
@@ -335,6 +339,7 @@ export const getCommunitiesByGardenDocument = gql `
           id
           proposalType
           pointSystem
+          minThresholdPoints
         }
         proposals {
           id
@@ -386,6 +391,7 @@ export const getPoolDataDocument = gql `
       proposalType
       pointSystem
       maxRatio
+      minThresholdPoints
     }
     registryCommunity {
       id
@@ -432,6 +438,7 @@ export const getProposalDataDocument = gql `
       config {
         proposalType
         pointSystem
+        minThresholdPoints
       }
     }
   }
@@ -455,6 +462,7 @@ export const getStrategyByPoolDocument = gql `
       id
       proposalType
       pointSystem
+      minThresholdPoints
     }
     registryCommunity {
       id

@@ -101,7 +101,9 @@ type Stake @entity {
 type MemberCommunity @entity(immutable: false) {
   id: ID!
   memberAddress: String
-  stakedAmount: BigInt
+  stakedTokens: BigInt
+  activatedPoints: BigInt
+  stakedPoints: BigInt
   isRegistered: Boolean
   member: Member!
   registryCommunity: RegistryCommunity!

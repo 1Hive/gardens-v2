@@ -69,7 +69,9 @@ query isMember($me: ID!, $comm: String!) {
       }
     }
     memberCommunity(where: { registryCommunity_contains: $comm }) {
-      stakedAmount
+      stakedPoints
+      stakedTokens
+      activatedPoints
       registryCommunity {
         id
       }
@@ -82,7 +84,9 @@ query getMember($me: ID!) {
     id
     memberCommunity {
       id
-      stakedAmount
+      stakedPoints
+      stakedTokens
+      activatedPoints
       isRegistered
       registryCommunity {
         id
@@ -133,7 +137,7 @@ query getCommunitiesByGarden($addr: ID!) {
       registerToken
       registerStakeAmount
       alloAddress
-      members(where: { stakedAmount_gt: "0" }) {
+      members(where: { stakedTokens_gt: "0" }) {
         id
         memberAddress
       }

@@ -220,8 +220,8 @@ export function handleSupportAdded(event: SupportAdded): void {
     return;
   }
 
-  memberCommunity.stakedAmount = memberCommunity.stakedAmount
-    ? memberCommunity.stakedAmount!.plus(event.params.amount)
+  memberCommunity.stakedPoints = memberCommunity.stakedPoints
+    ? memberCommunity.stakedPoints!.plus(event.params.amount)
     : event.params.amount;
 
   memberCommunity.save();
@@ -276,9 +276,13 @@ export function handlePowerIncreased(event: PowerIncreased): void {
     return;
   }
 
-  memberCommunity.stakedAmount = memberCommunity.stakedAmount
-    ? memberCommunity.stakedAmount!.plus(event.params.tokensStaked)
+  memberCommunity.stakedTokens = memberCommunity.stakedTokens
+    ? memberCommunity.stakedTokens!.plus(event.params.tokensStaked)
     : event.params.tokensStaked;
+
+  memberCommunity.activatedPoints = memberCommunity.activatedPoints
+    ? memberCommunity.activatedPoints!.plus(event.params.pointsToIncrease)
+    : event.params.pointsToIncrease;
 
   memberCommunity.save();
 }
@@ -308,8 +312,12 @@ export function handlePowerDecreased(event: PowerDecreased): void {
     return;
   }
 
-  memberCommunity.stakedAmount = memberCommunity.stakedAmount
-    ? memberCommunity.stakedAmount!.minus(event.params.tokensUnStaked)
+  memberCommunity.stakedTokens = memberCommunity.stakedTokens
+    ? memberCommunity.stakedTokens!.minus(event.params.tokensUnStaked)
+    : BigInt.fromI32(0);
+
+  memberCommunity.activatedPoints = memberCommunity.activatedPoints
+    ? memberCommunity.activatedPoints!.minus(event.params.pointsToDecrease)
     : BigInt.fromI32(0);
 
   memberCommunity.save();

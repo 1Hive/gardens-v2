@@ -127,9 +127,10 @@ export function handleMemberRegistered(event: MemberRegistered): void {
     newMemberCommunity.memberAddress = memberAddress;
   }
 
-  newMemberCommunity.stakedAmount = newMemberCommunity.stakedAmount
-    ? newMemberCommunity.stakedAmount!.plus(event.params._amountStaked)
-    : event.params._amountStaked;
+  //Since on the activateMember function calls the increasePower we should just update the staked tokens there if not we are duplicating the staked tokens
+  // newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
+  //   ? newMemberCommunity.stakedTokens!.plus(event.params._amountStaked)
+  //   : event.params._amountStaked;
 
   newMemberCommunity.isRegistered = true;
   newMemberCommunity.save();
@@ -150,12 +151,8 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
     return;
   }
   memberCommunity.isRegistered = false;
-  memberCommunity.stakedAmount = BigInt.fromI32(0);
-  memberCommunity.save();
-
-  memberCommunity.stakedAmount = memberCommunity.stakedAmount
-    ? memberCommunity.stakedAmount!.minus(event.params._amountStaked)
-    : event.params._amountStaked;
+  memberCommunity.stakedTokens = BigInt.fromI32(0);
+  memberCommunity.activatedPoints = BigInt.fromI32(0);
 
   memberCommunity.save();
 }
@@ -177,14 +174,10 @@ export function handleMemberKicked(event: MemberKicked): void {
     return;
   }
   memberCommunity.isRegistered = false;
-  memberCommunity.stakedAmount = BigInt.fromI32(0);
+  memberCommunity.stakedTokens = BigInt.fromI32(0);
+  memberCommunity.activatedPoints = BigInt.fromI32(0);
+  memberCommunity.stakedPoints = BigInt.fromI32(0);
   memberCommunity.save();
-
-  memberCommunity.stakedAmount = memberCommunity.stakedAmount
-    ? memberCommunity.stakedAmount!.minus(event.params._amountReturned)
-    : event.params._amountReturned;
-
-  member.save();
 }
 
 // //  handleStrategyAdded
