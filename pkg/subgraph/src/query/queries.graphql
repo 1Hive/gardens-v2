@@ -87,10 +87,8 @@ query getMember($me: ID!) {
         id
       }
     }
-    totalStakedAmount
     stakes {
       id
-      poolId
       proposal {
         id
       }
@@ -180,6 +178,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     tokenNative
   }
   tokenGarden(id: $garden) {
+    address
     name
     symbol
     description
@@ -192,6 +191,9 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     metadata
     id
     poolId
+    memberActive {
+      id
+    }
     config {
       id
       proposalType
@@ -263,6 +265,9 @@ query getStrategyByPool($poolId: BigInt!) {
       id
       proposalType
       pointSystem
+    }
+    memberActive {
+      id
     }
     registryCommunity {
       id

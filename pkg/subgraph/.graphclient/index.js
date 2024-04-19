@@ -49,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "http://localhost:8000/subgraphs/name/kamikazebr/gv2" },
+        config: { "endpoint": "https://api.studio.thegraph.com/query/29898/gv2-arbsepolia/version/latest/" },
         baseDir,
         cache,
         pubsub,
@@ -272,10 +272,8 @@ export const getMemberDocument = gql `
         id
       }
     }
-    totalStakedAmount
     stakes {
       id
-      poolId
       proposal {
         id
       }
@@ -369,6 +367,7 @@ export const getPoolDataDocument = gql `
     tokenNative
   }
   tokenGarden(id: $garden) {
+    address
     name
     symbol
     description
@@ -381,6 +380,9 @@ export const getPoolDataDocument = gql `
     metadata
     id
     poolId
+    memberActive {
+      id
+    }
     config {
       id
       proposalType
@@ -455,6 +457,9 @@ export const getStrategyByPoolDocument = gql `
       id
       proposalType
       pointSystem
+    }
+    memberActive {
+      id
     }
     registryCommunity {
       id
