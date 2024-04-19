@@ -94,6 +94,12 @@ export async function getMeshOptions() {
                     },
                     location: 'GetTokenGardensDocument.graphql'
                 }, {
+                    document: GetMemberStrategyDocument,
+                    get rawSDL() {
+                        return printWithCache(GetMemberStrategyDocument);
+                    },
+                    location: 'GetMemberStrategyDocument.graphql'
+                }, {
                     document: IsMemberDocument,
                     get rawSDL() {
                         return printWithCache(IsMemberDocument);
@@ -228,6 +234,21 @@ export const getTokenGardensDocument = gql `
   }
 }
     `;
+export const getMemberStrategyDocument = gql `
+    query getMemberStrategy($me: ID!) {
+  memberStrategy(id: $me) {
+    id
+    totalStakedPoints
+    activatedPoints
+    strategy {
+      id
+    }
+    member {
+      id
+    }
+  }
+}
+    `;
 export const isMemberDocument = gql `
     query isMember($me: ID!, $comm: String!) {
   members(where: {id: $me}) {
@@ -253,9 +274,7 @@ export const isMemberDocument = gql `
       }
     }
     memberCommunity(where: {registryCommunity_contains: $comm}) {
-      stakedPoints
       stakedTokens
-      activatedPoints
       registryCommunity {
         id
       }
@@ -269,9 +288,7 @@ export const getMemberDocument = gql `
     id
     memberCommunity {
       id
-      stakedPoints
       stakedTokens
-      activatedPoints
       isRegistered
       registryCommunity {
         id
@@ -497,6 +514,9 @@ export function getSdk(requester) {
         },
         getTokenGardens(variables, options) {
             return requester(getTokenGardensDocument, variables, options);
+        },
+        getMemberStrategy(variables, options) {
+            return requester(getMemberStrategyDocument, variables, options);
         },
         isMember(variables, options) {
             return requester(isMemberDocument, variables, options);

@@ -19,6 +19,8 @@ import {
   MemberDeactivatedStrategy,
   PoolCreated,
   MemberKicked,
+  MemberPowerIncreased,
+  MemberPowerDecreased,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 
 import { RegistryFactory as RegistryFactoryContract } from "../../generated/RegistryFactory/RegistryFactory";
@@ -127,10 +129,9 @@ export function handleMemberRegistered(event: MemberRegistered): void {
     newMemberCommunity.memberAddress = memberAddress;
   }
 
-  //Since on the activateMember function calls the increasePower we should just update the staked tokens there if not we are duplicating the staked tokens
-  // newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
-  //   ? newMemberCommunity.stakedTokens!.plus(event.params._amountStaked)
-  //   : event.params._amountStaked;
+  newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
+    ? newMemberCommunity.stakedTokens!.plus(event.params._amountStaked)
+    : event.params._amountStaked;
 
   newMemberCommunity.isRegistered = true;
   newMemberCommunity.save();
@@ -152,7 +153,6 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
   }
   memberCommunity.isRegistered = false;
   memberCommunity.stakedTokens = BigInt.fromI32(0);
-  memberCommunity.activatedPoints = BigInt.fromI32(0);
 
   memberCommunity.save();
 }
@@ -175,8 +175,6 @@ export function handleMemberKicked(event: MemberKicked): void {
   }
   memberCommunity.isRegistered = false;
   memberCommunity.stakedTokens = BigInt.fromI32(0);
-  memberCommunity.activatedPoints = BigInt.fromI32(0);
-  memberCommunity.stakedPoints = BigInt.fromI32(0);
   memberCommunity.save();
 }
 
@@ -289,6 +287,44 @@ export function handlePoolCreated(event: PoolCreated): void {
   // const community = event.params._community;
 
   CVStrategyTemplate.create(strategyAddress);
+}
+
+export function handleMemberPowerIncreased(event: MemberPowerIncreased): void {
+  const community = event.address.toHex();
+  const memberAddress = event.params._member.toHexString();
+  const memberCommunityId = `${memberAddress}-${community}`;
+
+  let newMemberCommunity = MemberCommunity.load(memberCommunityId);
+
+  if (newMemberCommunity == null) {
+    log.error("MemberCommunity not found: {}", [memberCommunityId]);
+    return;
+  }
+
+  newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
+    ? newMemberCommunity.stakedTokens!.plus(event.params._stakedAmount)
+    : event.params._stakedAmount;
+
+  newMemberCommunity.save();
+}
+
+export function handleMemberPowerDecreased(event: MemberPowerDecreased): void {
+  const community = event.address.toHex();
+  const memberAddress = event.params._member.toHexString();
+  const memberCommunityId = `${memberAddress}-${community}`;
+
+  let newMemberCommunity = MemberCommunity.load(memberCommunityId);
+
+  if (newMemberCommunity == null) {
+    log.error("MemberCommunity not found: {}", [memberCommunityId]);
+    return;
+  }
+
+  newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
+    ? newMemberCommunity.stakedTokens!.minus(event.params._unstakedAmount)
+    : event.params._unstakedAmount;
+
+  newMemberCommunity.save();
 }
 
 // handler: handleMemberPowerDecreased

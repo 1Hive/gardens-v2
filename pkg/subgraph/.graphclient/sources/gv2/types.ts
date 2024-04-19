@@ -645,8 +645,6 @@ export type MemberCommunity = {
   id: Scalars['ID'];
   memberAddress?: Maybe<Scalars['String']>;
   stakedTokens?: Maybe<Scalars['BigInt']>;
-  activatedPoints?: Maybe<Scalars['BigInt']>;
-  stakedPoints?: Maybe<Scalars['BigInt']>;
   isRegistered?: Maybe<Scalars['Boolean']>;
   member: Member;
   registryCommunity: RegistryCommunity;
@@ -689,22 +687,6 @@ export type MemberCommunity_filter = {
   stakedTokens_lte?: InputMaybe<Scalars['BigInt']>;
   stakedTokens_in?: InputMaybe<Array<Scalars['BigInt']>>;
   stakedTokens_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  activatedPoints?: InputMaybe<Scalars['BigInt']>;
-  activatedPoints_not?: InputMaybe<Scalars['BigInt']>;
-  activatedPoints_gt?: InputMaybe<Scalars['BigInt']>;
-  activatedPoints_lt?: InputMaybe<Scalars['BigInt']>;
-  activatedPoints_gte?: InputMaybe<Scalars['BigInt']>;
-  activatedPoints_lte?: InputMaybe<Scalars['BigInt']>;
-  activatedPoints_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  activatedPoints_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  stakedPoints?: InputMaybe<Scalars['BigInt']>;
-  stakedPoints_not?: InputMaybe<Scalars['BigInt']>;
-  stakedPoints_gt?: InputMaybe<Scalars['BigInt']>;
-  stakedPoints_lt?: InputMaybe<Scalars['BigInt']>;
-  stakedPoints_gte?: InputMaybe<Scalars['BigInt']>;
-  stakedPoints_lte?: InputMaybe<Scalars['BigInt']>;
-  stakedPoints_in?: InputMaybe<Array<Scalars['BigInt']>>;
-  stakedPoints_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
   isRegistered?: InputMaybe<Scalars['Boolean']>;
   isRegistered_not?: InputMaybe<Scalars['Boolean']>;
   isRegistered_in?: InputMaybe<Array<Scalars['Boolean']>>;
@@ -761,8 +743,6 @@ export type MemberCommunity_orderBy =
   | 'id'
   | 'memberAddress'
   | 'stakedTokens'
-  | 'activatedPoints'
-  | 'stakedPoints'
   | 'isRegistered'
   | 'member'
   | 'member__id'
@@ -779,6 +759,101 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity__registerStakeAmount'
   | 'registryCommunity__registerToken'
   | 'registryCommunity__alloAddress';
+
+export type MemberStrategy = {
+  id: Scalars['ID'];
+  member: Member;
+  strategy: CVStrategy;
+  totalStakedPoints: Scalars['BigInt'];
+  activatedPoints?: Maybe<Scalars['BigInt']>;
+};
+
+export type MemberStrategy_filter = {
+  id?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  member?: InputMaybe<Scalars['String']>;
+  member_not?: InputMaybe<Scalars['String']>;
+  member_gt?: InputMaybe<Scalars['String']>;
+  member_lt?: InputMaybe<Scalars['String']>;
+  member_gte?: InputMaybe<Scalars['String']>;
+  member_lte?: InputMaybe<Scalars['String']>;
+  member_in?: InputMaybe<Array<Scalars['String']>>;
+  member_not_in?: InputMaybe<Array<Scalars['String']>>;
+  member_contains?: InputMaybe<Scalars['String']>;
+  member_contains_nocase?: InputMaybe<Scalars['String']>;
+  member_not_contains?: InputMaybe<Scalars['String']>;
+  member_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  member_starts_with?: InputMaybe<Scalars['String']>;
+  member_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  member_not_starts_with?: InputMaybe<Scalars['String']>;
+  member_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  member_ends_with?: InputMaybe<Scalars['String']>;
+  member_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  member_not_ends_with?: InputMaybe<Scalars['String']>;
+  member_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  member_?: InputMaybe<Member_filter>;
+  strategy?: InputMaybe<Scalars['String']>;
+  strategy_not?: InputMaybe<Scalars['String']>;
+  strategy_gt?: InputMaybe<Scalars['String']>;
+  strategy_lt?: InputMaybe<Scalars['String']>;
+  strategy_gte?: InputMaybe<Scalars['String']>;
+  strategy_lte?: InputMaybe<Scalars['String']>;
+  strategy_in?: InputMaybe<Array<Scalars['String']>>;
+  strategy_not_in?: InputMaybe<Array<Scalars['String']>>;
+  strategy_contains?: InputMaybe<Scalars['String']>;
+  strategy_contains_nocase?: InputMaybe<Scalars['String']>;
+  strategy_not_contains?: InputMaybe<Scalars['String']>;
+  strategy_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  strategy_starts_with?: InputMaybe<Scalars['String']>;
+  strategy_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  strategy_not_starts_with?: InputMaybe<Scalars['String']>;
+  strategy_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  strategy_ends_with?: InputMaybe<Scalars['String']>;
+  strategy_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  strategy_not_ends_with?: InputMaybe<Scalars['String']>;
+  strategy_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  strategy_?: InputMaybe<CVStrategy_filter>;
+  totalStakedPoints?: InputMaybe<Scalars['BigInt']>;
+  totalStakedPoints_not?: InputMaybe<Scalars['BigInt']>;
+  totalStakedPoints_gt?: InputMaybe<Scalars['BigInt']>;
+  totalStakedPoints_lt?: InputMaybe<Scalars['BigInt']>;
+  totalStakedPoints_gte?: InputMaybe<Scalars['BigInt']>;
+  totalStakedPoints_lte?: InputMaybe<Scalars['BigInt']>;
+  totalStakedPoints_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  totalStakedPoints_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  activatedPoints?: InputMaybe<Scalars['BigInt']>;
+  activatedPoints_not?: InputMaybe<Scalars['BigInt']>;
+  activatedPoints_gt?: InputMaybe<Scalars['BigInt']>;
+  activatedPoints_lt?: InputMaybe<Scalars['BigInt']>;
+  activatedPoints_gte?: InputMaybe<Scalars['BigInt']>;
+  activatedPoints_lte?: InputMaybe<Scalars['BigInt']>;
+  activatedPoints_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  activatedPoints_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<MemberStrategy_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<MemberStrategy_filter>>>;
+};
+
+export type MemberStrategy_orderBy =
+  | 'id'
+  | 'member'
+  | 'member__id'
+  | 'strategy'
+  | 'strategy__id'
+  | 'strategy__poolId'
+  | 'strategy__poolAmount'
+  | 'strategy__metadata'
+  | 'strategy__maxCVSupply'
+  | 'strategy__totalEffectiveActivePoints'
+  | 'totalStakedPoints'
+  | 'activatedPoints';
 
 export type Member_filter = {
   id?: InputMaybe<Scalars['ID']>;
@@ -824,6 +899,8 @@ export type Query = {
   stakes: Array<Stake>;
   memberCommunity?: Maybe<MemberCommunity>;
   memberCommunities: Array<MemberCommunity>;
+  memberStrategy?: Maybe<MemberStrategy>;
+  memberStrategies: Array<MemberStrategy>;
   tokenGarden?: Maybe<TokenGarden>;
   tokenGardens: Array<TokenGarden>;
   allo?: Maybe<Allo>;
@@ -972,6 +1049,24 @@ export type QuerymemberCommunitiesArgs = {
   orderBy?: InputMaybe<MemberCommunity_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<MemberCommunity_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerymemberStrategyArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerymemberStrategiesArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<MemberStrategy_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<MemberStrategy_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1473,6 +1568,8 @@ export type Subscription = {
   stakes: Array<Stake>;
   memberCommunity?: Maybe<MemberCommunity>;
   memberCommunities: Array<MemberCommunity>;
+  memberStrategy?: Maybe<MemberStrategy>;
+  memberStrategies: Array<MemberStrategy>;
   tokenGarden?: Maybe<TokenGarden>;
   tokenGardens: Array<TokenGarden>;
   allo?: Maybe<Allo>;
@@ -1621,6 +1718,24 @@ export type SubscriptionmemberCommunitiesArgs = {
   orderBy?: InputMaybe<MemberCommunity_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<MemberCommunity_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionmemberStrategyArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionmemberStrategiesArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<MemberStrategy_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<MemberStrategy_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1905,6 +2020,10 @@ export type _SubgraphErrorPolicy_ =
   /** null **/
   memberCommunities: InContextSdkMethod<Query['memberCommunities'], QuerymemberCommunitiesArgs, MeshContext>,
   /** null **/
+  memberStrategy: InContextSdkMethod<Query['memberStrategy'], QuerymemberStrategyArgs, MeshContext>,
+  /** null **/
+  memberStrategies: InContextSdkMethod<Query['memberStrategies'], QuerymemberStrategiesArgs, MeshContext>,
+  /** null **/
   tokenGarden: InContextSdkMethod<Query['tokenGarden'], QuerytokenGardenArgs, MeshContext>,
   /** null **/
   tokenGardens: InContextSdkMethod<Query['tokenGardens'], QuerytokenGardensArgs, MeshContext>,
@@ -1953,6 +2072,10 @@ export type _SubgraphErrorPolicy_ =
   memberCommunity: InContextSdkMethod<Subscription['memberCommunity'], SubscriptionmemberCommunityArgs, MeshContext>,
   /** null **/
   memberCommunities: InContextSdkMethod<Subscription['memberCommunities'], SubscriptionmemberCommunitiesArgs, MeshContext>,
+  /** null **/
+  memberStrategy: InContextSdkMethod<Subscription['memberStrategy'], SubscriptionmemberStrategyArgs, MeshContext>,
+  /** null **/
+  memberStrategies: InContextSdkMethod<Subscription['memberStrategies'], SubscriptionmemberStrategiesArgs, MeshContext>,
   /** null **/
   tokenGarden: InContextSdkMethod<Subscription['tokenGarden'], SubscriptiontokenGardenArgs, MeshContext>,
   /** null **/

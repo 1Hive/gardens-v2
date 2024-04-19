@@ -58,8 +58,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     event MemberActivatedStrategy(address _member, address _strategy);
     event MemberDeactivatedStrategy(address _member, address _strategy);
     event BasisStakedAmountSet(uint256 _newAmount);
-    // event MemberPowerIncreased(address _member, address _strategy, uint256 _power);
-    // event MemberPowerDecreased(address _member, address _strategy, uint256 _power);
+    event MemberPowerIncreased(address _member, uint256 _stakedAmount);
+    event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
     event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata);
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -317,6 +317,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         gardenToken.safeTransferFrom(member, address(this), _amountStaked);
         addressToMemberInfo[member].stakedAmount += _amountStaked;
+        emit MemberPowerIncreased(member, _amountStaked);
     }
 
     /*
@@ -341,6 +342,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
             // }
         }
+        emit MemberPowerDecreased(member, _amountUnstaked);
     }
 
     function getMemberPowerInStrategy(address _member, address _strategy) public view returns (uint256) {

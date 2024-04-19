@@ -102,11 +102,17 @@ type MemberCommunity @entity(immutable: false) {
   id: ID!
   memberAddress: String
   stakedTokens: BigInt
-  activatedPoints: BigInt
-  stakedPoints: BigInt
   isRegistered: Boolean
   member: Member!
   registryCommunity: RegistryCommunity!
+}
+
+type MemberStrategy @entity(immutable: false) {
+  id: ID!
+  member: Member!
+  strategy: CVStrategy!
+  totalStakedPoints: BigInt!
+  activatedPoints: BigInt
 }
 
 type TokenGarden @entity(immutable: false) {

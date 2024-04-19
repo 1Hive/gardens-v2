@@ -45,6 +45,20 @@ query getTokenGardens {
   }
 }
 
+query getMemberStrategy($me: ID!) {
+  memberStrategy(id: $me) {
+    id
+    totalStakedPoints
+    activatedPoints
+    strategy {
+      id
+    }
+    member {
+      id
+    }
+  }
+}
+
 query isMember($me: ID!, $comm: String!) {
   members(where: { id: $me }) {
     id
@@ -69,9 +83,7 @@ query isMember($me: ID!, $comm: String!) {
       }
     }
     memberCommunity(where: { registryCommunity_contains: $comm }) {
-      stakedPoints
       stakedTokens
-      activatedPoints
       registryCommunity {
         id
       }
@@ -84,9 +96,7 @@ query getMember($me: ID!) {
     id
     memberCommunity {
       id
-      stakedPoints
       stakedTokens
-      activatedPoints
       isRegistered
       registryCommunity {
         id

@@ -2,8 +2,7 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
-  Member,
-  MemberCommunity,
+  MemberStrategy,
   Stake,
   // ProposalMeta as ProposalMetadata,
 } from "../../generated/schema";
@@ -192,8 +191,8 @@ export function handleSupportAdded(event: SupportAdded): void {
     ]);
     return;
   }
-  const memberCommunityId = `${event.params.from.toHexString()}-${cvs.registryCommunity.toString()}`;
-  let stakeId = `${cvp.id.toString()}-${memberCommunityId}`;
+  const memberStrategyId = `${event.params.from.toHexString()}-${cvs.id}`;
+  let stakeId = `${cvp.id.toString()}-${memberStrategyId}`;
 
   let stake = Stake.load(stakeId);
   if (!stake) {
@@ -212,19 +211,19 @@ export function handleSupportAdded(event: SupportAdded): void {
   );
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
-  let memberCommunity = MemberCommunity.load(memberCommunityId);
-  if (memberCommunity == null) {
-    log.debug("handleSupportAdded memberCommunity not found: {}", [
-      memberCommunityId.toString(),
+  let memberStrategy = MemberStrategy.load(memberStrategyId);
+  if (memberStrategy == null) {
+    log.debug("handleSupportAdded memberStrategy not found: {}", [
+      memberStrategyId.toString(),
     ]);
     return;
   }
 
-  memberCommunity.stakedPoints = memberCommunity.stakedPoints
-    ? memberCommunity.stakedPoints!.plus(event.params.amount)
+  memberStrategy.totalStakedPoints = memberStrategy.totalStakedPoints
+    ? memberStrategy.totalStakedPoints.plus(event.params.amount)
     : event.params.amount;
 
-  memberCommunity.save();
+  memberStrategy.save();
   cvp.maxCVStaked = maxConviction;
 
   cvp.stakedAmount = event.params.totalStakedAmount;
@@ -266,25 +265,21 @@ export function handlePowerIncreased(event: PowerIncreased): void {
 
   cvs.save();
 
-  const memberCommunityId = `${event.params.member.toHexString()}-${cvs.registryCommunity.toString()}`;
+  const memberStrategyId = `${event.params.member.toHexString()}-${cvs.id}`;
 
-  let memberCommunity = MemberCommunity.load(memberCommunityId);
-  if (memberCommunity == null) {
-    log.debug("handlePowerIncreased memberCommunity not found: {}", [
-      memberCommunityId.toString(),
-    ]);
-    return;
+  let memberStrategy = MemberStrategy.load(memberStrategyId);
+  if (memberStrategy == null) {
+    memberStrategy = new MemberStrategy(memberStrategyId);
+    memberStrategy.member = event.params.member.toHexString();
+    memberStrategy.strategy = cvs.id;
+    memberStrategy.totalStakedPoints = BigInt.fromI32(0);
   }
 
-  memberCommunity.stakedTokens = memberCommunity.stakedTokens
-    ? memberCommunity.stakedTokens!.plus(event.params.tokensStaked)
-    : event.params.tokensStaked;
-
-  memberCommunity.activatedPoints = memberCommunity.activatedPoints
-    ? memberCommunity.activatedPoints!.plus(event.params.pointsToIncrease)
+  memberStrategy.activatedPoints = memberStrategy.activatedPoints
+    ? memberStrategy.activatedPoints!.plus(event.params.pointsToIncrease)
     : event.params.pointsToIncrease;
 
-  memberCommunity.save();
+  memberStrategy.save();
 }
 
 export function handlePowerDecreased(event: PowerDecreased): void {
@@ -302,25 +297,21 @@ export function handlePowerDecreased(event: PowerDecreased): void {
 
   cvs.save();
 
-  const memberCommunityId = `${event.params.member.toHexString()}-${cvs.registryCommunity.toString()}`;
+  const memberStrategyId = `${event.params.member.toHexString()}-${cvs.id}`;
 
-  let memberCommunity = MemberCommunity.load(memberCommunityId);
-  if (memberCommunity == null) {
-    log.debug("handlePowerDecreased memberCommunity not found: {}", [
-      memberCommunityId.toString(),
+  let memberStrategy = MemberStrategy.load(memberStrategyId);
+  if (memberStrategy == null) {
+    log.debug("handlePowerDecreased memberStrategy not found: {}", [
+      memberStrategyId.toString(),
     ]);
     return;
   }
 
-  memberCommunity.stakedTokens = memberCommunity.stakedTokens
-    ? memberCommunity.stakedTokens!.minus(event.params.tokensUnStaked)
+  memberStrategy.activatedPoints = memberStrategy.activatedPoints
+    ? memberStrategy.activatedPoints!.minus(event.params.pointsToDecrease)
     : BigInt.fromI32(0);
 
-  memberCommunity.activatedPoints = memberCommunity.activatedPoints
-    ? memberCommunity.activatedPoints!.minus(event.params.pointsToDecrease)
-    : BigInt.fromI32(0);
-
-  memberCommunity.save();
+  memberStrategy.save();
 }
 
 export function handleDecayUpdated(event: DecayUpdated): void {
