@@ -104,7 +104,6 @@ query getMember($me: ID!) {
     }
     stakes {
       id
-      poolId
       proposal {
         id
       }
@@ -195,6 +194,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     tokenNative
   }
   tokenGarden(id: $garden) {
+    address
     name
     symbol
     description

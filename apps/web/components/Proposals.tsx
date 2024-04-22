@@ -9,15 +9,11 @@ import {
   Address as AddressType,
   useContractRead,
 } from "wagmi";
-import { confirmationsRequired } from "@/constants/contracts";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
 import { formatTokenAmount } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
-import { ProposalStats } from "@/components";
-import { toast } from "react-toastify";
-import { useViemClient } from "@/hooks/useViemClient";
 import {
   getStrategyByPoolQuery,
   isMemberDocument,
@@ -26,16 +22,15 @@ import {
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/pool/[poolId]/page";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { encodeAbiParameters, formatUnits, parseUnits } from "viem";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import { useTotalVoterStakedPct } from "@/hooks/useTotalVoterStakedPct";
-import * as dnum from "dnum";
-import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { queryByChain } from "@/providers/urql";
 import { getChainIdFromPath } from "@/utils/path";
-import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
+import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { FormLink } from "@/components";
 
 type InputItem = {
   id: string;
@@ -63,10 +58,12 @@ export function Proposals({
   strategy,
   alloInfo,
   communityAddress,
+  createProposalUrl,
 }: {
   strategy: Strategy;
   alloInfo: AlloQuery;
   communityAddress: Address;
+  createProposalUrl: string;
 }) {
   const DECIMALS = strategy.registryCommunity.garden.decimals;
 
@@ -90,17 +87,26 @@ export function Proposals({
   const pathname = usePathname();
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-
   const urqlClient = useUrqlClient();
-
   const chainId = getChainIdFromPath();
-  //TODO: make hook for this
 
-  // const { data: memberPointsVotingPower } = useContractRead({
-  //   address: communityAddress as Address,
-  //   abi: abiWithErrors(registryCommunityABI),
-  //   functionName: "getMemberPowerInStrategy",
-  //   args: [connectedAccount as Address, strategyAddress],
+  const registryContractCallConfig = {
+    address: communityAddress,
+    abi: abiWithErrors2(registryCommunityABI),
+  };
+
+  const { data: isMemberActivated } = useContractRead({
+    ...registryContractCallConfig,
+    functionName: "memberActivatedInStrategies",
+    args: [address as Address, strategy.id as Address],
+    watch: true,
+  });
+
+  // const { data: checking } = useContractRead({
+  //   address: strategy.id as Address,
+  //   abi: abiWithErrors(cvStrategyABI),
+  //   functionName: "canExecuteProposal",
+  //   args: [5],
   // });
 
   const runIsMemberQuery = useCallback(async () => {
@@ -336,16 +342,18 @@ export function Proposals({
   //ManageSupport Tooltip condition => message mapping
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
-      condition: !isMemberActived,
-      message: "Activate your points to support proposals",
+      condition: !isMemberActivated,
+      message: "Must have points activated to support proposals",
     },
   ];
   const disableManSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
   );
-  const tooltipMessage = useTooltipMessage(disableManageSupportBtnCondition);
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
+    disableManageSupportBtnCondition,
+  );
 
-  //Execute Tooltip condition => message mapping
+  //Execute Disable Button condition => message mapping
   // const disableExecuteBtnCondition: ConditionObject[] = [
   //   {
   //     condition: proposals.some((proposal) => proposal.proposalStatus == "4"),
@@ -355,7 +363,7 @@ export function Proposals({
   // const disableExecuteButton = disableExecuteBtnCondition.some(
   //   (cond) => cond.condition,
   // );
-  // const tooltipMessageExecuteBtn = useTooltipMessage(
+  // const tooltipMessageExecuteBtn = useDisableButtons(
   //   disableExecuteBtnCondition,
   // );
 
@@ -366,7 +374,7 @@ export function Proposals({
           <div className="flex w-full items-baseline justify-between">
             <h3 className="font-semibold">Proposals</h3>
             {proposals.length === 0 ? (
-              <h4 className="text-lg font-semibold">
+              <h4 className="text-2xl text-info">
                 No submitted proposals to support
               </h4>
             ) : (
@@ -375,7 +383,7 @@ export function Proposals({
                   icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
                   onClick={() => setEditView((prev) => !prev)}
                   disabled={disableManSupportButton}
-                  tooltip={tooltipMessage}
+                  tooltip={String(tooltipMessage)}
                 >
                   Manage support
                 </Button>
@@ -423,8 +431,14 @@ export function Proposals({
                     {!editView && (
                       <Button
                         // TODO: add flexible tooltip and func to check executability
-                        disabled={proposalStatus == "4"}
-                        tooltip={"Proposal already executed"}
+                        disabled={
+                          proposalStatus == "4" || !isConnected || missmatchUrl
+                        }
+                        tooltip={
+                          proposalStatus == "4"
+                            ? "Proposal already executed"
+                            : tooltipMessage
+                        }
                         onClick={() =>
                           writeDistribute?.({
                             args: [
@@ -524,12 +538,13 @@ export function Proposals({
         <div className="">
           <p className="font-semibold">{message}</p>
         </div>
-
-        {/*  PROPOSALS STATS  ///// */}
-        {/* <ProposalStats
-          proposals={proposals}
-          distributedPoints={distributedPoints}
-        /> */}
+      </div>
+      <div>
+        <h4 className="text-2xl">Do you have a great idea?</h4>
+        <div className="flex items-center gap-6">
+          <p>Share it with the community and get support !</p>
+          <FormLink href={createProposalUrl} label="Create Proposal" />
+        </div>
       </div>
     </section>
   );

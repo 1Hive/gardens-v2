@@ -4,8 +4,14 @@ import {
   UserGroupIcon,
   BuildingOffice2Icon,
 } from "@heroicons/react/24/outline";
-import { PoolCard, IncreasePower } from "@/components";
-import { CommunityProfile } from "@/components";
+import {
+  PoolCard,
+  IncreasePower,
+  CommunityProfile,
+  FormLink,
+} from "@/components";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { usePathname } from "next/navigation";
 import { Address, useAccount } from "wagmi";
 import {
   TokenGarden,
@@ -13,7 +19,6 @@ import {
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -36,7 +41,7 @@ export function CommunityCard({
   communityFee,
   tokenGarden,
 }: CommunityCardProps) {
-  const { address: accountAddress, isConnected } = useAccount();
+  const { address: accountAddress } = useAccount();
   const pathname = usePathname();
 
   const pools = strategies ?? [];
@@ -110,12 +115,10 @@ export function CommunityCard({
           <div className="flex flex-col justify-end gap-2">
             <div className="flex items-center justify-between">
               <h3>Pools</h3>
-              <Link
+              <FormLink
                 href={`${pathname}/${communityAddress}/create-pool`}
-                className=""
-              >
-                <Button disabled={!isConnected}>Create Pool</Button>
-              </Link>
+                label="Create Pool"
+              />
             </div>
 
             <h5 className="font-bold">

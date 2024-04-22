@@ -20,19 +20,24 @@ export const PointsComponent: FC<PoolStatsProps> = ({
   communityAddress,
 }) => {
   const { address: connectedAccount } = useAccount();
-  const { isConnected } = useAccount();
+
+  const isValidAccount =
+    connectedAccount !== undefined && connectedAccount !== null;
+
+  const registryContractCallConfig = {
+    address: communityAddress,
+    abi: abiWithErrors2(registryCommunityABI),
+  };
 
   const { data: memberPointsVotingPower } = useContractRead({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
+    ...registryContractCallConfig,
     functionName: "getMemberPowerInStrategy",
     args: [connectedAccount as Address, strategyAddress],
-    watch: true,
+    watch: isValidAccount,
   });
 
   const { data: isMemberActivated } = useContractRead({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
+    ...registryContractCallConfig,
     functionName: "memberActivatedInStrategies",
     args: [connectedAccount as Address, strategyAddress],
     watch: true,
@@ -41,12 +46,6 @@ export const PointsComponent: FC<PoolStatsProps> = ({
   const memberPointsInPool = (
     ((memberPointsVotingPower as bigint) ?? 0n) / PRECISION_SCALE
   ).toString();
-
-  //TODO: create a hook for this
-  const registryContractCallConfig = {
-    address: communityAddress,
-    abi: abiWithErrors2(registryCommunityABI),
-  };
 
   const {
     data: isMember,
@@ -59,6 +58,9 @@ export const PointsComponent: FC<PoolStatsProps> = ({
     watch: true,
   });
 
+  const showTokensValue =
+    isMember && isMemberActivated !== undefined && isMemberActivated;
+
   return (
     <section className="border2 flex  w-full flex-col rounded-xl bg-white px-12 py-4">
       <h3 className="font-semibold">Your Tokens</h3>
@@ -66,15 +68,19 @@ export const PointsComponent: FC<PoolStatsProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-10">
             <div className="flex items-center gap-2 font-semibold">
-              {isMember && (
+              {showTokensValue && (
                 <>
-                  <p className="text-4xl">
+                  <p
+                    className={`text-4xl ${!isMemberActivated && "text-gray-300"}`}
+                  >
                     {formatTokenAmount(
                       memberPointsInPool,
                       strategy.registryCommunity.garden.decimals,
                     )}
                   </p>
-                  <span className="text-lg">
+                  <span
+                    className={`text-lg ${!isMemberActivated && "text-gray-300"}`}
+                  >
                     {strategy.registryCommunity.garden.symbol}
                   </span>
                 </>

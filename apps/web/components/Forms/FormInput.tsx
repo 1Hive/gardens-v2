@@ -8,13 +8,13 @@ import {
 } from "react-hook-form";
 
 type Props = {
-  label: string;
+  label?: string;
   subLabel?: string | undefined;
   type: HTMLInputTypeAttribute;
-  registerKey: string;
+  registerKey?: string;
   placeholder?: string;
-  register: any;
-  errors: any;
+  register?: any;
+  errors?: any;
   required?: boolean;
   registerOptions?: RegisterOptions;
   children?: any;
@@ -22,16 +22,19 @@ type Props = {
   readOnly?: boolean;
   otherProps?: any;
   className?: string;
+  value?: string | number;
+  step?: number;
+  onChange?: (value: any) => void;
 };
 
 export function FormInput({
-  label = "",
+  label,
   subLabel,
   type,
-  registerKey,
+  registerKey = "",
   placeholder = "",
-  register,
-  errors,
+  register = () => ({}),
+  errors = false,
   required = false,
   registerOptions,
   children,
@@ -39,23 +42,31 @@ export function FormInput({
   readOnly,
   otherProps,
   className,
+  value,
+  step,
+  onChange,
 }: Props) {
   const fixedInputClassname =
     "border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed";
   return (
-    <>
-      <label htmlFor={registerKey} className="my-2 text-lg text-black">
-        {label}
-      </label>
+    <div className="flex flex-col">
+      {label && (
+        <label htmlFor={registerKey} className="my-2 text-lg text-black">
+          {label}
+        </label>
+      )}
       {subLabel && <p className="text-xs">{subLabel}</p>}
       <div className={`relative ${type !== "textarea" && "max-w-md"}`}>
         {type !== "textarea" ? (
           <input
+            onChange={onChange}
+            value={value}
             type={type}
             placeholder={placeholder}
             className={`${className} hide-input-arrows input input-bordered ${!!errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname}`}
             required={required}
             readOnly={readOnly}
+            step={step}
             {...register(registerKey, {
               required,
               ...registerOptions,
@@ -78,9 +89,11 @@ export function FormInput({
         )}
         {children}
       </div>
-      <p className="mt-2 text-sm text-red">
-        {errors[registerKey]?.message || ""}
-      </p>
-    </>
+      {errors && (
+        <p className="mt-2 text-sm text-red">
+          {errors[registerKey]?.message || ""}
+        </p>
+      )}
+    </div>
   );
 }
