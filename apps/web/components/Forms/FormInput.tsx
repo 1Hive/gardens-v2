@@ -42,7 +42,7 @@ export function FormInput({
   readOnly,
   otherProps,
   className,
-  value,
+  value = undefined,
   step,
   onChange,
 }: Props) {
