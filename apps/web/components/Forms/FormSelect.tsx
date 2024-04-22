@@ -29,6 +29,7 @@ export function FormSelect({
       </label>
       <select
         className="select select-info w-full max-w-md"
+        id={registerKey}
         {...register(registerKey, {
           required,
           ...registerOptions,
