@@ -26,6 +26,7 @@ type CVStrategyConfig @entity(immutable: false) {
 
 type CVProposal @entity(immutable: false) {
   id: ID!
+  proposalNumber: BigInt!
   # proposalMeta: ProposalMeta!
   metadata: String!
   version: BigInt

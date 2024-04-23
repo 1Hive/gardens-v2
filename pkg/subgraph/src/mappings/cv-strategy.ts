@@ -95,8 +95,9 @@ export function handleInitialized(event: InitializedCV): void {
 }
 
 export function handleProposalCreated(event: ProposalCreated): void {
-  const proposalIdString = event.params.proposalId.toHex();
-  const cvsId = event.address.toHex();
+  const cvsId = event.address.toHexString();
+  const proposalIdString = `${cvsId}-${event.params.proposalId.toString()}`;
+
   const cvc = CVStrategyContract.bind(event.address);
 
   log.debug("handleProposalCreated proposalIdString:{} cvsId:{} ", [
@@ -118,6 +119,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   let newProposal = new CVProposal(proposalIdString);
   newProposal.strategy = cvsId;
+  newProposal.proposalNumber = event.params.proposalId;
 
   newProposal.beneficiary = proposal.getBeneficiary().toHex();
   let requestedToken = proposal.getRequestedToken();
@@ -212,6 +214,15 @@ export function handleSupportAdded(event: SupportAdded): void {
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
   let memberStrategy = MemberStrategy.load(memberStrategyId);
+
+  log.debug("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC memberStrategyId: {}", [
+    memberStrategyId,
+  ]);
+
+  log.debug("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD pointsToStake: {}", [
+    event.params.amount.toString(),
+  ]);
+
   if (memberStrategy == null) {
     log.debug("handleSupportAdded memberStrategy not found: {}", [
       memberStrategyId.toString(),
@@ -266,6 +277,14 @@ export function handlePowerIncreased(event: PowerIncreased): void {
   cvs.save();
 
   const memberStrategyId = `${event.params.member.toHexString()}-${cvs.id}`;
+
+  log.debug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA memberStrategyId: {}", [
+    memberStrategyId,
+  ]);
+
+  log.debug("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB pointsToIncrease: {}", [
+    event.params.pointsToIncrease.toString(),
+  ]);
 
   let memberStrategy = MemberStrategy.load(memberStrategyId);
   if (memberStrategy == null) {
