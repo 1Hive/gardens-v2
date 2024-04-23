@@ -66,6 +66,13 @@ export const IncreasePower = ({
 
   const [increaseInput, setIncreaseInput] = useState<number | undefined>();
 
+  //handeling states
+  type states = "idle" | "loading" | "success" | "error";
+  const [allowanceTransactionStatus, setAllowanceTransactionStatus] =
+    useState<states>("idle");
+  const [resetTransactionStatus, setResetTransactionStatus] =
+    useState<states>("idle");
+
   const requestedAmount = parseUnits(
     (increaseInput ?? 0).toString(),
     registerTokenDecimals,
@@ -93,7 +100,7 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "isMember",
     args: [connectedAccount as Address],
-    watch: true,
+    //watch: true,
   });
   //
 
@@ -102,11 +109,22 @@ export const IncreasePower = ({
     write: writeAllowToken,
     error: allowTokenError,
     status: allowTokenStatus,
+    isSuccess: isAllowTokenSuccess,
   } = useContractWrite({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
     args: [communityAddress, requestedAmount as bigint], // [allowed spender address, amount ]
     functionName: "approve",
+  });
+  const {
+    data,
+    isError,
+    isLoading,
+    isSuccess: isWaitSuccess,
+    status: waitAllowTokenStatus,
+  } = useWaitForTransaction({
+    confirmations: 1,
+    hash: allowTokenData?.hash,
   });
 
   const {
@@ -119,24 +137,19 @@ export const IncreasePower = ({
     args: [communityAddress, 0n as bigint], // [allowed spender address, amount ]
     functionName: "approve",
   });
-
   const {
-    data,
-    isError,
-    isLoading,
-    isSuccess: isWaitSuccess,
-    status: waitAllowTokenStatus,
+    isSuccess: isWaitResetAllowanceStatus,
+    status: waitResetAllowanceStatus,
   } = useWaitForTransaction({
     confirmations: 1,
-    hash: allowTokenData?.hash,
+    hash: resetAllowance?.hash,
   });
 
-  const { data: dataAllowance } = useContractRead({
+  const { data: allowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
     args: [connectedAccount, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
-    //watch: true,
   });
 
   const {
@@ -148,35 +161,26 @@ export const IncreasePower = ({
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "increasePower",
-    args: [
-      (BigInt(dataAllowance == 0n) ? requestedAmount : dataAllowance) as bigint,
-    ],
+    args: [requestedAmount as bigint],
   });
 
   const requestesMoreThanAllowance =
-    (dataAllowance ?? 0n) > 0n && requestedAmount > (dataAllowance ?? 0n);
+    (allowance ?? 0n) > 0n && requestedAmount > (allowance ?? 0n);
 
   async function handleChange() {
-    const requestesMoreThanAllowance =
-      (dataAllowance ?? 0n) > 0n && requestedAmount > (dataAllowance ?? 0n);
-
+    setAllowanceTransactionStatus("idle");
+    setResetTransactionStatus("idle");
     if (requestesMoreThanAllowance) {
-      // Reset allowance to 0
       writeResetAllowance?.();
-      console.log("Resetting allowance...");
-
-      // Update state or perform any necessary actions after resetting allowance
-      return; // Exit early after resetting allowance
+      return;
     }
-
-    if (dataAllowance === requestedAmount) {
-      // If allowance is exactly equal to requested amount, increase power
+    if (requestedAmount <= (allowance ?? 0n)) {
       writeIncreasePower?.();
       openModal();
       setPendingAllowance(true);
       console.log("Step 3 stake...");
     } else {
-      // If allowance is less than requested amount, approve new allowance
+      // initial state, allowance === 0
       writeAllowToken?.();
       openModal();
       console.log("Step 2 ...");
@@ -192,18 +196,21 @@ export const IncreasePower = ({
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
-    if (resetAllowanceStatus === "success") {
+    setAllowanceTransactionStatus(allowTokenStatus);
+    setResetTransactionStatus(resetAllowanceStatus);
+    if (
+      resetTransactionStatus === "success" &&
+      allowanceTransactionStatus === "idle"
+    ) {
+      console.log("Reset allowance success");
       writeAllowToken?.();
+      setResetTransactionStatus("idle");
     }
-
-    if (allowTokenStatus === "success") {
+    if (isWaitSuccess) {
+      console.log("allowance succeded");
       writeIncreasePower?.();
     }
-  }, [allowTokenStatus, resetAllowanceStatus]);
-
-  console.log(resetAllowanceStatus);
-  console.log(allowTokenStatus);
-  console.log(increaseStakeStatus);
+  }, [waitResetAllowanceStatus, isWaitSuccess, allowTokenStatus]);
 
   useEffect(() => {
     if (increaseStakeStatus === "success") {
@@ -238,6 +245,10 @@ export const IncreasePower = ({
       condition:
         increaseInput == 0 || increaseInput == undefined || increaseInput < 0,
       message: "Input can not be zero or negtive",
+    },
+    {
+      condition: requestesMoreThanAllowance,
+      message: `You have a pending allowance of ${formatTokenAmount(allowance ?? 0n, registerTokenDecimals)} ${tokenSymbol}. In order to stake more tokens, plaese stake the pending allowance first`,
     },
   ];
   const disabledIncPowerButton = disableIncPowerBtnCondition.some(
