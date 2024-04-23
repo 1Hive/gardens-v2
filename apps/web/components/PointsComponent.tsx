@@ -36,16 +36,14 @@ export const PointsComponent: FC<PoolStatsProps> = ({
     watch: isValidAccount,
   });
 
+  console.log("memberPointsVotingPower ", memberPointsVotingPower);
+
   const { data: isMemberActivated } = useContractRead({
     ...registryContractCallConfig,
     functionName: "memberActivatedInStrategies",
     args: [connectedAccount as Address, strategyAddress],
     watch: true,
   });
-
-  const memberPointsInPool = (
-    ((memberPointsVotingPower as bigint) ?? 0n) / PRECISION_SCALE
-  ).toString();
 
   const {
     data: isMember,
@@ -61,6 +59,15 @@ export const PointsComponent: FC<PoolStatsProps> = ({
   const showTokensValue =
     isMember && isMemberActivated !== undefined && isMemberActivated;
 
+  console.log(
+    "FORMATTED ",
+    formatTokenAmount(
+      memberPointsVotingPower,
+      strategy.registryCommunity.garden.decimals,
+    ),
+  );
+
+  console.log("isMemberActivated ", isMemberActivated);
   return (
     <section className="border2 flex  w-full flex-col rounded-xl bg-white px-12 py-4">
       <h3 className="font-semibold">Your Tokens</h3>
@@ -74,7 +81,7 @@ export const PointsComponent: FC<PoolStatsProps> = ({
                     className={`text-4xl ${!isMemberActivated && "text-gray-300"}`}
                   >
                     {formatTokenAmount(
-                      memberPointsInPool,
+                      memberPointsVotingPower,
                       strategy.registryCommunity.garden.decimals,
                     )}
                   </p>
