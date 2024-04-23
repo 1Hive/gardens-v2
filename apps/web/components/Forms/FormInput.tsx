@@ -42,7 +42,7 @@ export function FormInput({
   readOnly,
   otherProps,
   className,
-  value,
+  value = undefined,
   step,
   onChange,
 }: Props) {
@@ -59,6 +59,7 @@ export function FormInput({
       <div className={`relative ${type !== "textarea" && "max-w-md"}`}>
         {type !== "textarea" ? (
           <input
+            id={registerKey}
             onChange={onChange}
             value={value}
             type={type}
@@ -80,6 +81,7 @@ export function FormInput({
             required={required}
             rows={rows}
             readOnly={readOnly}
+            id={registerKey}
             {...register(registerKey, {
               required,
               ...registerOptions,
