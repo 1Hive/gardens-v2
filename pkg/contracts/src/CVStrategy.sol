@@ -7,15 +7,18 @@ import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol
 
 import {RegistryCommunity, Metadata} from "./RegistryCommunity.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import {console} from "forge-std/console.sol";
 
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+
 interface IPointStrategy {
-    // function withdraw(address _member) external;
+    // functiisActivatedddress _member) external;
     function deactivatePoints(address _member) external;
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256);
     function decreasePower(address _member, uint256 _amountToUntake) external returns (uint256);
-    function getPointsPerMember() external view returns (uint256);
+    function getPointSystem() external returns (StrategyStruct.PointSystem);
 }
 
 library StrategyStruct {
@@ -71,14 +74,8 @@ library StrategyStruct {
     }
 
     struct PointSystemConfig {
-        //Unlimited and Capped systems
-        uint256 pointsPerTokenStaked;
         //Capped point system
         uint256 maxAmount;
-        //Fixed point system
-        uint256 pointsPerMember;
-        //Quadratic point system
-        uint256 tokensPerPoint;
     }
 
     struct InitializeParams {
@@ -89,6 +86,7 @@ library StrategyStruct {
         uint256 maxRatio;
         // Weight | RHO | p
         uint256 weight;
+        uint256 minThresholdPoints;
         // Proposal Type
         ProposalType proposalType;
         //NEXT: use this for tests
@@ -98,9 +96,11 @@ library StrategyStruct {
 }
 
 contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
+    using Math for uint256;
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
+
     error UserCannotBeZero(); // 0xd1f28288
     error UserNotInRegistry(); //0x6a5cfb6d
     error UserIsInactive(); //
@@ -142,6 +142,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event DecayUpdated(uint256 decay);
     event MaxRatioUpdated(uint256 maxRatio);
     event WeightUpdated(uint256 weight);
+
+    event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
+
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
@@ -166,8 +169,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     uint256 public proposalCounter = 0;
     uint256 public totalStaked;
     uint256 public totalPointsActivated;
+    uint256 public _minThresholdPoints = 0;
 
-    uint256 public minPointsActivated = 100 * 10 * PRECISION_SCALE;
     StrategyStruct.PointSystem public pointSystem;
     StrategyStruct.PointSystemConfig public pointConfig;
 
@@ -204,6 +207,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
+        _minThresholdPoints = ip.minThresholdPoints;
 
         emit InitializedCV(_poolId, ip);
     }
@@ -305,8 +309,16 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         totalPointsActivated += registryCommunity.getMemberPowerInStrategy(member, address(this));
     }
 
+    function deactivatePoints() public {
+        _deactivatePoints(msg.sender);
+    }
+
     function deactivatePoints(address _member) external {
-        //address member = msg.sender; //@todo wip
+        onlyRegistryCommunity();
+        _deactivatePoints(_member);
+    }
+
+    function _deactivatePoints(address _member) internal {
         totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
@@ -324,7 +336,10 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         } else if (pointSystem == StrategyStruct.PointSystem.Quadratic) {
             pointsToIncrease = increasePowerQuadratic(_member, _amountToStake);
         }
-        totalPointsActivated += pointsToIncrease;
+        bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
+        if (isActivated) {
+            totalPointsActivated += pointsToIncrease;
+        }
         emit PowerIncreased(_member, _amountToStake, pointsToIncrease);
         return pointsToIncrease;
     }
@@ -344,81 +359,61 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     //todo: increase/decrease for all systems, 8 total
-    function increasePowerUnlimited(uint256 _amountToStake) internal view returns (uint256) {
-        uint256 pointsToIncrease = _amountToStake * pointConfig.pointsPerTokenStaked;
-        return pointsToIncrease / (10 ** 18);
+    function increasePowerUnlimited(uint256 _amountToStake) internal pure returns (uint256) {
+        return _amountToStake;
     }
 
     function increasePowerCapped(address _member, uint256 _amountToStake) internal view returns (uint256) {
-        uint256 pointsToIncrease = _amountToStake * pointConfig.pointsPerTokenStaked / (10 ** 18);
+        uint256 pointsToIncrease = _amountToStake;
+        console.log("POINTS TO INCREASE", pointsToIncrease);
         uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        console.log("MEMBERPOWER", memberPower);
         if (memberPower + pointsToIncrease > pointConfig.maxAmount) {
             pointsToIncrease = pointConfig.maxAmount - memberPower;
         }
+        console.log("POINTS TO INCREASE END", pointsToIncrease);
+
         return pointsToIncrease;
     }
 
     function increasePowerQuadratic(address _member, uint256 _amountToStake) public view returns (uint256) {
-        uint256 totalExtraStake =
-            registryCommunity.getMemberStakedAmount(_member) + _amountToStake - registryCommunity.registerStakeAmount();
+        uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
 
-        uint256 newTotalPoints = sqrt((totalExtraStake / pointConfig.tokensPerPoint) * 1e18) / 1e5;
-        console.log("totalExtraStake", totalExtraStake);
-        console.log("pointConfig.tokensPerPoint", pointConfig.tokensPerPoint);
+        uint256 decimal = 18;
+        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
+            decimal = uint256(_decimal);
+        } catch {
+            console.log("Error getting decimal");
+        }
+        uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
+
+        console.log("======");
+        console.log("AMount to stake", _amountToStake);
+        console.log("totalExtraStake", totalStake);
         console.log("newTotalPoints", newTotalPoints);
+        console.log("MEMBER POWER", registryCommunity.getMemberPowerInStrategy(_member, address(this)));
 
-        uint256 pointsToIncrease = (pointConfig.pointsPerMember + newTotalPoints)
-            - registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        uint256 pointsToIncrease = newTotalPoints - registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        console.log("POINTS TO INCREASE", pointsToIncrease);
         return pointsToIncrease;
     }
 
-    function decreasePowerCappedUnlimited(uint256 _amountToUnstake) internal view returns (uint256) {
-        return (_amountToUnstake * pointConfig.pointsPerTokenStaked);
+    function decreasePowerCappedUnlimited(uint256 _amountToUnstake) internal pure returns (uint256) {
+        return _amountToUnstake;
     }
 
     function decreasePowerQuadratic(address _member, uint256 _amountToUnstake) internal view returns (uint256) {
-        uint256 newTotalPoints = (
-            registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake
-                - registryCommunity.registerStakeAmount()
-        ) / pointConfig.tokensPerPoint;
-        uint256 pointsToDecrease = newTotalPoints - registryCommunity.getMemberPowerInStrategy(_member, address(this));
-
+        uint256 newTotalPoints = (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake);
+        uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
         return pointsToDecrease;
     }
 
-    // function sqrt(uint y) internal pure returns (uint z) {
-    // if (y > 3) {
-    //     z = y;
-    //     uint x = y / 2 + 1;
-    //     while (x < z) {
-    //         z = x;
-    //         x = (y / x + x) / 2;
-    //     }
-    // } else if (y != 0) {
-    //     z = 1;
-    // }
-    // }
-
-    function sqrt(uint256 y) internal pure returns (uint256 z) {
-        if (y > 3) {
-            z = y;
-            uint256 x = y / 2 + 1;
-            while (x < z) {
-                z = x;
-                x = (y / x + x) / 2;
-            }
-        } else if (y != 0) {
-            z = 1;
-        }
-        // else z = 0 (default value)
+    function getMaxAmount() public view returns (uint256) {
+        return pointConfig.maxAmount;
     }
 
-    function getPointsPerMember() external view returns (uint256) {
-        return pointConfig.pointsPerMember;
-    }
-
-    function getPointsPerTokenStaked() external view returns (uint256) {
-        return pointConfig.pointsPerTokenStaked;
+    function getPointSystem() public view returns (StrategyStruct.PointSystem) {
+        return pointSystem;
     }
 
     // [[[proposalId, delta],[proposalId, delta]]]
@@ -836,6 +831,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         ) >> 64;
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
+        _threshold = _threshold > _minThresholdPoints ? _threshold : _minThresholdPoints;
     }
 
     /**
@@ -875,9 +871,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function totalEffectiveActivePoints() public view returns (uint256) {
-        // console.log("totalPointsActivated", totalPointsActivated);
-        // console.log("minPointsActivated", minPointsActivated);
-        return totalPointsActivated > minPointsActivated ? totalPointsActivated : minPointsActivated;
+        return totalPointsActivated;
     }
 
     /**
@@ -949,5 +943,11 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
         registryCommunity = RegistryCommunity(_registryCommunity);
+        //@todo missing event, also we can change it?
+    }
+
+    function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {
+        emit MinThresholdPointsUpdated(_minThresholdPoints, minThresholdPoints_);
+        _minThresholdPoints = minThresholdPoints_;
     }
 }

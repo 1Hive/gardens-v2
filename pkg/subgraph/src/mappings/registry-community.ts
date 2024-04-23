@@ -19,6 +19,8 @@ import {
   MemberDeactivatedStrategy,
   PoolCreated,
   MemberKicked,
+  MemberPowerIncreased,
+  MemberPowerDecreased,
 } from "../../generated/templates/RegistryCommunity/RegistryCommunity";
 
 import { RegistryFactory as RegistryFactoryContract } from "../../generated/RegistryFactory/RegistryFactory";
@@ -127,8 +129,8 @@ export function handleMemberRegistered(event: MemberRegistered): void {
     newMemberCommunity.memberAddress = memberAddress;
   }
 
-  newMemberCommunity.stakedAmount = newMemberCommunity.stakedAmount
-    ? newMemberCommunity.stakedAmount!.plus(event.params._amountStaked)
+  newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
+    ? newMemberCommunity.stakedTokens!.plus(event.params._amountStaked)
     : event.params._amountStaked;
 
   newMemberCommunity.isRegistered = true;
@@ -150,12 +152,7 @@ export function handleMemberUnregistered(event: MemberRegistered): void {
     return;
   }
   memberCommunity.isRegistered = false;
-  memberCommunity.stakedAmount = BigInt.fromI32(0);
-  memberCommunity.save();
-
-  memberCommunity.stakedAmount = memberCommunity.stakedAmount
-    ? memberCommunity.stakedAmount!.minus(event.params._amountStaked)
-    : event.params._amountStaked;
+  memberCommunity.stakedTokens = BigInt.fromI32(0);
 
   memberCommunity.save();
 }
@@ -177,14 +174,8 @@ export function handleMemberKicked(event: MemberKicked): void {
     return;
   }
   memberCommunity.isRegistered = false;
-  memberCommunity.stakedAmount = BigInt.fromI32(0);
+  memberCommunity.stakedTokens = BigInt.fromI32(0);
   memberCommunity.save();
-
-  memberCommunity.stakedAmount = memberCommunity.stakedAmount
-    ? memberCommunity.stakedAmount!.minus(event.params._amountReturned)
-    : event.params._amountReturned;
-
-  member.save();
 }
 
 // //  handleStrategyAdded
@@ -296,6 +287,44 @@ export function handlePoolCreated(event: PoolCreated): void {
   // const community = event.params._community;
 
   CVStrategyTemplate.create(strategyAddress);
+}
+
+export function handleMemberPowerIncreased(event: MemberPowerIncreased): void {
+  const community = event.address.toHex();
+  const memberAddress = event.params._member.toHexString();
+  const memberCommunityId = `${memberAddress}-${community}`;
+
+  let newMemberCommunity = MemberCommunity.load(memberCommunityId);
+
+  if (newMemberCommunity == null) {
+    log.error("MemberCommunity not found: {}", [memberCommunityId]);
+    return;
+  }
+
+  newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
+    ? newMemberCommunity.stakedTokens!.plus(event.params._stakedAmount)
+    : event.params._stakedAmount;
+
+  newMemberCommunity.save();
+}
+
+export function handleMemberPowerDecreased(event: MemberPowerDecreased): void {
+  const community = event.address.toHex();
+  const memberAddress = event.params._member.toHexString();
+  const memberCommunityId = `${memberAddress}-${community}`;
+
+  let newMemberCommunity = MemberCommunity.load(memberCommunityId);
+
+  if (newMemberCommunity == null) {
+    log.error("MemberCommunity not found: {}", [memberCommunityId]);
+    return;
+  }
+
+  newMemberCommunity.stakedTokens = newMemberCommunity.stakedTokens
+    ? newMemberCommunity.stakedTokens!.minus(event.params._unstakedAmount)
+    : event.params._unstakedAmount;
+
+  newMemberCommunity.save();
 }
 
 // handler: handleMemberPowerDecreased

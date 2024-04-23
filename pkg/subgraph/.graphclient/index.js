@@ -49,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "https://api.studio.thegraph.com/query/29898/gv2-arbsepolia/version/latest/" },
+        config: { "endpoint": "http://localhost:8000/subgraphs/name/kamikazebr/gv2" },
         baseDir,
         cache,
         pubsub,
@@ -93,6 +93,12 @@ export async function getMeshOptions() {
                         return printWithCache(GetTokenGardensDocument);
                     },
                     location: 'GetTokenGardensDocument.graphql'
+                }, {
+                    document: GetMemberStrategyDocument,
+                    get rawSDL() {
+                        return printWithCache(GetMemberStrategyDocument);
+                    },
+                    location: 'GetMemberStrategyDocument.graphql'
                 }, {
                     document: IsMemberDocument,
                     get rawSDL() {
@@ -201,6 +207,7 @@ export const getFactoriesDocument = gql `
           decay
           maxRatio
           weight
+          minThresholdPoints
         }
       }
     }
@@ -227,6 +234,21 @@ export const getTokenGardensDocument = gql `
   }
 }
     `;
+export const getMemberStrategyDocument = gql `
+    query getMemberStrategy($meStr: ID!) {
+  memberStrategy(id: $meStr) {
+    id
+    totalStakedPoints
+    activatedPoints
+    strategy {
+      id
+    }
+    member {
+      id
+    }
+  }
+}
+    `;
 export const isMemberDocument = gql `
     query isMember($me: ID!, $comm: String!) {
   members(where: {id: $me}) {
@@ -236,6 +258,7 @@ export const isMemberDocument = gql `
       amount
       proposal {
         id
+        proposalNumber
         stakedAmount
         strategy {
           id
@@ -252,7 +275,7 @@ export const isMemberDocument = gql `
       }
     }
     memberCommunity(where: {registryCommunity_contains: $comm}) {
-      stakedAmount
+      stakedTokens
       registryCommunity {
         id
       }
@@ -266,7 +289,7 @@ export const getMemberDocument = gql `
     id
     memberCommunity {
       id
-      stakedAmount
+      stakedTokens
       isRegistered
       registryCommunity {
         id
@@ -275,6 +298,7 @@ export const getMemberDocument = gql `
     stakes {
       id
       proposal {
+        proposalNumber
         id
       }
       amount
@@ -318,7 +342,7 @@ export const getCommunitiesByGardenDocument = gql `
       registerToken
       registerStakeAmount
       alloAddress
-      members(where: {stakedAmount_gt: "0"}) {
+      members(where: {stakedTokens_gt: "0"}) {
         id
         memberAddress
       }
@@ -333,9 +357,11 @@ export const getCommunitiesByGardenDocument = gql `
           id
           proposalType
           pointSystem
+          minThresholdPoints
         }
         proposals {
           id
+          proposalNumber
         }
       }
     }
@@ -388,6 +414,7 @@ export const getPoolDataDocument = gql `
       proposalType
       pointSystem
       maxRatio
+      minThresholdPoints
     }
     registryCommunity {
       id
@@ -399,6 +426,7 @@ export const getPoolDataDocument = gql `
     }
     proposals {
       id
+      proposalNumber
       metadata
       beneficiary
       requestedAmount
@@ -416,6 +444,7 @@ export const getProposalDataDocument = gql `
     symbol
   }
   cvproposal(id: $proposalId) {
+    proposalNumber
     beneficiary
     blockLast
     convictionLast
@@ -434,6 +463,7 @@ export const getProposalDataDocument = gql `
       config {
         proposalType
         pointSystem
+        minThresholdPoints
       }
     }
   }
@@ -457,6 +487,7 @@ export const getStrategyByPoolDocument = gql `
       id
       proposalType
       pointSystem
+      minThresholdPoints
     }
     memberActive {
       id
@@ -471,6 +502,8 @@ export const getStrategyByPoolDocument = gql `
     }
     proposals {
       id
+      proposalNumber
+      proposalNumber
       metadata
       beneficiary
       requestedAmount
@@ -488,6 +521,9 @@ export function getSdk(requester) {
         },
         getTokenGardens(variables, options) {
             return requester(getTokenGardensDocument, variables, options);
+        },
+        getMemberStrategy(variables, options) {
+            return requester(getMemberStrategyDocument, variables, options);
         },
         isMember(variables, options) {
             return requester(isMemberDocument, variables, options);

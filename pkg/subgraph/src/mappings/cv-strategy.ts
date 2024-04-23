@@ -2,8 +2,7 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
-  Member,
-  MemberCommunity,
+  MemberStrategy,
   Stake,
   // ProposalMeta as ProposalMetadata,
 } from "../../generated/schema";
@@ -20,6 +19,7 @@ import {
   PowerDecreased,
   DecayUpdated,
   MaxRatioUpdated,
+  MinThresholdPointsUpdated,
   WeightUpdated,
 } from "../../generated/templates/CVStrategy/CVStrategy";
 
@@ -36,26 +36,21 @@ export function handleInitialized(event: InitializedCV): void {
   const registryCommunity = event.params.data.registryCommunity.toHexString();
   const decay = event.params.data.decay;
   const maxRatio = event.params.data.maxRatio;
+  const minThresholdPoints = event.params.data.minThresholdPoints;
   const weight = event.params.data.weight;
   const pType = event.params.data.proposalType;
-  const pointsPerMember = event.params.data.pointConfig.pointsPerMember;
-  const pointsPerTokenStaked =
-    event.params.data.pointConfig.pointsPerTokenStaked;
-  const tokensPerPoint = event.params.data.pointConfig.tokensPerPoint;
   const maxAmount = event.params.data.pointConfig.maxAmount;
   const pointSystem = event.params.data.pointSystem;
 
   log.debug(
-    "handleInitialized registryCommunity:{} decay:{} maxRatio:{} weight:{} pType:{} pointsPerMember:{} pointsPerTokenStaked:{} tokensPerPoint:{} maxAmount:{}",
+    "handleInitialized registryCommunity:{} decay:{} maxRatio:{} minThresholdPoints:{} weight:{} pType:{} maxAmount:{}",
     [
       registryCommunity,
       decay.toString(),
       maxRatio.toString(),
+      minThresholdPoints.toString(),
       weight.toString(),
       pType.toString(),
-      pointsPerMember.toString(),
-      pointsPerTokenStaked.toString(),
-      tokensPerPoint.toString(),
       maxAmount.toString(),
     ],
   );
@@ -85,12 +80,10 @@ export function handleInitialized(event: InitializedCV): void {
 
   config.decay = decay;
   config.maxRatio = maxRatio;
+  config.minThresholdPoints = minThresholdPoints;
   config.weight = weight;
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);
-  config.pointsPerMember = pointsPerMember;
-  config.pointsPerTokenStaked = pointsPerTokenStaked;
-  config.tokensPerPoint = tokensPerPoint;
   config.maxAmount = maxAmount;
 
   config.D = cvc.D();
@@ -102,8 +95,9 @@ export function handleInitialized(event: InitializedCV): void {
 }
 
 export function handleProposalCreated(event: ProposalCreated): void {
-  const proposalIdString = event.params.proposalId.toHex();
-  const cvsId = event.address.toHex();
+  const cvsId = event.address.toHexString();
+  const proposalIdString = `${cvsId}-${event.params.proposalId.toString()}`;
+
   const cvc = CVStrategyContract.bind(event.address);
 
   log.debug("handleProposalCreated proposalIdString:{} cvsId:{} ", [
@@ -125,6 +119,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   let newProposal = new CVProposal(proposalIdString);
   newProposal.strategy = cvsId;
+  newProposal.proposalNumber = event.params.proposalId;
 
   newProposal.beneficiary = proposal.getBeneficiary().toHex();
   let requestedToken = proposal.getRequestedToken();
@@ -198,8 +193,8 @@ export function handleSupportAdded(event: SupportAdded): void {
     ]);
     return;
   }
-  const memberCommunityId = `${event.params.from.toHexString()}-${cvs.registryCommunity.toString()}`;
-  let stakeId = `${cvp.id.toString()}-${memberCommunityId}`;
+  const memberStrategyId = `${event.params.from.toHexString()}-${cvs.id}`;
+  let stakeId = `${cvp.id.toString()}-${memberStrategyId}`;
 
   let stake = Stake.load(stakeId);
   if (!stake) {
@@ -218,19 +213,28 @@ export function handleSupportAdded(event: SupportAdded): void {
   );
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
-  let memberCommunity = MemberCommunity.load(memberCommunityId);
-  if (memberCommunity == null) {
-    log.debug("handleSupportAdded memberCommunity not found: {}", [
-      memberCommunityId.toString(),
+  let memberStrategy = MemberStrategy.load(memberStrategyId);
+
+  log.debug("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC memberStrategyId: {}", [
+    memberStrategyId,
+  ]);
+
+  log.debug("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD pointsToStake: {}", [
+    event.params.amount.toString(),
+  ]);
+
+  if (memberStrategy == null) {
+    log.debug("handleSupportAdded memberStrategy not found: {}", [
+      memberStrategyId.toString(),
     ]);
     return;
   }
 
-  memberCommunity.stakedAmount = memberCommunity.stakedAmount
-    ? memberCommunity.stakedAmount!.plus(event.params.amount)
+  memberStrategy.totalStakedPoints = memberStrategy.totalStakedPoints
+    ? memberStrategy.totalStakedPoints.plus(event.params.amount)
     : event.params.amount;
 
-  memberCommunity.save();
+  memberStrategy.save();
   cvp.maxCVStaked = maxConviction;
 
   cvp.stakedAmount = event.params.totalStakedAmount;
@@ -272,21 +276,29 @@ export function handlePowerIncreased(event: PowerIncreased): void {
 
   cvs.save();
 
-  const memberCommunityId = `${event.params.member.toHexString()}-${cvs.registryCommunity.toString()}`;
+  const memberStrategyId = `${event.params.member.toHexString()}-${cvs.id}`;
 
-  let memberCommunity = MemberCommunity.load(memberCommunityId);
-  if (memberCommunity == null) {
-    log.debug("handlePowerIncreased memberCommunity not found: {}", [
-      memberCommunityId.toString(),
-    ]);
-    return;
+  log.debug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA memberStrategyId: {}", [
+    memberStrategyId,
+  ]);
+
+  log.debug("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB pointsToIncrease: {}", [
+    event.params.pointsToIncrease.toString(),
+  ]);
+
+  let memberStrategy = MemberStrategy.load(memberStrategyId);
+  if (memberStrategy == null) {
+    memberStrategy = new MemberStrategy(memberStrategyId);
+    memberStrategy.member = event.params.member.toHexString();
+    memberStrategy.strategy = cvs.id;
+    memberStrategy.totalStakedPoints = BigInt.fromI32(0);
   }
 
-  memberCommunity.stakedAmount = memberCommunity.stakedAmount
-    ? memberCommunity.stakedAmount!.plus(event.params.tokensStaked)
-    : event.params.tokensStaked;
+  memberStrategy.activatedPoints = memberStrategy.activatedPoints
+    ? memberStrategy.activatedPoints!.plus(event.params.pointsToIncrease)
+    : event.params.pointsToIncrease;
 
-  memberCommunity.save();
+  memberStrategy.save();
 }
 
 export function handlePowerDecreased(event: PowerDecreased): void {
@@ -304,21 +316,21 @@ export function handlePowerDecreased(event: PowerDecreased): void {
 
   cvs.save();
 
-  const memberCommunityId = `${event.params.member.toHexString()}-${cvs.registryCommunity.toString()}`;
+  const memberStrategyId = `${event.params.member.toHexString()}-${cvs.id}`;
 
-  let memberCommunity = MemberCommunity.load(memberCommunityId);
-  if (memberCommunity == null) {
-    log.debug("handlePowerDecreased memberCommunity not found: {}", [
-      memberCommunityId.toString(),
+  let memberStrategy = MemberStrategy.load(memberStrategyId);
+  if (memberStrategy == null) {
+    log.debug("handlePowerDecreased memberStrategy not found: {}", [
+      memberStrategyId.toString(),
     ]);
     return;
   }
 
-  memberCommunity.stakedAmount = memberCommunity.stakedAmount
-    ? memberCommunity.stakedAmount!.minus(event.params.tokensUnStaked)
+  memberStrategy.activatedPoints = memberStrategy.activatedPoints
+    ? memberStrategy.activatedPoints!.minus(event.params.pointsToDecrease)
     : BigInt.fromI32(0);
 
-  memberCommunity.save();
+  memberStrategy.save();
 }
 
 export function handleDecayUpdated(event: DecayUpdated): void {
@@ -360,6 +372,30 @@ export function handleMaxRatioUpdated(event: MaxRatioUpdated): void {
       return;
     }
     config.maxRatio = event.params.maxRatio;
+    config.save();
+  }
+  return;
+}
+
+export function handleMinThresholdPointsUpdated(
+  event: MinThresholdPointsUpdated,
+): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.debug("handleMaxRatioUpdated cvs not found: {}", [
+      event.address.toHexString(),
+    ]);
+    return;
+  }
+  if (cvs.config) {
+    let config = CVStrategyConfig.load(cvs.config);
+    if (config == null) {
+      log.debug("handleMaxRatioUpdated config not found: {}", [
+        event.address.toHexString(),
+      ]);
+      return;
+    }
+    config.minThresholdPoints = event.params.minThresholdPoints;
     config.save();
   }
   return;

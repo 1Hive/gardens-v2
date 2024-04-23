@@ -83,10 +83,10 @@ templates:
           handler: handleMemberActivatedStrategy
         - event: MemberDeactivatedStrategy(address,address)
           handler: handleMemberDeactivatedStrategy
-        # - event: MemberPowerDecreased(address,address,uint256)
-          # handler: handleMemberPowerDecreased
-        # - event: MemberPowerIncreased(address,address,uint256)
-          # handler: handleMemberPowerIncreased
+        - event: MemberPowerDecreased(address,uint256)
+          handler: handleMemberPowerDecreased
+        - event: MemberPowerIncreased(address,uint256)
+          handler: handleMemberPowerIncreased
         # - event: BasisStakedAmountSet(uint256)
           # handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
@@ -119,7 +119,7 @@ templates:
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8,uint8,(uint256,uint256,uint256,uint256))) 
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256))) 
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
