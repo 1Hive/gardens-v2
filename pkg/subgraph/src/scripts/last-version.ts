@@ -67,7 +67,6 @@ const querySubgraphWithAuthuserSubgraphs = `query SubgraphWithAuthUserSubgraphs(
       id
       networkChainUID
       networkSubgraphId
-      publishStatus
       createdAt
       updatedAt
       __typename
@@ -176,6 +175,7 @@ const { ok: ok2, json } = await subgraphFetch({
 });
 
 if (!ok2) {
+  console.error(JSON.stringify(json, null, 2));
   throw new Error("Subgraph fetch failed");
 }
 
