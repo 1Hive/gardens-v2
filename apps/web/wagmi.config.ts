@@ -4,6 +4,7 @@ import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.
 import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
 import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunity.sol/RegistryCommunity.json";
 import { abi as mockERC20ABI } from "#/contracts/out/utils/MockERC20.sol/MockERC20.json";
+import { abi as SafeABI } from "#/contracts/out/ISafe.sol/ISafe.json";
 import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
 import { Abi } from "viem";
 
@@ -29,6 +30,10 @@ export default defineConfig({
     {
       name: "Allo",
       abi: alloABI as Abi,
+    },
+    {
+      name: "Safe",
+      abi: SafeABI as Abi,
     },
   ],
   plugins: [
