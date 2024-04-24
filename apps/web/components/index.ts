@@ -23,3 +23,4 @@ export { TransactionModal } from "./TransactionModal";
 export { PointsComponent } from "./PointsComponent";
 export { Show, When, Else } from "./Show";
 export { FormLink } from "./FormLink";
+export { Layout } from "./Layout";
