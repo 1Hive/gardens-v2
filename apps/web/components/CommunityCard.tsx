@@ -56,27 +56,27 @@ export function CommunityCard({
   return (
     <>
       <Layout hover className="w-fit border-4">
-        <Link href={`${pathname}/community/${communityAddress}`}>
-          <div className="flex flex-col gap-2">
-            <Image src={newLogo} height={50} width={50} alt="community logo" />
-            <h4>{communityName}</h4>
-            <Identifier
-              icon={<UserGroupIcon />}
-              label="Members"
-              count={members.length}
-            />
-            <Identifier
-              icon={<CurrencyDollarIcon />}
-              label="Funding Pools"
-              count={FundingPools.length}
-            />
-            <Identifier
-              icon={<BuildingOffice2Icon />}
-              label="Signaling Pools"
-              count={SiganlingPools.length}
-            />
-          </div>
-        </Link>
+        {/* <Link href={`${pathname}/community/${communityAddress}`}> */}
+        <div className="flex flex-col gap-2">
+          <Image src={newLogo} height={50} width={50} alt="community logo" />
+          <h4>{communityName}</h4>
+          <Identifier
+            icon={<UserGroupIcon />}
+            label="Members"
+            count={members.length}
+          />
+          <Identifier
+            icon={<CurrencyDollarIcon />}
+            label="Funding Pools"
+            count={FundingPools.length}
+          />
+          <Identifier
+            icon={<BuildingOffice2Icon />}
+            label="Signaling Pools"
+            count={SiganlingPools.length}
+          />
+        </div>
+        {/* </Link> */}
       </Layout>
     </>
   );

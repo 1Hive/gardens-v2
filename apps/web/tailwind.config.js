@@ -34,6 +34,7 @@ module.exports = {
         red: "var(--color-red)",
         borderHover: "var(--border-hover)",
         surfaceHover: "var(--base-orange)",
+        fgNeutralSoft: "var(--color-grey-500)",
       },
       transitionProperty: {
         height: "height",

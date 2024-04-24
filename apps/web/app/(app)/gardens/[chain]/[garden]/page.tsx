@@ -1,6 +1,6 @@
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
-import { CommunityCard } from "@/components";
+import { CommunityCard, Identifier, FormLink, Layout } from "@/components";
 import {
   RegistryCommunity,
   TokenGarden,
@@ -8,7 +8,8 @@ import {
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
-import { FormLink } from "@/components";
+import { UserGroupIcon } from "@heroicons/react/24/outline";
+import { newLogo } from "@/assets";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,8 @@ export default async function Garden({
 
   let communities = result?.tokenGarden?.communities || [];
   const tokenGarden = result?.tokenGarden as TokenGarden;
+  const tokenAddress = result?.tokenGarden?.id;
+  const communitiesCount = communities.length;
 
   const fetchAndUpdateCommunities = async (communities: any) => {
     const promises = communities.map(async (com: any) => {
@@ -75,46 +78,72 @@ export default async function Garden({
     });
 
   return (
-    <div className="relative mx-auto max-w-6xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
-      <header className="relative flex min-h-[500px] flex-col items-center justify-between gap-6 px-3">
-        <div className="flex h-full min-h-96 flex-col items-center justify-between p-1">
-          <h3 className="text-center font-press">
-            {tokenGarden?.symbol} Token Ecosystem
-          </h3>
-          <p className="max-w-lg text-center font-semibold leading-7">
-            Discover communities in the
-            <span className="text-primary"> {tokenGarden?.name} Garden</span>,
-            where you connect with people and support proposals bounded by a
-            shared
-            <span className="text-primary"> covenant.</span>
-          </p>
-          <FormLink
-            label="Create Community"
-            href={`/gardens/${chain}/${garden}/create-community`}
-          />
-        </div>
-        <Image src={tree2} alt="tree" className="absolute bottom-0 left-5" />
-        <Image src={tree3} alt="tree" className="absolute bottom-0 right-5" />
-        <Image
-          src={grassLarge}
-          alt="grass"
-          className="absolute -bottom-1 h-10 overflow-hidden"
-        />
-      </header>
-      <section className="mx-auto flex flex-col gap-8">
-        <h4 className="rounded-b-xl bg-surface py-6 text-center font-press shadow">
-          {tokenGarden?.name} Communities
-        </h4>
+    <>
+      <div className="relative flex flex-col gap-8">
+        <Layout size="lg">
+          <div className="flex items-center justify-between gap-10">
+            <Image src={newLogo} height={280} width={311} alt="garden logo" />
+            <div className="flex flex-1 flex-col gap-4">
+              <div>
+                <h2>{tokenGarden?.name} Garden</h2>
+                <p>{tokenAddress}</p>
+              </div>
+              <p className="max-w-lg text-start">
+                Discover communities in the {tokenGarden?.name} Garden , where
+                you connect with people and support proposals bounded by a
+                shared covenant
+              </p>
+              <Identifier
+                icon={<UserGroupIcon />}
+                label="Communities"
+                count={communitiesCount}
+              />
+            </div>
+          </div>
+        </Layout>
+        <Layout size="lg">
+          <div className="flex flex-col gap-10">
+            <h2>Communities</h2>
 
-        {/* communites */}
-        {communities.map((community, i) => (
-          <CommunityCard
-            {...community}
-            tokenGarden={tokenGarden}
-            key={`${community.communityName}_${i}`}
-          />
-        ))}
-      </section>
-    </div>
+            <div className="">
+              {communities.map((community, i) => (
+                <CommunityCard
+                  {...community}
+                  tokenGarden={tokenGarden}
+                  key={`${community.communityName}_${i}`}
+                />
+              ))}
+            </div>
+          </div>
+        </Layout>
+        <Layout>
+          {" "}
+          <h5 className="text-borderHover">Create Your Own Comminty</h5>
+          <section className="relative flex flex-col items-center justify-center">
+            <div className="flex h-full min-h-96 flex-col items-center justify-center p-1">
+              <FormLink
+                label="Create Community"
+                href={`/gardens/${chain}/${garden}/create-community`}
+              />
+            </div>
+            <Image
+              src={tree2}
+              alt="tree"
+              className="absolute bottom-0 left-5"
+            />
+            <Image
+              src={tree3}
+              alt="tree"
+              className="absolute bottom-0 right-5"
+            />
+            <Image
+              src={grassLarge}
+              alt="grass"
+              className="absolute -bottom-1 h-10 overflow-hidden"
+            />
+          </section>{" "}
+        </Layout>
+      </div>
+    </>
   );
 }
