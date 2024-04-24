@@ -1,6 +1,6 @@
 import "@/styles/globals.css";
 import React from "react";
-import { Press_Start_2P, Chakra_Petch, Inter } from "next/font/google";
+import { Chakra_Petch, Inter } from "next/font/google";
 import Providers from "@/providers/Providers";
 import { Metadata } from "next";
 import { Bounce, ToastContainer } from "react-toastify";
@@ -33,9 +33,9 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="en"
-      className={`${inter.variable} ${chakra.variable} bg-white`}
+      className={`${inter.variable} ${chakra.variable} bg-background`}
     >
-      <body className="min-h-screen bg-white font-chakra">
+      <body className="font-inter min-h-screen">
         <Providers>{children}</Providers>
         <ToastContainer
           position="top-right"

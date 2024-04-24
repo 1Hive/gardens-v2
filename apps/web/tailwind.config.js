@@ -26,11 +26,14 @@ module.exports = {
       colors: {
         primary: "var(--color-primary)",
         secondary: "var(--color-secondary)",
+        background: "var(--color-background)",
         surface: "var(--color-surface)",
         white: "var(--color-white)",
         black: "var(--color-black)",
         accent: "var(--color-accent)",
         red: "var(--color-red)",
+        borderHover: "var(--border-hover)",
+        surfaceHover: "var(--base-orange)",
       },
       transitionProperty: {
         height: "height",

@@ -4,9 +4,13 @@ import { GoBackButton } from "@/components";
 export default function layout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <NavBar />
       <GoBackButton />
-      <main className="mx-6 my-10">{children}</main>
+
+      <NavBar />
+      <main className="relative mx-auto mt-10 max-w-6xl rounded p-9">
+        {children}
+      </main>
+
       {/* footer */}
     </>
   );

@@ -5,7 +5,9 @@
 :root {
   --color-primary: #82c837;
   --color-secondary: #4dafd6;
+  /* TODO: adjust bg and surface color */
   --color-surface: #fcfff7;
+  --color-background: #fcfff7;
   --color-white: #ffffff;
   --color-black: #2d2d2d;
   --color-accent: #ffe236;
