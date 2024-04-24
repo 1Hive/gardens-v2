@@ -124,6 +124,12 @@ export async function getMeshOptions() {
                     },
                     location: 'GetCommunitiesByGardenDocument.graphql'
                 }, {
+                    document: GetCommunityByIdDocument,
+                    get rawSDL() {
+                        return printWithCache(GetCommunityByIdDocument);
+                    },
+                    location: 'GetCommunityByIdDocument.graphql'
+                }, {
                     document: GetCommunityCreationDataDocument,
                     get rawSDL() {
                         return printWithCache(GetCommunityCreationDataDocument);
@@ -368,6 +374,53 @@ export const getCommunitiesByGardenDocument = gql `
   }
 }
     `;
+export const getCommunityByIdDocument = gql `
+    query getCommunityById($addr: ID!, $commId: ID!) {
+  registryFactories {
+    id
+  }
+  tokenGarden(id: $addr) {
+    id
+    name
+    symbol
+    decimals
+    chainId
+    communities(where: {id: $commId}) {
+      id
+      covenantIpfsHash
+      chainId
+      communityName
+      protocolFee
+      communityFee
+      registerToken
+      registerStakeAmount
+      alloAddress
+      members(where: {stakedTokens_gt: "0"}) {
+        id
+        memberAddress
+      }
+      strategies {
+        registryCommunity {
+          registerStakeAmount
+        }
+        id
+        poolId
+        poolAmount
+        config {
+          id
+          proposalType
+          pointSystem
+          minThresholdPoints
+        }
+        proposals {
+          id
+          proposalNumber
+        }
+      }
+    }
+  }
+}
+    `;
 export const getCommunityCreationDataDocument = gql `
     query getCommunityCreationData($addr: ID!) {
   registryFactories {
@@ -503,7 +556,6 @@ export const getStrategyByPoolDocument = gql `
     proposals {
       id
       proposalNumber
-      proposalNumber
       metadata
       beneficiary
       requestedAmount
@@ -536,6 +588,9 @@ export function getSdk(requester) {
         },
         getCommunitiesByGarden(variables, options) {
             return requester(getCommunitiesByGardenDocument, variables, options);
+        },
+        getCommunityById(variables, options) {
+            return requester(getCommunityByIdDocument, variables, options);
         },
         getCommunityCreationData(variables, options) {
             return requester(getCommunityCreationDataDocument, variables, options);
