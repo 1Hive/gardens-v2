@@ -301,7 +301,7 @@ export const CommunityForm = ({
           </div>
           <div className="flex flex-col">
             <FormInput
-              label="Council safe address"
+              label="Council Safe address"
               register={register}
               required
               registerOptions={{
@@ -311,7 +311,7 @@ export const CommunityForm = ({
                 },
                 validate: async (value) =>
                   (await addressIsSAFE(value)) ||
-                  `SAFE address validation failed for ${getChain(chain)?.name} network`,
+                  `Not a valid Safe address in ${getChain(chain)?.name} network`,
               }}
               errors={errors}
               registerKey="councilSafe"
