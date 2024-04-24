@@ -20,12 +20,7 @@ export type Scalars = {
   BigInt: any;
   Bytes: any;
   Int8: any;
-  Timestamp: any;
 };
-
-export type Aggregation_interval =
-  | 'hour'
-  | 'day';
 
 export type Allo = {
   id: Scalars['ID'];
@@ -648,6 +643,7 @@ export type Member = {
   id: Scalars['ID'];
   memberCommunity?: Maybe<Array<MemberCommunity>>;
   totalStakedAmount?: Maybe<Scalars['BigInt']>;
+  stakes?: Maybe<Array<Stake>>;
 };
 
 
@@ -657,6 +653,15 @@ export type MembermemberCommunityArgs = {
   orderBy?: InputMaybe<MemberCommunity_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<MemberCommunity_filter>;
+};
+
+
+export type MemberstakesArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<Stake_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<Stake_filter>;
 };
 
 export type MemberCommunity = {
@@ -797,6 +802,7 @@ export type Member_filter = {
   totalStakedAmount_lte?: InputMaybe<Scalars['BigInt']>;
   totalStakedAmount_in?: InputMaybe<Array<Scalars['BigInt']>>;
   totalStakedAmount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  stakes_?: InputMaybe<Stake_filter>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<Member_filter>>>;
@@ -806,7 +812,8 @@ export type Member_filter = {
 export type Member_orderBy =
   | 'id'
   | 'memberCommunity'
-  | 'totalStakedAmount';
+  | 'totalStakedAmount'
+  | 'stakes';
 
 /** Defines the order direction, either ascending or descending */
 export type OrderDirection =
@@ -826,6 +833,8 @@ export type Query = {
   registryCommunities: Array<RegistryCommunity>;
   member?: Maybe<Member>;
   members: Array<Member>;
+  stake?: Maybe<Stake>;
+  stakes: Array<Stake>;
   memberCommunity?: Maybe<MemberCommunity>;
   memberCommunities: Array<MemberCommunity>;
   tokenGarden?: Maybe<TokenGarden>;
@@ -940,6 +949,24 @@ export type QuerymembersArgs = {
   orderBy?: InputMaybe<Member_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<Member_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerystakeArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerystakesArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<Stake_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<Stake_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1328,6 +1355,121 @@ export type RegistryFactory_orderBy =
   | 'chainId'
   | 'registryCommunities';
 
+export type Stake = {
+  id: Scalars['ID'];
+  member: Member;
+  poolId: Scalars['BigInt'];
+  proposal: CVProposal;
+  amount: Scalars['BigInt'];
+  createdAt: Scalars['BigInt'];
+};
+
+export type Stake_filter = {
+  id?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  member?: InputMaybe<Scalars['String']>;
+  member_not?: InputMaybe<Scalars['String']>;
+  member_gt?: InputMaybe<Scalars['String']>;
+  member_lt?: InputMaybe<Scalars['String']>;
+  member_gte?: InputMaybe<Scalars['String']>;
+  member_lte?: InputMaybe<Scalars['String']>;
+  member_in?: InputMaybe<Array<Scalars['String']>>;
+  member_not_in?: InputMaybe<Array<Scalars['String']>>;
+  member_contains?: InputMaybe<Scalars['String']>;
+  member_contains_nocase?: InputMaybe<Scalars['String']>;
+  member_not_contains?: InputMaybe<Scalars['String']>;
+  member_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  member_starts_with?: InputMaybe<Scalars['String']>;
+  member_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  member_not_starts_with?: InputMaybe<Scalars['String']>;
+  member_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  member_ends_with?: InputMaybe<Scalars['String']>;
+  member_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  member_not_ends_with?: InputMaybe<Scalars['String']>;
+  member_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  member_?: InputMaybe<Member_filter>;
+  poolId?: InputMaybe<Scalars['BigInt']>;
+  poolId_not?: InputMaybe<Scalars['BigInt']>;
+  poolId_gt?: InputMaybe<Scalars['BigInt']>;
+  poolId_lt?: InputMaybe<Scalars['BigInt']>;
+  poolId_gte?: InputMaybe<Scalars['BigInt']>;
+  poolId_lte?: InputMaybe<Scalars['BigInt']>;
+  poolId_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  poolId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  proposal?: InputMaybe<Scalars['String']>;
+  proposal_not?: InputMaybe<Scalars['String']>;
+  proposal_gt?: InputMaybe<Scalars['String']>;
+  proposal_lt?: InputMaybe<Scalars['String']>;
+  proposal_gte?: InputMaybe<Scalars['String']>;
+  proposal_lte?: InputMaybe<Scalars['String']>;
+  proposal_in?: InputMaybe<Array<Scalars['String']>>;
+  proposal_not_in?: InputMaybe<Array<Scalars['String']>>;
+  proposal_contains?: InputMaybe<Scalars['String']>;
+  proposal_contains_nocase?: InputMaybe<Scalars['String']>;
+  proposal_not_contains?: InputMaybe<Scalars['String']>;
+  proposal_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  proposal_starts_with?: InputMaybe<Scalars['String']>;
+  proposal_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  proposal_not_starts_with?: InputMaybe<Scalars['String']>;
+  proposal_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  proposal_ends_with?: InputMaybe<Scalars['String']>;
+  proposal_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  proposal_not_ends_with?: InputMaybe<Scalars['String']>;
+  proposal_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  proposal_?: InputMaybe<CVProposal_filter>;
+  amount?: InputMaybe<Scalars['BigInt']>;
+  amount_not?: InputMaybe<Scalars['BigInt']>;
+  amount_gt?: InputMaybe<Scalars['BigInt']>;
+  amount_lt?: InputMaybe<Scalars['BigInt']>;
+  amount_gte?: InputMaybe<Scalars['BigInt']>;
+  amount_lte?: InputMaybe<Scalars['BigInt']>;
+  amount_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  amount_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  createdAt?: InputMaybe<Scalars['BigInt']>;
+  createdAt_not?: InputMaybe<Scalars['BigInt']>;
+  createdAt_gt?: InputMaybe<Scalars['BigInt']>;
+  createdAt_lt?: InputMaybe<Scalars['BigInt']>;
+  createdAt_gte?: InputMaybe<Scalars['BigInt']>;
+  createdAt_lte?: InputMaybe<Scalars['BigInt']>;
+  createdAt_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  createdAt_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<Stake_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<Stake_filter>>>;
+};
+
+export type Stake_orderBy =
+  | 'id'
+  | 'member'
+  | 'member__id'
+  | 'member__totalStakedAmount'
+  | 'poolId'
+  | 'proposal'
+  | 'proposal__id'
+  | 'proposal__metadata'
+  | 'proposal__version'
+  | 'proposal__beneficiary'
+  | 'proposal__requestedAmount'
+  | 'proposal__requestedToken'
+  | 'proposal__proposalStatus'
+  | 'proposal__blockLast'
+  | 'proposal__convictionLast'
+  | 'proposal__threshold'
+  | 'proposal__maxCVStaked'
+  | 'proposal__stakedAmount'
+  | 'proposal__submitter'
+  | 'proposal__createdAt'
+  | 'proposal__updatedAt'
+  | 'amount'
+  | 'createdAt';
+
 export type Subscription = {
   cvstrategy?: Maybe<CVStrategy>;
   cvstrategies: Array<CVStrategy>;
@@ -1341,6 +1483,8 @@ export type Subscription = {
   registryCommunities: Array<RegistryCommunity>;
   member?: Maybe<Member>;
   members: Array<Member>;
+  stake?: Maybe<Stake>;
+  stakes: Array<Stake>;
   memberCommunity?: Maybe<MemberCommunity>;
   memberCommunities: Array<MemberCommunity>;
   tokenGarden?: Maybe<TokenGarden>;
@@ -1455,6 +1599,24 @@ export type SubscriptionmembersArgs = {
   orderBy?: InputMaybe<Member_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<Member_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionstakeArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionstakesArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<Stake_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<Stake_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1699,8 +1861,6 @@ export type _Block_ = {
   number: Scalars['Int'];
   /** Integer representation of the timestamp stored in blocks for the chain */
   timestamp?: Maybe<Scalars['Int']>;
-  /** The hash of the parent block */
-  parentHash?: Maybe<Scalars['Bytes']>;
 };
 
 /** The type for the top-level _meta field */
@@ -1751,6 +1911,10 @@ export type _SubgraphErrorPolicy_ =
   /** null **/
   members: InContextSdkMethod<Query['members'], QuerymembersArgs, MeshContext>,
   /** null **/
+  stake: InContextSdkMethod<Query['stake'], QuerystakeArgs, MeshContext>,
+  /** null **/
+  stakes: InContextSdkMethod<Query['stakes'], QuerystakesArgs, MeshContext>,
+  /** null **/
   memberCommunity: InContextSdkMethod<Query['memberCommunity'], QuerymemberCommunityArgs, MeshContext>,
   /** null **/
   memberCommunities: InContextSdkMethod<Query['memberCommunities'], QuerymemberCommunitiesArgs, MeshContext>,
@@ -1795,6 +1959,10 @@ export type _SubgraphErrorPolicy_ =
   member: InContextSdkMethod<Subscription['member'], SubscriptionmemberArgs, MeshContext>,
   /** null **/
   members: InContextSdkMethod<Subscription['members'], SubscriptionmembersArgs, MeshContext>,
+  /** null **/
+  stake: InContextSdkMethod<Subscription['stake'], SubscriptionstakeArgs, MeshContext>,
+  /** null **/
+  stakes: InContextSdkMethod<Subscription['stakes'], SubscriptionstakesArgs, MeshContext>,
   /** null **/
   memberCommunity: InContextSdkMethod<Subscription['memberCommunity'], SubscriptionmemberCommunityArgs, MeshContext>,
   /** null **/

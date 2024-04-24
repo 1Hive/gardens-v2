@@ -1,0 +1,12 @@
+!out/
+out/*
+!out/*CV*
+!out/*Allo.*
+!out/*Registry*
+!out/*ERC20*
+out/*Test*
+out/*Deploy*
+
+!out/utils/
+out/utils/*
+!out/utils/Mock*

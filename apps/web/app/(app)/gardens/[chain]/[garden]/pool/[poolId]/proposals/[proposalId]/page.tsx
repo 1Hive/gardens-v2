@@ -12,6 +12,7 @@ import {
 import { PRECISION_SCALE } from "@/actions/getProposals";
 import { formatTokenAmount } from "@/utils/numbers";
 import * as dn from "dnum";
+import { getIpfsMetadata } from "@/utils/ipfsUtils";
 
 export const dynamic = "force-dynamic";
 
@@ -39,10 +40,6 @@ type UnparsedProposal = {
 };
 
 type Proposal = UnparsedProposal & ProposalsMock;
-type ProposalMetadata = {
-  title: string;
-  description: string;
-};
 
 const { urqlClient } = initUrqlClient();
 
@@ -84,25 +81,7 @@ export default async function Proposal({
   const status = proposalData.proposalStatus as number;
   const metadata = proposalData.metadata;
 
-  const getIpfsData = (ipfsHash: string) =>
-    fetch(`https://ipfs.io/ipfs/${ipfsHash}`, {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-      },
-    });
-
-  let title = "";
-  let description = "";
-
-  try {
-    const rawProposalMetadata = await getIpfsData(metadata);
-    const proposalMetadata: ProposalMetadata = await rawProposalMetadata.json();
-    title = proposalMetadata?.title || "No title found";
-    description = proposalMetadata?.description || "No description found";
-  } catch (error) {
-    console.log(error);
-  }
+  const { title, description } = await getIpfsMetadata(metadata);
 
   const client = createPublicClient({
     chain: getChain(chain),

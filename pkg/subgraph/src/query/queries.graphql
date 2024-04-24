@@ -47,8 +47,28 @@ query getTokenGardens {
 query isMember($me: ID!, $comm: String!) {
   members(where: { id: $me }) {
     id
-    memberCommunity(where: { registryCommunity_contains: $comm }) {
+    stakes {
       id
+      amount
+      proposal {
+        id
+        stakedAmount
+        strategy {
+          id
+          poolId
+          registryCommunity {
+            id
+            garden {
+              id
+              symbol
+              decimals
+            }
+          }
+        }
+      }
+    }
+    memberCommunity(where: { registryCommunity_contains: $comm }) {
+      stakedAmount
       registryCommunity {
         id
       }
@@ -56,7 +76,35 @@ query isMember($me: ID!, $comm: String!) {
   }
 }
 
-query getPoolCreationData($communityAddr: ID!) {
+query getMember($me: ID!) {
+  member(id: $me) {
+    id
+    memberCommunity {
+      id
+      stakedAmount
+      isRegistered
+      registryCommunity {
+        id
+      }
+    }
+    totalStakedAmount
+    stakes {
+      id
+      poolId
+      proposal {
+        id
+      }
+      amount
+      createdAt
+    }
+  }
+}
+
+query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
+  tokenGarden(id: $tokenAddr) {
+    decimals
+    id
+  }
   allos {
     id
   }
@@ -109,6 +157,22 @@ query getCommunitiesByGarden($addr: ID!) {
   }
 }
 
+query getCommunityCreationData($addr: ID!) {
+  registryFactories {
+    id
+  }
+  tokenGarden(id: $addr) {
+    id
+    name
+    symbol
+    decimals
+    chainId
+    communities {
+      alloAddress
+    }
+  }
+}
+
 query getPoolData($garden: ID!, $poolId: BigInt!) {
   allos {
     id
@@ -136,6 +200,11 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     registryCommunity {
       id
+      garden {
+        id
+        symbol
+        decimals
+      }
     }
     proposals {
       id
@@ -197,6 +266,11 @@ query getStrategyByPool($poolId: BigInt!) {
     }
     registryCommunity {
       id
+      garden {
+        id
+        symbol
+        decimals
+      }
     }
     proposals {
       id

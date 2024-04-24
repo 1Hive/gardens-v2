@@ -3,6 +3,7 @@ import {
   CVStrategy,
   CVStrategyConfig,
   Member,
+  Stake,
   // ProposalMeta as ProposalMetadata,
 } from "../../generated/schema";
 // import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
@@ -188,6 +189,28 @@ export function handleSupportAdded(event: SupportAdded): void {
     ]);
     return;
   }
+
+  let cvs = CVStrategy.load(cvp.strategy);
+  if (cvs == null) {
+    log.debug("handleSupportAdded cvs not found: {}", [
+      cvp.strategy.toString(),
+    ]);
+    return;
+  }
+  const memberCommunityId = `${event.params.from.toHexString()}-${cvs.registryCommunity.toString()}`;
+  let stakeId = `${cvp.id.toString()}-${memberCommunityId}`;
+
+  let stake = Stake.load(stakeId);
+  if (!stake) {
+    stake = new Stake(stakeId);
+    stake.member = event.params.from.toHexString();
+    stake.proposal = cvp.id;
+  }
+  stake.poolId = cvs.poolId;
+  stake.amount = event.params.amount;
+  stake.createdAt = event.block.timestamp;
+  stake.save();
+
   const cvc = CVStrategyContract.bind(event.address);
   const proposalStakedAmount = cvc.getProposalStakedAmount(
     event.params.proposalId,

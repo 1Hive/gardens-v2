@@ -88,7 +88,17 @@ type Member @entity(immutable: false) {
   # registryCommunity: [RegistryCommunity!]
   memberCommunity: [MemberCommunity!] @derivedFrom(field: "member")
   totalStakedAmount: BigInt
+  stakes: [Stake!] @derivedFrom(field: "member")
   # isRegistered: Boolean
+}
+
+type Stake @entity {
+  id: ID!
+  member: Member!
+  poolId: BigInt!
+  proposal: CVProposal!
+  amount: BigInt!
+  createdAt: BigInt!
 }
 
 type MemberCommunity @entity(immutable: false) {
