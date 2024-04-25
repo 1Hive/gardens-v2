@@ -56,22 +56,28 @@ const prettyTimestamp = (timestamp: number) => {
 export default async function Proposal({
   params: { proposalId, poolId, chain, garden },
 }: {
-  params: { proposalId: number; poolId: number; chain: number; garden: string };
+  params: { proposalId: string; poolId: number; chain: number; garden: string };
 }) {
   const { data: getProposalQuery } = await queryByChain<getProposalDataQuery>(
     urqlClient,
     chain,
     getProposalDataDocument,
-    { poolId: poolId, proposalId: proposalId, garden: garden },
+    {
+      garden: garden,
+      proposalId: proposalId,
+    },
   );
 
   const proposalData = getProposalQuery?.cvproposal;
 
   if (!proposalData) {
-    return <div>{`Proposal ${proposalId} not found`}</div>;
+    return (
+      <p className="text-center text-2xl text-error">{`Proposal ${proposalId} not found`}</p>
+    );
   }
 
   const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
+  const proposalIdNumber = proposalData.proposalNumber as number;
   const convictionLast = proposalData.convictionLast as string;
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
@@ -111,7 +117,7 @@ export default async function Proposal({
     getProposalStakedAmount = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getProposalStakedAmount",
-      args: [proposalId],
+      args: [proposalIdNumber],
     })) as bigint;
 
     rawThresholdFromContract = (await client.readContract({
@@ -123,13 +129,13 @@ export default async function Proposal({
     updateConvictionLast = (await client.readContract({
       ...cvStrategyContract,
       functionName: "updateProposalConviction",
-      args: [proposalId],
+      args: [proposalIdNumber],
     })) as bigint;
 
     getProposal = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getProposal",
-      args: [proposalId],
+      args: [proposalIdNumber],
     })) as bigint;
 
     maxCVSupply = (await client.readContract({
@@ -147,12 +153,12 @@ export default async function Proposal({
     getProposalVoterStake = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getProposalVoterStake",
-      args: [proposalId, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
+      args: [proposalIdNumber, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
     })) as bigint;
   } catch (error) {
     console.log(error);
     return (
-      <div className="text-center">{`Data of proposal ${proposalId} not found`}</div>
+      <div className="text-center text-error">{`Syntax error!, check above functions arguments`}</div>
     );
   }
 
