@@ -4,6 +4,7 @@ out/*
 !out/*Allo.*
 !out/*Registry*
 !out/*ERC20*
+!out/*ISafe*
 out/*Test*
 out/*Deploy*
 
