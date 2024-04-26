@@ -157,6 +157,7 @@ query getCommunitiesByGarden($addr: ID!) {
           registerStakeAmount
         }
         id
+        totalEffectiveActivePoints
         poolId
         poolAmount
         config {
@@ -210,6 +211,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     metadata
     id
     poolId
+    totalEffectiveActivePoints
     memberActive {
       id
     }
@@ -284,6 +286,7 @@ query getStrategyByPool($poolId: BigInt!) {
   cvstrategies(where: { poolId: $poolId }) {
     id
     poolId
+    totalEffectiveActivePoints
     config {
       id
       proposalType

@@ -178,14 +178,14 @@ export function handlePoolAmountIncreased(event: PoolAmountIncreased): void {
 export function handleSupportAdded(event: SupportAdded): void {
   log.debug("handleSupportAdded: amount: {}", [event.params.amount.toString()]);
 
-  let cvp = CVProposal.load(event.params.proposalId.toHexString());
+  const proposalId = `${event.address.toHexString()}-${event.params.proposalId}`;
+
+  let cvp = CVProposal.load(proposalId);
   if (cvp == null) {
-    log.debug("handleSupportAdded cvp not found: {}", [
-      event.params.proposalId.toString(),
-    ]);
+    log.debug("handleSupportAdded cvp not found: {}", [proposalId.toString()]);
     return;
   }
-
+  log.debug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", []);
   let cvs = CVStrategy.load(cvp.strategy);
   if (cvs == null) {
     log.debug("handleSupportAdded cvs not found: {}", [
@@ -193,15 +193,18 @@ export function handleSupportAdded(event: SupportAdded): void {
     ]);
     return;
   }
+  log.debug("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB", []);
   const memberStrategyId = `${event.params.from.toHexString()}-${cvs.id}`;
   let stakeId = `${cvp.id.toString()}-${memberStrategyId}`;
 
   let stake = Stake.load(stakeId);
+  log.debug("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC", []);
   if (!stake) {
     stake = new Stake(stakeId);
     stake.member = event.params.from.toHexString();
     stake.proposal = cvp.id;
   }
+  log.debug("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD", []);
   stake.poolId = cvs.poolId;
   stake.amount = event.params.amount;
   stake.createdAt = event.block.timestamp;
