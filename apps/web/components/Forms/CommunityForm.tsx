@@ -94,7 +94,7 @@ export const CommunityForm = ({
       parse: (value: boolean) => (value ? "Yes" : "No"),
     },
     feeAmount: {
-      label: "Protocol Fee Amount:",
+      label: "Community Fee Amount:",
       parse: (value: number) => `${value ?? "0"} %`,
     },
     feeReceiver: { label: "Fee Receiver:" },
@@ -166,11 +166,11 @@ export const CommunityForm = ({
       previewData?.stakeAmount.toString() as string,
       tokenGarden.decimals,
     );
-    const protocolFeeAmount = parseUnits(
+    const communityFeeAmount = parseUnits(
       previewData?.feeAmount.toString() as string,
       tokenGarden.decimals,
     );
-    const protocolFeeReceiver = previewData?.feeReceiver;
+    const communityFeeReceiver = previewData?.feeReceiver;
     const councilSafeAddress = previewData?.councilSafe;
     // arb safe 0xda7bdebd79833a5e0c027fab1b1b9b874ddcbd10
     const metadata = [1n, "ipfsHash"];
@@ -181,10 +181,10 @@ export const CommunityForm = ({
       alloContractAddr,
       gardenTokenAddress,
       stakeAmount,
-      protocolFeeAmount,
+      communityFeeAmount,
       0n,
       registryFactoryAddr,
-      protocolFeeReceiver,
+      communityFeeReceiver,
       metadata,
       councilSafeAddress,
       communityName,
@@ -275,7 +275,7 @@ export const CommunityForm = ({
           </div>
           <div className="flex flex-col">
             <FormSelect
-              label="Protocol fee %"
+              label="Community fee %"
               register={register}
               errors={errors}
               registerKey="feeAmount"
@@ -284,7 +284,7 @@ export const CommunityForm = ({
           </div>
           <div className="flex flex-col">
             <FormInput
-              label="Protocol fee Receiver address"
+              label="Community fee Receiver address"
               register={register}
               required
               registerOptions={{
