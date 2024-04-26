@@ -5,11 +5,11 @@ function validateInput(input: any) {
   return Number.isInteger(Number(input));
 }
 
-type numberOrBigInt = number | bigint;
+type NumberOrBigInt = number | bigint;
 
 export const calcThresholdPct = (
-  threshold: numberOrBigInt,
-  maxCVSupply: numberOrBigInt,
+  threshold: NumberOrBigInt,
+  maxCVSupply: NumberOrBigInt,
   tokenDecimals: number,
 ): string | number => {
   if (
@@ -31,8 +31,8 @@ export const calcThresholdPct = (
 };
 
 export const calcTotalSupport = (
-  totalStaked: numberOrBigInt,
-  effActPoints: numberOrBigInt,
+  totalStaked: NumberOrBigInt,
+  effActPoints: NumberOrBigInt,
   tokenDecimals: number,
 ) => {
   if (!validateInput(totalStaked) || totalStaked < 0 || effActPoints <= 0) {
@@ -46,8 +46,8 @@ export const calcTotalSupport = (
 };
 
 export const calcCurrentConviction = (
-  convictionLast: numberOrBigInt,
-  maxCVSupply: numberOrBigInt,
+  convictionLast: NumberOrBigInt,
+  maxCVSupply: NumberOrBigInt,
   tokenDecimals: number,
 ) => {
   if (
