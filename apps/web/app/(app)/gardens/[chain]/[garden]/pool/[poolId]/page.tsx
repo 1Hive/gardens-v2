@@ -9,7 +9,7 @@ import {
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { PointsComponent } from "@/components";
+import { GovernanceComponent } from "@/components";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 
 export const dynamic = "force-dynamic";
@@ -144,7 +144,7 @@ export default async function Pool({
             spendingLimit={spendingLimitPct}
           />
           {/* With [Activate - Deactivate] funcionality */}
-          <PointsComponent
+          <GovernanceComponent
             strategyAddress={strategyAddr}
             strategy={strategyObj}
             communityAddress={communityAddress}

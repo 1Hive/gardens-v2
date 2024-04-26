@@ -91,9 +91,9 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
 
   return (
     <>
-      <section className="border2 flex w-full justify-between rounded-xl bg-white px-12 py-4">
+      <section className="border2 flex w-full justify-between rounded-xl bg-white px-12 py-8">
         <div className="flex flex-col">
-          <h3 className="font-semibold">Metrics</h3>
+          <h3 className="mb-6 font-semibold">Pool Metrics</h3>
           <div className="flex justify-between">
             <div className="flex flex-col justify-between">
               <div className="flex items-center justify-between">
