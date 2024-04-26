@@ -12,7 +12,11 @@ import {
 import { formatTokenAmount } from "@/utils/numbers";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import * as dn from "dnum";
-import { calcThresholdPct } from "@/utils/convictionFormulas";
+import {
+  calcThresholdPct,
+  calcTotalSupport,
+  calcCurrentConviction,
+} from "@/utils/convictionFormulas";
 
 export const dynamic = "force-dynamic";
 
@@ -162,9 +166,19 @@ export default async function Proposal({
       <div className="text-center text-error">{`Syntax error!, check above functions arguments`}</div>
     );
   }
-
   const tokenDecimals = 18;
+
   const thresholdPct = calcThresholdPct(threshold, maxCVSupply, tokenDecimals);
+  const totalSupport = calcTotalSupport(
+    getProposalStakedAmount,
+    totalEffectiveActivePoints,
+    tokenDecimals,
+  );
+  const currentConviction = calcCurrentConviction(
+    updateConvictionLast,
+    maxCVSupply,
+    tokenDecimals,
+  );
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
@@ -235,22 +249,20 @@ export default async function Proposal({
           <div>
             <p className="text-xl">
               This proposal need{" "}
-              <span className="text-2xl text-secondary">
-                {String(thresholdPct)}%
-              </span>{" "}
-              of pool weight conviction to pass
+              <span className="text-2xl text-secondary">{thresholdPct}%</span>{" "}
+              of pool conviction to pass
             </p>
           </div>
           <div>
             <p className="text-xl">
-              Total pool weight support is :{" "}
-              <span className="text-2xl text-secondary">X</span>{" "}
+              Total support is :{" "}
+              <span className="text-2xl text-secondary">{totalSupport}%</span>{" "}
             </p>
           </div>
           <div>
             <p className="text-xl">
-              The current pool weight conviction is:{" "}
-              <span className="text-4xl text-info">X</span>{" "}
+              Current conviction is:{" "}
+              <span className="text-4xl text-info">{currentConviction}%</span>{" "}
             </p>
           </div>
         </div>
