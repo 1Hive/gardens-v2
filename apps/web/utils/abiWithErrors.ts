@@ -4,6 +4,7 @@ import {
   registryFactoryABI,
   alloABI,
   erc20ABI,
+  safeABI
 } from "@/src/generated";
 import { Abi } from "viem";
 
@@ -16,6 +17,7 @@ const errorsABI = [
   ...registryCommunityABI.filter(FuncFilterError),
   ...registryFactoryABI.filter(FuncFilterError),
   ...erc20ABI.filter(FuncFilterError),
+  ...safeABI.filter(FuncFilterError)
 ];
 
 // console.log("errorsABI", errorsABI);

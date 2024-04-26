@@ -2,9 +2,13 @@
 import React, { useEffect, useState, ChangeEvent } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FormModal } from "./FormModal";
-import { registryFactoryABI } from "@/src/generated";
-import { Address, parseUnits } from "viem";
-import { usePrepareContractWrite, useContractWrite } from "wagmi";
+import { registryFactoryABI, safeABI } from "@/src/generated";
+import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
+import {
+  usePrepareContractWrite,
+  useContractWrite,
+  useContractRead,
+} from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsFileUpload, ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -18,6 +22,9 @@ import { FormSelect } from "./FormSelect";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
+import { getChain } from "@/configs/chainServer";
+import { getChainIdFromPath } from "@/utils/path";
+import { getNetwork } from "@wagmi/core";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -45,10 +52,12 @@ const feeOptions: Option[] = [
 ];
 
 export const CommunityForm = ({
+  chain,
   tokenGarden,
   registryFactoryAddr,
   alloContractAddr,
 }: {
+  chain: number;
   tokenGarden: TokenGarden;
   registryFactoryAddr: Address;
   alloContractAddr: Address;
@@ -69,6 +78,11 @@ export const CommunityForm = ({
   const router = useRouter();
   const pathname = usePathname();
   // const [file, setFile] = useState<File | null>(null);
+
+  const publicClient = createPublicClient({
+    chain: getChain(getChainIdFromPath()) as Chain,
+    transport: http(),
+  });
 
   const formRowTypes: Record<string, FormRowTypes> = {
     stakeAmount: {
@@ -202,6 +216,25 @@ export const CommunityForm = ({
     return formattedRows;
   };
 
+  const safeAddress = watch("councilSafe");
+
+  const addressIsSAFE = async (walletAddress: Address) => {
+    let isSafe = false;
+    try {
+      const data = await publicClient.readContract({
+        address: walletAddress,
+        abi: abiWithErrors(safeABI),
+        functionName: "getOwners",
+      });
+      isSafe = !!data;
+    } catch (error) {
+      console.log(
+        walletAddress + " is not a valid Safe address in the network",
+      );
+    }
+    return isSafe;
+  };
+
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ? (
@@ -268,7 +301,7 @@ export const CommunityForm = ({
           </div>
           <div className="flex flex-col">
             <FormInput
-              label="Council safe address"
+              label="Council Safe address"
               register={register}
               required
               registerOptions={{
@@ -276,6 +309,9 @@ export const CommunityForm = ({
                   value: ethereumAddressRegEx,
                   message: "Invalid Eth Address",
                 },
+                validate: async (value) =>
+                  (await addressIsSAFE(value)) ||
+                  `Not a valid Safe address in ${getChain(chain)?.name} network`,
               }}
               errors={errors}
               registerKey="councilSafe"
