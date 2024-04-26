@@ -23,6 +23,8 @@ type PoolStatsProps = {
   poolId: number;
 };
 
+const MIN_VALUE = 0.000000000001;
+
 export const PoolMetrics: FC<PoolStatsProps> = ({
   alloInfo,
   balance,
@@ -32,7 +34,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
   spendingLimit,
   poolId,
 }) => {
-  const [amount, setAmount] = useState<number | string>("");
+  const [amount, setAmount] = useState<number | string>();
   const { address: connectedAccount } = useAccount();
 
   const registryContractCallConfig = {
@@ -69,7 +71,10 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     functionName: "approve",
     onSuccess: () =>
       writeFundPool({
-        args: [poolId, parseUnits(amount.toString(), tokenGarden?.decimals)],
+        args: [
+          poolId,
+          parseUnits(amount ? amount.toString() : "0", tokenGarden?.decimals),
+        ],
       }),
   });
 
@@ -77,7 +82,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     writeAllowToken({
       args: [
         alloInfo?.id,
-        parseUnits(amount.toString(), tokenGarden?.decimals),
+        parseUnits(amount ? amount.toString() : "0", tokenGarden?.decimals),
       ],
     });
   };
@@ -120,12 +125,17 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
         <div className="flex flex-col justify-center gap-4">
           <FormInput
             type="number"
-            value={amount}
             placeholder="0"
             required
-            step={0.00000001}
+            className="pr-14"
+            step={MIN_VALUE}
             onChange={(e) => setAmount(Number(e.target.value))}
-          />
+            otherProps={{ step: MIN_VALUE, min: MIN_VALUE }}
+          >
+            <span className="absolute right-4 top-4 text-black">
+              {tokenGarden.symbol}
+            </span>
+          </FormInput>
           <Button
             disabled={missmatchUrl || !connectedAccount}
             tooltip={tooltipMessage}
