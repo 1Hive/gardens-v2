@@ -70,7 +70,7 @@ export const PointsComponent: FC<PoolStatsProps> = ({
   console.log("isMemberActivated ", isMemberActivated);
   return (
     <section className="border2 flex  w-full flex-col rounded-xl bg-white px-12 py-4">
-      <h3 className="font-semibold">Your Tokens</h3>
+      <h3 className="font-semibold">Your Points</h3>
       <div className="flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-10">

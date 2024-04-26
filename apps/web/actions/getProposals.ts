@@ -54,6 +54,7 @@ export async function getProposals(
 
     async function transformProposals(strategy: Strategy) {
       const proposalsData = await fetchIPFSDataBatch(strategy.proposals);
+      console.log("PROPOSALS DATA ", proposalsData);
       const transformedProposals = proposalsData.map((data, index) => {
         const p = strategy.proposals[index];
         return {

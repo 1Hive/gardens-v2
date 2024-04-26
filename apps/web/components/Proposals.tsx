@@ -174,7 +174,7 @@ export function Proposals({
       id: item.proposal.proposalNumber,
       value: item.amount,
     }));
-    console.log(memberStakes);
+    console.log("_stakesFilteres ", memberStakes);
     setTotalAllocatedTokens(totalStaked);
     setStakedFilteres(memberStakes);
   }, [
