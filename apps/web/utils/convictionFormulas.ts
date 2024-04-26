@@ -1,7 +1,24 @@
+import * as dn from "dnum";
+import { formatTokenAmount } from "./numbers";
+
 function validateInput(input: any) {
   return Number.isInteger(Number(input));
 }
 
+export const calcThresholdPct = (
+  threshold: number | bigint,
+  maxCVSupply: number | bigint,
+  tokenDecimals: number,
+): string | number => {
+  const thresholdPct = dn.divide(threshold, maxCVSupply, tokenDecimals);
+
+  const formatThresholdPct =
+    Number(dn.format(thresholdPct, { digits: 4 })) * 100;
+
+  return formatThresholdPct;
+};
+
+//TODO: calc in % the rest of formulas
 export const calcCurrentConviction = (
   convictionLast: number | bigint,
   maxCVSupply: number | bigint,
@@ -101,84 +118,4 @@ export const calcPointsNeeded = (
   }
   const pointsNeeded = threshold - maxConviction;
   return Math.ceil(pointsNeeded);
-};
-
-export const calcThresholdPoints = (
-  threshold: number | bigint,
-  maxCVSupply: number | bigint,
-  totalEffectiveActivePoints: number | bigint,
-): number => {
-  if (
-    !validateInput(threshold) ||
-    !validateInput(maxCVSupply) ||
-    !validateInput(totalEffectiveActivePoints) ||
-    threshold < 0 ||
-    maxCVSupply <= 0 ||
-    totalEffectiveActivePoints < 0
-  ) {
-    return 1;
-  }
-  if (maxCVSupply <= threshold) {
-    throw new Error(
-      "Invalid input. maxCVSupply must be greater than threshold.",
-    );
-  }
-
-  const thresholdPct = Number(threshold) / Number(maxCVSupply);
-
-  const result = thresholdPct * Number(totalEffectiveActivePoints) * 2;
-  return Math.ceil(result);
-};
-
-type ExecutionResults = {
-  currentConviction?: number | Error;
-  maxConviction?: number | Error;
-  futureConviction?: number | Error;
-  pointsNeeded?: number | Error;
-  thresholdPoints?: number | Error;
-  error?: Error;
-};
-export const executeAllFunctions = (
-  convictionLast: number | bigint,
-  maxCVStaked: number | bigint,
-  maxCVSupply: number | bigint,
-  totalEffectiveActivePoints: number | bigint,
-  threshold: number,
-  calcThreshold: number,
-) => {
-  // Initialize an object to store all results
-  const results: ExecutionResults = {};
-
-  // Call each function and store the results
-  results.currentConviction = calcCurrentConviction(
-    convictionLast,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  results.maxConviction = calcMaxConviction(
-    maxCVStaked,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  results.futureConviction = calcFutureConviction(
-    convictionLast,
-    maxCVStaked,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  results.thresholdPoints = calcThresholdPoints(
-    threshold,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  results.pointsNeeded = threshold;
-
-  // calcPointsNeeded(
-  //   calcThreshold,
-  //   maxCVStaked,
-  //   maxCVSupply,
-  //   totalEffectiveActivePoints,
-  // );
-
-  return results;
 };
