@@ -185,7 +185,7 @@ export function handleSupportAdded(event: SupportAdded): void {
     log.debug("handleSupportAdded cvp not found: {}", [proposalId.toString()]);
     return;
   }
-  log.debug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", []);
+
   let cvs = CVStrategy.load(cvp.strategy);
   if (cvs == null) {
     log.debug("handleSupportAdded cvs not found: {}", [
@@ -193,18 +193,36 @@ export function handleSupportAdded(event: SupportAdded): void {
     ]);
     return;
   }
-  log.debug("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB", []);
+
   const memberStrategyId = `${event.params.from.toHexString()}-${cvs.id}`;
   let stakeId = `${cvp.id.toString()}-${memberStrategyId}`;
 
   let stake = Stake.load(stakeId);
-  log.debug("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC", []);
+
+  let memberStrategy = MemberStrategy.load(memberStrategyId);
+
+  if (memberStrategy == null) {
+    log.debug("handleSupportAdded memberStrategy not found: {}", [
+      memberStrategyId.toString(),
+    ]);
+    return;
+  }
+
   if (!stake) {
     stake = new Stake(stakeId);
     stake.member = event.params.from.toHexString();
     stake.proposal = cvp.id;
+    stake.amount = BigInt.fromI32(0);
   }
-  log.debug("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD", []);
+
+  const previousStake = stake.amount;
+
+  const delta = event.params.amount.minus(previousStake);
+
+  memberStrategy.totalStakedPoints = memberStrategy.totalStakedPoints
+    ? memberStrategy.totalStakedPoints.plus(delta)
+    : event.params.amount;
+
   stake.poolId = cvs.poolId;
   stake.amount = event.params.amount;
   stake.createdAt = event.block.timestamp;
@@ -215,27 +233,6 @@ export function handleSupportAdded(event: SupportAdded): void {
     event.params.proposalId,
   );
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
-
-  let memberStrategy = MemberStrategy.load(memberStrategyId);
-
-  log.debug("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC memberStrategyId: {}", [
-    memberStrategyId,
-  ]);
-
-  log.debug("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD pointsToStake: {}", [
-    event.params.amount.toString(),
-  ]);
-
-  if (memberStrategy == null) {
-    log.debug("handleSupportAdded memberStrategy not found: {}", [
-      memberStrategyId.toString(),
-    ]);
-    return;
-  }
-
-  memberStrategy.totalStakedPoints = memberStrategy.totalStakedPoints
-    ? memberStrategy.totalStakedPoints.plus(event.params.amount)
-    : event.params.amount;
 
   memberStrategy.save();
   cvp.maxCVStaked = maxConviction;
@@ -280,14 +277,6 @@ export function handlePowerIncreased(event: PowerIncreased): void {
   cvs.save();
 
   const memberStrategyId = `${event.params.member.toHexString()}-${cvs.id}`;
-
-  log.debug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA memberStrategyId: {}", [
-    memberStrategyId,
-  ]);
-
-  log.debug("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB pointsToIncrease: {}", [
-    event.params.pointsToIncrease.toString(),
-  ]);
 
   let memberStrategy = MemberStrategy.load(memberStrategyId);
   if (memberStrategy == null) {
