@@ -12,7 +12,7 @@ import {
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
-import { formatTokenAmount } from "@/utils/numbers";
+import { formatTokenAmount, calculatePercentage } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
 import {
   getMemberStrategyDocument,
@@ -75,14 +75,14 @@ export function Proposals({
   const [inputs, setInputs] = useState<InputItem[]>([]);
 
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
-  const [totalAllocatedTokens, setTotalAllocatedTokens] = useState<bigint>(0n);
+  const [totalAllocatedTokens, setTotalAllocatedTokens] = useState<number>(0);
 
   const [message, setMessage] = useState("");
 
   //using this for test alpha
   const { address: connectedAccount } = useAccount();
   // const { voterStake } = useTotalVoterStakedPct(strategy);
-  const [memberTokensInPool, setMemberTokensInPool] = useState<number>(0);
+  const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilteres, setStakedFilteres] = useState<InputItem[]>([]);
 
   const { address } = useAccount();
@@ -116,8 +116,6 @@ export function Proposals({
       console.error("address is undefined");
       return;
     }
-    // console.log("address", address);
-    // console.log("strategy.registryCommunity.id", strategy.registryCommunity.id);
     const { data: result, error } = await queryByChain<isMemberQuery>(
       urqlClient,
       chainId,
@@ -138,21 +136,17 @@ export function Proposals({
         },
       );
 
-    console.log("resultMS", memberStrategyResult);
-    console.log("errorMS", errorMS);
-    // console.log("result IsMemberNew", result);
-
     let _stakesFilteres: StakesMemberType = [];
-    let totalStakedAmount: bigint = 0n;
+    let totalActivatedAmount: bigint = 0n;
 
-    if (result && result.members.length > 0) {
-      totalStakedAmount =
+    if (memberStrategyResult?.memberStrategy) {
+      totalActivatedAmount =
         memberStrategyResult?.memberStrategy?.activatedPoints ?? 0n;
 
-      // console.log("totalStakedAmount", totalStakedAmount);
-      // setVoterStake(Number(totalStakedAmount));
-      setMemberTokensInPool(Number(totalStakedAmount));
+      setMemberActivatedPoints(Number(totalActivatedAmount));
+    }
 
+    if (result && result.members.length > 0) {
       const stakes = result.members[0].stakes;
       if (stakes && stakes.length > 0) {
         _stakesFilteres = stakes.filter((stake) => {
@@ -168,14 +162,12 @@ export function Proposals({
       return acc + BigInt(curr.amount);
     }, 0n);
 
-    console.log("_stakesFilteres ", _stakesFilteres);
-
     const memberStakes: InputItem[] = _stakesFilteres.map((item) => ({
       id: item.proposal.proposalNumber,
       value: item.amount,
     }));
-    console.log("_stakesFilteres ", memberStakes);
-    setTotalAllocatedTokens(totalStaked);
+
+    setTotalAllocatedTokens(Number(totalStaked));
     setStakedFilteres(memberStakes);
   }, [
     address,
@@ -229,6 +221,7 @@ export function Proposals({
 
   useEffect(() => {
     setInputAllocatedTokens(calculateTotalTokens());
+    setTotalAllocatedTokens(calculateTotalTokens());
   }, [inputs]);
 
   useEffect(() => {
@@ -285,15 +278,9 @@ export function Proposals({
     updateTransactionStatus(allocateStatus);
   }, [allocateStatus]);
 
-  console.log("INPUTS!!!! ", inputs);
   const submit = async () => {
-    console.log("PROPOSALS ", proposals);
     const encodedData = getEncodedProposals(inputs, proposals);
-    // const poolId = Number(poolID);
-
-    console.log("encoded data ", encodedData);
     const poolId = Number(strategy.poolId);
-    // console.log("poolId", poolId);
     writeAllocate({
       args: [BigInt(poolId), encodedData as AddressType],
     });
@@ -331,7 +318,6 @@ export function Proposals({
     // const currentPoints = calculatePoints(i);
     const pointsDistributed = Number(totalAllocatedTokens);
     // console.log("currentPoints", currentPoints);
-    console.log("value", value);
 
     // if (pointsDistributed + value <= memberTokensInPool) {
     setInputs(
@@ -340,6 +326,7 @@ export function Proposals({
       ),
     );
     setInputAllocatedTokens(pointsDistributed + value);
+    setTotalAllocatedTokens(pointsDistributed + value);
     // } else {
     //   console.log("can't exceed 100% points");
     // }
@@ -401,18 +388,51 @@ export function Proposals({
               <div className="w-full text-right text-2xl">
                 <span
                   className={`${
-                    inputAllocatedTokens >= memberTokensInPool &&
+                    inputAllocatedTokens >= memberActivatedPoints &&
                     "scale-110 font-semibold text-red"
                   } transition-all`}
                 >
                   Assigned:{" "}
                   <span
-                    className={`text-3xl font-bold  ${inputAllocatedTokens >= memberTokensInPool ? "text-red" : "text-success"} `}
+                    className={`text-3xl font-bold  ${inputAllocatedTokens >= memberActivatedPoints ? "text-red" : "text-success"} `}
                   >
                     {formatTokenAmount(inputAllocatedTokens, DECIMALS)}
                   </span>{" "}
-                  / {formatTokenAmount(memberTokensInPool, DECIMALS)}
+                  / {formatTokenAmount(memberActivatedPoints, DECIMALS)}
                   {" " + strategy.registryCommunity.garden.symbol}
+                </span>
+              </div>
+              <div className="w-full text-right text-2xl">
+                <span className={`transition-all`}>
+                  Your Governance Weight:{" "}
+                </span>
+                <span
+                  className={`text-3xl font-bold  ${inputAllocatedTokens >= memberActivatedPoints ? "text-red" : "text-success"} `}
+                >
+                  {calculatePercentage(
+                    Number(formatTokenAmount(memberActivatedPoints, DECIMALS)),
+                    Number(
+                      formatTokenAmount(
+                        strategy.totalEffectiveActivePoints,
+                        DECIMALS,
+                      ),
+                    ),
+                  )}
+                  %
+                </span>
+              </div>
+              <div className="w-full text-right text-2xl">
+                <span
+                  className={`text-3xl font-bold  ${inputAllocatedTokens >= memberActivatedPoints ? "text-red" : "text-success"} `}
+                >
+                  {calculatePercentage(
+                    Number(formatTokenAmount(totalAllocatedTokens, DECIMALS)),
+                    Number(formatTokenAmount(memberActivatedPoints, DECIMALS)),
+                  )}
+                  %
+                </span>
+                <span className={`transition-all`}>
+                  Of yout governance weight is supporting proposals
                 </span>
               </div>
             </>
@@ -472,14 +492,14 @@ export function Proposals({
                         key={i}
                         type="range"
                         min={0}
-                        max={memberTokensInPool}
+                        max={memberActivatedPoints}
                         value={
                           // getProposalId(id) ===
                           inputs[i]?.value
                           // stakedFilteres?[i].amount
                         }
                         className={`range range-success range-sm min-w-[420px]`}
-                        step={memberTokensInPool / 100}
+                        step={memberActivatedPoints / 100}
                         onChange={(e) =>
                           inputHandler(i, Number(e.target.value))
                         }
@@ -492,7 +512,7 @@ export function Proposals({
                     </div>
                     <div className="mb-2">
                       {Number(
-                        (inputs[i].value * 100) / memberTokensInPool,
+                        (inputs[i].value * 100) / memberActivatedPoints,
                       ).toFixed(2)}
                       %
                     </div>
@@ -533,6 +553,8 @@ export function Proposals({
                 className="min-w-[200px]"
                 onClick={() => submit()}
                 isLoading={allocateStatus === "loading"}
+                disabled={inputAllocatedTokens > memberActivatedPoints}
+                tooltip="Assigned points can't exceed total activated points pool"
               >
                 Save changes
               </Button>
