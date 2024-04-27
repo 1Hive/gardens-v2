@@ -53,10 +53,7 @@ export async function getProposals(
     }
 
     async function transformProposals(strategy: Strategy) {
-      console.log("STRATEGYYYYYYYY ", strategy);
       const proposalsData = await fetchIPFSDataBatch(strategy.proposals);
-      console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAA");
-      console.log("PROPOSALS DATA ", proposalsData);
       const transformedProposals = proposalsData.map((data, index) => {
         const p = strategy.proposals[index];
         return {
@@ -71,7 +68,6 @@ export async function getProposals(
 
       return transformedProposals;
     }
-    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAA");
     let transformedProposals: ProposalTypeVoter[] =
       await transformProposals(strategy);
 
