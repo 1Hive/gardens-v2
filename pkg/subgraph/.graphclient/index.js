@@ -351,6 +351,7 @@ export const getCommunitiesByGardenDocument = gql `
           registerStakeAmount
         }
         id
+        totalEffectiveActivePoints
         poolId
         poolAmount
         config {
@@ -406,6 +407,7 @@ export const getPoolDataDocument = gql `
     metadata
     id
     poolId
+    totalEffectiveActivePoints
     memberActive {
       id
     }
@@ -483,6 +485,7 @@ export const getStrategyByPoolDocument = gql `
   cvstrategies(where: {poolId: $poolId}) {
     id
     poolId
+    totalEffectiveActivePoints
     config {
       id
       proposalType
@@ -502,7 +505,6 @@ export const getStrategyByPoolDocument = gql `
     }
     proposals {
       id
-      proposalNumber
       proposalNumber
       metadata
       beneficiary
