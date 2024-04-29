@@ -62,7 +62,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     }
 
     function run() public {
-        string memory net = vm.prompt("Enter network name");
+        // string memory net = vm.prompt("Enter network name");
+        string memory net = "";
         run(net);
     }
 
@@ -137,9 +138,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
-        pointConfig.pointsPerMember = MINIMUM_STAKE * (10 ** 4);
-        pointConfig.tokensPerPoint = 1 * (DECIMALS);
-        pointConfig.pointsPerTokenStaked = 1 * DECIMALS * (10 ** 4);
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),

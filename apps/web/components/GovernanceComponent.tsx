@@ -14,39 +14,34 @@ type PoolStatsProps = {
   communityAddress: Address;
 };
 
-export const PointsComponent: FC<PoolStatsProps> = ({
+export const GovernanceComponent: FC<PoolStatsProps> = ({
   strategyAddress,
   strategy,
   communityAddress,
 }) => {
   const { address: connectedAccount } = useAccount();
-  const { isConnected } = useAccount();
 
-  const { data: memberPointsVotingPower } = useContractRead({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
-    functionName: "getMemberPowerInStrategy",
-    args: [connectedAccount as Address, strategyAddress],
-    watch: true,
-  });
+  const isValidAccount =
+    connectedAccount !== undefined && connectedAccount !== null;
 
-  const { data: isMemberActivated } = useContractRead({
-    address: communityAddress as Address,
-    abi: abiWithErrors(registryCommunityABI),
-    functionName: "memberActivatedInStrategies",
-    args: [connectedAccount as Address, strategyAddress],
-    watch: true,
-  });
-
-  const memberPointsInPool = (
-    ((memberPointsVotingPower as bigint) ?? 0n) / PRECISION_SCALE
-  ).toString();
-
-  //TODO: create a hook for this
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
   };
+
+  const { data: memberPointsVotingPower } = useContractRead({
+    ...registryContractCallConfig,
+    functionName: "getMemberPowerInStrategy",
+    args: [connectedAccount as Address, strategyAddress],
+    watch: isValidAccount,
+  });
+
+  const { data: isMemberActivated } = useContractRead({
+    ...registryContractCallConfig,
+    functionName: "memberActivatedInStrategies",
+    args: [connectedAccount as Address, strategyAddress],
+    watch: true,
+  });
 
   const {
     data: isMember,
@@ -59,22 +54,29 @@ export const PointsComponent: FC<PoolStatsProps> = ({
     watch: true,
   });
 
+  const showTokensValue =
+    isMember && isMemberActivated !== undefined && isMemberActivated;
+
   return (
-    <section className="border2 flex  w-full flex-col rounded-xl bg-white px-12 py-4">
-      <h3 className="font-semibold">Your Tokens</h3>
+    <section className="border2 flex  w-full flex-col rounded-xl bg-white px-12 py-8">
+      <h3 className="mb-6 font-semibold">Your Pool Governance</h3>
       <div className="flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-10">
             <div className="flex items-center gap-2 font-semibold">
-              {isMember && (
+              {showTokensValue && (
                 <>
-                  <p className="text-4xl">
+                  <p
+                    className={`text-4xl ${!isMemberActivated && "text-gray-300"}`}
+                  >
                     {formatTokenAmount(
-                      memberPointsInPool,
+                      memberPointsVotingPower,
                       strategy.registryCommunity.garden.decimals,
                     )}
                   </p>
-                  <span className="text-lg">
+                  <span
+                    className={`text-lg ${!isMemberActivated && "text-gray-300"}`}
+                  >
                     {strategy.registryCommunity.garden.symbol}
                   </span>
                 </>
@@ -87,6 +89,7 @@ export const PointsComponent: FC<PoolStatsProps> = ({
           </div>
           <ActivatePoints
             strategyAddress={strategyAddress}
+            communityAddress={communityAddress}
             isMemberActivated={isMemberActivated as boolean | undefined}
             isMember={isMember}
             // errorMemberActivated={errorMemberActivated}

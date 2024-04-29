@@ -1,6 +1,3 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
-
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -29,6 +26,8 @@ import {SafeSetup} from "./shared/SafeSetup.sol";
 import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
+
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
 
 contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
@@ -36,7 +35,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     MockERC20 public token;
     uint256 public mintAmount = 1_000_000 * DECIMALS;
 
-    uint256 public constant MINIMUM_STAKE = 1000 * DECIMALS;
+    uint256 public constant MINIMUM_STAKE = 50 * DECIMALS;
+    uint256 public constant SQRT_ONE_THOUSAND = 31622776601683793319;
     uint256 public constant PRECISION = 10 ** 4;
     uint256 public constant PROTOCOL_FEE_PERCENTAGE = 22525; // 2.2525  * 10 ** 4
     uint256 public constant COMMUNITY_FEE_PERCENTAGE = 3 * PRECISION;
@@ -186,6 +186,44 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
     }
 
+    function test_activate_totalActivatedPoints_fixed_system() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Fixed
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+        strategy.activatePoints();
+
+        // token.approve(address(registryCommunity), tokenAmount * DECIMALS);
+        // _registryCommunity().increasePower(tokenAmount * DECIMALS);
+
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE, "balance");
+
+        vm.stopPrank();
+
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.getMemberStakedAmount(gardenMember),
+            "memberPower"
+        );
+    }
+
     function testFuzz_increasePower(uint256 tokenAmount) public {
         vm.assume(tokenAmount > 2 && tokenAmount < 100);
         vm.startPrank(pool_admin());
@@ -216,13 +254,20 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
         assertEq(
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            (100 * (10 ** 4) + (tokenAmount * strategy.getPointsPerTokenStaked()))
+            registryCommunity.getMemberStakedAmount(gardenMember)
         );
     }
 
     function testFuzz_increasePowerCapped(uint256 tokenAmount) public {
-        //To avoid InsufficientBalance
-        vm.assume(tokenAmount < 100000);
+        uint256 CAPPED_MAX_AMOUNT = 200 * DECIMALS;
+        uint256 MIN_AMOUNT_TO_MAX = (CAPPED_MAX_AMOUNT - MINIMUM_STAKE) / DECIMALS;
+        console.log("MINIMUM_STAKE: %s", MINIMUM_STAKE / DECIMALS);
+        console.log("CAPPED_MAX_AMOUNT- MINIMUM_STAKE: %s", MIN_AMOUNT_TO_MAX);
+
+        vm.assume(tokenAmount <= MIN_AMOUNT_TO_MAX * 2);
+        vm.assume(tokenAmount >= MIN_AMOUNT_TO_MAX);
+        // vm.assume(tokenAmount > 0);
+
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
             allo(),
@@ -244,59 +289,83 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //vm.expectRevert("error");
         strategy.activatePoints();
 
+        token.mint(gardenMember, tokenAmount * DECIMALS);
         token.approve(address(registryCommunity), tokenAmount * DECIMALS);
+
         _registryCommunity().increasePower(tokenAmount * DECIMALS);
-        if (tokenAmount > 20) {
-            assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 200 * PRECISION);
-        } else {
-            assertEq(
-                registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-                (100 * (10 ** 4) + (tokenAmount * strategy.getPointsPerTokenStaked()))
-            );
-        }
+
+        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy));
+
+        uint256 current = tokenAmount * DECIMALS + MINIMUM_STAKE;
+
+        console.log("Current: %s", current);
+        // if (tokenAmount >= CAPPED_MAX_AMOUNT) {
+        assertEq(memberPower, CAPPED_MAX_AMOUNT, "Power to 200");
+        // } else {
+        // assertEq(
+        // memberPower,
+        // registryCommunity.getMemberStakedAmount(gardenMember) + (tokenAmount * DECIMALS),
+        // "power = staked + tokenAmount"
+        // );
+        // }
     }
 
     function testFuzz_increasePowerQuadratic(uint256 firstIncrease, uint256 secondIncrease) public {
-        vm.assume(firstIncrease < 10000);
-        vm.assume(secondIncrease < 10000);
-        vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Quadratic
-        );
-        console.log("PoolId: %s", poolId);
-        vm.stopPrank();
-        vm.startPrank(address(councilSafe));
-        _registryCommunity().addStrategy(address(strategy));
-        vm.stopPrank();
-        vm.startPrank(gardenMember);
-        token.approve(address(registryCommunity), STAKE_WITH_FEES);
-        _registryCommunity().stakeAndRegisterMember();
-        //vm.expectRevert("error");
-        strategy.activatePoints();
+        vm.assume(firstIncrease < 10000 && firstIncrease > 0);
+        vm.assume(secondIncrease < 10000 && secondIncrease > 0);
 
-        token.approve(address(registryCommunity), firstIncrease * DECIMALS);
-        uint256 firstPointIncrease = strategy.increasePowerQuadratic(gardenMember, firstIncrease * (10 ** 18));
-        _registryCommunity().increasePower(firstIncrease * DECIMALS);
-        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (firstIncrease * DECIMALS));
-        assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            ((100 * (10 ** 4)) + firstPointIncrease)
-        );
-        //assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 110 * (10 ** 4));
-        token.approve(address(registryCommunity), secondIncrease * DECIMALS);
-        uint256 secondPointIncrease = strategy.increasePowerQuadratic(gardenMember, secondIncrease * (10 ** 18));
-        _registryCommunity().increasePower(secondIncrease * DECIMALS);
-        assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            (100 * (10 ** 4)) + firstPointIncrease + secondPointIncrease
-        );
-        // assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 120 * (10 ** 4) );
+        vm.startPrank(pool_admin());
+        {
+            uint256 poolId = createPool(
+                allo(),
+                address(strategy),
+                address(_registryCommunity()),
+                registry(),
+                NATIVE,
+                StrategyStruct.ProposalType(0),
+                StrategyStruct.PointSystem.Quadratic
+            );
+            console.log("PoolId: %s", poolId);
+        }
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        {
+            _registryCommunity().addStrategy(address(strategy));
+        }
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        {
+            token.approve(address(registryCommunity), STAKE_WITH_FEES);
+            _registryCommunity().stakeAndRegisterMember();
+            //vm.expectRevert("error");
+            strategy.activatePoints(); //its call increasePower w 0
+
+            token.approve(address(registryCommunity), firstIncrease * DECIMALS);
+
+            uint256 firstPointIncrease = strategy.increasePowerQuadratic(gardenMember, firstIncrease * DECIMALS);
+
+            _registryCommunity().increasePower(firstIncrease * DECIMALS);
+
+            assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (firstIncrease * DECIMALS));
+
+            assertEq(
+                registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+                (Math.sqrt(MINIMUM_STAKE * DECIMALS) + firstPointIncrease),
+                "power1"
+            );
+            //assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 110 * (10 ** 4));
+            token.approve(address(registryCommunity), secondIncrease * DECIMALS);
+            uint256 secondPointIncrease = strategy.increasePowerQuadratic(gardenMember, secondIncrease * (10 ** 18));
+            _registryCommunity().increasePower(secondIncrease * DECIMALS);
+            assertEq(
+                registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+                Math.sqrt(MINIMUM_STAKE * DECIMALS) + firstPointIncrease + secondPointIncrease,
+                "power2"
+            );
+            // assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 120 * (10 ** 4) );
+        }
         vm.stopPrank();
     }
 
@@ -320,25 +389,118 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
         //vm.expectRevert("error");
-        strategy.activatePoints();
 
         // DECIMALS = 10 ** 6;
-        token.approve(address(registryCommunity), 100 * DECIMALS);
+        uint256 TO_INCREASE = 1100 * DECIMALS - MINIMUM_STAKE;
+        token.approve(address(registryCommunity), TO_INCREASE);
 
-        _registryCommunity().increasePower(100 * DECIMALS);
-        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (100 * DECIMALS), "100 * decimals");
+        _registryCommunity().increasePower(TO_INCREASE);
+
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + TO_INCREASE, "After increase");
+        //Sqrt of 1100
+
+        strategy.activatePoints();
+
+        uint256 sqrtValue = 33166247903553998491;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            (110 * (10 ** 4)),
-            "power for 110"
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1100"
         );
 
         token.approve(address(registryCommunity), 300 * DECIMALS);
         _registryCommunity().increasePower(300 * DECIMALS);
+        //sqrt of 1400
+        sqrtValue = 37416573867739413855;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            120 * (10 ** 4),
-            "power for 120"
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1200"
+        );
+        vm.stopPrank();
+    }
+
+    // function test_activateAfterIncreasePowerQuadratic() public {
+    //     vm.startPrank(pool_admin());
+    //     uint256 poolId = createPool(
+    //         allo(),
+    //         address(strategy),
+    //         address(_registryCommunity()),
+    //         registry(),
+    //         NATIVE,
+    //         StrategyStruct.ProposalType(0),
+    //         StrategyStruct.PointSystem.Quadratic
+    //     );
+    //     console.log("PoolId: %s", poolId);
+    //     vm.stopPrank();
+    //     vm.startPrank(address(councilSafe));
+    //     _registryCommunity().addStrategy(address(strategy));
+    //     vm.stopPrank();
+    //     vm.startPrank(gardenMember);
+    //     token.approve(address(registryCommunity), STAKE_WITH_FEES);
+    //     _registryCommunity().stakeAndRegisterMember();
+    //     //vm.expectRevert("error");
+
+    //     // DECIMALS = 10 ** 6;
+    //     uint256 TO_INCREASE = 1100 * DECIMALS - MINIMUM_STAKE;
+    //     token.approve(address(registryCommunity), TO_INCREASE);
+
+    //     _registryCommunity().increasePower(TO_INCREASE);
+
+    //     assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + TO_INCREASE, "After increase");
+    //     //Sqrt of 1100
+    //     uint256 sqrtValue = 33166247903553998491;
+    //     assertEq(
+    //         registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1100"
+    //     );
+
+    //     token.approve(address(registryCommunity), 300 * DECIMALS);
+    //     _registryCommunity().increasePower(300 * DECIMALS);
+    //     //sqrt of 1400
+    //     sqrtValue = 37416573867739413855;
+    //     assertEq(
+    //         registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1200"
+    //     );
+    //     vm.stopPrank();
+    // }
+
+    function test_activateAfterIncreasePowerQuadratic() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Quadratic
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+        strategy.activatePoints();
+
+        // DECIMALS = 10 ** 6;
+        uint256 TO_INCREASE = 1100 * DECIMALS - MINIMUM_STAKE;
+        token.approve(address(registryCommunity), TO_INCREASE);
+
+        _registryCommunity().increasePower(TO_INCREASE);
+
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + TO_INCREASE, "After increase");
+        //Sqrt of 1100
+        uint256 sqrtValue = 33166247903553998491;
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1100"
+        );
+
+        token.approve(address(registryCommunity), 300 * DECIMALS);
+        _registryCommunity().increasePower(300 * DECIMALS);
+        //sqrt of 1400
+        sqrtValue = 37416573867739413855;
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1200"
         );
         vm.stopPrank();
     }
@@ -375,8 +537,101 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
         assertEq(
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-            (100 * (10 ** 4) + (tokenAmount * strategy.getPointsPerTokenStaked()))
+            registryCommunity.getMemberStakedAmount(gardenMember)
         );
+    }
+
+    function test_DecreasePower_after_increasePower() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+
+        token.approve(address(registryCommunity), 150 * DECIMALS);
+
+        _registryCommunity().increasePower(100 * DECIMALS);
+        _registryCommunity().increasePower(50 * DECIMALS);
+        // token.approve(address(registryCommunity), 100 * DECIMALS);
+        strategy.activatePoints();
+
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.registerStakeAmount() + (150 * DECIMALS)
+        );
+
+        _registryCommunity().decreasePower(150 * DECIMALS);
+
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.registerStakeAmount()
+        );
+        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
+        vm.stopPrank();
+    }
+
+    function test_decreasePowerQuadratic_FixedValues() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Quadratic
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        strategy.activatePoints();
+
+        token.approve(address(registryCommunity), 350 * DECIMALS);
+        _registryCommunity().increasePower(350 * DECIMALS);
+
+        uint256 sqrtValue = 20 * DECIMALS;
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            sqrtValue,
+            "powerrrrrrrrrrrr for 1100"
+        );
+
+        _registryCommunity().decreasePower(300 * DECIMALS);
+
+        sqrtValue = 10 * DECIMALS;
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue);
+
+        _registryCommunity().decreasePower(36 * DECIMALS);
+
+        sqrtValue = 8 * DECIMALS;
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue);
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
+        _registryCommunity().decreasePower(50 * DECIMALS);
+        vm.stopPrank();
     }
 
     function test_kickMember() public {
@@ -405,7 +660,10 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //vm.expectRevert("error");
         strategy.activatePoints();
         vm.stopPrank();
-        assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)), 100 * 10 ** 4);
+        assertEq(
+            registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy))
+        );
         //assertEq(strategy.activatedPointsIn)
         vm.startPrank(address(councilSafe));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
@@ -454,48 +712,16 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         token.approve(address(registryCommunity), 100 * DECIMALS);
         _registryCommunity().increasePower(100 * DECIMALS);
-        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 600 * PRECISION);
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.getMemberStakedAmount(gardenMember)
+        );
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(101 * DECIMALS);
-        vm.stopPrank();
-    }
 
-    function test_DecreasePower_after_increasePower() public {
-        vm.startPrank(pool_admin());
-        uint256 poolId = createPool(
-            allo(),
-            address(strategy),
-            address(_registryCommunity()),
-            registry(),
-            NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
-        );
-        console.log("PoolId: %s", poolId);
-        vm.stopPrank();
+        //Test if decreasing by 100 doesn't revert as it shouldn't
+        _registryCommunity().decreasePower(100 * DECIMALS);
 
-        vm.startPrank(address(councilSafe));
-        _registryCommunity().addStrategy(address(strategy));
-        vm.stopPrank();
-
-        vm.startPrank(gardenMember);
-        token.approve(address(registryCommunity), STAKE_WITH_FEES);
-        _registryCommunity().stakeAndRegisterMember();
-        //vm.expectRevert("error");
-
-        token.approve(address(registryCommunity), 150 * DECIMALS);
-
-        _registryCommunity().increasePower(100 * DECIMALS);
-        _registryCommunity().increasePower(50 * DECIMALS);
-        // token.approve(address(registryCommunity), 100 * DECIMALS);
-        _registryCommunity().decreasePower(150 * DECIMALS);
-
-        strategy.activatePoints();
-
-        uint256 pointsPerMember = strategy.getPointsPerMember();
-
-        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), pointsPerMember);
-        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
         vm.stopPrank();
     }
 

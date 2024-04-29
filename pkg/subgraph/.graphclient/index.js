@@ -94,6 +94,12 @@ export async function getMeshOptions() {
                     },
                     location: 'GetTokenGardensDocument.graphql'
                 }, {
+                    document: GetMemberStrategyDocument,
+                    get rawSDL() {
+                        return printWithCache(GetMemberStrategyDocument);
+                    },
+                    location: 'GetMemberStrategyDocument.graphql'
+                }, {
                     document: IsMemberDocument,
                     get rawSDL() {
                         return printWithCache(IsMemberDocument);
@@ -201,6 +207,7 @@ export const getFactoriesDocument = gql `
           decay
           maxRatio
           weight
+          minThresholdPoints
         }
       }
     }
@@ -227,6 +234,21 @@ export const getTokenGardensDocument = gql `
   }
 }
     `;
+export const getMemberStrategyDocument = gql `
+    query getMemberStrategy($meStr: ID!) {
+  memberStrategy(id: $meStr) {
+    id
+    totalStakedPoints
+    activatedPoints
+    strategy {
+      id
+    }
+    member {
+      id
+    }
+  }
+}
+    `;
 export const isMemberDocument = gql `
     query isMember($me: ID!, $comm: String!) {
   members(where: {id: $me}) {
@@ -236,6 +258,7 @@ export const isMemberDocument = gql `
       amount
       proposal {
         id
+        proposalNumber
         stakedAmount
         strategy {
           id
@@ -252,7 +275,7 @@ export const isMemberDocument = gql `
       }
     }
     memberCommunity(where: {registryCommunity_contains: $comm}) {
-      stakedAmount
+      stakedTokens
       registryCommunity {
         id
       }
@@ -266,17 +289,16 @@ export const getMemberDocument = gql `
     id
     memberCommunity {
       id
-      stakedAmount
+      stakedTokens
       isRegistered
       registryCommunity {
         id
       }
     }
-    totalStakedAmount
     stakes {
       id
-      poolId
       proposal {
+        proposalNumber
         id
       }
       amount
@@ -320,7 +342,7 @@ export const getCommunitiesByGardenDocument = gql `
       registerToken
       registerStakeAmount
       alloAddress
-      members(where: {stakedAmount_gt: "0"}) {
+      members(where: {stakedTokens_gt: "0"}) {
         id
         memberAddress
       }
@@ -329,15 +351,18 @@ export const getCommunitiesByGardenDocument = gql `
           registerStakeAmount
         }
         id
+        totalEffectiveActivePoints
         poolId
         poolAmount
         config {
           id
           proposalType
           pointSystem
+          minThresholdPoints
         }
         proposals {
           id
+          proposalNumber
         }
       }
     }
@@ -369,6 +394,7 @@ export const getPoolDataDocument = gql `
     tokenNative
   }
   tokenGarden(id: $garden) {
+    address
     name
     symbol
     description
@@ -381,11 +407,16 @@ export const getPoolDataDocument = gql `
     metadata
     id
     poolId
+    totalEffectiveActivePoints
+    memberActive {
+      id
+    }
     config {
       id
       proposalType
       pointSystem
       maxRatio
+      minThresholdPoints
     }
     registryCommunity {
       id
@@ -397,6 +428,7 @@ export const getPoolDataDocument = gql `
     }
     proposals {
       id
+      proposalNumber
       metadata
       beneficiary
       requestedAmount
@@ -414,6 +446,7 @@ export const getProposalDataDocument = gql `
     symbol
   }
   cvproposal(id: $proposalId) {
+    proposalNumber
     beneficiary
     blockLast
     convictionLast
@@ -432,6 +465,7 @@ export const getProposalDataDocument = gql `
       config {
         proposalType
         pointSystem
+        minThresholdPoints
       }
     }
   }
@@ -451,10 +485,15 @@ export const getStrategyByPoolDocument = gql `
   cvstrategies(where: {poolId: $poolId}) {
     id
     poolId
+    totalEffectiveActivePoints
     config {
       id
       proposalType
       pointSystem
+      minThresholdPoints
+    }
+    memberActive {
+      id
     }
     registryCommunity {
       id
@@ -466,6 +505,7 @@ export const getStrategyByPoolDocument = gql `
     }
     proposals {
       id
+      proposalNumber
       metadata
       beneficiary
       requestedAmount
@@ -483,6 +523,9 @@ export function getSdk(requester) {
         },
         getTokenGardens(variables, options) {
             return requester(getTokenGardensDocument, variables, options);
+        },
+        getMemberStrategy(variables, options) {
+            return requester(getMemberStrategyDocument, variables, options);
         },
         isMember(variables, options) {
             return requester(isMemberDocument, variables, options);

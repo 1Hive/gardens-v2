@@ -1,5 +1,5 @@
 "use client";
-import React, { forwardRef, useEffect, useRef } from "react";
+import React, { forwardRef, useEffect, useRef, useState } from "react";
 import {
   useBalance,
   useContractWrite,
@@ -16,8 +16,8 @@ import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { calculateFees, formatTokenAmount, gte, dn } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
-import { TransactionModal, TransactionModalStep } from "./TransactionModal";
-import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
+import { TransactionModal, TransactionStep } from "./TransactionModal";
+import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 
 type RegisterMemberProps = {
   name: string;
@@ -43,9 +43,15 @@ export function RegisterMember({
   connectedAccount,
 }: RegisterMemberProps) {
   const chainId = getChainIdFromPath();
-  const { isConnected } = useAccount();
-
+  //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
+  const openModal = () => modalRef.current?.showModal();
+  const closeModal = () => modalRef.current?.close();
+  //
+  //new logic
+  const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
+    false,
+  );
 
   const registryContractCallConfig = {
     address: communityAddress,
@@ -143,14 +149,13 @@ export function RegisterMember({
     if (isMember) {
       writeUnregisterMember();
     } else {
-      // Check if allowance is equal to registerStakeAmount
-      if (dataAllowance !== registerStakeAmount) {
-        writeAllowToken();
-        modalRef.current?.showModal();
-      } else {
-        // Handle the case where allowance is already equal to registerStakeAmount
-        modalRef.current?.showModal();
+      if (dataAllowance !== 0n) {
         writeRegisterMember();
+        openModal();
+        setPendingAllowance(true);
+      } else {
+        writeAllowToken();
+        openModal();
       }
     }
   }
@@ -165,8 +170,6 @@ export function RegisterMember({
     useTransactionNotification(unregisterMemberData);
 
   const approveToken = allowTokenStatus === "success";
-  const allowanceFailed = allowTokenStatus === "error";
-  const registerMemberFailed = approveToken && registerMemberStatus === "error";
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
@@ -178,7 +181,8 @@ export function RegisterMember({
   useEffect(() => {
     updateRegisterMemberTransactionStatus(registerMemberStatus);
     if (registerMemberStatus === "success") {
-      modalRef.current?.close();
+      closeModal();
+      setPendingAllowance(false);
     }
   }, [registerMemberStatus]);
 
@@ -186,7 +190,7 @@ export function RegisterMember({
     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
   }, [unregisterMemberStatus]);
 
-  //RegisterMember Tooltip condition => message mapping
+  //RegisterMember Disable Button condition => message mapping
   const disableRegMemberBtnCondition: ConditionObject[] = [
     {
       condition: !accountHasBalance,
@@ -196,35 +200,42 @@ export function RegisterMember({
   const disabledRegMemberButton = disableRegMemberBtnCondition.some(
     (cond) => cond.condition,
   );
-  const tooltipMessage = useTooltipMessage(disableRegMemberBtnCondition);
+  const { tooltipMessage, missmatchUrl } = useDisableButtons(
+    disableRegMemberBtnCondition,
+  );
+
+  const InitialTransactionSteps = [
+    {
+      transaction: "Approve token expenditure",
+      message: "waiting for signature",
+      current: true,
+      dataContent: "1",
+      loading: false,
+      stepClassName: "idle",
+      messageClassName: "",
+    },
+    {
+      transaction: "Register",
+      message: "waiting for approval",
+      dataContent: "2",
+      current: false,
+      stepClassName: "idle",
+      messageClassName: "",
+    },
+  ];
 
   return (
     <>
-      {/* Modal */}
       <TransactionModal
         ref={modalRef}
         label="Register in community"
-        isSuccess={approveToken}
-        isFailed={allowanceFailed}
-      >
-        <TransactionModalStep
-          tokenSymbol={`Approve ${tokenSymbol}`}
-          status={allowTokenStatus}
-          isLoading={allowTokenStatus === "loading"}
-          failedMessage="An error has occurred, please try again!"
-          successMessage="Transaction sent successfully!"
-        />
-
-        <TransactionModalStep
-          tokenSymbol="Register"
-          status={registerMemberStatus}
-          isLoading={registerMemberIsLoading}
-          failedMessage="An error has occurred, please try again!"
-          successMessage="Waiting for signature"
-          type="register"
-        />
-      </TransactionModal>
-
+        allowTokenStatus={allowTokenStatus}
+        stepTwoStatus={registerMemberStatus}
+        initialTransactionSteps={InitialTransactionSteps}
+        token={tokenSymbol}
+        pendingAllowance={pendingAllowance}
+        setPendingAllowance={setPendingAllowance}
+      />
       <div className="space-y-4">
         <div className="stats flex">
           <div
@@ -271,7 +282,7 @@ export function RegisterMember({
               onClick={handleChange}
               className="w-full bg-primary"
               size="md"
-              disabled={disabledRegMemberButton}
+              disabled={missmatchUrl || disabledRegMemberButton}
               tooltip={tooltipMessage}
             >
               {isMember ? "Leave community" : "Register in community"}

@@ -27,6 +27,7 @@ export function FormCheckBox({
         defaultChecked={defaultChecked}
         type="checkbox"
         value=""
+        id={registerKey}
         {...register(registerKey, {
           required,
           ...registerOptions,

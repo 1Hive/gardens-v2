@@ -1,6 +1,6 @@
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
-import { Button, CommunityCard } from "@/components";
+import { CommunityCard } from "@/components";
 import {
   RegistryCommunity,
   TokenGarden,
@@ -8,9 +8,7 @@ import {
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
-import { CommunityForm } from "@/components/Forms";
-import { Address } from "viem";
-import Link from "next/link";
+import { FormLink } from "@/components";
 
 export const dynamic = "force-dynamic";
 
@@ -90,13 +88,10 @@ export default async function Garden({
             shared
             <span className="text-primary"> covenant.</span>
           </p>
-
-          <Link
+          <FormLink
+            label="Create Community"
             href={`/gardens/${chain}/${garden}/create-community`}
-            className=""
-          >
-            <Button className="">Create Community</Button>
-          </Link>
+          />
         </div>
         <Image src={tree2} alt="tree" className="absolute bottom-0 left-5" />
         <Image src={tree3} alt="tree" className="absolute bottom-0 right-5" />

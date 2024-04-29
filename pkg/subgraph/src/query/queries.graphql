@@ -19,6 +19,7 @@ query getFactories {
           decay
           maxRatio
           weight
+          minThresholdPoints
         }
       }
     }
@@ -44,6 +45,20 @@ query getTokenGardens {
   }
 }
 
+query getMemberStrategy($meStr: ID!) {
+  memberStrategy(id: $meStr) {
+    id
+    totalStakedPoints
+    activatedPoints
+    strategy {
+      id
+    }
+    member {
+      id
+    }
+  }
+}
+
 query isMember($me: ID!, $comm: String!) {
   members(where: { id: $me }) {
     id
@@ -52,6 +67,7 @@ query isMember($me: ID!, $comm: String!) {
       amount
       proposal {
         id
+        proposalNumber
         stakedAmount
         strategy {
           id
@@ -68,7 +84,7 @@ query isMember($me: ID!, $comm: String!) {
       }
     }
     memberCommunity(where: { registryCommunity_contains: $comm }) {
-      stakedAmount
+      stakedTokens
       registryCommunity {
         id
       }
@@ -81,17 +97,16 @@ query getMember($me: ID!) {
     id
     memberCommunity {
       id
-      stakedAmount
+      stakedTokens
       isRegistered
       registryCommunity {
         id
       }
     }
-    totalStakedAmount
     stakes {
       id
-      poolId
       proposal {
+        proposalNumber
         id
       }
       amount
@@ -133,7 +148,7 @@ query getCommunitiesByGarden($addr: ID!) {
       registerToken
       registerStakeAmount
       alloAddress
-      members(where: { stakedAmount_gt: "0" }) {
+      members(where: { stakedTokens_gt: "0" }) {
         id
         memberAddress
       }
@@ -142,15 +157,18 @@ query getCommunitiesByGarden($addr: ID!) {
           registerStakeAmount
         }
         id
+        totalEffectiveActivePoints
         poolId
         poolAmount
         config {
           id
           proposalType
           pointSystem
+          minThresholdPoints
         }
         proposals {
           id
+          proposalNumber
         }
       }
     }
@@ -180,6 +198,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     tokenNative
   }
   tokenGarden(id: $garden) {
+    address
     name
     symbol
     description
@@ -192,11 +211,16 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     metadata
     id
     poolId
+    totalEffectiveActivePoints
+    memberActive {
+      id
+    }
     config {
       id
       proposalType
       pointSystem
       maxRatio
+      minThresholdPoints
     }
     registryCommunity {
       id
@@ -208,6 +232,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     proposals {
       id
+      proposalNumber
       metadata
       beneficiary
       requestedAmount
@@ -224,6 +249,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     symbol
   }
   cvproposal(id: $proposalId) {
+    proposalNumber
     beneficiary
     blockLast
     convictionLast
@@ -242,6 +268,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
       config {
         proposalType
         pointSystem
+        minThresholdPoints
       }
     }
   }
@@ -259,10 +286,15 @@ query getStrategyByPool($poolId: BigInt!) {
   cvstrategies(where: { poolId: $poolId }) {
     id
     poolId
+    totalEffectiveActivePoints
     config {
       id
       proposalType
       pointSystem
+      minThresholdPoints
+    }
+    memberActive {
+      id
     }
     registryCommunity {
       id
@@ -274,6 +306,7 @@ query getStrategyByPool($poolId: BigInt!) {
     }
     proposals {
       id
+      proposalNumber
       metadata
       beneficiary
       requestedAmount
