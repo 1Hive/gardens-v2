@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { Button } from "./Button";
 import { Address, useContractWrite, useAccount } from "wagmi";
-import { cvStrategyABI } from "@/src/generated";
+import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -11,12 +11,14 @@ import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
+  communityAddress: Address;
   isMemberActivated: boolean | undefined;
   isMember: boolean | undefined;
 };
 
 export function ActivatePoints({
   strategyAddress,
+  communityAddress,
   isMember,
   isMemberActivated,
 }: ActiveMemberProps) {
@@ -40,10 +42,10 @@ export function ActivatePoints({
     error: errorDeactivatePoints,
     status: deactivatePointsStatus,
   } = useContractWrite({
-    address: strategyAddress,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "deactivatePoints",
-    args: [connectedAccount as Address],
+    address: communityAddress,
+    abi: abiWithErrors(registryCommunityABI),
+    functionName: "deactivateMemberInStrategy",
+    args: [connectedAccount as Address, strategyAddress],
   });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
@@ -100,7 +102,7 @@ export function ActivatePoints({
           disabled={missmatchUrl || disableActiveBtn}
           tooltip={String(tooltipMessage)}
         >
-          {isMemberActivated ? "Deactivate Points" : "Activate Points"}
+          {isMemberActivated ? "Deactivate points" : "Activate points"}
         </Button>
       </div>
     </>
