@@ -36,8 +36,6 @@ export const GovernanceComponent: FC<PoolStatsProps> = ({
     watch: isValidAccount,
   });
 
-  console.log("memberPointsVotingPower ", memberPointsVotingPower);
-
   const { data: isMemberActivated } = useContractRead({
     ...registryContractCallConfig,
     functionName: "memberActivatedInStrategies",
@@ -59,7 +57,6 @@ export const GovernanceComponent: FC<PoolStatsProps> = ({
   const showTokensValue =
     isMember && isMemberActivated !== undefined && isMemberActivated;
 
-  console.log("isMemberActivated ", isMemberActivated);
   return (
     <section className="border2 flex  w-full flex-col rounded-xl bg-white px-12 py-8">
       <h3 className="mb-6 font-semibold">Your Pool Governance</h3>
