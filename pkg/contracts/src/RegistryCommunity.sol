@@ -255,11 +255,11 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         Member memory member = addressToMemberInfo[_member];
 
         uint256 totalStakedAmount = member.stakedAmount;
-        uint256 pointsToIncrease = 0;
+        uint256 pointsToIncrease = totalStakedAmount;
 
         if (IPointStrategy(_strategy).getPointSystem() == StrategyStruct.PointSystem.Quadratic) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, 0);
-        } else {
+        } else if (IPointStrategy(_strategy).getPointSystem() != StrategyStruct.PointSystem.Fixed) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, totalStakedAmount);
         }
 
