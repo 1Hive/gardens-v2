@@ -88,8 +88,6 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     watch: true,
   });
 
-  console.log(allowance);
-
   const {
     data: allowTokenData,
     write: writeAllowToken,
