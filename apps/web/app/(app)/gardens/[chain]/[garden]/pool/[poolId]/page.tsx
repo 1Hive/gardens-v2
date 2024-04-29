@@ -1,19 +1,16 @@
-import { Badge, Button, Proposals, PoolMetrics } from "@/components";
+import { Badge, Proposals, PoolMetrics } from "@/components";
 import Image from "next/image";
-import { createPublicClient, http } from "viem";
-import { getChain } from "@/configs/chainServer";
 import { gardenLand } from "@/assets";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
+  TokenGarden,
   getAlloQuery,
   getPoolDataDocument,
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { ProposalForm } from "@/components/Forms";
-import { PointsComponent } from "@/components";
+import { GovernanceComponent } from "@/components";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +37,7 @@ export default async function Pool({
     { poolId: poolId, garden: garden },
   );
   const strategyObj = data?.cvstrategies?.[0];
+  //const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;
@@ -51,10 +49,12 @@ export default async function Pool({
   const alloInfo = data?.allos[0];
   const proposalType = strategyObj?.config?.proposalType as number;
   const poolAmount = strategyObj?.poolAmount as number;
-  const tokenGarden = data.tokenGarden;
+  const tokenGarden = data.tokenGarden as TokenGarden;
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
+  const { title, description } = await getIpfsMetadata(metadata);
 
-  //calcs for spending limit
+  //TODO: check decimals
+  //spending limit calculations
   const PRECISON_OF_7 = 10 ** 7;
   const maxRatioDivPrecision =
     Number(strategyObj?.config?.maxRatio) / PRECISON_OF_7;
@@ -62,8 +62,7 @@ export default async function Pool({
   const spendingLimitPct = maxRatioDivPrecision * 100;
 
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
-
-  const { title, description } = await getIpfsMetadata(metadata);
+  //
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -76,7 +75,6 @@ export default async function Pool({
         </header>
         <main className="flex flex-col gap-10">
           {/* Description section */}
-
           <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
               <h3 className="max-w-2xl  text-center font-semibold">{title}</h3>
@@ -136,6 +134,8 @@ export default async function Pool({
           </section>
           {/* Pool metrics: for now we have funds available and spending limit */}
           <PoolMetrics
+            alloInfo={alloInfo}
+            poolId={poolId}
             balance={poolAmount}
             strategyAddress={strategyAddr}
             strategy={strategyObj}
@@ -144,8 +144,8 @@ export default async function Pool({
             pointSystem={pointSystem}
             spendingLimit={spendingLimitPct}
           />
-          {/* Activate - Deactivate/ points */}
-          <PointsComponent
+          {/* With [Activate - Deactivate] funcionality */}
+          <GovernanceComponent
             strategyAddress={strategyAddr}
             strategy={strategyObj}
             communityAddress={communityAddress}
@@ -156,17 +156,9 @@ export default async function Pool({
             strategy={strategyObj}
             alloInfo={alloInfo}
             communityAddress={communityAddress}
+            createProposalUrl={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
           />
-          {/* Metrics section (only funds available & spending limit for alpha) */}
         </main>
-        <div className="mt-4 flex justify-center">
-          <Link
-            href={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
-            className=""
-          >
-            <Button className="">Create Proposal</Button>
-          </Link>
-        </div>
       </div>
     </div>
   );

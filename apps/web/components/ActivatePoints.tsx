@@ -2,21 +2,23 @@
 import React, { useEffect } from "react";
 import { Button } from "./Button";
 import { Address, useContractWrite, useAccount } from "wagmi";
-import { cvStrategyABI } from "@/src/generated";
+import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
+import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
+  communityAddress: Address;
   isMemberActivated: boolean | undefined;
   isMember: boolean | undefined;
 };
 
 export function ActivatePoints({
   strategyAddress,
+  communityAddress,
   isMember,
   isMemberActivated,
 }: ActiveMemberProps) {
@@ -40,10 +42,10 @@ export function ActivatePoints({
     error: errorDeactivatePoints,
     status: deactivatePointsStatus,
   } = useContractWrite({
-    address: strategyAddress,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "deactivatePoints",
-    args: [connectedAccount as Address],
+    address: communityAddress,
+    abi: abiWithErrors(registryCommunityABI),
+    functionName: "deactivateMemberInStrategy",
+    args: [connectedAccount as Address, strategyAddress],
   });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
@@ -75,7 +77,7 @@ export function ActivatePoints({
     updateDeactivePointsStatus(deactivatePointsStatus);
   }, [deactivatePointsStatus]);
 
-  // Activate Tooltip condition => message mapping
+  // Activate Disable Button condition => message mapping
   const disableActiveBtnCondition: ConditionObject[] = [
     {
       condition: !isMember,
@@ -87,7 +89,9 @@ export function ActivatePoints({
     (cond) => cond.condition,
   );
 
-  const tooltipMessage = useTooltipMessage(disableActiveBtnCondition);
+  const { tooltipMessage, missmatchUrl } = useDisableButtons(
+    disableActiveBtnCondition,
+  );
 
   return (
     <>
@@ -95,10 +99,10 @@ export function ActivatePoints({
         <Button
           onClick={handleChange}
           className="w-fit bg-primary"
-          disabled={disableActiveBtn}
-          tooltip={tooltipMessage}
+          disabled={missmatchUrl || disableActiveBtn}
+          tooltip={String(tooltipMessage)}
         >
-          {isMemberActivated ? "Deactivate Points" : "Activate Points"}
+          {isMemberActivated ? "Deactivate points" : "Activate points"}
         </Button>
       </div>
     </>

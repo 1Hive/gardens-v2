@@ -68,7 +68,6 @@ export async function getProposals(
 
       return transformedProposals;
     }
-
     let transformedProposals: ProposalTypeVoter[] =
       await transformProposals(strategy);
 

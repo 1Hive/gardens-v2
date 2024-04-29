@@ -10,14 +10,14 @@ import {
   useWaitForTransaction,
 } from "wagmi";
 import { Button } from "./Button";
-import { TransactionModal, TransactionModalStep } from "./TransactionModal";
+import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { useEffect, useRef, useState } from "react";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
 import { getChainIdFromPath } from "@/utils/path";
-import { Show, When, Else } from "./Show";
-import { useTooltipMessage, ConditionObject } from "@/hooks/useTooltipMessage";
+import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -27,6 +27,26 @@ type IncreasePowerProps = {
   registerTokenDecimals: number;
 };
 
+const InitialTransactionSteps: TransactionStep[] = [
+  {
+    transaction: "Approve token expenditure",
+    message: "waiting for signature",
+    current: true,
+    dataContent: "1",
+    loading: false,
+    stepClassName: "idle",
+    messageClassName: "",
+  },
+  {
+    transaction: "Stake",
+    message: "waiting for approval",
+    dataContent: "2",
+    current: false,
+    stepClassName: "idle",
+    messageClassName: "",
+  },
+];
+
 export const IncreasePower = ({
   communityAddress,
   registerToken,
@@ -34,8 +54,24 @@ export const IncreasePower = ({
   tokenSymbol,
   registerTokenDecimals,
 }: IncreasePowerProps) => {
+  //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
+  const openModal = () => modalRef.current?.showModal();
+  const closeModal = () => modalRef.current?.close();
+  //
+  //new logic
+  const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
+    false,
+  );
+
   const [increaseInput, setIncreaseInput] = useState<number | undefined>();
+
+  //handeling states
+  type states = "idle" | "loading" | "success" | "error";
+  const [allowanceTransactionStatus, setAllowanceTransactionStatus] =
+    useState<states>("idle");
+  const [resetTransactionStatus, setResetTransactionStatus] =
+    useState<states>("idle");
 
   const requestedAmount = parseUnits(
     (increaseInput ?? 0).toString(),
@@ -64,7 +100,7 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "isMember",
     args: [connectedAccount as Address],
-    watch: true,
+    //watch: true,
   });
   //
 
@@ -73,13 +109,13 @@ export const IncreasePower = ({
     write: writeAllowToken,
     error: allowTokenError,
     status: allowTokenStatus,
+    isSuccess: isAllowTokenSuccess,
   } = useContractWrite({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
     args: [communityAddress, requestedAmount as bigint], // [allowed spender address, amount ]
     functionName: "approve",
   });
-
   const {
     data,
     isError,
@@ -91,12 +127,29 @@ export const IncreasePower = ({
     hash: allowTokenData?.hash,
   });
 
-  const { data: dataAllowance } = useContractRead({
+  const {
+    data: resetAllowance,
+    write: writeResetAllowance,
+    status: resetAllowanceStatus,
+  } = useContractWrite({
+    address: registerToken,
+    abi: abiWithErrors(erc20ABI),
+    args: [communityAddress, 0n as bigint], // [allowed spender address, amount ]
+    functionName: "approve",
+  });
+  const {
+    isSuccess: isWaitResetAllowanceStatus,
+    status: waitResetAllowanceStatus,
+  } = useWaitForTransaction({
+    confirmations: 1,
+    hash: resetAllowance?.hash,
+  });
+
+  const { data: allowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
     args: [connectedAccount, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
-    watch: true,
   });
 
   const {
@@ -108,16 +161,27 @@ export const IncreasePower = ({
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "increasePower",
-    args: [requestedAmount ?? dataAllowance],
+    args: [requestedAmount as bigint],
   });
 
+  const requestesMoreThanAllowance =
+    (allowance ?? 0n) > 0n && requestedAmount > (allowance ?? 0n);
+
   async function handleChange() {
-    if (dataAllowance !== 0n) {
+    setAllowanceTransactionStatus("idle");
+    setResetTransactionStatus("idle");
+    if (requestesMoreThanAllowance) {
+      writeResetAllowance?.();
+      return;
+    }
+    if (requestedAmount <= (allowance ?? 0n)) {
       writeIncreasePower?.();
-      modalRef.current?.showModal();
+      openModal();
+      setPendingAllowance(true);
     } else {
+      // initial state, allowance === 0
       writeAllowToken?.();
-      modalRef.current?.showModal();
+      openModal();
     }
   }
 
@@ -130,17 +194,25 @@ export const IncreasePower = ({
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
-    if (waitAllowTokenStatus === "success") {
+    setAllowanceTransactionStatus(allowTokenStatus);
+    setResetTransactionStatus(resetAllowanceStatus);
+    if (
+      resetTransactionStatus === "success" &&
+      allowanceTransactionStatus === "idle"
+    ) {
+      writeAllowToken?.();
+      setResetTransactionStatus("idle");
+    }
+    if (isWaitSuccess) {
       writeIncreasePower?.();
     }
-  }, [waitAllowTokenStatus]);
-
-  console.log(waitAllowTokenStatus);
+  }, [waitResetAllowanceStatus, isWaitSuccess, allowTokenStatus]);
 
   useEffect(() => {
     if (increaseStakeStatus === "success") {
-      modalRef.current?.close();
+      closeModal();
       setIncreaseInput(0);
+      setPendingAllowance(false);
     }
   }, [increaseStakeStatus]);
 
@@ -155,14 +227,11 @@ export const IncreasePower = ({
     Number(increaseInput as unknown as number) >
     Number(accountTokenBalance?.formatted);
 
-  console.log(dataAllowance, "dataAllowance");
-  console.log(increasePowerData);
-
-  //IncreasePower Tooltip condition => message mapping
+  //IncreasePower Disable Button condition => message mapping
   const disableIncPowerBtnCondition: ConditionObject[] = [
     {
       condition: !isMember,
-      message: "Join community to increase power",
+      message: "Join community to increase voting power",
     },
     {
       condition: isInputIncreaseGreaterThanBalance,
@@ -173,57 +242,48 @@ export const IncreasePower = ({
         increaseInput == 0 || increaseInput == undefined || increaseInput < 0,
       message: "Input can not be zero or negtive",
     },
+    {
+      condition: requestesMoreThanAllowance,
+      message: `You have a pending allowance of ${formatTokenAmount(allowance ?? 0n, registerTokenDecimals)} ${tokenSymbol}. In order to stake more tokens, plaese stake the pending allowance first`,
+    },
   ];
   const disabledIncPowerButton = disableIncPowerBtnCondition.some(
     (cond) => cond.condition,
   );
-  const tooltipMessage = useTooltipMessage(disableIncPowerBtnCondition);
+  const { tooltipMessage } = useDisableButtons(disableIncPowerBtnCondition);
+  //
 
   return (
     <>
       <TransactionModal
         ref={modalRef}
-        label={`Stake ${increaseInput} more tokens`}
-        isSuccess={waitAllowTokenStatus === "success"}
-        isFailed={waitAllowTokenStatus === "error"}
-      >
-        {/* <Show>
-          <Show.When isTrue={dataAllowance === 0n || dataAllowance > 0n}> */}
-        <TransactionModalStep
-          tokenSymbol={`Approve ${tokenSymbol}`}
-          status={allowTokenStatus}
-          isLoading={allowTokenStatus === "loading"}
-          failedMessage="An error has occurred, please try again!"
-          successMessage="Transaction sent successfully!"
-        />
-        <TransactionModalStep
-          tokenSymbol={`Stake ${tokenSymbol}`}
-          status={increaseStakeStatus === "success" ? "success" : "loading"}
-          isLoading={increasePowerIsLoading}
-          failedMessage="An error has occurred, please try again!"
-          successMessage="Waiting for signature"
-          type="register"
-        />
-        {/* </Show.When>
-        </Show> */}
-      </TransactionModal>
+        label={`Stake ${tokenSymbol} in community`}
+        initialTransactionSteps={InitialTransactionSteps}
+        allowTokenStatus={allowTokenStatus}
+        stepTwoStatus={increaseStakeStatus}
+        token={tokenSymbol}
+        pendingAllowance={pendingAllowance}
+        setPendingAllowance={setPendingAllowance}
+      ></TransactionModal>
 
       {/* input */}
       <div className="flex max-w-md flex-col space-y-2">
-        <label
-          htmlFor="stake"
-          className="text-md max-w-[420px] rounded-lg bg-info px-4 py-1 text-start font-semibold text-white"
-        >
-          Staking more tokens in the community will increase your voting power
-          to support proposals
-        </label>
+        <div className="mt-3 flex max-w-[420px] items-center gap-2 rounded-lg bg-info px-2 py-1 text-white">
+          <ExclamationCircleIcon height={32} width={32} />
+          <p className="text-sm">
+            Staking more tokens in the community will increase your voting power
+            to support proposals
+          </p>
+        </div>
+
         <div className="relative max-w-[420px]">
           <input
             type="number"
             value={increaseInput}
-            placeholder="0"
-            className="input input-bordered  input-info w-full "
+            placeholder="Amount"
+            className="input input-bordered input-info w-full disabled:bg-gray-300 disabled:text-black"
             onChange={(e) => handleInputChange(e)}
+            disabled={!isMember}
           />
           <span className="absolute right-10 top-3.5 text-black">
             {tokenSymbol}

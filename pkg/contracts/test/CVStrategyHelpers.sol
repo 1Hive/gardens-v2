@@ -54,18 +54,7 @@ contract CVStrategyHelpers is Native, Accounts {
         if (pointConfig.maxAmount == 0) {
             // StrategyStruct.PointSystemConfig memory pointConfig;
             //Capped point system
-            pointConfig.maxAmount = 200 * (10 ** 4);
-        }
-        if (pointConfig.pointsPerMember == 0) {
-            //Fixed point system
-            pointConfig.pointsPerMember = 100 * (10 ** 4);
-        }
-        if (pointConfig.tokensPerPoint == 0) {
-            //Quadratic point system
-            pointConfig.tokensPerPoint = 1 * (DECIMALS);
-        }
-        if (pointConfig.pointsPerTokenStaked == 0) {
-            pointConfig.pointsPerTokenStaked = 5 * (10 ** 4);
+            pointConfig.maxAmount = 200 * DECIMALS;
         }
         params.pointConfig = pointConfig;
     }
@@ -127,7 +116,7 @@ contract CVStrategyHelpers is Native, Accounts {
             token,
             proposalType,
             pointSystem,
-            StrategyStruct.PointSystemConfig(0, 0, 0, 0)
+            StrategyStruct.PointSystemConfig(0)
         );
     }
 

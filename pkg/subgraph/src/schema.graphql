@@ -17,17 +17,16 @@ type CVStrategyConfig @entity(immutable: false) {
   D: BigInt!
   decay: BigInt!
   maxRatio: BigInt!
+  minThresholdPoints: BigInt!
   weight: BigInt!
   proposalType: BigInt!
   pointSystem: BigInt!
-  pointsPerMember: BigInt
-  pointsPerTokenStaked: BigInt
-  tokensPerPoint: BigInt
   maxAmount: BigInt
 }
 
 type CVProposal @entity(immutable: false) {
   id: ID!
+  proposalNumber: BigInt!
   # proposalMeta: ProposalMeta!
   metadata: String!
   version: BigInt
@@ -87,7 +86,6 @@ type Member @entity(immutable: false) {
   id: ID!
   # registryCommunity: [RegistryCommunity!]
   memberCommunity: [MemberCommunity!] @derivedFrom(field: "member")
-  totalStakedAmount: BigInt
   stakes: [Stake!] @derivedFrom(field: "member")
   # isRegistered: Boolean
 }
@@ -104,10 +102,18 @@ type Stake @entity {
 type MemberCommunity @entity(immutable: false) {
   id: ID!
   memberAddress: String
-  stakedAmount: BigInt
+  stakedTokens: BigInt
   isRegistered: Boolean
   member: Member!
   registryCommunity: RegistryCommunity!
+}
+
+type MemberStrategy @entity(immutable: false) {
+  id: ID!
+  member: Member!
+  strategy: CVStrategy!
+  totalStakedPoints: BigInt!
+  activatedPoints: BigInt
 }
 
 type TokenGarden @entity(immutable: false) {
