@@ -42,6 +42,7 @@ export default async function page({
         </div>
       </div>
       <CommunityForm
+        chain={chain}
         tokenGarden={tokenGarden}
         registryFactoryAddr={registryFactoryAddr}
         alloContractAddr={alloContractAddr}

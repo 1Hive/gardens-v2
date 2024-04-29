@@ -9,7 +9,7 @@ import {
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { PointsComponent } from "@/components";
+import { GovernanceComponent } from "@/components";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +53,8 @@ export default async function Pool({
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
   const { title, description } = await getIpfsMetadata(metadata);
 
-  //calcs for spending limit
+  //TODO: check decimals
+  //spending limit calculations
   const PRECISON_OF_7 = 10 ** 7;
   const maxRatioDivPrecision =
     Number(strategyObj?.config?.maxRatio) / PRECISON_OF_7;
@@ -144,7 +145,7 @@ export default async function Pool({
             spendingLimit={spendingLimitPct}
           />
           {/* With [Activate - Deactivate] funcionality */}
-          <PointsComponent
+          <GovernanceComponent
             strategyAddress={strategyAddr}
             strategy={strategyObj}
             communityAddress={communityAddress}

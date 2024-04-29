@@ -62,7 +62,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     }
 
     function run() public {
-        string memory net = vm.prompt("Enter network name");
+        // string memory net = vm.prompt("Enter network name");
+        string memory net = "";
         run(net);
     }
 

@@ -439,7 +439,7 @@ export function Proposals({
           )}
         </header>
         <div className="flex flex-col gap-6">
-          {proposals.map(({ title, proposalNumber, proposalStatus }, i) => (
+          {proposals.map(({ title, proposalNumber, proposalStatus, id }, i) => (
             <div
               className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
               key={title + "_" + proposalNumber}
@@ -478,7 +478,7 @@ export function Proposals({
                     </Button>
                   )}
                   <>
-                    <Link href={`${pathname}/proposals/${proposalNumber}`}>
+                    <Link href={`${pathname}/proposals/${id}`}>
                       <Button variant="outline">View Proposal</Button>
                     </Link>
                   </>

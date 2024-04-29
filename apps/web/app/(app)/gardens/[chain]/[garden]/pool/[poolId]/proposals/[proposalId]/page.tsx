@@ -9,10 +9,14 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { PRECISION_SCALE } from "@/actions/getProposals";
 import { formatTokenAmount } from "@/utils/numbers";
-import * as dn from "dnum";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import * as dn from "dnum";
+import {
+  calcThresholdPct,
+  calcTotalSupport,
+  calcCurrentConviction,
+} from "@/utils/convictionFormulas";
 
 export const dynamic = "force-dynamic";
 
@@ -56,22 +60,29 @@ const prettyTimestamp = (timestamp: number) => {
 export default async function Proposal({
   params: { proposalId, poolId, chain, garden },
 }: {
-  params: { proposalId: number; poolId: number; chain: number; garden: string };
+  params: { proposalId: string; poolId: number; chain: number; garden: string };
 }) {
+  // TODO: fetch garden decimals in query
   const { data: getProposalQuery } = await queryByChain<getProposalDataQuery>(
     urqlClient,
     chain,
     getProposalDataDocument,
-    { poolId: poolId, proposalId: proposalId, garden: garden },
+    {
+      garden: garden,
+      proposalId: proposalId,
+    },
   );
 
   const proposalData = getProposalQuery?.cvproposal;
 
   if (!proposalData) {
-    return <div>{`Proposal ${proposalId} not found`}</div>;
+    return (
+      <p className="text-center text-2xl text-error">{`Proposal ${proposalId} not found`}</p>
+    );
   }
 
   const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
+  const proposalIdNumber = proposalData.proposalNumber as number;
   const convictionLast = proposalData.convictionLast as string;
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
@@ -111,7 +122,7 @@ export default async function Proposal({
     getProposalStakedAmount = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getProposalStakedAmount",
-      args: [proposalId],
+      args: [proposalIdNumber],
     })) as bigint;
 
     rawThresholdFromContract = (await client.readContract({
@@ -123,13 +134,13 @@ export default async function Proposal({
     updateConvictionLast = (await client.readContract({
       ...cvStrategyContract,
       functionName: "updateProposalConviction",
-      args: [proposalId],
+      args: [proposalIdNumber],
     })) as bigint;
 
     getProposal = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getProposal",
-      args: [proposalId],
+      args: [proposalIdNumber],
     })) as bigint;
 
     maxCVSupply = (await client.readContract({
@@ -147,67 +158,27 @@ export default async function Proposal({
     getProposalVoterStake = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getProposalVoterStake",
-      args: [proposalId, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
+      args: [proposalIdNumber, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
     })) as bigint;
   } catch (error) {
     console.log(error);
     return (
-      <div className="text-center">{`Data of proposal ${proposalId} not found`}</div>
+      <div className="text-center text-error">{`Syntax error!, check above functions arguments`}</div>
     );
   }
+  const tokenDecimals = 18;
 
-  //the amount of points of the voter manuelly added
-  console.log(getProposalVoterStake);
-  console.log(requestedAmount);
-  console.log(rawThresholdFromContract);
-  console.log(totalEffectiveActivePoints);
-  console.log(maxCVSupply);
-  console.log(maxCVStaked);
-  console.log(threshold);
-  console.log(updateConvictionLast);
-  console.log(convictionLast);
-  console.log(getProposalStakedAmount);
-
-  const maxCVSupplyNum = Number(maxCVSupply / PRECISION_SCALE);
-  const maxCVStakedNum = Number(maxCVStaked / PRECISION_SCALE);
-  const convictionLastNum = Number(
-    updateConvictionLast / PRECISION_SCALE,
-  ).toFixed(0);
-  const pointsNum = Number(totalEffectiveActivePoints / PRECISION_SCALE);
-  const tokenStakedNum = getProposalStakedAmount / PRECISION_SCALE;
-
-  console.log("ConvictionLast", convictionLastNum);
-  console.log("staked tokens", tokenStakedNum);
-  console.log("maxCVSupply", maxCVSupplyNum);
-  console.log("maxCVStaked", maxCVStakedNum);
-
-  //Formulas
-  const calcThreshold = calcThresholdPoints(
-    rawThresholdFromContract,
+  const thresholdPct = calcThresholdPct(threshold, maxCVSupply, tokenDecimals);
+  const totalSupport = calcTotalSupport(
+    getProposalStakedAmount,
+    totalEffectiveActivePoints,
+    tokenDecimals,
+  );
+  const currentConviction = calcCurrentConviction(
+    updateConvictionLast,
     maxCVSupply,
-    totalEffectiveActivePoints as bigint,
+    tokenDecimals,
   );
-
-  const calcMaxConv = calcMaxConviction(
-    maxCVStakedNum,
-    maxCVSupplyNum,
-    pointsNum,
-  );
-  const calcCurrCon = calcCurrentConviction(
-    convictionLastNum as unknown as number,
-    maxCVSupplyNum,
-    pointsNum,
-  );
-
-  //values
-  const th = BigInt(calcThreshold) / PRECISION_SCALE;
-  console.log(calcThreshold);
-  console.log("Threshold", th);
-  console.log("MaxConviction", calcMaxConv);
-  console.log("currentConviction", calcCurrCon);
-  console.log("support", tokenStakedNum);
-
-  const proposalSupport = Number(tokenStakedNum);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
@@ -273,188 +244,40 @@ export default async function Proposal({
             </div>
           </div>
         </div>
+        <div>Alpha test number</div>
+        <div className="flex flex-col gap-8">
+          <div>
+            <p className="text-xl">
+              This proposal need{" "}
+              <span className="text-2xl text-secondary">{thresholdPct}%</span>{" "}
+              of pool conviction to pass
+            </p>
+          </div>
+          <div>
+            <p className="text-xl">
+              Total support is :{" "}
+              <span className="text-2xl text-secondary">{totalSupport}%</span>{" "}
+            </p>
+          </div>
+          <div>
+            <p className="text-xl">
+              Current conviction is:{" "}
+              <span className="text-4xl text-info">{currentConviction}%</span>{" "}
+            </p>
+          </div>
+        </div>
 
         {/* PROPOSAL NUMBERS CHART  */}
         <div className="mt-10 flex justify-evenly">
-          <ConvictionBarChart
+          {/* <ConvictionBarChart
             currentConviction={calcCurrCon as number}
             maxConviction={calcMaxConv.toString() as unknown as number}
-            threshold={th as unknown as number}
+            threshold={calcThreshold as number}
             // data={calcsResults}
-            proposalSupport={proposalSupport}
-          />
+            proposalSupport={50}
+          /> */}
         </div>
       </main>
     </div>
   );
-}
-
-function validateInput(input: any) {
-  return Number.isInteger(Number(input)) && input >= 0;
-}
-
-function calcCurrentConviction(
-  convictionLast: number | bigint,
-  maxCVSupply: number | bigint,
-  totalEffectiveActivePoints: number | bigint,
-): number {
-  if (
-    !validateInput(convictionLast) ||
-    !validateInput(maxCVSupply) ||
-    !validateInput(totalEffectiveActivePoints) ||
-    convictionLast < 0 ||
-    maxCVSupply <= 0 ||
-    totalEffectiveActivePoints < 0
-  ) {
-    console.log("Invalid input. All parameters must be non-negative integers.");
-  }
-  if (maxCVSupply <= convictionLast) {
-    console.log(
-      "Invalid input. maxCVSupply must be greater than convictionLast.",
-    );
-  }
-  const convictionLastPct = Number(convictionLast) / Number(maxCVSupply);
-  console.log(convictionLastPct);
-  const result = convictionLastPct * Number(totalEffectiveActivePoints);
-  console.log(result);
-  return Math.floor(result);
-}
-
-function calcMaxConviction(
-  maxCVStaked: number | bigint,
-  maxCVSupply: number | bigint,
-  totalEffectiveActivePoints: number | bigint,
-): number {
-  if (
-    !validateInput(maxCVStaked) ||
-    !validateInput(maxCVSupply) ||
-    !validateInput(totalEffectiveActivePoints) ||
-    maxCVStaked < 0 ||
-    maxCVSupply <= 0 ||
-    totalEffectiveActivePoints < 0
-  ) {
-    console.log("Invalid input. All parameters must be non-negative integers.");
-  }
-  if (maxCVSupply === 0 || maxCVStaked === 0) {
-    console.log("Invalid input. maxCVSupply and maxCVStaked must be non-zero.");
-  }
-  const futureConvictionStakedPct = Number(maxCVStaked) / Number(maxCVSupply);
-  const result = futureConvictionStakedPct * Number(totalEffectiveActivePoints);
-  return Math.floor(result);
-}
-
-function calcFutureConviction(
-  convictionLast: number | bigint,
-  maxCVStaked: number | bigint,
-  maxCVSupply: number | bigint,
-  totalEffectiveActivePoints: number | bigint,
-): number {
-  const currentConviction = calcCurrentConviction(
-    convictionLast,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  const futureConviction = calcMaxConviction(
-    maxCVStaked,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  if (
-    typeof currentConviction !== "number" ||
-    typeof futureConviction !== "number"
-  ) {
-    console.log("Invalid input. Conviction results must be numbers.");
-  }
-  const deductedFutureConviction = futureConviction - currentConviction;
-  return Math.floor(deductedFutureConviction);
-}
-
-function calcPointsNeeded(
-  threshold: number | string,
-  maxCVStaked: number | bigint,
-  maxCVSupply: number | bigint,
-  totalEffectiveActivePoints: number | bigint,
-): number {
-  const maxConviction = calcMaxConviction(
-    maxCVStaked,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  if (typeof threshold !== "number" || typeof maxConviction !== "number") {
-    console.log(
-      "Invalid input. Threshold and future conviction must be numbers.",
-    );
-  }
-  const pointsNeeded = Number(threshold) - maxConviction;
-  return Math.ceil(pointsNeeded);
-}
-
-function calcThresholdPoints(
-  threshold: number | bigint,
-  maxCVSupply: number | bigint,
-  totalEffectiveActivePoints: number | bigint,
-): number {
-  if (
-    !validateInput(threshold) ||
-    !validateInput(maxCVSupply) ||
-    !validateInput(totalEffectiveActivePoints) ||
-    threshold < 0 ||
-    maxCVSupply <= 0 ||
-    totalEffectiveActivePoints < 0
-  ) {
-    return 1;
-  }
-  if (maxCVSupply <= threshold) {
-    console.log("Invalid input. maxCVSupply must be greater than threshold.");
-  }
-
-  const thresholdPct = Number(threshold) / Number(maxCVSupply);
-
-  const result = thresholdPct * Number(totalEffectiveActivePoints);
-  return Math.ceil(result);
-}
-
-type ExecutionResults = {
-  currentConviction?: number;
-  maxConviction?: number;
-  futureConviction?: number;
-  pointsNeeded?: number;
-  thresholdPoints?: number;
-};
-
-function executeAllFunctions(
-  convictionLast: number | bigint,
-  maxCVStaked: number | bigint,
-  maxCVSupply: number | bigint,
-  totalEffectiveActivePoints: number | bigint,
-  threshold: number,
-) {
-  // Initialize an object to store all results
-  const results: ExecutionResults = {};
-
-  // Call each function and store the results
-  results.currentConviction = calcCurrentConviction(
-    convictionLast,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  results.maxConviction = calcMaxConviction(
-    maxCVStaked,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  results.futureConviction = calcFutureConviction(
-    convictionLast,
-    maxCVStaked,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  results.thresholdPoints = calcThresholdPoints(
-    threshold,
-    maxCVSupply,
-    totalEffectiveActivePoints,
-  );
-  results.pointsNeeded = threshold;
-
-  return results;
 }
