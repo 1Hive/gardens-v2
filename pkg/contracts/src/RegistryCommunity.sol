@@ -335,13 +335,13 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             revert DecreaseUnderMinimum();
         }
         gardenToken.safeTransfer(member, _amountUnstaked);
-        addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             // if (address(memberStrategies[i]) == _strategy) {
             pointsToDecrease = IPointStrategy(memberStrategies[i]).decreasePower(member, _amountUnstaked);
             memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
             // }
         }
+        addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
         emit MemberPowerDecreased(member, _amountUnstaked);
     }
 
