@@ -53,7 +53,8 @@ export default async function Pool({
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
   const { title, description } = await getIpfsMetadata(metadata);
 
-  //calcs for spending limit
+  //TODO: check decimals
+  //spending limit calculations
   const PRECISON_OF_7 = 10 ** 7;
   const maxRatioDivPrecision =
     Number(strategyObj?.config?.maxRatio) / PRECISON_OF_7;

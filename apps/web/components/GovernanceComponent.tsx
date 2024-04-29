@@ -59,14 +59,6 @@ export const GovernanceComponent: FC<PoolStatsProps> = ({
   const showTokensValue =
     isMember && isMemberActivated !== undefined && isMemberActivated;
 
-  console.log(
-    "FORMATTED ",
-    formatTokenAmount(
-      memberPointsVotingPower,
-      strategy.registryCommunity.garden.decimals,
-    ),
-  );
-
   console.log("isMemberActivated ", isMemberActivated);
   return (
     <section className="border2 flex  w-full flex-col rounded-xl bg-white px-12 py-8">
@@ -100,6 +92,7 @@ export const GovernanceComponent: FC<PoolStatsProps> = ({
           </div>
           <ActivatePoints
             strategyAddress={strategyAddress}
+            communityAddress={communityAddress}
             isMemberActivated={isMemberActivated as boolean | undefined}
             isMember={isMember}
             // errorMemberActivated={errorMemberActivated}
