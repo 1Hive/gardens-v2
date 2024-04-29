@@ -11,7 +11,7 @@ function formatTokenAmount(
   }
   const num = [BigInt(value), decimals] as const;
 
-  return dn.format(num);
+  return dn.format(num, { digits: 2 });
 }
 
 function calculateFees(
@@ -42,4 +42,15 @@ function gte(
   return dn.greaterThan(v1, v2) || dn.equal(v1, v2);
 }
 
-export { calculateFees, formatTokenAmount, gte, dn };
+function calculatePercentage(
+  value1: number | undefined,
+  value2: number | undefined,
+): number {
+  if (!value1 || !value2) {
+    return 0;
+  }
+  const percentage = (value1 * 100) / value2;
+  return parseFloat(percentage.toFixed(2));
+}
+
+export { calculateFees, formatTokenAmount, gte, dn, calculatePercentage };

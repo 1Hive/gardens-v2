@@ -12,9 +12,9 @@ dataSources:
         type: Int
         data: 421614
     source:
-      address: "0xeE8B920641210e26d4D18BD285A862156f31556f"
+      address: "0xb65852c022e3e818d3c3b04be1b2c21344bcac07"
       abi: RegistryFactory
-      startBlock: 29317993
+      startBlock: 38905456
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -83,10 +83,10 @@ templates:
           handler: handleMemberActivatedStrategy
         - event: MemberDeactivatedStrategy(address,address)
           handler: handleMemberDeactivatedStrategy
-        # - event: MemberPowerDecreased(address,address,uint256)
-          # handler: handleMemberPowerDecreased
-        # - event: MemberPowerIncreased(address,address,uint256)
-          # handler: handleMemberPowerIncreased
+        - event: MemberPowerDecreased(address,uint256)
+          handler: handleMemberPowerDecreased
+        - event: MemberPowerIncreased(address,uint256)
+          handler: handleMemberPowerIncreased
         # - event: BasisStakedAmountSet(uint256)
           # handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
@@ -119,7 +119,7 @@ templates:
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8,uint8,(uint256,uint256,uint256,uint256))) 
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256))) 
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated

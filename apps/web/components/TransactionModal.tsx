@@ -1,98 +1,183 @@
-import { ChevronRightIcon } from "@heroicons/react/24/outline";
+"use client";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Button } from "./Button";
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useState } from "react";
 
-type TransactionModalProps = {
+export interface TransactionStep {
+  transaction: string;
+  message: string;
+  current: boolean;
+  dataContent: string;
+  loading?: boolean;
+  stepClassName?: string;
+  messageClassName?: string;
+}
+
+type statuses = "idle" | "loading" | "success" | "error";
+
+export type TransactionModalProps = {
   label: string;
-  children: React.ReactNode;
-  isSuccess: boolean;
-  isFailed: boolean;
+  allowTokenStatus: statuses;
+  stepTwoStatus: statuses;
+  allowance?: bigint;
+  pendingAllowance?: boolean;
+  setPendingAllowance?: (value: boolean) => void;
+  token: string;
+  initialTransactionSteps: TransactionStep[];
+  children?: React.ReactNode;
 };
+
+interface StatusConfig {
+  message: string;
+  dataContent: string;
+  className: string;
+  messageClassName: string;
+}
 
 export const TransactionModal = forwardRef<
   HTMLDialogElement,
   TransactionModalProps
->(function TransactionModal({ label, children, isSuccess, isFailed }, ref) {
-  const dialogRef = typeof ref === "function" ? { current: null } : ref;
+>(function TransactionModal(
+  {
+    label,
+    allowTokenStatus,
+    allowance,
+    stepTwoStatus,
+    initialTransactionSteps,
+    token,
+    children,
+    pendingAllowance,
+    setPendingAllowance,
+  },
+  ref,
+) {
+  const statusConfig: Record<string, StatusConfig> = {
+    idle: {
+      message: "waiting for approval",
+      dataContent: "",
+      className: "step",
+      messageClassName: "",
+    },
+    loading: {
+      message: "waiting for signature",
+      dataContent: "",
+      className: "step-info",
+      messageClassName: "text-info",
+    },
+    success: {
+      message: "transaction sent successfully",
+      dataContent: "✓",
+      className: "step-success",
+      messageClassName: "text-success",
+    },
+    error: {
+      message: "an error has occurred, please try again!",
+      dataContent: "X",
+      className: "step-error",
+      messageClassName: "text-error",
+    },
+  };
+
+  const [transactionStepsState, setTransactionStepsState] = useState(
+    initialTransactionSteps,
+  );
+
+  const { message, dataContent, className, messageClassName } =
+    statusConfig[allowTokenStatus];
+
+  useEffect(() => {
+    const updatedFirstStep = {
+      ...transactionStepsState[0],
+      dataContent: pendingAllowance ? "✓" : dataContent || "1",
+      message: pendingAllowance
+        ? "Allowance previously approved successfully!"
+        : message,
+      stepClassName: pendingAllowance ? "step-success" : className,
+      messageClassName: pendingAllowance ? "text-success" : messageClassName,
+    };
+
+    const updatedSecondStep = {
+      ...transactionStepsState[1],
+      message: statusConfig[stepTwoStatus].message || "2",
+      dataContent: statusConfig[stepTwoStatus].dataContent || "2",
+      current: allowTokenStatus === "success",
+      stepClassName:
+        stepTwoStatus === "success"
+          ? "idle"
+          : statusConfig[stepTwoStatus].className,
+      messageClassName: statusConfig[stepTwoStatus].messageClassName,
+    };
+
+    if (stepTwoStatus === "success") {
+      updatedSecondStep.message = "waiting for approval";
+      updatedSecondStep.stepClassName = "idle";
+      updatedSecondStep.dataContent = "2";
+      updatedSecondStep.current = false;
+      updatedSecondStep.messageClassName = "";
+    }
+
+    setTransactionStepsState([updatedFirstStep, updatedSecondStep]);
+  }, [allowTokenStatus, stepTwoStatus]);
+
+  const handleModalClose = () => {
+    if (ref && "current" in ref && ref.current) {
+      ref.current.close();
+    }
+    if (setPendingAllowance) {
+      setPendingAllowance(false);
+    }
+  };
 
   return (
     <dialog id="transaction_modal" className="modal" ref={ref}>
-      <div className="modal-box relative max-w-xl bg-surface">
-        {/* Content */}
-        <div className="-px-2 absolute left-0 top-[45%] flex w-full items-center justify-center -space-x-2">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <ChevronRightIcon
-              key={i}
-              className={`h-4 w-4 transition-colors duration-200 ease-in ${
-                isSuccess
-                  ? "text-success"
-                  : isFailed
-                    ? "text-error"
-                    : "text-secondary"
-              }`}
-            />
-          ))}
-        </div>
-
-        <div className="flex items-start justify-between pb-10">
-          <h4 className="text-2xl">{label}</h4>
-          <Button size="sm" onClick={() => dialogRef?.current?.close()}>
-            close
+      <div className="modal-box relative max-w-md bg-white transition-all duration-500 ease-in-out">
+        <div className="flex items-start justify-between">
+          <h4 className="text-lg font-bold">{label}</h4>
+          <Button
+            className="border-none font-bold text-black"
+            size="sm"
+            onClick={handleModalClose}
+          >
+            X
           </Button>
         </div>
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-info p-2 text-white">
+          <ExclamationCircleIcon height={32} width={32} />
+          <p className="text-sm">
+            {/*  Please sign two wallet transaction
+            One to allow ERC-20 tokens, the other to register  */}
+            You need to allow Gardens on the {token} contract. This is a two
+            step process.
+          </p>
+        </div>
+        <div className="w-full">
+          <ul className="steps steps-vertical min-h-48 w-full">
+            {transactionStepsState.map((step, index) => (
+              <li
+                key={index}
+                data-content={step.dataContent}
+                className={`step ${step.stepClassName}`}
+              >
+                <div className="flex flex-col gap-1">
+                  <span className="text-left font-semibold">
+                    {step.transaction}
+                  </span>
+                  <span
+                    className={`flex items-center gap-2 text-left text-sm ${step.messageClassName}`}
+                  >
+                    {step.stepClassName === "step-info" && (
+                      <span className="loading loading-spinner loading-xs" />
+                    )}
 
-        <div className="flex h-48 overflow-hidden px-6">{children}</div>
+                    {step.message}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        {children}
       </div>
     </dialog>
   );
 });
-
-type TransactionModalStepProps = {
-  tokenSymbol?: string;
-  status: "success" | "error" | "idle" | "loading";
-  isLoading: boolean;
-  failedMessage: string;
-  successMessage: string;
-  type?: string;
-};
-
-export const TransactionModalStep = ({
-  tokenSymbol,
-  status,
-  isLoading,
-  failedMessage,
-  successMessage,
-  type,
-}: TransactionModalStepProps) => {
-  const isSuccess = status === "success";
-  const isFailed = status === "error";
-  const loadingClass = isLoading ? "animate-pulse" : "animate-none";
-  const successClass = isSuccess ? "text-success" : "";
-  const errorClass = isFailed ? "text-error" : "";
-
-  return (
-    <div className="relative flex flex-1 flex-col items-center justify-start transition-all duration-300 ease-in-out">
-      <div
-        className={`rounded-full bg-secondary ${isFailed ? "border-[1px] border-error first:bg-error" : isSuccess ? "border-[1px] border-success first:bg-success" : ""}`}
-      >
-        <div
-          className={`relative flex h-28 w-28 items-center rounded-full border-8 border-white p-1 text-center ${loadingClass}`}
-        />
-      </div>
-      <span
-        className={`absolute top-9 h-fit max-w-min text-center leading-5 text-white ${successClass}`}
-      >
-        {tokenSymbol}
-      </span>
-      <p
-        className={`absolute bottom-0 max-w-xs px-10 text-center text-sm ${successClass} ${errorClass}`}
-      >
-        {isFailed
-          ? failedMessage
-          : isSuccess
-            ? successMessage
-            : "Waiting for signature"}
-      </p>
-    </div>
-  );
-};

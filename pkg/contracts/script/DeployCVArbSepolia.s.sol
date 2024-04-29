@@ -28,10 +28,6 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         return address(SENDER);
     }
 
-    // function allo_owner() public virtual override returns (address) {
-    //     return address(SENDER);
-    // }
-
     function run() public {
         address allo_proxy = vm.envAddress("ALLO_PROXY");
         if (allo_proxy == address(0)) {
@@ -80,8 +76,15 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
 
-        StrategyStruct.InitializeParams memory paramsCV =
-            getParams(address(registryCommunity), StrategyStruct.ProposalType.Funding, StrategyStruct.PointSystem.Fixed);
+        StrategyStruct.PointSystemConfig memory pointConfig;
+        pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
+
+        StrategyStruct.InitializeParams memory paramsCV = getParams(
+            address(registryCommunity),
+            StrategyStruct.ProposalType.Funding,
+            StrategyStruct.PointSystem.Fixed,
+            pointConfig
+        );
 
         paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
         paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio

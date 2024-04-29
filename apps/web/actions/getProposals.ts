@@ -59,6 +59,7 @@ export async function getProposals(
         return {
           ...p,
           voterStakedPointsPct: 0,
+          stakedAmount: strategy.proposals[index].stakedAmount,
           title: data.title,
           type: strategy.config?.proposalType as number,
           status: strategy.proposals[index].proposalStatus,
@@ -67,39 +68,8 @@ export async function getProposals(
 
       return transformedProposals;
     }
-
     let transformedProposals: ProposalTypeVoter[] =
       await transformProposals(strategy);
-
-    if (accountAddress) {
-      const alloContractReadProps = {
-        address: strategy.id as Address,
-        abi: cvStrategyABI as Abi,
-        functionName: "getProposalVoterStakedPointsPct",
-      };
-
-      const contractsToRead = transformedProposals.map((proposal) => ({
-        ...alloContractReadProps,
-        args: [proposal.id, accountAddress],
-      }));
-
-      const proposalsReadsContract = await readContracts({
-        contracts: contractsToRead,
-      });
-
-      console.log(proposalsReadsContract);
-
-      transformedProposals.map((proposal, i) => {
-        if (proposalsReadsContract[i]?.result !== undefined) {
-          const result = proposalsReadsContract[i].result as {
-            voterStakedPoints: bigint;
-          };
-          const voterStakedPointsPct =
-            result?.voterStakedPoints / PRECISION_SCALE;
-          return { ...proposal, voterStakedPointsPct: voterStakedPointsPct };
-        }
-      });
-    }
 
     return transformedProposals;
   } catch (error) {

@@ -4,13 +4,14 @@ import { useAccount } from "wagmi";
 import { cvStrategyABI } from "@/src/generated";
 import { Strategy } from "@/components/Proposals";
 import { useViemClient } from "./useViemClient";
+import { PRECISION_SCALE } from "@/utils/numbers";
 import { Abi } from "viem";
 
 export function useTotalVoterStakedPct(strategy: Strategy) {
   const { address } = useAccount();
   const client = useViemClient();
 
-  const [voterStakePct, setVoterStakePct] = useState<any>(null);
+  const [voterStake, setVoterStake] = useState<any>(null);
 
   useEffect(() => {
     if (!address) return;
@@ -19,17 +20,17 @@ export function useTotalVoterStakedPct(strategy: Strategy) {
   }, [address]);
 
   const fetchData = async () => {
-    const _voterStakePctData = await client.readContract({
+    const _voterStakeData = await client.readContract({
       address: strategy.id as Address,
       abi: cvStrategyABI as Abi,
       functionName: "getTotalVoterStakePct",
       args: [address as Address],
     });
 
-    setVoterStakePct(_voterStakePctData);
+    setVoterStake((_voterStakeData as unknown as bigint) / PRECISION_SCALE);
   };
 
   return {
-    voterStakePct,
+    voterStake,
   };
 }

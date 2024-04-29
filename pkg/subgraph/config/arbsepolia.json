@@ -4,8 +4,8 @@
   "dataSources": [
     {
       "name": "RegistryFactory",
-      "startBlock": 29317993,
-      "address": "0xeE8B920641210e26d4D18BD285A862156f31556f",
+      "startBlock": 38905456,
+      "address": "0xb65852c022e3e818d3c3b04be1b2c21344bcac07",
       "customTemplate": "registryFactory"
     }
   ]

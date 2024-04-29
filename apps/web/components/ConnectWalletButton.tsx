@@ -171,7 +171,7 @@ export const ConnectWallet = () => {
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                       >
-                        <Menu.Items className="absolute left-0  top-0 z-10  mt-14 w-[270px] rounded-md bg-white focus:outline-none">
+                        <Menu.Items className="absolute right-0 top-0 z-10  mt-14 rounded-md bg-white focus:outline-none">
                           <div className="border2 flex flex-col gap-4 rounded-lg p-4">
                             {/* wallet and token balance info */}
                             <Menu.Item as="div" className="flex flex-col gap-2">
@@ -196,7 +196,7 @@ export const ConnectWallet = () => {
                               {chain.id !== urlChainId &&
                                 !isNaN(urlChainId) && (
                                   <Button
-                                    className="overflow-hidden truncate text-sm"
+                                    className="overflow-hidden truncate"
                                     onClick={() =>
                                       switchNetwork && switchNetwork(urlChainId)
                                     }
@@ -208,7 +208,7 @@ export const ConnectWallet = () => {
                               <Button
                                 onClick={() => disconnect()}
                                 variant="error"
-                                className="text-sm"
+                                className="w-full"
                                 icon={
                                   <PowerIcon className="stroke-10 mr-1 h-5 w-5" />
                                 }

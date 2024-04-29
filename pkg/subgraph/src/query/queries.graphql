@@ -19,6 +19,7 @@ query getFactories {
           decay
           maxRatio
           weight
+          minThresholdPoints
         }
       }
     }
@@ -44,15 +45,86 @@ query getTokenGardens {
   }
 }
 
+query getMemberStrategy($meStr: ID!) {
+  memberStrategy(id: $meStr) {
+    id
+    totalStakedPoints
+    activatedPoints
+    strategy {
+      id
+    }
+    member {
+      id
+    }
+  }
+}
+
 query isMember($me: ID!, $comm: String!) {
   members(where: { id: $me }) {
     id
-    memberCommunity(where: { registryCommunity_contains: $comm }) {
+    stakes {
       id
+      amount
+      proposal {
+        id
+        proposalNumber
+        stakedAmount
+        strategy {
+          id
+          poolId
+          registryCommunity {
+            id
+            garden {
+              id
+              symbol
+              decimals
+            }
+          }
+        }
+      }
+    }
+    memberCommunity(where: { registryCommunity_contains: $comm }) {
+      stakedTokens
       registryCommunity {
         id
       }
     }
+  }
+}
+
+query getMember($me: ID!) {
+  member(id: $me) {
+    id
+    memberCommunity {
+      id
+      stakedTokens
+      isRegistered
+      registryCommunity {
+        id
+      }
+    }
+    stakes {
+      id
+      proposal {
+        proposalNumber
+        id
+      }
+      amount
+      createdAt
+    }
+  }
+}
+
+query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
+  tokenGarden(id: $tokenAddr) {
+    decimals
+    id
+  }
+  allos {
+    id
+  }
+  registryCommunity(id: $communityAddr) {
+    communityName
   }
 }
 
@@ -76,7 +148,7 @@ query getCommunitiesByGarden($addr: ID!) {
       registerToken
       registerStakeAmount
       alloAddress
-      members(where: { stakedAmount_gt: "0" }) {
+      members(where: { stakedTokens_gt: "0" }) {
         id
         memberAddress
       }
@@ -85,17 +157,36 @@ query getCommunitiesByGarden($addr: ID!) {
           registerStakeAmount
         }
         id
+        totalEffectiveActivePoints
         poolId
         poolAmount
         config {
           id
           proposalType
           pointSystem
+          minThresholdPoints
         }
         proposals {
           id
+          proposalNumber
         }
       }
+    }
+  }
+}
+
+query getCommunityCreationData($addr: ID!) {
+  registryFactories {
+    id
+  }
+  tokenGarden(id: $addr) {
+    id
+    name
+    symbol
+    decimals
+    chainId
+    communities {
+      alloAddress
     }
   }
 }
@@ -107,6 +198,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     tokenNative
   }
   tokenGarden(id: $garden) {
+    address
     name
     symbol
     description
@@ -119,16 +211,28 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     metadata
     id
     poolId
+    totalEffectiveActivePoints
+    memberActive {
+      id
+    }
     config {
       id
       proposalType
       pointSystem
+      maxRatio
+      minThresholdPoints
     }
     registryCommunity {
       id
+      garden {
+        id
+        symbol
+        decimals
+      }
     }
     proposals {
       id
+      proposalNumber
       metadata
       beneficiary
       requestedAmount
@@ -145,6 +249,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     symbol
   }
   cvproposal(id: $proposalId) {
+    proposalNumber
     beneficiary
     blockLast
     convictionLast
@@ -163,6 +268,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
       config {
         proposalType
         pointSystem
+        minThresholdPoints
       }
     }
   }
@@ -180,16 +286,27 @@ query getStrategyByPool($poolId: BigInt!) {
   cvstrategies(where: { poolId: $poolId }) {
     id
     poolId
+    totalEffectiveActivePoints
     config {
       id
       proposalType
       pointSystem
+      minThresholdPoints
+    }
+    memberActive {
+      id
     }
     registryCommunity {
       id
+      garden {
+        id
+        symbol
+        decimals
+      }
     }
     proposals {
       id
+      proposalNumber
       metadata
       beneficiary
       requestedAmount
