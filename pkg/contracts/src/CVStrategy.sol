@@ -174,7 +174,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     StrategyStruct.PointSystem public pointSystem;
     StrategyStruct.PointSystemConfig public pointConfig;
 
-    uint256 public constant PRECISION_SCALE = 10 ** 4;
+    // uint256 public constant PRECISION_SCALE = 10 ** 4;
     uint256 public constant D = 10000000; //10**7
     // uint256 public constant PRECISION_PERCENTAGE = 100 * PRECISION_SCALE;
     uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
