@@ -61,11 +61,13 @@ export function Proposals({
   alloInfo,
   communityAddress,
   createProposalUrl,
+  proposalType,
 }: {
   strategy: Strategy;
   alloInfo: AlloQuery;
   communityAddress: Address;
   createProposalUrl: string;
+  proposalType: number;
 }) {
   const DECIMALS = strategy.registryCommunity.garden.decimals;
 
@@ -92,6 +94,8 @@ export function Proposals({
   const urqlClient = useUrqlClient();
   const chainId = getChainIdFromPath();
 
+  const isSignalingProposal = proposalType == 0;
+
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
@@ -103,13 +107,6 @@ export function Proposals({
     args: [address as Address, strategy.id as Address],
     watch: true,
   });
-
-  // const { data: checking } = useContractRead({
-  //   address: strategy.id as Address,
-  //   abi: abiWithErrors(cvStrategyABI),
-  //   functionName: "canExecuteProposal",
-  //   args: [5],
-  // });
 
   const runIsMemberQuery = useCallback(async () => {
     if (address === undefined) {
@@ -453,7 +450,7 @@ export function Proposals({
                 <div className="flex items-center gap-8">
                   <StatusBadge status={proposalStatus} />
                   {/* Button to test distribute */}
-                  {!editView && (
+                  {!editView && !isSignalingProposal && (
                     <Button
                       // TODO: add flexible tooltip and func to check executability
                       disabled={
