@@ -254,16 +254,23 @@ export function Proposals({
     write: writeDistribute,
     error: errorDistribute,
     isSuccess: isSuccessDistribute,
+    isError: isErrorDistribute,
     status: distributeStatus,
   } = useContractWrite({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
   });
+
+  const distributeErrorName = useErrorDetails(errorDistribute);
+  useEffect(() => {
+    if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
+      alert("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
+    }
+  }, [isErrorDistribute]);
   //
 
   useErrorDetails(errorAllocate, "errorAllocate");
-
   const { updateTransactionStatus, txConfirmationHash } =
     useTransactionNotification(allocateData);
 
@@ -342,20 +349,6 @@ export function Proposals({
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
   );
-
-  //Execute Disable Button condition => message mapping
-  // const disableExecuteBtnCondition: ConditionObject[] = [
-  //   {
-  //     condition: proposals.some((proposal) => proposal.proposalStatus == "4"),
-  //     message: "Proposal already executed",
-  //   },
-  // ];
-  // const disableExecuteButton = disableExecuteBtnCondition.some(
-  //   (cond) => cond.condition,
-  // );
-  // const tooltipMessageExecuteBtn = useDisableButtons(
-  //   disableExecuteBtnCondition,
-  // );
 
   return (
     <section className="rounded-lg border-2 border-black bg-white p-12">
@@ -471,7 +464,7 @@ export function Proposals({
                         })
                       }
                     >
-                      Execute proposal
+                      Execute
                     </Button>
                   )}
                   <>
