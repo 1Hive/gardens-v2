@@ -8,6 +8,7 @@ import {
   useContractWrite,
   Address as AddressType,
   useContractRead,
+  useWaitForTransaction,
 } from "wagmi";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
@@ -248,7 +249,7 @@ export function Proposals({
     return encodedProposalId;
   };
 
-  //test executing a proposal with distribute function
+  //executing proposal distribute function / alert error if not executable / notification if success
   const {
     data: distributeData,
     write: writeDistribute,
@@ -268,6 +269,24 @@ export function Proposals({
       alert("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
     }
   }, [isErrorDistribute]);
+
+  const {
+    updateTransactionStatus: updateDistributeTransactionStatus,
+    txConfirmationHash: distributeTxConfirmationHash,
+  } = useTransactionNotification(distributeData);
+
+  const {
+    data: waitDistributeData,
+    isSuccess: isWaitDistributeSuccess,
+    status: isWaitDistributeStatus,
+  } = useWaitForTransaction({
+    hash: distributeData?.hash,
+    confirmations: 1,
+  });
+
+  useEffect(() => {
+    updateDistributeTransactionStatus(isWaitDistributeStatus);
+  }, [isWaitDistributeStatus]);
   //
 
   useErrorDetails(errorAllocate, "errorAllocate");
@@ -276,7 +295,7 @@ export function Proposals({
 
   useEffect(() => {
     triggerRenderProposals();
-  }, [txConfirmationHash]);
+  }, [txConfirmationHash, distributeTxConfirmationHash]);
 
   useEffect(() => {
     updateTransactionStatus(allocateStatus);
