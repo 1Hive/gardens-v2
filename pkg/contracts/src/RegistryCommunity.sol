@@ -255,11 +255,11 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         Member memory member = addressToMemberInfo[_member];
 
         uint256 totalStakedAmount = member.stakedAmount;
-        uint256 pointsToIncrease = 0;
+        uint256 pointsToIncrease = totalStakedAmount;
 
         if (IPointStrategy(_strategy).getPointSystem() == StrategyStruct.PointSystem.Quadratic) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, 0);
-        } else {
+        } else if (IPointStrategy(_strategy).getPointSystem() != StrategyStruct.PointSystem.Fixed) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, totalStakedAmount);
         }
 
@@ -335,13 +335,13 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             revert DecreaseUnderMinimum();
         }
         gardenToken.safeTransfer(member, _amountUnstaked);
-        addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             // if (address(memberStrategies[i]) == _strategy) {
             pointsToDecrease = IPointStrategy(memberStrategies[i]).decreasePower(member, _amountUnstaked);
             memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
             // }
         }
+        addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
         emit MemberPowerDecreased(member, _amountUnstaked);
     }
 

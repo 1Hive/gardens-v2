@@ -1655,7 +1655,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(registryCommunity.communityName(), "GardensDAO", "communityMember");
     }
 
-    function test_activate_points() public {
+    function test_activate_points_unlimited() public {
         (IAllo.Pool memory pool,,) = _createProposal(address(0), 0, 0);
 
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));

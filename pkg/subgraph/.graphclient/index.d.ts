@@ -2180,7 +2180,7 @@ export type getCommunitiesByGardenQuery = {
     tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'decimals' | 'chainId'> & {
         communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'covenantIpfsHash' | 'chainId' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
-            strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId' | 'poolAmount'> & {
+            strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount'> & {
                 registryCommunity: Pick<RegistryCommunity, 'registerStakeAmount'>;
                 config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;
                 proposals: Array<Pick<CVProposal, 'id' | 'proposalNumber'>>;
@@ -2204,7 +2204,7 @@ export type getPoolDataQueryVariables = Exact<{
 export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'address' | 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
-    cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId'> & {
+    cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints'> & {
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'maxRatio' | 'minThresholdPoints'>;
         registryCommunity: (Pick<RegistryCommunity, 'id'> & {
@@ -2235,7 +2235,7 @@ export type getStrategyByPoolQueryVariables = Exact<{
     poolId: Scalars['BigInt'];
 }>;
 export type getStrategyByPoolQuery = {
-    cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId'> & {
+    cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId' | 'totalEffectiveActivePoints'> & {
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         registryCommunity: (Pick<RegistryCommunity, 'id'> & {

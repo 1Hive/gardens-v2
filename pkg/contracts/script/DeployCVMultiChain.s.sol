@@ -48,24 +48,15 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         return result;
     }
 
-    function getKeyNetwork(
-        string memory key
-    ) internal view returns (string memory) {
+    function getKeyNetwork(string memory key) internal view returns (string memory) {
         string memory networkSelected = CURRENT_NETWORK;
-        string memory jqNetworkSelected = string.concat(
-            "$.networks[?(@.name=='",
-            networkSelected,
-            "')]"
-        );
+        string memory jqNetworkSelected = string.concat("$.networks[?(@.name=='", networkSelected, "')]");
         return string.concat(jqNetworkSelected, key);
     }
 
     function getNetworkJson() internal view returns (string memory) {
         string memory root = vm.projectRoot();
-        string memory path = string.concat(
-            root,
-            "/pkg/contracts/config/networks.json"
-        );
+        string memory path = string.concat(root, "/pkg/contracts/config/networks.json");
         string memory json = vm.readFile(path);
         return json;
     }
@@ -91,9 +82,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("sender: %s", SENDER);
         console2.log("chainId : %s", chainId);
 
-        address allo_proxy = json.readAddress(
-            getKeyNetwork(".ENVS.ALLO_PROXY")
-        );
+        address allo_proxy = json.readAddress(getKeyNetwork(".ENVS.ALLO_PROXY"));
         // address allo_proxy = vm.envAddress("ALLO_PROXY");
         if (allo_proxy == address(0)) {
             revert("ALLO_PROXY not set");
@@ -142,9 +131,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         assertTrue(params._councilSafe != address(0));
 
-        RegistryCommunity registryCommunity = RegistryCommunity(
-            registryFactory.createRegistry(params)
-        );
+        RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
 
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
@@ -173,19 +160,13 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             councilSafeDeploy,
             councilMemberPKEnv,
             address(registryCommunity),
-            abi.encodeWithSelector(
-                registryCommunity.addStrategy.selector,
-                address(strategy1)
-            )
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
         );
         safeHelper(
             councilSafeDeploy,
             councilMemberPKEnv,
             address(registryCommunity),
-            abi.encodeWithSelector(
-                registryCommunity.addStrategy.selector,
-                address(strategy2)
-            )
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
         );
 
         // address[] memory _pool_managers = new address[](2);
@@ -196,12 +177,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         //     0, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
         // );
 
-        (uint256 poolId, ) = registryCommunity.createPool(
-            address(strategy1),
-            address(token),
-            paramsCV,
-            metadata
-        );
+        (uint256 poolId,) = registryCommunity.createPool(address(strategy1), address(token), paramsCV, metadata);
 
         // uint256 poolId = allo.createPoolWithCustomStrategy(
         //     // poolId = allo.createPool(
@@ -228,12 +204,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         //     _pool_managers
         // );
 
-        (uint256 poolIdSignaling, ) = registryCommunity.createPool(
-            address(strategy2),
-            address(0),
-            paramsCV,
-            metadata
-        );
+        (uint256 poolIdSignaling,) = registryCommunity.createPool(address(strategy2), address(0), paramsCV, metadata);
         strategy1.setDecay(_etherToFloat(0.9965402 ether));
         // alpha = decay
         strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
@@ -263,46 +234,22 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         token.approve(address(allo), type(uint256).max);
         allo.fundPool(poolId, 1_000);
 
-        StrategyStruct.CreateProposal memory proposal = StrategyStruct
-            .CreateProposal(
-                poolId,
-                pool_admin(),
-                50 wei,
-                address(token),
-                metadata
-            );
+        StrategyStruct.CreateProposal memory proposal =
+            StrategyStruct.CreateProposal(poolId, pool_admin(), 50 wei, address(token), metadata);
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
         // StrategyStruct.ProposalType.Funding
-        proposal = StrategyStruct.CreateProposal(
-            poolId,
-            pool_admin(),
-            25 wei,
-            address(token),
-            metadata
-        );
+        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 25 wei, address(token), metadata);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(
-            poolId,
-            pool_admin(),
-            10 wei,
-            address(token),
-            metadata
-        );
+        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 10 wei, address(token), metadata);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
         // Strategy 2 Signaling
-        StrategyStruct.CreateProposal memory proposal2 = StrategyStruct
-            .CreateProposal(
-                poolIdSignaling,
-                pool_admin(),
-                0,
-                address(0),
-                metadata
-            );
+        StrategyStruct.CreateProposal memory proposal2 =
+            StrategyStruct.CreateProposal(poolIdSignaling, pool_admin(), 0, address(0), metadata);
         bytes memory data2 = abi.encode(proposal2);
         allo.registerRecipient(poolIdSignaling, data2);
 

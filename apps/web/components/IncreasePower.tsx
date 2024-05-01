@@ -178,12 +178,10 @@ export const IncreasePower = ({
       writeIncreasePower?.();
       openModal();
       setPendingAllowance(true);
-      console.log("Step 3 stake...");
     } else {
       // initial state, allowance === 0
       writeAllowToken?.();
       openModal();
-      console.log("Step 2 ...");
     }
   }
 
@@ -202,12 +200,10 @@ export const IncreasePower = ({
       resetTransactionStatus === "success" &&
       allowanceTransactionStatus === "idle"
     ) {
-      console.log("Reset allowance success");
       writeAllowToken?.();
       setResetTransactionStatus("idle");
     }
     if (isWaitSuccess) {
-      console.log("allowance succeded");
       writeIncreasePower?.();
     }
   }, [waitResetAllowanceStatus, isWaitSuccess, allowTokenStatus]);

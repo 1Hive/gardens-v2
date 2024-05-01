@@ -20,7 +20,7 @@ export { ConnectWallet } from "./ConnectWalletButton";
 export { GoBackButton } from "./GoBackButton";
 export { IncreasePower } from "./IncreasePower";
 export { TransactionModal } from "./TransactionModal";
-export { PointsComponent } from "./PointsComponent";
+export { GovernanceComponent } from "./GovernanceComponent";
 export { Show, When, Else } from "./Show";
 export { FormLink } from "./FormLink";
 export { Layout } from "./Layout";

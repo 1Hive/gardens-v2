@@ -403,7 +403,16 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function decreasePowerQuadratic(address _member, uint256 _amountToUnstake) internal view returns (uint256) {
-        uint256 newTotalPoints = (registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake);
+        uint256 decimal = 18;
+        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
+            decimal = uint256(_decimal);
+        } catch {
+            console.log("Error getting decimal");
+        }
+        console.log("_amountToUnstake", _amountToUnstake);
+        uint256 newTotalStake = registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake;
+        console.log("newTotalStake", newTotalStake);
+        uint256 newTotalPoints = Math.sqrt(newTotalStake * 10 ** decimal);
         uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
         return pointsToDecrease;
     }

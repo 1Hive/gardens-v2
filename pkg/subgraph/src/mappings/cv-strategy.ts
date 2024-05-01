@@ -181,11 +181,11 @@ export function handlePoolAmountIncreased(event: PoolAmountIncreased): void {
 export function handleSupportAdded(event: SupportAdded): void {
   log.debug("handleSupportAdded: amount: {}", [event.params.amount.toString()]);
 
-  let cvp = CVProposal.load(event.params.proposalId.toHexString());
+  const proposalId = `${event.address.toHexString()}-${event.params.proposalId}`;
+
+  let cvp = CVProposal.load(proposalId);
   if (cvp == null) {
-    log.debug("handleSupportAdded cvp not found: {}", [
-      event.params.proposalId.toString(),
-    ]);
+    log.debug("handleSupportAdded cvp not found: {}", [proposalId.toString()]);
     return;
   }
 
@@ -196,25 +196,11 @@ export function handleSupportAdded(event: SupportAdded): void {
     ]);
     return;
   }
+
   const memberStrategyId = `${event.params.from.toHexString()}-${cvs.id}`;
   let stakeId = `${cvp.id.toString()}-${memberStrategyId}`;
 
   let stake = Stake.load(stakeId);
-  if (!stake) {
-    stake = new Stake(stakeId);
-    stake.member = event.params.from.toHexString();
-    stake.proposal = cvp.id;
-  }
-  stake.poolId = cvs.poolId;
-  stake.amount = event.params.amount;
-  stake.createdAt = event.block.timestamp;
-  stake.save();
-
-  const cvc = CVStrategyContract.bind(event.address);
-  const proposalStakedAmount = cvc.getProposalStakedAmount(
-    event.params.proposalId,
-  );
-  const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
   let memberStrategy = MemberStrategy.load(memberStrategyId);
 
@@ -225,9 +211,31 @@ export function handleSupportAdded(event: SupportAdded): void {
     return;
   }
 
+  if (!stake) {
+    stake = new Stake(stakeId);
+    stake.member = event.params.from.toHexString();
+    stake.proposal = cvp.id;
+    stake.amount = BigInt.fromI32(0);
+  }
+
+  const previousStake = stake.amount;
+
+  const delta = event.params.amount.minus(previousStake);
+
   memberStrategy.totalStakedPoints = memberStrategy.totalStakedPoints
-    ? memberStrategy.totalStakedPoints.plus(event.params.amount)
+    ? memberStrategy.totalStakedPoints.plus(delta)
     : event.params.amount;
+
+  stake.poolId = cvs.poolId;
+  stake.amount = event.params.amount;
+  stake.createdAt = event.block.timestamp;
+  stake.save();
+
+  const cvc = CVStrategyContract.bind(event.address);
+  const proposalStakedAmount = cvc.getProposalStakedAmount(
+    event.params.proposalId,
+  );
+  const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
   memberStrategy.save();
   cvp.maxCVStaked = maxConviction;
