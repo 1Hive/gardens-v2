@@ -4,22 +4,24 @@ import { doesNotReject } from "assert";
 import { useEffect, useState } from "react";
 
 export const DisplayNumber = ({
-  number: fullNumber,
+  number,
   tokenSymbol,
   className,
   compact,
 }: {
-  number: string | undefined;
+  number: dn.Dnum;
   tokenSymbol?: string;
   className?: string;
   compact?: boolean;
 }) => {
+  const [fullNumberStr, setFullNumberStr] = useState(dn.format(number));
   const [isCopied, setIsCopied] = useState(false);
   const [shortNumber, setShortNumber] = useState("");
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
-    setShortNumber(parseString(fullNumber));
+    setShortNumber(parseString(fullNumberStr));
+    console.log(fullNumberStr);
   }, []);
 
   const parseString = (str: string | undefined) => {
@@ -40,20 +42,18 @@ export const DisplayNumber = ({
         "…" +
         str.slice(-charsLength)
       );
-    // console.log(dn.from(str));
-    return str;
-    // return "";
+    return dn.format(number, { compact: compact });
   };
 
   const handleCopy = async () => {
+    if (showTooltip === false) setShowTooltip(true);
     try {
-      setShowTooltip(true);
-      await navigator.clipboard.writeText(fullNumber ?? "");
+      await navigator.clipboard.writeText(fullNumberStr ?? "");
       setIsCopied(true);
       setTimeout(() => {
         setIsCopied(false);
-        setShowTooltip(false);
-      }, 2000);
+        if (showTooltip === false) setShowTooltip(false);
+      }, 1500);
     } catch (err) {
       console.error("Failed to copy!", err);
     }
@@ -63,8 +63,8 @@ export const DisplayNumber = ({
     <div className="relative ml-2 flex items-center gap-1">
       <div
         onClick={handleCopy}
-        className={`${showTooltip && "tooltip"} cursor-copy ${className}`}
-        data-tip={isCopied ? "Copied!" : fullNumber}
+        className={`${showTooltip && "tooltip"} cursor-pointer ${className}`}
+        data-tip={isCopied ? "Copied!" : fullNumberStr}
       >
         <p>{shortNumber}</p>
       </div>

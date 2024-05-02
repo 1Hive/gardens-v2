@@ -67,11 +67,11 @@ export function RegisterMember({
         Number(registerTokenDecimals),
       ] as dn.Dnum;
 
-      const result = dn.multiply(membership, feePercentage);
-      return dn.format(result);
+      return dn.multiply(membership, feePercentage);
     } catch (error) {
       console.log(error);
     }
+    return [0n, 0] as dn.Dnum;
   };
 
   const registryContractCallConfig = {
@@ -263,12 +263,9 @@ export function RegisterMember({
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
       />
-      <div className="space-y-4">
-        <div className="stats flex">
-          <div
-            className="stat flex-1 items-center bg-info px-4 py-3 text-sm font-bold text-white"
-            role="alert"
-          >
+      <div className="space-y-4 ">
+        <div className="flex">
+          <div className="flex-1 items-center rounded-lg bg-info px-4 py-3 text-sm font-bold text-white">
             <div className="flex items-center gap-2">
               <svg
                 className="mr-2 h-4 w-4 fill-current"
@@ -281,11 +278,9 @@ export function RegisterMember({
                 <div className="flex-start flex">
                   <p> Registration amount:</p>
                   <DisplayNumber
-                    number={formatBigint(
-                      BigInt(membershipAmount),
-                      registerTokenDecimals,
-                    )}
+                    number={[BigInt(membershipAmount), registerTokenDecimals]}
                     tokenSymbol={tokenSymbol}
+                    compact={true}
                   />
                 </div>
                 <div className="flex-start flex">
@@ -293,6 +288,7 @@ export function RegisterMember({
                   <DisplayNumber
                     number={parsedCommunityFee()}
                     tokenSymbol={tokenSymbol}
+                    compact={true}
                   />
                 </div>
                 {/* 
