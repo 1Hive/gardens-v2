@@ -106,6 +106,7 @@ export default async function Proposal({
 
   let totalEffectiveActivePoints = 0n;
   let getProposalStakedAmount = 0n;
+  let updateConvictionLast = 0n;
   let getProposal: any = [];
   let maxCVSupply = 0n;
 
@@ -124,20 +125,21 @@ export default async function Proposal({
       functionName: "getProposal",
       args: [proposalIdNumber],
     });
+    updateConvictionLast = (await client.readContract({
+      ...cvStrategyContract,
+      functionName: "updateProposalConviction",
+      args: [proposalIdNumber],
+    })) as bigint;
     maxCVSupply = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getMaxConviction",
       args: [totalEffectiveActivePoints],
     })) as bigint;
   } catch (error) {
-    console.log(error);
-    return (
-      <div className="text-center text-error">{`Syntax error!, check above functions arguments`}</div>
-    );
+    updateConvictionLast = getProposal[7];
+    console.log("error proposalId data from contract", error);
   }
   const tokenDecimals = 18;
-
-  const updatedConvictionLast = getProposal[7] ?? 0;
 
   const thresholdPct = calcThresholdPct(threshold, maxCVSupply, tokenDecimals);
   const totalSupport = calcTotalSupport(
@@ -146,7 +148,7 @@ export default async function Proposal({
     tokenDecimals,
   );
   const currentConviction = calcCurrentConviction(
-    updatedConvictionLast,
+    updateConvictionLast,
     maxCVSupply,
     tokenDecimals,
   );
