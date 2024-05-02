@@ -83,7 +83,7 @@ export default async function Proposal({
 
   const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
   const proposalIdNumber = proposalData.proposalNumber as number;
-  const convictionLast = proposalData.convictionLast as string;
+  // const convictionLast = proposalData.convictionLast as string;
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount as bigint;
@@ -106,59 +106,28 @@ export default async function Proposal({
 
   let totalEffectiveActivePoints = 0n;
   let getProposalStakedAmount = 0n;
-  let rawThresholdFromContract = 0n;
-  let updateConvictionLast = 0n;
-  let getProposal = 0n;
+  let getProposal: any = [];
   let maxCVSupply = 0n;
-  let maxCVStaked = 0n;
-  let getProposalVoterStake = 0n;
 
   try {
     totalEffectiveActivePoints = (await client.readContract({
       ...cvStrategyContract,
       functionName: "totalEffectiveActivePoints",
     })) as bigint;
-
     getProposalStakedAmount = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getProposalStakedAmount",
       args: [proposalIdNumber],
     })) as bigint;
-
-    rawThresholdFromContract = (await client.readContract({
-      ...cvStrategyContract,
-      functionName: "calculateThreshold",
-      args: [requestedAmount],
-    })) as bigint;
-
-    updateConvictionLast = (await client.readContract({
-      ...cvStrategyContract,
-      functionName: "updateProposalConviction",
-      args: [proposalIdNumber],
-    })) as bigint;
-
-    getProposal = (await client.readContract({
+    getProposal = await client.readContract({
       ...cvStrategyContract,
       functionName: "getProposal",
       args: [proposalIdNumber],
-    })) as bigint;
-
+    });
     maxCVSupply = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getMaxConviction",
       args: [totalEffectiveActivePoints],
-    })) as bigint;
-
-    maxCVStaked = (await client.readContract({
-      ...cvStrategyContract,
-      functionName: "getMaxConviction",
-      args: [getProposalStakedAmount],
-    })) as bigint;
-
-    getProposalVoterStake = (await client.readContract({
-      ...cvStrategyContract,
-      functionName: "getProposalVoterStake",
-      args: [proposalIdNumber, "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
     })) as bigint;
   } catch (error) {
     console.log(error);
@@ -168,6 +137,8 @@ export default async function Proposal({
   }
   const tokenDecimals = 18;
 
+  const updatedConvictionLast = getProposal[7] ?? 0;
+
   const thresholdPct = calcThresholdPct(threshold, maxCVSupply, tokenDecimals);
   const totalSupport = calcTotalSupport(
     getProposalStakedAmount,
@@ -175,7 +146,7 @@ export default async function Proposal({
     tokenDecimals,
   );
   const currentConviction = calcCurrentConviction(
-    updateConvictionLast,
+    updatedConvictionLast,
     maxCVSupply,
     tokenDecimals,
   );
