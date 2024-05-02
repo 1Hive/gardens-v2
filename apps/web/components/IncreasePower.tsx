@@ -18,6 +18,7 @@ import { parseUnits } from "viem";
 import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import useErrorDetails from "@/utils/getErrorName";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -163,6 +164,33 @@ export const IncreasePower = ({
     functionName: "increasePower",
     args: [requestedAmount as bigint],
   });
+  const {
+    data: decreasePowerData,
+    write: writeDecreasePower,
+    error: errorDecreasePower,
+    status: decreasePowerStatus,
+    isLoading: decreasePowerIsLoading,
+    isError: isErrordecreasePower,
+  } = useContractWrite({
+    ...registryContractCallConfig,
+    functionName: "decreasePower",
+    args: [requestedAmount as bigint],
+  });
+  useErrorDetails(errorDecreasePower, "errorDecrease");
+
+  const { updateTransactionStatus: updateDecreasePowerTransactionStatus } =
+    useTransactionNotification(decreasePowerData);
+
+  useEffect(() => {
+    updateDecreasePowerTransactionStatus(decreasePowerStatus);
+  }, [decreasePowerStatus]);
+
+  const decreasePoweErrorName = useErrorDetails(errorDecreasePower);
+  useEffect(() => {
+    if (isErrordecreasePower && decreasePoweErrorName.errorName !== undefined) {
+      alert("UNEXECUTABLE OPTION:" + " " + decreasePoweErrorName.errorName);
+    }
+  }, [errorDecreasePower]);
 
   const requestesMoreThanAllowance =
     (allowance ?? 0n) > 0n && requestedAmount > (allowance ?? 0n);
@@ -289,6 +317,7 @@ export const IncreasePower = ({
             {tokenSymbol}
           </span>
         </div>
+
         <Button
           onClick={handleChange}
           className="w-full max-w-[420px]"
@@ -298,6 +327,16 @@ export const IncreasePower = ({
           {increaseInput !== undefined && increaseInput > 0
             ? `Stake ${tokenSymbol}`
             : "Increase stake"}
+          <span className="loading-spinner"></span>
+        </Button>
+
+        <Button
+          onClick={() => writeDecreasePower?.()}
+          className="w-full max-w-[420px]"
+          disabled={disabledIncPowerButton}
+          tooltip={tooltipMessage}
+        >
+          Decrease stake
           <span className="loading-spinner"></span>
         </Button>
       </div>
