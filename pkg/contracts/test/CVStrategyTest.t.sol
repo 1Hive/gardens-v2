@@ -183,6 +183,30 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
     }
 
+    function _assertProposalStatus(CVStrategy cv, uint256 proposalId, StrategyStruct.ProposalStatus _toBeChecked)
+        internal
+        view
+    {
+        (
+            , // address submitter,
+            // address beneficiary
+            ,
+            , // address requestedToken,
+            // uint256 requestedAmount
+            ,
+            , // uint256 stakedTokens,
+            StrategyStruct.ProposalStatus proposalStatus,
+            , // uint256 blockLast,
+            // uint256 convictionLast
+            ,
+            // uint256 threshold
+            ,
+            // uint256 voterPointsPct
+        ) = cv.getProposal(proposalId);
+
+        assertTrue(proposalStatus == _toBeChecked, "ProposalStatus");
+    }
+
     function getBalance(address _token, address holder) public view returns (uint256) {
         if (_token == NATIVE) {
             return address(holder).balance;
@@ -1374,6 +1398,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
         assertEq(amount, requestedAmount);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
 
     function test_distribute_native_token() public {
@@ -1444,9 +1469,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(amount, 0);
 
         allo().distribute(poolId, recipients, dataProposal);
+        //@todo chec ProposalStatus
+
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
         assertEq(amount, requestedAmount);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
 
     function test_revert_conviction_distribute() public {
@@ -1468,6 +1496,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.ConvictionUnderMinimumThreshold.selector));
         allo().distribute(poolId, recipients, dataProposal);
+
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
     }
 
     function test_canExecuteProposal_should_false() public {
@@ -1550,6 +1580,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //     // amount = getBalance(pool.token, beneficiary);
     //     // // console.log("Beneficienry After amount: %s", amount);
     //     // assertEq(amount, requestedAmount);
+    // _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
 
     // }
 
@@ -1589,6 +1620,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         allo().distribute(poolId, new address[](0), dataProposal);
         // console.log("Beneficienry After amount: %s", amount);
+        _assertProposalStatus(cv, PROPOSAL_ID, StrategyStruct.ProposalStatus.Active);
     }
 
     function printProposalDetails(CVStrategy cv, uint256 proposalId) public view {
