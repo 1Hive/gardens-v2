@@ -13,6 +13,7 @@ import { Button } from "./Button";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { useEffect, useRef, useState } from "react";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { toast } from "react-toastify";
 import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
 import { getChainIdFromPath } from "@/utils/path";
@@ -188,7 +189,7 @@ export const IncreasePower = ({
   const decreasePoweErrorName = useErrorDetails(errorDecreasePower);
   useEffect(() => {
     if (isErrordecreasePower && decreasePoweErrorName.errorName !== undefined) {
-      alert("UNEXECUTABLE OPTION:" + " " + decreasePoweErrorName.errorName);
+      toast.error(decreasePoweErrorName.errorName);
     }
   }, [errorDecreasePower]);
 
