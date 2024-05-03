@@ -47,8 +47,8 @@ type FormRowTypes = {
 const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 const feeOptions: Option[] = [
   { value: 0, label: "0%" },
-  { value: 1, label: "1%" },
-  { value: 2, label: "2%" },
+  { value: 0.01, label: "1%" },
+  { value: 0.02, label: "2%" },
 ];
 
 export const CommunityForm = ({

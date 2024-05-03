@@ -8,6 +8,7 @@ import {
   useContractWrite,
   Address as AddressType,
   useContractRead,
+  useWaitForTransaction,
 } from "wagmi";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
@@ -33,6 +34,7 @@ import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { FormLink } from "@/components";
+import { toast } from "react-toastify";
 
 type InputItem = {
   id: string;
@@ -61,11 +63,13 @@ export function Proposals({
   alloInfo,
   communityAddress,
   createProposalUrl,
+  proposalType,
 }: {
   strategy: Strategy;
   alloInfo: AlloQuery;
   communityAddress: Address;
   createProposalUrl: string;
+  proposalType: number;
 }) {
   const DECIMALS = strategy.registryCommunity.garden.decimals;
 
@@ -92,6 +96,8 @@ export function Proposals({
   const urqlClient = useUrqlClient();
   const chainId = getChainIdFromPath();
 
+  const isSignalingProposal = proposalType == 0;
+
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
@@ -103,13 +109,6 @@ export function Proposals({
     args: [address as Address, strategy.id as Address],
     watch: true,
   });
-
-  // const { data: checking } = useContractRead({
-  //   address: strategy.id as Address,
-  //   abi: abiWithErrors(cvStrategyABI),
-  //   functionName: "canExecuteProposal",
-  //   args: [5],
-  // });
 
   const runIsMemberQuery = useCallback(async () => {
     if (address === undefined) {
@@ -251,28 +250,53 @@ export function Proposals({
     return encodedProposalId;
   };
 
-  //test executing a proposal with distribute function
+  //executing proposal distribute function / alert error if not executable / notification if success
   const {
     data: distributeData,
     write: writeDistribute,
     error: errorDistribute,
     isSuccess: isSuccessDistribute,
+    isError: isErrorDistribute,
     status: distributeStatus,
   } = useContractWrite({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
   });
+
+  const distributeErrorName = useErrorDetails(errorDistribute);
+  useEffect(() => {
+    if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
+      toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
+    }
+  }, [isErrorDistribute]);
+
+  const {
+    updateTransactionStatus: updateDistributeTransactionStatus,
+    txConfirmationHash: distributeTxConfirmationHash,
+  } = useTransactionNotification(distributeData);
+
+  const {
+    data: waitDistributeData,
+    isSuccess: isWaitDistributeSuccess,
+    status: isWaitDistributeStatus,
+  } = useWaitForTransaction({
+    hash: distributeData?.hash,
+    confirmations: 1,
+  });
+
+  useEffect(() => {
+    updateDistributeTransactionStatus(distributeStatus);
+  }, [distributeStatus]);
   //
 
   useErrorDetails(errorAllocate, "errorAllocate");
-
   const { updateTransactionStatus, txConfirmationHash } =
     useTransactionNotification(allocateData);
 
   useEffect(() => {
     triggerRenderProposals();
-  }, [txConfirmationHash]);
+  }, [txConfirmationHash, distributeTxConfirmationHash]);
 
   useEffect(() => {
     updateTransactionStatus(allocateStatus);
@@ -345,20 +369,6 @@ export function Proposals({
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
   );
-
-  //Execute Disable Button condition => message mapping
-  // const disableExecuteBtnCondition: ConditionObject[] = [
-  //   {
-  //     condition: proposals.some((proposal) => proposal.proposalStatus == "4"),
-  //     message: "Proposal already executed",
-  //   },
-  // ];
-  // const disableExecuteButton = disableExecuteBtnCondition.some(
-  //   (cond) => cond.condition,
-  // );
-  // const tooltipMessageExecuteBtn = useDisableButtons(
-  //   disableExecuteBtnCondition,
-  // );
 
   return (
     <section className="rounded-lg border-2 border-black bg-white p-12">
@@ -453,7 +463,7 @@ export function Proposals({
                 <div className="flex items-center gap-8">
                   <StatusBadge status={proposalStatus} />
                   {/* Button to test distribute */}
-                  {!editView && (
+                  {!editView && !isSignalingProposal && (
                     <Button
                       // TODO: add flexible tooltip and func to check executability
                       disabled={
@@ -474,7 +484,7 @@ export function Proposals({
                         })
                       }
                     >
-                      Execute proposal
+                      Execute
                     </Button>
                   )}
                   <>
