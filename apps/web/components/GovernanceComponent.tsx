@@ -24,9 +24,6 @@ export const GovernanceComponent: FC<PoolGovernanceStatsProps> = ({
 }) => {
   const { address: connectedAccount } = useAccount();
 
-  const isValidAccount =
-    connectedAccount !== undefined && connectedAccount !== null;
-
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),

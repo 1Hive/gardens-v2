@@ -357,8 +357,7 @@ export function Proposals({
     disableManageSupportBtnCondition,
   );
 
-  //Calculate Member Pool weight
-  //TODO: move to utils and refactor name. It is similar to calculate other percentages in the app
+  //TODO: move to utils calcDivisionToPct and refactor name. It is similar to calculate other percentages in the app
   const calcDivisionToPct = (
     memberActivatedPoints: bigint | number,
     totalEffectiveActivePoints: bigint | number,
@@ -397,7 +396,15 @@ export function Proposals({
       DECIMALS,
     );
   }, [totalAllocatedTokens, memberActivatedPoints]);
-  //
+
+  const poolWeightUsed = useMemo(() => {
+    return (
+      (Number(calcMemberSupportedProposalsPct) * Number(calcMemberPoolWeight)) /
+      100
+    )
+      .toFixed(1)
+      .toString();
+  }, [calcMemberSupportedProposalsPct, calcMemberPoolWeight]);
 
   //Execute Disable Button condition => message mapping
   // const disableExecuteBtnCondition: ConditionObject[] = [
@@ -446,15 +453,23 @@ export function Proposals({
             </div>
             {editView && (
               <>
-                <div className="flex w-full items-center  text-right">
-                  <p
-                    className={`w-full text-center text-5xl ${Number(calcMemberSupportedProposalsPct) >= 100 && "text-error"}`}
-                  >
-                    {calcMemberSupportedProposalsPct} %
-                  </p>
-                  <p className="text-left text-lg">
-                    Of your governance weight is supporting proposals
-                  </p>
+                <div className="flex w-full items-start text-right">
+                  <div className="flex w-full flex-col items-center">
+                    <p className={`text-center text-3xl text-info`}>
+                      {poolWeightUsed} %
+                    </p>
+                    <p className="text-md text-left">Pool weight used</p>
+                  </div>
+                  <div className="flex w-full flex-col items-center">
+                    <p
+                      className={`text-center text-5xl ${Number(calcMemberSupportedProposalsPct) >= 100 && "text-info"}`}
+                    >
+                      {calcMemberSupportedProposalsPct} %
+                    </p>
+                    <p className="text-center text-lg">
+                      Of your governance weight is supporting proposals
+                    </p>
+                  </div>
                 </div>
               </>
             )}
