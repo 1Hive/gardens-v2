@@ -34,6 +34,7 @@ import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { FormLink } from "@/components";
+import { toast } from "react-toastify";
 
 type InputItem = {
   id: string;
@@ -266,7 +267,7 @@ export function Proposals({
   const distributeErrorName = useErrorDetails(errorDistribute);
   useEffect(() => {
     if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
-      alert("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
+      toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
     }
   }, [isErrorDistribute]);
 
@@ -285,8 +286,8 @@ export function Proposals({
   });
 
   useEffect(() => {
-    updateDistributeTransactionStatus(isWaitDistributeStatus);
-  }, [isWaitDistributeStatus]);
+    updateDistributeTransactionStatus(distributeStatus);
+  }, [distributeStatus]);
   //
 
   useErrorDetails(errorAllocate, "errorAllocate");
