@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Button, StatusBadge } from "@/components";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -33,6 +33,7 @@ import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { FormLink, GovernanceComponent } from "@/components";
+import * as dn from "dnum";
 
 type InputItem = {
   id: string;
@@ -67,8 +68,6 @@ export function Proposals({
   communityAddress: Address;
   createProposalUrl: string;
 }) {
-  const DECIMALS = strategy.registryCommunity.garden.decimals;
-
   const [editView, setEditView] = useState(false);
   // const [distributedPoints, setDistributedPoints] = useState(0);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
@@ -84,9 +83,14 @@ export function Proposals({
   // const { voterStake } = useTotalVoterStakedPct(strategy);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilteres, setStakedFilteres] = useState<InputItem[]>([]);
+  const [memberTokenInCommunity, setMemberTokenInCommunity] = useState<
+    number | string
+  >(0);
 
   const { address } = useAccount();
   const pathname = usePathname();
+
+  const DECIMALS = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
   const urqlClient = useUrqlClient();
@@ -124,6 +128,13 @@ export function Proposals({
         me: address.toLowerCase(),
         comm: strategy.registryCommunity.id.toLowerCase(),
       },
+    );
+
+    setMemberTokenInCommunity(
+      formatTokenAmount(
+        result?.members[0]?.memberCommunity?.[0]?.stakedTokens ?? 0,
+        DECIMALS,
+      ),
     );
 
     const { data: memberStrategyResult, error: errorMS } =
@@ -346,6 +357,48 @@ export function Proposals({
     disableManageSupportBtnCondition,
   );
 
+  //Calculate Member Pool weight
+  //TODO: move to utils and refactor name. It is similar to calculate other percentages in the app
+  const calcDivisionToPct = (
+    memberActivatedPoints: bigint | number,
+    totalEffectiveActivePoints: bigint | number,
+    tokenDecimals: number,
+    setDigist?: number,
+  ): string | number => {
+    if (memberActivatedPoints < 0 || totalEffectiveActivePoints <= 0) {
+      return 0;
+    }
+
+    const division = dn.divide(
+      memberActivatedPoints,
+      totalEffectiveActivePoints,
+      tokenDecimals,
+    );
+
+    const formatDivisionResult = (
+      Number(dn.format(division, { digits: setDigist ?? 3 })) * 100
+    ).toFixed(1);
+
+    return formatDivisionResult;
+  };
+
+  const calcMemberPoolWeight = useMemo(() => {
+    return calcDivisionToPct(
+      memberActivatedPoints,
+      strategy.totalEffectiveActivePoints,
+      DECIMALS,
+    );
+  }, [memberActivatedPoints, strategy.totalEffectiveActivePoints]);
+
+  const calcMemberSupportedProposalsPct = useMemo(() => {
+    return calcDivisionToPct(
+      totalAllocatedTokens,
+      memberActivatedPoints,
+      DECIMALS,
+    );
+  }, [totalAllocatedTokens, memberActivatedPoints]);
+  //
+
   //Execute Disable Button condition => message mapping
   // const disableExecuteBtnCondition: ConditionObject[] = [
   //   {
@@ -366,6 +419,8 @@ export function Proposals({
         strategyAddress={strategy.id as Address}
         strategy={strategy}
         communityAddress={communityAddress}
+        memberPoolWeight={calcMemberPoolWeight}
+        memberTokensInCommunity={memberTokenInCommunity}
       />
       <section className="rounded-lg border-2 border-black bg-white p-12">
         <div className="mx-auto max-w-5xl space-y-10">
@@ -391,59 +446,15 @@ export function Proposals({
             </div>
             {editView && (
               <>
-                <div className="w-full text-right text-2xl">
-                  <span
-                    className={`${
-                      inputAllocatedTokens >= memberActivatedPoints &&
-                      "scale-110 font-semibold text-red"
-                    } transition-all`}
+                <div className="flex w-full items-center  text-right">
+                  <p
+                    className={`w-full text-center text-5xl ${Number(calcMemberSupportedProposalsPct) >= 100 && "text-error"}`}
                   >
-                    Assigned:{" "}
-                    <span
-                      className={`text-3xl font-bold  ${inputAllocatedTokens >= memberActivatedPoints ? "text-red" : "text-success"} `}
-                    >
-                      {formatTokenAmount(inputAllocatedTokens, DECIMALS)}
-                    </span>{" "}
-                    / {formatTokenAmount(memberActivatedPoints, DECIMALS)}
-                    {" " + strategy.registryCommunity.garden.symbol}
-                  </span>
-                </div>
-                <div className="w-full text-right text-2xl">
-                  <span className={`transition-all`}>
-                    Your Governance Weight:{" "}
-                  </span>
-                  <span
-                    className={`text-3xl font-bold  ${inputAllocatedTokens >= memberActivatedPoints ? "text-red" : "text-success"} `}
-                  >
-                    {calculatePercentage(
-                      Number(
-                        formatTokenAmount(memberActivatedPoints, DECIMALS),
-                      ),
-                      Number(
-                        formatTokenAmount(
-                          strategy.totalEffectiveActivePoints,
-                          DECIMALS,
-                        ),
-                      ),
-                    )}
-                    %
-                  </span>
-                </div>
-                <div className="w-full text-right text-2xl">
-                  <span
-                    className={`text-3xl font-bold  ${inputAllocatedTokens >= memberActivatedPoints ? "text-red" : "text-success"} `}
-                  >
-                    {calculatePercentage(
-                      Number(formatTokenAmount(totalAllocatedTokens, DECIMALS)),
-                      Number(
-                        formatTokenAmount(memberActivatedPoints, DECIMALS),
-                      ),
-                    )}
-                    %
-                  </span>
-                  <span className={`transition-all`}>
-                    Of yout governance weight is supporting proposals
-                  </span>
+                    {calcMemberSupportedProposalsPct} %
+                  </p>
+                  <p className="text-left text-lg">
+                    Of your governance weight is supporting proposals
+                  </p>
                 </div>
               </>
             )}
@@ -530,21 +541,42 @@ export function Proposals({
                           %
                         </div>
                       </div>
-                      <div className="flex max-w-xs flex-1 items-baseline justify-center gap-2">
-                        {inputs[i]?.value > 0n ? (
-                          <p className="text-success">
-                            Assigned{" "}
-                            <span className="text-2xl font-bold">
-                              {formatTokenAmount(
-                                inputs[i]?.value.toString(),
-                                DECIMALS,
-                              )}
-                            </span>{" "}
-                            {strategy.registryCommunity.garden.symbol}
+                      <div className="flex max-w-sm flex-1 items-baseline justify-center gap-2 px-8">
+                        {inputs[i]?.value > stakedFilteres[i]?.value ? (
+                          <p className="text-center text-success">
+                            You are adding support up to{" "}
+                            <span className="px-2 py-2 text-3xl font-semibold">
+                              {Number(
+                                (inputs[i].value * 100) / memberActivatedPoints,
+                              ).toFixed(2)}
+                            </span>
+                            %
+                          </p>
+                        ) : inputs[i]?.value < stakedFilteres[i]?.value ? (
+                          <p className="text-center text-info">
+                            You are removing support down to{" "}
+                            <span className="px-2 py-1 text-3xl font-semibold">
+                              {Number(
+                                (inputs[i].value * 100) / memberActivatedPoints,
+                              ).toFixed(2)}
+                            </span>
+                            %
+                          </p>
+                        ) : inputs[i]?.value == stakedFilteres[i]?.value ? (
+                          <p className="text-center">
+                            You have assigned{" "}
+                            <span className="px-2 text-3xl font-semibold">
+                              {Number(
+                                (stakedFilteres[i].value * 100) /
+                                  memberActivatedPoints,
+                              ).toFixed(2)}
+                              %
+                            </span>
+                            of your support to this proposal
                           </p>
                         ) : (
                           <p className="text-gray-400">
-                            You have no support on this proposal yet
+                            You have not support this proposal
                           </p>
                         )}
                       </div>
