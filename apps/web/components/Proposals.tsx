@@ -8,6 +8,7 @@ import {
   useContractWrite,
   Address as AddressType,
   useContractRead,
+  useWaitForTransaction,
 } from "wagmi";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
@@ -31,9 +32,10 @@ import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { queryByChain } from "@/providers/urql";
 import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { useUrqlClient } from "@/hooks/useUqrlClient"; { toast } from "react-toastify";
 import { FormLink, GovernanceComponent } from "@/components";
 import * as dn from "dnum";
+
 
 type InputItem = {
   id: string;
@@ -62,11 +64,13 @@ export function Proposals({
   alloInfo,
   communityAddress,
   createProposalUrl,
+  proposalType,
 }: {
   strategy: Strategy;
   alloInfo: AlloQuery;
   communityAddress: Address;
   createProposalUrl: string;
+  proposalType: number;
 }) {
   const [editView, setEditView] = useState(false);
   // const [distributedPoints, setDistributedPoints] = useState(0);
@@ -96,6 +100,8 @@ export function Proposals({
   const urqlClient = useUrqlClient();
   const chainId = getChainIdFromPath();
 
+  const isSignalingProposal = proposalType == 0;
+
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
@@ -107,13 +113,6 @@ export function Proposals({
     args: [address as Address, strategy.id as Address],
     watch: true,
   });
-
-  // const { data: checking } = useContractRead({
-  //   address: strategy.id as Address,
-  //   abi: abiWithErrors(cvStrategyABI),
-  //   functionName: "canExecuteProposal",
-  //   args: [5],
-  // });
 
   const runIsMemberQuery = useCallback(async () => {
     if (address === undefined) {
@@ -262,28 +261,53 @@ export function Proposals({
     return encodedProposalId;
   };
 
-  //test executing a proposal with distribute function
+  //executing proposal distribute function / alert error if not executable / notification if success
   const {
     data: distributeData,
     write: writeDistribute,
     error: errorDistribute,
     isSuccess: isSuccessDistribute,
+    isError: isErrorDistribute,
     status: distributeStatus,
   } = useContractWrite({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
   });
+
+  const distributeErrorName = useErrorDetails(errorDistribute);
+  useEffect(() => {
+    if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
+      toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
+    }
+  }, [isErrorDistribute]);
+
+  const {
+    updateTransactionStatus: updateDistributeTransactionStatus,
+    txConfirmationHash: distributeTxConfirmationHash,
+  } = useTransactionNotification(distributeData);
+
+  const {
+    data: waitDistributeData,
+    isSuccess: isWaitDistributeSuccess,
+    status: isWaitDistributeStatus,
+  } = useWaitForTransaction({
+    hash: distributeData?.hash,
+    confirmations: 1,
+  });
+
+  useEffect(() => {
+    updateDistributeTransactionStatus(distributeStatus);
+  }, [distributeStatus]);
   //
 
   useErrorDetails(errorAllocate, "errorAllocate");
-
   const { updateTransactionStatus, txConfirmationHash } =
     useTransactionNotification(allocateData);
 
   useEffect(() => {
     triggerRenderProposals();
-  }, [txConfirmationHash]);
+  }, [txConfirmationHash, distributeTxConfirmationHash]);
 
   useEffect(() => {
     updateTransactionStatus(allocateStatus);
@@ -488,6 +512,94 @@ export function Proposals({
                       Of your governance weight is supporting proposals
                     </p>
                   </div>
+
+                    {formatTokenAmount(inputAllocatedTokens, DECIMALS)}
+                  </span>{" "}
+                  / {formatTokenAmount(memberActivatedPoints, DECIMALS)}
+                  {" " + strategy.registryCommunity.garden.symbol}
+                </span>
+              </div>
+              <div className="w-full text-right text-2xl">
+                <span className={`transition-all`}>
+                  Your Governance Weight:{" "}
+                </span>
+                <span
+                  className={`text-3xl font-bold  ${inputAllocatedTokens >= memberActivatedPoints ? "text-red" : "text-success"} `}
+                >
+                  {calculatePercentage(
+                    Number(formatTokenAmount(memberActivatedPoints, DECIMALS)),
+                    Number(
+                      formatTokenAmount(
+                        strategy.totalEffectiveActivePoints,
+                        DECIMALS,
+                      ),
+                    ),
+                  )}
+                  %
+                </span>
+              </div>
+              <div className="w-full text-right text-2xl">
+                <span
+                  className={`text-3xl font-bold  ${inputAllocatedTokens >= memberActivatedPoints ? "text-red" : "text-success"} `}
+                >
+                  {calculatePercentage(
+                    Number(formatTokenAmount(totalAllocatedTokens, DECIMALS)),
+                    Number(formatTokenAmount(memberActivatedPoints, DECIMALS)),
+                  )}
+                  %
+                </span>
+                <span className={`transition-all`}>
+                  Of yout governance weight is supporting proposals
+                </span>
+              </div>
+            </>
+          )}
+        </header>
+        <div className="flex flex-col gap-6">
+          {proposals.map(({ title, proposalNumber, proposalStatus, id }, i) => (
+            <div
+              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
+              key={title + "_" + proposalNumber}
+            >
+              <div className="flex w-full items-center justify-between ">
+                <div className="flex flex-[30%] flex-col items-baseline gap-2">
+                  <h4 className="text-2xl font-bold">{title}</h4>
+                  <span className="text-md">ID {proposalNumber}</span>
+                </div>
+
+                <div className="flex items-center gap-8">
+                  <StatusBadge status={proposalStatus} />
+                  {/* Button to test distribute */}
+                  {!editView && !isSignalingProposal && (
+                    <Button
+                      // TODO: add flexible tooltip and func to check executability
+                      disabled={
+                        proposalStatus == "4" || !isConnected || missmatchUrl
+                      }
+                      tooltip={
+                        proposalStatus == "4"
+                          ? "Proposal already executed"
+                          : tooltipMessage
+                      }
+                      onClick={() =>
+                        writeDistribute?.({
+                          args: [
+                            strategy.poolId,
+                            [strategy.id],
+                            encodedDataProposalId(proposalNumber),
+                          ],
+                        })
+                      }
+                    >
+                      Execute
+                    </Button>
+                  )}
+                  <>
+                    <Link href={`${pathname}/proposals/${id}`}>
+                      <Button variant="outline">View Proposal</Button>
+                    </Link>
+                  </>
+
                 </div>
               </>
             )}

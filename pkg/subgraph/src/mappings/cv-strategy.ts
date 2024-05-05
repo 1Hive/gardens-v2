@@ -171,7 +171,10 @@ export function handlePoolAmountIncreased(event: PoolAmountIncreased): void {
     ]);
     return;
   }
-  cvs.poolAmount = event.params.amount;
+
+  cvs.poolAmount = cvs.poolAmount
+    ? cvs.poolAmount.plus(event.params.amount)
+    : event.params.amount;
   cvs.save();
 }
 
