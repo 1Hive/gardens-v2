@@ -89,6 +89,12 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
     }
 
+    function onlyStrategyAddress(address _sender, address _strategy) private view {
+        if (_sender != _strategy) {
+            revert SenderNotStrategy();
+        }
+    }
+
     function onlyActivatedInStrategy(address _strategy) private view {
         if (!memberActivatedInStrategies[msg.sender][_strategy]) {
             revert PointsDeactivated();
@@ -109,7 +115,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     error UserAlreadyDeactivated();
     error StrategyExists();
     error StrategyDisabled();
-    error CallerIsNotNewOnwer();
+    error SenderNotNewOwner();
+    error SenderNotStrategy();
     error ValueCannotBeZero();
     error KickNotEnabled();
     error PointsDeactivated();
@@ -274,6 +281,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     function deactivateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
         revertZeroAddress(_strategy);
+        onlyStrategyAddress(msg.sender, _strategy);
 
         if (!memberActivatedInStrategies[_member][_strategy]) {
             revert UserAlreadyDeactivated();
@@ -397,7 +405,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
     function acceptCouncilSafe() public {
         if (msg.sender != pendingCouncilSafe) {
-            revert CallerIsNotNewOnwer();
+            revert SenderNotNewOwner();
         }
         _changeCouncilSafe();
     }
