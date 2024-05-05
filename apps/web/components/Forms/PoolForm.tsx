@@ -35,8 +35,6 @@ import FormPreview, { FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
 
-const PRECISION_SCALE = 10 ** 4;
-
 type PoolSettings = {
   spendingLimit?: number;
   minimumConviction?: number;
@@ -49,18 +47,18 @@ type FormInputs = {
   strategyType: number;
   pointSystemType: number;
   optionType?: number;
+  maxAmount?: number;
 } & PoolSettings;
-
-type PointSystemConfig = [BigInt, BigInt, BigInt, BigInt];
 
 type InitializeParams = [
   Address,
   BigInt,
   BigInt,
   BigInt,
+  BigInt,
   number,
   number,
-  PointSystemConfig,
+  [BigInt],
 ];
 type Metadata = [BigInt, string];
 type CreatePoolParams = [Address, Address, InitializeParams, Metadata];
@@ -107,6 +105,7 @@ const poolSettingValues: Record<
 };
 
 const ARB_BLOCK_TIME = 0.23;
+const MIN_VALUE = 0.000000000001;
 
 function calculateDecay(blockTime: number, convictionGrowth: number) {
   const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
@@ -141,6 +140,8 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { address } = useAccount();
+
+  const pointSystemType = watch("pointSystemType");
 
   const formRowTypes: Record<string, FormRowTypes> = {
     optionType: {
@@ -210,7 +211,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
   const contractWrite = async (ipfsHash: string) => {
     const strategyAddr = await triggerDeployContract();
     if (strategyAddr == null) {
-      console.log("error deploying cvStrategy");
+      toast.error("error deploying cvStrategy contract");
       return;
     }
 
@@ -230,7 +231,6 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       convictionGrowth = poolSettingValues[optionType].values
         ?.convictionGrowth as number;
     }
-    console.log(spendingLimit, minimumConviction);
 
     const SPENDING_LIMIT_CONSTANT = 0.77645;
 
@@ -246,40 +246,20 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       Math.round(calculateDecay(ARB_BLOCK_TIME, convictionGrowth)),
     );
 
-    console.log(maxRatio, weight, decay);
-
-    // pointConfig
-    const pointsPerTokenStaked = BigInt(1 * PRECISION_SCALE);
-    const maxAmount = BigInt(100 * PRECISION_SCALE);
-    const pointsPerMember = BigInt(100 * PRECISION_SCALE);
-    const tokensPerPoint = BigInt(
-      ((1 * 10 ** token?.decimals) as number).toString(),
-    );
-
-    console.log(
-      pointsPerTokenStaked,
-      maxAmount,
-      pointsPerMember,
-      tokensPerPoint,
-    );
+    const minThresholdPoints = BigInt(1 * 10 ** 4);
+    // 1000 for precision this is a default value that can change later on
 
     const metadata: Metadata = [BigInt(1), ipfsHash];
-
-    const pointConfig: PointSystemConfig = [
-      pointsPerTokenStaked,
-      maxAmount,
-      pointsPerMember,
-      tokensPerPoint,
-    ];
 
     const params: InitializeParams = [
       communityAddr,
       decay,
       maxRatio,
       weight,
+      minThresholdPoints,
       previewData?.strategyType as number, // proposalType
       previewData?.pointSystemType as number, // pointSystem
-      pointConfig,
+      [BigInt(previewData?.maxAmount || 0)], // pointConfig
     ];
 
     const args: CreatePoolParams = [
@@ -288,7 +268,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       params,
       metadata,
     ];
-
+    console.log(args);
     write({ args: args });
   };
 
@@ -298,7 +278,8 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     functionName: "createPool",
     onSuccess: () =>
       router.push(pathname.replace(`/${communityAddr}/create-pool`, "")),
-    onError: () => alert("Something went wrong creating a pool"),
+    onError: () =>
+      toast.error("Something went wrong creating a pool, check logs"),
     onSettled: () => setLoading(false),
   });
 
@@ -483,6 +464,31 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
               }))}
             ></FormSelect>
           </div>
+          {pointSystemType == 1 && (
+            <div className="flex flex-col">
+              <FormInput
+                label="Max token amount"
+                register={register}
+                required
+                registerOptions={{
+                  min: {
+                    value: MIN_VALUE,
+                    message: "Amount must be greater than 0",
+                  },
+                }}
+                otherProps={{ step: MIN_VALUE }}
+                errors={errors}
+                className="pr-14"
+                registerKey="maxAmount"
+                type="number"
+                placeholder="0"
+              >
+                <span className="absolute right-4 top-4 text-black">
+                  {token.symbol}
+                </span>
+              </FormInput>
+            </div>
+          )}
         </div>
       )}
       <div className="flex w-full items-center justify-center py-6">
