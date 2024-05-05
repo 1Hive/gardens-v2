@@ -24,3 +24,4 @@ export { GovernanceComponent } from "./GovernanceComponent";
 export { Show, When, Else } from "./Show";
 export { FormLink } from "./FormLink";
 export { Layout } from "./Layout";
+export {DisplayNumber } from "./DisplayNumber";

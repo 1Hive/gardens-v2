@@ -150,6 +150,7 @@ export default async function Pool({
             alloInfo={alloInfo}
             communityAddress={communityAddress}
             createProposalUrl={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
+            proposalType={proposalType}
           />
         </main>
       </div>
