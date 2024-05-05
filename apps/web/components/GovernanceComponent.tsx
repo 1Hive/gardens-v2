@@ -72,9 +72,9 @@ export const GovernanceComponent: FC<PoolGovernanceStatsProps> = ({
                   </div>
                   <div className="flex w-full items-baseline gap-6">
                     <h5 className="">Your governance weight:</h5>
-                    <p className="text-4xl">
+                    <p className="text-4xl text-info">
                       {memberPoolWeight}%{" "}
-                      <span className="text-lg">of the pool </span>
+                      <span className="text-lg text-black">of the pool </span>
                     </p>
                   </div>
                 </>

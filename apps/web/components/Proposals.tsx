@@ -397,14 +397,32 @@ export function Proposals({
     );
   }, [totalAllocatedTokens, memberActivatedPoints]);
 
-  const poolWeightUsed = useMemo(() => {
-    return (
-      (Number(calcMemberSupportedProposalsPct) * Number(calcMemberPoolWeight)) /
-      100
-    )
+  //this function calculate the pool weight used with a
+  //callback as argument
+  const calcPoolWeightUsed = (callback: any) => {
+    return ((Number(callback) * Number(calcMemberPoolWeight)) / 100)
       .toFixed(1)
       .toString();
-  }, [calcMemberSupportedProposalsPct, calcMemberPoolWeight]);
+  };
+
+  //this variable return the overall pool weight
+  //used by the member throw all supported proposals
+  const poolWeightUsedSum = useMemo(() => {
+    return calcPoolWeightUsed(calcMemberSupportedProposalsPct);
+  }, [calcMemberSupportedProposalsPct]);
+
+  //used this function as a callback to calcPoolWeightUsed to calculate each proposal supported weight in pool
+  //based on member activated points and total activated points in pool.
+  const calcPoolWeightUsedByProposal = useMemo(() => {
+    const _calcPoolWeightByProposal = (index: number) => {
+      return calcDivisionToPct(
+        inputs[index]?.value ?? 0,
+        memberActivatedPoints,
+        DECIMALS,
+      );
+    };
+    return _calcPoolWeightByProposal;
+  }, [memberActivatedPoints, inputs]);
 
   //Execute Disable Button condition => message mapping
   // const disableExecuteBtnCondition: ConditionObject[] = [
@@ -455,14 +473,14 @@ export function Proposals({
               <>
                 <div className="flex w-full items-start text-right">
                   <div className="flex w-full flex-col items-center">
-                    <p className={`text-center text-3xl text-info`}>
-                      {poolWeightUsed} %
+                    <p className={`text-center text-4xl text-info`}>
+                      {poolWeightUsedSum} %
                     </p>
                     <p className="text-md text-left">Pool weight used</p>
                   </div>
                   <div className="flex w-full flex-col items-center">
                     <p
-                      className={`text-center text-5xl ${Number(calcMemberSupportedProposalsPct) >= 100 && "text-info"}`}
+                      className={`text-center text-5xl ${Number(calcMemberSupportedProposalsPct) >= 100 && "text-warning"}`}
                     >
                       {calcMemberSupportedProposalsPct} %
                     </p>
@@ -550,48 +568,34 @@ export function Proposals({
                           </div>
                         </div>
                         <div className="mb-2">
-                          {Number(
-                            (inputs[i].value * 100) / memberActivatedPoints,
-                          ).toFixed(2)}
-                          %
+                          <p className="text-2xl font-semibold">
+                            {Number(
+                              (inputs[i].value * 100) / memberActivatedPoints,
+                            ).toFixed(2)}
+                            %
+                          </p>
                         </div>
                       </div>
                       <div className="flex max-w-sm flex-1 items-baseline justify-center gap-2 px-8">
-                        {inputs[i]?.value > stakedFilteres[i]?.value ? (
-                          <p className="text-center text-success">
-                            You are adding support up to{" "}
-                            <span className="px-2 py-2 text-3xl font-semibold">
-                              {Number(
-                                (inputs[i].value * 100) / memberActivatedPoints,
-                              ).toFixed(2)}
-                            </span>
-                            %
-                          </p>
-                        ) : inputs[i]?.value < stakedFilteres[i]?.value ? (
-                          <p className="text-center text-info">
-                            You are removing support down to{" "}
-                            <span className="px-2 py-1 text-3xl font-semibold">
-                              {Number(
-                                (inputs[i].value * 100) / memberActivatedPoints,
-                              ).toFixed(2)}
-                            </span>
-                            %
-                          </p>
-                        ) : inputs[i]?.value == stakedFilteres[i]?.value ? (
+                        {inputs[i]?.value < stakedFilteres[i]?.value ? (
                           <p className="text-center">
-                            You have assigned{" "}
-                            <span className="px-2 text-3xl font-semibold">
-                              {Number(
-                                (stakedFilteres[i].value * 100) /
-                                  memberActivatedPoints,
-                              ).toFixed(2)}
-                              %
+                            Removing to
+                            <span className="px-2 py-1 text-3xl font-semibold text-info">
+                              {calcPoolWeightUsed(
+                                calcPoolWeightUsedByProposal(i),
+                              )}
                             </span>
-                            of your support to this proposal
+                            % of pool weight
                           </p>
                         ) : (
-                          <p className="text-gray-400">
-                            You have not support this proposal
+                          <p className="text-center">
+                            Assingning
+                            <span className="px-2 py-2 text-3xl font-semibold text-info">
+                              {calcPoolWeightUsed(
+                                calcPoolWeightUsedByProposal(i),
+                              )}
+                            </span>
+                            % of pool weight
                           </p>
                         )}
                       </div>
