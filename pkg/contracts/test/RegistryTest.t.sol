@@ -698,6 +698,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
         stopMeasuringGas();
     }
+
     function test_revertDecreasePower() public {
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
