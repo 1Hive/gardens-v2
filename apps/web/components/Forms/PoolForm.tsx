@@ -34,6 +34,7 @@ import { FormSelect } from "./FormSelect";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
+import { ARB_BLOCK_TIME, INPUT_MIN_VALUE, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -103,9 +104,6 @@ const poolSettingValues: Record<
     },
   },
 };
-
-const ARB_BLOCK_TIME = 0.23;
-const MIN_VALUE = 0.000000000001;
 
 function calculateDecay(blockTime: number, convictionGrowth: number) {
   const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
@@ -232,10 +230,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
         ?.convictionGrowth as number;
     }
 
-    const SPENDING_LIMIT_CONSTANT = 0.77645;
-
-    const maxRatioNum =
-      (spendingLimit / SPENDING_LIMIT_CONSTANT / 100) * 10 ** 7;
+    const maxRatioNum = (spendingLimit / MAX_RATIO_CONSTANT / 100) * 10 ** 7;
     const weightNum = (minimumConviction / 100) * (spendingLimit / 100) ** 2;
     // const convictionCalc = convictionGrowth / 24 / 60;
 
@@ -472,11 +467,11 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                 required
                 registerOptions={{
                   min: {
-                    value: MIN_VALUE,
+                    value: INPUT_MIN_VALUE,
                     message: "Amount must be greater than 0",
                   },
                 }}
-                otherProps={{ step: MIN_VALUE }}
+                otherProps={{ step: INPUT_MIN_VALUE }}
                 errors={errors}
                 className="pr-14"
                 registerKey="maxAmount"

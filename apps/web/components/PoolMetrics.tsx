@@ -8,7 +8,7 @@ import {
   useContractWrite,
   useWaitForTransaction,
 } from "wagmi";
-import { formatTokenAmount } from "@/utils/numbers";
+import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
 import { Button } from "./Button";
@@ -198,10 +198,10 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
               </div>
               <div className="mt-4 flex w-full items-baseline gap-8">
                 <h4 className="stat-title text-center text-lg font-bold">
-                  Spendig Limit:
+                  Spending Limit:
                 </h4>
                 <span className="stat-value ml-8 text-center text-xl">
-                  {`${spendingLimit} %`}
+                  {`${((spendingLimit || 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
                 </span>
               </div>
             </div>
