@@ -32,10 +32,10 @@ import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { queryByChain } from "@/providers/urql";
 import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { useUrqlClient } from "@/hooks/useUqrlClient"; { toast } from "react-toastify";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { toast } from "react-toastify";
 import { FormLink, GovernanceComponent } from "@/components";
 import * as dn from "dnum";
-
 
 type InputItem = {
   id: string;
@@ -512,98 +512,13 @@ export function Proposals({
                       Of your governance weight is supporting proposals
                     </p>
                   </div>
-
-                    {formatTokenAmount(inputAllocatedTokens, DECIMALS)}
-                  </span>{" "}
-                  / {formatTokenAmount(memberActivatedPoints, DECIMALS)}
-                  {" " + strategy.registryCommunity.garden.symbol}
-                </span>
-              </div>
-              <div className="w-full text-right text-2xl">
-                <span className={`transition-all`}>
-                  Your Governance Weight:{" "}
-                </span>
-                <span
-                  className={`text-3xl font-bold  ${inputAllocatedTokens >= memberActivatedPoints ? "text-red" : "text-success"} `}
-                >
-                  {calculatePercentage(
-                    Number(formatTokenAmount(memberActivatedPoints, DECIMALS)),
-                    Number(
-                      formatTokenAmount(
-                        strategy.totalEffectiveActivePoints,
-                        DECIMALS,
-                      ),
-                    ),
-                  )}
-                  %
-                </span>
-              </div>
-              <div className="w-full text-right text-2xl">
-                <span
-                  className={`text-3xl font-bold  ${inputAllocatedTokens >= memberActivatedPoints ? "text-red" : "text-success"} `}
-                >
-                  {calculatePercentage(
-                    Number(formatTokenAmount(totalAllocatedTokens, DECIMALS)),
-                    Number(formatTokenAmount(memberActivatedPoints, DECIMALS)),
-                  )}
-                  %
-                </span>
-                <span className={`transition-all`}>
-                  Of yout governance weight is supporting proposals
-                </span>
-              </div>
-            </>
-          )}
-        </header>
-        <div className="flex flex-col gap-6">
-          {proposals.map(({ title, proposalNumber, proposalStatus, id }, i) => (
-            <div
-              className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
-              key={title + "_" + proposalNumber}
-            >
-              <div className="flex w-full items-center justify-between ">
-                <div className="flex flex-[30%] flex-col items-baseline gap-2">
-                  <h4 className="text-2xl font-bold">{title}</h4>
-                  <span className="text-md">ID {proposalNumber}</span>
-                </div>
-
-                <div className="flex items-center gap-8">
-                  <StatusBadge status={proposalStatus} />
-                  {/* Button to test distribute */}
-                  {!editView && !isSignalingProposal && (
-                    <Button
-                      // TODO: add flexible tooltip and func to check executability
-                      disabled={
-                        proposalStatus == "4" || !isConnected || missmatchUrl
-                      }
-                      tooltip={
-                        proposalStatus == "4"
-                          ? "Proposal already executed"
-                          : tooltipMessage
-                      }
-                      onClick={() =>
-                        writeDistribute?.({
-                          args: [
-                            strategy.poolId,
-                            [strategy.id],
-                            encodedDataProposalId(proposalNumber),
-                          ],
-                        })
-                      }
-                    >
-                      Execute
-                    </Button>
-                  )}
-                  <>
-                    <Link href={`${pathname}/proposals/${id}`}>
-                      <Button variant="outline">View Proposal</Button>
-                    </Link>
-                  </>
-
                 </div>
               </>
             )}
           </header>
+        </div>
+
+        <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-6">
             {proposals.map(
               ({ title, proposalNumber, proposalStatus, id }, i) => (
@@ -742,6 +657,7 @@ export function Proposals({
             <p className="font-semibold">{message}</p>
           </div>
         </div>
+
         <div>
           <h4 className="text-2xl">Do you have a great idea?</h4>
           <div className="flex items-center gap-6">
