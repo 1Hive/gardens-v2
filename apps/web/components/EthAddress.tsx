@@ -2,7 +2,6 @@
 import React from "react";
 import { Addreth, ThemeDeclaration, Theme } from "addreth";
 import { Address } from "viem";
-import { base } from "viem/chains";
 
 type EthAddressProps = {
   address: Address;
