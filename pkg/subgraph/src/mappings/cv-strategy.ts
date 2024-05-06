@@ -248,7 +248,9 @@ export function handleSupportAdded(event: SupportAdded): void {
 export function handleDistributed(event: Distributed): void {
   log.debug("handleDistributed: amount: {}", [event.params.amount.toString()]);
 
-  let cvp = CVProposal.load(event.params.proposalId.toHexString());
+  const proposalId = `${event.address.toHexString()}-${event.params.proposalId}`;
+
+  let cvp = CVProposal.load(proposalId);
   if (cvp == null) {
     log.debug("handleDistributed cvp not found: {}", [
       event.params.proposalId.toString(),
