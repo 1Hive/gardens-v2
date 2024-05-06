@@ -10,6 +10,7 @@ import {
   custom,
   encodeAbiParameters,
   http,
+  parseUnits,
 } from "viem";
 import { Button } from "@/components/Button";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -34,7 +35,11 @@ import { FormSelect } from "./FormSelect";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
-import { ARB_BLOCK_TIME, INPUT_MIN_VALUE, MAX_RATIO_CONSTANT } from "@/utils/numbers";
+import {
+  ARB_BLOCK_TIME,
+  INPUT_MIN_VALUE,
+  MAX_RATIO_CONSTANT,
+} from "@/utils/numbers";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -163,6 +168,9 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       label: "Point system type:",
       parse: (value: string) => pointSystems[value],
     },
+    maxAmount: {
+      label: "Token max amount:",
+    },
   };
 
   useEffect(() => {
@@ -246,6 +254,8 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
 
     const metadata: Metadata = [BigInt(1), ipfsHash];
 
+    const maxAmountStr = (previewData?.maxAmount || 0).toString();
+
     const params: InitializeParams = [
       communityAddr,
       decay,
@@ -254,7 +264,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       minThresholdPoints,
       previewData?.strategyType as number, // proposalType
       previewData?.pointSystemType as number, // pointSystem
-      [BigInt(previewData?.maxAmount || 0)], // pointConfig
+      [parseUnits(maxAmountStr, token.decimals)], // pointConfig
     ];
 
     const args: CreatePoolParams = [
@@ -325,6 +335,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     const reorderedData = {
       strategyType: previewData.strategyType,
       pointSystemType: previewData.pointSystemType,
+      maxAmount: previewData.maxAmount as number,
       optionType: previewData.optionType as number,
       spendingLimit: previewData.spendingLimit as number,
       minimumConviction: previewData.minimumConviction as number,
@@ -333,6 +344,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
+      if (key == "maxAmount" && previewData.pointSystemType != 1) return;
       if (formRow) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
@@ -462,7 +474,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
           {pointSystemType == 1 && (
             <div className="flex flex-col">
               <FormInput
-                label="Max token amount"
+                label="Token max amount"
                 register={register}
                 required
                 registerOptions={{
