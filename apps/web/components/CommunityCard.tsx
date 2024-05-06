@@ -49,11 +49,11 @@ export function CommunityCard({
   let registerToken = tokenGarden?.id ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
 
-  const SiganlingPools = pools.filter(
+  const signalingPools = pools.filter(
     (pool) => pool.config?.proposalType === "0",
   );
 
-  const FundingPools = pools.filter(
+  const fundingPools = pools.filter(
     (pool) => pool.config?.proposalType === "1",
   );
 
@@ -122,12 +122,12 @@ export function CommunityCard({
             </div>
 
             <h5 className="font-bold">
-              Signaling pools ( {SiganlingPools.length} ){" "}
+              Signaling pools ( {signalingPools.length} ){" "}
             </h5>
             <div
               className={`flex w-full transform flex-wrap gap-4 overflow-x-auto transition-height duration-200 ease-in-out  `}
             >
-              {SiganlingPools.map((pool, i) => (
+              {signalingPools.map((pool, i) => (
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
 
@@ -144,12 +144,12 @@ export function CommunityCard({
               )} */}
             </div>
             <h5 className="mt-4 font-bold">
-              Funding pools ( {FundingPools.length} )
+              Funding pools ( {fundingPools.length} )
             </h5>
             <div
               className={`flex w-full transform flex-wrap gap-4 overflow-x-auto transition-height duration-200 ease-in-out  `}
             >
-              {FundingPools.map((pool, i) => (
+              {fundingPools.map((pool, i) => (
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
             </div>

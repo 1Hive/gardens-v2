@@ -296,32 +296,38 @@ export const IncreasePower = ({
       ></TransactionModal>
 
       {/* input */}
-      <div className="flex max-w-md flex-col space-y-2">
-        <div className="mt-3 flex max-w-[420px] items-center gap-2 rounded-lg bg-info px-2 py-1 text-white">
+      <div className="grid max-w-[420px] grid-cols-2 gap-4">
+        <div className="col-span-2 mt-3 items-center gap-2 rounded-lg bg-info px-2 py-1 text-white">
           <ExclamationCircleIcon height={32} width={32} />
-          <p className="text-sm">
+          <p className="text-sm text-white">
             Staking more tokens in the community will increase your voting power
             to support proposals
           </p>
         </div>
 
-        <div className="relative max-w-[420px]">
+        {/* <div className="flex max-w-md flex-row space-x-6"> */}
+        <div className="flex items-center">
+          <span className="text-black">{`${Number(accountTokenBalance?.formatted)} ${tokenSymbol}`}</span>
+        </div>
+        {/* <div className=""> */}
+        <div className="relative">
           <input
             type="number"
             value={increaseInput}
             placeholder="Amount"
-            className="input input-bordered input-info w-full disabled:bg-gray-300 disabled:text-black"
+            className="input input-bordered input-info disabled:bg-gray-300 disabled:text-black"
             onChange={(e) => handleInputChange(e)}
             disabled={!isMember}
           />
-          <span className="absolute right-10 top-3.5 text-black">
+          <span className="absolute right-1 top-3.5 text-black">
             {tokenSymbol}
           </span>
         </div>
+        {/* </div> */}
 
         <Button
           onClick={handleChange}
-          className="w-full max-w-[420px]"
+          className="w-full max-w-[210px]"
           disabled={disabledIncPowerButton}
           tooltip={tooltipMessage}
         >
@@ -333,7 +339,7 @@ export const IncreasePower = ({
 
         <Button
           onClick={() => writeDecreasePower?.()}
-          className="w-full max-w-[420px]"
+          className="w-full max-w-[210px]"
           disabled={disabledIncPowerButton}
           tooltip={tooltipMessage}
         >
@@ -341,6 +347,60 @@ export const IncreasePower = ({
           <span className="loading-spinner"></span>
         </Button>
       </div>
+
+      {/* <div className="flex max-w-md flex-col space-y-2">
+        <div className="mt-3 flex max-w-[420px] items-center gap-2 rounded-lg bg-info px-2 py-1 text-white">
+          <ExclamationCircleIcon height={32} width={32} />
+          <p className="text-sm">
+            Staking more tokens in the community will increase your voting power
+            to support proposals
+          </p>
+        </div>
+
+        <div className="flex max-w-md flex-row space-x-6">
+          <div className="flex items-center">
+            <span className="text-black">{`${Number(accountTokenBalance?.formatted)} ${tokenSymbol}`}</span>
+          </div>
+          {/* <div className="">
+          <div className="relative max-w-[420px]">
+            <input
+              type="number"
+              value={increaseInput}
+              placeholder="Amount"
+              className="input input-bordered input-info disabled:bg-gray-300 disabled:text-black"
+              onChange={(e) => handleInputChange(e)}
+              disabled={!isMember}
+            />
+            <span className="absolute right-10 top-3.5 text-black">
+              {tokenSymbol}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex max-w-md flex-row space-x-2">
+          <Button
+            onClick={handleChange}
+            className="w-full max-w-[420px]"
+            disabled={disabledIncPowerButton}
+            tooltip={tooltipMessage}
+          >
+            {increaseInput !== undefined && increaseInput > 0
+              ? `Stake ${tokenSymbol}`
+              : "Increase stake"}
+            <span className="loading-spinner"></span>
+          </Button>
+
+          <Button
+            onClick={() => writeDecreasePower?.()}
+            className="w-full max-w-[420px]"
+            disabled={disabledIncPowerButton}
+            tooltip={tooltipMessage}
+          >
+            Decrease stake
+            <span className="loading-spinner"></span>
+          </Button>
+        </div>
+      </div> */}
     </>
   );
 };
