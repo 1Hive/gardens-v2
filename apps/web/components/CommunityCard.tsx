@@ -209,7 +209,7 @@ export function CommunityCard({
             </div>
 
             {/* IncreasePower funcionality - alpha test */}
-            <h3 className="mt-10">Customize you stake in the community</h3>
+            <h3 className="mt-10">Your stake in the community</h3>
             <IncreasePower
               communityAddress={communityAddress as Address}
               registerToken={registerToken as Address}
