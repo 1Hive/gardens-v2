@@ -1,4 +1,5 @@
 "use client";
+import { useCallback, useEffect, useState } from "react";
 import { Button, RegisterMember } from "@/components";
 import {
   UserGroupIcon,
@@ -16,9 +17,16 @@ import { Address, useAccount } from "wagmi";
 import {
   TokenGarden,
   getCommunitiesByGardenQuery,
+  isMemberDocument,
+  isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
 import Link from "next/link";
+import { queryByChain } from "@/providers/urql";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { getChainIdFromPath } from "@/utils/path";
+
+export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -42,7 +50,52 @@ export function CommunityCard({
   tokenGarden,
 }: CommunityCardProps) {
   const { address: accountAddress } = useAccount();
+  const [memberStakedTokens, setMemberStakedTokens] = useState<
+    StakesMemberType | undefined
+  >();
   const pathname = usePathname();
+
+  const urqlClient = useUrqlClient();
+
+  const chainId = getChainIdFromPath();
+
+  const runIsMemberQuery = useCallback(async () => {
+    if (accountAddress === undefined) {
+      return;
+    }
+    const { data: result, error } = await queryByChain<isMemberQuery>(
+      urqlClient,
+      chainId,
+      isMemberDocument,
+      {
+        me: accountAddress.toLowerCase(),
+        comm: communityAddress.toLowerCase(),
+      },
+    );
+
+    if (result && result.members.length > 0) {
+      const memberStakedTokens = (result.members?.[0].memberCommunity?.[0]
+        .stakedTokens ?? 0) as StakesMemberType;
+
+      setMemberStakedTokens(memberStakedTokens);
+    }
+  }, [accountAddress]);
+
+  const calculateRemainingStake = () => {
+    const remainingStake = formatTokenAmount(
+      Number(memberStakedTokens ?? 0) - Number(registerStakeAmount),
+      tokenGarden?.decimals,
+    );
+
+    return Number(remainingStake);
+  };
+
+  //diff between registerAmount and totalStakeAmount
+  const addedStake = calculateRemainingStake();
+
+  useEffect(() => {
+    runIsMemberQuery();
+  }, [accountAddress]);
 
   const pools = strategies ?? [];
   members = members ?? [];
@@ -91,6 +144,7 @@ export function CommunityCard({
                 <BuildingOffice2Icon className="inline-block h-8 w-8 text-secondary" />
               </div>
               <div className="stat-title">Pools</div>
+
               <div className="stat-value text-secondary">{pools.length}</div>
               {/* TODO: add this parameter */}
               <div className="stat-desc"> # in total funds</div>
@@ -162,6 +216,7 @@ export function CommunityCard({
               connectedAccount={accountAddress as Address}
               tokenSymbol={tokenGarden?.symbol as string}
               registerTokenDecimals={tokenGarden?.decimals as number}
+              addedStake={addedStake}
             />
           </div>
         </main>

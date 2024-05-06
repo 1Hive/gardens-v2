@@ -27,6 +27,7 @@ type IncreasePowerProps = {
   connectedAccount: Address;
   tokenSymbol: string;
   registerTokenDecimals: number;
+  addedStake: number;
 };
 
 const InitialTransactionSteps: TransactionStep[] = [
@@ -55,6 +56,7 @@ export const IncreasePower = ({
   connectedAccount,
   tokenSymbol,
   registerTokenDecimals,
+  addedStake,
 }: IncreasePowerProps) => {
   //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
@@ -276,10 +278,30 @@ export const IncreasePower = ({
       message: `You have a pending allowance of ${formatTokenAmount(allowance ?? 0n, registerTokenDecimals)} ${tokenSymbol}. In order to stake more tokens, plaese stake the pending allowance first`,
     },
   ];
+
+  const disableDecPowerBtnCondition: ConditionObject[] = [
+    ...disableIncPowerBtnCondition,
+    {
+      condition: addedStake === 0 || addedStake === undefined,
+      message: "You have no stake to decrease",
+    },
+    {
+      condition: increaseInput !== undefined && increaseInput > addedStake,
+      message: "Can not decrease more than added stake",
+    },
+  ];
+
+  const disabledDecPowerButton = disableDecPowerBtnCondition.some(
+    (cond) => cond.condition,
+  );
+
   const disabledIncPowerButton = disableIncPowerBtnCondition.some(
     (cond) => cond.condition,
   );
   const { tooltipMessage } = useDisableButtons(disableIncPowerBtnCondition);
+  const { tooltipMessage: decreaseTooltipMsg } = useDisableButtons(
+    disableDecPowerBtnCondition,
+  );
   //
 
   return (
@@ -297,7 +319,7 @@ export const IncreasePower = ({
 
       {/* input */}
       <div className="grid max-w-[420px] grid-cols-2 gap-4">
-        <div className="col-span-2 mt-3 items-center gap-2 rounded-lg bg-info px-2 py-1 text-white">
+        <div className="col-span-2 mt-3 flex items-center gap-2 rounded-lg bg-info px-2 py-4 text-white">
           <ExclamationCircleIcon height={32} width={32} />
           <p className="text-sm text-white">
             Staking more tokens in the community will increase your voting power
@@ -305,25 +327,37 @@ export const IncreasePower = ({
           </p>
         </div>
 
-        {/* <div className="flex max-w-md flex-row space-x-6"> */}
-        <div className="flex items-center">
-          <span className="text-black">{`${Number(accountTokenBalance?.formatted)} ${tokenSymbol}`}</span>
+        <div className="col-span-2 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-lg text-black">
+                balance: {`${Number(accountTokenBalance?.formatted)}`}
+                <span className="px-1 text-xs">{tokenSymbol}</span>
+              </span>
+            </div>
+
+            <div>
+              <span className="text-lg text-black">
+                addedStake : {addedStake}
+                <span className="px-1 text-xs">{tokenSymbol}</span>
+              </span>
+            </div>
+          </div>
+          {/* <div className=""> */}
+          <div className="relative">
+            <input
+              type="number"
+              value={increaseInput}
+              placeholder="Amount"
+              className="input input-bordered input-info w-full disabled:bg-gray-300 disabled:text-black"
+              onChange={(e) => handleInputChange(e)}
+              disabled={!isMember}
+            />
+            <span className="absolute right-8 top-3.5 text-black">
+              {tokenSymbol}
+            </span>
+          </div>
         </div>
-        {/* <div className=""> */}
-        <div className="relative">
-          <input
-            type="number"
-            value={increaseInput}
-            placeholder="Amount"
-            className="input input-bordered input-info disabled:bg-gray-300 disabled:text-black"
-            onChange={(e) => handleInputChange(e)}
-            disabled={!isMember}
-          />
-          <span className="absolute right-1 top-3.5 text-black">
-            {tokenSymbol}
-          </span>
-        </div>
-        {/* </div> */}
 
         <Button
           onClick={handleChange}
@@ -340,8 +374,8 @@ export const IncreasePower = ({
         <Button
           onClick={() => writeDecreasePower?.()}
           className="w-full max-w-[210px]"
-          disabled={disabledIncPowerButton}
-          tooltip={tooltipMessage}
+          disabled={disabledDecPowerButton}
+          tooltip={decreaseTooltipMsg}
         >
           Decrease stake
           <span className="loading-spinner"></span>
