@@ -6,6 +6,7 @@ import {
   MemberCommunity,
   Allo,
   CVStrategy,
+  MemberStrategy,
 } from "../../generated/schema";
 
 import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
@@ -271,7 +272,17 @@ export function handleMemberDeactivatedStrategy(
   const maxCVSupply = cvc.getMaxConviction(totalEffectiveActivePoints);
   strategy.maxCVSupply = maxCVSupply;
 
+  const memberStrategyId = `${memberAddress.toHexString()}-${strategyAddress.toHexString()}`;
+  const memberStrategy = MemberStrategy.load(memberStrategyId);
+
+  if (!memberStrategy) {
+    log.error("memberStrategy not found: {}", [memberStrategyId]);
+    return;
+  }
+  memberStrategy.activatedPoints = BigInt.fromI32(0);
+
   strategy.memberActive = membersActive;
+  memberStrategy.save();
   strategy.save();
 }
 
