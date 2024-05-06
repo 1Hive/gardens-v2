@@ -89,7 +89,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
     }
 
-    function onlyStrategyAddress(address _sender, address _strategy) private view {
+    function onlyStrategyAddress(address _sender, address _strategy) private pure {
         if (_sender != _strategy) {
             revert SenderNotStrategy();
         }

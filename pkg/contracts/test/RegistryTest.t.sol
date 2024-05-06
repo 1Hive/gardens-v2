@@ -690,12 +690,18 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_revert_deactivateMemberInStrategyCaller() public {
         startMeasuringGas("Registering and kicking member");
+
         vm.startPrank(gardenMember);
+
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
+
         _registryCommunity().stakeAndRegisterMember();
+
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.SenderNotStrategy.selector));
         _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
+
         vm.stopPrank();
+
         stopMeasuringGas();
     }
 
