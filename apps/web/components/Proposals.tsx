@@ -405,62 +405,31 @@ export function Proposals({
     return formatDivisionResult;
   };
 
-  const calcMemberPoolWeight = useMemo(() => {
+  const calcMemberPoolWeight = calcDivisionToPct(
+    memberActivatedPoints,
+    strategy.totalEffectiveActivePoints,
+    DECIMALS,
+  );
+
+  const calcMemberSupportedProposalsPct = calcDivisionToPct(
+    totalAllocatedTokens,
+    memberActivatedPoints,
+    DECIMALS,
+  );
+
+  const calcPoolWeightUsedByProposal = (index: number) => {
     return calcDivisionToPct(
+      inputs[index]?.value ?? 0,
       memberActivatedPoints,
-      strategy.totalEffectiveActivePoints,
       DECIMALS,
     );
-  }, [memberActivatedPoints, strategy.totalEffectiveActivePoints]);
+  };
 
-  const calcMemberSupportedProposalsPct = useMemo(() => {
-    return calcDivisionToPct(
-      totalAllocatedTokens,
-      memberActivatedPoints,
-      DECIMALS,
-    );
-  }, [totalAllocatedTokens, memberActivatedPoints]);
-
-  //this function calculate the pool weight used with a
-  //callback as argument
   const calcPoolWeightUsed = (callback: any) => {
     return ((Number(callback) * Number(calcMemberPoolWeight)) / 100)
       .toFixed(1)
       .toString();
   };
-
-  //this variable return the overall pool weight
-  //used by the member throw all supported proposals
-  const poolWeightUsedSum = useMemo(() => {
-    return calcPoolWeightUsed(calcMemberSupportedProposalsPct);
-  }, [calcMemberSupportedProposalsPct]);
-
-  //used this function as a callback to calcPoolWeightUsed to calculate each proposal supported weight in pool
-  //based on member activated points and total activated points in pool.
-  const calcPoolWeightUsedByProposal = useMemo(() => {
-    const _calcPoolWeightByProposal = (index: number) => {
-      return calcDivisionToPct(
-        inputs[index]?.value ?? 0,
-        memberActivatedPoints,
-        DECIMALS,
-      );
-    };
-    return _calcPoolWeightByProposal;
-  }, [memberActivatedPoints, inputs]);
-
-  //Execute Disable Button condition => message mapping
-  // const disableExecuteBtnCondition: ConditionObject[] = [
-  //   {
-  //     condition: proposals.some((proposal) => proposal.proposalStatus == "4"),
-  //     message: "Proposal already executed",
-  //   },
-  // ];
-  // const disableExecuteButton = disableExecuteBtnCondition.some(
-  //   (cond) => cond.condition,
-  // );
-  // const tooltipMessageExecuteBtn = useDisableButtons(
-  //   disableExecuteBtnCondition,
-  // );
 
   return (
     <>
@@ -498,7 +467,7 @@ export function Proposals({
                 <div className="flex w-full items-start text-right">
                   <div className="flex w-full flex-col items-center">
                     <p className={`text-center text-4xl text-info`}>
-                      {poolWeightUsedSum} %
+                      {calcPoolWeightUsed(calcMemberSupportedProposalsPct)} %
                     </p>
                     <p className="text-md text-left">Pool weight used</p>
                   </div>
