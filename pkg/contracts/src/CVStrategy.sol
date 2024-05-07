@@ -2,11 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
-// import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
-// import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 
 import {RegistryCommunity, Metadata} from "./RegistryCommunity.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import {console} from "forge-std/console.sol";
@@ -14,7 +12,6 @@ import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 interface IPointStrategy {
-    // functiisActivatedddress _member) external;
     function deactivatePoints(address _member) external;
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256);
     function decreasePower(address _member, uint256 _amountToUntake) external returns (uint256);
@@ -225,6 +222,10 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         // // surpressStateMutabilityWarning++;
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(IPointStrategy).interfaceId || super.supportsInterface(interfaceId);
+    }
+
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
@@ -327,7 +328,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
         //requireMemberActivatedInStrategies
-
+        onlyRegistryCommunity();
         uint256 pointsToIncrease = 0;
         if (pointSystem == StrategyStruct.PointSystem.Unlimited) {
             pointsToIncrease = increasePowerUnlimited(_amountToStake);
@@ -345,6 +346,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function decreasePower(address _member, uint256 _amountToUnstake) external returns (uint256) {
+        onlyRegistryCommunity();
         //requireMemberActivatedInStrategies
 
         uint256 pointsToDecrease = 0;
@@ -376,7 +378,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         return pointsToIncrease;
     }
 
-    function increasePowerQuadratic(address _member, uint256 _amountToStake) public view returns (uint256) {
+    function increasePowerQuadratic(address _member, uint256 _amountToStake) internal view returns (uint256) {
         uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
 
         uint256 decimal = 18;
@@ -386,15 +388,10 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             console.log("Error getting decimal");
         }
         uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
+        uint256 currentPoints = registryCommunity.getMemberPowerInStrategy(_member, address(this));
 
-        console.log("======");
-        console.log("AMount to stake", _amountToStake);
-        console.log("totalExtraStake", totalStake);
-        console.log("newTotalPoints", newTotalPoints);
-        console.log("MEMBER POWER", registryCommunity.getMemberPowerInStrategy(_member, address(this)));
+        uint256 pointsToIncrease = newTotalPoints - currentPoints;
 
-        uint256 pointsToIncrease = newTotalPoints - registryCommunity.getMemberPowerInStrategy(_member, address(this));
-        console.log("POINTS TO INCREASE", pointsToIncrease);
         return pointsToIncrease;
     }
 
