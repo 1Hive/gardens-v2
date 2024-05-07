@@ -14,19 +14,12 @@ import {
 } from "viem";
 import { Button } from "@/components/Button";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import {
-  useAccount,
-  useConfig,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
+import { useAccount, useContractWrite } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { pointSystems, proposalTypes } from "@/types";
-import { localhost } from "viem/chains";
 import cvStrategyJson from "../../../../pkg/contracts/out/CVStrategy.sol/CVStrategy.json" assert { type: "json" };
 import "viem/window";
-import { chains } from "@/configs/wagmiConfig";
 import { getChainIdFromPath } from "@/utils/path";
 import { getChain } from "@/configs/chainServer";
 import { TokenGarden } from "#/subgraph/.graphclient";
