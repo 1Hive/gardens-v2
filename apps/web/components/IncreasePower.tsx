@@ -68,7 +68,7 @@ export const IncreasePower = ({
     false,
   );
 
-  const [increaseInput, setIncreaseInput] = useState<number | undefined>();
+  const [increaseInput, setIncreaseInput] = useState<number | string>("");
 
   //handeling states
   type states = "idle" | "loading" | "success" | "error";
@@ -186,6 +186,9 @@ export const IncreasePower = ({
 
   useEffect(() => {
     updateDecreasePowerTransactionStatus(decreasePowerStatus);
+    if (decreasePowerStatus === "success") {
+      setIncreaseInput("");
+    }
   }, [decreasePowerStatus]);
 
   const decreasePoweErrorName = useErrorDetails(errorDecreasePower);
@@ -242,7 +245,7 @@ export const IncreasePower = ({
   useEffect(() => {
     if (increaseStakeStatus === "success") {
       closeModal();
-      setIncreaseInput(0);
+      setIncreaseInput("");
       setPendingAllowance(false);
     }
   }, [increaseStakeStatus]);
@@ -270,8 +273,10 @@ export const IncreasePower = ({
     },
     {
       condition:
-        increaseInput == 0 || increaseInput == undefined || increaseInput < 0,
-      message: "Input can not be zero or negtive",
+        Number(increaseInput) === 0 ||
+        increaseInput === undefined ||
+        Number(increaseInput) < 0,
+      message: "Input can not be zero or negative",
     },
     {
       condition: requestesMoreThanAllowance,
@@ -286,7 +291,9 @@ export const IncreasePower = ({
       message: "You have no stake to decrease",
     },
     {
-      condition: increaseInput !== undefined && increaseInput > addedStake,
+      condition:
+        Number(increaseInput) !== undefined &&
+        Number(increaseInput) > addedStake,
       message: "Can not decrease more than current stake",
     },
   ];
@@ -368,7 +375,7 @@ export const IncreasePower = ({
           disabled={disabledIncPowerButton}
           tooltip={tooltipMessage}
         >
-          {increaseInput !== undefined && increaseInput > 0
+          {increaseInput !== undefined && Number(increaseInput) > 0
             ? `Stake ${tokenSymbol}`
             : "Increase stake"}
           <span className="loading-spinner"></span>
