@@ -28,7 +28,7 @@ export function FormRadioButton({
           className="radio"
           name={registerKey}
         />
-        <h4 className="text-md font-bold">{label}</h4>
+        <label className="text-base font-bold">{label}</label>
       </div>
       <p className="text-sm">{description}</p>
     </div>

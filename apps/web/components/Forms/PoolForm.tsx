@@ -410,7 +410,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
               )}
             </div>
             <div className="mb-6 flex flex-col">
-              <div className="flex flex-col">
+            <div className="flex flex-col max-w-64">
                 <FormInput
                   label="Spending limit"
                   register={register}
@@ -418,11 +418,25 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                   errors={errors}
                   registerKey="spendingLimit"
                   type="number"
-                  placeholder="20%"
+                  placeholder="20"
                   readOnly={optionType !== 0}
-                ></FormInput>
+                  className="pr-14"
+                  otherProps={{ step: INPUT_MIN_VALUE }}
+                  registerOptions={{
+                    max: {
+                      value: 100,
+                      message: `Max amount cannot exceed 100%`,
+                    },
+                    min: {
+                      value: INPUT_MIN_VALUE,
+                      message: "Amount must be greater than 0",
+                    },
+                  }}
+                >
+                  <span className="absolute right-4 top-4 text-black">%</span>
+                </FormInput>
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col max-w-64">
                 <FormInput
                   label="Minimum conviction"
                   register={register}
@@ -430,21 +444,51 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                   errors={errors}
                   registerKey="minimumConviction"
                   type="number"
-                  placeholder="10%"
+                  placeholder="10"
                   readOnly={optionType !== 0}
-                ></FormInput>
+                  className="pr-14"
+                  otherProps={{ step: INPUT_MIN_VALUE }}
+                  registerOptions={{
+                    max: {
+                      value: 100,
+                      message: `Max amount cannot exceed 100%`,
+                    },
+                    min: {
+                      value: INPUT_MIN_VALUE,
+                      message: "Amount must be greater than 0",
+                    },
+                  }}
+                >
+                  <span className="absolute right-4 top-4 text-black">%</span>
+                </FormInput>
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col max-w-64">
                 <FormInput
-                  label="Conviction growth (in days)"
+                  label="Conviction growth"
                   register={register}
                   required
                   errors={errors}
                   registerKey="convictionGrowth"
                   type="number"
-                  placeholder="10 days"
+                  placeholder="1"
                   readOnly={optionType !== 0}
-                ></FormInput>
+                  className="pr-14"
+                  otherProps={{ step: INPUT_MIN_VALUE }}
+                  registerOptions={{
+                    max: {
+                      value: 100,
+                      message: `Max amount cannot exceed 100 DAYS`,
+                    },
+                    min: {
+                      value: INPUT_MIN_VALUE,
+                      message: "Amount must be greater than 0",
+                    },
+                  }}
+                >
+                  <span className="absolute right-4 top-4 text-black">
+                    days
+                  </span>
+                </FormInput>
               </div>
             </div>
           </div>

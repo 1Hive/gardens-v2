@@ -61,7 +61,7 @@ const abiParameters = [
 ];
 
 const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
-const MIN_VALUE = 0.000000000001;
+const INPUT_MIN_VALUE = 0.000000000001;
 
 export const ProposalForm = ({
   poolId,
@@ -244,11 +244,11 @@ export const ProposalForm = ({
                     message: `Max amount cannot exceed ${spendingLimitString} ${tokenSymbol}`,
                   },
                   min: {
-                    value: MIN_VALUE,
+                    value: INPUT_MIN_VALUE,
                     message: "Amount must be greater than 0",
                   },
                 }}
-                otherProps={{ step: MIN_VALUE }}
+                otherProps={{ step: INPUT_MIN_VALUE }}
                 errors={errors}
                 className="pr-14"
                 registerKey="amount"
