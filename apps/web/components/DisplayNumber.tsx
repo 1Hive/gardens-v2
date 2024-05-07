@@ -21,7 +21,6 @@ export const DisplayNumber = ({
 
   useEffect(() => {
     setShortNumber(parseString(fullNumberStr));
-    console.log(fullNumberStr);
   }, []);
 
   const parseString = (str: string | undefined) => {
