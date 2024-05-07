@@ -15,7 +15,10 @@ let ssrCache: ReturnType<typeof ssrExchange>;
 
 const isServer = typeof window === "undefined";
 
-const subgraphURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL || "";
+//Subgraph URL
+const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP || "";
+const subgraphOpSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP || "";
+
 /**
  * Function to initialize urql client. can be used both on client and server
  * @param initialState -  usually the data from the server returned as props
@@ -28,7 +31,7 @@ export function initUrqlClient({ initialState }: { initialState?: any } = {}) {
     ssrCache = ssrExchange({ initialState, isClient: !isServer });
 
     urqlClient = createClient({
-      url: subgraphURL,
+      url: subgraphArbSepURL,
       exchanges: [
         // cacheExchange,
         // authExchange(async (util) => {

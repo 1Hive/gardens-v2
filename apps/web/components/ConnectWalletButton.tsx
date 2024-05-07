@@ -109,45 +109,25 @@ export const ConnectWallet = () => {
                             <h4 className="text-left">
                               {formatAddress(account.address)}
                             </h4>
-                            <div className="flex items-center justify-end text-xs font-semibold text-success">
-                              {isNaN(urlChainId) ? (
+                            <div className="ml-[2px] flex items-center text-xs font-semibold text-success">
+                              {isNaN(urlChainId) || chain.id === urlChainId ? (
                                 <>
                                   <span>Connected to</span>
-                                  {chain.hasIcon && (
-                                    <div className="ml-1">
-                                      {chain.iconUrl && (
-                                        <Image
-                                          alt={chain.name ?? "Chain icon"}
-                                          src={chain.iconUrl}
-                                          width={12}
-                                          height={12}
-                                        />
-                                      )}
-                                    </div>
-                                  )}
-                                  <span>{chain.name}</span>
-                                </>
-                              ) : chain.id === urlChainId ? (
-                                <>
-                                  {" "}
-                                  <span>Connected to</span>
-                                  {chain.hasIcon && (
-                                    <div className="ml-1">
-                                      {chain.iconUrl && (
-                                        <Image
-                                          alt={chain.name ?? "Chain icon"}
-                                          src={chain.iconUrl}
-                                          width={12}
-                                          height={12}
-                                        />
-                                      )}
-                                    </div>
-                                  )}{" "}
+                                  <div className="mx-1">
+                                    {chain.hasIcon && chain.iconUrl && (
+                                      <Image
+                                        alt={chain.name ?? "Chain icon"}
+                                        src={chain.iconUrl}
+                                        width={16}
+                                        height={16}
+                                      />
+                                    )}
+                                  </div>
                                   <span>{chain.name}</span>
                                 </>
                               ) : (
                                 <span className="text-error">
-                                  Mismatch Network
+                                  Network mismatch
                                 </span>
                               )}
                             </div>
