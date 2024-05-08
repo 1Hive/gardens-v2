@@ -144,13 +144,6 @@ export default async function Pool({
             pointSystem={pointSystem}
             spendingLimit={spendingLimitPct}
           />
-          {/* With [Activate - Deactivate] funcionality */}
-          <GovernanceComponent
-            strategyAddress={strategyAddr}
-            strategy={strategyObj}
-            communityAddress={communityAddress}
-          />
-
           {/* Proposals section */}
           <Proposals
             strategy={strategyObj}

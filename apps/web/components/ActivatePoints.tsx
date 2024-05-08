@@ -102,7 +102,7 @@ export function ActivatePoints({
           disabled={missmatchUrl || disableActiveBtn}
           tooltip={String(tooltipMessage)}
         >
-          {isMemberActivated ? "Deactivate points" : "Activate points"}
+          {isMemberActivated ? "Deactivate governance" : "Activate governance"}
         </Button>
       </div>
     </>

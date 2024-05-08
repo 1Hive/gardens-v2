@@ -16,6 +16,7 @@ const envCouncilSafeAddressArbSepolia =
   process.env.NEXT_PUBLIC_COUNCIL_SAFE_ADDR_ARB_SEPOLIA;
 
 const envRpcUrlArbTestnet = process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET;
+const envRpcUrlOpTestnet = process.env.NEXT_PUBLIC_RPC_URL_OP_TESTNET;
 
 const envTokenAddressArbSepolia =
   process.env.NEXT_PUBLIC_TOKEN_ADDR_ARB_SEPOLIA;
@@ -86,12 +87,12 @@ let __contractsAddresses = {
   [arbitrumSepolia.id as number]: {
     ...getContractsAddresses(runLatestArbSepolia),
     rpcUrl: envRpcUrlArbTestnet,
-    subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL || "",
+    subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP || "",
   },
   [optimismSepolia.id as number]: {
     ...getContractsAddresses(runLatestOpSepolia),
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_OP_TESTNET || "",
-    subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL || "",
+    rpcUrl: envRpcUrlOpTestnet,
+    subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP || "",
   },
 };
 
