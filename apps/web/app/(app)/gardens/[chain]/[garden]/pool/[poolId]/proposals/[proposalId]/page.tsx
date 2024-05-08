@@ -141,7 +141,10 @@ export default async function Proposal({
   }
   const tokenDecimals = 18;
 
+  const proposalStatusFromContract = getProposal[5];
+
   const thresholdPct = calcThresholdPct(threshold, maxCVSupply, tokenDecimals);
+
   const totalSupport = calcTotalSupport(
     getProposalStakedAmount,
     totalEffectiveActivePoints,
@@ -172,9 +175,11 @@ export default async function Proposal({
         </div>
 
         {/* title - description - status */}
-        <div className="border2 relative space-y-12 rounded-xl bg-white px-8 py-4">
+        <div
+          className={`relative space-y-12 rounded-xl bg-white px-8 py-4 ${proposalStatusFromContract === 4 ? "border-2 border-success" : "border2"}`}
+        >
           <div className="flex justify-end">
-            <StatusBadge status={status} />
+            <StatusBadge status={proposalStatusFromContract} />
           </div>
           <div className=" flex items-baseline justify-end space-x-4 ">
             <h3 className="w-full text-center text-2xl font-semibold">
@@ -217,7 +222,7 @@ export default async function Proposal({
             </div>
           </div>
         </div>
-        <div>Alpha test number</div>
+        {/* <div>Alpha test number</div>
         <div className="flex flex-col gap-8">
           <div>
             <p className="text-xl">
@@ -238,18 +243,24 @@ export default async function Proposal({
               <span className="text-4xl text-info">{currentConviction}%</span>{" "}
             </p>
           </div>
-        </div>
+        </div> */}
 
+        {proposalStatusFromContract === 4 ? (
+          <h1 className="text-center text-success">Proposal Executed</h1>
+        ) : (
+          <div className="mt-10 flex justify-evenly">
+            <ConvictionBarChart
+              currentConviction={
+                currentConviction.toString() as unknown as number
+              }
+              //maxConviction={calcMaxConv.toString() as unknown as number}
+              threshold={thresholdPct.toString() as unknown as number}
+              // data={calcsResults}
+              proposalSupport={totalSupport.toString() as unknown as number}
+            />
+          </div>
+        )}
         {/* PROPOSAL NUMBERS CHART  */}
-        <div className="mt-10 flex justify-evenly">
-          {/* <ConvictionBarChart
-            currentConviction={calcCurrCon as number}
-            maxConviction={calcMaxConv.toString() as unknown as number}
-            threshold={calcThreshold as number}
-            // data={calcsResults}
-            proposalSupport={50}
-          /> */}
-        </div>
       </main>
     </div>
   );
