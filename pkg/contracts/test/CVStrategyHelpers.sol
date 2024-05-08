@@ -15,6 +15,8 @@ contract CVStrategyHelpers is Native, Accounts {
     Metadata public metadata = Metadata({protocol: 1, pointer: "QmW4zFLFJRN7J67EzNmdC2r2M9u2iJDha2fj5Gee6hJzSY"}); //@todo CID from IPFS
 
     uint256 public constant DECIMALS = 10 ** 18;
+    uint256 public constant PERCENTAGE_SCALE = 10 ** 4;
+
     bytes32 internal _poolProfileId1_;
 
     uint256 internal constant TWO_127 = 2 ** 127;

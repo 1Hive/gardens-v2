@@ -20,7 +20,7 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 
 contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup {
-    uint256 public constant MINIMUM_STAKE = 50;
+    uint256 public constant MINIMUM_STAKE = 50 * DECIMALS;
 
     address public SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
 
@@ -90,7 +90,7 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
 
         StrategyStruct.PointSystemConfig memory pointConfig;
-        pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
+        pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
