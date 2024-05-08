@@ -3,9 +3,23 @@ import {
   arbitrumSepolia,
   arbitrum,
   mainnet,
+  sepolia,
   Chain,
+  optimism,
+  optimismSepolia,
+  gnosis,
 } from "viem/chains";
-export const chains = [arbitrumSepolia, arbitrum, localhost];
+
+export const chains = [
+  localhost,
+  arbitrumSepolia,
+  arbitrum,
+  mainnet,
+  sepolia,
+  optimism,
+  optimismSepolia,
+  gnosis,
+];
 
 export function getChain(chainId: number | string): Chain | undefined {
   let chainResult: Chain = arbitrumSepolia;

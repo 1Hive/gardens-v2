@@ -345,24 +345,22 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
             token.approve(address(registryCommunity), firstIncrease * DECIMALS);
 
-            uint256 firstPointIncrease = strategy.increasePowerQuadratic(gardenMember, firstIncrease * DECIMALS);
-
             _registryCommunity().increasePower(firstIncrease * DECIMALS);
 
             assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (firstIncrease * DECIMALS));
 
             assertEq(
                 registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-                (Math.sqrt(MINIMUM_STAKE * DECIMALS) + firstPointIncrease),
+                (Math.sqrt((MINIMUM_STAKE + firstIncrease * DECIMALS) * DECIMALS)),
                 "power1"
             );
             //assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 110 );
             token.approve(address(registryCommunity), secondIncrease * DECIMALS);
-            uint256 secondPointIncrease = strategy.increasePowerQuadratic(gardenMember, secondIncrease * (10 ** 18));
+
             _registryCommunity().increasePower(secondIncrease * DECIMALS);
             assertEq(
                 registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-                Math.sqrt(MINIMUM_STAKE * DECIMALS) + firstPointIncrease + secondPointIncrease,
+                Math.sqrt((MINIMUM_STAKE + firstIncrease * DECIMALS + secondIncrease * DECIMALS) * DECIMALS),
                 "power2"
             );
             // assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 120  );
