@@ -30,8 +30,8 @@ import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ARB_BLOCK_TIME,
-  INPUT_MIN_VALUE,
   MAX_RATIO_CONSTANT,
+  PERCENTAGE_PRECISION,
 } from "@/utils/numbers";
 
 type PoolSettings = {
@@ -47,6 +47,7 @@ type FormInputs = {
   pointSystemType: number;
   optionType?: number;
   maxAmount?: number;
+  minThresholdPoints: number;
 } & PoolSettings;
 
 type InitializeParams = [
@@ -128,6 +129,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       pointSystemType: 0,
     },
   });
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -163,6 +165,9 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     },
     maxAmount: {
       label: "Token max amount:",
+    },
+    minThresholdPoints: {
+      label: "Minimum threshold points:",
     },
   };
 
@@ -231,19 +236,21 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
         ?.convictionGrowth as number;
     }
 
-    const maxRatioNum = (spendingLimit / MAX_RATIO_CONSTANT / 100) * 10 ** 7;
+    const maxRatioNum =
+      (spendingLimit / MAX_RATIO_CONSTANT / 100) * PERCENTAGE_PRECISION;
     const weightNum = (minimumConviction / 100) * (spendingLimit / 100) ** 2;
-    // const convictionCalc = convictionGrowth / 24 / 60;
 
     // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum));
-    const weight = BigInt(Math.round(weightNum * 10 ** 7));
+    const weight = BigInt(Math.round(weightNum * PERCENTAGE_PRECISION));
     const decay = BigInt(
       Math.round(calculateDecay(ARB_BLOCK_TIME, convictionGrowth)),
     );
 
-    const minThresholdPoints = BigInt(1 * 10 ** 4);
-    // 1000 for precision this is a default value that can change later on
+    const minThresholdPoints = parseUnits(
+      (previewData?.minThresholdPoints || 0).toString(),
+      token.decimals,
+    );
 
     const metadata: Metadata = [BigInt(1), ipfsHash];
 
@@ -329,6 +336,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       strategyType: previewData.strategyType,
       pointSystemType: previewData.pointSystemType,
       maxAmount: previewData.maxAmount as number,
+      minThresholdPoints: previewData.minThresholdPoints as number,
       optionType: previewData.optionType as number,
       spendingLimit: previewData.spendingLimit as number,
       minimumConviction: previewData.minimumConviction as number,
@@ -403,7 +411,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
               )}
             </div>
             <div className="mb-6 flex flex-col">
-            <div className="flex flex-col max-w-64">
+              <div className="flex max-w-64 flex-col">
                 <FormInput
                   label="Spending limit"
                   register={register}
@@ -414,14 +422,17 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                   placeholder="20"
                   readOnly={optionType !== 0}
                   className="pr-14"
-                  otherProps={{ step: INPUT_MIN_VALUE }}
+                  otherProps={{
+                    step: 1 / PERCENTAGE_PRECISION,
+                    min: 1 / PERCENTAGE_PRECISION,
+                  }}
                   registerOptions={{
                     max: {
                       value: 100,
                       message: `Max amount cannot exceed 100%`,
                     },
                     min: {
-                      value: INPUT_MIN_VALUE,
+                      value: 1 / PERCENTAGE_PRECISION,
                       message: "Amount must be greater than 0",
                     },
                   }}
@@ -429,7 +440,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                   <span className="absolute right-4 top-4 text-black">%</span>
                 </FormInput>
               </div>
-              <div className="flex flex-col max-w-64">
+              <div className="flex max-w-64 flex-col">
                 <FormInput
                   label="Minimum conviction"
                   register={register}
@@ -440,14 +451,17 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                   placeholder="10"
                   readOnly={optionType !== 0}
                   className="pr-14"
-                  otherProps={{ step: INPUT_MIN_VALUE }}
+                  otherProps={{
+                    step: 1 / PERCENTAGE_PRECISION,
+                    min: 1 / PERCENTAGE_PRECISION,
+                  }}
                   registerOptions={{
                     max: {
                       value: 100,
                       message: `Max amount cannot exceed 100%`,
                     },
                     min: {
-                      value: INPUT_MIN_VALUE,
+                      value: 1 / PERCENTAGE_PRECISION,
                       message: "Amount must be greater than 0",
                     },
                   }}
@@ -455,7 +469,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                   <span className="absolute right-4 top-4 text-black">%</span>
                 </FormInput>
               </div>
-              <div className="flex flex-col max-w-64">
+              <div className="flex max-w-64 flex-col">
                 <FormInput
                   label="Conviction growth"
                   register={register}
@@ -463,18 +477,21 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                   errors={errors}
                   registerKey="convictionGrowth"
                   type="number"
-                  placeholder="1"
+                  placeholder="10"
                   readOnly={optionType !== 0}
                   className="pr-14"
-                  otherProps={{ step: INPUT_MIN_VALUE }}
+                  otherProps={{
+                    step: INPUT_TOKEN_MIN_VALUE,
+                    min: INPUT_TOKEN_MIN_VALUE,
+                  }}
                   registerOptions={{
                     max: {
                       value: 100,
                       message: `Max amount cannot exceed 100 DAYS`,
                     },
                     min: {
-                      value: INPUT_MIN_VALUE,
-                      message: "Amount must be greater than 0",
+                      value: INPUT_TOKEN_MIN_VALUE,
+                      message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
                     },
                   }}
                 >
@@ -484,6 +501,27 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                 </FormInput>
               </div>
             </div>
+          </div>
+          <div className="flex flex-col">
+            <FormInput
+              label="Minimum threshold points"
+              register={register}
+              required
+              registerOptions={{
+                min: {
+                  value: INPUT_TOKEN_MIN_VALUE,
+                  message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                },
+              }}
+              otherProps={{
+                step: INPUT_TOKEN_MIN_VALUE,
+                min: INPUT_TOKEN_MIN_VALUE,
+              }}
+              errors={errors}
+              registerKey="minThresholdPoints"
+              type="number"
+              placeholder="0"
+            ></FormInput>
           </div>
           <div className="flex flex-col">
             <FormSelect
@@ -516,11 +554,14 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                 required
                 registerOptions={{
                   min: {
-                    value: INPUT_MIN_VALUE,
-                    message: "Amount must be greater than 0",
+                    value: INPUT_TOKEN_MIN_VALUE,
+                    message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
                   },
                 }}
-                otherProps={{ step: INPUT_MIN_VALUE }}
+                otherProps={{
+                  step: INPUT_TOKEN_MIN_VALUE,
+                  min: INPUT_TOKEN_MIN_VALUE,
+                }}
                 errors={errors}
                 className="pr-14"
                 registerKey="maxAmount"
