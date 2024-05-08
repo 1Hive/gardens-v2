@@ -1,28 +1,35 @@
 "use client";
-import React, { FC } from "react";
+import React from "react";
 import { StatusBadge } from "./Badge";
 import { ActivatePoints } from "./ActivatePoints";
-import { Strategy } from "./Proposals";
 import { Address, useAccount, useContractRead } from "wagmi";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
+import { calcDivisionToPct } from "@/utils/numbers";
+import { CVStrategy } from "#/subgraph/.graphclient";
 
-type PoolGovernanceStatsProps = {
-  strategyAddress: Address;
-  strategy: Strategy;
+type PoolGovernanceProps = {
+  memberActivatedPoints: number;
+  tokenDecimals: number;
+  strategy: CVStrategy;
   communityAddress: Address;
-  memberPoolWeight: string | number;
   memberTokensInCommunity: string | number;
 };
 
-export const GovernanceComponent: FC<PoolGovernanceStatsProps> = ({
-  strategyAddress,
+export const PoolGovernance = ({
+  memberActivatedPoints,
+  tokenDecimals,
   strategy,
   communityAddress,
-  memberPoolWeight,
   memberTokensInCommunity,
-}) => {
+}: PoolGovernanceProps) => {
   const { address: connectedAccount } = useAccount();
+
+  const memberPoolWeight = calcDivisionToPct(
+    memberActivatedPoints,
+    strategy.totalEffectiveActivePoints,
+    tokenDecimals,
+  );
 
   const registryContractCallConfig = {
     address: communityAddress,
@@ -32,7 +39,7 @@ export const GovernanceComponent: FC<PoolGovernanceStatsProps> = ({
   const { data: isMemberActivated } = useContractRead({
     ...registryContractCallConfig,
     functionName: "memberActivatedInStrategies",
-    args: [connectedAccount as Address, strategyAddress],
+    args: [connectedAccount as Address, strategy.id as Address],
     watch: true,
   });
 
@@ -89,7 +96,7 @@ export const GovernanceComponent: FC<PoolGovernanceStatsProps> = ({
             </div>
           </div>
           <ActivatePoints
-            strategyAddress={strategyAddress}
+            strategyAddress={strategy.id as Address}
             communityAddress={communityAddress}
             isMemberActivated={isMemberActivated as boolean | undefined}
             isMember={isMember}

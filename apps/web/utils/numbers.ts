@@ -53,4 +53,34 @@ function calculatePercentage(
   return parseFloat(percentage.toFixed(2));
 }
 
-export { calculateFees, formatTokenAmount, gte, dn, calculatePercentage };
+const calcDivisionToPct = (
+  memberActivatedPoints: bigint | number,
+  totalEffectiveActivePoints: bigint | number,
+  tokenDecimals: number,
+  setDigist?: number,
+): number => {
+  if (memberActivatedPoints < 0 || totalEffectiveActivePoints <= 0) {
+    return 0;
+  }
+
+  const division = dn.divide(
+    memberActivatedPoints,
+    totalEffectiveActivePoints,
+    tokenDecimals,
+  );
+
+  const formatDivisionResult = (
+    Number(dn.format(division, { digits: setDigist ?? 3 })) * 100
+  ).toFixed(1);
+
+  return Number(formatDivisionResult);
+};
+
+export {
+  calculateFees,
+  formatTokenAmount,
+  gte,
+  dn,
+  calculatePercentage,
+  calcDivisionToPct,
+};
