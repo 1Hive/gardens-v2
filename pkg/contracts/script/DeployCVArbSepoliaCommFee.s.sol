@@ -24,10 +24,10 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
 
     address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
 
-    address public constant TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
-    address public constant SAFE = 0xdA7BdeBD79833a5e0C027fAb1b1B9b874DdcbD10;
-    address public constant COMMUNITY = 0x422b8cf2358d80A9B6cD9E67dfB69D89Bb77c46b;
-    address public constant FACTORY = 0x01702BE1D40F6B241c9CB0296a3E49aDb9d41f48;
+    address public TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
+    address public SAFE = 0x70471a50d4655C1677B7f0C5cAdD7a0410Aa2607;
+    address public COMMUNITY = 0x6EEbe6832eF5cF540cd7F8b7BcA5BA9ED3Ebc331;
+    address public constant FACTORY = 0xb65852C022e3e818D3C3b04BE1b2c21344bCAC07;
 
     Metadata metadata2 = Metadata({protocol: 1, pointer: "QmdRrdzXkxb9LSKVxJUmAkYzqqboo3aAjbnzVUdrbX6VSd"}); // BitcoinDAO metadata QmdRrdzXkxb9LSKVxJUmAkYzqqboo3aAjbnzVUdrbX6VSd
 
@@ -88,7 +88,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
         StrategyStruct.PointSystemConfig memory pointConfig;
-        pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
+        pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
@@ -98,12 +98,12 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
         );
 
         //Capped point system
-        // paramsCV.pointConfig.maxAmount = 200 ether * (10 ** 4);
+        // paramsCV.pointConfig.maxAmount = 200 ether ;
         // //Fixed point system
-        // paramsCV.pointConfig.pointsPerMember = 100 ether * (10 ** 4);
+        // paramsCV.pointConfig.pointsPerMember = 100 ether ;
         // //Quadratic point system
         // paramsCV.pointConfig.tokensPerPoint = 1 ether;
-        // paramsCV.pointConfig.pointsPerTokenStaked = 5 ether * (10 ** 4);
+        // paramsCV.pointConfig.pointsPerTokenStaked = 5 ether ;
 
         paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
         paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio

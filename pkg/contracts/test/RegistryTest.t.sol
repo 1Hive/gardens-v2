@@ -37,11 +37,11 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     uint256 public constant MINIMUM_STAKE = 50 * DECIMALS;
     uint256 public constant SQRT_ONE_THOUSAND = 31622776601683793319;
-    uint256 public constant PRECISION = 10 ** 4;
+    // uint256 public constant PRECISION = 10 ** 4;
     uint256 public constant PROTOCOL_FEE_PERCENTAGE = 22525; // 2.2525  * 10 ** 4
-    uint256 public constant COMMUNITY_FEE_PERCENTAGE = 3 * PRECISION;
-    uint256 public constant STAKE_WITH_FEES =
-        MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / (100 * PRECISION);
+    uint256 public constant COMMUNITY_FEE_PERCENTAGE = 3 * PERCENTAGE_SCALE;
+    uint256 public constant STAKE_WITH_FEES = MINIMUM_STAKE
+        + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / (100 * PERCENTAGE_SCALE);
 
     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
@@ -126,8 +126,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().stakeAndRegisterMember();
         assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE);
         assertEq(token.balanceOf(address(gardenMember)), mintAmount - STAKE_WITH_FEES);
-        uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE) / (100 * PRECISION);
-        uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE) / (100 * PRECISION);
+        uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE) / (100 * PERCENTAGE_SCALE);
+        uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE) / (100 * PERCENTAGE_SCALE);
         assertEq(token.balanceOf(address(protocolFeeReceiver)), protocolAmount);
         assertEq(token.balanceOf(address(daoFeeReceiver)), feeAmount);
         vm.stopPrank();
@@ -154,8 +154,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE * (i + 1), "Registry balance");
             assertEq(token.balanceOf(members[i]), mintAmount - STAKE_WITH_FEES, "Member balance");
 
-            uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE * (i + 1)) / (100 * PRECISION);
-            uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE * (i + 1)) / (100 * PRECISION);
+            uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE * (i + 1)) / (100 * PERCENTAGE_SCALE);
+            uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE * (i + 1)) / (100 * PERCENTAGE_SCALE);
             assertEq(token.balanceOf(address(protocolFeeReceiver)), protocolAmount, "Protocol balance");
             assertEq(token.balanceOf(address(daoFeeReceiver)), feeAmount, "DAO balance");
         }
@@ -170,7 +170,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryCommunity().stakeAndRegisterMember();
         _registryCommunity().unregisterMember();
         assertTrue(!_registryCommunity().isMember(gardenMember));
-        uint256 feesAmount = (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / (100 * PRECISION);
+        uint256 feesAmount =
+            (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / (100 * PERCENTAGE_SCALE);
         assertEq(token.balanceOf(address(registryCommunity)), 0);
         assertEq(token.balanceOf(address(gardenMember)), mintAmount - feesAmount);
         assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)), 0);
@@ -344,27 +345,25 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
             token.approve(address(registryCommunity), firstIncrease * DECIMALS);
 
-            uint256 firstPointIncrease = strategy.increasePowerQuadratic(gardenMember, firstIncrease * DECIMALS);
-
             _registryCommunity().increasePower(firstIncrease * DECIMALS);
 
             assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (firstIncrease * DECIMALS));
 
             assertEq(
                 registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-                (Math.sqrt(MINIMUM_STAKE * DECIMALS) + firstPointIncrease),
+                (Math.sqrt((MINIMUM_STAKE + firstIncrease * DECIMALS) * DECIMALS)),
                 "power1"
             );
-            //assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 110 * (10 ** 4));
+            //assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 110 );
             token.approve(address(registryCommunity), secondIncrease * DECIMALS);
-            uint256 secondPointIncrease = strategy.increasePowerQuadratic(gardenMember, secondIncrease * (10 ** 18));
+
             _registryCommunity().increasePower(secondIncrease * DECIMALS);
             assertEq(
                 registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
-                Math.sqrt(MINIMUM_STAKE * DECIMALS) + firstPointIncrease + secondPointIncrease,
+                Math.sqrt((MINIMUM_STAKE + firstIncrease * DECIMALS + secondIncrease * DECIMALS) * DECIMALS),
                 "power2"
             );
-            // assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 120 * (10 ** 4) );
+            // assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 120  );
         }
         vm.stopPrank();
     }
