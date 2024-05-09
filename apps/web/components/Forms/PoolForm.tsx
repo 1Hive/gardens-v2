@@ -27,8 +27,7 @@ import { FormSelect } from "./FormSelect";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
-
-const PRECISION_SCALE = 10 ** 4;
+import { PRECISION_SCALE } from "@/utils/numbers";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -242,9 +241,9 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     console.log(maxRatio, weight, decay);
 
     // pointConfig
-    const pointsPerTokenStaked = BigInt(1 * PRECISION_SCALE);
-    const maxAmount = BigInt(100 * PRECISION_SCALE);
-    const pointsPerMember = BigInt(100 * PRECISION_SCALE);
+    const pointsPerTokenStaked = BigInt(1) * PRECISION_SCALE;
+    const maxAmount = BigInt(100) * PRECISION_SCALE;
+    const pointsPerMember = BigInt(100) * PRECISION_SCALE;
     const tokensPerPoint = BigInt(
       ((1 * 10 ** token?.decimals) as number).toString(),
     );

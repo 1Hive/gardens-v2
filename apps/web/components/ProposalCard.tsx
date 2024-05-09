@@ -11,7 +11,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
 import { Address, useContractWrite } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { encodeAbiParameters } from "viem";
+import { encodeAbiParameters, formatUnits } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 

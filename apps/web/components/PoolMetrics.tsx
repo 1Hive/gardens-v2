@@ -1,6 +1,5 @@
 "use client";
 import React, { FC, useState, useRef, useEffect } from "react";
-import { Strategy } from "./Proposals";
 import {
   Address,
   useAccount,
@@ -12,7 +11,7 @@ import { formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
 import { Button } from "./Button";
-import { Allo, TokenGarden } from "#/subgraph/.graphclient";
+import { Allo, CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
 import { parseUnits } from "viem";
 import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
@@ -41,7 +40,7 @@ const InitialTransactionSteps: TransactionStep[] = [
 type PoolStatsProps = {
   balance: string | number;
   strategyAddress: Address;
-  strategy: Strategy;
+  strategy: CVStrategy;
   communityAddress: Address;
   tokenGarden: TokenGarden;
   pointSystem: string;
