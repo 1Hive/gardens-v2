@@ -49,8 +49,6 @@ type PoolStatsProps = {
   poolId: number;
 };
 
-const MIN_VALUE = 0.000000000001;
-
 export const PoolMetrics: FC<PoolStatsProps> = ({
   alloInfo,
   balance,
@@ -60,6 +58,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
   spendingLimit,
   poolId,
 }) => {
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
+
   const [amount, setAmount] = useState<number | string>();
   const { address: connectedAccount } = useAccount();
   const tokenSymbol = tokenGarden?.symbol;
@@ -212,9 +212,12 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
             placeholder="0"
             required
             className="pr-14"
-            step={MIN_VALUE}
+            step={INPUT_TOKEN_MIN_VALUE}
             onChange={(e) => setAmount(Number(e.target.value))}
-            otherProps={{ step: MIN_VALUE, min: MIN_VALUE }}
+            otherProps={{
+              step: INPUT_TOKEN_MIN_VALUE,
+              min: INPUT_TOKEN_MIN_VALUE,
+            }}
           >
             <span className="absolute right-4 top-4 text-black">
               {tokenGarden.symbol}
