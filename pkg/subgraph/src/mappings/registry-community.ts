@@ -6,6 +6,7 @@ import {
   MemberCommunity,
   Allo,
   CVStrategy,
+  CVStrategyConfig,
   MemberStrategy,
 } from "../../generated/schema";
 
@@ -227,9 +228,25 @@ export function handleMemberActivatedStrategy(
   if (strategy.memberActive) {
     membersActive = strategy.memberActive!;
   }
+
   membersActive.push(memberAddress.toHexString());
   strategy.memberActive = membersActive;
   strategy.save();
+
+  const strategyConfigId = strategy.config;
+  const strategyConfig = CVStrategyConfig.load(strategyConfigId);
+  if (strategyConfig !== null) {
+    if (strategyConfig.pointSystem === BigInt.fromI32(0)) {
+      const memberStrategyId = `${memberAddress.toHexString()}}-${strategyAddress.toHexString()}`;
+      let memberStrategy = new MemberStrategy(memberStrategyId);
+      memberStrategy.member = memberAddress.toHexString();
+      memberStrategy.strategy = strategyAddress.toHexString();
+      memberStrategy.totalStakedPoints = BigInt.fromI32(0);
+      memberStrategy.activatedPoints = event.params._pointsToIncrease;
+      memberStrategy.totalStakedPoints = event.params._pointsToIncrease;
+      memberStrategy.save();
+    }
+  }
 }
 
 // handleMemberDeactivatedStrategy
