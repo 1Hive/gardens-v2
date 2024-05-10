@@ -5,15 +5,17 @@ import { ActivatePoints } from "./ActivatePoints";
 import { Address, useAccount, useContractRead } from "wagmi";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
-import { calcDivisionToPct } from "@/utils/numbers";
+import { calcDivisionToPct, dn } from "@/utils/numbers";
 import { CVStrategy } from "#/subgraph/.graphclient";
+import { DisplayNumber } from "./DisplayNumber";
+import { Dnum } from "dnum";
 
 type PoolGovernanceProps = {
   memberActivatedPoints: number;
   tokenDecimals: number;
   strategy: CVStrategy;
   communityAddress: Address;
-  memberTokensInCommunity: string | number;
+  memberTokensInCommunity: string;
 };
 
 export const PoolGovernance = ({
@@ -56,7 +58,7 @@ export const PoolGovernance = ({
   return (
     <section className="border2 flex w-full flex-col rounded-xl bg-white px-12 py-8">
       <h3 className="mb-6 font-semibold">Your Pool Governance</h3>
-      <div className="flex flex-col justify-between px-6">
+      <div className="flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-10">
             <div className="flex w-full max-w-xl flex-col items-center gap-2 font-semibold">
@@ -64,12 +66,16 @@ export const PoolGovernance = ({
                 <>
                   <div className="flex w-full items-center gap-6">
                     <h5 className="">Total staked in community:</h5>
-                    <p className="text-4xl">
-                      {memberTokensInCommunity}
-                      <span className="px-2 text-lg">
+                    <DisplayNumber
+                      tokenSymbol={strategy.registryCommunity.garden.symbol}
+                      className="text-2xl"
+                      number={
+                        [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
+                      }
+                    />
+                    {/* <span className="px-2 text-lg">
                         {strategy.registryCommunity.garden.symbol}
-                      </span>
-                    </p>
+                      </span> */}
                   </div>
                   <div className="flex w-full items-center gap-6">
                     <h5 className="">Status:</h5>
