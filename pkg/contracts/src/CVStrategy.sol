@@ -139,7 +139,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event DecayUpdated(uint256 decay);
     event MaxRatioUpdated(uint256 maxRatio);
     event WeightUpdated(uint256 weight);
-
+    event RegistryUpdated(address registryCommunity);
     event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
 
     /*|-------------------------------------/-------|*o
@@ -230,8 +230,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
     function checkSenderIsMember(address _sender) private view {
-        //        @todo: check if user is in registry
-        //        require(_user != address(0), "CVStrategy: User is not valid");
         if (_sender == address(0)) {
             revert UserCannotBeZero();
         }
@@ -362,7 +360,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         return pointsToDecrease;
     }
 
-    //todo: increase/decrease for all systems, 8 total
     function increasePowerUnlimited(uint256 _amountToStake) internal pure returns (uint256) {
         return _amountToStake;
     }
@@ -755,7 +752,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 totalStaked -= previousStakedPoints - stakedPoints;
                 proposal.stakedAmount -= previousStakedPoints - stakedPoints;
             }
-            //@todo: should emit event
             if (proposal.blockLast == 0) {
                 proposal.blockLast = block.number;
             } else {
@@ -951,7 +947,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
         registryCommunity = RegistryCommunity(_registryCommunity);
-        //@todo missing event, also we can change it?
+        emit RegistryUpdated(_registryCommunity);
     }
 
     function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {

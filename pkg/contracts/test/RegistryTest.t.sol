@@ -53,6 +53,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     address gardenMember = makeAddr("communityGardenMember");
     address protocolFeeReceiver = makeAddr("multisigReceiver");
     address daoFeeReceiver = makeAddr("daoFeeReceiver");
+    address newCouncilSafe = makeAddr("newCouncilSafe");
 
     function setUp() public {
         __RegistrySetupFull();
@@ -185,6 +186,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryFactory().setProtocolFee(address(registryCommunity), 2);
         assertEq(_registryFactory().getProtocolFee(address(registryCommunity)), 2);
         vm.stopPrank();
+        stopMeasuringGas();
     }
 
     function test_activate_totalActivatedPoints_fixed_system() public {
@@ -763,13 +765,25 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         stopMeasuringGas();
     }
 
-    function test_updateCommunityFee() public {
+    function test_setCommunityFee() public {
         startMeasuringGas("Updating protocol fee");
         vm.startPrank(address(councilSafe));
-        _registryCommunity().updateCommunityFee(5);
-        assertEq(_registryCommunity().communityFee(), 5);
+        _registryCommunity().setCommunityFee(5 * PERCENTAGE_SCALE);
+        assertEq(_registryCommunity().communityFee(), 5 * PERCENTAGE_SCALE);
         vm.stopPrank();
         stopMeasuringGas();
+    }
+
+    function test_setCouncilSafe() public {
+        startMeasuringGas("Setting council safe");
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
+        assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
+        vm.stopPrank();
+        vm.startPrank(newCouncilSafe);
+        _registryCommunity().acceptCouncilSafe();
+        assertEq(address(_registryCommunity().councilSafe()), address(newCouncilSafe));
+        vm.stopPrank();
     }
 
     function test_addStrategy() public {
@@ -779,6 +793,23 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
         vm.stopPrank();
         stopMeasuringGas();
+    }
+
+    function test_revertSetCouncilSafe() public {
+        vm.startPrank(gardenMember);
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
+        vm.stopPrank();
+        vm.startPrank(address(councilSafe));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        _registryCommunity().setCouncilSafe(payable(address(0)));
+        _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
+        assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
+        vm.stopPrank();
+        vm.startPrank(gardenMember);
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.SenderNotNewOwner.selector));
+        _registryCommunity().acceptCouncilSafe();
+        vm.stopPrank();
     }
 
     function test_removeStrategy() public {
@@ -810,13 +841,19 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         stopMeasuringGas();
     }
 
-    function test_revertUpdateCommunityFee() public {
+    function test_revertSetCommunityFee() public {
         startMeasuringGas("Testing update protocol revert");
         vm.startPrank(gardenOwner);
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
-        _registryCommunity().updateCommunityFee(5);
+        _registryCommunity().setCommunityFee(5);
         vm.stopPrank();
-        stopMeasuringGas();
+
+        vm.startPrank(address(councilSafe));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.NewFeeGreaterThanMax.selector));
+        _registryCommunity().setCommunityFee(11 * PERCENTAGE_SCALE);
+        _registryCommunity().setCommunityFee(10 * PERCENTAGE_SCALE);
+        assertEq(_registryCommunity().communityFee(), 10 * PERCENTAGE_SCALE);
+        vm.stopPrank();
     }
 
     function test_revertSetBasisStakeAmount() public {
