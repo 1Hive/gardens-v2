@@ -55,7 +55,7 @@ export function FormInput({
           {label}
         </label>
       )}
-      {subLabel && <p className="text-xs">{subLabel}</p>}
+      {subLabel && <p className="text-xs mb-1">{subLabel}</p>}
       <div className={`relative ${type !== "textarea" && "max-w-md"}`}>
         {type !== "textarea" ? (
           <input

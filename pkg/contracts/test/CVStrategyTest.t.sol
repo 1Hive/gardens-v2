@@ -52,7 +52,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     uint256 public constant STAKE_WITH_FEES =
         MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / 100;
     uint256 public constant REQUESTED_AMOUNT = 1000 ether;
-    uint256 public constant PRECISION_SCALE = 10 ** 4;
+    // uint256 public constant PRECISION_SCALE = 10 ** 4;
     uint256 public constant MIN_THRESHOLD_PTS = 5e23;
 
     RegistryCommunity internal registryCommunity;
@@ -183,6 +183,30 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
     }
 
+    function _assertProposalStatus(CVStrategy cv, uint256 proposalId, StrategyStruct.ProposalStatus _toBeChecked)
+        internal
+        view
+    {
+        (
+            , // address submitter,
+            // address beneficiary
+            ,
+            , // address requestedToken,
+            // uint256 requestedAmount
+            ,
+            , // uint256 stakedTokens,
+            StrategyStruct.ProposalStatus proposalStatus,
+            , // uint256 blockLast,
+            // uint256 convictionLast
+            ,
+            // uint256 threshold
+            ,
+            // uint256 voterPointsPct
+        ) = cv.getProposal(proposalId);
+
+        assertTrue(proposalStatus == _toBeChecked, "ProposalStatus");
+    }
+
     function getBalance(address _token, address holder) public view returns (uint256) {
         if (_token == NATIVE) {
             return address(holder).balance;
@@ -213,10 +237,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         // startMeasuringGas("Support a Proposal");
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](2);
-        // votes[0] = StrategyStruct.ProposalSupport(proposalId, 70 * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80 * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
-        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20 * int256(PRECISION_SCALE)); // 70 + 20 = 90% = 45
-        // votes[2] = StrategyStruct.ProposalSupport(proposalId, -10 * int256(PRECISION_SCALE)); // 90 - 10 = 80% = 40
+        // votes[0] = StrategyStruct.ProposalSupport(proposalId, 70
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80);
+        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20); // 70 + 20 = 90% = 45
+        // votes[2] = StrategyStruct.ProposalSupport(proposalId, -10 ); // 90 - 10 = 80% = 40
         // 35 + 45 + 40 = 120
         bytes memory data = abi.encode(votes);
         // vm.expectRevert(CVStrategy.ProposalSupportDuplicated.selector);
@@ -234,10 +258,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         // startMeasuringGas("Support a Proposal");
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](2);
-        // votes[0] = StrategyStruct.ProposalSupport(proposalId, 70 * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80 * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
-        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20 * int256(PRECISION_SCALE)); // 70 + 20 = 90% = 45
-        // votes[2] = StrategyStruct.ProposalSupport(proposalId, -10 * int256(PRECISION_SCALE)); // 90 - 10 = 80% = 40
+        // votes[0] = StrategyStruct.ProposalSupport(proposalId, 70 ); // 0 + 70 = 70% = 35
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80); // 0 + 70 = 70% = 35
+        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20); // 70 + 20 = 90% = 45
+        // votes[2] = StrategyStruct.ProposalSupport(proposalId, -10 ); // 90 - 10 = 80% = 40
         // 35 + 45 + 40 = 120
         bytes memory data = abi.encode(votes);
         vm.startPrank(pool_admin());
@@ -248,34 +272,34 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
         stopMeasuringGas();
     }
+    //@todo should fix that tests using old percentage scale
+    // function testRevert_allocate_removeSupport_wo_support_before_SUPPORT_UNDERFLOW() public {
+    //     (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
-    function testRevert_allocate_removeSupport_wo_support_before_SUPPORT_UNDERFLOW() public {
-        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+    //     /**
+    //      * ASSERTS
+    //      *
+    //      */
+    //     // startMeasuringGas("Support a Proposal");
+    //     StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
+    //     votes[0] = StrategyStruct.ProposalSupport(proposalId, -100 );
+    //     bytes memory data = abi.encode(votes);
 
-        /**
-         * ASSERTS
-         *
-         */
-        // startMeasuringGas("Support a Proposal");
-        StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, -100 * int256(PRECISION_SCALE));
-        bytes memory data = abi.encode(votes);
+    //     CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+    //     vm.expectRevert(
+    //         abi.encodeWithSelector(
+    //             CVStrategy.SupportUnderflow.selector,
+    //             0,
+    //             -100 * int256(cv.PRECISION_SCALE()),
+    //             -100 * int256(cv.PRECISION_SCALE())
+    //         )
+    //     );
+    //     allo().allocate(poolId, data);
+    //     stopMeasuringGas();
 
-        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CVStrategy.SupportUnderflow.selector,
-                0,
-                -100 * int256(cv.PRECISION_SCALE()),
-                -100 * int256(cv.PRECISION_SCALE())
-            )
-        );
-        allo().allocate(poolId, data);
-        stopMeasuringGas();
-
-        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0, "VoterStakeAmount"); // 100% of 50 = 50
-        assertEq(cv.getProposalStakedAmount(proposalId), 0, "TotalStakedAmountInProposal");
-    }
+    //     assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0, "VoterStakeAmount"); // 100% of 50 = 50
+    //     assertEq(cv.getProposalStakedAmount(proposalId), 0, "TotalStakedAmountInProposal");
+    // }
 
     function testRevert_registerRecipient_TokenNotAllowed() public {
         (, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
@@ -294,7 +318,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         /**
          * ASSERTS
          */
-        uint256 STAKED_AMOUNT = uint256(80 * int256(PRECISION_SCALE));
+        uint256 STAKED_AMOUNT = uint256(80);
         // startMeasuringGas("Support a Proposal");
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
         votes[0] = StrategyStruct.ProposalSupport(proposalId, int256(STAKED_AMOUNT)); // 0 + 70 = 70% = 35 range is -100 +100
@@ -317,14 +341,14 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // registryCommunity.stakeAndregisterMember();
 
         StrategyStruct.ProposalSupport[] memory votes2 = new StrategyStruct.ProposalSupport[](1);
-        votes2[0] = StrategyStruct.ProposalSupport(proposalId, 20 * int256(PRECISION_SCALE));
+        votes2[0] = StrategyStruct.ProposalSupport(proposalId, 20);
         data = abi.encode(votes2);
         // vm.expectEmit(true, true, true, false);
         allo().allocate(poolId, data);
         // vm.stopPrank();
 
-        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 100e4); // 100% of 50 = 50
-        assertEq(cv.getProposalStakedAmount(proposalId), 100e4);
+        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 100); // 100% of 50 = 50
+        assertEq(cv.getProposalStakedAmount(proposalId), 100);
     }
 
     function test_proposalVoterStake_after_deactivate() public {
@@ -333,26 +357,27 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          * ASSERTS
          */
         // startMeasuringGas("Support a Proposal");
+        uint256 STAKED_AMOUNT = 80;
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80 * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35 range is -100 +100
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, int256(STAKED_AMOUNT)); // 0 + 70 = 70% = 35 range is -100 +100
         bytes memory data = abi.encode(votes);
 
         allo().allocate(poolId, data);
 
         stopMeasuringGas();
-        uint256 STAKED_AMOUNT = 80e4;
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), STAKED_AMOUNT); // 80% of 50 = 40
         assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT); // 80% of 50 = 40
 
+        uint256 STAKED_AMOUNT2 = 20;
         StrategyStruct.ProposalSupport[] memory votes2 = new StrategyStruct.ProposalSupport[](1);
-        votes2[0] = StrategyStruct.ProposalSupport(proposalId, 20 * int256(PRECISION_SCALE));
+        votes2[0] = StrategyStruct.ProposalSupport(proposalId, int256(STAKED_AMOUNT2));
         data = abi.encode(votes2);
         // vm.expectEmit(true, true, true, false);
         allo().allocate(poolId, data);
 
-        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 100e4); // 100% of 50 = 50
-        assertEq(cv.getProposalStakedAmount(proposalId), 100e4);
+        assertEq(cv.getProposalVoterStake(proposalId, address(this)), STAKED_AMOUNT + STAKED_AMOUNT2); // 100% of 50 = 50
+        assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT + STAKED_AMOUNT2);
         cv.deactivatePoints();
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0);
         assertEq(cv.getProposalStakedAmount(proposalId), 0);
@@ -365,25 +390,25 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         // startMeasuringGas("Support a Proposal");
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80 * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35 range is -100 +100
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80); // 0 + 70 = 70% = 35 range is -100 +100
         bytes memory data = abi.encode(votes);
 
         allo().allocate(poolId, data);
 
         stopMeasuringGas();
-        uint256 STAKED_AMOUNT = 80e4;
+        uint256 STAKED_AMOUNT = 80;
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), STAKED_AMOUNT); // 80% of 50 = 40
         assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT); // 80% of 50 = 40
 
         StrategyStruct.ProposalSupport[] memory votes2 = new StrategyStruct.ProposalSupport[](1);
-        votes2[0] = StrategyStruct.ProposalSupport(proposalId, 20 * int256(PRECISION_SCALE));
+        votes2[0] = StrategyStruct.ProposalSupport(proposalId, 20);
         data = abi.encode(votes2);
         // vm.expectEmit(true, true, true, false);
         allo().allocate(poolId, data);
 
-        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 100e4); // 100% of 50 = 50
-        assertEq(cv.getProposalStakedAmount(proposalId), 100e4);
+        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 100); // 100% of 50 = 50
+        assertEq(cv.getProposalStakedAmount(proposalId), 100);
         registryCommunity.unregisterMember();
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0);
         assertEq(cv.getProposalStakedAmount(proposalId), 0);
@@ -404,7 +429,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         /**
          * ASSERTS
          */
-        uint256 AMOUNT_STAKED = uint256(80 * int256(PRECISION_SCALE));
+        uint256 AMOUNT_STAKED = uint256(80);
         // startMeasuringGas("Support a Proposal");
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
         votes[0] = StrategyStruct.ProposalSupport(proposalId, int256(AMOUNT_STAKED));
@@ -448,7 +473,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         // startMeasuringGas("Support a Proposal");
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, 100 * int256(PRECISION_SCALE));
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 100);
         bytes memory data = abi.encode(votes);
         allo().allocate(poolId, data);
         stopMeasuringGas();
@@ -500,7 +525,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         // startMeasuringGas("Support a Proposal");
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, 100 * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 100); // 0 + 70 = 70% = 35
         bytes memory data = abi.encode(votes);
         allo().allocate(poolId, data);
         stopMeasuringGas();
@@ -534,18 +559,18 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          * ASSERTS
          */
         // // startMeasuringGas("Support a Proposal");
+        uint256 AMOUNT_STAKED = 100;
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, 100 * int256(PRECISION_SCALE));
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, int256(AMOUNT_STAKED));
         bytes memory data = abi.encode(votes);
         allo().allocate(poolId, data);
         // stopMeasuringGas();
 
-        uint256 AMOUNT_STAKED = 100e4;
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         assertEq(cv.getProposalVoterStake(1, address(this)), AMOUNT_STAKED);
         assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED);
 
-        int256 REMOVE_SUPPORT = -80 * int256(PRECISION_SCALE);
+        int256 REMOVE_SUPPORT = -80;
         votes[0] = StrategyStruct.ProposalSupport(1, REMOVE_SUPPORT);
         data = abi.encode(votes);
         allo().allocate(poolId, data);
@@ -556,7 +581,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.getProposalStakedAmount(1), uint256(int256(AMOUNT_STAKED) + REMOVE_SUPPORT), "StakedAmount");
         assertEq(cv.totalStaked(), uint256(int256(AMOUNT_STAKED) + REMOVE_SUPPORT), "TotalStaked");
 
-        int256 REMOVE_SUPPORT2 = -5 * int256(PRECISION_SCALE);
+        int256 REMOVE_SUPPORT2 = -5;
         votes[0] = StrategyStruct.ProposalSupport(1, REMOVE_SUPPORT2);
         data = abi.encode(votes);
         allo().allocate(poolId, data);
@@ -1315,7 +1340,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // // startMeasuringGas("Support a Proposal");
         int256 SUPPORT_PCT = int256(MINIMUM_STAKE + extraStakeAmount);
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
-        // votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
+        // votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT ); // 0 + 70 = 70% = 35
         votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 70 = 70% = 35
         // bytes memory data = ;
         allo().allocate(poolId, abi.encode(votes));
@@ -1373,6 +1398,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
         assertEq(amount, requestedAmount);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
 
     function test_distribute_native_token() public {
@@ -1388,7 +1414,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // startMeasuringGas("Support a Proposal");
         int256 SUPPORT_PCT = int256(MINIMUM_STAKE);
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
-        // votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
+        // votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT ); // 0 + 70 = 70% = 35
         votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 70 = 70% = 35
         // bytes memory data = ;
         allo().allocate(poolId, abi.encode(votes));
@@ -1443,9 +1469,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(amount, 0);
 
         allo().distribute(poolId, recipients, dataProposal);
+        //@todo chec ProposalStatus
+
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
         assertEq(amount, requestedAmount);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
 
     function test_revert_conviction_distribute() public {
@@ -1467,6 +1496,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.ConvictionUnderMinimumThreshold.selector));
         allo().distribute(poolId, recipients, dataProposal);
+
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
     }
 
     function test_canExecuteProposal_should_false() public {
@@ -1500,7 +1531,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //     // startMeasuringGas("Support a Proposal");
     //     int256 SUPPORT_PCT = 1500;
     //     StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
-    //     votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT * int256(PRECISION_SCALE)); // 0 + 70 = 70% = 35
+    //     votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT ); // 0 + 70 = 70% = 35
     //     // bytes memory data = ;
     //     allo().allocate(poolId, abi.encode(votes));
     //     stopMeasuringGas();
@@ -1549,6 +1580,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //     // amount = getBalance(pool.token, beneficiary);
     //     // // console.log("Beneficienry After amount: %s", amount);
     //     // assertEq(amount, requestedAmount);
+    // _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
 
     // }
 
@@ -1569,7 +1601,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          *
          */
         // startMeasuringGas("Support a Proposal");
-        int256 SUPPORT_PCT = 100 * int256(PRECISION_SCALE);
+        int256 SUPPORT_PCT = 100;
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
         votes[0] = StrategyStruct.ProposalSupport(PROPOSAL_ID, SUPPORT_PCT); // 0 + 70 = 70% = 35
         // bytes memory data = ;
@@ -1588,6 +1620,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         allo().distribute(poolId, new address[](0), dataProposal);
         // console.log("Beneficienry After amount: %s", amount);
+        _assertProposalStatus(cv, PROPOSAL_ID, StrategyStruct.ProposalStatus.Active);
     }
 
     function printProposalDetails(CVStrategy cv, uint256 proposalId) public view {

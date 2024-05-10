@@ -25,6 +25,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { getChain } from "@/configs/chainServer";
 import { getChainIdFromPath } from "@/utils/path";
 import { getNetwork } from "@wagmi/core";
+import {
+  PERCENTAGE_PRECISION,
+  PERCENTAGE_PRECISION_DECIMALS,
+} from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -47,8 +51,8 @@ type FormRowTypes = {
 const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 const feeOptions: Option[] = [
   { value: 0, label: "0%" },
-  { value: 1, label: "1%" },
-  { value: 2, label: "2%" },
+  { value: 0.01, label: "1%" },
+  { value: 0.02, label: "2%" },
 ];
 
 export const CommunityForm = ({
@@ -72,6 +76,7 @@ export const CommunityForm = ({
     watch,
   } = useForm<FormInputs>();
 
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
@@ -168,7 +173,7 @@ export const CommunityForm = ({
     );
     const communityFeeAmount = parseUnits(
       previewData?.feeAmount.toString() as string,
-      tokenGarden.decimals,
+      PERCENTAGE_PRECISION_DECIMALS,
     );
     const communityFeeReceiver = previewData?.feeReceiver;
     const councilSafeAddress = previewData?.councilSafe;
@@ -215,8 +220,6 @@ export const CommunityForm = ({
 
     return formattedRows;
   };
-
-  const safeAddress = watch("councilSafe");
 
   const addressIsSAFE = async (walletAddress: Address) => {
     let isSafe = false;
@@ -266,7 +269,16 @@ export const CommunityForm = ({
               errors={errors}
               registerKey="stakeAmount"
               type="number"
-              otherProps={{ step: "0.000000000001", min: "0" }}
+              registerOptions={{
+                min: {
+                  value: INPUT_TOKEN_MIN_VALUE,
+                  message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                },
+              }}
+              otherProps={{
+                step: INPUT_TOKEN_MIN_VALUE,
+                min: INPUT_TOKEN_MIN_VALUE,
+              }}
             >
               <span className="absolute right-4 top-4 text-black">
                 {tokenGarden.symbol}

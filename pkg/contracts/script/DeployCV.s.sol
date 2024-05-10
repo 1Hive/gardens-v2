@@ -20,7 +20,7 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50 ether;
-    uint256 public constant COMMUNITY_FEE = 1 * 10 ** 4;
+    uint256 public constant COMMUNITY_FEE = 1 * PERCENTAGE_SCALE;
 
     TERC20 public token;
 
@@ -186,7 +186,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
     function _getPointConfig() internal pure returns (StrategyStruct.PointSystemConfig memory) {
         StrategyStruct.PointSystemConfig memory pointConfig;
-        pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
+        pointConfig.maxAmount = MINIMUM_STAKE * 2;
         return pointConfig;
     }
 

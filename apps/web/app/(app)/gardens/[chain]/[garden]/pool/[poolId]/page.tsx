@@ -144,19 +144,13 @@ export default async function Pool({
             pointSystem={pointSystem}
             spendingLimit={spendingLimitPct}
           />
-          {/* With [Activate - Deactivate] funcionality */}
-          <GovernanceComponent
-            strategyAddress={strategyAddr}
-            strategy={strategyObj}
-            communityAddress={communityAddress}
-          />
-
           {/* Proposals section */}
           <Proposals
             strategy={strategyObj}
             alloInfo={alloInfo}
             communityAddress={communityAddress}
             createProposalUrl={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
+            proposalType={proposalType}
           />
         </main>
       </div>

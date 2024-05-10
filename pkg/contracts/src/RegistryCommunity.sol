@@ -12,7 +12,7 @@ import {RegistryFactory} from "./RegistryFactory.sol";
 import {ISafe} from "./ISafe.sol";
 // import {Safe} from "safe-contracts/contracts/Safe.sol";
 import "forge-std/console.sol";
-// import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 import {IPointStrategy, CVStrategy, StrategyStruct} from "./CVStrategy.sol";
 
@@ -33,7 +33,7 @@ interface FAllo {
 }
 
 contract RegistryCommunity is ReentrancyGuard, AccessControl {
-    // using ERC165Checker for address;
+    using ERC165Checker for address;
     using SafeERC20 for IERC20;
 
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -89,6 +89,12 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
     }
 
+    function onlyStrategyAddress(address _sender, address _strategy) private pure {
+        if (_sender != _strategy) {
+            revert SenderNotStrategy();
+        }
+    }
+
     function onlyActivatedInStrategy(address _strategy) private view {
         if (!memberActivatedInStrategies[msg.sender][_strategy]) {
             revert PointsDeactivated();
@@ -109,12 +115,13 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     error UserAlreadyDeactivated();
     error StrategyExists();
     error StrategyDisabled();
-    error CallerIsNotNewOnwer();
+    error SenderNotNewOwner();
+    error SenderNotStrategy();
     error ValueCannotBeZero();
     error KickNotEnabled();
     error PointsDeactivated();
     error DecreaseUnderMinimum();
-    error CantIncreaseNullAmount();
+    error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower);
 
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -274,6 +281,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     function deactivateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
         revertZeroAddress(_strategy);
+        onlyStrategyAddress(msg.sender, _strategy);
 
         if (!memberActivatedInStrategies[_member][_strategy]) {
             revert UserAlreadyDeactivated();
@@ -327,7 +335,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     function decreasePower(uint256 _amountUnstaked) public nonReentrant {
         onlyRegistryMemberSender();
         address member = msg.sender;
-        address[] memory memberStrategies = strategiesByMember[member];
+        address[] storage memberStrategies = strategiesByMember[member];
 
         uint256 pointsToDecrease;
 
@@ -336,9 +344,21 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         }
         gardenToken.safeTransfer(member, _amountUnstaked);
         for (uint256 i = 0; i < memberStrategies.length; i++) {
-            // if (address(memberStrategies[i]) == _strategy) {
-            pointsToDecrease = IPointStrategy(memberStrategies[i]).decreasePower(member, _amountUnstaked);
-            memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
+            address strategy = memberStrategies[i];
+            if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
+                pointsToDecrease = IPointStrategy(strategy).decreasePower(member, _amountUnstaked);
+                uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
+                if (pointsToDecrease > currentPower) {
+                    revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);
+                } else {
+                    memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
+                }
+            } else {
+                // emit StrategyShouldBeRemoved(strategy, member);
+                memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
+                memberStrategies.pop();
+                _removeStrategy(strategy);
+            }
             // }
         }
         addressToMemberInfo[member].stakedAmount -= _amountUnstaked;
@@ -370,11 +390,15 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
-    function removeStrategy(address _strategy) public {
-        onlyCouncilSafe();
+    function _removeStrategy(address _strategy) internal {
         revertZeroAddress(_strategy);
         enabledStrategies[_strategy] = false;
         emit StrategyRemoved(_strategy);
+    }
+
+    function removeStrategy(address _strategy) public {
+        onlyCouncilSafe();
+        _removeStrategy(_strategy);
     }
 
     function setAllo(address _allo) public {
@@ -397,7 +421,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
     function acceptCouncilSafe() public {
         if (msg.sender != pendingCouncilSafe) {
-            revert CallerIsNotNewOnwer();
+            revert SenderNotNewOwner();
         }
         _changeCouncilSafe();
     }

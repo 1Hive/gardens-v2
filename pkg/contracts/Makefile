@@ -10,6 +10,15 @@ RPC_URL_LOCALHOST = http://127.0.0.1:8545
 print : 
 	@echo $(RPC_URL)
 	
+add-strategy: #make add-strategy S=0x1234 
+	-forge script script/AddStrategy.s.sol:AddStrategy \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--sig "run(address)" $(S) \
+	--broadcast \
+	-vvvv
+
+
 deploy: 
 	-forge script script/DeployCV.s.sol:DeployCV \
 	--rpc-url $(RPC_URL_LOCALHOST) \
@@ -40,7 +49,14 @@ deploy-testnet:
 	--account pk1 \
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
-	--broadcast -vv
+	--broadcast \
+	-vv
+
+deploy-testnet-dry: 
+	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	-vvvv
 
 
 deploy-testnet2-op: 

@@ -77,7 +77,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
 
         StrategyStruct.PointSystemConfig memory pointConfig;
-        pointConfig.maxAmount = MINIMUM_STAKE * 2 * (10 ** 4);
+        pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),

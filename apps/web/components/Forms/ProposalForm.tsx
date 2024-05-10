@@ -61,7 +61,6 @@ const abiParameters = [
 ];
 
 const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
-const MIN_VALUE = 0.000000000001;
 
 export const ProposalForm = ({
   poolId,
@@ -93,6 +92,8 @@ export const ProposalForm = ({
     },
     strategy: { label: "Strategy:" },
   };
+
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -235,7 +236,7 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${spendingLimitString} ${tokenSymbol} (${spendingLimitPct}% of Pool Funds)`}
+                subLabel={`Max ${spendingLimitString} ${tokenSymbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
                 register={register}
                 required
                 registerOptions={{
@@ -244,11 +245,14 @@ export const ProposalForm = ({
                     message: `Max amount cannot exceed ${spendingLimitString} ${tokenSymbol}`,
                   },
                   min: {
-                    value: MIN_VALUE,
-                    message: "Amount must be greater than 0",
+                    value: INPUT_TOKEN_MIN_VALUE,
+                    message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
                   },
                 }}
-                otherProps={{ step: MIN_VALUE }}
+                otherProps={{
+                  step: INPUT_TOKEN_MIN_VALUE,
+                  min: INPUT_TOKEN_MIN_VALUE,
+                }}
                 errors={errors}
                 className="pr-14"
                 registerKey="amount"

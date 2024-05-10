@@ -13,11 +13,13 @@ import { Button } from "./Button";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { useEffect, useRef, useState } from "react";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { toast } from "react-toastify";
 import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
 import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import useErrorDetails from "@/utils/getErrorName";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -25,6 +27,7 @@ type IncreasePowerProps = {
   connectedAccount: Address;
   tokenSymbol: string;
   registerTokenDecimals: number;
+  addedStake: number;
 };
 
 const InitialTransactionSteps: TransactionStep[] = [
@@ -53,6 +56,7 @@ export const IncreasePower = ({
   connectedAccount,
   tokenSymbol,
   registerTokenDecimals,
+  addedStake,
 }: IncreasePowerProps) => {
   //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
@@ -64,7 +68,7 @@ export const IncreasePower = ({
     false,
   );
 
-  const [increaseInput, setIncreaseInput] = useState<number | undefined>();
+  const [increaseInput, setIncreaseInput] = useState<number | string>("");
 
   //handeling states
   type states = "idle" | "loading" | "success" | "error";
@@ -163,6 +167,36 @@ export const IncreasePower = ({
     functionName: "increasePower",
     args: [requestedAmount as bigint],
   });
+  const {
+    data: decreasePowerData,
+    write: writeDecreasePower,
+    error: errorDecreasePower,
+    status: decreasePowerStatus,
+    isLoading: decreasePowerIsLoading,
+    isError: isErrordecreasePower,
+  } = useContractWrite({
+    ...registryContractCallConfig,
+    functionName: "decreasePower",
+    args: [requestedAmount as bigint],
+  });
+  useErrorDetails(errorDecreasePower, "errorDecrease");
+
+  const { updateTransactionStatus: updateDecreasePowerTransactionStatus } =
+    useTransactionNotification(decreasePowerData);
+
+  useEffect(() => {
+    updateDecreasePowerTransactionStatus(decreasePowerStatus);
+    if (decreasePowerStatus === "success") {
+      setIncreaseInput("");
+    }
+  }, [decreasePowerStatus]);
+
+  const decreasePoweErrorName = useErrorDetails(errorDecreasePower);
+  useEffect(() => {
+    if (isErrordecreasePower && decreasePoweErrorName.errorName !== undefined) {
+      toast.error(decreasePoweErrorName.errorName);
+    }
+  }, [errorDecreasePower]);
 
   const requestesMoreThanAllowance =
     (allowance ?? 0n) > 0n && requestedAmount > (allowance ?? 0n);
@@ -211,7 +245,7 @@ export const IncreasePower = ({
   useEffect(() => {
     if (increaseStakeStatus === "success") {
       closeModal();
-      setIncreaseInput(0);
+      setIncreaseInput("");
       setPendingAllowance(false);
     }
   }, [increaseStakeStatus]);
@@ -239,18 +273,42 @@ export const IncreasePower = ({
     },
     {
       condition:
-        increaseInput == 0 || increaseInput == undefined || increaseInput < 0,
-      message: "Input can not be zero or negtive",
+        Number(increaseInput) === 0 ||
+        increaseInput === undefined ||
+        Number(increaseInput) < 0,
+      message: "Input can not be zero or negative",
     },
     {
       condition: requestesMoreThanAllowance,
       message: `You have a pending allowance of ${formatTokenAmount(allowance ?? 0n, registerTokenDecimals)} ${tokenSymbol}. In order to stake more tokens, plaese stake the pending allowance first`,
     },
   ];
+
+  const disableDecPowerBtnCondition: ConditionObject[] = [
+    ...disableIncPowerBtnCondition,
+    {
+      condition: addedStake === 0 || addedStake === undefined,
+      message: "You have no stake to decrease",
+    },
+    {
+      condition:
+        Number(increaseInput) !== undefined &&
+        Number(increaseInput) > addedStake,
+      message: "Can not decrease more than current stake",
+    },
+  ];
+
+  const disabledDecPowerButton = disableDecPowerBtnCondition.some(
+    (cond) => cond.condition,
+  );
+
   const disabledIncPowerButton = disableIncPowerBtnCondition.some(
     (cond) => cond.condition,
   );
   const { tooltipMessage } = useDisableButtons(disableIncPowerBtnCondition);
+  const { tooltipMessage: decreaseTooltipMsg } = useDisableButtons(
+    disableDecPowerBtnCondition,
+  );
   //
 
   return (
@@ -267,39 +325,73 @@ export const IncreasePower = ({
       ></TransactionModal>
 
       {/* input */}
-      <div className="flex max-w-md flex-col space-y-2">
-        <div className="mt-3 flex max-w-[420px] items-center gap-2 rounded-lg bg-info px-2 py-1 text-white">
+      <div className="grid max-w-[460px] grid-cols-2 gap-4">
+        <div className="col-span-2 mt-3 flex items-center gap-2 rounded-lg bg-info px-2 py-4 text-white">
           <ExclamationCircleIcon height={32} width={32} />
-          <p className="text-sm">
+          <p className="text-sm text-white">
             Staking more tokens in the community will increase your voting power
             to support proposals
           </p>
         </div>
 
-        <div className="relative max-w-[420px]">
-          <input
-            type="number"
-            value={increaseInput}
-            placeholder="Amount"
-            className="input input-bordered input-info w-full disabled:bg-gray-300 disabled:text-black"
-            onChange={(e) => handleInputChange(e)}
-            disabled={!isMember}
-          />
-          <span className="absolute right-10 top-3.5 text-black">
-            {tokenSymbol}
-          </span>
+        <div className="col-span-2 flex flex-col gap-4">
+          {isMember && (
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-lg text-black">
+                  Balance:{" "}
+                  {`${Number(accountTokenBalance?.formatted).toFixed(1)}`}
+                  <span className="px-1 text-xs">{tokenSymbol}</span>
+                </span>
+              </div>
+
+              <div>
+                <span className="text-lg text-black">
+                  Current Staked: {addedStake.toFixed(1)}
+                  <span className="px-1 text-xs">{tokenSymbol}</span>
+                </span>
+              </div>
+            </div>
+          )}
+          {/* <div className=""> */}
+          <div className="relative">
+            <input
+              type="number"
+              value={increaseInput}
+              placeholder="Amount"
+              className="input input-bordered input-info w-full disabled:bg-gray-300 disabled:text-black"
+              onChange={(e) => handleInputChange(e)}
+              disabled={!isMember}
+            />
+            <span className="absolute right-8 top-3.5 text-black">
+              {tokenSymbol}
+            </span>
+          </div>
         </div>
+
         <Button
           onClick={handleChange}
-          className="w-full max-w-[420px]"
+          className="w-full"
           disabled={disabledIncPowerButton}
           tooltip={tooltipMessage}
         >
-          {increaseInput !== undefined && increaseInput > 0
+          {increaseInput !== undefined && Number(increaseInput) > 0
             ? `Stake ${tokenSymbol}`
             : "Increase stake"}
           <span className="loading-spinner"></span>
         </Button>
+
+        {isMember && (
+          <Button
+            onClick={() => writeDecreasePower?.()}
+            className="w-full"
+            disabled={disabledDecPowerButton}
+            tooltip={decreaseTooltipMsg}
+          >
+            Decrease stake
+            <span className="loading-spinner"></span>
+          </Button>
+        )}
       </div>
     </>
   );

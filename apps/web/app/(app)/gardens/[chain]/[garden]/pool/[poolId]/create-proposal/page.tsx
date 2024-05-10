@@ -1,7 +1,12 @@
-import { TokenGarden, getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
+import {
+  TokenGarden,
+  getPoolDataDocument,
+  getPoolDataQuery,
+} from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { MAX_RATIO_CONSTANT, PERCENTAGE_PRECISION } from "@/utils/numbers";
 import React from "react";
 import { Address } from "viem";
 
@@ -33,10 +38,9 @@ export default async function page({
   const tokenGarden = data.tokenGarden;
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
 
-  //calcs for spending limit
-  const PRECISON_OF_7 = 10 ** 7;
   const maxRatioDivPrecision =
-    Number(strategyObj?.config?.maxRatio) / PRECISON_OF_7;
+    (Number(strategyObj?.config?.maxRatio) / PERCENTAGE_PRECISION) *
+    MAX_RATIO_CONSTANT;
 
   const spendingLimitPct = maxRatioDivPrecision * 100;
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;

@@ -14,10 +14,12 @@ import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { calculateFees, formatTokenAmount, gte, dn } from "@/utils/numbers";
+import { dn, PERCENTAGE_PRECISION_DECIMALS, gte } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
+import { formatUnits, parseUnits } from "viem";
+import { DisplayNumber } from "./DisplayNumber";
 
 type RegisterMemberProps = {
   name: string;
@@ -52,6 +54,25 @@ export function RegisterMember({
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
     false,
   );
+
+  const parsedCommunityFee = () => {
+    // if (communityFee == "0") return "0";
+    try {
+      const membership = [
+        BigInt(membershipAmount),
+        Number(registerTokenDecimals),
+      ] as dn.Dnum;
+      const feePercentage = [
+        BigInt(communityFee),
+        Number(PERCENTAGE_PRECISION_DECIMALS),
+      ] as dn.Dnum;
+
+      return dn.multiply(membership, feePercentage);
+    } catch (error) {
+      console.log(error);
+    }
+    return [0n, 0] as dn.Dnum;
+  };
 
   const registryContractCallConfig = {
     address: communityAddress,
@@ -224,6 +245,12 @@ export function RegisterMember({
     },
   ];
 
+  const formatBigint = (number: bigint, decimals: number) => {
+    const num = [number, decimals] as dn.Dnum;
+
+    return dn.format(num);
+  };
+
   return (
     <>
       <TransactionModal
@@ -236,13 +263,10 @@ export function RegisterMember({
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
       />
-      <div className="space-y-4">
-        <div className="stats flex">
-          <div
-            className="stat flex-1 items-center bg-info px-4 py-3 text-sm font-bold text-white"
-            role="alert"
-          >
-            <div className="flex items-center">
+      <div className="space-y-4 ">
+        <div className="flex">
+          <div className="flex-1 items-center rounded-lg bg-info px-4 py-3 text-sm font-bold text-white">
+            <div className="flex items-center gap-2">
               <svg
                 className="mr-2 h-4 w-4 fill-current"
                 xmlns="http://www.w3.org/2000/svg"
@@ -251,21 +275,28 @@ export function RegisterMember({
                 <path d="M12.432 0c1.34 0 2.01.912 2.01 1.957 0 1.305-1.164 2.512-2.679 2.512-1.269 0-2.009-.75-1.974-1.99C9.789 1.436 10.67 0 12.432 0zM8.309 20c-1.058 0-1.833-.652-1.093-3.524l1.214-5.092c.211-.814.246-1.141 0-1.141-.317 0-1.689.562-2.502 1.117l-.528-.88c2.572-2.186 5.531-3.467 6.801-3.467 1.057 0 1.233 1.273.705 3.23l-1.391 5.352c-.246.945-.141 1.271.106 1.271.317 0 1.357-.392 2.379-1.207l.6.814C12.098 19.02 9.365 20 8.309 20z" />
               </svg>
               <div>
+                <div className="flex-start flex">
+                  <p> Registration amount:</p>
+                  <DisplayNumber
+                    number={[BigInt(membershipAmount), registerTokenDecimals]}
+                    tokenSymbol={tokenSymbol}
+                    compact={true}
+                  />
+                </div>
+                <div className="flex-start flex">
+                  <p>Community fee:</p>
+                  <DisplayNumber
+                    number={parsedCommunityFee()}
+                    tokenSymbol={tokenSymbol}
+                    compact={true}
+                  />
+                </div>
+                {/* 
                 <p>
-                  Registration amount:{" "}
-                  {formatTokenAmount(membershipAmount, registerTokenDecimals)}{" "}
+                  Community fee: {parseString(parsedCommunityFee())}{" "}
                   {tokenSymbol}
-                </p>
-                <p>
-                  Community fee:{" "}
-                  {calculateFees(
-                    membershipAmount,
-                    communityFee,
-                    registerTokenDecimals,
-                  )}{" "}
-                  {tokenSymbol}
-                </p>
-                <p>
+                </p> */}
+                {/* <p>
                   Protocol fee:{" "}
                   {calculateFees(
                     membershipAmount,
@@ -273,7 +304,7 @@ export function RegisterMember({
                     registerTokenDecimals,
                   )}{" "}
                   {tokenSymbol}
-                </p>
+                </p> */}
               </div>
             </div>
           </div>
