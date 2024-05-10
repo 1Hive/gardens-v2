@@ -14,14 +14,15 @@ export const DisplayNumber = ({
   className?: string;
   compact?: boolean;
 }) => {
-  const [fullNumberStr, setFullNumberStr] = useState(dn.format(number));
+  const fullNumberStr = dn.format([BigInt(number[0]), Number(number[1])]);
+
   const [isCopied, setIsCopied] = useState(false);
   const [shortNumber, setShortNumber] = useState("");
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     setShortNumber(parseString(fullNumberStr));
-  }, []);
+  }, [fullNumberStr]);
 
   const parseString = (str: string | undefined) => {
     const charsLength = 3;
@@ -62,12 +63,12 @@ export const DisplayNumber = ({
     <div className="relative ml-2 flex items-center gap-1">
       <div
         onClick={handleCopy}
-        className={`${showTooltip && "tooltip"} cursor-pointer ${className}`}
+        className={`${showTooltip && "tooltip"} cursor-pointer`}
         data-tip={isCopied ? "Copied!" : fullNumberStr}
       >
-        <p>{shortNumber}</p>
+        <p className={className}>{shortNumber}</p>
       </div>
-      <p>{tokenSymbol}</p>
+      <p className={className}>{tokenSymbol}</p>
     </div>
   );
 };
