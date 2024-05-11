@@ -14,7 +14,7 @@ import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { calculateFees, formatTokenAmount, gte, dn } from "@/utils/numbers";
+import { dn, PERCENTAGE_PRECISION_DECIMALS, gte } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
@@ -64,7 +64,7 @@ export function RegisterMember({
       ] as dn.Dnum;
       const feePercentage = [
         BigInt(communityFee),
-        Number(registerTokenDecimals),
+        Number(PERCENTAGE_PRECISION_DECIMALS),
       ] as dn.Dnum;
 
       return dn.multiply(membership, feePercentage);

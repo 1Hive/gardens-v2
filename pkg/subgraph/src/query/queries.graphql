@@ -119,6 +119,7 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
   tokenGarden(id: $tokenAddr) {
     decimals
     id
+    symbol
   }
   allos {
     id
