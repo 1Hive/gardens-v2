@@ -109,11 +109,17 @@ export default async function Proposal({
   let updateConvictionLast = 0n;
   let getProposal: any = [];
   let maxCVSupply = 0n;
+  let testThFromContract = 0n;
 
   try {
     totalEffectiveActivePoints = (await client.readContract({
       ...cvStrategyContract,
       functionName: "totalEffectiveActivePoints",
+    })) as bigint;
+    testThFromContract = (await client.readContract({
+      ...cvStrategyContract,
+      functionName: "calculateThreshold",
+      args: [requestedAmount],
     })) as bigint;
     getProposalStakedAmount = (await client.readContract({
       ...cvStrategyContract,
@@ -137,11 +143,12 @@ export default async function Proposal({
     })) as bigint;
   } catch (error) {
     updateConvictionLast = getProposal[7];
-    console.log("error proposalId data from contract", error);
+    console.log(
+      "proposal already executed so threshold can no be read from contracts",
+      error,
+    );
   }
   const tokenDecimals = 18;
-
-  const proposalStatusFromContract = getProposal[5];
 
   const thresholdPct = calcThresholdPct(threshold, maxCVSupply, tokenDecimals);
 
@@ -175,11 +182,9 @@ export default async function Proposal({
         </div>
 
         {/* title - description - status */}
-        <div
-          className={`relative space-y-12 rounded-xl bg-white px-8 py-4 ${proposalStatusFromContract === 4 ? "border-2 border-success" : "border2"}`}
-        >
+        <div className="border2 relative space-y-12 rounded-xl bg-white px-8 py-4">
           <div className="flex justify-end">
-            <StatusBadge status={proposalStatusFromContract} />
+            <StatusBadge status={status} />
           </div>
           <div className=" flex items-baseline justify-end space-x-4 ">
             <h3 className="w-full text-center text-2xl font-semibold">
@@ -222,45 +227,20 @@ export default async function Proposal({
             </div>
           </div>
         </div>
-        {/* <div>Alpha test number</div>
-        <div className="flex flex-col gap-8">
-          <div>
-            <p className="text-xl">
-              This proposal need{" "}
-              <span className="text-2xl text-secondary">{thresholdPct}%</span>{" "}
-              of pool conviction to pass
-            </p>
-          </div>
-          <div>
-            <p className="text-xl">
-              Total support is :{" "}
-              <span className="text-2xl text-secondary">{totalSupport}%</span>{" "}
-            </p>
-          </div>
-          <div>
-            <p className="text-xl">
-              Current conviction is:{" "}
-              <span className="text-4xl text-info">{currentConviction}%</span>{" "}
-            </p>
-          </div>
-        </div> */}
 
-        {proposalStatusFromContract === 4 ? (
+        {status && status == 4 ? (
           <h1 className="text-center text-success">Proposal Executed</h1>
         ) : (
           <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
-              currentConviction={
-                currentConviction.toString() as unknown as number
-              }
+              currentConviction={Number(currentConviction)}
               //maxConviction={calcMaxConv.toString() as unknown as number}
-              threshold={thresholdPct.toString() as unknown as number}
+              threshold={Number(thresholdPct)}
               // data={calcsResults}
-              proposalSupport={totalSupport.toString() as unknown as number}
+              proposalSupport={Number(totalSupport)}
             />
           </div>
         )}
-        {/* PROPOSAL NUMBERS CHART  */}
       </main>
     </div>
   );
