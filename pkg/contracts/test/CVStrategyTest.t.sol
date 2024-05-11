@@ -82,6 +82,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
 
         RegistryCommunity.InitializeParams memory params;
+        params._strategyTemplate = address(new CVStrategy(address(allo())));
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -1761,6 +1762,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         RegistryFactory registryFactory = new RegistryFactory();
 
         RegistryCommunity.InitializeParams memory params;
+        params._strategyTemplate = address(new CVStrategy(address(allo())));
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -1778,6 +1780,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         RegistryFactory registryFactory = new RegistryFactory();
 
         RegistryCommunity.InitializeParams memory params;
+        params._strategyTemplate = address(new CVStrategy(address(allo())));
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;

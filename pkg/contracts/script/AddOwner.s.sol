@@ -32,9 +32,11 @@ contract AddOwner is Native, CVStrategyHelpers, Script, SafeSetup {
         return address(SENDER);
     }
 
-    function run(address payable _owner) public {
+    function run(address payable _owner, address _safe) public {
         console2.log("AddOwner.run(%s)", _owner);
+        console2.log("AddOwner.run(%s)", _safe);
         assertNotEq(_owner, address(0), "Owner not set");
+
         // get PK from env
         uint256 councilMemberPKEnv = vm.envUint("PK");
         if (councilMemberPKEnv == 0) {
@@ -43,6 +45,9 @@ contract AddOwner is Native, CVStrategyHelpers, Script, SafeSetup {
 
         vm.startBroadcast(pool_admin());
 
+        if (_safe != address(0)) {
+            SAFE = _safe;
+        }
         Safe councilSafeDeploy = Safe(payable(SAFE));
 
         uint256 _threshold = 1;
