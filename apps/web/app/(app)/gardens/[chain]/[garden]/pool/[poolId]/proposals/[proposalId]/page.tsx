@@ -11,7 +11,6 @@ import {
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import * as dn from "dnum";
 import {
   calcThresholdPct,
   calcTotalSupport,
@@ -139,6 +138,7 @@ export default async function Proposal({
   }
   const tokenDecimals = 18;
   const thresholdPct = calcThresholdPct(threshold, maxCVSupply, tokenDecimals);
+  const isSignalingType = type == 0;
 
   const totalSupport = calcTotalSupport(
     stakedAmount,
@@ -222,10 +222,9 @@ export default async function Proposal({
           <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
               currentConviction={Number(currentConviction)}
-              //maxConviction={calcMaxConv.toString() as unknown as number}
               threshold={Number(thresholdPct)}
-              // data={calcsResults}
               proposalSupport={Number(totalSupport)}
+              isSignalingType={isSignalingType}
             />
           </div>
         )}

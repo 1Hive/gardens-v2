@@ -2,7 +2,7 @@
 import React from "react";
 import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
-import type { EChartsOption } from "echarts";
+import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
 import { Show } from "../Show";
 
@@ -15,15 +15,43 @@ export const ConvictionBarChart = ({
   currentConviction,
   threshold,
   proposalSupport,
+  isSignalingType,
 }: {
   currentConviction: number;
   threshold: number;
   proposalSupport: number;
   maxConviction?: number;
+  isSignalingType: boolean;
 }) => {
   const supportNeeded = (threshold - proposalSupport).toFixed(2);
 
   const scenarioMappings: Record<string, ScenarioMapping> = {
+    //1-SignalingType) Support > 0 && > Conviction
+    isSignalingTypeAndCovictionEqSupport: {
+      condition: () =>
+        isSignalingType &&
+        proposalSupport !== 0 &&
+        proposalSupport > currentConviction,
+      details: [
+        {
+          message: "",
+          growing: true,
+        },
+      ],
+    },
+    //2-SignalingType) Support > 0 && < Conviction
+    isSignalingTypeAndCovictionGtSupport: {
+      condition: () =>
+        isSignalingType &&
+        proposalSupport !== 0 &&
+        proposalSupport < currentConviction,
+      details: [
+        {
+          message: "",
+          growing: false,
+        },
+      ],
+    },
     //1) Conviction < Total Support < Threshold --- working ...
     convictionLTSupportLTThreshold: {
       condition: () =>
@@ -129,6 +157,51 @@ export const ConvictionBarChart = ({
     disabled: true,
   };
 
+  const markLine: MarkLineComponentOption = {
+    symbol: "none",
+    label: {
+      position: "start",
+      formatter: "{@score} %",
+      fontSize: 16,
+    },
+  };
+
+  const markLineTh: MarkLineComponentOption = isSignalingType
+    ? {}
+    : {
+        ...markLine,
+        data: [
+          {
+            xAxis: threshold,
+            symbol:
+              "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
+            symbolSize: [20, 20],
+            symbolOffset: [-9, 95],
+          },
+        ],
+        lineStyle: {
+          width: 2,
+          color: "#191919",
+        },
+      };
+
+  const markLineCv: MarkLineComponentOption =
+    currentConviction === 0
+      ? {}
+      : {
+          ...markLine,
+          data: [
+            {
+              xAxis: currentConviction,
+            },
+          ],
+          lineStyle: {
+            width: 2,
+            color: "#69db7c",
+            type: "solid",
+          },
+        };
+
   const option: EChartsOption = {
     title: {
       text: "Conviction voting chart",
@@ -202,7 +275,6 @@ export const ConvictionBarChart = ({
       {
         type: "bar",
         name: "Support",
-        //emphasis: emphasis,
         stack: "a",
         itemStyle: {
           color: "#b2f2bb",
@@ -213,70 +285,23 @@ export const ConvictionBarChart = ({
       {
         type: "bar",
         name: "Conviction",
-        // label: {
-        //   show: currentConviction > 0 ? true : false,
-        //   position: "inside",
-        //   formatter: "{c} %",
-        //   fontSize: 12,
-        //   // fontStyle: "italic",
-        //   color: "black",
-        // },
-        emphasis: emphasis,
         itemStyle: {
           color: "#69db7c",
         },
         barWidth: 20,
         data: [currentConviction],
-        markLine: {
-          symbol: "none",
-          data: [
-            {
-              xAxis: currentConviction,
-              label: {
-                position: "start",
-                formatter: "{@score} %",
-                fontSize: 16,
-              },
-            },
-          ],
-          lineStyle: {
-            width: 2,
-            color: "#69db7c",
-            type: "solid",
-          },
-        },
+        markLine: markLineCv,
       },
       {
         type: "bar",
-        name: "Threshold",
+        name: !isSignalingType ? "Threshold" : "",
         stack: "a",
-        //emphasis: emphasis,
         barWidth: 50,
         data: [Number(supportNeeded) < 0 ? 0 : threshold - proposalSupport],
         color: "#e9ecef",
         z: -10,
-        //markLine: {},
         markLine: {
-          symbol: "none",
-          data: [
-            {
-              xAxis: threshold,
-              symbol:
-                "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
-              symbolSize: [20, 20],
-              symbolOffset: [-9, 95],
-              label: {
-                position: "start",
-                formatter: "{@score} %",
-                fontSize: 16,
-              },
-            },
-          ],
-
-          lineStyle: {
-            width: 2,
-            color: "#191919",
-          },
+          ...markLineTh,
         },
       },
     ],
