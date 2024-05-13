@@ -272,19 +272,22 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
         vm.stopBroadcast();
 
-        address[] memory membersStaked = new address[](4);
+        address[] memory membersStaked = new address[](5);
         membersStaked[0] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
         membersStaked[1] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
         membersStaked[2] = address(0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC);
         membersStaked[3] = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+        membersStaked[4] = address(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
 
         for (uint256 i = 0; i < membersStaked.length; i++) {
             vm.startBroadcast(address(membersStaked[i]));
             token.mint(address(membersStaked[i]), MINIMUM_STAKE * 2);
-            token.approve(address(registryCommunity), MINIMUM_STAKE + (MINIMUM_STAKE * COMMUNITY_FEE / 100e4));
-            registryCommunity.stakeAndRegisterMember();
-            strategy1.activatePoints();
-            strategy2.activatePoints();
+            if (i < 4) {
+                token.approve(address(registryCommunity), MINIMUM_STAKE + (MINIMUM_STAKE * COMMUNITY_FEE / 100e4));
+                registryCommunity.stakeAndRegisterMember();
+                strategy1.activatePoints();
+                strategy2.activatePoints();
+            }
 
             vm.stopBroadcast();
         }

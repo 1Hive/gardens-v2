@@ -233,11 +233,23 @@ export function handleMemberActivatedStrategy(
   strategy.memberActive = membersActive;
   strategy.save();
 
+  log.debug(
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA {}",
+    [""],
+  );
   const strategyConfigId = strategy.config;
   const strategyConfig = CVStrategyConfig.load(strategyConfigId);
+  log.debug(
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB {}",
+    [""],
+  );
   if (strategyConfig !== null) {
-    if (strategyConfig.pointSystem === BigInt.fromI32(0)) {
-      const memberStrategyId = `${memberAddress.toHexString()}}-${strategyAddress.toHexString()}`;
+    log.debug("strategyConfig {}", [strategyConfig.pointSystem.toString()]);
+    if (strategyConfig.pointSystem == BigInt.fromI32(0)) {
+      const memberStrategyId = `${memberAddress.toHexString()}-${strategyAddress.toHexString()}`;
+      log.debug("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC {}", [
+        memberStrategyId,
+      ]);
       let memberStrategy = new MemberStrategy(memberStrategyId);
       memberStrategy.member = memberAddress.toHexString();
       memberStrategy.strategy = strategyAddress.toHexString();
