@@ -93,7 +93,9 @@ export const ConvictionBarChart = ({
     //7) Conviction = Total Support  < Threshold
     CovictionEqSupportLTthreshold: {
       condition: () =>
-        proposalSupport == currentConviction && proposalSupport < threshold,
+        proposalSupport == currentConviction &&
+        proposalSupport !== 0 &&
+        proposalSupport < threshold,
       details: [
         {
           message: `This proposal needs ${supportNeeded} % more support to reach threshold`,
@@ -104,7 +106,9 @@ export const ConvictionBarChart = ({
     //8) Conviction = Total Support  > Threshold
     CovictionEqSupportGTthreshold: {
       condition: () =>
-        proposalSupport == currentConviction && proposalSupport > threshold,
+        proposalSupport == currentConviction &&
+        proposalSupport !== 0 &&
+        proposalSupport > threshold,
       details: [
         {
           message: `This proposal is ready to be executed!`,
@@ -117,7 +121,7 @@ export const ConvictionBarChart = ({
   const { message, growing } = Object.values(scenarioMappings).find(
     ({ condition }) => condition(),
   )?.details[0] ?? {
-    details: "Proposal waiting for support ...",
+    message: "Proposal waiting for support ...",
     growing: null,
   };
 
@@ -127,7 +131,7 @@ export const ConvictionBarChart = ({
 
   const option: EChartsOption = {
     title: {
-      text: "Conviction voting",
+      text: "Conviction voting chart",
       subtext: "alpha version",
     },
     emphasis: emphasis,
@@ -162,7 +166,7 @@ export const ConvictionBarChart = ({
           itemStyle: {
             color: "none",
             borderType: "dashed",
-            borderColor: "#8C8C8C",
+            borderColor: "#191919",
             borderWidth: 2,
           },
         },
@@ -177,8 +181,8 @@ export const ConvictionBarChart = ({
       show: false,
       left: "0%",
       right: "5%",
-      top: "30%",
-      bottom: "30%",
+      top: "35%",
+      bottom: "35%",
       containLabel: true,
     },
     xAxis: {
@@ -199,7 +203,6 @@ export const ConvictionBarChart = ({
         type: "bar",
         name: "Support",
         //emphasis: emphasis,
-        //z: 10,
         stack: "a",
         itemStyle: {
           color: "#b2f2bb",
@@ -210,20 +213,38 @@ export const ConvictionBarChart = ({
       {
         type: "bar",
         name: "Conviction",
-        label: {
-          show: currentConviction > 0 ? true : false,
-          position: "inside",
-          formatter: "{c} %",
-          fontSize: 16,
-          fontStyle: "italic",
-          color: "black",
-        },
+        // label: {
+        //   show: currentConviction > 0 ? true : false,
+        //   position: "inside",
+        //   formatter: "{c} %",
+        //   fontSize: 12,
+        //   // fontStyle: "italic",
+        //   color: "black",
+        // },
         emphasis: emphasis,
         itemStyle: {
           color: "#69db7c",
         },
         barWidth: 20,
         data: [currentConviction],
+        markLine: {
+          symbol: "none",
+          data: [
+            {
+              xAxis: currentConviction,
+              label: {
+                position: "start",
+                formatter: "{@score} %",
+                fontSize: 16,
+              },
+            },
+          ],
+          lineStyle: {
+            width: 2,
+            color: "#69db7c",
+            type: "solid",
+          },
+        },
       },
       {
         type: "bar",
@@ -233,6 +254,8 @@ export const ConvictionBarChart = ({
         barWidth: 50,
         data: [Number(supportNeeded) < 0 ? 0 : threshold - proposalSupport],
         color: "#e9ecef",
+        z: -10,
+        //markLine: {},
         markLine: {
           symbol: "none",
           data: [
@@ -241,20 +264,18 @@ export const ConvictionBarChart = ({
               symbol:
                 "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
               symbolSize: [20, 20],
-              symbolOffset: [-9, 123],
+              symbolOffset: [-9, 95],
               label: {
                 position: "start",
                 formatter: "{@score} %",
                 fontSize: 16,
-                color: "#8C8C8C",
-                fontStyle: "italic",
               },
             },
           ],
 
           lineStyle: {
             width: 2,
-            color: "#8C8C8C",
+            color: "#191919",
           },
         },
       },

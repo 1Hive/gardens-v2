@@ -83,13 +83,14 @@ export default async function Proposal({
 
   const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
   const proposalIdNumber = proposalData.proposalNumber as number;
-  // const convictionLast = proposalData.convictionLast as string;
+  const convictionLast = proposalData.convictionLast as string;
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount as bigint;
   const beneficiary = proposalData.beneficiary as Address;
   const submitter = proposalData.submitter as Address;
   const status = proposalData.proposalStatus as number;
+  const stakedAmount = proposalData.stakedAmount as bigint;
   const metadata = proposalData.metadata;
 
   const { title, description } = await getIpfsMetadata(metadata);
@@ -105,26 +106,14 @@ export default async function Proposal({
   };
 
   let totalEffectiveActivePoints = 0n;
-  let getProposalStakedAmount = 0n;
   let updateConvictionLast = 0n;
   let getProposal: any = [];
   let maxCVSupply = 0n;
-  let testThFromContract = 0n;
 
   try {
     totalEffectiveActivePoints = (await client.readContract({
       ...cvStrategyContract,
       functionName: "totalEffectiveActivePoints",
-    })) as bigint;
-    testThFromContract = (await client.readContract({
-      ...cvStrategyContract,
-      functionName: "calculateThreshold",
-      args: [requestedAmount],
-    })) as bigint;
-    getProposalStakedAmount = (await client.readContract({
-      ...cvStrategyContract,
-      functionName: "getProposalStakedAmount",
-      args: [proposalIdNumber],
     })) as bigint;
     getProposal = await client.readContract({
       ...cvStrategyContract,
@@ -144,16 +133,15 @@ export default async function Proposal({
   } catch (error) {
     updateConvictionLast = getProposal[7];
     console.log(
-      "proposal already executed so threshold can no be read from contracts",
+      "proposal already executed so threshold can no be read from contracts, or it is siganling proposal",
       error,
     );
   }
   const tokenDecimals = 18;
-
   const thresholdPct = calcThresholdPct(threshold, maxCVSupply, tokenDecimals);
 
   const totalSupport = calcTotalSupport(
-    getProposalStakedAmount,
+    stakedAmount,
     totalEffectiveActivePoints,
     tokenDecimals,
   );
