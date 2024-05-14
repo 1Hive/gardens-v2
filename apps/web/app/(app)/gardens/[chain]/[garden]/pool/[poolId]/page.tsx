@@ -12,19 +12,13 @@ import {
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { pointSystems, proposalTypes } from "@/types";
 
 export const dynamic = "force-dynamic";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
 const { urqlClient } = initUrqlClient();
-
-const pointSystemObject = {
-  0: "Fixed",
-  1: "Capped",
-  2: "Unlimited",
-  3: "Quadratic",
-};
 
 export default async function Pool({
   params: { chain, poolId, garden },
@@ -102,11 +96,7 @@ export default async function Pool({
                     <div className="text-md stat-title">
                       Points System:{" "}
                       <span className="text-md pl-2 text-black">
-                        {
-                          pointSystemObject[
-                            pointSystem as unknown as keyof typeof pointSystemObject
-                          ]
-                        }
+                        {pointSystems[pointSystem]}
                       </span>
                     </div>
                   </div>
@@ -134,22 +124,26 @@ export default async function Pool({
             </div>
           </section>
           {/* Pool metrics: for now we have funds available and spending limit */}
-          <PoolMetrics
-            alloInfo={alloInfo}
-            poolId={poolId}
-            balance={poolAmount}
-            strategyAddress={strategyAddr}
-            strategy={strategyObj}
-            communityAddress={communityAddress}
-            tokenGarden={tokenGarden}
-            pointSystem={pointSystem}
-            spendingLimit={spendingLimitPct}
-          />
+          {proposalTypes[proposalType] !== "signaling" && (
+            <PoolMetrics
+              alloInfo={alloInfo}
+              poolId={poolId}
+              balance={poolAmount}
+              strategyAddress={strategyAddr}
+              strategy={strategyObj}
+              communityAddress={communityAddress}
+              tokenGarden={tokenGarden}
+              pointSystem={pointSystem}
+              spendingLimit={spendingLimitPct}
+            />
+          )}
+          {/* Proposals section */}
           <Proposals
             strategy={strategyObj}
             alloInfo={alloInfo}
             communityAddress={communityAddress}
             createProposalUrl={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
+            proposalType={proposalType}
           />
         </main>
       </div>

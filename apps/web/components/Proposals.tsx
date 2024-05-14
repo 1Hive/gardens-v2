@@ -93,9 +93,8 @@ export function Proposals({
   // const { address: connectedAccount } = useAccount();
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilteres, setStakedFilteres] = useState<ProposalInputItem[]>([]);
-  const [memberTokenInCommunity, setMemberTokenInCommunity] = useState<
-    number | string
-  >(0);
+  const [memberTokensInCommunity, setMemberTokensInCommunity] =
+    useState<string>("0");
 
   const { address } = useAccount();
 
@@ -132,7 +131,7 @@ export function Proposals({
       },
     );
 
-    setMemberTokenInCommunity(
+    setMemberTokensInCommunity(
       formatTokenAmount(
         result?.members[0]?.memberCommunity?.[0]?.stakedTokens ?? 0,
         tokenDecimals,
@@ -306,18 +305,18 @@ export function Proposals({
     // const currentPoints = calculatePoints(i);
     const pointsDistributed = Number(totalAllocatedTokens);
     // console.log("currentPoints", currentPoints);
-
-    // if (pointsDistributed + value <= memberTokensInPool) {
-    setInputs(
-      inputs.map((input, index) =>
-        index === i ? { ...input, value: value } : input,
-      ),
-    );
-    setInputAllocatedTokens(pointsDistributed + value);
-    setTotalAllocatedTokens(pointsDistributed + value);
-    // } else {
-    //   console.log("can't exceed 100% points");
-    // }
+    console.log(pointsDistributed + value, memberActivatedPoints);
+    if (pointsDistributed + value <= memberActivatedPoints) {
+      setInputs(
+        inputs.map((input, index) =>
+          index === i ? { ...input, value: value } : input,
+        ),
+      );
+      setInputAllocatedTokens(pointsDistributed + value);
+      setTotalAllocatedTokens(pointsDistributed + value);
+    } else {
+      console.log("can't exceed 100% points");
+    }
   };
 
   //ManageSupport Tooltip condition => message mapping
@@ -359,7 +358,7 @@ export function Proposals({
         tokenDecimals={tokenDecimals}
         strategy={strategy}
         communityAddress={communityAddress}
-        memberTokensInCommunity={memberTokenInCommunity}
+        memberTokensInCommunity={memberTokensInCommunity}
       />
       <section className="rounded-lg border-2 border-black bg-white p-12">
         <div className="mx-auto max-w-5xl space-y-10">
