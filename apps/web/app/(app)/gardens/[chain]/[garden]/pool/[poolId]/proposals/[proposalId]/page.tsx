@@ -217,7 +217,9 @@ export default async function Proposal({
         </div>
 
         {status && status == 4 ? (
-          <h1 className="text-center text-success">Proposal Executed</h1>
+          <div className="badge badge-success p-4 text-white">
+            Proposal passed and executed successfully
+          </div>
         ) : (
           <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
