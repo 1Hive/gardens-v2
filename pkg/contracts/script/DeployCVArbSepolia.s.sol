@@ -24,25 +24,30 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
     address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
 
+    uint256 councilMemberPKEnv;
+    address allo_proxy;
+    Allo allo;
+    AMockERC20 token;
+
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
     }
 
     function run() public {
-        address allo_proxy = vm.envAddress("ALLO_PROXY");
+        allo_proxy = vm.envAddress("ALLO_PROXY");
         if (allo_proxy == address(0)) {
             revert("ALLO_PROXY not set");
         }
         // get PK from env
-        uint256 councilMemberPKEnv = vm.envUint("PK");
+        councilMemberPKEnv = vm.envUint("PK");
         if (councilMemberPKEnv == 0) {
             revert("PK not set");
         }
 
-        Allo allo = Allo(allo_proxy);
+        allo = Allo(allo_proxy);
 
         // console2.log("Allo Addr: %s", address(allo));
-        AMockERC20 token = AMockERC20(0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D);
+        token = AMockERC20(0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D);
 
         // IRegistry registry = allo.getRegistry();
         // console2.log("Registry Addr: %s", address(registry));
@@ -57,9 +62,9 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         // RegistryFactory registryFactory = new RegistryFactory();
         RegistryFactory registryFactory = new RegistryFactory();
-
         RegistryCommunity.InitializeParams memory params;
 
+        params._strategyTemplate = address(new CVStrategy(address(allo)));
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -93,8 +98,23 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         // paramsCV.registryCommunity = address(registryCommunity);
         // paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
 
-        CVStrategy strategy1 = new CVStrategy(address(allo));
-        CVStrategy strategy2 = new CVStrategy(address(allo));
+        // address[] memory _pool_managers = new address[](2);
+        // _pool_managers[0] = address(params._councilSafe);
+        // _pool_managers[1] = address(msg.sender);
+
+        // bytes32 memory_poolProfileId_ = registry.createProfile(
+        //     0, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
+        // );
+
+        (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
+
+        paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
+        paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
+
+        (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(address(0), paramsCV, metadata);
+
+        CVStrategy strategy1 = CVStrategy(payable(_strategy1));
+        CVStrategy strategy2 = CVStrategy(payable(_strategy2));
 
         safeHelper(
             councilSafeDeploy,
@@ -109,42 +129,6 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
         );
 
-        // address[] memory _pool_managers = new address[](2);
-        // _pool_managers[0] = address(params._councilSafe);
-        // _pool_managers[1] = address(msg.sender);
-
-        // bytes32 memory_poolProfileId_ = registry.createProfile(
-        //     0, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
-        // );
-
-        (uint256 poolId,) = registryCommunity.createPool(address(strategy1), address(token), paramsCV, metadata);
-
-        // uint256 poolId = allo.createPoolWithCustomStrategy(
-        //     // poolId = allo.createPool(
-        //     registryCommunity.profileId(),
-        //     address(strategy1),
-        //     abi.encode(paramsCV),
-        //     address(token),
-        //     0,
-        //     metadata,
-        //     _pool_managers
-        // );
-
-        paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
-        paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
-
-        // uint256 poolIdSignaling = allo.createPoolWithCustomStrategy(
-        //     // poolId = allo.createPool(
-        //     registryCommunity.profileId(),
-        //     address(strategy2),
-        //     abi.encode(paramsCV),
-        //     address(0),
-        //     0,
-        //     metadata,
-        //     _pool_managers
-        // );
-
-        (uint256 poolIdSignaling,) = registryCommunity.createPool(address(strategy2), address(0), paramsCV, metadata);
         strategy1.setDecay(_etherToFloat(0.9965402 ether));
         // alpha = decay
         strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
