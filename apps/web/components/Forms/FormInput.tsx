@@ -23,7 +23,7 @@ type Props = {
   otherProps?: any;
   className?: string;
   value?: string | number;
-  step?: number;
+  step?: number | string;
   onChange?: (value: any) => void;
 };
 
