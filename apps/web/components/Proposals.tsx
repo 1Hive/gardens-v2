@@ -132,10 +132,7 @@ export function Proposals({
     );
 
     setMemberTokensInCommunity(
-      formatTokenAmount(
-        result?.members[0]?.memberCommunity?.[0]?.stakedTokens ?? 0,
-        tokenDecimals,
-      ),
+      result?.members[0]?.memberCommunity?.[0]?.stakedTokens,
     );
 
     const { data: memberStrategyResult, error: errorMS } =
@@ -306,7 +303,7 @@ export function Proposals({
     const pointsDistributed = Number(totalAllocatedTokens);
     // console.log("currentPoints", currentPoints);
     console.log(pointsDistributed + value, memberActivatedPoints);
-    if (pointsDistributed + value <= memberActivatedPoints) {
+    // if (pointsDistributed + value <= memberActivatedPoints) {
       setInputs(
         inputs.map((input, index) =>
           index === i ? { ...input, value: value } : input,
@@ -314,9 +311,9 @@ export function Proposals({
       );
       setInputAllocatedTokens(pointsDistributed + value);
       setTotalAllocatedTokens(pointsDistributed + value);
-    } else {
-      console.log("can't exceed 100% points");
-    }
+    // } else {
+    //   console.log("can't exceed 100% points");
+    // }
   };
 
   //ManageSupport Tooltip condition => message mapping
