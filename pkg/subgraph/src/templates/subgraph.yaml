@@ -52,7 +52,7 @@ templates:
           handler: handleStrategyAdded
         # - event: StrategyRemoved(address)
         #   handler: handleStrategyRemoved
-        - event: MemberActivatedStrategy(address,address)
+        - event: MemberActivatedStrategy(address,address,uint256)
           handler: handleMemberActivatedStrategy
         - event: MemberDeactivatedStrategy(address,address)
           handler: handleMemberDeactivatedStrategy
