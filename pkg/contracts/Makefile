@@ -18,6 +18,14 @@ add-strategy: #make add-strategy S=0x1234
 	--broadcast \
 	-vvvv
 
+add-owner: #make add-owner owner=0x1234 safe=0x1234
+	-forge script script/AddOwner.s.sol:AddOwner \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--sig "run(address,address)" $(owner) $(safe) \
+	--broadcast \
+	-vvvv
+
 
 deploy: 
 	-forge script script/DeployCV.s.sol:DeployCV \
