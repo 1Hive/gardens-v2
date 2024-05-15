@@ -1,10 +1,8 @@
 "use client";
 import React from "react";
-import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
-import { Show } from "../Show";
 
 type ScenarioMapping = {
   condition: () => boolean;
@@ -24,7 +22,6 @@ export const ConvictionBarChart = ({
   isSignalingType: boolean;
 }) => {
   const supportNeeded = (threshold - proposalSupport).toFixed(2);
-
   const scenarioMappings: Record<string, ScenarioMapping> = {
     //1-SignalingType) Support > 0 && > Conviction
     isSignalingTypeAndCovictionEqSupport: {
@@ -276,6 +273,13 @@ export const ConvictionBarChart = ({
         type: "bar",
         name: "Support",
         stack: "a",
+        label: {
+          show: true,
+          position: "top",
+          color: "#191919",
+          fontSize: 16,
+          formatter: "{c} %",
+        },
         itemStyle: {
           color: "#b2f2bb",
         },

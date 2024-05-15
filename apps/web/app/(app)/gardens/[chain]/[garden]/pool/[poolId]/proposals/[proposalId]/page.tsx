@@ -9,13 +9,8 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { formatTokenAmount } from "@/utils/numbers";
+import { formatTokenAmount, calculatePercentage } from "@/utils/numbers";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import {
-  calcThresholdPct,
-  calcTotalSupport,
-  calcCurrentConviction,
-} from "@/utils/convictionFormulas";
 
 export const dynamic = "force-dynamic";
 
@@ -108,11 +103,23 @@ export default async function Proposal({
   let updateConvictionLast = 0n;
   let getProposal: any = [];
   let maxCVSupply = 0n;
+  let thFromContract = 0n;
+  let stakeAmountFromContract = 0n;
 
   try {
     totalEffectiveActivePoints = (await client.readContract({
       ...cvStrategyContract,
       functionName: "totalEffectiveActivePoints",
+    })) as bigint;
+    thFromContract = (await client.readContract({
+      ...cvStrategyContract,
+      functionName: "calculateThreshold",
+      args: [requestedAmount],
+    })) as bigint;
+    stakeAmountFromContract = (await client.readContract({
+      ...cvStrategyContract,
+      functionName: "getProposalStakedAmount",
+      args: [proposalIdNumber],
     })) as bigint;
     getProposal = await client.readContract({
       ...cvStrategyContract,
@@ -136,19 +143,33 @@ export default async function Proposal({
       error,
     );
   }
-  const tokenDecimals = 18;
-  const thresholdPct = calcThresholdPct(threshold, maxCVSupply, tokenDecimals);
   const isSignalingType = type == 0;
 
-  const totalSupport = calcTotalSupport(
-    stakedAmount,
-    totalEffectiveActivePoints,
-    tokenDecimals,
+  //logs for debugging in arb sepolia - //TODO: remove before merge
+  console.log(requestedAmount);
+  console.log(maxCVSupply);
+  //threshold
+  console.log(threshold);
+  console.log(thFromContract);
+  //stakeAmount
+  console.log(stakedAmount);
+  console.log(stakeAmountFromContract);
+  // console.log(totalEffectiveActivePoints);
+  console.log(updateConvictionLast);
+  console.log(convictionLast);
+
+  const thresholdPct = calculatePercentage(
+    Number(threshold),
+    Number(maxCVSupply),
   );
-  const currentConviction = calcCurrentConviction(
-    updateConvictionLast,
-    maxCVSupply,
-    tokenDecimals,
+
+  const totalSupport = calculatePercentage(
+    Number(stakedAmount),
+    Number(totalEffectiveActivePoints),
+  );
+  const currentConviction = calculatePercentage(
+    Number(updateConvictionLast),
+    Number(maxCVSupply),
   );
 
   return (
@@ -223,9 +244,9 @@ export default async function Proposal({
         ) : (
           <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
-              currentConviction={Number(currentConviction)}
-              threshold={Number(thresholdPct)}
-              proposalSupport={Number(totalSupport)}
+              currentConviction={currentConviction}
+              threshold={thresholdPct}
+              proposalSupport={totalSupport}
               isSignalingType={isSignalingType}
             />
           </div>
