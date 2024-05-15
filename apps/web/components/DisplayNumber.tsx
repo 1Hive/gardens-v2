@@ -9,12 +9,15 @@ export const DisplayNumber = ({
   className,
   compact,
 }: {
-  number: dn.Dnum;
+  number: dn.Dnum | string;
   tokenSymbol?: string;
   className?: string;
   compact?: boolean;
 }) => {
-  const fullNumberStr = dn.format([BigInt(number[0]), Number(number[1])]);
+  const fullNumberStr =
+    typeof number === "string"
+      ? number
+      : dn.format([BigInt(number[0]), Number(number[1])]);
 
   const [isCopied, setIsCopied] = useState(false);
   const [shortNumber, setShortNumber] = useState("");
@@ -27,6 +30,7 @@ export const DisplayNumber = ({
   const parseString = (str: string | undefined) => {
     const charsLength = 3;
     const prefixLength = 2; // "0."
+
     if (!str) {
       setShowTooltip(false);
       return "";
@@ -36,13 +40,20 @@ export const DisplayNumber = ({
       return str;
     }
     setShowTooltip(true);
+
     if (str.slice(0, 2) === "0.")
       return (
         str.slice(0, charsLength + prefixLength - 1) +
         "…" +
         str.slice(-charsLength)
       );
-    return dn.format(number, { compact: compact });
+    if (typeof number == "string")
+      return dn.format(dn.from(number), {
+        compact: compact,
+        digits: 2,
+      });
+
+    return dn.format(number, { compact: compact, digits: 2 });
   };
 
   const handleCopy = async () => {
