@@ -62,13 +62,13 @@ export type ProposalTypeVoter = CVProposal & {
   type: number;
 };
 
-const getProposalId = (inputString: string) => {
-  if (inputString.length >= 2) {
-    return inputString.substring(2);
-  } else {
-    return "0x0";
-  }
-};
+// const getProposalId = (inputString: string) => {
+//   if (inputString.length >= 2) {
+//     return inputString.substring(2);
+//   } else {
+//     return "0x0";
+//   }
+// };
 
 export function Proposals({
   strategy,
@@ -96,6 +96,14 @@ export function Proposals({
   const [memberTokensInCommunity, setMemberTokensInCommunity] =
     useState<string>("0");
 
+  console.log("inputAllocatedTokens: " + inputAllocatedTokens);
+  console.log(inputs);
+  console.log(proposals);
+  console.log("totalAllocatedTokens: " + totalAllocatedTokens);
+  console.log("memberActivatedPoints: " + memberActivatedPoints);
+  console.log(stakedFilteres);
+  console.log("memberTokensInCommunity: " + memberTokensInCommunity);
+
   const { address } = useAccount();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
@@ -104,13 +112,9 @@ export function Proposals({
   const urqlClient = useUrqlClient();
   const chainId = getChainIdFromPath();
 
-  const registryContractCallConfig = {
+  const { data: isMemberActivated } = useContractRead({
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
-  };
-
-  const { data: isMemberActivated } = useContractRead({
-    ...registryContractCallConfig,
     functionName: "memberActivatedInStrategies",
     args: [address as Address, strategy.id as Address],
     watch: true,
@@ -132,7 +136,7 @@ export function Proposals({
     );
 
     setMemberTokensInCommunity(
-      result?.members[0]?.memberCommunity?.[0]?.stakedTokens,
+      result?.members[0]?.memberCommunity?.[0]?.stakedTokens ?? "0",
     );
 
     const { data: memberStrategyResult, error: errorMS } =
@@ -146,14 +150,10 @@ export function Proposals({
       );
 
     let _stakesFilteres: StakesMemberType = [];
-    let totalActivatedAmount: bigint = 0n;
 
-    if (memberStrategyResult?.memberStrategy) {
-      totalActivatedAmount =
-        memberStrategyResult?.memberStrategy?.activatedPoints ?? 0n;
-
-      setMemberActivatedPoints(Number(totalActivatedAmount));
-    }
+    setMemberActivatedPoints(
+      Number(memberStrategyResult?.memberStrategy?.activatedPoints ?? 0n),
+    );
 
     if (result && result.members.length > 0) {
       const stakes = result.members[0].stakes;
@@ -217,16 +217,16 @@ export function Proposals({
       });
       return returnItem;
     });
-
+    console.log(stakedFilteres);
     if (newInputs.length > 0) {
       let sum = newInputs?.reduce(
         (prev, curr) => prev + BigInt(curr.value),
         0n,
       );
     }
-
+    console.log(newInputs);
     setInputs(newInputs);
-  }, [proposals]);
+  }, [proposals, address]);
 
   useEffect(() => {
     setInputAllocatedTokens(calculateTotalTokens());
@@ -263,7 +263,7 @@ export function Proposals({
   }, [allocateStatus]);
 
   const submit = async () => {
-    const encodedData = getEncodedProposals(inputs, proposals);
+    const encodedData = getEncodedProposals(inputs, stakedFilteres);
     const poolId = Number(strategy.poolId);
     writeAllocate({
       args: [BigInt(poolId), encodedData as AddressType],
@@ -272,13 +272,13 @@ export function Proposals({
 
   const getEncodedProposals = (
     inputData: ProposalInputItem[],
-    currentData: ProposalTypeVoter[],
+    currentData: ProposalInputItem[],
   ) => {
     const resultArr: [number, BigInt][] = [];
     inputData.forEach((input) => {
       currentData.forEach((current) => {
-        if (input.id === current.proposalNumber) {
-          const dif = BigInt(input.value - current.stakedAmount);
+        if (input.id === current.id) {
+          const dif = BigInt(input.value - current.value);
           if (dif !== BigInt(0)) {
             resultArr.push([Number(input.id), dif]);
           }
@@ -302,15 +302,15 @@ export function Proposals({
     // const currentPoints = calculatePoints(i);
     const pointsDistributed = Number(totalAllocatedTokens);
     // console.log("currentPoints", currentPoints);
-    console.log(pointsDistributed + value, memberActivatedPoints);
+    console.log(memberActivatedPoints - pointsDistributed + value);
     // if (pointsDistributed + value <= memberActivatedPoints) {
-      setInputs(
-        inputs.map((input, index) =>
-          index === i ? { ...input, value: value } : input,
-        ),
-      );
-      setInputAllocatedTokens(pointsDistributed + value);
-      setTotalAllocatedTokens(pointsDistributed + value);
+    setInputs(
+      inputs.map((input, index) =>
+        index === i ? { ...input, value: value } : input,
+      ),
+    );
+    setInputAllocatedTokens(pointsDistributed + value);
+    setTotalAllocatedTokens(pointsDistributed + value);
     // } else {
     //   console.log("can't exceed 100% points");
     // }
