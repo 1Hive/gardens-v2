@@ -202,7 +202,6 @@ export const ConvictionBarChart = ({
   const option: EChartsOption = {
     title: {
       text: "Conviction voting chart",
-      subtext: "alpha version",
     },
     emphasis: emphasis,
     yAxis: {
@@ -249,7 +248,7 @@ export const ConvictionBarChart = ({
     },
     grid: {
       show: false,
-      left: "0%",
+      left: "5%",
       right: "5%",
       top: "35%",
       bottom: "35%",
@@ -275,10 +274,15 @@ export const ConvictionBarChart = ({
         stack: "a",
         label: {
           show: true,
-          position: "top",
+          position:
+            proposalSupport === 0
+              ? [2, -14]
+              : proposalSupport > threshold
+                ? "right"
+                : "top",
           color: "#191919",
-          fontSize: 16,
-          formatter: "{c} %",
+          fontSize: 12,
+          formatter: "{a}: {@score} %",
         },
         itemStyle: {
           color: "#b2f2bb",
