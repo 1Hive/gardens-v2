@@ -32,6 +32,11 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
     string public CURRENT_NETWORK = "arbsepolia";
 
+    uint256 councilMemberPKEnv;
+    address allo_proxy;
+    Allo allo;
+    AMockERC20 token;
+
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
     }
@@ -82,23 +87,23 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("sender: %s", SENDER);
         console2.log("chainId : %s", chainId);
 
-        address allo_proxy = json.readAddress(getKeyNetwork(".ENVS.ALLO_PROXY"));
+        allo_proxy = json.readAddress(getKeyNetwork(".ENVS.ALLO_PROXY"));
         // address allo_proxy = vm.envAddress("ALLO_PROXY");
         if (allo_proxy == address(0)) {
             revert("ALLO_PROXY not set");
         }
         // get PK from env
-        uint256 councilMemberPKEnv = vm.envUint("PK");
+        councilMemberPKEnv = vm.envUint("PK");
         if (councilMemberPKEnv == 0) {
             revert("PK not set");
         }
 
-        Allo allo = Allo(allo_proxy);
+        allo = Allo(allo_proxy);
 
         TOKEN = json.readAddress(getKeyNetwork(".ENVS.TOKEN"));
         // assertTrue(TOKEN != address(0));
         // console2.log("Allo Addr: %s", address(allo));
-        AMockERC20 token = AMockERC20(TOKEN);
+        token = AMockERC20(TOKEN);
         if (TOKEN == address(0)) {
             token = new AMockERC20();
             TOKEN = address(token);
@@ -153,22 +158,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         // paramsCV.registryCommunity = address(registryCommunity);
         // paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
 
-        CVStrategy strategy1 = new CVStrategy(address(allo));
-        CVStrategy strategy2 = new CVStrategy(address(allo));
-
-        safeHelper(
-            councilSafeDeploy,
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
-        );
-        safeHelper(
-            councilSafeDeploy,
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
-        );
-
         // address[] memory _pool_managers = new address[](2);
         // _pool_managers[0] = address(params._councilSafe);
         // _pool_managers[1] = address(msg.sender);
@@ -177,8 +166,16 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         //     0, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
         // );
 
-        (uint256 poolId,) = registryCommunity.createPool(address(strategy1), address(token), paramsCV, metadata);
+        (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
 
+        CVStrategy strategy1 = CVStrategy(payable(_strategy1));
+
+        safeHelper(
+            councilSafeDeploy,
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
+        );
         // uint256 poolId = allo.createPoolWithCustomStrategy(
         //     // poolId = allo.createPool(
         //     registryCommunity.profileId(),
@@ -204,7 +201,16 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         //     _pool_managers
         // );
 
-        (uint256 poolIdSignaling,) = registryCommunity.createPool(address(strategy2), address(0), paramsCV, metadata);
+        (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(address(0), paramsCV, metadata);
+
+        CVStrategy strategy2 = CVStrategy(payable(_strategy2));
+        safeHelper(
+            councilSafeDeploy,
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
+        );
+
         strategy1.setDecay(_etherToFloat(0.9965402 ether));
         // alpha = decay
         strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio

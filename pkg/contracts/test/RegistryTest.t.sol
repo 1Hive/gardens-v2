@@ -89,6 +89,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
         vm.stopPrank();
         RegistryCommunity.InitializeParams memory params;
+        params._strategyTemplate = address(strategy);
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
