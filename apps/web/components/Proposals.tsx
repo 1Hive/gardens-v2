@@ -88,14 +88,13 @@ export function Proposals({
   const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
-  const [stakedFilteres, setStakedFilteres] = useState<ProposalInputItem[]>([]);
+  const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
   const [memberTokensInCommunity, setMemberTokensInCommunity] =
     useState<string>("0");
 
-  console.log("inputAllocatedTokens: " + inputAllocatedTokens);
-  console.log(inputs);
-  console.log(proposals);
-  console.log(stakedFilteres);
+  // console.log("inputAllocatedTokens: " + inputAllocatedTokens);
+  // console.log(inputs);
+  // console.log(stakedFilters);
 
   const { address } = useAccount();
 
@@ -168,9 +167,8 @@ export function Proposals({
       id: item.proposal.proposalNumber,
       value: item.amount,
     }));
-
     setInputAllocatedTokens(Number(totalStaked));
-    setStakedFilteres(memberStakes);
+    setStakedFilters(memberStakes);
   }, [
     address,
     strategy.registryCommunity.id,
@@ -200,26 +198,24 @@ export function Proposals({
   useEffect(() => {
     const newInputs = proposals.map(({ proposalNumber, stakedAmount }) => {
       let returnItem = { id: proposalNumber, value: 0 };
-      stakedFilteres.forEach((item, index) => {
+      stakedFilters.forEach((item, index) => {
         if (proposalNumber === item.id) {
           returnItem = {
             id: proposalNumber,
-            value: stakedFilteres[Number(index)]?.value,
+            value: stakedFilters[Number(index)]?.value,
           };
         }
       });
       return returnItem;
     });
-    console.log(stakedFilteres);
     if (newInputs.length > 0) {
       let sum = newInputs?.reduce(
         (prev, curr) => prev + BigInt(curr.value),
         0n,
       );
     }
-    console.log(newInputs);
     setInputs(newInputs);
-  }, [proposals, address]);
+  }, [proposals, address, stakedFilters]);
 
   useEffect(() => {
     if (isMemberActived === undefined) return;
@@ -251,7 +247,7 @@ export function Proposals({
   }, [allocateStatus]);
 
   const submit = async () => {
-    const encodedData = getEncodedProposals(inputs, stakedFilteres);
+    const encodedData = getEncodedProposals(inputs, stakedFilters);
     const poolId = Number(strategy.poolId);
     writeAllocate({
       args: [BigInt(poolId), encodedData as AddressType],
@@ -264,16 +260,18 @@ export function Proposals({
   ) => {
     const resultArr: [number, BigInt][] = [];
     inputData.forEach((input) => {
+      let row: [number, bigint] | undefined = undefined;
+      if (input.value > 0) row = [Number(input.id), BigInt(input.value)];
       currentData.forEach((current) => {
         if (input.id === current.id) {
           const dif = BigInt(input.value - current.value);
-          if (dif !== BigInt(0)) {
-            resultArr.push([Number(input.id), dif]);
-          }
+          row = [Number(input.id), dif];
         }
       });
+      if (!!row) resultArr.push(row);
     });
-
+    console.log(inputData, currentData);
+    console.log(resultArr);
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
@@ -395,7 +393,7 @@ export function Proposals({
                 <React.Fragment key={id + "_" + i}>
                   <ProposalCard
                     inputData={inputs[i]}
-                    stakedFilter={stakedFilteres[i]}
+                    stakedFilter={stakedFilters[i]}
                     title={title}
                     proposalNumber={proposalNumber}
                     proposalStatus={proposalStatus}

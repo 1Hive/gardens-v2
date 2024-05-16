@@ -161,9 +161,7 @@ export function ProposalCard({
                 type="range"
                 min={0}
                 max={memberActivatedPoints}
-                value={
-                  inputData.value
-                }
+                value={inputData?.value ?? 0}
                 className={`range range-success range-sm min-w-[420px] cursor-pointer`}
                 step={memberActivatedPoints / 100}
                 onChange={(e) => inputHandler(i, Number(e.target.value))}
@@ -179,7 +177,7 @@ export function ProposalCard({
             <div className="mb-2">
               <p className="text-xl font-semibold">
                 {Number(
-                  (inputData.value * 100) / memberActivatedPoints,
+                  (inputData?.value * 100) / memberActivatedPoints,
                 ).toFixed(2)}
                 %
               </p>
@@ -192,7 +190,7 @@ export function ProposalCard({
                 <span className="px-2 py-1 text-xl font-semibold text-info">
                   {calcPoolWeightUsed(
                     calcDivisionToPct(
-                      inputData.value ?? 0,
+                      inputData?.value ?? 0,
                       memberActivatedPoints,
                       tokenDecimals,
                     ),
@@ -206,7 +204,7 @@ export function ProposalCard({
                 <span className="px-2 py-2 text-2xl font-semibold text-info">
                   {calcPoolWeightUsed(
                     calcDivisionToPct(
-                      inputData.value ?? 0,
+                      inputData?.value ?? 0,
                       memberActivatedPoints,
                       tokenDecimals,
                     ),
