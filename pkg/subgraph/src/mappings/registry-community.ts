@@ -244,7 +244,6 @@ export function handleMemberActivatedStrategy(
       memberStrategy.strategy = strategyAddress.toHexString();
       memberStrategy.totalStakedPoints = BigInt.fromI32(0);
       memberStrategy.activatedPoints = event.params._pointsToIncrease;
-      memberStrategy.totalStakedPoints = event.params._pointsToIncrease;
       memberStrategy.save();
     }
   }
