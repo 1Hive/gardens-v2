@@ -150,34 +150,37 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     /*|                VARIABLES                   |*/
     /*|--------------------------------------------|*/
 
-    uint256 internal surpressStateMutabilityWarning;
-
-    RegistryCommunity public registryCommunity;
-
-    mapping(uint256 => StrategyStruct.Proposal) public proposals;
-    mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
-    mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
-
-    uint256 public decay;
-    uint256 public maxRatio;
-    uint256 public weight;
-    StrategyStruct.ProposalType public proposalType;
-
-    uint256 public proposalCounter = 0;
-    uint256 public totalStaked;
-    uint256 public totalPointsActivated;
-    uint256 public _minThresholdPoints = 0;
-
-    StrategyStruct.PointSystem public pointSystem;
-    StrategyStruct.PointSystemConfig public pointConfig;
-
-    // uint256 public constant PRECISION_SCALE = 10 ** 4;
+    // Constants for fixed numbers
     uint256 public constant D = 10000000; //10**7
-    // uint256 public constant PRECISION_PERCENTAGE = 100 * PRECISION_SCALE;
     uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
     uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
-    uint256 public constant MAX_STAKED_PROPOSALS = 10; //@todo not allow stake more than 10 proposals per user, dont count executed?
+    uint256 public constant MAX_STAKED_PROPOSALS = 10; // @todo not allow stake more than 10 proposals per user, don't count executed?
+
+    // uint256 variables packed together
+    uint256 public decay;
+    uint256 public maxRatio;
+    uint256 public weight;
+    uint256 public proposalCounter = 0;
+    uint256 public totalStaked;
+    uint256 public totalPointsActivated;
+    uint256 public _minThresholdPoints = 0; // starting with a default of zero
+    uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
+
+    // Enum for handling proposal types
+    StrategyStruct.ProposalType public proposalType;
+
+    // Struct variables for complex data structures
+    StrategyStruct.PointSystem public pointSystem;
+    StrategyStruct.PointSystemConfig public pointConfig;
+
+    // Contract reference
+    RegistryCommunity public registryCommunity;
+
+    // Mappings to handle relationships and staking details
+    mapping(uint256 => StrategyStruct.Proposal) public proposals; // Mapping of proposal IDs to Proposal structures
+    mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
+    mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/

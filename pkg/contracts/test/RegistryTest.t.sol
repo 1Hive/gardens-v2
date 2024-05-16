@@ -228,6 +228,47 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         );
     }
 
+    function test_activate_deactivate_totalActivatedPoints_fixed_system() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Fixed
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+        strategy.activatePoints();
+
+        // token.approve(address(registryCommunity), tokenAmount * DECIMALS);
+        // _registryCommunity().increasePower(tokenAmount * DECIMALS);
+
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE, "balance");
+        token.approve(address(registryCommunity), 20 * DECIMALS);
+        _registryCommunity().increasePower(20 * DECIMALS);
+        strategy.deactivatePoints();
+        strategy.activatePoints();
+        vm.stopPrank();
+
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.registerStakeAmount(),
+            "memberPower"
+        );
+    }
+
     function testFuzz_increasePower(uint256 tokenAmount) public {
         vm.assume(tokenAmount > 2 && tokenAmount < 100);
         vm.startPrank(pool_admin());

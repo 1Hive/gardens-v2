@@ -286,7 +286,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         Member memory member = addressToMemberInfo[_member];
 
         uint256 totalStakedAmount = member.stakedAmount;
-        uint256 pointsToIncrease = totalStakedAmount;
+        uint256 pointsToIncrease = registerStakeAmount;
 
         if (IPointStrategy(_strategy).getPointSystem() == StrategyStruct.PointSystem.Quadratic) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, 0);
