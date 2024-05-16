@@ -117,7 +117,7 @@ export function ProposalCard({
     >
       <div className="flex w-full items-center justify-between ">
         <div className="flex flex-[30%] flex-col items-baseline gap-2">
-          <h4 className="text-2xl font-bold">{title}</h4>
+          <h4 className="text-xl font-bold">{title}</h4>
           <span className="text-md">ID {proposalNumber}</span>
         </div>
 
@@ -162,22 +162,22 @@ export function ProposalCard({
                 min={0}
                 max={memberActivatedPoints}
                 value={
-                  // getProposalId(id) ===
                   inputData.value
-                  // stakedFilteres?[i].amount
                 }
-                className={`range range-success range-sm min-w-[420px]`}
+                className={`range range-success range-sm min-w-[420px] cursor-pointer`}
                 step={memberActivatedPoints / 100}
                 onChange={(e) => inputHandler(i, Number(e.target.value))}
               />
-              <div className="flex w-full justify-between px-[10px] text-[4px]">
+              <div className="flex w-full justify-between px-[10px]">
                 {[...Array(21)].map((_, i) => (
-                  <span key={"span_" + i}>|</span>
+                  <span className="text-[8px]" key={"span_" + i}>
+                    |
+                  </span>
                 ))}
               </div>
             </div>
             <div className="mb-2">
-              <p className="text-2xl font-semibold">
+              <p className="text-xl font-semibold">
                 {Number(
                   (inputData.value * 100) / memberActivatedPoints,
                 ).toFixed(2)}
@@ -189,7 +189,7 @@ export function ProposalCard({
             {inputData?.value < stakedFilter?.value ? (
               <p className="text-center">
                 Removing to
-                <span className="px-2 py-1 text-3xl font-semibold text-info">
+                <span className="px-2 py-1 text-xl font-semibold text-info">
                   {calcPoolWeightUsed(
                     calcDivisionToPct(
                       inputData.value ?? 0,
@@ -203,7 +203,7 @@ export function ProposalCard({
             ) : (
               <p className="text-center">
                 Assingning
-                <span className="px-2 py-2 text-3xl font-semibold text-info">
+                <span className="px-2 py-2 text-2xl font-semibold text-info">
                   {calcPoolWeightUsed(
                     calcDivisionToPct(
                       inputData.value ?? 0,

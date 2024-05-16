@@ -86,11 +86,7 @@ export function Proposals({
   const [editView, setEditView] = useState(false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
-
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
-  const [totalAllocatedTokens, setTotalAllocatedTokens] = useState<number>(0);
-  //using this for test alpha
-  // const { address: connectedAccount } = useAccount();
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilteres, setStakedFilteres] = useState<ProposalInputItem[]>([]);
   const [memberTokensInCommunity, setMemberTokensInCommunity] =
@@ -99,10 +95,7 @@ export function Proposals({
   console.log("inputAllocatedTokens: " + inputAllocatedTokens);
   console.log(inputs);
   console.log(proposals);
-  console.log("totalAllocatedTokens: " + totalAllocatedTokens);
-  console.log("memberActivatedPoints: " + memberActivatedPoints);
   console.log(stakedFilteres);
-  console.log("memberTokensInCommunity: " + memberTokensInCommunity);
 
   const { address } = useAccount();
 
@@ -176,7 +169,7 @@ export function Proposals({
       value: item.amount,
     }));
 
-    setTotalAllocatedTokens(Number(totalStaked));
+    setInputAllocatedTokens(Number(totalStaked));
     setStakedFilteres(memberStakes);
   }, [
     address,
@@ -227,11 +220,6 @@ export function Proposals({
     console.log(newInputs);
     setInputs(newInputs);
   }, [proposals, address]);
-
-  useEffect(() => {
-    setInputAllocatedTokens(calculateTotalTokens());
-    setTotalAllocatedTokens(calculateTotalTokens());
-  }, [inputs]);
 
   useEffect(() => {
     if (isMemberActived === undefined) return;
@@ -299,24 +287,20 @@ export function Proposals({
     }, 0);
 
   const inputHandler = (i: number, value: number) => {
-    // const currentPoints = calculatePoints(i);
-    const pointsDistributed = Number(totalAllocatedTokens);
-    // console.log("currentPoints", currentPoints);
-    console.log(memberActivatedPoints - pointsDistributed + value);
-    // if (pointsDistributed + value <= memberActivatedPoints) {
-    setInputs(
-      inputs.map((input, index) =>
-        index === i ? { ...input, value: value } : input,
-      ),
-    );
-    setInputAllocatedTokens(pointsDistributed + value);
-    setTotalAllocatedTokens(pointsDistributed + value);
-    // } else {
-    //   console.log("can't exceed 100% points");
-    // }
+    const currentPoints = calculateTotalTokens(i);
+
+    if (currentPoints + value <= memberActivatedPoints) {
+      setInputs(
+        inputs.map((input, index) =>
+          index === i ? { ...input, value: value } : input,
+        ),
+      );
+      setInputAllocatedTokens(currentPoints + value);
+    } else {
+      console.log("can't exceed 100% points");
+    }
   };
 
-  //ManageSupport Tooltip condition => message mapping
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
       condition: !isMemberActivated,
@@ -331,7 +315,7 @@ export function Proposals({
   );
 
   const calcMemberSupportedProposalsPct = calcDivisionToPct(
-    totalAllocatedTokens,
+    inputAllocatedTokens,
     memberActivatedPoints,
     tokenDecimals,
   );
@@ -454,11 +438,7 @@ export function Proposals({
               </>
             )}
           </div>
-          {/* <div className="">
-            <p className="font-semibold">{message}</p>
-          </div> */}
         </div>
-
         <div>
           <h4 className="text-2xl">Do you have a great idea?</h4>
           <div className="flex items-center gap-6">
