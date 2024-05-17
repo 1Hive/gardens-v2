@@ -16,6 +16,7 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 
 import {IPointStrategy, CVStrategy, StrategyStruct} from "./CVStrategy.sol";
 
+import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 // import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
 interface FAllo {
@@ -35,6 +36,7 @@ interface FAllo {
 contract RegistryCommunity is ReentrancyGuard, AccessControl {
     using ERC165Checker for address;
     using SafeERC20 for IERC20;
+    using Clone for address;
 
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     /*|--------------------------------------------|*/
@@ -55,7 +57,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
     event StrategyAdded(address _strategy);
     event StrategyRemoved(address _strategy);
-    event MemberActivatedStrategy(address _member, address _strategy);
+    event MemberActivatedStrategy(address _member, address _strategy, uint256 _pointsToIncrease);
     event MemberDeactivatedStrategy(address _member, address _strategy);
     event BasisStakedAmountSet(uint256 _newAmount);
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
@@ -149,6 +151,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         string _communityName;
         bool _isKickEnabled;
         string covenantIpfsHash;
+        address _strategyTemplate;
     }
 
     //TODO: can change to uint32 with optimized storage order
@@ -162,6 +165,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     bytes32 public profileId;
     bool public isKickEnabled;
     address public registryFactory;
+    address public strategyTemplate;
+    uint256 public cloneNonce;
 
     address payable public pendingCouncilSafe; //@todo write test for change owner in 2 step
     ISafe public councilSafe;
@@ -192,6 +197,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         revertZeroAddress(params._councilSafe);
         revertZeroAddress(params._allo);
         revertZeroAddress(params._registryFactory);
+        // revertZeroAddress(params._strategyTemplate);
 
         allo = FAllo(params._allo);
         gardenToken = params._gardenToken;
@@ -206,6 +212,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         registryFactory = params._registryFactory;
         feeReceiver = params._feeReceiver;
         councilSafe = ISafe(params._councilSafe);
+        strategyTemplate = params._strategyTemplate;
+
         _grantRole(COUNCIL_MEMBER_CHANGE, params._councilSafe);
 
         registry = IRegistry(allo.getRegistry());
@@ -227,6 +235,14 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         initialMembers = pool_initialMembers;
 
         emit RegistryInitialized(profileId, communityName, params._metadata);
+    }
+
+    function createPool(address _token, StrategyStruct.InitializeParams memory _params, Metadata memory _metadata)
+        public
+        returns (uint256 poolId, address strategy)
+    {
+        address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
+        return createPool(strategyClone, _token, _params, _metadata);
     }
 
     function createPool(
@@ -262,7 +278,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         Member memory member = addressToMemberInfo[_member];
 
         uint256 totalStakedAmount = member.stakedAmount;
-        uint256 pointsToIncrease = totalStakedAmount;
+        uint256 pointsToIncrease = registerStakeAmount;
 
         if (IPointStrategy(_strategy).getPointSystem() == StrategyStruct.PointSystem.Quadratic) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, 0);
@@ -275,7 +291,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         strategiesByMember[_member].push(_strategy);
 
-        emit MemberActivatedStrategy(_member, _strategy);
+        emit MemberActivatedStrategy(_member, _strategy, pointsToIncrease);
     }
 
     function deactivateMemberInStrategy(address _member, address _strategy) public {
