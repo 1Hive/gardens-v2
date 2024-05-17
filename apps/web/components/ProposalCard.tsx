@@ -4,8 +4,7 @@ import { StatusBadge } from "./Badge";
 import { Button } from "./Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ProposalInputItem } from "./Proposals";
-import { calcDivisionToPct } from "@/utils/numbers";
+import { ProposalInputItem, ProposalTypeVoter } from "./Proposals";
 import { Allo, CVStrategy } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
@@ -14,19 +13,17 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeAbiParameters, formatUnits } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
+import { calculatePercentage } from "@/utils/numbers";
 
 type ProposalCard = {
+  proposalData: ProposalTypeVoter;
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
-  title: string;
-  proposalNumber: number;
-  proposalStatus: number;
-  id: string;
   i: number;
   isEditView: boolean;
   tooltipMessage: string;
   memberActivatedPoints: number;
-  tokenDecimals: number;
+  memberPoolWeight: number;
   executeDisabled: boolean;
   strategy: CVStrategy;
   alloInfo: Allo;
@@ -35,35 +32,25 @@ type ProposalCard = {
 };
 
 export function ProposalCard({
+  proposalData,
   inputData,
   stakedFilter,
-  title,
-  proposalNumber,
-  proposalStatus,
-  id,
   i,
   isEditView,
   tooltipMessage,
   memberActivatedPoints,
-  tokenDecimals,
+  memberPoolWeight,
   executeDisabled,
   strategy,
   alloInfo,
   inputHandler,
   triggerRenderProposals,
 }: ProposalCard) {
+  const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
 
-  const calcMemberPoolWeight = calcDivisionToPct(
-    memberActivatedPoints,
-    strategy.totalEffectiveActivePoints,
-    tokenDecimals,
-  );
-
   const calcPoolWeightUsed = (number: number) => {
-    return ((Number(number) * Number(calcMemberPoolWeight)) / 100)
-      .toFixed(1)
-      .toString();
+    return ((number / 100) * memberPoolWeight).toFixed(2);
   };
 
   //encode proposal id to pass as argument to distribute function
@@ -189,10 +176,9 @@ export function ProposalCard({
                 Removing to
                 <span className="px-2 py-1 text-xl font-semibold text-info">
                   {calcPoolWeightUsed(
-                    calcDivisionToPct(
+                    calculatePercentage(
                       inputData?.value ?? 0,
                       memberActivatedPoints,
-                      tokenDecimals,
                     ),
                   )}
                 </span>
@@ -203,10 +189,10 @@ export function ProposalCard({
                 Assingning
                 <span className="px-2 py-2 text-2xl font-semibold text-info">
                   {calcPoolWeightUsed(
-                    calcDivisionToPct(
+                    calculatePercentage(
                       inputData?.value ?? 0,
                       memberActivatedPoints,
-                      tokenDecimals,
+                      // tokenDecimals,
                     ),
                   )}
                 </span>

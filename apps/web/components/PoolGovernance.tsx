@@ -5,13 +5,13 @@ import { ActivatePoints } from "./ActivatePoints";
 import { Address, useAccount, useContractRead } from "wagmi";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
-import { calcDivisionToPct, dn } from "@/utils/numbers";
 import { CVStrategy } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { Dnum } from "dnum";
+import { calculatePercentage } from "@/utils/numbers";
 
 type PoolGovernanceProps = {
-  memberActivatedPoints: number;
+  memberPoolWeight: number;
   tokenDecimals: number;
   strategy: CVStrategy;
   communityAddress: Address;
@@ -19,19 +19,13 @@ type PoolGovernanceProps = {
 };
 
 export const PoolGovernance = ({
-  memberActivatedPoints,
+  memberPoolWeight,
   tokenDecimals,
   strategy,
   communityAddress,
   memberTokensInCommunity,
 }: PoolGovernanceProps) => {
   const { address: connectedAccount } = useAccount();
-
-  const memberPoolWeight = calcDivisionToPct(
-    memberActivatedPoints,
-    strategy.totalEffectiveActivePoints,
-    tokenDecimals,
-  );
 
   const registryContractCallConfig = {
     address: communityAddress,
@@ -85,8 +79,8 @@ export const PoolGovernance = ({
                   <div className="flex w-full items-baseline gap-6">
                     <h5 className="">Your governance weight:</h5>
                     <p className="text-3xl text-info">
-                      {memberPoolWeight.toFixed(2)}%{" "}
-                      <span className="text-lg text-black">of the pool </span>
+                      {memberPoolWeight.toFixed(2)} %
+                      <span className="text-lg text-black"> of the pool</span>
                     </p>
                   </div>
                 </>

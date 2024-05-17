@@ -19,11 +19,7 @@ import {
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
-import {
-  formatTokenAmount,
-  calculatePercentage,
-  calcDivisionToPct,
-} from "@/utils/numbers";
+import { formatTokenAmount, calculatePercentage } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
 import {
   Allo,
@@ -54,21 +50,13 @@ export type ProposalInputItem = {
 };
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
-// export type Proposal = Strategy["proposals"][number];
+// export type Proposal = CVStrategy["proposals"][number];
 export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
 
 export type ProposalTypeVoter = CVProposal & {
   title: string;
   type: number;
 };
-
-// const getProposalId = (inputString: string) => {
-//   if (inputString.length >= 2) {
-//     return inputString.substring(2);
-//   } else {
-//     return "0x0";
-//   }
-// };
 
 export function Proposals({
   strategy,
@@ -312,28 +300,24 @@ export function Proposals({
     disableManageSupportBtnCondition,
   );
 
-  const calcMemberSupportedProposalsPct = calcDivisionToPct(
+  const memberSupportedProposalsPct = calculatePercentage(
     inputAllocatedTokens,
     memberActivatedPoints,
-    tokenDecimals,
   );
 
-  const calcMemberPoolWeight = calcDivisionToPct(
+  const memberPoolWeight = calculatePercentage(
     memberActivatedPoints,
     strategy.totalEffectiveActivePoints,
-    tokenDecimals,
   );
 
   const calcPoolWeightUsed = (number: number) => {
-    return ((Number(number) * Number(calcMemberPoolWeight)) / 100)
-      .toFixed(1)
-      .toString();
+    return ((number / 100) * memberPoolWeight).toFixed(2);
   };
 
   return (
     <>
       <PoolGovernance
-        memberActivatedPoints={memberActivatedPoints}
+        memberPoolWeight={memberPoolWeight}
         tokenDecimals={tokenDecimals}
         strategy={strategy}
         communityAddress={communityAddress}
@@ -366,15 +350,15 @@ export function Proposals({
                 <div className="flex w-full items-start text-right">
                   <div className="flex w-full flex-col items-center">
                     <p className={`text-center text-4xl text-info`}>
-                      {calcPoolWeightUsed(calcMemberSupportedProposalsPct)} %
+                      {calcPoolWeightUsed(memberSupportedProposalsPct)} %
                     </p>
                     <p className="text-md text-left">Pool weight used</p>
                   </div>
                   <div className="flex w-full flex-col items-center">
                     <p
-                      className={`text-center text-5xl ${Number(calcMemberSupportedProposalsPct) >= 100 && "text-warning"}`}
+                      className={`text-center text-5xl ${memberSupportedProposalsPct >= 100 && "text-warning"}`}
                     >
-                      {calcMemberSupportedProposalsPct} %
+                      {memberSupportedProposalsPct} %
                     </p>
                     <p className="text-center text-lg">
                       Of your governance weight is supporting proposals
@@ -388,32 +372,29 @@ export function Proposals({
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-6">
-            {proposals.map(
-              ({ title, proposalNumber, proposalStatus, id }, i) => (
-                <React.Fragment key={id + "_" + i}>
-                  <ProposalCard
-                    inputData={inputs[i]}
-                    stakedFilter={stakedFilters[i]}
-                    title={title}
-                    proposalNumber={proposalNumber}
-                    proposalStatus={proposalStatus}
-                    i={i}
-                    id={id}
-                    isEditView={editView}
-                    tooltipMessage={tooltipMessage}
-                    memberActivatedPoints={memberActivatedPoints}
-                    tokenDecimals={tokenDecimals}
-                    executeDisabled={
-                      proposalStatus == 4 || !isConnected || missmatchUrl
-                    }
-                    strategy={strategy}
-                    alloInfo={alloInfo}
-                    triggerRenderProposals={triggerRenderProposals}
-                    inputHandler={inputHandler}
-                  />
-                </React.Fragment>
-              ),
-            )}
+            {proposals.map((proposalData, i) => (
+              <React.Fragment key={proposalData.id + "_" + i}>
+                <ProposalCard
+                  proposalData={proposalData}
+                  inputData={inputs[i]}
+                  stakedFilter={stakedFilters[i]}
+                  i={i}
+                  isEditView={editView}
+                  tooltipMessage={tooltipMessage}
+                  memberActivatedPoints={memberActivatedPoints}
+                  memberPoolWeight={memberPoolWeight}
+                  executeDisabled={
+                    proposalData.proposalStatus == 4 ||
+                    !isConnected ||
+                    missmatchUrl
+                  }
+                  strategy={strategy}
+                  alloInfo={alloInfo}
+                  triggerRenderProposals={triggerRenderProposals}
+                  inputHandler={inputHandler}
+                />
+              </React.Fragment>
+            ))}
           </div>
           <div className="flex justify-end gap-8">
             {editView && (
