@@ -9,7 +9,6 @@ import {
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { GovernanceComponent } from "@/components";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { pointSystems, proposalTypes } from "@/types";
 
@@ -31,7 +30,6 @@ export default async function Pool({
     { poolId: poolId, garden: garden },
   );
   const strategyObj = data?.cvstrategies?.[0];
-  //const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;
@@ -45,6 +43,7 @@ export default async function Pool({
   const poolAmount = strategyObj?.poolAmount as number;
   const tokenGarden = data.tokenGarden as TokenGarden;
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
+  const isEnabled = data?.cvstrategies?.[0]?.isEnabled as boolean;
   const { title, description } = await getIpfsMetadata(metadata);
 
   //TODO: check decimals
@@ -55,23 +54,23 @@ export default async function Pool({
 
   const spendingLimitPct = maxRatioDivPrecision * 100;
 
-  const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
-  //
-
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
         <header className="flex flex-col items-center justify-center">
           <h2 className="text-center font-press">Pool {poolId} </h2>
-          <h4 className="text-2xl ">
-            {/* {poolInfo[(poolId as unknown as number) - 1].title} */}
-          </h4>
         </header>
         <main className="flex flex-col gap-10">
           {/* Description section */}
           <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
               <h3 className="max-w-2xl  text-center font-semibold">{title}</h3>
+              {!isEnabled && (
+                <div className="badge badge-warning absolute left-5 top-5 gap-2 p-4 font-bold">
+                  Pendign review from community council
+                </div>
+              )}
+
               <p>{description}</p>
               <div className="flex w-full  p-4">
                 <div className="flex flex-1  text-xl font-semibold">
@@ -123,27 +122,31 @@ export default async function Pool({
             </div>
           </section>
           {/* Pool metrics: for now we have funds available and spending limit */}
-          {proposalTypes[proposalType] !== "signaling" && (
-            <PoolMetrics
-              alloInfo={alloInfo}
-              poolId={poolId}
-              balance={poolAmount}
-              strategyAddress={strategyAddr}
-              strategy={strategyObj}
-              communityAddress={communityAddress}
-              tokenGarden={tokenGarden}
-              pointSystem={pointSystem}
-              spendingLimit={spendingLimitPct}
-            />
+          {isEnabled && (
+            <>
+              {proposalTypes[proposalType] !== "signaling" && (
+                <PoolMetrics
+                  alloInfo={alloInfo}
+                  poolId={poolId}
+                  balance={poolAmount}
+                  strategyAddress={strategyAddr}
+                  strategy={strategyObj}
+                  communityAddress={communityAddress}
+                  tokenGarden={tokenGarden}
+                  pointSystem={pointSystem}
+                  spendingLimit={spendingLimitPct}
+                />
+              )}
+              {/* Proposals section */}
+              <Proposals
+                strategy={strategyObj}
+                alloInfo={alloInfo}
+                communityAddress={communityAddress}
+                createProposalUrl={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
+                proposalType={proposalType}
+              />
+            </>
           )}
-          {/* Proposals section */}
-          <Proposals
-            strategy={strategyObj}
-            alloInfo={alloInfo}
-            communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
-            proposalType={proposalType}
-          />
         </main>
       </div>
     </div>

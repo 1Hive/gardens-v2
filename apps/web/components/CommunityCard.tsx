@@ -98,17 +98,20 @@ export function CommunityCard({
   }, [accountAddress]);
 
   const pools = strategies ?? [];
+
   members = members ?? [];
   let registerToken = tokenGarden?.id ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
 
   const signalingPools = pools.filter(
-    (pool) => pool.config?.proposalType === "0",
+    (pool) => pool.config?.proposalType === "0" && pool.isEnabled === true,
   );
 
   const fundingPools = pools.filter(
-    (pool) => pool.config?.proposalType === "1",
+    (pool) => pool.config?.proposalType === "1" && pool.isEnabled === true,
   );
+
+  const poolInReview = pools.filter((pool) => pool.isEnabled === false);
 
   return (
     <>
@@ -207,6 +210,24 @@ export function CommunityCard({
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
             </div>
+
+            <h5 className="mt-4 font-bold">
+              Pools in Review ( {fundingPools.length} )
+            </h5>
+            <div
+              className={`mt-2 flex w-full transform flex-wrap gap-4 overflow-x-auto transition-height duration-200 ease-in-out  `}
+            >
+              {poolInReview.map((pool, i) => (
+                <PoolCard
+                  tokenGarden={tokenGarden}
+                  {...pool}
+                  key={i}
+                  enabled={false}
+                />
+              ))}
+            </div>
+
+            {}
 
             {/* IncreasePower funcionality - alpha test */}
             <h3 className="mt-10">Your stake in the community</h3>
