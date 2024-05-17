@@ -9,14 +9,8 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { formatTokenAmount } from "@/utils/numbers";
+import { formatTokenAmount, calculatePercentage } from "@/utils/numbers";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import * as dn from "dnum";
-import {
-  calcThresholdPct,
-  calcTotalSupport,
-  calcCurrentConviction,
-} from "@/utils/convictionFormulas";
 
 export const dynamic = "force-dynamic";
 
@@ -83,13 +77,14 @@ export default async function Proposal({
 
   const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
   const proposalIdNumber = proposalData.proposalNumber as number;
-  // const convictionLast = proposalData.convictionLast as string;
+  const convictionLast = proposalData.convictionLast as string;
   const threshold = proposalData.threshold;
   const type = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount as bigint;
   const beneficiary = proposalData.beneficiary as Address;
   const submitter = proposalData.submitter as Address;
   const status = proposalData.proposalStatus as number;
+  const stakedAmount = proposalData.stakedAmount as bigint;
   const metadata = proposalData.metadata;
 
   const { title, description } = await getIpfsMetadata(metadata);
@@ -105,17 +100,23 @@ export default async function Proposal({
   };
 
   let totalEffectiveActivePoints = 0n;
-  let getProposalStakedAmount = 0n;
   let updateConvictionLast = 0n;
   let getProposal: any = [];
   let maxCVSupply = 0n;
+  let thFromContract = 0n;
+  let stakeAmountFromContract = 0n;
 
   try {
     totalEffectiveActivePoints = (await client.readContract({
       ...cvStrategyContract,
       functionName: "totalEffectiveActivePoints",
     })) as bigint;
-    getProposalStakedAmount = (await client.readContract({
+    thFromContract = (await client.readContract({
+      ...cvStrategyContract,
+      functionName: "calculateThreshold",
+      args: [requestedAmount],
+    })) as bigint;
+    stakeAmountFromContract = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getProposalStakedAmount",
       args: [proposalIdNumber],
@@ -137,20 +138,38 @@ export default async function Proposal({
     })) as bigint;
   } catch (error) {
     updateConvictionLast = getProposal[7];
-    console.log("error proposalId data from contract", error);
+    console.log(
+      "proposal already executed so threshold can no be read from contracts, or it is siganling proposal",
+      error,
+    );
   }
-  const tokenDecimals = 18;
+  const isSignalingType = type == 0;
 
-  const thresholdPct = calcThresholdPct(threshold, maxCVSupply, tokenDecimals);
-  const totalSupport = calcTotalSupport(
-    getProposalStakedAmount,
-    totalEffectiveActivePoints,
-    tokenDecimals,
+  //logs for debugging in arb sepolia - //TODO: remove before merge
+  console.log(requestedAmount);
+  console.log(maxCVSupply);
+  //threshold
+  console.log(threshold);
+  console.log(thFromContract);
+  //stakeAmount
+  console.log(stakedAmount);
+  console.log(stakeAmountFromContract);
+  // console.log(totalEffectiveActivePoints);
+  console.log(updateConvictionLast);
+  console.log(convictionLast);
+
+  const thresholdPct = calculatePercentage(
+    Number(threshold),
+    Number(maxCVSupply),
   );
-  const currentConviction = calcCurrentConviction(
-    updateConvictionLast,
-    maxCVSupply,
-    tokenDecimals,
+
+  const totalSupport = calculatePercentage(
+    Number(stakedAmount),
+    Number(totalEffectiveActivePoints),
+  );
+  const currentConviction = calculatePercentage(
+    Number(updateConvictionLast),
+    Number(maxCVSupply),
   );
 
   return (
@@ -217,39 +236,21 @@ export default async function Proposal({
             </div>
           </div>
         </div>
-        <div>Alpha test number</div>
-        <div className="flex flex-col gap-8">
-          <div>
-            <p className="text-xl">
-              This proposal need{" "}
-              <span className="text-2xl text-secondary">{thresholdPct}%</span>{" "}
-              of pool conviction to pass
-            </p>
-          </div>
-          <div>
-            <p className="text-xl">
-              Total support is :{" "}
-              <span className="text-2xl text-secondary">{totalSupport}%</span>{" "}
-            </p>
-          </div>
-          <div>
-            <p className="text-xl">
-              Current conviction is:{" "}
-              <span className="text-4xl text-info">{currentConviction}%</span>{" "}
-            </p>
-          </div>
-        </div>
 
-        {/* PROPOSAL NUMBERS CHART  */}
-        <div className="mt-10 flex justify-evenly">
-          {/* <ConvictionBarChart
-            currentConviction={calcCurrCon as number}
-            maxConviction={calcMaxConv.toString() as unknown as number}
-            threshold={calcThreshold as number}
-            // data={calcsResults}
-            proposalSupport={50}
-          /> */}
-        </div>
+        {status && status == 4 ? (
+          <div className="badge badge-success p-4 text-white">
+            Proposal passed and executed successfully
+          </div>
+        ) : (
+          <div className="mt-10 flex justify-evenly">
+            <ConvictionBarChart
+              currentConviction={currentConviction}
+              threshold={thresholdPct}
+              proposalSupport={totalSupport}
+              isSignalingType={isSignalingType}
+            />
+          </div>
+        )}
       </main>
     </div>
   );
