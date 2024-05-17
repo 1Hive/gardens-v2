@@ -6,6 +6,7 @@ import {
   MemberCommunity,
   Allo,
   CVStrategy,
+  CVStrategyConfig,
   MemberStrategy,
 } from "../../generated/schema";
 
@@ -16,6 +17,7 @@ import {
   MemberRegistered,
   MemberActivatedStrategy,
   StrategyAdded,
+  StrategyRemoved,
   StakeAndRegisterMemberCall,
   MemberDeactivatedStrategy,
   PoolCreated,
@@ -182,9 +184,33 @@ export function handleMemberKicked(event: MemberKicked): void {
 // //  handleStrategyAdded
 export function handleStrategyAdded(event: StrategyAdded): void {
   log.debug("handleStrategyAdded", [event.params._strategy.toHexString()]);
-  const strategyAddress = event.params._strategy;
+  const strategyAddress = event.params._strategy.toHexString();
 
-  CVStrategyTemplate.create(strategyAddress);
+  const cvs = CVStrategy.load(strategyAddress);
+
+  if (cvs == null) {
+    log.error("CVStrategy not found: {}", [strategyAddress]);
+    return;
+  }
+
+  cvs.isEnabled = true;
+  cvs.save();
+}
+
+// //  handleStrategyAdded
+export function handleStrategyRemoved(event: StrategyRemoved): void {
+  log.debug("handleStrategyRemoved", [event.params._strategy.toHexString()]);
+  const strategyAddress = event.params._strategy.toHexString();
+
+  const cvs = CVStrategy.load(strategyAddress);
+
+  if (cvs == null) {
+    log.error("CVStrategy not found: {}", [strategyAddress]);
+    return;
+  }
+
+  cvs.isEnabled = false;
+  cvs.save();
 }
 
 // handleCallStake
@@ -227,9 +253,25 @@ export function handleMemberActivatedStrategy(
   if (strategy.memberActive) {
     membersActive = strategy.memberActive!;
   }
+
   membersActive.push(memberAddress.toHexString());
   strategy.memberActive = membersActive;
   strategy.save();
+
+  const strategyConfigId = strategy.config;
+  const strategyConfig = CVStrategyConfig.load(strategyConfigId);
+
+  if (strategyConfig !== null) {
+    if (strategyConfig.pointSystem == BigInt.fromI32(0)) {
+      const memberStrategyId = `${memberAddress.toHexString()}-${strategyAddress.toHexString()}`;
+      let memberStrategy = new MemberStrategy(memberStrategyId);
+      memberStrategy.member = memberAddress.toHexString();
+      memberStrategy.strategy = strategyAddress.toHexString();
+      memberStrategy.totalStakedPoints = BigInt.fromI32(0);
+      memberStrategy.activatedPoints = event.params._pointsToIncrease;
+      memberStrategy.save();
+    }
+  }
 }
 
 // handleMemberDeactivatedStrategy

@@ -26,6 +26,9 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
     Allo _allo_;
     Registry _registry_;
+    Allo allo;
+    IRegistry registry;
+    RegistryFactory registryFactory;
 
     function pool_admin() public virtual override returns (address) {
         return address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
@@ -38,19 +41,21 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     function run() public {
         vm.startBroadcast(pool_admin());
 
-        Allo allo = Allo(deployAllo());
+        allo = Allo(deployAllo());
 
         token = new TERC20("sepolia Honey", "sepHNY", 18);
 
         console2.log("sepHNY Token Addr: %s", address(token));
 
-        IRegistry registry = allo.getRegistry();
+        registry = allo.getRegistry();
 
-        RegistryFactory registryFactory = new RegistryFactory();
+        registryFactory = new RegistryFactory();
 
         console2.log("Registry Factory Addr: %s", address(registryFactory));
 
         RegistryCommunity.InitializeParams memory params;
+
+        params._strategyTemplate = address(new CVStrategy(address(allo)));
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
@@ -64,39 +69,38 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         token.mint(address(pool_admin()), 10_000 ether);
 
-        CVStrategy strategy1 = new CVStrategy(address(allo));
+        StrategyStruct.PointSystemConfig memory pointConfig;
+        pointConfig.maxAmount = MINIMUM_STAKE * 2;
+
+        StrategyStruct.InitializeParams memory paramsCV = getParams(
+            address(registryCommunity),
+            StrategyStruct.ProposalType.Funding,
+            StrategyStruct.PointSystem.Unlimited,
+            pointConfig
+        );
+
+        // FAST 1 MIN GROWTH
+        (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
+
+        CVStrategy strategy1 = CVStrategy(payable(_strategy1));
 
         safeHelper(
             address(registryCommunity),
             0,
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
         );
-        CVStrategy strategy2 = new CVStrategy(address(allo));
+
+        paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
+        paramsCV.pointSystem = StrategyStruct.PointSystem.Fixed;
+
+        (uint256 poolIdFixed, address _strategy2) = registryCommunity.createPool(address(token), paramsCV, metadata);
+
+        CVStrategy strategy2 = CVStrategy(payable(_strategy2));
+
         safeHelper(
             address(registryCommunity),
             0,
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
-        );
-        // FAST 1 MIN GROWTH
-
-        uint256 poolId = createPool(
-            Allo(address(allo)),
-            address(strategy1),
-            address(registryCommunity),
-            registry,
-            address(token),
-            StrategyStruct.ProposalType.Funding,
-            StrategyStruct.PointSystem.Unlimited
-        );
-
-        uint256 poolIdFixed = createPool(
-            Allo(address(allo)),
-            address(strategy2),
-            address(registryCommunity),
-            registry,
-            address(token),
-            StrategyStruct.ProposalType.Funding,
-            StrategyStruct.PointSystem.Fixed
         );
 
         // uint256 poolIdSignaling = createPool(
@@ -109,14 +113,33 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         //     StrategyStruct.PointSystem.Unlimited
         // );
 
-        strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
-        strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
-        strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        // strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
+        safeHelper(
+            address(strategy1), 0, abi.encodeWithSelector(strategy1.setDecay.selector, _etherToFloat(0.9965402 ether))
+        );
+
+        // strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        safeHelper(
+            address(strategy1), 0, abi.encodeWithSelector(strategy1.setMaxRatio.selector, _etherToFloat(0.1 ether))
+        );
+        // strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        safeHelper(
+            address(strategy1), 0, abi.encodeWithSelector(strategy1.setWeight.selector, _etherToFloat(0.0005 ether))
+        );
 
         // FAST 1 MIN GROWTH
-        strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
-        strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
-        strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        // strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
+        safeHelper(
+            address(strategy2), 0, abi.encodeWithSelector(strategy2.setDecay.selector, _etherToFloat(0.9965402 ether))
+        );
+        // strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        safeHelper(
+            address(strategy2), 0, abi.encodeWithSelector(strategy2.setMaxRatio.selector, _etherToFloat(0.1 ether))
+        );
+        // strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        safeHelper(
+            address(strategy2), 0, abi.encodeWithSelector(strategy2.setWeight.selector, _etherToFloat(0.0005 ether))
+        );
         vm.stopBroadcast();
 
         address[] memory membersStaked = new address[](5);
@@ -272,19 +295,22 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
         vm.stopBroadcast();
 
-        address[] memory membersStaked = new address[](4);
+        address[] memory membersStaked = new address[](5);
         membersStaked[0] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
         membersStaked[1] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
         membersStaked[2] = address(0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC);
         membersStaked[3] = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+        membersStaked[4] = address(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
 
         for (uint256 i = 0; i < membersStaked.length; i++) {
             vm.startBroadcast(address(membersStaked[i]));
             token.mint(address(membersStaked[i]), MINIMUM_STAKE * 2);
-            token.approve(address(registryCommunity), MINIMUM_STAKE + (MINIMUM_STAKE * COMMUNITY_FEE / 100e4));
-            registryCommunity.stakeAndRegisterMember();
-            strategy1.activatePoints();
-            strategy2.activatePoints();
+            if (i < 4) {
+                token.approve(address(registryCommunity), MINIMUM_STAKE + (MINIMUM_STAKE * COMMUNITY_FEE / 100e4));
+                registryCommunity.stakeAndRegisterMember();
+                strategy1.activatePoints();
+                strategy2.activatePoints();
+            }
 
             vm.stopBroadcast();
         }
