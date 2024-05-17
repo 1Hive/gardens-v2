@@ -17,6 +17,7 @@ import {
   MemberRegistered,
   MemberActivatedStrategy,
   StrategyAdded,
+  StrategyRemoved,
   StakeAndRegisterMemberCall,
   MemberDeactivatedStrategy,
   PoolCreated,
@@ -183,9 +184,33 @@ export function handleMemberKicked(event: MemberKicked): void {
 // //  handleStrategyAdded
 export function handleStrategyAdded(event: StrategyAdded): void {
   log.debug("handleStrategyAdded", [event.params._strategy.toHexString()]);
-  const strategyAddress = event.params._strategy;
+  const strategyAddress = event.params._strategy.toHexString();
 
-  CVStrategyTemplate.create(strategyAddress);
+  const cvs = CVStrategy.load(strategyAddress);
+
+  if (cvs == null) {
+    log.error("CVStrategy not found: {}", [strategyAddress]);
+    return;
+  }
+
+  cvs.isEnabled = true;
+  cvs.save();
+}
+
+// //  handleStrategyAdded
+export function handleStrategyRemoved(event: StrategyRemoved): void {
+  log.debug("handleStrategyRemoved", [event.params._strategy.toHexString()]);
+  const strategyAddress = event.params._strategy.toHexString();
+
+  const cvs = CVStrategy.load(strategyAddress);
+
+  if (cvs == null) {
+    log.error("CVStrategy not found: {}", [strategyAddress]);
+    return;
+  }
+
+  cvs.isEnabled = false;
+  cvs.save();
 }
 
 // handleCallStake
