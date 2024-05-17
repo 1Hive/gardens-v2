@@ -14,6 +14,7 @@ import { encodeAbiParameters, formatUnits } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
+import { proposalTypes } from "@/types";
 
 type ProposalCard = {
   proposalData: ProposalTypeVoter;
@@ -111,7 +112,7 @@ export function ProposalCard({
         <div className="flex items-center gap-8">
           <StatusBadge status={proposalStatus} />
           {/* Button to test distribute */}
-          {!isEditView && (
+          {!isEditView && proposalTypes[proposalData.type] == "funding" && (
             <Button
               // TODO: add flexible tooltip and func to check executability
               disabled={executeDisabled}
