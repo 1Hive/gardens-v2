@@ -258,8 +258,7 @@ export function Proposals({
       });
       if (!!row) resultArr.push(row);
     });
-    console.log(inputData, currentData);
-    console.log(resultArr);
+
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
@@ -274,17 +273,20 @@ export function Proposals({
 
   const inputHandler = (i: number, value: number) => {
     const currentPoints = calculateTotalTokens(i);
+    const maxAllowableValue = memberActivatedPoints - currentPoints;
 
-    if (currentPoints + value <= memberActivatedPoints) {
-      setInputs(
-        inputs.map((input, index) =>
-          index === i ? { ...input, value: value } : input,
-        ),
-      );
-      setInputAllocatedTokens(currentPoints + value);
-    } else {
+    // If the sum exceeds the memberActivatedPoints, adjust the value to the maximum allowable value
+    if (currentPoints + value > memberActivatedPoints) {
+      value = maxAllowableValue;
       console.log("can't exceed 100% points");
     }
+
+    setInputs(
+      inputs.map((input, index) =>
+        index === i ? { ...input, value: value } : input,
+      ),
+    );
+    setInputAllocatedTokens(currentPoints + value);
   };
 
   const disableManageSupportBtnCondition: ConditionObject[] = [
