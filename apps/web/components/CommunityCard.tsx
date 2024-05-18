@@ -111,7 +111,7 @@ export function CommunityCard({
     (pool) => pool.config?.proposalType === "1" && pool.isEnabled === true,
   );
 
-  const poolInReview = pools.filter((pool) => pool.isEnabled === false);
+  const poolsInReview = pools.filter((pool) => pool.isEnabled === false);
 
   return (
     <>
@@ -212,12 +212,12 @@ export function CommunityCard({
             </div>
 
             <h5 className="mt-4 font-bold">
-              Pools in Review ( {fundingPools.length} )
+              Pools in Review ( {poolsInReview.length} )
             </h5>
             <div
               className={`mt-2 flex w-full transform flex-wrap gap-4 overflow-x-auto transition-height duration-200 ease-in-out  `}
             >
-              {poolInReview.map((pool, i) => (
+              {poolsInReview.map((pool, i) => (
                 <PoolCard
                   tokenGarden={tokenGarden}
                   {...pool}
