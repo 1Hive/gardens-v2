@@ -341,7 +341,7 @@ enum CVProposal_orderBy {
 type CVStrategy {
   id: ID!
   poolId: BigInt!
-  poolAmount: BigInt
+  poolAmount: BigInt!
   metadata: String
   registryCommunity: RegistryCommunity!
   config: CVStrategyConfig!
