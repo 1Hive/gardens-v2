@@ -1,29 +1,21 @@
-import { readContracts } from "@wagmi/core";
-import { cvStrategyABI } from "@/src/generated";
-import { Abi, Address } from "viem";
-import { Proposal, ProposalTypeVoter, Strategy } from "@/components/Proposals";
-import { CVProposal } from "#/subgraph/.graphclient";
-
-export const PRECISION_SCALE = BigInt(10 ** 4);
-// const pts = 1_000_000 = 100% = 1M;
-// 100 * PRECISION_SCALE = 100%
-// 950.000 / PRECISION_SCALE = 95%
-// use PRECISION_SCALE & registerStakeAmount, etc to parse data so you get a number between 0% and 100%
+import { Address } from "viem";
+import { ProposalTypeVoter } from "@/components/Proposals";
+import { CVProposal, CVStrategy } from "#/subgraph/.graphclient";
 
 export async function getProposals(
   accountAddress: Address | undefined,
-  strategy: Strategy,
+  strategy: CVStrategy,
 ) {
   try {
     async function fetchIPFSDataBatch(
-      proposals: Proposal[],
+      proposals: CVProposal[],
       batchSize = 5,
       delay = 300,
     ) {
       // Fetch data for a batch of proposals
       const fetchBatch = async (batch: any) =>
         Promise.all(
-          batch.map((p: Proposal) =>
+          batch.map((p: CVProposal) =>
             fetch(`https://ipfs.io/ipfs/${p.metadata}`, {
               method: "GET",
               headers: { "content-type": "application/json" },
@@ -52,7 +44,7 @@ export async function getProposals(
       return results;
     }
 
-    async function transformProposals(strategy: Strategy) {
+    async function transformProposals(strategy: CVStrategy) {
       const proposalsData = await fetchIPFSDataBatch(strategy.proposals);
       const transformedProposals = proposalsData.map((data, index) => {
         const p = strategy.proposals[index];

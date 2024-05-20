@@ -343,7 +343,7 @@ export type CVProposal_orderBy =
 export type CVStrategy = {
   id: Scalars['ID'];
   poolId: Scalars['BigInt'];
-  poolAmount?: Maybe<Scalars['BigInt']>;
+  poolAmount: Scalars['BigInt'];
   metadata?: Maybe<Scalars['String']>;
   registryCommunity: RegistryCommunity;
   config: CVStrategyConfig;
