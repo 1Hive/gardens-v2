@@ -140,12 +140,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             StrategyStruct.PointSystemConfig(200 * DECIMALS)
         );
 
-        CVStrategy strategy = new CVStrategy(address(allo()));
+        // CVStrategy strategy = new CVStrategy(address(allo()));
 
-        (uint256 _poolId,) = _registryCommunity().createPool(address(strategy), useTokenPool, params, metadata);
+        (uint256 _poolId, address _strategy) = _registryCommunity().createPool(useTokenPool, params, metadata);
         // console.log("strat: %s", strat);
         poolId = _poolId;
-        // CVStrategy strategy = CVStrategy(payable(strat));
+        CVStrategy strategy = CVStrategy(payable(_strategy));
 
         vm.startPrank(pool_admin());
         safeHelper(

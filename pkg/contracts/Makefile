@@ -14,7 +14,7 @@ add-strategy: #make add-strategy S=0x1234
 	-forge script script/AddStrategy.s.sol:AddStrategy \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pk1 \
-	--sig "run(address)" $(S) \
+	--sig "run(address,address)" $(S) $(C) \
 	--broadcast \
 	-vvvv
 
