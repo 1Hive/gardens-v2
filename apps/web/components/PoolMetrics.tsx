@@ -1,6 +1,5 @@
 "use client";
 import React, { FC, useState, useRef, useEffect } from "react";
-import { Strategy } from "./Proposals";
 import {
   Address,
   useAccount,
@@ -12,7 +11,7 @@ import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
 import { Button } from "./Button";
-import { Allo, TokenGarden } from "#/subgraph/.graphclient";
+import { Allo, CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
 import { parseUnits } from "viem";
 import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
@@ -41,7 +40,7 @@ const InitialTransactionSteps: TransactionStep[] = [
 type PoolStatsProps = {
   balance: string | number;
   strategyAddress: Address;
-  strategy: Strategy;
+  strategy: CVStrategy;
   communityAddress: Address;
   tokenGarden: TokenGarden;
   pointSystem: string;
@@ -49,8 +48,6 @@ type PoolStatsProps = {
   alloInfo: Allo;
   poolId: number;
 };
-
-const MIN_VALUE = 0.000000000001;
 
 export const PoolMetrics: FC<PoolStatsProps> = ({
   alloInfo,
@@ -61,6 +58,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
   spendingLimit,
   poolId,
 }) => {
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
+
   const [amount, setAmount] = useState<number | string>();
   const { address: connectedAccount } = useAccount();
   const tokenSymbol = tokenGarden?.symbol;
@@ -213,9 +212,12 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
             placeholder="0"
             required
             className="pr-14"
-            step={MIN_VALUE}
+            step={INPUT_TOKEN_MIN_VALUE}
             onChange={(e) => setAmount(Number(e.target.value))}
-            otherProps={{ step: MIN_VALUE, min: MIN_VALUE }}
+            otherProps={{
+              step: INPUT_TOKEN_MIN_VALUE,
+              min: INPUT_TOKEN_MIN_VALUE,
+            }}
           >
             <span className="absolute right-4 top-4 text-black">
               {tokenGarden.symbol}

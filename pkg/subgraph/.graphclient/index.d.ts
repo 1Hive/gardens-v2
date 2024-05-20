@@ -317,7 +317,7 @@ export type CVProposal_orderBy = 'id' | 'proposalNumber' | 'metadata' | 'version
 export type CVStrategy = {
     id: Scalars['ID'];
     poolId: Scalars['BigInt'];
-    poolAmount?: Maybe<Scalars['BigInt']>;
+    poolAmount: Scalars['BigInt'];
     metadata?: Maybe<Scalars['String']>;
     registryCommunity: RegistryCommunity;
     config: CVStrategyConfig;
@@ -1872,7 +1872,7 @@ export type CVProposalResolvers<ContextType = MeshContext, ParentType extends Re
 export type CVStrategyResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CVStrategy'] = ResolversParentTypes['CVStrategy']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     poolId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
-    poolAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    poolAmount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     metadata?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     registryCommunity?: Resolver<ResolversTypes['RegistryCommunity'], ParentType, ContextType>;
     config?: Resolver<ResolversTypes['CVStrategyConfig'], ParentType, ContextType>;

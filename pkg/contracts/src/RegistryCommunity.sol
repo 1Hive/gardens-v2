@@ -57,7 +57,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
     event StrategyAdded(address _strategy);
     event StrategyRemoved(address _strategy);
-    event MemberActivatedStrategy(address _member, address _strategy);
+    event MemberActivatedStrategy(address _member, address _strategy, uint256 _pointsToIncrease);
     event MemberDeactivatedStrategy(address _member, address _strategy);
     event BasisStakedAmountSet(uint256 _newAmount);
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
@@ -299,7 +299,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         strategiesByMember[_member].push(_strategy);
 
-        emit MemberActivatedStrategy(_member, _strategy);
+        emit MemberActivatedStrategy(_member, _strategy, pointsToIncrease);
     }
 
     function deactivateMemberInStrategy(address _member, address _strategy) public {
