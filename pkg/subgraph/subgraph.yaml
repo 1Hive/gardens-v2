@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: arbitrum-sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 421614
+        data: 1337
     source:
-      address: "0xecde7c689566dca851ed138ab123d6f0735bb0d5"
+      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
       abi: RegistryFactory
-      startBlock: 38905456
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -37,7 +37,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: arbitrum-sepolia
+    network: localhost
     source:
       abi: RegistryCommunity
     mapping:
@@ -79,7 +79,7 @@ templates:
           handler: handleStrategyAdded
         # - event: StrategyRemoved(address)
         #   handler: handleStrategyRemoved
-        - event: MemberActivatedStrategy(address,address)
+        - event: MemberActivatedStrategy(address,address,uint256)
           handler: handleMemberActivatedStrategy
         - event: MemberDeactivatedStrategy(address,address)
           handler: handleMemberDeactivatedStrategy
@@ -99,7 +99,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: arbitrum-sepolia
+    network: localhost
     source:
       abi: CVStrategy
     mapping:
