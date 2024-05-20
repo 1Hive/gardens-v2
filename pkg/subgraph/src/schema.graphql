@@ -9,6 +9,7 @@ type CVStrategy @entity(immutable: false) {
   memberActive: [Member!]
   maxCVSupply: BigInt!
   totalEffectiveActivePoints: BigInt!
+  isEnabled: Boolean!
 }
 
 type CVStrategyConfig @entity(immutable: false) {
