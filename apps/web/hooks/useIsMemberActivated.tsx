@@ -2,10 +2,10 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { registryCommunityABI } from "@/src/generated";
-import { Strategy } from "@/components/Proposals";
 import { useViemClient } from "./useViemClient";
+import { CVStrategy } from "#/subgraph/.graphclient";
 
-export function useIsMemberActivated(strategy: Strategy) {
+export function useIsMemberActivated(strategy: CVStrategy) {
   const { address } = useAccount();
   const client = useViemClient();
 
