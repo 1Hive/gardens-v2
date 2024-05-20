@@ -104,14 +104,14 @@ export function CommunityCard({
   registerStakeAmount = registerStakeAmount ?? 0;
 
   const signalingPools = pools.filter(
-    (pool) => pool.config?.proposalType === "0" && pool.isEnabled === true,
+    (pool) => pool.config?.proposalType === "0" && pool.isEnabled,
   );
 
   const fundingPools = pools.filter(
-    (pool) => pool.config?.proposalType === "1" && pool.isEnabled === true,
+    (pool) => pool.config?.proposalType === "1" && pool.isEnabled,
   );
 
-  const poolsInReview = pools.filter((pool) => pool.isEnabled === false);
+  const poolsInReview = pools.filter((pool) => !pool.isEnabled);
 
   return (
     <>
