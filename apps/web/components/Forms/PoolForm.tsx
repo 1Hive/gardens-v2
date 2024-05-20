@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import {
   Address,
@@ -8,7 +8,6 @@ import {
   createPublicClient,
   createWalletClient,
   custom,
-  encodeAbiParameters,
   http,
   parseUnits,
 } from "viem";
@@ -16,9 +15,8 @@ import { Button } from "@/components/Button";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { useAccount, useContractWrite } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, proposalTypes } from "@/types";
-import cvStrategyJson from "../../../../pkg/contracts/out/CVStrategy.sol/CVStrategy.json" assert { type: "json" };
 import "viem/window";
 import { getChainIdFromPath } from "@/utils/path";
 import { getChain } from "@/configs/chainServer";
@@ -61,7 +59,7 @@ type InitializeParams = [
   [BigInt],
 ];
 type Metadata = [BigInt, string];
-type CreatePoolParams = [Address, Address, InitializeParams, Metadata];
+type CreatePoolParams = [Address, InitializeParams, Metadata];
 
 type FormRowTypes = {
   label: string;
@@ -129,7 +127,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
       pointSystemType: 0,
     },
   });
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token?.decimals;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -193,32 +191,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     transport: http(),
   });
 
-  async function triggerDeployContract() {
-    try {
-      const hash = await walletClient.deployContract({
-        abi: abiWithErrors(cvStrategyABI),
-        account: address as Address,
-        bytecode: cvStrategyJson.bytecode.object as Address,
-        args: [alloAddr],
-      });
-
-      const transaction = await publicClient.waitForTransactionReceipt({
-        hash: hash,
-      });
-      return transaction.contractAddress;
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-    }
-  }
-
   const contractWrite = async (ipfsHash: string) => {
-    const strategyAddr = await triggerDeployContract();
-    if (strategyAddr == null) {
-      toast.error("error deploying cvStrategy contract");
-      return;
-    }
-
     let spendingLimit: number;
     let minimumConviction;
     let convictionGrowth;
@@ -249,7 +222,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
 
     const minThresholdPoints = parseUnits(
       (previewData?.minThresholdPoints || 0).toString(),
-      token.decimals,
+      token?.decimals,
     );
 
     const metadata: Metadata = [BigInt(1), ipfsHash];
@@ -257,22 +230,17 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     const maxAmountStr = (previewData?.maxAmount || 0).toString();
 
     const params: InitializeParams = [
-      communityAddr,
+      communityAddr as Address,
       decay,
       maxRatio,
       weight,
       minThresholdPoints,
       previewData?.strategyType as number, // proposalType
       previewData?.pointSystemType as number, // pointSystem
-      [parseUnits(maxAmountStr, token.decimals)], // pointConfig
+      [parseUnits(maxAmountStr, token?.decimals)], // pointConfig
     ];
 
-    const args: CreatePoolParams = [
-      strategyAddr,
-      token.id as Address,
-      params,
-      metadata,
-    ];
+    const args: CreatePoolParams = [token?.id as Address, params, metadata];
     console.log(args);
     write({ args: args });
   };
@@ -310,7 +278,6 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     };
 
     const ipfsUpload = ipfsJsonUpload(json);
-
     toast
       .promise(ipfsUpload, {
         pending: "Uploading data, wait a moment...",
@@ -569,7 +536,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                 placeholder="0"
               >
                 <span className="absolute right-4 top-4 text-black">
-                  {token.symbol}
+                  {token?.symbol}
                 </span>
               </FormInput>
             </div>

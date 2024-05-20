@@ -62,12 +62,20 @@ function calculatePercentage(
   value1: number | bigint | string | undefined,
   value2: number | bigint | string | undefined,
 ): number {
+  console.log(value1, value2);
   if (value1 === undefined || value2 === undefined) {
     return 0;
   }
 
-  const dnumValue1 = dn.from(value1);
-  const dnumValue2 = dn.from(value2);
+  let dnumValue1;
+  let dnumValue2;
+  try {
+    dnumValue1 = dn.from(value1);
+    dnumValue2 = dn.from(value2);
+  } catch (error) {
+    console.log(error);
+    return 0;
+  }
 
   if (dn.eq(dnumValue2, 0)) {
     return 0;

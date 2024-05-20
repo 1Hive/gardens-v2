@@ -20,12 +20,7 @@ export type Scalars = {
   BigInt: any;
   Bytes: any;
   Int8: any;
-  Timestamp: any;
 };
-
-export type Aggregation_interval =
-  | 'hour'
-  | 'day';
 
 export type Allo = {
   id: Scalars['ID'];
@@ -327,6 +322,7 @@ export type CVProposal_orderBy =
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
+  | 'strategy__isEnabled'
   | 'beneficiary'
   | 'requestedAmount'
   | 'requestedToken'
@@ -351,6 +347,7 @@ export type CVStrategy = {
   memberActive?: Maybe<Array<Member>>;
   maxCVSupply: Scalars['BigInt'];
   totalEffectiveActivePoints: Scalars['BigInt'];
+  isEnabled: Scalars['Boolean'];
 };
 
 
@@ -473,6 +470,7 @@ export type CVStrategyConfig_orderBy =
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
+  | 'strategy__isEnabled'
   | 'D'
   | 'decay'
   | 'maxRatio'
@@ -593,6 +591,10 @@ export type CVStrategy_filter = {
   totalEffectiveActivePoints_lte?: InputMaybe<Scalars['BigInt']>;
   totalEffectiveActivePoints_in?: InputMaybe<Array<Scalars['BigInt']>>;
   totalEffectiveActivePoints_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  isEnabled?: InputMaybe<Scalars['Boolean']>;
+  isEnabled_not?: InputMaybe<Scalars['Boolean']>;
+  isEnabled_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  isEnabled_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
@@ -630,7 +632,8 @@ export type CVStrategy_orderBy =
   | 'proposals'
   | 'memberActive'
   | 'maxCVSupply'
-  | 'totalEffectiveActivePoints';
+  | 'totalEffectiveActivePoints'
+  | 'isEnabled';
 
 export type Member = {
   id: Scalars['ID'];
@@ -867,6 +870,7 @@ export type MemberStrategy_orderBy =
   | 'strategy__metadata'
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
+  | 'strategy__isEnabled'
   | 'totalStakedPoints'
   | 'activatedPoints';
 
@@ -1978,8 +1982,6 @@ export type _Block_ = {
   number: Scalars['Int'];
   /** Integer representation of the timestamp stored in blocks for the chain */
   timestamp?: Maybe<Scalars['Int']>;
-  /** The hash of the parent block */
-  parentHash?: Maybe<Scalars['Bytes']>;
 };
 
 /** The type for the top-level _meta field */
