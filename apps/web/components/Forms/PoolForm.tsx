@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import {
   Address,
@@ -8,17 +8,15 @@ import {
   createPublicClient,
   createWalletClient,
   custom,
-  encodeAbiParameters,
   http,
   parseUnits,
 } from "viem";
 import { Button } from "@/components/Button";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { useAccount, useContractWrite } from "wagmi";
-import { abiWithErrors2, abiWithErrors } from "@/utils/abiWithErrors";
-import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, proposalTypes } from "@/types";
-import cvStrategyJson from "../../../../pkg/contracts/out/CVStrategy.sol/CVStrategy.json" assert { type: "json" };
 import "viem/window";
 import { getChainIdFromPath } from "@/utils/path";
 import { getChain } from "@/configs/chainServer";
@@ -193,32 +191,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     transport: http(),
   });
 
-  // async function triggerDeployContract() {
-  //   try {
-  //     const hash = await walletClient.deployContract({
-  //       abi: abiWithErrors2(cvStrategyABI),
-  //       account: address as Address,
-  //       bytecode: cvStrategyJson.bytecode.object as Address,
-  //       args: [alloAddr],
-  //     });
-
-  //     const transaction = await publicClient.waitForTransactionReceipt({
-  //       hash: hash,
-  //     });
-  //     return transaction.contractAddress;
-  //   } catch (error) {
-  //     console.log(error);
-  //     setLoading(false);
-  //   }
-  // }
-
   const contractWrite = async (ipfsHash: string) => {
-    // const strategyAddr = await triggerDeployContract();
-    // if (strategyAddr == null) {
-    //   toast.error("error deploying cvStrategy contract");
-    //   return;
-    // }
-
     let spendingLimit: number;
     let minimumConviction;
     let convictionGrowth;
