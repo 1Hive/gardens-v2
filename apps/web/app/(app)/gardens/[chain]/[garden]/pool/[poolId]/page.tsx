@@ -1,8 +1,10 @@
-import { Badge, Proposals, PoolMetrics } from "@/components";
+import { Badge, Proposals, PoolMetrics, PoolGovernance } from "@/components";
 import Image from "next/image";
 import { gardenLand } from "@/assets";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
+  Allo,
+  CVStrategy,
   TokenGarden,
   getAlloQuery,
   getPoolDataDocument,
@@ -29,7 +31,8 @@ export default async function Pool({
     getPoolDataDocument,
     { poolId: poolId, garden: garden },
   );
-  const strategyObj = data?.cvstrategies?.[0];
+  const strategyObj = data?.cvstrategies?.[0] as CVStrategy;
+  //const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;
@@ -38,10 +41,10 @@ export default async function Pool({
   const pointSystem = data?.cvstrategies?.[0].config?.pointSystem;
   const strategyAddr = strategyObj.id as Address;
   const communityAddress = strategyObj.registryCommunity.id as Address;
-  const alloInfo = data?.allos[0];
+  const alloInfo = data?.allos[0] as Allo;
   const proposalType = strategyObj?.config?.proposalType as number;
   const poolAmount = strategyObj?.poolAmount as number;
-  const tokenGarden = data.tokenGarden as TokenGarden;
+  const tokenGarden = data?.tokenGarden as TokenGarden;
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
   const isEnabled = data?.cvstrategies?.[0]?.isEnabled as boolean;
   const { title, description } = await getIpfsMetadata(metadata);
