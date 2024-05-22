@@ -21,6 +21,7 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50 ether;
     uint256 public constant COMMUNITY_FEE = 1 * PERCENTAGE_SCALE;
+    address public constant FEE_RECEIVER = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
 
     TERC20 public token;
 
@@ -225,9 +226,11 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         RegistryCommunity.InitializeParams memory params;
 
         params._allo = address(allo);
+        params._strategyTemplate = address(new CVStrategy(address(allo)));
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = COMMUNITY_FEE;
+        params._feeReceiver = address(FEE_RECEIVER);
         params._metadata = metadata; // convenant ipfs
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "Pioneers of Matias";
