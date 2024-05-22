@@ -8,30 +8,45 @@ import {
   getTokenGardensQuery,
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
-import { localhost, arbitrumSepolia, optimismSepolia } from "viem/chains";
+import {
+  localhost,
+  arbitrumSepolia,
+  optimismSepolia,
+  sepolia,
+} from "viem/chains";
 export const dynamic = "force-dynamic";
 
 const { urqlClient } = initUrqlClient();
 
 export default async function Gardens() {
-  const chainsId = [localhost.id, arbitrumSepolia.id, optimismSepolia.id];
+  const chainsId = [
+    localhost.id,
+    arbitrumSepolia.id,
+    optimismSepolia.id,
+    sepolia.id,
+  ];
   let gardens: getTokenGardensQuery | null = null;
   gardens = {
     tokenGardens: [],
   };
 
   try {
-    const r1 = await getTokenGardens(arbitrumSepolia.id);
-    const r2 = await getTokenGardens(localhost.id);
-    const r3 = await getTokenGardens(optimismSepolia.id);
+    if (!!process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP) {
+      const r = await getTokenGardens(sepolia.id);
+      gardens?.tokenGardens.push(...r.data.tokenGardens);
+    } else {
+      const r1 = await getTokenGardens(arbitrumSepolia.id);
+      const r2 = await getTokenGardens(localhost.id);
+      const r3 = await getTokenGardens(optimismSepolia.id);
 
-    const queryArray = [r1, r2, r3];
+      const queryArray = [r1, r2, r3];
 
-    queryArray.forEach((r) => {
-      if (r.data) {
-        gardens?.tokenGardens.push(...r.data.tokenGardens);
-      }
-    });
+      queryArray.forEach((r) => {
+        if (r.data) {
+          gardens?.tokenGardens.push(...r.data.tokenGardens);
+        }
+      });
+    }
   } catch (error) {
     console.error("Error fetching token gardens:", error);
   }
