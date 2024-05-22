@@ -30,6 +30,8 @@ templates:
           file: ../contracts/out/ERC20.sol/ERC20.json
         - name: CVStrategy
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
+        - name: RegistryFactory
+          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
      
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
@@ -38,22 +40,28 @@ templates:
           handler: handleMemberRegistered
         - event: MemberUnregistered(address,uint256)
           handler: handleMemberUnregistered
-        # - event: MemberKicked(address,address,uint256)
-        #   handler: handleMemberKicked
+        - event: PoolCreated(uint256,address,address,address,(uint256,string))
+          handler: handlePoolCreated
+        - event: MemberKicked(address,address,uint256)
+          handler: handleMemberKicked
+        # - event: CommunityFeeUpdated(uint256)
+        #   handler: handleCommunityFeeUpdated
         # - event: ProtocolFeeUpdated(uint256)
         #   handler: handleProtocolFeeUpdated
         - event: StrategyAdded(address)
           handler: handleStrategyAdded
-        # - event: StrategyRemoved(address)
-        #   handler: handleStrategyRemoved
-        - event: MemberActivatedStrategy(address,address)
+        - event: StrategyRemoved(address)
+          handler: handleStrategyRemoved
+        - event: MemberActivatedStrategy(address,address,uint256)
           handler: handleMemberActivatedStrategy
         - event: MemberDeactivatedStrategy(address,address)
           handler: handleMemberDeactivatedStrategy
-        # - event: StakeAmountUpdated(address,uint256)
-        #   handler: handleStakeAmountUpdated
+        - event: MemberPowerDecreased(address,uint256)
+          handler: handleMemberPowerDecreased
+        - event: MemberPowerIncreased(address,uint256)
+          handler: handleMemberPowerIncreased
         # - event: BasisStakedAmountSet(uint256)
-        #   handler: handleBasisStakedAmountSet
+          # handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
         #   handler: handleCouncilSafeSet
         # - event: CouncilSafeChangeStarted(address,address)
@@ -75,18 +83,35 @@ templates:
         - CVStrategy
         - CVStrategyConfig
         - CVProposal
+        - Allo
       abis:
         - name: CVStrategy
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
         - name: RegistryCommunity
           file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: Allo
+          file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint8))
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256))) 
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
         - event: PoolAmountIncreased(uint256)
           handler: handlePoolAmountIncreased
-
+        - event: SupportAdded(address,uint256,uint256,uint256,uint256)
+          handler: handleSupportAdded
+        - event: Distributed(uint256,address,uint256)
+          handler: handleDistributed
+        - event: PowerIncreased(address,uint256,uint256)
+          handler: handlePowerIncreased
+        - event: PowerDecreased(address,uint256,uint256)
+          handler: handlePowerDecreased
+        - event: DecayUpdated(uint256)
+          handler: handleDecayUpdated
+        - event: MaxRatioUpdated(uint256)
+          handler: handleMaxRatioUpdated
+        - event: WeightUpdated(uint256)
+          handler: handleWeightUpdated
+ 
       file: ./src/mappings/cv-strategy.ts
   

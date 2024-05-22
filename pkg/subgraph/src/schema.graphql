@@ -1,12 +1,15 @@
 type CVStrategy @entity(immutable: false) {
   id: ID!
   poolId: BigInt!
-  poolAmount: BigInt
+  poolAmount: BigInt!
   metadata: String
   registryCommunity: RegistryCommunity!
-  config: CVStrategyConfig
+  config: CVStrategyConfig!
   proposals: [CVProposal!]! @derivedFrom(field: "strategy")
   memberActive: [Member!]
+  maxCVSupply: BigInt!
+  totalEffectiveActivePoints: BigInt!
+  isEnabled: Boolean!
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -15,12 +18,16 @@ type CVStrategyConfig @entity(immutable: false) {
   D: BigInt!
   decay: BigInt!
   maxRatio: BigInt!
+  minThresholdPoints: BigInt!
   weight: BigInt!
   proposalType: BigInt!
+  pointSystem: BigInt!
+  maxAmount: BigInt
 }
 
 type CVProposal @entity(immutable: false) {
   id: ID!
+  proposalNumber: BigInt!
   # proposalMeta: ProposalMeta!
   metadata: String!
   version: BigInt
@@ -32,8 +39,9 @@ type CVProposal @entity(immutable: false) {
   blockLast: BigInt!
   convictionLast: BigInt!
   threshold: BigInt!
+  maxCVStaked: BigInt!
   # proposalType: BigInt!
-  stakedTokens: BigInt!
+  stakedAmount: BigInt!
   submitter: String!
   # voterStakedPointsPct: BigInt!
   # agreementActionId: BigInt!
@@ -59,7 +67,8 @@ type RegistryCommunity @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
   profileId: String
-  protocolFee: BigInt
+  communityFee: BigInt!
+  protocolFee: BigInt!
   communityName: String
   covenantIpfsHash: String
   registryFactory: RegistryFactory
@@ -78,17 +87,34 @@ type Member @entity(immutable: false) {
   id: ID!
   # registryCommunity: [RegistryCommunity!]
   memberCommunity: [MemberCommunity!] @derivedFrom(field: "member")
-  totalStakedAmount: BigInt
+  stakes: [Stake!] @derivedFrom(field: "member")
   # isRegistered: Boolean
+}
+
+type Stake @entity {
+  id: ID!
+  member: Member!
+  poolId: BigInt!
+  proposal: CVProposal!
+  amount: BigInt!
+  createdAt: BigInt!
 }
 
 type MemberCommunity @entity(immutable: false) {
   id: ID!
   memberAddress: String
-  stakedAmount: BigInt
+  stakedTokens: BigInt
   isRegistered: Boolean
   member: Member!
   registryCommunity: RegistryCommunity!
+}
+
+type MemberStrategy @entity(immutable: false) {
+  id: ID!
+  member: Member!
+  strategy: CVStrategy!
+  totalStakedPoints: BigInt!
+  activatedPoints: BigInt
 }
 
 type TokenGarden @entity(immutable: false) {

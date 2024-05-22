@@ -1,25 +1,40 @@
 "use client";
 import React from "react";
-import { GardensLogo } from "@/assets";
+import { GardensLogo, newLogo } from "@/assets";
 import Link from "next/link";
 import { navItems } from "@/constants/navigation";
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectWallet } from "@/components";
+import { Badge } from "@/components";
+
+import Image from "next/image";
 
 export function NavBar() {
   return (
-    <Disclosure as="nav" className="bg-surface shadow">
+    <Disclosure as="nav" className="sticky left-0 top-0 z-10 bg-surface shadow">
       {({ open }) => (
         <>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 md:py-0.5 lg:px-8">
             <div className="flex h-16 justify-between">
               <div className="flex gap-8">
-                <div className="flex flex-shrink-0 items-center">
+                <div className="flex flex-shrink-0 items-center gap-4">
                   <Link href="/" className="flex items-center gap-3">
-                    <GardensLogo className="h-10 text-primary" />
+                    <Image
+                      src={newLogo}
+                      alt="logo"
+                      height={40}
+                      width={40}
+                      loading="lazy"
+                    />
+                    {/* <GardensLogo className="h-10 text-primary" /> */}
                     <span className="text-2xl font-medium">Gardens</span>
                   </Link>
+                  {/* TODO: change or remove after alpha */}
+                  <div className="badge badge-success badge-md text-white">
+                    alpha version
+                  </div>
                 </div>
                 <div className="hidden sm:ml-4 sm:flex sm:space-x-8">
                   {/* {navItems.map(({ name, href }) => (
@@ -34,19 +49,7 @@ export function NavBar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                <ConnectButton />
-                {/* <w3m-button balance="show" label="Connect Wallet" size="md" />{" "} */}
-                {/* <Button
-                  disabled={connecting}
-                  onClick={() => (wallet ? disconnect(wallet) : connect())}
-                  className="bg-primary"
-                >
-                  {connecting
-                    ? "Connecting"
-                    : wallet
-                      ? "Disconnect"
-                      : "Connect"}
-                </Button> */}
+                <ConnectWallet />
               </div>
               <div className="-mr-2 flex items-center sm:hidden">
                 {/* Mobile menu button */}

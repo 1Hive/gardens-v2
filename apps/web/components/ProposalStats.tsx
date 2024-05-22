@@ -15,22 +15,20 @@ export const ProposalStats: FC<ProposalStatsProps> = ({
   proposals,
   distributedPoints,
 }) => {
-  const proposalsDistributionPoints = proposals.map(
-    ({ title, voterStakedPointsPct }) => {
-      // console.log("voterStakedPointsPct", voterStakedPointsPct);
-      return {
-        value: voterStakedPointsPct,
-        name: title,
-      };
-    },
-  ) as Proposals[];
+  const proposalsDistributionPoints = proposals.map(({ title }) => {
+    // console.log("voterStakedPointsPct", voterStakedPointsPct);
+    return {
+      value: 0,
+      name: title,
+    };
+  }) as Proposals[];
 
-  const proposalsTotalSupport = proposals.map(({ title, stakedTokens }) => ({
-    value: stakedTokens,
+  const proposalsTotalSupport = proposals.map(({ title }) => ({
+    value: 0,
     name: title,
   }));
 
-  console.log(proposalsTotalSupport, proposalsDistributionPoints);
+  // console.log(proposalsTotalSupport, proposalsDistributionPoints);
 
   return (
     <div className="w-full space-y-8 p-2">

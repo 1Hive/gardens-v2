@@ -20,7 +20,7 @@ module.exports = {
     content: [""],
     extend: {
       fontFamily: {
-        press: ["var(--font-press)"],
+        press: ["var(--font-inter)"],
         chakra: ["var(--font-chakra)"],
       },
       colors: {

@@ -57,7 +57,7 @@ export const useTransactionNotification = (
       toast
         .promise(promise, {
           pending: "Please sign the transaction",
-          success: "Signed!",
+          // success: "Signed!",
           error: "Something went wrong",
         })
         .then((data) => {

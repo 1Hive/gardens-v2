@@ -1,31 +1,45 @@
 "use client";
 import React, { useState } from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { FormModal } from "./FormModal";
+import { useForm } from "react-hook-form";
 import { alloABI } from "@/src/generated";
-import { parseUnits } from "viem";
-import { usePrepareContractWrite, useContractWrite } from "wagmi";
-import { encodeAbiParameters, isAddress } from "viem";
+import { Address, parseUnits } from "viem";
+import { useContractWrite } from "wagmi";
+import { encodeAbiParameters } from "viem";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
-import { ipfsJsonUpload } from "@/utils/ipfsUpload";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { toast } from "react-toastify";
-//docs link: https://react-hook-form.com/
+import { proposalTypes } from "@/types";
+import { Allo, Maybe, TokenGarden } from "#/subgraph/.graphclient";
+import { formatTokenAmount } from "@/utils/numbers";
+import FormPreview, { FormRow } from "./FormPreview";
+import { FormInput } from "./FormInput";
+import { usePathname, useRouter } from "next/navigation";
+
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
-  title: number;
+  title: string;
   amount: number;
   beneficiary: string;
   description: string;
 };
-type PreviewDataProps = {
-  data: FormInputs;
-  proposalType: string;
-};
+
 type ProposalFormProps = {
   poolId: number;
-  proposalType: string;
+  proposalType: number;
+  alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
+  tokenGarden: TokenGarden;
+  tokenAddress: Address;
+  spendingLimit: number;
+  spendingLimitPct: number;
+  poolAmount: number;
 };
+
+type FormRowTypes = {
+  label: string;
+  parse?: (value: any) => string;
+};
+
 const abiParameters = [
   {
     type: "tuple",
@@ -46,293 +60,277 @@ const abiParameters = [
   },
 ];
 
-const ethereumAddressRegExp = /^(0x)?[0-9a-fA-F]{40}$/;
+const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
-export const ProposalForm: React.FC<ProposalFormProps> = ({
+export const ProposalForm = ({
   poolId,
   proposalType,
-}) => {
+  alloInfo,
+  tokenGarden,
+  tokenAddress,
+  spendingLimit,
+  spendingLimitPct,
+  poolAmount,
+}: ProposalFormProps) => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitted },
+    formState: { errors },
     getValues,
-    reset,
   } = useForm<FormInputs>();
 
-  const [isEditMode, setIsEditMode] = useState<boolean>(false);
-  // TODO: ADD TYPES
-  const [previewData, setPreviewData] = useState<any>(null); // preview data
-  const [metadataIpfs, setMetadataIpfs] = useState<string>(); // ipfs hash of proposal title and description
-  const [formEncodeData, setFormEncodeData] = useState(undefined) as any; // args for contract write
-  const tokenSymbol = "MTK";
-
-  const proposalTypeNames: Record<string, string> = {
-    0: "Signaling",
-    1: "Funding",
-    2: "Streaming",
+  const formRowTypes: Record<string, FormRowTypes> = {
+    amount: {
+      label: "Requested amount:",
+      parse: (value: number) => `${value} ${tokenGarden?.symbol}`,
+    },
+    beneficiary: {
+      label: "Beneficiary:",
+    },
+    proposalType: {
+      label: "Proposal Type:",
+    },
+    strategy: { label: "Strategy:" },
   };
 
-  console.log(proposalType);
-  const typeOfProposal = proposalTypeNames[proposalType];
-  console.log(typeOfProposal);
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
 
-  const handleJsonUpload = () => {
-    const sampleJson = {
+  const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [previewData, setPreviewData] = useState<FormInputs>();
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const tokenSymbol = tokenGarden?.symbol || "";
+
+  const spendingLimitNumber = spendingLimit / 10 ** tokenGarden?.decimals;
+
+  const spendingLimitString = formatTokenAmount(
+    spendingLimit,
+    tokenGarden?.decimals as number,
+  );
+
+  const proposalTypeName = proposalTypes[proposalType];
+
+  const createProposal = () => {
+    setLoading(true);
+    const json = {
       title: getValues("title"),
-      descripcion: getValues("description"),
+      description: getValues("description"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(sampleJson);
+    const ipfsUpload = ipfsJsonUpload(json);
 
     toast
       .promise(ipfsUpload, {
-        pending: "Validating Proposal Form...",
-        success: "Validation Succesfull!",
+        pending: "Uploading data, wait a moment...",
+        success: "All ready!",
         error: "Something went wrong",
       })
-      .then((data) => {
-        console.log("https://ipfs.io/ipfs/" + data);
-        setMetadataIpfs(data);
+      .then((ipfsHash) => {
+        console.log("https://ipfs.io/ipfs/" + ipfsHash);
+        if (previewData === undefined) throw new Error("No preview data");
+        const encodedData = getEncodeData(ipfsHash);
+        write({ args: [poolId, encodedData] });
       })
       .catch((error: any) => {
+        setLoading(false);
         console.error(error);
       });
   };
 
-  const handlePreview = () => {
-    handleJsonUpload();
-
-    const data = {
-      title: getValues("title"),
-      amount: getValues("amount"),
-      beneficiary: getValues("beneficiary"),
-      description: getValues("description"),
-    };
-
+  const handlePreview = (data: FormInputs) => {
     setPreviewData(data);
-    setIsEditMode(true);
+    setShowPreview(true);
   };
-  const { config } = usePrepareContractWrite({
-    //TODO: add dynamic address
-    //contract for localhost deploy
-    address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-    //contract for arb sepolia
-    // address: "",
+
+  const { write, error, isError, data } = useContractWrite({
+    address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
-    args: [1, formEncodeData],
-    onError: (error) => {
-      console.log("error", error);
-    },
-    onSuccess: (data) => {
-      console.log(data?.result);
-    },
+    onSuccess: () => router.push(pathname.replace(`/create-proposal`, "")),
+    onError: () => alert("Something went wrong creating Proposal"),
+    onSettled: () => setLoading(false),
   });
 
-  const { write, error, isError, data } = useContractWrite(config);
+  const getEncodeData = (metadataIpfs: string) => {
+    if (previewData === undefined) throw new Error("no preview data");
 
-  const handleEncodeData = (data: any) => {
-    //TODO: remove cl, add dynamic poolId from props
-    const poolId = 1;
-    const metadata = [1, metadataIpfs];
+    const metadata = [1, metadataIpfs as string];
 
-    let proposalData;
+    const strAmount = previewData.amount?.toString() || "";
+    const requestedAmount = parseUnits(
+      strAmount,
+      tokenGarden?.decimals as number,
+    );
 
-    // Check if proposal type is not equal to "Funding"
-
-    proposalData =
-      typeOfProposal !== "Funding"
-        ? {
-            beneficiary: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-            requestedAmount: 0,
-            tokenAddress: "0x0000000000000000000000000000000000000000",
-          }
-        : {
-            beneficiary: data.beneficiary,
-            requestedAmount: parseUnits(data.amount, 18),
-            tokenAddress: "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
-          };
-
+    console.log([
+      poolId,
+      previewData.beneficiary,
+      requestedAmount,
+      tokenAddress,
+      metadata,
+    ]);
     const encodedData = encodeAbiParameters(abiParameters, [
       [
         poolId,
-        proposalData.beneficiary,
-        proposalData.requestedAmount,
-        proposalData.tokenAddress,
+        previewData?.beneficiary ||
+          "0x0000000000000000000000000000000000000000",
+        requestedAmount,
+        tokenAddress,
         metadata,
       ],
     ]);
 
-    console.log("poolId", poolId);
-    console.log("beneficiary", proposalData.beneficiary);
-    console.log("requestedAmount", proposalData.requestedAmount);
-    console.log("tokenAddress", proposalData.tokenAddress);
-    console.log(metadata);
-    console.log("encodedData", encodedData);
+    console.log(
+      poolId,
+      previewData.beneficiary,
+      requestedAmount,
+      tokenAddress,
+      metadata,
+    );
 
-    setFormEncodeData(encodedData);
-    return "";
+    return encodedData;
   };
 
-  const handleCreateNewCommunity: SubmitHandler<FormInputs> = (data: any) => {
-    handleEncodeData(data);
-    write?.();
+  const formatFormRows = () => {
+    if (!previewData) return [];
+    let formattedRows: FormRow[] = [];
+
+    Object.entries(previewData).forEach(([key, value]) => {
+      const formRow = formRowTypes[key];
+      if (formRow) {
+        const parsedValue = formRow.parse ? formRow.parse(value) : value;
+        formattedRows.push({
+          label: formRow.label,
+          data: parsedValue,
+        });
+      }
+    });
+
+    formattedRows.push({
+      label: formRowTypes["strategy"].label,
+      data: "Conviction voting",
+    });
+    formattedRows.push({
+      label: formRowTypes["proposalType"].label,
+      data: proposalTypeName,
+    });
+
+    return formattedRows;
   };
-
-  const inputClassname = "input input-bordered input-accent w-full";
-  const labelClassname = "mb-2 text-xs text-black";
-
   return (
-    <>
-      <FormModal
-        label="Create Proposal"
-        title={`Create ${typeOfProposal} Proposal`}
-        description={`Propose and request funds for pool enhancements. Share your vision and request funds for upgrades that benefit the entire community`}
-      >
-        <form onSubmit={handleSubmit(handleCreateNewCommunity)}>
-          {!isEditMode ? (
-            <div className="flex flex-col space-y-6 overflow-hidden p-1">
-              {typeOfProposal === "Funding" && (
-                <>
-                  <div className="relative flex flex-col">
-                    <label htmlFor="stake" className={labelClassname}>
-                      Requested Amount
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="0"
-                      className={inputClassname}
-                      {...register("amount", {
-                        required: true,
-                      })}
-                    />
-                    <span className="absolute right-10 top-10 text-black">
-                      {tokenSymbol}
-                    </span>
-                  </div>
-                </>
-              )}
-              {(typeOfProposal === "Funding" ||
-                proposalType === "Streaming") && (
-                <div className="flex flex-col">
-                  <label htmlFor="beneficiary" className={labelClassname}>
-                    Beneficary Address
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Add the beneficiary's address"
-                    className={inputClassname}
-                    {...register("beneficiary", {
-                      required: true,
-                      pattern: {
-                        value: ethereumAddressRegExp,
-                        message: "Invalid Eth Address",
-                      },
-                    })}
-                  />
-                </div>
-              )}
-              <div className="flex flex-col">
-                <label htmlFor="title" className={labelClassname}>
-                  Title
-                </label>
-                <input
-                  type="text"
-                  placeholder="Add the title of the proposal"
-                  className={inputClassname}
-                  {...register("title", {
-                    required: true,
-                  })}
-                />
-              </div>
-
-              <label htmlFor="description" className={labelClassname}>
-                Proposal Description
-              </label>
-              <textarea
-                className="textarea textarea-accent line-clamp-5"
-                placeholder="Add proposal description"
-                rows={10}
-                {...register("description", {
-                  required: true,
-                })}
-              ></textarea>
+    <form onSubmit={handleSubmit(handlePreview)} className="w-full">
+      {showPreview ? (
+        <FormPreview
+          title={previewData?.title || ""}
+          description={previewData?.description || ""}
+          formRows={formatFormRows()}
+          previewTitle="Check proposals details"
+        />
+      ) : (
+        <div className="flex flex-col gap-2 overflow-hidden p-1">
+          {proposalTypeName === "funding" && (
+            <div className="relative flex flex-col">
+              <FormInput
+                label="Requested amount"
+                subLabel={`Max ${spendingLimitString} ${tokenSymbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
+                register={register}
+                required
+                registerOptions={{
+                  max: {
+                    value: spendingLimitNumber,
+                    message: `Max amount cannot exceed ${spendingLimitString} ${tokenSymbol}`,
+                  },
+                  min: {
+                    value: INPUT_TOKEN_MIN_VALUE,
+                    message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                  },
+                }}
+                otherProps={{
+                  step: INPUT_TOKEN_MIN_VALUE,
+                  min: INPUT_TOKEN_MIN_VALUE,
+                }}
+                errors={errors}
+                className="pr-14"
+                registerKey="amount"
+                type="number"
+                placeholder="0"
+              >
+                <span className="absolute right-4 top-4 text-black">
+                  {tokenSymbol}
+                </span>
+              </FormInput>
             </div>
-          ) : (
-            <ProposalOverview data={previewData} proposalType={"Funding"} />
           )}
-
-          <div className="flex w-full items-center justify-center py-6">
-            {!isEditMode ? (
-              <Button type="button" onClick={handlePreview} variant="fill">
-                Preview
-              </Button>
-            ) : (
-              <div className="flex items-center gap-10">
-                <Button type="submit">Submit</Button>
-                <Button
-                  type="button"
-                  onClick={() => setIsEditMode(false)}
-                  variant="fill"
-                >
-                  Edit
-                </Button>
-              </div>
-            )}
-          </div>
-        </form>
-      </FormModal>
-    </>
-  );
-};
-
-const ProposalOverview: React.FC<PreviewDataProps> = (data) => {
-  const { title, amount, beneficiary, description } = data.data;
-
-  const proposalType = "Funding";
-  return (
-    <>
-      <div className="px-4 sm:px-0">
-        <p className="mt-0 max-w-2xl text-sm leading-6 text-gray-500">
-          Check proposals details
-        </p>
-      </div>
-      <div>
-        {data && (
-          <div className="relative">
-            <PreviewData label="Strategy" data="Conviction voting" />
-            <PreviewData label="Proposal Type" data={"no type"} />
-            {proposalType === "Funding" && (
-              <PreviewData label="Requested Amount" data={amount} />
-            )}
-            {(proposalType === "Funding" || proposalType === "Streaming") && (
-              <PreviewData label="Beneficiary" data={beneficiary} />
-            )}
-
-            <div className="divider-default divider"></div>
-            <div className="mt-4 flex flex-col items-center space-y-4">
-              <h4 className="text-xl font-medium leading-6 text-gray-900">
-                {title}
-              </h4>
-              <p className="text-md max-h-56 overflow-y-auto rounded-xl p-2 text-justify leading-7">
-                {description}
-              </p>
+          {proposalTypeName !== "signaling" && (
+            <div className="flex flex-col">
+              <FormInput
+                label="Beneficary address"
+                register={register}
+                registerOptions={{
+                  pattern: {
+                    value: ethereumAddressRegEx,
+                    message: "Invalid Eth Address",
+                  },
+                }}
+                required
+                errors={errors}
+                registerKey="beneficiary"
+                type="text"
+                placeholder="0x000..."
+              ></FormInput>
             </div>
+          )}
+          <div className="flex flex-col">
+            <FormInput
+              label="Title"
+              register={register}
+              required
+              errors={errors}
+              registerKey="title"
+              type="text"
+              placeholder="Example Title"
+            ></FormInput>
           </div>
+          <div className="flex flex-col">
+            <FormInput
+              label="Proposal description"
+              register={register}
+              required
+              errors={errors}
+              registerKey="description"
+              type="textarea"
+              rows={10}
+              placeholder="Proposal description"
+            ></FormInput>
+          </div>
+        </div>
+      )}
+      <div className="flex w-full items-center justify-center py-6">
+        {showPreview ? (
+          <div className="flex items-center gap-10">
+            <Button
+              type="button"
+              onClick={() => createProposal()}
+              isLoading={loading}
+            >
+              Submit
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setShowPreview(false);
+                setLoading(false);
+              }}
+              variant="fill"
+            >
+              Edit
+            </Button>
+          </div>
+        ) : (
+          <Button type="submit">Preview</Button>
         )}
       </div>
-    </>
-  );
-};
-
-const PreviewData = ({ label, data }: { label: string; data: any }) => {
-  return (
-    <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-      <dt className="text-sm font-medium leading-6 text-gray-900">{label}</dt>
-      <dd className="mt-1 text-lg leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-        {data}
-      </dd>
-    </div>
+    </form>
   );
 };

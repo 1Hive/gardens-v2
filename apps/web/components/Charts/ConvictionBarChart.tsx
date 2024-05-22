@@ -1,156 +1,329 @@
 "use client";
 import React from "react";
-import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
-import type { EChartsOption } from "echarts";
+import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
 
+type ScenarioMapping = {
+  condition: () => boolean;
+  details: [{ message: string; growing: boolean | null }];
+};
+
 export const ConvictionBarChart = ({
-  data,
+  currentConviction,
+  threshold,
   proposalSupport,
+  isSignalingType,
 }: {
-  data: any;
+  currentConviction: number;
+  threshold: number;
   proposalSupport: number;
+  maxConviction?: number;
+  isSignalingType: boolean;
 }) => {
-  // console.log(data);
-  // console.log(proposalSupport);
+  const supportNeeded = (threshold - proposalSupport).toFixed(2);
+  const scenarioMappings: Record<string, ScenarioMapping> = {
+    //1-SignalingType) Support > 0 && > Conviction
+    isSignalingTypeAndCovictionEqSupport: {
+      condition: () =>
+        isSignalingType &&
+        proposalSupport !== 0 &&
+        proposalSupport > currentConviction,
+      details: [
+        {
+          message: "",
+          growing: true,
+        },
+      ],
+    },
+    //2-SignalingType) Support > 0 && < Conviction
+    isSignalingTypeAndCovictionGtSupport: {
+      condition: () =>
+        isSignalingType &&
+        proposalSupport !== 0 &&
+        proposalSupport < currentConviction,
+      details: [
+        {
+          message: "",
+          growing: false,
+        },
+      ],
+    },
+    //1) Conviction < Total Support < Threshold --- working ...
+    convictionLTSupportLTThreshold: {
+      condition: () =>
+        currentConviction < proposalSupport && proposalSupport < threshold,
+      details: [
+        {
+          message: `This proposal needs ${supportNeeded} % more support to reach threshold`,
+          growing: true,
+        },
+      ],
+    },
+    //2) Conviction < Threshold < Total Support --- working ...
+    convictionLTThresholdLTSupport: {
+      condition: () =>
+        currentConviction < threshold && threshold < proposalSupport,
+      details: [
+        {
+          message: "This proposal will pass within X days ...",
+          growing: true,
+        },
+      ],
+    },
+    //3) Total Support < Conviction < Threshold
+    supportLTConvictionLTThreshold: {
+      condition: () =>
+        proposalSupport < currentConviction && currentConviction < threshold,
+      details: [
+        {
+          message: `This proposal needs ${supportNeeded} % more support to reach threshold`,
+          growing: false,
+        },
+      ],
+    },
+    //4) Total Support < Threshold < Conviction
+    supportLTThresholdLTConviction: {
+      condition: () =>
+        proposalSupport < threshold && threshold < currentConviction,
+      details: [
+        {
+          message: "This proposal is Executable until X date",
+          growing: false,
+        },
+      ],
+    },
+    //5) Threshold < Conviction < Total Support
+    thresholdLTConvictionLTSupport: {
+      condition: () =>
+        threshold < currentConviction && currentConviction < proposalSupport,
+      details: [
+        {
+          message: "This proposal is ready to be executed !",
+          growing: true,
+        },
+      ],
+    },
+    //6) Threshold < Total Support < Conviction
+    thresholdLTSupportLTConviction: {
+      condition: () =>
+        threshold < proposalSupport && proposalSupport < currentConviction,
+      details: [
+        {
+          message: "This proposal is ready to be executed!",
+          growing: false,
+        },
+      ],
+    },
+    //7) Conviction = Total Support  < Threshold
+    CovictionEqSupportLTthreshold: {
+      condition: () =>
+        proposalSupport == currentConviction &&
+        proposalSupport !== 0 &&
+        proposalSupport < threshold,
+      details: [
+        {
+          message: `This proposal needs ${supportNeeded} % more support to reach threshold`,
+          growing: null,
+        },
+      ],
+    },
+    //8) Conviction = Total Support  > Threshold
+    CovictionEqSupportGTthreshold: {
+      condition: () =>
+        proposalSupport == currentConviction &&
+        proposalSupport !== 0 &&
+        proposalSupport > threshold,
+      details: [
+        {
+          message: `This proposal is ready to be executed!`,
+          growing: null,
+        },
+      ],
+    },
+  };
 
-  const { currentConviction, futureConviction, thresholdPoints, pointsNeeded } =
-    data;
+  const { message, growing } = Object.values(scenarioMappings).find(
+    ({ condition }) => condition(),
+  )?.details[0] ?? {
+    message: "Proposal waiting for support ...",
+    growing: null,
+  };
 
-  const OPTION_TEST: EChartsOption = {
-    tooltip: {
-      trigger: "axis",
-      axisPointer: {
-        type: "shadow",
+  const emphasis = {
+    disabled: true,
+  };
+
+  const markLine: MarkLineComponentOption = {
+    symbol: "none",
+    label: {
+      position: "start",
+      formatter: "{@score} %",
+      fontSize: 16,
+    },
+  };
+
+  const markLineTh: MarkLineComponentOption = isSignalingType
+    ? {}
+    : {
+        ...markLine,
+        data: [
+          {
+            xAxis: threshold,
+            symbol:
+              "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
+            symbolSize: [20, 20],
+            symbolOffset: [-9, 95],
+          },
+        ],
+        lineStyle: {
+          width: 2,
+          color: "#191919",
+        },
+      };
+
+  const markLineCv: MarkLineComponentOption =
+    currentConviction === 0
+      ? {}
+      : {
+          ...markLine,
+          data: [
+            {
+              xAxis: currentConviction,
+            },
+          ],
+          lineStyle: {
+            width: 2,
+            color: "#69db7c",
+            type: "solid",
+          },
+        };
+
+  const option: EChartsOption = {
+    title: {
+      text: "Conviction voting chart",
+    },
+    emphasis: emphasis,
+    yAxis: {
+      data: ["cv"],
+      axisTick: { show: false },
+      axisLabel: {
+        formatter: "",
+      },
+      axisLine: {
+        show: false,
       },
     },
-    legend: {},
+    legend: {
+      itemGap: 35,
+      selectedMode: false,
+      textStyle: {
+        fontSize: 13,
+      },
+      data: [
+        {
+          name: "Support",
+          icon: "rect",
+        },
+        {
+          name: "Conviction",
+          icon: "rect",
+        },
+        {
+          name: "Threshold",
+          icon: "rect",
+          itemStyle: {
+            color: "none",
+            borderType: "dashed",
+            borderColor: "#191919",
+            borderWidth: 2,
+          },
+        },
+      ],
+    },
+    toolbox: {
+      feature: {
+        saveAsImage: { show: true },
+      },
+    },
     grid: {
+      show: false,
       left: "5%",
-      right: "4%",
-      bottom: "3%",
+      right: "5%",
+      top: "35%",
+      bottom: "35%",
       containLabel: true,
     },
     xAxis: {
-      type: "value",
+      splitLine: { show: false },
+      axisLabel: {
+        show: false,
+        formatter: "{value}%",
+        fontSize: 10,
+      },
+      axisLine: {
+        show: false,
+      },
     },
-    yAxis: {
-      type: "category",
-      data: ["Proposal"],
-    },
-
-    barWidth: "20%",
-
+    animationDurationUpdate: 1200,
+    barGap: "-69%",
     series: [
       {
-        name: "Conviction",
         type: "bar",
-        stack: "total",
-        color: "rgb(93, 143, 216)",
-
-        showBackground: false,
-
-        label: {
-          show: false,
-          formatter: "CV: {@score} pts",
-          fontSize: 10,
-          color: "white",
-          ellipsis: "...",
-          // fontWeight: "",
-        },
-        emphasis: {
-          focus: "series",
-        },
-        data: [currentConviction],
-      },
-      {
-        name: "Future Convcition",
-        type: "bar",
-        stack: "total",
-        itemStyle: {
-          borderRadius: [0, 20, 20, 0],
-        },
-        color: "rgb(93, 143, 216, 0.3)",
-        showBackground: true,
-        backgroundStyle: {
-          color: "rgb(93, 143, 216, 0.1)",
-          // borderRadius: [20, 20, 0, 0],
-        },
-        //   itemStyle:{
-        //   borderRadius: 20
-        // },
-
-        label: {
-          show: false,
-        },
-        emphasis: {
-          focus: "series",
-        },
-        data: [futureConviction],
-      },
-      {
         name: "Support",
-        type: "bar",
-        stack: "points",
-        color: "#AFE3B2",
-        itemStyle: {
-          borderRadius: [0, 20, 20, 0],
-        },
-        // markLine: {
-        //   data: [{ type: 'max', name: 'max' }]
-        // },
+        stack: "a",
         label: {
-          show: false,
-          formatter: "{a}: {@score} pts",
-          fontSize: 10,
-          // fontWeight: "",
-          color: "black",
+          show: true,
+          position:
+            proposalSupport === 0
+              ? [2, -14]
+              : proposalSupport > threshold
+                ? "right"
+                : "top",
+          color: "#191919",
+          fontSize: 12,
+          formatter: "{a}: {@score} %",
         },
-        emphasis: {
-          focus: "series",
+        itemStyle: {
+          color: "#b2f2bb",
         },
-
+        barWidth: 50,
         data: [proposalSupport],
       },
       {
-        name: "Points Needed",
         type: "bar",
-        stack: "points",
-
-        color: "rgb(205, 250, 225, 0.3)",
-        showBackground: true,
-        backgroundStyle: {
-          // borderRadius: [0, 20, 20, 0],
+        name: "Conviction",
+        itemStyle: {
+          color: "#69db7c",
         },
-
-        label: {
-          show: true,
-          formatter: "{a}: {@score}",
-          fontSize: 12,
-          // fontWeight: "",
-          // fontFamily: "",
-          color: "black",
-        },
-        emphasis: {
-          focus: "series",
-        },
-        data: [pointsNeeded],
+        barWidth: 20,
+        data: [currentConviction],
+        markLine: markLineCv,
+      },
+      {
+        type: "bar",
+        name: !isSignalingType ? "Threshold" : "",
+        stack: "a",
+        barWidth: 50,
+        data: [Number(supportNeeded) < 0 ? 0 : threshold - proposalSupport],
+        color: "#e9ecef",
+        z: -10,
         markLine: {
-          data: [{ type: "max", name: "threshold" }],
-          lineStyle: {
-            width: 1,
-            color: "#5D8FD8",
-          },
+          ...markLineTh,
         },
       },
     ],
   };
 
-  // animationEasing: "elasticOut"
   return (
-    <ChartWrapper title="" size="lg">
-      <EChartsReact option={OPTION_TEST} />
-    </ChartWrapper>
+    <>
+      <ChartWrapper
+        title={"Proposal Conviction Chart"}
+        message={message}
+        growing={growing}
+      >
+        <EChartsReact option={option} />
+      </ChartWrapper>
+    </>
   );
 };

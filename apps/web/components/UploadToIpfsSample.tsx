@@ -1,7 +1,7 @@
 "use client";
-import React, { ChangeEvent, useState } from "react";
+import React, { ChangeEvent } from "react";
 import { Button } from "./Button";
-import { ipfsFileUpload, ipfsJsonUpload } from "@/utils/ipfsUpload";
+import { ipfsFileUpload, ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { toast } from "react-toastify";
 
 export default function UploadToIpfsSample() {

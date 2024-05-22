@@ -1,71 +1,173 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Button, Badge } from "@/components";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  Button,
+  StatusBadge,
+  PoolGovernance,
+  FormLink,
+  ProposalCard,
+} from "@/components";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useAccount, useContractWrite } from "wagmi";
-import { confirmationsRequired } from "@/constants/contracts";
+import { usePathname } from "next/navigation";
+import {
+  useAccount,
+  useContractWrite,
+  Address as AddressType,
+  useContractRead,
+  useWaitForTransaction,
+} from "wagmi";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { alloABI, cvStrategyABI } from "@/src/generated";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
+import { formatTokenAmount, calculatePercentage } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
-import { ProposalStats } from "@/components";
-import { toast } from "react-toastify";
-import { useViemClient } from "@/hooks/useViemClient";
-import { getStrategyByPoolQuery } from "#/subgraph/.graphclient";
+import {
+  Allo,
+  CVProposal,
+  CVStrategy,
+  getMemberStrategyDocument,
+  getMemberStrategyQuery,
+  getStrategyByPoolQuery,
+  isMemberDocument,
+  isMemberQuery,
+} from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/communities/pool/[poolId]/page";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { encodeAbiParameters, formatUnits, parseUnits } from "viem";
+import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
+import { queryByChain } from "@/providers/urql";
+import { getChainIdFromPath } from "@/utils/path";
+import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { toast } from "react-toastify";
+import * as dn from "dnum";
 
-// export const convertBigIntToNumberFraction = (bigInt: bigint) => {
-//   return Number(bigInt.toString()) / 10 ** 4;
-// };
-
-// export const convertNumberFractionToBigInt = (number: number) => {
-//   return BigInt(number * 10 ** 4);
-// };
-
-type InputItem = {
+export type ProposalInputItem = {
   id: string;
   value: number;
 };
 
-export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
-export type Proposal = Strategy["proposals"][number];
+// export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
+// export type Proposal = CVStrategy["proposals"][number];
+export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
 
-export type ProposalTypeVoter = Proposal & {
-  voterStakedPointsPct: number;
+export type ProposalTypeVoter = CVProposal & {
   title: string;
   type: number;
 };
 
-// const BIGINT_100_SCALED = BigInt(100 * 10 ** 4);
-
-//!POOL == STRATEGY
 export function Proposals({
   strategy,
   alloInfo,
+  communityAddress,
+  createProposalUrl,
+  proposalType,
 }: {
-  strategy: Strategy;
-  alloInfo: AlloQuery;
+  strategy: CVStrategy;
+  alloInfo: Allo;
+  communityAddress: Address;
+  createProposalUrl: string;
+  proposalType: number;
 }) {
   const [editView, setEditView] = useState(false);
-  const [distributedPoints, setDistributedPoints] = useState(0);
-  const [message, setMessage] = useState("");
-  const [inputs, setInputs] = useState<InputItem[]>([]);
+  const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
+  const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
+  const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
+  const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
+  const [memberTokensInCommunity, setMemberTokensInCommunity] =
+    useState<string>("0");
+
+  // console.log("inputAllocatedTokens: " + inputAllocatedTokens);
+  // console.log(inputs);
+  // console.log(stakedFilters);
+
   const { address } = useAccount();
-  const pathname = usePathname();
-  const router = useRouter();
-  const [strategyAddress, setStrategyAddress] = useState<Address>("0x0"); //@todo should be higher level HOC
+
+  const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
+  const urqlClient = useUrqlClient();
+  const chainId = getChainIdFromPath();
+
+  const { data: isMemberActivated } = useContractRead({
+    address: communityAddress,
+    abi: abiWithErrors2(registryCommunityABI),
+    functionName: "memberActivatedInStrategies",
+    args: [address as Address, strategy.id as Address],
+    watch: true,
+  });
+
+  const runIsMemberQuery = useCallback(async () => {
+    if (address === undefined) {
+      console.error("address is undefined");
+      return;
+    }
+    const { data: result, error } = await queryByChain<isMemberQuery>(
+      urqlClient,
+      chainId,
+      isMemberDocument,
+      {
+        me: address.toLowerCase(),
+        comm: strategy.registryCommunity.id.toLowerCase(),
+      },
+    );
+
+    setMemberTokensInCommunity(
+      result?.members[0]?.memberCommunity?.[0]?.stakedTokens ?? "0",
+    );
+
+    const { data: memberStrategyResult, error: errorMS } =
+      await queryByChain<getMemberStrategyQuery>(
+        urqlClient,
+        chainId,
+        getMemberStrategyDocument,
+        {
+          meStr: `${address.toLowerCase()}-${strategy.id.toLowerCase()}`,
+        },
+      );
+
+    let _stakesFilteres: StakesMemberType = [];
+
+    setMemberActivatedPoints(
+      Number(memberStrategyResult?.memberStrategy?.activatedPoints ?? 0n),
+    );
+
+    if (result && result.members.length > 0) {
+      const stakes = result.members[0].stakes;
+      if (stakes && stakes.length > 0) {
+        _stakesFilteres = stakes.filter((stake) => {
+          return (
+            stake.proposal.strategy.id.toLowerCase() ===
+            strategy.id.toLowerCase()
+          );
+        });
+      }
+    }
+
+    const totalStaked = _stakesFilteres.reduce((acc, curr) => {
+      return acc + BigInt(curr.amount);
+    }, 0n);
+
+    const memberStakes: ProposalInputItem[] = _stakesFilteres.map((item) => ({
+      id: item.proposal.proposalNumber,
+      value: item.amount,
+    }));
+    setInputAllocatedTokens(Number(totalStaked));
+    setStakedFilters(memberStakes);
+  }, [
+    address,
+    strategy.registryCommunity.id,
+    urqlClient,
+    chainId,
+    isMemberDocument,
+  ]);
 
   useEffect(() => {
-    setStrategyAddress(strategy.id as Address);
-  }, [strategy.id]);
+    runIsMemberQuery();
+  }, [address, runIsMemberQuery]);
 
   const triggerRenderProposals = () => {
     getProposals(address as Address, strategy).then((res) => {
@@ -82,17 +184,26 @@ export function Proposals({
   }, [address]);
 
   useEffect(() => {
-    const newInputs = proposals.map(({ id, voterStakedPointsPct }) => ({
-      id: id,
-      value: voterStakedPointsPct,
-    }));
-    // console.log("newInputs", newInputs);
+    const newInputs = proposals.map(({ proposalNumber, stakedAmount }) => {
+      let returnItem = { id: proposalNumber, value: 0 };
+      stakedFilters.forEach((item, index) => {
+        if (proposalNumber === item.id) {
+          returnItem = {
+            id: proposalNumber,
+            value: stakedFilters[Number(index)]?.value,
+          };
+        }
+      });
+      return returnItem;
+    });
+    if (newInputs.length > 0) {
+      let sum = newInputs?.reduce(
+        (prev, curr) => prev + BigInt(curr.value),
+        0n,
+      );
+    }
     setInputs(newInputs);
-  }, [proposals]);
-
-  useEffect(() => {
-    setDistributedPoints(calculatePoints());
-  }, [inputs]);
+  }, [proposals, address, stakedFilters]);
 
   useEffect(() => {
     if (isMemberActived === undefined) return;
@@ -112,7 +223,6 @@ export function Proposals({
   });
 
   useErrorDetails(errorAllocate, "errorAllocate");
-
   const { updateTransactionStatus, txConfirmationHash } =
     useTransactionNotification(allocateData);
 
@@ -125,163 +235,199 @@ export function Proposals({
   }, [allocateStatus]);
 
   const submit = async () => {
-    const encodedData = getEncodedProposals(inputs, proposals);
-    // const poolId = Number(poolID);
+    const encodedData = getEncodedProposals(inputs, stakedFilters);
     const poolId = Number(strategy.poolId);
-    // console.log("poolId", poolId);
-
     writeAllocate({
-      args: [BigInt(poolId), encodedData as `0x${string}`],
+      args: [BigInt(poolId), encodedData as AddressType],
     });
   };
 
   const getEncodedProposals = (
-    inputData: InputItem[],
-    currentData: ProposalTypeVoter[],
+    inputData: ProposalInputItem[],
+    currentData: ProposalInputItem[],
   ) => {
-    const resultArr: number[][] = [];
+    const resultArr: [number, BigInt][] = [];
     inputData.forEach((input) => {
+      let row: [number, bigint] | undefined = undefined;
+      if (input.value > 0) row = [Number(input.id), BigInt(input.value)];
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = input.value - current.voterStakedPointsPct;
-          if (dif !== 0) {
-            resultArr.push([Number(input.id), dif]);
-          }
+          const dif = BigInt(input.value - current.value);
+          row = [Number(input.id), dif];
         }
       });
+      if (!!row) resultArr.push(row);
     });
 
-    // console.log("resultArr", resultArr);
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
       resultArr,
     ]);
     return encodedData;
   };
 
-  const inputHandler = (i: number, value: number) => {
-    const currentPoints = calculatePoints(i);
-    // console.log("currentPoints", currentPoints);
-    // console.log("value", value);
-    if (currentPoints + value <= 100) {
-      setInputs(
-        inputs.map((input, index) =>
-          index === i ? { ...input, value: value } : input,
-        ),
-      );
-      setDistributedPoints(currentPoints + value);
-    } else {
-      console.log("can't exceed 100% points");
-    }
-  };
-
-  const calculatePoints = (exceptIndex?: number) =>
+  const calculateTotalTokens = (exceptIndex?: number) =>
     inputs.reduce((acc, curr, i) => {
       if (exceptIndex !== undefined && exceptIndex === i) return acc;
-      else return acc + curr.value;
+      else return acc + Number(curr.value);
     }, 0);
 
-  return (
-    <section className="rounded-lg border-2 border-black bg-white p-16">
-      {/* proposals: title - proposals -create Button */}
-      <div className="mx-auto max-w-3xl space-y-10">
-        <header className="flex items-center justify-between">
-          <h3 className="">Proposals</h3>
-          {editView && (
-            <span
-              className={`${
-                distributedPoints >= 100 && "scale-110 font-semibold text-red"
-              } transition-all`}
-            >
-              {distributedPoints >= 100
-                ? "Max points reached: "
-                : "Total distributed: "}
-              {distributedPoints} pts
-            </span>
-          )}
-        </header>
-        <div className="flex flex-col gap-6">
-          {proposals.map(({ title, type, id, stakedTokens }, i) => (
-            <div
-              className="flex flex-col items-center justify-center gap-8 rounded-lg bg-surface p-4"
-              key={title + "_" + id}
-            >
-              <div className="flex w-full items-center justify-between">
-                <h4 className="font-semibold">{title}</h4>
-                <div>
-                  <Badge type={Number(type)} />
-                  {!editView && (
-                    <Link href={`${pathname}/proposals/${id}`} className="ml-8">
-                      <button className="btn btn-outline btn-info px-3 py-[6px]">
-                        View Proposal
-                      </button>
-                    </Link>
-                  )}
-                </div>
-              </div>
+  const inputHandler = (i: number, value: number) => {
+    const currentPoints = calculateTotalTokens(i);
+    const maxAllowableValue = memberActivatedPoints - currentPoints;
 
-              {editView && (
-                <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                  <div className="flex items-center gap-8">
-                    <div>
-                      <input
-                        key={i}
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={inputs[i]?.value}
-                        className={`range-aja range range-sm min-w-[420px]`}
-                        step="5"
-                        onChange={(e) =>
-                          inputHandler(i, Number(e.target.value))
-                        }
-                      />
-                      <div className="flex w-full justify-between px-[10px] text-[4px]">
-                        {[...Array(21)].map((_, i) => (
-                          <span key={"span_" + i}>|</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="mb-2">{inputs[i].value} %</div>
-                  </div>
-                  <Link href={`${pathname}/proposals/${id}`}>
-                    <Button className="h-[38px] bg-slate-200">
-                      View Proposal
-                    </Button>
-                  </Link>
-                </div>
+    // If the sum exceeds the memberActivatedPoints, adjust the value to the maximum allowable value
+    if (currentPoints + value > memberActivatedPoints) {
+      value = maxAllowableValue;
+      console.log("can't exceed 100% points");
+    }
+
+    setInputs(
+      inputs.map((input, index) =>
+        index === i ? { ...input, value: value } : input,
+      ),
+    );
+    setInputAllocatedTokens(currentPoints + value);
+  };
+
+  const disableManageSupportBtnCondition: ConditionObject[] = [
+    {
+      condition: !isMemberActivated,
+      message: "Must have points activated to support proposals",
+    },
+  ];
+  const disableManSupportButton = disableManageSupportBtnCondition.some(
+    (cond) => cond.condition,
+  );
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
+    disableManageSupportBtnCondition,
+  );
+
+  const memberSupportedProposalsPct = calculatePercentage(
+    inputAllocatedTokens,
+    memberActivatedPoints,
+  );
+
+  const memberPoolWeight = calculatePercentage(
+    memberActivatedPoints,
+    strategy.totalEffectiveActivePoints,
+  );
+
+  const calcPoolWeightUsed = (number: number) => {
+    return ((number / 100) * memberPoolWeight).toFixed(2);
+  };
+
+  return (
+    <>
+      <PoolGovernance
+        memberPoolWeight={memberPoolWeight}
+        tokenDecimals={tokenDecimals}
+        strategy={strategy}
+        communityAddress={communityAddress}
+        memberTokensInCommunity={memberTokensInCommunity}
+      />
+      <section className="rounded-lg border-2 border-black bg-white p-12">
+        <div className="mx-auto max-w-5xl space-y-10">
+          <header className="flex items-center justify-between">
+            <div className="flex w-full items-baseline justify-between">
+              <h3 className="font-semibold">Proposals</h3>
+              {proposals.length === 0 ? (
+                <h4 className="text-2xl text-info">
+                  No submitted proposals to support
+                </h4>
+              ) : (
+                !editView && (
+                  <Button
+                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                    onClick={() => setEditView((prev) => !prev)}
+                    disabled={disableManSupportButton}
+                    tooltip={String(tooltipMessage)}
+                  >
+                    Manage support
+                  </Button>
+                )
               )}
             </div>
-          ))}
+            {editView && (
+              <>
+                <div className="flex w-full items-start text-right">
+                  <div className="flex w-full flex-col items-center">
+                    <p className={`text-center text-4xl text-info`}>
+                      {calcPoolWeightUsed(memberSupportedProposalsPct)} %
+                    </p>
+                    <p className="text-md text-left">Pool weight used</p>
+                  </div>
+                  <div className="flex w-full flex-col items-center">
+                    <p
+                      className={`text-center text-5xl ${memberSupportedProposalsPct >= 100 && "text-warning"}`}
+                    >
+                      {memberSupportedProposalsPct} %
+                    </p>
+                    <p className="text-center text-lg">
+                      Of your governance weight is supporting proposals
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </header>
         </div>
-        <div className="flex justify-center gap-8">
-          {/* <Button className={`bg-primary`}>Create Proposal</Button> */}
-          {isMemberActived && (
-            <Button
-              className={`${editView ? "bg-red text-white" : "bg-primary"}`}
-              onClick={() => setEditView((prev) => !prev)}
-            >
-              {editView ? "Cancel" : "Manage support"}
-            </Button>
-          )}
-          {editView && (
-            <Button
-              className="min-w-[200px] bg-secondary"
-              onClick={() => submit()}
-              isLoading={allocateStatus === "loading"}
-            >
-              Save changes
-            </Button>
-          )}
+
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6">
+            {proposals.map((proposalData, i) => (
+              <React.Fragment key={proposalData.id + "_" + i}>
+                <ProposalCard
+                  proposalData={proposalData}
+                  inputData={inputs[i]}
+                  stakedFilter={stakedFilters[i]}
+                  i={i}
+                  isEditView={editView}
+                  tooltipMessage={tooltipMessage}
+                  memberActivatedPoints={memberActivatedPoints}
+                  memberPoolWeight={memberPoolWeight}
+                  executeDisabled={
+                    proposalData.proposalStatus == 4 ||
+                    !isConnected ||
+                    missmatchUrl
+                  }
+                  strategy={strategy}
+                  alloInfo={alloInfo}
+                  triggerRenderProposals={triggerRenderProposals}
+                  inputHandler={inputHandler}
+                />
+              </React.Fragment>
+            ))}
+          </div>
+          <div className="flex justify-end gap-8">
+            {editView && (
+              <>
+                <Button
+                  variant="error"
+                  onClick={() => setEditView((prev) => !prev)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="min-w-[200px]"
+                  onClick={() => submit()}
+                  isLoading={allocateStatus === "loading"}
+                  disabled={inputAllocatedTokens > memberActivatedPoints}
+                  tooltip="Assigned points can't exceed total activated points pool"
+                >
+                  Save changes
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-        <div className="">
-          <p className="font-semibold">{message}</p>
+        <div>
+          <h4 className="text-2xl">Do you have a great idea?</h4>
+          <div className="flex items-center gap-6">
+            <p>Share it with the community and get support !</p>
+            <FormLink href={createProposalUrl} label="Create Proposal" />
+          </div>
         </div>
-        {/*  PROPOSALS STATS  ///// */}
-        <ProposalStats
-          proposals={proposals}
-          distributedPoints={distributedPoints}
-        />
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
-import {CVStrategy} from "../src/CVStrategy.sol";
+import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 
@@ -13,6 +13,9 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 contract CVStrategyHelpers is Native, Accounts {
     Metadata public metadata = Metadata({protocol: 1, pointer: "QmW4zFLFJRN7J67EzNmdC2r2M9u2iJDha2fj5Gee6hJzSY"}); //@todo CID from IPFS
+
+    uint256 public constant DECIMALS = 10 ** 18;
+    uint256 public constant PERCENTAGE_SCALE = 10 ** 4;
 
     bytes32 internal _poolProfileId1_;
 
@@ -34,16 +37,13 @@ contract CVStrategyHelpers is Native, Accounts {
         return _poolProfileId1_;
     }
 
-    function createPool(
-        Allo allo,
-        address strategy,
+    function getParams(
         address registryCommunity,
-        IRegistry registry,
-        address token,
-        CVStrategy.ProposalType proposalType
-    ) public returns (uint256 poolId) {
+        StrategyStruct.ProposalType proposalType,
+        StrategyStruct.PointSystem pointSystem,
+        StrategyStruct.PointSystemConfig memory pointConfig
+    ) public pure returns (StrategyStruct.InitializeParams memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        CVStrategy.InitializeParams memory params;
         params.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         // params.decay = _etherToFloat(0.9999 ether); // alpha = decay
         params.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
@@ -51,6 +51,29 @@ contract CVStrategyHelpers is Native, Accounts {
         // params.minThresholdStakePercentage = 0.2 ether; // 20%
         params.registryCommunity = registryCommunity;
         params.proposalType = proposalType;
+        params.pointSystem = pointSystem;
+
+        if (pointConfig.maxAmount == 0) {
+            // StrategyStruct.PointSystemConfig memory pointConfig;
+            //Capped point system
+            pointConfig.maxAmount = 200 * DECIMALS;
+        }
+        params.pointConfig = pointConfig;
+    }
+
+    function createPool(
+        Allo allo,
+        address strategy,
+        address registryCommunity,
+        IRegistry registry,
+        address token,
+        StrategyStruct.ProposalType proposalType,
+        StrategyStruct.PointSystem pointSystem,
+        StrategyStruct.PointSystemConfig memory pointConfig
+    ) public returns (uint256 poolId) {
+        // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
+        StrategyStruct.InitializeParams memory params =
+            getParams(registryCommunity, proposalType, pointSystem, pointConfig);
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
@@ -76,6 +99,27 @@ contract CVStrategyHelpers is Native, Accounts {
         );
 
         assert(CVStrategy(payable(strategy)).proposalType() == proposalType);
+    }
+
+    function createPool(
+        Allo allo,
+        address strategy,
+        address registryCommunity,
+        IRegistry registry,
+        address token,
+        StrategyStruct.ProposalType proposalType,
+        StrategyStruct.PointSystem pointSystem
+    ) public returns (uint256 poolId) {
+        return createPool(
+            allo,
+            strategy,
+            registryCommunity,
+            registry,
+            token,
+            proposalType,
+            pointSystem,
+            StrategyStruct.PointSystemConfig(0)
+        );
     }
 
     function _etherToFloat(uint256 _amount) internal pure returns (uint256) {

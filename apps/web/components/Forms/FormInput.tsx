@@ -7,38 +7,95 @@ import {
   UseFormRegister,
 } from "react-hook-form";
 
-type FormInputProps<T extends FieldValues> = {
+type Props = {
+  label?: string;
+  subLabel?: string | undefined;
   type: HTMLInputTypeAttribute;
-  registerKey: Path<T>;
-  placeholder: string;
-  register: UseFormRegister<T>;
-  required?: boolean | string;
+  registerKey?: string;
+  placeholder?: string;
+  register?: any;
+  errors?: any;
+  required?: boolean;
   registerOptions?: RegisterOptions;
+  children?: any;
+  rows?: number;
+  readOnly?: boolean;
+  otherProps?: any;
+  className?: string;
+  value?: string | number;
+  step?: number | string;
+  onChange?: (value: any) => void;
 };
 
-//TODO: handle errors for each input
-
-export const FormInput = <T extends FieldValues>({
+export function FormInput({
+  label,
+  subLabel,
   type,
-  registerKey,
+  registerKey = "",
   placeholder = "",
-  register,
+  register = () => ({}),
+  errors = false,
   required = false,
   registerOptions,
-}: FormInputProps<T>) => (
-  <>
-    <input
-      type={type}
-      className="input input-bordered input-info w-full max-w-md"
-      placeholder={placeholder}
-      {...register(registerKey, {
-        required,
-        ...registerOptions,
-      })}
-    />
-
-    {/* {errors[registerKey] && (
-        <p className="text-red-500">{errors[registerKey]?.message}</p>
-      )} */}
-  </>
-);
+  children,
+  rows,
+  readOnly,
+  otherProps,
+  className,
+  value = undefined,
+  step,
+  onChange,
+}: Props) {
+  const fixedInputClassname =
+    "border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed";
+  return (
+    <div className="flex flex-col">
+      {label && (
+        <label htmlFor={registerKey} className="my-2 text-lg text-black">
+          {label}
+        </label>
+      )}
+      {subLabel && <p className="text-xs mb-1">{subLabel}</p>}
+      <div className={`relative ${type !== "textarea" && "max-w-md"}`}>
+        {type !== "textarea" ? (
+          <input
+            id={registerKey}
+            onChange={onChange}
+            value={value}
+            type={type}
+            placeholder={placeholder}
+            className={`${className} hide-input-arrows input input-bordered ${!!errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname}`}
+            required={required}
+            readOnly={readOnly}
+            step={step}
+            {...register(registerKey, {
+              required,
+              ...registerOptions,
+            })}
+            {...otherProps}
+          />
+        ) : (
+          <textarea
+            placeholder={placeholder}
+            className={`${className} textarea textarea-info line-clamp-5 w-full ${!!errors[registerKey] ? "input-error" : "input-info"}`}
+            required={required}
+            rows={rows}
+            readOnly={readOnly}
+            id={registerKey}
+            {...register(registerKey, {
+              required,
+              ...registerOptions,
+            })}
+            {...otherProps}
+          />
+        )}
+        {children}
+      </div>
+      {errors && (
+        <p className="mt-2 text-sm text-red">
+          {errors[registerKey]?.message || ""}
+        </p>
+      )}
+    </div>
+  );
+}

@@ -10,6 +10,23 @@ RPC_URL_LOCALHOST = http://127.0.0.1:8545
 print : 
 	@echo $(RPC_URL)
 	
+add-strategy: #make add-strategy S=0x1234 
+	-forge script script/AddStrategy.s.sol:AddStrategy \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--sig "run(address,address)" $(S) $(C) \
+	--broadcast \
+	-vvvv
+
+add-owner: #make add-owner owner=0x1234 safe=0x1234
+	-forge script script/AddOwner.s.sol:AddOwner \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--sig "run(address,address)" $(owner) $(safe) \
+	--broadcast \
+	-vvvv
+
+
 deploy: 
 	-forge script script/DeployCV.s.sol:DeployCV \
 	--rpc-url $(RPC_URL_LOCALHOST) \
@@ -18,14 +35,53 @@ deploy:
 	--broadcast -vv
 	
 
-deploy-testnet: 
-	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
+deploy-pool-testnet: 
+	-forge script script/DeployCVArbSepoliaPool.s.sol:DeployCVArbSepoliaPool \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--verify \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast -vv
+
+deploy-commfee-testnet: 
+	-forge script script/DeployCVArbSepoliaCommFee.s.sol:DeployCVArbSepoliaCommFee \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pk1 \
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast -vv
 	
+deploy-testnet: 
+	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--verify \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast \
+	-vv
+
+deploy-testnet-dry: 
+	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	-vvvv
+
+
+deploy-testnet2-op: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_OP_TESTNET) \
+	--account pk1 \
+	--sig "run(string)" 'opsepolia' \
+	--ffi \
+	-vvv
+
+deploy-testnet2: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--sig "run(string)" 'arbsepolia' \
+	--ffi \
+	-vvv
 deploy-verify: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
@@ -37,6 +93,8 @@ fork:
 	anvil --chain-id 1337
 fork0:
 	anvil --host=0.0.0.0 --chain-id 1337
+fork0b5:
+	anvil --host=0.0.0.0 --chain-id 1337 -b 5
 fork-testnet:
 	anvil --host=0.0.0.0 -f $(RPC_URL_ARB_TESTNET)
 test1:

@@ -1,51 +1,81 @@
 "use client";
-import { getCommunityByGardenQuery } from "#/subgraph/.graphclient";
+import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
 import { gardenLand } from "@/assets";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Badge } from ".";
+import { BuildingOffice2Icon } from "@heroicons/react/24/outline";
+import { Badge } from "@/components";
+import { TokenGarden } from "#/subgraph/.graphclient";
+import { formatTokenAmount } from "@/utils/numbers";
 
 type StrategyQuery = NonNullable<
   NonNullable<
-    NonNullable<getCommunityByGardenQuery["tokenGarden"]>["communities"]
+    NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
   >[number]["strategies"]
->[number];
+>[number] & { enabled?: boolean }; // Add 'enabled' property to the type definition
+
 export function PoolCard({
   proposals,
   config,
   poolAmount,
   poolId,
-}: StrategyQuery) {
+  tokenGarden,
+  enabled = true,
+}: StrategyQuery & { tokenGarden: TokenGarden | undefined }) {
   const pathname = usePathname();
 
   poolAmount = poolAmount || 0;
   return (
-    <Link
-      className="relative flex min-w-56 snap-center flex-col items-start rounded-md border-2 border-black bg-white transition-all duration-150 ease-out hover:scale-105"
-      href={`${pathname}/pool/${poolId}`}
-    >
-      <h4 className="my-3 w-full text-center font-press">{poolId}</h4>
-      <div className="flex w-full flex-col p-4">
-        <div className="flex justify-between text-xs">
-          <p className="font-semibold">type:</p>
-          <Badge type={config?.proposalType as number}/>
-          {/* <p className="font-semibold">{}</p> */}
+    <div className="relative flex max-w-56 rounded-md bg-white shadow transition-all duration-150 ease-out ">
+      {!enabled && (
+        <div className="border2 absolute top-10 z-50 w-full bg-warning">
+          <p className="text-center text-sm font-semibold">
+            waiting for council approval
+          </p>
         </div>
-        <div className="flex justify-between ">
-          <p className="font-semibold">amount:</p>
-          <p className="font-semibold">{poolAmount}</p>
+      )}
+
+      <Link
+        className={`border2 z-10 flex max-w-56 flex-1 snap-center flex-col items-start rounded-md bg-white  shadow transition-all duration-150 ease-out hover:border-2 hover:border-secondary ${!enabled && "opacity-70"}`}
+        href={`${pathname}/pool/${poolId}`}
+      >
+        <div className="flex w-full items-center justify-around py-2">
+          <div className="text-xs">
+            <BuildingOffice2Icon className="h-7 w-7 text-secondary" />
+          </div>
+          <h4 className="w-fit text-center font-press text-secondary">
+            {poolId}
+          </h4>
         </div>
-        <div className="flex justify-between ">
-          <p className="font-semibold">proposals:</p>
-          <p className="font-semibold">{proposals.length}</p>
+        <div className="flex w-full flex-col p-1">
+          <div className="flex items-center justify-between text-xs">
+            <p className="stat-title">pool type:</p>
+
+            <Badge
+              type={config?.proposalType as number}
+              classNames="scale-75"
+            />
+          </div>
+          <div className="flex items-baseline justify-between">
+            <p className="stat-title">funds available:</p>
+            <p className="overflow-hidden truncate px-2 text-right text-lg font-semibold">
+              {formatTokenAmount(poolAmount, tokenGarden?.decimals)}
+            </p>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <p className="stat-title">proposals:</p>
+            <p className="px-2 text-right text-lg font-semibold">
+              {proposals.length}
+            </p>
+          </div>
         </div>
-      </div>
-      <Image
-        src={gardenLand}
-        alt="Garden land"
-        className="h-10 w-full object-cover"
-      />
-    </Link>
+        <Image
+          src={gardenLand}
+          alt="Garden land"
+          className="h-10 w-full object-cover"
+        />
+      </Link>
+    </div>
   );
 }

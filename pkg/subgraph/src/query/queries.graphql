@@ -1,0 +1,323 @@
+query getFactories {
+  registryFactories {
+    id
+    registryCommunities {
+      id
+      chainId
+      communityName
+      covenantIpfsHash
+      registerToken
+      alloAddress
+      members {
+        memberAddress
+      }
+      strategies {
+        id
+        poolId
+        isEnabled
+        config {
+          id
+          decay
+          maxRatio
+          weight
+          minThresholdPoints
+        }
+      }
+    }
+  }
+}
+
+query getTokenGardens {
+  tokenGardens {
+    id
+    chainId
+    name
+    symbol
+    decimals
+    totalBalance
+    communities {
+      id
+      chainId
+      communityFee
+      members {
+        id
+      }
+    }
+  }
+}
+
+query getMemberStrategy($meStr: ID!) {
+  memberStrategy(id: $meStr) {
+    id
+    totalStakedPoints
+    activatedPoints
+    strategy {
+      id
+    }
+    member {
+      id
+    }
+  }
+}
+
+query isMember($me: ID!, $comm: String!) {
+  members(where: { id: $me }) {
+    id
+    stakes {
+      id
+      amount
+      proposal {
+        id
+        proposalNumber
+        stakedAmount
+        strategy {
+          id
+          poolId
+          registryCommunity {
+            id
+            garden {
+              id
+              symbol
+              decimals
+            }
+          }
+        }
+      }
+    }
+    memberCommunity(where: { registryCommunity_contains: $comm }) {
+      stakedTokens
+      registryCommunity {
+        id
+      }
+    }
+  }
+}
+
+query getMember($me: ID!) {
+  member(id: $me) {
+    id
+    memberCommunity {
+      id
+      stakedTokens
+      isRegistered
+      registryCommunity {
+        id
+      }
+    }
+    stakes {
+      id
+      proposal {
+        proposalNumber
+        id
+      }
+      amount
+      createdAt
+    }
+  }
+}
+
+query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
+  tokenGarden(id: $tokenAddr) {
+    decimals
+    id
+    symbol
+  }
+  allos {
+    id
+  }
+  registryCommunity(id: $communityAddr) {
+    communityName
+  }
+}
+
+query getCommunitiesByGarden($addr: ID!) {
+  registryFactories {
+    id
+  }
+  tokenGarden(id: $addr) {
+    id
+    name
+    symbol
+    decimals
+    chainId
+    communities {
+      id
+      covenantIpfsHash
+      chainId
+      communityName
+      protocolFee
+      communityFee
+      registerToken
+      registerStakeAmount
+      alloAddress
+      members(where: { stakedTokens_gt: "0" }) {
+        id
+        memberAddress
+      }
+      strategies {
+        registryCommunity {
+          registerStakeAmount
+        }
+        id
+        totalEffectiveActivePoints
+        poolId
+        poolAmount
+        isEnabled
+        config {
+          id
+          proposalType
+          pointSystem
+          minThresholdPoints
+        }
+        proposals {
+          id
+          proposalNumber
+        }
+      }
+    }
+  }
+}
+
+query getCommunityCreationData($addr: ID!) {
+  registryFactories {
+    id
+  }
+  tokenGarden(id: $addr) {
+    id
+    name
+    symbol
+    decimals
+    chainId
+    communities {
+      alloAddress
+    }
+  }
+}
+
+query getPoolData($garden: ID!, $poolId: BigInt!) {
+  allos {
+    id
+    chainId
+    tokenNative
+  }
+  tokenGarden(id: $garden) {
+    address
+    name
+    symbol
+    description
+    totalBalance
+    ipfsCovenant
+    decimals
+  }
+  cvstrategies(where: { poolId: $poolId }) {
+    poolAmount
+    metadata
+    id
+    poolId
+    totalEffectiveActivePoints
+    isEnabled
+    memberActive {
+      id
+    }
+    config {
+      id
+      proposalType
+      pointSystem
+      maxRatio
+      minThresholdPoints
+    }
+    registryCommunity {
+      id
+      garden {
+        id
+        symbol
+        decimals
+      }
+    }
+    proposals {
+      id
+      proposalNumber
+      metadata
+      beneficiary
+      requestedAmount
+      requestedToken
+      proposalStatus
+      stakedAmount
+    }
+  }
+}
+
+query getProposalData($garden: ID!, $proposalId: ID!) {
+  tokenGarden(id: $garden) {
+    name
+    symbol
+  }
+  cvproposal(id: $proposalId) {
+    proposalNumber
+    beneficiary
+    blockLast
+    convictionLast
+    createdAt
+    metadata
+    proposalStatus
+    requestedAmount
+    requestedToken
+    stakedAmount
+    submitter
+    threshold
+    updatedAt
+    version
+    strategy {
+      id
+      config {
+        proposalType
+        pointSystem
+        minThresholdPoints
+      }
+    }
+  }
+}
+
+query getAllo {
+  allos {
+    id
+    chainId
+    tokenNative
+  }
+}
+
+query getStrategyByPool($poolId: BigInt!) {
+  cvstrategies(where: { poolId: $poolId }) {
+    id
+    poolId
+    totalEffectiveActivePoints
+    isEnabled
+    config {
+      id
+      proposalType
+      pointSystem
+      minThresholdPoints
+    }
+    memberActive {
+      id
+    }
+    registryCommunity {
+      id
+      garden {
+        id
+        symbol
+        decimals
+      }
+    }
+    proposals {
+      id
+      proposalNumber
+      metadata
+      beneficiary
+      requestedAmount
+      requestedToken
+      proposalStatus
+      stakedAmount
+    }
+  }
+}
