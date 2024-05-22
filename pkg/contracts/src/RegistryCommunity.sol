@@ -201,12 +201,15 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     }
 
     function initialize(RegistryCommunity.InitializeParams memory params) public {
-        revertZeroAddress(address(params._gardenToken));
-        revertZeroAddress(params._councilSafe);
-        revertZeroAddress(params._allo);
-        revertZeroAddress(params._registryFactory);
-        // revertZeroAddress(params._strategyTemplate);
+        _revertZeroAddress(address(params._gardenToken));
+        _revertZeroAddress(params._councilSafe);
+        _revertZeroAddress(params._allo);
+        _revertZeroAddress(params._registryFactory);
+        _revertZeroAddress(params._strategyTemplate);
 
+        if (params._communityFee != 0) {
+            _revertZeroAddress(params._feeReceiver);
+        }
         allo = FAllo(params._allo);
         gardenToken = params._gardenToken;
         if (params._registerStakeAmount == 0) {
@@ -277,7 +280,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     function activateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
-        revertZeroAddress(_strategy);
+        _revertZeroAddress(_strategy);
 
         if (memberActivatedInStrategies[_member][_strategy]) {
             revert UserAlreadyActivated();
@@ -304,7 +307,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
     function deactivateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
-        revertZeroAddress(_strategy);
+        _revertZeroAddress(_strategy);
         onlyStrategyAddress(msg.sender, _strategy);
 
         if (!memberActivatedInStrategies[_member][_strategy]) {
@@ -410,12 +413,12 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         emit StrategyAdded(_newStrategy);
     }
 
-    function revertZeroAddress(address _address) internal pure {
+    function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
     function _removeStrategy(address _strategy) internal {
-        revertZeroAddress(_strategy);
+        _revertZeroAddress(_strategy);
         enabledStrategies[_strategy] = false;
         emit StrategyRemoved(_strategy);
     }
@@ -432,7 +435,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
     function setCouncilSafe(address payable _safe) public {
         onlyCouncilSafe();
-        revertZeroAddress(_safe);
+        _revertZeroAddress(_safe);
         pendingCouncilSafe = _safe;
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
@@ -466,6 +469,9 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             newMember.isRegistered = true;
 
             newMember.stakedAmount = registerStakeAmount;
+            // console.log("registerStakeAmount", registerStakeAmount);
+            console.log("gardenToken", address(gardenToken));
+
             gardenToken.safeTransferFrom(
                 _member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
             );
@@ -473,11 +479,14 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             //individually. Check vulnerabilites for that with Felipe
             // gardenToken.approve(feeReceiver,communityFeeAmount);
             //Error: ProtocolFee is equal to zero
+            console.log("communityFeeAmount", communityFeeAmount);
             if (communityFeeAmount > 0) {
+                console.log("feeReceiver", feeReceiver);
                 gardenToken.safeTransfer(feeReceiver, communityFeeAmount);
             }
-            // gardenToken.approve(gardensFactory.getGardensFeeReceiver(),gardensFeeAmount);
+            console.log("gardensFeeAmount", gardensFeeAmount);
             if (gardensFeeAmount > 0) {
+                console.log("gardensFactory.getGardensFeeReceiver()", gardensFactory.getGardensFeeReceiver());
                 gardenToken.safeTransfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
             }
 

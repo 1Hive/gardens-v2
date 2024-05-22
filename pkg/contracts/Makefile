@@ -67,21 +67,37 @@ deploy-testnet-dry:
 	-vvvv
 
 
-deploy-testnet2-op: 
+deploy-testnet-multi-sep: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_SEP_TESTNET) \
+	--account pk1 \
+	--sig "run(string,address)" 'sepolia' \
+	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast \
+	--legacy \
+	-vvv
+
+deploy-testnet-multi-op: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--account pk1 \
-	--sig "run(string)" 'opsepolia' \
+	--sig "run(string,address)" 'opsepolia' \
 	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast \
 	-vvv
 
-deploy-testnet2: 
+deploy-testnet-multi-arb: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pk1 \
-	--sig "run(string)" 'arbsepolia' \
+	--sig "run(string,address)" 'arbsepolia' \
 	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast \
 	-vvv
+
 deploy-verify: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \

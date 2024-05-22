@@ -12,7 +12,8 @@
 // runLatest = JSON.parse(runLatest);
 import { fromHex } from "viem";
 
-import runLatest from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
+// import runLatest from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
+import runLatest from "../../../../broadcast/DeployCVMultiChain.s.sol/11155111/run-latest.json" assert { type: "json" };
 // import runLatest from "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json" assert { type: "json" };
 
 export type RunLatest = typeof runLatest;
@@ -70,6 +71,8 @@ export function extractAddr(runLatest?: RunLatest) {
       ) {
         token = tx.contractAddress as Address;
       } else if (tx.contractName == "TERC20") {
+        token = tx.contractAddress as Address;
+      } else if (tx.contractName == "GV2ERC20") {
         token = tx.contractAddress as Address;
       }
     }

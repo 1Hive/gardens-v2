@@ -25,19 +25,15 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
     address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
 
     address public TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
-    address public SAFE = 0x70471a50d4655C1677B7f0C5cAdD7a0410Aa2607;
-    address public COMMUNITY = 0x6EEbe6832eF5cF540cd7F8b7BcA5BA9ED3Ebc331;
-    address public constant FACTORY = 0xb65852C022e3e818D3C3b04BE1b2c21344bCAC07;
+    address public SAFE = 0xd96e152760BBc6502cAc7D2e43C34Da05230076c;
+    // address public COMMUNITY = 0xfD4e8327aa3877dD010fd2d5411DF62FED8d262b;
+    address public constant FACTORY = 0x197a3115f932DF5aEE2a4b5732E8586A00ccF243;
 
     Metadata metadata2 = Metadata({protocol: 1, pointer: "QmdRrdzXkxb9LSKVxJUmAkYzqqboo3aAjbnzVUdrbX6VSd"}); // BitcoinDAO metadata QmdRrdzXkxb9LSKVxJUmAkYzqqboo3aAjbnzVUdrbX6VSd
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
     }
-
-    // function allo_owner() public virtual override returns (address) {
-    //     return address(SENDER);
-    // }
 
     function run() public {
         address allo_proxy = vm.envAddress("ALLO_PROXY");

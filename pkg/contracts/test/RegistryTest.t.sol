@@ -64,7 +64,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         allo().updatePercentFee(0);
         vm.stopPrank();
 
-        token = new MockERC20();
+        token = new MockERC20("Mock Token", "MTK", 18);
         token.mint(local(), mintAmount);
         token.mint(allo_owner(), mintAmount);
         token.mint(gardenOwner, mintAmount);

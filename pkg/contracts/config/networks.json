@@ -21,6 +21,17 @@
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
       }
+    },
+    {
+      "name": "sepolia",
+      "chainId": 11155111,
+      "ENVS": {
+        "SENDER": "0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d",
+        "TOKEN": "0xa8ea1b06621ce640762ccb12e9bcab03723b76c7",
+        "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
+        "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
+        "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      }
     }
   ]
 }
