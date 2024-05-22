@@ -5,7 +5,8 @@ import React from "react";
 import { Button } from ".";
 import { gardenLand } from "@/assets";
 import { getTokenGardensQuery } from "#/subgraph/.graphclient";
-import { getChain } from "@/configs/chainServer";
+import { getChain, ChainIcon } from "@/configs/chainServer";
+import { Arbitrum, GnosisGno } from "@thirdweb-dev/chain-icons";
 
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
@@ -22,12 +23,16 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
     <div className="border2 relative flex max-w-[320px] flex-col overflow-hidden rounded-lg border-black bg-surface shadow">
       <div className="flex flex-col gap-2 p-2">
         <div className="card relative"></div>
-        <div className="flex flex-col items-center">
-          <h4 className="text-2xl font-bold">{name} Garden</h4>
+        <div className="flex flex-col items-center gap-1">
+          <h4 className="text-2xl font-bold">{name}</h4>
           <p className="text-center">{symbol}</p>
-          <p className="text-center text-xs">
-            Network: {getChain(chainId)?.name}
-          </p>
+          <div className="align-center flex justify-center">
+            <p className="text-center text-xs">Network:</p>
+            <div className="mx-1 content-center justify-center">
+              <ChainIcon chain={chainId} height={16} />
+            </div>
+            <p className="text-center text-xs">{getChain(chainId)?.name}</p>
+          </div>
         </div>
         <InfoData
           label={`Communit${commLength > 1 ? "ies" : "y"}`}
@@ -37,7 +42,7 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
 
         <div className="mb-2 mt-4">
           <Link href={link}>
-            <Button className="w-full bg-primary">Check Garden</Button>
+            <Button className="w-full bg-primary">View Ecosystem</Button>
           </Link>
         </div>
       </div>
