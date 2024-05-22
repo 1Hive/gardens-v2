@@ -19,7 +19,8 @@ import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
 import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
 import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
-import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
+
+import {GV2ERC20} from "../script/GV2ERC20.sol";
 
 import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
@@ -42,7 +43,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     using ABDKMath64x64 for uint128;
     using ABDKMath64x64 for uint256;
 
-    MockERC20 public token;
+    GV2ERC20 public token;
     uint256 public mintAmount = 15000 ether;
     uint256 public constant TOTAL_SUPPLY = 45000 ether;
     uint256 public constant POOL_AMOUNT = 15000 ether;
@@ -67,7 +68,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().updatePercentFee(0);
         vm.stopPrank();
 
-        token = new MockERC20("Mock Token", "MTK", 18);
+        token = new GV2ERC20("Mock Token", "MTK", 18);
         token.mint(local(), TOTAL_SUPPLY / 2);
         token.mint(pool_admin(), TOTAL_SUPPLY / 2);
         token.approve(address(allo()), mintAmount);
@@ -168,8 +169,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         if (useTokenPool == NATIVE) {
             allo().fundPool{value: poolAmount}(poolId, poolAmount);
         } else {
-            MockERC20(useTokenPool).mint(address(this), poolAmount);
-            MockERC20(useTokenPool).approve(address(allo()), poolAmount);
+            GV2ERC20(useTokenPool).mint(address(this), poolAmount);
+            GV2ERC20(useTokenPool).approve(address(allo()), poolAmount);
             allo().fundPool(poolId, poolAmount);
         }
 
@@ -308,7 +309,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function testRevert_registerRecipient_TokenNotAllowed() public {
         (, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
 
-        // address wrong_token = address(new MockERC20());
+        // address wrong_token = address(new GV2ERC20());
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0x666), metadata);
         bytes memory data = abi.encode(proposal);

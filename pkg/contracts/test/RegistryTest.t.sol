@@ -15,7 +15,7 @@ import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
 import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
 import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
-import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
+import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
@@ -32,7 +32,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
     CVStrategy public strategy;
-    MockERC20 public token;
+    GV2ERC20 public token;
     uint256 public mintAmount = 1_000_000 * DECIMALS;
 
     uint256 public constant MINIMUM_STAKE = 50 * DECIMALS;
@@ -64,7 +64,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         allo().updatePercentFee(0);
         vm.stopPrank();
 
-        token = new MockERC20("Mock Token", "MTK", 18);
+        token = new GV2ERC20("Mock Token", "MTK", 18);
         token.mint(local(), mintAmount);
         token.mint(allo_owner(), mintAmount);
         token.mint(gardenOwner, mintAmount);

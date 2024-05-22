@@ -188,7 +188,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         allo.registerRecipient(poolIdFixed, data2);
         vm.stopBroadcast();
 
-        create_community(allo, registryFactory);
+        create_community();
 
         console2.log("PoolId: %s", poolId);
         console2.log("Strategy1 Addr: %s", address(strategy1));
@@ -213,12 +213,10 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         return pointConfig;
     }
 
-    function create_community(Allo allo, RegistryFactory registryFactory) public {
+    function create_community() public {
         vm.startBroadcast(pool_admin());
 
         token = new TERC20("sepolia Matias", "sepMAT", 18);
-
-        IRegistry registry = allo.getRegistry();
 
         // RegistryFactory registryFactory = new RegistryFactory();
 
