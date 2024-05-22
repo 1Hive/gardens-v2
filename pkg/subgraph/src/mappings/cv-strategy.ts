@@ -4,6 +4,7 @@ import {
   CVStrategyConfig,
   MemberStrategy,
   Stake,
+  Member,
   // ProposalMeta as ProposalMetadata,
 } from "../../generated/schema";
 // import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
@@ -243,6 +244,27 @@ export function handleSupportAdded(event: SupportAdded): void {
   cvp.stakedAmount = event.params.totalStakedAmount;
   cvp.convictionLast = event.params.convictionLast;
   cvp.save();
+
+  log.debug(
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa !!!!!!!!!! : {}",
+    [""],
+  );
+  let member = Member.load(event.params.from.toHexString());
+  log.debug(
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa !!!!!!!!!! : {}",
+    [member!.id.toString()],
+  );
+  if (member !== null) {
+    log.debug(
+      "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB !!!!!!!!!! : {}",
+      [""],
+    );
+
+    const stakes = member.stakes.load();
+    for (let i = 0; i < stakes.length; i++) {
+      log.debug(" STAKE FOUND !!!!!!!!!! : {}", [stakes[i].id.toString()]);
+    }
+  }
 }
 
 export function handleDistributed(event: Distributed): void {
