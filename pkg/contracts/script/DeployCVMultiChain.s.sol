@@ -14,7 +14,8 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
-import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
+// import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
+import {GV2ERC20} from "./GV2ERC20.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -35,7 +36,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 councilMemberPKEnv;
     address allo_proxy;
     Allo allo;
-    AMockERC20 token;
+    GV2ERC20 token;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -100,32 +101,30 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         allo = Allo(allo_proxy);
 
-        TOKEN = json.readAddress(getKeyNetwork(".ENVS.TOKEN"));
-        // assertTrue(TOKEN != address(0));
-        // console2.log("Allo Addr: %s", address(allo));
-        token = AMockERC20(TOKEN);
-        if (TOKEN == address(0)) {
-            token = new AMockERC20();
-            TOKEN = address(token);
-        }
-
-        // IRegistry registry = allo.getRegistry();
-        // console2.log("Registry Addr: %s", address(registry));
-
-        // console2.log("Pool Admin Addr: %s", pool_admin());
+        assertTrue(address(allo) != address(0));
 
         vm.startBroadcast(pool_admin());
+        TOKEN = json.readAddress(getKeyNetwork(".ENVS.TOKEN"));
+        if (TOKEN == address(0)) {
+            token = new GV2ERC20("HoneyV2", "HNYV2", 18);
+            console2.log("Created Token Addr: %s", address(token));
+        }
 
-        // AMockERC20 token = new AMockERC20();
-        // console2.log("Token Addr: %s", address(token));
+        TOKEN = address(token);
+
+        assertTrue(token != GV2ERC20(address(0)));
+        assertTrue(TOKEN != address(0));
+
+        console2.log("Allo Addr: %s", address(allo));
+
         Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
 
-        // RegistryFactory registryFactory = new RegistryFactory();
         RegistryFactory registryFactory = new RegistryFactory();
 
         RegistryCommunity.InitializeParams memory params;
 
         params._allo = address(allo);
+        params._strategyTemplate = address(new CVStrategy(address(allo)));
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 0;
@@ -176,30 +175,9 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             address(registryCommunity),
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
         );
-        // uint256 poolId = allo.createPoolWithCustomStrategy(
-        //     // poolId = allo.createPool(
-        //     registryCommunity.profileId(),
-        //     address(strategy1),
-        //     abi.encode(paramsCV),
-        //     address(token),
-        //     0,
-        //     metadata,
-        //     _pool_managers
-        // );
 
         paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
-
-        // uint256 poolIdSignaling = allo.createPoolWithCustomStrategy(
-        //     // poolId = allo.createPool(
-        //     registryCommunity.profileId(),
-        //     address(strategy2),
-        //     abi.encode(paramsCV),
-        //     address(0),
-        //     0,
-        //     metadata,
-        //     _pool_managers
-        // );
 
         (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(address(0), paramsCV, metadata);
 
@@ -227,37 +205,41 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         // uint256 poolIdSignaling =
         //     createPool(Allo(address(allo)), address(strategy2), address(registryCommunity), registry, address(0));
         //
+        token.mint(address(pool_admin()), 12_000);
         token.approve(address(registryCommunity), type(uint256).max);
+        // token.mint(address(pool_admin()), 100);
         //@todo get correct value instead infinite approval
         registryCommunity.stakeAndRegisterMember();
+
+        assertEq(registryCommunity.isMember(address(pool_admin())), true, "Not a member");
+        // assertEq(token.balanceOf(address(this)), registryCommunity.getStakeAmountWithFees(), "Balance not correct");
 
         strategy1.activatePoints();
         strategy2.activatePoints();
 
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
-        token.mint(address(pool_admin()), 10_000);
         token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 1_000);
+        allo.fundPool(poolId, 10_000);
 
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), 50 wei, address(token), metadata);
         bytes memory data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        // allo.registerRecipient(poolId, data);
         // StrategyStruct.ProposalType.Funding
-        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 25 wei, address(token), metadata);
-        data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        // proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 25 wei, address(token), metadata);
+        // data = abi.encode(proposal);
+        // allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 10 wei, address(token), metadata);
-        data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        // proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 10 wei, address(token), metadata);
+        // data = abi.encode(proposal);
+        // allo.registerRecipient(poolId, data);
 
         // Strategy 2 Signaling
-        StrategyStruct.CreateProposal memory proposal2 =
-            StrategyStruct.CreateProposal(poolIdSignaling, pool_admin(), 0, address(0), metadata);
-        bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
+        // StrategyStruct.CreateProposal memory proposal2 =
+        //     StrategyStruct.CreateProposal(poolIdSignaling, pool_admin(), 0, address(0), metadata);
+        // bytes memory data2 = abi.encode(proposal2);
+        // allo.registerRecipient(poolIdSignaling, data2);
 
         vm.stopBroadcast();
 

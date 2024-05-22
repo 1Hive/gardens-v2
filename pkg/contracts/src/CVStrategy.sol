@@ -649,11 +649,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
     }
 
-    function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool) {
-        if (maxRatio * poolAmount <= _requestedAmount * D) {
-            return true;
-        }
-        return false;
+    function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool isOverMaxRatio) {
+        isOverMaxRatio = maxRatio * poolAmount <= _requestedAmount * D;
     }
 
     function _check_before_addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport)

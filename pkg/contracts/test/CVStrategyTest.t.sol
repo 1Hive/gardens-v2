@@ -67,7 +67,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().updatePercentFee(0);
         vm.stopPrank();
 
-        token = new MockERC20();
+        token = new MockERC20("Mock Token", "MTK", 18);
         token.mint(local(), TOTAL_SUPPLY / 2);
         token.mint(pool_admin(), TOTAL_SUPPLY / 2);
         token.approve(address(allo()), mintAmount);
@@ -87,6 +87,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = COMMUNITY_FEE_PERCENTAGE;
+
+        params._feeReceiver = address(this);
+
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
@@ -1767,6 +1770,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 2;
+        params._feeReceiver = address(this);
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
@@ -1785,6 +1789,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 2;
+        params._feeReceiver = address(this);
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "GardensDAO";
