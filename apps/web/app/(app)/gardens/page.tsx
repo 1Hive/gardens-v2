@@ -31,7 +31,10 @@ export default async function Gardens() {
   };
 
   try {
-    if (!!process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP) {
+    if (
+      process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP !== undefined &&
+      process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP !== ""
+    ) {
       const r = await getTokenGardens(sepolia.id);
       gardens?.tokenGardens.push(...r.data.tokenGardens);
     } else {
