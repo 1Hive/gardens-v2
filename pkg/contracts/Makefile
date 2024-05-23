@@ -18,6 +18,15 @@ add-strategy: #make add-strategy S=0x1234
 	--broadcast \
 	-vvvv
 
+add-strategy-local: #make add-strategy S=0x1234 
+	-forge script script/AddStrategy.s.sol:AddStrategy \
+	--rpc-url $(RPC_URL_LOCALHOST) \
+	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
+	--unlocked \
+	--sig "run(address,address)" $(S) $(C) \
+	--broadcast \
+	-vvvv
+
 add-owner: #make add-owner owner=0x1234 safe=0x1234
 	-forge script script/AddOwner.s.sol:AddOwner \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
