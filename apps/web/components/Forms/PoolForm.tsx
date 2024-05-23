@@ -210,7 +210,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     }
 
     const maxRatioNum =
-      (spendingLimit / MAX_RATIO_CONSTANT / 100) * PERCENTAGE_PRECISION;
+      (spendingLimit / MAX_RATIO_CONSTANT) * PERCENTAGE_PRECISION;
     const weightNum = (minimumConviction / 100) * (spendingLimit / 100) ** 2;
 
     // pool settings
