@@ -100,7 +100,7 @@ export const CommunityForm = ({
     },
     feeAmount: {
       label: "Community Fee Amount:",
-      parse: (value: number) => `${value ?? "0"} %`,
+      parse: (value: number) => `${value * 100 ?? "0"} %`,
     },
     feeReceiver: { label: "Fee Receiver:" },
     councilSafe: { label: "Council Safe:" },
@@ -160,7 +160,10 @@ export const CommunityForm = ({
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
     onSuccess: () => router.push(pathname.replace(`/create-community`, "")),
-    onError: () => alert("Something went wrong creating Community"),
+    onError: (err) => {
+      console.log(err);
+      toast.error("Something went wrong creating Community");
+    },
     onSettled: () => setLoading(false),
   });
 
@@ -181,8 +184,7 @@ export const CommunityForm = ({
     const metadata = [1n, "ipfsHash"];
     const isKickMemberEnabled = previewData?.isKickMemberEnabled;
     const covenantIpfsHash = ipfsHash;
-
-    return [
+    const args = [
       alloContractAddr,
       gardenTokenAddress,
       stakeAmount,
@@ -196,6 +198,9 @@ export const CommunityForm = ({
       isKickMemberEnabled,
       covenantIpfsHash,
     ];
+    console.log(args);
+
+    return args;
   };
 
   const handlePreview = (data: FormInputs) => {
