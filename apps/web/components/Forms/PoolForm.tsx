@@ -102,6 +102,23 @@ const poolSettingValues: Record<
   },
 };
 
+const proposalInputMap: Record<string, number[]> = {
+  title: [0, 1, 2],
+  description: [0, 1, 2],
+  strategyType: [0, 1, 2],
+  pointSystemType: [0, 1],
+  optionType: [0, 1],
+  maxAmount: [0, 1],
+  minThresholdPoints: [1],
+  spendingLimit: [1],
+  minimumConviction: [1],
+  convictionGrowth: [0, 1],
+};
+
+const isInInputMap = (key: string, value: number): boolean => {
+  return proposalInputMap[key]?.includes(Number(value)) ?? false;
+};
+
 function calculateDecay(blockTime: number, convictionGrowth: number) {
   const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
 
@@ -123,7 +140,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     watch,
   } = useForm<FormInputs>({
     defaultValues: {
-      strategyType: 0,
+      strategyType: 1,
       pointSystemType: 0,
     },
   });
@@ -138,6 +155,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
   const { address } = useAccount();
 
   const pointSystemType = watch("pointSystemType");
+  const strategyType = watch("strategyType");
 
   const formRowTypes: Record<string, FormRowTypes> = {
     optionType: {
@@ -146,19 +164,22 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     },
     spendingLimit: {
       label: "Spending limit:",
+      parse: (value: string) => value + " %",
     },
     minimumConviction: {
       label: "Minimum conviction:",
+      parse: (value: string) => value + " %",
     },
     convictionGrowth: {
-      label: "Conviction growh:",
+      label: "Conviction growth:",
+      parse: (value: string) => value + " days",
     },
     strategyType: {
       label: "Strategy type:",
       parse: (value: string) => proposalTypes[value],
     },
     pointSystemType: {
-      label: "Point system type:",
+      label: "Voting Weight System:",
       parse: (value: string) => pointSystems[value],
     },
     maxAmount: {
@@ -313,7 +334,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
       if (key == "maxAmount" && previewData.pointSystemType != 1) return;
-      if (formRow) {
+      if (formRow && isInInputMap(key, strategyType)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
@@ -324,7 +345,6 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
 
     return formattedRows;
   };
-
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ? (
@@ -360,6 +380,17 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
             ></FormInput>
           </div>
           <div className="flex flex-col">
+            <FormSelect
+              label="Strategy type"
+              register={register}
+              errors={errors}
+              registerKey="strategyType"
+              options={Object.entries(proposalTypes)
+                .slice(0, -1)
+                .map(([value, text]) => ({ label: text, value: value }))}
+            ></FormSelect>
+          </div>
+          <div className="flex flex-col">
             <h4 className="my-4 text-xl">Select pool settings</h4>
             <div className="flex gap-8">
               {Object.entries(poolSettingValues).map(
@@ -377,65 +408,69 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                 ),
               )}
             </div>
-            <div className="mb-6 flex flex-col">
-              <div className="flex max-w-64 flex-col">
-                <FormInput
-                  label="Spending limit"
-                  register={register}
-                  required
-                  errors={errors}
-                  registerKey="spendingLimit"
-                  type="number"
-                  placeholder="20"
-                  readOnly={optionType !== 0}
-                  className="pr-14"
-                  otherProps={{
-                    step: 1 / PERCENTAGE_PRECISION,
-                    min: 1 / PERCENTAGE_PRECISION,
-                  }}
-                  registerOptions={{
-                    max: {
-                      value: 100,
-                      message: `Max amount cannot exceed 100%`,
-                    },
-                    min: {
-                      value: 1 / PERCENTAGE_PRECISION,
-                      message: "Amount must be greater than 0",
-                    },
-                  }}
-                >
-                  <span className="absolute right-4 top-4 text-black">%</span>
-                </FormInput>
-              </div>
-              <div className="flex max-w-64 flex-col">
-                <FormInput
-                  label="Minimum conviction"
-                  register={register}
-                  required
-                  errors={errors}
-                  registerKey="minimumConviction"
-                  type="number"
-                  placeholder="10"
-                  readOnly={optionType !== 0}
-                  className="pr-14"
-                  otherProps={{
-                    step: 1 / PERCENTAGE_PRECISION,
-                    min: 1 / PERCENTAGE_PRECISION,
-                  }}
-                  registerOptions={{
-                    max: {
-                      value: 100,
-                      message: `Max amount cannot exceed 100%`,
-                    },
-                    min: {
-                      value: 1 / PERCENTAGE_PRECISION,
-                      message: "Amount must be greater than 0",
-                    },
-                  }}
-                >
-                  <span className="absolute right-4 top-4 text-black">%</span>
-                </FormInput>
-              </div>
+            <div className="mb-6 mt-2 flex flex-col">
+              {isInInputMap("spendingLimit", strategyType) && (
+                <div className="flex max-w-64 flex-col">
+                  <FormInput
+                    label="Spending limit"
+                    register={register}
+                    required
+                    errors={errors}
+                    registerKey="spendingLimit"
+                    type="number"
+                    placeholder="20"
+                    readOnly={optionType !== 0}
+                    className="pr-14"
+                    otherProps={{
+                      step: 1 / PERCENTAGE_PRECISION,
+                      min: 1 / PERCENTAGE_PRECISION,
+                    }}
+                    registerOptions={{
+                      max: {
+                        value: 100,
+                        message: `Max amount cannot exceed 100%`,
+                      },
+                      min: {
+                        value: 1 / PERCENTAGE_PRECISION,
+                        message: "Amount must be greater than 0",
+                      },
+                    }}
+                  >
+                    <span className="absolute right-4 top-4 text-black">%</span>
+                  </FormInput>
+                </div>
+              )}
+              {isInInputMap("minimumConviction", strategyType) && (
+                <div className="flex max-w-64 flex-col">
+                  <FormInput
+                    label="Minimum conviction"
+                    register={register}
+                    required
+                    errors={errors}
+                    registerKey="minimumConviction"
+                    type="number"
+                    placeholder="10"
+                    readOnly={optionType !== 0}
+                    className="pr-14"
+                    otherProps={{
+                      step: 1 / PERCENTAGE_PRECISION,
+                      min: 1 / PERCENTAGE_PRECISION,
+                    }}
+                    registerOptions={{
+                      max: {
+                        value: 100,
+                        message: `Max amount cannot exceed 100%`,
+                      },
+                      min: {
+                        value: 1 / PERCENTAGE_PRECISION,
+                        message: "Amount must be greater than 0",
+                      },
+                    }}
+                  >
+                    <span className="absolute right-4 top-4 text-black">%</span>
+                  </FormInput>
+                </div>
+              )}
               <div className="flex max-w-64 flex-col">
                 <FormInput
                   label="Conviction growth"
@@ -469,41 +504,33 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
               </div>
             </div>
           </div>
-          <div className="flex flex-col">
-            <FormInput
-              label="Minimum threshold points"
-              register={register}
-              required
-              registerOptions={{
-                min: {
-                  value: INPUT_TOKEN_MIN_VALUE,
-                  message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
-                },
-              }}
-              otherProps={{
-                step: INPUT_TOKEN_MIN_VALUE,
-                min: INPUT_TOKEN_MIN_VALUE,
-              }}
-              errors={errors}
-              registerKey="minThresholdPoints"
-              type="number"
-              placeholder="0"
-            ></FormInput>
-          </div>
-          <div className="flex flex-col">
-            <FormSelect
-              label="Strategy type"
-              register={register}
-              errors={errors}
-              registerKey="strategyType"
-              options={Object.entries(proposalTypes)
-                .slice(0, -1)
-                .map(([value, text]) => ({ label: text, value: value }))}
-            ></FormSelect>
-          </div>
+          {isInInputMap("minThresholdPoints", strategyType) && (
+            <div className="flex flex-col">
+              <FormInput
+                label="Minimum threshold points"
+                register={register}
+                required
+                registerOptions={{
+                  min: {
+                    value: INPUT_TOKEN_MIN_VALUE,
+                    message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                  },
+                }}
+                otherProps={{
+                  step: INPUT_TOKEN_MIN_VALUE,
+                  min: INPUT_TOKEN_MIN_VALUE,
+                }}
+                errors={errors}
+                registerKey="minThresholdPoints"
+                type="number"
+                placeholder="0"
+              ></FormInput>
+            </div>
+          )}
+
           <div className="flex flex-col">
             <FormSelect
-              label="Point system type"
+              label="Voting Weight System"
               register={register}
               errors={errors}
               registerKey="pointSystemType"
