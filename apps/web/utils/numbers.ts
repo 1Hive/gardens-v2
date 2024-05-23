@@ -62,7 +62,6 @@ function calculatePercentage(
   value1: number | bigint | string | undefined,
   value2: number | bigint | string | undefined,
 ): number {
-  console.log(value1, value2);
   if (value1 === undefined || value2 === undefined) {
     return 0;
   }
