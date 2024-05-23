@@ -148,7 +148,10 @@ export const ProposalForm = ({
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
     onSuccess: () => router.push(pathname.replace(`/create-proposal`, "")),
-    onError: () => alert("Something went wrong creating Proposal"),
+    onError: (err) => {
+      console.log(err);
+      toast.error("Something went wrong creating Proposal");
+    },
     onSettled: () => setLoading(false),
   });
 
