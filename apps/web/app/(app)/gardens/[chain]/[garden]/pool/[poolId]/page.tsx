@@ -70,7 +70,7 @@ export default async function Pool({
               <h3 className="max-w-2xl  text-center font-semibold">{title}</h3>
               {!isEnabled && (
                 <div className="badge badge-warning absolute left-5 top-5 gap-2 p-4 font-bold">
-                  Pendign review from community council
+                  Pending review from community council
                 </div>
               )}
 

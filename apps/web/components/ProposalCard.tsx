@@ -187,7 +187,7 @@ export function ProposalCard({
               </p>
             ) : (
               <p className="text-center">
-                Assingning
+                Assigning
                 <span className="px-2 py-2 text-2xl font-semibold text-info">
                   {calcPoolWeightUsed(
                     calculatePercentage(
