@@ -3,7 +3,6 @@ import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import { GardenCard } from "@/components";
 import {
-  TokenGarden,
   getTokenGardensDocument,
   getTokenGardensQuery,
 } from "#/subgraph/.graphclient";
@@ -14,6 +13,8 @@ import {
   optimismSepolia,
   sepolia,
 } from "viem/chains";
+import { getContractsAddrByChain, isProd } from "@/constants/contracts";
+
 export const dynamic = "force-dynamic";
 
 const { urqlClient } = initUrqlClient();
@@ -31,23 +32,20 @@ export default async function Gardens() {
   };
 
   try {
-    if (
-      process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP !== undefined &&
-      process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP !== ""
-    ) {
-      const r = await getTokenGardens(sepolia.id);
-      gardens?.tokenGardens.push(...r.data.tokenGardens);
+    if (isProd) {
+      const r0 = await getTokenGardens(sepolia.id);
+      gardens?.tokenGardens.push(...r0.data.tokenGardens);
     } else {
-      const r1 = await getTokenGardens(arbitrumSepolia.id);
-      const r2 = await getTokenGardens(localhost.id);
-      const r3 = await getTokenGardens(optimismSepolia.id);
+      const promises = [];
+      for (let index = 0; index < chainsId.length; index++) {
+        const chainId = chainsId[index];
+        const subgraph = getContractsAddrByChain(chainId)?.subgraphUrl;
+        if (subgraph !== "") promises.push(await getTokenGardens(chainId));
+      }
 
-      const queryArray = [r1, r2, r3];
-
-      queryArray.forEach((r) => {
-        if (r.data) {
-          gardens?.tokenGardens.push(...r.data.tokenGardens);
-        }
+      const resArr = await Promise.all(promises);
+      resArr.forEach((res) => {
+        if (res?.data) gardens?.tokenGardens.push(...res?.data.tokenGardens);
       });
     }
   } catch (error) {
