@@ -17,30 +17,6 @@ import {
   sepolia,
 } from "viem/chains";
 
-let runLatestLocal = undefined as any;
-let runLatestArbSepolia = undefined as any;
-let runLatestOpSepolia = undefined as any;
-let runLatestEthSepolia = undefined as any;
-try {
-  runLatestLocal = require("#/../broadcast/DeployCV.s.sol/1337/run-latest.json");
-} catch (error) {
-  console.log("error LatestLocal ignored");
-}
-try {
-  runLatestArbSepolia = require("#/../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json");
-} catch (error) {
-  console.log("error ArbSepolia ignored");
-}
-try {
-  runLatestOpSepolia = require("#/../broadcast/DeployCVOpSepolia.s.sol/11155420/run-latest.json");
-} catch (error) {
-  console.log("error OpSepolia ignored");
-}
-try {
-  runLatestEthSepolia = require("#/../broadcast/DeployCVMultiChain.s.sol/11155111/run-latest.json");
-} catch (error) {
-  console.log("error OpSepolia ignored");
-}
 export const isProd = ENV === "prod";
 export const confirmationsRequired = Number(envConfirmationsRequired);
 
