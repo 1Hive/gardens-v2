@@ -42,8 +42,8 @@ export default async function page({
     (Number(strategyObj?.config?.maxRatio) / PERCENTAGE_PRECISION) *
     MAX_RATIO_CONSTANT;
 
-  const spendingLimitPct = maxRatioDivPrecision * 100;
-  const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
+  const spendingLimitPct = maxRatioDivPrecision;
+  const poolAmountSpendingLimit = (poolAmount * maxRatioDivPrecision) / 100;
 
   const { title, description } = await getIpfsMetadata(metadata);
 

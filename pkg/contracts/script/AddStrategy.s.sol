@@ -31,7 +31,7 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
     // address public SAFE = 0x70471a50d4655C1677B7f0C5cAdD7a0410Aa2607;
     // address public SAFE = 0x46Abca313093B7F143Ae0833366e606a940BE44d;
     // address public SAFE = 0x46Abca313093B7F143Ae0833366e606a940BE44d;
-    address public SAFE = 0xF17aC71a9Cef839127AE220b427299b17A44bD7d;
+    address public SAFE = 0xfd22B835c4aA9A998d8A213943afFb52886C0547;
     address public COMMUNITY = 0x127BBb34A1cF9C8dc773Ea4C5D13878C534F1770;
 
     address allo_proxy;
@@ -41,10 +41,9 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
         return address(SENDER);
     }
 
-    function run(address payable _strategy, address _comm, uint256 _poolId) public {
+    function run(address payable _strategy, address _comm) public {
         console2.log("AddStrategy.run(%s)", _strategy);
         console2.log("AddStrategy.run(%s)", _comm);
-        console2.log("AddStrategy.run(%s)", _poolId);
         assertNotEq(_strategy, address(0), "Strategy not set");
         // get PK from env
         uint256 councilMemberPKEnv = vm.envUint("PK");
@@ -64,11 +63,12 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
 
         allo = Allo(allo_proxy);
 
-        IAllo.Pool memory pool = allo.getPool(352);
+        // IAllo.Pool memory pool = allo.getPool(352);
 
-        address strategy = address(pool.strategy);
+        // address strategy = address(pool.strategy);
+        // address strategy = address(pool.strategy);
 
-        assertNotEq(strategy, address(0), "Strategy not found");
+        // assertNotEq(strategy, address(0), "Strategy not found");
 
         vm.startBroadcast(pool_admin());
 
