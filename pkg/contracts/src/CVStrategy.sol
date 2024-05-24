@@ -316,13 +316,11 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function deactivatePoints() public {
         _deactivatePoints(msg.sender);
-        emit PointsDeactivated(msg.sender);
     }
 
     function deactivatePoints(address _member) external {
         onlyRegistryCommunity();
         _deactivatePoints(_member);
-        emit PointsDeactivated(_member);
     }
 
     function _deactivatePoints(address _member) internal {
@@ -330,6 +328,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         withdraw(_member);
+        emit PointsDeactivated(_member);
     }
 
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {

@@ -266,12 +266,23 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
               stake.save();
               proposal.stakedAmount = proposal.stakedAmount.minus(stakedAmount);
               const cvc = CVStrategyContract.bind(event.address);
-              const contractProposal = cvc.getProposal(proposal.proposalNumber);
+
+              let contractProposal = cvc.try_getProposal(
+                proposal.proposalNumber,
+              );
+              if (contractProposal.reverted) {
+                log.error(
+                  "handlePointsDeactivated contractProposal reverted:{}",
+                  [proposal.proposalNumber.toString()],
+                );
+                return;
+              }
+              let prop = contractProposal.value;
               const maxConviction = cvc.getMaxConviction(
-                contractProposal.value4,
+                prop.value4, // proposalStakedAmount
               );
               proposal.maxCVStaked = maxConviction;
-              proposal.convictionLast = contractProposal.value7;
+              proposal.convictionLast = prop.value7; // convictionLast
 
               proposal.save();
               const memberStrategyId = `${member.id}-${strategy.id}`;
@@ -280,12 +291,32 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
                 memberStrategy.totalStakedPoints =
                   memberStrategy.totalStakedPoints.minus(stakedAmount);
                 memberStrategy.save();
+              } else {
+                log.debug(
+                  "handlePointsDeactivated memberStrategy not found: {}",
+                  [memberStrategyId.toString()],
+                );
               }
+              log.debug("handlePointsDeactivated stake not found: {}", [
+                stakes[i].id.toString(),
+              ]);
             }
+          } else {
+            log.debug("handlePointsDeactivated strategy not found: {}", [
+              proposal.strategy.toString(),
+            ]);
           }
+        } else {
+          log.debug("handlePointsDeactivated proposal not found: {}", [
+            stakes[i].proposal.toString(),
+          ]);
         }
       }
     }
+  } else {
+    log.debug("handlePointsDeactivated member not found: {}", [
+      event.params.member.toHexString(),
+    ]);
   }
 }
 
