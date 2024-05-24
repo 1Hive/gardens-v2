@@ -3,35 +3,51 @@ import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import { GardenCard } from "@/components";
 import {
-  TokenGarden,
   getTokenGardensDocument,
   getTokenGardensQuery,
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
-import { localhost, arbitrumSepolia, optimismSepolia } from "viem/chains";
+import {
+  localhost,
+  arbitrumSepolia,
+  optimismSepolia,
+  sepolia,
+} from "viem/chains";
+import { getContractsAddrByChain, isProd } from "@/constants/contracts";
+
 export const dynamic = "force-dynamic";
 
 const { urqlClient } = initUrqlClient();
 
 export default async function Gardens() {
-  const chainsId = [localhost.id, arbitrumSepolia.id, optimismSepolia.id];
+  const chainsId = [
+    localhost.id,
+    arbitrumSepolia.id,
+    optimismSepolia.id,
+    sepolia.id,
+  ];
   let gardens: getTokenGardensQuery | null = null;
   gardens = {
     tokenGardens: [],
   };
 
   try {
-    const r1 = await getTokenGardens(arbitrumSepolia.id);
-    const r2 = await getTokenGardens(localhost.id);
-    const r3 = await getTokenGardens(optimismSepolia.id);
-
-    const queryArray = [r1, r2, r3];
-
-    queryArray.forEach((r) => {
-      if (r.data) {
-        gardens?.tokenGardens.push(...r.data.tokenGardens);
+    if (isProd) {
+      const r0 = await getTokenGardens(sepolia.id);
+      gardens?.tokenGardens.push(...r0.data.tokenGardens);
+    } else {
+      const promises = [];
+      for (let index = 0; index < chainsId.length; index++) {
+        const chainId = chainsId[index];
+        const subgraph = getContractsAddrByChain(chainId)?.subgraphUrl;
+        if (subgraph !== "") promises.push(await getTokenGardens(chainId));
       }
-    });
+
+      const resArr = await Promise.all(promises);
+      resArr.forEach((res) => {
+        if (res?.data) gardens?.tokenGardens.push(...res?.data.tokenGardens);
+      });
+    }
   } catch (error) {
     console.error("Error fetching token gardens:", error);
   }

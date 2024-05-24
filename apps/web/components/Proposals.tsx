@@ -1,6 +1,12 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Button, StatusBadge } from "@/components";
+import {
+  Button,
+  StatusBadge,
+  PoolGovernance,
+  FormLink,
+  ProposalCard,
+} from "@/components";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -16,6 +22,9 @@ import { getProposals } from "@/actions/getProposals";
 import { formatTokenAmount, calculatePercentage } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
 import {
+  Allo,
+  CVProposal,
+  CVStrategy,
   getMemberStrategyDocument,
   getMemberStrategyQuery,
   getStrategyByPoolQuery,
@@ -23,7 +32,6 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { AlloQuery } from "@/app/(app)/gardens/[chain]/[garden]/pool/[poolId]/page";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
@@ -34,29 +42,20 @@ import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { toast } from "react-toastify";
-import { FormLink, GovernanceComponent } from "@/components";
 import * as dn from "dnum";
 
-type InputItem = {
+export type ProposalInputItem = {
   id: string;
   value: number;
 };
 
-export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
-export type Proposal = Strategy["proposals"][number];
+// export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
+// export type Proposal = CVStrategy["proposals"][number];
 export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
 
-export type ProposalTypeVoter = Proposal & {
+export type ProposalTypeVoter = CVProposal & {
   title: string;
   type: number;
-};
-
-const getProposalId = (inputString: string) => {
-  if (inputString.length >= 2) {
-    return inputString.substring(2);
-  } else {
-    return "0x0";
-  }
 };
 
 export function Proposals({
@@ -66,49 +65,36 @@ export function Proposals({
   createProposalUrl,
   proposalType,
 }: {
-  strategy: Strategy;
-  alloInfo: AlloQuery;
+  strategy: CVStrategy;
+  alloInfo: Allo;
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;
 }) {
   const [editView, setEditView] = useState(false);
-  // const [distributedPoints, setDistributedPoints] = useState(0);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
-  const [inputs, setInputs] = useState<InputItem[]>([]);
-
+  const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
   const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
-  const [totalAllocatedTokens, setTotalAllocatedTokens] = useState<number>(0);
-
-  const [message, setMessage] = useState("");
-
-  //using this for test alpha
-  const { address: connectedAccount } = useAccount();
-  // const { voterStake } = useTotalVoterStakedPct(strategy);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
-  const [stakedFilteres, setStakedFilteres] = useState<InputItem[]>([]);
-  const [memberTokenInCommunity, setMemberTokenInCommunity] = useState<
-    number | string
-  >(0);
+  const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
+  const [memberTokensInCommunity, setMemberTokensInCommunity] =
+    useState<string>("0");
+
+  // console.log("inputAllocatedTokens: " + inputAllocatedTokens);
+  // console.log(inputs);
+  // console.log(stakedFilters);
 
   const { address } = useAccount();
-  const pathname = usePathname();
 
-  const DECIMALS = strategy.registryCommunity.garden.decimals;
+  const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
   const urqlClient = useUrqlClient();
   const chainId = getChainIdFromPath();
 
-  const isSignalingProposal = proposalType == 0;
-
-  const registryContractCallConfig = {
+  const { data: isMemberActivated } = useContractRead({
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
-  };
-
-  const { data: isMemberActivated } = useContractRead({
-    ...registryContractCallConfig,
     functionName: "memberActivatedInStrategies",
     args: [address as Address, strategy.id as Address],
     watch: true,
@@ -129,11 +115,8 @@ export function Proposals({
       },
     );
 
-    setMemberTokenInCommunity(
-      formatTokenAmount(
-        result?.members[0]?.memberCommunity?.[0]?.stakedTokens ?? 0,
-        DECIMALS,
-      ),
+    setMemberTokensInCommunity(
+      result?.members[0]?.memberCommunity?.[0]?.stakedTokens ?? "0",
     );
 
     const { data: memberStrategyResult, error: errorMS } =
@@ -147,14 +130,10 @@ export function Proposals({
       );
 
     let _stakesFilteres: StakesMemberType = [];
-    let totalActivatedAmount: bigint = 0n;
 
-    if (memberStrategyResult?.memberStrategy) {
-      totalActivatedAmount =
-        memberStrategyResult?.memberStrategy?.activatedPoints ?? 0n;
-
-      setMemberActivatedPoints(Number(totalActivatedAmount));
-    }
+    setMemberActivatedPoints(
+      Number(memberStrategyResult?.memberStrategy?.activatedPoints ?? 0n),
+    );
 
     if (result && result.members.length > 0) {
       const stakes = result.members[0].stakes;
@@ -172,13 +151,12 @@ export function Proposals({
       return acc + BigInt(curr.amount);
     }, 0n);
 
-    const memberStakes: InputItem[] = _stakesFilteres.map((item) => ({
+    const memberStakes: ProposalInputItem[] = _stakesFilteres.map((item) => ({
       id: item.proposal.proposalNumber,
       value: item.amount,
     }));
-
-    setTotalAllocatedTokens(Number(totalStaked));
-    setStakedFilteres(memberStakes);
+    setInputAllocatedTokens(Number(totalStaked));
+    setStakedFilters(memberStakes);
   }, [
     address,
     strategy.registryCommunity.id,
@@ -208,31 +186,24 @@ export function Proposals({
   useEffect(() => {
     const newInputs = proposals.map(({ proposalNumber, stakedAmount }) => {
       let returnItem = { id: proposalNumber, value: 0 };
-      stakedFilteres.forEach((item, index) => {
+      stakedFilters.forEach((item, index) => {
         if (proposalNumber === item.id) {
           returnItem = {
             id: proposalNumber,
-            value: stakedFilteres[Number(index)]?.value,
+            value: stakedFilters[Number(index)]?.value,
           };
         }
       });
       return returnItem;
     });
-
     if (newInputs.length > 0) {
       let sum = newInputs?.reduce(
         (prev, curr) => prev + BigInt(curr.value),
         0n,
       );
     }
-
     setInputs(newInputs);
-  }, [proposals]);
-
-  useEffect(() => {
-    setInputAllocatedTokens(calculateTotalTokens());
-    setTotalAllocatedTokens(calculateTotalTokens());
-  }, [inputs]);
+  }, [proposals, address, stakedFilters]);
 
   useEffect(() => {
     if (isMemberActived === undefined) return;
@@ -251,70 +222,20 @@ export function Proposals({
     functionName: "allocate",
   });
 
-  //encode proposal id to pass as argument to distribute function
-  const encodedDataProposalId = (proposalId: string) => {
-    const encodedProposalId = encodeAbiParameters(
-      [{ name: "proposalId", type: "uint" }],
-      [BigInt(proposalId)],
-    );
-
-    return encodedProposalId;
-  };
-
-  //executing proposal distribute function / alert error if not executable / notification if success
-  const {
-    data: distributeData,
-    write: writeDistribute,
-    error: errorDistribute,
-    isSuccess: isSuccessDistribute,
-    isError: isErrorDistribute,
-    status: distributeStatus,
-  } = useContractWrite({
-    address: alloInfo.id as Address,
-    abi: abiWithErrors(alloABI),
-    functionName: "distribute",
-  });
-
-  const distributeErrorName = useErrorDetails(errorDistribute);
-  useEffect(() => {
-    if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
-      toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
-    }
-  }, [isErrorDistribute]);
-
-  const {
-    updateTransactionStatus: updateDistributeTransactionStatus,
-    txConfirmationHash: distributeTxConfirmationHash,
-  } = useTransactionNotification(distributeData);
-
-  const {
-    data: waitDistributeData,
-    isSuccess: isWaitDistributeSuccess,
-    status: isWaitDistributeStatus,
-  } = useWaitForTransaction({
-    hash: distributeData?.hash,
-    confirmations: 1,
-  });
-
-  useEffect(() => {
-    updateDistributeTransactionStatus(distributeStatus);
-  }, [distributeStatus]);
-  //
-
   useErrorDetails(errorAllocate, "errorAllocate");
   const { updateTransactionStatus, txConfirmationHash } =
     useTransactionNotification(allocateData);
 
   useEffect(() => {
     triggerRenderProposals();
-  }, [txConfirmationHash, distributeTxConfirmationHash]);
+  }, [txConfirmationHash]);
 
   useEffect(() => {
     updateTransactionStatus(allocateStatus);
   }, [allocateStatus]);
 
   const submit = async () => {
-    const encodedData = getEncodedProposals(inputs, proposals);
+    const encodedData = getEncodedProposals(inputs, stakedFilters);
     const poolId = Number(strategy.poolId);
     writeAllocate({
       args: [BigInt(poolId), encodedData as AddressType],
@@ -322,19 +243,20 @@ export function Proposals({
   };
 
   const getEncodedProposals = (
-    inputData: InputItem[],
-    currentData: ProposalTypeVoter[],
+    inputData: ProposalInputItem[],
+    currentData: ProposalInputItem[],
   ) => {
     const resultArr: [number, BigInt][] = [];
     inputData.forEach((input) => {
+      let row: [number, bigint] | undefined = undefined;
+      if (input.value > 0) row = [Number(input.id), BigInt(input.value)];
       currentData.forEach((current) => {
-        if (input.id === current.proposalNumber) {
-          const dif = BigInt(input.value - current.stakedAmount);
-          if (dif !== BigInt(0)) {
-            resultArr.push([Number(input.id), dif]);
-          }
+        if (input.id === current.id) {
+          const dif = BigInt(input.value - current.value);
+          row = [Number(input.id), dif];
         }
       });
+      if (!!row) resultArr.push(row);
     });
 
     const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
@@ -350,24 +272,23 @@ export function Proposals({
     }, 0);
 
   const inputHandler = (i: number, value: number) => {
-    // const currentPoints = calculatePoints(i);
-    const pointsDistributed = Number(totalAllocatedTokens);
-    // console.log("currentPoints", currentPoints);
+    const currentPoints = calculateTotalTokens(i);
+    const maxAllowableValue = memberActivatedPoints - currentPoints;
 
-    // if (pointsDistributed + value <= memberTokensInPool) {
+    // If the sum exceeds the memberActivatedPoints, adjust the value to the maximum allowable value
+    if (currentPoints + value > memberActivatedPoints) {
+      value = maxAllowableValue;
+      console.log("can't exceed 100% points");
+    }
+
     setInputs(
       inputs.map((input, index) =>
         index === i ? { ...input, value: value } : input,
       ),
     );
-    setInputAllocatedTokens(pointsDistributed + value);
-    setTotalAllocatedTokens(pointsDistributed + value);
-    // } else {
-    //   console.log("can't exceed 100% points");
-    // }
+    setInputAllocatedTokens(currentPoints + value);
   };
 
-  //ManageSupport Tooltip condition => message mapping
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
       condition: !isMemberActivated,
@@ -381,64 +302,28 @@ export function Proposals({
     disableManageSupportBtnCondition,
   );
 
-  //TODO: move to utils calcDivisionToPct and refactor name. It is similar to calculate other percentages in the app
-  const calcDivisionToPct = (
-    memberActivatedPoints: bigint | number,
-    totalEffectiveActivePoints: bigint | number,
-    tokenDecimals: number,
-    setDigist?: number,
-  ): string | number => {
-    if (memberActivatedPoints < 0 || totalEffectiveActivePoints <= 0) {
-      return 0;
-    }
+  const memberSupportedProposalsPct = calculatePercentage(
+    inputAllocatedTokens,
+    memberActivatedPoints,
+  );
 
-    const division = dn.divide(
-      memberActivatedPoints,
-      totalEffectiveActivePoints,
-      tokenDecimals,
-    );
-
-    const formatDivisionResult = (
-      Number(dn.format(division, { digits: setDigist ?? 3 })) * 100
-    ).toFixed(1);
-
-    return formatDivisionResult;
-  };
-
-  const calcMemberPoolWeight = calcDivisionToPct(
+  const memberPoolWeight = calculatePercentage(
     memberActivatedPoints,
     strategy.totalEffectiveActivePoints,
-    DECIMALS,
   );
 
-  const calcMemberSupportedProposalsPct = calcDivisionToPct(
-    totalAllocatedTokens,
-    memberActivatedPoints,
-    DECIMALS,
-  );
-
-  const calcPoolWeightUsedByProposal = (index: number) => {
-    return calcDivisionToPct(
-      inputs[index]?.value ?? 0,
-      memberActivatedPoints,
-      DECIMALS,
-    );
-  };
-
-  const calcPoolWeightUsed = (callback: any) => {
-    return ((Number(callback) * Number(calcMemberPoolWeight)) / 100)
-      .toFixed(1)
-      .toString();
+  const calcPoolWeightUsed = (number: number) => {
+    return ((number / 100) * memberPoolWeight).toFixed(2);
   };
 
   return (
     <>
-      <GovernanceComponent
-        strategyAddress={strategy.id as Address}
+      <PoolGovernance
+        memberPoolWeight={memberPoolWeight}
+        tokenDecimals={tokenDecimals}
         strategy={strategy}
         communityAddress={communityAddress}
-        memberPoolWeight={calcMemberPoolWeight}
-        memberTokensInCommunity={memberTokenInCommunity}
+        memberTokensInCommunity={memberTokensInCommunity}
       />
       <section className="rounded-lg border-2 border-black bg-white p-12">
         <div className="mx-auto max-w-5xl space-y-10">
@@ -467,15 +352,15 @@ export function Proposals({
                 <div className="flex w-full items-start text-right">
                   <div className="flex w-full flex-col items-center">
                     <p className={`text-center text-4xl text-info`}>
-                      {calcPoolWeightUsed(calcMemberSupportedProposalsPct)} %
+                      {calcPoolWeightUsed(memberSupportedProposalsPct)} %
                     </p>
                     <p className="text-md text-left">Pool weight used</p>
                   </div>
                   <div className="flex w-full flex-col items-center">
                     <p
-                      className={`text-center text-5xl ${Number(calcMemberSupportedProposalsPct) >= 100 && "text-warning"}`}
+                      className={`text-center text-5xl ${memberSupportedProposalsPct >= 100 && "text-warning"}`}
                     >
-                      {calcMemberSupportedProposalsPct} %
+                      {memberSupportedProposalsPct} %
                     </p>
                     <p className="text-center text-lg">
                       Of your governance weight is supporting proposals
@@ -489,117 +374,29 @@ export function Proposals({
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-6">
-            {proposals.map(
-              ({ title, proposalNumber, proposalStatus, id }, i) => (
-                <div
-                  className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
-                  key={title + "_" + proposalNumber}
-                >
-                  <div className="flex w-full items-center justify-between ">
-                    <div className="flex flex-[30%] flex-col items-baseline gap-2">
-                      <h4 className="text-2xl font-bold">{title}</h4>
-                      <span className="text-md">ID {proposalNumber}</span>
-                    </div>
-
-                    <div className="flex items-center gap-8">
-                      <StatusBadge status={proposalStatus} />
-                      {/* Button to test distribute */}
-                      {!editView && (
-                        <Button
-                          // TODO: add flexible tooltip and func to check executability
-                          disabled={
-                            proposalStatus == "4" ||
-                            !isConnected ||
-                            missmatchUrl
-                          }
-                          tooltip={
-                            proposalStatus == "4"
-                              ? "Proposal already executed"
-                              : tooltipMessage
-                          }
-                          onClick={() =>
-                            writeDistribute?.({
-                              args: [
-                                strategy.poolId,
-                                [strategy.id],
-                                encodedDataProposalId(proposalNumber),
-                              ],
-                            })
-                          }
-                        >
-                          Execute proposal
-                        </Button>
-                      )}
-                      <>
-                        <Link href={`${pathname}/proposals/${id}`}>
-                          <Button variant="outline">View Proposal</Button>
-                        </Link>
-                      </>
-                    </div>
-                  </div>
-                  {editView && (
-                    <div className="flex w-full flex-wrap items-center justify-between gap-6">
-                      <div className="flex items-center gap-8">
-                        <div>
-                          <input
-                            key={i}
-                            type="range"
-                            min={0}
-                            max={memberActivatedPoints}
-                            value={
-                              // getProposalId(id) ===
-                              inputs[i]?.value
-                              // stakedFilteres?[i].amount
-                            }
-                            className={`range range-success range-sm min-w-[420px]`}
-                            step={memberActivatedPoints / 100}
-                            onChange={(e) =>
-                              inputHandler(i, Number(e.target.value))
-                            }
-                          />
-                          <div className="flex w-full justify-between px-[10px] text-[4px]">
-                            {[...Array(21)].map((_, i) => (
-                              <span key={"span_" + i}>|</span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="mb-2">
-                          <p className="text-2xl font-semibold">
-                            {Number(
-                              (inputs[i].value * 100) / memberActivatedPoints,
-                            ).toFixed(2)}
-                            %
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex max-w-sm flex-1 items-baseline justify-center gap-2 px-8">
-                        {inputs[i]?.value < stakedFilteres[i]?.value ? (
-                          <p className="text-center">
-                            Removing to
-                            <span className="px-2 py-1 text-3xl font-semibold text-info">
-                              {calcPoolWeightUsed(
-                                calcPoolWeightUsedByProposal(i),
-                              )}
-                            </span>
-                            % of pool weight
-                          </p>
-                        ) : (
-                          <p className="text-center">
-                            Assingning
-                            <span className="px-2 py-2 text-3xl font-semibold text-info">
-                              {calcPoolWeightUsed(
-                                calcPoolWeightUsedByProposal(i),
-                              )}
-                            </span>
-                            % of pool weight
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ),
-            )}
+            {proposals.map((proposalData, i) => (
+              <React.Fragment key={proposalData.id + "_" + i}>
+                <ProposalCard
+                  proposalData={proposalData}
+                  inputData={inputs[i]}
+                  stakedFilter={stakedFilters[i]}
+                  i={i}
+                  isEditView={editView}
+                  tooltipMessage={tooltipMessage}
+                  memberActivatedPoints={memberActivatedPoints}
+                  memberPoolWeight={memberPoolWeight}
+                  executeDisabled={
+                    proposalData.proposalStatus == 4 ||
+                    !isConnected ||
+                    missmatchUrl
+                  }
+                  strategy={strategy}
+                  alloInfo={alloInfo}
+                  triggerRenderProposals={triggerRenderProposals}
+                  inputHandler={inputHandler}
+                />
+              </React.Fragment>
+            ))}
           </div>
           <div className="flex justify-end gap-8">
             {editView && (
@@ -622,11 +419,7 @@ export function Proposals({
               </>
             )}
           </div>
-          <div className="">
-            <p className="font-semibold">{message}</p>
-          </div>
         </div>
-
         <div>
           <h4 className="text-2xl">Do you have a great idea?</h4>
           <div className="flex items-center gap-6">

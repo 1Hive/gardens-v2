@@ -1,0 +1,12 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "dataSources": [
+    {
+      "name": "RegistryFactory",
+      "startBlock": 5954770,
+      "address": "0xcc6c8b9f745db2277f7aac1bc026d5c2ea7bd88d",
+      "customTemplate": "registryFactory"
+    }
+  ]
+}

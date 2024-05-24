@@ -82,7 +82,7 @@ export const ProposalForm = ({
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
       label: "Requested amount:",
-      parse: (value: number) => `${value} ${tokenGarden.symbol}`,
+      parse: (value: number) => `${value} ${tokenGarden?.symbol}`,
     },
     beneficiary: {
       label: "Beneficiary:",
@@ -93,7 +93,7 @@ export const ProposalForm = ({
     strategy: { label: "Strategy:" },
   };
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -102,9 +102,7 @@ export const ProposalForm = ({
   const pathname = usePathname();
   const tokenSymbol = tokenGarden?.symbol || "";
 
-  const spendingLimitNumber = Math.round(
-    spendingLimit / 10 ** tokenGarden?.decimals,
-  );
+  const spendingLimitNumber = spendingLimit / 10 ** tokenGarden?.decimals;
 
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
@@ -150,7 +148,10 @@ export const ProposalForm = ({
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
     onSuccess: () => router.push(pathname.replace(`/create-proposal`, "")),
-    onError: () => alert("Something went wrong creating Proposal"),
+    onError: (err) => {
+      console.log(err);
+      toast.error("Something went wrong creating Proposal");
+    },
     onSettled: () => setLoading(false),
   });
 
@@ -220,7 +221,6 @@ export const ProposalForm = ({
 
     return formattedRows;
   };
-
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ? (

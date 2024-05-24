@@ -3,17 +3,13 @@
 import React from "react";
 import { useBalance, useSwitchNetwork } from "wagmi";
 import { usePathname } from "next/navigation";
-import { getChain } from "@/configs/chainServer";
+import { ChainIcon, getChain } from "@/configs/chainServer";
 import Image from "next/image";
 import { walletIcon } from "@/assets";
-import {
-  useAccountModal,
-  useChainModal,
-  ConnectButton,
-} from "@rainbow-me/rainbowkit";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useDisconnect, useConnect, useAccount } from "wagmi";
 import cn from "classnames";
-import { Button, EthAddress } from "@/components";
+import { Button } from "@/components";
 import { Fragment } from "react";
 import { formatAddress } from "@/utils/formatAddress";
 import { Menu, Transition } from "@headlessui/react";
@@ -36,7 +32,6 @@ export const ConnectWallet = () => {
     token: tokenUrlAddress as `0x${string}` | undefined,
     chainId: urlChainId || 0,
   });
-
   return (
     <ConnectButton.Custom>
       {({
@@ -114,14 +109,7 @@ export const ConnectWallet = () => {
                                 <>
                                   <span>Connected to</span>
                                   <div className="mx-1">
-                                    {chain.hasIcon && chain.iconUrl && (
-                                      <Image
-                                        alt={chain.name ?? "Chain icon"}
-                                        src={chain.iconUrl}
-                                        width={16}
-                                        height={16}
-                                      />
-                                    )}
+                                    <ChainIcon chain={chain.id} height={16} />
                                   </div>
                                   <span>{chain.name}</span>
                                 </>

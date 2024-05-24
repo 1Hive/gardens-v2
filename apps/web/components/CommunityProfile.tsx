@@ -42,7 +42,7 @@ export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-hidden">
-            <div className="absolute inset-0 overflow-hidden">
+            <div className="overflow-hidden">
               <div className="pointer-events-none fixed inset-y-0 left-0 flex max-w-full pr-10">
                 <Transition.Child
                   as={Fragment}
@@ -76,10 +76,9 @@ export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
                       </div>
                     </Transition.Child>
                     <div className="relative h-full overflow-y-auto bg-white p-8">
-                      <div className="relative h-40 min-w-[500px]">
-                        <div>
+                      <div className="relative min-w-[500px]">
+                        {/* <div>
                           <div className="flex h-full">
-                            {/* TODO: look for better image here */}
                             {[...Array(6)].map((_, i) => (
                               <Image
                                 key={i}
@@ -91,8 +90,8 @@ export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
                               />
                             ))}
                           </div>
-                        </div>
-                        <div className="absolute top-28 flex w-full bg-white">
+                        </div> */}
+                        <div className="flex gap-4">
                           <div className="border2 h-20 w-20 overflow-hidden rounded-full">
                             {/* logo image */}
                             {covenantData?.logo && covenantData?.logo !== "" ? (
@@ -113,10 +112,8 @@ export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
                           </div>
 
                           {/* commuity name + Addrr */}
-                          <div className="flex flex-1 items-start justify-between gap-2 p-2">
-                            <span className="font-press text-xl text-info-content">
-                              {name}
-                            </span>
+                          <div className="flex flex-col justify-between">
+                            <h3 className="">{name}</h3>
                             <EthAddress
                               address={communityAddress}
                               icon="identicon"
@@ -126,7 +123,7 @@ export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
                       </div>
 
                       {/* covenant */}
-                      <div className="mt-20 w-full">
+                      <div className="mt-8 w-full">
                         <h3 className="bg-white py-2">Covenant</h3>
                         <p className="text-justify leading-6">
                           {covenantData?.covenant

@@ -77,8 +77,8 @@ templates:
         #   handler: handleProtocolFeeUpdated
         - event: StrategyAdded(address)
           handler: handleStrategyAdded
-        # - event: StrategyRemoved(address)
-        #   handler: handleStrategyRemoved
+        - event: StrategyRemoved(address)
+          handler: handleStrategyRemoved
         - event: MemberActivatedStrategy(address,address,uint256)
           handler: handleMemberActivatedStrategy
         - event: MemberDeactivatedStrategy(address,address)

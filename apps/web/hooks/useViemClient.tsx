@@ -9,11 +9,14 @@ export const useViemClient = function () {
 
   let chain: number | string = "";
 
-  if (isConnected) chain = chainId;
+  // if (isConnected)
+  chain = chainId;
+
+  const chainObj = getChain(chain);
 
   const [viemClient, setViemClient] = useState<PublicClient>(
     createPublicClient({
-      chain: getChain(chain),
+      chain: chainObj,
       transport: http(),
     }),
   );
@@ -21,7 +24,7 @@ export const useViemClient = function () {
   useEffect(() => {
     setViemClient(
       createPublicClient({
-        chain: getChain(chain),
+        chain: chainObj,
         transport: http(),
       }),
     );

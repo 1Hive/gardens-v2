@@ -79,6 +79,7 @@ export function handleInitialized(event: InitializedCV): void {
   cvs.poolAmount = cvc.getPoolAmount();
   cvs.maxCVSupply = BigInt.fromI32(0);
   cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  cvs.isEnabled = false;
 
   config.decay = decay;
   config.maxRatio = maxRatio;

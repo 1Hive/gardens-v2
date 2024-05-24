@@ -187,8 +187,14 @@ if (!subgraph) {
 const versions: Array<{ id: number; label: string }> = subgraph.versions;
 versions.sort((a, b) => b.id - a.id);
 
-console.log("latest version", versions[0].id);
-const label = versions[0].label;
+// console.log("versions", versions);
+
+let label = "v0.0.0";
+
+if (versions.length > 0) {
+  console.log("latest version", versions[0].id);
+  label = versions[0].label;
+}
 console.log("latest version label", label);
 
 if (label === undefined || label.trim() === "") {

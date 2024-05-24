@@ -47,15 +47,51 @@ function gte(
   return dn.greaterThan(v1, v2) || dn.equal(v1, v2);
 }
 
+// function calculatePercentage(
+//   value1: number | undefined,
+//   value2: number | undefined,
+// ): number {
+//   if (!value1 || !value2) {
+//     return 0;
+//   }
+//   const percentage = (value1 * 100) / value2;
+//   return parseFloat(percentage.toFixed(2));
+// }
+
 function calculatePercentage(
-  value1: number | undefined,
-  value2: number | undefined,
+  value1: number | bigint | string | undefined,
+  value2: number | bigint | string | undefined,
 ): number {
-  if (!value1 || !value2) {
+  if (value1 === undefined || value2 === undefined) {
     return 0;
   }
-  const percentage = (value1 * 100) / value2;
-  return parseFloat(percentage.toFixed(2));
+
+  let dnumValue1;
+  let dnumValue2;
+  try {
+    dnumValue1 = dn.from(value1);
+    dnumValue2 = dn.from(value2);
+  } catch (error) {
+    console.log(error);
+    return 0;
+  }
+
+  if (dn.eq(dnumValue2, 0)) {
+    return 0;
+  }
+  const PRECISION = 2;
+
+  const percentage = dn.div(
+    dn.mul(dnumValue1, 100 * 10 ** PRECISION),
+    dnumValue2,
+  );
+
+  const formattedPercentage = dn.format(
+    [percentage[0], percentage[1] + PRECISION],
+    2,
+  );
+
+  return Number(formattedPercentage);
 }
 
 export { calculateFees, formatTokenAmount, gte, dn, calculatePercentage };

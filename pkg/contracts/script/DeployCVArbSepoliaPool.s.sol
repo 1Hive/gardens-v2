@@ -25,8 +25,8 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
     address public SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
 
     address public TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
-    address public SAFE = 0x70471a50d4655C1677B7f0C5cAdD7a0410Aa2607;
-    address public COMMUNITY = 0x6EEbe6832eF5cF540cd7F8b7BcA5BA9ED3Ebc331;
+    address public SAFE = 0xd96e152760BBc6502cAc7D2e43C34Da05230076c;
+    address public COMMUNITY = 0xfD4e8327aa3877dD010fd2d5411DF62FED8d262b;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
