@@ -2,6 +2,8 @@
 import React from "react";
 import { Addreth, ThemeDeclaration, Theme } from "addreth";
 import { Address } from "viem";
+import { chainIdMap } from "@/configs/chainServer";
+import { getChainIdFromPath } from "@/utils/path";
 
 type EthAddressProps = {
   address: Address;
@@ -9,7 +11,6 @@ type EthAddressProps = {
   icon?: false | "ens" | "identicon" | ((address: Address) => string);
 };
 
-//TODO: handle if more than one chain is used
 //TODO: handle theme change by create a theme object and pass it to Addre
 
 //docs: https://github.com/bpierre/addreth?tab=readme-ov-file
@@ -34,6 +35,7 @@ export const EthAddress = ({
   //   popupRadius: 12,
   //   popupShadow: "black",
   // };
+  const chainId = getChainIdFromPath();
 
   return (
     <Addreth
@@ -48,9 +50,9 @@ export const EthAddress = ({
       icon={icon}
       address={address}
       explorer={(address) => ({
-        name: "Base",
-        url: `https://sepolia.arbiscan.io/address/${address}`,
-        accountUrl: `https://sepolia.arbiscan.io/address/${address}`,
+        name: chainIdMap[chainId].name,
+        url: `${chainIdMap[chainId].explorer}${address}`,
+        accountUrl: `${chainIdMap[chainId].explorer}${address}`,
       })}
     />
   );
