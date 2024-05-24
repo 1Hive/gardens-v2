@@ -246,30 +246,48 @@ export function handleSupportAdded(event: SupportAdded): void {
   cvp.stakedAmount = event.params.totalStakedAmount;
   cvp.convictionLast = event.params.convictionLast;
   cvp.save();
+}
 
-  log.debug(
-    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa !!!!!!!!!! : {}",
-    [""],
-  );
-  let member = Member.load(event.params.from.toHexString());
-  log.debug(
-    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa !!!!!!!!!! : {}",
-    [member!.id.toString()],
-  );
+export function handlePointsDeactivated(event: PointsDeactivated): void {
+  let member = Member.load(event.params.member.toHexString());
+
   if (member !== null) {
-    log.debug(
-      "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB !!!!!!!!!! : {}",
-      [""],
-    );
-
     const stakes = member.stakes.load();
     for (let i = 0; i < stakes.length; i++) {
-      log.debug(" STAKE FOUND !!!!!!!!!! : {}", [stakes[i].id.toString()]);
+      const proposal = CVProposal.load(stakes[i].proposal);
+      if (proposal !== null) {
+        const strategy = CVStrategy.load(proposal.strategy);
+        if (strategy !== null) {
+          if (strategy.id == event.address.toHexString()) {
+            const stake = Stake.load(stakes[i].id);
+            if (stake !== null) {
+              const stakedAmount = stake.amount;
+              stake.amount = BigInt.fromI32(0);
+              stake.save();
+              proposal.stakedAmount = proposal.stakedAmount.minus(stakedAmount);
+              const cvc = CVStrategyContract.bind(event.address);
+              const contractProposal = cvc.getProposal(proposal.proposalNumber);
+              const maxConviction = cvc.getMaxConviction(
+                contractProposal.value4,
+              );
+              proposal.maxCVStaked = maxConviction;
+              proposal.convictionLast = contractProposal.value7;
+
+              proposal.save();
+              const memberStrategyId = `${member.id}-${strategy.id}`;
+              const memberStrategy = MemberStrategy.load(memberStrategyId);
+              if (memberStrategy !== null) {
+                memberStrategy.totalStakedPoints =
+                  memberStrategy.totalStakedPoints.minus(stakedAmount);
+                memberStrategy.save();
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
-
-export function handlePointsDeactivated(event: PointsDeactivated): void {}
 
 export function handleDistributed(event: Distributed): void {
   log.debug("handleDistributed: amount: {}", [event.params.amount.toString()]);

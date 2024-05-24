@@ -87,8 +87,6 @@ templates:
           handler: handleMemberPowerDecreased
         - event: MemberPowerIncreased(address,uint256)
           handler: handleMemberPowerIncreased
-        - event: MemberPointsDeactivated(address)
-          handler: handlePointsDeactivated
         # - event: BasisStakedAmountSet(uint256)
           # handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
@@ -135,6 +133,8 @@ templates:
           handler: handlePowerIncreased
         - event: PowerDecreased(address,uint256,uint256)
           handler: handlePowerDecreased
+        - event: PointsDeactivated(address)
+          handler: handlePointsDeactivated
         - event: DecayUpdated(uint256)
           handler: handleDecayUpdated
         - event: MaxRatioUpdated(uint256)
