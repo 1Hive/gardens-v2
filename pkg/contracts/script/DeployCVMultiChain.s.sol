@@ -23,14 +23,17 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 
+import {SafeProxyFactory} from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+
 contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     using stdJson for string;
 
-    uint256 public MINIMUM_STAKE = 50;
+    uint256 public MINIMUM_STAKE = 1 ether;
 
     address public SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
-    address public TOKEN;
-    address public COUNCIL_SAFE;
+    address public TOKEN; // check networks.json file
+    address public COUNCIL_SAFE; // check networks.json file
+    address public SAFE_PROXY_FACTORY; // check networks.json file
 
     string public CURRENT_NETWORK = "arbsepolia";
 
@@ -126,7 +129,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         assertTrue(COUNCIL_SAFE != address(0), "Council Safe not set");
 
         if (COUNCIL_SAFE == address(0)) {
-            Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
+            Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin(), SafeProxyFactory(SAFE_PROXY_FACTORY));
             COUNCIL_SAFE = address(councilSafeDeploy);
         }
         // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
@@ -135,22 +138,20 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         RegistryCommunity.InitializeParams memory params;
 
+        metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"});
+        params._metadata = metadata; // convenant ipfs
+
+        params._communityName = "Alpha Centaurians";
         params._allo = address(allo);
         params._strategyTemplate = address(new CVStrategy(address(allo)));
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 0;
-        params._metadata = metadata; // convenant ipfs
         params._councilSafe = payable(COUNCIL_SAFE);
-        // params._councilSafe = payable(address(_councilSafeWithOwner(pool_admin());
-        params._communityName = "GardensDAO";
 
         assertTrue(params._councilSafe != address(0));
 
         RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
-
-        // console2.log("Registry Factory Addr: %s", address(registryFactory));
-        // console2.log("Registry Community Addr: %s", address(registryCommunity));
 
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
@@ -165,17 +166,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
         paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
         paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
-        // params.minThresholdStakePercentage = 0.2 ether; // 20%
-        // paramsCV.registryCommunity = address(registryCommunity);
-        // paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
-
-        // address[] memory _pool_managers = new address[](2);
-        // _pool_managers[0] = address(params._councilSafe);
-        // _pool_managers[1] = address(msg.sender);
-
-        // bytes32 memory_poolProfileId_ = registry.createProfile(
-        //     0, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
-        // );
 
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
 
@@ -212,7 +202,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
 
-        token.mint(address(pool_admin()), 12_000);
+        token.mint(address(pool_admin()), 10_000 ether);
         token.approve(address(registryCommunity), type(uint256).max);
         // token.mint(address(pool_admin()), 100);
         //@todo get correct value instead infinite approval
@@ -227,18 +217,18 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
         token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 10_000);
+        allo.fundPool(poolId, 1_000 ether);
 
         StrategyStruct.CreateProposal memory proposal =
-            StrategyStruct.CreateProposal(poolId, pool_admin(), 50 wei, address(token), metadata);
+            StrategyStruct.CreateProposal(poolId, pool_admin(), 50 ether, address(token), metadata);
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 25 wei, address(token), metadata);
+        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 25 ether, address(token), metadata);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 10 wei, address(token), metadata);
+        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 10 ether, address(token), metadata);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
@@ -249,16 +239,5 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         allo.registerRecipient(poolIdSignaling, data2);
 
         vm.stopBroadcast();
-
-        // console2.log("PoolId: %s", poolId);
-        // console2.log("Strategy1 Addr: %s", address(strategy1));
-
-        // console2.log("PoolIdSignaling: %s", poolIdSignaling);
-        // console2.log("Strategy2 Addr: %s", address(strategy2));
-        // console2.log("Token Addr: %s", address(token));
-        // console2.log("Token Native Addr: %s", address(NATIVE));
-
-        // console2.log("Allo Registry Addr: %s", address(registry));
-        // console2.log("Council Safe Addr: %s", address(councilSafeOwner));
     }
 }
