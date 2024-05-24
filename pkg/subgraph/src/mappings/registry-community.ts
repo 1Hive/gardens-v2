@@ -66,6 +66,7 @@ export function handleInitialized(event: RegistryInitialized): void {
     const token = rcc.gardenToken();
     newRC.registerToken = token.toHexString();
     newRC.registryFactory = factoryAddress;
+    newRC.strategyTemplate = rcc.strategyTemplate().toHexString();
 
     let tg = TokenGarden.load(token.toHexString());
     if (tg == null) {

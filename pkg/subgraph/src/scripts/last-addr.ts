@@ -1,60 +1,44 @@
-// import path from "path";
-// import fs from "fs";
-// let runLatest = fs
-//   .readFileSync(
-//     path.join(
-//       "../../broadcast/DeployCVArbSepolia.s.sol/421614",
-//       "run-latest.json",
-//     ),
-//   )
-//   .toString();
+import {
+  arbitrumSepolia,
+  localhost,
+  optimismSepolia,
+  sepolia,
+} from "viem/chains";
+import runLatestArbSep from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
+import runLatestEthSep from "../../../../broadcast/DeployCVMultiChain.s.sol/11155111/run-latest.json" assert { type: "json" };
+import runLatestLocal from "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json" assert { type: "json" };
 
-// runLatest = JSON.parse(runLatest);
-import { fromHex } from "viem";
-
-// import runLatest from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
-import runLatest from "../../../../broadcast/DeployCVMultiChain.s.sol/11155111/run-latest.json" assert { type: "json" };
-// import runLatest from "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json" assert { type: "json" };
-
-export type RunLatest = typeof runLatest;
+export type RunLatest =
+  | typeof runLatestLocal
+  | typeof runLatestArbSep
+  | typeof runLatestEthSep;
 export type Address = `0x${string}`;
 // export type AddressOrUndefined = Address | undefined;
 // console.log(runLatest);
 // return;
 
-export function extractAddr(runLatest?: RunLatest) {
+export type AddressChain = {
+  token: Address;
+  safe: Address;
+  factory: Address;
+  registryCommunity: Address;
+  strategyTemplate: Address;
+};
+export function extractAddr(runLatest: RunLatest): AddressChain {
   let registryCommunity: Address = "0x";
   let factory: Address = "0x";
-  let token: Address = "0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D";
+  let token: Address = "0x";
   let safe: Address = "0x";
+  let strategyTemplate: Address = "0x";
+
   if (runLatest) {
     const txs = runLatest.transactions;
-    const receipts = runLatest.receipts;
 
-    for (const receipt of receipts) {
-      type Log = (typeof receipt.logs)[0];
-      const logWithTopic = receipt.logs.find((log: Log) =>
-        log.topics.find(
-          (topic) =>
-            topic ==
-            "0x69bcb5a6cf6a3c95185cbb451e77787240c866dd2e8332597e3013ff18a1aba1", //CreatedPool event
-        ),
-      );
-      if (logWithTopic) {
-        // console.log("txHash", logWithTopic.transactionHash);
-        const txForIt = runLatest.transactions.find(
-          (tx) => tx.hash == logWithTopic.transactionHash,
-        );
-        const strategyAddr = txForIt?.arguments?.[1];
-        // console.log("strategyAddr", strategyAddr);
-        // console.log("topic", logWithTopic.topics[0]);
-        // console.log(
-        //   "poolID",
-        //   fromHex(logWithTopic.topics[1] as `0x${string}`, "number"),
-        // );
-      }
-    }
     for (const tx of txs) {
+      if (!tx.contractName) {
+        continue;
+      }
+
       if (tx.contractName == "RegistryCommunity") {
         registryCommunity = tx.contractAddress as Address;
       } else if (
@@ -66,6 +50,8 @@ export function extractAddr(runLatest?: RunLatest) {
         factory = tx.contractAddress as Address;
       } else if (tx.contractName == "SafeProxy") {
         safe = tx.contractAddress as Address;
+      } else if (tx.contractName == "CVStrategy") {
+        strategyTemplate = tx.contractAddress as Address;
       } else if (
         tx.contractName == "lib/allo-v2/test/utils/MockERC20.sol:MockERC20"
       ) {
@@ -76,19 +62,37 @@ export function extractAddr(runLatest?: RunLatest) {
         token = tx.contractAddress as Address;
       }
     }
-
-    // console.log("token", token);
-    // console.log("safe", safe);
-    // console.log("factory", factory);
-    // console.log("registryCommunity", registryCommunity);
   }
   return {
     token,
     safe,
     factory,
     registryCommunity,
+    strategyTemplate,
   };
 }
 
-const data = extractAddr(runLatest);
+export function getRunLatestAddrs(chain: number): AddressChain | undefined {
+  let runLatest: any | undefined;
+
+  switch (chain) {
+    case localhost.id:
+      runLatest = runLatestLocal;
+      break;
+    case arbitrumSepolia.id:
+      runLatest = runLatestArbSep;
+      break;
+    case sepolia.id:
+      runLatest = runLatestEthSep;
+      break;
+  }
+  let result = undefined;
+  if (runLatest) {
+    result = extractAddr(runLatest!);
+  }
+  return result;
+}
+
+const data = getRunLatestAddrs(localhost.id);
+
 console.log(data);

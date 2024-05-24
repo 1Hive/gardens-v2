@@ -8,7 +8,11 @@ const envRpcUrlEthSepoliaTestnet = process.env.NEXT_PUBLIC_RPC_URL_ETH_TESTNET;
 const envConfirmationsRequired =
   process.env.NEXT_PUBLIC_CONFIRMATIONS_REQUIRED || 1;
 
-import { Address } from "#/subgraph/src/scripts/last-addr";
+import {
+  Address,
+  extractAddr,
+  getRunLatestAddrs,
+} from "#/subgraph/src/scripts/last-addr";
 import { getChain } from "@/configs/chainServer";
 import {
   arbitrumSepolia,
@@ -25,7 +29,15 @@ const envOrDefaultAddr = (env: string | undefined, def: Address) =>
 
 console.log("isProd", isProd);
 
-let __contractsAddresses = {
+type RPCSubgraphAddr = {
+  [key: number]: {
+    rpcUrl?: string;
+    subgraphUrl: string;
+    strategyTemplate?: Address;
+  };
+};
+
+let __contractsAddresses: RPCSubgraphAddr = {
   [localhost.id as number]: {
     rpcUrl: `http://127.0.0.1:8545`,
     subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
@@ -43,6 +55,16 @@ let __contractsAddresses = {
     subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP || "",
   },
 };
+
+for (const chainId in __contractsAddresses) {
+  const chain = getChain(chainId);
+  if (chain?.id) {
+    const addrs = getRunLatestAddrs(chain.id);
+    if (addrs) {
+      __contractsAddresses[chain.id].strategyTemplate = addrs.strategyTemplate;
+    }
+  }
+}
 
 function __getContractsAddrByChain(chain: number | string) {
   const currentChain = getChain(chain);
