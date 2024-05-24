@@ -26,7 +26,8 @@ import { queryByChain } from "@/providers/urql";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { getChainIdFromPath } from "@/utils/path";
 
-export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
+export type StakesMemberType =
+  isMemberQuery["members"][number]["memberCommunity"];
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -74,8 +75,8 @@ export function CommunityCard({
     );
 
     if (result && result.members.length > 0) {
-      const memberStakedTokens = (result.members?.[0].stakes ??
-        0) as StakesMemberType;
+      const memberStakedTokens = (result.members?.[0].memberCommunity?.[0]
+        .stakedTokens ?? 0) as StakesMemberType;
 
       console.log("memberStakedTokens", memberStakedTokens);
 
@@ -84,8 +85,8 @@ export function CommunityCard({
   }, [accountAddress]);
 
   const calculateRemainingStake = () => {
-    
-    const calculateDiffStake = Number(memberStakedTokens ?? 0) - Number(registerStakeAmount);
+    const calculateDiffStake =
+      Number(memberStakedTokens ?? 0) - Number(registerStakeAmount);
     const remainingStake = formatTokenAmount(
       calculateDiffStake < 0 ? 0 : calculateDiffStake,
       tokenGarden?.decimals,
