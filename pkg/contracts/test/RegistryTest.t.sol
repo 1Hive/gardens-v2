@@ -584,6 +584,58 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         );
     }
 
+    function test_DecreasePower_after_increasePower_diff_orders() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(token),
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+
+        token.approve(address(registryCommunity), 100 * DECIMALS);
+
+        strategy.activatePoints();
+
+        _registryCommunity().increasePower(100 * DECIMALS);
+
+        strategy.deactivatePoints();
+        strategy.activatePoints();
+
+        _registryCommunity().decreasePower(50 * DECIMALS);
+
+        strategy.deactivatePoints();
+        strategy.activatePoints();
+
+        _registryCommunity().decreasePower(50 * DECIMALS);
+
+        // assertEq(
+        //     registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+        //     registryCommunity.registerStakeAmount() + (150 * DECIMALS)
+        // );
+
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.registerStakeAmount()
+        );
+        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
+        vm.stopPrank();
+    }
+
     function test_DecreasePower_after_increasePower() public {
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
@@ -910,5 +962,55 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_getStakeAmountWithFees() public {
         uint256 stakeFees = _registryCommunity().getStakeAmountWithFees();
         assertEq(stakeFees, STAKE_WITH_FEES);
+    }
+
+    function test_addStrategyByPoolId() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(token),
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategyByPoolId(poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
+    }
+
+    function test_Revert_addStrategyByPoolId() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(token),
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        _registryCommunity().addStrategyByPoolId(poolId);
+
+        vm.startPrank(address(councilSafe));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        _registryCommunity().addStrategyByPoolId(poolId + 1);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
     }
 }

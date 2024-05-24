@@ -18,6 +18,24 @@ add-strategy: #make add-strategy S=0x1234
 	--broadcast \
 	-vvvv
 
+add-strategy-ethsep: #make add-strategy S=0x1234 
+	-forge script script/AddStrategy.s.sol:AddStrategy \
+	--rpc-url $(RPC_URL_SEP_TESTNET) \
+	--account pk1 \
+	--sig "run(address,address)" $(S) $(C) \
+	--broadcast \
+	--legacy \
+	-vvvv
+	
+add-strategy-ethsep-pool: #make add-strategy S=0x1234 
+	-forge script script/AddStrategy.s.sol:AddStrategy \
+	--rpc-url $(RPC_URL_SEP_TESTNET) \
+	--account pk1 \
+	--sig "run(uint256,address)" $(P) $(C) \
+	--broadcast \
+	--legacy \
+	-vvvv
+	
 add-strategy-local: #make add-strategy S=0x1234 
 	-forge script script/AddStrategy.s.sol:AddStrategy \
 	--rpc-url $(RPC_URL_LOCALHOST) \
