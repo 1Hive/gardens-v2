@@ -202,15 +202,15 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     setShowPreview(true);
   };
 
-  const walletClient = createWalletClient({
-    chain: getChain(getChainIdFromPath()) as Chain,
-    transport: custom(window.ethereum!),
-  });
+  // const walletClient = createWalletClient({
+  //   chain: getChain(getChainIdFromPath()) as Chain,
+  //   transport: custom(window.ethereum!),
+  // });
 
-  const publicClient = createPublicClient({
-    chain: getChain(getChainIdFromPath()) as Chain,
-    transport: http(),
-  });
+  // const publicClient = createPublicClient({
+  //   chain: getChain(getChainIdFromPath()) as Chain,
+  //   transport: http(),
+  // });
 
   const contractWrite = async (ipfsHash: string) => {
     let spendingLimit: number;
