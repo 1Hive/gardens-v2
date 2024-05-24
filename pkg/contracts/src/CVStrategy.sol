@@ -136,6 +136,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
+    event PointsDeactivated(address member);
     event DecayUpdated(uint256 decay);
     event MaxRatioUpdated(uint256 maxRatio);
     event WeightUpdated(uint256 weight);
@@ -314,11 +315,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function deactivatePoints() public {
         _deactivatePoints(msg.sender);
+        emit PointsDeactivated(msg.sender);
     }
 
     function deactivatePoints(address _member) external {
         onlyRegistryCommunity();
         _deactivatePoints(_member);
+        emit PointsDeactivated(_member);
     }
 
     function _deactivatePoints(address _member) internal {

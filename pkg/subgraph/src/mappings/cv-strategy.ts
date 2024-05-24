@@ -18,6 +18,7 @@ import {
   SupportAdded,
   PowerIncreased,
   PowerDecreased,
+  PointsDeactivated,
   DecayUpdated,
   MaxRatioUpdated,
   MinThresholdPointsUpdated,
@@ -266,6 +267,8 @@ export function handleSupportAdded(event: SupportAdded): void {
     }
   }
 }
+
+export function handlePointsDeactivated(event: PointsDeactivated): void {}
 
 export function handleDistributed(event: Distributed): void {
   log.debug("handleDistributed: amount: {}", [event.params.amount.toString()]);
