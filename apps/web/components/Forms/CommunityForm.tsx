@@ -175,7 +175,7 @@ export const CommunityForm = ({
     const metadata = [1n, "ipfsHash"];
     const isKickMemberEnabled = previewData?.isKickMemberEnabled;
     const covenantIpfsHash = ipfsHash;
-    const strategyTemplate = getContractsAddrByChain(chain);
+    const strategyTemplate = getContractsAddrByChain(chain)?.strategyTemplate;
     if (!strategyTemplate) {
       console.log("No strategy template found for chain", chain);
       toast.error("No strategy template found for chain");
