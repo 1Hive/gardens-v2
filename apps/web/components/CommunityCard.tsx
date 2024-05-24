@@ -74,16 +74,20 @@ export function CommunityCard({
     );
 
     if (result && result.members.length > 0) {
-      const memberStakedTokens = (result.members?.[0].memberCommunity?.[0]
-        .stakedTokens ?? 0) as StakesMemberType;
+      const memberStakedTokens = (result.members?.[0].stakes ??
+        0) as StakesMemberType;
+
+      console.log("memberStakedTokens", memberStakedTokens);
 
       setMemberStakedTokens(memberStakedTokens);
     }
   }, [accountAddress]);
 
   const calculateRemainingStake = () => {
+    
+    const calculateDiffStake = Number(memberStakedTokens ?? 0) - Number(registerStakeAmount);
     const remainingStake = formatTokenAmount(
-      Number(memberStakedTokens ?? 0) - Number(registerStakeAmount),
+      calculateDiffStake < 0 ? 0 : calculateDiffStake,
       tokenGarden?.decimals,
     );
 
