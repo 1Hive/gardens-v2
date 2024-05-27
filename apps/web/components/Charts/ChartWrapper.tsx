@@ -1,42 +1,56 @@
 import cn from "classnames";
 import { ReactNode } from "react";
+import {
+  ArrowDownRightIcon,
+  ArrowUpRightIcon,
+} from "@heroicons/react/24/solid";
 
 type ChartWrapperProps = {
   children?: ReactNode;
   size?: "sm" | "md" | "lg";
-  title: string;
+  title?: string;
+  message?: string;
+  growing?: boolean | null;
 };
-
-//handle the size + ... ?
-//TODO set the exacts types
-//TODO set offical styles
 
 export const ChartWrapper = ({
   children,
   size = "md",
   title,
+  message,
+  growing,
 }: ChartWrapperProps) => {
+  const iconClassname = `h-6 w-6 text-bold ${growing ? "text-success" : "text-error"}`;
+
   return (
     <>
-      <div className="flex w-full flex-col gap-0 overflow-hidden rounded-lg rounded-t-lg">
+      <div className="flex h-[fit] w-full flex-col gap-0 rounded-lg rounded-t-lg">
+        {children}
+
         <div
-          className={cn({
-            "h-8 md:h-20 lg:h-24": size === "sm",
-            "h-10 md:h-24 lg:h-64": size === "md",
-            "h-10 md:h-24 lg:h-72": size === "lg",
-          })}
-        >
-          {children}
-        </div>
-        <header
-          className={`w-full p-4 text-center font-semibold text-black last:rounded-b-lg ${cn(
+          className={`w-full px-2 text-left font-semibold text-black last:rounded-b-lg ${cn(
             {
               "text-xs": size === "sm",
             },
           )} `}
         >
-          {title}
-        </header>
+          <div className="space-y-2">
+            {growing !== null && (
+              <p className="flex items-center gap-2">
+                Conviction {growing ? "is growing" : "is decreasing"}
+                <span>
+                  {growing ? (
+                    <ArrowUpRightIcon className={iconClassname} />
+                  ) : (
+                    <ArrowDownRightIcon className={iconClassname} />
+                  )}{" "}
+                </span>
+              </p>
+            )}
+
+            <p>{message}</p>
+          </div>
+        </div>
       </div>
     </>
   );

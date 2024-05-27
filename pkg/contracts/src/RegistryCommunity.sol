@@ -8,6 +8,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 // import {Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 // import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
+import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {RegistryFactory} from "./RegistryFactory.sol";
 import {ISafe} from "./ISafe.sol";
 // import {Safe} from "safe-contracts/contracts/Safe.sol";
@@ -16,6 +17,7 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 
 import {IPointStrategy, CVStrategy, StrategyStruct} from "./CVStrategy.sol";
 
+import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 // import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
 interface FAllo {
@@ -30,11 +32,13 @@ interface FAllo {
     ) external payable returns (uint256 poolId);
 
     function getRegistry() external view returns (address);
+    function getPool(uint256 _poolId) external view returns (IAllo.Pool memory);
 }
 
 contract RegistryCommunity is ReentrancyGuard, AccessControl {
     using ERC165Checker for address;
     using SafeERC20 for IERC20;
+    using Clone for address;
 
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     /*|--------------------------------------------|*/
@@ -55,7 +59,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
     event StrategyAdded(address _strategy);
     event StrategyRemoved(address _strategy);
-    event MemberActivatedStrategy(address _member, address _strategy);
+    event MemberActivatedStrategy(address _member, address _strategy, uint256 _pointsToIncrease);
     event MemberDeactivatedStrategy(address _member, address _strategy);
     event BasisStakedAmountSet(uint256 _newAmount);
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
@@ -118,6 +122,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     error SenderNotNewOwner();
     error SenderNotStrategy();
     error ValueCannotBeZero();
+    error NewFeeGreaterThanMax();
     error KickNotEnabled();
     error PointsDeactivated();
     error DecreaseUnderMinimum();
@@ -149,25 +154,34 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         string _communityName;
         bool _isKickEnabled;
         string covenantIpfsHash;
+        address _strategyTemplate;
     }
 
-    //TODO: can change to uint32 with optimized storage order
-    FAllo public allo;
-    IRegistry public registry;
-    IERC20 public gardenToken;
+    //DONE: grouping and order of variables
+    // Smaller uints and bools packed together
+    bool public isKickEnabled; // 1 byte, consider aligning with other small data types or bools if available
 
+    // 256-bit (32 bytes) uints and bytes packed together
     uint256 public registerStakeAmount;
     uint256 public communityFee;
-    address public feeReceiver;
     bytes32 public profileId;
-    bool public isKickEnabled;
+
+    // Address types packed (20 bytes each)
+    address public feeReceiver;
     address public registryFactory;
+    address public strategyTemplate;
+    uint256 public cloneNonce;
+    address payable public pendingCouncilSafe;
 
-    address payable public pendingCouncilSafe; //@todo write test for change owner in 2 step
+    // Contract interfaces (addresses internally, hence 20 bytes each)
+    IRegistry public registry;
+    IERC20 public gardenToken;
     ISafe public councilSafe;
+    FAllo public allo;
 
+    // Dynamic string types (variable size, stored last)
     string public communityName;
-    string public covenantIpfsHash; //@todo maybe should be bytes32
+    string public covenantIpfsHash;
 
     // mapping(address => bool) public tribunalMembers;
 
@@ -181,6 +195,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     address[] initialMembers;
 
     uint256 public constant PRECISION_SCALE = 10 ** 4;
+    uint256 public constant MAX_FEE = 10 * PRECISION_SCALE;
 
     constructor() {
         // _grantRole(DEFAULT_ADMIN_ROLE, address(this));
@@ -188,17 +203,21 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     }
 
     function initialize(RegistryCommunity.InitializeParams memory params) public {
-        revertZeroAddress(address(params._gardenToken));
-        revertZeroAddress(params._councilSafe);
-        revertZeroAddress(params._allo);
-        revertZeroAddress(params._registryFactory);
+        _revertZeroAddress(address(params._gardenToken));
+        _revertZeroAddress(params._councilSafe);
+        _revertZeroAddress(params._allo);
+        _revertZeroAddress(params._registryFactory);
+        _revertZeroAddress(params._strategyTemplate);
 
+        if (params._communityFee != 0) {
+            _revertZeroAddress(params._feeReceiver);
+        }
         allo = FAllo(params._allo);
         gardenToken = params._gardenToken;
         if (params._registerStakeAmount == 0) {
             revert ValueCannotBeZero();
         }
-        registerStakeAmount = params._registerStakeAmount; //@todo can be zero?
+        registerStakeAmount = params._registerStakeAmount;
         communityFee = params._communityFee;
         isKickEnabled = params._isKickEnabled;
         communityName = params._communityName;
@@ -206,6 +225,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         registryFactory = params._registryFactory;
         feeReceiver = params._feeReceiver;
         councilSafe = ISafe(params._councilSafe);
+        strategyTemplate = params._strategyTemplate;
+
         _grantRole(COUNCIL_MEMBER_CHANGE, params._councilSafe);
 
         registry = IRegistry(allo.getRegistry());
@@ -227,6 +248,14 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         initialMembers = pool_initialMembers;
 
         emit RegistryInitialized(profileId, communityName, params._metadata);
+    }
+
+    function createPool(address _token, StrategyStruct.InitializeParams memory _params, Metadata memory _metadata)
+        public
+        returns (uint256 poolId, address strategy)
+    {
+        address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
+        return createPool(strategyClone, _token, _params, _metadata);
     }
 
     function createPool(
@@ -253,7 +282,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     function activateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
-        revertZeroAddress(_strategy);
+        _revertZeroAddress(_strategy);
 
         if (memberActivatedInStrategies[_member][_strategy]) {
             revert UserAlreadyActivated();
@@ -262,7 +291,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         Member memory member = addressToMemberInfo[_member];
 
         uint256 totalStakedAmount = member.stakedAmount;
-        uint256 pointsToIncrease = totalStakedAmount;
+        uint256 pointsToIncrease = registerStakeAmount;
 
         if (IPointStrategy(_strategy).getPointSystem() == StrategyStruct.PointSystem.Quadratic) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, 0);
@@ -275,12 +304,12 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
         strategiesByMember[_member].push(_strategy);
 
-        emit MemberActivatedStrategy(_member, _strategy);
+        emit MemberActivatedStrategy(_member, _strategy, pointsToIncrease);
     }
 
     function deactivateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
-        revertZeroAddress(_strategy);
+        _revertZeroAddress(_strategy);
         onlyStrategyAddress(msg.sender, _strategy);
 
         if (!memberActivatedInStrategies[_member][_strategy]) {
@@ -376,9 +405,21 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     // function getGardenTokenDecimals() public view returns (uint256){
     //     return gardenToken.decimals();
     // }
+    function addStrategyByPoolId(uint256 poolId) public {
+        onlyCouncilSafe();
+        address strategy = address(allo.getPool(poolId).strategy);
+        _revertZeroAddress(strategy);
+        if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
+            _addStrategy(strategy);
+        }
+    }
 
     function addStrategy(address _newStrategy) public {
         onlyCouncilSafe();
+        _addStrategy(_newStrategy);
+    }
+
+    function _addStrategy(address _newStrategy) internal {
         if (enabledStrategies[_newStrategy]) {
             revert StrategyExists();
         }
@@ -386,12 +427,12 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         emit StrategyAdded(_newStrategy);
     }
 
-    function revertZeroAddress(address _address) internal pure {
+    function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
     function _removeStrategy(address _strategy) internal {
-        revertZeroAddress(_strategy);
+        _revertZeroAddress(_strategy);
         enabledStrategies[_strategy] = false;
         emit StrategyRemoved(_strategy);
     }
@@ -408,8 +449,8 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
 
     function setCouncilSafe(address payable _safe) public {
         onlyCouncilSafe();
-        revertZeroAddress(_safe);
-        pendingCouncilSafe = _safe; //@todo write tests
+        _revertZeroAddress(_safe);
+        pendingCouncilSafe = _safe;
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
 
@@ -442,6 +483,9 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             newMember.isRegistered = true;
 
             newMember.stakedAmount = registerStakeAmount;
+            // console.log("registerStakeAmount", registerStakeAmount);
+            console.log("gardenToken", address(gardenToken));
+
             gardenToken.safeTransferFrom(
                 _member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
             );
@@ -449,11 +493,14 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
             //individually. Check vulnerabilites for that with Felipe
             // gardenToken.approve(feeReceiver,communityFeeAmount);
             //Error: ProtocolFee is equal to zero
+            console.log("communityFeeAmount", communityFeeAmount);
             if (communityFeeAmount > 0) {
+                console.log("feeReceiver", feeReceiver);
                 gardenToken.safeTransfer(feeReceiver, communityFeeAmount);
             }
-            // gardenToken.approve(gardensFactory.getGardensFeeReceiver(),gardensFeeAmount);
+            console.log("gardensFeeAmount", gardensFeeAmount);
             if (gardensFeeAmount > 0) {
+                console.log("gardensFactory.getGardensFeeReceiver()", gardensFactory.getGardensFeeReceiver());
                 gardenToken.safeTransfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
             }
 
@@ -480,8 +527,11 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         emit BasisStakedAmountSet(_newAmount);
     }
 
-    function updateCommunityFee(uint256 _newCommunityFee) public {
+    function setCommunityFee(uint256 _newCommunityFee) public {
         onlyCouncilSafe();
+        if (_newCommunityFee > MAX_FEE) {
+            revert NewFeeGreaterThanMax();
+        }
         communityFee = _newCommunityFee;
         emit CommunityFeeUpdated(_newCommunityFee);
     }

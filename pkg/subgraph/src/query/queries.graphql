@@ -14,6 +14,7 @@ query getFactories {
       strategies {
         id
         poolId
+        isEnabled
         config {
           id
           decay
@@ -161,6 +162,7 @@ query getCommunitiesByGarden($addr: ID!) {
         totalEffectiveActivePoints
         poolId
         poolAmount
+        isEnabled
         config {
           id
           proposalType
@@ -213,6 +215,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     id
     poolId
     totalEffectiveActivePoints
+    isEnabled
     memberActive {
       id
     }
@@ -288,6 +291,7 @@ query getStrategyByPool($poolId: BigInt!) {
     id
     poolId
     totalEffectiveActivePoints
+    isEnabled
     config {
       id
       proposalType

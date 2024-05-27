@@ -15,9 +15,15 @@ contract SafeSetup is Test {
     uint256 public councilMemberPK = 1;
 
     function _councilSafeWithOwner(address _owner) public returns (Safe) {
+        return _councilSafeWithOwner(_owner, new SafeProxyFactory());
+    }
+
+    function _councilSafeWithOwner(address _owner, SafeProxyFactory _safeProxyFactory) public returns (Safe) {
         if (address(councilSafeOwner) == address(0)) {
-            SafeProxyFactory spf = new SafeProxyFactory();
-            SafeProxy sp = spf.createProxyWithNonce(address(new Safe()), "", 0);
+            if (_safeProxyFactory == SafeProxyFactory(address(0))) {
+                _safeProxyFactory = new SafeProxyFactory();
+            }
+            SafeProxy sp = _safeProxyFactory.createProxyWithNonce(address(new Safe()), "", 0);
             councilSafeOwner = Safe(payable(address(sp)));
             vm.label(address(councilSafeOwner), "councilSafeAddr");
             vm.label(address(_owner), "councilSafeOwner");
@@ -38,8 +44,10 @@ contract SafeSetup is Test {
             councilSafe = Safe(payable(address(sp)));
             console.log("councilSafe address: %s", address(councilSafe));
             vm.label(address(councilSafe), "councilSafe");
-            address[] memory owners = new address[](1);
+            address[] memory owners = new address[](3);
             owners[0] = address(councilMember1);
+            owners[1] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
+            owners[2] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
             councilSafe.setup(owners, 1, address(0), "", address(0), address(0), 0, payable(address(0)));
         }
         return councilSafe;

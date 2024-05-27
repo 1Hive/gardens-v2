@@ -42,10 +42,9 @@ export function ActivatePoints({
     error: errorDeactivatePoints,
     status: deactivatePointsStatus,
   } = useContractWrite({
-    address: communityAddress,
-    abi: abiWithErrors(registryCommunityABI),
-    functionName: "deactivateMemberInStrategy",
-    args: [connectedAccount as Address, strategyAddress],
+    address: strategyAddress,
+    abi: abiWithErrors(cvStrategyABI),
+    functionName: "deactivatePoints",
   });
 
   useErrorDetails(errorActivatePoints, "activatePoints");

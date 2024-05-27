@@ -26,7 +26,8 @@ import { queryByChain } from "@/providers/urql";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { getChainIdFromPath } from "@/utils/path";
 
-export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
+export type StakesMemberType =
+  isMemberQuery["members"][number]["memberCommunity"];
 
 type CommunityQuery = NonNullable<
   NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -77,13 +78,17 @@ export function CommunityCard({
       const memberStakedTokens = (result.members?.[0].memberCommunity?.[0]
         .stakedTokens ?? 0) as StakesMemberType;
 
+      console.log("memberStakedTokens", memberStakedTokens);
+
       setMemberStakedTokens(memberStakedTokens);
     }
   }, [accountAddress]);
 
   const calculateRemainingStake = () => {
+    const calculateDiffStake =
+      Number(memberStakedTokens ?? 0) - Number(registerStakeAmount);
     const remainingStake = formatTokenAmount(
-      Number(memberStakedTokens ?? 0) - Number(registerStakeAmount),
+      calculateDiffStake < 0 ? 0 : calculateDiffStake,
       tokenGarden?.decimals,
     );
 
@@ -98,17 +103,20 @@ export function CommunityCard({
   }, [accountAddress]);
 
   const pools = strategies ?? [];
+
   members = members ?? [];
   let registerToken = tokenGarden?.id ?? "0x0";
   registerStakeAmount = registerStakeAmount ?? 0;
 
   const signalingPools = pools.filter(
-    (pool) => pool.config?.proposalType === "0",
+    (pool) => pool.config?.proposalType === "0" && pool.isEnabled,
   );
 
   const fundingPools = pools.filter(
-    (pool) => pool.config?.proposalType === "1",
+    (pool) => pool.config?.proposalType === "1" && pool.isEnabled,
   );
+
+  const poolsInReview = pools.filter((pool) => !pool.isEnabled);
 
   return (
     <>
@@ -207,6 +215,24 @@ export function CommunityCard({
                 <PoolCard tokenGarden={tokenGarden} {...pool} key={i} />
               ))}
             </div>
+
+            <h5 className="mt-4 font-bold">
+              Pools in Review ( {poolsInReview.length} )
+            </h5>
+            <div
+              className={`mt-2 flex w-full transform flex-wrap gap-4 overflow-x-auto transition-height duration-200 ease-in-out  `}
+            >
+              {poolsInReview.map((pool, i) => (
+                <PoolCard
+                  tokenGarden={tokenGarden}
+                  {...pool}
+                  key={i}
+                  enabled={false}
+                />
+              ))}
+            </div>
+
+            {}
 
             {/* IncreasePower funcionality - alpha test */}
             <h3 className="mt-10">Your stake in the community</h3>

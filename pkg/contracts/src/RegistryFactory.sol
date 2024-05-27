@@ -32,6 +32,14 @@ contract RegistryFactory is Ownable {
     /*|--------------------------------------------|*/
 
     error CommunityInvalid(address _community);
+    error AddressCannotBeZero();
+
+    /*|--------------------------------------------|*/
+    /*|                 MODIFIERS                  |*/
+    /*|--------------------------------------------|*/
+    function _revertZeroAddress(address _address) internal pure {
+        if (_address == address(0)) revert AddressCannotBeZero();
+    }
 
     function createRegistry(RegistryCommunity.InitializeParams memory params)
         public
@@ -48,6 +56,7 @@ contract RegistryFactory is Ownable {
     }
 
     function setReceiverAddress(address _newFeeReceiver) public onlyOwner {
+        _revertZeroAddress(_newFeeReceiver);
         gardensFeeReceiver = _newFeeReceiver;
         emit FeeReceiverSet(_newFeeReceiver);
     }

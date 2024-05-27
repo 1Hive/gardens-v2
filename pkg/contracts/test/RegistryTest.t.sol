@@ -15,7 +15,7 @@ import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
 import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
 import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
-import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
+import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
@@ -32,7 +32,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
     CVStrategy public strategy;
-    MockERC20 public token;
+    GV2ERC20 public token;
     uint256 public mintAmount = 1_000_000 * DECIMALS;
 
     uint256 public constant MINIMUM_STAKE = 50 * DECIMALS;
@@ -53,6 +53,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     address gardenMember = makeAddr("communityGardenMember");
     address protocolFeeReceiver = makeAddr("multisigReceiver");
     address daoFeeReceiver = makeAddr("daoFeeReceiver");
+    address newCouncilSafe = makeAddr("newCouncilSafe");
 
     function setUp() public {
         __RegistrySetupFull();
@@ -63,7 +64,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         allo().updatePercentFee(0);
         vm.stopPrank();
 
-        token = new MockERC20();
+        token = new GV2ERC20("Mock Token", "MTK", 18);
         token.mint(local(), mintAmount);
         token.mint(allo_owner(), mintAmount);
         token.mint(gardenOwner, mintAmount);
@@ -88,6 +89,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
         vm.stopPrank();
         RegistryCommunity.InitializeParams memory params;
+        params._strategyTemplate = address(strategy);
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -185,6 +187,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         _registryFactory().setProtocolFee(address(registryCommunity), 2);
         assertEq(_registryFactory().getProtocolFee(address(registryCommunity)), 2);
         vm.stopPrank();
+        stopMeasuringGas();
     }
 
     function test_activate_totalActivatedPoints_fixed_system() public {
@@ -221,6 +224,47 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         assertEq(
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.getMemberStakedAmount(gardenMember),
+            "memberPower"
+        );
+    }
+
+    function test_activate_deactivate_totalActivatedPoints_fixed_system() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Fixed
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+        strategy.activatePoints();
+
+        // token.approve(address(registryCommunity), tokenAmount * DECIMALS);
+        // _registryCommunity().increasePower(tokenAmount * DECIMALS);
+
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE, "balance");
+        token.approve(address(registryCommunity), 20 * DECIMALS);
+        _registryCommunity().increasePower(20 * DECIMALS);
+        strategy.deactivatePoints();
+        strategy.activatePoints();
+        vm.stopPrank();
+
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.registerStakeAmount(),
             "memberPower"
         );
     }
@@ -540,6 +584,58 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         );
     }
 
+    function test_DecreasePower_after_increasePower_diff_orders() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(token),
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategy(address(strategy));
+        vm.stopPrank();
+
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        //vm.expectRevert("error");
+
+        token.approve(address(registryCommunity), 100 * DECIMALS);
+
+        strategy.activatePoints();
+
+        _registryCommunity().increasePower(100 * DECIMALS);
+
+        strategy.deactivatePoints();
+        strategy.activatePoints();
+
+        _registryCommunity().decreasePower(50 * DECIMALS);
+
+        strategy.deactivatePoints();
+        strategy.activatePoints();
+
+        _registryCommunity().decreasePower(50 * DECIMALS);
+
+        // assertEq(
+        //     registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+        //     registryCommunity.registerStakeAmount() + (150 * DECIMALS)
+        // );
+
+        assertEq(
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.registerStakeAmount()
+        );
+        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
+        vm.stopPrank();
+    }
+
     function test_DecreasePower_after_increasePower() public {
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
@@ -763,13 +859,25 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         stopMeasuringGas();
     }
 
-    function test_updateCommunityFee() public {
+    function test_setCommunityFee() public {
         startMeasuringGas("Updating protocol fee");
         vm.startPrank(address(councilSafe));
-        _registryCommunity().updateCommunityFee(5);
-        assertEq(_registryCommunity().communityFee(), 5);
+        _registryCommunity().setCommunityFee(5 * PERCENTAGE_SCALE);
+        assertEq(_registryCommunity().communityFee(), 5 * PERCENTAGE_SCALE);
         vm.stopPrank();
         stopMeasuringGas();
+    }
+
+    function test_setCouncilSafe() public {
+        startMeasuringGas("Setting council safe");
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
+        assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
+        vm.stopPrank();
+        vm.startPrank(newCouncilSafe);
+        _registryCommunity().acceptCouncilSafe();
+        assertEq(address(_registryCommunity().councilSafe()), address(newCouncilSafe));
+        vm.stopPrank();
     }
 
     function test_addStrategy() public {
@@ -779,6 +887,23 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
         vm.stopPrank();
         stopMeasuringGas();
+    }
+
+    function test_revertSetCouncilSafe() public {
+        vm.startPrank(gardenMember);
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
+        vm.stopPrank();
+        vm.startPrank(address(councilSafe));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        _registryCommunity().setCouncilSafe(payable(address(0)));
+        _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
+        assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
+        vm.stopPrank();
+        vm.startPrank(gardenMember);
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.SenderNotNewOwner.selector));
+        _registryCommunity().acceptCouncilSafe();
+        vm.stopPrank();
     }
 
     function test_removeStrategy() public {
@@ -810,13 +935,19 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         stopMeasuringGas();
     }
 
-    function test_revertUpdateCommunityFee() public {
+    function test_revertSetCommunityFee() public {
         startMeasuringGas("Testing update protocol revert");
         vm.startPrank(gardenOwner);
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
-        _registryCommunity().updateCommunityFee(5);
+        _registryCommunity().setCommunityFee(5);
         vm.stopPrank();
-        stopMeasuringGas();
+
+        vm.startPrank(address(councilSafe));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.NewFeeGreaterThanMax.selector));
+        _registryCommunity().setCommunityFee(11 * PERCENTAGE_SCALE);
+        _registryCommunity().setCommunityFee(10 * PERCENTAGE_SCALE);
+        assertEq(_registryCommunity().communityFee(), 10 * PERCENTAGE_SCALE);
+        vm.stopPrank();
     }
 
     function test_revertSetBasisStakeAmount() public {
@@ -831,5 +962,55 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_getStakeAmountWithFees() public {
         uint256 stakeFees = _registryCommunity().getStakeAmountWithFees();
         assertEq(stakeFees, STAKE_WITH_FEES);
+    }
+
+    function test_addStrategyByPoolId() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(token),
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategyByPoolId(poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
+    }
+
+    function test_Revert_addStrategyByPoolId() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(token),
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        _registryCommunity().addStrategyByPoolId(poolId);
+
+        vm.startPrank(address(councilSafe));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        _registryCommunity().addStrategyByPoolId(poolId + 1);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
     }
 }

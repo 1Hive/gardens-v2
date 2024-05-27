@@ -19,7 +19,8 @@ import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
 import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
 import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
-import {MockERC20} from "allo-v2-test/utils/MockERC20.sol";
+
+import {GV2ERC20} from "../script/GV2ERC20.sol";
 
 import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
@@ -42,7 +43,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     using ABDKMath64x64 for uint128;
     using ABDKMath64x64 for uint256;
 
-    MockERC20 public token;
+    GV2ERC20 public token;
     uint256 public mintAmount = 15000 ether;
     uint256 public constant TOTAL_SUPPLY = 45000 ether;
     uint256 public constant POOL_AMOUNT = 15000 ether;
@@ -67,7 +68,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().updatePercentFee(0);
         vm.stopPrank();
 
-        token = new MockERC20();
+        token = new GV2ERC20("Mock Token", "MTK", 18);
         token.mint(local(), TOTAL_SUPPLY / 2);
         token.mint(pool_admin(), TOTAL_SUPPLY / 2);
         token.approve(address(allo()), mintAmount);
@@ -82,10 +83,14 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
 
         RegistryCommunity.InitializeParams memory params;
+        params._strategyTemplate = address(new CVStrategy(address(allo())));
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = COMMUNITY_FEE_PERCENTAGE;
+
+        params._feeReceiver = address(this);
+
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
@@ -139,12 +144,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             StrategyStruct.PointSystemConfig(200 * DECIMALS)
         );
 
-        CVStrategy strategy = new CVStrategy(address(allo()));
+        // CVStrategy strategy = new CVStrategy(address(allo()));
 
-        (uint256 _poolId,) = _registryCommunity().createPool(address(strategy), useTokenPool, params, metadata);
+        (uint256 _poolId, address _strategy) = _registryCommunity().createPool(useTokenPool, params, metadata);
         // console.log("strat: %s", strat);
         poolId = _poolId;
-        // CVStrategy strategy = CVStrategy(payable(strat));
+        CVStrategy strategy = CVStrategy(payable(_strategy));
 
         vm.startPrank(pool_admin());
         safeHelper(
@@ -164,8 +169,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         if (useTokenPool == NATIVE) {
             allo().fundPool{value: poolAmount}(poolId, poolAmount);
         } else {
-            MockERC20(useTokenPool).mint(address(this), poolAmount);
-            MockERC20(useTokenPool).approve(address(allo()), poolAmount);
+            GV2ERC20(useTokenPool).mint(address(this), poolAmount);
+            GV2ERC20(useTokenPool).approve(address(allo()), poolAmount);
             allo().fundPool(poolId, poolAmount);
         }
 
@@ -304,7 +309,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function testRevert_registerRecipient_TokenNotAllowed() public {
         (, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
 
-        // address wrong_token = address(new MockERC20());
+        // address wrong_token = address(new GV2ERC20());
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0x666), metadata);
         bytes memory data = abi.encode(proposal);
@@ -654,6 +659,110 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         //assertEq(cv.getProposalVoterStake(1, address(this)), MINIMUM_STAKE); // 100% of 50 = 50
         //assertEq(cv.getProposalStakedAmount(1), (MINIMUM_STAKE * PRECISE_FIVE_PERCENT)/PRECISE_HUNDRED_PERCENT);
         assertEq(cv.getProposalStakedAmount(1), PRECISE_FIVE_PERCENT);
+    }
+
+    function test_proposalSupported_threshold_error() public {
+        uint256 maxRatio = 0.1 ether;
+        uint256 spendingLimit = ((maxRatio * 1e18) / 0.77645 ether);
+
+        console.log("maxRatio:          %s", maxRatio);
+        console.log("spendingLimit:     %s", spendingLimit);
+
+        uint256 pot = 3_000 ether;
+        uint256 amountRequested = (pot * spendingLimit / 1e18) - 115 ether;
+        console.log("amountRequested:   %s", amountRequested);
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) =
+            _createProposal(address(token), amountRequested, pot);
+
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMinThresholdPoints.selector, MIN_THRESHOLD_PTS));
+
+        // FAST 1 MIN half life Conviction Growth
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9965402 ether)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(spendingLimit)));
+        safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setWeight.selector, _etherToFloat(0.0005 ether)));
+
+        // startMeasuringGas("Support a Proposal");
+        int256 SUPPORT_PCT = int256(MINIMUM_STAKE);
+        StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 70 = 70% = 35
+        bytes memory data = abi.encode(votes);
+        allo().allocate(poolId, data);
+        stopMeasuringGas();
+
+        uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT);
+        assertEq(cv.getProposalVoterStake(1, address(this)), STAKED_AMOUNT, "ProposalVoterStake:"); // 80% of 50 = 40
+        assertEq(cv.getProposalStakedAmount(1), STAKED_AMOUNT, " ProposalStakeAmount:"); // 80% of 50 = 40
+
+        /**
+         * ASSERTS
+         *
+         */
+        vm.startPrank(pool_admin());
+
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember();
+        cv.activatePoints();
+
+        StrategyStruct.ProposalSupport[] memory votes2 = new StrategyStruct.ProposalSupport[](1);
+        int256 SUPPORT_PCT2 = int256(MINIMUM_STAKE);
+        votes2[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT2);
+        data = abi.encode(votes2);
+        // vm.expectEmit(true, true, true, false);
+        allo().allocate(poolId, data);
+        vm.stopPrank();
+
+        uint256 STAKED_AMOUNT2 = uint256(SUPPORT_PCT2);
+
+        assertEq(cv.getProposalVoterStake(proposalId, address(pool_admin())), STAKED_AMOUNT2); // 100% of 50 = 50
+        assertEq(cv.getProposalStakedAmount(proposalId), STAKED_AMOUNT + STAKED_AMOUNT2);
+
+        // console.log("before block.number", block.number);
+
+        // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
+
+        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.decay(), 1e7));
+        vm.roll(rollTo100 * 2);
+
+        console.log("after block.number", block.number);
+        cv.updateProposalConviction(proposalId);
+
+        (
+            , // address submitter,
+            , // address beneficiary,
+            , // address requestedToken,
+            , // uint256 requestedAmount,
+            , // uint256 stakedTokens,
+            , // ProposalStatus proposalStatus,
+            , // uint256 blockLast,
+            uint256 convictionLast,
+            uint256 threshold,
+            // uint256 voterPointsPct
+        ) = cv.getProposal(proposalId);
+
+        // console.log("Requested Amount: %s", requestedAmount);
+        // console.log("Staked Tokens: %s", stakedTokens);
+        console.log("Threshold:         %s", threshold);
+        console.log("Conviction Last:   %s", convictionLast);
+        // console.log("Voter points pct %s", voterPointsPct);
+        // assertEq(threshold, 115613619, "threshold");
+        // assertEq(threshold, MIN_THRESHOLD_PTS, "threshold");
+
+        console.log("after block.number", block.number);
+
+        cv.updateProposalConviction(proposalId);
+
+        uint256 totalEffectiveActivePoints = cv.totalEffectiveActivePoints();
+        console.log("maxCVSupply:       %s", cv.getMaxConviction(totalEffectiveActivePoints));
+        console.log("totalEffectiveActivePoints:    %s", totalEffectiveActivePoints);
+        // if (block.number >= rollTo100 * 2) {
+        // assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
+
+        // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMinThresholdPoints.selector, 0));
+        // cv.updateProposalConviction(proposalId);
+        assertEq(cv.canExecuteProposal(proposalId), true, "canExecuteProposal");
+        // }
     }
 
     function test_proposalSupported_conviction_with_minThresholdPoints() public {
@@ -1657,10 +1766,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         RegistryFactory registryFactory = new RegistryFactory();
 
         RegistryCommunity.InitializeParams memory params;
+        params._strategyTemplate = address(new CVStrategy(address(allo())));
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 2;
+        params._feeReceiver = address(this);
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
@@ -1674,10 +1785,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         RegistryFactory registryFactory = new RegistryFactory();
 
         RegistryCommunity.InitializeParams memory params;
+        params._strategyTemplate = address(new CVStrategy(address(allo())));
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 2;
+        params._feeReceiver = address(this);
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "GardensDAO";

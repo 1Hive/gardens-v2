@@ -136,10 +136,11 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
+    event PointsDeactivated(address member);
     event DecayUpdated(uint256 decay);
     event MaxRatioUpdated(uint256 maxRatio);
     event WeightUpdated(uint256 weight);
-
+    event RegistryUpdated(address registryCommunity);
     event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
 
     /*|-------------------------------------/-------|*o
@@ -150,34 +151,37 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     /*|                VARIABLES                   |*/
     /*|--------------------------------------------|*/
 
-    uint256 internal surpressStateMutabilityWarning;
-
-    RegistryCommunity public registryCommunity;
-
-    mapping(uint256 => StrategyStruct.Proposal) public proposals;
-    mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
-    mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
-
-    uint256 public decay;
-    uint256 public maxRatio;
-    uint256 public weight;
-    StrategyStruct.ProposalType public proposalType;
-
-    uint256 public proposalCounter = 0;
-    uint256 public totalStaked;
-    uint256 public totalPointsActivated;
-    uint256 public _minThresholdPoints = 0;
-
-    StrategyStruct.PointSystem public pointSystem;
-    StrategyStruct.PointSystemConfig public pointConfig;
-
-    // uint256 public constant PRECISION_SCALE = 10 ** 4;
+    // Constants for fixed numbers
     uint256 public constant D = 10000000; //10**7
-    // uint256 public constant PRECISION_PERCENTAGE = 100 * PRECISION_SCALE;
     uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
     uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
-    uint256 public constant MAX_STAKED_PROPOSALS = 10; //@todo not allow stake more than 10 proposals per user, dont count executed?
+    uint256 public constant MAX_STAKED_PROPOSALS = 10; // @todo not allow stake more than 10 proposals per user, don't count executed?
+
+    // uint256 variables packed together
+    uint256 public decay;
+    uint256 public maxRatio;
+    uint256 public weight;
+    uint256 public proposalCounter = 0;
+    uint256 public totalStaked;
+    uint256 public totalPointsActivated;
+    uint256 public _minThresholdPoints = 0; // starting with a default of zero
+    uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
+
+    // Enum for handling proposal types
+    StrategyStruct.ProposalType public proposalType;
+
+    // Struct variables for complex data structures
+    StrategyStruct.PointSystem public pointSystem;
+    StrategyStruct.PointSystemConfig public pointConfig;
+
+    // Contract reference
+    RegistryCommunity public registryCommunity;
+
+    // Mappings to handle relationships and staking details
+    mapping(uint256 => StrategyStruct.Proposal) public proposals; // Mapping of proposal IDs to Proposal structures
+    mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
+    mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -230,8 +234,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
     function checkSenderIsMember(address _sender) private view {
-        //        @todo: check if user is in registry
-        //        require(_user != address(0), "CVStrategy: User is not valid");
         if (_sender == address(0)) {
             revert UserCannotBeZero();
         }
@@ -326,6 +328,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         withdraw(_member);
+        emit PointsDeactivated(_member);
     }
 
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
@@ -362,7 +365,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         return pointsToDecrease;
     }
 
-    //todo: increase/decrease for all systems, 8 total
     function increasePowerUnlimited(uint256 _amountToStake) internal pure returns (uint256) {
         return _amountToStake;
     }
@@ -649,11 +651,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
     }
 
-    function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool) {
-        if (maxRatio * poolAmount <= _requestedAmount * D) {
-            return true;
-        }
-        return false;
+    function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool isOverMaxRatio) {
+        isOverMaxRatio = maxRatio * poolAmount <= _requestedAmount * D;
     }
 
     function _check_before_addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport)
@@ -755,7 +754,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 totalStaked -= previousStakedPoints - stakedPoints;
                 proposal.stakedAmount -= previousStakedPoints - stakedPoints;
             }
-            //@todo: should emit event
             if (proposal.blockLast == 0) {
                 proposal.blockLast = block.number;
             } else {
@@ -951,7 +949,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
         registryCommunity = RegistryCommunity(_registryCommunity);
-        //@todo missing event, also we can change it?
+        emit RegistryUpdated(_registryCommunity);
     }
 
     function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {

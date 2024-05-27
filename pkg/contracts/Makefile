@@ -14,7 +14,42 @@ add-strategy: #make add-strategy S=0x1234
 	-forge script script/AddStrategy.s.sol:AddStrategy \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pk1 \
-	--sig "run(address)" $(S) \
+	--sig "run(address,address)" $(S) $(C) \
+	--broadcast \
+	-vvvv
+
+add-strategy-ethsep: #make add-strategy S=0x1234 
+	-forge script script/AddStrategy.s.sol:AddStrategy \
+	--rpc-url $(RPC_URL_SEP_TESTNET) \
+	--account pk1 \
+	--sig "run(address,address)" $(S) $(C) \
+	--broadcast \
+	--legacy \
+	-vvvv
+	
+add-strategy-ethsep-pool: #make add-strategy S=0x1234 
+	-forge script script/AddStrategy.s.sol:AddStrategy \
+	--rpc-url $(RPC_URL_SEP_TESTNET) \
+	--account pk1 \
+	--sig "run(uint256,address)" $(P) $(C) \
+	--broadcast \
+	--legacy \
+	-vvvv
+	
+add-strategy-local: #make add-strategy S=0x1234 
+	-forge script script/AddStrategy.s.sol:AddStrategy \
+	--rpc-url $(RPC_URL_LOCALHOST) \
+	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
+	--unlocked \
+	--sig "run(address,address)" $(S) $(C) \
+	--broadcast \
+	-vvvv
+
+add-owner: #make add-owner owner=0x1234 safe=0x1234
+	-forge script script/AddOwner.s.sol:AddOwner \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pk1 \
+	--sig "run(address,address)" $(owner) $(safe) \
 	--broadcast \
 	-vvvv
 
@@ -59,21 +94,45 @@ deploy-testnet-dry:
 	-vvvv
 
 
-deploy-testnet2-op: 
+deploy-testnet-multi-sep: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_SEP_TESTNET) \
+	--account pk1 \
+	--sig "run(string)" 'sepolia' \
+	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
+	--broadcast \
+	--legacy \
+	-vvv
+
+deploy-verify-multi-sep: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_SEP_TESTNET) \
+	--account pk1 \
+	--verify \
+	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
+	-vv
+	
+deploy-testnet-multi-op: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
 	--account pk1 \
 	--sig "run(string)" 'opsepolia' \
 	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast \
 	-vvv
 
-deploy-testnet2: 
+deploy-testnet-multi-arb: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pk1 \
 	--sig "run(string)" 'arbsepolia' \
 	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
+	--broadcast \
 	-vvv
+
 deploy-verify: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \

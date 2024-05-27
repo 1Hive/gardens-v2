@@ -1,20 +1,13 @@
 "use client";
-import React, { useEffect, useState, ChangeEvent } from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { FormModal } from "./FormModal";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import {
-  usePrepareContractWrite,
-  useContractWrite,
-  useContractRead,
-} from "wagmi";
+import { useContractWrite } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
-import { ipfsFileUpload, ipfsJsonUpload } from "@/utils/ipfsUtils";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { toast } from "react-toastify";
-import { PhotoIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormInput } from "./FormInput";
 import { FormCheckBox } from "./FormCheckBox";
@@ -24,11 +17,8 @@ import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
 import { getChain } from "@/configs/chainServer";
 import { getChainIdFromPath } from "@/utils/path";
-import { getNetwork } from "@wagmi/core";
-import {
-  PERCENTAGE_PRECISION,
-  PERCENTAGE_PRECISION_DECIMALS,
-} from "@/utils/numbers";
+import { PERCENTAGE_PRECISION_DECIMALS } from "@/utils/numbers";
+import { getContractsAddrByChain } from "@/constants/contracts";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -82,6 +72,7 @@ export const CommunityForm = ({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
   // const [file, setFile] = useState<File | null>(null);
 
   const publicClient = createPublicClient({
@@ -100,7 +91,7 @@ export const CommunityForm = ({
     },
     feeAmount: {
       label: "Community Fee Amount:",
-      parse: (value: number) => `${value ?? "0"} %`,
+      parse: (value: number) => `${value * 100 ?? "0"} %`,
     },
     feeReceiver: { label: "Fee Receiver:" },
     councilSafe: { label: "Council Safe:" },
@@ -160,7 +151,10 @@ export const CommunityForm = ({
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
     onSuccess: () => router.push(pathname.replace(`/create-community`, "")),
-    onError: () => alert("Something went wrong creating Community"),
+    onError: (err) => {
+      console.log(err);
+      toast.error("Something went wrong creating Community");
+    },
     onSettled: () => setLoading(false),
   });
 
@@ -181,8 +175,12 @@ export const CommunityForm = ({
     const metadata = [1n, "ipfsHash"];
     const isKickMemberEnabled = previewData?.isKickMemberEnabled;
     const covenantIpfsHash = ipfsHash;
-
-    return [
+    const strategyTemplate = getContractsAddrByChain(chain)?.strategyTemplate;
+    if (!strategyTemplate) {
+      console.log("No strategy template found for chain", chain);
+      toast.error("No strategy template found for chain");
+    }
+    const args = [
       alloContractAddr,
       gardenTokenAddress,
       stakeAmount,
@@ -195,7 +193,11 @@ export const CommunityForm = ({
       communityName,
       isKickMemberEnabled,
       covenantIpfsHash,
+      strategyTemplate,
     ];
+    console.log(args);
+
+    return args;
   };
 
   const handlePreview = (data: FormInputs) => {

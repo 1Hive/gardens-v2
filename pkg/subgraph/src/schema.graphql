@@ -9,6 +9,7 @@ type CVStrategy @entity(immutable: false) {
   memberActive: [Member!]
   maxCVSupply: BigInt!
   totalEffectiveActivePoints: BigInt!
+  isEnabled: Boolean!
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -65,6 +66,7 @@ type RegistryFactory @entity(immutable: false) {
 type RegistryCommunity @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
+  strategyTemplate: String!
   profileId: String
   communityFee: BigInt!
   protocolFee: BigInt!

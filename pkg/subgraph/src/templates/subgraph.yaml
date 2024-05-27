@@ -50,9 +50,9 @@ templates:
         #   handler: handleProtocolFeeUpdated
         - event: StrategyAdded(address)
           handler: handleStrategyAdded
-        # - event: StrategyRemoved(address)
-        #   handler: handleStrategyRemoved
-        - event: MemberActivatedStrategy(address,address)
+        - event: StrategyRemoved(address)
+          handler: handleStrategyRemoved
+        - event: MemberActivatedStrategy(address,address,uint256)
           handler: handleMemberActivatedStrategy
         - event: MemberDeactivatedStrategy(address,address)
           handler: handleMemberDeactivatedStrategy
@@ -106,6 +106,8 @@ templates:
           handler: handlePowerIncreased
         - event: PowerDecreased(address,uint256,uint256)
           handler: handlePowerDecreased
+        - event: PointsDeactivated(address)
+          handler: handlePointsDeactivated
         - event: DecayUpdated(uint256)
           handler: handleDecayUpdated
         - event: MaxRatioUpdated(uint256)

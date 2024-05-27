@@ -14,7 +14,8 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
-import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
+// import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
+import {GV2ERC20} from "./GV2ERC20.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -22,15 +23,24 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 
+import {SafeProxyFactory} from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+
 contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     using stdJson for string;
 
-    uint256 public MINIMUM_STAKE = 50;
+    uint256 public MINIMUM_STAKE = 1 ether;
 
     address public SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
-    address public TOKEN;
+    address public TOKEN; // check networks.json file
+    address public COUNCIL_SAFE; // check networks.json file
+    address public SAFE_PROXY_FACTORY; // check networks.json file
 
     string public CURRENT_NETWORK = "arbsepolia";
+
+    uint256 councilMemberPKEnv;
+    address allo_proxy;
+    Allo allo;
+    GV2ERC20 token;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -68,6 +78,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     }
 
     function run(string memory network) public {
+        vm.startBroadcast(pool_admin());
+
         if (bytes(network).length != 0) {
             CURRENT_NETWORK = network;
         }
@@ -82,59 +94,64 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("sender: %s", SENDER);
         console2.log("chainId : %s", chainId);
 
-        address allo_proxy = json.readAddress(getKeyNetwork(".ENVS.ALLO_PROXY"));
-        // address allo_proxy = vm.envAddress("ALLO_PROXY");
+        allo_proxy = json.readAddress(getKeyNetwork(".ENVS.ALLO_PROXY"));
+
         if (allo_proxy == address(0)) {
             revert("ALLO_PROXY not set");
         }
         // get PK from env
-        uint256 councilMemberPKEnv = vm.envUint("PK");
+        councilMemberPKEnv = vm.envUint("PK");
         if (councilMemberPKEnv == 0) {
             revert("PK not set");
         }
 
-        Allo allo = Allo(allo_proxy);
+        allo = Allo(allo_proxy);
+
+        assertTrue(address(allo) != address(0));
 
         TOKEN = json.readAddress(getKeyNetwork(".ENVS.TOKEN"));
-        // assertTrue(TOKEN != address(0));
-        // console2.log("Allo Addr: %s", address(allo));
-        AMockERC20 token = AMockERC20(TOKEN);
+
         if (TOKEN == address(0)) {
-            token = new AMockERC20();
+            token = new GV2ERC20("HoneyV2", "HNYV2", 18);
+            console2.log("Created Token Addr: %s", address(token));
             TOKEN = address(token);
+        } else {
+            token = GV2ERC20(TOKEN);
         }
 
-        // IRegistry registry = allo.getRegistry();
-        // console2.log("Registry Addr: %s", address(registry));
+        assertTrue(token != GV2ERC20(address(0)));
+        assertTrue(TOKEN != address(0));
 
-        // console2.log("Pool Admin Addr: %s", pool_admin());
+        console2.log("Allo Addr: %s", address(allo));
 
-        vm.startBroadcast(pool_admin());
+        COUNCIL_SAFE = json.readAddress(getKeyNetwork(".ENVS.COUNCIL_SAFE"));
 
-        // AMockERC20 token = new AMockERC20();
-        // console2.log("Token Addr: %s", address(token));
-        Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
+        assertTrue(COUNCIL_SAFE != address(0), "Council Safe not set");
 
-        // RegistryFactory registryFactory = new RegistryFactory();
+        if (COUNCIL_SAFE == address(0)) {
+            Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin(), SafeProxyFactory(SAFE_PROXY_FACTORY));
+            COUNCIL_SAFE = address(councilSafeDeploy);
+        }
+        // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
+
         RegistryFactory registryFactory = new RegistryFactory();
 
         RegistryCommunity.InitializeParams memory params;
 
+        metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"});
+        params._metadata = metadata; // convenant ipfs
+
+        params._communityName = "Alpha Centaurians";
         params._allo = address(allo);
+        params._strategyTemplate = address(new CVStrategy(address(allo)));
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 0;
-        params._metadata = metadata; // convenant ipfs
-        params._councilSafe = payable(address(councilSafeDeploy));
-        // params._councilSafe = payable(address(_councilSafeWithOwner(pool_admin());
-        params._communityName = "GardensDAO";
+        params._councilSafe = payable(COUNCIL_SAFE);
 
         assertTrue(params._councilSafe != address(0));
 
         RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
-
-        // console2.log("Registry Factory Addr: %s", address(registryFactory));
-        // console2.log("Registry Community Addr: %s", address(registryCommunity));
 
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
@@ -149,121 +166,78 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
         paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
         paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
-        // params.minThresholdStakePercentage = 0.2 ether; // 20%
-        // paramsCV.registryCommunity = address(registryCommunity);
-        // paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
 
-        CVStrategy strategy1 = new CVStrategy(address(allo));
-        CVStrategy strategy2 = new CVStrategy(address(allo));
+        (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
 
         safeHelper(
-            councilSafeDeploy,
+            Safe(payable(COUNCIL_SAFE)),
             councilMemberPKEnv,
             address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
-        );
-        safeHelper(
-            councilSafeDeploy,
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
         );
 
-        // address[] memory _pool_managers = new address[](2);
-        // _pool_managers[0] = address(params._councilSafe);
-        // _pool_managers[1] = address(msg.sender);
+        CVStrategy strategy1 = CVStrategy(payable(_strategy1));
 
-        // bytes32 memory_poolProfileId_ = registry.createProfile(
-        //     0, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
-        // );
-
-        (uint256 poolId,) = registryCommunity.createPool(address(strategy1), address(token), paramsCV, metadata);
-
-        // uint256 poolId = allo.createPoolWithCustomStrategy(
-        //     // poolId = allo.createPool(
-        //     registryCommunity.profileId(),
-        //     address(strategy1),
-        //     abi.encode(paramsCV),
-        //     address(token),
-        //     0,
-        //     metadata,
-        //     _pool_managers
-        // );
-
-        paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
-        paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
-
-        // uint256 poolIdSignaling = allo.createPoolWithCustomStrategy(
-        //     // poolId = allo.createPool(
-        //     registryCommunity.profileId(),
-        //     address(strategy2),
-        //     abi.encode(paramsCV),
-        //     address(0),
-        //     0,
-        //     metadata,
-        //     _pool_managers
-        // );
-
-        (uint256 poolIdSignaling,) = registryCommunity.createPool(address(strategy2), address(0), paramsCV, metadata);
         strategy1.setDecay(_etherToFloat(0.9965402 ether));
         // alpha = decay
         strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+
+        paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
+        paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
+
+        (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(address(0), paramsCV, metadata);
+
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
+        );
+
+        CVStrategy strategy2 = CVStrategy(payable(_strategy2));
 
         // FAST 1 MIN GROWTH
         strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
         strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
 
-        // poolId =
-        //     createPool(Allo(address(allo)), address(strategy1), address(registryCommunity), registry, address(token));
-
-        // uint256 poolIdSignaling =
-        //     createPool(Allo(address(allo)), address(strategy2), address(registryCommunity), registry, address(0));
-        //
+        token.mint(address(pool_admin()), 10_000 ether);
         token.approve(address(registryCommunity), type(uint256).max);
+        // token.mint(address(pool_admin()), 100);
         //@todo get correct value instead infinite approval
         registryCommunity.stakeAndRegisterMember();
+
+        assertEq(registryCommunity.isMember(address(pool_admin())), true, "Not a member");
+        // assertEq(token.balanceOf(address(this)), registryCommunity.getStakeAmountWithFees(), "Balance not correct");
 
         strategy1.activatePoints();
         strategy2.activatePoints();
 
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
-        token.mint(address(pool_admin()), 10_000);
         token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 1_000);
+        allo.fundPool(poolId, 1_000 ether);
 
         StrategyStruct.CreateProposal memory proposal =
-            StrategyStruct.CreateProposal(poolId, pool_admin(), 50 wei, address(token), metadata);
+            StrategyStruct.CreateProposal(poolId, pool_admin(), 50 ether, address(token), metadata);
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
-        // StrategyStruct.ProposalType.Funding
-        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 25 wei, address(token), metadata);
+
+        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 25 ether, address(token), metadata);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 10 wei, address(token), metadata);
+        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 10 ether, address(token), metadata);
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        // Strategy 2 Signaling
+        // Strategy with Signaling
         StrategyStruct.CreateProposal memory proposal2 =
             StrategyStruct.CreateProposal(poolIdSignaling, pool_admin(), 0, address(0), metadata);
         bytes memory data2 = abi.encode(proposal2);
         allo.registerRecipient(poolIdSignaling, data2);
 
         vm.stopBroadcast();
-
-        // console2.log("PoolId: %s", poolId);
-        // console2.log("Strategy1 Addr: %s", address(strategy1));
-
-        // console2.log("PoolIdSignaling: %s", poolIdSignaling);
-        // console2.log("Strategy2 Addr: %s", address(strategy2));
-        // console2.log("Token Addr: %s", address(token));
-        // console2.log("Token Native Addr: %s", address(NATIVE));
-
-        // console2.log("Allo Registry Addr: %s", address(registry));
-        // console2.log("Council Safe Addr: %s", address(councilSafeOwner));
     }
 }
