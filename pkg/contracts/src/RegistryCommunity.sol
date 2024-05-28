@@ -442,11 +442,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         _removeStrategy(_strategy);
     }
 
-    function setAllo(address _allo) public {
-        allo = FAllo(_allo); //@todo if used, write tests
-        emit AlloSet(_allo);
-    }
-
     function setCouncilSafe(address payable _safe) public {
         onlyCouncilSafe();
         _revertZeroAddress(_safe);
