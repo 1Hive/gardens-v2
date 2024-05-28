@@ -27,6 +27,7 @@ type ProposalCard = {
   memberPoolWeight: number;
   executeDisabled: boolean;
   strategy: CVStrategy;
+  tokenDecimals: number;
   alloInfo: Allo;
   inputHandler: (i: number, value: number) => void;
   triggerRenderProposals: () => void;
@@ -43,6 +44,7 @@ export function ProposalCard({
   memberPoolWeight,
   executeDisabled,
   strategy,
+  tokenDecimals,
   alloInfo,
   inputHandler,
   triggerRenderProposals,
@@ -180,6 +182,7 @@ export function ProposalCard({
                     calculatePercentage(
                       inputData?.value ?? 0,
                       memberActivatedPoints,
+                      tokenDecimals,
                     ),
                   )}
                 </span>
@@ -193,7 +196,7 @@ export function ProposalCard({
                     calculatePercentage(
                       inputData?.value ?? 0,
                       memberActivatedPoints,
-                      // tokenDecimals,
+                      tokenDecimals,
                     ),
                   )}
                 </span>

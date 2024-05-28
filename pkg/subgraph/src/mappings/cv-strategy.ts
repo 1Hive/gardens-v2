@@ -4,6 +4,7 @@ import {
   CVStrategyConfig,
   MemberStrategy,
   Stake,
+  Member,
   // ProposalMeta as ProposalMetadata,
 } from "../../generated/schema";
 // import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
@@ -17,6 +18,7 @@ import {
   SupportAdded,
   PowerIncreased,
   PowerDecreased,
+  PointsDeactivated,
   DecayUpdated,
   MaxRatioUpdated,
   MinThresholdPointsUpdated,
@@ -246,6 +248,78 @@ export function handleSupportAdded(event: SupportAdded): void {
   cvp.save();
 }
 
+export function handlePointsDeactivated(event: PointsDeactivated): void {
+  let member = Member.load(event.params.member.toHexString());
+
+  if (member !== null) {
+    const stakes = member.stakes.load();
+    for (let i = 0; i < stakes.length; i++) {
+      const proposal = CVProposal.load(stakes[i].proposal);
+      if (proposal !== null) {
+        const strategy = CVStrategy.load(proposal.strategy);
+        if (strategy !== null) {
+          if (strategy.id == event.address.toHexString()) {
+            const stake = Stake.load(stakes[i].id);
+            if (stake !== null) {
+              const stakedAmount = stake.amount;
+              stake.amount = BigInt.fromI32(0);
+              stake.save();
+              proposal.stakedAmount = proposal.stakedAmount.minus(stakedAmount);
+              const cvc = CVStrategyContract.bind(event.address);
+
+              let contractProposal = cvc.try_getProposal(
+                proposal.proposalNumber,
+              );
+              if (contractProposal.reverted) {
+                log.error(
+                  "handlePointsDeactivated contractProposal reverted:{}",
+                  [proposal.proposalNumber.toString()],
+                );
+                return;
+              }
+              let prop = contractProposal.value;
+              const maxConviction = cvc.getMaxConviction(
+                prop.value4, // proposalStakedAmount
+              );
+              proposal.maxCVStaked = maxConviction;
+              proposal.convictionLast = prop.value7; // convictionLast
+
+              proposal.save();
+              const memberStrategyId = `${member.id}-${strategy.id}`;
+              const memberStrategy = MemberStrategy.load(memberStrategyId);
+              if (memberStrategy !== null) {
+                memberStrategy.totalStakedPoints =
+                  memberStrategy.totalStakedPoints.minus(stakedAmount);
+                memberStrategy.save();
+              } else {
+                log.debug(
+                  "handlePointsDeactivated memberStrategy not found: {}",
+                  [memberStrategyId.toString()],
+                );
+              }
+              log.debug("handlePointsDeactivated stake not found: {}", [
+                stakes[i].id.toString(),
+              ]);
+            }
+          } else {
+            log.debug("handlePointsDeactivated strategy not found: {}", [
+              proposal.strategy.toString(),
+            ]);
+          }
+        } else {
+          log.debug("handlePointsDeactivated proposal not found: {}", [
+            stakes[i].proposal.toString(),
+          ]);
+        }
+      }
+    }
+  } else {
+    log.debug("handlePointsDeactivated member not found: {}", [
+      event.params.member.toHexString(),
+    ]);
+  }
+}
+
 export function handleDistributed(event: Distributed): void {
   log.debug("handleDistributed: amount: {}", [event.params.amount.toString()]);
 
@@ -258,6 +332,13 @@ export function handleDistributed(event: Distributed): void {
     ]);
     return;
   }
+
+  let cvs = CVStrategy.load(cvp.strategy);
+  if (cvs == null) {
+    log.debug("handleDistributed cvs not found: {}", [cvp.strategy.toString()]);
+    return;
+  }
+
   const cvc = CVStrategyContract.bind(event.address);
   const proposalStatus = cvc
     .getProposal(event.params.proposalId)
@@ -265,6 +346,9 @@ export function handleDistributed(event: Distributed): void {
 
   cvp.proposalStatus = BigInt.fromI32(proposalStatus);
   cvp.save();
+
+  cvs.poolAmount = cvc.getPoolAmount();
+  cvs.save();
 }
 
 export function handlePowerIncreased(event: PowerIncreased): void {

@@ -31,7 +31,7 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
     // address public SAFE = 0x70471a50d4655C1677B7f0C5cAdD7a0410Aa2607;
     // address public SAFE = 0x46Abca313093B7F143Ae0833366e606a940BE44d;
     // address public SAFE = 0x46Abca313093B7F143Ae0833366e606a940BE44d;
-    address public SAFE = 0xfd22B835c4aA9A998d8A213943afFb52886C0547;
+    address public SAFE;
     address public COMMUNITY = 0x127BBb34A1cF9C8dc773Ea4C5D13878C534F1770;
 
     address allo_proxy;
@@ -39,6 +39,26 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
+    }
+
+    function run(uint256 poolId, address _comm) public {
+        console2.log("AddStrategy.run(%s)", poolId);
+        console2.log("AddStrategy.run(%s)", _comm);
+        assertNotEq(_comm, address(0), "Community not set");
+        assertNotEq(poolId, 0, "Pool ID not set");
+
+        allo_proxy = vm.envAddress("ALLO_PROXY");
+        if (allo_proxy == address(0)) {
+            revert("ALLO_PROXY not set");
+        }
+
+        allo = Allo(allo_proxy);
+
+        IAllo.Pool memory pool = allo.getPool(poolId);
+
+        console2.log("Pool Addr: %s", address(pool.strategy));
+
+        run(payable(address(pool.strategy)), _comm);
     }
 
     function run(address payable _strategy, address _comm) public {
@@ -63,8 +83,9 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
 
         allo = Allo(allo_proxy);
 
-        // IAllo.Pool memory pool = allo.getPool(352);
+        IAllo.Pool memory pool = allo.getPool(172);
 
+        console2.log("Pool Addr: %s", address(pool.strategy));
         // address strategy = address(pool.strategy);
         // address strategy = address(pool.strategy);
 
@@ -72,18 +93,21 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
 
         vm.startBroadcast(pool_admin());
 
-        Safe councilSafeDeploy = Safe(payable(SAFE));
-
         if (_comm != address(0)) {
             COMMUNITY = _comm;
         }
 
         RegistryCommunity registryCommunity = RegistryCommunity(COMMUNITY);
 
+        if (SAFE == address(0)) {
+            SAFE = address(registryCommunity.councilSafe());
+        }
+        Safe councilSafeDeploy = Safe(payable(SAFE));
+
         console2.log("Comm Safe Addr: %s", address(registryCommunity.councilSafe()));
 
         assertTrue(address(registryCommunity.councilSafe()) != address(0), "Council Safe not set");
-        assertEq(address(registryCommunity.councilSafe()), address(councilSafeDeploy), "Council Safe not set2");
+        assertTrue(address(councilSafeDeploy) != address(0), "Council Safe empty");
 
         CVStrategy strategy1 = CVStrategy(_strategy);
 

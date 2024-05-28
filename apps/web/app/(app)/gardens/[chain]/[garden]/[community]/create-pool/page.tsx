@@ -40,6 +40,7 @@ export default async function CreatePool({
         alloAddr={alloAddr}
         token={token as TokenGarden}
         communityAddr={community as Address}
+        chainId={chain}
       />
     </div>
   );

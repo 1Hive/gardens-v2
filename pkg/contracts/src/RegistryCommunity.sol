@@ -8,6 +8,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 // import {Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 // import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
+import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {RegistryFactory} from "./RegistryFactory.sol";
 import {ISafe} from "./ISafe.sol";
 // import {Safe} from "safe-contracts/contracts/Safe.sol";
@@ -31,6 +32,7 @@ interface FAllo {
     ) external payable returns (uint256 poolId);
 
     function getRegistry() external view returns (address);
+    function getPool(uint256 _poolId) external view returns (IAllo.Pool memory);
 }
 
 contract RegistryCommunity is ReentrancyGuard, AccessControl {
@@ -403,9 +405,21 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     // function getGardenTokenDecimals() public view returns (uint256){
     //     return gardenToken.decimals();
     // }
+    function addStrategyByPoolId(uint256 poolId) public {
+        onlyCouncilSafe();
+        address strategy = address(allo.getPool(poolId).strategy);
+        _revertZeroAddress(strategy);
+        if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
+            _addStrategy(strategy);
+        }
+    }
 
     function addStrategy(address _newStrategy) public {
         onlyCouncilSafe();
+        _addStrategy(_newStrategy);
+    }
+
+    function _addStrategy(address _newStrategy) internal {
         if (enabledStrategies[_newStrategy]) {
             revert StrategyExists();
         }
@@ -426,11 +440,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     function removeStrategy(address _strategy) public {
         onlyCouncilSafe();
         _removeStrategy(_strategy);
-    }
-
-    function setAllo(address _allo) public {
-        allo = FAllo(_allo); //@todo if used, write tests
-        emit AlloSet(_allo);
     }
 
     function setCouncilSafe(address payable _safe) public {

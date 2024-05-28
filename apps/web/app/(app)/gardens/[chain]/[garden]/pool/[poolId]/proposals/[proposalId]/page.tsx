@@ -76,6 +76,7 @@ export default async function Proposal({
   }
 
   const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
+  const tokenDecimals = getProposalQuery?.tokenGarden?.decimals;
   const proposalIdNumber = proposalData.proposalNumber as number;
   const convictionLast = proposalData.convictionLast as string;
   const threshold = proposalData.threshold;
@@ -146,31 +147,44 @@ export default async function Proposal({
   const isSignalingType = type == 0;
 
   //logs for debugging in arb sepolia - //TODO: remove before merge
-  console.log(requestedAmount);
-  console.log(maxCVSupply);
-  //threshold
-  console.log(threshold);
-  console.log(thFromContract);
+  console.log("requesteAmount:              %s", requestedAmount);
+  console.log("maxCVSupply:                 %s", maxCVSupply);
+  //thresholda
+  // console.log(threshold);
+  console.log("threshold:                   %s", threshold);
+  // console.log(thFromContract);
+  console.log("thFromContract:              %s", thFromContract);
   //stakeAmount
-  console.log(stakedAmount);
-  console.log(stakeAmountFromContract);
+  // console.log(stakedAmount);
+  console.log("stakedAmount:                %s", stakedAmount);
+  // console.log(stakeAmountFromContract);
+  console.log("stakeAmountFromContract:     %s", stakeAmountFromContract);
   // console.log(totalEffectiveActivePoints);
-  console.log(updateConvictionLast);
-  console.log(convictionLast);
+  console.log("totalEffectiveActivePoints:  %s", totalEffectiveActivePoints);
+  // console.log(updateConvictionLast);
+  console.log("updateConvictionLast:        %s", updateConvictionLast);
+  // console.log(convictionLast);
+  console.log("convictionLast:              %s", convictionLast);
 
   const thresholdPct = calculatePercentage(
-    Number(threshold),
-    Number(maxCVSupply),
+    threshold,
+    maxCVSupply,
+    tokenDecimals,
   );
 
-  const totalSupport = calculatePercentage(
-    Number(stakedAmount),
-    Number(totalEffectiveActivePoints),
+  const totalSupportPct = calculatePercentage(
+    stakedAmount,
+    totalEffectiveActivePoints,
+    tokenDecimals,
   );
-  const currentConviction = calculatePercentage(
-    Number(updateConvictionLast),
-    Number(maxCVSupply),
+
+  const currentConvictionPct = calculatePercentage(
+    updateConvictionLast,
+    maxCVSupply,
+    tokenDecimals,
   );
+
+  console.log("currentConviction:           %s", currentConvictionPct);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
@@ -244,9 +258,9 @@ export default async function Proposal({
         ) : (
           <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
-              currentConviction={currentConviction}
-              threshold={thresholdPct}
-              proposalSupport={totalSupport}
+              currentConvictionPct={currentConvictionPct}
+              thresholdPct={thresholdPct}
+              proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
             />
           </div>

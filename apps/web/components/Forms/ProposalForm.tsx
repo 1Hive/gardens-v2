@@ -221,6 +221,14 @@ export const ProposalForm = ({
 
     return formattedRows;
   };
+  console.log(
+    "spendingLimitNumber: " + spendingLimitNumber,
+    "spendingLimitPct: " + spendingLimitPct,
+    Math.round(4.5),
+    Math.round(4.56),
+    Math.round(4.567457),
+    Math.round(0.111231),
+  );
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ? (

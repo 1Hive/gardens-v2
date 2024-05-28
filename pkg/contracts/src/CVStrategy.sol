@@ -100,19 +100,18 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     error UserCannotBeZero(); // 0xd1f28288
     error UserNotInRegistry(); //0x6a5cfb6d
-    error UserIsInactive(); //
-    error PoolIsEmpty();
-    // 0xed4421ad
+    error UserIsInactive(); // 0x5fccb67f
+    error PoolIsEmpty(); // 0xed4421ad
     error NotImplemented(); //0xd6234725
     error TokenCannotBeZero(); //0x596a094c
-    error TokenNotAllowed();
+    error TokenNotAllowed(); // 0xa29c4986
     error AmountOverMaxRatio(); // 0x3bf5ca14
     error PoolIdCannotBeZero(); //0x4e791786
     error AddressCannotBeZero(); //0xe622e040
     error RegistryCannotBeZero(); // 0x5df4b1ef
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
-    error MaxPointsReached();
-    error CantIncreaseFixedSystem();
+    error MaxPointsReached(); // 0x8402b474
+    error CantIncreaseFixedSystem(); // 0x573c3e93
     error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
     error ProposalDataIsEmpty(); //0xc5f7c4c0
@@ -120,8 +119,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     error ProposalNotActive(uint256 _proposalId); // 0x44980d8f
     error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
-    error ConvictionUnderMinimumThreshold();
-    error OnlyCommunityAllowed();
+    error ConvictionUnderMinimumThreshold(); // 0xcce79308
+    error OnlyCommunityAllowed(); // 0xaf0916a2
+    error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount); //0x5863b0b6
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -136,6 +136,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
+    event PointsDeactivated(address member);
     event DecayUpdated(uint256 decay);
     event MaxRatioUpdated(uint256 maxRatio);
     event WeightUpdated(uint256 weight);
@@ -327,6 +328,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         withdraw(_member);
+        emit PointsDeactivated(_member);
     }
 
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
@@ -452,6 +454,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     // most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
     // this contract will need to track the amount paid already, so that it doesn't double pay
     function _distribute(address[] memory, bytes memory _data, address) internal override {
+        //@todo could reentrancy?
         // surpressStateMutabilityWarning++;
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty();
@@ -469,6 +472,10 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 revert ProposalNotInList(proposalId);
             }
 
+            if (proposal.requestedAmount > poolAmount) {
+                revert PoolAmountNotEnough(proposalId, proposal.requestedAmount, poolAmount);
+            }
+
             if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
                 revert ProposalNotActive(proposalId);
             }
@@ -482,7 +489,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
             IAllo.Pool memory pool = allo.getPool(poolId);
 
-            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
+            poolAmount -= proposal.requestedAmount; // CEI
+
+            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
 

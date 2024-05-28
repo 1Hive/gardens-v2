@@ -251,6 +251,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
   tokenGarden(id: $garden) {
     name
     symbol
+    decimals
   }
   cvproposal(id: $proposalId) {
     proposalNumber

@@ -106,6 +106,8 @@ templates:
           handler: handlePowerIncreased
         - event: PowerDecreased(address,uint256,uint256)
           handler: handlePowerDecreased
+        - event: PointsDeactivated(address)
+          handler: handlePointsDeactivated
         - event: DecayUpdated(uint256)
           handler: handleDecayUpdated
         - event: MaxRatioUpdated(uint256)

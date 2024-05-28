@@ -15,9 +15,15 @@ contract SafeSetup is Test {
     uint256 public councilMemberPK = 1;
 
     function _councilSafeWithOwner(address _owner) public returns (Safe) {
+        return _councilSafeWithOwner(_owner, new SafeProxyFactory());
+    }
+
+    function _councilSafeWithOwner(address _owner, SafeProxyFactory _safeProxyFactory) public returns (Safe) {
         if (address(councilSafeOwner) == address(0)) {
-            SafeProxyFactory spf = new SafeProxyFactory();
-            SafeProxy sp = spf.createProxyWithNonce(address(new Safe()), "", 0);
+            if (_safeProxyFactory == SafeProxyFactory(address(0))) {
+                _safeProxyFactory = new SafeProxyFactory();
+            }
+            SafeProxy sp = _safeProxyFactory.createProxyWithNonce(address(new Safe()), "", 0);
             councilSafeOwner = Safe(payable(address(sp)));
             vm.label(address(councilSafeOwner), "councilSafeAddr");
             vm.label(address(_owner), "councilSafeOwner");
