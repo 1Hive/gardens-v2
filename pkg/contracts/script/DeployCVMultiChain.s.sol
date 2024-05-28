@@ -34,7 +34,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     address public TOKEN; // check networks.json file
     address public COUNCIL_SAFE; // check networks.json file
     address public SAFE_PROXY_FACTORY; // check networks.json file
-    address public REGISTRY_FACTORY = 0x00eFd236A6C7c0265121b1de35C2dc654d215c87;
+    // address public REGISTRY_FACTORY = 0x00eFd236A6C7c0265121b1de35C2dc654d215c87;
+    address public REGISTRY_FACTORY;
 
     uint256 public WAIT_TIME = 20 seconds;
 
@@ -44,6 +45,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     address allo_proxy;
     Allo allo;
     GV2ERC20 token;
+    RegistryFactory registryFactory;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -138,8 +140,14 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         }
         // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
 
-        // RegistryFactory registryFactory = new RegistryFactory();
-        RegistryFactory registryFactory = RegistryFactory(REGISTRY_FACTORY);
+        // if (REGISTRY_FACTORY == address(0)) {
+        //     REGISTRY_FACTORY = json.readAddress(getKeyNetwork(".ENVS.REGISTRY_FACTORY"));
+        // }
+        if (REGISTRY_FACTORY == address(0)) {
+            registryFactory = new RegistryFactory();
+        } else {
+            registryFactory = RegistryFactory(REGISTRY_FACTORY);
+        }
 
         RegistryCommunity.InitializeParams memory params;
 

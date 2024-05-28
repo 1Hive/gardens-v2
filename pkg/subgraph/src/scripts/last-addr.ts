@@ -91,7 +91,24 @@ export function getRunLatestAddrs(chain: number): AddressChain | undefined {
   }
   return result;
 }
+const chainArg = process.argv[process.argv.length - 1];
+let defaultChain: number = sepolia.id;
 
-const data = getRunLatestAddrs(sepolia.id);
+switch (chainArg) {
+  case "local":
+    defaultChain = localhost.id;
+    break;
+  case "arbsep":
+    defaultChain = arbitrumSepolia.id;
+    break;
+  case "ethsep":
+    defaultChain = sepolia.id;
+    break;
+  case "opsep":
+    defaultChain = optimismSepolia.id;
+    break;
+}
+
+const data = getRunLatestAddrs(defaultChain);
 
 console.log(data);
