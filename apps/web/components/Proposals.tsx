@@ -393,6 +393,7 @@ export function Proposals({
                     missmatchUrl
                   }
                   strategy={strategy}
+                  tokenDecimals={tokenDecimals}
                   alloInfo={alloInfo}
                   triggerRenderProposals={triggerRenderProposals}
                   inputHandler={inputHandler}
