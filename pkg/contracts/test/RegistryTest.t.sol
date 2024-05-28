@@ -205,25 +205,12 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         startMeasuringGas("Setting community Validity");
         vm.startPrank(gardenOwner);
         _registryFactory().setCommunityValidity(address(registryCommunity), false);
-        bytes32 slot = keccak256(abi.encode(registryCommunity, uint256(0)));
 
-        // Read the value of the 'valid' field from the storage
-        bytes32 value = vm.load(address(registryFactory), slot);
+        assertEq(_registryFactory().getCommunityValidity(address(registryCommunity)), false);
 
-        // Check the initial validity, should be false (0x00) since it's not set
-        assertEq(uint256(value), 0);
-    }
-
-    function test_revert_setCommunityValidity() public {
-        startMeasuringGas("Setting Community Validity");
-        vm.startPrank(gardenOwner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RegistryFactory.InputValidityAlreadyChanged.selector, address(registryCommunity), true
-            )
-        );
         _registryFactory().setCommunityValidity(address(registryCommunity), true);
-        stopMeasuringGas();
+
+        assertEq(_registryFactory().getCommunityValidity(address(registryCommunity)), true);
     }
 
     function test_activate_totalActivatedPoints_fixed_system() public {
@@ -765,9 +752,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
     }
 
-    function test_isCouncilMember() public view{
-        assertEq(_registryCommunity().isCouncilMember(address(councilSafe)),true);
-        assertEq(_registryCommunity().isCouncilMember(gardenMember),false);
+    function test_isCouncilMember() public view {
+        assertEq(_registryCommunity().isCouncilMember(address(councilSafe)), true);
+        assertEq(_registryCommunity().isCouncilMember(gardenMember), false);
     }
 
     function test_kickMember() public {
@@ -851,6 +838,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         strategy.activatePoints();
         vm.stopPrank();
     }
+
     function test_revert_addStrategy() public {
         startMeasuringGas("Registering and kicking member");
 
@@ -872,7 +860,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.StrategyExists.selector));
         _registryCommunity().addStrategy(address(strategy));
         vm.stopPrank();
-        
     }
 
     function test_revert_deactivateMemberInStrategyCaller() public {
@@ -897,6 +884,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
         _registryCommunity().increasePower(20 * DECIMALS);
     }
+
     function test_revertDecreasePower() public {
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
