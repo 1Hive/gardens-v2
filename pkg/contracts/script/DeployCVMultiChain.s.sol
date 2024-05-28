@@ -34,10 +34,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     address public TOKEN; // check networks.json file
     address public COUNCIL_SAFE; // check networks.json file
     address public SAFE_PROXY_FACTORY; // check networks.json file
-    // address public REGISTRY_FACTORY = 0x00eFd236A6C7c0265121b1de35C2dc654d215c87;
-    address public REGISTRY_FACTORY;
+    address public REGISTRY_FACTORY = 0xC98c004A1d6c62E0C42ECEe1a924dc216aac2094;
+    // address public REGISTRY_FACTORY;
 
-    uint256 public WAIT_TIME = 20 seconds;
+    uint256 public WAIT_TIME = 20000;
 
     string public CURRENT_NETWORK = "arbsepolia";
 
@@ -117,8 +117,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         TOKEN = json.readAddress(getKeyNetwork(".ENVS.TOKEN"));
 
         if (TOKEN == address(0)) {
-            // token = new GV2ERC20("HoneyV2", "HNYV2", 18);
-            token = new GV2ERC20("Seedling", "SEED", 18);
+            token = new GV2ERC20("HoneyV2", "HNYV2", 18);
+            // token = new GV2ERC20("Seedling", "SEED", 18);
             console2.log("Created Token Addr: %s", address(token));
             TOKEN = address(token);
         } else {
@@ -155,6 +155,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         params._metadata = metadata; // convenant ipfs
 
         params._communityName = "Alpha Seedling";
+        // params._communityName = "Alpha Centaurius";
         params._allo = address(allo);
         params._strategyTemplate = address(new CVStrategy(address(allo)));
         params._gardenToken = IERC20(address(token));
@@ -201,7 +202,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
 
-        vm.sleep(WAIT_TIME);
+        // vm.sleep(WAIT_TIME);
 
         safeHelper(
             Safe(payable(COUNCIL_SAFE)),
