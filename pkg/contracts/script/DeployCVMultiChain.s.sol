@@ -36,6 +36,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     address public SAFE_PROXY_FACTORY; // check networks.json file
     address public REGISTRY_FACTORY = 0x00eFd236A6C7c0265121b1de35C2dc654d215c87;
 
+    uint256 public WAIT_TIME = 20 seconds;
+
     string public CURRENT_NETWORK = "arbsepolia";
 
     uint256 councilMemberPKEnv;
@@ -172,13 +174,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
 
-        safeHelper(
-            Safe(payable(COUNCIL_SAFE)),
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
-        );
-
         CVStrategy strategy1 = CVStrategy(payable(_strategy1));
 
         strategy1.setDecay(_etherToFloat(0.9965402 ether));
@@ -191,19 +186,28 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(address(0), paramsCV, metadata);
 
-        safeHelper(
-            Safe(payable(COUNCIL_SAFE)),
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
-        );
-
         CVStrategy strategy2 = CVStrategy(payable(_strategy2));
 
         // FAST 1 MIN GROWTH
         strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
         strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+
+        vm.sleep(WAIT_TIME);
+
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
+        );
+
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
+        );
 
         token.mint(address(pool_admin()), 10_000 ether);
         token.approve(address(registryCommunity), type(uint256).max);
