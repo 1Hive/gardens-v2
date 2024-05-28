@@ -60,6 +60,7 @@ function gte(
 function calculatePercentage(
   value1: number | bigint | string | undefined,
   value2: number | bigint | string | undefined,
+  decimals: number,
 ): number {
   if (value1 === undefined || value2 === undefined) {
     return 0;
@@ -78,18 +79,17 @@ function calculatePercentage(
   if (dn.eq(dnumValue2, 0)) {
     return 0;
   }
-  const PRECISION = 2;
+  const PRECISION = 4;
 
   const percentage = dn.div(
     dn.mul(dnumValue1, 100 * 10 ** PRECISION),
     dnumValue2,
+    decimals,
   );
 
-  const formattedPercentage = dn.format(
-    [percentage[0], percentage[1] + PRECISION],
-    2,
-  );
+  const formattedPercentage = dn.format(percentage, 2);
 
+  console.log(formattedPercentage);
   return Number(formattedPercentage);
 }
 

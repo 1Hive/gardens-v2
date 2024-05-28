@@ -235,7 +235,6 @@ export default function PoolForm({
       Math.round(calculateDecay(blockTime, convictionGrowth)),
     );
 
-    console.log(decay);
     const minThresholdPoints = parseUnits(
       (previewData?.minThresholdPoints || 0).toString(),
       token?.decimals,

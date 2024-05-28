@@ -166,14 +166,14 @@ export default async function Proposal({
   console.log("convictionLast:              %s", convictionLast);
 
   const thresholdPct = calculatePercentage(threshold, maxCVSupply);
+  console.log(thresholdPct);
 
   const totalSupportPct = calculatePercentage(
     stakedAmount,
     totalEffectiveActivePoints,
   );
 
-  console.log("totalSupportPct:             %s", totalSupportPct);
-  const currentConviction = calculatePercentage(
+  const currentConvictionPct = calculatePercentage(
     updateConvictionLast,
     maxCVSupply,
   );
@@ -252,9 +252,9 @@ export default async function Proposal({
         ) : (
           <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
-              currentConviction={currentConviction}
-              threshold={thresholdPct}
-              proposalSupport={totalSupportPct}
+              currentConvictionPct={currentConvictionPct}
+              thresholdPct={thresholdPct}
+              proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
             />
           </div>
