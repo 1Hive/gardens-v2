@@ -34,6 +34,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     address public TOKEN; // check networks.json file
     address public COUNCIL_SAFE; // check networks.json file
     address public SAFE_PROXY_FACTORY; // check networks.json file
+    address public REGISTRY_FACTORY = 0xC98c004A1d6c62E0C42ECEe1a924dc216aac2094;
+    // address public REGISTRY_FACTORY;
+
+    uint256 public WAIT_TIME = 20000;
 
     string public CURRENT_NETWORK = "arbsepolia";
 
@@ -41,6 +45,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     address allo_proxy;
     Allo allo;
     GV2ERC20 token;
+    RegistryFactory registryFactory;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -113,6 +118,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         if (TOKEN == address(0)) {
             token = new GV2ERC20("HoneyV2", "HNYV2", 18);
+            // token = new GV2ERC20("Seedling", "SEED", 18);
             console2.log("Created Token Addr: %s", address(token));
             TOKEN = address(token);
         } else {
@@ -134,14 +140,22 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         }
         // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
 
-        RegistryFactory registryFactory = new RegistryFactory();
+        // if (REGISTRY_FACTORY == address(0)) {
+        //     REGISTRY_FACTORY = json.readAddress(getKeyNetwork(".ENVS.REGISTRY_FACTORY"));
+        // }
+        if (REGISTRY_FACTORY == address(0)) {
+            registryFactory = new RegistryFactory();
+        } else {
+            registryFactory = RegistryFactory(REGISTRY_FACTORY);
+        }
 
         RegistryCommunity.InitializeParams memory params;
 
         metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"});
         params._metadata = metadata; // convenant ipfs
 
-        params._communityName = "Alpha Centaurians";
+        params._communityName = "Alpha Seedling";
+        // params._communityName = "Alpha Centaurius";
         params._allo = address(allo);
         params._strategyTemplate = address(new CVStrategy(address(allo)));
         params._gardenToken = IERC20(address(token));
@@ -169,13 +183,6 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
 
-        safeHelper(
-            Safe(payable(COUNCIL_SAFE)),
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
-        );
-
         CVStrategy strategy1 = CVStrategy(payable(_strategy1));
 
         strategy1.setDecay(_etherToFloat(0.9965402 ether));
@@ -188,19 +195,28 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(address(0), paramsCV, metadata);
 
-        safeHelper(
-            Safe(payable(COUNCIL_SAFE)),
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
-        );
-
         CVStrategy strategy2 = CVStrategy(payable(_strategy2));
 
         // FAST 1 MIN GROWTH
         strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
         strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+
+        // vm.sleep(WAIT_TIME);
+
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
+        );
+
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
+        );
 
         token.mint(address(pool_admin()), 10_000 ether);
         token.approve(address(registryCommunity), type(uint256).max);

@@ -332,6 +332,13 @@ export function handleDistributed(event: Distributed): void {
     ]);
     return;
   }
+
+  let cvs = CVStrategy.load(cvp.strategy);
+  if (cvs == null) {
+    log.debug("handleDistributed cvs not found: {}", [cvp.strategy.toString()]);
+    return;
+  }
+
   const cvc = CVStrategyContract.bind(event.address);
   const proposalStatus = cvc
     .getProposal(event.params.proposalId)
@@ -339,6 +346,9 @@ export function handleDistributed(event: Distributed): void {
 
   cvp.proposalStatus = BigInt.fromI32(proposalStatus);
   cvp.save();
+
+  cvs.poolAmount = cvc.getPoolAmount();
+  cvs.save();
 }
 
 export function handlePowerIncreased(event: PowerIncreased): void {
