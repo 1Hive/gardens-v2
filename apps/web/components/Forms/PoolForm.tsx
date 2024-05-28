@@ -148,6 +148,7 @@ export default function PoolForm({
     },
   });
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token?.decimals;
+  const INPUT_MIN_THRESHOLD_MIN_VALUE = 0;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -507,13 +508,13 @@ export default function PoolForm({
                 required
                 registerOptions={{
                   min: {
-                    value: INPUT_TOKEN_MIN_VALUE,
-                    message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                    value: INPUT_MIN_THRESHOLD_MIN_VALUE,
+                    message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_MIN_VALUE}`,
                   },
                 }}
                 otherProps={{
                   step: INPUT_TOKEN_MIN_VALUE,
-                  min: INPUT_TOKEN_MIN_VALUE,
+                  min: INPUT_MIN_THRESHOLD_MIN_VALUE,
                 }}
                 errors={errors}
                 registerKey="minThresholdPoints"
