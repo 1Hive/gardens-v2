@@ -441,11 +441,17 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         onlyCouncilSafe();
         _removeStrategy(_strategy);
     }
-
-    function setAllo(address _allo) public {
-        allo = FAllo(_allo); //@todo if used, write tests
-        emit AlloSet(_allo);
-    }
+    // function supportsAlloInterface(bytes4 interfaceId) internal view returns (bool){
+    //     return interfaceId == type(FAllo).interfaceId || super.supportsInterface(interfaceId);
+    // }
+    
+    // function setAllo(address _allo) public {
+    //     allo = FAllo(_allo); //@todo if used, write tests
+    //     if (supportsAlloInterface(type(FAllo).interfaceId)){
+            
+    //     }
+    //     emit AlloSet(_allo);
+    // }
 
     function setCouncilSafe(address payable _safe) public {
         onlyCouncilSafe();

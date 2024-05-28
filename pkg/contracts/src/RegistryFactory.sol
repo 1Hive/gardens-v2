@@ -33,10 +33,11 @@ contract RegistryFactory is Ownable {
 
     error CommunityInvalid(address _community);
     error AddressCannotBeZero();
-
+    error InputValidityAlreadyChanged(address _community, bool _isValid);
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
+
     function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
@@ -71,6 +72,9 @@ contract RegistryFactory is Ownable {
     }
 
     function setCommunityValidity(address _community, bool _isValid) public onlyOwner {
+        if (communityToInfo[_community].valid == _isValid) {
+            revert InputValidityAlreadyChanged(_community, _isValid);
+        }
         communityToInfo[_community].valid = _isValid;
         emit CommunityValiditySet(_community, _isValid);
     }
