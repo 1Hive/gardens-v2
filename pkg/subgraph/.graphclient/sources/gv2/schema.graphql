@@ -12,6 +12,11 @@ directive @subgraphId(id: String!) on OBJECT
 "creates a virtual field on the entity that may be queried but cannot be set manually through the mappings API."
 directive @derivedFrom(field: String!) on FIELD_DEFINITION
 
+enum Aggregation_interval {
+  hour
+  day
+}
+
 type Allo {
   id: ID!
   chainId: BigInt!
@@ -590,6 +595,7 @@ enum CVStrategy_orderBy {
   registryCommunity
   registryCommunity__id
   registryCommunity__chainId
+  registryCommunity__strategyTemplate
   registryCommunity__profileId
   registryCommunity__communityFee
   registryCommunity__protocolFee
@@ -737,6 +743,7 @@ enum MemberCommunity_orderBy {
   registryCommunity
   registryCommunity__id
   registryCommunity__chainId
+  registryCommunity__strategyTemplate
   registryCommunity__profileId
   registryCommunity__communityFee
   registryCommunity__protocolFee
@@ -1169,6 +1176,7 @@ type Query {
 type RegistryCommunity {
   id: ID!
   chainId: BigInt!
+  strategyTemplate: String!
   profileId: String
   communityFee: BigInt!
   protocolFee: BigInt!
@@ -1202,6 +1210,26 @@ input RegistryCommunity_filter {
   chainId_lte: BigInt
   chainId_in: [BigInt!]
   chainId_not_in: [BigInt!]
+  strategyTemplate: String
+  strategyTemplate_not: String
+  strategyTemplate_gt: String
+  strategyTemplate_lt: String
+  strategyTemplate_gte: String
+  strategyTemplate_lte: String
+  strategyTemplate_in: [String!]
+  strategyTemplate_not_in: [String!]
+  strategyTemplate_contains: String
+  strategyTemplate_contains_nocase: String
+  strategyTemplate_not_contains: String
+  strategyTemplate_not_contains_nocase: String
+  strategyTemplate_starts_with: String
+  strategyTemplate_starts_with_nocase: String
+  strategyTemplate_not_starts_with: String
+  strategyTemplate_not_starts_with_nocase: String
+  strategyTemplate_ends_with: String
+  strategyTemplate_ends_with_nocase: String
+  strategyTemplate_not_ends_with: String
+  strategyTemplate_not_ends_with_nocase: String
   profileId: String
   profileId_not: String
   profileId_gt: String
@@ -1403,6 +1431,7 @@ input RegistryCommunity_filter {
 enum RegistryCommunity_orderBy {
   id
   chainId
+  strategyTemplate
   profileId
   communityFee
   protocolFee
@@ -1873,6 +1902,12 @@ type Subscription {
   _meta(block: Block_height): _Meta_
 }
 
+"""
+A string representation of microseconds UNIX timestamp (16 digits)
+
+"""
+scalar Timestamp
+
 type TokenGarden {
   id: ID!
   name: String!
@@ -2046,6 +2081,8 @@ type _Block_ {
   number: Int!
   """Integer representation of the timestamp stored in blocks for the chain"""
   timestamp: Int
+  """The hash of the parent block"""
+  parentHash: Bytes
 }
 
 """The type for the top-level _meta field"""

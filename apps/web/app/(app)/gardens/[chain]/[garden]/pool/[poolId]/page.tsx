@@ -56,6 +56,11 @@ export default async function Pool({
     Number(strategyObj?.config?.maxRatio) / PRECISON_OF_7;
 
   const spendingLimitPct = maxRatioDivPrecision;
+  console.log(
+    "maxRatio: " + strategyObj?.config?.maxRatio,
+    "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
+    "poolAmount: " + poolAmount,
+  );
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">

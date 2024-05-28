@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 11155111
+        data: 1337
     source:
-      address: "0xc98c004a1d6c62e0c42ecee1a924dc216aac2094"
+      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
       abi: RegistryFactory
-      startBlock: 5992419
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -37,7 +37,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: sepolia
+    network: localhost
     source:
       abi: RegistryCommunity
     mapping:
@@ -99,7 +99,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: sepolia
+    network: localhost
     source:
       abi: CVStrategy
     mapping:

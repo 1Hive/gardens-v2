@@ -52,7 +52,7 @@ export function CommunityCard({
 }: CommunityCardProps) {
   const { address: accountAddress } = useAccount();
   const [memberStakedTokens, setMemberStakedTokens] = useState<
-    StakesMemberType | undefined
+    string | bigint | undefined
   >();
   const pathname = usePathname();
 
@@ -75,10 +75,8 @@ export function CommunityCard({
     );
 
     if (result && result.members.length > 0) {
-      const memberStakedTokens = (result.members?.[0].memberCommunity?.[0]
-        .stakedTokens ?? 0) as StakesMemberType;
-
-      console.log("memberStakedTokens", memberStakedTokens);
+      const memberStakedTokens = (result.members?.[0]?.memberCommunity?.[0]
+        ?.stakedTokens ?? "0") as string | bigint;
 
       setMemberStakedTokens(memberStakedTokens);
     }

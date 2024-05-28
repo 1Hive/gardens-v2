@@ -305,11 +305,13 @@ export function Proposals({
   const memberSupportedProposalsPct = calculatePercentage(
     inputAllocatedTokens,
     memberActivatedPoints,
+    tokenDecimals,
   );
 
   const memberPoolWeight = calculatePercentage(
     memberActivatedPoints,
     strategy.totalEffectiveActivePoints,
+    tokenDecimals,
   );
 
   const calcPoolWeightUsed = (number: number) => {
@@ -391,6 +393,7 @@ export function Proposals({
                     missmatchUrl
                   }
                   strategy={strategy}
+                  tokenDecimals={tokenDecimals}
                   alloInfo={alloInfo}
                   triggerRenderProposals={triggerRenderProposals}
                   inputHandler={inputHandler}
