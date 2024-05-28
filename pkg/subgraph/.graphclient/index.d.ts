@@ -2258,7 +2258,7 @@ export type getProposalDataQueryVariables = Exact<{
     proposalId: Scalars['ID'];
 }>;
 export type getProposalDataQuery = {
-    tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol'>>;
+    tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'decimals'>>;
     cvproposal?: Maybe<(Pick<CVProposal, 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadata' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
         strategy: (Pick<CVStrategy, 'id'> & {
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;

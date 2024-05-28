@@ -448,6 +448,7 @@ export const getProposalDataDocument = gql `
   tokenGarden(id: $garden) {
     name
     symbol
+    decimals
   }
   cvproposal(id: $proposalId) {
     proposalNumber
