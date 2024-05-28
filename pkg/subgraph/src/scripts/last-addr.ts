@@ -6,7 +6,7 @@ import {
 } from "viem/chains";
 import runLatestArbSep from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
 import runLatestEthSep from "../../../../broadcast/DeployCVMultiChain.s.sol/11155111/run-latest.json" assert { type: "json" };
-// import runLatestLocal from "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json" assert { type: "json" };
+import runLatestLocal from "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json" assert { type: "json" };
 
 export type RunLatest =
   // | typeof runLatestLocal
@@ -76,7 +76,7 @@ export function getRunLatestAddrs(chain: number): AddressChain | undefined {
 
   switch (chain) {
     case localhost.id:
-      // runLatest = runLatestLocal;
+      runLatest = runLatestLocal;
       break;
     case arbitrumSepolia.id:
       runLatest = runLatestArbSep;

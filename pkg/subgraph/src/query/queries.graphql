@@ -4,6 +4,7 @@ query getFactories {
     registryCommunities {
       id
       chainId
+      isValid
       communityName
       covenantIpfsHash
       registerToken
@@ -39,6 +40,7 @@ query getTokenGardens {
       id
       chainId
       communityFee
+      isValid
       members {
         id
       }
@@ -75,6 +77,7 @@ query isMember($me: ID!, $comm: String!) {
           poolId
           registryCommunity {
             id
+            isValid
             garden {
               id
               symbol
@@ -102,6 +105,7 @@ query getMember($me: ID!) {
       isRegistered
       registryCommunity {
         id
+        isValid
       }
     }
     stakes {
@@ -127,6 +131,7 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
   }
   registryCommunity(id: $communityAddr) {
     communityName
+    isValid
   }
 }
 
@@ -142,6 +147,7 @@ query getCommunitiesByGarden($addr: ID!) {
     chainId
     communities {
       id
+      isValid
       covenantIpfsHash
       chainId
       communityName
@@ -190,6 +196,7 @@ query getCommunityCreationData($addr: ID!) {
     chainId
     communities {
       alloAddress
+      isValid
     }
   }
 }
@@ -228,6 +235,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     registryCommunity {
       id
+      isValid
       garden {
         id
         symbol
@@ -303,6 +311,7 @@ query getStrategyByPool($poolId: BigInt!) {
     }
     registryCommunity {
       id
+      isValid
       garden {
         id
         symbol
