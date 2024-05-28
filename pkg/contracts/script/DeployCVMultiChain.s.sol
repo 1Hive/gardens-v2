@@ -34,6 +34,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     address public TOKEN; // check networks.json file
     address public COUNCIL_SAFE; // check networks.json file
     address public SAFE_PROXY_FACTORY; // check networks.json file
+    address public REGISTRY_FACTORY = 0x00eFd236A6C7c0265121b1de35C2dc654d215c87;
 
     string public CURRENT_NETWORK = "arbsepolia";
 
@@ -112,7 +113,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         TOKEN = json.readAddress(getKeyNetwork(".ENVS.TOKEN"));
 
         if (TOKEN == address(0)) {
-            token = new GV2ERC20("HoneyV2", "HNYV2", 18);
+            // token = new GV2ERC20("HoneyV2", "HNYV2", 18);
+            token = new GV2ERC20("Seedling", "SEED", 18);
             console2.log("Created Token Addr: %s", address(token));
             TOKEN = address(token);
         } else {
@@ -134,14 +136,15 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         }
         // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
 
-        RegistryFactory registryFactory = new RegistryFactory();
+        // RegistryFactory registryFactory = new RegistryFactory();
+        RegistryFactory registryFactory = RegistryFactory(REGISTRY_FACTORY);
 
         RegistryCommunity.InitializeParams memory params;
 
         metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"});
         params._metadata = metadata; // convenant ipfs
 
-        params._communityName = "Alpha Centaurians";
+        params._communityName = "Alpha Seedling";
         params._allo = address(allo);
         params._strategyTemplate = address(new CVStrategy(address(allo)));
         params._gardenToken = IERC20(address(token));

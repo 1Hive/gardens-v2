@@ -85,13 +85,13 @@ export function getRunLatestAddrs(chain: number): AddressChain | undefined {
       runLatest = runLatestEthSep;
       break;
   }
-  let result = undefined;
+  let result: AddressChain | undefined = undefined;
   if (runLatest) {
     result = extractAddr(runLatest!);
   }
   return result;
 }
 
-const data = getRunLatestAddrs(localhost.id);
+const data = getRunLatestAddrs(sepolia.id);
 
 console.log(data);

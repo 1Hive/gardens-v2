@@ -61,16 +61,16 @@ export const ConvictionBarChart = ({
       ],
     },
     //2) Conviction < Threshold < Total Support --- working ...
-    convictionLTThresholdLTSupport: {
-      condition: () =>
-        currentConviction < threshold && threshold < proposalSupport,
-      details: [
-        {
-          message: "This proposal will pass within X days ...",
-          growing: true,
-        },
-      ],
-    },
+    // convictionLTThresholdLTSupport: {
+    //   condition: () =>
+    //     currentConviction < threshold && threshold < proposalSupport,
+    //   details: [
+    //     {
+    //       message: "This proposal will pass within X days ...",
+    //       growing: true,
+    //     },
+    //   ],
+    // },
     //3) Total Support < Conviction < Threshold
     supportLTConvictionLTThreshold: {
       condition: () =>
