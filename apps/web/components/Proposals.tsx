@@ -305,11 +305,13 @@ export function Proposals({
   const memberSupportedProposalsPct = calculatePercentage(
     inputAllocatedTokens,
     memberActivatedPoints,
+    tokenDecimals,
   );
 
   const memberPoolWeight = calculatePercentage(
     memberActivatedPoints,
     strategy.totalEffectiveActivePoints,
+    tokenDecimals,
   );
 
   const calcPoolWeightUsed = (number: number) => {

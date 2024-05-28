@@ -76,6 +76,7 @@ export default async function Proposal({
   }
 
   const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
+  const tokenDecimals = getProposalQuery?.tokenGarden?.decimals;
   const proposalIdNumber = proposalData.proposalNumber as number;
   const convictionLast = proposalData.convictionLast as string;
   const threshold = proposalData.threshold;
@@ -165,17 +166,23 @@ export default async function Proposal({
   // console.log(convictionLast);
   console.log("convictionLast:              %s", convictionLast);
 
-  const thresholdPct = calculatePercentage(threshold, maxCVSupply);
+  const thresholdPct = calculatePercentage(
+    threshold,
+    maxCVSupply,
+    tokenDecimals,
+  );
 
   const totalSupportPct = calculatePercentage(
     stakedAmount,
     totalEffectiveActivePoints,
+    tokenDecimals,
   );
 
   console.log("totalSupportPct:             %s", totalSupportPct);
   const currentConviction = calculatePercentage(
     updateConvictionLast,
     maxCVSupply,
+    tokenDecimals,
   );
 
   console.log("currentConviction:           %s", currentConviction);

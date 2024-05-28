@@ -8,7 +8,6 @@ import { registryCommunityABI } from "@/src/generated";
 import { CVStrategy } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { Dnum } from "dnum";
-import { calculatePercentage } from "@/utils/numbers";
 
 type PoolGovernanceProps = {
   memberPoolWeight: number;
