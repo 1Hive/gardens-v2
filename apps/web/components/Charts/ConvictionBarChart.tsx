@@ -18,9 +18,14 @@ export const ConvictionBarChart = ({
   currentConviction: number;
   threshold: number;
   proposalSupport: number;
-  maxConviction?: number;
   isSignalingType: boolean;
 }) => {
+  console.log(
+    "proposalSupport: " + proposalSupport,
+    "currentConviction: " + currentConviction,
+    "threshold: " + threshold,
+  );
+
   const supportNeeded = (threshold - proposalSupport).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
     //1-SignalingType) Support > 0 && > Conviction
@@ -146,7 +151,7 @@ export const ConvictionBarChart = ({
   const { message, growing } = Object.values(scenarioMappings).find(
     ({ condition }) => condition(),
   )?.details[0] ?? {
-    message: "Proposal waiting for support ...",
+    message: proposalSupport == 0 ? "Proposal waiting for support ..." : "",
     growing: null,
   };
 
@@ -274,12 +279,7 @@ export const ConvictionBarChart = ({
         stack: "a",
         label: {
           show: true,
-          position:
-            proposalSupport === 0
-              ? [2, -14]
-              : proposalSupport > threshold
-                ? "right"
-                : "top",
+          position: proposalSupport === 0 ? [2, -14] : "top",
           color: "#191919",
           fontSize: 12,
           formatter: "{a}: {@score} %",

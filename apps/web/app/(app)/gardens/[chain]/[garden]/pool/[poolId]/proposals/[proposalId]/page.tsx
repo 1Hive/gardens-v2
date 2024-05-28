@@ -145,7 +145,6 @@ export default async function Proposal({
   }
   const isSignalingType = type == 0;
 
-  //logs for debugging in arb sepolia - //TODO: remove before merge
   console.log(requestedAmount);
   console.log(maxCVSupply);
   //threshold
@@ -154,22 +153,21 @@ export default async function Proposal({
   //stakeAmount
   console.log(stakedAmount);
   console.log(stakeAmountFromContract);
-  // console.log(totalEffectiveActivePoints);
+  console.log(totalEffectiveActivePoints);
   console.log(updateConvictionLast);
   console.log(convictionLast);
 
-  const thresholdPct = calculatePercentage(
-    Number(threshold),
-    Number(maxCVSupply),
+  const thresholdPct = calculatePercentage(threshold, maxCVSupply);
+  console.log(thresholdPct);
+  
+  const totalSupport = calculatePercentage(
+    stakedAmount,
+    totalEffectiveActivePoints,
   );
 
-  const totalSupport = calculatePercentage(
-    Number(stakedAmount),
-    Number(totalEffectiveActivePoints),
-  );
   const currentConviction = calculatePercentage(
-    Number(updateConvictionLast),
-    Number(maxCVSupply),
+    updateConvictionLast,
+    maxCVSupply,
   );
 
   return (
