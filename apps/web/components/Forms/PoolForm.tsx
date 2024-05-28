@@ -26,11 +26,8 @@ import { FormSelect } from "./FormSelect";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  ARB_BLOCK_TIME,
-  MAX_RATIO_CONSTANT,
-  PERCENTAGE_PRECISION,
-} from "@/utils/numbers";
+import { MAX_RATIO_CONSTANT, PERCENTAGE_PRECISION } from "@/utils/numbers";
+import { chainIdMap } from "@/configs/chainServer";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -70,6 +67,7 @@ type Props = {
   communityAddr: Address;
   alloAddr: Address;
   token: TokenGarden;
+  chainId: number;
 };
 
 const poolSettingValues: Record<
@@ -129,7 +127,12 @@ function calculateDecay(blockTime: number, convictionGrowth: number) {
   return result;
 }
 
-export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
+export default function PoolForm({
+  alloAddr,
+  token,
+  communityAddr,
+  chainId,
+}: Props) {
   const {
     register,
     handleSubmit,
@@ -202,16 +205,6 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     setShowPreview(true);
   };
 
-  // const walletClient = createWalletClient({
-  //   chain: getChain(getChainIdFromPath()) as Chain,
-  //   transport: custom(window.ethereum!),
-  // });
-
-  // const publicClient = createPublicClient({
-  //   chain: getChain(getChainIdFromPath()) as Chain,
-  //   transport: http(),
-  // });
-
   const contractWrite = async (ipfsHash: string) => {
     let spendingLimit: number;
     let minimumConviction;
@@ -230,17 +223,19 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
         ?.convictionGrowth as number;
     }
 
-    const maxRatioNum =
-      (spendingLimit / MAX_RATIO_CONSTANT) * PERCENTAGE_PRECISION;
-    const weightNum = (minimumConviction / 100) * (spendingLimit / 100) ** 2;
+    const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
 
+    const weightNum = (minimumConviction / 100) * (maxRatioNum / 100) ** 2;
+
+    const blockTime = chainIdMap[chainId].blockTime;
     // pool settings
-    const maxRatio = BigInt(Math.round(maxRatioNum));
+    const maxRatio = BigInt(Math.round(maxRatioNum * PERCENTAGE_PRECISION));
     const weight = BigInt(Math.round(weightNum * PERCENTAGE_PRECISION));
     const decay = BigInt(
-      Math.round(calculateDecay(ARB_BLOCK_TIME, convictionGrowth)),
+      Math.round(calculateDecay(blockTime, convictionGrowth)),
     );
 
+    console.log(decay);
     const minThresholdPoints = parseUnits(
       (previewData?.minThresholdPoints || 0).toString(),
       token?.decimals,

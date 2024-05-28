@@ -1,7 +1,6 @@
 import * as dn from "dnum";
 
 export const PRECISION_SCALE = BigInt(10 ** 4);
-export const ARB_BLOCK_TIME = 0.23;
 export const INPUT_MIN_VALUE = 0.000000000001;
 export const MAX_RATIO_CONSTANT = 0.77645;
 export const PERCENTAGE_PRECISION = 10 ** 7;
