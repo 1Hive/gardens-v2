@@ -1,4 +1,5 @@
 import * as dn from "dnum";
+import { formatUnits } from "viem";
 
 export const PRECISION_SCALE = BigInt(10 ** 4);
 export const INPUT_MIN_VALUE = 0.000000000001;
@@ -46,6 +47,28 @@ function gte(
   return dn.greaterThan(v1, v2) || dn.equal(v1, v2);
 }
 
+function calculatePercentageBigInt(
+  value1: bigint,
+  value2: bigint,
+  tokenDecimals: number,
+): number {
+  if (!value1 || !value2) {
+    // console.log("divideWithDecimals: value1 or value2 is undefined");
+    return 0;
+  }
+
+  if (value1 == 0n || value2 == 0n) {
+    return 0;
+  }
+
+  return parseFloat(
+    (
+      (parseFloat(formatUnits(value1, tokenDecimals)) /
+        parseFloat(formatUnits(value2, tokenDecimals))) *
+      100
+    ).toFixed(2),
+  );
+}
 function calculatePercentage(value1: number, value2: number): number {
   if (!value1 || !value2) {
     // console.log("divideWithDecimals: value1 or value2 is undefined");
@@ -107,5 +130,6 @@ export {
   gte,
   dn,
   calculatePercentageDecimals,
+  calculatePercentageBigInt,
   calculatePercentage,
 };

@@ -57,10 +57,11 @@ export const ConvictionBarChart = ({
     //1) Conviction < Total Support < Threshold --- working ...
     convictionLTSupportLTThreshold: {
       condition: () =>
-        currentConvictionPct < proposalSupportPct && proposalSupportPct < thresholdPct,
+        currentConvictionPct < proposalSupportPct &&
+        proposalSupportPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} % more support to reach thresholdPct`,
+          message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
           growing: true,
         },
       ],
@@ -79,10 +80,11 @@ export const ConvictionBarChart = ({
     //3) Total Support < Conviction < Threshold
     supportLTConvictionLTThreshold: {
       condition: () =>
-        proposalSupportPct < currentConvictionPct && currentConvictionPct < thresholdPct,
+        proposalSupportPct < currentConvictionPct &&
+        currentConvictionPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} % more support to reach thresholdPct`,
+          message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
           growing: false,
         },
       ],
@@ -90,7 +92,8 @@ export const ConvictionBarChart = ({
     //4) Total Support < Threshold < Conviction
     supportLTThresholdLTConviction: {
       condition: () =>
-        proposalSupportPct < thresholdPct && thresholdPct < currentConvictionPct,
+        proposalSupportPct < thresholdPct &&
+        thresholdPct < currentConvictionPct,
       details: [
         {
           message: "This proposal is Executable until X date",
@@ -101,7 +104,8 @@ export const ConvictionBarChart = ({
     //5) Threshold < Conviction < Total Support
     thresholdLTConvictionLTSupport: {
       condition: () =>
-        thresholdPct < currentConvictionPct && currentConvictionPct < proposalSupportPct,
+        thresholdPct < currentConvictionPct &&
+        currentConvictionPct < proposalSupportPct,
       details: [
         {
           message: "This proposal is ready to be executed !",
@@ -112,7 +116,8 @@ export const ConvictionBarChart = ({
     //6) Threshold < Total Support < Conviction
     thresholdLTSupportLTConviction: {
       condition: () =>
-        thresholdPct < proposalSupportPct && proposalSupportPct < currentConvictionPct,
+        thresholdPct < proposalSupportPct &&
+        proposalSupportPct < currentConvictionPct,
       details: [
         {
           message: "This proposal is ready to be executed!",
@@ -128,7 +133,7 @@ export const ConvictionBarChart = ({
         proposalSupportPct < thresholdPct,
       details: [
         {
-          message: `This proposal needs ${supportNeeded} % more support to reach thresholdPct`,
+          message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
           growing: null,
         },
       ],
@@ -305,7 +310,9 @@ export const ConvictionBarChart = ({
         name: !isSignalingType ? "Threshold" : "",
         stack: "a",
         barWidth: 50,
-        data: [Number(supportNeeded) < 0 ? 0 : thresholdPct - proposalSupportPct],
+        data: [
+          Number(supportNeeded) < 0 ? 0 : thresholdPct - proposalSupportPct,
+        ],
         color: "#e9ecef",
         z: -10,
         markLine: {
