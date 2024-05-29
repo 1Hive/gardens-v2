@@ -93,6 +93,8 @@ function calculatePercentageDecimals(
     decimals,
   );
 
+  console.log(percentage);
+
   const formattedPercentage = dn.format(percentage, 2);
 
   // console.log(formattedPercentage);

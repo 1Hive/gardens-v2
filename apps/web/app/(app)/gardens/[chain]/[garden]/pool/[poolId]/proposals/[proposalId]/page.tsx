@@ -1,7 +1,7 @@
 import { Badge, StatusBadge } from "@/components";
 import { EthAddress } from "@/components";
 import { cvStrategyABI } from "@/src/generated";
-import { Abi, Address, createPublicClient, http } from "viem";
+import { Abi, Address, createPublicClient, formatUnits, http } from "viem";
 import { getChain } from "@/configs/chainServer";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
@@ -171,23 +171,43 @@ export default async function Proposal({
   // console.log(convictionLast);
   console.log("convictionLast:              %s", convictionLast);
 
-  const thresholdPct = calculatePercentageDecimals(
-    threshold,
-    maxCVSupply,
-    tokenDecimals,
-  );
+  // const thresholdPct = calculatePercentageDecimals(
+  //   threshold,
+  //   maxCVSupply,
+  //   tokenDecimals,
+  // );
 
-  const totalSupportPct = calculatePercentageDecimals(
-    stakedAmount,
-    totalEffectiveActivePoints,
-    tokenDecimals,
-  );
+  const thresholdPct =
+    (parseFloat(formatUnits(threshold, tokenDecimals)) /
+      parseFloat(formatUnits(maxCVSupply, tokenDecimals))) *
+    100;
 
-  const currentConvictionPct = calculatePercentageDecimals(
-    updateConvictionLast,
-    maxCVSupply,
-    tokenDecimals,
-  );
+  console.log("thresholdPct:                %s", thresholdPct);
+
+  // console.log("ff:                          %s", ff);
+
+  // const totalSupportPct = calculatePercentageDecimals(
+  //   stakedAmount,
+  //   totalEffectiveActivePoints,
+  //   tokenDecimals,
+  // );
+
+  const totalSupportPct =
+    (parseFloat(formatUnits(stakedAmount, tokenDecimals)) /
+      parseFloat(formatUnits(totalEffectiveActivePoints, tokenDecimals))) *
+    100;
+
+  console.log("totalSupportPct:             %s", totalSupportPct);
+  // const currentConvictionPct = calculatePercentageDecimals(
+  //   updateConvictionLast,
+  //   maxCVSupply,
+  //   tokenDecimals,
+  // );
+
+  const currentConvictionPct =
+    (parseFloat(formatUnits(updateConvictionLast, tokenDecimals)) /
+      parseFloat(formatUnits(maxCVSupply, tokenDecimals))) *
+    100;
 
   console.log("currentConviction:           %s", currentConvictionPct);
 
