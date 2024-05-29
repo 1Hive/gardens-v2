@@ -246,7 +246,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
         token.approve(address(allo), type(uint256).max);
-        // allo.fundPool(poolId, 10_000 ether);
+        allo.fundPool(poolId, 10_000 ether);
 
         StrategyStruct.CreateProposal memory proposal = StrategyStruct.CreateProposal(
             poolId,
