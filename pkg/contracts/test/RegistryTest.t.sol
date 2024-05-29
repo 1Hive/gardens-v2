@@ -1044,9 +1044,37 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         stopMeasuringGas();
     }
 
-    function test_getStakeAmountWithFees() public {
+    function test_getStakeAmountWithFees() public view {
         uint256 stakeFees = _registryCommunity().getStakeAmountWithFees();
         assertEq(stakeFees, STAKE_WITH_FEES);
+    }
+
+    function test_removeStrategyByPoolId() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(token),
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategyByPoolId(poolId);
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
+
+        _registryCommunity().removeStrategyByPoolId(poolId);
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+
+        vm.stopPrank();
     }
 
     function test_addStrategyByPoolId() public {
@@ -1067,6 +1095,39 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategyByPoolId(poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
+    }
+
+    function test_Revert_removeStrategyByPoolId() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(token),
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategyByPoolId(poolId);
+        vm.stopPrank();
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        _registryCommunity().removeStrategyByPoolId(poolId);
+
+        vm.startPrank(address(councilSafe));
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        _registryCommunity().removeStrategyByPoolId(poolId + 1);
+
         vm.stopPrank();
 
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
