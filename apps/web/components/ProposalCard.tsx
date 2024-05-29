@@ -182,7 +182,6 @@ export function ProposalCard({
                     calculatePercentage(
                       inputData?.value ?? 0,
                       memberActivatedPoints,
-                      tokenDecimals,
                     ),
                   )}
                 </span>
@@ -196,7 +195,6 @@ export function ProposalCard({
                     calculatePercentage(
                       inputData?.value ?? 0,
                       memberActivatedPoints,
-                      tokenDecimals,
                     ),
                   )}
                 </span>

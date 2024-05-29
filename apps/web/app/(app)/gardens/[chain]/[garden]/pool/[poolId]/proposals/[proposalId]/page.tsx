@@ -9,10 +9,15 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { formatTokenAmount, calculatePercentage } from "@/utils/numbers";
+import {
+  formatTokenAmount,
+  calculatePercentageDecimals,
+} from "@/utils/numbers";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 
 export const dynamic = "force-dynamic";
+
+// export const EMPTY_BENEFICIARY = "0x0000000000000000000000000000000000000000";
 
 type ProposalsMock = {
   title: string;
@@ -80,7 +85,7 @@ export default async function Proposal({
   const proposalIdNumber = proposalData.proposalNumber as number;
   const convictionLast = proposalData.convictionLast as string;
   const threshold = proposalData.threshold;
-  const type = proposalData.strategy.config?.proposalType as number;
+  const proposalType = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount as bigint;
   const beneficiary = proposalData.beneficiary as Address;
   const submitter = proposalData.submitter as Address;
@@ -144,7 +149,7 @@ export default async function Proposal({
       error,
     );
   }
-  const isSignalingType = type == 0;
+  const isSignalingType = proposalType == 0;
 
   //logs for debugging in arb sepolia - //TODO: remove before merge
   console.log("requesteAmount:              %s", requestedAmount);
@@ -166,19 +171,19 @@ export default async function Proposal({
   // console.log(convictionLast);
   console.log("convictionLast:              %s", convictionLast);
 
-  const thresholdPct = calculatePercentage(
+  const thresholdPct = calculatePercentageDecimals(
     threshold,
     maxCVSupply,
     tokenDecimals,
   );
 
-  const totalSupportPct = calculatePercentage(
+  const totalSupportPct = calculatePercentageDecimals(
     stakedAmount,
     totalEffectiveActivePoints,
     tokenDecimals,
   );
 
-  const currentConvictionPct = calculatePercentage(
+  const currentConvictionPct = calculatePercentageDecimals(
     updateConvictionLast,
     maxCVSupply,
     tokenDecimals,
@@ -192,7 +197,7 @@ export default async function Proposal({
         {/* main content */}
         <div className="flex justify-between">
           <div className="flex items-center gap-2">
-            <Badge type={type} />
+            <Badge type={proposalType} />
             <h4 className="font-sm font-bold">
               <span className="">
                 {" "}
@@ -220,7 +225,7 @@ export default async function Proposal({
           <div>
             {/* reqAmount - bene - creatBy */}
             <div className="flex justify-between ">
-              {!!requestedAmount && (
+              {!isSignalingType && !!requestedAmount && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
                   <span className="text-md font-bold underline">
                     Requested Amount
@@ -231,7 +236,7 @@ export default async function Proposal({
                   </span>
                 </div>
               )}
-              {beneficiary && (
+              {!isSignalingType && beneficiary && (
                 <div className="flex flex-1 flex-col items-center space-y-4">
                   <span className="text-md font-bold underline">
                     Beneficiary

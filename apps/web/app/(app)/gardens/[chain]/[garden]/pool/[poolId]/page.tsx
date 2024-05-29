@@ -55,7 +55,7 @@ export default async function Pool({
   const maxRatioDivPrecision =
     Number(strategyObj?.config?.maxRatio) / PRECISON_OF_7;
 
-  const spendingLimitPct = maxRatioDivPrecision;
+  const spendingLimitPct = maxRatioDivPrecision * 100;
   console.log(
     "maxRatio: " + strategyObj?.config?.maxRatio,
     "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,

@@ -2,15 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import {
-  Address,
-  Chain,
-  createPublicClient,
-  createWalletClient,
-  custom,
-  http,
-  parseUnits,
-} from "viem";
+import { Address, parseUnits } from "viem";
 import { Button } from "@/components/Button";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { useAccount, useContractWrite } from "wagmi";
@@ -18,8 +10,6 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, proposalTypes } from "@/types";
 import "viem/window";
-import { getChainIdFromPath } from "@/utils/path";
-import { getChain } from "@/configs/chainServer";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
 import { FormSelect } from "./FormSelect";
@@ -226,7 +216,12 @@ export default function PoolForm({
 
     const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
 
+    // console.log("maxRatioNum                %s", maxRatioNum);
+    // console.log("minimumConviction          %s", minimumConviction);
     const weightNum = (minimumConviction / 100) * (maxRatioNum / 100) ** 2;
+
+    // console.log("weightNum                  %s", weightNum);
+    // console.log("convictionGrowth           %s", convictionGrowth);
 
     const blockTime = chainIdMap[chainId].blockTime;
     // pool settings
