@@ -42,31 +42,12 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     string public CURRENT_NETWORK = "arbsepolia";
 
     address BENEFICIARY = 0xc583789751910E39Fd2Ddb988AD05567Bcd81334;
-    // struct ProposalsInfo {
-    //     uint256 poolId;
-    //     address beneficiary;
-    //     uint256 requestedAmount;
-    //     Metadata metadata;
-    // }
-
-    // ProposalsInfo[] public proposals;
 
     uint256 councilMemberPKEnv;
     address allo_proxy;
     Allo allo;
     GV2ERC20 token;
     RegistryFactory registryFactory;
-
-    // constructor() {
-    //     proposals.push(
-    //         ProposalsInfo({
-    //             poolId: 0,
-    //             beneficiary: address(0),
-    //             requestedAmount: 50 ether,
-    //             metadata: Metadata({protocol: 1, pointer: "QmSLYbgSsapjdp1VGj3LeQn1hp5jBs4JcWS1zQRRWLLkid"})
-    //         })
-    //     );
-    // }
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -198,11 +179,17 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             pointConfig
         );
 
-        paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
-        paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
-        paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
+        // paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
+        // paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
+        // paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
 
-        (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
+        paramsCV.decay = _etherToFloat(0.9999903 ether); // alpha = decay
+        paramsCV.maxRatio = _etherToFloat(0.321978234271363 ether); // beta = maxRatio
+        paramsCV.weight = _etherToFloat(0.01036699833 ether); // RHO = p  = weight
+
+        (uint256 poolId, address _strategy1) = registryCommunity.createPool(
+            address(token), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
+        );
 
         CVStrategy strategy1 = CVStrategy(payable(_strategy1));
 
@@ -217,7 +204,9 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
 
-        (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(address(0), paramsCV, metadata);
+        (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(
+            address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
+        );
 
         CVStrategy strategy2 = CVStrategy(payable(_strategy2));
 
@@ -257,12 +246,12 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
         token.approve(address(allo), type(uint256).max);
-        allo.fundPool(poolId, 10_000 ether);
+        // allo.fundPool(poolId, 10_000 ether);
 
         StrategyStruct.CreateProposal memory proposal = StrategyStruct.CreateProposal(
             poolId,
             BENEFICIARY,
-            300 ether,
+            500 ether,
             address(token),
             Metadata({protocol: 1, pointer: "QmVi1G1hQX4x8pb4W6KRroxsJjyP1gTkoqkGuyqoiGBPhS"})
         );
@@ -272,7 +261,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         proposal = StrategyStruct.CreateProposal(
             poolId,
             BENEFICIARY,
-            500 ether,
+            1500 ether,
             address(token),
             Metadata({protocol: 1, pointer: "QmQfaGooGAWUHuHbYWzDp1ZHNJpreJP7oBiLjbKvxGwGuG"})
         );
@@ -292,12 +281,34 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         // Strategy with Signaling
         StrategyStruct.CreateProposal memory proposal2 = StrategyStruct.CreateProposal(
             poolIdSignaling,
-            pool_admin(),
+            address(0),
             0,
             address(0),
             Metadata({protocol: 1, pointer: "QmSLYbgSsapjdp1VGj3LeQn1hp5jBs4JcWS1zQRRWLLkid"})
         );
         bytes memory data2 = abi.encode(proposal2);
+        allo.registerRecipient(poolIdSignaling, data2);
+
+        proposal2 = StrategyStruct.CreateProposal(
+            poolIdSignaling,
+            address(0),
+            0,
+            address(0),
+            Metadata({protocol: 1, pointer: "QmXa5sb2uLiux8ewWt9pcCFdZERisSfY1FiUjEykYnySwz"})
+        );
+
+        data2 = abi.encode(proposal2);
+        allo.registerRecipient(poolIdSignaling, data2);
+
+        proposal2 = StrategyStruct.CreateProposal(
+            poolIdSignaling,
+            address(0),
+            0,
+            address(0),
+            Metadata({protocol: 1, pointer: "QmTafMKt491NJp5GdcPZpg5SQ1gTsYS7vidCutWcW3KFVg"})
+        );
+
+        data2 = abi.encode(proposal2);
         allo.registerRecipient(poolIdSignaling, data2);
 
         safeHelper(
