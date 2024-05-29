@@ -104,6 +104,10 @@ export const ProposalForm = ({
 
   const spendingLimitNumber = spendingLimit / 10 ** tokenGarden?.decimals;
 
+  // console.log("spendingLimit:               %s", spendingLimit);
+  // console.log("spendingLimitNumber:         %s", spendingLimitNumber);
+  // console.log("spendingLimitPct:            %s", spendingLimitPct);
+
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
     tokenGarden?.decimals as number,

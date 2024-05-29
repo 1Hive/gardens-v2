@@ -128,7 +128,7 @@ export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
                         <p className="text-justify leading-6">
                           {covenantData?.covenant
                             ? covenantData?.covenant
-                            : "No covenent was submitted for this community."}
+                            : "No covenant was submitted for this community."}
                         </p>
                       </div>
                     </div>

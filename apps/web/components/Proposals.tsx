@@ -1,25 +1,16 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import {
-  Button,
-  StatusBadge,
-  PoolGovernance,
-  FormLink,
-  ProposalCard,
-} from "@/components";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import React, { useState, useEffect, useCallback } from "react";
+import { Button, PoolGovernance, FormLink, ProposalCard } from "@/components";
 import {
   useAccount,
   useContractWrite,
   Address as AddressType,
   useContractRead,
-  useWaitForTransaction,
 } from "wagmi";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
-import { formatTokenAmount, calculatePercentage } from "@/utils/numbers";
+import { calculatePercentage } from "@/utils/numbers";
 import useErrorDetails from "@/utils/getErrorName";
 import {
   Allo,
@@ -27,7 +18,6 @@ import {
   CVStrategy,
   getMemberStrategyDocument,
   getMemberStrategyQuery,
-  getStrategyByPoolQuery,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
@@ -35,14 +25,11 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { encodeAbiParameters, formatUnits, parseUnits } from "viem";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { queryByChain } from "@/providers/urql";
 import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
-import { toast } from "react-toastify";
-import * as dn from "dnum";
 
 export type ProposalInputItem = {
   id: string;
@@ -79,10 +66,6 @@ export function Proposals({
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
   const [memberTokensInCommunity, setMemberTokensInCommunity] =
     useState<string>("0");
-
-  // console.log("inputAllocatedTokens: " + inputAllocatedTokens);
-  // console.log(inputs);
-  // console.log(stakedFilters);
 
   const { address } = useAccount();
 
@@ -305,14 +288,33 @@ export function Proposals({
   const memberSupportedProposalsPct = calculatePercentage(
     inputAllocatedTokens,
     memberActivatedPoints,
-    tokenDecimals,
   );
+  // console.log("inputAllocatedTokens:          %s", inputAllocatedTokens);
+  // console.log("memberSupportedProposalsPct:   %s", memberSupportedProposalsPct);
 
   const memberPoolWeight = calculatePercentage(
     memberActivatedPoints,
     strategy.totalEffectiveActivePoints,
-    tokenDecimals,
   );
+
+  // const memberActivatePointsAsNum = Number(
+  //   BigInt(memberActivatedPoints) / BigInt(10 ** tokenDecimals),
+  // );
+  // const totalEAPasNum = Number(
+  //   BigInt(strategy.totalEffectiveActivePoints) / BigInt(10 ** tokenDecimals),
+  // );
+
+  // const memberPoolWeight = memberActivatePointsAsNum / totalEAPasNum;
+
+  // console.log("newLocal:                    %s", memberActivatePointsAsNum);
+  // console.log("newLocal_1:                  %s", totalEAPasNum);
+  console.log("memberActivatedPoints:       %s", memberActivatedPoints);
+  console.log("memberPoolWeight:            %s", memberPoolWeight);
+  // console.log(
+  //   "totalEffectiveActivePoints:  %s",
+  //   strategy.totalEffectiveActivePoints,
+  // );
+  // console.log("tokenDecimals:               %s", tokenDecimals);
 
   const calcPoolWeightUsed = (number: number) => {
     return ((number / 100) * memberPoolWeight).toFixed(2);

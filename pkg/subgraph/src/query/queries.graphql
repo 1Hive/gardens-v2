@@ -38,6 +38,7 @@ query getTokenGardens {
     communities {
       id
       chainId
+      covenantIpfsHash
       communityFee
       members {
         id

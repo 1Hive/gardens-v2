@@ -1,4 +1,5 @@
 import * as dn from "dnum";
+import { formatUnits } from "viem";
 
 export const PRECISION_SCALE = BigInt(10 ** 4);
 export const INPUT_MIN_VALUE = 0.000000000001;
@@ -46,20 +47,48 @@ function gte(
   return dn.greaterThan(v1, v2) || dn.equal(v1, v2);
 }
 
-// function calculatePercentage(
-//   value1: number | undefined,
-//   value2: number | undefined,
-// ): number {
-//   if (!value1 || !value2) {
-//     return 0;
-//   }
-//   const percentage = (value1 * 100) / value2;
-//   return parseFloat(percentage.toFixed(2));
-// }
+function calculatePercentageBigInt(
+  value1: bigint,
+  value2: bigint,
+  tokenDecimals: number,
+): number {
+  if (!value1 || !value2) {
+    // console.log("divideWithDecimals: value1 or value2 is undefined");
+    return 0;
+  }
 
-function calculatePercentage(
-  value1: number | bigint | string | undefined,
-  value2: number | bigint | string | undefined,
+  if (value1 == 0n || value2 == 0n) {
+    return 0;
+  }
+
+  return parseFloat(
+    (
+      (parseFloat(formatUnits(value1, tokenDecimals)) /
+        parseFloat(formatUnits(value2, tokenDecimals))) *
+      100
+    ).toFixed(2),
+  );
+}
+function calculatePercentage(value1: number, value2: number): number {
+  if (!value1 || !value2) {
+    // console.log("divideWithDecimals: value1 or value2 is undefined");
+    return 0;
+  }
+
+  if (value2 == 0) {
+    // console.log("divideWithDecimals: value2 is 0");
+    return 0;
+  }
+
+  const divided = (value1 * 100) / value2;
+  // console.log("divideWithDecimals: ", divided);
+
+  return parseFloat(divided.toFixed(2));
+}
+
+function calculatePercentageDecimals(
+  value1: number | bigint,
+  value2: number | bigint,
   decimals: number,
 ): number {
   if (value1 === undefined || value2 === undefined) {
@@ -87,10 +116,20 @@ function calculatePercentage(
     decimals,
   );
 
+  console.log(percentage);
+
   const formattedPercentage = dn.format(percentage, 2);
 
-  console.log(formattedPercentage);
+  // console.log(formattedPercentage);
   return Number(formattedPercentage);
 }
 
-export { calculateFees, formatTokenAmount, gte, dn, calculatePercentage };
+export {
+  calculateFees,
+  formatTokenAmount,
+  gte,
+  dn,
+  calculatePercentageDecimals,
+  calculatePercentageBigInt,
+  calculatePercentage,
+};
