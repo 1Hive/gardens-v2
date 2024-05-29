@@ -1,7 +1,7 @@
 import { Badge, StatusBadge } from "@/components";
 import { EthAddress } from "@/components";
 import { cvStrategyABI } from "@/src/generated";
-import { Abi, Address, createPublicClient, http } from "viem";
+import { Abi, Address, createPublicClient, formatUnits, http } from "viem";
 import { getChain } from "@/configs/chainServer";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
@@ -9,10 +9,7 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import {
-  formatTokenAmount,
-  calculatePercentageDecimals,
-} from "@/utils/numbers";
+import { formatTokenAmount, calculatePercentageBigInt } from "@/utils/numbers";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 
 export const dynamic = "force-dynamic";
@@ -84,7 +81,7 @@ export default async function Proposal({
   const tokenDecimals = getProposalQuery?.tokenGarden?.decimals;
   const proposalIdNumber = proposalData.proposalNumber as number;
   const convictionLast = proposalData.convictionLast as string;
-  const threshold = proposalData.threshold;
+  const threshold = proposalData.threshold as bigint;
   const proposalType = proposalData.strategy.config?.proposalType as number;
   const requestedAmount = proposalData.requestedAmount as bigint;
   const beneficiary = proposalData.beneficiary as Address;
@@ -92,6 +89,8 @@ export default async function Proposal({
   const status = proposalData.proposalStatus as number;
   const stakedAmount = proposalData.stakedAmount as bigint;
   const metadata = proposalData.metadata;
+
+  const isSignalingType = proposalType == 0;
 
   const { title, description } = await getIpfsMetadata(metadata);
 
@@ -113,15 +112,23 @@ export default async function Proposal({
   let stakeAmountFromContract = 0n;
 
   try {
+    if (!isSignalingType) {
+      thFromContract = (await client.readContract({
+        ...cvStrategyContract,
+        functionName: "calculateThreshold",
+        args: [proposalIdNumber],
+      })) as bigint;
+    }
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
     totalEffectiveActivePoints = (await client.readContract({
       ...cvStrategyContract,
       functionName: "totalEffectiveActivePoints",
     })) as bigint;
-    thFromContract = (await client.readContract({
-      ...cvStrategyContract,
-      functionName: "calculateThreshold",
-      args: [requestedAmount],
-    })) as bigint;
+
     stakeAmountFromContract = (await client.readContract({
       ...cvStrategyContract,
       functionName: "getProposalStakedAmount",
@@ -143,13 +150,12 @@ export default async function Proposal({
       args: [totalEffectiveActivePoints],
     })) as bigint;
   } catch (error) {
-    updateConvictionLast = getProposal[7];
+    updateConvictionLast = getProposal[7] as bigint;
     console.log(
       "proposal already executed so threshold can no be read from contracts, or it is siganling proposal",
       error,
     );
   }
-  const isSignalingType = proposalType == 0;
 
   //logs for debugging in arb sepolia - //TODO: remove before merge
   console.log("requesteAmount:              %s", requestedAmount);
@@ -171,19 +177,36 @@ export default async function Proposal({
   // console.log(convictionLast);
   console.log("convictionLast:              %s", convictionLast);
 
-  const thresholdPct = calculatePercentageDecimals(
+  const thresholdPct = calculatePercentageBigInt(
     threshold,
     maxCVSupply,
     tokenDecimals,
   );
 
-  const totalSupportPct = calculatePercentageDecimals(
+  console.log("thresholdPct:                %s", thresholdPct);
+
+  // console.log("ff:                          %s", ff);
+
+  // const totalSupportPct = calculatePercentageDecimals(
+  //   stakedAmount,
+  //   totalEffectiveActivePoints,
+  //   tokenDecimals,
+  // );
+
+  const totalSupportPct = calculatePercentageBigInt(
     stakedAmount,
     totalEffectiveActivePoints,
     tokenDecimals,
   );
 
-  const currentConvictionPct = calculatePercentageDecimals(
+  console.log("totalSupportPct:             %s", totalSupportPct);
+  // const currentConvictionPct = calculatePercentageDecimals(
+  //   updateConvictionLast,
+  //   maxCVSupply,
+  //   tokenDecimals,
+  // );
+
+  const currentConvictionPct = calculatePercentageBigInt(
     updateConvictionLast,
     maxCVSupply,
     tokenDecimals,

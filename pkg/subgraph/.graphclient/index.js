@@ -227,6 +227,7 @@ export const getTokenGardensDocument = gql `
     communities {
       id
       chainId
+      covenantIpfsHash
       communityFee
       members {
         id

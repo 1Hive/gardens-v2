@@ -289,8 +289,8 @@ export function Proposals({
     inputAllocatedTokens,
     memberActivatedPoints,
   );
-  console.log("inputAllocatedTokens:          %s", inputAllocatedTokens);
-  console.log("memberSupportedProposalsPct:   %s", memberSupportedProposalsPct);
+  // console.log("inputAllocatedTokens:          %s", inputAllocatedTokens);
+  // console.log("memberSupportedProposalsPct:   %s", memberSupportedProposalsPct);
 
   const memberPoolWeight = calculatePercentage(
     memberActivatedPoints,
