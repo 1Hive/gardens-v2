@@ -56,7 +56,6 @@ export function RegisterMember({
   );
 
   const parsedCommunityFee = () => {
-    console.log(communityFee)
     try {
       const membership = [
         BigInt(membershipAmount),
