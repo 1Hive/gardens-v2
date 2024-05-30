@@ -3,8 +3,8 @@ import { formatUnits } from "viem";
 
 export const INPUT_MIN_VALUE = 0.000000000001;
 export const MAX_RATIO_CONSTANT = 0.77645;
-export const PERCENTAGE_PRECISION = 10 ** 4;
-export const PERCENTAGE_PRECISION_DECIMALS = 4;
+export const PERCENTAGE_PRECISION = 10 ** 6;
+export const PERCENTAGE_PRECISION_DECIMALS = 6;
 export const GV1_PERCENTAGE_PRECISION = 10 ** 7;
 export const GV1_PERCENTAGE_PRECISION_DECIMALS = 7;
 
