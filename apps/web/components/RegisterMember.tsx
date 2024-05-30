@@ -56,7 +56,6 @@ export function RegisterMember({
   );
 
   const parsedCommunityFee = () => {
-    // if (communityFee == "0") return "0";
     try {
       const membership = [
         BigInt(membershipAmount),
@@ -64,7 +63,7 @@ export function RegisterMember({
       ] as dn.Dnum;
       const feePercentage = [
         BigInt(communityFee),
-        Number(PERCENTAGE_PRECISION_DECIMALS),
+        PERCENTAGE_PRECISION_DECIMALS + 2, // adding 2 decimals because 1% == 10.000 == 1e4
       ] as dn.Dnum;
 
       return dn.multiply(membership, feePercentage);

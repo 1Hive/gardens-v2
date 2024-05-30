@@ -1,11 +1,12 @@
 import * as dn from "dnum";
 import { formatUnits } from "viem";
 
-export const PRECISION_SCALE = BigInt(10 ** 4);
 export const INPUT_MIN_VALUE = 0.000000000001;
 export const MAX_RATIO_CONSTANT = 0.77645;
-export const PERCENTAGE_PRECISION = 10 ** 7;
-export const PERCENTAGE_PRECISION_DECIMALS = 7;
+export const PERCENTAGE_PRECISION = 10 ** 4;
+export const PERCENTAGE_PRECISION_DECIMALS = 4;
+export const GV1_PERCENTAGE_PRECISION = 10 ** 7;
+export const GV1_PERCENTAGE_PRECISION_DECIMALS = 7;
 
 function formatTokenAmount(
   value: string | number | bigint | undefined,
@@ -25,7 +26,7 @@ function calculateFees(
   tokenDecimals: number,
 ) {
   const dividend = BigInt(stakeAmount) * BigInt(fee || 0);
-  const divisor = BigInt(100) * PRECISION_SCALE;
+  const divisor = BigInt(100) * BigInt(PERCENTAGE_PRECISION);
 
   const result = dividend / divisor;
   const num = [result, tokenDecimals] as dn.Dnum;

@@ -16,7 +16,7 @@ import { FormSelect } from "./FormSelect";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
-import { MAX_RATIO_CONSTANT, PERCENTAGE_PRECISION } from "@/utils/numbers";
+import { MAX_RATIO_CONSTANT, GV1_PERCENTAGE_PRECISION } from "@/utils/numbers";
 import { chainIdMap } from "@/configs/chainServer";
 
 type PoolSettings = {
@@ -224,8 +224,8 @@ export default function PoolForm({
     const blockTime = chainIdMap[chainId].blockTime;
 
     // pool settings
-    const maxRatio = BigInt(Math.round(maxRatioNum * PERCENTAGE_PRECISION));
-    const weight = BigInt(Math.round(weightNum * PERCENTAGE_PRECISION));
+    const maxRatio = BigInt(Math.round(maxRatioNum * GV1_PERCENTAGE_PRECISION));
+    const weight = BigInt(Math.round(weightNum * GV1_PERCENTAGE_PRECISION));
     const decay = BigInt(
       Math.round(calculateDecay(blockTime, convictionGrowth)),
     );
@@ -411,8 +411,8 @@ export default function PoolForm({
                     readOnly={optionType !== 0}
                     className="pr-14"
                     otherProps={{
-                      step: 1 / PERCENTAGE_PRECISION,
-                      min: 1 / PERCENTAGE_PRECISION,
+                      step: 1 / GV1_PERCENTAGE_PRECISION,
+                      min: 1 / GV1_PERCENTAGE_PRECISION,
                     }}
                     registerOptions={{
                       max: {
@@ -420,7 +420,7 @@ export default function PoolForm({
                         message: `Max amount cannot exceed 100%`,
                       },
                       min: {
-                        value: 1 / PERCENTAGE_PRECISION,
+                        value: 1 / GV1_PERCENTAGE_PRECISION,
                         message: "Amount must be greater than 0",
                       },
                     }}
@@ -442,8 +442,8 @@ export default function PoolForm({
                     readOnly={optionType !== 0}
                     className="pr-14"
                     otherProps={{
-                      step: 1 / PERCENTAGE_PRECISION,
-                      min: 1 / PERCENTAGE_PRECISION,
+                      step: 1 / GV1_PERCENTAGE_PRECISION,
+                      min: 1 / GV1_PERCENTAGE_PRECISION,
                     }}
                     registerOptions={{
                       max: {
@@ -451,7 +451,7 @@ export default function PoolForm({
                         message: `Max amount cannot exceed 100%`,
                       },
                       min: {
-                        value: 1 / PERCENTAGE_PRECISION,
+                        value: 1 / GV1_PERCENTAGE_PRECISION,
                         message: "Amount must be greater than 0",
                       },
                     }}
