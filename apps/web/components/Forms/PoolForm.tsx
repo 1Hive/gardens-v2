@@ -17,7 +17,7 @@ import FormPreview, { FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
 import { MAX_RATIO_CONSTANT, PERCENTAGE_PRECISION } from "@/utils/numbers";
-import { chainIdMap } from "@/configs/chainServer";
+import { chainDataMap } from "@/configs/chainServer";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -223,7 +223,7 @@ export default function PoolForm({
     // console.log("weightNum                  %s", weightNum);
     // console.log("convictionGrowth           %s", convictionGrowth);
 
-    const blockTime = chainIdMap[chainId].blockTime;
+    const blockTime = chainDataMap[chainId].blockTime;
     // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum * PERCENTAGE_PRECISION));
     const weight = BigInt(Math.round(weightNum * PERCENTAGE_PRECISION));

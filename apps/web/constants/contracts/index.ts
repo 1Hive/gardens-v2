@@ -5,9 +5,6 @@ const envRpcUrlArbTestnet = process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET;
 const envRpcUrlOpTestnet = process.env.NEXT_PUBLIC_RPC_URL_OP_TESTNET;
 const envRpcUrlEthSepoliaTestnet = process.env.NEXT_PUBLIC_RPC_URL_ETH_TESTNET;
 
-const envConfirmationsRequired =
-  process.env.NEXT_PUBLIC_CONFIRMATIONS_REQUIRED || 1;
-
 import {
   Address,
   extractAddr,
@@ -22,7 +19,6 @@ import {
 } from "viem/chains";
 
 export const isProd = ENV === "prod";
-export const confirmationsRequired = Number(envConfirmationsRequired);
 
 const envOrDefaultAddr = (env: string | undefined, def: Address) =>
   env ? (env as Address) : def;

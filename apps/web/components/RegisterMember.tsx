@@ -20,6 +20,7 @@ import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { formatUnits, parseUnits } from "viem";
 import { DisplayNumber } from "./DisplayNumber";
+import { chainDataMap } from "@/configs/chainServer";
 
 type RegisterMemberProps = {
   name: string;
@@ -148,7 +149,7 @@ export function RegisterMember({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: 1,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: allowTokenData?.hash,
   });
 

@@ -211,7 +211,8 @@ export function Proposals({
     useTransactionNotification(allocateData);
 
   useEffect(() => {
-    triggerRenderProposals();
+    // triggerRenderProposals();
+    runIsMemberQuery();
   }, [txConfirmationHash]);
 
   useEffect(() => {

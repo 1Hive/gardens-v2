@@ -1,9 +1,10 @@
-import { confirmationsRequired } from "@/constants/contracts";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { WriteContractResult } from "wagmi/actions";
 import { useViemClient } from "./useViemClient";
 import { Address } from "viem";
+import { chainDataMap } from "@/configs/chainServer";
+import { getChainIdFromPath } from "@/utils/path";
 
 type TransactionStatus = "error" | "success" | "loading" | "idle";
 type TransactionData = WriteContractResult | undefined;
@@ -22,14 +23,16 @@ export const useTransactionNotification = (
 ) => {
   const [transactionStatus, updateTransactionStatus] =
     useState<TransactionStatus>("idle");
-  const [txConfirmationHash, setTxConfirmationHash] = useState<Address | undefined>(undefined);
+  const [txConfirmationHash, setTxConfirmationHash] = useState<
+    Address | undefined
+  >(undefined);
   const [promiseResolve, setPromiseResolve] = useState<
     TransactionFunction | undefined
   >(undefined);
   const [promiseReject, setPromiseReject] = useState<
     TransactionFunction | undefined
   >(undefined);
-
+  const chainId = getChainIdFromPath();
   const viemClient = useViemClient();
 
   const transactionPromise = () => {
@@ -63,7 +66,7 @@ export const useTransactionNotification = (
         .then((data) => {
           const receipt = async () =>
             await viemClient.waitForTransactionReceipt({
-              confirmations: confirmationsRequired,
+              confirmations: chainDataMap[chainId].confirmations,
               hash: data.transactionData?.hash || "0x",
             });
 
@@ -71,7 +74,7 @@ export const useTransactionNotification = (
           toast
             .promise(receipt, {
               pending: "Waiting for block confirmations...",
-              success: `Transaction sent with ${confirmationsRequired} confirmations`,
+              success: `Transaction sent with ${chainDataMap[chainId].confirmations} confirmations`,
               error: "Something went wrong",
             })
             .then((data) => {

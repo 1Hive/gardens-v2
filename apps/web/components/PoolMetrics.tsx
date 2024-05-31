@@ -16,6 +16,7 @@ import { parseUnits } from "viem";
 import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
+import { chainDataMap } from "@/configs/chainServer";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -47,6 +48,7 @@ type PoolStatsProps = {
   spendingLimit?: number;
   alloInfo: Allo;
   poolId: number;
+  chainId: number;
 };
 
 export const PoolMetrics: FC<PoolStatsProps> = ({
@@ -57,6 +59,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
   tokenGarden,
   spendingLimit,
   poolId,
+  chainId,
 }) => {
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
 
@@ -100,7 +103,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
 
   const { isSuccess: isWaitAllowanceSuccess, status: waitAllowTokenStatus } =
     useWaitForTransaction({
-      confirmations: 1,
+      confirmations: chainDataMap[chainId].confirmations,
       hash: allowTokenData?.hash,
     });
 
