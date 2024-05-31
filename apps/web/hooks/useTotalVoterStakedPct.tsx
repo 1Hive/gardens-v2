@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { cvStrategyABI } from "@/src/generated";
 import { useViemClient } from "./useViemClient";
-import { PERCENTAGE_PRECISION } from "@/utils/numbers";
+import { SCALE_PRECISION } from "@/utils/numbers";
 import { Abi } from "viem";
 import { CVStrategy } from "#/subgraph/.graphclient";
 
@@ -28,7 +28,7 @@ export function useTotalVoterStakedPct(strategy: CVStrategy) {
     });
 
     setVoterStake(
-      (_voterStakeData as unknown as bigint) / BigInt(PERCENTAGE_PRECISION),
+      (_voterStakeData as unknown as bigint) / BigInt(SCALE_PRECISION),
     );
   };
 

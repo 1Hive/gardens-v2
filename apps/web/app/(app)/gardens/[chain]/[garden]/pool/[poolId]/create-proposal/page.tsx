@@ -6,7 +6,7 @@ import {
 import { ProposalForm } from "@/components/Forms";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { MAX_RATIO_CONSTANT, GV1_PERCENTAGE_PRECISION } from "@/utils/numbers";
+import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
 import React from "react";
 import { Address } from "viem";
 
@@ -39,7 +39,7 @@ export default async function page({
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
 
   const maxRatioDivPrecision =
-    (Number(strategyObj?.config?.maxRatio) / GV1_PERCENTAGE_PRECISION) *
+    (Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION) *
     MAX_RATIO_CONSTANT;
 
   const spendingLimitPct = maxRatioDivPrecision * 100;
