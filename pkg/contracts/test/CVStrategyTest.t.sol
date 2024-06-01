@@ -233,6 +233,16 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().registerRecipient(poolId, data);
     }
 
+    function testRevert_deactivate_NotRegistry() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         */
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.OnlyCommunityAllowed.selector));
+        cv.deactivatePoints(address(pool_admin()));
+    }
+
     function testRevert_allocate_ProposalIdDuplicated() public {
         ( /*IAllo.Pool memory pool*/ , uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
@@ -277,6 +287,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
         stopMeasuringGas();
     }
+
     //@todo should fix that tests using old percentage scale
     // function testRevert_allocate_removeSupport_wo_support_before_SUPPORT_UNDERFLOW() public {
     //     (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
@@ -1668,7 +1679,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
 
-    function test_revert_conviction_distribute() public {
+    function testRevert_conviction_distribute() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         /**
@@ -1689,6 +1700,28 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().distribute(poolId, recipients, dataProposal);
 
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
+    }
+
+    function testRevert_distribute_onlyAllo() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        address[] memory recipientIds;
+        bytes memory data; // Non-empty data
+        // bytes memory data = abi.encode(uint256(1)); // Non-empty data
+        address sender = address(this);
+        vm.expectRevert(abi.encodeWithSelector(UNAUTHORIZED.selector));
+        cv.distribute(recipientIds, data, sender);
+    }
+
+    function testRevert_initialize_registryZero() public {
+        StrategyStruct.InitializeParams memory params = getParams(
+            address(0),
+            StrategyStruct.ProposalType.Funding,
+            StrategyStruct.PointSystem.Unlimited,
+            StrategyStruct.PointSystemConfig(200 * DECIMALS)
+        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.RegistryCannotBeZero.selector));
+        _registryCommunity().createPool(NATIVE, params, metadata);
     }
 
     function test_canExecuteProposal_should_false() public {
