@@ -16,9 +16,8 @@ import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { dn, SCALE_PRECISION_DECIMALS, gte } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
-import { TransactionModal, TransactionStep } from "./TransactionModal";
+import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { formatUnits, parseUnits } from "viem";
 import { DisplayNumber } from "./DisplayNumber";
 
 type RegisterMemberProps = {
@@ -27,7 +26,7 @@ type RegisterMemberProps = {
   communityAddress: Address;
   registerToken: Address;
   registerTokenDecimals: number;
-  membershipAmount: string;
+  membershipAmount: bigint;
   protocolFee: string;
   communityFee: string;
   connectedAccount: Address;
@@ -290,20 +289,6 @@ export function RegisterMember({
                     compact={true}
                   />
                 </div>
-                {/* 
-                <p>
-                  Community fee: {parseString(parsedCommunityFee())}{" "}
-                  {tokenSymbol}
-                </p> */}
-                {/* <p>
-                  Protocol fee:{" "}
-                  {calculateFees(
-                    membershipAmount,
-                    protocolFee,
-                    registerTokenDecimals,
-                  )}{" "}
-                  {tokenSymbol}
-                </p> */}
               </div>
             </div>
           </div>
