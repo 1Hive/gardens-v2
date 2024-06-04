@@ -13,6 +13,7 @@ import {
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { pointSystems, proposalTypes } from "@/types";
+import { CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -51,11 +52,11 @@ export default async function Pool({
 
   //TODO: check decimals
   //spending limit calculations
-  const PRECISON_OF_7 = 10 ** 7;
-  const maxRatioDivPrecision =
-    Number(strategyObj?.config?.maxRatio) / PRECISON_OF_7;
 
-  const spendingLimitPct = maxRatioDivPrecision * 100;
+  const maxRatioDivPrecision =
+    Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION;
+
+  const spendingLimitPct = maxRatioDivPrecision;
   console.log(
     "maxRatio: " + strategyObj?.config?.maxRatio,
     "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
