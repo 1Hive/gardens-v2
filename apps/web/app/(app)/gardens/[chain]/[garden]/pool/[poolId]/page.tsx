@@ -50,13 +50,9 @@ export default async function Pool({
   const isEnabled = data?.cvstrategies?.[0]?.isEnabled as boolean;
   const { title, description } = await getIpfsMetadata(metadata);
 
-  //TODO: check decimals
-  //spending limit calculations
+  const spendingLimitPct =
+    (Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION) * 100;
 
-  const maxRatioDivPrecision =
-    Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION;
-
-  const spendingLimitPct = maxRatioDivPrecision;
   console.log(
     "maxRatio: " + strategyObj?.config?.maxRatio,
     "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
@@ -143,7 +139,7 @@ export default async function Pool({
                   communityAddress={communityAddress}
                   tokenGarden={tokenGarden}
                   pointSystem={pointSystem}
-                  spendingLimit={spendingLimitPct}
+                  spendingLimitPct={spendingLimitPct}
                 />
               )}
               {/* Proposals section */}
