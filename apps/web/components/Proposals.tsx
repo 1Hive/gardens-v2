@@ -233,6 +233,7 @@ export function Proposals({
     });
   };
 
+  // this calculations breaks when dealing with < 50 wei
   const getProposalsInputsDifferences = (
     inputData: ProposalInputItem[],
     currentData: ProposalInputItem[],
@@ -240,10 +241,11 @@ export function Proposals({
     const resultArr: [number, BigInt][] = [];
     inputData.forEach((input) => {
       let row: [number, bigint] | undefined = undefined;
-      if (input.value > 0) row = [Number(input.id), BigInt(input.value)];
+      if (input.value > 0)
+        row = [Number(input.id), BigInt(Math.round(input.value))];
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = BigInt(input.value - current.value);
+          const dif = BigInt(Math.round(input.value) - current.value);
           row = [Number(input.id), dif];
         }
       });
@@ -305,7 +307,6 @@ export function Proposals({
     memberActivatedPoints,
     strategy.totalEffectiveActivePoints,
   );
-
   // const memberActivatePointsAsNum = Number(
   //   BigInt(memberActivatedPoints) / BigInt(10 ** tokenDecimals),
   // );
@@ -326,6 +327,7 @@ export function Proposals({
   // console.log("tokenDecimals:               %s", tokenDecimals);
 
   const calcPoolWeightUsed = (number: number) => {
+    if (memberPoolWeight == 0) return 0;
     return ((number / 100) * memberPoolWeight).toFixed(2);
   };
 
