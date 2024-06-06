@@ -265,14 +265,10 @@ export const IncreasePower = ({
     Number(accountTokenBalance?.formatted);
 
   //IncreasePower Disable Button condition => message mapping
-  const disableIncPowerBtnCondition: ConditionObject[] = [
+  const disablePowerBtnCondition: ConditionObject[] = [
     {
       condition: !isMember,
       message: "Join community to increase voting power",
-    },
-    {
-      condition: isInputIncreaseGreaterThanBalance,
-      message: `Not enough ${tokenSymbol} balance to stake`,
     },
     {
       condition:
@@ -281,6 +277,15 @@ export const IncreasePower = ({
         Number(increaseInput) < 0,
       message: "Input can not be zero or negative",
     },
+  ];
+
+  const disableIncPowerBtnCondition: ConditionObject[] = [
+    ...disablePowerBtnCondition,
+    {
+      condition: isInputIncreaseGreaterThanBalance,
+      message: `Not enough ${tokenSymbol} balance to stake`,
+    },
+
     {
       condition: requestesMoreThanAllowance,
       message: `You have a pending allowance of ${formatTokenAmount(allowance ?? 0n, registerTokenDecimals)} ${tokenSymbol}. In order to stake more tokens, plaese stake the pending allowance first`,
@@ -288,7 +293,7 @@ export const IncreasePower = ({
   ];
 
   const disableDecPowerBtnCondition: ConditionObject[] = [
-    ...disableIncPowerBtnCondition,
+    ...disablePowerBtnCondition,
     {
       condition:
         parseUnits(increaseInput.toString(), registerTokenDecimals) >
