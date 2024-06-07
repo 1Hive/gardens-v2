@@ -100,6 +100,9 @@ export function RegisterMember({
     chainId: chainId || 0,
   });
 
+  console.log("accountTokenBalance ", accountTokenBalance);
+  console.log("registerToken ", registerToken);
+
   const accountHasBalance = gte(
     accountTokenBalance?.value,
     registerStakeAmount as bigint,
@@ -212,7 +215,7 @@ export function RegisterMember({
   //RegisterMember Disable Button condition => message mapping
   const disableRegMemberBtnCondition: ConditionObject[] = [
     {
-      condition: !accountHasBalance,
+      condition: !isMember && !accountHasBalance,
       message: "Connected account has insufficient balance",
     },
   ];
