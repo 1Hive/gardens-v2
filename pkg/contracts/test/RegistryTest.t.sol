@@ -862,6 +862,21 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
     }
 
+    function test_revert_initialize_zeroStake() public {
+        RegistryCommunity.InitializeParams memory params;
+        params._strategyTemplate = address(strategy);
+        params._allo = address(allo());
+        params._gardenToken = IERC20(address(token));
+        params._registerStakeAmount = 0;
+        params._communityFee = COMMUNITY_FEE_PERCENTAGE;
+        params._metadata = metadata;
+        params._feeReceiver = address(daoFeeReceiver);
+        params._councilSafe = payable(address(_councilSafe()));
+        params._isKickEnabled = true;
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.ValueCannotBeZero.selector));
+        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+    }
+
     function test_revert_deactivateMemberInStrategyCaller() public {
         startMeasuringGas("Registering and kicking member");
 
@@ -876,6 +891,19 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         vm.stopPrank();
 
+        stopMeasuringGas();
+    }
+
+    function test_revert_deactivateMember_alreadyDeactivated() public {
+        startMeasuringGas("Registering and kicking member");
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        vm.stopPrank();
+        vm.startPrank(address(strategy));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyDeactivated.selector));
+        _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
+        vm.stopPrank();
         stopMeasuringGas();
     }
 
