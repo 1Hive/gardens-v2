@@ -7,7 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "query-passport-account": "curl -X GET http://localhost:3000/api/passport/0xdf8f53B9f83e611e1154402992c6F6CB7Daf246c",
+    "query-all-scorer": "curl -X GET http://localhost:3000/api/passport/scores"
   },
   "dependencies": {
     "@allo-team/allo-v2-sdk": "^1.0.34",

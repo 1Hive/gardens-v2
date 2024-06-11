@@ -1,51 +1,44 @@
-// app/api/passport/[account]/route.ts
 import { NextResponse } from "next/server";
 
-interface Params {
-  params: {
-    account: string;
-  };
+interface PassportData {
+  address: string;
+  signature: string;
+  nonce: string;
 }
 
-export async function GET(request: Request, { params }: Params) {
-  const { account } = params;
-
-  if (!account) {
-    return NextResponse.json(
-      { error: "Account address is required" },
-      { status: 400 },
-    );
-  }
-
+export async function POST(request: Request) {
   const apiKey = process.env.GITCOIN_PASSPORT_API_KEY;
   const scorerId = process.env.SCORER_ID;
-  const endpoint = `https://api.scorer.gitcoin.co/registry/score/${scorerId}/${account}`;
+  const endpoint = "https://api.scorer.gitcoin.co/registry/submit-passport";
 
   if (!apiKey) {
     return NextResponse.json({ error: "API key is missing" }, { status: 500 });
   }
 
-  console.log("Making request to endpoint:", endpoint);
-  console.log("Using API key:", apiKey);
+  const { address, signature, nonce }: PassportData = await request.json();
+
+  if (!address || !signature || !nonce) {
+    return NextResponse.json(
+      { error: "Address, signature, and nonce are required" },
+      { status: 400 },
+    );
+  }
 
   try {
     const response = await fetch(endpoint, {
-      method: "GET",
+      method: "POST",
       headers: {
-        "X-API-KEY": apiKey,
         "Content-Type": "application/json",
+        "X-API-KEY": apiKey,
       },
+      body: JSON.stringify({ address, scorer_id: scorerId, signature, nonce }),
     });
-
-    console.log("Response status:", response.status);
-    console.log("Response status text:", response.statusText);
 
     if (response.ok) {
       const data = await response.json();
       return NextResponse.json(data, { status: 200 });
     } else {
       const errorData = await response.json();
-      console.log("Error data:", errorData);
       return NextResponse.json(
         { error: errorData.message },
         { status: response.status },

@@ -10,12 +10,11 @@ export async function GET() {
     return NextResponse.json({ error: "API key is missing" }, { status: 500 });
   }
 
-
   try {
     const response = await fetch(endpoint, {
       headers: {
         "X-API-KEY": apiKey,
-        "Content-Type": "application/json",,
+        "Content-Type": "application/json",
       },
     });
 
