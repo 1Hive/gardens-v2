@@ -1702,8 +1702,19 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
     }
 
-    function testRevert_distribute_onlyAllo() public {
+    function testRevert_distribute_onlyAllo_Native() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        address[] memory recipientIds;
+        bytes memory data; // Non-empty data
+        // bytes memory data = abi.encode(uint256(1)); // Non-empty data
+        address sender = address(this);
+        vm.expectRevert(abi.encodeWithSelector(UNAUTHORIZED.selector));
+        cv.distribute(recipientIds, data, sender);
+    }
+
+    function testRevert_distribute_onlyAllo() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(address(token), 0, 0);
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         address[] memory recipientIds;
         bytes memory data; // Non-empty data
