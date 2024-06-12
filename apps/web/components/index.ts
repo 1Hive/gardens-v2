@@ -7,7 +7,7 @@ export { PoolCard } from "./PoolCard";
 export { CommunityCard } from "./CommunityCard";
 export { Badge } from "./Badge";
 export { StatusBadge } from "./Badge";
-export { StackedBarChart } from "./StackedBarChart";
+// export { StackedBarChart } from "./StackedBarChart";
 export { ActivatePoints } from "./ActivatePoints";
 export { ActivePointsChart } from "./Charts/ActivePointsChart";
 export { PoolTokenPriceChart } from "./Charts/PoolTokenPriceChart";

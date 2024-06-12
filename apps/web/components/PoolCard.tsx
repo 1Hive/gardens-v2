@@ -57,12 +57,14 @@ export function PoolCard({
               classNames="scale-75"
             />
           </div>
-          <div className="flex items-baseline justify-between">
-            <p className="stat-title">funds available:</p>
-            <p className="overflow-hidden truncate px-2 text-right text-lg font-semibold">
-              {formatTokenAmount(poolAmount, tokenGarden?.decimals)}
-            </p>
-          </div>
+          {(config?.proposalType as number) == 1 && (
+            <div className="flex items-baseline justify-between">
+              <p className="stat-title">funds available:</p>
+              <p className="overflow-hidden truncate px-2 text-right text-lg font-semibold">
+                {formatTokenAmount(poolAmount, tokenGarden?.decimals)}
+              </p>
+            </div>
+          )}
           <div className="flex items-baseline justify-between">
             <p className="stat-title">proposals:</p>
             <p className="px-2 text-right text-lg font-semibold">

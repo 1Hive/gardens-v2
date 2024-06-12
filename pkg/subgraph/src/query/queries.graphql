@@ -38,6 +38,7 @@ query getTokenGardens {
     communities {
       id
       chainId
+      covenantIpfsHash
       communityFee
       members {
         id
@@ -251,6 +252,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
   tokenGarden(id: $garden) {
     name
     symbol
+    decimals
   }
   cvproposal(id: $proposalId) {
     proposalNumber

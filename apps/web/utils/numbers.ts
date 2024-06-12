@@ -1,11 +1,20 @@
 import * as dn from "dnum";
+import { formatUnits } from "viem";
 
-export const PRECISION_SCALE = BigInt(10 ** 4);
-export const ARB_BLOCK_TIME = 0.23;
 export const INPUT_MIN_VALUE = 0.000000000001;
 export const MAX_RATIO_CONSTANT = 0.77645;
-export const PERCENTAGE_PRECISION = 10 ** 7;
-export const PERCENTAGE_PRECISION_DECIMALS = 7;
+export const CV_PERCENTAGE_SCALE = 10 ** 4;
+export const CV_PERCENTAGE_SCALE_DECIMALS = 4;
+
+export const UI_PERCENTAGE_FORMAT = 10 ** 2; // 100% = 1
+export const UI_PERCENTAGE_FORMAT_DECIMALS = 2;
+
+export const SCALE_PRECISION = CV_PERCENTAGE_SCALE * UI_PERCENTAGE_FORMAT; // 1% = 10.000
+export const SCALE_PRECISION_DECIMALS =
+  CV_PERCENTAGE_SCALE_DECIMALS + UI_PERCENTAGE_FORMAT_DECIMALS; // 6 decimals
+
+export const CV_SCALE_PRECISION = 10 ** 7;
+export const CV_SCALE_PRECISION_DECIMALS = 7;
 
 function formatTokenAmount(
   value: string | number | bigint | undefined,
@@ -25,7 +34,7 @@ function calculateFees(
   tokenDecimals: number,
 ) {
   const dividend = BigInt(stakeAmount) * BigInt(fee || 0);
-  const divisor = BigInt(100) * PRECISION_SCALE;
+  const divisor = BigInt(100) * BigInt(SCALE_PRECISION);
 
   const result = dividend / divisor;
   const num = [result, tokenDecimals] as dn.Dnum;
@@ -47,20 +56,49 @@ function gte(
   return dn.greaterThan(v1, v2) || dn.equal(v1, v2);
 }
 
-// function calculatePercentage(
-//   value1: number | undefined,
-//   value2: number | undefined,
-// ): number {
-//   if (!value1 || !value2) {
-//     return 0;
-//   }
-//   const percentage = (value1 * 100) / value2;
-//   return parseFloat(percentage.toFixed(2));
-// }
+function calculatePercentageBigInt(
+  value1: bigint,
+  value2: bigint,
+  tokenDecimals: number,
+): number {
+  if (!value1 || !value2) {
+    // console.log("divideWithDecimals: value1 or value2 is undefined");
+    return 0;
+  }
 
-function calculatePercentage(
-  value1: number | bigint | string | undefined,
-  value2: number | bigint | string | undefined,
+  if (value1 == 0n || value2 == 0n) {
+    return 0;
+  }
+
+  return parseFloat(
+    (
+      (parseFloat(formatUnits(value1, tokenDecimals)) /
+        parseFloat(formatUnits(value2, tokenDecimals))) *
+      100
+    ).toFixed(2),
+  );
+}
+function calculatePercentage(value1: number, value2: number): number {
+  if (!value1 || !value2) {
+    // console.log("divideWithDecimals: value1 or value2 is undefined");
+    return 0;
+  }
+
+  if (value2 == 0) {
+    // console.log("divideWithDecimals: value2 is 0");
+    return 0;
+  }
+
+  const divided = (value1 * 100) / value2;
+  // console.log("divideWithDecimals: ", divided);
+
+  return parseFloat(divided.toFixed(2));
+}
+
+function calculatePercentageDecimals(
+  value1: number | bigint,
+  value2: number | bigint,
+  decimals: number,
 ): number {
   if (value1 === undefined || value2 === undefined) {
     return 0;
@@ -79,19 +117,28 @@ function calculatePercentage(
   if (dn.eq(dnumValue2, 0)) {
     return 0;
   }
-  const PRECISION = 2;
+  const PRECISION = 4;
 
   const percentage = dn.div(
     dn.mul(dnumValue1, 100 * 10 ** PRECISION),
     dnumValue2,
+    decimals,
   );
 
-  const formattedPercentage = dn.format(
-    [percentage[0], percentage[1] + PRECISION],
-    2,
-  );
+  console.log(percentage);
 
+  const formattedPercentage = dn.format(percentage, 2);
+
+  // console.log(formattedPercentage);
   return Number(formattedPercentage);
 }
 
-export { calculateFees, formatTokenAmount, gte, dn, calculatePercentage };
+export {
+  calculateFees,
+  formatTokenAmount,
+  gte,
+  dn,
+  calculatePercentageDecimals,
+  calculatePercentageBigInt,
+  calculatePercentage,
+};

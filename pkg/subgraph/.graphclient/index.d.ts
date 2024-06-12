@@ -32,7 +32,9 @@ export type Scalars = {
     BigInt: any;
     Bytes: any;
     Int8: any;
+    Timestamp: any;
 };
+export type Aggregation_interval = 'hour' | 'day';
 export type Allo = {
     id: Scalars['ID'];
     chainId: Scalars['BigInt'];
@@ -551,7 +553,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled';
 export type Member = {
     id: Scalars['ID'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -667,7 +669,7 @@ export type MemberCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
 };
-export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress';
+export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress';
 export type MemberStrategy = {
     id: Scalars['ID'];
     member: Member;
@@ -953,6 +955,7 @@ export type Query_metaArgs = {
 export type RegistryCommunity = {
     id: Scalars['ID'];
     chainId: Scalars['BigInt'];
+    strategyTemplate: Scalars['String'];
     profileId?: Maybe<Scalars['String']>;
     communityFee: Scalars['BigInt'];
     protocolFee: Scalars['BigInt'];
@@ -999,6 +1002,26 @@ export type RegistryCommunity_filter = {
     chainId_lte?: InputMaybe<Scalars['BigInt']>;
     chainId_in?: InputMaybe<Array<Scalars['BigInt']>>;
     chainId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    strategyTemplate?: InputMaybe<Scalars['String']>;
+    strategyTemplate_not?: InputMaybe<Scalars['String']>;
+    strategyTemplate_gt?: InputMaybe<Scalars['String']>;
+    strategyTemplate_lt?: InputMaybe<Scalars['String']>;
+    strategyTemplate_gte?: InputMaybe<Scalars['String']>;
+    strategyTemplate_lte?: InputMaybe<Scalars['String']>;
+    strategyTemplate_in?: InputMaybe<Array<Scalars['String']>>;
+    strategyTemplate_not_in?: InputMaybe<Array<Scalars['String']>>;
+    strategyTemplate_contains?: InputMaybe<Scalars['String']>;
+    strategyTemplate_contains_nocase?: InputMaybe<Scalars['String']>;
+    strategyTemplate_not_contains?: InputMaybe<Scalars['String']>;
+    strategyTemplate_not_contains_nocase?: InputMaybe<Scalars['String']>;
+    strategyTemplate_starts_with?: InputMaybe<Scalars['String']>;
+    strategyTemplate_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    strategyTemplate_not_starts_with?: InputMaybe<Scalars['String']>;
+    strategyTemplate_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    strategyTemplate_ends_with?: InputMaybe<Scalars['String']>;
+    strategyTemplate_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    strategyTemplate_not_ends_with?: InputMaybe<Scalars['String']>;
+    strategyTemplate_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
     profileId?: InputMaybe<Scalars['String']>;
     profileId_not?: InputMaybe<Scalars['String']>;
     profileId_gt?: InputMaybe<Scalars['String']>;
@@ -1196,7 +1219,7 @@ export type RegistryCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
 };
-export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'profileId' | 'communityFee' | 'protocolFee' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address';
+export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address';
 export type RegistryFactory = {
     id: Scalars['ID'];
     chainId: Scalars['BigInt'];
@@ -1671,6 +1694,8 @@ export type _Block_ = {
     number: Scalars['Int'];
     /** Integer representation of the timestamp stored in blocks for the chain */
     timestamp?: Maybe<Scalars['Int']>;
+    /** The hash of the parent block */
+    parentHash?: Maybe<Scalars['Bytes']>;
 };
 /** The type for the top-level _meta field */
 export type _Meta_ = {
@@ -1731,6 +1756,7 @@ export type NextResolverFn<T> = () => Promise<T>;
 export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs = {}> = (next: NextResolverFn<TResult>, parent: TParent, args: TArgs, context: TContext, info: GraphQLResolveInfo) => TResult | Promise<TResult>;
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
+    Aggregation_interval: Aggregation_interval;
     Allo: ResolverTypeWrapper<Allo>;
     Allo_filter: Allo_filter;
     Allo_orderBy: Allo_orderBy;
@@ -1775,6 +1801,7 @@ export type ResolversTypes = ResolversObject<{
     Stake_orderBy: Stake_orderBy;
     String: ResolverTypeWrapper<Scalars['String']>;
     Subscription: ResolverTypeWrapper<{}>;
+    Timestamp: ResolverTypeWrapper<Scalars['Timestamp']>;
     TokenGarden: ResolverTypeWrapper<TokenGarden>;
     TokenGarden_filter: TokenGarden_filter;
     TokenGarden_orderBy: TokenGarden_orderBy;
@@ -1817,6 +1844,7 @@ export type ResolversParentTypes = ResolversObject<{
     Stake_filter: Stake_filter;
     String: Scalars['String'];
     Subscription: {};
+    Timestamp: Scalars['Timestamp'];
     TokenGarden: TokenGarden;
     TokenGarden_filter: TokenGarden_filter;
     _Block_: _Block_;
@@ -1948,6 +1976,7 @@ export type QueryResolvers<ContextType = MeshContext, ParentType extends Resolve
 export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['RegistryCommunity'] = ResolversParentTypes['RegistryCommunity']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     chainId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    strategyTemplate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     profileId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     communityFee?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     protocolFee?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
@@ -2004,6 +2033,9 @@ export type SubscriptionResolvers<ContextType = MeshContext, ParentType extends 
     allos?: SubscriptionResolver<Array<ResolversTypes['Allo']>, "allos", ParentType, ContextType, RequireFields<SubscriptionallosArgs, 'skip' | 'first' | 'subgraphError'>>;
     _meta?: SubscriptionResolver<Maybe<ResolversTypes['_Meta_']>, "_meta", ParentType, ContextType, Partial<Subscription_metaArgs>>;
 }>;
+export interface TimestampScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Timestamp'], any> {
+    name: 'Timestamp';
+}
 export type TokenGardenResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['TokenGarden'] = ResolversParentTypes['TokenGarden']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2021,6 +2053,7 @@ export type _Block_Resolvers<ContextType = MeshContext, ParentType extends Resol
     hash?: Resolver<Maybe<ResolversTypes['Bytes']>, ParentType, ContextType>;
     number?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
     timestamp?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+    parentHash?: Resolver<Maybe<ResolversTypes['Bytes']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type _Meta_Resolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['_Meta_'] = ResolversParentTypes['_Meta_']> = ResolversObject<{
@@ -2046,6 +2079,7 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     RegistryFactory?: RegistryFactoryResolvers<ContextType>;
     Stake?: StakeResolvers<ContextType>;
     Subscription?: SubscriptionResolvers<ContextType>;
+    Timestamp?: GraphQLScalarType;
     TokenGarden?: TokenGardenResolvers<ContextType>;
     _Block_?: _Block_Resolvers<ContextType>;
     _Meta_?: _Meta_Resolvers<ContextType>;
@@ -2122,7 +2156,7 @@ export type getTokenGardensQueryVariables = Exact<{
 }>;
 export type getTokenGardensQuery = {
     tokenGardens: Array<(Pick<TokenGarden, 'id' | 'chainId' | 'name' | 'symbol' | 'decimals' | 'totalBalance'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityFee'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'covenantIpfsHash' | 'communityFee'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'id'>>>;
         })>>;
     })>;
@@ -2224,7 +2258,7 @@ export type getProposalDataQueryVariables = Exact<{
     proposalId: Scalars['ID'];
 }>;
 export type getProposalDataQuery = {
-    tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol'>>;
+    tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'decimals'>>;
     cvproposal?: Maybe<(Pick<CVProposal, 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadata' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
         strategy: (Pick<CVStrategy, 'id'> & {
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;

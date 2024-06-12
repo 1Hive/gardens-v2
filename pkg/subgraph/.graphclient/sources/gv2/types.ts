@@ -20,7 +20,12 @@ export type Scalars = {
   BigInt: any;
   Bytes: any;
   Int8: any;
+  Timestamp: any;
 };
+
+export type Aggregation_interval =
+  | 'hour'
+  | 'day';
 
 export type Allo = {
   id: Scalars['ID'];
@@ -609,6 +614,7 @@ export type CVStrategy_orderBy =
   | 'registryCommunity'
   | 'registryCommunity__id'
   | 'registryCommunity__chainId'
+  | 'registryCommunity__strategyTemplate'
   | 'registryCommunity__profileId'
   | 'registryCommunity__communityFee'
   | 'registryCommunity__protocolFee'
@@ -767,6 +773,7 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity'
   | 'registryCommunity__id'
   | 'registryCommunity__chainId'
+  | 'registryCommunity__strategyTemplate'
   | 'registryCommunity__profileId'
   | 'registryCommunity__communityFee'
   | 'registryCommunity__protocolFee'
@@ -1134,6 +1141,7 @@ export type Query_metaArgs = {
 export type RegistryCommunity = {
   id: Scalars['ID'];
   chainId: Scalars['BigInt'];
+  strategyTemplate: Scalars['String'];
   profileId?: Maybe<Scalars['String']>;
   communityFee: Scalars['BigInt'];
   protocolFee: Scalars['BigInt'];
@@ -1185,6 +1193,26 @@ export type RegistryCommunity_filter = {
   chainId_lte?: InputMaybe<Scalars['BigInt']>;
   chainId_in?: InputMaybe<Array<Scalars['BigInt']>>;
   chainId_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  strategyTemplate?: InputMaybe<Scalars['String']>;
+  strategyTemplate_not?: InputMaybe<Scalars['String']>;
+  strategyTemplate_gt?: InputMaybe<Scalars['String']>;
+  strategyTemplate_lt?: InputMaybe<Scalars['String']>;
+  strategyTemplate_gte?: InputMaybe<Scalars['String']>;
+  strategyTemplate_lte?: InputMaybe<Scalars['String']>;
+  strategyTemplate_in?: InputMaybe<Array<Scalars['String']>>;
+  strategyTemplate_not_in?: InputMaybe<Array<Scalars['String']>>;
+  strategyTemplate_contains?: InputMaybe<Scalars['String']>;
+  strategyTemplate_contains_nocase?: InputMaybe<Scalars['String']>;
+  strategyTemplate_not_contains?: InputMaybe<Scalars['String']>;
+  strategyTemplate_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  strategyTemplate_starts_with?: InputMaybe<Scalars['String']>;
+  strategyTemplate_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  strategyTemplate_not_starts_with?: InputMaybe<Scalars['String']>;
+  strategyTemplate_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  strategyTemplate_ends_with?: InputMaybe<Scalars['String']>;
+  strategyTemplate_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  strategyTemplate_not_ends_with?: InputMaybe<Scalars['String']>;
+  strategyTemplate_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
   profileId?: InputMaybe<Scalars['String']>;
   profileId_not?: InputMaybe<Scalars['String']>;
   profileId_gt?: InputMaybe<Scalars['String']>;
@@ -1386,6 +1414,7 @@ export type RegistryCommunity_filter = {
 export type RegistryCommunity_orderBy =
   | 'id'
   | 'chainId'
+  | 'strategyTemplate'
   | 'profileId'
   | 'communityFee'
   | 'protocolFee'
@@ -1982,6 +2011,8 @@ export type _Block_ = {
   number: Scalars['Int'];
   /** Integer representation of the timestamp stored in blocks for the chain */
   timestamp?: Maybe<Scalars['Int']>;
+  /** The hash of the parent block */
+  parentHash?: Maybe<Scalars['Bytes']>;
 };
 
 /** The type for the top-level _meta field */

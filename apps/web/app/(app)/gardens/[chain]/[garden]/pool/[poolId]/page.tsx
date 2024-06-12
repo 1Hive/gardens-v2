@@ -13,6 +13,7 @@ import {
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { pointSystems, proposalTypes } from "@/types";
+import { CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -49,13 +50,14 @@ export default async function Pool({
   const isEnabled = data?.cvstrategies?.[0]?.isEnabled as boolean;
   const { title, description } = await getIpfsMetadata(metadata);
 
-  //TODO: check decimals
-  //spending limit calculations
-  const PRECISON_OF_7 = 10 ** 7;
-  const maxRatioDivPrecision =
-    Number(strategyObj?.config?.maxRatio) / PRECISON_OF_7;
+  const spendingLimitPct =
+    (Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION) * 100;
 
-  const spendingLimitPct = maxRatioDivPrecision;
+  console.log(
+    "maxRatio: " + strategyObj?.config?.maxRatio,
+    "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
+    "poolAmount: " + poolAmount,
+  );
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
@@ -137,7 +139,7 @@ export default async function Pool({
                   communityAddress={communityAddress}
                   tokenGarden={tokenGarden}
                   pointSystem={pointSystem}
-                  spendingLimit={spendingLimitPct}
+                  spendingLimitPct={spendingLimitPct}
                 />
               )}
               {/* Proposals section */}
