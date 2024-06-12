@@ -20,6 +20,7 @@ import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import useErrorDetails from "@/utils/getErrorName";
+import { DisplayNumber } from "./DisplayNumber";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -27,7 +28,8 @@ type IncreasePowerProps = {
   connectedAccount: Address;
   tokenSymbol: string;
   registerTokenDecimals: number;
-  addedStake: number;
+  registerStakeAmount: bigint;
+  memberStakedTokens: bigint;
 };
 
 const InitialTransactionSteps: TransactionStep[] = [
@@ -56,7 +58,8 @@ export const IncreasePower = ({
   connectedAccount,
   tokenSymbol,
   registerTokenDecimals,
-  addedStake,
+  registerStakeAmount,
+  memberStakedTokens,
 }: IncreasePowerProps) => {
   //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
@@ -262,14 +265,10 @@ export const IncreasePower = ({
     Number(accountTokenBalance?.formatted);
 
   //IncreasePower Disable Button condition => message mapping
-  const disableIncPowerBtnCondition: ConditionObject[] = [
+  const disablePowerBtnCondition: ConditionObject[] = [
     {
       condition: !isMember,
       message: "Join community to increase voting power",
-    },
-    {
-      condition: isInputIncreaseGreaterThanBalance,
-      message: `Not enough ${tokenSymbol} balance to stake`,
     },
     {
       condition:
@@ -278,6 +277,15 @@ export const IncreasePower = ({
         Number(increaseInput) < 0,
       message: "Input can not be zero or negative",
     },
+  ];
+
+  const disableIncPowerBtnCondition: ConditionObject[] = [
+    ...disablePowerBtnCondition,
+    {
+      condition: isInputIncreaseGreaterThanBalance,
+      message: `Not enough ${tokenSymbol} balance to stake`,
+    },
+
     {
       condition: requestesMoreThanAllowance,
       message: `You have a pending allowance of ${formatTokenAmount(allowance ?? 0n, registerTokenDecimals)} ${tokenSymbol}. In order to stake more tokens, plaese stake the pending allowance first`,
@@ -285,16 +293,12 @@ export const IncreasePower = ({
   ];
 
   const disableDecPowerBtnCondition: ConditionObject[] = [
-    ...disableIncPowerBtnCondition,
-    {
-      condition: addedStake === 0 || addedStake === undefined,
-      message: "You have no stake to decrease",
-    },
+    ...disablePowerBtnCondition,
     {
       condition:
-        Number(increaseInput) !== undefined &&
-        Number(increaseInput) > addedStake,
-      message: "Can not decrease more than current stake",
+        parseUnits(increaseInput.toString(), registerTokenDecimals) >
+        memberStakedTokens - registerStakeAmount,
+      message: "You can only decrease your added stake.",
     },
   ];
 
@@ -337,19 +341,21 @@ export const IncreasePower = ({
         <div className="col-span-2 flex flex-col gap-4">
           {isMember && (
             <div className="flex items-center justify-between">
-              <div>
-                <span className="text-lg text-black">
-                  Balance:{" "}
-                  {`${Number(accountTokenBalance?.formatted).toFixed(1)}`}
-                  <span className="px-1 text-xs">{tokenSymbol}</span>
-                </span>
+              <div className="flex-start flex">
+                <p>Balance:</p>
+                <DisplayNumber
+                  number={accountTokenBalance?.formatted ?? "0"}
+                  tokenSymbol={tokenSymbol}
+                  compact={true}
+                />
               </div>
-
-              <div>
-                <span className="text-lg text-black">
-                  Current Staked: {addedStake.toFixed(1)}
-                  <span className="px-1 text-xs">{tokenSymbol}</span>
-                </span>
+              <div className="flex-start flex">
+                <p>Current Stake:</p>
+                <DisplayNumber
+                  number={[BigInt(memberStakedTokens), registerTokenDecimals]}
+                  tokenSymbol={tokenSymbol}
+                  compact={true}
+                />
               </div>
             </div>
           )}
