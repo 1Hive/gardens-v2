@@ -53,49 +53,49 @@ export const chainDataMap: {
     icon: Arbitrum,
     explorer: "https://sepolia.arbiscan.io/address/",
     blockTime: 0.23,
-    confirmations: 7,
+    confirmations: 1, // 7
   },
   42161: {
     name: arbitrum.name,
     icon: Arbitrum,
     explorer: "https://arbiscan.io/address/",
     blockTime: 0.23,
-    confirmations: 7,
+    confirmations: 1, // 7
   },
   1: {
     name: mainnet.name,
     icon: Ethereum,
     explorer: "https://etherscan.io/address/",
     blockTime: 12,
-    confirmations: 3,
+    confirmations: 1, // 3
   },
   11155111: {
     name: sepolia.name,
     icon: Ethereum,
     explorer: "https://sepolia.etherscan.io/address/",
     blockTime: 12,
-    confirmations: 3,
+    confirmations: 1, // 3
   },
   10: {
     name: optimism.name,
     icon: Optimism,
     explorer: "https://optimistic.etherscan.io/address/",
     blockTime: 2,
-    confirmations: 2,
+    confirmations: 1, // 2
   },
   11155420: {
     name: optimismSepolia.name,
     icon: Optimism,
     explorer: "https://sepolia-optimism.etherscan.io/address/",
     blockTime: 2,
-    confirmations: 2,
+    confirmations: 1, // 2
   },
   100: {
     name: gnosis.name,
     icon: GnosisGno,
     explorer: "https://gnosisscan.io/address/",
     blockTime: 5.2,
-    confirmations: 4,
+    confirmations: 1, // 4
   },
 };
 
