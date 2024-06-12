@@ -2,15 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import {
-  Address,
-  Chain,
-  createPublicClient,
-  createWalletClient,
-  custom,
-  http,
-  parseUnits,
-} from "viem";
+import { Address, parseUnits } from "viem";
 import { Button } from "@/components/Button";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { useAccount, useContractWrite } from "wagmi";
@@ -18,19 +10,14 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, proposalTypes } from "@/types";
 import "viem/window";
-import { getChainIdFromPath } from "@/utils/path";
-import { getChain } from "@/configs/chainServer";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
 import { FormSelect } from "./FormSelect";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  ARB_BLOCK_TIME,
-  MAX_RATIO_CONSTANT,
-  PERCENTAGE_PRECISION,
-} from "@/utils/numbers";
+import { MAX_RATIO_CONSTANT, PERCENTAGE_PRECISION } from "@/utils/numbers";
+import { chainIdMap } from "@/configs/chainServer";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -70,6 +57,7 @@ type Props = {
   communityAddr: Address;
   alloAddr: Address;
   token: TokenGarden;
+  chainId: number;
 };
 
 const poolSettingValues: Record<
@@ -129,7 +117,12 @@ function calculateDecay(blockTime: number, convictionGrowth: number) {
   return result;
 }
 
-export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
+export default function PoolForm({
+  alloAddr,
+  token,
+  communityAddr,
+  chainId,
+}: Props) {
   const {
     register,
     handleSubmit,
@@ -145,6 +138,7 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     },
   });
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token?.decimals;
+  const INPUT_MIN_THRESHOLD_MIN_VALUE = 0;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -202,16 +196,6 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
     setShowPreview(true);
   };
 
-  // const walletClient = createWalletClient({
-  //   chain: getChain(getChainIdFromPath()) as Chain,
-  //   transport: custom(window.ethereum!),
-  // });
-
-  // const publicClient = createPublicClient({
-  //   chain: getChain(getChainIdFromPath()) as Chain,
-  //   transport: http(),
-  // });
-
   const contractWrite = async (ipfsHash: string) => {
     let spendingLimit: number;
     let minimumConviction;
@@ -230,15 +214,21 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
         ?.convictionGrowth as number;
     }
 
-    const maxRatioNum =
-      (spendingLimit / MAX_RATIO_CONSTANT) * PERCENTAGE_PRECISION;
-    const weightNum = (minimumConviction / 100) * (spendingLimit / 100) ** 2;
+    const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
 
+    // console.log("maxRatioNum                %s", maxRatioNum);
+    // console.log("minimumConviction          %s", minimumConviction);
+    const weightNum = (minimumConviction / 100) * (maxRatioNum / 100) ** 2;
+
+    // console.log("weightNum                  %s", weightNum);
+    // console.log("convictionGrowth           %s", convictionGrowth);
+
+    const blockTime = chainIdMap[chainId].blockTime;
     // pool settings
-    const maxRatio = BigInt(Math.round(maxRatioNum));
+    const maxRatio = BigInt(Math.round(maxRatioNum * PERCENTAGE_PRECISION));
     const weight = BigInt(Math.round(weightNum * PERCENTAGE_PRECISION));
     const decay = BigInt(
-      Math.round(calculateDecay(ARB_BLOCK_TIME, convictionGrowth)),
+      Math.round(calculateDecay(blockTime, convictionGrowth)),
     );
 
     const minThresholdPoints = parseUnits(
@@ -512,13 +502,13 @@ export default function PoolForm({ alloAddr, token, communityAddr }: Props) {
                 required
                 registerOptions={{
                   min: {
-                    value: INPUT_TOKEN_MIN_VALUE,
-                    message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                    value: INPUT_MIN_THRESHOLD_MIN_VALUE,
+                    message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_MIN_VALUE}`,
                   },
                 }}
                 otherProps={{
                   step: INPUT_TOKEN_MIN_VALUE,
-                  min: INPUT_TOKEN_MIN_VALUE,
+                  min: INPUT_MIN_THRESHOLD_MIN_VALUE,
                 }}
                 errors={errors}
                 registerKey="minThresholdPoints"

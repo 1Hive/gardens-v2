@@ -42,8 +42,8 @@ export default async function page({
     (Number(strategyObj?.config?.maxRatio) / PERCENTAGE_PRECISION) *
     MAX_RATIO_CONSTANT;
 
-  const spendingLimitPct = maxRatioDivPrecision;
-  const poolAmountSpendingLimit = (poolAmount * maxRatioDivPrecision) / 100;
+  const spendingLimitPct = maxRatioDivPrecision * 100;
+  const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
 
   const { title, description } = await getIpfsMetadata(metadata);
 
@@ -51,13 +51,10 @@ export default async function page({
     <div className="mx-auto flex max-w-[820px] flex-col items-center justify-center gap-4">
       <div className="text-center sm:mt-5">
         <h2 className="text-xl font-semibold leading-6 text-gray-900">
-          Create a Proposal in Pool {title}
+          Create a Proposal in Pool
         </h2>
         <div className="mt-1">
-          <p className="text-sm">
-            Propose and Share your vision for requesting funds that benefit the
-            entire community
-          </p>
+          <p className="text-sm">{title}</p>
         </div>
       </div>
       <ProposalForm

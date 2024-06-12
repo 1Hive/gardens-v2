@@ -431,6 +431,13 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
+    function removeStrategyByPoolId(uint256 poolId) public {
+        onlyCouncilSafe();
+        address strategy = address(allo.getPool(poolId).strategy);
+        _revertZeroAddress(strategy);
+        _removeStrategy(strategy);
+    }
+
     function _removeStrategy(address _strategy) internal {
         _revertZeroAddress(_strategy);
         enabledStrategies[_strategy] = false;

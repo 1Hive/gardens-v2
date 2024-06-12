@@ -862,6 +862,21 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
     }
 
+    function test_revert_initialize_zeroStake() public {
+        RegistryCommunity.InitializeParams memory params;
+        params._strategyTemplate = address(strategy);
+        params._allo = address(allo());
+        params._gardenToken = IERC20(address(token));
+        params._registerStakeAmount = 0;
+        params._communityFee = COMMUNITY_FEE_PERCENTAGE;
+        params._metadata = metadata;
+        params._feeReceiver = address(daoFeeReceiver);
+        params._councilSafe = payable(address(_councilSafe()));
+        params._isKickEnabled = true;
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.ValueCannotBeZero.selector));
+        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+    }
+
     function test_revert_deactivateMemberInStrategyCaller() public {
         startMeasuringGas("Registering and kicking member");
 
@@ -876,6 +891,19 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         vm.stopPrank();
 
+        stopMeasuringGas();
+    }
+
+    function test_revert_deactivateMember_alreadyDeactivated() public {
+        startMeasuringGas("Registering and kicking member");
+        vm.startPrank(gardenMember);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        _registryCommunity().stakeAndRegisterMember();
+        vm.stopPrank();
+        vm.startPrank(address(strategy));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyDeactivated.selector));
+        _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
+        vm.stopPrank();
         stopMeasuringGas();
     }
 
@@ -1044,9 +1072,37 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         stopMeasuringGas();
     }
 
-    function test_getStakeAmountWithFees() public {
+    function test_getStakeAmountWithFees() public view {
         uint256 stakeFees = _registryCommunity().getStakeAmountWithFees();
         assertEq(stakeFees, STAKE_WITH_FEES);
+    }
+
+    function test_removeStrategyByPoolId() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(token),
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategyByPoolId(poolId);
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
+
+        _registryCommunity().removeStrategyByPoolId(poolId);
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+
+        vm.stopPrank();
     }
 
     function test_addStrategyByPoolId() public {
@@ -1067,6 +1123,39 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategyByPoolId(poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
+    }
+
+    function test_Revert_removeStrategyByPoolId() public {
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            address(token),
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Unlimited
+        );
+        console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
+
+        vm.startPrank(address(councilSafe));
+        _registryCommunity().addStrategyByPoolId(poolId);
+        vm.stopPrank();
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
+        _registryCommunity().removeStrategyByPoolId(poolId);
+
+        vm.startPrank(address(councilSafe));
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
+        _registryCommunity().removeStrategyByPoolId(poolId + 1);
+
         vm.stopPrank();
 
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);

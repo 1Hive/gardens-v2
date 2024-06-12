@@ -6,7 +6,8 @@ import {
 } from "viem/chains";
 import runLatestArbSep from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
 import runLatestEthSep from "../../../../broadcast/DeployCVMultiChain.s.sol/11155111/run-latest.json" assert { type: "json" };
-import runLatestLocal from "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json" assert { type: "json" };
+import { fromHex } from "viem";
+// import runLatestLocal from "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json" assert { type: "json" };
 
 export type RunLatest =
   // | typeof runLatestLocal
@@ -17,6 +18,7 @@ export type Address = `0x${string}`;
 // return;
 
 export type AddressChain = {
+  blockNumber: number;
   token: Address;
   safe: Address;
   factory: Address;
@@ -29,9 +31,14 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
   let token: Address = "0x";
   let safe: Address = "0x";
   let strategyTemplate: Address = "0x";
+  let blockNumber: number = 0;
 
   if (runLatest) {
     const txs = runLatest.transactions;
+    blockNumber = fromHex(
+      runLatest.receipts[0].blockNumber as Address,
+      "number",
+    );
 
     for (const tx of txs) {
       if (!tx.contractName) {
@@ -63,6 +70,7 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
     }
   }
   return {
+    blockNumber,
     token,
     safe,
     factory,
@@ -76,7 +84,7 @@ export function getRunLatestAddrs(chain: number): AddressChain | undefined {
 
   switch (chain) {
     case localhost.id:
-      runLatest = runLatestLocal;
+      // runLatest = runLatestLocal;
       break;
     case arbitrumSepolia.id:
       runLatest = runLatestArbSep;
