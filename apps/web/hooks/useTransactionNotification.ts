@@ -60,30 +60,31 @@ export const useTransactionNotification = (
       toast
         .promise(promise, {
           pending: "Please sign the transaction",
-          // success: "Signed!",
+          success: "Transaction sent!",
           error: "Something went wrong",
         })
         .then((data) => {
-          const receipt = async () =>
-            await viemClient.waitForTransactionReceipt({
-              confirmations: chainDataMap[chainId].confirmations,
-              hash: data.transactionData?.hash || "0x",
-            });
+          console.log("Tx hash: "+data.transactionData?.hash)
+          // const receipt = async () =>
+          //   await viemClient.waitForTransactionReceipt({
+          //     confirmations: chainDataMap[chainId].confirmations,
+          //     hash: data.transactionData?.hash || "0x",
+          //   });
 
-          // transaction notification toasts
-          toast
-            .promise(receipt, {
-              pending: "Waiting for block confirmations...",
-              success: `Transaction sent with ${chainDataMap[chainId].confirmations} confirmations`,
-              error: "Something went wrong",
-            })
-            .then((data) => {
-              console.log(data);
-              setTxConfirmationHash(data.transactionHash);
-            })
-            .catch((error: any) => {
-              console.error(`Tx failure: ${error}`);
-            });
+          // // transaction notification toasts
+          // toast
+          //   .promise(receipt, {
+          //     pending: "Waiting for block confirmations...",
+          //     success: `Transaction sent with ${chainDataMap[chainId].confirmations} confirmations`,
+          //     error: "Something went wrong",
+          //   })
+          //   .then((data) => {
+          //     console.log(data);
+          //     setTxConfirmationHash(data.transactionHash);
+          //   })
+          //   .catch((error: any) => {
+          //     console.error(`Tx failure: ${error}`);
+          //   });
         })
         .catch((error: any) => {
           console.error(error);

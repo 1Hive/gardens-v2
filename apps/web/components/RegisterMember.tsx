@@ -101,9 +101,6 @@ export function RegisterMember({
     chainId: chainId || 0,
   });
 
-  console.log("accountTokenBalance ", accountTokenBalance);
-  console.log("registerToken ", registerToken);
-
   const accountHasBalance = gte(
     accountTokenBalance?.value,
     registerStakeAmount as bigint,
