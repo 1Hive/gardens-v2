@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         "X-API-KEY": apiKey,
       },
-      body: JSON.stringify({ address, scorer_id: scorerId }),
+      body: JSON.stringify({ address, scorer_id: scorerId, signature, nonce }),
     });
 
     console.log("SERVER RESPONSEEE ", response);
