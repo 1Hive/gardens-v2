@@ -16,10 +16,13 @@ export async function GET() {
         "X-API-KEY": apiKey,
         "Content-Type": "application/json",
       },
+      cache: "no-store",
     });
 
+    console.log("SignMessage response ", response);
     if (response.ok) {
       const data = await response.json();
+      console.log("DATA ", data);
       return NextResponse.json(data, { status: 200 });
     } else {
       const errorData = await response.json();

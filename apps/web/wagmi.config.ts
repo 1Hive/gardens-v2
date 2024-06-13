@@ -6,6 +6,7 @@ import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunity.s
 import { abi as mockERC20ABI } from "#/contracts/out/utils/MockERC20.sol/MockERC20.json";
 import { abi as SafeABI } from "#/contracts/out/ISafe.sol/ISafe.json";
 import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
+import { abi as PassportScorerABI } from "#/contracts/out/PassportScorer.sol/PassportScorer.json";
 import { Abi } from "viem";
 
 export default defineConfig({
@@ -34,6 +35,10 @@ export default defineConfig({
     {
       name: "Safe",
       abi: SafeABI as Abi,
+    },
+    {
+      name: "PassportScorer",
+      abi: PassportScorerABI as Abi,
     },
   ],
   plugins: [

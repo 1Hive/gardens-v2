@@ -1,3 +1,4 @@
+// app/api/passport/submit-passport/route.ts
 import { NextResponse } from "next/server";
 
 interface PassportData {
@@ -7,6 +8,7 @@ interface PassportData {
 }
 
 export async function POST(request: Request) {
+  console.log("Received POST request");
   const apiKey = process.env.GITCOIN_PASSPORT_API_KEY;
   const scorerId = process.env.SCORER_ID;
   const endpoint = "https://api.scorer.gitcoin.co/registry/submit-passport";
@@ -15,7 +17,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "API key is missing" }, { status: 500 });
   }
 
-  const { address, signature, nonce }: PassportData = await request.json();
+  let requestBody: PassportData;
+  try {
+    requestBody = await request.json();
+    console.log("REQUEST BODY:", requestBody);
+  } catch (error) {
+    console.error("Error parsing JSON:", error);
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { address, signature, nonce } = requestBody;
 
   if (!address || !signature || !nonce) {
     return NextResponse.json(
@@ -31,8 +42,10 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         "X-API-KEY": apiKey,
       },
-      body: JSON.stringify({ address, scorer_id: scorerId, signature, nonce }),
+      body: JSON.stringify({ address, scorer_id: scorerId }),
     });
+
+    console.log("SERVER RESPONSEEE ", response);
 
     if (response.ok) {
       const data = await response.json();
@@ -40,7 +53,7 @@ export async function POST(request: Request) {
     } else {
       const errorData = await response.json();
       return NextResponse.json(
-        { error: errorData.message },
+        { error: errorData.statusText },
         { status: response.status },
       );
     }
