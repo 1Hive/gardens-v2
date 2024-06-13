@@ -35,6 +35,8 @@ export default async function Gardens() {
     if (isProd) {
       const r0 = await getTokenGardens(sepolia.id);
       gardens?.tokenGardens.push(...r0.data.tokenGardens);
+      const r1 = await getTokenGardens(arbitrumSepolia.id);
+      gardens?.tokenGardens.push(...r1.data.tokenGardens);
     } else {
       const promises = [];
       for (let index = 0; index < chainsId.length; index++) {
