@@ -80,7 +80,7 @@ export const useTransactionNotification = (
           //   })
           //   .then((data) => {
           //     console.log(data);
-          //     setTxConfirmationHash(data.transactionHash);
+              setTxConfirmationHash(data.transactionData?.hash);
           //   })
           //   .catch((error: any) => {
           //     console.error(`Tx failure: ${error}`);
