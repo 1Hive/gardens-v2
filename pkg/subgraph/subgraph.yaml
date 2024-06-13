@@ -8,13 +8,14 @@ dataSources:
     name: RegistryFactory
     network: localhost
     context:
-      chainId:
+      chainId: 
+      chainId: 
         type: Int
         data: 1337
     source:
-      address: "0xbff8a6c13d6536d48dce27186fc3fb503539e5f0"
+      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
       abi: RegistryFactory
-      startBlock: 5998577
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -59,7 +60,8 @@ templates:
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
         - name: RegistryFactory
           file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
-
+     
+     
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -88,7 +90,8 @@ templates:
         - event: MemberPowerIncreased(address,uint256)
           handler: handleMemberPowerIncreased
         # - event: BasisStakedAmountSet(uint256)
-        # handler: handleBasisStakedAmountSet
+          # handler: handleBasisStakedAmountSet
+          # handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
         #   handler: handleCouncilSafeSet
         # - event: CouncilSafeChangeStarted(address,address)
@@ -119,7 +122,8 @@ templates:
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256)))
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256))) 
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256))) 
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
@@ -141,5 +145,8 @@ templates:
           handler: handleMaxRatioUpdated
         - event: WeightUpdated(uint256)
           handler: handleWeightUpdated
-
+ 
+ 
       file: ./src/mappings/cv-strategy.ts
+  
+  

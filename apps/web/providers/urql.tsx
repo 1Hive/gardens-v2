@@ -79,6 +79,10 @@ export function initUrqlClient({ initialState }: { initialState?: any } = {}) {
   return { urqlClient, ssrCache };
 }
 
+// export type QueryResult<Data = any> = Promise<
+//   OperationResult<Data, AnyVariables>
+// >;
+
 export async function queryByChain<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
