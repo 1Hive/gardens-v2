@@ -1,15 +1,8 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Button } from "./Button";
 import { useAccount, useSignMessage } from "wagmi";
-import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
-import useErrorDetails from "@/utils/getErrorName";
-import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { connect } from "http2";
-import { Data } from "@thirdweb-dev/chain-icons";
 
 export function SubmitPassport() {
   const { address: connectedAccount } = useAccount();

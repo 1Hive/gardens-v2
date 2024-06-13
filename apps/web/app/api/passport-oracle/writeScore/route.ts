@@ -13,27 +13,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { recoverAddress, hashMessage } from "viem";
 import { passportScorerABI } from "@/src/generated";
 
-const CONTRACT_ADDRESS = "" as `0x${string}`;
-const CONTRACT_ABI = [
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "_user",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "_score",
-        type: "uint256",
-      },
-    ],
-    name: "addUserScore",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-];
+const CONTRACT_ADDRESS = process.env.PASSPORT_SCORER_ADDRESS as Address;
 
 const LIST_MANAGER_PRIVATE_KEY = process.env
   .LIST_MANAGER_PRIVATE_KEY as Address;
@@ -64,7 +44,7 @@ async function verifySignature(
 
     const recoveredAddress = await recoverAddress({
       hash: messageHash,
-      signature: signature as `0x${string}`,
+      signature: signature as Address,
     });
 
     return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
