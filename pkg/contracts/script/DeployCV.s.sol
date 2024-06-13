@@ -14,6 +14,8 @@ import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
 // import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
 import {TERC20} from "../test/shared/TERC20.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
+import {ISybilScorer} from '../src/ISybilScorer.sol';
+import {PassportScorer} from '../src/PassportScorer.sol';
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
@@ -22,6 +24,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50 ether;
     uint256 public constant COMMUNITY_FEE = 1 * PERCENTAGE_SCALE;
     address public constant FEE_RECEIVER = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+    uint256 public constant MINIMUM_SCORER_THRESHOLD = 20 ether;
 
     TERC20 public token;
 
@@ -29,6 +32,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     Registry _registry_;
     Allo allo;
     IRegistry registry;
+    ISybilScorer sybilScorer;
     RegistryFactory registryFactory;
 
     function pool_admin() public virtual override returns (address) {
@@ -37,6 +41,10 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
     function allo_owner() public virtual override returns (address) {
         return address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
+    }
+    
+    function scorer_list_manager() public virtual returns (address) {
+        return address(0xa0Ee7A142d267C1f36714E4a8F75612F20a79720);
     }
 
     function run() public {
@@ -49,6 +57,10 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("sepHNY Token Addr: %s", address(token));
 
         registry = allo.getRegistry();
+
+        sybilScorer = new PassportScorer(pool_admin(), scorer_list_manager());
+
+        sybilScorer.setThreshold(MINIMUM_SCORER_THRESHOLD);
 
         registryFactory = new RegistryFactory();
 
@@ -188,6 +200,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         bytes memory data2 = abi.encode(proposal2);
         allo.registerRecipient(poolIdFixed, data2);
         vm.stopBroadcast();
+        
+        console2.log("Scorer Address: %s", address(sybilScorer));
 
         create_community();
 
