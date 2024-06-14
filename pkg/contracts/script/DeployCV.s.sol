@@ -155,12 +155,14 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         );
         vm.stopBroadcast();
 
-        address[] memory membersStaked = new address[](5);
+        address[] memory membersStaked = new address[](7);
         membersStaked[0] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
         membersStaked[1] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
         membersStaked[2] = address(0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC);
         membersStaked[3] = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
         membersStaked[4] = address(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
+        membersStaked[5] = address(0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc);
+        membersStaked[6] = address(0x976EA74026E726554dB657fA54763abd0C3a0aa9);
 
         for (uint256 i = 0; i < membersStaked.length; i++) {
             vm.startBroadcast(address(membersStaked[i]));
