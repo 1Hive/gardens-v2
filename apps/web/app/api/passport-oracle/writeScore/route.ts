@@ -1,6 +1,6 @@
 // pages/api/addUserScore.ts
 
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server";
 import {
   createPublicClient,
   http,
@@ -16,8 +16,8 @@ import { getContractsAddrByChain } from "@/constants/contracts";
 
 const CONTRACT_ADDRESS = process.env.PASSPORT_SCORER_ADDRESS as Address;
 
-const LIST_MANAGER_PRIVATE_KEY = process.env
-  .LIST_MANAGER_PRIVATE_KEY as Address;
+const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
+
 const CHAIN = process.env.CHAIN_ID || "1337";
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
@@ -29,7 +29,7 @@ const client = createPublicClient({
 });
 
 const walletClient = createWalletClient({
-  account: privateKeyToAccount(LIST_MANAGER_PRIVATE_KEY || ""),
+  account: privateKeyToAccount(`0x${LIST_MANAGER_PRIVATE_KEY}` || ""),
   chain: localhost,
   transport: custom(client.transport),
 });
@@ -58,27 +58,22 @@ async function verifySignature(
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse,
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const { user, score, signature, message } = req.body;
+export async function POST(req: Request) {
+  const { user, score, signature, message } = await req.json();
 
   if (!user || !score || !signature || !message) {
-    return res.status(400).json({
-      error: "User address, score, message, and signature are required",
-    });
+    return NextResponse.json(
+      {
+        error: "User address, score, message, and signature are required",
+      },
+      { status: 400 },
+    );
   }
 
   try {
-    // Verify the signature
     const isValidSignature = await verifySignature(message, signature, user);
     if (!isValidSignature) {
-      return res.status(400).json({ error: "Invalid signature" });
+      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
     const data = {
@@ -88,15 +83,17 @@ export default async function handler(
       args: [user, BigInt(score)] as const,
     };
 
-    // Send the transaction
     const hash = await walletClient.writeContract(data);
 
-    return res.status(200).json({
+    return NextResponse.json({
       message: "User score added successfully",
       transactionHash: hash,
     });
   } catch (error) {
     console.error("Error adding user score:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
