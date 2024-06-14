@@ -26,10 +26,10 @@ import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import { queryByChain } from "@/providers/urql";
 import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
 export type ProposalInputItem = {
   id: string;
@@ -69,6 +69,11 @@ export function Proposals({
 
   const { address } = useAccount();
 
+  if (address === undefined) {
+    console.error("address is undefined");
+    return;
+  }
+
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
@@ -83,43 +88,19 @@ export function Proposals({
     watch: true,
   });
 
-  const runIsMemberQuery = useCallback(async () => {
-    if (address === undefined) {
-      console.error("address is undefined");
-      return;
-    }
-    const { data: result, error } = await queryByChain<isMemberQuery>(
-      urqlClient,
-      chainId,
-      isMemberDocument,
-      {
-        me: address.toLowerCase(),
-        comm: strategy.registryCommunity.id.toLowerCase(),
-      },
-    );
+  const { data: memberResult, error, refetch: refetchIsMemberQuery } = useSubgraphQueryByChain<isMemberQuery>(
+    chainId,
+    isMemberDocument,
+    {
+      me: address?.toLowerCase(),
+      comm: strategy.registryCommunity.id.toLowerCase(),
+    },
+  );
 
-    setMemberTokensInCommunity(
-      result?.members[0]?.memberCommunity?.[0]?.stakedTokens ?? "0",
-    );
-
-    const { data: memberStrategyResult, error: errorMS } =
-      await queryByChain<getMemberStrategyQuery>(
-        urqlClient,
-        chainId,
-        getMemberStrategyDocument,
-        {
-          meStr: `${address.toLowerCase()}-${strategy.id.toLowerCase()}`,
-        },
-      );
-
+  useEffect(() => {
     let _stakesFilteres: StakesMemberType = [];
-
-    setMemberActivatedPoints(
-      Number(memberStrategyResult?.memberStrategy?.activatedPoints ?? 0n),
-    );
-
-    if (result && result.members.length > 0) {
-      const stakes = result.members[0].stakes;
+    if (memberResult && memberResult.members.length > 0) {
+      const stakes = memberResult.members[0].stakes;
       if (stakes && stakes.length > 0) {
         _stakesFilteres = stakes.filter((stake) => {
           return (
@@ -130,6 +111,10 @@ export function Proposals({
       }
     }
 
+    _stakesFilteres.reduce((acc, curr) => {
+      return acc + BigInt(curr.amount);
+    }, 0n);
+
     const totalStaked = _stakesFilteres.reduce((acc, curr) => {
       return acc + BigInt(curr.amount);
     }, 0n);
@@ -138,19 +123,29 @@ export function Proposals({
       id: item.proposal.proposalNumber,
       value: item.amount,
     }));
+
     setInputAllocatedTokens(Number(totalStaked));
     setStakedFilters(memberStakes);
-  }, [
-    address,
-    strategy.registryCommunity.id,
-    urqlClient,
-    chainId,
-    isMemberDocument,
-  ]);
+  }, [memberResult]);
+
+  const { data: memberStrategyResult, error: errorMS } =
+    useSubgraphQueryByChain<getMemberStrategyQuery>(
+      chainId,
+      getMemberStrategyDocument,
+      {
+        meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
+      },
+    );
 
   useEffect(() => {
-    runIsMemberQuery();
-  }, [address, runIsMemberQuery]);
+    refetchIsMemberQuery();
+  }, [address]);
+
+  useEffect(() => {
+    setMemberActivatedPoints(
+      Number(memberStrategyResult?.memberStrategy?.activatedPoints ?? 0n),
+    );
+  }, [memberStrategyResult]);
 
   const triggerRenderProposals = () => {
     getProposals(address as Address, strategy).then((res) => {

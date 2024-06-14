@@ -1,14 +1,17 @@
+"use client";
+
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
-import { CommunityCard } from "@/components";
+import { CommunityCard, FormLink } from "@/components";
 import {
   RegistryCommunity,
   TokenGarden,
   getCommunitiesByGardenDocument,
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
-import { FormLink } from "@/components";
+
+import { useEffect, useState } from "react";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
 export const dynamic = "force-dynamic";
 
@@ -28,21 +31,29 @@ export default async function Garden({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { urqlClient } = initUrqlClient();
-
-  const { data: result, error: error } =
-    await queryByChain<getCommunitiesByGardenQuery>(
-      urqlClient,
+  const { data: result, error } =
+    useSubgraphQueryByChain<getCommunitiesByGardenQuery>(
       chain,
       getCommunitiesByGardenDocument,
       { addr: garden },
     );
 
-  let communities = result?.tokenGarden?.communities || [];
-  const tokenGarden = result?.tokenGarden as TokenGarden;
+  const [communities, setCommunities] = useState<NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"] | undefined>();
+  const [tokenGarden, setTokenGarden] = useState<getCommunitiesByGardenQuery["tokenGarden"] | undefined>();
+
+  useEffect(() => {
+    if (result) {
+      console.log('result.tokenGarden?.communities', result.tokenGarden?.communities);
+      setCommunities(result.tokenGarden?.communities);
+      setTokenGarden(result.tokenGarden);
+      fetchAndUpdateCommunities(result.tokenGarden?.communities);
+    } else {
+      console.error('No result while fetching communitiesByGarden');
+    }
+  }, [result]);
 
   const fetchAndUpdateCommunities = async (communities: any) => {
-    const promises = communities.map(async (com: any) => {
+    const promises = communities?.map(async (com: any) => {
       if (com?.covenantIpfsHash) {
         const ipfsHash = com.covenantIpfsHash;
         try {
@@ -58,63 +69,56 @@ export default async function Garden({
       }
       // Return the original community object if there's no covenantIpfsHash
       return com;
-    });
+    }) ?? [];
 
     // Wait for all promises to resolve and update the communities array
-    const updatedCommunities = await Promise.all(promises);
-    return updatedCommunities;
+    const promisesResult = await Promise.all(promises);
+    setCommunities(promisesResult);
   };
-
-  // Use the function
-  await fetchAndUpdateCommunities(communities)
-    .then((updatedCommunities) => {
-      communities = updatedCommunities; // Here you'll have the communities array with updated covenantIpfsHashes
-    })
-    .catch((error) => {
-      console.error("An error occurred:", error);
-    });
 
   return (
     <div className="relative mx-auto max-w-6xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
-      <header className="relative flex min-h-[500px] flex-col items-center justify-between gap-6 px-3">
-        <div className="flex h-full min-h-96 flex-col items-center justify-between p-1">
-          <h3 className="text-center font-press">
-            {tokenGarden?.symbol} Token Ecosystem
-          </h3>
-          <p className="max-w-lg text-center font-semibold leading-7">
-            Discover communities in the
-            <span className="text-primary"> {tokenGarden?.name} Garden</span>,
-            where you connect with people and support proposals bounded by a
-            shared
-            <span className="text-primary"> covenant.</span>
-          </p>
-          <FormLink
-            label="Create Community"
-            href={`/gardens/${chain}/${garden}/create-community`}
-          />
-        </div>
-        <Image src={tree2} alt="tree" className="absolute bottom-0 left-5" />
-        <Image src={tree3} alt="tree" className="absolute bottom-0 right-5" />
-        <Image
-          src={grassLarge}
-          alt="grass"
-          className="absolute -bottom-1 h-10 overflow-hidden"
-        />
-      </header>
-      <section className="mx-auto flex flex-col gap-8">
-        <h4 className="rounded-b-xl bg-surface py-6 text-center font-press shadow">
-          {tokenGarden?.name} Communities
-        </h4>
-
-        {/* communites */}
-        {communities.map((community, i) => (
-          <CommunityCard
-            {...community}
-            tokenGarden={tokenGarden}
-            key={`${community.communityName}_${i}`}
-          />
-        ))}
-      </section>
+      {tokenGarden ?
+        <>
+          <header className="relative flex min-h-[500px] flex-col items-center justify-between gap-6 px-3">
+            <div className="flex h-full min-h-96 flex-col items-center justify-between p-1">
+              <h3 className="text-center font-press">
+                {tokenGarden?.symbol} Token Ecosystem
+              </h3>
+              <p className="max-w-lg text-center font-semibold leading-7">
+                Discover communities in the
+                <span className="text-primary"> {tokenGarden?.name} Garden</span>,
+                where you connect with people and support proposals bounded by a
+                shared
+                <span className="text-primary"> covenant.</span>
+              </p>
+              <FormLink
+                label="Create Community"
+                href={`/gardens/${chain}/${garden}/create-community`}
+              />
+            </div>
+            <Image src={tree2} alt="tree" className="absolute bottom-0 left-5" />
+            <Image src={tree3} alt="tree" className="absolute bottom-0 right-5" />
+            <Image
+              src={grassLarge}
+              alt="grass"
+              className="absolute -bottom-1 h-10 overflow-hidden"
+            />
+          </header>
+          <section className="mx-auto flex flex-col gap-8">
+            <h4 className="rounded-b-xl bg-surface py-6 text-center font-press shadow">
+              {tokenGarden?.name} Communities
+            </h4>
+            {communities?.map((community, i) => (
+              <CommunityCard
+                {...community}
+                tokenGarden={tokenGarden as TokenGarden}
+                key={`${community.communityName}_${i}`}
+              />
+            ))}
+          </section>
+        </>
+        : <div className="w-full text-center"><div className="loading"></div></div>}
     </div>
   );
 }

@@ -1,57 +1,27 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import { GardenCard } from "@/components";
-import {
-  getTokenGardensDocument,
-  getTokenGardensQuery,
-} from "#/subgraph/.graphclient";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
-import {
-  localhost,
-  arbitrumSepolia,
-  optimismSepolia,
-  sepolia,
-} from "viem/chains";
-import { getContractsAddrByChain, isProd } from "@/constants/contracts";
+import { getTokenGardensQuery, getTokenGardensDocument } from "#/subgraph/.graphclient";
+import { isProd } from "@/constants/contracts";
+import useSubgraphQueryMultiChain from "@/hooks/useSubgraphQueryMultiChain";
+import { arbitrumSepolia } from "viem/chains";
+import { sepolia } from "wagmi";
 
 export const dynamic = "force-dynamic";
 
-const { urqlClient } = initUrqlClient();
-
 export default async function Gardens() {
-  const chainsId = [
-    localhost.id,
-    arbitrumSepolia.id,
-    optimismSepolia.id,
-    sepolia.id,
-  ];
-  let gardens: getTokenGardensQuery | null = null;
-  gardens = {
-    tokenGardens: [],
-  };
+  const { data: gardens } = useSubgraphQueryMultiChain<getTokenGardensQuery>(
+    getTokenGardensDocument,
+    {},
+    {},
+    ['community', 'garden'],
+    isProd ? [sepolia.id, arbitrumSepolia.id] : undefined
+  );
 
-  try {
-    if (isProd) {
-      const r0 = await getTokenGardens(sepolia.id);
-      gardens?.tokenGardens.push(...r0.data.tokenGardens);
-    } else {
-      const promises = [];
-      for (let index = 0; index < chainsId.length; index++) {
-        const chainId = chainsId[index];
-        const subgraph = getContractsAddrByChain(chainId)?.subgraphUrl;
-        if (subgraph !== "") promises.push(await getTokenGardens(chainId));
-      }
-
-      const resArr = await Promise.all(promises);
-      resArr.forEach((res) => {
-        if (res?.data) gardens?.tokenGardens.push(...res?.data.tokenGardens);
-      });
-    }
-  } catch (error) {
-    console.error("Error fetching token gardens:", error);
-  }
-
+  const tokenGardens = useMemo(() => {
+    return gardens?.flatMap((g) => g.tokenGardens).filter((x): x is NonNullable<typeof x> => !!x);
+  }, [gardens]);
   return (
     <div className="flex flex-col items-center justify-center gap-8">
       <header className="flex flex-col items-center gap-8">
@@ -77,9 +47,11 @@ export default async function Gardens() {
       </header>
       <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8">
         <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
-          {gardens ? (
-            gardens.tokenGardens.map((garden, id) => (
-              <GardenCard garden={garden} key={`${garden.id}-${id}`} />
+          {tokenGardens ? (
+            tokenGardens.map((garden, id) => (
+              <div key={`${garden.id}-${id}`}>
+                <GardenCard garden={garden} />
+              </div>
             ))
           ) : (
             <div>{"Can't find token gardens"}</div>
@@ -89,8 +61,4 @@ export default async function Gardens() {
       </section>
     </div>
   );
-}
-
-async function getTokenGardens(chainId: string | number) {
-  return await queryByChain(urqlClient, chainId, getTokenGardensDocument, {});
 }

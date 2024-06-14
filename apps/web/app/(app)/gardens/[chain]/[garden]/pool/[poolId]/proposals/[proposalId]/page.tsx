@@ -1,16 +1,18 @@
+"use client";
+
 import { Badge, StatusBadge } from "@/components";
 import { EthAddress } from "@/components";
 import { cvStrategyABI } from "@/src/generated";
 import { Abi, Address, createPublicClient, formatUnits, http } from "viem";
 import { getChain } from "@/configs/chainServer";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount, calculatePercentageBigInt } from "@/utils/numbers";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
 export const dynamic = "force-dynamic";
 
@@ -41,8 +43,6 @@ type UnparsedProposal = {
 
 type Proposal = UnparsedProposal & ProposalsMock;
 
-const { urqlClient } = initUrqlClient();
-
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
 
@@ -59,8 +59,7 @@ export default async function Proposal({
   params: { proposalId: string; poolId: number; chain: number; garden: string };
 }) {
   // TODO: fetch garden decimals in query
-  const { data: getProposalQuery } = await queryByChain<getProposalDataQuery>(
-    urqlClient,
+  const { data: getProposalQuery } = useSubgraphQueryByChain<getProposalDataQuery>(
     chain,
     getProposalDataDocument,
     {

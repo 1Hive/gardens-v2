@@ -1,5 +1,5 @@
 "use client";
-import React, { forwardRef, useEffect, useRef, useState } from "react";
+import React, { forwardRef, useEffect, useInsertionEffect, useRef, useState } from "react";
 import {
   useBalance,
   useContractWrite,
@@ -20,6 +20,8 @@ import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { formatUnits, parseUnits } from "viem";
 import { DisplayNumber } from "./DisplayNumber";
+import { ChangeContext, ChangeTopic } from "@/utils/pubsub";
+import useChangeSubscription from "@/hooks/useChangeSubscription";
 
 type RegisterMemberProps = {
   name: string;
@@ -49,6 +51,8 @@ export function RegisterMember({
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
+
+  const { emit } = useChangeSubscription();
   //
   //new logic
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
@@ -99,11 +103,10 @@ export function RegisterMember({
   const { data: accountTokenBalance } = useBalance({
     address: connectedAccount,
     token: registerToken as `0x${string}` | undefined,
-    chainId: chainId || 0,
+    chainId: Number(chainId) ?? 0,
   });
 
-  console.log("accountTokenBalance ", accountTokenBalance);
-  console.log("registerToken ", registerToken);
+  useEffect(() => { console.log(communityName, { accountTokenBalance, registerToken }); }, [accountTokenBalance]);
 
   const accountHasBalance = gte(
     accountTokenBalance?.value,
@@ -117,6 +120,7 @@ export function RegisterMember({
     isLoading: registerMemberIsLoading,
     error: registerMemberError,
     status: registerMemberStatus,
+
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "stakeAndRegisterMember",
@@ -213,6 +217,20 @@ export function RegisterMember({
   useEffect(() => {
     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
   }, [unregisterMemberStatus]);
+
+  useEffect(() => {
+    if (registerMemberStatus === "success" || unregisterMemberStatus === "success") {
+      const context: ChangeContext = {
+        type: 'update',
+        id: communityAddress,
+        context: {
+          type: registerMemberStatus === "success" ? 'member-added' : 'member-removed',
+        },
+        topic: 'community'
+      };
+      emit(context);
+    }
+  }, [registerMemberStatus, unregisterMemberStatus]);
 
   //RegisterMember Disable Button condition => message mapping
   const disableRegMemberBtnCondition: ConditionObject[] = [

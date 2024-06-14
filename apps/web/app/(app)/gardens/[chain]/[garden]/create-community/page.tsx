@@ -1,10 +1,11 @@
+"use client"
 import {
   TokenGarden,
   getCommunityCreationDataDocument,
   getCommunityCreationDataQuery,
 } from "#/subgraph/.graphclient";
 import { CommunityForm } from "@/components/Forms";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import React from "react";
 import { Address } from "viem";
 
@@ -13,11 +14,8 @@ export default async function page({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { urqlClient } = initUrqlClient();
-
   const { data: result, error: error } =
-    await queryByChain<getCommunityCreationDataQuery>(
-      urqlClient,
+    useSubgraphQueryByChain<getCommunityCreationDataQuery>(
       chain,
       getCommunityCreationDataDocument,
       { addr: garden },

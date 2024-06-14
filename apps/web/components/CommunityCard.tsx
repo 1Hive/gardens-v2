@@ -1,6 +1,7 @@
 "use client";
+
 import { useCallback, useEffect, useState } from "react";
-import { Button, RegisterMember } from "@/components";
+import { RegisterMember } from "@/components";
 import {
   UserGroupIcon,
   BuildingOffice2Icon,
@@ -22,9 +23,9 @@ import {
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
 import Link from "next/link";
-import { queryByChain } from "@/providers/urql";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { getChainIdFromPath } from "@/utils/path";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
 export type StakesMemberType =
   isMemberQuery["members"][number]["memberCommunity"];
@@ -64,8 +65,7 @@ export function CommunityCard({
     if (accountAddress === undefined) {
       return;
     }
-    const { data: result, error } = await queryByChain<isMemberQuery>(
-      urqlClient,
+    const { data: result, error } = useSubgraphQueryByChain<isMemberQuery>(
       chainId,
       isMemberDocument,
       {

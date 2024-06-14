@@ -1,7 +1,8 @@
+"use client";
+
 import { Badge, Proposals, PoolMetrics, PoolGovernance } from "@/components";
 import Image from "next/image";
 import { gardenLand } from "@/assets";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
   Allo,
   CVStrategy,
@@ -13,20 +14,18 @@ import {
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { pointSystems, proposalTypes } from "@/types";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
 export const dynamic = "force-dynamic";
 
 export type AlloQuery = getAlloQuery["allos"][number];
-
-const { urqlClient } = initUrqlClient();
 
 export default async function Pool({
   params: { chain, poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data } = await queryByChain<getPoolDataQuery>(
-    urqlClient,
+  const { data } = await useSubgraphQueryByChain<getPoolDataQuery>(
     chain,
     getPoolDataDocument,
     { poolId: poolId, garden: garden },
