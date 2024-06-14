@@ -21,7 +21,9 @@ const LIST_MANAGER_PRIVATE_KEY = process.env
 
 const client = createPublicClient({
   chain: localhost,
-  transport: http(process.env.ETH_RPC_URL || ""),
+  transport: http(
+    process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "http://127.0.0.1:8545",
+  ),
 });
 
 const walletClient = createWalletClient({
