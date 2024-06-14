@@ -4,6 +4,15 @@ import { Button } from "./Button";
 import { useAccount, useSignMessage } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
+interface SignMessageResponse {
+  nonce: string;
+  message: string;
+}
+
+interface SubmitPassportResponse {
+  score: string;
+}
+
 export function SubmitPassport() {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -16,7 +25,7 @@ export function SubmitPassport() {
     }
   }
 
-  const getSigningMessage = async () => {
+  const getSigningMessage = async (): Promise<string | null> => {
     const SIGNING_MESSAGE_URI = "/api/passport/signMessage";
 
     try {
@@ -26,7 +35,7 @@ export function SubmitPassport() {
         },
       });
 
-      const json = await response.json();
+      const json: SignMessageResponse = await response.json();
 
       console.log("Signing message response", json);
       setNonce(json.nonce);
@@ -41,7 +50,7 @@ export function SubmitPassport() {
     address: string,
     signature: string,
     nonce: string,
-  ) => {
+  ): Promise<SubmitPassportResponse | null> => {
     const SUBMIT_SIGNED_PASSPORT_URI = "/api/passport/submitPassport";
 
     try {
@@ -53,10 +62,41 @@ export function SubmitPassport() {
         body: JSON.stringify({ address, signature, nonce }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error("Failed to submit signed passport");
+      }
+
+      const data: SubmitPassportResponse = await response.json();
       console.log("Response from server:", data);
+
+      return data;
     } catch (err) {
       console.error("Error submitting signed passport:", err);
+      return null;
+    }
+  };
+
+  const writeScorer = async (
+    address: string,
+    score: string,
+    signature: string,
+    message: string,
+  ): Promise<void> => {
+    const WRITE_SCORER_URI = "/api/addUserScore";
+
+    try {
+      const response = await fetch(WRITE_SCORER_URI, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user: address, score, signature, message }),
+      });
+
+      const data = await response.json();
+      console.log("Response from writeScorer API:", data);
+    } catch (err) {
+      console.error("Error calling writeScorer API:", err);
     }
   };
 
@@ -65,7 +105,20 @@ export function SubmitPassport() {
       console.log("variables ", variables);
       console.log("signature ", data);
       if (connectedAccount && nonce) {
-        await submitSignedPassport(connectedAccount, data, nonce);
+        const passportResponse = await submitSignedPassport(
+          connectedAccount,
+          data,
+          nonce,
+        );
+
+        if (passportResponse) {
+          await writeScorer(
+            connectedAccount,
+            passportResponse.score,
+            data,
+            nonce,
+          );
+        }
       }
     },
   });
