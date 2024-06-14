@@ -36,10 +36,10 @@ export default defineConfig({
       name: "Safe",
       abi: SafeABI as Abi,
     },
-    // {
-    //   name: "PassportScorer",
-    //   abi: PassportScorerABI as Abi,
-    // },
+    {
+      name: "PassportScorer",
+      abi: PassportScorerABI as Abi,
+    },
   ],
   plugins: [
     actions({
