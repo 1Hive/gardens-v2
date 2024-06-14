@@ -12,18 +12,20 @@ import { mainnet, localhost } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { recoverAddress, hashMessage } from "viem";
 import { passportScorerABI } from "@/src/generated";
+import { getContractsAddrByChain } from "@/constants/contracts";
 
 const CONTRACT_ADDRESS = process.env.PASSPORT_SCORER_ADDRESS as Address;
 
 const LIST_MANAGER_PRIVATE_KEY = process.env
   .LIST_MANAGER_PRIVATE_KEY as Address;
-// const CHAIN = process.env.CHAIN || "localhost";
+const CHAIN = process.env.CHAIN_ID || "1337";
+const LOCAL_RPC = "http://127.0.0.1:8545";
+
+const RPC_URL = getContractsAddrByChain(CHAIN)?.rpcUrl || LOCAL_RPC;
 
 const client = createPublicClient({
   chain: localhost,
-  transport: http(
-    process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "http://127.0.0.1:8545",
-  ),
+  transport: http(RPC_URL),
 });
 
 const walletClient = createWalletClient({

@@ -23,7 +23,8 @@
         "GITCOIN_PASSPORT_API_KEY",
         "SCORER_ID",
         "PASSPORT_SCORER_ADDRESS",
-        "LIST_MANAGER_PRIVATE_KEY"
+        "LIST_MANAGER_PRIVATE_KEY",
+        "CHAIN_ID"
       ]
     },
     "test": {
