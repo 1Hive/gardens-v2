@@ -10,7 +10,7 @@ import {
 } from "viem";
 import { mainnet, localhost } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { recoverAddress, hashMessage } from "viem";
+import { recoverMessageAddress, hashMessage } from "viem";
 import { passportScorerABI } from "@/src/generated";
 import { getContractsAddrByChain } from "@/constants/contracts";
 
@@ -40,15 +40,13 @@ async function verifySignature(
   expectedAddress: string,
 ): Promise<boolean> {
   try {
-    const messageHash = hashMessage(message);
-
     if (!signature.startsWith("0x")) {
       signature = "0x" + signature;
     }
 
-    const recoveredAddress = await recoverAddress({
-      hash: messageHash,
-      signature: signature as Address,
+    const recoveredAddress = await recoverMessageAddress({
+      message,
+      signature: signature as `0x${string}`,
     });
 
     return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();

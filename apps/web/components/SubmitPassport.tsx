@@ -37,7 +37,6 @@ export function SubmitPassport() {
 
       const json: SignMessageResponse = await response.json();
 
-      console.log("Signing message response", json);
       setNonce(json.nonce);
       return json.message;
     } catch (err) {
@@ -82,7 +81,7 @@ export function SubmitPassport() {
     signature: string,
     message: string,
   ): Promise<void> => {
-    const WRITE_SCORER_URI = "/api/addUserScore";
+    const WRITE_SCORER_URI = "/api/passport-oracle/writeScore";
 
     try {
       const response = await fetch(WRITE_SCORER_URI, {
@@ -102,8 +101,6 @@ export function SubmitPassport() {
 
   const { signMessage } = useSignMessage({
     onSuccess: async (data, variables) => {
-      console.log("variables ", variables);
-      console.log("signature ", data);
       if (connectedAccount && nonce) {
         const passportResponse = await submitSignedPassport(
           connectedAccount,
@@ -116,7 +113,7 @@ export function SubmitPassport() {
             connectedAccount,
             passportResponse.score,
             data,
-            nonce,
+            variables.message,
           );
         }
       }
@@ -130,7 +127,6 @@ export function SubmitPassport() {
     }
 
     const message = await getSigningMessage();
-    console.log("Signing message:", message);
     if (message) {
       signMessage({ message });
     }
