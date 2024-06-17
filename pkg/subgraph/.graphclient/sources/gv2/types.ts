@@ -625,6 +625,7 @@ export type CVStrategy_orderBy =
   | 'registryCommunity__registerStakeAmount'
   | 'registryCommunity__registerToken'
   | 'registryCommunity__alloAddress'
+  | 'registryCommunity__isValid'
   | 'config'
   | 'config__id'
   | 'config__D'
@@ -783,7 +784,8 @@ export type MemberCommunity_orderBy =
   | 'registryCommunity__isKickEnabled'
   | 'registryCommunity__registerStakeAmount'
   | 'registryCommunity__registerToken'
-  | 'registryCommunity__alloAddress';
+  | 'registryCommunity__alloAddress'
+  | 'registryCommunity__isValid';
 
 export type MemberStrategy = {
   id: Scalars['ID'];
@@ -1156,6 +1158,7 @@ export type RegistryCommunity = {
   alloAddress?: Maybe<Scalars['String']>;
   members?: Maybe<Array<MemberCommunity>>;
   garden: TokenGarden;
+  isValid: Scalars['Boolean'];
 };
 
 
@@ -1405,6 +1408,10 @@ export type RegistryCommunity_filter = {
   garden_not_ends_with?: InputMaybe<Scalars['String']>;
   garden_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
   garden_?: InputMaybe<TokenGarden_filter>;
+  isValid?: InputMaybe<Scalars['Boolean']>;
+  isValid_not?: InputMaybe<Scalars['Boolean']>;
+  isValid_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  isValid_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
@@ -1439,7 +1446,8 @@ export type RegistryCommunity_orderBy =
   | 'garden__ipfsCovenant'
   | 'garden__symbol'
   | 'garden__decimals'
-  | 'garden__address';
+  | 'garden__address'
+  | 'isValid';
 
 export type RegistryFactory = {
   id: Scalars['ID'];
