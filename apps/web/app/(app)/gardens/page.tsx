@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useMemo } from "react";
 import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
