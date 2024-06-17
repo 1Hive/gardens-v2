@@ -7,7 +7,11 @@ import {
   dataSource,
   log,
 } from "@graphprotocol/graph-ts";
-import { CommunityCreated, ProtocolFeeSet } from "../../generated/RegistryFactory/RegistryFactory";
+import {
+  CommunityCreated,
+  CommunityValiditySet,
+  ProtocolFeeSet,
+} from "../../generated/RegistryFactory/RegistryFactory";
 // import {RegistryCommunity}from "../../generated/RegistryCommunity/RegistryCommunity";
 
 export const CTX_FACTORY_ADDRESS = "factoryAddress";
@@ -35,11 +39,22 @@ export function handleCommunityCreated(event: CommunityCreated): void {
 
 export function handleProtocolFeeSet(event: ProtocolFeeSet): void {
   const addr_id = event.address.toHexString();
-  let community = RegistryCommunity.load(event.params._community.toHexString())
+  let community = RegistryCommunity.load(event.params._community.toHexString());
   if (community == null) {
     log.error("Community not found", []);
     return;
   }
-  community.protocolFee = event.params._newProtocolFee
-  community.save()
+  community.protocolFee = event.params._newProtocolFee;
+  community.save();
+}
+
+//event CommunityValiditySet
+export function handleCommunityValiditySet(event: CommunityValiditySet): void {
+  let community = RegistryCommunity.load(event.params._community.toHexString());
+  if (community == null) {
+    log.error("Community not found", []);
+    return;
+  }
+  community.isValid = event.params._isValid;
+  community.save();
 }
