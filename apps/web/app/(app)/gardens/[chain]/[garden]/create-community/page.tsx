@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import {
   TokenGarden,
   getCommunityCreationDataDocument,
@@ -9,7 +9,7 @@ import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import React from "react";
 import { Address } from "viem";
 
-export default async function Page({
+export default function Page({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };

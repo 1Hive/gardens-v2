@@ -16,17 +16,18 @@ import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { pointSystems, proposalTypes } from "@/types";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
+import { useEffect, useState } from "react";
 
 export const dynamic = "force-dynamic";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
-export default async function Pool({
+export default function Pool({
   params: { chain, poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data } = await useSubgraphQueryByChain<getPoolDataQuery>(
+  const { data } = useSubgraphQueryByChain<getPoolDataQuery>(
     chain,
     getPoolDataDocument,
     { poolId: poolId, garden: garden },
@@ -47,7 +48,16 @@ export default async function Pool({
   const tokenGarden = data?.tokenGarden as TokenGarden;
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
   const isEnabled = data?.cvstrategies?.[0]?.isEnabled as boolean;
-  const { title, description } = await getIpfsMetadata(metadata);
+  const [ipfsResult, setIpfsResult] =
+    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
+
+  useEffect(() => {
+    if (metadata) {
+      getIpfsMetadata(metadata).then((data) => {
+        setIpfsResult(data);
+      });
+    }
+  }, [metadata]);
 
   const spendingLimitPct =
     (Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION) * 100;
@@ -68,14 +78,16 @@ export default async function Pool({
           {/* Description section */}
           <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
-              <h3 className="max-w-2xl  text-center font-semibold">{title}</h3>
+              <h3 className="max-w-2xl  text-center font-semibold">
+                {ipfsResult?.title}
+              </h3>
               {!isEnabled && (
                 <div className="badge badge-warning absolute left-5 top-5 gap-2 p-4 font-bold">
                   Pending review from community council
                 </div>
               )}
 
-              <p>{description}</p>
+              <p>{ipfsResult?.description}</p>
               <div className="flex w-full  p-4">
                 <div className="flex flex-1  text-xl font-semibold">
                   <div className="mx-auto flex max-w-fit flex-col items-start justify-center space-y-4">

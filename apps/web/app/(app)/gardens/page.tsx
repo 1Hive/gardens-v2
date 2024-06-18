@@ -1,10 +1,13 @@
-"use client"
+"use client";
 
 import React, { useMemo } from "react";
 import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import { GardenCard } from "@/components";
-import { getTokenGardensQuery, getTokenGardensDocument } from "#/subgraph/.graphclient";
+import {
+  getTokenGardensQuery,
+  getTokenGardensDocument,
+} from "#/subgraph/.graphclient";
 import { isProd } from "@/constants/contracts";
 import useSubgraphQueryMultiChain from "@/hooks/useSubgraphQueryMultiChain";
 import { arbitrumSepolia } from "viem/chains";
@@ -12,19 +15,21 @@ import { sepolia } from "wagmi";
 
 export const dynamic = "force-dynamic";
 
-export default async function Gardens() {
+export default function Gardens() {
   const { data: gardens } = useSubgraphQueryMultiChain<getTokenGardensQuery>(
     getTokenGardensDocument,
     {},
     {},
-    ['community', 'garden'],
-    isProd ? [sepolia.id, arbitrumSepolia.id] : undefined
+    ["community", "garden"],
+    isProd ? [sepolia.id, arbitrumSepolia.id] : undefined,
   );
 
   const tokenGardens = useMemo(() => {
-    return gardens?.flatMap((g) => g.tokenGardens).filter((x): x is NonNullable<typeof x> => !!x);
+    return gardens
+      ?.flatMap((g) => g.tokenGardens)
+      .filter((x): x is NonNullable<typeof x> => !!x);
   }, [gardens]);
-  
+
   return (
     <div className="flex flex-col items-center justify-center gap-8">
       <header className="flex flex-col items-center gap-8">

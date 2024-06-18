@@ -88,14 +88,14 @@ export function Proposals({
     watch: true,
   });
 
-  const { data: memberResult, error, refetch: refetchIsMemberQuery } = useSubgraphQueryByChain<isMemberQuery>(
-    chainId,
-    isMemberDocument,
-    {
-      me: address?.toLowerCase(),
-      comm: strategy.registryCommunity.id.toLowerCase(),
-    },
-  );
+  const {
+    data: memberResult,
+    error,
+    refetch: refetchIsMemberQuery,
+  } = useSubgraphQueryByChain<isMemberQuery>(chainId, isMemberDocument, {
+    me: address?.toLowerCase(),
+    comm: strategy.registryCommunity.id.toLowerCase(),
+  });
 
   useEffect(() => {
     let _stakesFilteres: StakesMemberType = [];

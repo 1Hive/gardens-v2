@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 
 export const dynamic = "force-dynamic";
 
-export default async function Garden({
+export default function Garden({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };

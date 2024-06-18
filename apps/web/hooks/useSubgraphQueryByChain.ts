@@ -20,15 +20,23 @@ export default function useSubgraphQueryByChain<
   const { newEvent } = useTopicChangeSubscription(changeTopics ?? []);
 
   const contractAddress = getContractsAddrByChain(chain);
-  const [response, setResponse] = useState<Omit<Awaited<ReturnType<typeof fetch>>, 'operation'>>({ hasNext: true, stale: true, data: undefined, error: undefined });
+  const [response, setResponse] = useState<
+    Omit<Awaited<ReturnType<typeof fetch>>, "operation">
+  >({ hasNext: true, stale: true, data: undefined, error: undefined });
 
-  if (!contractAddress) throw new Error(`No contract address found for chain ${chain}`);
+  if (!contractAddress)
+    throw new Error(`No contract address found for chain ${chain}`);
 
-  const fetch = (force: boolean) => urqlClient.query<Data>(query, variables, { ...context, url: contractAddress.subgraphUrl, requestPolicy: force ? 'network-only' : undefined },);
+  const fetch = (force: boolean) =>
+    urqlClient.query<Data>(query, variables, {
+      ...context,
+      url: contractAddress.subgraphUrl,
+      requestPolicy: force ? "network-only" : undefined,
+    });
 
   useEffect(() => {
     fetch(false).then(setResponse);
-  }, [newEvent, variables, query, changeTopics]);
+  }, [newEvent]);
 
   return { ...response, refetch: () => fetch(true) };
 }
