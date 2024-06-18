@@ -242,10 +242,10 @@ export function Proposals({
     inputData.forEach((input) => {
       let row: [number, bigint] | undefined = undefined;
       if (input.value > 0)
-        row = [Number(input.id), BigInt(Math.round(input.value))];
+        row = [Number(input.id), BigInt(Math.floor(input.value))];
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = BigInt(Math.round(input.value)) - BigInt(current.value);
+          const dif = BigInt(Math.floor(input.value)) - BigInt(current.value);
           row = [Number(input.id), dif];
         }
       });
