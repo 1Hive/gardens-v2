@@ -27,16 +27,15 @@ export default function useSubgraphQueryByChain<
   if (!contractAddress)
     throw new Error(`No contract address found for chain ${chain}`);
 
-  const fetch = (force: boolean) =>
+  const fetch = () =>
     urqlClient.query<Data>(query, variables, {
       ...context,
       url: contractAddress.subgraphUrl,
-      requestPolicy: force ? "network-only" : undefined,
     });
 
   useEffect(() => {
-    fetch(false).then(setResponse);
+    fetch().then(setResponse);
   }, [newEvent]);
 
-  return { ...response, refetch: () => fetch(true) };
+  return { ...response, refetch: () => fetch() };
 }
