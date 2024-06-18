@@ -20,7 +20,7 @@ import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
 import { ChangeContext, ChangeTopic } from "@/utils/pubsub";
-import useChangeSubscription from "@/hooks/useChangeSubscription";
+import useTopicChangeSubscription from "@/hooks/useChangeSubscription";
 
 type RegisterMemberProps = {
   name: string;
@@ -51,7 +51,7 @@ export function RegisterMember({
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
 
-  const { emit } = useChangeSubscription();
+  const { emit } = useTopicChangeSubscription();
   //
   //new logic
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
@@ -101,7 +101,7 @@ export function RegisterMember({
   const { data: accountTokenBalance } = useBalance({
     address: connectedAccount,
     token: registerToken as `0x${string}` | undefined,
-    chainId: Number(chainId) ?? 0,
+    chainId: Number(chainId),
   });
 
   useEffect(() => { console.log(communityName, { accountTokenBalance, registerToken }); }, [accountTokenBalance]);

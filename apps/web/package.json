@@ -18,7 +18,6 @@
     "@rainbow-me/rainbowkit": "^1.3.3",
     "@tanstack/react-query": "^5.17.19",
     "@thirdweb-dev/chain-icons": "^1.0.5",
-    "@urql/exchange-graphcache": "^4.0.0",
     "@urql/next": "^1.1.0",
     "@wagmi/core": "~1",
     "addreth": "1.2.0",

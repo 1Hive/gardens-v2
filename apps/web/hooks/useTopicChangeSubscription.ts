@@ -9,7 +9,7 @@ export type ChangeContext = {
   topic: ChangeTopic,
 };
 
-export default function useChangeSubscription(topics?: ChangeTopic[]) {
+export default function useTopicChangeSubscription(topics?: ChangeTopic[]) {
   const [newEvent, setNewMessage] = useState<ChangeContext | null>();
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { ChangeTopic } from "@/utils/pubsub";
 import { AnyVariables, Client, CombinedError, DocumentInput, OperationContext, OperationResultSource } from "@urql/next";
-import useChangeSubscription from "./useChangeSubscription";
+import useTopicChangeSubscription from "./useTopicChangeSubscription";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { useEffect, useState } from "react";
 import { localhost, arbitrumSepolia, optimismSepolia, sepolia } from "viem/chains";
@@ -25,7 +25,7 @@ export default function useSubgraphQueryMultiChain<
   changeTopics?: ChangeTopic[],
   chains?: ChainId[],
 ) {
-  const { newEvent } = useChangeSubscription(changeTopics ?? []);
+  const { newEvent } = useTopicChangeSubscription(changeTopics ?? []);
 
   const contractAddresses = (chains ?? allChains).map((chain) => getContractsAddrByChain(chain)).filter((x): x is { subgraphUrl: string } => !!x?.subgraphUrl);
   const [result, setResult] = useState<Data[]>();

@@ -1,3 +1,6 @@
+
+"use client"
+
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
 import { CommunityCard } from "@/components";
