@@ -29,7 +29,9 @@ const client = createPublicClient({
 });
 
 const walletClient = createWalletClient({
-  account: privateKeyToAccount(`0x${LIST_MANAGER_PRIVATE_KEY}` || ""),
+  account: privateKeyToAccount(
+    (`${LIST_MANAGER_PRIVATE_KEY}` as Address) || "",
+  ),
   chain: localhost,
   transport: custom(client.transport),
 });
