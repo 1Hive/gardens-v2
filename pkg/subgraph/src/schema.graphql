@@ -82,6 +82,7 @@ type RegistryCommunity @entity(immutable: false) {
   members: [MemberCommunity!] @derivedFrom(field: "registryCommunity")
   # members: [Member!] @derivedFrom(field: "registryCommunity")
   garden: TokenGarden!
+  isValid: Boolean!
 }
 
 type Member @entity(immutable: false) {

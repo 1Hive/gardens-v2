@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: localhost
+    network: arbitrum-sepolia
     context:
-      chainId: 
+      chainId:
         type: Int
-        data: 1337
+        data: 421614
     source:
-      address: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
+      address: "0x197a3115f932df5aee2a4b5732e8586a00ccf243"
       abi: RegistryFactory
-      startBlock: 0
+      startBlock: 46157748
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -30,14 +30,17 @@ dataSources:
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
+        - event: CommunityValiditySet(address,bool)
+          handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
           handler: handleProtocolFeeSet
+
       file: ./src/mappings/registry-factory.ts
 
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunity
     mapping:
@@ -59,7 +62,7 @@ templates:
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
         - name: RegistryFactory
           file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
-     
+
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -88,7 +91,7 @@ templates:
         - event: MemberPowerIncreased(address,uint256)
           handler: handleMemberPowerIncreased
         # - event: BasisStakedAmountSet(uint256)
-          # handler: handleBasisStakedAmountSet
+        # handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
         #   handler: handleCouncilSafeSet
         # - event: CouncilSafeChangeStarted(address,address)
@@ -99,7 +102,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: CVStrategy
     mapping:
@@ -119,7 +122,7 @@ templates:
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256))) 
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256)))
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
@@ -141,6 +144,5 @@ templates:
           handler: handleMaxRatioUpdated
         - event: WeightUpdated(uint256)
           handler: handleWeightUpdated
- 
+
       file: ./src/mappings/cv-strategy.ts
-  
