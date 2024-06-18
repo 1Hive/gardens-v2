@@ -1,5 +1,11 @@
 "use client";
-import React, { forwardRef, useEffect, useInsertionEffect, useRef, useState } from "react";
+import React, {
+  forwardRef,
+  useEffect,
+  useInsertionEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   useBalance,
   useContractWrite,
@@ -19,8 +25,8 @@ import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
-import { ChangeContext, ChangeTopic } from "@/utils/pubsub";
-import useTopicChangeSubscription from "@/hooks/useChangeSubscription";
+import { ChangeContext } from "@/utils/pubsub";
+import useTopicChangeSubscription from "@/hooks/useTopicChangeSubscription";
 
 type RegisterMemberProps = {
   name: string;
@@ -104,7 +110,9 @@ export function RegisterMember({
     chainId: Number(chainId),
   });
 
-  useEffect(() => { console.log(communityName, { accountTokenBalance, registerToken }); }, [accountTokenBalance]);
+  useEffect(() => {
+    console.log(communityName, { accountTokenBalance, registerToken });
+  }, [accountTokenBalance]);
 
   const accountHasBalance = gte(
     accountTokenBalance?.value,
@@ -118,7 +126,6 @@ export function RegisterMember({
     isLoading: registerMemberIsLoading,
     error: registerMemberError,
     status: registerMemberStatus,
-
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "stakeAndRegisterMember",
@@ -217,14 +224,20 @@ export function RegisterMember({
   }, [unregisterMemberStatus]);
 
   useEffect(() => {
-    if (registerMemberStatus === "success" || unregisterMemberStatus === "success") {
+    if (
+      registerMemberStatus === "success" ||
+      unregisterMemberStatus === "success"
+    ) {
       const context: ChangeContext = {
-        type: 'update',
+        type: "update",
         id: communityAddress,
         context: {
-          type: registerMemberStatus === "success" ? 'member-added' : 'member-removed',
+          type:
+            registerMemberStatus === "success"
+              ? "member-added"
+              : "member-removed",
         },
-        topic: 'community'
+        topic: "community",
       };
       emit(context);
     }
