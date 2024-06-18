@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "./Button";
 import { useAccount, useSignMessage } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { toast } from "react-toastify";
 
 interface SignMessageResponse {
   nonce: string;
@@ -122,7 +123,7 @@ export function SubmitPassport() {
 
   const handleSignMessage = async () => {
     if (!connectedAccount) {
-      alert("Please connect your wallet first");
+      toast.error("Please connect your wallet first");
       return;
     }
 
