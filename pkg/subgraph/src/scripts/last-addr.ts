@@ -14,24 +14,10 @@ const chainArg = process.argv[process.argv.length - 1];
 
 let runLatestLocal: any | undefined = undefined;
 
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// ...
-
 // import runLatestLocal from "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json" assert { type: "json" };
-//write with catch error dynamic import DeployCV.s.sol from broadcast/DeployCV.s.sol/1337/run-latest.json
 
-export type RunLatest =
-  // | typeof runLatestLocal
-  typeof runLatestArbSep | typeof runLatestEthSep;
+export type RunLatest = typeof runLatestArbSep | typeof runLatestEthSep;
 export type Address = `0x${string}`;
-// export type AddressOrUndefined = Address | undefined;
-// console.log(runLatest);
-// return;
 
 export type AddressChain = {
   blockNumber: number;
@@ -140,8 +126,8 @@ switch (chainArg) {
 
 if (chainArg == "local") {
   const filePath = path.join(
-    __dirname,
-    "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json",
+    process.cwd(),
+    "../../broadcast/DeployCV.s.sol/1337/run-latest.json",
   );
   fs.readFile(filePath, "utf8", (err, data) => {
     if (err) {
