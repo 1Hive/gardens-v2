@@ -67,6 +67,7 @@ export function handleInitialized(event: RegistryInitialized): void {
     newRC.registerToken = token.toHexString();
     newRC.registryFactory = factoryAddress;
     newRC.strategyTemplate = rcc.strategyTemplate().toHexString();
+    newRC.isValid = true;
 
     let tg = TokenGarden.load(token.toHexString());
     if (tg == null) {

@@ -15,17 +15,6 @@ import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
 export const dynamic = "force-dynamic";
 
-type Community = Pick<
-  RegistryCommunity,
-  | "id"
-  | "covenantIpfsHash"
-  | "chainId"
-  | "communityName"
-  | "registerToken"
-  | "registerStakeAmount"
-  | "alloAddress"
-> & {};
-
 export default async function Garden({
   params: { chain, garden },
 }: {
@@ -43,8 +32,8 @@ export default async function Garden({
 
   useEffect(() => {
     if (result) {
-      console.log('result.tokenGarden?.communities', result.tokenGarden?.communities);
-      setCommunities(result.tokenGarden?.communities);
+      let filteredCommunities = result.tokenGarden?.communities?.filter((com) => com.isValid);
+      setCommunities(filteredCommunities ?? []);
       setTokenGarden(result.tokenGarden);
       fetchAndUpdateCommunities(result.tokenGarden?.communities);
     } else {

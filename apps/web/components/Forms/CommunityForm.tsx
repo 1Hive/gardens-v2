@@ -17,7 +17,7 @@ import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
 import { getChain } from "@/configs/chainServer";
 import { getChainIdFromPath } from "@/utils/path";
-import { PERCENTAGE_PRECISION_DECIMALS } from "@/utils/numbers";
+import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 import { getContractsAddrByChain } from "@/constants/contracts";
 
 //protocol : 1 => means ipfs!, to do some checks later
@@ -130,9 +130,9 @@ export const CommunityForm = ({
 
     toast
       .promise(ipfsUpload, {
-        pending: "Uploading data, wait a moment...",
-        success: "All ready!",
-        error: "Something went wrong",
+        pending: "Preparing everything, wait a moment...",
+        // success: "All ready!",
+        error: "Error uploading data to IPFS",
       })
       .then((ipfsHash) => {
         console.log("https://ipfs.io/ipfs/" + ipfsHash);
@@ -167,7 +167,7 @@ export const CommunityForm = ({
     );
     const communityFeeAmount = parseUnits(
       previewData?.feeAmount.toString() as string,
-      PERCENTAGE_PRECISION_DECIMALS,
+      SCALE_PRECISION_DECIMALS,
     );
     const communityFeeReceiver = previewData?.feeReceiver;
     const councilSafeAddress = previewData?.councilSafe;

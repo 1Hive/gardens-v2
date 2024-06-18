@@ -15,6 +15,7 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { pointSystems, proposalTypes } from "@/types";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import { CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -48,13 +49,9 @@ export default async function Pool({
   const isEnabled = data?.cvstrategies?.[0]?.isEnabled as boolean;
   const { title, description } = await getIpfsMetadata(metadata);
 
-  //TODO: check decimals
-  //spending limit calculations
-  const PRECISON_OF_7 = 10 ** 7;
-  const maxRatioDivPrecision =
-    Number(strategyObj?.config?.maxRatio) / PRECISON_OF_7;
+  const spendingLimitPct =
+    (Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION) * 100;
 
-  const spendingLimitPct = maxRatioDivPrecision * 100;
   console.log(
     "maxRatio: " + strategyObj?.config?.maxRatio,
     "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
@@ -141,7 +138,7 @@ export default async function Pool({
                   communityAddress={communityAddress}
                   tokenGarden={tokenGarden}
                   pointSystem={pointSystem}
-                  spendingLimit={spendingLimitPct}
+                  spendingLimitPct={spendingLimitPct}
                 />
               )}
               {/* Proposals section */}

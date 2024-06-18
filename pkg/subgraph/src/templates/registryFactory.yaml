@@ -24,6 +24,8 @@
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
+        - event: CommunityValiditySet(address,bool)
+          handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
-          handler: handleProtocolFeeSet
+          handler: handleProtocolFeeSet  
       file: ./src/mappings/registry-factory.ts

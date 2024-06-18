@@ -24,6 +24,7 @@ export default async function Gardens() {
   const tokenGardens = useMemo(() => {
     return gardens?.flatMap((g) => g.tokenGardens).filter((x): x is NonNullable<typeof x> => !!x);
   }, [gardens]);
+  
   return (
     <div className="flex flex-col items-center justify-center gap-8">
       <header className="flex flex-col items-center gap-8">

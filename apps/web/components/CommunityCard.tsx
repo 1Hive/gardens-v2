@@ -12,7 +12,6 @@ import {
   CommunityProfile,
   FormLink,
 } from "@/components";
-import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { usePathname } from "next/navigation";
 import { Address, useAccount } from "wagmi";
 import {
@@ -22,7 +21,6 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
-import Link from "next/link";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { getChainIdFromPath } from "@/utils/path";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
@@ -52,9 +50,7 @@ export function CommunityCard({
   tokenGarden,
 }: CommunityCardProps) {
   const { address: accountAddress } = useAccount();
-  const [memberStakedTokens, setMemberStakedTokens] = useState<
-    string | bigint | undefined
-  >();
+  const [memberStakedTokens, setMemberStakedTokens] = useState<string>("0");
   const pathname = usePathname();
 
   const urqlClient = useUrqlClient();
@@ -75,26 +71,14 @@ export function CommunityCard({
     );
 
     if (result && result.members.length > 0) {
-      const memberStakedTokens = (result.members?.[0]?.memberCommunity?.[0]
-        ?.stakedTokens ?? "0") as string | bigint;
+      const stakedTokens =
+        result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
+      const memberStakedTokens =
+        typeof stakedTokens === "string" ? stakedTokens : "0";
 
       setMemberStakedTokens(memberStakedTokens);
     }
   }, [accountAddress]);
-
-  const calculateRemainingStake = () => {
-    const calculateDiffStake =
-      Number(memberStakedTokens ?? 0) - Number(registerStakeAmount);
-    const remainingStake = formatTokenAmount(
-      calculateDiffStake < 0 ? 0 : calculateDiffStake,
-      tokenGarden?.decimals,
-    );
-
-    return Number(remainingStake);
-  };
-
-  //diff between registerAmount and totalStakeAmount
-  const addedStake = calculateRemainingStake();
 
   useEffect(() => {
     runIsMemberQuery();
@@ -104,7 +88,8 @@ export function CommunityCard({
 
   members = members ?? [];
   let registerToken = tokenGarden?.id ?? "0x0";
-  registerStakeAmount = registerStakeAmount ?? 0;
+  registerStakeAmount =
+    registerStakeAmount !== undefined ? BigInt(registerStakeAmount) : 0n;
 
   const signalingPools = pools.filter(
     (pool) => pool.config?.proposalType === "0" && pool.isEnabled,
@@ -165,7 +150,7 @@ export function CommunityCard({
               communityAddress={communityAddress as Address}
               registerToken={registerToken as Address}
               registerTokenDecimals={tokenGarden?.decimals as number}
-              membershipAmount={registerStakeAmount}
+              membershipAmount={registerStakeAmount as bigint}
               protocolFee={protocolFee}
               communityFee={communityFee}
             />
@@ -240,7 +225,8 @@ export function CommunityCard({
               connectedAccount={accountAddress as Address}
               tokenSymbol={tokenGarden?.symbol as string}
               registerTokenDecimals={tokenGarden?.decimals as number}
-              addedStake={addedStake}
+              registerStakeAmount={registerStakeAmount as bigint}
+              memberStakedTokens={BigInt(memberStakedTokens)}
             />
           </div>
         </main>
