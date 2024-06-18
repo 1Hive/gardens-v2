@@ -69,11 +69,6 @@ export function Proposals({
 
   const { address } = useAccount();
 
-  if (address === undefined) {
-    console.error("address is undefined");
-    return;
-  }
-
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
@@ -302,8 +297,10 @@ export function Proposals({
 
   // console.log("newLocal:                    %s", memberActivatePointsAsNum);
   // console.log("newLocal_1:                  %s", totalEAPasNum);
-  console.log("memberActivatedPoints:       %s", memberActivatedPoints);
-  console.log("memberPoolWeight:            %s", memberPoolWeight);
+  useEffect(() => {
+    console.log("memberActivatedPoints:       %s", memberActivatedPoints);
+    console.log("memberPoolWeight:            %s", memberPoolWeight);
+  }, [memberActivatedPoints, memberPoolWeight]);
   // console.log(
   //   "totalEffectiveActivePoints:  %s",
   //   strategy.totalEffectiveActivePoints,
