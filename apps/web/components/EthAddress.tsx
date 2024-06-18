@@ -35,7 +35,7 @@ export const EthAddress = ({
   //   popupRadius: 12,
   //   popupShadow: "black",
   // };
-  const chainId = getChainIdFromPath();
+  const chainId = getChainIdFromPath() as number;
 
   return (
     <Addreth
