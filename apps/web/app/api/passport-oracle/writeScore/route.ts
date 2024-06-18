@@ -9,9 +9,8 @@ import {
   Address,
   Chain,
 } from "viem";
-import { mainnet, localhost, arbitrumSepolia, sepolia } from "viem/chains";
+import { localhost, arbitrumSepolia, sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { recoverMessageAddress, hashMessage } from "viem";
 import { passportScorerABI } from "@/src/generated";
 import { getContractsAddrByChain } from "@/constants/contracts";
 
@@ -60,46 +59,19 @@ const walletClient = createWalletClient({
   transport: custom(client.transport),
 });
 
-async function verifySignature(
-  message: string,
-  signature: string,
-  expectedAddress: string,
-): Promise<boolean> {
-  try {
-    if (!signature.startsWith("0x")) {
-      signature = "0x" + signature;
-    }
-
-    const recoveredAddress = await recoverMessageAddress({
-      message,
-      signature: signature as `0x${string}`,
-    });
-
-    return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
-  } catch (error) {
-    console.error("Error verifying signature:", error);
-    return false;
-  }
-}
-
 export async function POST(req: Request) {
-  const { user, score, signature, message } = await req.json();
+  const { user, score } = await req.json();
 
-  if (!user || !score || !signature || !message) {
+  if (!user || !score) {
     return NextResponse.json(
       {
-        error: "User address, score, message, and signature are required",
+        error: "User address and score are required",
       },
       { status: 400 },
     );
   }
 
   try {
-    const isValidSignature = await verifySignature(message, signature, user);
-    if (!isValidSignature) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-    }
-
     const data = {
       abi: passportScorerABI,
       address: CONTRACT_ADDRESS,

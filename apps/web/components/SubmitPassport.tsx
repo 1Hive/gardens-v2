@@ -1,56 +1,20 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "./Button";
-import { useAccount, useSignMessage } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
 import { toast } from "react-toastify";
 
-interface SignMessageResponse {
-  nonce: string;
-  message: string;
-}
-
 interface SubmitPassportResponse {
-  score: string;
+  data: any;
+  error: boolean;
 }
 
 export function SubmitPassport() {
   const { address: connectedAccount } = useAccount();
-  const { openConnectModal } = useConnectModal();
-  const [nonce, setNonce] = useState<string | null>(null);
 
-  async function handleOnClick() {
-    if (connectedAccount) {
-    } else {
-      openConnectModal?.();
-    }
-  }
-
-  const getSigningMessage = async (): Promise<string | null> => {
-    const SIGNING_MESSAGE_URI = "/api/passport/signMessage";
-
-    try {
-      const response = await fetch(SIGNING_MESSAGE_URI, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const json: SignMessageResponse = await response.json();
-
-      setNonce(json.nonce);
-      return json.message;
-    } catch (err) {
-      console.log("error: ", err);
-      return null;
-    }
-  };
-
-  const submitSignedPassport = async (
+  const submitPassport = async (
     address: string,
-    signature: string,
-    nonce: string,
-  ): Promise<SubmitPassportResponse | null> => {
+  ): Promise<SubmitPassportResponse> => {
     const SUBMIT_SIGNED_PASSPORT_URI = "/api/passport/submitPassport";
 
     try {
@@ -59,29 +23,30 @@ export function SubmitPassport() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ address, signature, nonce }),
+        body: JSON.stringify({ address }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to submit signed passport");
+        return {
+          error: true,
+          data: {},
+        };
       }
 
-      const data: SubmitPassportResponse = await response.json();
+      const data = await response.json();
       console.log("Response from server:", data);
 
-      return data;
+      return { error: false, data };
     } catch (err) {
-      console.error("Error submitting signed passport:", err);
-      return null;
+      console.error("Error submitting passport:", err);
+      return {
+        error: true,
+        data: {},
+      };
     }
   };
 
-  const writeScorer = async (
-    address: string,
-    score: string,
-    signature: string,
-    message: string,
-  ): Promise<void> => {
+  const writeScorer = async (address: string, score: string): Promise<any> => {
     const WRITE_SCORER_URI = "/api/passport-oracle/writeScore";
 
     try {
@@ -90,52 +55,57 @@ export function SubmitPassport() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ user: address, score, signature, message }),
+        body: JSON.stringify({ user: address, score }),
       });
+
+      if (!response.ok) {
+        return {
+          error: true,
+        };
+      }
 
       const data = await response.json();
       console.log("Response from writeScorer API:", data);
+      return data;
     } catch (err) {
       console.error("Error calling writeScorer API:", err);
+      return {
+        error: true,
+        errorMessage: err,
+      };
     }
   };
 
-  const { signMessage } = useSignMessage({
-    onSuccess: async (data, variables) => {
-      if (connectedAccount && nonce) {
-        const passportResponse = await submitSignedPassport(
-          connectedAccount,
-          data,
-          nonce,
-        );
-
-        if (passportResponse) {
-          await writeScorer(
-            connectedAccount,
-            passportResponse.score,
-            data,
-            variables.message,
-          );
-        }
-      }
-    },
-  });
-
-  const handleSignMessage = async () => {
+  const handleSubmitPassport = async () => {
     if (!connectedAccount) {
-      toast.error("Please connect your wallet first");
       return;
     }
 
-    const message = await getSigningMessage();
-    if (message) {
-      signMessage({ message });
+    const passportResponse = await submitPassport(connectedAccount);
+
+    if (!passportResponse.error) {
+      const writeScorerData = await writeScorer(
+        connectedAccount,
+        passportResponse.data.score,
+      );
+      if (!writeScorerData.error) {
+        toast.success("Passport submitted and score written successfully!");
+      } else {
+        toast.error("Failed to write score.");
+      }
+    } else {
+      toast.error("Failed to submit passport.");
     }
   };
+
   return (
     <>
       <div className="flex flex-col gap-4 pl-4">
-        <Button onClick={handleSignMessage} className="w-fit bg-primary">
+        <Button
+          onClick={handleSubmitPassport}
+          disabled={!connectedAccount}
+          className="w-fit bg-primary"
+        >
           Submit Passport
         </Button>
       </div>

@@ -20,19 +20,15 @@ export async function POST(request: Request) {
   let requestBody: PassportData;
   try {
     requestBody = await request.json();
-    console.log("REQUEST BODY:", requestBody);
   } catch (error) {
     console.error("Error parsing JSON:", error);
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { address, signature, nonce } = requestBody;
+  const { address } = requestBody;
 
-  if (!address || !signature || !nonce) {
-    return NextResponse.json(
-      { error: "Address, signature, and nonce are required" },
-      { status: 400 },
-    );
+  if (!address) {
+    return NextResponse.json({ error: "Address is required" }, { status: 400 });
   }
 
   try {
@@ -42,10 +38,8 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         "X-API-KEY": apiKey,
       },
-      body: JSON.stringify({ address, scorer_id: scorerId, signature, nonce }),
+      body: JSON.stringify({ address, scorer_id: scorerId }),
     });
-
-    console.log("SERVER RESPONSEEE ", response);
 
     if (response.ok) {
       const data = await response.json();
