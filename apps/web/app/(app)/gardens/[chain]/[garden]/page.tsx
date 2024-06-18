@@ -1,5 +1,4 @@
-
-"use client"
+"use client";
 
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
@@ -27,38 +26,46 @@ export default async function Garden({
       { addr: garden },
     );
 
-  const [communities, setCommunities] = useState<NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"] | undefined>();
-  const [tokenGarden, setTokenGarden] = useState<getCommunitiesByGardenQuery["tokenGarden"] | undefined>();
+  const [communities, setCommunities] = useState<
+    | NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
+    | undefined
+  >();
+  const [tokenGarden, setTokenGarden] = useState<
+    getCommunitiesByGardenQuery["tokenGarden"] | undefined
+  >();
 
   useEffect(() => {
     if (result) {
-      let filteredCommunities = result.tokenGarden?.communities?.filter((com) => com.isValid);
+      let filteredCommunities = result.tokenGarden?.communities?.filter(
+        (com) => com.isValid,
+      );
       setCommunities(filteredCommunities ?? []);
       setTokenGarden(result.tokenGarden);
       fetchAndUpdateCommunities(result.tokenGarden?.communities);
     } else {
-      console.error('No result while fetching communitiesByGarden');
+      console.error("No result while fetching communitiesByGarden");
     }
   }, [result]);
 
   const fetchAndUpdateCommunities = async (communities: any) => {
-    const promises = communities?.map(async (com: any) => {
-      if (com?.covenantIpfsHash) {
-        const ipfsHash = com.covenantIpfsHash;
-        try {
-          const response = await fetch("https://ipfs.io/ipfs/" + ipfsHash);
-          const json = await response.json();
-          // Return a new object with the updated covenantIpfsHash
-          return { ...com, covenantData: json };
-        } catch (error) {
-          console.log(error);
-          // Return the original community object in case of an error
-          return com;
+    const promises =
+      communities?.map(async (com: any) => {
+        if (com?.covenantIpfsHash) {
+          const ipfsHash = com.covenantIpfsHash;
+          try {
+            const response = await fetch("https://ipfs.io/ipfs/" + ipfsHash);
+            const json = await response.json();
+            // Return a new object with the updated covenantIpfsHash
+            return { ...com, covenantData: json };
+          } catch (error) {
+            console.log(error);
+            // Return the original community object in case of an error
+            return com;
+          }
         }
-      }
-      // Return the original community object if there's no covenantIpfsHash
-      return com;
-    }) ?? [];
+        // Return the original community object if there's no covenantIpfsHash
+        return com;
+      }) ?? [];
 
     // Wait for all promises to resolve and update the communities array
     const promisesResult = await Promise.all(promises);
