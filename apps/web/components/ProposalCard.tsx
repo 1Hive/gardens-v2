@@ -53,8 +53,9 @@ export function ProposalCard({
   const pathname = usePathname();
 
   const calcPoolWeightUsed = (number: number) => {
-    if (memberPoolWeight == 0) return 0;
-    return ((number / 100) * memberPoolWeight).toFixed(2);
+    return memberPoolWeight == 0
+      ? 0
+      : ((number / 100) * memberPoolWeight).toFixed(2);
   };
 
   //encode proposal id to pass as argument to distribute function
