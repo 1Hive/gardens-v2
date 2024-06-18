@@ -90,7 +90,7 @@ export const IncreasePower = ({
   const { data: accountTokenBalance } = useBalance({
     address: connectedAccount,
     token: registerToken as `0x${string}` | undefined,
-    chainId: chainId || 0,
+    chainId: Number(chainId),
   });
 
   //TODO: create a hook for this
