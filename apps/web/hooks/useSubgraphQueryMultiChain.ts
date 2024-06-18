@@ -20,12 +20,10 @@ import { ChainId } from "@/types";
 import { debounce } from "lodash-es";
 import { initUrqlClient } from "@/providers/urql";
 
-const allChains = [
-  localhost.id,
-  arbitrumSepolia.id,
-  optimismSepolia.id,
-  sepolia.id,
-];
+const allChains = [localhost.id, arbitrumSepolia.id, optimismSepolia.id];
+if (process.env.NODE_ENV === "development") {
+  allChains.push(localhost.id);
+}
 
 export default function useSubgraphQueryMultiChain<
   Data = any,
