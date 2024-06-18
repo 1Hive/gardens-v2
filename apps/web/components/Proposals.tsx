@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { Button, PoolGovernance, FormLink, ProposalCard } from "@/components";
 import {
@@ -28,7 +29,6 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { useUrqlClient } from "@/hooks/useUqrlClient";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
 export type ProposalInputItem = {
@@ -77,7 +77,6 @@ export function Proposals({
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-  const urqlClient = useUrqlClient();
   const chainId = getChainIdFromPath();
 
   const { data: isMemberActivated } = useContractRead({

@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Proposals, PoolMetrics, PoolGovernance } from "@/components";
+import { Badge, Proposals, PoolMetrics } from "@/components";
 import Image from "next/image";
 import { gardenLand } from "@/assets";
 import {
@@ -16,7 +16,7 @@ import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { pointSystems, proposalTypes } from "@/types";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -32,22 +32,23 @@ export default function Pool({
     getPoolDataDocument,
     { poolId: poolId, garden: garden },
   );
-  const strategyObj = data?.cvstrategies?.[0] as CVStrategy;
+  const strategyObj = data?.cvstrategies?.[0] as CVStrategy | undefined;
   //const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
-  if (!strategyObj) {
-    return <div>{`Pool ${poolId} not found`}</div>;
-  }
+  const maxRatioDivPrecision =
+    (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
+  data?.cvstrategies?.[0] as CVStrategy;
 
   const pointSystem = data?.cvstrategies?.[0].config?.pointSystem;
-  const strategyAddr = strategyObj.id as Address;
-  const communityAddress = strategyObj.registryCommunity.id as Address;
+  const strategyAddr = strategyObj?.id as Address;
+  const communityAddress = strategyObj?.registryCommunity.id as Address;
   const alloInfo = data?.allos[0] as Allo;
   const proposalType = strategyObj?.config?.proposalType as number;
   const poolAmount = strategyObj?.poolAmount as number;
   const tokenGarden = data?.tokenGarden as TokenGarden;
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
   const isEnabled = data?.cvstrategies?.[0]?.isEnabled as boolean;
+
   const [ipfsResult, setIpfsResult] =
     useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
 
@@ -59,16 +60,20 @@ export default function Pool({
     }
   }, [metadata]);
 
-  const spendingLimitPct =
-    (Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION) * 100;
+  const spendingLimitPct = useMemo(() => {
+    const maxRatioDivPrecision =
+      (Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION) * 100;
 
-  console.log(
-    "maxRatio: " + strategyObj?.config?.maxRatio,
-    "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
-    "poolAmount: " + poolAmount,
-  );
+    console.log(
+      "maxRatio: " + strategyObj?.config?.maxRatio,
+      "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
+      "poolAmount: " + poolAmount,
+    );
 
-  return (
+    return maxRatioDivPrecision;
+  }, [strategyObj?.config?.maxRatio]);
+
+  return strategyObj ? (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
         <header className="flex flex-col items-center justify-center">
@@ -166,5 +171,7 @@ export default function Pool({
         </main>
       </div>
     </div>
+  ) : (
+    <div>{`Pool ${poolId} not found`}</div>
   );
 }
