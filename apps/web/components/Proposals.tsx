@@ -245,11 +245,11 @@ export function Proposals({
         row = [Number(input.id), BigInt(Math.round(input.value))];
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = BigInt(Math.round(input.value) - current.value);
+          const dif = BigInt(Math.round(input.value)) - BigInt(current.value);
           row = [Number(input.id), dif];
         }
       });
-      if (!!row && row[1] !== 0n) resultArr.push(row);
+      if (row && row[1] !== 0n) resultArr.push(row);
     });
 
     return resultArr;
@@ -327,8 +327,11 @@ export function Proposals({
   // console.log("tokenDecimals:               %s", tokenDecimals);
 
   const calcPoolWeightUsed = (number: number) => {
-    if (memberPoolWeight == 0) return 0;
+    if (memberPoolWeight == 0) {
+      return 0;
+    } else {
     return ((number / 100) * memberPoolWeight).toFixed(2);
+    }
   };
 
   return (
