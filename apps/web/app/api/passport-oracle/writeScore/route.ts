@@ -7,24 +7,48 @@ import {
   createWalletClient,
   custom,
   Address,
+  Chain,
 } from "viem";
-import { mainnet, localhost } from "viem/chains";
+import { mainnet, localhost, arbitrumSepolia, sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { recoverMessageAddress, hashMessage } from "viem";
 import { passportScorerABI } from "@/src/generated";
 import { getContractsAddrByChain } from "@/constants/contracts";
 
-const CONTRACT_ADDRESS = process.env.PASSPORT_SCORER_ADDRESS as Address;
-
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
 
-const CHAIN = process.env.CHAIN_ID || "1337";
+const CHAIN = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
 const RPC_URL = getContractsAddrByChain(CHAIN)?.rpcUrl || LOCAL_RPC;
 
+const CONTRACT_ADDRESS = getContractsAddrByChain(CHAIN)
+  ?.passportScorer as Address;
+
+function getViemChain(chain: number): Chain {
+  let viemChain: Chain;
+
+  switch (chain) {
+    case localhost.id:
+      viemChain = localhost;
+      break;
+    case arbitrumSepolia.id:
+      viemChain = arbitrumSepolia;
+      break;
+    case sepolia.id:
+      viemChain = sepolia;
+      break;
+
+    default:
+      viemChain = localhost;
+      break;
+  }
+
+  return viemChain;
+}
+
 const client = createPublicClient({
-  chain: localhost,
+  chain: getViemChain(CHAIN),
   transport: http(RPC_URL),
 });
 

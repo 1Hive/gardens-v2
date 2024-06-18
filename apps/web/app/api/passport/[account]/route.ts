@@ -26,7 +26,6 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   console.log("Making request to endpoint:", endpoint);
-  console.log("Using API key:", apiKey);
 
   try {
     const response = await fetch(endpoint, {
