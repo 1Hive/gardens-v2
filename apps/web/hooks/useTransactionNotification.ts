@@ -1,9 +1,10 @@
-import { confirmationsRequired } from "@/constants/contracts";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { WriteContractResult } from "wagmi/actions";
 import { useViemClient } from "./useViemClient";
 import { Address } from "viem";
+import { chainDataMap } from "@/configs/chainServer";
+import { getChainIdFromPath } from "@/utils/path";
 
 type TransactionStatus = "error" | "success" | "loading" | "idle";
 type TransactionData = WriteContractResult | undefined;
@@ -22,14 +23,16 @@ export const useTransactionNotification = (
 ) => {
   const [transactionStatus, updateTransactionStatus] =
     useState<TransactionStatus>("idle");
-  const [txConfirmationHash, setTxConfirmationHash] = useState<Address | undefined>(undefined);
+  const [txConfirmationHash, setTxConfirmationHash] = useState<
+    Address | undefined
+  >(undefined);
   const [promiseResolve, setPromiseResolve] = useState<
     TransactionFunction | undefined
   >(undefined);
   const [promiseReject, setPromiseReject] = useState<
     TransactionFunction | undefined
   >(undefined);
-
+  const chainId = getChainIdFromPath();
   const viemClient = useViemClient();
 
   const transactionPromise = () => {
@@ -57,30 +60,31 @@ export const useTransactionNotification = (
       toast
         .promise(promise, {
           pending: "Please sign the transaction",
-          // success: "Signed!",
+          success: "Transaction sent!",
           error: "Something went wrong",
         })
         .then((data) => {
-          const receipt = async () =>
-            await viemClient.waitForTransactionReceipt({
-              confirmations: confirmationsRequired,
-              hash: data.transactionData?.hash || "0x",
-            });
+          console.log("Tx hash: "+data.transactionData?.hash)
+          // const receipt = async () =>
+          //   await viemClient.waitForTransactionReceipt({
+          //     confirmations: chainDataMap[chainId].confirmations,
+          //     hash: data.transactionData?.hash || "0x",
+          //   });
 
-          // transaction notification toasts
-          toast
-            .promise(receipt, {
-              pending: "Waiting for block confirmations...",
-              success: `Transaction sent with ${confirmationsRequired} confirmations`,
-              error: "Something went wrong",
-            })
-            .then((data) => {
-              console.log(data);
-              setTxConfirmationHash(data.transactionHash);
-            })
-            .catch((error: any) => {
-              console.error(`Tx failure: ${error}`);
-            });
+          // // transaction notification toasts
+          // toast
+          //   .promise(receipt, {
+          //     pending: "Waiting for block confirmations...",
+          //     success: `Transaction sent with ${chainDataMap[chainId].confirmations} confirmations`,
+          //     error: "Something went wrong",
+          //   })
+          //   .then((data) => {
+          //     console.log(data);
+              setTxConfirmationHash(data.transactionData?.hash);
+          //   })
+          //   .catch((error: any) => {
+          //     console.error(`Tx failure: ${error}`);
+          //   });
         })
         .catch((error: any) => {
           console.error(error);
