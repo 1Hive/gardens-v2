@@ -6,7 +6,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { CommunityForm } from "@/components/Forms";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
-import React from "react";
+import React, { useEffect } from "react";
 import { Address } from "viem";
 
 export default function Page({
@@ -14,19 +14,28 @@ export default function Page({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error: error } =
+  const { data: result, error: getCommunityCreationDataQueryError } =
     useSubgraphQueryByChain<getCommunityCreationDataQuery>(
       chain,
       getCommunityCreationDataDocument,
       { addr: garden },
     );
 
+  useEffect(() => {
+    if (getCommunityCreationDataQueryError) {
+      console.error(
+        "Error while fetching community creation data: ",
+        getCommunityCreationDataQueryError,
+      );
+    }
+  }, [getCommunityCreationDataQueryError]);
+
   const registryFactoryAddr = result?.registryFactories?.[0].id as Address;
   const tokenGarden = result?.tokenGarden as TokenGarden;
   const alloContractAddr = result?.tokenGarden?.communities?.[0]
     .alloAddress as Address;
 
-  return (
+  return tokenGarden ? (
     <div className="mx-auto flex max-w-[820px] flex-col items-center justify-center gap-4">
       <div className="text-center sm:mt-5">
         <h2 className="text-xl font-semibold leading-6 text-gray-900">
@@ -34,7 +43,7 @@ export default function Page({
         </h2>
         <div className="mt-1">
           <p className="text-sm">
-            Create a vibrant community around the {tokenGarden.name} by
+            Create a vibrant community around the {tokenGarden?.name} by
             providing the necessary details below.
           </p>
         </div>
@@ -45,6 +54,10 @@ export default function Page({
         registryFactoryAddr={registryFactoryAddr}
         alloContractAddr={alloContractAddr}
       />
+    </div>
+  ) : (
+    <div className="w-full text-center">
+      <div className="spinner"></div>
     </div>
   );
 }

@@ -19,12 +19,21 @@ export default function Garden({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error } =
+  const { data: result, error: getCommunitiesByGardenQueryError } =
     useSubgraphQueryByChain<getCommunitiesByGardenQuery>(
       chain,
       getCommunitiesByGardenDocument,
       { addr: garden },
     );
+
+  useEffect(() => {
+    if (getCommunitiesByGardenQueryError) {
+      console.error(
+        "Error while fetching communities: ",
+        getCommunitiesByGardenQueryError,
+      );
+    }
+  }, [getCommunitiesByGardenQueryError]);
 
   const [communities, setCommunities] = useState<
     | NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
@@ -42,8 +51,6 @@ export default function Garden({
       setCommunities(filteredCommunities ?? []);
       setTokenGarden(result.tokenGarden);
       fetchAndUpdateCommunities(result.tokenGarden?.communities);
-    } else {
-      console.error("No result while fetching communitiesByGarden");
     }
   }, [result]);
 
