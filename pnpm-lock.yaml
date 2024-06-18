@@ -68,7 +68,7 @@ importers:
         version: 1.0.39(typescript@5.2.2)
       '@graphprotocol/client-urql':
         specifier: ^2.0.0
-        version: 2.0.0(@graphql-mesh/runtime@0.93.2)(@graphql-tools/utils@9.2.1)(@urql/core@4.2.3)(graphql@16.8.1)(wonka@6.3.4)
+        version: 2.0.0(@graphql-mesh/runtime@0.93.2)(@graphql-tools/utils@9.2.1)(@urql/core@4.3.0)(graphql@16.8.1)(wonka@6.3.4)
       '@headlessui/react':
         specifier: ^1.7.17
         version: 1.7.18(react-dom@18.2.0)(react@18.2.0)
@@ -87,9 +87,6 @@ importers:
       '@thirdweb-dev/chain-icons':
         specifier: ^1.0.5
         version: 1.0.5(react@18.2.0)
-      '@urql/exchange-graphcache':
-        specifier: ^4.0.0
-        version: 4.4.3(graphql@16.8.1)
       '@urql/next':
         specifier: ^1.1.0
         version: 1.1.0(next@14.0.3)(react@18.2.0)(urql@4.0.6)
@@ -114,9 +111,6 @@ importers:
       graphql:
         specifier: ^16.8.1
         version: 16.8.1
-      lodash-es:
-        specifier: ^4.17.21
-        version: 4.17.21
       lokijs:
         specifier: ^1.5.12
         version: 1.5.12
@@ -163,9 +157,6 @@ importers:
       '@ianvs/prettier-plugin-sort-imports':
         specifier: ^4.1.1
         version: 4.1.1(prettier@3.2.4)
-      '@types/lodash-es':
-        specifier: ^4.17.12
-        version: 4.17.12
       '@types/node':
         specifier: ^17.0.12
         version: 17.0.45
@@ -266,7 +257,7 @@ importers:
         version: 2.29.1(@typescript-eslint/parser@6.18.2-alpha.2)(eslint-import-resolver-typescript@2.7.1)(eslint@8.56.0)
       eslint-plugin-prettier:
         specifier: ^5.0.1
-        version: 5.1.3(eslint-config-prettier@8.10.0)(eslint@8.56.0)(prettier@3.3.2)
+        version: 5.1.3(eslint-config-prettier@8.10.0)(eslint@8.56.0)(prettier@3.2.5)
       eslint-plugin-react:
         specifier: ^7.33.2
         version: 7.33.2(eslint@8.56.0)
@@ -376,6 +367,17 @@ packages:
 
   /@0no-co/graphql.web@1.0.4(graphql@16.8.1):
     resolution: {integrity: sha512-W3ezhHGfO0MS1PtGloaTpg0PbaT8aZSmmaerL7idtU5F7oCI+uu25k+MsMS31BVFlp4aMkHSrNRxiD72IlK8TA==}
+    peerDependencies:
+      graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
+    peerDependenciesMeta:
+      graphql:
+        optional: true
+    dependencies:
+      graphql: 16.8.1
+    dev: false
+
+  /@0no-co/graphql.web@1.0.6(graphql@16.8.1):
+    resolution: {integrity: sha512-KZ7TnwMcQJcFgzjoY623AVxtlDQonkqp3rSz0wb15/jHPyU1v5gynUibEpuutDeoyGJ5Tp+FwxjGyDGDwq3vIw==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
     peerDependenciesMeta:
@@ -3203,15 +3205,15 @@ packages:
       tslib: 2.6.2
     dev: true
 
-  /@graphprotocol/client-urql@2.0.0(@graphql-mesh/runtime@0.93.2)(@graphql-tools/utils@9.2.1)(@urql/core@4.2.3)(graphql@16.8.1)(wonka@6.3.4):
+  /@graphprotocol/client-urql@2.0.0(@graphql-mesh/runtime@0.93.2)(@graphql-tools/utils@9.2.1)(@urql/core@4.3.0)(graphql@16.8.1)(wonka@6.3.4):
     resolution: {integrity: sha512-caz4fkJTeXCY/OEV2UtHEY1oklEiMyHNnpFi/QQd9Zo9mQeHrYs3XoDNXIaS7zk11g5CK80vC+SFrSj6ZAMirw==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       '@urql/core': ^2.4.0 || ^3.0.0 || ^4.0.0
       graphql: ^15.2.0 || ^16.0.0
     dependencies:
-      '@graphql-mesh/urql-exchange': 0.93.1(@graphql-mesh/runtime@0.93.2)(@graphql-tools/utils@9.2.1)(@urql/core@4.2.3)(graphql@16.8.1)(tslib@2.6.2)(wonka@6.3.4)
-      '@urql/core': 4.2.3(graphql@16.8.1)
+      '@graphql-mesh/urql-exchange': 0.93.1(@graphql-mesh/runtime@0.93.2)(@graphql-tools/utils@9.2.1)(@urql/core@4.3.0)(graphql@16.8.1)(tslib@2.6.2)(wonka@6.3.4)
+      '@urql/core': 4.3.0(graphql@16.8.1)
       graphql: 16.8.1
       tslib: 2.6.2
     transitivePeerDependencies:
@@ -3768,7 +3770,7 @@ packages:
       graphql: 16.8.1
       tslib: 2.6.2
 
-  /@graphql-mesh/urql-exchange@0.93.1(@graphql-mesh/runtime@0.93.2)(@graphql-tools/utils@9.2.1)(@urql/core@4.2.3)(graphql@16.8.1)(tslib@2.6.2)(wonka@6.3.4):
+  /@graphql-mesh/urql-exchange@0.93.1(@graphql-mesh/runtime@0.93.2)(@graphql-tools/utils@9.2.1)(@urql/core@4.3.0)(graphql@16.8.1)(tslib@2.6.2)(wonka@6.3.4):
     resolution: {integrity: sha512-cXrRL7HGyWqdj5P0le9C/h81aSBAZb78XbOGHcihp+5dJKMQSw/AIEEmSqe86+nXnzh/vvrf/HurzO8nROJP7Q==}
     peerDependencies:
       '@graphql-mesh/runtime': ^0.93.1
@@ -3780,7 +3782,7 @@ packages:
     dependencies:
       '@graphql-mesh/runtime': 0.93.2(@graphql-mesh/cross-helpers@0.3.4)(@graphql-mesh/types@0.93.2)(@graphql-mesh/utils@0.93.2)(@graphql-tools/utils@9.2.1)(graphql@16.8.1)(tslib@2.6.2)
       '@graphql-tools/utils': 9.2.1(graphql@16.8.1)
-      '@urql/core': 4.2.3(graphql@16.8.1)
+      '@urql/core': 4.3.0(graphql@16.8.1)
       graphql: 16.8.1
       tslib: 2.6.2
       wonka: 6.3.4
@@ -5849,16 +5851,6 @@ packages:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
     dev: true
 
-  /@types/lodash-es@4.17.12:
-    resolution: {integrity: sha512-0NgftHUcV4v34VhXm8QBSftKVXtbkBG3ViCjs6+eJ5a6y6Mi/jiFGPc1sC7QK+9BFhWrURE3EOggmWaSxL9OzQ==}
-    dependencies:
-      '@types/lodash': 4.17.5
-    dev: true
-
-  /@types/lodash@4.17.5:
-    resolution: {integrity: sha512-MBIOHVZqVqgfro1euRDWX7OO0fBVUUMrN6Pwm8LQsz8cWhEpihlvR70ENj3f40j58TNxZaWv2ndSkInykNBBJw==}
-    dev: true
-
   /@types/long@4.0.2:
     resolution: {integrity: sha512-MqTGEo5bj5t157U6fA/BiDynNkn0YknVdh48CMPkTSpFTVmvao5UQmm7uEF6xBEo7qIMAlY/JSleYaE6VOdpaA==}
     dev: false
@@ -6153,14 +6145,13 @@ packages:
       - graphql
     dev: false
 
-  /@urql/exchange-graphcache@4.4.3(graphql@16.8.1):
-    resolution: {integrity: sha512-EPXRCzq929RjVDym4NP4mO6bsyGE6J1JzUxE9vpm04VjZtK90Ag4bgftFdkHsMHh4ydvokLKQjCRVqGxKEBnEg==}
-    peerDependencies:
-      graphql: ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+  /@urql/core@4.3.0(graphql@16.8.1):
+    resolution: {integrity: sha512-wT+FeL8DG4x5o6RfHEnONNFVDM3616ouzATMYUClB6CB+iIu2mwfBKd7xSUxYOZmwtxna5/hDRQdMl3nbQZlnw==}
     dependencies:
-      '@urql/core': 4.2.3(graphql@16.8.1)
-      graphql: 16.8.1
-      wonka: 4.0.15
+      '@0no-co/graphql.web': 1.0.6(graphql@16.8.1)
+      wonka: 6.3.4
+    transitivePeerDependencies:
+      - graphql
     dev: false
 
   /@urql/next@1.1.0(next@14.0.3)(react@18.2.0)(urql@4.0.6):
@@ -9258,7 +9249,7 @@ packages:
       synckit: 0.8.8
     dev: true
 
-  /eslint-plugin-prettier@5.1.3(eslint-config-prettier@8.10.0)(eslint@8.56.0)(prettier@3.3.2):
+  /eslint-plugin-prettier@5.1.3(eslint-config-prettier@8.10.0)(eslint@8.56.0)(prettier@3.2.5):
     resolution: {integrity: sha512-C9GCVAs4Eq7ZC/XFQHITLiHJxQngdtraXaM+LoUFoFp/lHNl2Zn8f3WQbe9HvTBBQ9YnKFB0/2Ajdqwo5D1EAw==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
@@ -9274,7 +9265,7 @@ packages:
     dependencies:
       eslint: 8.56.0
       eslint-config-prettier: 8.10.0(eslint@8.56.0)
-      prettier: 3.3.2
+      prettier: 3.2.5
       prettier-linter-helpers: 1.0.0
       synckit: 0.8.8
     dev: true
@@ -11744,10 +11735,6 @@ packages:
       p-locate: 6.0.0
     dev: true
 
-  /lodash-es@4.17.21:
-    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
-    dev: false
-
   /lodash.camelcase@4.3.0:
     resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
     dev: false
@@ -13409,12 +13396,6 @@ packages:
     hasBin: true
     dev: true
 
-  /prettier@3.3.2:
-    resolution: {integrity: sha512-rAVeHYMcv8ATV5d508CFdn+8/pHPpXeIid1DdrPwXnaAdH7cqjVbpJaT5eq4yRAFU/lsbwYwSF/n5iNrdJHPQA==}
-    engines: {node: '>=14'}
-    hasBin: true
-    dev: true
-
   /pretty-format@26.6.2:
     resolution: {integrity: sha512-7AeGuCYNGmycyQbCqd/3PWH4eOoX/OiCa0uphp57NVTeAGdJGaAliecxwBDHYQCIvrW7aDBZCYeNTP/WX69mkg==}
     engines: {node: '>= 10'}
@@ -14045,7 +14026,6 @@ packages:
 
   /rimraf@2.6.3:
     resolution: {integrity: sha512-mwqeW5XsA2qAejG46gYdENaxXjx9onRNCfn7L0duuP4hCuTIi/QO7PDK07KJfp1d+izWPrzEJDcSqBa0OZQriA==}
-    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
     dependencies:
       glob: 7.2.3
@@ -15866,10 +15846,6 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       string-width: 4.2.3
-    dev: false
-
-  /wonka@4.0.15:
-    resolution: {integrity: sha512-U0IUQHKXXn6PFo9nqsHphVCE5m3IntqZNB9Jjn7EB1lrR7YTDY3YWgFvEvwniTzXSvOH/XMzAZaIfJF/LvHYXg==}
     dev: false
 
   /wonka@6.3.4:
