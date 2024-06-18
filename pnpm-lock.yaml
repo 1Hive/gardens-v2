@@ -102,6 +102,7 @@ importers:
       typescript: '5.2'
       ui: workspace:*
       urql: ^4.0.6
+      use-debounce: ^10.0.1
       viem: ~1
       wagmi: ~1
     dependencies:
@@ -131,6 +132,7 @@ importers:
       react-toastify: 10.0.5_biqbaboplfbrettd7655fr4n2y
       ui: link:../../pkg/ui
       urql: 4.1.0_iwzgi4mky6hlagskcbmfj6yshy
+      use-debounce: 10.0.1_react@18.2.0
       viem: 1.21.4_typescript@5.2.2
       wagmi: 1.4.13_kn7y74x7355efenmmcqgswhtlm
     devDependencies:
@@ -15287,6 +15289,15 @@ packages:
       '@types/react': 18.3.3
       react: 18.2.0
       tslib: 2.6.3
+    dev: false
+
+  /use-debounce/10.0.1_react@18.2.0:
+    resolution: {integrity: sha512-0uUXjOfm44e6z4LZ/woZvkM8FwV1wiuoB6xnrrOmeAEjRDDzTLQNRFtYHvqUsJdrz1X37j0rVGIVp144GLHGKg==}
+    engines: {node: '>= 16.0.0'}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      react: 18.2.0
     dev: false
 
   /use-sidecar/1.1.2_pcklb7m674k6u3r3q7fjhnofge:

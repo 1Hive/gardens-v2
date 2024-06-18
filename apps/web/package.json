@@ -36,6 +36,7 @@
     "react-toastify": "^10.0.4",
     "ui": "workspace:*",
     "urql": "^4.0.6",
+    "use-debounce": "^10.0.1",
     "viem": "~1",
     "wagmi": "~1"
   },

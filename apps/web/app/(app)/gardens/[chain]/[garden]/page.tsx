@@ -24,6 +24,8 @@ export default function Garden({
       chain,
       getCommunitiesByGardenDocument,
       { addr: garden },
+      {},
+      ["community", "garden"],
     );
 
   useEffect(() => {

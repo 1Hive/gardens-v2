@@ -1,12 +1,5 @@
-import { ChangeTopic } from "@/utils/pubsub";
+import { ChangeContext, ChangeTopic } from "@/utils/pubsub";
 import { useEffect, useState } from "react";
-
-export type ChangeContext = {
-  type: "add" | "delete" | "update";
-  id?: string;
-  context: any;
-  topic: ChangeTopic;
-};
 
 export default function useTopicChangeSubscription(topics?: ChangeTopic[]) {
   const [newEvent, setNewMessage] = useState<ChangeContext | null>();
@@ -25,6 +18,7 @@ export default function useTopicChangeSubscription(topics?: ChangeTopic[]) {
     );
 
     eventSource.onmessage = (event) => {
+      console.log("EventSource message:", event.data);
       setNewMessage(event.data);
     };
 

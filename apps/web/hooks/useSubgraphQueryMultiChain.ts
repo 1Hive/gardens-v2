@@ -54,7 +54,7 @@ export default function useSubgraphQueryMultiChain<
             return await urqlClient.query<Data>(query, variables, {
               ...context,
               url: address.subgraphUrl,
-            });
+            } as OperationContext & { _instance: any });
           } catch (error: any) {
             console.error("Error occured while fetching query", error);
             return { error, data: undefined };
@@ -75,7 +75,6 @@ export default function useSubgraphQueryMultiChain<
   );
 
   useEffect(() => {
-    console.log("newEvent", newEvent);
     fetchDebounce();
   }, [newEvent]);
 

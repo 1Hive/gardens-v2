@@ -238,6 +238,7 @@ export function RegisterMember({
               : "member-removed",
         },
         topic: "community",
+        chainId: chainId,
       };
       emit(context);
     }
