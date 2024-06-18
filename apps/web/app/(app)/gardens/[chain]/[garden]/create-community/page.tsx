@@ -9,7 +9,7 @@ import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import React from "react";
 import { Address } from "viem";
 
-export default async function page({
+export default async function Page({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };

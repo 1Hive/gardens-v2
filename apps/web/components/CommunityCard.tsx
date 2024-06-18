@@ -57,18 +57,16 @@ export function CommunityCard({
 
   const chainId = getChainIdFromPath();
 
-  const runIsMemberQuery = useCallback(async () => {
-    if (accountAddress === undefined) {
-      return;
-    }
-    const { data: result, error } = useSubgraphQueryByChain<isMemberQuery>(
-      chainId,
-      isMemberDocument,
-      {
-        me: accountAddress.toLowerCase(),
-        comm: communityAddress.toLowerCase(),
-      },
-    );
+  const { data: result, error } = useSubgraphQueryByChain<isMemberQuery>(
+    chainId,
+    isMemberDocument,
+    {
+      me: accountAddress?.toLowerCase(),
+      comm: communityAddress.toLowerCase(),
+    },
+  );
+
+  useEffect(() => {
 
     if (result && result.members.length > 0) {
       const stakedTokens =
@@ -78,11 +76,7 @@ export function CommunityCard({
 
       setMemberStakedTokens(memberStakedTokens);
     }
-  }, [accountAddress]);
-
-  useEffect(() => {
-    runIsMemberQuery();
-  }, [accountAddress]);
+  }, [result]);
 
   const pools = strategies ?? [];
 
@@ -215,7 +209,7 @@ export function CommunityCard({
               ))}
             </div>
 
-            {}
+            { }
 
             {/* IncreasePower funcionality - alpha test */}
             <h3 className="mt-10">Your stake in the community</h3>

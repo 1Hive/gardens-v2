@@ -28,7 +28,7 @@ export default function useSubgraphQueryByChain<
 
   useEffect(() => {
     fetch(false).then(setResponse);
-  }, [newEvent]);
+  }, [newEvent, variables, query, changeTopics]);
 
   return { ...response, refetch: () => fetch(true) };
 }

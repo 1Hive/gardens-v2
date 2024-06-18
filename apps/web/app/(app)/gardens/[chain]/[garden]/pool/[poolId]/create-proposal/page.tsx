@@ -12,7 +12,7 @@ import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
 import React from "react";
 import { Address } from "viem";
 
-export default async function page({
+export default async function Page({
   params: { chain, poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };
