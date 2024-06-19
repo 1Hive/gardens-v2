@@ -27,8 +27,9 @@ jobs:
           version: nightly
 
       - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 8.14.0
+        # The packageManager field is considered: https://github.com/pnpm/action-setup?tab=readme-ov-file#version
+        # with:
+        #   version: 8.14.0
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v3

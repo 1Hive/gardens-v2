@@ -1,46 +1,73 @@
-import { ChangeContext, ChangeTopic } from "@/utils/pubsub";
-import { useEffect, useState } from "react";
+import {
+  ChangeEventTopic,
+  ChangeEventPayload,
+  SubMessage,
+  PubMessage,
+} from "@/pages/api/pubsub";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useDebounce, useDebouncedCallback } from "use-debounce";
 
-export default function useTopicChangeSubscription(topics?: ChangeTopic[]) {
-  const [newEvent, setNewMessage] = useState<ChangeContext | null>();
+export default function useTopicChangeSubscription(
+  topics?: ChangeEventTopic[],
+) {
+  const [connected, setConnected] = useState(false);
+  const [newChangeEvent, setNewChangeEvent] =
+    useState<ChangeEventPayload | null>();
+  const socketRef = useRef<WebSocket | null>(null);
+
+  const initDebounced = useDebouncedCallback(
+    async (_topics: ChangeEventTopic[]) => {
+      const resp = await fetch("/api/pubsub"); // Ensure the WebSocket server is started
+      if (resp.ok) {
+        const body = await resp.json();
+        const _ws = new WebSocket(body.wsPath);
+
+        _ws.onopen = () => {
+          setConnected(true);
+          console.log("Connected to WebSocket server");
+          // Subscribe to topics
+          _ws.send(
+            JSON.stringify({
+              type: "sub",
+              topics: topics ?? [],
+            } as SubMessage),
+          );
+        };
+
+        _ws.onmessage = (event) => {
+          if (typeof event.data === "string") {
+            console.log("WS: received message:", event.data);
+            return;
+          }
+          const message: ChangeEventPayload = JSON.parse(event.data);
+          console.log("Received message:", message);
+          setNewChangeEvent(message);
+        };
+
+        _ws.onclose = () => {
+          console.log("Disconnected from WebSocket server");
+        };
+
+        socketRef.current = _ws;
+      }
+    },
+    200,
+  );
 
   useEffect(() => {
-    if (!topics?.length) return;
-
-    const queryString = new URLSearchParams();
-
-    topics.forEach((id) => {
-      queryString.append("topics", id);
-    });
-
-    const eventSource = new EventSource(
-      `/api/subscribe?${queryString.toString()}`,
-    );
-
-    eventSource.onmessage = (event) => {
-      console.log("EventSource message:", event.data);
-      setNewMessage(event.data);
-    };
-
-    eventSource.onerror = (error) => {
-      console.error("EventSource error:", error);
-      eventSource.close();
-    };
+    // if (!topics?.length) return;
+    initDebounced(topics ?? []);
 
     return () => {
-      eventSource.close();
+      socketRef.current?.close();
     };
   }, [topics]);
 
-  const handlePublish = async (context: ChangeContext) => {
-    await fetch("/api/publish", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ context }),
-    });
-  };
+  function publish(payload: ChangeEventPayload) {
+    const ws = socketRef.current;
+    if (!ws || ws.readyState !== ws.OPEN) return;
+    ws.send(JSON.stringify({ type: "pub", payload } as PubMessage));
+  }
 
-  return { newEvent, emit: handlePublish };
+  return { connected, publish, newChangeEvent };
 }

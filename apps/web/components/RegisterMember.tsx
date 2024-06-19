@@ -1,21 +1,14 @@
 "use client";
-import React, {
-  forwardRef,
-  useEffect,
-  useInsertionEffect,
-  useRef,
-  useState,
-} from "react";
+
+import React, { useEffect, useRef, useState } from "react";
 import {
   useBalance,
   useContractWrite,
   useContractRead,
   Address,
   useWaitForTransaction,
-  useAccount,
 } from "wagmi";
 import { Button } from "./Button";
-import { toast } from "react-toastify";
 import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -25,8 +18,8 @@ import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
-import { ChangeContext } from "@/utils/pubsub";
 import useTopicChangeSubscription from "@/hooks/useTopicChangeSubscription";
+import { ChangeEventPayload } from "@/pages/api/pubsub";
 
 type RegisterMemberProps = {
   name: string;
@@ -57,7 +50,7 @@ export function RegisterMember({
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
 
-  const { emit } = useTopicChangeSubscription();
+  const { publish } = useTopicChangeSubscription();
   //
   //new logic
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
@@ -228,10 +221,10 @@ export function RegisterMember({
       registerMemberStatus === "success" ||
       unregisterMemberStatus === "success"
     ) {
-      const context: ChangeContext = {
+      const context: ChangeEventPayload = {
         type: "update",
         id: communityAddress,
-        context: {
+        data: {
           type:
             registerMemberStatus === "success"
               ? "member-added"
@@ -240,7 +233,7 @@ export function RegisterMember({
         topic: "community",
         chainId: chainId,
       };
-      emit(context);
+      publish(context);
     }
   }, [registerMemberStatus, unregisterMemberStatus]);
 
@@ -336,6 +329,16 @@ export function RegisterMember({
               tooltip={tooltipMessage}
             >
               {isMember ? "Leave community" : "Register in community"}
+            </Button>
+            <Button
+              className="w-full bg-primary"
+              onClick={() => {
+                publish({
+                  topic: "garden",
+                });
+              }}
+            >
+              Emit
             </Button>
           </div>
         </div>

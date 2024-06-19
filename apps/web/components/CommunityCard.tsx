@@ -66,7 +66,6 @@ export function CommunityCard({
   );
 
   useEffect(() => {
-
     if (result && result.members.length > 0) {
       const stakedTokens =
         result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
@@ -208,7 +207,7 @@ export function CommunityCard({
               ))}
             </div>
 
-            { }
+            {}
 
             {/* IncreasePower funcionality - alpha test */}
             <h3 className="mt-10">Your stake in the community</h3>

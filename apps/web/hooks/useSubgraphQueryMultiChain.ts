@@ -1,4 +1,3 @@
-import { ChangeTopic } from "@/utils/pubsub";
 import {
   AnyVariables,
   CombinedError,
@@ -17,6 +16,7 @@ import {
 import { ChainId } from "@/types";
 import { debounce } from "lodash-es";
 import { initUrqlClient } from "@/providers/urql";
+import { ChangeEventTopic } from "@/pages/api/pubsub";
 
 const allChains: ChainId[] = [
   sepolia.id,
@@ -35,7 +35,7 @@ export default function useSubgraphQueryMultiChain<
   query: DocumentInput<any, Variables>,
   variables: Variables = {} as Variables,
   context?: Partial<OperationContext>,
-  changeTopics?: ChangeTopic[],
+  changeTopics?: ChangeEventTopic[],
   chains?: ChainId[],
 ) {
   const { newEvent } = useTopicChangeSubscription(changeTopics ?? []);

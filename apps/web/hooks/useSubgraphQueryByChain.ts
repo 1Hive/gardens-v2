@@ -1,4 +1,3 @@
-import { ChangeTopic } from "@/utils/pubsub";
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import useTopicChangeSubscription from "./useTopicChangeSubscription";
 import { getContractsAddrByChain } from "@/constants/contracts";
@@ -7,6 +6,7 @@ import { ChainId } from "@/types";
 import { initUrqlClient } from "@/providers/urql";
 import { debounce, isEqual } from "lodash-es";
 import { useDebouncedCallback } from "use-debounce";
+import { ChangeEventTopic } from "@/pages/api/pubsub";
 
 const INITIAL_DELAY = 1000;
 const MAX_RETRIES = 6; // Total waiting time of ~2min
@@ -19,10 +19,10 @@ export default function useSubgraphQueryByChain<
   query: DocumentInput<any, Variables>,
   variables: Variables = {} as Variables,
   context?: Partial<OperationContext>,
-  changeTopics?: ChangeTopic[],
+  changeTopics?: ChangeEventTopic[],
 ) {
   const { urqlClient } = initUrqlClient();
-  const { newEvent } = useTopicChangeSubscription(changeTopics ?? []);
+  const { newChangeEvent } = useTopicChangeSubscription(changeTopics ?? []);
 
   const contractAddress = getContractsAddrByChain(chain);
   const [response, setResponse] = useState<
@@ -69,7 +69,7 @@ export default function useSubgraphQueryByChain<
 
   useEffect(() => {
     refetch(); // Call the debounced function immediately
-  }, [newEvent]);
+  }, [newChangeEvent]);
 
   return { ...response, refetch };
 }
