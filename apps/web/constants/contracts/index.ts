@@ -30,6 +30,7 @@ type RPCSubgraphAddr = {
     rpcUrl?: string;
     subgraphUrl: string;
     strategyTemplate?: Address;
+    passportScorer?: Address;
   };
 };
 
@@ -37,6 +38,7 @@ let __contractsAddresses: RPCSubgraphAddr = {
   [localhost.id as number]: {
     rpcUrl: `http://127.0.0.1:8545`,
     subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
+    passportScorer: "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707",
   },
   [arbitrumSepolia.id as number]: {
     rpcUrl: envRpcUrlArbTestnet,

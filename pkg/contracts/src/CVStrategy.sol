@@ -75,6 +75,11 @@ library StrategyStruct {
         uint256 maxAmount;
     }
 
+    struct SybilConfig {
+        address sybilOracleScorer;
+        uint256 threshold;
+    }
+
     struct InitializeParams {
         address registryCommunity;
         // Alpha | Decay | a
@@ -89,6 +94,7 @@ library StrategyStruct {
         //NEXT: use this for tests
         PointSystem pointSystem;
         PointSystemConfig pointConfig;
+        SybilConfig sybilConfig;
     }
 }
 
