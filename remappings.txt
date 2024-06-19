@@ -4,5 +4,6 @@ safe-contracts/=lib/safe-contracts/
 allo-v2/=lib/allo-v2/
 allo-v2-contracts/=lib/allo-v2/contracts/
 allo-v2-test/=lib/allo-v2/test/
-@openzeppelin/contracts/=lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/foundry/=lib/openzeppelin-foundry-upgrades/src/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/

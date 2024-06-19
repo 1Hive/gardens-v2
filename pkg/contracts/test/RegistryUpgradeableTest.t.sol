@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {IStrategy} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 // Core contracts
@@ -21,6 +21,8 @@ import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
+import {RegistryFactoryV0_1} from "../src/RegistryFactoryV0_1.sol";
+import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
@@ -30,8 +32,10 @@ import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
-import {Math} from "openzeppelin/contracts/utils/math/Math.sol";
-import {Upgrades} from "@openzeppelin/foundry/Upgrades.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
+
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
 
 contract RegistryUpgradeableTest is
@@ -57,7 +61,7 @@ contract RegistryUpgradeableTest is
 
     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
-    RegistryFactoryV0_0 internal registryFactory;
+    RegistryFactoryV0_1 internal registryFactory;
     RegistryCommunity internal registryCommunity;
     RegistryCommunity internal nonKickableCommunity;
 
@@ -98,12 +102,19 @@ contract RegistryUpgradeableTest is
         vm.stopPrank();
         vm.startPrank(gardenOwner);
 
-        registryFactory = RegistryFactoryV0_0(
-            Upgrades.deployUUPSProxy(
-                "RegistryFactoryV0_0.sol",
-                abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(protocolFeeReceiver))
-            )
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(new RegistryFactoryV0_0()),
+            abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(protocolFeeReceiver))
         );
+
+        Upgrades.upgradeProxy(
+            address(proxy),
+            "RegistryFactoryV0_1.sol",
+            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
+        );
+
+        registryFactory = RegistryFactoryV0_1(address(proxy));
+
         // registryFactory = new RegistryFactory();
         // _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
 

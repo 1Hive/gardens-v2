@@ -3,15 +3,19 @@ pragma solidity ^0.8.19;
 
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 
+import {RegistryFactory} from "../src/RegistryFactory.sol";
+
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 struct CommunityInfo {
     uint256 fee;
     bool valid;
 }
+/// @custom:oz-upgrades-from RegistryFactory
 
-contract RegistryFactoryV0_0 is OwnableUpgradeable {
-    uint256 public nonce = 0;
+contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
+    uint256 public nonce;
 
     mapping(address => CommunityInfo) communityToInfo;
     address public gardensFeeReceiver;
@@ -39,13 +43,17 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
-    function initialize(address _gardensFeeReceiver) public initializer {
+    function initialize(address _gardensFeeReceiver) public virtual initializer {
         __Ownable_init();
-        setReceiverAddress(_gardensFeeReceiver); //onlyOwner
+        nonce = 0;
+        gardensFeeReceiver = _gardensFeeReceiver;
+        emit FeeReceiverSet(_gardensFeeReceiver);
+        // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
     }
 
     function createRegistry(RegistryCommunity.InitializeParams memory params)
         public
+        virtual
         returns (address _createdRegistryAddress)
     {
         RegistryCommunity registryCommunity = new RegistryCommunity();
@@ -58,35 +66,39 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable {
         return address(registryCommunity);
     }
 
-    function setReceiverAddress(address _newFeeReceiver) public onlyOwner {
+    function setReceiverAddress(address _newFeeReceiver) public virtual onlyOwner {
         _revertZeroAddress(_newFeeReceiver);
         gardensFeeReceiver = _newFeeReceiver;
         emit FeeReceiverSet(_newFeeReceiver);
     }
 
-    function getGardensFeeReceiver() external view returns (address) {
+    function getGardensFeeReceiver() external view virtual returns (address) {
         return gardensFeeReceiver;
     }
 
-    function setProtocolFee(address _community, uint256 _newProtocolFee) public onlyOwner {
+    function setProtocolFee(address _community, uint256 _newProtocolFee) public virtual onlyOwner {
         communityToInfo[_community].fee = _newProtocolFee;
         emit ProtocolFeeSet(_community, _newProtocolFee);
     }
 
-    function setCommunityValidity(address _community, bool _isValid) public onlyOwner {
+    function setCommunityValidity(address _community, bool _isValid) public virtual onlyOwner {
         communityToInfo[_community].valid = _isValid;
         emit CommunityValiditySet(_community, _isValid);
     }
 
-    function getCommunityValidity(address _community) external view returns (bool) {
+    function getCommunityValidity(address _community) external view virtual returns (bool) {
         return communityToInfo[_community].valid;
     }
 
-    function getProtocolFee(address _community) external view returns (uint256) {
+    function getProtocolFee(address _community) external view virtual returns (uint256) {
         if (!communityToInfo[_community].valid) {
             revert CommunityInvalid(_community);
         }
 
         return communityToInfo[_community].fee;
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    uint256[50] private __gap;
 }
