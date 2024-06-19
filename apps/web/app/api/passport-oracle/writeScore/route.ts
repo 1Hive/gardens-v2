@@ -76,7 +76,10 @@ export async function POST(req: Request) {
       abi: passportScorerABI,
       address: CONTRACT_ADDRESS,
       functionName: "addUserScore" as const,
-      args: [user, BigInt(score)] as const,
+      args: [
+        user,
+        { score: BigInt(score), lastUpdated: BigInt(Date.now()) },
+      ] as const,
     };
 
     const hash = await walletClient.writeContract(data);
