@@ -13,7 +13,7 @@ export default defineConfig({
   out: "src/generated.ts",
   contracts: [
     {
-      name: "TERC20",
+      name: "ERC20",
       abi: tERC20ABI as Abi,
     },
     {

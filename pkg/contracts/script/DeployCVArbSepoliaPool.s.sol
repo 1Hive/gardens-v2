@@ -59,7 +59,6 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
 
         vm.startBroadcast(pool_admin());
 
-        // AMockERC20 token = new AMockERC20();
         // console2.log("Token Addr: %s", address(token));
         // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
         Safe councilSafeDeploy = Safe(payable(SAFE));
