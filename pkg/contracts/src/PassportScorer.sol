@@ -8,7 +8,7 @@ contract PassportScorer is Ownable, ISybilScorer {
     address public listManager;
     uint256 public threshold;
 
-    mapping(address user => PassportData passportData) private userScores;
+    mapping(address user => PassportData passportData) public userScores;
 
     error OnlyAuthorized();
     error ZeroAddress();
