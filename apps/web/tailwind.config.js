@@ -34,25 +34,26 @@ module.exports = {
         // new light color palette:
         neutral: "var(--color-grey-900)",
         neutralSoft: "var(--color-grey-500)",
-        neutralBg: "var(--color-grey-400)",
-        neutralBgSoft: "var(--color-grey-200)",
-        neutralBgSoft2: "var(--color-grey-100)",
+        neutralButtonBg: "var(--color-grey-400)",
+        neutralSoftBg: "var(--color-grey-200)",
+        neutralSoft2Bg: "var(--color-grey-100)",
         neutralInverted: "var(--color-grey-0)",
+        neutralBg: "var(--color-grey-0)",
         //
         primaryHover: "var(--color-green-600)",
-        primaryButton: "var(--color-green-500)",
-        primarySoft: "var(--color-green-50)",
+        primaryButtonBg: "var(--color-green-500)",
+        primarySoftBg: "var(--color-green-50)",
         primaryBg: "var(--color-green-25)",
         //
         warn: "var(--color-red-500)",
         warnHover: "var(--color-red-600)",
-        warnBg: "var(--color-red-500)",
-        warnSoft: "var(--color-red-100)",
+        warnButtonBg: "var(--color-red-500)",
+        warnSoftBg: "var(--color-red-100)",
         //
-        secondarySoft: "var(--color-orange-50)",
+        secondarySoftBg: "var(--color-orange-50)",
         //
         terciary: "var(--color-cyan-500)",
-        terciarySoft: "var(--color-cyan-50)",
+        terciarySoftBg: "var(--color-cyan-50)",
       },
       transitionProperty: {
         height: "height",
