@@ -17,6 +17,7 @@ jobs:
       SCORER_ID: ${{ secrets.SCORER_ID }}
       GITCOIN_PASSPORT_API_KEY: ${{ secrets.GITCOIN_PASSPORT_API_KEY }}
       LIST_MANAGER_PRIVATE_KEY: ${{ secrets.LIST_MANAGER_PRIVATE_KEY }}
+      FOUNDRY_OUT: pkg/contracts/out
 
     steps:
       - name: Check out code

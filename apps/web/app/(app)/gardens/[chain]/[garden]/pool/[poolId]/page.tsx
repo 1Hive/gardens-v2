@@ -139,6 +139,7 @@ export default async function Pool({
                   communityAddress={communityAddress}
                   tokenGarden={tokenGarden}
                   pointSystem={pointSystem}
+                  chainId={parseInt(chain)}
                   spendingLimitPct={spendingLimitPct}
                 />
               )}

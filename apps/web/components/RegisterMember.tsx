@@ -19,6 +19,7 @@ import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
+import { chainDataMap } from "@/configs/chainServer";
 
 type RegisterMemberProps = {
   name: string;
@@ -100,9 +101,6 @@ export function RegisterMember({
     chainId: chainId || 0,
   });
 
-  console.log("accountTokenBalance ", accountTokenBalance);
-  console.log("registerToken ", registerToken);
-
   const accountHasBalance = gte(
     accountTokenBalance?.value,
     registerStakeAmount as bigint,
@@ -149,7 +147,7 @@ export function RegisterMember({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: 1,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: allowTokenData?.hash,
   });
 
