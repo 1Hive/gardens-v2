@@ -60,76 +60,117 @@ body {
   line-height: 1.15;
 }
 
-/* TODO: add Inter Font */
-
 h1 {
   margin-bottom: 1rem;
   margin-top: 0.5rem;
   color: var(--color-black);
   font-family: var(--font-chakra);
-  font-size: 3.25rem;
-  font-weight: bold;
-  @media only screen and (max-width: 680px) {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 56px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
     font-size: 2.5rem;
-  }
+  } */
 }
 
 h2 {
   color: var(--color-black);
   font-family: var(--font-chakra);
-  font-size: 2.25rem;
-  /*TODO: check the line-height from figma: I think it was too much ??, I put less here */
-  line-height: 2.25;
+  font-size: 36px;
   font-weight: 600;
-  @media only screen and (max-width: 680px) {
+  line-height: 46.8px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
     font-size: 2rem;
-  }
+  } */
 }
 
 h3 {
   color: var(--color-black);
   font-family: var(--font-chakra);
-  font-size: 2.25rem;
-  @media only screen and (max-width: 680px) {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 26.63px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
     font-size: 1.75rem;
-  }
+  } */
 }
+
 h4 {
   color: var(--color-black);
   font-family: var(--font-inter);
-  font-size: 1.5rem;
-  line-height: 1.663;
-  font-weight: 600;
-  @media only screen and (max-width: 680px) {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 29.05px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
     font-size: 1.75rem;
-  }
+  } */
 }
+
+/* subtitle 1 */
 h5 {
   color: var(--color-black);
   font-family: var(--font-inter);
-  font-size: 1.375rem;
-  line-height: 1.225;
+  font-size: 18px;
   font-weight: 500;
-  @media only screen and (max-width: 680px) {
-    font-size: 1.75rem;
-  }
+  line-height: 18.4px;
+  text-align: left;
+}
+
+/* subtitle 2 */
+h6 {
+  color: var(--color-black);
+  font-family: var(--font-inter);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 19.36px;
+  text-align: left;
 }
 
 p {
   color: var(--color-black);
   font-family: var(--font-inter);
-  font-size: 1rem;
+  font-size: 16px;
   font-weight: 400;
-  line-height: 1.5rem;
-  @media only screen and (max-width: 680px) {
+  line-height: 24px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
     font-size: 1rem;
-  }
+  } */
 }
 
 span {
+  color: var(--color-black);
   font-family: var(--font-inter);
   font-size: 1rem;
   font-weight: 400;
+}
+
+button {
+  color: var(--color-black);
+  font-family: var(--font-inter);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 18.4px;
+  text-align: left;
+}
+
+caption {
+  color: var(--color-black);
+  font-family: var(--font-inter);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 20px;
+  letter-spacing: 0.5px;
+  text-align: left;
 }
 
 .border2 {
