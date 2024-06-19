@@ -1,8 +1,25 @@
-# Turborepo starter for web3 projects
+# Gardens v2
 
-This is a starter turborepo for web3 development.
+> Gardens is a **coordination platform** 
+> that fosters **vibrant ecosystems of shared wealth**
+> by providing **healthy funding mechanisms to communities in web3** 
 
-## What's inside?
+As a modular governance mechanism, Gardens strategically mixes centralized and decentralized components to take advantage of the efficiency and security benefits of both when needed.
+
+Project and Ecosystem leaders can use Gardens to:
+* Publish a Covenant to IPFS and Create a Community pinned to its values and purpose.
+* Appoint a Council Safe as admin for the Community and a Tribunal Safe to rule on disputes
+* Create funding pools and strategies to allocate funding and source collective decisions
+
+Community members and Public Goods builders can use Gardens to:
+* Support Communities by staking in their Covenant
+* Create proposals in funding pools and strategies they're eligible for
+* Take part in collective decision-making by voting on Proposals.
+
+For Communities building goods and services whose value subjective to its users (AKA "Public Goods"), Gardens offers a toolset capable of leveraging the _Wisdom of the Crowds_ and that resists value extraction by malicious, abusive, or apathetic parties. 
+
+
+## Turborepo starter for web3 projects
 
 This turborepo uses [pnpm](https://pnpm.io) as a package manager. It includes the following packages/apps:
 

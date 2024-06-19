@@ -16,8 +16,8 @@ import { FormSelect } from "./FormSelect";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
+import { chainDataMap } from "@/configs/chainServer";
 import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
-import { chainIdMap } from "@/configs/chainServer";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -32,7 +32,7 @@ type FormInputs = {
   pointSystemType: number;
   optionType?: number;
   maxAmount?: number;
-  minThresholdPoints: number;
+  minThresholdPoints: string;
 } & PoolSettings;
 
 type InitializeParams = [
@@ -47,11 +47,6 @@ type InitializeParams = [
 ];
 type Metadata = [BigInt, string];
 type CreatePoolParams = [Address, InitializeParams, Metadata];
-
-type FormRowTypes = {
-  label: string;
-  parse?: (value: any) => string;
-};
 
 type Props = {
   communityAddr: Address;
@@ -151,7 +146,7 @@ export default function PoolForm({
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
-  const formRowTypes: Record<string, FormRowTypes> = {
+  const formRowTypes: Record<string, any> = {
     optionType: {
       label: "Pool settings:",
       parse: (value: number) => poolSettingValues[value].label,
@@ -181,6 +176,9 @@ export default function PoolForm({
     },
     minThresholdPoints: {
       label: "Minimum threshold points:",
+      parse: (value: string) => {
+        return value && value == "" ? "0" : value;
+      },
     },
   };
 
@@ -221,8 +219,7 @@ export default function PoolForm({
     const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
     const weightNum = minimumConviction * maxRatioNum ** 2;
 
-    const blockTime = chainIdMap[chainId].blockTime;
-
+    const blockTime = chainDataMap[chainId].blockTime;
     // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));
     const weight = BigInt(Math.round(weightNum * CV_SCALE_PRECISION));
@@ -290,9 +287,9 @@ export default function PoolForm({
     const ipfsUpload = ipfsJsonUpload(json);
     toast
       .promise(ipfsUpload, {
-        pending: "Uploading data, wait a moment...",
-        success: "All ready!",
-        error: "Something went wrong",
+        pending: "Preparing everything, wait a moment...",
+        // success: "All ready!",
+        error: "Error uploading data to IPFS",
       })
       .then((ipfsHash) => {
         console.log("https://ipfs.io/ipfs/" + ipfsHash);
@@ -312,12 +309,12 @@ export default function PoolForm({
     const reorderedData = {
       strategyType: previewData.strategyType,
       pointSystemType: previewData.pointSystemType,
-      maxAmount: previewData.maxAmount as number,
-      minThresholdPoints: previewData.minThresholdPoints as number,
-      optionType: previewData.optionType as number,
-      spendingLimit: previewData.spendingLimit as number,
-      minimumConviction: previewData.minimumConviction as number,
-      convictionGrowth: previewData.convictionGrowth as number,
+      maxAmount: previewData.maxAmount,
+      minThresholdPoints: previewData.minThresholdPoints,
+      optionType: previewData.optionType,
+      spendingLimit: previewData.spendingLimit,
+      minimumConviction: previewData.minimumConviction,
+      convictionGrowth: previewData.convictionGrowth,
     };
 
     Object.entries(reorderedData).forEach(([key, value]) => {
@@ -498,7 +495,6 @@ export default function PoolForm({
               <FormInput
                 label="Minimum threshold points"
                 register={register}
-                required
                 registerOptions={{
                   min: {
                     value: INPUT_MIN_THRESHOLD_MIN_VALUE,
