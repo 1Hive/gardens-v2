@@ -10,7 +10,7 @@ type NextApiResponseWithSocket = NextApiResponse & {
     };
   };
 };
-export const WEB_SOCKET_PORT = 3001;
+export const WEB_SOCKET_PORT = 443;
 
 export type ChangeEventTopic = "community" | "garden" | "pool" | "proposal";
 export type ChangeEventScope = {
@@ -114,7 +114,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
       res.socket.server.wss = wss;
     }
-    res.send({ wsPath: `ws://${req.headers.hostname}:${WEB_SOCKET_PORT}/` });
+    res.send({ wsPath: `wss://${req.headers.hostname}:${WEB_SOCKET_PORT}/` });
   }
 
   res.end();
