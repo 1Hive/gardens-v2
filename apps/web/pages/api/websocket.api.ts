@@ -12,43 +12,61 @@ type NextApiResponseWithSocket = NextApiResponse & {
 };
 export const WEB_SOCKET_PORT = 3001;
 
-export type ChangeEventTopic = "community" | "garden" | "token" | "user";
-export type ChangeEventPayload = {
+export type ChangeEventTopic = "community" | "garden" | "pool" | "proposal";
+export type ChangeEventScope = {
   topic: ChangeEventTopic;
-  type?: "add" | "delete" | "update";
+  chainId: ChainId;
   id?: string;
-  chainId?: ChainId;
-  data?: any;
-};
+  type?: string;
+} & { [key: string]: string | number | boolean };
 
 export type PubMessage = {
   type: "pub";
-  payload: ChangeEventPayload;
+  scope: ChangeEventScope;
 };
 
 export type SubMessage = {
   type: "sub";
-  topics: ChangeEventTopic[];
+  scopes: ChangeEventScope[];
 };
 
-const subscribers: Map<WebSocket, ChangeEventTopic[]> = new Map();
+const subscribers: Map<WebSocket, SubMessage["scopes"]> = new Map();
 let wss: WebSocketServer | null = null;
 
+const WAITING_TIME_BEFORE_DIPATCH = 2000;
+
 const handler = async (req: NextApiRequest, res: NextApiResponseWithSocket) => {
-  const subscribe = (topics: ChangeEventTopic[], ws: WebSocket) => {
-    ws.send(JSON.stringify({ log: `subscribed to [${topics.join(", ")}]` }));
-    subscribers.set(ws, topics);
+  const subscribe = (scopes: SubMessage["scopes"], ws: WebSocket) => {
+    // Ensure array and not object with index as key
+    scopes = Object.values(scopes)
+      .filter((x) => typeof x === "object")
+      .map((key) => key as ChangeEventScope);
+    ws.send(
+      JSON.stringify({
+        log: `subscribed to [${scopes.map((x) => x.topic).join(", ")}]`,
+      }),
+    );
+    subscribers.set(ws, scopes);
   };
 
-  const publish = (payload: ChangeEventPayload, publisherWs: WebSocket) => {
+  const publish = (pubScope: ChangeEventScope, publisherWs: WebSocket) => {
     let counter = 0;
-    for (const [ws, topics] of subscribers.entries()) {
-      if (topics.includes(payload.topic)) {
+    for (const [ws, subScopes] of subscribers.entries()) {
+      // And filtering based on each scope fields (topics, chainId, id, type, etc.)
+      if (
+        Object.values(subScopes).find((scope) =>
+          Object.keys(scope).every(
+            (key) =>
+              scope[key].toString().toUpperCase() ===
+              pubScope[key].toString().toUpperCase(),
+          ),
+        )
+      ) {
         counter++;
         // Delay the message in order to let the time for subgraph to index the data
         setTimeout(() => {
-          ws.send(JSON.stringify(payload));
-        }, 200);
+          ws.send(JSON.stringify(pubScope));
+        }, WAITING_TIME_BEFORE_DIPATCH);
       }
     }
 
@@ -86,10 +104,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponseWithSocket) => {
           const parsed = JSON.parse(message) as PubMessage | SubMessage;
           if (parsed.type === "sub") {
             // Subscribe to topics
-            subscribe(parsed.topics, ws);
+            subscribe(parsed.scopes, ws);
           } else if (parsed.type === "pub") {
             // Publish to topics
-            publish(parsed.payload, ws);
+            publish(parsed.scope, ws);
           }
         });
       });

@@ -1,8 +1,7 @@
 import {
-  ChangeEventTopic,
-  ChangeEventPayload,
   SubMessage,
   PubMessage,
+  ChangeEventScope,
 } from "@/pages/api/websocket.api";
 import { uniqueId } from "lodash-es";
 import React, {
@@ -19,12 +18,12 @@ import { useDebouncedCallback } from "use-debounce";
 interface WebSocketContextData {
   connected: boolean;
   subscribe: (
-    topics: ChangeEventTopic[],
-    onChangeEvent: (payload: ChangeEventPayload) => void,
+    scope: ChangeEventScope[],
+    onChangeEvent: (payload: ChangeEventScope) => void,
   ) => string;
   unsubscribe: (subscriptionId: string) => void;
-  publish: (payload: ChangeEventPayload) => void;
-  messages: ChangeEventPayload[];
+  publish: (payload: ChangeEventScope) => void;
+  messages: ChangeEventScope[];
 }
 
 export type SubscriptionId = string;
@@ -46,23 +45,28 @@ export function useWebSocketContext() {
 }
 
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
-  const [messages, setMessages] = useState<ChangeEventPayload[]>([]);
+  const [messages, setMessages] = useState<ChangeEventScope[]>([]);
   const [connected, setConnected] = useState(false);
 
   const socketRef = useRef<WebSocket | null>(null);
   const subscriptionsMap = useRef(
     new Map<
       SubscriptionId,
-      [ChangeEventTopic[], (payload: ChangeEventPayload) => void]
+      {
+        scopes: ChangeEventScope[];
+        onChangeEvent: (payload: ChangeEventScope) => void;
+      }
     >(),
   );
-  const [socketSubscribedTopics, setSocketSubscribedTopics] = useState<
-    ChangeEventTopic[]
-  >([]);
+
+  // const [socketSubscribedTopics, setSocketSubscribedTopics] = useState<
+  //   ChangeEventTopic[]
+  // >([]);
 
   const subMap = subscriptionsMap.current;
 
   useEffect(() => {
+    console.log("⚡ WS: init");
     const initWebSocket = async () => {
       const resp = await fetch("/api/websocket");
       const { wsPath } = await resp.json();
@@ -70,16 +74,16 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       socketRef.current = new WebSocket(wsPath); // Update with your WebSocket URL
 
       socketRef.current.onopen = () => {
-        console.log("🗞 WS: connected");
+        console.log("⚡ WS: connected");
         setConnected(true);
       };
 
       socketRef.current.onclose = (ev) => {
-        console.log("🗞 WS: disconnected");
+        console.log("⚡ WS: disconnected");
         setConnected(false);
         const wsCloseNormalReason = "1000";
         if (ev.reason === wsCloseNormalReason) {
-          console.log("🗞 WS: lost connection, reconnecting...", {
+          console.log("⚡ WS: lost connection, reconnecting...", {
             reason: ev.reason,
           });
           setTimeout(() => {
@@ -89,17 +93,17 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       };
 
       socketRef.current.onerror = (error) => {
-        console.error("🗞 WS: error", { error });
+        console.error("⚡ WS: error", { error });
       };
 
       socketRef.current.onmessage = (message) => {
         const data = JSON.parse(message.data) as
-          | ChangeEventPayload
+          | ChangeEventScope
           | { log: string };
         if ("log" in data) {
-          console.log("🗞 WS: received message: " + message.data);
+          console.log("⚡ WS:", data.log);
         } else {
-          console.log("🗞 WS: change event", { payload: data });
+          console.log("⚡ WS: change event", { payload: data });
           setMessages((prev) => [...prev, data]);
           dispatch(data);
         }
@@ -115,47 +119,56 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const computeSocketSubscription = useDebouncedCallback(() => {
-    if (socketRef.current?.readyState !== WebSocket.OPEN) {
-      return;
-    }
+  // const computeSocketSubscription = useDebouncedCallback(() => {
+  //   if (socketRef.current?.readyState !== WebSocket.OPEN) {
+  //     return;
+  //   }
 
-    let topics: ChangeEventTopic[] = [];
-    subMap.forEach(([topicSubs]) => {
-      topicSubs.forEach((topic) => {
-        topics.push(topic);
-      });
-    });
+  //   // let subPayload: { topics: ChangeEventTopic[]; scope: any }[] = [];
+  //   // subMap.forEach(({ topics, scope }) => {
+  //   //   topics.forEach((topic) => {
+  //   //     topics.push(topic);
+  //   //   });
+  //   // });
 
-    topics = Array.from(new Set(topics)); // Dedupe topics
+  //   // if (JSON.stringify(topics) === JSON.stringify(socketSubscribedTopics)) {
+  //   //   return; // No change
+  //   // }
 
-    if (JSON.stringify(topics) === JSON.stringify(socketSubscribedTopics)) {
-      return; // No change
-    }
+  //   // setSocketSubscribedTopics(topics);
 
-    setSocketSubscribedTopics(topics);
+  // }, 200);
 
-    socketRef.current?.send(
-      JSON.stringify({ type: "sub", topics } as SubMessage),
-    );
-  }, 200);
-
-  const dispatch = (payload: ChangeEventPayload) => {
-    subMap.forEach(([topics, onChangeEvent]) => {
-      if (topics.includes(payload.topic)) {
-        onChangeEvent(payload);
+  const dispatch = (pubPayload: ChangeEventScope) => {
+    subMap.forEach(({ scopes, onChangeEvent }) => {
+      if (
+        scopes.find((scope) =>
+          Object.keys(scope).every(
+            (key) =>
+              scope[key].toString().toUpperCase() ===
+              pubPayload[key].toString().toUpperCase(),
+          ),
+        )
+      ) {
+        onChangeEvent(pubPayload);
       }
     });
   };
 
   const subscribe = useCallback(
     (
-      topics: ChangeEventTopic[],
-      onChangeEvent: (payload: ChangeEventPayload) => void,
+      scopes: ChangeEventScope[],
+      onChangeEvent: (payload: ChangeEventScope) => void,
     ) => {
+      if (socketRef.current?.readyState !== WebSocket.OPEN) {
+        return "Not connected to WebSocket server.";
+      }
+
       const subscriptionId = uniqueId();
-      subMap.set(subscriptionId, [topics, onChangeEvent]);
-      computeSocketSubscription();
+      subMap.set(subscriptionId, { scopes, onChangeEvent });
+      socketRef.current?.send(
+        JSON.stringify({ type: "sub", scopes } as SubMessage),
+      );
       return subscriptionId;
     },
     [],
@@ -163,13 +176,13 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
   const unsubscribe = (subscriptionId: SubscriptionId) => {
     subMap.delete(subscriptionId);
-    computeSocketSubscription();
+    // computeSocketSubscription();
   };
 
-  const publish = (payload: ChangeEventPayload) => {
+  const publish = (payload: ChangeEventScope) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
       socketRef.current.send(
-        JSON.stringify({ type: "pub", payload } as PubMessage),
+        JSON.stringify({ type: "pub", scope: payload } as PubMessage),
       );
     }
   };

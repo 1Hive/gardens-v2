@@ -69,6 +69,8 @@ export default function Proposal({
         garden: garden,
         proposalId: proposalId,
       },
+      {},
+      [{ topic: "garden", id: proposalId, chainId: chain }],
     );
 
   const proposalData = getProposalQuery?.cvproposal;
@@ -122,8 +124,7 @@ export default function Proposal({
   });
 
   const refreshData = async () => {
-
-    if(!proposalData) return;
+    if (!proposalData) return;
 
     let {
       totalEffectiveActivePoints,

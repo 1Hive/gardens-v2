@@ -9,8 +9,9 @@ import {
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import { FormLink } from "@/components";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { useEffect, useState } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
 export const dynamic = "force-dynamic";
 
@@ -19,14 +20,27 @@ export default function Garden({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error: getCommunitiesByGardenQueryError } =
-    useSubgraphQueryByChain<getCommunitiesByGardenQuery>(
-      chain,
-      getCommunitiesByGardenDocument,
-      { addr: garden },
-      {},
-      ["community", "garden"],
-    );
+  const {
+    data: result,
+    error: getCommunitiesByGardenQueryError,
+    fetching,
+  } = useSubgraphQueryByChain<getCommunitiesByGardenQuery>(
+    chain,
+    getCommunitiesByGardenDocument,
+    { addr: garden },
+    {},
+    [
+      {
+        topic: "community",
+        chainId: chain,
+      },
+      {
+        topic: "garden",
+        id: garden,
+        chainId: chain,
+      },
+    ],
+  );
 
   useEffect(() => {
     if (getCommunitiesByGardenQueryError) {
@@ -41,6 +55,7 @@ export default function Garden({
     | NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
     | undefined
   >();
+
   const [tokenGarden, setTokenGarden] = useState<
     getCommunitiesByGardenQuery["tokenGarden"] | undefined
   >();
@@ -114,13 +129,19 @@ export default function Garden({
         </h4>
 
         {/* communites */}
-        {communities?.map((community, i) => (
-          <CommunityCard
-            {...community}
-            tokenGarden={tokenGarden as TokenGarden}
-            key={`${community.communityName}_${i}`}
-          />
-        ))}
+        {fetching ? (
+          <LoadingSpinner />
+        ) : communities?.length ? (
+          communities.map((community, i) => (
+            <CommunityCard
+              {...community}
+              tokenGarden={tokenGarden as TokenGarden}
+              key={`${community.communityName}_${i}`}
+            />
+          ))
+        ) : (
+          <div className="text-center">No communities found</div>
+        )}
       </section>
     </div>
   );

@@ -12,17 +12,19 @@ import { isProd } from "@/constants/contracts";
 import useSubgraphQueryMultiChain from "@/hooks/useSubgraphQueryMultiChain";
 import { arbitrumSepolia } from "viem/chains";
 import { sepolia } from "wagmi";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export const dynamic = "force-dynamic";
 
 export default function Gardens() {
-  const { data: gardens } = useSubgraphQueryMultiChain<getTokenGardensQuery>(
-    getTokenGardensDocument,
-    {},
-    {},
-    ["community", "garden"],
-    isProd ? [sepolia.id, arbitrumSepolia.id] : undefined,
-  );
+  const { data: gardens, fetching } =
+    useSubgraphQueryMultiChain<getTokenGardensQuery>(
+      getTokenGardensDocument,
+      {},
+      {},
+      ["community", "garden"],
+      isProd ? [sepolia.id, arbitrumSepolia.id] : undefined,
+    );
 
   const tokenGardens = useMemo(() => {
     return gardens
@@ -55,14 +57,18 @@ export default function Gardens() {
       </header>
       <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8">
         <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
-          {tokenGardens ? (
+          {fetching ? (
+            <LoadingSpinner />
+          ) : tokenGardens?.length ? (
             tokenGardens.map((garden, id) => (
               <div key={`${garden.id}-${id}`}>
                 <GardenCard garden={garden} />
               </div>
             ))
           ) : (
-            <div>{"Can't find token gardens"}</div>
+            <p className="badge-info mb-8 rounded p-1 text-center">
+              Can't find Gardens
+            </p>
           )}
         </div>
         <Image src={gardenHeader} alt="gardens" />

@@ -15,7 +15,7 @@ import {
 import { ChangeEventTopic } from "@/pages/api/websocket.api";
 import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
-import { debounce } from "lodash-es";
+import { debounce, set } from "lodash-es";
 import {
   SubscriptionId,
   useWebSocketContext,
@@ -48,6 +48,11 @@ export default function useSubgraphQueryMultiChain<
     .filter((x): x is { subgraphUrl: string } => !!x?.subgraphUrl);
   const [result, setResult] = useState<Data[]>();
   const [errorsByChain, setErrorsByChain] = useState<Record<ChainId, any>>();
+  const [fetching, setFetching] = useState(true);
+
+  useEffect(() => {
+    fetchDebounce();
+  }, []);
 
   useEffect(() => {
     let subscritionId: SubscriptionId;
@@ -65,36 +70,37 @@ export default function useSubgraphQueryMultiChain<
     };
   }, [connected]);
 
-  const fetchDebounce = debounce(
-    (chainsOverride?: ChainId[]) =>
-      Promise.all(
-        contractAddresses.map(async (address, i) => {
-          try {
-            const { urqlClient } = initUrqlClient({
-              chainId: (chainsOverride ?? chains ?? allChains)[i],
-            });
-            return await urqlClient.query<Data>(query, variables, {
-              ...context,
-              url: address.subgraphUrl,
-            } as OperationContext & { _instance: any });
-          } catch (error: any) {
-            console.error("Error occured while fetching query", error);
-            return { error, data: undefined };
-          }
-        }),
-      ).then((result) => {
-        const errorsRecord: Record<ChainId, CombinedError> = {};
-        result.forEach((r, i) => {
-          if (r.error) {
-            errorsRecord[(chains ?? allChains)[i]] = r.error;
-          }
-        });
-        setErrorsByChain(errorsRecord);
-        const res = result.flatMap((r) => r.data).filter((x): x is Data => !!x);
-        setResult(res);
+  const fetchDebounce = debounce(async (chainsOverride?: ChainId[]) => {
+    setFetching(true);
+    const allResults = await Promise.all(
+      contractAddresses.map(async (address, i) => {
+        try {
+          const { urqlClient } = initUrqlClient({
+            chainId: (chainsOverride ?? chains ?? allChains)[i],
+          });
+          return await urqlClient.query<Data>(query, variables, {
+            ...context,
+            url: address.subgraphUrl,
+          } as OperationContext & { _instance: any });
+        } catch (error: any) {
+          console.error("Error occured while fetching query", error);
+          return { error, data: undefined };
+        }
       }),
-    200,
-  );
+    );
+    const errorsRecord: Record<ChainId, CombinedError> = {};
+    allResults.forEach((r, i_1) => {
+      if (r.error) {
+        errorsRecord[(chains ?? allChains)[i_1]] = r.error;
+      }
+    });
+    setErrorsByChain(errorsRecord);
+    const res = allResults
+      .flatMap((r_1) => r_1.data)
+      .filter((x): x is Data => !!x);
+    setResult(res);
+    setFetching(false);
+  }, 200);
 
-  return { data: result, errorsByChain, refetch: fetchDebounce };
+  return { data: result, errorsByChain, refetch: fetchDebounce, fetching };
 }

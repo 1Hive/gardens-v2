@@ -19,7 +19,7 @@ import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
 import { useWebSocketContext } from "@/contexts/websocket.context";
-import { ChangeEventPayload } from "@/pages/api/websocket.api";
+import { ChangeEventScope } from "@/pages/api/websocket.api";
 
 type RegisterMemberProps = {
   name: string;
@@ -222,15 +222,13 @@ export function RegisterMember({
       registerMemberStatus === "success" ||
       unregisterMemberStatus === "success"
     ) {
-      const context: ChangeEventPayload = {
+      const context: ChangeEventScope = {
         type: "update",
+        action:
+          registerMemberStatus === "success"
+            ? "member-added"
+            : "member-removed",
         id: communityAddress,
-        data: {
-          type:
-            registerMemberStatus === "success"
-              ? "member-added"
-              : "member-removed",
-        },
         topic: "community",
         chainId: chainId,
       };
@@ -337,13 +335,11 @@ export function RegisterMember({
                 publish({
                   topic: "garden",
                   type: "add",
+                  chainId,
+                  name: communityName,
+                  token: tokenSymbol,
+                  address: communityAddress,
                   id: communityAddress,
-                  chainId: Number(chainId),
-                  data: {
-                    name: communityName,
-                    token: tokenSymbol,
-                    address: communityAddress,
-                  },
                 });
               }}
             >
