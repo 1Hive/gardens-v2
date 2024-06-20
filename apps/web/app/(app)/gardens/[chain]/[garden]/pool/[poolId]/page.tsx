@@ -155,6 +155,7 @@ export default function Pool({
                   communityAddress={communityAddress}
                   tokenGarden={tokenGarden}
                   pointSystem={pointSystem}
+                  chainId={parseInt(chain)}
                   spendingLimitPct={spendingLimitPct}
                 />
               )}

@@ -30,6 +30,7 @@ import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import { toast } from "react-toastify";
 
 export type ProposalInputItem = {
   id: string;
@@ -199,44 +200,44 @@ export function Proposals({
     useTransactionNotification(allocateData);
 
   useEffect(() => {
-    triggerRenderProposals();
-  }, [txConfirmationHash]);
-
-  useEffect(() => {
     updateTransactionStatus(allocateStatus);
   }, [allocateStatus]);
 
   const submit = async () => {
-    const encodedData = getEncodedProposals(inputs, stakedFilters);
+    const proposalsDifferencesArr = getProposalsInputsDifferences(
+      inputs,
+      stakedFilters,
+    );
+    const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
+      proposalsDifferencesArr,
+    ]);
     const poolId = Number(strategy.poolId);
     writeAllocate({
       args: [BigInt(poolId), encodedData as AddressType],
     });
   };
 
-  const getEncodedProposals = (
+  // this calculations breaks when dealing with < 50 wei
+  const getProposalsInputsDifferences = (
     inputData: ProposalInputItem[],
     currentData: ProposalInputItem[],
   ) => {
     const resultArr: [number, BigInt][] = [];
     inputData.forEach((input) => {
       let row: [number, bigint] | undefined = undefined;
-      if (input.value > 0) row = [Number(input.id), BigInt(input.value)];
+      if (input.value > 0)
+        row = [Number(input.id), BigInt(Math.floor(input.value))];
       currentData.forEach((current) => {
         if (input.id === current.id) {
-          const dif = BigInt(input.value - current.value);
+          const dif = BigInt(Math.floor(input.value)) - BigInt(current.value);
           row = [Number(input.id), dif];
         }
       });
-      if (!!row) resultArr.push(row);
+      if (row && row[1] !== 0n) resultArr.push(row);
     });
 
-    const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
-      resultArr,
-    ]);
-    return encodedData;
+    return resultArr;
   };
-
   const calculateTotalTokens = (exceptIndex?: number) =>
     inputs.reduce((acc, curr, i) => {
       if (exceptIndex !== undefined && exceptIndex === i) return acc;
@@ -246,10 +247,15 @@ export function Proposals({
   const inputHandler = (i: number, value: number) => {
     const currentPoints = calculateTotalTokens(i);
     const maxAllowableValue = memberActivatedPoints - currentPoints;
-
+    const toastId = "error-toast";
     // If the sum exceeds the memberActivatedPoints, adjust the value to the maximum allowable value
     if (currentPoints + value > memberActivatedPoints) {
       value = maxAllowableValue;
+      if (!toast.isActive(toastId)) {
+        toast.error("Can't exceed 100% in total support!", {
+          toastId,
+        });
+      }
       console.log("can't exceed 100% points");
     }
 
@@ -285,7 +291,6 @@ export function Proposals({
     memberActivatedPoints,
     strategy.totalEffectiveActivePoints,
   );
-
   // const memberActivatePointsAsNum = Number(
   //   BigInt(memberActivatedPoints) / BigInt(10 ** tokenDecimals),
   // );
@@ -297,10 +302,8 @@ export function Proposals({
 
   // console.log("newLocal:                    %s", memberActivatePointsAsNum);
   // console.log("newLocal_1:                  %s", totalEAPasNum);
-  useEffect(() => {
-    console.log("memberActivatedPoints:       %s", memberActivatedPoints);
-    console.log("memberPoolWeight:            %s", memberPoolWeight);
-  }, [memberActivatedPoints, memberPoolWeight]);
+  // console.log("memberActivatedPoints:       %s", memberActivatedPoints);
+  // console.log("memberPoolWeight:            %s", memberPoolWeight);
   // console.log(
   //   "totalEffectiveActivePoints:  %s",
   //   strategy.totalEffectiveActivePoints,
@@ -308,7 +311,11 @@ export function Proposals({
   // console.log("tokenDecimals:               %s", tokenDecimals);
 
   const calcPoolWeightUsed = (number: number) => {
-    return ((number / 100) * memberPoolWeight).toFixed(2);
+    if (memberPoolWeight == 0) {
+      return 0;
+    } else {
+      return ((number / 100) * memberPoolWeight).toFixed(2);
+    }
   };
 
   return (
@@ -407,8 +414,10 @@ export function Proposals({
                   className="min-w-[200px]"
                   onClick={() => submit()}
                   isLoading={allocateStatus === "loading"}
-                  disabled={inputAllocatedTokens > memberActivatedPoints}
-                  tooltip="Assigned points can't exceed total activated points pool"
+                  disabled={
+                    !getProposalsInputsDifferences(inputs, stakedFilters).length
+                  }
+                  tooltip="Make changes in proposals support first"
                 >
                   Save changes
                 </Button>

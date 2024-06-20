@@ -2,7 +2,7 @@
 import React from "react";
 import { Addreth, ThemeDeclaration, Theme } from "addreth";
 import { Address } from "viem";
-import { chainIdMap } from "@/configs/chainServer";
+import { chainDataMap } from "@/configs/chainServer";
 import { getChainIdFromPath } from "@/utils/path";
 
 type EthAddressProps = {
@@ -50,9 +50,9 @@ export const EthAddress = ({
       icon={icon}
       address={address}
       explorer={(address) => ({
-        name: chainIdMap[chainId].name,
-        url: `${chainIdMap[chainId].explorer}${address}`,
-        accountUrl: `${chainIdMap[chainId].explorer}${address}`,
+        name: chainDataMap[chainId].name,
+        url: `${chainDataMap[chainId].explorer}${address}`,
+        accountUrl: `${chainDataMap[chainId].explorer}${address}`,
       })}
     />
   );

@@ -20,6 +20,7 @@ import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
 import { useWebSocketContext } from "@/contexts/websocket.context";
 import { ChangeEventScope } from "@/pages/api/websocket.api";
+import { chainDataMap } from "@/configs/chainServer";
 
 type RegisterMemberProps = {
   name: string;
@@ -104,10 +105,6 @@ export function RegisterMember({
     chainId: Number(chainId),
   });
 
-  useEffect(() => {
-    console.log(communityName, { accountTokenBalance, registerToken });
-  }, [accountTokenBalance]);
-
   const accountHasBalance = gte(
     accountTokenBalance?.value,
     registerStakeAmount as bigint,
@@ -154,7 +151,7 @@ export function RegisterMember({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: 1,
+    confirmations: chainDataMap[+chainId].confirmations,
     hash: allowTokenData?.hash,
   });
 
