@@ -336,6 +336,14 @@ export function RegisterMember({
               onClick={() => {
                 publish({
                   topic: "garden",
+                  type: "add",
+                  id: communityAddress,
+                  chainId: Number(chainId),
+                  data: {
+                    name: communityName,
+                    token: tokenSymbol,
+                    address: communityAddress,
+                  },
                 });
               }}
             >

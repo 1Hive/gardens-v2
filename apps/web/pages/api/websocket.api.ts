@@ -36,7 +36,7 @@ let wss: WebSocketServer | null = null;
 
 const handler = async (req: NextApiRequest, res: NextApiResponseWithSocket) => {
   const subscribe = (topics: ChangeEventTopic[], ws: WebSocket) => {
-    ws.send(JSON.stringify({ log: `subscribed to ${topics.join(", ")}` }));
+    ws.send(JSON.stringify({ log: `subscribed to [${topics.join(", ")}]` }));
     subscribers.set(ws, topics);
   };
 
