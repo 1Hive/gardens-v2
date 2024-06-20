@@ -1,12 +1,14 @@
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
-import useTopicChangeSubscription from "./useTopicChangeSubscription";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { useEffect, useState } from "react";
 import { ChainId } from "@/types";
 import { initUrqlClient } from "@/providers/urql";
-import { debounce, isEqual } from "lodash-es";
-import { useDebouncedCallback } from "use-debounce";
-import { ChangeEventTopic } from "@/pages/api/pubsub";
+import { isEqual, set } from "lodash-es";
+import { ChangeEventTopic } from "@/pages/api/websocket.api";
+import {
+  SubscriptionId,
+  useWebSocketContext,
+} from "@/contexts/websocket.context";
 
 const INITIAL_DELAY = 1000;
 const MAX_RETRIES = 6; // Total waiting time of ~2min
@@ -22,7 +24,7 @@ export default function useSubgraphQueryByChain<
   changeTopics?: ChangeEventTopic[],
 ) {
   const { urqlClient } = initUrqlClient();
-  const { newChangeEvent } = useTopicChangeSubscription(changeTopics ?? []);
+  const { connected, subscribe, unsubscribe } = useWebSocketContext();
 
   const contractAddress = getContractsAddrByChain(chain);
   const [response, setResponse] = useState<
@@ -33,6 +35,27 @@ export default function useSubgraphQueryByChain<
 
   if (!contractAddress)
     console.error(`No contract address found for chain ${chain}`);
+
+  useEffect(() => {
+    fetch()?.then(setResponse);
+  }, []);
+
+  useEffect(() => {
+    let subscritionId: SubscriptionId;
+    if (connected) {
+      subscritionId = subscribe(changeTopics ?? [], (payload) => {
+        if (payload.chainId !== chain) return;
+        console.debug("Received change event", payload);
+        refetch();
+      });
+    }
+
+    return () => {
+      if (subscritionId) {
+        unsubscribe(subscritionId);
+      }
+    };
+  }, [connected]);
 
   const fetch = () =>
     urqlClient
@@ -45,8 +68,6 @@ export default function useSubgraphQueryByChain<
         console.debug("Fetched data", res);
         return res;
       });
-
-  // const fetchDebounce = debounce(fetch, 200);
 
   const refetch = () => {
     fetch()?.then((result) => {
@@ -66,10 +87,6 @@ export default function useSubgraphQueryByChain<
       }
     });
   };
-
-  useEffect(() => {
-    refetch(); // Call the debounced function immediately
-  }, [newChangeEvent]);
 
   return { ...response, refetch };
 }

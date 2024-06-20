@@ -31,6 +31,7 @@ module.exports = {
         black: "var(--color-black)",
         accent: "var(--color-accent)",
         red: "var(--color-red)",
+        gragra: "red",
       },
       transitionProperty: {
         height: "height",

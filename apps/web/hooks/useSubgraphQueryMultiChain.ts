@@ -4,7 +4,6 @@ import {
   DocumentInput,
   OperationContext,
 } from "@urql/next";
-import useTopicChangeSubscription from "./useTopicChangeSubscription";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { useEffect, useState } from "react";
 import {
@@ -13,10 +12,14 @@ import {
   optimismSepolia,
   sepolia,
 } from "viem/chains";
+import { ChangeEventTopic } from "@/pages/api/websocket.api";
+import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
 import { debounce } from "lodash-es";
-import { initUrqlClient } from "@/providers/urql";
-import { ChangeEventTopic } from "@/pages/api/pubsub";
+import {
+  SubscriptionId,
+  useWebSocketContext,
+} from "@/contexts/websocket.context";
 
 const allChains: ChainId[] = [
   sepolia.id,
@@ -38,7 +41,7 @@ export default function useSubgraphQueryMultiChain<
   changeTopics?: ChangeEventTopic[],
   chains?: ChainId[],
 ) {
-  const { newEvent } = useTopicChangeSubscription(changeTopics ?? []);
+  const { connected, subscribe, unsubscribe } = useWebSocketContext();
 
   const contractAddresses = (chains ?? allChains)
     .map((chain) => getContractsAddrByChain(chain))
@@ -46,13 +49,29 @@ export default function useSubgraphQueryMultiChain<
   const [result, setResult] = useState<Data[]>();
   const [errorsByChain, setErrorsByChain] = useState<Record<ChainId, any>>();
 
+  useEffect(() => {
+    let subscritionId: SubscriptionId;
+    if (connected) {
+      subscribe(changeTopics ?? [], (payload) => {
+        console.debug("Received change event", payload);
+        fetchDebounce(payload.chainId ? [payload.chainId] : undefined);
+      });
+    }
+
+    return () => {
+      if (subscritionId) {
+        unsubscribe(subscritionId);
+      }
+    };
+  }, [connected]);
+
   const fetchDebounce = debounce(
-    () =>
+    (chainsOverride?: ChainId[]) =>
       Promise.all(
         contractAddresses.map(async (address, i) => {
           try {
             const { urqlClient } = initUrqlClient({
-              chainId: (chains ?? allChains)[i],
+              chainId: (chainsOverride ?? chains ?? allChains)[i],
             });
             return await urqlClient.query<Data>(query, variables, {
               ...context,
@@ -76,10 +95,6 @@ export default function useSubgraphQueryMultiChain<
       }),
     200,
   );
-
-  useEffect(() => {
-    fetchDebounce();
-  }, [newEvent]);
 
   return { data: result, errorsByChain, refetch: fetchDebounce };
 }

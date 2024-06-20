@@ -19,6 +19,7 @@ import { createConfig, WagmiConfig } from "wagmi";
 import { chains, publicClient } from "@/configs/wagmiConfig";
 import { AddrethConfig } from "addreth";
 import UrqlProvider from "./UrqlProvider";
+import { WebSocketProvider } from "@/contexts/websocket.context";
 
 type Props = {
   children: React.ReactNode;
@@ -62,7 +63,9 @@ const Providers = ({ children }: Props) => {
                 borderRadius: "large",
               })}
             >
-              <ThemeProvider>{mounted && children}</ThemeProvider>
+              <ThemeProvider>
+                <WebSocketProvider>{mounted && children}</WebSocketProvider>
+              </ThemeProvider>
             </RainbowKitProvider>
           </AddrethConfig>
         </WagmiConfig>

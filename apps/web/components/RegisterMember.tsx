@@ -18,8 +18,8 @@ import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
-import useTopicChangeSubscription from "@/hooks/useTopicChangeSubscription";
-import { ChangeEventPayload } from "@/pages/api/pubsub";
+import { useWebSocketContext } from "@/contexts/websocket.context";
+import { ChangeEventPayload } from "@/pages/api/websocket.api";
 
 type RegisterMemberProps = {
   name: string;
@@ -50,7 +50,8 @@ export function RegisterMember({
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
 
-  const { publish } = useTopicChangeSubscription();
+  const { publish } = useWebSocketContext();
+
   //
   //new logic
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(

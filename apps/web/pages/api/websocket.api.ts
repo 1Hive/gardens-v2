@@ -31,41 +31,30 @@ export type SubMessage = {
   topics: ChangeEventTopic[];
 };
 
-const subscribers: { [key: string]: Set<WebSocket> } = {};
+const subscribers: Map<WebSocket, ChangeEventTopic[]> = new Map();
 let wss: WebSocketServer | null = null;
 
 const handler = async (req: NextApiRequest, res: NextApiResponseWithSocket) => {
   const subscribe = (topics: ChangeEventTopic[], ws: WebSocket) => {
-    ws.send(`subscribed to ${topics.join(", ")}`);
-    topics.forEach((topic) => {
-      if (!subscribers[topic]) {
-        subscribers[topic] = new Set();
-      }
-      subscribers[topic].add(ws);
-    });
+    ws.send(JSON.stringify({ log: `subscribed to ${topics.join(", ")}` }));
+    subscribers.set(ws, topics);
   };
 
   const publish = (payload: ChangeEventPayload, publisherWs: WebSocket) => {
-    publisherWs.send(JSON.stringify(payload));
-    if (!subscribers[payload.topic]) return;
+    let counter = 0;
+    for (const [ws, topics] of subscribers.entries()) {
+      if (topics.includes(payload.topic)) {
+        counter++;
+        // Delay the message in order to let the time for subgraph to index the data
+        setTimeout(() => {
+          ws.send(JSON.stringify(payload));
+        }, 200);
+      }
+    }
 
     publisherWs.send(
-      `published to ${subscribers[payload.topic].size} subscribers`,
+      JSON.stringify({ log: `published to ${counter} subscribers` }),
     );
-
-    subscribers[payload.topic].forEach((ws) => {
-      // if (ws.readyState !== ws.OPEN) {
-      //   // remove it from subscribers
-      //   try {
-      //     subscribers[payload.topic].delete(ws);
-      //   } catch (error) {
-      //     console.warn("Error removing subscriber", error);
-      //   }
-      // }
-
-      // Delay the message in order to let the time for subgraph to index the data
-      ws.send(JSON.stringify(payload));
-    });
   };
 
   if (process.env.NODE_ENV === "development" && req.query.kill === "true") {
@@ -84,13 +73,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponseWithSocket) => {
         port: WEB_SOCKET_PORT,
       });
 
-      res.socket.server.on("upgrade", (req, socket, head) => {
-        if (!req.url!.includes("/_next/webpack-hmr")) {
-          wss!.handleUpgrade(req, socket, head, (ws) => {
-            wss!.emit("connection", ws, req);
-          });
-        }
-      });
+      // res.socket.server.on("upgrade", (req, socket, head) => {
+      //   if (!req.url!.includes("/_next/webpack-hmr")) {
+      //     wss!.handleUpgrade(req, socket, head, (ws) => {
+      //       wss!.emit("connection", ws, req);
+      //     });
+      //   }
+      // });
 
       wss.on("connection", (ws: WebSocket) => {
         ws.on("message", (message: string) => {
