@@ -150,7 +150,8 @@ export const CommunityForm = ({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-    onSuccess: () => router.push(pathname.replace(`/create-community`, "")),
+    onSuccess: () =>
+      pathname && router.push(pathname?.replace(`/create-community`, "")),
     onError: (err) => {
       console.log(err);
       toast.error("Something went wrong creating Community");
