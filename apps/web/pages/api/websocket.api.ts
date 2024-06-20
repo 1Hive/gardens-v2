@@ -114,7 +114,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponseWithSocket) => {
 
       res.socket.server.wss = wss;
     }
-    res.send({ wsPath: `ws://localhost:${WEB_SOCKET_PORT}/` });
+    res.send({ wsPath: `ws://${req.headers.hostname}:${WEB_SOCKET_PORT}/` });
   }
 
   res.end();
