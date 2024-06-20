@@ -1,19 +1,20 @@
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { getContractsAddrByChain, isProd } from "@/constants/contracts";
 import { useEffect, useRef, useState } from "react";
 import { ChainId } from "@/types";
 import { initUrqlClient } from "@/providers/urql";
-import { isEqual, max, set } from "lodash-es";
+import { isEqual } from "lodash-es";
 import {
   SubscriptionId,
   useWebSocketContext,
 } from "@/contexts/websocket.context";
 import delayAsync from "@/utils/delayAsync";
 import { ChangeEventScope } from "@/pages/api/websocket.api";
-import { useDebouncedCallback } from "use-debounce";
-
-const INITIAL_DELAY = 2000;
-const MAX_RETRIES = 6; // Total waiting time of ~2min
+import { debounce } from "lodash-es";
+import {
+  CHANGE_EVENT_INITIAL_DELAY,
+  CHANGE_EVENT_MAX_RETRIES,
+} from "@/globals";
 
 export default function useSubgraphQueryByChain<
   Data = any,
@@ -23,7 +24,7 @@ export default function useSubgraphQueryByChain<
   query: DocumentInput<any, Variables>,
   variables: Variables = {} as Variables,
   context?: Partial<OperationContext>,
-  changeScope?: ChangeEventScope[],
+  changeScopes?: ChangeEventScope[],
 ) {
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe } = useWebSocketContext();
@@ -33,24 +34,24 @@ export default function useSubgraphQueryByChain<
     Omit<Awaited<ReturnType<typeof fetch>>, "operation">
   >({ hasNext: true, stale: true, data: undefined, error: undefined });
 
-  // useRef to store the latest response
   const latestResponse = useRef(response);
 
   useEffect(() => {
     latestResponse.current = response; // Update ref on every response change
   }, [response]);
 
-  if (!contractAddress)
+  if (!contractAddress) {
     console.error(`No contract address found for chain ${chainId}`);
+  }
 
   useEffect(() => {
     let subscritionId: SubscriptionId;
-    if (connected && changeScope) {
+    if (connected && changeScopes) {
       const onChangeEvent = (payload: ChangeEventScope) => {
         refetch().then((res) => setResponse(res));
       };
       subscritionId = subscribe(
-        changeScope,
+        changeScopes,
         onChangeEvent.bind({
           response,
           setResponse,
@@ -74,7 +75,7 @@ export default function useSubgraphQueryByChain<
     });
 
   const refetch = async (
-    retryCount: number,
+    retryCount?: number,
   ): // @ts-ignore
   ReturnType<typeof fetch> => {
     const result = await fetch();
@@ -83,29 +84,21 @@ export default function useSubgraphQueryByChain<
     }
     if (
       (!result.error && !isEqual(result.data, latestResponse.current.data)) ||
-      retryCount >= MAX_RETRIES - 1
+      retryCount >= CHANGE_EVENT_MAX_RETRIES - 1
     ) {
-      if (retryCount === MAX_RETRIES - 1) {
+      if (retryCount === CHANGE_EVENT_MAX_RETRIES - 1) {
         console.debug(`Max retries reached. (retry count: ${retryCount})`);
       } else {
         console.debug(
           `Subgraph result updated after ${retryCount + 1} retries.`,
         );
       }
-      console.log({
-        retryCount,
-        resultData: result.data,
-        oldResponseData: latestResponse.current.data,
-        equal:
-          JSON.stringify(result.data) ===
-          JSON.stringify(latestResponse.current.data),
-      });
       return result;
     } else {
       console.debug(
-        `Subgraph result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${MAX_RETRIES})`,
+        `Subgraph result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
       );
-      const delay = INITIAL_DELAY * 2 ** retryCount;
+      const delay = CHANGE_EVENT_INITIAL_DELAY * 2 ** retryCount;
       await delayAsync(delay);
       return refetch(retryCount + 1);
     }
@@ -118,7 +111,7 @@ export default function useSubgraphQueryByChain<
       setResponse(resp);
       setFetching(false);
     };
-    init.bind({ setFetching, setResponse, fetch })();
+    init();
   }, []);
 
   return { ...response, refetch, fetching };

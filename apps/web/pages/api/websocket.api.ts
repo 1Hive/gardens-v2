@@ -15,7 +15,7 @@ export const WEB_SOCKET_PORT = 3001;
 export type ChangeEventTopic = "community" | "garden" | "pool" | "proposal";
 export type ChangeEventScope = {
   topic: ChangeEventTopic;
-  chainId: ChainId;
+  chainId?: ChainId;
   id?: string;
   type?: string;
 } & { [key: string]: string | number | boolean };

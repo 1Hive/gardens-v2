@@ -12,7 +12,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useDebouncedCallback } from "use-debounce";
 
 // Define the shape of your context data
 interface WebSocketContextData {
@@ -58,10 +57,6 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       }
     >(),
   );
-
-  // const [socketSubscribedTopics, setSocketSubscribedTopics] = useState<
-  //   ChangeEventTopic[]
-  // >([]);
 
   const subMap = subscriptionsMap.current;
 
@@ -119,26 +114,6 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // const computeSocketSubscription = useDebouncedCallback(() => {
-  //   if (socketRef.current?.readyState !== WebSocket.OPEN) {
-  //     return;
-  //   }
-
-  //   // let subPayload: { topics: ChangeEventTopic[]; scope: any }[] = [];
-  //   // subMap.forEach(({ topics, scope }) => {
-  //   //   topics.forEach((topic) => {
-  //   //     topics.push(topic);
-  //   //   });
-  //   // });
-
-  //   // if (JSON.stringify(topics) === JSON.stringify(socketSubscribedTopics)) {
-  //   //   return; // No change
-  //   // }
-
-  //   // setSocketSubscribedTopics(topics);
-
-  // }, 200);
-
   const dispatch = (pubPayload: ChangeEventScope) => {
     subMap.forEach(({ scopes, onChangeEvent }) => {
       if (
@@ -176,7 +151,6 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
   const unsubscribe = (subscriptionId: SubscriptionId) => {
     subMap.delete(subscriptionId);
-    // computeSocketSubscription();
   };
 
   const publish = (payload: ChangeEventScope) => {
