@@ -260,7 +260,7 @@ export default function PoolForm({
     abi: abiWithErrors(registryCommunityABI),
     functionName: "createPool",
     onSuccess: () =>
-      router.push(pathname.replace(`/${communityAddr}/create-pool`, "")),
+      pathname && router.push(pathname.replace(`/${communityAddr}/create-pool`, "")),
     onError: () =>
       toast.error("Something went wrong creating a pool, check logs"),
     onSettled: () => setLoading(false),
