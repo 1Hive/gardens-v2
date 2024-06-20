@@ -131,7 +131,7 @@ export const IncreasePower = ({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[+chainId].confirmations,
     hash: allowTokenData?.hash,
   });
 
@@ -149,7 +149,7 @@ export const IncreasePower = ({
     isSuccess: isWaitResetAllowanceStatus,
     status: waitResetAllowanceStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[+chainId].confirmations,
     hash: resetAllowance?.hash,
   });
 
