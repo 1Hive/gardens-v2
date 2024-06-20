@@ -10,5 +10,4 @@ interface ISybilScorer {
     function addUserScore(address _user, PassportData memory _passportData) external;
     function removeUser(address _user) external;
     function changeListManager(address _newManager) external;
-    function setThreshold(uint256 _newThreshold) external;
 }
