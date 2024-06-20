@@ -63,7 +63,6 @@ body {
 h1 {
   margin-bottom: 1rem;
   margin-top: 0.5rem;
-  color: var(--color-black);
   font-family: var(--font-chakra);
   font-size: 52px;
   font-weight: 700;
@@ -76,7 +75,6 @@ h1 {
 }
 
 h2 {
-  color: var(--color-black);
   font-family: var(--font-chakra);
   font-size: 36px;
   font-weight: 600;
@@ -89,7 +87,6 @@ h2 {
 }
 
 h3 {
-  color: var(--color-black);
   font-family: var(--font-chakra);
   font-size: 22px;
   font-weight: 600;
@@ -102,7 +99,6 @@ h3 {
 }
 
 h4 {
-  color: var(--color-black);
   font-family: var(--font-inter);
   font-size: 24px;
   font-weight: 500;
@@ -116,7 +112,6 @@ h4 {
 
 /* subtitle 1 */
 h5 {
-  color: var(--color-black);
   font-family: var(--font-inter);
   font-size: 18px;
   font-weight: 500;
@@ -126,7 +121,6 @@ h5 {
 
 /* subtitle 2 */
 h6 {
-  color: var(--color-black);
   font-family: var(--font-inter);
   font-size: 16px;
   font-weight: 500;
@@ -135,7 +129,6 @@ h6 {
 }
 
 p {
-  color: var(--color-black);
   font-family: var(--font-inter);
   font-size: 16px;
   font-weight: 400;
@@ -148,14 +141,12 @@ p {
 }
 
 span {
-  color: var(--color-black);
   font-family: var(--font-inter);
   font-size: 1rem;
   font-weight: 400;
 }
 
 button {
-  color: var(--color-black);
   font-family: var(--font-inter);
   font-size: 18px;
   font-weight: 600;
@@ -164,13 +155,16 @@ button {
 }
 
 caption {
-  color: var(--color-black);
   font-family: var(--font-inter);
   font-size: 12px;
   font-weight: 300;
   line-height: 20px;
   letter-spacing: 0.5px;
   text-align: left;
+}
+
+.badge {
+  @apply text-black
 }
 
 .border2 {
