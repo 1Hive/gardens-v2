@@ -177,7 +177,7 @@ export default function PoolForm({
     minThresholdPoints: {
       label: "Minimum threshold points:",
       parse: (value: string) => {
-        return value && value == "" ? "0" : value;
+        return value == undefined || value == "" ? "0" : value;
       },
     },
   };
@@ -559,21 +559,16 @@ export default function PoolForm({
         {showPreview ? (
           <div className="flex items-center gap-10">
             <Button
-              type="button"
-              onClick={() => createPool()}
-              isLoading={loading}
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="fill"
+              variant="outline"
             >
               Edit
+            </Button>
+            <Button onClick={() => createPool()} isLoading={loading}>
+              Submit
             </Button>
           </div>
         ) : (

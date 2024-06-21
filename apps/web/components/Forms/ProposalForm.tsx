@@ -325,21 +325,16 @@ export const ProposalForm = ({
         {showPreview ? (
           <div className="flex items-center gap-10">
             <Button
-              type="button"
-              onClick={() => createProposal()}
-              isLoading={loading}
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="fill"
+              variant="outline"
             >
               Edit
+            </Button>
+            <Button onClick={() => createProposal()} isLoading={loading}>
+              Submit
             </Button>
           </div>
         ) : (

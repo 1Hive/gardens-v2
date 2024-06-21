@@ -209,7 +209,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
             </div>
           </div>
         </div>
-        <div className="flex flex-col justify-center gap-4">
+        <div className="flex flex-col justify-center items-start gap-4">
           <FormInput
             type="number"
             placeholder="0"
