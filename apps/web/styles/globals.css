@@ -6,8 +6,6 @@
   --color-primary: #82c837;
   --color-secondary: #4dafd6;
   --color-surface: #fcfff7;
-  --color-white: #ffffff;
-  --color-black: #2d2d2d;
   --color-accent: #ffe236;
   --color-red: #dc3030;
   --border-neutral: #d5d5d5;
@@ -57,6 +55,7 @@ html::-webkit-scrollbar-thumb {
 body {
   margin: 0;
   background-color: var(--color-background);
+  color: var(--color-grey-900);
   line-height: 1.15;
 }
 
@@ -164,7 +163,7 @@ caption {
 }
 
 .badge {
-  @apply text-black
+  @apply text-black;
 }
 
 .border2 {
