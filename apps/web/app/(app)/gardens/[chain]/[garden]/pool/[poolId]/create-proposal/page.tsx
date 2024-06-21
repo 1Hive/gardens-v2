@@ -17,7 +17,7 @@ export default async function Page({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data } = await useSubgraphQueryByChain<getPoolDataQuery>(
+  const { data } = useSubgraphQueryByChain<getPoolDataQuery>(
     chain,
     getPoolDataDocument,
     { poolId: poolId, garden: garden },

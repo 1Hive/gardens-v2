@@ -1,16 +1,29 @@
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
-import { getContractsAddrByChain} from "@/constants/contracts";
+import { getContractsAddrByChain } from "@/constants/contracts";
 import { useEffect, useRef, useState } from "react";
 import { ChainId } from "@/types";
 import { initUrqlClient } from "@/providers/urql";
 import { isEqual } from "lodash-es";
-import { ChangeEventScope, SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
+import {
+  ChangeEventScope,
+  SubscriptionId,
+  usePubSubContext,
+} from "@/contexts/pubsub.context";
 import delayAsync from "@/utils/delayAsync";
 import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
 
+/**
+ *  Fetches data from a subgraph by chain id
+ * @param chainId
+ * @param query
+ * @param variables
+ * @param context
+ * @param changeScope  - optional, if provided, will subscribe to change events (see jsdoc in pubsub.context.tsx)
+ * @returns
+ */
 export default function useSubgraphQueryByChain<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
@@ -18,7 +31,7 @@ export default function useSubgraphQueryByChain<
   chainId: ChainId,
   query: DocumentInput<any, Variables>,
   variables: Variables = {} as Variables,
-  context?: Partial<OperationContext>,
+  context?: Omit<OperationContext, "topic">,
   changeScope?: ChangeEventScope[] | ChangeEventScope,
 ) {
   const { urqlClient } = initUrqlClient();
@@ -29,7 +42,7 @@ export default function useSubgraphQueryByChain<
     Omit<Awaited<ReturnType<typeof fetch>>, "operation">
   >({ hasNext: true, stale: true, data: undefined, error: undefined });
 
-  const latestResponse = useRef(response); 
+  const latestResponse = useRef(response);
   const subscritionId = useRef<SubscriptionId>();
 
   useEffect(() => {
@@ -59,8 +72,8 @@ export default function useSubgraphQueryByChain<
     );
 
     return () => {
-      if (subscritionId.current ) {
-        unsubscribe(subscritionId.current );
+      if (subscritionId.current) {
+        unsubscribe(subscritionId.current);
       }
     };
   }, [connected]);
@@ -82,14 +95,14 @@ export default function useSubgraphQueryByChain<
     }
     if (
       (!result.error && !isEqual(result.data, latestResponse.current.data)) ||
-      retryCount >= CHANGE_EVENT_MAX_RETRIES - 1
+      retryCount >= CHANGE_EVENT_MAX_RETRIES
     ) {
-      if (retryCount === CHANGE_EVENT_MAX_RETRIES - 1) {
-        console.debug(`Still not updated but max retries reached. (retry count: ${retryCount + 1})`);
-      } else {
+      if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
         console.debug(
-          `Subgraph result updated after ${retryCount + 1} retries.`,
+          `Still not updated but max retries reached. (retry count: ${retryCount})`,
         );
+      } else {
+        console.debug(`Subgraph result updated after ${retryCount} retries.`);
       }
       return result;
     } else {

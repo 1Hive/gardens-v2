@@ -87,10 +87,21 @@ export function Proposals({
     data: memberResult,
     error,
     refetch: refetchIsMemberQuery,
-  } = useSubgraphQueryByChain<isMemberQuery>(chainId, isMemberDocument, {
-    me: address?.toLowerCase(),
-    comm: strategy.registryCommunity.id.toLowerCase(),
-  });
+  } = useSubgraphQueryByChain<isMemberQuery>(
+    chainId,
+    isMemberDocument,
+    {
+      me: address?.toLowerCase(),
+      comm: strategy.registryCommunity.id.toLowerCase(),
+    },
+    {},
+    {
+      topic: "community",
+      id: communityAddress,
+      action: ["add", "delete"],
+      chainId,
+    },
+  );
 
   useEffect(() => {
     let _stakesFilteres: StakesMemberType = [];
@@ -131,14 +142,16 @@ export function Proposals({
         meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
       {},
-      [{
+      {
         topic: "proposal",
         chainId: chainId,
-      }]
+      },
     );
 
   useEffect(() => {
-    refetchIsMemberQuery();
+    if (address) {
+      refetchIsMemberQuery();
+    }
   }, [address]);
 
   useEffect(() => {

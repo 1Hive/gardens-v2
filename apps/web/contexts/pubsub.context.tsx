@@ -13,24 +13,71 @@ import { ChainId } from "@/types";
 // Define the shape of your context data
 interface PubSubContextData {
   connected: boolean;
+  /**
+   * Subscribes to a channel, optionally filtering messages based on a flexible criteria.
+   *
+   * @param {Array|Object} filter - The filtering criteria.
+   *   - If an array, each element is treated as an OR condition.
+   *   - If an object, it represents an AND condition on message fields.
+   *   - Nested arrays within the object act as OR conditions for the specific field.
+   * @param {ChangeEventPayload} callback - The function to call when a matching message is received.
+   *
+   * @example
+   * // Subscribe to messages with specific events or matching a pattern:
+   * channel.subscribe(["event1", "event2", "pattern.*"], callback);
+   *
+   * @example
+   * // Subscribe to messages where all specified fields match:
+   * channel.subscribe({ field1: "value1", field2: "value2" }, callback);
+   *
+   * @example
+   * // Subscribe to messages where a field contains any of the specified values:
+   * channel.subscribe({ field1: ["value1", "value2", "value3"] }, callback);
+   *
+   * @example
+   * // Combine multiple filtering layers:
+   * channel.subscribe(
+   *   [
+   *     { field1: "value1", field2: ["value2", "value3"] },
+   *     { field3: "value4" }
+   *   ],
+   *   callback
+   * );
+   */
   subscribe: (
     scope: ChangeEventScope[] | ChangeEventScope,
-    onChangeEvent: (payload: ChangeEventScope) => void,
+    onChangeEvent: (payload: ChangeEventPayload) => void,
   ) => string;
   unsubscribe: (subscriptionId: string) => void;
-  publish: (payload: ChangeEventScope) => void;
-  messages: ChangeEventScope[];
+  publish: (payload: ChangeEventPayload) => void;
+  messages: ChangeEventPayload[];
 }
 
 export type SubscriptionId = string;
 
-export type ChangeEventTopic = "community" | "garden" | "pool" | "proposal";
+export type ChangeEventTopic =
+  | "community"
+  | "garden"
+  | "pool"
+  | "proposal"
+  | "member";
+type Native = string | number | boolean | null;
+
 export type ChangeEventScope = {
   topic: ChangeEventTopic;
+  type?: string;
+  action?: ChangeEventPayload["action"] | ChangeEventPayload["action"][];
+  chainId?: ChangeEventPayload["chainId"] | ChangeEventPayload["chainId"][];
+  id?: ChangeEventPayload["id"] | ChangeEventPayload["id"][];
+} & { [key: string]: Native | Native[] };
+
+export type ChangeEventPayload = {
+  topic: ChangeEventTopic;
+  type?: string;
+  action?: "add" | "update" | "delete";
   chainId?: ChainId;
   id?: string;
-  type?: string;
-} & { [key: string]: string | number | boolean };
+} & { [key: string]: Native };
 
 // Create the context with an initial default value (optional)
 const PubSubContext = createContext<PubSubContextData | undefined>(undefined);
@@ -47,11 +94,9 @@ export function usePubSubContext() {
 }
 
 export function PubSubProvider({ children }: { children: React.ReactNode }) {
-  const [messages, setMessages] = useState<ChangeEventScope[]>([]);
+  const [messages, setMessages] = useState<ChangeEventPayload[]>([]);
   const [connected, setConnected] = useState(false);
-  const ablyClientRef = useRef(
-    new Realtime({ key: process.env.NEXT_PUBLIC_ABLY_KEY }),
-  );
+  const ablyClientRef = useRef(new Realtime({ authUrl: "/api/ably-auth" }));
   const ablyClient = ablyClientRef.current;
 
   const subscriptionsMap = useRef(
@@ -59,7 +104,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       SubscriptionId,
       {
         scopes: ChangeEventScope[];
-        onChangeEvent: (payload: ChangeEventScope) => void;
+        onChangeEvent: (payload: ChangeEventPayload) => void;
       }
     >(),
   );
@@ -67,7 +112,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     ablyClient.channels.get(CHANGE_EVENT_CHANNEL_NAME).subscribe((message) => {
       console.debug("⚡ WS: sub message", message);
-      const data = message.data as ChangeEventScope;
+      const data = message.data as ChangeEventPayload;
       setMessages((prevMessages) => [...prevMessages, data]);
       dispatch(data);
     });
@@ -97,15 +142,21 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const dispatch = (pubPayload: ChangeEventScope) => {
+  const dispatch = (pubPayload: ChangeEventPayload) => {
     subMap.forEach(({ scopes, onChangeEvent }) => {
       if (
         scopes.find((scope) =>
-          Object.keys(scope).every(
-            (key) =>
-              scope[key].toString().toUpperCase() ===
-              pubPayload[key].toString().toUpperCase(),
-          ),
+          Object.keys(scope).every((key) => {
+            if (!Array.isArray(scope[key])) {
+              scope[key] = [scope[key] as Native];
+            }
+
+            return (scope[key] as Native[]).find(
+              (scope) =>
+                scope?.toString().toLowerCase() ===
+                pubPayload[key]?.toString().toLowerCase(),
+            );
+          }),
         )
       ) {
         onChangeEvent(pubPayload);
@@ -116,10 +167,13 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const subscribe = useCallback(
     (
       scope: ChangeEventScope[] | ChangeEventScope,
-      onChangeEvent: (payload: ChangeEventScope) => void,
+      onChangeEvent: (payload: ChangeEventPayload) => void,
     ) => {
       const subscriptionId = uniqueId();
-      subMap.set(subscriptionId, { scopes: (scope.length ? scope : [scope]) as ChangeEventScope[], onChangeEvent });
+      subMap.set(subscriptionId, {
+        scopes: (scope.length ? scope : [scope]) as ChangeEventScope[],
+        onChangeEvent,
+      });
       return subscriptionId;
     },
     [],

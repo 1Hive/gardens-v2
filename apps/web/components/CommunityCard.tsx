@@ -62,7 +62,12 @@ export function CommunityCard({
       comm: communityAddress.toLowerCase(),
     },
     {},
-    []
+    {
+      topic: "community",
+      chainId,
+      id: communityAddress,
+      action: ["add", "delete"],
+    },
   );
 
   useEffect(() => {

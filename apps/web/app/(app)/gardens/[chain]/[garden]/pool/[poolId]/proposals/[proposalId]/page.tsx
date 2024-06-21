@@ -13,7 +13,6 @@ import {
 import { formatTokenAmount, calculatePercentageBigInt } from "@/utils/numbers";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
-import { title } from "process";
 import { useState, useEffect } from "react";
 
 export const dynamic = "force-dynamic";
@@ -70,7 +69,7 @@ export default function Proposal({
         proposalId: proposalId,
       },
       {},
-      [{ topic: "garden", id: proposalId, chainId: chain }],
+      { topic: "proposal", id: proposalId, chainId: chain },
     );
 
   const proposalData = getProposalQuery?.cvproposal;

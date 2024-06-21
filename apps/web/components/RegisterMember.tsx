@@ -119,6 +119,15 @@ export function RegisterMember({
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "stakeAndRegisterMember",
+    onSuccess: () => {
+      publish({
+        topic: "community",
+        type: "member",
+        action: "add",
+        id: communityAddress,
+        chainId: chainId,
+      });
+    },
   });
 
   const {
@@ -129,6 +138,15 @@ export function RegisterMember({
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
+    onSuccess: () => {
+      publish({
+        topic: "community",
+        type: "member",
+        action: "delete",
+        id: communityAddress,
+        chainId: chainId,
+      });
+    },
   });
 
   const {
@@ -212,24 +230,6 @@ export function RegisterMember({
   useEffect(() => {
     updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
   }, [unregisterMemberStatus]);
-
-  useEffect(() => {
-    if (
-      registerMemberStatus === "success" ||
-      unregisterMemberStatus === "success"
-    ) {
-      publish({
-        type: "update",
-        action:
-          registerMemberStatus === "success"
-            ? "member-added"
-            : "member-removed",
-        id: communityAddress,
-        topic: "community",
-        chainId: chainId,
-      });
-    }
-  }, [registerMemberStatus, unregisterMemberStatus]);
 
   //RegisterMember Disable Button condition => message mapping
   const disableRegMemberBtnCondition: ConditionObject[] = [
