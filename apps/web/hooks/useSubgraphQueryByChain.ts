@@ -1,16 +1,11 @@
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
-import { getContractsAddrByChain, isProd } from "@/constants/contracts";
+import { getContractsAddrByChain} from "@/constants/contracts";
 import { useEffect, useRef, useState } from "react";
 import { ChainId } from "@/types";
 import { initUrqlClient } from "@/providers/urql";
 import { isEqual } from "lodash-es";
-import {
-  SubscriptionId,
-  useWebSocketContext,
-} from "@/contexts/websocket.context";
+import { ChangeEventScope, SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import delayAsync from "@/utils/delayAsync";
-import { ChangeEventScope } from "@/pages/api/websocket.api";
-import { debounce } from "lodash-es";
 import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
@@ -24,17 +19,18 @@ export default function useSubgraphQueryByChain<
   query: DocumentInput<any, Variables>,
   variables: Variables = {} as Variables,
   context?: Partial<OperationContext>,
-  changeScopes?: ChangeEventScope[],
+  changeScope?: ChangeEventScope[] | ChangeEventScope,
 ) {
   const { urqlClient } = initUrqlClient();
-  const { connected, subscribe, unsubscribe } = useWebSocketContext();
+  const { connected, subscribe, unsubscribe } = usePubSubContext();
   const [fetching, setFetching] = useState(true);
   const contractAddress = getContractsAddrByChain(chainId);
   const [response, setResponse] = useState<
     Omit<Awaited<ReturnType<typeof fetch>>, "operation">
   >({ hasNext: true, stale: true, data: undefined, error: undefined });
 
-  const latestResponse = useRef(response);
+  const latestResponse = useRef(response); 
+  const subscritionId = useRef<SubscriptionId>();
 
   useEffect(() => {
     latestResponse.current = response; // Update ref on every response change
@@ -45,24 +41,26 @@ export default function useSubgraphQueryByChain<
   }
 
   useEffect(() => {
-    let subscritionId: SubscriptionId;
-    if (connected && changeScopes) {
-      const onChangeEvent = (payload: ChangeEventScope) => {
-        refetch().then((res) => setResponse(res));
-      };
-      subscritionId = subscribe(
-        changeScopes,
-        onChangeEvent.bind({
-          response,
-          setResponse,
-          chain: chainId,
-        }),
-      );
+    if (!connected || !changeScope || !changeScope.length) {
+      return;
     }
 
+    const onChangeEvent = () => {
+      refetch().then((res) => setResponse(res));
+    };
+
+    subscritionId.current = subscribe(
+      changeScope,
+      onChangeEvent.bind({
+        response,
+        setResponse,
+        chain: chainId,
+      }),
+    );
+
     return () => {
-      if (subscritionId) {
-        unsubscribe(subscritionId);
+      if (subscritionId.current ) {
+        unsubscribe(subscritionId.current );
       }
     };
   }, [connected]);
@@ -87,7 +85,7 @@ export default function useSubgraphQueryByChain<
       retryCount >= CHANGE_EVENT_MAX_RETRIES - 1
     ) {
       if (retryCount === CHANGE_EVENT_MAX_RETRIES - 1) {
-        console.debug(`Max retries reached. (retry count: ${retryCount})`);
+        console.debug(`Still not updated but max retries reached. (retry count: ${retryCount + 1})`);
       } else {
         console.debug(
           `Subgraph result updated after ${retryCount + 1} retries.`,

@@ -52,8 +52,6 @@ export function CommunityCard({
   const [memberStakedTokens, setMemberStakedTokens] = useState<string>("0");
   const pathname = usePathname();
 
-  const urqlClient = useUrqlClient();
-
   const chainId = getChainIdFromPath();
 
   const { data: result, error } = useSubgraphQueryByChain<isMemberQuery>(
@@ -63,6 +61,8 @@ export function CommunityCard({
       me: accountAddress?.toLowerCase(),
       comm: communityAddress.toLowerCase(),
     },
+    {},
+    []
   );
 
   useEffect(() => {

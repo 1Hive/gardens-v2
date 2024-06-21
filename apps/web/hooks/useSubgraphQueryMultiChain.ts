@@ -12,13 +12,9 @@ import {
   optimismSepolia,
   sepolia,
 } from "viem/chains";
-import { ChangeEventScope } from "@/pages/api/websocket.api";
 import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
-import {
-  SubscriptionId,
-  useWebSocketContext,
-} from "@/contexts/websocket.context";
+import { ChangeEventScope, SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
 import { debounce, isEqual } from "lodash-es";
 import { CHANGE_EVENT_MAX_RETRIES } from "@/globals";
 import delayAsync from "@/utils/delayAsync";
@@ -40,15 +36,16 @@ export default function useSubgraphQueryMultiChain<
   query: DocumentInput<any, Variables>,
   variables: Variables = {} as Variables,
   context?: Partial<OperationContext>,
-  changeScopes?: ChangeEventScope[],
+  changeScope?: ChangeEventScope[] | ChangeEventScope,
 ) {
-  const { connected, subscribe, unsubscribe } = useWebSocketContext();
+  const { connected, subscribe, unsubscribe } = usePubSubContext();
 
   const [response, setResponse] = useState<Data[]>();
   const [fetching, setFetching] = useState(true);
 
   const responseMap = useRef(new Map<ChainId, Data>());
   const errorsMap = useRef(new Map<ChainId, CombinedError>());
+  const subscritionId = useRef<SubscriptionId>();
 
   useEffect(() => {
     const init = async () => {
@@ -60,20 +57,18 @@ export default function useSubgraphQueryMultiChain<
   }, []);
 
   useEffect(() => {
-    if (!changeScopes) {
+    if (!connected || !changeScope || changeScope.length === 0) {
       return;
     }
-    let subscritionId: SubscriptionId;
-    if (connected) {
-      subscribe(changeScopes, (payload) => {
-        console.debug("Received change event", payload);
-        fetchDebounce(payload.chainId ? [payload.chainId] : undefined, true);
-      });
-    }
+
+    subscritionId.current = subscribe(changeScope, (payload) => {
+      console.debug("Received change event", payload);
+      fetchDebounce(payload.chainId ? [payload.chainId] : undefined, true);
+    });
 
     return () => {
-      if (subscritionId) {
-        unsubscribe(subscritionId);
+      if (subscritionId.current) {
+        unsubscribe(subscritionId.current);
       }
     };
   }, [connected]);
@@ -86,7 +81,7 @@ export default function useSubgraphQueryMultiChain<
       }));
       await Promise.all(
         chainSubgraphs.map(async ({ chainId, url }, i) => {
-          const fetchSubgraphChain = async (retries?: number) => {
+          const fetchSubgraphChain = async (retryCount?: number) => {
             try {
               const fetchQuery = async () => {
                 const { urqlClient } = initUrqlClient({
@@ -96,6 +91,7 @@ export default function useSubgraphQueryMultiChain<
                   ...context,
                   url,
                   chainId,
+                  requestPolicy: "network-only",
                 } as OperationContext & { _instance: any });
               };
 
@@ -106,17 +102,20 @@ export default function useSubgraphQueryMultiChain<
               } else {
                 if (
                   !isEqual(res.data, responseMap.current.get(chainId)) ||
-                  retries === undefined ||
-                  retries >= CHANGE_EVENT_MAX_RETRIES - 1
+                  retryCount === undefined ||
+                  retryCount >= CHANGE_EVENT_MAX_RETRIES - 1
                 ) {
+                  if (retryCount === CHANGE_EVENT_MAX_RETRIES - 1) {
+                    console.debug(`Still not updated but max retries reached. (retry count: ${retryCount + 1})`);
+                  } 
                   responseMap.current.set(chainId, res.data!);
                 } else {
                   console.debug(
-                    `Subgraph-${chainId} result not yet updated, retrying with incremental delays... (retry count: ${retries + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
+                    `Subgraph-${chainId} result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
                   );
-                  const delay = 2000 * 2 ** retries;
+                  const delay = 2000 * 2 ** retryCount;
                   await delayAsync(delay);
-                  await fetchSubgraphChain(retries + 1);
+                  await fetchSubgraphChain(retryCount + 1);
                 }
               }
             } catch (error: any) {

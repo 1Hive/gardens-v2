@@ -18,8 +18,7 @@ import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
-import { useWebSocketContext } from "@/contexts/websocket.context";
-import { ChangeEventScope } from "@/pages/api/websocket.api";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
 
 type RegisterMemberProps = {
@@ -51,7 +50,7 @@ export function RegisterMember({
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
 
-  const { publish } = useWebSocketContext();
+  const { publish } = usePubSubContext();
 
   //
   //new logic
@@ -219,7 +218,7 @@ export function RegisterMember({
       registerMemberStatus === "success" ||
       unregisterMemberStatus === "success"
     ) {
-      const context: ChangeEventScope = {
+      publish({
         type: "update",
         action:
           registerMemberStatus === "success"
@@ -228,8 +227,7 @@ export function RegisterMember({
         id: communityAddress,
         topic: "community",
         chainId: chainId,
-      };
-      publish(context);
+      });
     }
   }, [registerMemberStatus, unregisterMemberStatus]);
 
@@ -325,22 +323,6 @@ export function RegisterMember({
               tooltip={tooltipMessage}
             >
               {isMember ? "Leave community" : "Register in community"}
-            </Button>
-            <Button
-              className="w-full bg-primary"
-              onClick={() => {
-                publish({
-                  topic: "garden",
-                  type: "add",
-                  chainId,
-                  name: communityName,
-                  token: tokenSymbol,
-                  address: communityAddress,
-                  id: communityAddress,
-                });
-              }}
-            >
-              Emit
             </Button>
           </div>
         </div>

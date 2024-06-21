@@ -130,6 +130,11 @@ export function Proposals({
       {
         meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
+      {},
+      [{
+        topic: "proposal",
+        chainId: chainId,
+      }]
     );
 
   useEffect(() => {

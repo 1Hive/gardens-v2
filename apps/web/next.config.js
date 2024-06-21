@@ -24,4 +24,7 @@ module.exports = {
       },
     ];
   },
+  experimental: {
+    serverComponentsExternalPackages: ["ably"],
+  },
 };
