@@ -1,4 +1,4 @@
-import { Badge, StatusBadge } from "@/components";
+import { Badge } from "@/components";
 import { EthAddress } from "@/components";
 import { cvStrategyABI } from "@/src/generated";
 import { Abi, Address, createPublicClient, formatUnits, http } from "viem";
@@ -216,11 +216,11 @@ export default async function Proposal({
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
-      <main className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 bg-surface p-16">
+      <main className="bg-surface flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 p-16">
         {/* main content */}
         <div className="flex justify-between">
           <div className="flex items-center gap-2">
-            <Badge type={proposalType} />
+            <Badge poolType={proposalType} />
             <h4 className="font-sm font-bold">
               <span className="">
                 {" "}
@@ -235,7 +235,7 @@ export default async function Proposal({
         {/* title - description - status */}
         <div className="border2 relative space-y-12 rounded-xl bg-white px-8 py-4">
           <div className="flex justify-end">
-            <StatusBadge status={status} />
+            <Badge status={status} />
           </div>
           <div className=" flex items-baseline justify-end space-x-4 ">
             <h3 className="w-full text-center text-2xl font-semibold">

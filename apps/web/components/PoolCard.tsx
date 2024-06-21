@@ -53,7 +53,7 @@ export function PoolCard({
             <p className="stat-title">pool type:</p>
 
             <Badge
-              type={config?.proposalType as number}
+              poolType={config?.proposalType as number}
               classNames="scale-75"
             />
           </div>

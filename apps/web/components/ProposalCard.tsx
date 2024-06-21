@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
-import { StatusBadge } from "./Badge";
+import { Badge } from "./Badge";
 import { Button } from "./Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -14,7 +14,7 @@ import { encodeAbiParameters, formatUnits } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
-import { proposalTypes } from "@/types";
+import { poolTypes } from "@/types";
 
 type ProposalCard = {
   proposalData: ProposalTypeVoter;
@@ -104,7 +104,7 @@ export function ProposalCard({
 
   return (
     <div
-      className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
+      className="bg-surface flex flex-col items-center justify-center gap-4 rounded-lg p-8"
       key={title + "_" + proposalNumber}
     >
       <div className="flex w-full items-center justify-between ">
@@ -114,9 +114,9 @@ export function ProposalCard({
         </div>
 
         <div className="flex items-center gap-8">
-          <StatusBadge status={proposalStatus} />
+          <Badge status={proposalStatus} />
           {/* Button to test distribute */}
-          {!isEditView && proposalTypes[proposalData.type] == "funding" && (
+          {!isEditView && poolTypes[proposalData.type] == "funding" && (
             <Button
               // TODO: add flexible tooltip and func to check executability
               disabled={executeDisabled}

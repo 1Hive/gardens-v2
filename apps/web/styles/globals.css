@@ -162,10 +162,6 @@ caption {
   text-align: left;
 }
 
-.badge {
-  @apply text-black;
-}
-
 .border2 {
   border: 2px solid black;
 }

@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { StatusBadge } from "./Badge";
 import { ActivatePoints } from "./ActivatePoints";
 import { Address, useAccount, useContractRead } from "wagmi";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -8,6 +7,7 @@ import { registryCommunityABI } from "@/src/generated";
 import { CVStrategy } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { Dnum } from "dnum";
+import { Badge } from "./Badge";
 
 type PoolGovernanceProps = {
   memberPoolWeight: number;
@@ -72,7 +72,7 @@ export const PoolGovernance = ({
                   <div className="flex w-full items-center gap-6">
                     <h5 className="">Status:</h5>
                     <div>
-                      <StatusBadge status={isMemberActivated ? 1 : 0} />
+                      <Badge status={isMemberActivated ? 1 : 0} />
                     </div>
                   </div>
                   <div className="flex w-full items-baseline gap-6">
@@ -87,7 +87,7 @@ export const PoolGovernance = ({
                 <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
-                    <StatusBadge status={isMemberActivated ? 1 : 0} />
+                    <Badge status={isMemberActivated ? 1 : 0} />
                   </div>
                 </div>
               )}

@@ -9,7 +9,7 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { toast } from "react-toastify";
-import { proposalTypes } from "@/types";
+import { poolTypes } from "@/types";
 import { Allo, Maybe, TokenGarden } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
 import FormPreview, { FormRow } from "./FormPreview";
@@ -113,7 +113,7 @@ export const ProposalForm = ({
     tokenGarden?.decimals as number,
   );
 
-  const proposalTypeName = proposalTypes[proposalType];
+  const proposalTypeName = poolTypes[proposalType];
 
   const createProposal = () => {
     setLoading(true);
