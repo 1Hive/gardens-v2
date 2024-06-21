@@ -20,9 +20,10 @@ const TYPE_STYLES = [
 ];
 
 //variants for Status Badge
-const STATUS_STYLES = ["badge-error", "bg-success", "bg-warning"];
+const STATUS_STYLES = ["badge-error", "bg-success", "bg-warning", "bg-neutral"];
 
-const BASE_STYLES = "badge w-28 p-4 font-semibold";
+const BASE_STYLES = "badge text-base leading-5 font-medium";
+
 const BASE_STYLES_STATUS =
   "badge text-white min-w-20 p-4 text-center tracking-widest";
 
