@@ -6,7 +6,7 @@ const ably = new Ably.Rest({ key: process.env.NEXT_ABLY_API_KEY });
 
 const allowedOrigins = [process.env.VERCEL_URL];
 
-export async function GET(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest, res: NextResponse) {
   try {
     const tokenRequestData = {
       capability: JSON.stringify({ "*": ["publish", "subscribe", "presence"] }), // Adjust based on your needs

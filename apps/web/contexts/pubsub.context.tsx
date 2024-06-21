@@ -97,7 +97,11 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<ChangeEventPayload[]>([]);
   const [connected, setConnected] = useState(false);
   const ablyClientRef = useRef(
-    new Realtime({ authUrl: "/api/ably-auth", queryTime: true }),
+    new Realtime({
+      authUrl: "/api/ably-auth",
+      queryTime: true,
+      authMethod: "POST",
+    }),
   );
   const ablyClient = ablyClientRef.current;
 
