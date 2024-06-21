@@ -17,6 +17,7 @@ import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { chainDataMap } from "@/configs/chainServer";
+import { Layout } from "./Layout";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -178,65 +179,66 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
       ></TransactionModal>
-      <section className="border2 flex w-full justify-between rounded-xl bg-white px-12 py-8">
-        <div className="flex flex-col">
-          <h3 className="mb-6 font-semibold">Pool Metrics</h3>
-          <div className="flex justify-between">
-            <div className="flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-10">
-                  <div className="flex w-full items-baseline gap-8">
-                    <h4 className="stat-title text-center text-xl font-bold">
-                      Funds Available:
-                    </h4>
-                    <span className="stat-value text-center text-2xl font-bold">
-                      {balance
-                        ? formatTokenAmount(balance, tokenGarden?.decimals)
-                        : "0"}{" "}
-                      {tokenGarden?.symbol}
-                    </span>
+      <Layout title="Pool Metrics">
+        <section className="mt-10 flex w-full justify-between rounded-xl bg-white">
+          <div className="flex flex-col">
+            <div className="flex justify-between">
+              <div className="flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-10">
+                    <div className="flex w-full items-baseline gap-8">
+                      <h4 className="stat-title text-center text-xl font-bold">
+                        Funds Available:
+                      </h4>
+                      <span className="stat-value text-center text-2xl font-bold">
+                        {balance
+                          ? formatTokenAmount(balance, tokenGarden?.decimals)
+                          : "0"}{" "}
+                        {tokenGarden?.symbol}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-4 flex w-full items-baseline gap-8">
-                <h4 className="stat-title text-center text-lg font-bold">
-                  Spending Limit:
-                </h4>
-                <span className="stat-value ml-8 text-center text-xl">
-                  {`${((spendingLimitPct || 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
-                </span>
+                <div className="mt-4 flex w-full items-baseline gap-8">
+                  <h4 className="stat-title text-center text-lg font-bold">
+                    Spending Limit:
+                  </h4>
+                  <span className="stat-value ml-8 text-center text-xl">
+                    {`${((spendingLimitPct || 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className="flex flex-col justify-center items-start gap-4">
-          <FormInput
-            type="number"
-            placeholder="0"
-            required
-            className="pr-14"
-            step={INPUT_TOKEN_MIN_VALUE}
-            onChange={(e) => setAmount(Number(e.target.value))}
-            otherProps={{
-              step: INPUT_TOKEN_MIN_VALUE,
-              min: INPUT_TOKEN_MIN_VALUE,
-            }}
-          >
-            <span className="absolute right-4 top-4 text-black">
-              {tokenGarden.symbol}
-            </span>
-          </FormInput>
-          <Button
-            disabled={
-              missmatchUrl || !connectedAccount || requestesMoreThanAllowance
-            }
-            tooltip={tooltipMessage}
-            onClick={handleFundPool}
-          >
-            Fund pool
-          </Button>
-        </div>
-      </section>
+          <div className="flex flex-col items-start justify-center gap-4">
+            <FormInput
+              type="number"
+              placeholder="0"
+              required
+              className="pr-14"
+              step={INPUT_TOKEN_MIN_VALUE}
+              onChange={(e) => setAmount(Number(e.target.value))}
+              otherProps={{
+                step: INPUT_TOKEN_MIN_VALUE,
+                min: INPUT_TOKEN_MIN_VALUE,
+              }}
+            >
+              <span className="absolute right-4 top-4 text-black">
+                {tokenGarden.symbol}
+              </span>
+            </FormInput>
+            <Button
+              disabled={
+                missmatchUrl || !connectedAccount || requestesMoreThanAllowance
+              }
+              tooltip={tooltipMessage}
+              onClick={handleFundPool}
+            >
+              Fund pool
+            </Button>
+          </div>
+        </section>
+      </Layout>
     </>
   );
 };
