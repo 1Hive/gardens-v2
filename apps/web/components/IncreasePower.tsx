@@ -378,7 +378,6 @@ export const IncreasePower = ({
 
         <Button
           onClick={handleChange}
-          className="w-full"
           disabled={disabledIncPowerButton}
           tooltip={tooltipMessage}
         >
@@ -391,7 +390,8 @@ export const IncreasePower = ({
         {isMember && (
           <Button
             onClick={() => writeDecreasePower?.()}
-            className="w-full"
+            variant="outline"
+            color="error"
             disabled={disabledDecPowerButton}
             tooltip={decreaseTooltipMsg}
           >

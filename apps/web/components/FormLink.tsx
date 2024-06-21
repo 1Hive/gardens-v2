@@ -17,7 +17,7 @@ export const FormLink = ({ href, label, className }: LinkProps) => {
   return (
     <Link href={href} className={className}>
       <Button
-        variant="link"
+        variant="filled"
         disabled={!isConnected || missmatchUrl}
         tooltip={tooltipMessage}
         icon={<PlusIcon height={24} width={24} />}
