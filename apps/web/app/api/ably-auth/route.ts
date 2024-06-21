@@ -4,12 +4,14 @@ import { NextResponse, NextRequest } from "next/server";
 
 const ably = new Ably.Rest({ key: process.env.NEXT_ABLY_API_KEY });
 
-const allowedOrigins = [process.env.VERCEL_URL];
-
 export async function POST(req: NextRequest, res: NextResponse) {
   try {
     const tokenRequestData = {
-      capability: JSON.stringify({ "*": ["publish", "subscribe", "presence"] }), // Adjust based on your needs
+      capability: JSON.stringify({
+        [process.env.NODE_ENV === "development"
+          ? "*"
+          : process.env.VERCEL_URL!]: ["publish", "subscribe", "presence"],
+      }), // Adjust based on your needs
     };
     const tokenDetails = await ably.auth.createTokenRequest(tokenRequestData);
     return NextResponse.json(tokenDetails);
