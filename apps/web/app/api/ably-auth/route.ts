@@ -8,15 +8,6 @@ const allowedOrigins = [process.env.VERCEL_URL];
 
 export async function GET(req: NextRequest, res: NextResponse) {
   try {
-    const origin = req.headers.get("origin") ?? "";
-    const isAllowedOrigin = allowedOrigins.includes(origin);
-    if (!isAllowedOrigin) {
-      return NextResponse.json(
-        { error: "Origin not allowed" },
-        { status: 403 },
-      );
-    }
-
     const tokenRequestData = {
       capability: JSON.stringify({ "*": ["publish", "subscribe", "presence"] }), // Adjust based on your needs
     };
