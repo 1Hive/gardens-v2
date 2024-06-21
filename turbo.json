@@ -29,7 +29,9 @@
         "NEXT_PUBLIC_SUBGRAPH_URL",
         "NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP",
         "PINATA_JWT",
-        "NODE_ENV"
+        "NODE_ENV",
+        "NEXT_ABLY_API_KEY",
+        "VERCEL_URL"
       ]
     },
     "test": {
