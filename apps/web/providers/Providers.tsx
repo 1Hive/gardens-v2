@@ -18,8 +18,6 @@ import { chains, publicClient } from "@/configs/wagmiConfig";
 import { AddrethConfig } from "addreth";
 import UrqlProvider from "./UrqlProvider";
 import { PubSubProvider } from "@/contexts/pubsub.context";
-import { Realtime } from "ably";
-import { AblyProvider } from "ably/react";
 
 type Props = {
   children: React.ReactNode;
@@ -46,7 +44,7 @@ export const wagmiConfig = createConfig({
 const Providers = ({ children }: Props) => {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
-  
+
   return (
     // if mounted UrlqProvider will be rendered
     // if not, null will be rendered
@@ -64,9 +62,7 @@ const Providers = ({ children }: Props) => {
               })}
             >
               <ThemeProvider>
-                {/* <AblyProvider client={ablyClient}> */}
                 <PubSubProvider>{mounted && children}</PubSubProvider>
-                {/* </AblyProvider> */}
               </ThemeProvider>
             </RainbowKitProvider>
           </AddrethConfig>

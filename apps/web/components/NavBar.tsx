@@ -17,7 +17,7 @@ export function NavBar() {
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 md:py-0.5 lg:px-8">
-            <div className="bg-grara flex h-16 justify-between bg-[oklch(var(--b9))]">
+            <div className="flex h-16 justify-between">
               <div className="flex gap-8">
                 <div className="flex flex-shrink-0 items-center gap-4">
                   <Link href="/" className="flex items-center gap-3">

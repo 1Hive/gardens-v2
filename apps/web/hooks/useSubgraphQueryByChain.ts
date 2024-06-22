@@ -99,15 +99,15 @@ export default function useSubgraphQueryByChain<
     ) {
       if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
         console.debug(
-          `Still not updated but max retries reached. (retry count: ${retryCount})`,
+          `⚡ Still not updated but max retries reached. (retry count: ${retryCount})`,
         );
       } else {
-        console.debug(`Subgraph result updated after ${retryCount} retries.`);
+        console.debug(`⚡ Subgraph result updated after ${retryCount} retries.`);
       }
       return result;
     } else {
       console.debug(
-        `Subgraph result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
+        `⚡ Subgraph result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
       );
       const delay = CHANGE_EVENT_INITIAL_DELAY * 2 ** retryCount;
       await delayAsync(delay);

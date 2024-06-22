@@ -35,21 +35,17 @@
     "react-dom": "18.2.0",
     "react-hook-form": "^7.50.1",
     "react-toastify": "^10.0.4",
-    "socket.io": "^4.7.5",
-    "socket.io-client": "^4.7.5",
     "ui": "workspace:*",
     "urql": "^4.0.6",
     "use-debounce": "^10.0.1",
     "viem": "~1",
-    "wagmi": "~1",
-    "ws": "^8.17.1"
+    "wagmi": "~1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.12",
     "@babel/eslint-parser": "^7.23.3",
     "@babel/preset-env": "^7.23.5",
     "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
-    "@types/express": "^4.17.21",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^17.0.12",
     "@types/react": "^18.0.22",
