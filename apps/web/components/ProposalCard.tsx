@@ -8,13 +8,14 @@ import { ProposalInputItem, ProposalTypeVoter } from "./Proposals";
 import { Allo, CVStrategy } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
-import { Address, useContractWrite } from "wagmi";
+import { Address, useChainId, useContractWrite } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeAbiParameters, formatUnits } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
 import { proposalTypes } from "@/types";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type ProposalCard = {
   proposalData: ProposalTypeVoter;
@@ -52,6 +53,9 @@ export function ProposalCard({
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
 
+  const { publish } = usePubSubContext();
+  const chainId = useChainId();
+
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0
       ? 0
@@ -80,6 +84,16 @@ export function ProposalCard({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
+    onSuccess: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "distribute",
+        id,
+        containerId: strategy.poolId,
+        chainId,
+      });
+    },
   });
 
   const distributeErrorName = useErrorDetails(errorDistribute);

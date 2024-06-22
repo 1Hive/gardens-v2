@@ -17,6 +17,7 @@ import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { chainDataMap } from "@/configs/chainServer";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -66,6 +67,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
   const [amount, setAmount] = useState<number | string>();
   const { address: connectedAccount } = useAccount();
   const tokenSymbol = tokenGarden?.symbol;
+
+  const { publish } = usePubSubContext();
 
   //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
@@ -123,6 +126,15 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     address: alloInfo?.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "fundPool",
+    onSuccess: () => {
+      publish({
+        topic: "pool",
+        type: "update",
+        function: "fundPool",
+        containerId: communityAddress,
+        chainId: tokenGarden.chainId,
+      });
+    },
   });
 
   const writeContract = () => {

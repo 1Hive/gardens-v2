@@ -1,13 +1,14 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { use, useEffect } from "react";
 import { Button } from "./Button";
-import { Address, useContractWrite, useAccount } from "wagmi";
+import { Address, useContractWrite, useAccount, useChainId } from "wagmi";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -24,6 +25,8 @@ export function ActivatePoints({
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const chainId = useChainId();
+  const { publish } = usePubSubContext();
 
   const {
     data: activatePointsData,
@@ -34,6 +37,16 @@ export function ActivatePoints({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "activatePoints",
+    onSuccess: () => {
+      publish({
+        topic: "member",
+        id: connectedAccount,
+        type: "update",
+        function: "activatePoints",
+        containerId: communityAddress,
+        chainId,
+      });
+    },
   });
 
   const {
@@ -45,6 +58,16 @@ export function ActivatePoints({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
+    onSuccess: () => {
+      publish({
+        topic: "member",
+        id: connectedAccount,
+        containerId: communityAddress,
+        type: "update",
+        function: "deactivatePoints",
+        chainId,
+      });
+    },
   });
 
   useErrorDetails(errorActivatePoints, "activatePoints");

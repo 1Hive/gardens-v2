@@ -15,6 +15,7 @@ import { formatTokenAmount } from "@/utils/numbers";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormInput } from "./FormInput";
 import { usePathname, useRouter } from "next/navigation";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -78,6 +79,8 @@ export const ProposalForm = ({
     formState: { errors },
     getValues,
   } = useForm<FormInputs>();
+
+  const { publish } = usePubSubContext();
 
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
@@ -151,8 +154,17 @@ export const ProposalForm = ({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
-    onSuccess: () =>
-      pathname && router.push(pathname.replace(`/create-proposal`, "")),
+    onSuccess: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "registerRecipient",
+        chainId: tokenGarden.chainId,
+      });
+      if (pathname) {
+        router.push(pathname.replace(`/create-proposal`, ""));
+      }
+    },
     onError: (err) => {
       console.log(err);
       toast.error("Something went wrong creating Proposal");

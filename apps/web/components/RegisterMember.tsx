@@ -121,9 +121,10 @@ export function RegisterMember({
     functionName: "stakeAndRegisterMember",
     onSuccess: () => {
       publish({
-        topic: "community",
-        type: "member",
-        action: "add",
+        topic: "member",
+        type: "add",
+        containerId: communityAddress,
+        function: "stakeAndRegisterMember",
         id: communityAddress,
         chainId: chainId,
       });
@@ -140,9 +141,10 @@ export function RegisterMember({
     functionName: "unregisterMember",
     onSuccess: () => {
       publish({
-        topic: "community",
-        type: "member",
-        action: "delete",
+        topic: "member",
+        type: "delete",
+        containerId: communityAddress,
+        function: "unregisterMember",
         id: communityAddress,
         chainId: chainId,
       });

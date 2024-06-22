@@ -22,6 +22,7 @@ import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import useErrorDetails from "@/utils/getErrorName";
 import { chainDataMap } from "@/configs/chainServer";
 import { DisplayNumber } from "./DisplayNumber";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -73,6 +74,8 @@ export const IncreasePower = ({
   );
 
   const [increaseInput, setIncreaseInput] = useState<number | string>("");
+
+  const { publish } = usePubSubContext();
 
   //handeling states
   type states = "idle" | "loading" | "success" | "error";
@@ -170,6 +173,16 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "increasePower",
     args: [requestedAmount as bigint],
+    onSuccess: () => {
+      publish({
+        topic: "member",
+        type: "update",
+        function: "increasePower",
+        containerId: communityAddress,
+        id: connectedAccount,
+        chainId: chainId,
+      });
+    },
   });
   const {
     data: decreasePowerData,
@@ -182,6 +195,17 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "decreasePower",
     args: [requestedAmount as bigint],
+
+    onSuccess: () => {
+      publish({
+        topic: "member",
+        type: "update",
+        containerId: communityAddress,
+        function: "decreasePower",
+        id: connectedAccount,
+        chainId: chainId,
+      });
+    },
   });
   useErrorDetails(errorDecreasePower, "errorDecrease");
 

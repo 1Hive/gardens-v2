@@ -30,6 +30,7 @@ import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { toast } from "react-toastify";
 
 export type ProposalInputItem = {
@@ -74,6 +75,7 @@ export function Proposals({
 
   const { isMemberActived } = useIsMemberActivated(strategy);
   const chainId = getChainIdFromPath();
+  const { publish } = usePubSubContext();
 
   const { data: isMemberActivated } = useContractRead({
     address: communityAddress,
@@ -211,6 +213,15 @@ export function Proposals({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
+    onSuccess: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        id: alloInfo.id,
+        function: "allocate",
+        chainId,
+      });
+    },
   });
 
   useErrorDetails(errorAllocate, "errorAllocate");

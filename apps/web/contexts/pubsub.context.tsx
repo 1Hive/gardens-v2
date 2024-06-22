@@ -62,21 +62,25 @@ export type ChangeEventTopic =
   | "pool"
   | "proposal"
   | "member";
-type Native = string | number | boolean | null;
+type Native = string | number | boolean | null | undefined;
 
 export type ChangeEventScope = {
   topic: ChangeEventTopic;
   type?: string;
-  action?: ChangeEventPayload["action"] | ChangeEventPayload["action"][];
+  containerId?:
+    | ChangeEventPayload["containerId"]
+    | ChangeEventPayload["containerId"][];
+  action?: ChangeEventPayload["function"] | ChangeEventPayload["function"][];
   chainId?: ChangeEventPayload["chainId"] | ChangeEventPayload["chainId"][];
   id?: ChangeEventPayload["id"] | ChangeEventPayload["id"][];
 } & { [key: string]: Native | Native[] };
 
 export type ChangeEventPayload = {
   topic: ChangeEventTopic;
-  type?: string;
-  action?: "add" | "update" | "delete";
+  type?: "add" | "update" | "delete";
+  function?: string;
   chainId?: ChainId;
+  containerId?: string;
   id?: string;
 } & { [key: string]: Native };
 

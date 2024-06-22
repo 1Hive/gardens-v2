@@ -19,6 +19,7 @@ import { getChain } from "@/configs/chainServer";
 import { getChainIdFromPath } from "@/utils/path";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 import { getContractsAddrByChain } from "@/constants/contracts";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -65,6 +66,8 @@ export const CommunityForm = ({
     reset,
     watch,
   } = useForm<FormInputs>();
+
+  const { publish } = usePubSubContext();
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
   const [showPreview, setShowPreview] = useState<boolean>(false);
@@ -150,8 +153,18 @@ export const CommunityForm = ({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-    onSuccess: () =>
-      pathname && router.push(pathname?.replace(`/create-community`, "")),
+    onSuccess: () => {
+      publish({
+        topic: "community",
+        type: "add",
+        function: "createRegistry",
+        containerId: tokenGarden.id,
+        chainId: tokenGarden.chainId,
+      });
+      if (pathname) {
+        router.push(pathname?.replace(`/create-community`, ""));
+      }
+    },
     onError: (err) => {
       console.log(err);
       toast.error("Something went wrong creating Community");
