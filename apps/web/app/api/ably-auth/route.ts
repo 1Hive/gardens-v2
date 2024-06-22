@@ -1,4 +1,5 @@
 import { isProd } from "@/constants/contracts";
+import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 import Ably from "ably";
 import { NextResponse, NextRequest } from "next/server";
 
@@ -8,9 +9,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
   try {
     const tokenRequestData = {
       capability: JSON.stringify({
-        [process.env.NODE_ENV === "development"
-          ? "*"
-          : process.env.VERCEL_URL!]: ["publish", "subscribe", "presence"],
+        [CHANGE_EVENT_CHANNEL_NAME]: ["publish", "subscribe", "presence"],
       }), // Adjust based on your needs
     };
     const tokenDetails = await ably.auth.createTokenRequest(tokenRequestData);

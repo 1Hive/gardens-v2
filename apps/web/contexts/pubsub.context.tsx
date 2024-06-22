@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { Realtime } from "ably";
 import { ChainId } from "@/types";
+import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 
 // Define the shape of your context data
 interface PubSubContextData {
@@ -81,8 +82,6 @@ export type ChangeEventPayload = {
 
 // Create the context with an initial default value (optional)
 const PubSubContext = createContext<PubSubContextData | undefined>(undefined);
-
-const CHANGE_EVENT_CHANNEL_NAME = "change-events";
 
 // Helper hook for consuming the context
 export function usePubSubContext() {
