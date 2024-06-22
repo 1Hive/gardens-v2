@@ -98,9 +98,9 @@ export function Proposals({
     },
     {},
     {
-      topic: "community",
+      topic: "member",
       id: communityAddress,
-      action: ["add", "delete"],
+      type: ["add", "delete"],
       chainId,
     },
   );
@@ -146,6 +146,8 @@ export function Proposals({
       {},
       {
         topic: "proposal",
+        id: strategy.id,
+        type: "update",
         chainId: chainId,
       },
     );

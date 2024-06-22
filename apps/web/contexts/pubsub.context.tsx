@@ -66,7 +66,7 @@ type Native = string | number | boolean | null | undefined;
 
 export type ChangeEventScope = {
   topic: ChangeEventTopic;
-  type?: string;
+  type?: ChangeEventPayload["type"] | ChangeEventPayload["type"][];
   containerId?:
     | ChangeEventPayload["containerId"]
     | ChangeEventPayload["containerId"][];
@@ -81,7 +81,7 @@ export type ChangeEventPayload = {
   function?: string;
   chainId?: ChainId;
   containerId?: string;
-  id?: string;
+  id?: string | number;
 } & { [key: string]: Native };
 
 // Create the context with an initial default value (optional)
@@ -162,8 +162,9 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
 
             return (scope[key] as Native[]).find(
               (scope) =>
+                pubPayload[key] === undefined ||
                 scope?.toString().toLowerCase() ===
-                pubPayload[key]?.toString().toLowerCase(),
+                  pubPayload[key]?.toString().toLowerCase(),
             );
           }),
         )

@@ -32,7 +32,11 @@ export default function Pool({
     getPoolDataDocument,
     { poolId: poolId, garden: garden },
     {},
-    { topic: "pool", id: poolId.toString(), chainId: chain },
+    {
+      topic: "pool",
+      id: poolId,
+      chainId: chain,
+    },
   );
   const strategyObj = data?.cvstrategies?.[0] as CVStrategy | undefined;
   //const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();

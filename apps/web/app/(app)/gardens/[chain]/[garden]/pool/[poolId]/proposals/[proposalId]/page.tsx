@@ -69,7 +69,7 @@ export default function Proposal({
         proposalId: proposalId,
       },
       {},
-      { topic: "proposal", id: proposalId, chainId: chain },
+      { topic: "proposal", id: proposalId, type: "update", chainId: chain },
     );
 
   const proposalData = getProposalQuery?.cvproposal;

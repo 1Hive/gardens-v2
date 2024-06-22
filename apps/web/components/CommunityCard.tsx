@@ -66,7 +66,7 @@ export function CommunityCard({
       topic: "community",
       chainId,
       id: communityAddress,
-      action: ["add", "delete"],
+      type: ["add", "delete"],
     },
   );
 

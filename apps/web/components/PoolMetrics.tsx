@@ -131,6 +131,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
         topic: "pool",
         type: "update",
         function: "fundPool",
+        id: poolId,
         containerId: communityAddress,
         chainId: tokenGarden.chainId,
       });
