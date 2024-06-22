@@ -7,8 +7,11 @@ const ably = new Ably.Rest({ key: process.env.NEXT_ABLY_API_KEY });
 
 export async function POST(req: NextRequest, res: NextResponse) {
   // Used for linter that fails
+  console.log({
+    "process.env.NEXT_ABLY_API_KEY": process.env.NEXT_ABLY_API_KEY,
+  });
   if (!process.env.NEXT_ABLY_API_KEY) {
-    console.error("NEXT_ABLY_API_KEY env must be provided");
+    console.error("NEXT_ABLY_API_KEY env must be");
     return NextResponse.json({
       status: 200,
       message: "No auth",
