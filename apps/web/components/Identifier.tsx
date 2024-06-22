@@ -4,7 +4,7 @@ import { capitalize } from "@/utils/text";
 
 type IdentifierProps = {
   icon?: React.ReactNode;
-  count: number;
+  count: number | string;
   label: string;
 };
 
