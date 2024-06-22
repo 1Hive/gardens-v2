@@ -144,9 +144,6 @@ importers:
       urql:
         specifier: ^4.0.6
         version: 4.1.0(@urql/core@5.0.4)(react@18.2.0)
-      use-debounce:
-        specifier: ^10.0.1
-        version: 10.0.1(react@18.2.0)
       viem:
         specifier: ~1
         version: 1.21.4(typescript@5.2.2)(zod@3.23.8)
@@ -178,9 +175,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.0.7
         version: 18.3.0
-      '@types/ws':
-        specifier: ^8.5.10
-        version: 8.5.10
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.18.0
         version: 6.21.0(@typescript-eslint/parser@6.18.2-alpha.2)(eslint@8.57.0)(typescript@5.2.2)
@@ -15525,15 +15519,6 @@ packages:
       '@types/react': 18.3.3
       react: 18.2.0
       tslib: 2.6.3
-    dev: false
-
-  /use-debounce@10.0.1(react@18.2.0):
-    resolution: {integrity: sha512-0uUXjOfm44e6z4LZ/woZvkM8FwV1wiuoB6xnrrOmeAEjRDDzTLQNRFtYHvqUsJdrz1X37j0rVGIVp144GLHGKg==}
-    engines: {node: '>= 16.0.0'}
-    peerDependencies:
-      react: '>=16.8.0'
-    dependencies:
-      react: 18.2.0
     dev: false
 
   /use-sidecar@1.1.2(@types/react@18.3.3)(react@18.2.0):

@@ -14,11 +14,12 @@ import { Fragment } from "react";
 import { formatAddress } from "@/utils/formatAddress";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
+import { getChainIdFromPath } from "@/utils/path";
 
 export const ConnectWallet = () => {
   const path = usePathname();
   const account = useAccount();
-  const urlChainId = path ? Number(path.split("/")[2]) : undefined;
+  const urlChainId = +getChainIdFromPath();
   const tokenUrlAddress = path?.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();

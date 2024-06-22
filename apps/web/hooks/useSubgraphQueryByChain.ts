@@ -87,8 +87,7 @@ export default function useSubgraphQueryByChain<
 
   const refetch = async (
     retryCount?: number,
-  ): // @ts-ignore
-  ReturnType<typeof fetch> => {
+  ): Promise<Awaited<ReturnType<typeof fetch>>> => {
     const result = await fetch();
     if (!retryCount) {
       retryCount = 0;
@@ -102,7 +101,9 @@ export default function useSubgraphQueryByChain<
           `⚡ Still not updated but max retries reached. (retry count: ${retryCount})`,
         );
       } else {
-        console.debug(`⚡ Subgraph result updated after ${retryCount} retries.`);
+        console.debug(
+          `⚡ Subgraph result updated after ${retryCount} retries.`,
+        );
       }
       return result;
     } else {
