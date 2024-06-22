@@ -17,6 +17,7 @@ import { pointSystems, proposalTypes } from "@/types";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
 import { useEffect, useMemo, useState } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ export default function Pool({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data } = useSubgraphQueryByChain<getPoolDataQuery>(
+  const { data, fetching } = useSubgraphQueryByChain<getPoolDataQuery>(
     chain,
     getPoolDataDocument,
     { poolId: poolId, garden: garden },
@@ -79,7 +80,9 @@ export default function Pool({
     return maxRatioDivPrecision;
   }, [strategyObj?.config?.maxRatio]);
 
-  return strategyObj ? (
+  return fetching ? (
+    <LoadingSpinner></LoadingSpinner>
+  ) : strategyObj ? (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
       <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
         <header className="flex flex-col items-center justify-center">

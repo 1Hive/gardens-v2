@@ -1,5 +1,5 @@
 "use client";
-import React, { use, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Button } from "./Button";
 import { Address, useContractWrite, useAccount, useChainId } from "wagmi";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";

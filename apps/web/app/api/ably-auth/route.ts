@@ -10,7 +10,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const tokenRequestData = {
       capability: JSON.stringify({
         [CHANGE_EVENT_CHANNEL_NAME]: ["publish", "subscribe", "presence"],
-      }), // Adjust based on your needs
+      }),
     };
     const tokenDetails = await ably.auth.createTokenRequest(tokenRequestData);
     return NextResponse.json(tokenDetails);

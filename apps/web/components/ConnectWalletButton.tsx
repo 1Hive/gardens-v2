@@ -19,7 +19,7 @@ export const ConnectWallet = () => {
   const path = usePathname();
   const account = useAccount();
   const urlChainId = path ? Number(path.split("/")[2]) : undefined;
-  const tokenUrlAddress = path ? path.split("/")[3] : undefined;
+  const tokenUrlAddress = path?.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
   const { disconnect } = useDisconnect();
@@ -107,7 +107,7 @@ export const ConnectWallet = () => {
                               {formatAddress(account.address)}
                             </h4>
                             <div className="ml-[2px] flex items-center text-xs font-semibold text-success">
-                              {urlChainId ||
+                              {!urlChainId ||
                               isNaN(urlChainId!) ||
                               chain.id === urlChainId ? (
                                 <>
