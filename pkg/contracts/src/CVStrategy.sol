@@ -10,6 +10,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {console} from "forge-std/console.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
 interface IPointStrategy {
     function deactivatePoints(address _member) external;
@@ -128,6 +129,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     error ConvictionUnderMinimumThreshold(); // 0xcce79308
     error OnlyCommunityAllowed(); // 0xaf0916a2
     error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount); //0x5863b0b6
+    error OnlyCouncilSafe();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -180,14 +182,24 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     // Struct variables for complex data structures
     StrategyStruct.PointSystem public pointSystem;
     StrategyStruct.PointSystemConfig public pointConfig;
+    StrategyStruct.SybilConfig public sybilConfig;
 
     // Contract reference
     RegistryCommunity public registryCommunity;
+    ISybilScorer public sybilScorer;
 
     // Mappings to handle relationships and staking details
     mapping(uint256 => StrategyStruct.Proposal) public proposals; // Mapping of proposal IDs to Proposal structures
     mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
     mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
+
+    modifier onlyCouncilSafe() {
+        if (msg.sender == address(registryCommunity.councilSafe())) {
+            _;
+        } else {
+            revert OnlyCouncilSafe();
+        }
+    }
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -197,11 +209,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     function initialize(uint256 _poolId, bytes memory _data) external {
         __BaseStrategy_init(_poolId);
         StrategyStruct.InitializeParams memory ip = abi.decode(_data, (StrategyStruct.InitializeParams));
-        // PointSystemConfig memory pc = abi.decode(_data,(PointSystemConfig));
-        // StrategyStruct.PointSystemConfig memory pc = ip.pointConfig;
-        // console.log("InitializeParams.decay", ip.decay);
-        // console.log("InitializeParams.maxRatio", ip.maxRatio);
-        // console.log("InitializeParams.weight", ip.weight);
 
         if (ip.registryCommunity == address(0)) {
             revert RegistryCannotBeZero();
@@ -215,6 +222,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         _minThresholdPoints = ip.minThresholdPoints;
+        sybilConfig = ip.sybilConfig;
+        sybilScorer = ISybilScorer(ip.sybilConfig.sybilOracleScorer);
 
         emit InitializedCV(_poolId, ip);
     }
@@ -968,5 +977,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {
         emit MinThresholdPointsUpdated(_minThresholdPoints, minThresholdPoints_);
         _minThresholdPoints = minThresholdPoints_;
+    }
+
+    function setSybilScorer(address _sybilScorer) external onlyCouncilSafe {
+        sybilScorer = ISybilScorer(_sybilScorer);
+    }
+
+    function setSybilThreshold(uint256 _threshold) external onlyCouncilSafe {
+        sybilConfig.threshold = _threshold;
     }
 }
