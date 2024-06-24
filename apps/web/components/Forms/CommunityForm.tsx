@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import { useContractWrite } from "wagmi";
+import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -15,7 +15,7 @@ import { FormSelect } from "./FormSelect";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
-import { getChain } from "@/configs/chainServer";
+import { chainDataMap, getChain } from "@/configs/chainServer";
 import { getChainIdFromPath } from "@/utils/path";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 import { getContractsAddrByChain } from "@/constants/contracts";
@@ -75,6 +75,8 @@ export const CommunityForm = ({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  const chainId = +getChainIdFromPath();
 
   // const [file, setFile] = useState<File | null>(null);
 
@@ -153,6 +155,11 @@ export const CommunityForm = ({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
+  });
+
+  useWaitForTransaction({
+    hash: data?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
     onSuccess: () => {
       publish({
         topic: "community",

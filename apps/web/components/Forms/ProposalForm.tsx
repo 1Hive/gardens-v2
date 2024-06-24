@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { alloABI } from "@/src/generated";
 import { Address, parseUnits } from "viem";
-import { useContractWrite } from "wagmi";
+import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { encodeAbiParameters } from "viem";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
@@ -16,6 +16,7 @@ import FormPreview, { FormRow } from "./FormPreview";
 import { FormInput } from "./FormInput";
 import { usePathname, useRouter } from "next/navigation";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { chainDataMap } from "@/configs/chainServer";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -81,6 +82,8 @@ export const ProposalForm = ({
   } = useForm<FormInputs>();
 
   const { publish } = usePubSubContext();
+
+  const chainId = alloInfo.chainId;
 
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
@@ -154,6 +157,11 @@ export const ProposalForm = ({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
+  });
+
+  useWaitForTransaction({
+    hash: data?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
     onSuccess: () => {
       publish({
         topic: "proposal",

@@ -5,6 +5,7 @@ import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   Address,
   useBalance,
+  useChainId,
   useContractRead,
   useContractWrite,
   useWaitForTransaction,
@@ -76,6 +77,7 @@ export const IncreasePower = ({
   const [increaseInput, setIncreaseInput] = useState<number | string>("");
 
   const { publish } = usePubSubContext();
+  const chainId = +getChainIdFromPath();
 
   //handeling states
   type states = "idle" | "loading" | "success" | "error";
@@ -88,8 +90,6 @@ export const IncreasePower = ({
     (increaseInput ?? 0).toString(),
     registerTokenDecimals,
   );
-
-  const chainId = getChainIdFromPath();
 
   const { data: accountTokenBalance } = useBalance({
     address: connectedAccount,
@@ -173,6 +173,11 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "increasePower",
     args: [requestedAmount as bigint],
+  });
+
+  useWaitForTransaction({
+    hash: increasePowerData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
     onSuccess: () => {
       publish({
         topic: "member",
@@ -184,6 +189,7 @@ export const IncreasePower = ({
       });
     },
   });
+
   const {
     data: decreasePowerData,
     write: writeDecreasePower,
@@ -195,7 +201,11 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "decreasePower",
     args: [requestedAmount as bigint],
+  });
 
+  useWaitForTransaction({
+    hash: decreasePowerData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
     onSuccess: () => {
       publish({
         topic: "member",
@@ -207,6 +217,7 @@ export const IncreasePower = ({
       });
     },
   });
+
   useErrorDetails(errorDecreasePower, "errorDecrease");
 
   const { updateTransactionStatus: updateDecreasePowerTransactionStatus } =

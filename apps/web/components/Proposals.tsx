@@ -7,6 +7,7 @@ import {
   useContractWrite,
   Address as AddressType,
   useContractRead,
+  useWaitForTransaction,
 } from "wagmi";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
@@ -32,6 +33,7 @@ import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { toast } from "react-toastify";
+import { chainDataMap } from "@/configs/chainServer";
 
 export type ProposalInputItem = {
   id: string;
@@ -74,7 +76,7 @@ export function Proposals({
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-  const chainId = getChainIdFromPath();
+  const chainId = +getChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const { data: isMemberActivated } = useContractRead({
@@ -215,6 +217,11 @@ export function Proposals({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
+  });
+
+  useWaitForTransaction({
+    hash: allocateData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
     onSuccess: () => {
       publish({
         topic: "proposal",

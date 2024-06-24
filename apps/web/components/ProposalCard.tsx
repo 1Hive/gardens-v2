@@ -8,7 +8,12 @@ import { ProposalInputItem, ProposalTypeVoter } from "./Proposals";
 import { Allo, CVStrategy } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
-import { Address, useChainId, useContractWrite } from "wagmi";
+import {
+  Address,
+  useChainId,
+  useContractWrite,
+  useWaitForTransaction,
+} from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeAbiParameters, formatUnits } from "viem";
 import { alloABI } from "@/src/generated";
@@ -16,6 +21,7 @@ import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
 import { proposalTypes } from "@/types";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { chainDataMap } from "@/configs/chainServer";
 
 type ProposalCard = {
   proposalData: ProposalTypeVoter;
@@ -84,6 +90,11 @@ export function ProposalCard({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
+  });
+
+  useWaitForTransaction({
+    hash: distributeData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
     onSuccess: () => {
       publish({
         topic: "proposal",
@@ -118,7 +129,7 @@ export function ProposalCard({
 
   return (
     <div
-      className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
+      className="bg-surface flex flex-col items-center justify-center gap-4 rounded-lg p-8"
       key={title + "_" + proposalNumber}
     >
       <div className="flex w-full items-center justify-between ">

@@ -152,22 +152,24 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const dispatch = (pubPayload: ChangeEventPayload) => {
+    console.log({ pubPayload }, 1);
     subMap.forEach(({ scopes, onChangeEvent }) => {
       if (
-        scopes.find((scope) =>
-          Object.keys(scope).every((key) => {
+        scopes.find((scope) => {
+          return Object.keys(scope).every((key) => {
             if (!Array.isArray(scope[key])) {
               scope[key] = [scope[key] as Native];
             }
 
-            return (scope[key] as Native[]).find(
-              (scope) =>
+            return (scope[key] as Native[]).find((scope) => {
+              return (
                 pubPayload[key] === undefined ||
                 scope?.toString().toLowerCase() ===
-                  pubPayload[key]?.toString().toLowerCase(),
-            );
-          }),
-        )
+                  pubPayload[key]?.toString().toLowerCase()
+              );
+            });
+          });
+        })
       ) {
         onChangeEvent(pubPayload);
       }

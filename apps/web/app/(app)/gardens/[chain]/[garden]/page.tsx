@@ -32,7 +32,6 @@ export default function Garden({
     [
       {
         topic: "community",
-        containerId: garden,
         chainId: chain,
       },
       {

@@ -126,6 +126,11 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     address: alloInfo?.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "fundPool",
+  });
+
+  useWaitForTransaction({
+    hash: fundPool?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
     onSuccess: () => {
       publish({
         topic: "pool",

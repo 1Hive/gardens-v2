@@ -119,7 +119,13 @@ export function RegisterMember({
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "stakeAndRegisterMember",
+  });
+
+  useWaitForTransaction({
+    confirmations: chainDataMap[+chainId].confirmations,
+    hash: registerMemberData?.hash,
     onSuccess: () => {
+      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
       publish({
         topic: "member",
         type: "add",
@@ -139,7 +145,13 @@ export function RegisterMember({
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
+  });
+
+  useWaitForTransaction({
+    confirmations: chainDataMap[+chainId].confirmations,
+    hash: unregisterMemberData?.hash,
     onSuccess: () => {
+      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
       publish({
         topic: "member",
         type: "delete",
