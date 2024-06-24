@@ -296,7 +296,7 @@ export function RegisterMember({
           <div className="flex items-center justify-center">
             <Button
               onClick={handleChange}
-              variant={isMember ? "outline" : "filled"}
+              btnStyle={isMember ? "outline" : "filled"}
               color={isMember ? "error" : "primary"}
               disabled={missmatchUrl || disabledRegMemberButton}
               tooltip={tooltipMessage}

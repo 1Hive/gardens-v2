@@ -134,7 +134,7 @@ export const TransactionModal = forwardRef<
         <div className="flex items-start justify-between">
           <h4 className="text-lg font-bold">{label}</h4>
           {/* we should use other button here */}
-          <Button variant="outline" color="error" onClick={handleModalClose}>
+          <Button btnStyle="outline" color="error" onClick={handleModalClose}>
             X
           </Button>
         </div>

@@ -140,7 +140,7 @@ export function ProposalCard({
           )}
           <>
             <Link href={`${pathname}/proposals/${id}`}>
-              <Button variant="outline">View Proposal</Button>
+              <Button btnStyle="outline">View Proposal</Button>
             </Link>
           </>
         </div>
