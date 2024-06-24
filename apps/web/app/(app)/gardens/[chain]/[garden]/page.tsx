@@ -30,8 +30,10 @@ export default function Garden({
     { addr: garden },
     {},
     [
+      { topic: "member", chainId: chain },
       {
         topic: "community",
+
         chainId: chain,
       },
       {
@@ -97,7 +99,7 @@ export default function Garden({
   };
 
   return (
-    <div className="relative mx-auto max-w-6xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
+    <div className="bg-surface relative mx-auto max-w-6xl space-y-10 rounded-xl border-2 border-black bg-base-100 p-8">
       <header className="relative flex min-h-[500px] flex-col items-center justify-between gap-6 px-3">
         <div className="flex h-full min-h-96 flex-col items-center justify-between p-1">
           <h3 className="text-center font-press">
@@ -124,7 +126,7 @@ export default function Garden({
         />
       </header>
       <section className="mx-auto flex flex-col gap-8">
-        <h4 className="rounded-b-xl bg-surface py-6 text-center font-press shadow">
+        <h4 className="bg-surface rounded-b-xl py-6 text-center font-press shadow">
           {tokenGarden?.name} Communities
         </h4>
 
