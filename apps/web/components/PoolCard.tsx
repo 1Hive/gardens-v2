@@ -1,6 +1,6 @@
 "use client";
 import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
-import { gardenLand } from "@/assets";
+import { gardenLand, grass, poolGrassBlue } from "@/assets";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components";
@@ -12,7 +12,6 @@ import {
   CurrencyDollarIcon,
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
-import { poolTypes } from "@/types";
 
 type StrategyQuery = NonNullable<
   NonNullable<
@@ -53,16 +52,16 @@ export function PoolCard({
         )}
       </div>
       {!enabled ? (
-        <div className="border2 grid h-10 w-full items-center rounded-xl bg-warning">
+        <div className="grid h-10 w-full items-center rounded-xl bg-warning">
           <p className="text-center text-sm font-semibold">
             waiting for council approval
           </p>
         </div>
       ) : (
         <Image
-          src={gardenLand}
+          src={poolType == 1 ? poolGrassBlue : grass}
           alt="Garden land"
-          className="h-10 w-full rounded-xl object-cover"
+          className="h-10 w-full rounded-lg object-cover"
         />
       )}
     </Card>

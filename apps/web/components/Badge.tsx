@@ -6,13 +6,13 @@ import {
 } from "@heroicons/react/24/outline";
 import { capitalize } from "@/utils/text";
 
-interface BadgeProps {
+type BadgeProps = {
   poolType?: number;
   status?: number;
   label?: string;
   classNames?: string;
   icon?: React.ReactNode;
-}
+};
 
 // Styles for different pool badge types
 const POOL_TYPE_STYLES = [
@@ -23,7 +23,7 @@ const POOL_TYPE_STYLES = [
 // Styles for different proposal statuses badges
 const PROPOSAL_STATUS_STYLES = [
   "bg-error-soft text-error-content",
-  "bg-primary text-primary-content",
+  "bg-primary-soft text-primary-content",
   "bg-secondary-soft text-secondary-content",
   "bg-error-soft text-error-content",
   "bg-tertiary-soft text-tertiary-content",

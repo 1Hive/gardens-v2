@@ -12,7 +12,7 @@ export const Card = ({ children, href, className }: CardProps) => {
     //todo: div or section ?
     <Link href={href}>
       <div
-        className={`border1 hover:bg-secondary-soft group card card-compact relative h-full w-[313px] cursor-pointer rounded-2xl bg-neutral p-6 transition-all duration-200 ease-in-out hover:border-secondary-content  ${className}`}
+        className={`border1 hover:bg-secondary-soft group relative h-full w-auto min-w-[313px] cursor-pointer rounded-2xl bg-neutral p-6 transition-all duration-200 ease-in-out hover:border-secondary-content  ${className}`}
       >
         {children}
       </div>
