@@ -170,6 +170,10 @@ caption {
   border: 1px solid var(--border-neutral);
 }
 
+.section-layout {
+  @apply border1 relative rounded-3xl bg-neutral p-8;
+}
+
 /* Hide number input arrows */
 .hide-input-arrows::-webkit-outer-spin-button,
 .hide-input-arrows::-webkit-inner-spin-button {

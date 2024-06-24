@@ -8,7 +8,6 @@ import { CVStrategy } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { Dnum } from "dnum";
 import { Badge } from "./Badge";
-import { Layout } from "./Layout";
 
 type PoolGovernanceProps = {
   memberPoolWeight: number;
@@ -49,8 +48,8 @@ export const PoolGovernance = ({
   const showPoolGovernanceData =
     isMember && isMemberActivated !== undefined && isMemberActivated;
   return (
-    <Layout title="Pool governance">
-      <div className="mt-5 flex flex-col justify-between">
+    <section className="section-layout">
+      <div className="flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-10">
             <div className="flex w-full max-w-xl flex-col items-center gap-2 font-semibold">
@@ -101,6 +100,6 @@ export const PoolGovernance = ({
           />
         </div>
       </div>
-    </Layout>
+    </section>
   );
 };
