@@ -1,14 +1,21 @@
 import React from "react";
 import { UserGroupIcon } from "@heroicons/react/24/outline";
 import { capitalize } from "@/utils/text";
+import { chiliz } from "viem/chains";
 
 type IdentifierProps = {
   icon?: React.ReactNode;
   count: number | string;
-  label: string;
+  label?: string;
+  children?: React.ReactNode;
 };
 
-export const Identifier = ({ icon, count, label }: IdentifierProps) => {
+export const Statistic = ({
+  icon,
+  count,
+  label,
+  children,
+}: IdentifierProps) => {
   const iconClassNames = "h-6 w-6";
   const defaultIcon = <UserGroupIcon className={iconClassNames} />;
 
@@ -19,9 +26,12 @@ export const Identifier = ({ icon, count, label }: IdentifierProps) => {
       ) : (
         <div className={iconClassNames}>{defaultIcon}</div>
       )}
-      <p className="">
-        {capitalize(label)}: {count}
-      </p>
+      {label && (
+        <p className="">
+          {capitalize(label)}: {count}
+        </p>
+      )}
+      {children}
     </div>
   );
 };
