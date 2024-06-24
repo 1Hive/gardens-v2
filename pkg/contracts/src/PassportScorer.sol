@@ -6,13 +6,21 @@ import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
 contract PassportScorer is Ownable, ISybilScorer {
     address public listManager;
-    uint256 public threshold;
+
+    struct Strategy {
+        uint256 threshold;
+        bool active;
+    }
 
     mapping(address => PassportData) public userScores;
+    mapping(address => Strategy) public strategies;
 
-    event UserScoreAdded(address user, uint256 score, uint256 lastUpdated);
-    event UserRemoved(address user);
-    event ListManagerChanged(address oldManager, address newManager);
+    event UserScoreAdded(address indexed user, uint256 score, uint256 lastUpdated);
+    event UserRemoved(address indexed user);
+    event ListManagerChanged(address indexed oldManager, address indexed newManager);
+    event StrategyAdded(address indexed strategy, uint256 threshold, bool active);
+    event StrategyRemoved(address indexed strategy);
+    event ThresholdModified(address indexed strategy, uint256 newThreshold);
 
     error OnlyAuthorized();
     error ZeroAddress();
@@ -53,6 +61,36 @@ contract PassportScorer is Ownable, ISybilScorer {
         address oldManager = listManager;
         listManager = _newManager;
         emit ListManagerChanged(oldManager, _newManager);
+    }
+
+    function addStrategy(address _strategy, uint256 _threshold) external override onlyAuthorized {
+        _revertZeroAddress(_strategy);
+        strategies[_strategy] = Strategy({threshold: _threshold, active: true});
+        emit StrategyAdded(_strategy, _threshold, true);
+    }
+
+    function removeStrategy(address _strategy) external override onlyAuthorized {
+        _revertZeroAddress(_strategy);
+        strategies[_strategy].active = false;
+        strategies[_strategy].threshold = 0;
+        emit StrategyRemoved(_strategy);
+    }
+
+    function modifyThreshold(address _strategy, uint256 _newThreshold) external onlyAuthorized {
+        _revertZeroAddress(_strategy);
+        strategies[_strategy].threshold = _newThreshold;
+        emit ThresholdModified(_strategy, _newThreshold);
+    }
+
+    function canExecuteAction(address _user, address _strategy) external view override returns (bool) {
+        PassportData memory userScore = userScores[_user];
+        Strategy memory strategy = strategies[_strategy];
+
+        if (!strategy.active) {
+            return true;
+        }
+
+        return userScore.score >= strategy.threshold;
     }
 
     function getUserScore(address _user) external view returns (PassportData memory) {
