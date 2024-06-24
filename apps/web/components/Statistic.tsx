@@ -1,12 +1,11 @@
 import React from "react";
 import { UserGroupIcon } from "@heroicons/react/24/outline";
 import { capitalize } from "@/utils/text";
-import { chiliz } from "viem/chains";
 
 type IdentifierProps = {
   icon?: React.ReactNode;
-  count: number | string;
-  label?: string;
+  count?: number | string;
+  label: string;
   children?: React.ReactNode;
 };
 
