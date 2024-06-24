@@ -8,7 +8,7 @@ type ButtonProps = {
     | "submit"
     | "reset"
     | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
-  variant?: BtnType;
+  btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
   className?: string;
@@ -22,11 +22,11 @@ type ButtonProps = {
 };
 
 type Color = "primary" | "secondary" | "tertiary" | "error" | "disabled";
-type BtnType = "filled" | "outline" | "link";
+type BtnStyle = "filled" | "outline" | "link";
 
-type VariantStyles = Record<BtnType, Record<Color, string>>;
+type BtnStyles = Record<BtnStyle, Record<Color, string>>;
 
-const variantStyles: VariantStyles = {
+const btnStyles: BtnStyles = {
   filled: {
     primary:
       "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content",
@@ -61,7 +61,7 @@ export function Button({
   tooltip = "Connect wallet",
   children,
   size,
-  variant = "filled",
+  btnStyle = "filled",
   color = "primary",
   isLoading = false,
   icon,
@@ -70,13 +70,13 @@ export function Button({
   const buttonContent = isLoading ? (
     <span className="loading loading-spinner"></span>
   ) : (
-    children
+    children  
   );
 
   const buttonElement = (
     <button
       type={type}
-      className={`${variantStyles[variant][disabled ? "disabled" : color]}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
       flex cursor-pointer items-center justify-center gap-2 rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
       onClick={onClick}
       disabled={disabled || isLoading}

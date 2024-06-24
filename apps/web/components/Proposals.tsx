@@ -421,7 +421,7 @@ export function Proposals({
             {editView && (
               <>
                 <Button
-                  variant="outline"
+                  btnStyle="outline"
                   color="error"
                   onClick={() => setEditView((prev) => !prev)}
                 >

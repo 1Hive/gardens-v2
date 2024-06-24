@@ -390,7 +390,7 @@ export const IncreasePower = ({
         {isMember && (
           <Button
             onClick={() => writeDecreasePower?.()}
-            variant="outline"
+            btnStyle="outline"
             color="error"
             disabled={disabledDecPowerButton}
             tooltip={decreaseTooltipMsg}

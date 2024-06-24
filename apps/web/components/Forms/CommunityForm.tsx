@@ -412,7 +412,7 @@ export const CommunityForm = ({
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="outline"
+              btnStyle="outline"
             >
               Edit
             </Button>
