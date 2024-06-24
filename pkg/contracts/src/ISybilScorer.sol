@@ -12,6 +12,6 @@ interface ISybilScorer {
     function changeListManager(address _newManager) external;
     function canExecuteAction(address _user, address _strategy) external view returns (bool);
     function modifyThreshold(address _strategy, uint256 _newThreshold) external;
-    function addStrategy(address _strategy, uint256 _threshold) external;
+    function addStrategy(address _strategy, uint256 _threshold, address _councilSafe) external;
     function removeStrategy(address _strategy) external;
 }

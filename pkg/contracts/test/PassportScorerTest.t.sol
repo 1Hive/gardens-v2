@@ -9,8 +9,9 @@ contract PassportScorerTest is Test {
     address public listManager = address(1);
     address public user = address(2);
     address public strategy = address(3);
+    address public councilSafe = address(4);
+    address public unauthorizedUser = address(5);
     PassportData public passportData;
-    address public unauthorizedUser = address(3);
 
     function setUp() public {
         passportScorer = new PassportScorer(listManager);
@@ -39,7 +40,7 @@ contract PassportScorerTest is Test {
     }
 
     function testChangeListManager() public {
-        address newManager = address(4);
+        address newManager = address(6);
 
         vm.prank(passportScorer.owner());
         passportScorer.changeListManager(newManager);
@@ -60,7 +61,7 @@ contract PassportScorerTest is Test {
     }
 
     function testOnlyOwnerCanChangeListManager() public {
-        address newManager = address(4);
+        address newManager = address(6);
 
         vm.prank(listManager);
         vm.expectRevert("Ownable: caller is not the owner");
@@ -71,47 +72,66 @@ contract PassportScorerTest is Test {
         uint256 threshold = 50;
 
         vm.prank(listManager);
-        passportScorer.addStrategy(strategy, threshold);
+        passportScorer.addStrategy(strategy, threshold, councilSafe);
 
-        (uint256 storedThreshold, bool storedActive) = passportScorer.strategies(strategy);
+        (uint256 storedThreshold, bool storedActive, address storedCouncilSafe) = passportScorer.strategies(strategy);
         assertEq(storedThreshold, threshold);
         assertEq(storedActive, true);
+        assertEq(storedCouncilSafe, councilSafe);
     }
 
     function testRemoveStrategy() public {
         uint256 threshold = 50;
 
         vm.prank(listManager);
-        passportScorer.addStrategy(strategy, threshold);
+        passportScorer.addStrategy(strategy, threshold, councilSafe);
 
         vm.prank(listManager);
         passportScorer.removeStrategy(strategy);
 
-        (uint256 storedThreshold, bool storedActive) = passportScorer.strategies(strategy);
+        (uint256 storedThreshold, bool storedActive, address storedCouncilSafe) = passportScorer.strategies(strategy);
         assertEq(storedThreshold, 0);
         assertEq(storedActive, false);
+        assertEq(storedCouncilSafe, councilSafe); // councilSafe should remain the same
     }
 
-    function testModifyThreshold() public {
+    function testModifyThresholdByAuthorized() public {
         uint256 threshold = 50;
         uint256 newThreshold = 75;
 
         vm.prank(listManager);
-        passportScorer.addStrategy(strategy, threshold);
+        passportScorer.addStrategy(strategy, threshold, councilSafe);
 
         vm.prank(listManager);
         passportScorer.modifyThreshold(strategy, newThreshold);
 
-        (uint256 storedThreshold, bool storedActive) = passportScorer.strategies(strategy);
+        (uint256 storedThreshold, bool storedActive, address storedCouncilSafe) = passportScorer.strategies(strategy);
         assertEq(storedThreshold, newThreshold);
         assertEq(storedActive, true);
+        assertEq(storedCouncilSafe, councilSafe);
+    }
+
+    function testModifyThresholdByCouncilSafe() public {
+        uint256 threshold = 50;
+        uint256 newThreshold = 75;
+
+        vm.prank(listManager);
+        passportScorer.addStrategy(strategy, threshold, councilSafe);
+
+        vm.prank(councilSafe);
+        passportScorer.modifyThreshold(strategy, newThreshold);
+
+        (uint256 storedThreshold, bool storedActive, address storedCouncilSafe) = passportScorer.strategies(strategy);
+        assertEq(storedThreshold, newThreshold);
+        assertEq(storedActive, true);
+        assertEq(storedCouncilSafe, councilSafe);
     }
 
     function testCanExecuteAction() public {
         uint256 threshold = 50;
 
         vm.prank(listManager);
-        passportScorer.addStrategy(strategy, threshold);
+        passportScorer.addStrategy(strategy, threshold, councilSafe);
 
         vm.prank(listManager);
         passportScorer.addUserScore(user, passportData);

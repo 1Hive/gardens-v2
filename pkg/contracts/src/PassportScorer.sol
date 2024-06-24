@@ -10,6 +10,7 @@ contract PassportScorer is Ownable, ISybilScorer {
     struct Strategy {
         uint256 threshold;
         bool active;
+        address councilSafe;
     }
 
     mapping(address => PassportData) public userScores;
@@ -18,11 +19,12 @@ contract PassportScorer is Ownable, ISybilScorer {
     event UserScoreAdded(address indexed user, uint256 score, uint256 lastUpdated);
     event UserRemoved(address indexed user);
     event ListManagerChanged(address indexed oldManager, address indexed newManager);
-    event StrategyAdded(address indexed strategy, uint256 threshold, bool active);
+    event StrategyAdded(address indexed strategy, uint256 threshold, bool active, address councilSafe);
     event StrategyRemoved(address indexed strategy);
     event ThresholdModified(address indexed strategy, uint256 newThreshold);
 
     error OnlyAuthorized();
+    error OnlyCouncilOrAuthorized();
     error ZeroAddress();
 
     modifier onlyAuthorized() {
@@ -30,6 +32,14 @@ contract PassportScorer is Ownable, ISybilScorer {
             _;
         } else {
             revert OnlyAuthorized();
+        }
+    }
+
+    modifier onlyCouncilOrAuthorized(address _strategy) {
+        if (msg.sender == owner() || msg.sender == listManager || msg.sender == strategies[_strategy].councilSafe) {
+            _;
+        } else {
+            revert OnlyCouncilOrAuthorized();
         }
     }
 
@@ -63,20 +73,21 @@ contract PassportScorer is Ownable, ISybilScorer {
         emit ListManagerChanged(oldManager, _newManager);
     }
 
-    function addStrategy(address _strategy, uint256 _threshold) external override onlyAuthorized {
+    function addStrategy(address _strategy, uint256 _threshold, address _councilSafe) external onlyAuthorized {
         _revertZeroAddress(_strategy);
-        strategies[_strategy] = Strategy({threshold: _threshold, active: true});
-        emit StrategyAdded(_strategy, _threshold, true);
+        _revertZeroAddress(_councilSafe);
+        strategies[_strategy] = Strategy({threshold: _threshold, active: true, councilSafe: _councilSafe});
+        emit StrategyAdded(_strategy, _threshold, true, _councilSafe);
     }
 
-    function removeStrategy(address _strategy) external override onlyAuthorized {
+    function removeStrategy(address _strategy) external override onlyCouncilOrAuthorized(_strategy) {
         _revertZeroAddress(_strategy);
         strategies[_strategy].active = false;
         strategies[_strategy].threshold = 0;
         emit StrategyRemoved(_strategy);
     }
 
-    function modifyThreshold(address _strategy, uint256 _newThreshold) external onlyAuthorized {
+    function modifyThreshold(address _strategy, uint256 _newThreshold) external onlyCouncilOrAuthorized(_strategy) {
         _revertZeroAddress(_strategy);
         strategies[_strategy].threshold = _newThreshold;
         emit ThresholdModified(_strategy, _newThreshold);
