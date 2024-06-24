@@ -15,7 +15,7 @@ export const GoBackButton = () => {
     <>
       {path === "/gardens" ? null : (
         <Button
-          variant="outline"
+          btnStyle="outline"
           color="error"
           onClick={goBack}
           className="fixed left-2 top-28 z-10 px-4 text-[16px]"

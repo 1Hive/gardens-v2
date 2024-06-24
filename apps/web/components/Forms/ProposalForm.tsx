@@ -329,7 +329,7 @@ export const ProposalForm = ({
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="outline"
+              btnStyle="outline"
             >
               Edit
             </Button>

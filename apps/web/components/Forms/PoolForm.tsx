@@ -563,7 +563,7 @@ export default function PoolForm({
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="outline"
+              btnStyle="outline"
             >
               Edit
             </Button>

@@ -66,7 +66,7 @@ export const ConnectWallet = () => {
                 return (
                   <Button
                     onClick={openChainModal}
-                    variant="outline"
+                    btnStyle="outline"
                     color="error"
                   >
                     Wrong network
@@ -167,7 +167,7 @@ export const ConnectWallet = () => {
 
                               <Button
                                 onClick={() => disconnect()}
-                                variant="outline"
+                                btnStyle="outline"
                                 color="error"
                                 className="w-full"
                                 icon={
