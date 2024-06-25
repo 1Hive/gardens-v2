@@ -177,7 +177,7 @@ export default function PoolForm({
     minThresholdPoints: {
       label: "Minimum threshold points:",
       parse: (value: string) => {
-        return value == undefined || value == "" ? "0" : value;
+        return value || "0";
       },
     },
   };
