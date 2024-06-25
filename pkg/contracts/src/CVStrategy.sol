@@ -261,11 +261,11 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         }
     }
 
-    function revertZeroAddress(address _address) internal pure {
+    function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
-    function canExecuteAction(address _user) internal view returns (bool) {
+    function _canExecuteAction(address _user) internal view returns (bool) {
         if (address(sybilScorer) == address(0)) {
             return true;
         }
@@ -290,7 +290,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         }
         // console.log("proposalType", uint256(proposalType));
         if (proposalType == StrategyStruct.ProposalType.Funding) {
-            revertZeroAddress(proposal.beneficiary);
+            _revertZeroAddress(proposal.beneficiary);
             // getAllo().getPool(poolId).token;
             if (proposal.requestedToken == address(0)) {
                 revert TokenCannotBeZero();
@@ -326,7 +326,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function activatePoints() external {
         address member = msg.sender;
-        if (!canExecuteAction(member)) {
+        if (!_canExecuteAction(member)) {
             revert UserCannotExecuteAction();
         }
         registryCommunity.activateMemberInStrategy(member, address(this));
@@ -352,7 +352,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
         onlyRegistryCommunity();
-        if (!canExecuteAction(_member)) {
+        if (!_canExecuteAction(_member)) {
             revert UserCannotExecuteAction();
         }
         uint256 pointsToIncrease = 0;
@@ -460,7 +460,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     // this will update some data in this contract to store votes, etc.
     function _allocate(bytes memory _data, address _sender) internal override {
         checkSenderIsMember(_sender);
-        if (!canExecuteAction(_sender)) {
+        if (!_canExecuteAction(_sender)) {
             revert UserCannotExecuteAction();
         }
         bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
@@ -987,6 +987,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function setSybilScorer(address _sybilScorer) external onlyCouncilSafe {
+        _revertZeroAddress(_sybilScorer);
         sybilScorer = ISybilScorer(_sybilScorer);
     }
 }
