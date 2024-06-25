@@ -125,6 +125,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     error OnlyCommunityAllowed(); // 0xaf0916a2
     error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount); //0x5863b0b6
     error OnlyCouncilSafe();
+    error UserCannotExecuteAction();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -264,6 +265,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
+    function canExecuteAction(address _user) internal view returns (bool) {
+        if (address(sybilScorer) == address(0)) {
+            return true;
+        }
+        return sybilScorer.canExecuteAction(_user, address(this));
+    }
+
     // this is called via allo.sol to register recipients
     // it can change their status all the way to Accepted, or to Pending if there are more steps
     // if there are more steps, additional functions should be added to allow the owner to check
@@ -318,6 +326,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function activatePoints() external {
         address member = msg.sender;
+        if (!canExecuteAction(member)) {
+            revert UserCannotExecuteAction();
+        }
         registryCommunity.activateMemberInStrategy(member, address(this));
         totalPointsActivated += registryCommunity.getMemberPowerInStrategy(member, address(this));
     }
@@ -340,8 +351,10 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
-        //requireMemberActivatedInStrategies
         onlyRegistryCommunity();
+        if (!canExecuteAction(_member)) {
+            revert UserCannotExecuteAction();
+        }
         uint256 pointsToIncrease = 0;
         if (pointSystem == StrategyStruct.PointSystem.Unlimited) {
             pointsToIncrease = increasePowerUnlimited(_amountToStake);
@@ -447,8 +460,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     // this will update some data in this contract to store votes, etc.
     function _allocate(bytes memory _data, address _sender) internal override {
         checkSenderIsMember(_sender);
-        // surpressStateMutabilityWarning++;
-
+        if (!canExecuteAction(_sender)) {
+            revert UserCannotExecuteAction();
+        }
         bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
         if (!isMemberActivatedPoints) {
             revert UserIsInactive();
