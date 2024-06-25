@@ -1,7 +1,8 @@
+"use client";
+
 import React, { useState } from "react";
 import { useContractWrite, useAccount, useNetwork, useChainId } from "wagmi";
 import { parseAbi, formatUnits, Address } from "viem";
-import LoadingSpinner from "./LoadingSpinner";
 
 interface FaucetProps {
   tokenAddress: Address;
@@ -62,7 +63,7 @@ export default function TokenGardenFaucet({
   return connectedAccount ? (
     <div className="fixed bottom-0 right-0 pb-3">
       <button onClick={requestTokens} disabled={isLoading}>
-        {isLoading ? <LoadingSpinner /> : "⛽"}
+        {isLoading ? <div className="loading-spinner"></div> : "⛽"}
       </button>
     </div>
   ) : (
