@@ -34,7 +34,7 @@ dataSources:
           handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
           handler: handleProtocolFeeSet
-        
+
       file: ./src/mappings/registry-factory.ts
 
 templates:
@@ -62,7 +62,7 @@ templates:
           file: ../contracts/out/CVStrategy.sol/CVStrategy.json
         - name: RegistryFactory
           file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
-     
+
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -144,6 +144,5 @@ templates:
           handler: handleMaxRatioUpdated
         - event: WeightUpdated(uint256)
           handler: handleWeightUpdated
- 
+
       file: ./src/mappings/cv-strategy.ts
-  
