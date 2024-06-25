@@ -7,7 +7,7 @@ import {
 import { capitalize } from "@/utils/text";
 
 type BadgeProps = {
-  poolType?: number;
+  type?: number;
   status?: number;
   label?: string;
   classNames?: string;
@@ -32,7 +32,7 @@ const PROPOSAL_STATUS_STYLES = [
 const BASE_STYLES = "badge border-none leading-5 p-4 text-base";
 
 export function Badge({
-  poolType,
+  type,
   status,
   label,
   classNames,
@@ -43,21 +43,23 @@ export function Badge({
   // Determine the appropriate styles based on whether it's a proposal status badge or a pool type badge
   const styles = isStatusBadge
     ? `${PROPOSAL_STATUS_STYLES[status!] ?? "bg-secondary-soft"}`
-    : `${POOL_TYPE_STYLES[poolType!] ?? "bg-tertiary-soft text-tertiary-content"}`;
+    : `${POOL_TYPE_STYLES[type!] ?? "bg-tertiary-soft text-tertiary-content"}`;
 
   // Determine the label content
   const content = isStatusBadge
-    ? proposalStatus[status!] ?? "no status"
-    : poolTypes[poolType!] ?? label ?? "no type";
+    ? proposalStatus[status!]
+    : poolTypes[type!] ?? label;
 
-  // Conditionally set the icon based on poolType
+  //For type => conditionally set the icon based on type == poolTypes[type]
   const iconIncluded =
     icon ??
-    (poolType == 0 ? (
-      <HandThumbUpIcon className="h-6 w-6 text-inherit" />
-    ) : poolType == 1 ? (
-      <CurrencyDollarIcon className="h-6 w-6 text-inherit" />
-    ) : null);
+    (() => {
+      const iconMap: { [key: string]: React.ReactNode } = {
+        signaling: <HandThumbUpIcon className="h-6 w-6 text-inherit" />,
+        funding: <CurrencyDollarIcon className="h-6 w-6 text-inherit" />,
+      };
+      return type ? iconMap[poolTypes[type]] || null : null;
+    })();
 
   return (
     <div

@@ -220,7 +220,7 @@ export default async function Proposal({
         {/* main content */}
         <div className="flex justify-between">
           <div className="flex items-center gap-2">
-            <Badge poolType={proposalType} />
+            <Badge type={proposalType} />
             <h4 className="font-sm font-bold">
               <span className="">
                 {" "}

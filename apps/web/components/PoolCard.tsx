@@ -35,7 +35,7 @@ export function PoolCard({
     <Card href={`${pathname}/pool/${poolId}`}>
       <header className="mb-4 flex w-full items-center justify-between">
         <h4>Pool #{poolId}</h4>
-        <Badge poolType={poolType} />
+        <Badge type={poolType} />
       </header>
       <div className="mb-10 flex min-h-[60px] flex-col gap-2">
         <Statistic

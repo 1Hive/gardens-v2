@@ -109,7 +109,7 @@ export default async function Pool({
                     Proposals type accepted:
                   </p>
                   <div className="flex w-full items-center justify-evenly">
-                    <Badge poolType={proposalType} />
+                    <Badge type={proposalType} />
                   </div>
                 </div>
               </div>
