@@ -27,3 +27,4 @@ export { Layout } from "./Layout";
 export { DisplayNumber } from "./DisplayNumber";
 export { ProposalCard } from "./ProposalCard";
 export { Card } from "./Card";
+export { TokenLabel } from "./TokenLabel";
