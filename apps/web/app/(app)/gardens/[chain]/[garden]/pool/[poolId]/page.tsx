@@ -74,18 +74,18 @@ export default async function Pool({
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-10">
       {/* Header */}
-      <section className="section-layout relative flex flex-col gap-3">
+      <section className="section-layout relative flex flex-col gap-0">
         <header>
           <h2>
-            Pool #{poolId} {title}
+            Pool #{poolId} - {title}
           </h2>
         </header>
-        <p>
+        <p className="mb-2">
           {" "}
           <EthAddress address={strategyAddr} />
         </p>
         <p>{description}</p>
-        <div className="mb-7 mt-5 flex w-full flex-col items-start gap-5">
+        <div className="mb-7 mt-5 flex w-full flex-col items-start gap-3.5">
           <Statistic label="pool type" icon={<InformationCircleIcon />}>
             <Badge poolType={proposalType} />
           </Statistic>
