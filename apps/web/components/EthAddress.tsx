@@ -20,21 +20,21 @@ export const EthAddress = ({
   actions = "all",
   icon = false,
 }: EthAddressProps) => {
-  const theme: ThemeDeclaration = {
-    textColor: "black",
-    // secondaryColor: "black",
-    focusColor: "black",
-    fontSize: 12,
-    badgeHeight: 12,
-    badgeGap: 12,
-    badgeRadius: 12,
-    badgeBackground: "black",
-    badgePadding: 12,
-    badgeLabelPadding: 12,
-    popupBackground: "black",
-    popupRadius: 12,
-    popupShadow: "black",
-  };
+  // const theme: ThemeDeclaration = {
+  //   textColor: "black",
+  //   // secondaryColor: "black",
+  //   focusColor: "black",
+  //   fontSize: 12,
+  //   badgeHeight: 12,
+  //   badgeGap: 12,
+  //   badgeRadius: 12,
+  //   badgeBackground: "black",
+  //   badgePadding: 12,
+  //   badgeLabelPadding: 12,
+  //   popupBackground: "black",
+  //   popupRadius: 12,
+  //   popupShadow: "black",
+  // };
   const chainId = getChainIdFromPath();
 
   return (

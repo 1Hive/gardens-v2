@@ -74,14 +74,13 @@ export default async function Pool({
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-10">
       {/* Header */}
-      <section className="section-layout relative flex flex-col gap-0">
+      <section className="section-layout flex flex-col gap-0 overflow-hidden">
         <header>
           <h2>
             Pool #{poolId} - {title}
           </h2>
         </header>
         <p className="mb-2">
-          {" "}
           <EthAddress address={strategyAddr} />
         </p>
         <p>{description}</p>
@@ -92,7 +91,11 @@ export default async function Pool({
 
           {poolTypes[proposalType] == "funding" && (
             <Statistic label="funding token" icon={<InformationCircleIcon />}>
-              <Badge label="ETH" icon={<Square3Stack3DIcon />}></Badge>
+              <Badge
+                isCapitalize
+                label={tokenGarden.symbol}
+                icon={<Square3Stack3DIcon />}
+              />
             </Statistic>
           )}
 
@@ -100,12 +103,14 @@ export default async function Pool({
             label="voting weight system"
             icon={<InformationCircleIcon />}
           >
-            <Badge
-              label="conviction voting"
-              classNames="text-secondary-content"
-              icon={<ChartBarIcon />}
-            />
-            <Badge label={pointSystems[pointSystem]} icon={<BoltIcon />} />
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Badge
+                label="conviction voting"
+                classNames="text-secondary-content"
+                icon={<ChartBarIcon />}
+              />
+              <Badge label={pointSystems[pointSystem]} icon={<BoltIcon />} />
+            </div>
           </Statistic>
         </div>
         {!isEnabled ? (
@@ -119,13 +124,12 @@ export default async function Pool({
             src={
               poolTypes[proposalType] == "funding" ? poolGrassBlue : grassLarge
             }
-            alt="Garden land"
+            alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
           />
         )}
       </section>
 
-      {/* Pool metrics: for now we have funds available and spending limit */}
       {isEnabled && (
         <>
           {poolTypes[proposalType] !== "signaling" && (
@@ -142,7 +146,6 @@ export default async function Pool({
               spendingLimitPct={spendingLimitPct}
             />
           )}
-          {/* Proposals section */}
           <Proposals
             strategy={strategyObj}
             alloInfo={alloInfo}

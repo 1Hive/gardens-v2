@@ -12,6 +12,7 @@ type BadgeProps = {
   label?: string;
   classNames?: string;
   icon?: React.ReactNode;
+  isCapitalize?: boolean;
 };
 
 // Styles for different pool badge types
@@ -37,6 +38,7 @@ export function Badge({
   label,
   classNames,
   icon,
+  isCapitalize = false,
 }: BadgeProps): JSX.Element {
   const isStatusBadge = status !== undefined;
 
@@ -66,7 +68,7 @@ export function Badge({
       {iconIncluded && (
         <div className="h-6 w-6 text-inherit">{iconIncluded}</div>
       )}
-      {capitalize(content)}
+      {isCapitalize ? content : capitalize(content)}
     </div>
   );
 }
