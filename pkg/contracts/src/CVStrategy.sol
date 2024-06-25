@@ -76,11 +76,6 @@ library StrategyStruct {
         uint256 maxAmount;
     }
 
-    struct SybilConfig {
-        address sybilOracleScorer;
-        uint256 threshold;
-    }
-
     struct InitializeParams {
         address registryCommunity;
         // Alpha | Decay | a
@@ -95,7 +90,7 @@ library StrategyStruct {
         //NEXT: use this for tests
         PointSystem pointSystem;
         PointSystemConfig pointConfig;
-        SybilConfig sybilConfig;
+        address sybilScorer;
     }
 }
 
@@ -182,7 +177,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     // Struct variables for complex data structures
     StrategyStruct.PointSystem public pointSystem;
     StrategyStruct.PointSystemConfig public pointConfig;
-    StrategyStruct.SybilConfig public sybilConfig;
 
     // Contract reference
     RegistryCommunity public registryCommunity;
@@ -222,8 +216,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         _minThresholdPoints = ip.minThresholdPoints;
-        sybilConfig = ip.sybilConfig;
-        sybilScorer = ISybilScorer(ip.sybilConfig.sybilOracleScorer);
+        sybilScorer = ISybilScorer(ip.sybilScorer);
 
         emit InitializedCV(_poolId, ip);
     }
@@ -981,9 +974,5 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function setSybilScorer(address _sybilScorer) external onlyCouncilSafe {
         sybilScorer = ISybilScorer(_sybilScorer);
-    }
-
-    function setSybilThreshold(uint256 _threshold) external onlyCouncilSafe {
-        sybilConfig.threshold = _threshold;
     }
 }
