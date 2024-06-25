@@ -87,7 +87,7 @@ export default async function Pool({
                         Conviction Voting
                       </span>
                     </div>
-                    {proposalType == 1 && (
+                    {poolTypes[proposalType] !== "sigaling" && (
                       <div className="text-md stat-title">
                         Funding Token:{" "}
                         <span className="text-md pl-2 text-black">
