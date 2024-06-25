@@ -15,24 +15,13 @@ import { Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
-type Community = Pick<
-  RegistryCommunity,
-  | "id"
-  | "covenantIpfsHash"
-  | "chainId"
-  | "communityName"
-  | "registerToken"
-  | "registerStakeAmount"
-  | "alloAddress"
-> & {};
+const { urqlClient } = initUrqlClient();
 
 export default async function Garden({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { urqlClient } = initUrqlClient();
-
   const { data: result, error: error } =
     await queryByChain<getCommunitiesByGardenQuery>(
       urqlClient,
@@ -42,6 +31,9 @@ export default async function Garden({
     );
 
   let communities = result?.tokenGarden?.communities || [];
+
+  communities = communities.filter((com) => com.isValid);
+
   const tokenGarden = result?.tokenGarden as TokenGarden;
 
   const fetchAndUpdateCommunities = async (communities: any) => {

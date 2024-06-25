@@ -14,12 +14,12 @@ import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { dn, PERCENTAGE_PRECISION_DECIMALS, gte } from "@/utils/numbers";
+import { dn, SCALE_PRECISION_DECIMALS, gte } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
-import { TransactionModal, TransactionStep } from "./TransactionModal";
+import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { formatUnits, parseUnits } from "viem";
 import { DisplayNumber } from "./DisplayNumber";
+import { chainDataMap } from "@/configs/chainServer";
 
 type RegisterMemberProps = {
   name: string;
@@ -27,7 +27,7 @@ type RegisterMemberProps = {
   communityAddress: Address;
   registerToken: Address;
   registerTokenDecimals: number;
-  membershipAmount: string;
+  membershipAmount: bigint;
   protocolFee: string;
   communityFee: string;
   connectedAccount: Address;
@@ -56,7 +56,6 @@ export function RegisterMember({
   );
 
   const parsedCommunityFee = () => {
-    // if (communityFee == "0") return "0";
     try {
       const membership = [
         BigInt(membershipAmount),
@@ -64,7 +63,7 @@ export function RegisterMember({
       ] as dn.Dnum;
       const feePercentage = [
         BigInt(communityFee),
-        Number(PERCENTAGE_PRECISION_DECIMALS),
+        SCALE_PRECISION_DECIMALS, // adding 2 decimals because 1% == 10.000 == 1e4
       ] as dn.Dnum;
 
       return dn.multiply(membership, feePercentage);
@@ -101,9 +100,6 @@ export function RegisterMember({
     token: registerToken as `0x${string}` | undefined,
     chainId: chainId || 0,
   });
-
-  console.log("accountTokenBalance ", accountTokenBalance);
-  console.log("registerToken ", registerToken);
 
   const accountHasBalance = gte(
     accountTokenBalance?.value,
@@ -151,7 +147,7 @@ export function RegisterMember({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: 1,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: allowTokenData?.hash,
   });
 
@@ -294,20 +290,6 @@ export function RegisterMember({
                     compact={true}
                   />
                 </div>
-                {/* 
-                <p>
-                  Community fee: {parseString(parsedCommunityFee())}{" "}
-                  {tokenSymbol}
-                </p> */}
-                {/* <p>
-                  Protocol fee:{" "}
-                  {calculateFees(
-                    membershipAmount,
-                    protocolFee,
-                    registerTokenDecimals,
-                  )}{" "}
-                  {tokenSymbol}
-                </p> */}
               </div>
             </div>
           </div>
