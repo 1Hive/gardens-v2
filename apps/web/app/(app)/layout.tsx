@@ -6,7 +6,7 @@ export default function layout({ children }: { children: React.ReactNode }) {
     <>
       <NavBar />
       <GoBackButton />
-      <main className="mx-6 my-10">{children}</main>
+      <main className="my-10 flex justify-center">{children}</main>
       {/* footer */}
     </>
   );
