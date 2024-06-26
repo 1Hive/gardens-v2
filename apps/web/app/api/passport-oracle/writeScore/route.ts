@@ -13,6 +13,7 @@ import { localhost, arbitrumSepolia, sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { passportScorerABI } from "@/src/generated";
 import { getContractsAddrByChain } from "@/constants/contracts";
+import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
 
@@ -71,13 +72,8 @@ export async function POST(req: Request) {
     );
   }
 
-  console.log("SCOREEEEEEE ", score);
-
-  const integerScore = Math.floor(Number(score));
-
-  console.log("INTEGER SCORE ", integerScore);
-
   try {
+    const integerScore = Number(score) * CV_PERCENTAGE_SCALE;
     const data = {
       abi: passportScorerABI,
       address: CONTRACT_ADDRESS,
