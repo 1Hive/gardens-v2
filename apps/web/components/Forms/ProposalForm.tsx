@@ -138,7 +138,9 @@ export const ProposalForm = ({
       })
       .then((ipfsHash) => {
         console.log("https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) throw new Error("No preview data");
+        if (previewData === undefined) {
+          throw new Error("No preview data");
+        }
         const encodedData = getEncodeData(ipfsHash);
         write({ args: [poolId, encodedData] });
       })
@@ -181,7 +183,9 @@ export const ProposalForm = ({
   });
 
   const getEncodeData = (metadataIpfs: string) => {
-    if (previewData === undefined) throw new Error("no preview data");
+    if (previewData === undefined) {
+      throw new Error("no preview data");
+    }
 
     const metadata = [1, metadataIpfs as string];
 
@@ -246,14 +250,6 @@ export const ProposalForm = ({
 
     return formattedRows;
   };
-  console.log(
-    "spendingLimitNumber: " + spendingLimitNumber,
-    "spendingLimitPct: " + spendingLimitPct,
-    Math.round(4.5),
-    Math.round(4.56),
-    Math.round(4.567457),
-    Math.round(0.111231),
-  );
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ? (
