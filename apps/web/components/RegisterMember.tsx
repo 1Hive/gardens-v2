@@ -297,7 +297,7 @@ export function RegisterMember({
             <Button
               onClick={handleChange}
               btnStyle={isMember ? "outline" : "filled"}
-              color={isMember ? "error" : "primary"}
+              color={isMember ? "danger" : "primary"}
               disabled={missmatchUrl || disabledRegMemberButton}
               tooltip={tooltipMessage}
             >

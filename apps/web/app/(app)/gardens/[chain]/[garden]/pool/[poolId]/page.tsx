@@ -86,7 +86,7 @@ export default async function Pool({
         <p>{description}</p>
         <div className="mb-7 mt-5 flex w-full flex-col items-start gap-3.5">
           <Statistic label="pool type" icon={<InformationCircleIcon />}>
-            <Badge poolType={proposalType} />
+            <Badge type={proposalType} />
           </Statistic>
 
           {poolTypes[proposalType] == "funding" && (

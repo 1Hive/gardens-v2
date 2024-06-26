@@ -422,7 +422,7 @@ export function Proposals({
               <>
                 <Button
                   btnStyle="outline"
-                  color="error"
+                  color="danger"
                   onClick={() => setEditView((prev) => !prev)}
                 >
                   Cancel
