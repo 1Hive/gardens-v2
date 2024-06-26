@@ -71,6 +71,12 @@ export async function POST(req: Request) {
     );
   }
 
+  console.log("SCOREEEEEEE ", score);
+
+  const integerScore = Math.floor(Number(score));
+
+  console.log("INTEGER SCORE ", integerScore);
+
   try {
     const data = {
       abi: passportScorerABI,
@@ -78,7 +84,7 @@ export async function POST(req: Request) {
       functionName: "addUserScore" as const,
       args: [
         user,
-        { score: BigInt(score), lastUpdated: BigInt(Date.now()) },
+        { score: BigInt(integerScore), lastUpdated: BigInt(Date.now()) },
       ] as const,
     };
 
