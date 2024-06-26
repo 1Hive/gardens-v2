@@ -107,18 +107,13 @@ contract RegistryUpgradeableTest is
             abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(protocolFeeReceiver))
         );
 
-        Upgrades.upgradeProxy(
-            address(proxy),
-            "RegistryFactoryV0_1.sol",
-            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
-        );
-
         registryFactory = RegistryFactoryV0_1(address(proxy));
 
         // registryFactory = new RegistryFactory();
         // _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
 
         vm.stopPrank();
+
         RegistryCommunity.InitializeParams memory params;
         params._strategyTemplate = address(strategy);
         params._allo = address(allo());
@@ -131,9 +126,19 @@ contract RegistryUpgradeableTest is
 
         params._isKickEnabled = true;
         registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+        assertEq(registryFactory.nonce(), 1, "nonce before upgrade");
+
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
+
+        Upgrades.upgradeProxy(
+            address(_registryFactory()),
+            "RegistryFactoryV0_1.sol",
+            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
+        );
+        assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
         vm.stopPrank();
+
         params._isKickEnabled = false;
         nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
     }
