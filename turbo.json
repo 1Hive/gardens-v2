@@ -1,22 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDotEnv": [
-    ".env"
-  ],
+  "globalDotEnv": [".env"],
   "pipeline": {
     "generate": {
-      "dependsOn": [
-        "^generate"
-      ],
-      "outputs": [
-        "src/**"
-      ]
+      "dependsOn": ["^generate"],
+      "outputs": ["src/**"]
     },
     "build": {
-      "dependsOn": [
-        "^build",
-        "web#generate"
-      ],
+      "dependsOn": ["^build", "web#generate"],
       "outputs": [
         "dist/**",
         ".next/**",
@@ -28,16 +19,17 @@
       "env": [
         "NEXT_PUBLIC_SUBGRAPH_URL",
         "NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP",
-        "PINATA_JWT"
+        "PINATA_JWT",
+        "GITCOIN_PASSPORT_API_KEY",
+        "SCORER_ID",
+        "PASSPORT_SCORER_ADDRESS",
+        "LIST_MANAGER_PRIVATE_KEY",
+        "CHAIN_ID"
       ]
     },
     "test": {
-      "dependsOn": [
-        "build"
-      ],
-      "inputs": [
-        "test/**/*.t.sol"
-      ],
+      "dependsOn": ["build"],
+      "inputs": ["test/**/*.t.sol"],
       "outputs": []
     },
     "test:watch": {
@@ -47,10 +39,7 @@
       "outputs": []
     },
     "dev": {
-      "dependsOn": [
-        "web#generate",
-        "^dev"
-      ],
+      "dependsOn": ["web#generate", "^dev"],
       "cache": false
     },
     "foundry#dev": {
@@ -63,9 +52,7 @@
       "cache": false
     },
     "subgraph#build": {
-      "dependsOn": [
-        "foundry#build"
-      ]
+      "dependsOn": ["foundry#build"]
     }
   }
 }

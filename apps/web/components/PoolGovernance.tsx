@@ -2,6 +2,7 @@
 import React from "react";
 import { StatusBadge } from "./Badge";
 import { ActivatePoints } from "./ActivatePoints";
+import { SubmitPassport } from "./SubmitPassport";
 import { Address, useAccount, useContractRead } from "wagmi";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
@@ -93,6 +94,7 @@ export const PoolGovernance = ({
               )}
             </div>
           </div>
+          <SubmitPassport />
           <ActivatePoints
             strategyAddress={strategy.id as Address}
             communityAddress={communityAddress}
