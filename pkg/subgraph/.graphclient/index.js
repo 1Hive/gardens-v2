@@ -49,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "http://localhost:8000/subgraphs/name/kamikazebr/gv2" },
+        config: { "endpoint": "https://api.studio.thegraph.com/query/29898/gv2-arbsepolia/version/latest/" },
         baseDir,
         cache,
         pubsub,
@@ -123,6 +123,12 @@ export async function getMeshOptions() {
                         return printWithCache(GetCommunitiesByGardenDocument);
                     },
                     location: 'GetCommunitiesByGardenDocument.graphql'
+                }, {
+                    document: GetCommunityDocument,
+                    get rawSDL() {
+                        return printWithCache(GetCommunityDocument);
+                    },
+                    location: 'GetCommunityDocument.graphql'
                 }, {
                     document: GetCommunityCreationDataDocument,
                     get rawSDL() {
@@ -379,6 +385,44 @@ export const getCommunitiesByGardenDocument = gql `
   }
 }
     `;
+export const getCommunityDocument = gql `
+    query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
+  registryCommunity(id: $communityAddr) {
+    communityName
+    id
+    members {
+      id
+      stakedTokens
+    }
+    strategies {
+      id
+      proposals {
+        id
+      }
+      isEnabled
+      poolAmount
+      poolId
+      metadata
+      config {
+        proposalType
+      }
+      proposals {
+        id
+      }
+    }
+    covenantIpfsHash
+    communityFee
+    protocolFee
+    registerStakeAmount
+    registerToken
+  }
+  tokenGarden(id: $tokenAddr) {
+    symbol
+    decimals
+    id
+  }
+}
+    `;
 export const getCommunityCreationDataDocument = gql `
     query getCommunityCreationData($addr: ID!) {
   registryFactories {
@@ -554,6 +598,9 @@ export function getSdk(requester) {
         },
         getCommunitiesByGarden(variables, options) {
             return requester(getCommunitiesByGardenDocument, variables, options);
+        },
+        getCommunity(variables, options) {
+            return requester(getCommunityDocument, variables, options);
         },
         getCommunityCreationData(variables, options) {
             return requester(getCommunityCreationDataDocument, variables, options);

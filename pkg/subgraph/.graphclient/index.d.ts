@@ -2126,6 +2126,10 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getCommunitiesByGarden(variables: Exact<{
         addr: string;
     }>, options?: TOperationContext): Promise<getCommunitiesByGardenQuery>;
+    getCommunity(variables: Exact<{
+        communityAddr: string;
+        tokenAddr: string;
+    }>, options?: TOperationContext): Promise<getCommunityQuery>;
     getCommunityCreationData(variables: Exact<{
         addr: string;
     }>, options?: TOperationContext): Promise<getCommunityCreationDataQuery>;
@@ -2234,6 +2238,20 @@ export type getCommunitiesByGardenQuery = {
         })>>;
     })>;
 };
+export type getCommunityQueryVariables = Exact<{
+    communityAddr: Scalars['ID'];
+    tokenAddr: Scalars['ID'];
+}>;
+export type getCommunityQuery = {
+    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken'> & {
+        members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'stakedTokens'>>>;
+        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'isEnabled' | 'poolAmount' | 'poolId' | 'metadata'> & {
+            proposals: Array<Pick<CVProposal, 'id'>>;
+            config: Pick<CVStrategyConfig, 'proposalType'>;
+        })>>;
+    })>;
+    tokenGarden?: Maybe<Pick<TokenGarden, 'symbol' | 'decimals' | 'id'>>;
+};
 export type getCommunityCreationDataQueryVariables = Exact<{
     addr: Scalars['ID'];
 }>;
@@ -2313,6 +2331,10 @@ export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDa
 export declare const getCommunitiesByGardenDocument: DocumentNode<getCommunitiesByGardenQuery, Exact<{
     addr: Scalars['ID'];
 }>>;
+export declare const getCommunityDocument: DocumentNode<getCommunityQuery, Exact<{
+    communityAddr: Scalars['ID'];
+    tokenAddr: Scalars['ID'];
+}>>;
 export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, Exact<{
     addr: Scalars['ID'];
 }>>;
@@ -2339,6 +2361,7 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getMember(variables: getMemberQueryVariables, options?: C): Promise<getMemberQuery>;
     getPoolCreationData(variables: getPoolCreationDataQueryVariables, options?: C): Promise<getPoolCreationDataQuery>;
     getCommunitiesByGarden(variables: getCommunitiesByGardenQueryVariables, options?: C): Promise<getCommunitiesByGardenQuery>;
+    getCommunity(variables: getCommunityQueryVariables, options?: C): Promise<getCommunityQuery>;
     getCommunityCreationData(variables: getCommunityCreationDataQueryVariables, options?: C): Promise<getCommunityCreationDataQuery>;
     getPoolData(variables: getPoolDataQueryVariables, options?: C): Promise<getPoolDataQuery>;
     getProposalData(variables: getProposalDataQueryVariables, options?: C): Promise<getProposalDataQuery>;

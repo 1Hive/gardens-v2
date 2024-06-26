@@ -185,6 +185,43 @@ query getCommunitiesByGarden($addr: ID!) {
   }
 }
 
+query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
+  registryCommunity(id: $communityAddr) {
+    communityName
+    id
+    members {
+      id
+      stakedTokens
+    }
+    strategies {
+      id
+      proposals {
+        id
+      }
+      isEnabled
+      poolAmount
+      poolId
+      metadata
+      config {
+        proposalType
+      }
+      proposals {
+        id
+      }
+    }
+    covenantIpfsHash
+    communityFee
+    protocolFee
+    registerStakeAmount
+    registerToken
+  }
+  tokenGarden(id: $tokenAddr) {
+    symbol
+    decimals
+    id
+  }
+}
+
 query getCommunityCreationData($addr: ID!) {
   registryFactories {
     id
