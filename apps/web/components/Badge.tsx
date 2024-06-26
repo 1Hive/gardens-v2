@@ -22,10 +22,10 @@ const POOL_TYPE_STYLES = [
 
 // Styles for different proposal statuses badges
 const PROPOSAL_STATUS_STYLES = [
-  "bg-error-soft text-error-content",
+  "bg-danger-soft text-danger-content",
   "bg-primary-soft text-primary-content",
   "bg-secondary-soft text-secondary-content",
-  "bg-error-soft text-error-content",
+  "bg-danger-soft text-danger-content",
   "bg-tertiary-soft text-tertiary-content",
 ];
 

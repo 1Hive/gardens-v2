@@ -16,7 +16,7 @@ export const GoBackButton = () => {
       {path === "/gardens" ? null : (
         <Button
           btnStyle="outline"
-          color="error"
+          color="danger"
           onClick={goBack}
           className="fixed left-2 top-28 z-10 px-4 text-[16px]"
           icon={<ArrowLeftIcon className="h-4 w-4" />}

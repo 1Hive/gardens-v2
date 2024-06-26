@@ -391,7 +391,7 @@ export const IncreasePower = ({
           <Button
             onClick={() => writeDecreasePower?.()}
             btnStyle="outline"
-            color="error"
+            color="danger"
             disabled={disabledDecPowerButton}
             tooltip={decreaseTooltipMsg}
           >
