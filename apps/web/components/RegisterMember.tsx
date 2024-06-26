@@ -22,7 +22,6 @@ import { DisplayNumber } from "./DisplayNumber";
 import { chainDataMap } from "@/configs/chainServer";
 
 type RegisterMemberProps = {
-  name: string;
   tokenSymbol: string;
   communityAddress: Address;
   registerToken: Address;
@@ -30,11 +29,9 @@ type RegisterMemberProps = {
   membershipAmount: bigint;
   protocolFee: string;
   communityFee: string;
-  connectedAccount: Address;
 };
 
 export function RegisterMember({
-  name: communityName,
   tokenSymbol,
   communityAddress,
   registerToken,
@@ -42,15 +39,12 @@ export function RegisterMember({
   membershipAmount,
   protocolFee,
   communityFee,
-  connectedAccount,
 }: RegisterMemberProps) {
   const chainId = getChainIdFromPath();
-  //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
-  //
-  //new logic
+  const { address: accountAddress } = useAccount();
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
     false,
   );
@@ -85,7 +79,7 @@ export function RegisterMember({
   } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
-    args: [connectedAccount],
+    args: [accountAddress ?? "0x"],
     watch: true,
   });
 
@@ -96,7 +90,7 @@ export function RegisterMember({
     });
 
   const { data: accountTokenBalance } = useBalance({
-    address: connectedAccount,
+    address: accountAddress,
     token: registerToken as `0x${string}` | undefined,
     chainId: chainId || 0,
   });
@@ -154,7 +148,7 @@ export function RegisterMember({
   const { data: dataAllowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    args: [connectedAccount, communityAddress], // [ owner,  spender address ]
+    args: [accountAddress ?? "0x", communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
     watch: true,
   });
@@ -264,7 +258,7 @@ export function RegisterMember({
       />
       <div className="">
         <div className="flex gap-4">
-          <div className="items-center rounded-lg bg-info px-4 py-3 text-sm font-bold text-white">
+          {/* <div className="items-center rounded-lg bg-info px-4 py-3 text-sm font-bold text-white">
             <div className="flex items-center gap-2">
               <svg
                 className="mr-2 h-4 w-4 fill-current"
@@ -292,7 +286,7 @@ export function RegisterMember({
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
           <div className="flex items-center justify-center">
             <Button
               onClick={handleChange}
