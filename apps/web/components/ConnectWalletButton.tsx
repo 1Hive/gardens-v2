@@ -67,7 +67,7 @@ export const ConnectWallet = () => {
                   <Button
                     onClick={openChainModal}
                     btnStyle="outline"
-                    color="error"
+                    color="danger"
                   >
                     Wrong network
                   </Button>
@@ -83,7 +83,7 @@ export const ConnectWallet = () => {
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
-                        "border-2 border-error":
+                        "border-2 border-danger":
                           urlChainId !== chain.id && !isNaN(urlChainId),
                       })} `}
                         >
@@ -106,7 +106,7 @@ export const ConnectWallet = () => {
                                   <span>{chain.name}</span>
                                 </>
                               ) : (
-                                <span className="text-error">
+                                <span className="text-danger">
                                   Network mismatch
                                 </span>
                               )}
@@ -168,7 +168,7 @@ export const ConnectWallet = () => {
                               <Button
                                 onClick={() => disconnect()}
                                 btnStyle="outline"
-                                color="error"
+                                color="danger"
                                 className="w-full"
                                 icon={
                                   <PowerIcon

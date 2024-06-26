@@ -33,9 +33,9 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="en"
-      className={`${inter.variable} ${chakra.variable} bg-white`}
+      className={`${inter.variable} ${chakra.variable} bg-primary`}
     >
-      <body className="min-h-screen bg-white font-chakra">
+      <body className="min-h-screen bg-primary font-chakra">
         <Providers>{children}</Providers>
         <ToastContainer
           position="top-right"

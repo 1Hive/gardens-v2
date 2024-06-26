@@ -98,7 +98,7 @@ export function ActivatePoints({
         <Button
           onClick={handleChange}
           btnStyle={isMemberActivated ? "outline" : "filled"}
-          color={isMemberActivated ? "error" : "primary"}
+          color={isMemberActivated ? "danger" : "primary"}
           disabled={missmatchUrl || disableActiveBtn}
           tooltip={String(tooltipMessage)}
         >

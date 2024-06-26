@@ -7,7 +7,7 @@ import { Badge } from "@/components";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
 import { Card } from "@/components";
-import { Identifier } from "@/components";
+import { Statistic } from "@/components";
 import {
   CurrencyDollarIcon,
   HandRaisedIcon,
@@ -35,16 +35,16 @@ export function PoolCard({
     <Card href={`${pathname}/pool/${poolId}`}>
       <header className="mb-4 flex w-full items-center justify-between">
         <h4>Pool #{poolId}</h4>
-        <Badge poolType={poolType} />
+        <Badge type={poolType} />
       </header>
       <div className="mb-10 flex min-h-[60px] flex-col gap-2">
-        <Identifier
+        <Statistic
           icon={<HandRaisedIcon />}
           count={proposals.length}
           label="proposals"
         />
         {poolType == 1 && (
-          <Identifier
+          <Statistic
             icon={<CurrencyDollarIcon />}
             count={formatTokenAmount(poolAmount, tokenGarden?.decimals)}
             label="funds available"

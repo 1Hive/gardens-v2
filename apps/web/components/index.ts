@@ -22,7 +22,7 @@ export { TransactionModal } from "./TransactionModal";
 export { PoolGovernance } from "./PoolGovernance";
 export { Show, When, Else } from "./Show";
 export { FormLink } from "./FormLink";
-export { Identifier } from "./Identifier";
+export { Statistic } from "./Statistic";
 export { Layout } from "./Layout";
 export { DisplayNumber } from "./DisplayNumber";
 export { ProposalCard } from "./ProposalCard";
