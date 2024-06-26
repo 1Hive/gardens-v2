@@ -1,6 +1,11 @@
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
-import { CommunityCard } from "@/components";
+import {
+  CommunityCard,
+  EthAddress,
+  Identifier,
+  TokenLabel,
+} from "@/components";
 import {
   RegistryCommunity,
   TokenGarden,
@@ -9,6 +14,8 @@ import {
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { FormLink } from "@/components";
+import { Address } from "viem";
+import React from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -33,79 +40,81 @@ export default async function Garden({
 
   const tokenGarden = result?.tokenGarden as TokenGarden;
 
-  const fetchAndUpdateCommunities = async (communities: any) => {
-    const promises = communities.map(async (com: any) => {
-      if (com?.covenantIpfsHash) {
-        const ipfsHash = com.covenantIpfsHash;
-        try {
-          const response = await fetch("https://ipfs.io/ipfs/" + ipfsHash);
-          const json = await response.json();
-          // Return a new object with the updated covenantIpfsHash
-          return { ...com, covenantData: json };
-        } catch (error) {
-          console.log(error);
-          // Return the original community object in case of an error
-          return com;
-        }
-      }
-      // Return the original community object if there's no covenantIpfsHash
-      return com;
-    });
-
-    // Wait for all promises to resolve and update the communities array
-    const updatedCommunities = await Promise.all(promises);
-    return updatedCommunities;
-  };
-
-  // Use the function
-  await fetchAndUpdateCommunities(communities)
-    .then((updatedCommunities) => {
-      communities = updatedCommunities; // Here you'll have the communities array with updated covenantIpfsHashes
-    })
-    .catch((error) => {
-      console.error("An error occurred:", error);
-    });
+  const gardenTotalMembers = communities.reduce(
+    (acc, community) => acc + (community?.members?.length ?? 0),
+    0,
+  );
 
   return (
-    <div className="relative mx-auto max-w-6xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
-      <header className="relative flex min-h-[500px] flex-col items-center justify-between gap-6 px-3">
-        <div className="flex h-full min-h-96 flex-col items-center justify-between p-1">
-          <h3 className="text-center font-press">
-            {tokenGarden?.symbol} Token Ecosystem
-          </h3>
-          <p className="max-w-lg text-center font-semibold leading-7">
-            Discover communities in the
-            <span className="text-primary"> {tokenGarden?.name} Garden</span>,
-            where you connect with people and support proposals bounded by a
-            shared
-            <span className="text-primary"> covenant.</span>
-          </p>
-          <FormLink
-            label="Create Community"
-            href={`/gardens/${chain}/${garden}/create-community`}
-          />
+    <div className="flex w-full max-w-6xl flex-col gap-10 p-8">
+      <header className="section-layout flex gap-10 p-10">
+        <div className="flex h-[280px] w-[300px] items-center justify-center rounded-2xl bg-slate-200">
+          Token Image
         </div>
-        <Image src={tree2} alt="tree" className="absolute bottom-0 left-5" />
-        <Image src={tree3} alt="tree" className="absolute bottom-0 right-5" />
-        <Image
-          src={grassLarge}
-          alt="grass"
-          className="absolute -bottom-1 h-10 overflow-hidden"
-        />
+        <div className="flex flex-col gap-6">
+          <div>
+            <div className="mb-2 flex flex-col">
+              <div className="flex items-center gap-4">
+                <h2>{tokenGarden?.name}</h2> <TokenLabel chainId={chain} />
+              </div>
+              <EthAddress address={tokenGarden?.id as Address} />
+            </div>
+            <p className="max-w-lg">
+              Discover communities in the
+              <span className="font-bold"> {tokenGarden?.name} Garden</span>,
+              where you connect with people and support proposals bounded by a
+              shared
+              <span className="font-bold"> covenant.</span>
+            </p>
+          </div>
+          <div>
+            <Identifier label="communities" count={communities?.length ?? 0} />
+            <Identifier label="members" count={gardenTotalMembers} />
+          </div>
+        </div>
       </header>
-      <section className="mx-auto flex flex-col gap-8">
-        <h4 className="rounded-b-xl bg-surface py-6 text-center font-press shadow">
-          {tokenGarden?.name} Communities
-        </h4>
+      <section className="section-layout flex flex-col gap-10">
+        <h2>Communities</h2>
+        <div className=" flex flex-row flex-wrap gap-10">
+          {communities.map(({ communityName, id, members, strategies }) => (
+            <React.Fragment key={`${id}`}>
+              <CommunityCard
+                name={communityName ?? ""}
+                members={members?.length ?? 0}
+                pools={strategies?.length ?? 0}
+                id={id}
+              />
+            </React.Fragment>
+          ))}
+        </div>
+      </section>
+      <section className="section-layout ">
+        <div className="flex flex-col gap-10 overflow-x-hidden">
+          <h4 className="text-secondary-content">Create your own community</h4>
+          <div className="relative flex h-[219px] justify-center">
+            <FormLink
+              label="Create a community"
+              href={`/gardens/${chain}/${garden}/create-community`}
+              className="mt-6"
+            />
 
-        {/* communites */}
-        {communities.map((community, i) => (
-          <CommunityCard
-            {...community}
-            tokenGarden={tokenGarden}
-            key={`${community.communityName}_${i}`}
-          />
-        ))}
+            <Image
+              src={tree2}
+              alt="tree"
+              className="absolute bottom-0 left-5"
+            />
+            <Image
+              src={tree3}
+              alt="tree"
+              className="absolute bottom-0 right-5"
+            />
+            <Image
+              src={grassLarge}
+              alt="grass"
+              className="absolute bottom-0 min-w-[1080px]"
+            />
+          </div>
+        </div>
       </section>
     </div>
   );
