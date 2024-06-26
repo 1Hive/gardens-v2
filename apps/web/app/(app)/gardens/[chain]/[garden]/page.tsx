@@ -111,9 +111,7 @@ export default async function Garden({
         ))}
       </section>
       {!isProd && tokenGarden && (
-        <TokenGardenFaucet
-          tokenAddress={tokenGarden.id as Address}
-        ></TokenGardenFaucet>
+        <TokenGardenFaucet token={tokenGarden}></TokenGardenFaucet>
       )}
     </div>
   );

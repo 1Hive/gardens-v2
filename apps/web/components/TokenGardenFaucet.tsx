@@ -1,26 +1,32 @@
 "use client";
 
 import React, { useState } from "react";
-import { useContractWrite, useAccount, useNetwork, useChainId } from "wagmi";
+import {
+  useContractWrite,
+  useAccount,
+  useNetwork,
+  useChainId,
+  useContractRead,
+} from "wagmi";
 import { parseAbi, formatUnits, Address } from "viem";
+import { TokenGarden } from "#/subgraph/.graphclient";
 
 interface FaucetProps {
-  tokenAddress: Address;
-  mintAmount?: bigint;
+  token: TokenGarden;
 }
 
-export default function TokenGardenFaucet({
-  tokenAddress,
-  mintAmount = 10n,
-}: FaucetProps) {
+const MINT_AMMOUNT = 1000n;
+
+export default function TokenGardenFaucet({ token }: FaucetProps) {
   const chain = useChainId();
   const { address: connectedAccount } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
 
-  const erc20MintAbi = ["function mint(address to, uint256 amount) public"];
+  const mintAmount = MINT_AMMOUNT * 10n ** BigInt(token.decimals);
 
+  const erc20MintAbi = ["function mint(address to, uint256 amount) public"];
   const { writeAsync } = useContractWrite({
-    address: tokenAddress,
+    address: token.id as Address,
     abi: parseAbi(erc20MintAbi),
     functionName: "mint",
     chainId: chain,
@@ -54,7 +60,7 @@ export default function TokenGardenFaucet({
       }
     } catch (error) {
       console.error(
-        "⛽: ",
+        "⛽:",
         error instanceof Error ? error.message : "Unknown error",
       );
     }
@@ -62,7 +68,11 @@ export default function TokenGardenFaucet({
 
   return connectedAccount ? (
     <div className="fixed bottom-0 right-0 pb-3">
-      <button onClick={requestTokens} disabled={isLoading}>
+      <button
+        onClick={() => requestTokens()}
+        disabled={isLoading}
+        title={`Get some test ${token.symbol}`}
+      >
         {isLoading ? <div className="loading-spinner"></div> : "⛽"}
       </button>
     </div>
