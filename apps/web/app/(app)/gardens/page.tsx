@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import Image from "next/image";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import { GardenCard } from "@/components";
@@ -14,20 +14,29 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 export const dynamic = "force-dynamic";
 
 export default function Gardens() {
-  const { data: gardens, fetching } =
-    useSubgraphQueryMultiChain<getTokenGardensQuery>(
-      getTokenGardensDocument,
-      {},
-      {},
-      [
-        {
-          topic: "garden",
-        },
-        {
-          topic: "community",
-        },
-      ],
-    );
+  const {
+    data: gardens,
+    fetching,
+    errors,
+  } = useSubgraphQueryMultiChain<getTokenGardensQuery>(
+    getTokenGardensDocument,
+    {},
+    {},
+    [
+      {
+        topic: "garden",
+      },
+      {
+        topic: "community",
+      },
+    ],
+  );
+
+  useEffect(() => {
+    if (errors.size) {
+      console.error("Error fetching token gardens:", Array.from(errors));
+    }
+  }, [errors.size]);
 
   const tokenGardens = useMemo(() => {
     return gardens
