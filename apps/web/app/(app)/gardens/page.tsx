@@ -35,6 +35,26 @@ export default function Gardens() {
       .filter((x): x is NonNullable<typeof x> => !!x);
   }, [gardens]);
 
+  const GardenList = useMemo(() => {
+    if (fetching) {
+      return <LoadingSpinner />;
+    } else if (tokenGardens?.length) {
+      return (
+        <>
+          {tokenGardens.map((garden, id) => (
+            <div key={`${garden.id}-${id}`}>
+              <GardenCard garden={garden} />
+            </div>
+          ))}
+        </>
+      );
+    } else {
+      return (
+        <p className="badge-info mb-8 rounded p-1 text-center">No Gardens</p>
+      );
+    }
+  }, [fetching, tokenGardens]);
+
   return (
     <div className="flex flex-col items-center justify-center gap-8">
       <header className="flex flex-col items-center gap-8">
@@ -60,19 +80,7 @@ export default function Gardens() {
       </header>
       <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8">
         <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
-          {!gardens ? (
-            <LoadingSpinner />
-          ) : tokenGardens?.length ? (
-            tokenGardens.map((garden, id) => (
-              <div key={`${garden.id}-${id}`}>
-                <GardenCard garden={garden} />
-              </div>
-            ))
-          ) : (
-            <p className="badge-info mb-8 rounded p-1 text-center">
-              No Gardens
-            </p>
-          )}
+          {GardenList}
         </div>
         <Image src={gardenHeader} alt="gardens" />
       </section>
