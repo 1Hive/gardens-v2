@@ -13,7 +13,8 @@ import {
 import { formatTokenAmount, calculatePercentageBigInt } from "@/utils/numbers";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useContractRead, useContractWrite } from "wagmi";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +61,7 @@ export default function Proposal({
   params: { proposalId: string; poolId: number; chain: number; garden: string };
 }) {
   // TODO: fetch garden decimals in query
-  const { data: getProposalQuery } =
+  const { data: getProposalResult } =
     useSubgraphQueryByChain<getProposalDataQuery>(
       chain,
       getProposalDataDocument,
@@ -72,20 +73,33 @@ export default function Proposal({
       { topic: "proposal", id: proposalId, type: "update", chainId: chain },
     );
 
-  const proposalData = getProposalQuery?.cvproposal;
+  if (!getProposalResult)
+    return (
+      <div className="w-full text-center">
+        <div className="spinner"></div>
+      </div>
+    );
 
-  const tokenSymbol = getProposalQuery?.tokenGarden?.symbol;
-  const tokenDecimals = getProposalQuery?.tokenGarden?.decimals;
-  const proposalIdNumber = proposalData?.proposalNumber as number;
-  const convictionLast = proposalData?.convictionLast as string;
-  const threshold = proposalData?.threshold as bigint;
-  const proposalType = proposalData?.strategy.config?.proposalType as number;
-  const requestedAmount = proposalData?.requestedAmount as bigint;
-  const beneficiary = proposalData?.beneficiary as Address;
-  const submitter = proposalData?.submitter as Address;
-  const status = proposalData?.proposalStatus as number;
-  const stakedAmount = proposalData?.stakedAmount as bigint;
-  const metadata = proposalData?.metadata;
+  const proposalData = getProposalResult.cvproposal;
+
+  if (!proposalData) {
+    return (
+      <p className="text-center text-2xl text-error">{`Proposal ${proposalId} not found`}</p>
+    );
+  }
+
+  const tokenSymbol = getProposalResult.tokenGarden?.symbol;
+  const tokenDecimals = getProposalResult?.tokenGarden?.decimals;
+  const proposalIdNumber = BigInt(proposalData.proposalNumber);
+  const convictionLast = proposalData.convictionLast as string;
+  const threshold = proposalData.threshold as bigint;
+  const proposalType = proposalData.strategy.config?.proposalType as number;
+  const requestedAmount = proposalData.requestedAmount as bigint;
+  const beneficiary = proposalData.beneficiary as Address;
+  const submitter = proposalData.submitter as Address;
+  const status = proposalData.proposalStatus as number;
+  const stakedAmount = proposalData.stakedAmount as bigint;
+  const metadata = proposalData.metadata;
 
   const isSignalingType = proposalType == 0;
 
@@ -106,81 +120,53 @@ export default function Proposal({
   });
 
   const cvStrategyContract = {
-    address: proposalData?.strategy.id as Address,
-    abi: cvStrategyABI as Abi,
+    address: proposalData.strategy.id as Address,
+    abi: cvStrategyABI,
   };
 
-  const [computedInfos, setComputedInfos] = useState({
-    totalEffectiveActivePoints: 0n,
-    updateConvictionLast: 0n,
-    getProposal: [],
-    maxCVSupply: 0n,
-    thFromContract: 0n,
-    stakeAmountFromContract: 0n,
-    currentConvictionPct: 0,
-    totalSupportPct: 0,
-    thresholdPct: 0,
+  const { data: thFromContract } = useContractRead({
+    ...cvStrategyContract,
+    functionName: "calculateThreshold",
+    args: [proposalIdNumber],
   });
 
-  const refreshData = async () => {
-    if (!proposalData) return;
+  const { data: totalEffectiveActivePoints } = useContractRead({
+    ...cvStrategyContract,
+    functionName: "totalEffectiveActivePoints",
+  });
 
-    let {
-      totalEffectiveActivePoints,
-      updateConvictionLast,
-      getProposal,
-      maxCVSupply,
-      thFromContract,
-      stakeAmountFromContract,
-      currentConvictionPct,
-      totalSupportPct,
-      thresholdPct,
-    } = computedInfos;
+  const { data: stakeAmountFromContract } = useContractRead({
+    ...cvStrategyContract,
+    functionName: "getProposalStakedAmount",
+    args: [proposalIdNumber],
+  });
 
-    try {
-      if (!isSignalingType) {
-        thFromContract = (await client.readContract({
-          ...cvStrategyContract,
-          functionName: "calculateThreshold",
-          args: [proposalIdNumber],
-        })) as bigint;
-      }
-    } catch (error) {
-      console.log(error);
-    }
+  const { data: getProposal } = useContractRead({
+    ...cvStrategyContract,
+    functionName: "getProposal",
+    args: [proposalIdNumber],
+  });
 
-    try {
-      totalEffectiveActivePoints = (await client.readContract({
-        ...cvStrategyContract,
-        functionName: "totalEffectiveActivePoints",
-      })) as bigint;
+  const { data: updateConvictionLast } = useContractRead({
+    ...cvStrategyContract,
+    functionName: "updateProposalConviction" as any, // TODO: fix CVStrategy.updateProposalConviction to view in contract
+    args: [proposalIdNumber],
+  }) as { data: bigint | undefined };
 
-      stakeAmountFromContract = (await client.readContract({
-        ...cvStrategyContract,
-        functionName: "getProposalStakedAmount",
-        args: [proposalIdNumber],
-      })) as bigint;
-      getProposal = (await client.readContract({
-        ...cvStrategyContract,
-        functionName: "getProposal",
-        args: [proposalIdNumber],
-      })) as any;
-      updateConvictionLast = (await client.readContract({
-        ...cvStrategyContract,
-        functionName: "updateProposalConviction",
-        args: [proposalIdNumber],
-      })) as bigint;
-      maxCVSupply = (await client.readContract({
-        ...cvStrategyContract,
-        functionName: "getMaxConviction",
-        args: [totalEffectiveActivePoints],
-      })) as bigint;
-    } catch (error) {
-      updateConvictionLast = getProposal[7] as bigint;
-      console.log(
-        "proposal already executed so threshold can no be read from contracts, or it is siganling proposal",
-        error,
-      );
+  const { data: maxCVSupply } = useContractRead({
+    ...cvStrategyContract,
+    functionName: "getMaxConviction",
+    args: [totalEffectiveActivePoints || 0n],
+  });
+
+  const percentages = useMemo(() => {
+    if (
+      !maxCVSupply ||
+      !totalEffectiveActivePoints ||
+      !updateConvictionLast ||
+      !maxCVSupply
+    ) {
+      return;
     }
 
     //logs for debugging in arb sepolia - //TODO: remove before merge
@@ -203,7 +189,7 @@ export default function Proposal({
     // console.log(convictionLast);
     console.log("convictionLast:              %s", convictionLast);
 
-    thresholdPct = calculatePercentageBigInt(
+    let thresholdPct = calculatePercentageBigInt(
       threshold,
       maxCVSupply,
       tokenDecimals,
@@ -219,7 +205,7 @@ export default function Proposal({
     //   tokenDecimals,
     // );
 
-    totalSupportPct = calculatePercentageBigInt(
+    let totalSupportPct = calculatePercentageBigInt(
       stakedAmount,
       totalEffectiveActivePoints,
       tokenDecimals,
@@ -232,34 +218,30 @@ export default function Proposal({
     //   tokenDecimals,
     // );
 
-    currentConvictionPct = calculatePercentageBigInt(
-      updateConvictionLast,
+    let currentConvictionPct = calculatePercentageBigInt(
+      BigInt(updateConvictionLast),
       maxCVSupply,
       tokenDecimals,
     );
 
     console.log("currentConviction:           %s", currentConvictionPct);
 
-    setComputedInfos({
-      totalEffectiveActivePoints,
-      updateConvictionLast,
-      getProposal,
-      maxCVSupply,
-      thFromContract,
-      stakeAmountFromContract,
-      currentConvictionPct,
-      totalSupportPct,
+    return {
       thresholdPct,
-    });
-  };
+      totalSupportPct,
+      currentConvictionPct,
+    };
+  }, [
+    threshold,
+    maxCVSupply,
+    stakedAmount,
+    totalEffectiveActivePoints,
+    updateConvictionLast,
+  ]);
 
-  useEffect(() => {
-    refreshData();
-  }, [proposalData]);
-
-  return proposalData && ipfsResult ? (
+  return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
-      <main className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 bg-surface p-16">
+      <main className="bg-surface flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 p-16">
         {/* main content */}
         <div className="flex justify-between">
           <div className="flex items-center gap-2">
@@ -267,7 +249,7 @@ export default function Proposal({
             <h4 className="font-sm font-bold">
               <span className="">
                 {" "}
-                {prettyTimestamp(proposalData?.createdAt || 0)}
+                {prettyTimestamp(proposalData.createdAt || 0)}
               </span>
             </h4>
           </div>
@@ -328,19 +310,17 @@ export default function Proposal({
           </div>
         ) : (
           <div className="mt-10 flex justify-evenly">
-            <ConvictionBarChart
-              currentConvictionPct={computedInfos?.currentConvictionPct}
-              thresholdPct={computedInfos?.thresholdPct}
-              proposalSupportPct={computedInfos?.totalSupportPct}
-              isSignalingType={isSignalingType}
-            />
+            {percentages && (
+              <ConvictionBarChart
+                currentConvictionPct={percentages.currentConvictionPct}
+                thresholdPct={percentages.thresholdPct}
+                proposalSupportPct={percentages.totalSupportPct}
+                isSignalingType={isSignalingType}
+              />
+            )}
           </div>
         )}
       </main>
-    </div>
-  ) : (
-    <div className="w-full text-center">
-      <div className="spinner"></div>
     </div>
   );
 }
