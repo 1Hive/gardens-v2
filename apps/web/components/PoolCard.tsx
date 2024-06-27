@@ -12,6 +12,7 @@ import {
   CurrencyDollarIcon,
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
+import { poolTypes } from "@/types";
 
 type StrategyQuery = NonNullable<
   NonNullable<
@@ -43,7 +44,7 @@ export function PoolCard({
           count={proposals.length}
           label="proposals"
         />
-        {poolType == 1 && (
+        {poolTypes[poolType] == "funding" && (
           <Statistic
             icon={<CurrencyDollarIcon />}
             count={formatTokenAmount(poolAmount, tokenGarden?.decimals)}
@@ -59,7 +60,7 @@ export function PoolCard({
         </div>
       ) : (
         <Image
-          src={poolType == 1 ? blueLand : grass}
+          src={poolTypes[poolType] == "funding" ? blueLand : grass}
           alt="Garden land"
           className="h-10 w-full rounded-lg object-cover"
         />

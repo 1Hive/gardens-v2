@@ -30,7 +30,7 @@ const PROPOSAL_STATUS_STYLES = [
   "bg-tertiary-soft text-tertiary-content",
 ];
 
-const BASE_STYLES = "badge border-none leading-5 py-4 px-4 text-base";
+const BASE_STYLES = "border-none rounded-full leading-5 py-2 px-4 text-base";
 
 export function Badge({
   poolType,
@@ -68,7 +68,7 @@ export function Badge({
       {iconIncluded && (
         <div className="h-6 w-6 text-inherit">{iconIncluded}</div>
       )}
-      {isCapitalize ? content : capitalize(content)}
+      <h6>{isCapitalize ? content : capitalize(content)}</h6>
     </div>
   );
 }
