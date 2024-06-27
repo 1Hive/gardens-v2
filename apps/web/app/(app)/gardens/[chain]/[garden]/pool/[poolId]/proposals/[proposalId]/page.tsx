@@ -82,24 +82,18 @@ export default function Proposal({
 
   const proposalData = getProposalResult.cvproposal;
 
-  if (!proposalData) {
-    return (
-      <p className="text-center text-2xl text-error">{`Proposal ${proposalId} not found`}</p>
-    );
-  }
-
   const tokenSymbol = getProposalResult.tokenGarden?.symbol;
   const tokenDecimals = getProposalResult?.tokenGarden?.decimals;
-  const proposalIdNumber = BigInt(proposalData.proposalNumber);
-  const convictionLast = proposalData.convictionLast as string;
-  const threshold = proposalData.threshold as bigint;
-  const proposalType = proposalData.strategy.config?.proposalType as number;
-  const requestedAmount = proposalData.requestedAmount as bigint;
-  const beneficiary = proposalData.beneficiary as Address;
-  const submitter = proposalData.submitter as Address;
-  const status = proposalData.proposalStatus as number;
-  const stakedAmount = proposalData.stakedAmount as bigint;
-  const metadata = proposalData.metadata;
+  const proposalIdNumber = proposalData?.proposalNumber;
+  const convictionLast = proposalData?.convictionLast as string;
+  const threshold = proposalData?.threshold as bigint;
+  const proposalType = proposalData?.strategy.config?.proposalType as number;
+  const requestedAmount = proposalData?.requestedAmount as bigint;
+  const beneficiary = proposalData?.beneficiary as Address;
+  const submitter = proposalData?.submitter as Address;
+  const status = proposalData?.proposalStatus as number;
+  const stakedAmount = proposalData?.stakedAmount as bigint;
+  const metadata = proposalData?.metadata;
 
   const isSignalingType = proposalType == 0;
 
@@ -114,10 +108,11 @@ export default function Proposal({
     }
   }, [metadata]);
 
-  const client = createPublicClient({
-    chain: getChain(chain),
-    transport: http(),
-  });
+  if (!proposalData) {
+    return (
+      <p className="text-center text-2xl text-error">{`Proposal ${proposalId} not found`}</p>
+    );
+  }
 
   const cvStrategyContract = {
     address: proposalData.strategy.id as Address,
