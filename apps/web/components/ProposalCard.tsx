@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
-import { StatusBadge } from "./Badge";
+import { Badge } from "./Badge";
 import { Button } from "./Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,9 +19,9 @@ import { encodeAbiParameters, formatUnits } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
-import { proposalTypes } from "@/types";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
+import { poolTypes } from "@/types";
 
 type ProposalCard = {
   proposalData: ProposalTypeVoter;
@@ -139,9 +139,9 @@ export function ProposalCard({
         </div>
 
         <div className="flex items-center gap-8">
-          <StatusBadge status={proposalStatus} />
+          <Badge status={proposalStatus} />
           {/* Button to test distribute */}
-          {!isEditView && proposalTypes[proposalData.type] == "funding" && (
+          {!isEditView && poolTypes[proposalData.type] == "funding" && (
             <Button
               // TODO: add flexible tooltip and func to check executability
               disabled={executeDisabled}
@@ -165,7 +165,7 @@ export function ProposalCard({
           )}
           <>
             <Link href={`${pathname}/proposals/${id}`}>
-              <Button variant="outline">View Proposal</Button>
+              <Button btnStyle="outline">View Proposal</Button>
             </Link>
           </>
         </div>

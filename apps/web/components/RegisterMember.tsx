@@ -297,9 +297,9 @@ export function RegisterMember({
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
       />
-      <div className="space-y-4 ">
-        <div className="flex">
-          <div className="flex-1 items-center rounded-lg bg-info px-4 py-3 text-sm font-bold text-white">
+      <div className="">
+        <div className="flex gap-4">
+          <div className="items-center rounded-lg bg-info px-4 py-3 text-sm font-bold text-white">
             <div className="flex items-center gap-2">
               <svg
                 className="mr-2 h-4 w-4 fill-current"
@@ -328,11 +328,11 @@ export function RegisterMember({
               </div>
             </div>
           </div>
-          <div className="stat flex-1 items-center gap-2">
+          <div className="flex items-center justify-center">
             <Button
               onClick={handleChange}
-              className="w-full bg-primary"
-              size="md"
+              btnStyle={isMember ? "outline" : "filled"}
+              color={isMember ? "danger" : "primary"}
               disabled={missmatchUrl || disabledRegMemberButton}
               tooltip={tooltipMessage}
             >

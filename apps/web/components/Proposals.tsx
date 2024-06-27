@@ -443,13 +443,13 @@ export function Proposals({
             {editView && (
               <>
                 <Button
-                  variant="error"
+                  btnStyle="outline"
+                  color="danger"
                   onClick={() => setEditView((prev) => !prev)}
                 >
                   Cancel
                 </Button>
                 <Button
-                  className="min-w-[200px]"
                   onClick={() => submit()}
                   isLoading={allocateStatus === "loading"}
                   disabled={

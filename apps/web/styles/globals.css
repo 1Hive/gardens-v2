@@ -162,16 +162,16 @@ caption {
   text-align: left;
 }
 
-.badge {
-  @apply text-black;
-}
-
 .border2 {
   border: 2px solid black;
 }
 
 .border1 {
   border: 1px solid var(--border-neutral);
+}
+
+.section-layout {
+  @apply border1 relative rounded-3xl bg-neutral p-8;
 }
 
 /* Hide number input arrows */

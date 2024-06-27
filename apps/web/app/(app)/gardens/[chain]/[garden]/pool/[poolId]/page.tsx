@@ -13,11 +13,11 @@ import {
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { pointSystems, proposalTypes } from "@/types";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import { pointSystems, poolTypes } from "@/types";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
 import { useEffect, useMemo, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
 export const dynamic = "force-dynamic";
 
@@ -121,7 +121,7 @@ export default function Pool({
                         Conviction Voting
                       </span>
                     </div>
-                    {proposalType == 1 && (
+                    {poolTypes[proposalType] !== "sigaling" && (
                       <div className="text-md stat-title">
                         Funding Token:{" "}
                         <span className="text-md pl-2 text-black">
@@ -163,7 +163,7 @@ export default function Pool({
           {/* Pool metrics: for now we have funds available and spending limit */}
           {isEnabled && (
             <>
-              {proposalTypes[proposalType] !== "signaling" && (
+              {poolTypes[proposalType] !== "signaling" && (
                 <PoolMetrics
                   alloInfo={alloInfo}
                   poolId={poolId}

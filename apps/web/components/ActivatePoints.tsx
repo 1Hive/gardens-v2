@@ -137,7 +137,8 @@ export function ActivatePoints({
       <div className="flex flex-col gap-4 pl-4">
         <Button
           onClick={handleChange}
-          className="w-fit bg-primary"
+          btnStyle={isMemberActivated ? "outline" : "filled"}
+          color={isMemberActivated ? "danger" : "primary"}
           disabled={missmatchUrl || disableActiveBtn}
           tooltip={String(tooltipMessage)}
         >

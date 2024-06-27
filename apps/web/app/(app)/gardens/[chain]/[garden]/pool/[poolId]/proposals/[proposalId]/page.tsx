@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, StatusBadge } from "@/components";
+import { Badge } from "@/components";
 import { EthAddress } from "@/components";
 import { cvStrategyABI } from "@/src/generated";
 import { Abi, Address, createPublicClient, formatUnits, http } from "viem";
@@ -260,7 +260,7 @@ export default function Proposal({
         {/* title - description - status */}
         <div className="border2 relative space-y-12 rounded-xl bg-white px-8 py-4">
           <div className="flex justify-end">
-            <StatusBadge status={status} />
+            <Badge status={status} />
           </div>
           <div className=" flex items-baseline justify-end space-x-4 ">
             <h3 className="w-full text-center text-2xl font-semibold">
