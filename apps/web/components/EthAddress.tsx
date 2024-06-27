@@ -42,7 +42,7 @@ export const EthAddress = ({
       // theme={theme}
       theme={{
         base: "simple-light",
-        textColor: "var(--color-green-600)",
+        textColor: "var(--color-green-500)",
         badgeIconRadius: 12,
         badgeHeight: 32,
         fontSize: 16,

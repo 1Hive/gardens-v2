@@ -1,6 +1,6 @@
 "use client";
 import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
-import { grass, poolGrassBlue } from "@/assets";
+import { grass, blueLand } from "@/assets";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components";
@@ -59,7 +59,7 @@ export function PoolCard({
         </div>
       ) : (
         <Image
-          src={poolType == 1 ? poolGrassBlue : grass}
+          src={poolType == 1 ? blueLand : grass}
           alt="Garden land"
           className="h-10 w-full rounded-lg object-cover"
         />

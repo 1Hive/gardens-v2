@@ -19,7 +19,7 @@ export const Statistic = ({
   const defaultIcon = <UserGroupIcon className={iconClassNames} />;
 
   return (
-    <div className="text-neutral-soft-content flex h-full items-center gap-2">
+    <div className="text-neutral-soft-content flex items-center gap-2">
       {icon ? (
         <div className={iconClassNames}>{icon}</div>
       ) : (

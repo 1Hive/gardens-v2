@@ -30,7 +30,7 @@ const PROPOSAL_STATUS_STYLES = [
   "bg-tertiary-soft text-tertiary-content",
 ];
 
-const BASE_STYLES = "badge border-none leading-5 p-4 text-base";
+const BASE_STYLES = "badge border-none leading-5 py-4 px-4 text-base";
 
 export function Badge({
   poolType,

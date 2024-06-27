@@ -6,7 +6,7 @@ import {
   EthAddress,
 } from "@/components";
 import Image from "next/image";
-import { grassLarge, poolGrassBlue } from "@/assets";
+import { grassLarge, blueLand } from "@/assets";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
   Allo,
@@ -84,7 +84,7 @@ export default async function Pool({
           <EthAddress address={strategyAddr} />
         </p>
         <p>{description}</p>
-        <div className="mb-7 mt-5 flex w-full flex-col items-start gap-3.5">
+        <div className="mb-10 mt-8 flex flex-col items-start gap-2">
           <Statistic label="pool type" icon={<InformationCircleIcon />}>
             <Badge poolType={proposalType} />
           </Statistic>
@@ -121,9 +121,7 @@ export default async function Pool({
           </div>
         ) : (
           <Image
-            src={
-              poolTypes[proposalType] == "funding" ? poolGrassBlue : grassLarge
-            }
+            src={poolTypes[proposalType] == "funding" ? blueLand : grassLarge}
             alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
           />
