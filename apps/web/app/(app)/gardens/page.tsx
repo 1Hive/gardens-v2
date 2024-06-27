@@ -53,7 +53,7 @@ export default function Gardens() {
         <p className="badge-info mb-8 rounded p-1 text-center">No Gardens</p>
       );
     }
-  }, [fetching, tokenGardens]);
+  }, [fetching, tokenGardens?.length]);
 
   return (
     <div className="flex flex-col items-center justify-center gap-8">

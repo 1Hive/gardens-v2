@@ -14,7 +14,11 @@ import {
 } from "viem/chains";
 import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
-import { ChangeEventScope, SubscriptionId, usePubSubContext } from "@/contexts/pubsub.context";
+import {
+  ChangeEventScope,
+  SubscriptionId,
+  usePubSubContext,
+} from "@/contexts/pubsub.context";
 import { debounce, isEqual } from "lodash-es";
 import { CHANGE_EVENT_MAX_RETRIES } from "@/globals";
 import delayAsync from "@/utils/delayAsync";
@@ -51,7 +55,6 @@ export default function useSubgraphQueryMultiChain<
     const init = async () => {
       setFetching(true);
       await fetchDebounce();
-      setFetching(false);
     };
     init();
   }, []);
@@ -106,16 +109,18 @@ export default function useSubgraphQueryMultiChain<
                   retryCount >= CHANGE_EVENT_MAX_RETRIES
                 ) {
                   if (retryCount === CHANGE_EVENT_MAX_RETRIES) {
-                    console.debug(`Still not updated but max retries reached. (retry count: ${retryCount})`);
-                  } 
+                    console.debug(
+                      `Still not updated but max retries reached. (retry count: ${retryCount})`,
+                    );
+                  }
                   responseMap.current.set(chainId, res.data!);
                 } else {
                   console.debug(
-                    `Subgraph-${chainId} result not yet updated, retrying with incremental delays... (retry count: ${retryCount+1}/${CHANGE_EVENT_MAX_RETRIES})`,
+                    `Subgraph-${chainId} result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
                   );
                   const delay = 2000 * 2 ** retryCount;
                   await delayAsync(delay);
-                  await fetchSubgraphChain(retryCount+1);
+                  await fetchSubgraphChain(retryCount + 1);
                 }
               }
             } catch (error: any) {
@@ -129,6 +134,7 @@ export default function useSubgraphQueryMultiChain<
 
       // Make sure unique values are returned
       setResponse(Array.from(new Set(responseMap.current.values())));
+      setFetching(false);
     },
     200,
   );
