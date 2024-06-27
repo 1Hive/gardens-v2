@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Statistic } from "./Statistic";
 import { Card } from "./Card";
 import { usePathname } from "next/navigation";
+import { RectangleGroupIcon } from "@heroicons/react/24/outline";
 
 type CommunityCardProps = {
   name: string;
@@ -30,9 +31,12 @@ export function CommunityCard({
         width={100}
       />
       <div className="flex flex-col gap-2">
-        <h5>{name}</h5>
+        {/* fixed height for 2row title */}
+        <div className="flex h-[37px] items-center">
+          <h5>{name}</h5>
+        </div>
         <Statistic label="members" count={members} />
-        <Statistic label="pools" count={pools} />
+        <Statistic label="pools" icon={<RectangleGroupIcon />} count={pools} />
       </div>
     </Card>
   );

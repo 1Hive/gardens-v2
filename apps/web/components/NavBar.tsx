@@ -5,10 +5,7 @@ import Link from "next/link";
 import { navItems } from "@/constants/navigation";
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ConnectWallet } from "@/components";
-import { Badge } from "@/components";
-
 import Image from "next/image";
 
 export function NavBar() {
