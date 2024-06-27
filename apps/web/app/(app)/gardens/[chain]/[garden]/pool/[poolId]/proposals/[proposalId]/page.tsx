@@ -73,9 +73,9 @@ export default function Proposal({
       { topic: "proposal", id: proposalId, type: "update", chainId: chain },
     );
 
-  const proposalData = getProposalResult.cvproposal;
+  const proposalData = getProposalResult?.cvproposal;
 
-  const tokenSymbol = getProposalResult.tokenGarden?.symbol;
+  const tokenSymbol = getProposalResult?.tokenGarden?.symbol;
   const tokenDecimals = getProposalResult?.tokenGarden?.decimals;
   const proposalIdNumber = proposalData?.proposalNumber;
   const convictionLast = proposalData?.convictionLast as string;
@@ -102,7 +102,7 @@ export default function Proposal({
   }, [metadata]);
 
   const cvStrategyContract = {
-    address: proposalData.strategy.id as Address,
+    address: proposalData?.strategy.id as Address,
     abi: cvStrategyABI,
   };
 
