@@ -1,7 +1,7 @@
 import { commImg, groupFlowers } from "@/assets";
 import React from "react";
 import Image from "next/image";
-import { EthAddress, Identifier, PoolCard, RegisterMember } from "@/components";
+import { EthAddress, Statistic, PoolCard, RegisterMember } from "@/components";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { Address } from "viem";
 import {
@@ -83,18 +83,18 @@ export default async function CommunityPage({
             <EthAddress address={communityAddr as Address} />
           </div>
           <div className="flex flex-col gap-2">
-            <Identifier label="members" count={members?.length ?? 0} />
-            <Identifier label="strategies" count={strategies?.length ?? 0} />
-            <Identifier label="staked tokens" count={communityStakedTokens} />
+            <Statistic label="members" count={members?.length ?? 0} />
+            <Statistic label="strategies" count={strategies?.length ?? 0} />
+            <Statistic label="staked tokens" count={communityStakedTokens} />
           </div>
         </div>
         <div className="flex flex-col gap-4">
           {/* <div className="flex flex-col gap-2">
-            <Identifier
+            <Statistic
               label="registration amount"
               count={registerStakeAmount}
             />
-            <Identifier label="community fee" count={communityFee} />
+            <Statistic label="community fee" count={communityFee} />
           </div> */}
           <RegisterMember
             tokenSymbol={tokenGarden?.symbol ?? ""}

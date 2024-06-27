@@ -2,7 +2,7 @@
 import React from "react";
 import { commImg } from "@/assets";
 import Image from "next/image";
-import { Identifier } from "./Identifier";
+import { Statistic } from "./Statistic";
 import { Card } from "./Card";
 import { usePathname } from "next/navigation";
 
@@ -31,8 +31,8 @@ export function CommunityCard({
       />
       <div className="flex flex-col gap-2">
         <h5>{name}</h5>
-        <Identifier label="members" count={members} />
-        <Identifier label="pools" count={pools} />
+        <Statistic label="members" count={members} />
+        <Statistic label="pools" count={pools} />
       </div>
     </Card>
   );

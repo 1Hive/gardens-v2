@@ -3,7 +3,7 @@ import Image from "next/image";
 import {
   CommunityCard,
   EthAddress,
-  Identifier,
+  Statistic,
   TokenLabel,
 } from "@/components";
 import {
@@ -68,8 +68,8 @@ export default async function Garden({
             </p>
           </div>
           <div>
-            <Identifier label="communities" count={communities?.length ?? 0} />
-            <Identifier label="members" count={gardenTotalMembers} />
+            <Statistic label="communities" count={communities?.length ?? 0} />
+            <Statistic label="members" count={gardenTotalMembers} />
           </div>
         </div>
       </header>
