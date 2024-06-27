@@ -330,7 +330,7 @@ export function Proposals({
     if (memberPoolWeight == 0) {
       return 0;
     } else {
-    return ((number / 100) * memberPoolWeight).toFixed(2);
+      return ((number / 100) * memberPoolWeight).toFixed(2);
     }
   };
 
@@ -421,13 +421,13 @@ export function Proposals({
             {editView && (
               <>
                 <Button
-                  variant="error"
+                  btnStyle="outline"
+                  color="danger"
                   onClick={() => setEditView((prev) => !prev)}
                 >
                   Cancel
                 </Button>
                 <Button
-                  className="min-w-[200px]"
                   onClick={() => submit()}
                   isLoading={allocateStatus === "loading"}
                   disabled={

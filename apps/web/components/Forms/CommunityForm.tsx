@@ -408,21 +408,16 @@ export const CommunityForm = ({
         {showPreview ? (
           <div className="flex items-center gap-10">
             <Button
-              type="button"
-              onClick={() => createCommunity()}
-              isLoading={loading}
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="fill"
+              btnStyle="outline"
             >
               Edit
+            </Button>
+            <Button onClick={() => createCommunity()} isLoading={loading}>
+              Submit
             </Button>
           </div>
         ) : (

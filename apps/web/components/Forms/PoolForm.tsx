@@ -8,7 +8,7 @@ import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { useAccount, useContractWrite } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
-import { pointSystems, proposalTypes } from "@/types";
+import { pointSystems, poolTypes } from "@/types";
 import "viem/window";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
@@ -165,7 +165,7 @@ export default function PoolForm({
     },
     strategyType: {
       label: "Strategy type:",
-      parse: (value: string) => proposalTypes[value],
+      parse: (value: string) => poolTypes[value],
     },
     pointSystemType: {
       label: "Voting Weight System:",
@@ -177,7 +177,7 @@ export default function PoolForm({
     minThresholdPoints: {
       label: "Minimum threshold points:",
       parse: (value: string) => {
-        return value && value == "" ? "0" : value;
+        return value || "0";
       },
     },
   };
@@ -371,7 +371,7 @@ export default function PoolForm({
               register={register}
               errors={errors}
               registerKey="strategyType"
-              options={Object.entries(proposalTypes)
+              options={Object.entries(poolTypes)
                 .slice(0, -1)
                 .map(([value, text]) => ({ label: text, value: value }))}
             ></FormSelect>
@@ -559,21 +559,16 @@ export default function PoolForm({
         {showPreview ? (
           <div className="flex items-center gap-10">
             <Button
-              type="button"
-              onClick={() => createPool()}
-              isLoading={loading}
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="fill"
+              btnStyle="outline"
             >
               Edit
+            </Button>
+            <Button onClick={() => createPool()} isLoading={loading}>
+              Submit
             </Button>
           </div>
         ) : (
