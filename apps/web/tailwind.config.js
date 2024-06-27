@@ -63,6 +63,7 @@ module.exports = {
         "primary-soft": "#EBFBD8",
         "danger-hover-content": "#d03a3a",
         "danger-button": "#eb4848",
+        "danger-content": "#EB4848",
         "danger-soft": "#FFE6E6",
       },
       transitionProperty: {
