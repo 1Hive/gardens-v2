@@ -12,7 +12,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { pointSystems, proposalTypes } from "@/types";
+import { pointSystems, poolTypes } from "@/types";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +61,7 @@ export default async function Pool({
 
   return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
+      <div className="bg-surface flex flex-1 flex-col gap-6 rounded-xl border-2 border-black p-16">
         <header className="flex flex-col items-center justify-center">
           <h2 className="text-center font-press">Pool {poolId} </h2>
         </header>
@@ -87,7 +87,7 @@ export default async function Pool({
                         Conviction Voting
                       </span>
                     </div>
-                    {proposalType == 1 && (
+                    {poolTypes[proposalType] !== "sigaling" && (
                       <div className="text-md stat-title">
                         Funding Token:{" "}
                         <span className="text-md pl-2 text-black">
@@ -129,7 +129,7 @@ export default async function Pool({
           {/* Pool metrics: for now we have funds available and spending limit */}
           {isEnabled && (
             <>
-              {proposalTypes[proposalType] !== "signaling" && (
+              {poolTypes[proposalType] !== "signaling" && (
                 <PoolMetrics
                   alloInfo={alloInfo}
                   poolId={poolId}

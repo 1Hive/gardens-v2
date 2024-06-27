@@ -42,7 +42,9 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
 
         <div className="mb-2 mt-4">
           <Link href={link}>
-            <Button className="w-full bg-primary">View Communities</Button>
+            <Button className="w-full">
+              View Communities
+            </Button>
           </Link>
         </div>
       </div>

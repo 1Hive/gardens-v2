@@ -24,7 +24,7 @@ export const CommunityProfile = ({ ...props }: CommunityProfileProps) => {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} variant="outline">
+      <Button onClick={() => setOpen(true)} btnStyle="outline">
         Community Profile
       </Button>
       <Transition.Root show={open} as={Fragment}>
