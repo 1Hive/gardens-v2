@@ -141,7 +141,7 @@ export default function useSubgraphQueryMultiChain<
 
   return {
     data: response,
-    errors: errorsMap,
+    errors: errorsMap.current,
     refetch: fetchDebounce,
     fetching,
   };

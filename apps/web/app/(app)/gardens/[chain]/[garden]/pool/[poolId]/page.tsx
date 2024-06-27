@@ -28,7 +28,7 @@ export default function Pool({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data, fetching } = useSubgraphQueryByChain<getPoolDataQuery>(
+  const { data, fetching, error } = useSubgraphQueryByChain<getPoolDataQuery>(
     chain,
     getPoolDataDocument,
     { poolId: poolId, garden: garden },
@@ -39,25 +39,17 @@ export default function Pool({
       chainId: chain,
     },
   );
-  const strategyObj = data?.cvstrategies?.[0] as CVStrategy | undefined;
-  //const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
-  const maxRatioDivPrecision =
-    (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
-  data?.cvstrategies?.[0] as CVStrategy;
-
-  const pointSystem = data?.cvstrategies?.[0].config?.pointSystem;
-  const strategyAddr = strategyObj?.id as Address;
-  const communityAddress = strategyObj?.registryCommunity.id as Address;
-  const alloInfo = data?.allos[0] as Allo;
-  const proposalType = strategyObj?.config?.proposalType as number;
-  const poolAmount = strategyObj?.poolAmount as number;
-  const tokenGarden = data?.tokenGarden as TokenGarden;
-  const metadata = data?.cvstrategies?.[0]?.metadata as string;
-  const isEnabled = data?.cvstrategies?.[0]?.isEnabled as boolean;
+  useEffect(() => {
+    if (error) {
+      console.error("Error while fetching pool data: ", error);
+    }
+  }, [error]);
 
   const [ipfsResult, setIpfsResult] =
     useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
+
+  const metadata = data?.cvstrategies?.[0]?.metadata as string;
 
   useEffect(() => {
     if (metadata) {
@@ -67,24 +59,41 @@ export default function Pool({
     }
   }, [metadata]);
 
-  const spendingLimitPct = useMemo(() => {
-    const maxRatioDivPrecision =
-      (Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION) * 100;
-
-    console.log(
-      "maxRatio: " + strategyObj?.config?.maxRatio,
-      "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
-      "poolAmount: " + poolAmount,
+  if (fetching || !ipfsResult) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
     );
+  }
 
-    return maxRatioDivPrecision;
-  }, [strategyObj?.config?.maxRatio]);
+  const strategyObj = data?.cvstrategies?.[0] as CVStrategy;
+  if (!data || !strategyObj) {
+    return <div className="mt-52 text-center">Pool {poolId} not found</div>;
+  }
 
-  return fetching ? (
-    <LoadingSpinner></LoadingSpinner>
-  ) : strategyObj ? (
+  const pointSystem = data.cvstrategies?.[0].config?.pointSystem;
+  const strategyAddr = strategyObj.id as Address;
+  const communityAddress = strategyObj.registryCommunity.id as Address;
+  const alloInfo = data.allos[0] as Allo;
+  const proposalType = strategyObj?.config?.proposalType as number;
+  const poolAmount = strategyObj?.poolAmount as number;
+  const tokenGarden = data.tokenGarden as TokenGarden;
+
+  const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
+
+  const spendingLimitPct =
+    (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
+
+  console.log(
+    "maxRatio: " + strategyObj?.config?.maxRatio,
+    "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
+    "poolAmount: " + poolAmount,
+  );
+
+  return (
     <div className="relative mx-auto flex max-w-7xl gap-3 px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-surface p-16">
+      <div className="bg-surface flex flex-1 flex-col gap-6 rounded-xl border-2 border-black p-16">
         <header className="flex flex-col items-center justify-center">
           <h2 className="text-center font-press">Pool {poolId} </h2>
         </header>
@@ -93,7 +102,7 @@ export default function Pool({
           <section className="relative flex w-full flex-col items-center overflow-hidden rounded-lg border-2 border-black bg-white">
             <div className="mt-4 flex w-full flex-col items-center gap-12 p-8">
               <h3 className="max-w-2xl  text-center font-semibold">
-                {ipfsResult?.title}
+                {ipfsResult.title}
               </h3>
               {!isEnabled && (
                 <div className="badge badge-warning absolute left-5 top-5 gap-2 p-4 font-bold">
@@ -101,7 +110,7 @@ export default function Pool({
                 </div>
               )}
 
-              <p>{ipfsResult?.description}</p>
+              <p>{ipfsResult.description}</p>
               <div className="flex w-full  p-4">
                 <div className="flex flex-1  text-xl font-semibold">
                   <div className="mx-auto flex max-w-fit flex-col items-start justify-center space-y-4">
@@ -181,7 +190,5 @@ export default function Pool({
         </main>
       </div>
     </div>
-  ) : (
-    <div>{`Pool ${poolId} not found`}</div>
   );
 }
