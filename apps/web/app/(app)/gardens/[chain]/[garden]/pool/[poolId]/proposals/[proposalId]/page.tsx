@@ -1,4 +1,4 @@
-import { Badge } from "@/components";
+import { Badge, Statistic, DisplayNumber } from "@/components";
 import { EthAddress } from "@/components";
 import { cvStrategyABI } from "@/src/generated";
 import { Abi, Address, createPublicClient, formatUnits, http } from "viem";
@@ -10,7 +10,10 @@ import {
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount, calculatePercentageBigInt } from "@/utils/numbers";
+import Image from "next/image";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
+import { proposalStatus, poolTypes } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -90,7 +93,7 @@ export default async function Proposal({
   const stakedAmount = proposalData.stakedAmount as bigint;
   const metadata = proposalData.metadata;
 
-  const isSignalingType = proposalType == 0;
+  const isSignalingType = poolTypes[proposalType] == "signaling";
 
   const { title, description } = await getIpfsMetadata(metadata);
 
@@ -215,71 +218,66 @@ export default async function Proposal({
   console.log("currentConviction:           %s", currentConvictionPct);
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
-      <main className="bg-surface flex flex-1 flex-col gap-6 rounded-xl border-2 border-black bg-base-100 p-16">
-        {/* main content */}
-        <div className="flex justify-between">
-          <div className="flex items-center gap-2">
-            <Badge type={proposalType} />
-            <h4 className="font-sm font-bold">
-              <span className="">
-                {" "}
-                {prettyTimestamp(proposalData?.createdAt || 0)}
-              </span>
-            </h4>
-          </div>
-
-          <h4 className="font-press">Pool: {poolId}</h4>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 p-8">
+      <header className="section-layout flex flex-row items-start gap-10">
+        <div>
+          <Image
+            src={"/images/1.png"}
+            alt={`${1} community`}
+            className="h-[180px] bg-slate-200"
+            height={180}
+            width={180}
+          />
         </div>
-
-        {/* title - description - status */}
-        <div className="border2 relative space-y-12 rounded-xl bg-white px-8 py-4">
-          <div className="flex justify-end">
-            <Badge status={status} />
-          </div>
-          <div className=" flex items-baseline justify-end space-x-4 ">
-            <h3 className="w-full text-center text-2xl font-semibold">
-              {title}
-            </h3>
-          </div>
-          <div className="">
-            <p className="text-md text-justify">{description}</p>
-          </div>
+        <div className="flex w-full flex-col gap-8">
           <div>
-            {/* reqAmount - bene - creatBy */}
-            <div className="flex justify-between ">
-              {!isSignalingType && !!requestedAmount && (
-                <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md font-bold underline">
-                    Requested Amount
-                  </span>
-                  <span className="flex items-center gap-2 text-lg">
-                    {formatTokenAmount(requestedAmount, 18)}{" "}
-                    <span>{tokenSymbol}</span>
-                  </span>
-                </div>
-              )}
-              {!isSignalingType && beneficiary && (
-                <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md font-bold underline">
-                    Beneficiary
-                  </span>
-                  <EthAddress address={beneficiary} actions="copy" />
-                </div>
-              )}
-              {submitter && (
-                <div className="flex flex-1 flex-col items-center space-y-4">
-                  <span className="text-md font-bold underline">
-                    Created By
-                  </span>
-                  <EthAddress address={submitter} actions="copy" />
-                </div>
-              )}
+            <div className="mb-2 flex items-center justify-between">
+              <h2>
+                Proposal #{proposalIdNumber} - {title}
+              </h2>
+              <Badge type={proposalType} />
+            </div>
+            <div className="flex items-center gap-4">
+              <Badge status={status} />
+              <p className="font-semibold">
+                {prettyTimestamp(proposalData?.createdAt || 0)}
+              </p>
             </div>
           </div>
+          <p>{description}</p>
+          <div className="flex flex-col gap-2">
+            {!isSignalingType && (
+              <>
+                <Statistic
+                  label={"requested amount"}
+                  icon={<InformationCircleIcon />}
+                >
+                  <DisplayNumber
+                    number={formatUnits(requestedAmount, 18)}
+                    tokenSymbol={tokenSymbol}
+                    compact={true}
+                    className="font-bold text-black"
+                  />
+                </Statistic>
+                <Statistic label={"beneficiary"} icon={<UserIcon />}>
+                  <EthAddress
+                    address={beneficiary}
+                    actions="copy"
+                    icon="identicon"
+                  />
+                </Statistic>
+              </>
+            )}
+            <Statistic label={"created by"} icon={<UserIcon />}>
+              <EthAddress address={submitter} actions="copy" icon="identicon" />
+            </Statistic>
+          </div>
         </div>
-
-        {status && status == 4 ? (
+      </header>
+      <section className="section-layout">
+        <h2>Metrics</h2>
+        {/* TODO: need designs when proposal is already executed */}
+        {status && proposalStatus[status] == "executed" ? (
           <div className="badge badge-success p-4 text-white">
             Proposal passed and executed successfully
           </div>
@@ -293,7 +291,7 @@ export default async function Proposal({
             />
           </div>
         )}
-      </main>
+      </section>
     </div>
   );
 }
