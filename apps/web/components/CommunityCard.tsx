@@ -20,7 +20,6 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
-import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { getChainIdFromPath } from "@/utils/path";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
