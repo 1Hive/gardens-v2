@@ -9,7 +9,7 @@ import {
   getCommunitiesByGardenQuery,
 } from "#/subgraph/.graphclient";
 import { FormLink } from "@/components";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
@@ -98,6 +98,22 @@ export default function Garden({
     setCommunities(promisesResult);
   };
 
+  const CommunityList = useMemo(() => {
+    if (fetching) {
+      return <LoadingSpinner />;
+    } else if (communities?.length) {
+      return communities.map((community, i) => (
+        <CommunityCard
+          {...community}
+          tokenGarden={tokenGarden as TokenGarden}
+          key={`${community.communityName}_${i}`}
+        />
+      ));
+    } else {
+      return <div className="text-center">No communities found</div>;
+    }
+  }, [communities, fetching]);
+
   return (
     <div className="bg-surface relative mx-auto max-w-6xl space-y-10 rounded-xl border-2 border-black bg-base-100 p-8">
       <header className="relative flex min-h-[500px] flex-col items-center justify-between gap-6 px-3">
@@ -129,21 +145,7 @@ export default function Garden({
         <h4 className="bg-surface rounded-b-xl py-6 text-center font-press shadow">
           {tokenGarden?.name} Communities
         </h4>
-
-        {/* communites */}
-        {fetching ? (
-          <LoadingSpinner />
-        ) : communities?.length ? (
-          communities.map((community, i) => (
-            <CommunityCard
-              {...community}
-              tokenGarden={tokenGarden as TokenGarden}
-              key={`${community.communityName}_${i}`}
-            />
-          ))
-        ) : (
-          <div className="text-center">No communities found</div>
-        )}
+        {CommunityList}
       </section>
     </div>
   );
