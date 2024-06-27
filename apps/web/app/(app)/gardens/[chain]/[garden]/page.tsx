@@ -9,6 +9,9 @@ import {
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { FormLink } from "@/components";
+import { isProd } from "@/constants/contracts";
+import TokenGardenFaucet from "@/components/TokenGardenFaucet";
+import { Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +110,9 @@ export default async function Garden({
           />
         ))}
       </section>
+      {!isProd && tokenGarden && (
+        <TokenGardenFaucet token={tokenGarden}></TokenGardenFaucet>
+      )}
     </div>
   );
 }
