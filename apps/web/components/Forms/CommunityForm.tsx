@@ -76,12 +76,12 @@ export const CommunityForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const chainId = +getChainIdFromPath();
+  const chainId = getChainIdFromPath();
 
   // const [file, setFile] = useState<File | null>(null);
 
   const publicClient = createPublicClient({
-    chain: getChain(getChainIdFromPath()) as Chain,
+    chain: getChain(chainId) as Chain,
     transport: http(),
   });
 

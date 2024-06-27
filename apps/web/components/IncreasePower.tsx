@@ -77,7 +77,7 @@ export const IncreasePower = ({
   const [increaseInput, setIncreaseInput] = useState<number | string>("");
 
   const { publish } = usePubSubContext();
-  const chainId = +getChainIdFromPath();
+  const chainId = getChainIdFromPath();
 
   //handeling states
   type states = "idle" | "loading" | "success" | "error";
@@ -94,7 +94,7 @@ export const IncreasePower = ({
   const { data: accountTokenBalance } = useBalance({
     address: connectedAccount,
     token: registerToken as `0x${string}` | undefined,
-    chainId: Number(chainId),
+    chainId,
   });
 
   //TODO: create a hook for this
@@ -134,7 +134,7 @@ export const IncreasePower = ({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[+chainId].confirmations,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: allowTokenData?.hash,
   });
 
@@ -152,7 +152,7 @@ export const IncreasePower = ({
     isSuccess: isWaitResetAllowanceStatus,
     status: waitResetAllowanceStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[+chainId].confirmations,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: resetAllowance?.hash,
   });
 

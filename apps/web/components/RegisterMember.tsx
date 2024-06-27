@@ -101,7 +101,7 @@ export function RegisterMember({
   const { data: accountTokenBalance } = useBalance({
     address: connectedAccount,
     token: registerToken as `0x${string}` | undefined,
-    chainId: Number(chainId),
+    chainId,
   });
 
   const accountHasBalance = gte(
@@ -122,7 +122,7 @@ export function RegisterMember({
   });
 
   useWaitForTransaction({
-    confirmations: chainDataMap[+chainId].confirmations,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: registerMemberData?.hash,
     onSuccess: () => {
       // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
@@ -148,7 +148,7 @@ export function RegisterMember({
   });
 
   useWaitForTransaction({
-    confirmations: chainDataMap[+chainId].confirmations,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: unregisterMemberData?.hash,
     onSuccess: () => {
       // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
@@ -182,7 +182,7 @@ export function RegisterMember({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[+chainId].confirmations,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: allowTokenData?.hash,
   });
 

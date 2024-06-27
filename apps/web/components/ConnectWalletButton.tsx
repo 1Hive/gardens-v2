@@ -19,8 +19,8 @@ import { getChainIdFromPath } from "@/utils/path";
 export const ConnectWallet = () => {
   const path = usePathname();
   const account = useAccount();
-  const urlChainId = +getChainIdFromPath();
-  const tokenUrlAddress = path?.split("/")[3];
+  const urlChainId = getChainIdFromPath();
+  const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
   const { disconnect } = useDisconnect();

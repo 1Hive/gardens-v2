@@ -76,7 +76,7 @@ export function Proposals({
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-  const chainId = +getChainIdFromPath();
+  const chainId = getChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const { data: isMemberActivated } = useContractRead({
