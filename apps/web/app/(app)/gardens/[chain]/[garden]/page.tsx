@@ -112,7 +112,7 @@ export default function Garden({
     } else {
       return <div className="text-center">No communities found</div>;
     }
-  }, [communities, fetching]);
+  }, [communities?.length, fetching, tokenGarden]);
 
   return (
     <div className="bg-surface relative mx-auto max-w-6xl space-y-10 rounded-xl border-2 border-black bg-base-100 p-8">
