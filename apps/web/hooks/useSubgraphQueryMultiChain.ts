@@ -26,7 +26,7 @@ import delayAsync from "@/utils/delayAsync";
 const allChains: ChainId[] = [
   sepolia.id,
   arbitrumSepolia.id,
-  optimismSepolia.id,
+  // optimismSepolia.id,
 ];
 
 if (process.env.NODE_ENV === "development") {
@@ -65,7 +65,6 @@ export default function useSubgraphQueryMultiChain<
     }
 
     subscritionId.current = subscribe(changeScope, (payload) => {
-      console.debug("Received change event", payload);
       fetchDebounce(payload.chainId ? [payload.chainId] : undefined, true);
     });
 
