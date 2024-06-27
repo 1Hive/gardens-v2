@@ -92,8 +92,13 @@ export default function useSubgraphQueryByChain<
     if (!retryCount) {
       retryCount = 0;
     }
+
+    if (result.error) {
+      console.error(`⚡ Error fetching subgraph data:`, result.error);
+      return result;
+    }
     if (
-      (!result.error && !isEqual(result.data, latestResponse.current.data)) ||
+      !isEqual(result.data, latestResponse.current.data) ||
       retryCount >= CHANGE_EVENT_MAX_RETRIES
     ) {
       if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
