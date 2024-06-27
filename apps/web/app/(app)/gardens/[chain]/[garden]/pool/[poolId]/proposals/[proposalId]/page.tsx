@@ -73,13 +73,6 @@ export default function Proposal({
       { topic: "proposal", id: proposalId, type: "update", chainId: chain },
     );
 
-  if (!getProposalResult)
-    return (
-      <div className="w-full text-center">
-        <div className="spinner"></div>
-      </div>
-    );
-
   const proposalData = getProposalResult.cvproposal;
 
   const tokenSymbol = getProposalResult.tokenGarden?.symbol;
@@ -107,12 +100,6 @@ export default function Proposal({
       });
     }
   }, [metadata]);
-
-  if (!proposalData) {
-    return (
-      <p className="text-center text-2xl text-error">{`Proposal ${proposalId} not found`}</p>
-    );
-  }
 
   const cvStrategyContract = {
     address: proposalData.strategy.id as Address,
@@ -233,6 +220,22 @@ export default function Proposal({
     totalEffectiveActivePoints,
     updateConvictionLast,
   ]);
+
+  if (!getProposalResult) {
+    return (
+      <div className="w-full text-center">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  if (!proposalData) {
+    return (
+      <p className="text-center text-2xl text-error">
+        Proposal {proposalId} not found
+      </p>
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl gap-3  px-4 sm:px-6 lg:px-8">
