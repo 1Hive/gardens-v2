@@ -553,7 +553,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled';
 export type Member = {
     id: Scalars['ID'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -669,7 +669,7 @@ export type MemberCommunity_filter = {
     and?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<MemberCommunity_filter>>>;
 };
-export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress';
+export type MemberCommunity_orderBy = 'id' | 'memberAddress' | 'stakedTokens' | 'isRegistered' | 'member' | 'member__id' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid';
 export type MemberStrategy = {
     id: Scalars['ID'];
     member: Member;
@@ -970,6 +970,7 @@ export type RegistryCommunity = {
     alloAddress?: Maybe<Scalars['String']>;
     members?: Maybe<Array<MemberCommunity>>;
     garden: TokenGarden;
+    isValid: Scalars['Boolean'];
 };
 export type RegistryCommunitystrategiesArgs = {
     skip?: InputMaybe<Scalars['Int']>;
@@ -1214,12 +1215,16 @@ export type RegistryCommunity_filter = {
     garden_not_ends_with?: InputMaybe<Scalars['String']>;
     garden_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
     garden_?: InputMaybe<TokenGarden_filter>;
+    isValid?: InputMaybe<Scalars['Boolean']>;
+    isValid_not?: InputMaybe<Scalars['Boolean']>;
+    isValid_in?: InputMaybe<Array<Scalars['Boolean']>>;
+    isValid_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
     or?: InputMaybe<Array<InputMaybe<RegistryCommunity_filter>>>;
 };
-export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address';
+export type RegistryCommunity_orderBy = 'id' | 'chainId' | 'strategyTemplate' | 'profileId' | 'communityFee' | 'protocolFee' | 'communityName' | 'covenantIpfsHash' | 'registryFactory' | 'registryFactory__id' | 'registryFactory__chainId' | 'strategies' | 'councilSafe' | 'isKickEnabled' | 'registerStakeAmount' | 'registerToken' | 'alloAddress' | 'members' | 'garden' | 'garden__id' | 'garden__name' | 'garden__description' | 'garden__chainId' | 'garden__totalBalance' | 'garden__ipfsCovenant' | 'garden__symbol' | 'garden__decimals' | 'garden__address' | 'isValid';
 export type RegistryFactory = {
     id: Scalars['ID'];
     chainId: Scalars['BigInt'];
@@ -1991,6 +1996,7 @@ export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType ext
     alloAddress?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
     members?: Resolver<Maybe<Array<ResolversTypes['MemberCommunity']>>, ParentType, ContextType, RequireFields<RegistryCommunitymembersArgs, 'skip' | 'first'>>;
     garden?: Resolver<ResolversTypes['TokenGarden'], ParentType, ContextType>;
+    isValid?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type RegistryFactoryResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['RegistryFactory'] = ResolversParentTypes['RegistryFactory']> = ResolversObject<{
@@ -2143,7 +2149,7 @@ export type getFactoriesQueryVariables = Exact<{
 }>;
 export type getFactoriesQuery = {
     registryFactories: Array<(Pick<RegistryFactory, 'id'> & {
-        registryCommunities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'communityName' | 'covenantIpfsHash' | 'registerToken' | 'alloAddress'> & {
+        registryCommunities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'isValid' | 'communityName' | 'covenantIpfsHash' | 'registerToken' | 'alloAddress'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'memberAddress'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'poolId' | 'isEnabled'> & {
                 config: Pick<CVStrategyConfig, 'id' | 'decay' | 'maxRatio' | 'weight' | 'minThresholdPoints'>;
@@ -2156,7 +2162,7 @@ export type getTokenGardensQueryVariables = Exact<{
 }>;
 export type getTokenGardensQuery = {
     tokenGardens: Array<(Pick<TokenGarden, 'id' | 'chainId' | 'name' | 'symbol' | 'decimals' | 'totalBalance'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'covenantIpfsHash' | 'communityFee'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'covenantIpfsHash' | 'communityFee' | 'isValid'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'id'>>>;
         })>>;
     })>;
@@ -2179,7 +2185,7 @@ export type isMemberQuery = {
         stakes?: Maybe<Array<(Pick<Stake, 'id' | 'amount'> & {
             proposal: (Pick<CVProposal, 'id' | 'proposalNumber' | 'stakedAmount'> & {
                 strategy: (Pick<CVStrategy, 'id' | 'poolId'> & {
-                    registryCommunity: (Pick<RegistryCommunity, 'id'> & {
+                    registryCommunity: (Pick<RegistryCommunity, 'id' | 'isValid'> & {
                         garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
                     });
                 });
@@ -2196,7 +2202,7 @@ export type getMemberQueryVariables = Exact<{
 export type getMemberQuery = {
     member?: Maybe<(Pick<Member, 'id'> & {
         memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'id' | 'stakedTokens' | 'isRegistered'> & {
-            registryCommunity: Pick<RegistryCommunity, 'id'>;
+            registryCommunity: Pick<RegistryCommunity, 'id' | 'isValid'>;
         })>>;
         stakes?: Maybe<Array<(Pick<Stake, 'id' | 'amount' | 'createdAt'> & {
             proposal: Pick<CVProposal, 'proposalNumber' | 'id'>;
@@ -2210,7 +2216,7 @@ export type getPoolCreationDataQueryVariables = Exact<{
 export type getPoolCreationDataQuery = {
     tokenGarden?: Maybe<Pick<TokenGarden, 'decimals' | 'id' | 'symbol'>>;
     allos: Array<Pick<Allo, 'id'>>;
-    registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName'>>;
+    registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName' | 'isValid'>>;
 };
 export type getCommunitiesByGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
@@ -2218,7 +2224,7 @@ export type getCommunitiesByGardenQueryVariables = Exact<{
 export type getCommunitiesByGardenQuery = {
     registryFactories: Array<Pick<RegistryFactory, 'id'>>;
     tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'decimals' | 'chainId'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'covenantIpfsHash' | 'chainId' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'isValid' | 'covenantIpfsHash' | 'chainId' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
             strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount' | 'isEnabled'> & {
                 registryCommunity: Pick<RegistryCommunity, 'registerStakeAmount'>;
@@ -2234,7 +2240,7 @@ export type getCommunityCreationDataQueryVariables = Exact<{
 export type getCommunityCreationDataQuery = {
     registryFactories: Array<Pick<RegistryFactory, 'id'>>;
     tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'decimals' | 'chainId'> & {
-        communities?: Maybe<Array<Pick<RegistryCommunity, 'alloAddress'>>>;
+        communities?: Maybe<Array<Pick<RegistryCommunity, 'alloAddress' | 'isValid'>>>;
     })>;
 };
 export type getPoolDataQueryVariables = Exact<{
@@ -2247,7 +2253,7 @@ export type getPoolDataQuery = {
     cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled'> & {
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'maxRatio' | 'minThresholdPoints'>;
-        registryCommunity: (Pick<RegistryCommunity, 'id'> & {
+        registryCommunity: (Pick<RegistryCommunity, 'id' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });
         proposals: Array<Pick<CVProposal, 'id' | 'proposalNumber' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount'>>;
@@ -2278,7 +2284,7 @@ export type getStrategyByPoolQuery = {
     cvstrategies: Array<(Pick<CVStrategy, 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled'> & {
         config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
-        registryCommunity: (Pick<RegistryCommunity, 'id'> & {
+        registryCommunity: (Pick<RegistryCommunity, 'id' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });
         proposals: Array<Pick<CVProposal, 'id' | 'proposalNumber' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount'>>;

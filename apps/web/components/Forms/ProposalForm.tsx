@@ -126,9 +126,9 @@ export const ProposalForm = ({
 
     toast
       .promise(ipfsUpload, {
-        pending: "Uploading data, wait a moment...",
-        success: "All ready!",
-        error: "Something went wrong",
+        pending: "Preparing everything, wait a moment...",
+        // success: "All ready!",
+        error: "Error uploading data to IPFS",
       })
       .then((ipfsHash) => {
         console.log("https://ipfs.io/ipfs/" + ipfsHash);

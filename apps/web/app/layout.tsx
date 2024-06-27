@@ -11,13 +11,13 @@ import Loading from "./loading";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const chakra = Chakra_Petch({
   variable: "--font-chakra",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const metadata: Metadata = {

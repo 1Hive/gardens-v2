@@ -13,6 +13,7 @@ import {
   rabbyWallet,
   frameWallet,
   injectedWallet,
+  coinbaseWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, WagmiConfig } from "wagmi";
 import { chains, publicClient } from "@/configs/wagmiConfig";
@@ -30,6 +31,7 @@ const connectors = connectorsForWallets([
       injectedWallet({ chains }),
       rabbyWallet({ chains }),
       frameWallet({ chains }),
+      coinbaseWallet({ appName: "Gardens V2", chains }),
     ],
   },
 ]);

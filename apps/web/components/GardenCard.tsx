@@ -11,9 +11,9 @@ import { Arbitrum, GnosisGno } from "@thirdweb-dev/chain-icons";
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
 export function GardenCard({ garden }: { garden: TokenGarden }) {
-  const { id, name, decimals, symbol, communities, totalBalance, chainId } =
-    garden;
+  const { id, name, decimals, symbol, totalBalance, chainId } = garden;
   const link = `/gardens/${chainId}/${id}`;
+  const communities = garden.communities?.filter((comm) => comm.isValid);
   const commLength = communities?.length ?? 0;
   const totalMembers =
     communities

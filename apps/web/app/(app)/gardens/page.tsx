@@ -35,23 +35,34 @@ export default async function Gardens() {
     if (isProd) {
       const r0 = await getTokenGardens(sepolia.id);
       gardens?.tokenGardens.push(...r0.data.tokenGardens);
+      const r1 = await getTokenGardens(arbitrumSepolia.id);
+      gardens?.tokenGardens.push(...r1.data.tokenGardens);
     } else {
       const promises = [];
       for (let index = 0; index < chainsId.length; index++) {
         const chainId = chainsId[index];
         const subgraph = getContractsAddrByChain(chainId)?.subgraphUrl;
-        if (subgraph !== "") promises.push(await getTokenGardens(chainId));
+
+        if (subgraph && subgraph !== "") {
+          console.log("subgraph", subgraph);
+          promises.push(await getTokenGardens(chainId));
+        }
       }
 
       const resArr = await Promise.all(promises);
-      resArr.forEach((res) => {
-        if (res?.data) gardens?.tokenGardens.push(...res?.data.tokenGardens);
-      });
+      for (const res of resArr) {
+        if (res?.data && res.data.tokenGardens) {
+          gardens?.tokenGardens.push(...res.data.tokenGardens);
+        } else {
+          console.error("Error fetching token gardens:", res.error?.message);
+        }
+      }
     }
   } catch (error) {
     console.error("Error fetching token gardens:", error);
   }
 
+  // console.log("gardens", gardens.tokenGardens);
   return (
     <div className="flex flex-col items-center justify-center gap-8">
       <header className="flex flex-col items-center gap-8">

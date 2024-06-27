@@ -16,6 +16,7 @@ import { parseUnits } from "viem";
 import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
+import { chainDataMap } from "@/configs/chainServer";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -44,9 +45,10 @@ type PoolStatsProps = {
   communityAddress: Address;
   tokenGarden: TokenGarden;
   pointSystem: string;
-  spendingLimit?: number;
+  spendingLimitPct?: number;
   alloInfo: Allo;
   poolId: number;
+  chainId: number;
 };
 
 export const PoolMetrics: FC<PoolStatsProps> = ({
@@ -55,8 +57,9 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
   strategy,
   communityAddress,
   tokenGarden,
-  spendingLimit,
+  spendingLimitPct,
   poolId,
+  chainId,
 }) => {
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
 
@@ -100,7 +103,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
 
   const { isSuccess: isWaitAllowanceSuccess, status: waitAllowTokenStatus } =
     useWaitForTransaction({
-      confirmations: 1,
+      confirmations: chainDataMap[chainId].confirmations,
       hash: allowTokenData?.hash,
     });
 
@@ -200,7 +203,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                   Spending Limit:
                 </h4>
                 <span className="stat-value ml-8 text-center text-xl">
-                  {`${((spendingLimit || 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
+                  {`${((spendingLimitPct || 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
                 </span>
               </div>
             </div>
