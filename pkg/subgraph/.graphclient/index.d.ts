@@ -2123,9 +2123,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         communityAddr: string;
         tokenAddr: string;
     }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
-    getCommunitiesByGarden(variables: Exact<{
+    getGarden(variables: Exact<{
         addr: string;
-    }>, options?: TOperationContext): Promise<getCommunitiesByGardenQuery>;
+    }>, options?: TOperationContext): Promise<getGardenQuery>;
     getCommunity(variables: Exact<{
         communityAddr: string;
         tokenAddr: string;
@@ -2222,19 +2222,14 @@ export type getPoolCreationDataQuery = {
     allos: Array<Pick<Allo, 'id'>>;
     registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName' | 'isValid'>>;
 };
-export type getCommunitiesByGardenQueryVariables = Exact<{
+export type getGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
 }>;
-export type getCommunitiesByGardenQuery = {
-    registryFactories: Array<Pick<RegistryFactory, 'id'>>;
+export type getGardenQuery = {
     tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'decimals' | 'chainId'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'isValid' | 'covenantIpfsHash' | 'chainId' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'isValid' | 'covenantIpfsHash' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
-            strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount' | 'isEnabled'> & {
-                registryCommunity: Pick<RegistryCommunity, 'registerStakeAmount'>;
-                config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;
-                proposals: Array<Pick<CVProposal, 'id' | 'proposalNumber'>>;
-            })>>;
+            strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount'>>>;
         })>>;
     })>;
 };
@@ -2328,7 +2323,7 @@ export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDa
     communityAddr: Scalars['ID'];
     tokenAddr: Scalars['ID'];
 }>>;
-export declare const getCommunitiesByGardenDocument: DocumentNode<getCommunitiesByGardenQuery, Exact<{
+export declare const getGardenDocument: DocumentNode<getGardenQuery, Exact<{
     addr: Scalars['ID'];
 }>>;
 export declare const getCommunityDocument: DocumentNode<getCommunityQuery, Exact<{
@@ -2360,7 +2355,7 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getMember(variables: getMemberQueryVariables, options?: C): Promise<getMemberQuery>;
     getPoolCreationData(variables: getPoolCreationDataQueryVariables, options?: C): Promise<getPoolCreationDataQuery>;
-    getCommunitiesByGarden(variables: getCommunitiesByGardenQueryVariables, options?: C): Promise<getCommunitiesByGardenQuery>;
+    getGarden(variables: getGardenQueryVariables, options?: C): Promise<getGardenQuery>;
     getCommunity(variables: getCommunityQueryVariables, options?: C): Promise<getCommunityQuery>;
     getCommunityCreationData(variables: getCommunityCreationDataQueryVariables, options?: C): Promise<getCommunityCreationDataQuery>;
     getPoolData(variables: getPoolDataQueryVariables, options?: C): Promise<getPoolDataQuery>;

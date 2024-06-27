@@ -118,11 +118,11 @@ export async function getMeshOptions() {
                     },
                     location: 'GetPoolCreationDataDocument.graphql'
                 }, {
-                    document: GetCommunitiesByGardenDocument,
+                    document: GetGardenDocument,
                     get rawSDL() {
-                        return printWithCache(GetCommunitiesByGardenDocument);
+                        return printWithCache(GetGardenDocument);
                     },
-                    location: 'GetCommunitiesByGardenDocument.graphql'
+                    location: 'GetGardenDocument.graphql'
                 }, {
                     document: GetCommunityDocument,
                     get rawSDL() {
@@ -335,11 +335,8 @@ export const getPoolCreationDataDocument = gql `
   }
 }
     `;
-export const getCommunitiesByGardenDocument = gql `
-    query getCommunitiesByGarden($addr: ID!) {
-  registryFactories {
-    id
-  }
+export const getGardenDocument = gql `
+    query getGarden($addr: ID!) {
   tokenGarden(id: $addr) {
     id
     name
@@ -350,36 +347,21 @@ export const getCommunitiesByGardenDocument = gql `
       id
       isValid
       covenantIpfsHash
-      chainId
       communityName
       protocolFee
       communityFee
       registerToken
       registerStakeAmount
       alloAddress
-      members(where: {stakedTokens_gt: "0"}) {
+      members {
         id
         memberAddress
       }
-      strategies {
-        registryCommunity {
-          registerStakeAmount
-        }
+      strategies(where: {isEnabled: true}) {
         id
         totalEffectiveActivePoints
         poolId
         poolAmount
-        isEnabled
-        config {
-          id
-          proposalType
-          pointSystem
-          minThresholdPoints
-        }
-        proposals {
-          id
-          proposalNumber
-        }
       }
     }
   }
@@ -596,8 +578,8 @@ export function getSdk(requester) {
         getPoolCreationData(variables, options) {
             return requester(getPoolCreationDataDocument, variables, options);
         },
-        getCommunitiesByGarden(variables, options) {
-            return requester(getCommunitiesByGardenDocument, variables, options);
+        getGarden(variables, options) {
+            return requester(getGardenDocument, variables, options);
         },
         getCommunity(variables, options) {
             return requester(getCommunityDocument, variables, options);

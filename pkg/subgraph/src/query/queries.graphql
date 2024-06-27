@@ -136,10 +136,7 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
   }
 }
 
-query getCommunitiesByGarden($addr: ID!) {
-  registryFactories {
-    id
-  }
+query getGarden($addr: ID!) {
   tokenGarden(id: $addr) {
     id
     name
@@ -150,36 +147,21 @@ query getCommunitiesByGarden($addr: ID!) {
       id
       isValid
       covenantIpfsHash
-      chainId
       communityName
       protocolFee
       communityFee
       registerToken
       registerStakeAmount
       alloAddress
-      members(where: { stakedTokens_gt: "0" }) {
+      members {
         id
         memberAddress
       }
-      strategies {
-        registryCommunity {
-          registerStakeAmount
-        }
+      strategies(where: { isEnabled: true }) {
         id
         totalEffectiveActivePoints
         poolId
         poolAmount
-        isEnabled
-        config {
-          id
-          proposalType
-          pointSystem
-          minThresholdPoints
-        }
-        proposals {
-          id
-          proposalNumber
-        }
       }
     }
   }
