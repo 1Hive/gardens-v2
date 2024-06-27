@@ -62,7 +62,6 @@ export default async function Gardens() {
     console.error("Error fetching token gardens:", error);
   }
 
-  // console.log("gardens", gardens.tokenGardens);
   return (
     <div className="flex flex-col items-center justify-center gap-8">
       <header className="flex flex-col items-center gap-8">

@@ -10,6 +10,10 @@ import {
   getCommunityDocument,
   getCommunityQuery,
 } from "#/subgraph/.graphclient";
+import {
+  CurrencyDollarIcon,
+  RectangleGroupIcon,
+} from "@heroicons/react/24/outline";
 
 const { urqlClient } = initUrqlClient();
 
@@ -39,8 +43,10 @@ export default async function CommunityPage({
   } = result?.registryCommunity as RegistryCommunity;
 
   const communityStakedTokens =
-    members?.reduce((acc, member) => acc + Number(member?.stakedTokens), 0) ??
-    0;
+    members?.reduce(
+      (acc: bigint, member) => acc + BigInt(member?.stakedTokens),
+      0n,
+    ) ?? 0;
 
   strategies = strategies ?? [];
 
@@ -65,8 +71,11 @@ export default async function CommunityPage({
       console.log(error);
     }
   }
+
+  const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
+
   return (
-    <div className="flex w-full max-w-6xl flex-col gap-10 p-8">
+    <div className="page-layout">
       <header className="section-layout flex flex-row items-center gap-10">
         <div>
           <Image
@@ -84,8 +93,17 @@ export default async function CommunityPage({
           </div>
           <div className="flex flex-col gap-2">
             <Statistic label="members" count={members?.length ?? 0} />
-            <Statistic label="strategies" count={strategies?.length ?? 0} />
-            <Statistic label="staked tokens" count={communityStakedTokens} />
+            <Statistic
+              label="pools"
+              icon={<RectangleGroupIcon />}
+              count={activePools.length ?? 0}
+            />
+            <Statistic
+              label="staked tokens"
+              icon={<CurrencyDollarIcon />}
+              count={[BigInt(communityStakedTokens), tokenGarden?.decimals]}
+              tokenSymbol={tokenGarden?.symbol}
+            />
           </div>
         </div>
         <div className="flex flex-col gap-4">
@@ -117,9 +135,11 @@ export default async function CommunityPage({
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {fundingPools.map((pool) => (
-              <React.Fragment key={`${pool.poolId}`}>
-                <PoolCard tokenGarden={tokenGarden as TokenGarden} {...pool} />
-              </React.Fragment>
+              <PoolCard
+                key={pool.poolId}
+                tokenGarden={tokenGarden as TokenGarden}
+                {...pool}
+              />
             ))}
           </div>
         </div>

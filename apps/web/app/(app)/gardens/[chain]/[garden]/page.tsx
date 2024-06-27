@@ -1,6 +1,7 @@
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
 import {
+  Communities,
   CommunityCard,
   EthAddress,
   Statistic,
@@ -9,13 +10,14 @@ import {
 import {
   RegistryCommunity,
   TokenGarden,
-  getCommunitiesByGardenDocument,
-  getCommunitiesByGardenQuery,
+  getGardenDocument,
+  getGardenQuery,
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { FormLink } from "@/components";
 import { Address } from "viem";
 import React from "react";
+import { CubeTransparentIcon } from "@heroicons/react/24/outline";
 
 export const dynamic = "force-dynamic";
 
@@ -26,13 +28,12 @@ export default async function Garden({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error: error } =
-    await queryByChain<getCommunitiesByGardenQuery>(
-      urqlClient,
-      chain,
-      getCommunitiesByGardenDocument,
-      { addr: garden },
-    );
+  const { data: result, error: error } = await queryByChain<getGardenQuery>(
+    urqlClient,
+    chain,
+    getGardenDocument,
+    { addr: garden },
+  );
 
   let communities = result?.tokenGarden?.communities || [];
 
@@ -40,13 +41,14 @@ export default async function Garden({
 
   const tokenGarden = result?.tokenGarden as TokenGarden;
 
+  // wrong value, there could be members repeated across different communities...
   const gardenTotalMembers = communities.reduce(
     (acc, community) => acc + (community?.members?.length ?? 0),
     0,
   );
 
   return (
-    <div className="flex w-full max-w-6xl flex-col gap-10 p-8">
+    <div className="page-layout">
       <header className="section-layout flex gap-10 p-10">
         <div className="flex h-[280px] w-[300px] items-center justify-center rounded-2xl bg-slate-200">
           Token Image
@@ -67,27 +69,17 @@ export default async function Garden({
               <span className="font-bold"> covenant.</span>
             </p>
           </div>
-          <div>
-            <Statistic label="communities" count={communities?.length ?? 0} />
+          <div className="flex flex-col gap-2">
+            <Statistic
+              label="communities"
+              icon={<CubeTransparentIcon />}
+              count={communities?.length ?? 0}
+            />
             <Statistic label="members" count={gardenTotalMembers} />
           </div>
         </div>
       </header>
-      <section className="section-layout flex flex-col gap-10">
-        <h2>Communities</h2>
-        <div className=" flex flex-row flex-wrap gap-10">
-          {communities.map(({ communityName, id, members, strategies }) => (
-            <React.Fragment key={`${id}`}>
-              <CommunityCard
-                name={communityName ?? ""}
-                members={members?.length ?? 0}
-                pools={strategies?.length ?? 0}
-                id={id}
-              />
-            </React.Fragment>
-          ))}
-        </div>
-      </section>
+      <Communities communities={communities as RegistryCommunity[]} />
       <section className="section-layout ">
         <div className="flex flex-col gap-10 overflow-x-hidden">
           <h4 className="text-secondary-content">Create your own community</h4>
