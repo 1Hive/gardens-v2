@@ -14,6 +14,7 @@ import Image from "next/image";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { proposalStatus, poolTypes } from "@/types";
+import { proposalImg } from "@/assets";
 
 export const dynamic = "force-dynamic";
 
@@ -218,26 +219,25 @@ export default async function Proposal({
   console.log("currentConviction:           %s", currentConvictionPct);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 p-8">
-      <header className="section-layout flex flex-row items-start gap-10">
-        <div>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 p-1 sm:p-8">
+      <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
+        <div className="flex w-full items-center justify-center sm:w-auto">
           <Image
-            src={"/images/1.png"}
-            alt={`${1} community`}
-            className="h-[180px] bg-slate-200"
-            height={180}
-            width={180}
+            src={proposalImg}
+            alt={`proposal image ${proposalIdNumber}`}
+            height={163}
+            width={164}
           />
         </div>
         <div className="flex w-full flex-col gap-8">
           <div>
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-4 flex flex-col items-center justify-between gap-4 sm:mb-2 sm:flex-row sm:gap-2">
               <h2>
                 Proposal #{proposalIdNumber} - {title}
               </h2>
               <Badge type={proposalType} />
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center gap-4 sm:justify-start">
               <Badge status={status} />
               <p className="font-semibold">
                 {prettyTimestamp(proposalData?.createdAt || 0)}
@@ -276,7 +276,7 @@ export default async function Proposal({
       </header>
       <section className="section-layout">
         <h2>Metrics</h2>
-        {/* TODO: need designs when proposal is already executed */}
+        {/* TODO: need designs for this entire section */}
         {status && proposalStatus[status] == "executed" ? (
           <div className="badge badge-success p-4 text-white">
             Proposal passed and executed successfully
