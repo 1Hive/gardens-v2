@@ -5,6 +5,7 @@ import {
   getCommunityCreationDataQuery,
 } from "#/subgraph/.graphclient";
 import { CommunityForm } from "@/components/Forms";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import React, { useEffect } from "react";
 import { Address } from "viem";
@@ -56,8 +57,6 @@ export default function Page({
       />
     </div>
   ) : (
-    <div className="w-full text-center">
-      <div className="spinner"></div>
-    </div>
+    <LoadingSpinner />
   );
 }
