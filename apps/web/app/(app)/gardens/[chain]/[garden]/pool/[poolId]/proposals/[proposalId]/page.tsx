@@ -219,7 +219,7 @@ export default async function Proposal({
   console.log("currentConviction:           %s", currentConvictionPct);
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 p-1 sm:p-8">
+    <div className="mx-auto flex max-w-6xl flex-col gap-10 p-1 sm:p-8">
       <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
         <div className="flex w-full items-center justify-center sm:w-auto">
           <Image
@@ -231,13 +231,13 @@ export default async function Proposal({
         </div>
         <div className="flex w-full flex-col gap-8">
           <div>
-            <div className="mb-4 flex flex-col items-center justify-between gap-4 sm:mb-2 sm:flex-row sm:gap-2">
+            <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <h2>
                 Proposal #{proposalIdNumber} - {title}
               </h2>
               <Badge type={proposalType} />
             </div>
-            <div className="flex items-center justify-center gap-4 sm:justify-start">
+            <div className="flex items-center justify-between gap-4 sm:justify-start">
               <Badge status={status} />
               <p className="font-semibold">
                 {prettyTimestamp(proposalData?.createdAt || 0)}
@@ -260,16 +260,12 @@ export default async function Proposal({
                   />
                 </Statistic>
                 <Statistic label={"beneficiary"} icon={<UserIcon />}>
-                  <EthAddress
-                    address={beneficiary}
-                    actions="copy"
-                    icon="identicon"
-                  />
+                  <EthAddress address={beneficiary} actions="copy" />
                 </Statistic>
               </>
             )}
             <Statistic label={"created by"} icon={<UserIcon />}>
-              <EthAddress address={submitter} actions="copy" icon="identicon" />
+              <EthAddress address={submitter} actions="copy" />
             </Statistic>
           </div>
         </div>
