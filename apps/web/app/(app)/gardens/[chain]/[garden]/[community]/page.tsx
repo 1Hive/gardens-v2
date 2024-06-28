@@ -1,7 +1,14 @@
 import { commImg, groupFlowers } from "@/assets";
 import React from "react";
 import Image from "next/image";
-import { EthAddress, Statistic, PoolCard, RegisterMember } from "@/components";
+import {
+  EthAddress,
+  Statistic,
+  PoolCard,
+  RegisterMember,
+  DisplayNumber,
+  IncreasePower,
+} from "@/components";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { Address } from "viem";
 import {
@@ -98,12 +105,13 @@ export default async function CommunityPage({
               icon={<RectangleGroupIcon />}
               count={activePools.length ?? 0}
             />
-            <Statistic
-              label="staked tokens"
-              icon={<CurrencyDollarIcon />}
-              count={[BigInt(communityStakedTokens), tokenGarden?.decimals]}
-              tokenSymbol={tokenGarden?.symbol}
-            />
+            <Statistic label="staked tokens" icon={<CurrencyDollarIcon />}>
+              <DisplayNumber
+                number={[BigInt(communityStakedTokens), tokenGarden?.decimals]}
+                compact={true}
+                tokenSymbol={tokenGarden?.symbol}
+              />
+            </Statistic>
           </div>
         </div>
         <div className="flex flex-col gap-4">
@@ -125,8 +133,15 @@ export default async function CommunityPage({
           />
         </div>
       </header>
+      <IncreasePower
+        communityAddress={communityAddr as Address}
+        registerToken={registerToken as Address}
+        tokenSymbol={tokenGarden?.symbol ?? ""}
+        registerTokenDecimals={tokenGarden?.decimals as number}
+        registerStakeAmount={BigInt(registerStakeAmount)}
+      />
       <section className="section-layout flex flex-col gap-10">
-        <header className="">
+        <header>
           <h2>Pools</h2>
         </header>
         <div className="flex flex-col gap-4">
@@ -149,9 +164,11 @@ export default async function CommunityPage({
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {signalingPools.map((pool) => (
-              <React.Fragment key={`${pool.poolId}`}>
-                <PoolCard tokenGarden={tokenGarden as TokenGarden} {...pool} />
-              </React.Fragment>
+              <PoolCard
+                key={pool.poolId}
+                tokenGarden={tokenGarden as TokenGarden}
+                {...pool}
+              />
             ))}
           </div>
         </div>
@@ -161,13 +178,11 @@ export default async function CommunityPage({
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {poolsInReview.map((pool) => (
-              <React.Fragment key={`${pool.poolId}`}>
-                <PoolCard
-                  tokenGarden={tokenGarden as TokenGarden}
-                  {...pool}
-                  enabled={false}
-                />
-              </React.Fragment>
+              <PoolCard
+                key={pool.poolId}
+                tokenGarden={tokenGarden as TokenGarden}
+                {...pool}
+              />
             ))}
           </div>
         </div>
