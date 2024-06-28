@@ -153,7 +153,7 @@ query getGarden($addr: ID!) {
       registerToken
       registerStakeAmount
       alloAddress
-      members {
+      members(where: {stakedTokens_gt: "0"}) {
         id
         memberAddress
       }
@@ -171,7 +171,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
   registryCommunity(id: $communityAddr) {
     communityName
     id
-    members {
+    members(where: {stakedTokens_gt: "0"}) {
       id
       stakedTokens
     }

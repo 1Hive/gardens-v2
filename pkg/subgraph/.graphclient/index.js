@@ -353,7 +353,7 @@ export const getGardenDocument = gql `
       registerToken
       registerStakeAmount
       alloAddress
-      members {
+      members(where: {stakedTokens_gt: "0"}) {
         id
         memberAddress
       }
@@ -372,7 +372,7 @@ export const getCommunityDocument = gql `
   registryCommunity(id: $communityAddr) {
     communityName
     id
-    members {
+    members(where: {stakedTokens_gt: "0"}) {
       id
       stakedTokens
     }
