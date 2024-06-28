@@ -278,6 +278,9 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     // this could also check attestations directly and then Accept
 
     function _registerRecipient(bytes memory _data, address _sender) internal override returns (address) {
+        if (!_canExecuteAction(_sender)) {
+            revert UserCannotExecuteAction();
+        }
         // surpressStateMutabilityWarning++;
         _data;
         StrategyStruct.CreateProposal memory proposal = abi.decode(_data, (StrategyStruct.CreateProposal));

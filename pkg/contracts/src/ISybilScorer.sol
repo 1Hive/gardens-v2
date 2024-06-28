@@ -6,6 +6,12 @@ struct PassportData {
     uint256 lastUpdated;
 }
 
+struct Strategy {
+    uint256 threshold;
+    bool active;
+    address councilSafe;
+}
+
 interface ISybilScorer {
     function addUserScore(address _user, PassportData memory _passportData) external;
     function removeUser(address _user) external;
@@ -14,4 +20,7 @@ interface ISybilScorer {
     function modifyThreshold(address _strategy, uint256 _newThreshold) external;
     function addStrategy(address _strategy, uint256 _threshold, address _councilSafe) external;
     function removeStrategy(address _strategy) external;
+    function activateStrategy(address _strategy) external;
+    function getUserScore(address _user) external view returns (PassportData memory);
+    function getStrategy(address _strategy) external view returns (Strategy memory);
 }

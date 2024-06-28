@@ -2,16 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
-import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
+import {ISybilScorer, PassportData, Strategy} from "./ISybilScorer.sol";
 
 contract PassportScorer is Ownable, ISybilScorer {
     address public listManager;
-
-    struct Strategy {
-        uint256 threshold;
-        bool active;
-        address councilSafe;
-    }
 
     mapping(address => PassportData) public userScores;
     mapping(address => Strategy) public strategies;

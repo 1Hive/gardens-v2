@@ -76,7 +76,7 @@ contract PassportScorerTest is Test {
 
         (uint256 storedThreshold, bool storedActive, address storedCouncilSafe) = passportScorer.strategies(strategy);
         assertEq(storedThreshold, threshold);
-        assertEq(storedActive, true);
+        assertEq(storedActive, false);
         assertEq(storedCouncilSafe, councilSafe);
     }
 
@@ -107,7 +107,7 @@ contract PassportScorerTest is Test {
 
         (uint256 storedThreshold, bool storedActive, address storedCouncilSafe) = passportScorer.strategies(strategy);
         assertEq(storedThreshold, newThreshold);
-        assertEq(storedActive, true);
+        assertEq(storedActive, false);
         assertEq(storedCouncilSafe, councilSafe);
     }
 
@@ -123,7 +123,7 @@ contract PassportScorerTest is Test {
 
         (uint256 storedThreshold, bool storedActive, address storedCouncilSafe) = passportScorer.strategies(strategy);
         assertEq(storedThreshold, newThreshold);
-        assertEq(storedActive, true);
+        assertEq(storedActive, false);
         assertEq(storedCouncilSafe, councilSafe);
     }
 
@@ -132,6 +132,9 @@ contract PassportScorerTest is Test {
 
         vm.prank(listManager);
         passportScorer.addStrategy(strategy, threshold, councilSafe);
+        vm.startPrank(councilSafe);
+        passportScorer.activateStrategy(strategy);
+        vm.stopPrank();
 
         vm.prank(listManager);
         passportScorer.addUserScore(user, passportData);
