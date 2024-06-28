@@ -41,11 +41,17 @@ export default async function Garden({
 
   const tokenGarden = result?.tokenGarden as TokenGarden;
 
-  // wrong value, there could be members repeated across different communities...
-  const gardenTotalMembers = communities.reduce(
-    (acc, community) => acc + (community?.members?.length ?? 0),
-    0,
-  );
+  const gardenTotalMembers = () => {
+    const uniqueMembers = new Set();
+
+    communities.forEach((community) =>
+      community.members?.forEach((member) =>
+        uniqueMembers.add(member?.memberAddress),
+      ),
+    );
+
+    return uniqueMembers.size;
+  };
 
   return (
     <div className="page-layout">
@@ -75,14 +81,18 @@ export default async function Garden({
               icon={<CubeTransparentIcon />}
               count={communities?.length ?? 0}
             />
-            <Statistic label="members" count={gardenTotalMembers} />
+            <Statistic label="members" count={gardenTotalMembers()} />
           </div>
         </div>
       </header>
       <Communities communities={communities as RegistryCommunity[]} />
       <section className="section-layout ">
         <div className="flex flex-col gap-10 overflow-x-hidden">
-          <h4 className="text-secondary-content">Create your own community</h4>
+          <header>
+            <h4 className="text-secondary-content">
+              Create your own community
+            </h4>
+          </header>
           <div className="relative flex h-[219px] justify-center">
             <FormLink
               label="Create a community"
