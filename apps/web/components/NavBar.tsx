@@ -10,7 +10,7 @@ import Image from "next/image";
 
 export function NavBar() {
   return (
-    <Disclosure as="nav" className="sticky left-0 top-0 z-10 bg-primary shadow">
+    <Disclosure as="nav" className="sticky left-0 top-0 z-10 bg-primary-soft shadow">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 md:py-0.5 lg:px-8">

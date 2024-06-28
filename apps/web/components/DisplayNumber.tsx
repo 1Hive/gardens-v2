@@ -71,7 +71,7 @@ export const DisplayNumber = ({
   };
 
   return (
-    <div className="relative ml-2 flex items-center gap-1">
+    <div className="relative flex items-center gap-1">
       <div
         onClick={handleCopy}
         className={`${showTooltip && "tooltip"} cursor-pointer`}

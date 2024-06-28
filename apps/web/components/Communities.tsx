@@ -45,7 +45,9 @@ export function Communities({
   console.log(userCommunities, !!userCommunities);
   return (
     <section className="section-layout flex flex-col gap-10">
-      <h2>Communities</h2>
+      <header>
+        <h2>Communities</h2>
+      </header>
       {userCommunities.length > 0 && (
         <div>
           <h4 className="mb-4 text-secondary-content">My communities</h4>
