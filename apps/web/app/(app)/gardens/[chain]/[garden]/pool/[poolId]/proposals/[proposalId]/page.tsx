@@ -240,7 +240,7 @@ export default async function Proposal({
             <div className="flex items-center justify-between gap-4 sm:justify-start">
               <Badge status={status} />
               <p className="font-semibold">
-                {prettyTimestamp(proposalData?.createdAt || 0)}
+                {prettyTimestamp(proposalData?.createdAt ?? 0)}
               </p>
             </div>
           </div>
