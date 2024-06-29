@@ -26,7 +26,7 @@ export function CommunityCard({
       <Image
         src={commImg}
         alt={`${name} community`}
-        className="mb-2 h-[100px] bg-slate-200"
+        className="mb-2 h-[100px]"
         height={100}
         width={100}
       />

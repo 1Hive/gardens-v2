@@ -8,6 +8,7 @@ import {
   RegisterMember,
   DisplayNumber,
   IncreasePower,
+  FormLink,
 } from "@/components";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { Address } from "viem";
@@ -88,7 +89,7 @@ export default async function CommunityPage({
           <Image
             src={commImg}
             alt={`${communityName} community`}
-            className="h-[180px] bg-slate-200"
+            className="h-[180px]"
             height={180}
             width={180}
           />
@@ -141,8 +142,9 @@ export default async function CommunityPage({
         registerStakeAmount={BigInt(registerStakeAmount)}
       />
       <section className="section-layout flex flex-col gap-10">
-        <header>
+        <header className="flex justify-between">
           <h2>Pools</h2>
+          <FormLink href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`} label="Create Pool" />
         </header>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
