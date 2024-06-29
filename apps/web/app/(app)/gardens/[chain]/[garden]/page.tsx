@@ -14,7 +14,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
-import { Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
@@ -61,9 +60,7 @@ export default function Garden({
     | undefined
   >();
 
-  const [tokenGarden, setTokenGarden] = useState<
-    getCommunitiesByGardenQuery["tokenGarden"] | undefined
-  >();
+  const [tokenGarden, setTokenGarden] = useState<TokenGarden | undefined>();
 
   useEffect(() => {
     if (result) {
@@ -71,7 +68,7 @@ export default function Garden({
         (com) => com.isValid,
       );
       setCommunities(filteredCommunities ?? []);
-      setTokenGarden(result.tokenGarden);
+      setTokenGarden(result.tokenGarden as TokenGarden);
       fetchAndUpdateCommunities(result.tokenGarden?.communities);
     }
   }, [result]);
