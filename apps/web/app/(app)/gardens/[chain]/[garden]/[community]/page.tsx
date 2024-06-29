@@ -22,6 +22,7 @@ import {
   CurrencyDollarIcon,
   RectangleGroupIcon,
 } from "@heroicons/react/24/outline";
+import { poolTypes } from "@/types";
 
 const { urqlClient } = initUrqlClient();
 
@@ -59,11 +60,15 @@ export default async function CommunityPage({
   strategies = strategies ?? [];
 
   const signalingPools = strategies.filter(
-    (strategy) => strategy.config?.proposalType === "0" && strategy.isEnabled,
+    (strategy) =>
+      poolTypes[strategy.config?.proposalType] === "signaling" &&
+      strategy.isEnabled,
   );
 
   const fundingPools = strategies.filter(
-    (strategy) => strategy.config?.proposalType === "1" && strategy.isEnabled,
+    (strategy) =>
+      poolTypes[strategy.config?.proposalType] === "funding" &&
+      strategy.isEnabled,
   );
 
   const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
@@ -144,11 +149,14 @@ export default async function CommunityPage({
       <section className="section-layout flex flex-col gap-10">
         <header className="flex justify-between">
           <h2>Pools</h2>
-          <FormLink href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`} label="Create Pool" />
+          <FormLink
+            href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`}
+            label="Create Pool"
+          />
         </header>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-            Funding pools ( {fundingPools.length} )
+            Funding pools ({fundingPools.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {fundingPools.map((pool) => (
@@ -162,7 +170,7 @@ export default async function CommunityPage({
         </div>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-            Signaling pools ( {signalingPools.length} )
+            Signaling pools ({signalingPools.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {signalingPools.map((pool) => (
@@ -176,7 +184,7 @@ export default async function CommunityPage({
         </div>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-            Pools in Review ( {poolsInReview.length} )
+            Pools in Review ({poolsInReview.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {poolsInReview.map((pool) => (

@@ -36,13 +36,13 @@ export function Communities({
       return false;
     }
     for (let member of community?.members) {
-      if (member?.memberAddress?.toLowerCase() == address?.toLowerCase()) {
+      if (member?.memberAddress?.toLowerCase() === address?.toLowerCase()) {
         return true;
       }
     }
     return false;
   }
-  console.log(userCommunities, !!userCommunities);
+
   return (
     <section className="section-layout flex flex-col gap-10">
       <header>

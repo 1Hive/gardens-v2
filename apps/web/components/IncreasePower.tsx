@@ -116,7 +116,7 @@ export const IncreasePower = ({
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
-    token: registerToken as `0x${string}` | undefined,
+    token: registerToken as Address,
     chainId: chainId || 0,
   });
 
@@ -133,10 +133,9 @@ export const IncreasePower = ({
   } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
+    enabled: accountAddress !== undefined,
     args: [accountAddress as Address],
-    //watch: true,
   });
-  //
 
   const {
     data: allowTokenData,
@@ -150,6 +149,7 @@ export const IncreasePower = ({
     args: [communityAddress, requestedAmount as bigint], // [allowed spender address, amount ]
     functionName: "approve",
   });
+
   const {
     data,
     isError,
@@ -182,7 +182,8 @@ export const IncreasePower = ({
   const { data: allowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    args: [accountAddress ?? "0x", communityAddress], // [ owner,  spender address ]
+    enabled: accountAddress !== undefined,
+    args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
   });
 

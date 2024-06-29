@@ -79,7 +79,8 @@ export function RegisterMember({
   } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
-    args: [accountAddress ?? "0x"],
+    enabled: accountAddress !== undefined,
+    args: [accountAddress as Address],
     watch: true,
   });
 
@@ -148,7 +149,8 @@ export function RegisterMember({
   const { data: dataAllowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    args: [accountAddress ?? "0x", communityAddress], // [ owner,  spender address ]
+    enabled: accountAddress !== undefined,
+    args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
     watch: true,
   });
