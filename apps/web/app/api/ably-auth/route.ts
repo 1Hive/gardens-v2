@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
   } catch (error) {
     console.error(error);
     return NextResponse.json({
-      status: 500,
+      status: HttpCodes.serverError,
       message: "Failed to generate token",
       error: isProd ? undefined : error,
     });
