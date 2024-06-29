@@ -15,7 +15,7 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { pointSystems, poolTypes } from "@/types";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
@@ -67,7 +67,7 @@ export default function Pool({
     );
   }
 
-  const strategyObj = data?.cvstrategies?.[0] as CVStrategy;
+  const strategyObj = data?.cvstrategies?.[0] as CVStrategy | undefined;
   if (!data || !strategyObj) {
     return <div className="mt-52 text-center">Pool {poolId} not found</div>;
   }
@@ -161,7 +161,7 @@ export default function Pool({
             </div>
           </section>
           {/* Pool metrics: for now we have funds available and spending limit */}
-          {isEnabled && (
+          {isEnabled && strategyObj && (
             <>
               {poolTypes[proposalType] !== "signaling" && (
                 <PoolMetrics

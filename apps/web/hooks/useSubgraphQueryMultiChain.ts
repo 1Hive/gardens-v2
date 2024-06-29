@@ -20,8 +20,12 @@ import {
   usePubSubContext,
 } from "@/contexts/pubsub.context";
 import { debounce, isEqual } from "lodash-es";
-import { CHANGE_EVENT_MAX_RETRIES } from "@/globals";
+import {
+  CHANGE_EVENT_INITIAL_DELAY,
+  CHANGE_EVENT_MAX_RETRIES,
+} from "@/globals";
 import delayAsync from "@/utils/delayAsync";
+import { HttpCodes } from "@/app/api/utils";
 
 const allChains: ChainId[] = [
   sepolia.id,
@@ -117,7 +121,7 @@ export default function useSubgraphQueryMultiChain<
                   console.debug(
                     `Subgraph-${chainId} result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
                   );
-                  const delay = 2000 * 2 ** retryCount;
+                  const delay = CHANGE_EVENT_INITIAL_DELAY * 2 ** retryCount;
                   await delayAsync(delay);
                   await fetchSubgraphChain(retryCount + 1);
                 }
@@ -135,7 +139,7 @@ export default function useSubgraphQueryMultiChain<
       setResponse(Array.from(new Set(responseMap.current.values())));
       setFetching(false);
     },
-    200,
+    HttpCodes.success,
   );
 
   return {

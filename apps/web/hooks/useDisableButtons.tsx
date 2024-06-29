@@ -33,7 +33,7 @@ export function useDisableButtons(
       return "Connect Wallet";
     }
     if (missmatchUrlAndWalletChain) {
-      return `Switch to ${supportedChains[+urlChainId] ?? ""} Network`;
+      return `Switch to ${supportedChains[urlChainId] ?? ""} Network`;
     }
     if (conditions && conditions.length > 0) {
       const activeCondition = conditions.find((cond) => cond.condition);
