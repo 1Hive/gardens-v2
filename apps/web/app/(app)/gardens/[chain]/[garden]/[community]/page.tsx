@@ -20,9 +20,17 @@ import {
 } from "#/subgraph/.graphclient";
 import {
   CurrencyDollarIcon,
+  ExclamationCircleIcon,
   RectangleGroupIcon,
 } from "@heroicons/react/24/outline";
 import { poolTypes } from "@/types";
+import {
+  SCALE_PRECISION,
+  SCALE_PRECISION_DECIMALS,
+  dn,
+  parseToken,
+} from "@/utils/numbers";
+import { Dnum } from "dnum";
 
 const { urqlClient } = initUrqlClient();
 
@@ -87,6 +95,34 @@ export default async function CommunityPage({
 
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
+  const parsedCommunityFee = () => {
+    try {
+      const membership = [
+        BigInt(registerStakeAmount),
+        Number(tokenGarden?.decimals),
+      ] as dn.Dnum;
+      const feePercentage = [
+        BigInt(communityFee),
+        SCALE_PRECISION_DECIMALS, // adding 2 decimals because 1% == 10.000 == 1e4
+      ] as dn.Dnum;
+
+      return dn.multiply(membership, feePercentage);
+    } catch (error) {
+      console.log(error);
+    }
+    return [0n, 0] as dn.Dnum;
+  };
+
+  const registrationAmount = [
+    BigInt(registerStakeAmount),
+    tokenGarden?.decimals,
+  ] as Dnum;
+
+  const totalRegistrationCost =
+    BigInt(registerStakeAmount) +
+    BigInt(registerStakeAmount) /
+      (BigInt(SCALE_PRECISION) / BigInt(communityFee));
+
   return (
     <div className="page-layout">
       <header className="section-layout flex flex-row items-center gap-10">
@@ -118,16 +154,29 @@ export default async function CommunityPage({
                 tokenSymbol={tokenGarden?.symbol}
               />
             </Statistic>
+            <div className="flex">
+              <p className="font-medium">Registration cost:</p>
+              <div
+                className="tooltip ml-2 flex cursor-pointer items-center text-primary-content"
+                data-tip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden?.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden?.symbol}`}
+              >
+                <DisplayNumber
+                  number={[totalRegistrationCost, tokenGarden?.decimals]}
+                  className="font-semibold"
+                  disableTooltip={true}
+                  compact={true}
+                  tokenSymbol={tokenGarden?.symbol}
+                />
+                <ExclamationCircleIcon
+                  className="ml-2 stroke-2"
+                  width={22}
+                  height={22}
+                />
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex flex-col gap-4">
-          {/* <div className="flex flex-col gap-2">
-            <Statistic
-              label="registration amount"
-              count={registerStakeAmount}
-            />
-            <Statistic label="community fee" count={communityFee} />
-          </div> */}
           <RegisterMember
             tokenSymbol={tokenGarden?.symbol ?? ""}
             communityAddress={communityAddr as Address}
