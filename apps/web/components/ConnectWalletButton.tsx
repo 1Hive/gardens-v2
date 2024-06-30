@@ -14,11 +14,12 @@ import { Fragment } from "react";
 import { formatAddress } from "@/utils/formatAddress";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
+import { getChainIdFromPath } from "@/utils/path";
 
 export const ConnectWallet = () => {
   const path = usePathname();
   const account = useAccount();
-  const urlChainId = Number(path.split("/")[2]);
+  const urlChainId = getChainIdFromPath();
   const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
@@ -83,8 +84,10 @@ export const ConnectWallet = () => {
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
-                        "border-2 border-danger":
-                          urlChainId !== chain.id && !isNaN(urlChainId),
+                        "border-danger border-2":
+                          urlChainId &&
+                          urlChainId !== chain.id &&
+                          !isNaN(urlChainId),
                       })} `}
                         >
                           <img
@@ -97,7 +100,9 @@ export const ConnectWallet = () => {
                               {formatAddress(account.address)}
                             </h4>
                             <div className="ml-[2px] flex items-center text-xs font-semibold text-success">
-                              {isNaN(urlChainId) || chain.id === urlChainId ? (
+                              {!urlChainId ||
+                              isNaN(urlChainId!) ||
+                              chain.id === urlChainId ? (
                                 <>
                                   <span>Connected to</span>
                                   <div className="mx-1">
@@ -154,6 +159,7 @@ export const ConnectWallet = () => {
                             {/* Switch network and Disconnect buttons */}
                             <Menu.Item as="div" className="flex flex-col gap-2">
                               {chain.id !== urlChainId &&
+                                urlChainId &&
                                 !isNaN(urlChainId) && (
                                   <Button
                                     className="overflow-hidden truncate"
@@ -161,7 +167,10 @@ export const ConnectWallet = () => {
                                       switchNetwork && switchNetwork(urlChainId)
                                     }
                                   >
-                                    Switch to {getChain(urlChainId)?.name}
+                                    Switch to{" "}
+                                    {urlChainId
+                                      ? getChain(urlChainId)?.name
+                                      : ""}
                                   </Button>
                                 )}
 

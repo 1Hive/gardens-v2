@@ -1,16 +1,15 @@
+"use client";
+
 import {
   Badge,
   Proposals,
   PoolMetrics,
-  Statistic,
   EthAddress,
+  Statistic,
 } from "@/components";
 import Image from "next/image";
-import { grassLarge, poolGrassBlue } from "@/assets";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
 import {
   Allo,
-  CVStrategy,
   TokenGarden,
   getAlloQuery,
   getPoolDataDocument,
@@ -20,50 +19,82 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { pointSystems, poolTypes } from "@/types";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
+import { useEffect, useState } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import {
-  InformationCircleIcon,
-  ChartBarIcon,
   BoltIcon,
+  ChartBarIcon,
+  InformationCircleIcon,
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
+import { grassLarge, poolGrassBlue } from "@/assets";
 
 export const dynamic = "force-dynamic";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
-const { urqlClient } = initUrqlClient();
-
-export default async function Pool({
+export default function Pool({
   params: { chain, poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data } = await queryByChain<getPoolDataQuery>(
-    urqlClient,
+  const { data, fetching, error } = useSubgraphQueryByChain<getPoolDataQuery>(
     chain,
     getPoolDataDocument,
     { poolId: poolId, garden: garden },
+    {},
+    {
+      topic: "pool",
+      id: poolId,
+      chainId: chain,
+    },
   );
-  const strategyObj = data?.cvstrategies?.[0] as CVStrategy;
-  //const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
-  if (!strategyObj) {
-    return <div>{`Pool ${poolId} not found`}</div>;
+  useEffect(() => {
+    if (error) {
+      console.error("Error while fetching pool data: ", error);
+    }
+  }, [error]);
+
+  const [ipfsResult, setIpfsResult] =
+    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
+
+  const metadata = data?.cvstrategies?.[0]?.metadata;
+
+  useEffect(() => {
+    if (metadata) {
+      getIpfsMetadata(metadata).then((data) => {
+        setIpfsResult(data);
+      });
+    }
+  }, [metadata]);
+
+  if (fetching || !ipfsResult) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
-  const pointSystem = data?.cvstrategies?.[0].config?.pointSystem;
+  const strategyObj = data?.cvstrategies?.[0];
+  if (!data || !strategyObj) {
+    return <div className="mt-52 text-center">Pool {poolId} not found</div>;
+  }
+
+  const pointSystem = data.cvstrategies?.[0].config?.pointSystem;
   const strategyAddr = strategyObj.id as Address;
   const communityAddress = strategyObj.registryCommunity.id as Address;
-  const alloInfo = data?.allos[0] as Allo;
+  const alloInfo = data.allos[0] as Allo;
   const proposalType = strategyObj?.config?.proposalType as number;
   const poolAmount = strategyObj?.poolAmount as number;
-  const tokenGarden = data?.tokenGarden as TokenGarden;
-  const metadata = data?.cvstrategies?.[0]?.metadata as string;
-  const isEnabled = data?.cvstrategies?.[0]?.isEnabled as boolean;
-  const { title, description } = await getIpfsMetadata(metadata);
+  const tokenGarden = data.tokenGarden as TokenGarden;
+
+  const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
   const spendingLimitPct =
-    (Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION) * 100;
+    (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
   console.log(
     "maxRatio: " + strategyObj?.config?.maxRatio,
@@ -77,13 +108,13 @@ export default async function Pool({
       <section className="section-layout flex flex-col gap-0 overflow-hidden">
         <header>
           <h2>
-            Pool #{poolId} - {title}
+            Pool #{poolId} - {ipfsResult.title}
           </h2>
         </header>
         <p className="mb-2">
           <EthAddress address={strategyAddr} />
         </p>
-        <p>{description}</p>
+        <p>{ipfsResult.description}</p>
         <div className="mb-7 mt-5 flex w-full flex-col items-start gap-3.5">
           <Statistic label="pool type" icon={<InformationCircleIcon />}>
             <Badge type={proposalType} />

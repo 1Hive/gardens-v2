@@ -18,6 +18,7 @@ import { FormRadioButton } from "./FormRadioButton";
 import { usePathname, useRouter } from "next/navigation";
 import { chainDataMap } from "@/configs/chainServer";
 import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -142,6 +143,7 @@ export default function PoolForm({
   const router = useRouter();
   const pathname = usePathname();
   const { address } = useAccount();
+  const { publish } = usePubSubContext();
 
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
@@ -256,8 +258,17 @@ export default function PoolForm({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "createPool",
-    onSuccess: () =>
-      router.push(pathname.replace(`/${communityAddr}/create-pool`, "")),
+    onSuccess: () => {
+      publish({
+        topic: "pool",
+        function: "createPool",
+        type: "add",
+        chainId: chainId,
+      });
+      if (pathname) {
+        router.push(pathname.replace(`/${communityAddr}/create-pool`, ""));
+      }
+    },
     onError: () =>
       toast.error("Something went wrong creating a pool, check logs"),
     onSettled: () => setLoading(false),

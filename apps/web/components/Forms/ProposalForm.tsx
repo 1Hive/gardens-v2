@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { alloABI } from "@/src/generated";
 import { Address, parseUnits } from "viem";
-import { useContractWrite } from "wagmi";
+import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { encodeAbiParameters } from "viem";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
@@ -15,6 +15,8 @@ import { formatTokenAmount } from "@/utils/numbers";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormInput } from "./FormInput";
 import { usePathname, useRouter } from "next/navigation";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { chainDataMap } from "@/configs/chainServer";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -79,6 +81,10 @@ export const ProposalForm = ({
     getValues,
   } = useForm<FormInputs>();
 
+  const { publish } = usePubSubContext();
+
+  const chainId = alloInfo.chainId;
+
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
       label: "Requested amount:",
@@ -132,7 +138,9 @@ export const ProposalForm = ({
       })
       .then((ipfsHash) => {
         console.log("https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) throw new Error("No preview data");
+        if (previewData === undefined) {
+          throw new Error("No preview data");
+        }
         const encodedData = getEncodeData(ipfsHash);
         write({ args: [poolId, encodedData] });
       })
@@ -151,7 +159,22 @@ export const ProposalForm = ({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
-    onSuccess: () => router.push(pathname.replace(`/create-proposal`, "")),
+  });
+
+  useWaitForTransaction({
+    hash: data?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "registerRecipient",
+        chainId: tokenGarden.chainId,
+      });
+      if (pathname) {
+        router.push(pathname.replace(`/create-proposal`, ""));
+      }
+    },
     onError: (err) => {
       console.log(err);
       toast.error("Something went wrong creating Proposal");
@@ -160,7 +183,9 @@ export const ProposalForm = ({
   });
 
   const getEncodeData = (metadataIpfs: string) => {
-    if (previewData === undefined) throw new Error("no preview data");
+    if (previewData === undefined) {
+      throw new Error("no preview data");
+    }
 
     const metadata = [1, metadataIpfs as string];
 
@@ -225,14 +250,6 @@ export const ProposalForm = ({
 
     return formattedRows;
   };
-  console.log(
-    "spendingLimitNumber: " + spendingLimitNumber,
-    "spendingLimitPct: " + spendingLimitPct,
-    Math.round(4.5),
-    Math.round(4.56),
-    Math.round(4.567457),
-    Math.round(0.111231),
-  );
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ? (

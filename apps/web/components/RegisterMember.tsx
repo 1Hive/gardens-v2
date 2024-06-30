@@ -1,15 +1,14 @@
 "use client";
-import React, { forwardRef, useEffect, useRef, useState } from "react";
+
+import React, { useEffect, useRef, useState } from "react";
 import {
   useBalance,
   useContractWrite,
   useContractRead,
   Address,
   useWaitForTransaction,
-  useAccount,
 } from "wagmi";
 import { Button } from "./Button";
-import { toast } from "react-toastify";
 import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -19,6 +18,7 @@ import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
 
 type RegisterMemberProps = {
@@ -49,6 +49,9 @@ export function RegisterMember({
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
+
+  const { publish } = usePubSubContext();
+
   //
   //new logic
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
@@ -98,7 +101,7 @@ export function RegisterMember({
   const { data: accountTokenBalance } = useBalance({
     address: connectedAccount,
     token: registerToken as `0x${string}` | undefined,
-    chainId: chainId || 0,
+    chainId,
   });
 
   const accountHasBalance = gte(
@@ -118,6 +121,22 @@ export function RegisterMember({
     functionName: "stakeAndRegisterMember",
   });
 
+  useWaitForTransaction({
+    confirmations: chainDataMap[chainId].confirmations,
+    hash: registerMemberData?.hash,
+    onSuccess: () => {
+      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
+      publish({
+        topic: "member",
+        type: "add",
+        containerId: communityAddress,
+        function: "stakeAndRegisterMember",
+        id: communityAddress,
+        chainId: chainId,
+      });
+    },
+  });
+
   const {
     data: unregisterMemberData,
     write: writeUnregisterMember,
@@ -126,6 +145,22 @@ export function RegisterMember({
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
+  });
+
+  useWaitForTransaction({
+    confirmations: chainDataMap[chainId].confirmations,
+    hash: unregisterMemberData?.hash,
+    onSuccess: () => {
+      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
+      publish({
+        topic: "member",
+        type: "delete",
+        containerId: communityAddress,
+        function: "unregisterMember",
+        id: communityAddress,
+        chainId: chainId,
+      });
+    },
   });
 
   const {

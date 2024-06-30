@@ -4,9 +4,10 @@ import { Addreth, ThemeDeclaration, Theme } from "addreth";
 import { Address } from "viem";
 import { chainDataMap } from "@/configs/chainServer";
 import { getChainIdFromPath } from "@/utils/path";
+import LoadingSpinner from "./LoadingSpinner";
 
 type EthAddressProps = {
-  address: Address;
+  address?: string;
   actions?: "all" | "copy" | "explorer" | "none";
   icon?: false | "ens" | "identicon" | ((address: Address) => string);
 };
@@ -37,7 +38,7 @@ export const EthAddress = ({
   // };
   const chainId = getChainIdFromPath();
 
-  return (
+  return address ? (
     <Addreth
       // theme={theme}
       theme={{
@@ -49,12 +50,14 @@ export const EthAddress = ({
       }}
       actions={actions}
       icon={icon}
-      address={address}
+      address={address as Address}
       explorer={(address) => ({
         name: chainDataMap[chainId].name,
         url: `${chainDataMap[chainId].explorer}${address}`,
         accountUrl: `${chainDataMap[chainId].explorer}${address}`,
       })}
     />
+  ) : (
+    <LoadingSpinner></LoadingSpinner>
   );
 };
