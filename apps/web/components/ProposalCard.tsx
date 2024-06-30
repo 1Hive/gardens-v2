@@ -8,16 +8,24 @@ import { ProposalInputItem, ProposalTypeVoter } from "./Proposals";
 import { Allo, CVStrategy } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
-import { Address, useContractWrite } from "wagmi";
+import {
+  Address,
+  useChainId,
+  useContractWrite,
+  useWaitForTransaction,
+} from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeAbiParameters, formatUnits } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
-import { poolTypes } from "@/types";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { chainDataMap } from "@/configs/chainServer";
+import { LightCVStrategy, poolTypes } from "@/types";
+import { getProposals } from "@/actions/getProposals";
 
 type ProposalCard = {
-  proposalData: ProposalTypeVoter;
+  proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   i: number;
@@ -26,7 +34,7 @@ type ProposalCard = {
   memberActivatedPoints: number;
   memberPoolWeight: number;
   executeDisabled: boolean;
-  strategy: CVStrategy;
+  strategy: LightCVStrategy;
   tokenDecimals: number;
   alloInfo: Allo;
   inputHandler: (i: number, value: number) => void;
@@ -51,6 +59,9 @@ export function ProposalCard({
 }: ProposalCard) {
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
+
+  const { publish } = usePubSubContext();
+  const chainId = useChainId();
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0
@@ -80,6 +91,21 @@ export function ProposalCard({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
+  });
+
+  useWaitForTransaction({
+    hash: distributeData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "distribute",
+        id,
+        containerId: strategy.poolId,
+        chainId,
+      });
+    },
   });
 
   const distributeErrorName = useErrorDetails(errorDistribute);

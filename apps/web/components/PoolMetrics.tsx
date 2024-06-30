@@ -11,12 +11,18 @@ import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
 import { Button } from "./Button";
-import { Allo, CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
+import {
+  Allo,
+  CVStrategy,
+  TokenGarden,
+  getPoolDataQuery,
+} from "#/subgraph/.graphclient";
 import { parseUnits } from "viem";
 import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { chainDataMap } from "@/configs/chainServer";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -38,10 +44,12 @@ const InitialTransactionSteps: TransactionStep[] = [
   },
 ];
 
+type LightCVStrategy = getPoolDataQuery["cvstrategies"][0];
+
 type PoolStatsProps = {
   balance: string | number;
   strategyAddress: Address;
-  strategy: CVStrategy;
+  strategy: LightCVStrategy;
   communityAddress: Address;
   tokenGarden: TokenGarden;
   pointSystem: string;
@@ -66,6 +74,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
   const [amount, setAmount] = useState<number | string>();
   const { address: connectedAccount } = useAccount();
   const tokenSymbol = tokenGarden?.symbol;
+
+  const { publish } = usePubSubContext();
 
   //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
@@ -123,6 +133,21 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     address: alloInfo?.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "fundPool",
+  });
+
+  useWaitForTransaction({
+    hash: fundPool?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "pool",
+        type: "update",
+        function: "fundPool",
+        id: poolId,
+        containerId: communityAddress,
+        chainId: tokenGarden.chainId,
+      });
+    },
   });
 
   const writeContract = () => {

@@ -1,3 +1,5 @@
+import { getPoolDataQuery } from "#/subgraph/.graphclient";
+
 export * from "./styles";
 
 export const poolTypes: Record<string, string> = {
@@ -20,3 +22,8 @@ export const proposalStatus: Record<string, string> = {
   3: "cancelled",
   4: "executed",
 };
+
+export type ChainId = string | number;
+
+export type LightCVStrategy = getPoolDataQuery["cvstrategies"][0];
+export type LightProposal = LightCVStrategy["proposals"][0];

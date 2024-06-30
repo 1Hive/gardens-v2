@@ -16,6 +16,7 @@ import {
   optimismSepolia,
   gnosis,
 } from "viem/chains";
+import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
   chain: number | string;
@@ -99,7 +100,7 @@ export const chainDataMap: {
   },
 };
 
-export function getChain(chainId: number | string): Chain | undefined {
+export function getChain(chainId: ChainId): Chain | undefined {
   return chains.find((chain) => chain.id === Number(chainId));
 }
 
