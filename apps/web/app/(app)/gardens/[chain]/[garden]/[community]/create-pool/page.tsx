@@ -1,23 +1,22 @@
+"use client";
+
 import {
   TokenGarden,
   getPoolCreationDataDocument,
   getPoolCreationDataQuery,
 } from "#/subgraph/.graphclient";
 import PoolForm from "@/components/Forms/PoolForm";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import React from "react";
 import { Address } from "viem";
 
-export default async function CreatePool({
+export default function CreatePool({
   params: { chain, garden, community },
 }: {
   params: { chain: number; garden: string; community: string };
 }) {
-  const { urqlClient } = initUrqlClient();
-
   const { data: result, error: error } =
-    await queryByChain<getPoolCreationDataQuery>(
-      urqlClient,
+    useSubgraphQueryByChain<getPoolCreationDataQuery>(
       chain,
       getPoolCreationDataDocument,
       { communityAddr: community, tokenAddr: garden },
