@@ -20,6 +20,7 @@ import {
   CVStrategy,
   getMemberStrategyDocument,
   getMemberStrategyQuery,
+  getPoolDataQuery,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
@@ -49,6 +50,8 @@ export type ProposalTypeVoter = CVProposal & {
   type: number;
 };
 
+type LightCVStrategy = getPoolDataQuery["cvstrategies"][0];
+
 export function Proposals({
   strategy,
   alloInfo,
@@ -56,7 +59,7 @@ export function Proposals({
   createProposalUrl,
   proposalType,
 }: {
-  strategy: CVStrategy;
+  strategy: LightCVStrategy;
   alloInfo: Allo;
   communityAddress: Address;
   createProposalUrl: string;

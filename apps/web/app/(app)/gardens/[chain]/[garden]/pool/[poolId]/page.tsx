@@ -49,7 +49,7 @@ export default function Pool({
   const [ipfsResult, setIpfsResult] =
     useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
 
-  const metadata = data?.cvstrategies?.[0]?.metadata as string;
+  const metadata = data?.cvstrategies?.[0]?.metadata;
 
   useEffect(() => {
     if (metadata) {
@@ -67,7 +67,7 @@ export default function Pool({
     );
   }
 
-  const strategyObj = data?.cvstrategies?.[0] as CVStrategy | undefined;
+  const strategyObj = data?.cvstrategies?.[0];
   if (!data || !strategyObj) {
     return <div className="mt-52 text-center">Pool {poolId} not found</div>;
   }

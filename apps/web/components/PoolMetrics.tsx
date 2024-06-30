@@ -11,7 +11,12 @@ import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
 import { Button } from "./Button";
-import { Allo, CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
+import {
+  Allo,
+  CVStrategy,
+  TokenGarden,
+  getPoolDataQuery,
+} from "#/subgraph/.graphclient";
 import { parseUnits } from "viem";
 import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
@@ -39,10 +44,12 @@ const InitialTransactionSteps: TransactionStep[] = [
   },
 ];
 
+type LightCVStrategy = getPoolDataQuery["cvstrategies"][0];
+
 type PoolStatsProps = {
   balance: string | number;
   strategyAddress: Address;
-  strategy: CVStrategy;
+  strategy: LightCVStrategy;
   communityAddress: Address;
   tokenGarden: TokenGarden;
   pointSystem: string;
