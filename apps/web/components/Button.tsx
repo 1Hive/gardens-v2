@@ -21,7 +21,7 @@ type ButtonProps = {
   walletConnected?: boolean;
 };
 
-type Color = "primary" | "secondary" | "tertiary" | "error" | "disabled";
+type Color = "primary" | "secondary" | "tertiary" | "danger" | "disabled";
 type BtnStyle = "filled" | "outline" | "link";
 
 type BtnStyles = Record<BtnStyle, Record<Color, string>>;
@@ -32,8 +32,8 @@ const btnStyles: BtnStyles = {
       "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content",
     secondary: "",
     tertiary: "",
-    error:
-      "bg-error-button text-neutral-inverted-content hover:bg-error-hover-content",
+    danger:
+      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content",
     disabled: "bg-neutral-button text-neutral-inverted-content",
   },
   outline: {
@@ -41,15 +41,15 @@ const btnStyles: BtnStyles = {
       "text-primary-content outline outline-2 outline-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
     secondary: "",
     tertiary: "",
-    error:
-      "text-error-button outline outline-2 outline-error-button hover:text-error-hover-content hover:outline-error-hover-content",
+    danger:
+      "text-danger-button outline outline-2 outline-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
     disabled: "text-neutral-soft outline outline-2 outline-neutral-soft",
   },
   link: {
     primary: "text-primary-content",
     secondary: "",
     tertiary: "",
-    error: "text-error-button",
+    danger: "text-danger-button",
     disabled: "text-neutral-soft",
   },
 };

@@ -1,6 +1,6 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
-import { Button, RegisterMember } from "@/components";
+import { useEffect, useState } from "react";
+import { RegisterMember } from "@/components";
 import {
   UserGroupIcon,
   BuildingOffice2Icon,
@@ -20,9 +20,8 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
-import { queryByChain } from "@/providers/urql";
-import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { getChainIdFromPath } from "@/utils/path";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 
 export type StakesMemberType =
   isMemberQuery["members"][number]["memberCommunity"];
@@ -52,24 +51,25 @@ export function CommunityCard({
   const [memberStakedTokens, setMemberStakedTokens] = useState<string>("0");
   const pathname = usePathname();
 
-  const urqlClient = useUrqlClient();
-
   const chainId = getChainIdFromPath();
 
-  const runIsMemberQuery = useCallback(async () => {
-    if (accountAddress === undefined) {
-      return;
-    }
-    const { data: result, error } = await queryByChain<isMemberQuery>(
-      urqlClient,
+  const { data: result, error } = useSubgraphQueryByChain<isMemberQuery>(
+    chainId,
+    isMemberDocument,
+    {
+      me: accountAddress?.toLowerCase(),
+      comm: communityAddress.toLowerCase(),
+    },
+    {},
+    {
+      topic: "community",
       chainId,
-      isMemberDocument,
-      {
-        me: accountAddress.toLowerCase(),
-        comm: communityAddress.toLowerCase(),
-      },
-    );
+      id: communityAddress,
+      type: ["add", "delete"],
+    },
+  );
 
+  useEffect(() => {
     if (result && result.members.length > 0) {
       const stakedTokens =
         result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
@@ -78,11 +78,7 @@ export function CommunityCard({
 
       setMemberStakedTokens(memberStakedTokens);
     }
-  }, [accountAddress]);
-
-  useEffect(() => {
-    runIsMemberQuery();
-  }, [accountAddress]);
+  }, [result]);
 
   const pools = strategies ?? [];
 
