@@ -25,7 +25,7 @@ import {
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
 import delayAsync from "@/utils/delayAsync";
-import { HttpCodes } from "@/app/api/utils";
+import { HTTP_CODES } from "@/app/api/utils";
 
 const allChains: ChainId[] = [
   sepolia.id,
@@ -139,7 +139,7 @@ export default function useSubgraphQueryMultiChain<
       setResponse(Array.from(new Set(responseMap.current.values())));
       setFetching(false);
     },
-    HttpCodes.success,
+    HTTP_CODES.SUCCESS,
   );
 
   return {

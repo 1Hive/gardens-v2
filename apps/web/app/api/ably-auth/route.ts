@@ -2,15 +2,14 @@ import { isProd } from "@/constants/contracts";
 import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 import Ably from "ably";
 import { NextResponse, NextRequest } from "next/server";
-import { HttpRequestError } from "viem";
-import { HttpCodes } from "../utils";
+import { HTTP_CODES } from "../utils";
 
 export async function POST(req: NextRequest, res: NextResponse) {
   // Used for linter that fails
   if (!process.env.NEXT_ABLY_API_KEY) {
     console.error("NEXT_ABLY_API_KEY env must be");
     return NextResponse.json({
-      status: HttpCodes.serverError,
+      status: HTTP_CODES.SERVER_ERROR,
       message: "No auth",
     });
   }
@@ -28,7 +27,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
   } catch (error) {
     console.error(error);
     return NextResponse.json({
-      status: HttpCodes.serverError,
+      status: HTTP_CODES.SERVER_ERROR,
       message: "Failed to generate token",
       error: isProd ? undefined : error,
     });
