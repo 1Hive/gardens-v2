@@ -5,13 +5,10 @@ import {
   Statistic,
   EthAddress,
 } from "@/components";
-import Image from "next/image";
 import { grassLarge, blueLand } from "@/assets";
 import Image from "next/image";
-import { gardenLand } from "@/assets";
 import {
   Allo,
-  CVStrategy,
   TokenGarden,
   getAlloQuery,
   getPoolDataDocument,
@@ -109,16 +106,16 @@ export default function Pool({
       <section className="section-layout flex flex-col gap-0 overflow-hidden">
         <header>
           <h2>
-            Pool #{poolId} - {title}
+            Pool #{poolId} - {ipfsResult.title}
           </h2>
         </header>
- <p className="mb-2">
+        <p className="mb-2">
           <EthAddress address={strategyAddr} />
         </p>
-        <p>{description}</p>
+        <p>{ipfsResult.description}</p>
         <div className="mb-10 mt-8 flex flex-col items-start gap-2">
           <Statistic label="pool type" icon={<InformationCircleIcon />}>
-            <Badge poolType={proposalType} />
+            <Badge type={proposalType} />
           </Statistic>
 
           {poolTypes[proposalType] == "funding" && (
