@@ -21,10 +21,11 @@ import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
-import { poolTypes } from "@/types";
+import { LightCVStrategy, poolTypes } from "@/types";
+import { getProposals } from "@/actions/getProposals";
 
 type ProposalCard = {
-  proposalData: ProposalTypeVoter;
+  proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   i: number;
@@ -33,7 +34,7 @@ type ProposalCard = {
   memberActivatedPoints: number;
   memberPoolWeight: number;
   executeDisabled: boolean;
-  strategy: CVStrategy;
+  strategy: LightCVStrategy;
   tokenDecimals: number;
   alloInfo: Allo;
   inputHandler: (i: number, value: number) => void;

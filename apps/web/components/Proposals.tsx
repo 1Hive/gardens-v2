@@ -35,6 +35,7 @@ import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { toast } from "react-toastify";
 import { chainDataMap } from "@/configs/chainServer";
+import { LightCVStrategy } from "@/types";
 
 export type ProposalInputItem = {
   id: string;
@@ -49,8 +50,6 @@ export type ProposalTypeVoter = CVProposal & {
   title: string;
   type: number;
 };
-
-type LightCVStrategy = getPoolDataQuery["cvstrategies"][0];
 
 export function Proposals({
   strategy,
@@ -68,7 +67,9 @@ export function Proposals({
   const [editView, setEditView] = useState(false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
-  const [proposals, setProposals] = useState<ProposalTypeVoter[]>([]);
+  const [proposals, setProposals] = useState<
+    Awaited<ReturnType<typeof getProposals>>
+  >([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
   const [memberTokensInCommunity, setMemberTokensInCommunity] =
@@ -184,6 +185,9 @@ export function Proposals({
   }, [address]);
 
   useEffect(() => {
+    if (!proposals) {
+      return;
+    }
     const newInputs = proposals.map(({ proposalNumber, stakedAmount }) => {
       let returnItem = { id: proposalNumber, value: 0 };
       stakedFilters.forEach((item, index) => {
@@ -373,7 +377,7 @@ export function Proposals({
           <header className="flex items-center justify-between">
             <div className="flex w-full items-baseline justify-between">
               <h3 className="font-semibold">Proposals</h3>
-              {proposals.length === 0 ? (
+              {proposals?.length === 0 ? (
                 <h4 className="text-2xl text-info">
                   No submitted proposals to support
                 </h4>
@@ -417,7 +421,7 @@ export function Proposals({
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-6">
-            {proposals.map((proposalData, i) => (
+            {proposals?.map((proposalData, i) => (
               <React.Fragment key={proposalData.id + "_" + i}>
                 <ProposalCard
                   proposalData={proposalData}

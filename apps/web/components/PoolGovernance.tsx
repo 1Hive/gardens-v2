@@ -8,11 +8,12 @@ import { CVStrategy } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { Dnum } from "dnum";
 import { Badge } from "./Badge";
+import { LightCVStrategy } from "@/types";
 
 type PoolGovernanceProps = {
   memberPoolWeight: number;
   tokenDecimals: number;
-  strategy: CVStrategy;
+  strategy: LightCVStrategy;
   communityAddress: Address;
   memberTokensInCommunity: string;
 };
