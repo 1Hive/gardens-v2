@@ -24,9 +24,13 @@ import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import useErrorDetails from "@/utils/getErrorName";
 import { chainDataMap } from "@/configs/chainServer";
 import { DisplayNumber } from "./DisplayNumber";
+<<<<<<< HEAD
 import { queryByChain } from "@/providers/urql";
 import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
+=======
+import { usePubSubContext } from "@/contexts/pubsub.context";
+>>>>>>> dev
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -70,6 +74,14 @@ export const IncreasePower = ({
     false,
   );
   const [increaseInput, setIncreaseInput] = useState<number | string>("");
+<<<<<<< HEAD
+=======
+
+  const { publish } = usePubSubContext();
+  const chainId = getChainIdFromPath();
+
+  //handeling states
+>>>>>>> dev
   type states = "idle" | "loading" | "success" | "error";
   const [allowanceTransactionStatus, setAllowanceTransactionStatus] =
     useState<states>("idle");
@@ -116,9 +128,15 @@ export const IncreasePower = ({
   );
 
   const { data: accountTokenBalance } = useBalance({
+<<<<<<< HEAD
     address: accountAddress,
     token: registerToken as Address,
     chainId: chainId || 0,
+=======
+    address: connectedAccount,
+    token: registerToken as `0x${string}` | undefined,
+    chainId,
+>>>>>>> dev
   });
 
   //TODO: create a hook for this

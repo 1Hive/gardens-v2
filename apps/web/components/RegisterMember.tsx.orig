@@ -17,6 +17,11 @@ import { dn, gte } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
+<<<<<<< HEAD
+=======
+import { DisplayNumber } from "./DisplayNumber";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+>>>>>>> dev
 import { chainDataMap } from "@/configs/chainServer";
 
 type RegisterMemberProps = {
@@ -42,7 +47,15 @@ export function RegisterMember({
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
+<<<<<<< HEAD
   const { address: accountAddress } = useAccount();
+=======
+
+  const { publish } = usePubSubContext();
+
+  //
+  //new logic
+>>>>>>> dev
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
     false,
   );

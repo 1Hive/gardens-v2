@@ -1,3 +1,5 @@
+"use client";
+
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
 import {
@@ -8,24 +10,19 @@ import {
   TokenLabel,
 } from "@/components";
 import {
-  RegistryCommunity,
   TokenGarden,
   getGardenDocument,
   getGardenQuery,
 } from "#/subgraph/.graphclient";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { FormLink } from "@/components";
 import React from "react";
 import { CubeTransparentIcon } from "@heroicons/react/24/outline";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
-import { Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
-const { urqlClient } = initUrqlClient();
-
-export default async function Garden({
+export default function Garden({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };
