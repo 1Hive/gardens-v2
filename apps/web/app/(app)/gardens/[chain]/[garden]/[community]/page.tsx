@@ -124,7 +124,7 @@ export default function CommunityPage({
     try {
       const membership = [
         BigInt(registerStakeAmount),
-        Number(tokenGarden?.decimals),
+        Number(tokenGarden.decimals),
       ] as dn.Dnum;
       const feePercentage = [
         BigInt(communityFee),
@@ -140,7 +140,7 @@ export default function CommunityPage({
 
   const registrationAmount = [
     BigInt(registerStakeAmount),
-    tokenGarden?.decimals,
+    tokenGarden.decimals,
   ] as Dnum;
 
   const totalRegistrationCost =
@@ -174,23 +174,23 @@ export default function CommunityPage({
             />
             <Statistic label="staked tokens" icon={<CurrencyDollarIcon />}>
               <DisplayNumber
-                number={[BigInt(communityStakedTokens), tokenGarden?.decimals]}
+                number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
                 compact={true}
-                tokenSymbol={tokenGarden?.symbol}
+                tokenSymbol={tokenGarden.symbol}
               />
             </Statistic>
             <div className="flex">
               <p className="font-medium">Registration cost:</p>
               <div
                 className="tooltip ml-2 flex cursor-pointer items-center text-primary-content"
-                data-tip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden?.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden?.symbol}`}
+                data-tip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
-                  number={[totalRegistrationCost, tokenGarden?.decimals]}
+                  number={[totalRegistrationCost, tokenGarden.decimals]}
                   className="font-semibold"
                   disableTooltip={true}
                   compact={true}
-                  tokenSymbol={tokenGarden?.symbol}
+                  tokenSymbol={tokenGarden.symbol}
                 />
                 <ExclamationCircleIcon
                   className="ml-2 stroke-2"
@@ -203,10 +203,10 @@ export default function CommunityPage({
         </div>
         <div className="flex flex-col gap-4">
           <RegisterMember
-            tokenSymbol={tokenGarden?.symbol ?? ""}
+            tokenSymbol={tokenGarden.symbol ?? ""}
             communityAddress={communityAddr as Address}
             registerToken={tokenAddr as Address}
-            registerTokenDecimals={tokenGarden?.decimals}
+            registerTokenDecimals={tokenGarden.decimals}
             membershipAmount={registerStakeAmount}
             protocolFee={protocolFee}
             communityFee={communityFee}
@@ -216,8 +216,8 @@ export default function CommunityPage({
       <IncreasePower
         communityAddress={communityAddr as Address}
         registerToken={registerToken as Address}
-        tokenSymbol={tokenGarden?.symbol ?? ""}
-        registerTokenDecimals={tokenGarden?.decimals as number}
+        tokenSymbol={tokenGarden.symbol ?? ""}
+        registerTokenDecimals={tokenGarden.decimals as number}
         registerStakeAmount={BigInt(registerStakeAmount)}
       />
       <section className="section-layout flex flex-col gap-10">
