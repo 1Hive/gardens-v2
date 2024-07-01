@@ -1,18 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  useContractWrite,
-  useAccount,
-  useNetwork,
-  useChainId,
-  useContractRead,
-} from "wagmi";
+import { useContractWrite, useAccount, useChainId } from "wagmi";
 import { parseAbi, formatUnits, Address } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 
 interface FaucetProps {
-  token: TokenGarden;
+  token: Pick<TokenGarden, "id" | "decimals" | "symbol">;
 }
 
 const MINT_AMMOUNT = 1000n;
@@ -32,7 +26,7 @@ export default function TokenGardenFaucet({ token }: FaucetProps) {
     chainId: chain,
     account: connectedAccount,
     onSuccess: () => {
-      const formattedAmount = formatUnits(mintAmount, 18);
+      const formattedAmount = formatUnits(mintAmount, token.decimals);
       console.debug(
         `⛽: Minted ${formattedAmount} tokens to ${connectedAccount}!`,
       );

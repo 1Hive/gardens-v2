@@ -6,6 +6,7 @@ import {
   Address,
   useAccount,
   useBalance,
+  useChainId,
   useContractRead,
   useContractWrite,
   useWaitForTransaction,
@@ -26,6 +27,7 @@ import { DisplayNumber } from "./DisplayNumber";
 import { queryByChain } from "@/providers/urql";
 import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -69,6 +71,11 @@ export const IncreasePower = ({
     false,
   );
   const [increaseInput, setIncreaseInput] = useState<number | string>("");
+
+  const { publish } = usePubSubContext();
+  const { address: connectedAccount } = useAccount();
+
+  //handeling states
   type states = "idle" | "loading" | "success" | "error";
   const [allowanceTransactionStatus, setAllowanceTransactionStatus] =
     useState<states>("idle");
@@ -198,6 +205,22 @@ export const IncreasePower = ({
     functionName: "increasePower",
     args: [requestedAmount as bigint],
   });
+
+  useWaitForTransaction({
+    hash: increasePowerData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "member",
+        type: "update",
+        function: "increasePower",
+        containerId: communityAddress,
+        id: connectedAccount,
+        chainId: chainId,
+      });
+    },
+  });
+
   const {
     data: decreasePowerData,
     write: writeDecreasePower,
@@ -210,6 +233,22 @@ export const IncreasePower = ({
     functionName: "decreasePower",
     args: [requestedAmount as bigint],
   });
+
+  useWaitForTransaction({
+    hash: decreasePowerData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "member",
+        type: "update",
+        containerId: communityAddress,
+        function: "decreasePower",
+        id: connectedAccount,
+        chainId: chainId,
+      });
+    },
+  });
+
   useErrorDetails(errorDecreasePower, "errorDecrease");
 
   const { updateTransactionStatus: updateDecreasePowerTransactionStatus } =

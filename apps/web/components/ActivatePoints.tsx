@@ -1,13 +1,21 @@
 "use client";
 import React, { useEffect } from "react";
 import { Button } from "./Button";
-import { Address, useContractWrite, useAccount } from "wagmi";
+import {
+  Address,
+  useContractWrite,
+  useAccount,
+  useChainId,
+  useWaitForTransaction,
+} from "wagmi";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { chainDataMap } from "@/configs/chainServer";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -24,6 +32,8 @@ export function ActivatePoints({
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const chainId = useChainId();
+  const { publish } = usePubSubContext();
 
   const {
     data: activatePointsData,
@@ -36,6 +46,21 @@ export function ActivatePoints({
     functionName: "activatePoints",
   });
 
+  useWaitForTransaction({
+    hash: activatePointsData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "member",
+        id: connectedAccount,
+        type: "update",
+        function: "activatePoints",
+        containerId: communityAddress,
+        chainId,
+      });
+    },
+  });
+
   const {
     data: deactivatePointsData,
     write: writeDeactivatePoints,
@@ -45,6 +70,21 @@ export function ActivatePoints({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
+  });
+
+  useWaitForTransaction({
+    hash: deactivatePointsData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "member",
+        id: connectedAccount,
+        containerId: communityAddress,
+        type: "update",
+        function: "deactivatePoints",
+        chainId,
+      });
+    },
   });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
