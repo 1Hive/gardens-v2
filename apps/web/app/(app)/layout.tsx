@@ -5,8 +5,12 @@ export default function layout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavBar />
-      <GoBackButton />
-      <main className="my-10 flex justify-center bg-primary">{children}</main>
+      <main className="my-10 flex flex-col items-center bg-primary">
+        <div className="w-full max-w-6xl">
+          <GoBackButton />
+        </div>
+        {children}
+      </main>
       {/* footer */}
     </>
   );
