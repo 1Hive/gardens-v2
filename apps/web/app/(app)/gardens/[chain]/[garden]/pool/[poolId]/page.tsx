@@ -25,6 +25,7 @@ import {
   ChartBarIcon,
   BoltIcon,
   Square3Stack3DIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -120,7 +121,7 @@ export default function Pool({
             <Badge type={proposalType} />
           </Statistic>
 
-          {poolTypes[proposalType] == "funding" && (
+          {poolTypes[proposalType] === "funding" && (
             <Statistic label="funding token" icon={<InformationCircleIcon />}>
               <Badge
                 isCapitalize
@@ -145,14 +146,15 @@ export default function Pool({
           </Statistic>
         </div>
         {!isEnabled ? (
-          <div className="grid h-10 w-full items-center rounded-xl bg-warning">
-            <p className="text-center text-sm font-semibold">
-              waiting for council approval
-            </p>
+          <div className="pool-footer">
+            <ClockIcon className="h-8 w-8 text-secondary-content" />
+            <h6>
+              Waiting for council approval
+            </h6>
           </div>
         ) : (
           <Image
-            src={poolTypes[proposalType] == "funding" ? blueLand : grassLarge}
+            src={poolTypes[proposalType] === "funding" ? blueLand : grassLarge}
             alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
           />

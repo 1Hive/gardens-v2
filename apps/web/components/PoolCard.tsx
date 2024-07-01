@@ -11,6 +11,7 @@ import { Statistic } from "@/components";
 import {
   CurrencyDollarIcon,
   HandRaisedIcon,
+  ClockIcon
 } from "@heroicons/react/24/outline";
 import { poolTypes } from "@/types";
 
@@ -30,7 +31,7 @@ export function PoolCard({
 }: StrategyQuery & { tokenGarden: TokenGarden | undefined }) {
   const pathname = usePathname();
   poolAmount = poolAmount || 0;
-  const poolType = config?.proposalType as number;
+  const poolType = config?.proposalType as number | undefined;
 
   return (
     <Card href={`${pathname}/pool/${poolId}`}>
@@ -44,7 +45,7 @@ export function PoolCard({
           count={proposals.length}
           label="proposals"
         />
-        {poolTypes[poolType] == "funding" && (
+        {poolType && poolTypes[poolType] === "funding" && (
           <Statistic
             icon={<CurrencyDollarIcon />}
             count={formatTokenAmount(poolAmount, tokenGarden?.decimals)}
@@ -53,14 +54,15 @@ export function PoolCard({
         )}
       </div>
       {!enabled ? (
-        <div className="grid h-10 w-full items-center rounded-xl bg-warning">
-          <p className="text-center text-sm font-semibold">
-            waiting for council approval
-          </p>
+        <div className="pool-footer">
+          <ClockIcon className="h-8 w-8 text-secondary-content" />
+          <h6>
+            Waiting for approval
+          </h6>
         </div>
       ) : (
         <Image
-          src={poolTypes[poolType] == "funding" ? blueLand : grass}
+          src={poolType && poolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
           className="h-10 w-full rounded-lg object-cover"
         />
