@@ -118,15 +118,22 @@ export default async function CommunityPage({
     tokenGarden?.decimals,
   ] as Dnum;
 
-  let totalRegistrationCost = 0n;
-  try {
-    totalRegistrationCost =
-      BigInt(registerStakeAmount) +
-      BigInt(registerStakeAmount) /
-        (BigInt(SCALE_PRECISION) / BigInt(communityFee));
-  } catch (error) {
-    console.error("Error while calculating total registration cost: ", error);
-  }
+  const getTotalRegistrationCost = () => {
+    if (registerStakeAmount) {
+      // using == for type coercion because communityFee is actually a string
+      if (communityFee == 0 || communityFee === undefined) {
+        return BigInt(registerStakeAmount);
+      } else {
+        return (
+          BigInt(registerStakeAmount) +
+          BigInt(registerStakeAmount) /
+            (BigInt(SCALE_PRECISION) / BigInt(communityFee))
+        );
+      }
+    } else {
+      return 0n;
+    }
+  };
 
   return (
     <div className="page-layout">
@@ -166,7 +173,7 @@ export default async function CommunityPage({
                 data-tip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden?.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden?.symbol}`}
               >
                 <DisplayNumber
-                  number={[totalRegistrationCost, tokenGarden?.decimals]}
+                  number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
                   className="font-semibold"
                   disableTooltip={true}
                   compact={true}
