@@ -48,7 +48,6 @@ export function RegisterMember({
   const { publish } = usePubSubContext();
 
   const { address: accountAddress } = useAccount();
-  const { publish } = usePubSubContext();
 
   //
   //new logic
