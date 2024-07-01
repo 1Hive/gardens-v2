@@ -236,7 +236,9 @@ export default function CommunityPage({
             {fundingPools.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={tokenGarden}
+                tokenGarden={{
+                  decimals: tokenGarden?.decimals ?? 18,
+                }}
                 pool={pool}
               />
             ))}
@@ -250,7 +252,9 @@ export default function CommunityPage({
             {signalingPools.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={tokenGarden}
+                tokenGarden={{
+                  decimals: tokenGarden?.decimals ?? 18,
+                }}
                 pool={pool}
               />
             ))}
@@ -264,7 +268,9 @@ export default function CommunityPage({
             {poolsInReview.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={tokenGarden}
+                tokenGarden={{
+                  decimals: tokenGarden?.decimals ?? 18,
+                }}
                 pool={pool}
               />
             ))}
