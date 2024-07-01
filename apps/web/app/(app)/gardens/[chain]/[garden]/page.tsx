@@ -50,6 +50,14 @@ export default function Garden({
 
   const tokenGarden = result?.tokenGarden;
 
+  if (!tokenGarden) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   const gardenTotalMembers = () => {
     const uniqueMembers = new Set();
 

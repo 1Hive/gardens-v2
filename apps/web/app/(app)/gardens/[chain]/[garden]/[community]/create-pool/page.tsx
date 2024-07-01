@@ -6,6 +6,7 @@ import {
   getPoolCreationDataQuery,
 } from "#/subgraph/.graphclient";
 import PoolForm from "@/components/Forms/PoolForm";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import React from "react";
 import { Address } from "viem";
@@ -25,7 +26,7 @@ export default function CreatePool({
   let alloAddr = result?.allos[0]?.id as Address;
   let communityName = result?.registryCommunity?.communityName as string;
 
-  return (
+  return result ? (
     <div className="mx-auto flex max-w-[820px] flex-col items-center justify-center gap-4">
       <div className="text-center sm:mt-5">
         <h2 className="text-xl font-semibold leading-6 text-gray-900">
@@ -41,6 +42,10 @@ export default function CreatePool({
         communityAddr={community as Address}
         chainId={chain}
       />
+    </div>
+  ) : (
+    <div className="mt-96">
+      <LoadingSpinner />
     </div>
   );
 }
