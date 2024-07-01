@@ -48,6 +48,9 @@ export function RegisterMember({
   const { publish } = usePubSubContext();
 
   const { address: accountAddress } = useAccount();
+
+  //
+  //new logic
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
     false,
   );

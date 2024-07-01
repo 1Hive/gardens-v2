@@ -42,8 +42,13 @@ query getTokenGardens {
       covenantIpfsHash
       communityFee
       isValid
+      communityName
+      strategies {
+        id
+      }
       members {
         id
+        memberAddress
       }
     }
   }
@@ -153,7 +158,7 @@ query getGarden($addr: ID!) {
       registerToken
       registerStakeAmount
       alloAddress
-      members(where: {stakedTokens_gt: "0"}) {
+      members(where: { stakedTokens_gt: "0" }) {
         id
         memberAddress
       }
@@ -171,7 +176,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
   registryCommunity(id: $communityAddr) {
     communityName
     id
-    members(where: {stakedTokens_gt: "0"}) {
+    members(where: { stakedTokens_gt: "0" }) {
       id
       stakedTokens
     }

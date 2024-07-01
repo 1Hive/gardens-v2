@@ -1,5 +1,9 @@
 "use client";
-import { CVStrategy, getCommunityQuery } from "#/subgraph/.graphclient";
+import {
+  CVStrategy,
+  CVProposal,
+  CVStrategyConfig,
+} from "#/subgraph/.graphclient";
 import { grass, poolGrassBlue } from "@/assets";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -13,15 +17,22 @@ import {
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
 
-export function PoolCard({
-  proposals,
-  config,
-  poolAmount,
-  poolId,
-  tokenGarden,
-  isEnabled,
-}: CVStrategy & { tokenGarden: TokenGarden }) {
+type Props = {
+  tokenGarden: Pick<TokenGarden, "decimals">;
+  pool: Pick<
+    CVStrategy,
+    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
+  > & {
+    proposals: Pick<CVProposal, "id">[];
+    config: Pick<CVStrategyConfig, "proposalType">;
+  };
+};
+
+export function PoolCard({ pool, tokenGarden }: Props) {
   const pathname = usePathname();
+
+  let { poolAmount, poolId, proposals, isEnabled, config } = pool;
+
   poolAmount = poolAmount || 0;
   const poolType = config?.proposalType as number;
 

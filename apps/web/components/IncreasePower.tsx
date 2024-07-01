@@ -27,6 +27,7 @@ import { DisplayNumber } from "./DisplayNumber";
 import { queryByChain } from "@/providers/urql";
 import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -70,6 +71,11 @@ export const IncreasePower = ({
     false,
   );
   const [increaseInput, setIncreaseInput] = useState<number | string>("");
+
+  const { publish } = usePubSubContext();
+  const { address: connectedAccount } = useAccount();
+
+  //handeling states
   type states = "idle" | "loading" | "success" | "error";
   const [allowanceTransactionStatus, setAllowanceTransactionStatus] =
     useState<states>("idle");

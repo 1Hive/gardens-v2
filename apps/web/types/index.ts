@@ -1,4 +1,7 @@
-import { getPoolDataQuery } from "#/subgraph/.graphclient";
+import {
+  getPoolDataQuery,
+  getTokenGardensQuery,
+} from "#/subgraph/.graphclient";
 
 export * from "./styles";
 
@@ -32,5 +35,5 @@ export const proposalStatus: Record<
 
 export type ChainId = string | number;
 
-export type LightCVStrategy = getPoolDataQuery["cvstrategies"][0];
-export type LightProposal = LightCVStrategy["proposals"][0];
+export type LightCVStrategy = getPoolDataQuery["cvstrategies"][number];
+export type LightProposal = LightCVStrategy["proposals"][number];

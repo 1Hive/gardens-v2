@@ -1,25 +1,34 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { CommunityCard } from "./CommunityCard";
-import { RegistryCommunity } from "#/subgraph/.graphclient";
+import {
+  CVStrategy,
+  Maybe,
+  MemberCommunity,
+  RegistryCommunity,
+} from "#/subgraph/.graphclient";
+
+export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
+  members?: Maybe<Array<Pick<MemberCommunity, "id" | "memberAddress">>>;
+  strategies?: Maybe<Array<Pick<CVStrategy, "id">>>;
+};
 
 export function Communities({
   communities,
 }: {
-  communities: RegistryCommunity[];
+  communities: LightCommunity[];
 }) {
   const { address } = useAccount();
 
   const [otherCommunities, setOtherCommunities] =
-    useState<RegistryCommunity[]>(communities);
-  const [userCommunities, setUserCommunities] = useState<RegistryCommunity[]>(
-    [],
-  );
+    useState<LightCommunity[]>(communities);
+  const [userCommunities, setUserCommunities] = useState<LightCommunity[]>([]);
 
   useEffect(() => {
-    const auxOtherCommunities: RegistryCommunity[] = [];
-    const auxUserCommunities: RegistryCommunity[] = [];
+    const auxOtherCommunities: LightCommunity[] = [];
+    const auxUserCommunities: LightCommunity[] = [];
     for (let community of communities) {
       if (memberInCommunity(community)) {
         auxUserCommunities.push(community);
@@ -31,7 +40,7 @@ export function Communities({
     setOtherCommunities(auxOtherCommunities);
   }, [address]);
 
-  function memberInCommunity(community: RegistryCommunity) {
+  function memberInCommunity(community: LightCommunity) {
     if (!community?.members) {
       return false;
     }
@@ -57,8 +66,8 @@ export function Communities({
                 <CommunityCard
                   key={id}
                   name={communityName ?? ""}
-                  members={members?.length ?? 0}
-                  pools={strategies?.length ?? 0}
+                  membersCount={members?.length ?? 0}
+                  poolsCount={strategies?.length ?? 0}
                   id={id}
                 />
               ),
@@ -75,8 +84,8 @@ export function Communities({
                 <CommunityCard
                   key={id}
                   name={communityName ?? ""}
-                  members={members?.length ?? 0}
-                  pools={strategies?.length ?? 0}
+                  membersCount={members?.length ?? 0}
+                  poolsCount={strategies?.length ?? 0}
                   id={id}
                 />
               ),

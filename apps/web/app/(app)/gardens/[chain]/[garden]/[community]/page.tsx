@@ -1,5 +1,7 @@
+"use client";
+
 import { commImg, groupFlowers } from "@/assets";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   EthAddress,
@@ -10,11 +12,8 @@ import {
   IncreasePower,
   FormLink,
 } from "@/components";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { Address } from "viem";
 import {
-  RegistryCommunity,
-  TokenGarden,
   getCommunityDocument,
   getCommunityQuery,
 } from "#/subgraph/.graphclient";
@@ -31,22 +30,61 @@ import {
   parseToken,
 } from "@/utils/numbers";
 import { Dnum } from "dnum";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
-const { urqlClient } = initUrqlClient();
-
-export default async function CommunityPage({
+export default function CommunityPage({
   params: { chain, garden: tokenAddr, community: communityAddr },
 }: {
   params: { chain: number; garden: string; community: string };
 }) {
-  const { data: result, error: error } = await queryByChain<getCommunityQuery>(
-    urqlClient,
+  const [covenant, setCovenant] = useState<string | undefined>();
+  const { data: result, error } = useSubgraphQueryByChain<getCommunityQuery>(
     chain,
     getCommunityDocument,
     { communityAddr: communityAddr, tokenAddr: tokenAddr },
+    {},
+    [
+      { topic: "community", id: communityAddr, chainId: chain },
+      { topic: "member", chainId: chain, containerId: communityAddr },
+    ],
   );
 
+  useEffect(() => {
+    if (error) {
+      console.error("Error while fetching community data: ", error);
+    }
+  }, [error]);
+
+  const covenantIpfsHash = result?.registryCommunity?.covenantIpfsHash;
   let tokenGarden = result?.tokenGarden;
+
+  useEffect(() => {
+    const fetchCovenant = async () => {
+      if (covenantIpfsHash) {
+        try {
+          const response = await fetch(
+            "https://ipfs.io/ipfs/" + covenantIpfsHash,
+          );
+          const json = await response.json();
+          if (typeof json.covenant === "string") {
+            setCovenant(json.covenant);
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    };
+    fetchCovenant();
+  }, [covenantIpfsHash]);
+
+  if (!tokenGarden || !result?.registryCommunity) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   let {
     communityName,
@@ -56,8 +94,7 @@ export default async function CommunityPage({
     registerStakeAmount,
     registerToken,
     protocolFee,
-    covenantIpfsHash,
-  } = result?.registryCommunity as RegistryCommunity;
+  } = result.registryCommunity;
 
   const communityStakedTokens =
     members?.reduce(
@@ -81,25 +118,13 @@ export default async function CommunityPage({
 
   const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
 
-  let covenant = "";
-
-  if (covenantIpfsHash) {
-    try {
-      const response = await fetch("https://ipfs.io/ipfs/" + covenantIpfsHash);
-      const json = await response.json();
-      covenant = typeof json.covenant === "string" && json.covenant;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
   const parsedCommunityFee = () => {
     try {
       const membership = [
         BigInt(registerStakeAmount),
-        Number(tokenGarden?.decimals),
+        Number(tokenGarden!.decimals),
       ] as dn.Dnum;
       const feePercentage = [
         BigInt(communityFee),
@@ -115,7 +140,7 @@ export default async function CommunityPage({
 
   const registrationAmount = [
     BigInt(registerStakeAmount),
-    tokenGarden?.decimals,
+    tokenGarden.decimals,
   ] as Dnum;
 
   const getTotalRegistrationCost = () => {
@@ -161,23 +186,23 @@ export default async function CommunityPage({
             />
             <Statistic label="staked tokens" icon={<CurrencyDollarIcon />}>
               <DisplayNumber
-                number={[BigInt(communityStakedTokens), tokenGarden?.decimals]}
+                number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
                 compact={true}
-                tokenSymbol={tokenGarden?.symbol}
+                tokenSymbol={tokenGarden.symbol}
               />
             </Statistic>
             <div className="flex">
               <p className="font-medium">Registration cost:</p>
               <div
                 className="tooltip ml-2 flex cursor-pointer items-center text-primary-content"
-                data-tip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden?.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden?.symbol}`}
+                data-tip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
                   number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
                   className="font-semibold"
                   disableTooltip={true}
                   compact={true}
-                  tokenSymbol={tokenGarden?.symbol}
+                  tokenSymbol={tokenGarden.symbol}
                 />
                 <ExclamationCircleIcon
                   className="ml-2 stroke-2"
@@ -190,10 +215,10 @@ export default async function CommunityPage({
         </div>
         <div className="flex flex-col gap-4">
           <RegisterMember
-            tokenSymbol={tokenGarden?.symbol ?? ""}
+            tokenSymbol={tokenGarden.symbol ?? ""}
             communityAddress={communityAddr as Address}
             registerToken={tokenAddr as Address}
-            registerTokenDecimals={tokenGarden?.decimals}
+            registerTokenDecimals={tokenGarden.decimals}
             membershipAmount={registerStakeAmount}
             protocolFee={protocolFee}
             communityFee={communityFee}
@@ -203,8 +228,8 @@ export default async function CommunityPage({
       <IncreasePower
         communityAddress={communityAddr as Address}
         registerToken={registerToken as Address}
-        tokenSymbol={tokenGarden?.symbol ?? ""}
-        registerTokenDecimals={tokenGarden?.decimals as number}
+        tokenSymbol={tokenGarden.symbol ?? ""}
+        registerTokenDecimals={tokenGarden.decimals as number}
         registerStakeAmount={BigInt(registerStakeAmount)}
       />
       <section className="section-layout flex flex-col gap-10">
@@ -223,8 +248,10 @@ export default async function CommunityPage({
             {fundingPools.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={tokenGarden as TokenGarden}
-                {...pool}
+                tokenGarden={{
+                  decimals: tokenGarden?.decimals ?? 18,
+                }}
+                pool={pool}
               />
             ))}
           </div>
@@ -237,8 +264,10 @@ export default async function CommunityPage({
             {signalingPools.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={tokenGarden as TokenGarden}
-                {...pool}
+                tokenGarden={{
+                  decimals: tokenGarden?.decimals ?? 18,
+                }}
+                pool={pool}
               />
             ))}
           </div>
@@ -251,8 +280,10 @@ export default async function CommunityPage({
             {poolsInReview.map((pool) => (
               <PoolCard
                 key={pool.poolId}
-                tokenGarden={tokenGarden as TokenGarden}
-                {...pool}
+                tokenGarden={{
+                  decimals: tokenGarden?.decimals ?? 18,
+                }}
+                pool={pool}
               />
             ))}
           </div>
@@ -260,7 +291,15 @@ export default async function CommunityPage({
       </section>
       <section className="section-layout">
         <h2 className="mb-4">Covenant</h2>
-        <p>{covenant}</p>
+        {covenantIpfsHash ? (
+          covenant ? (
+            <p>{covenant}</p>
+          ) : (
+            <LoadingSpinner></LoadingSpinner>
+          )
+        ) : (
+          <p className="italic">No covenant was submitted.</p>
+        )}
         <div className="mt-10 flex justify-center">
           <Image src={groupFlowers} alt="flowers" className="w-[265px]" />
         </div>

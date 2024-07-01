@@ -9,15 +9,15 @@ import { RectangleGroupIcon } from "@heroicons/react/24/outline";
 
 type CommunityCardProps = {
   name: string;
-  members: number;
-  pools: number;
+  membersCount: number;
+  poolsCount: number;
   id: string;
 };
 
 export function CommunityCard({
   name,
-  members,
-  pools,
+  membersCount,
+  poolsCount,
   id,
 }: CommunityCardProps) {
   const pathname = usePathname();
@@ -35,8 +35,12 @@ export function CommunityCard({
         <div className="flex h-[37px] items-center">
           <h5>{name}</h5>
         </div>
-        <Statistic label="members" count={members} />
-        <Statistic label="pools" icon={<RectangleGroupIcon />} count={pools} />
+        <Statistic label="members" count={membersCount} />
+        <Statistic
+          label="pools"
+          icon={<RectangleGroupIcon />}
+          count={poolsCount}
+        />
       </div>
     </Card>
   );

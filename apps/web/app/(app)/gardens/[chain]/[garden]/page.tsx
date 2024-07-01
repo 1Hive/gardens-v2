@@ -2,48 +2,62 @@
 
 import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
-import {
-  Communities,
-  CommunityCard,
-  EthAddress,
-  Statistic,
-  TokenLabel,
-} from "@/components";
-import {
-  RegistryCommunity,
-  TokenGarden,
-  getGardenDocument,
-  getGardenQuery,
-} from "#/subgraph/.graphclient";
+import { Communities, EthAddress, Statistic, TokenLabel } from "@/components";
+import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
 import { FormLink } from "@/components";
-import React from "react";
+import React, { useEffect } from "react";
 import { CubeTransparentIcon } from "@heroicons/react/24/outline";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
-import { Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
-const { urqlClient } = initUrqlClient();
-
-export default async function Garden({
+export default function Garden({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error: error } = await queryByChain<getGardenQuery>(
-    urqlClient,
+  const { data: result, error } = useSubgraphQueryByChain<getGardenQuery>(
     chain,
     getGardenDocument,
     { addr: garden },
+    {},
+    [
+      { topic: "member", chainId: chain },
+      {
+        topic: "community",
+
+        chainId: chain,
+      },
+      {
+        topic: "garden",
+        id: garden,
+        chainId: chain,
+      },
+    ],
   );
+
+  useEffect(() => {
+    if (error) {
+      console.error("Error while fetching garden data: ", error);
+    }
+  }, [error]);
 
   let communities = result?.tokenGarden?.communities || [];
 
   communities = communities.filter((com) => com.isValid);
 
-  const tokenGarden = result?.tokenGarden as TokenGarden;
+  const tokenGarden = result?.tokenGarden;
+
+  if (!tokenGarden) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   const gardenTotalMembers = () => {
     const uniqueMembers = new Set();
@@ -69,7 +83,7 @@ export default async function Garden({
               <div className="flex items-center gap-4">
                 <h2>{tokenGarden?.name}</h2> <TokenLabel chainId={chain} />
               </div>
-              <EthAddress address={tokenGarden?.id as Address} />
+              <EthAddress address={tokenGarden?.id} />
             </div>
             <p className="max-w-lg">
               Discover communities in the
@@ -89,7 +103,7 @@ export default async function Garden({
           </div>
         </div>
       </header>
-      <Communities communities={communities as RegistryCommunity[]} />
+      <Communities communities={communities} />
       <section className="section-layout ">
         <div className="flex flex-col gap-10 overflow-x-hidden">
           <header>

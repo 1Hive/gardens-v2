@@ -83,7 +83,7 @@ export function ConnectWallet() {
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
-                        "border-2 border-danger-content":
+                        "border-danger-content border-2":
                           urlChainId !== chain.id && !isNaN(urlChainId),
                       })} `}
                         >
