@@ -150,7 +150,11 @@ export default function CommunityPage({
       BigInt(registerStakeAmount) /
         (BigInt(SCALE_PRECISION) / BigInt(communityFee));
   } catch (error) {
-    console.error("Error while calculating total registration cost: ", error);
+    console.error("Error while calculating total registration cost: ", error, {
+      registerStakeAmount,
+      communityFee,
+      SCALE_PRECISION,
+    });
   }
 
   return (
