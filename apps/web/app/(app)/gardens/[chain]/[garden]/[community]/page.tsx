@@ -124,7 +124,7 @@ export default function CommunityPage({
     try {
       const membership = [
         BigInt(registerStakeAmount),
-        Number(tokenGarden.decimals),
+        Number(tokenGarden!.decimals),
       ] as dn.Dnum;
       const feePercentage = [
         BigInt(communityFee),
