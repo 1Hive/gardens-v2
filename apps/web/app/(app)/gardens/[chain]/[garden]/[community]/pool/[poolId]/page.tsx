@@ -121,7 +121,7 @@ export default function Pool({
                         Conviction Voting
                       </span>
                     </div>
-                    {poolTypes[proposalType] !== "sigaling" && (
+                    {poolTypes[proposalType] !== "signaling" && (
                       <div className="text-md stat-title">
                         Funding Token:{" "}
                         <span className="text-md pl-2 text-black">

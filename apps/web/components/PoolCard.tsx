@@ -1,5 +1,9 @@
 "use client";
-import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
+import {
+  CVStrategy,
+  CVProposal,
+  CVStrategyConfig,
+} from "#/subgraph/.graphclient";
 import { grass, poolGrassBlue } from "@/assets";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -13,21 +17,22 @@ import {
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
 
-type StrategyQuery = NonNullable<
-  NonNullable<
-    NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
-  >[number]["strategies"]
->[number] & { enabled?: boolean }; // Add 'enabled' property to the type definition
+type Props = {
+  tokenGarden: Pick<TokenGarden, "decimals">;
+  pool: Pick<
+    CVStrategy,
+    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
+  > & {
+    proposals: Pick<CVProposal, "id">[];
+    config: Pick<CVStrategyConfig, "proposalType">;
+  };
+};
 
-export function PoolCard({
-  proposals,
-  config,
-  poolAmount,
-  poolId,
-  tokenGarden,
-  enabled = true,
-}: StrategyQuery & { tokenGarden: TokenGarden | undefined }) {
+export function PoolCard({ pool, tokenGarden }: Props) {
   const pathname = usePathname();
+
+  let { poolAmount, poolId, proposals, isEnabled, config } = pool;
+
   poolAmount = poolAmount || 0;
   const poolType = config?.proposalType as number;
 
@@ -51,7 +56,7 @@ export function PoolCard({
           />
         )}
       </div>
-      {!enabled ? (
+      {!isEnabled ? (
         <div className="grid h-10 w-full items-center rounded-xl bg-warning">
           <p className="text-center text-sm font-semibold">
             waiting for council approval
@@ -66,7 +71,4 @@ export function PoolCard({
       )}
     </Card>
   );
-}
-
-{
 }

@@ -6,7 +6,7 @@ import { parseAbi, formatUnits, Address } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 
 interface FaucetProps {
-  token: TokenGarden;
+  token: Pick<TokenGarden, "id" | "decimals" | "symbol">;
 }
 
 const MINT_AMMOUNT = 1000n;
