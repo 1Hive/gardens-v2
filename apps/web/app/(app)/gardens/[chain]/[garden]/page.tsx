@@ -10,6 +10,7 @@ import {
   TokenLabel,
 } from "@/components";
 import {
+  RegistryCommunity,
   TokenGarden,
   getGardenDocument,
   getGardenQuery,
@@ -19,10 +20,14 @@ import React from "react";
 import { CubeTransparentIcon } from "@heroicons/react/24/outline";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
+import { initUrqlClient, queryByChain } from "@/providers/urql";
+import { Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
-export default function Garden({
+const { urqlClient } = initUrqlClient();
+
+export default async function Garden({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };

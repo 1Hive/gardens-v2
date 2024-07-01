@@ -203,16 +203,6 @@ export const IncreasePower = ({
   useWaitForTransaction({
     hash: increasePowerData?.hash,
     confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
-      publish({
-        topic: "member",
-        type: "update",
-        function: "increasePower",
-        containerId: communityAddress,
-        id: connectedAccount,
-        chainId: chainId,
-      });
-    },
   });
 
   const {
@@ -231,16 +221,6 @@ export const IncreasePower = ({
   useWaitForTransaction({
     hash: decreasePowerData?.hash,
     confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
-      publish({
-        topic: "member",
-        type: "update",
-        containerId: communityAddress,
-        function: "decreasePower",
-        id: connectedAccount,
-        chainId: chainId,
-      });
-    },
   });
 
   useErrorDetails(errorDecreasePower, "errorDecrease");
