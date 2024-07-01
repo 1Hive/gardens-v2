@@ -44,6 +44,9 @@ export function RegisterMember({
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
+
+  const { publish } = usePubSubContext();
+
   const { address: accountAddress } = useAccount();
   const { publish } = usePubSubContext();
 

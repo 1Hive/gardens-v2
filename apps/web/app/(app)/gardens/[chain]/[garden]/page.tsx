@@ -4,6 +4,7 @@ import { tree2, tree3, grassLarge } from "@/assets";
 import Image from "next/image";
 import { Communities, EthAddress, Statistic, TokenLabel } from "@/components";
 import {
+  RegistryCommunity,
   TokenGarden,
   getGardenDocument,
   getGardenQuery,
@@ -16,10 +17,14 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
+import { initUrqlClient, queryByChain } from "@/providers/urql";
+import { Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
-export default function Garden({
+const { urqlClient } = initUrqlClient();
+
+export default async function Garden({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };
