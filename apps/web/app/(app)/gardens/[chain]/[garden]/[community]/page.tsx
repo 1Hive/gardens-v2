@@ -118,10 +118,15 @@ export default async function CommunityPage({
     tokenGarden?.decimals,
   ] as Dnum;
 
-  const totalRegistrationCost =
-    BigInt(registerStakeAmount) +
-    BigInt(registerStakeAmount) /
-      (BigInt(SCALE_PRECISION) / BigInt(communityFee));
+  let totalRegistrationCost = 0n;
+  try {
+    totalRegistrationCost =
+      BigInt(registerStakeAmount) +
+      BigInt(registerStakeAmount) /
+        (BigInt(SCALE_PRECISION) / BigInt(communityFee));
+  } catch (error) {
+    console.error("Error while calculating total registration cost: ", error);
+  }
 
   return (
     <div className="page-layout">
