@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { registryCommunityABI } from "@/src/generated";
 import { useViemClient } from "./useViemClient";
-import { CVStrategy } from "#/subgraph/.graphclient";
+import { LightCVStrategy } from "@/types";
 
-export function useIsMemberActivated(strategy: CVStrategy) {
+export function useIsMemberActivated(strategy: LightCVStrategy) {
   const { address } = useAccount();
   const client = useViemClient();
 
