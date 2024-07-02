@@ -301,7 +301,13 @@ export default function CommunityPage({
           <p className="italic">No covenant was submitted.</p>
         )}
         <div className="mt-10 flex justify-center">
-          <Image src={groupFlowers} alt="flowers" className="w-[265px]" />
+          <Image
+            src={groupFlowers}
+            alt="flowers"
+            className="w-[265px]"
+            width={265}
+            height={70}
+          />
         </div>
       </section>
     </div>
