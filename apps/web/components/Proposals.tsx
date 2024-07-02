@@ -372,11 +372,11 @@ export function Proposals({
         communityAddress={communityAddress}
         memberTokensInCommunity={memberTokensInCommunity}
       />
-      <section className="rounded-lg border-2 border-black bg-white p-12">
+      <section className="section-layout">
         <div className="mx-auto max-w-5xl space-y-10">
           <header className="flex items-center justify-between">
             <div className="flex w-full items-baseline justify-between">
-              <h3 className="font-semibold">Proposals</h3>
+              <h2 className="font-semibold">Proposals</h2>
               {proposals?.length === 0 ? (
                 <h4 className="text-2xl text-info">
                   No submitted proposals to support

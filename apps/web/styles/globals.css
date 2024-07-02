@@ -171,7 +171,11 @@ caption {
 }
 
 .section-layout {
-  @apply border1 relative rounded-3xl bg-neutral p-8;
+  @apply border1 relative overflow-hidden rounded-3xl bg-neutral p-8;
+}
+
+.pool-footer {
+  @apply flex w-full p-4 items-center gap-4 rounded-[20px] bg-secondary-soft
 }
 
 /* Hide number input arrows */
