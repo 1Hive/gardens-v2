@@ -4,8 +4,8 @@ import {
   Badge,
   Proposals,
   PoolMetrics,
-  Statistic,
   EthAddress,
+  Statistic,
 } from "@/components";
 import { grassLarge, blueLand } from "@/assets";
 import Image from "next/image";
@@ -146,11 +146,9 @@ export default function Pool({
           </Statistic>
         </div>
         {!isEnabled ? (
-          <div className="pool-footer">
+          <div className="banner">
             <ClockIcon className="h-8 w-8 text-secondary-content" />
-            <h6>
-              Waiting for council approval
-            </h6>
+            <h6>Waiting for council approval</h6>
           </div>
         ) : (
           <Image
