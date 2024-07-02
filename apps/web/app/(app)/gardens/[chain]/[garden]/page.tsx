@@ -11,6 +11,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
+import { Address } from "viem";
 
 export const dynamic = "force-dynamic";
 
@@ -88,7 +89,7 @@ export default function Garden({
               <div className="flex items-center gap-4">
                 <h2>{tokenGarden?.name}</h2> <TokenLabel chainId={chain} />
               </div>
-              <EthAddress address={tokenGarden?.id} />
+              <EthAddress address={tokenGarden?.id as Address} />
             </div>
             <p className="max-w-lg">
               Discover communities in the
