@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {RegistryCommunity} from "../src/RegistryCommunity.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 struct CommunityInfo {
     uint256 fee;
@@ -51,16 +53,22 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
         // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
     }
 
-    function createRegistry(RegistryCommunity.InitializeParams memory params)
+    function createRegistry(RegistryCommunityV0_0.InitializeParams memory params)
         public
         virtual
         returns (address _createdRegistryAddress)
     {
-        RegistryCommunity registryCommunity = new RegistryCommunity();
         params._nonce = nonce++;
         params._registryFactory = address(this);
 
-        registryCommunity.initialize(params);
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(new RegistryCommunityV0_0()),
+            abi.encodeWithSelector(RegistryCommunityV0_0.initialize.selector, params)
+        );
+
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(payable(address(proxy)));
+
+        // registryCommunity.initialize(params);
         communityToInfo[address(registryCommunity)].valid = true;
         emit CommunityCreated(address(registryCommunity));
         return address(registryCommunity);

@@ -22,7 +22,12 @@ import {ISafe} from "./interfaces/ISafe.sol";
 import {RegistryFactory} from "./RegistryFactory.sol";
 import {IPointStrategy, CVStrategy, StrategyStruct} from "./CVStrategy.sol";
 
-contract RegistryCommunity is UUPSUpgradeable, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
+contract RegistryCommunityV0_0 is
+    OwnableUpgradeable,
+    UUPSUpgradeable,
+    ReentrancyGuardUpgradeable,
+    AccessControlUpgradeable
+{
     using ERC165Checker for address;
     using SafeERC20 for IERC20;
     using Clone for address;
@@ -187,11 +192,25 @@ contract RegistryCommunity is UUPSUpgradeable, ReentrancyGuardUpgradeable, Acces
         address[] strategies;
     }
 
+    /// @notice Initialize the contract with the required parameters
+    /// @param _allo The Allo contract address
+    /// @param _gardenToken The token used to stake in the community
+    /// @param _registerStakeAmount The amount of tokens required to register a member
+    /// @param _communityFee The fee charged to the community for each registration
+    /// @param _nonce The nonce used to create new profiles in the Allo Registry
+    /// @param _registryFactory The address of the registry factory
+    /// @param _feeReceiver The address that receives the community fee
+    /// @param _metadata The covenant IPFS hash of community
+    /// @param _councilSafe The council safe contract address
+    /// @param _communityName The community name
+    /// @param _isKickEnabled Enable or disable the kick feature
+    /// @param covenantIpfsHash The covenant IPFS hash of community
+    /// @param _strategyTemplate The address of the strategy template
     struct InitializeParams {
         address _allo;
         IERC20 _gardenToken;
         uint256 _registerStakeAmount;
-        uint256 _communityFee; //@todo if remove the protocol fee, also remove it here
+        uint256 _communityFee;
         uint256 _nonce;
         address _registryFactory;
         address _feeReceiver;
@@ -203,12 +222,13 @@ contract RegistryCommunity is UUPSUpgradeable, ReentrancyGuardUpgradeable, Acces
         address _strategyTemplate;
     }
 
-    constructor() {
-        // _grantRole(DEFAULT_ADMIN_ROLE, address(this));
-        _setRoleAdmin(COUNCIL_MEMBER, DEFAULT_ADMIN_ROLE);
-    }
+    function initialize(RegistryCommunityV0_0.InitializeParams memory params) public initializer {
+        __Ownable_init();
+        __ReentrancyGuard_init();
+        __AccessControl_init();
 
-    function initialize(RegistryCommunity.InitializeParams memory params) public {
+        _setRoleAdmin(COUNCIL_MEMBER, DEFAULT_ADMIN_ROLE);
+
         _revertZeroAddress(address(params._gardenToken));
         _revertZeroAddress(params._councilSafe);
         _revertZeroAddress(params._allo);
@@ -586,4 +606,8 @@ contract RegistryCommunity is UUPSUpgradeable, ReentrancyGuardUpgradeable, Acces
         gardenToken.transfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    uint256[50] private __gap;
 }

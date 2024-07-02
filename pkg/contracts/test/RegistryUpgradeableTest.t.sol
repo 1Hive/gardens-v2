@@ -25,6 +25,8 @@ import {RegistryFactoryV0_1} from "../src/RegistryFactoryV0_1.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
@@ -62,8 +64,8 @@ contract RegistryUpgradeableTest is
     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
     RegistryFactoryV0_1 internal registryFactory;
-    RegistryCommunity internal registryCommunity;
-    RegistryCommunity internal nonKickableCommunity;
+    RegistryCommunityV0_0 internal registryCommunity;
+    RegistryCommunityV0_0 internal nonKickableCommunity;
 
     address gardenOwner = makeAddr("communityGardenOwner");
     address gardenMember = makeAddr("communityGardenMember");
@@ -114,7 +116,7 @@ contract RegistryUpgradeableTest is
 
         vm.stopPrank();
 
-        RegistryCommunity.InitializeParams memory params;
+        RegistryCommunityV0_0.InitializeParams memory params;
         params._strategyTemplate = address(strategy);
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
@@ -125,7 +127,9 @@ contract RegistryUpgradeableTest is
         params._councilSafe = payable(address(_councilSafe()));
 
         params._isKickEnabled = true;
-        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+
+        registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+
         assertEq(registryFactory.nonce(), 1, "nonce before upgrade");
 
         vm.startPrank(gardenOwner);
@@ -140,10 +144,11 @@ contract RegistryUpgradeableTest is
         vm.stopPrank();
 
         params._isKickEnabled = false;
-        nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+
+        nonKickableCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
     }
 
-    function _registryCommunity() internal view returns (RegistryCommunity) {
+    function _registryCommunity() internal view returns (RegistryCommunityV0_0) {
         return registryCommunity;
     }
 
@@ -151,7 +156,7 @@ contract RegistryUpgradeableTest is
         return registryFactory;
     }
 
-    function _nonKickableCommunity() internal view returns (RegistryCommunity) {
+    function _nonKickableCommunity() internal view returns (RegistryCommunityV0_0) {
         return nonKickableCommunity;
     }
 
@@ -901,7 +906,7 @@ contract RegistryUpgradeableTest is
     }
 
     function test_revert_initialize_zeroStake() public {
-        RegistryCommunity.InitializeParams memory params;
+        RegistryCommunityV0_0.InitializeParams memory params;
         params._strategyTemplate = address(strategy);
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
@@ -912,7 +917,7 @@ contract RegistryUpgradeableTest is
         params._councilSafe = payable(address(_councilSafe()));
         params._isKickEnabled = true;
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.ValueCannotBeZero.selector));
-        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+        registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
     }
 
     function test_revert_deactivateMemberInStrategyCaller() public {
