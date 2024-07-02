@@ -1,6 +1,6 @@
 "use client";
 
-import { tree2, tree3, grassLarge } from "@/assets";
+import { tree2, tree3, grassLarge, ecosystem } from "@/assets";
 import Image from "next/image";
 import { Communities, EthAddress, Statistic, TokenLabel } from "@/components";
 import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
@@ -73,9 +73,14 @@ export default function Garden({
 
   return (
     <div className="page-layout">
-      <header className="section-layout flex gap-10 p-10">
-        <div className="flex h-[280px] w-[300px] items-center justify-center rounded-2xl bg-slate-200">
-          Token Image
+      <header className="section-layout flex flex-col gap-10 p-10 md:flex-row ">
+        <div className="flex h-[283px] w-[311px] items-center justify-center overflow-hidden rounded-2xl min-h-[283px] min-w-[311px]">
+          <Image
+            src={ecosystem}
+            width={311}
+            height={283}
+            alt={`${tokenGarden?.name}`}
+          />
         </div>
         <div className="flex flex-col gap-6">
           <div>
