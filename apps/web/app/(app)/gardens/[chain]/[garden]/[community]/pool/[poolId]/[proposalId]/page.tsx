@@ -59,8 +59,9 @@ const prettyTimestamp = (timestamp: number) => {
 export default function Proposal({
   params: { proposalId, poolId, chain, garden },
 }: {
-  params: { proposalId: string; poolId: number; chain: number; garden: string };
+  params: { proposalId: string; poolId: string; chain: string; garden: string };
 }) {
+  const chainId = Number(chain);
   // TODO: fetch garden decimals in query
   const { data } = useSubgraphQueryByChain<getProposalDataQuery>(
     chain,
@@ -97,6 +98,7 @@ export default function Proposal({
 
   const { data: thFromContract } = useContractRead({
     ...cvStrategyContract,
+    chainId: chainId,
     functionName: "calculateThreshold",
     args: [proposalIdNumber],
     enabled: !!proposalIdNumber,
@@ -104,12 +106,14 @@ export default function Proposal({
 
   const { data: totalEffectiveActivePoints } = useContractRead({
     ...cvStrategyContract,
+    chainId: chainId,
     functionName: "totalEffectiveActivePoints",
     enabled: !!proposalIdNumber,
   });
 
   const { data: stakeAmountFromContract } = useContractRead({
     ...cvStrategyContract,
+    chainId: chainId,
     functionName: "getProposalStakedAmount",
     args: [proposalIdNumber],
     enabled: !!proposalIdNumber,
@@ -117,6 +121,7 @@ export default function Proposal({
 
   const { data: getProposal } = useContractRead({
     ...cvStrategyContract,
+    chainId: chainId,
     functionName: "getProposal",
     args: [proposalIdNumber],
     enabled: !!proposalIdNumber,
@@ -124,6 +129,7 @@ export default function Proposal({
 
   const { data: updateConvictionLast } = useContractRead({
     ...cvStrategyContract,
+    chainId: chainId,
     functionName: "updateProposalConviction" as any, // TODO: fix CVStrategy.updateProposalConviction to view in contract
     args: [proposalIdNumber],
     enabled: !!proposalIdNumber,
@@ -131,11 +137,12 @@ export default function Proposal({
 
   const { data: maxCVSupply } = useContractRead({
     ...cvStrategyContract,
+    chainId: chainId,
     functionName: "getMaxConviction",
     args: [totalEffectiveActivePoints || 0n],
     enabled: !!proposalIdNumber,
   });
-
+  console.log("chainId: " + chain);
   if (
     !proposalData ||
     !ipfsResult ||
@@ -219,22 +226,6 @@ export default function Proposal({
   );
 
   console.log("currentConviction:           %s", currentConvictionPct);
-
-  if (!data) {
-    return (
-      <div className="w-full text-center">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
-
-  if (!proposalData) {
-    return (
-      <p className="text-center text-2xl text-error">
-        Proposal {proposalId} not found
-      </p>
-    );
-  }
 
   return (
     <div className="page-layout">
