@@ -4,10 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Button, PoolGovernance, FormLink, ProposalCard } from "@/components";
 import {
   useAccount,
-  useContractWrite,
   Address as AddressType,
   useContractRead,
-  useWaitForTransaction,
 } from "wagmi";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
@@ -17,10 +15,8 @@ import useErrorDetails from "@/utils/getErrorName";
 import {
   Allo,
   CVProposal,
-  CVStrategy,
   getMemberStrategyDocument,
   getMemberStrategyQuery,
-  getPoolDataQuery,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
@@ -34,7 +30,6 @@ import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { toast } from "react-toastify";
-import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy } from "@/types";
 import LoadingSpinner from "./LoadingSpinner";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";

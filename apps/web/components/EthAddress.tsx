@@ -2,9 +2,9 @@
 import React from "react";
 import { Addreth, ThemeDeclaration, Theme } from "addreth";
 import { Address } from "viem";
-import { chainDataMap } from "@/configs/chainServer";
 import { getChainIdFromPath } from "@/utils/path";
 import LoadingSpinner from "./LoadingSpinner";
+import { chainDataMap } from "@/configs/chainServer";
 
 type EthAddressProps = {
   address?: string;

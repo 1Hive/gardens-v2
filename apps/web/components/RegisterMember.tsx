@@ -3,10 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   useBalance,
-  useContractWrite,
   useContractRead,
   Address,
-  useWaitForTransaction,
 } from "wagmi";
 import { Button } from "./Button";
 import useErrorDetails from "@/utils/getErrorName";
@@ -19,7 +17,6 @@ import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { chainDataMap } from "@/configs/chainServer";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 type RegisterMemberProps = {

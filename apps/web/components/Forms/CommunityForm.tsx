@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";

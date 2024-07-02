@@ -1,5 +1,4 @@
 import { chainDataMap } from "@/configs/chainServer";
-import { ChainId } from "@/types";
 import { useEffect } from "react";
 import { TransactionReceipt } from "viem";
 import { useChainId, useContractWrite, useWaitForTransaction } from "wagmi";

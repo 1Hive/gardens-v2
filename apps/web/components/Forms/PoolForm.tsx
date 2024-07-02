@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { Address, parseUnits } from "viem";
 import { Button } from "@/components/Button";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { useAccount, useContractWrite } from "wagmi";
+import { useAccount } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, poolTypes } from "@/types";

@@ -2,14 +2,7 @@
 
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import {
-  Address,
-  useBalance,
-  useChainId,
-  useContractRead,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
+import { Address, useBalance, useChainId, useContractRead } from "wagmi";
 import { Button } from "./Button";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { useEffect, useRef, useState } from "react";
@@ -21,7 +14,6 @@ import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import useErrorDetails from "@/utils/getErrorName";
-import { chainDataMap } from "@/configs/chainServer";
 import { DisplayNumber } from "./DisplayNumber";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
@@ -128,15 +120,13 @@ export const IncreasePower = ({
     functionName: "approve",
   });
 
-  const {
-    write: writeResetAllowance,
-    status: resetAllowanceStatus,
-  } = useContractWriteWithConfirmations({
-    address: registerToken,
-    abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, 0n], // [allowed spender address, amount ]
-    functionName: "approve",
-  });
+  const { write: writeResetAllowance, status: resetAllowanceStatus } =
+    useContractWriteWithConfirmations({
+      address: registerToken,
+      abi: abiWithErrors(erc20ABI),
+      args: [communityAddress, 0n], // [allowed spender address, amount ]
+      functionName: "approve",
+    });
 
   const { data: allowance } = useContractRead({
     address: registerToken,

@@ -1,12 +1,6 @@
 "use client";
 import React, { FC, useState, useRef, useEffect } from "react";
-import {
-  Address,
-  useAccount,
-  useContractRead,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
+import { Address, useAccount, useContractRead, useContractWrite } from "wagmi";
 import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
@@ -21,7 +15,6 @@ import { parseUnits } from "viem";
 import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
-import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
