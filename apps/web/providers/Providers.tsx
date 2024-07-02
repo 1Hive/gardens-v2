@@ -46,10 +46,10 @@ const Providers = ({ children }: Props) => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [wagmiConfig, setWagmiConfig] =
-    useState<ReturnType<typeof createConfig>>();
+    useState<ReturnType<typeof createCustomConfig>>();
+  const chainId = getChainIdFromPath();
 
-  useEffect(() => {
-    const chainId = getChainIdFromPath();
+  const createCustomConfig = () => {
     const chain = getChain(chainId);
     const publicClient = chain
       ? configureChains(
@@ -62,23 +62,22 @@ const Providers = ({ children }: Props) => {
           ],
         ).publicClient
       : wagmiPublicClient;
+    return createConfig({
+      autoConnect: true,
+      connectors,
+      publicClient,
+    });
+  };
 
-      const wagmiConfig =  createConfig({
-        autoConnect: true,
-        connectors,
-        publicClient,
-      });
-
-    setWagmiConfig(
-      wagmiConfig
-    );
-
+  useEffect(() => {
+    setWagmiConfig(createCustomConfig());
   }, []);
 
   return (
     // if mounted UrlqProvider will be rendered
     // if not, null will be rendered
-    mounted && (
+    mounted &&
+    wagmiConfig && (
       <UrqlProvider>
         <WagmiConfig config={wagmiConfig}>
           <AddrethConfig>
