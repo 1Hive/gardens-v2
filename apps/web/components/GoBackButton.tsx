@@ -15,13 +15,13 @@ export const GoBackButton = () => {
     <>
       {path === "/gardens" ? null : (
         <Button
-          btnStyle="outline"
-          color="danger"
+          btnStyle="link"
+          color="primary"
           onClick={goBack}
-          className="fixed left-2 top-28 z-10 px-4 text-[16px]"
+          className="ml-8 w-fit px-0 py-0"
           icon={<ArrowLeftIcon className="h-4 w-4" />}
         >
-          {"Back"}
+          Back
         </Button>
       )}
     </>
