@@ -14,10 +14,11 @@ import grass_ from "./Grass.svg";
 import grassLarge_ from "./GrassLarge.svg";
 import grassBrown_ from "./GrassBrown.svg";
 import walletIcon_ from "./WalletIcon.svg";
-import poolGrassBlue_ from "./PoolBlueGrass.svg";
+import blueLand_ from "./PoolBlueGrass.svg";
 import commImg_ from "./CommunityImage.png";
 import groupFlowers_ from "./Groupflowers.svg";
 import ecosystem_ from "./ecosystem.png";
+import proposalImg_ from "./ProposalImage.png";
 
 export const clouds1 = clouds1_;
 export const clouds2 = clouds2_;
@@ -35,9 +36,10 @@ export const grass = grass_;
 export const grassLarge = grassLarge_;
 export const grassBrown = grassBrown_;
 export const walletIcon = walletIcon_;
-export const poolGrassBlue = poolGrassBlue_;
+export const blueLand = blueLand_;
 export const commImg = commImg_;
 export const groupFlowers = groupFlowers_;
 export const ecosystem = ecosystem_;
+export const proposalImg = proposalImg_;
 
 export { GardensLogo } from "./GardensLogo";

@@ -4,7 +4,7 @@ import {
   CVProposal,
   CVStrategyConfig,
 } from "#/subgraph/.graphclient";
-import { grass, poolGrassBlue } from "@/assets";
+import { grass, blueLand } from "@/assets";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components";
@@ -15,7 +15,9 @@ import { Statistic } from "@/components";
 import {
   CurrencyDollarIcon,
   HandRaisedIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
+import { poolTypes } from "@/types";
 
 type Props = {
   tokenGarden: Pick<TokenGarden, "decimals">;
@@ -34,7 +36,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
   let { poolAmount, poolId, proposals, isEnabled, config } = pool;
 
   poolAmount = poolAmount || 0;
-  const poolType = config?.proposalType as number;
+  const poolType = config?.proposalType as number | undefined;
 
   return (
     <Card href={`${pathname}/pool/${poolId}`}>
@@ -48,7 +50,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           count={proposals.length}
           label="proposals"
         />
-        {poolType == 1 && (
+        {poolType && poolTypes[poolType] === "funding" && (
           <Statistic
             icon={<CurrencyDollarIcon />}
             count={formatTokenAmount(poolAmount, tokenGarden?.decimals)}
@@ -57,14 +59,13 @@ export function PoolCard({ pool, tokenGarden }: Props) {
         )}
       </div>
       {!isEnabled ? (
-        <div className="grid h-10 w-full items-center rounded-xl bg-warning">
-          <p className="text-center text-sm font-semibold">
-            waiting for council approval
-          </p>
+        <div className="banner">
+          <ClockIcon className="h-8 w-8 text-secondary-content" />
+          <h6>Waiting for approval</h6>
         </div>
       ) : (
         <Image
-          src={poolType == 1 ? poolGrassBlue : grass}
+          src={poolType && poolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
           className="h-10 w-full rounded-lg object-cover"
         />

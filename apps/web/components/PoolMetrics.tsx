@@ -203,8 +203,11 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
       ></TransactionModal>
-      <section className="section-layout">
-        <section className="mt-10 flex w-full justify-between rounded-xl bg-white">
+      <section className="section-layout ">
+        <header>
+          <h2>Pool Metrics</h2>
+        </header>
+        <div className="mt-4 flex justify-between">
           <div className="flex flex-col">
             <div className="flex justify-between">
               <div className="flex flex-col justify-between">
@@ -261,7 +264,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
               Fund pool
             </Button>
           </div>
-        </section>
+        </div>
       </section>
     </>
   );

@@ -165,7 +165,7 @@ export function ProposalCard({
             </Button>
           )}
           <>
-            <Link href={`${pathname}/proposals/${id}`}>
+            <Link href={`${pathname}/${id}`}>
               <Button btnStyle="outline">View Proposal</Button>
             </Link>
           </>

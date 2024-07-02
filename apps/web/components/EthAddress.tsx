@@ -4,9 +4,10 @@ import { Addreth } from "addreth";
 import { Address } from "viem";
 import { chainDataMap } from "@/configs/chainServer";
 import { getChainIdFromPath } from "@/utils/path";
+import LoadingSpinner from "./LoadingSpinner";
 
 type EthAddressProps = {
-  address?: Address | string;
+  address?: Address;
   actions?: "all" | "copy" | "explorer" | "none";
   icon?: false | "ens" | "identicon" | ((address: Address) => string);
 };
@@ -57,6 +58,6 @@ export const EthAddress = ({
       })}
     />
   ) : (
-    <></>
+    <LoadingSpinner></LoadingSpinner>
   );
 };

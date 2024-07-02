@@ -36,6 +36,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { toast } from "react-toastify";
 import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy } from "@/types";
+import LoadingSpinner from "./LoadingSpinner";
 
 export type ProposalInputItem = {
   id: string;
@@ -110,6 +111,10 @@ export function Proposals({
       chainId,
     },
   );
+
+  if (error) {
+    console.error("Error while fetching member data: ", error);
+  }
 
   useEffect(() => {
     let _stakesFilteres: StakesMemberType = [];
@@ -372,26 +377,32 @@ export function Proposals({
         communityAddress={communityAddress}
         memberTokensInCommunity={memberTokensInCommunity}
       />
-      <section className="rounded-lg border-2 border-black bg-white p-12">
+      <section className="section-layout">
         <div className="mx-auto max-w-5xl space-y-10">
           <header className="flex items-center justify-between">
             <div className="flex w-full items-baseline justify-between">
-              <h3 className="font-semibold">Proposals</h3>
-              {proposals?.length === 0 ? (
-                <h4 className="text-2xl text-info">
-                  No submitted proposals to support
-                </h4>
-              ) : (
-                !editView && (
-                  <Button
-                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                    onClick={() => setEditView((prev) => !prev)}
-                    disabled={disableManSupportButton}
-                    tooltip={String(tooltipMessage)}
-                  >
-                    Manage support
-                  </Button>
+              <h2 className="font-semibold">Proposals</h2>
+              {proposals ? (
+                proposals.length === 0 ? (
+                  <h4 className="text-2xl text-info">
+                    No submitted proposals to support
+                  </h4>
+                ) : (
+                  !editView && (
+                    <Button
+                      icon={
+                        <AdjustmentsHorizontalIcon height={24} width={24} />
+                      }
+                      onClick={() => setEditView((prev) => !prev)}
+                      disabled={disableManSupportButton}
+                      tooltip={String(tooltipMessage)}
+                    >
+                      Manage support
+                    </Button>
+                  )
                 )
+              ) : (
+                <LoadingSpinner></LoadingSpinner>
               )}
             </div>
             {editView && (

@@ -191,6 +191,10 @@ caption {
   text-align: left;
 }
 
+.banner {
+  @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft p-4;
+}
+
 /* Hide number input arrows */
 .hide-input-arrows::-webkit-outer-spin-button,
 .hide-input-arrows::-webkit-inner-spin-button {
