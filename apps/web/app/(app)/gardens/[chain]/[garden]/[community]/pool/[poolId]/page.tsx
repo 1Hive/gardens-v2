@@ -45,11 +45,19 @@ export default function Pool({
     getPoolDataDocument,
     { poolId: poolId, garden: garden },
     {},
-    {
-      topic: "pool",
-      id: poolId,
-      chainId: chain,
-    },
+    [
+      {
+        topic: "pool",
+        id: poolId,
+        chainId: chain,
+      },
+      {
+        topic: "proposal",
+        containerId: poolId,
+        chainId: chain,
+        type: "update",
+      },
+    ],
   );
 
   useEffect(() => {
@@ -109,7 +117,7 @@ export default function Pool({
       <section className="section-layout flex flex-col gap-0 overflow-hidden">
         <header className="mb-2">
           <h2>
-            Pool #{poolId} - {ipfsResult.title}
+            {ipfsResult.title} - Pool #{poolId}
           </h2>
           <EthAddress address={strategyAddr} />
         </header>

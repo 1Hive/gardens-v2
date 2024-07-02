@@ -80,7 +80,7 @@ export type ChangeEventPayload = {
   type?: "add" | "update" | "delete";
   function?: string;
   chainId?: ChainId;
-  containerId?: string;
+  containerId?: string | number;
   id?: string | number;
 } & { [key: string]: Native };
 

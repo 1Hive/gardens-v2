@@ -136,7 +136,13 @@ export default function Proposal({
     enabled: !!proposalIdNumber,
   });
 
-  if (!proposalData || !ipfsResult) {
+  if (
+    !proposalData ||
+    !ipfsResult ||
+    !maxCVSupply ||
+    !totalEffectiveActivePoints ||
+    updateConvictionLast == null
+  ) {
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -156,15 +162,6 @@ export default function Proposal({
   const stakedAmount = proposalData.stakedAmount;
 
   const isSignalingType = poolTypes[proposalType] === "signaling";
-
-  if (
-    !maxCVSupply ||
-    !totalEffectiveActivePoints ||
-    !updateConvictionLast ||
-    !maxCVSupply
-  ) {
-    return;
-  }
 
   //logs for debugging in arb sepolia - //TODO: remove before merge
   console.log("requesteAmount:              %s", requestedAmount);
@@ -255,7 +252,7 @@ export default function Proposal({
           <div>
             <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <h2>
-                Proposal #{proposalIdNumber} - {ipfsResult?.title}
+                {ipfsResult?.title} - Proposal #{proposalIdNumber}
               </h2>
               <Badge type={proposalType} />
             </div>
