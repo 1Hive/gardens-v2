@@ -54,7 +54,7 @@ export function PoolCard({
         )}
       </div>
       {!enabled ? (
-        <div className="pool-footer">
+        <div className="banner">
           <ClockIcon className="h-8 w-8 text-secondary-content" />
           <h6>
             Waiting for approval
