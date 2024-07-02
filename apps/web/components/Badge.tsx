@@ -21,7 +21,7 @@ const POOL_TYPE_STYLES = [
   "bg-secondary-soft text-secondary-content",
 ];
 
-// Styles for different proposal statuses badges
+// Styles for different proposal status badge
 const PROPOSAL_STATUS_STYLES = [
   "bg-danger-soft text-danger-content",
   "bg-primary-soft text-primary-content",
@@ -30,7 +30,7 @@ const PROPOSAL_STATUS_STYLES = [
   "bg-tertiary-soft text-tertiary-content",
 ];
 
-const BASE_STYLES = "badge border-none leading-5 p-4 text-base";
+const BASE_STYLES = "border-none rounded-full leading-5 py-2 px-4 text-base";
 
 export function Badge({
   type,
@@ -40,19 +40,25 @@ export function Badge({
   icon,
   isCapitalize = false,
 }: BadgeProps): JSX.Element {
-  const isStatusBadge = status !== undefined;
 
+  const isStatusBadge = status !== undefined;
+  const ispoolTypeDefined = type !== undefined;
+  
   // Determine the appropriate styles based on whether it's a proposal status badge or a pool type badge
   const styles = isStatusBadge
-    ? `${PROPOSAL_STATUS_STYLES[status!] ?? "bg-secondary-soft"}`
-    : `${POOL_TYPE_STYLES[type!] ?? "bg-tertiary-soft text-tertiary-content"}`;
-
+    ? `${PROPOSAL_STATUS_STYLES[status] ?? "bg-secondary-soft"}`
+    : ispoolTypeDefined
+    ? `${POOL_TYPE_STYLES[type] ?? "bg-tertiary-soft text-tertiary-content"}`
+    : "bg-tertiary-soft text-tertiary-content";
+  
   // Determine the label content
   const content = isStatusBadge
-    ? proposalStatus[status!]
-    : poolTypes[type!] ?? label;
+    ? proposalStatus[status]
+    : ispoolTypeDefined
+    ? poolTypes[type] ?? label
+    : label;
 
-  //For type => conditionally set the icon based on type == poolTypes[type]
+  //For type => conditionally set the icon based on type === poolTypes[type]
   const iconIncluded =
     icon ??
     (() => {
@@ -70,7 +76,7 @@ export function Badge({
       {iconIncluded && (
         <div className="h-6 w-6 text-inherit">{iconIncluded}</div>
       )}
-      {isCapitalize ? content : capitalize(content)}
+      <h6>{isCapitalize ? content : capitalize(content ?? "")}</h6>
     </div>
   );
 }

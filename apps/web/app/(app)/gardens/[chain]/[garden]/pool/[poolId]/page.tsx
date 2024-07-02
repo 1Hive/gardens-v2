@@ -7,6 +7,7 @@ import {
   EthAddress,
   Statistic,
 } from "@/components";
+import { grassLarge, blueLand } from "@/assets";
 import Image from "next/image";
 import {
   Allo,
@@ -19,16 +20,16 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { pointSystems, poolTypes } from "@/types";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
+import {
+  InformationCircleIcon,
+  ChartBarIcon,
+  BoltIcon,
+  Square3Stack3DIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
-import {
-  BoltIcon,
-  ChartBarIcon,
-  InformationCircleIcon,
-  Square3Stack3DIcon,
-} from "@heroicons/react/24/outline";
-import { grassLarge, poolGrassBlue } from "@/assets";
 
 export const dynamic = "force-dynamic";
 
@@ -115,12 +116,12 @@ export default function Pool({
           <EthAddress address={strategyAddr} />
         </p>
         <p>{ipfsResult.description}</p>
-        <div className="mb-7 mt-5 flex w-full flex-col items-start gap-3.5">
+        <div className="mb-10 mt-8 flex flex-col items-start gap-2">
           <Statistic label="pool type" icon={<InformationCircleIcon />}>
             <Badge type={proposalType} />
           </Statistic>
 
-          {poolTypes[proposalType] == "funding" && (
+          {poolTypes[proposalType] === "funding" && (
             <Statistic label="funding token" icon={<InformationCircleIcon />}>
               <Badge
                 isCapitalize
@@ -145,16 +146,13 @@ export default function Pool({
           </Statistic>
         </div>
         {!isEnabled ? (
-          <div className="grid h-10 w-full items-center rounded-xl bg-warning">
-            <p className="text-center text-sm font-semibold">
-              waiting for council approval
-            </p>
+          <div className="banner">
+            <ClockIcon className="h-8 w-8 text-secondary-content" />
+            <h6>Waiting for council approval</h6>
           </div>
         ) : (
           <Image
-            src={
-              poolTypes[proposalType] == "funding" ? poolGrassBlue : grassLarge
-            }
+            src={poolTypes[proposalType] === "funding" ? blueLand : grassLarge}
             alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
           />
