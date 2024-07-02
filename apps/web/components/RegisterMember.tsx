@@ -1,15 +1,14 @@
 "use client";
-import React, { forwardRef, useEffect, useRef, useState } from "react";
+
+import React, { useEffect, useRef, useState } from "react";
 import {
   useBalance,
   useContractWrite,
   useContractRead,
   Address,
   useWaitForTransaction,
-  useAccount,
 } from "wagmi";
 import { Button } from "./Button";
-import { toast } from "react-toastify";
 import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -19,6 +18,8 @@ import { getChainIdFromPath } from "@/utils/path";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { chainDataMap } from "@/configs/chainServer";
 
 type RegisterMemberProps = {
   name: string;
@@ -48,6 +49,9 @@ export function RegisterMember({
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
+
+  const { publish } = usePubSubContext();
+
   //
   //new logic
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
@@ -97,11 +101,8 @@ export function RegisterMember({
   const { data: accountTokenBalance } = useBalance({
     address: connectedAccount,
     token: registerToken as `0x${string}` | undefined,
-    chainId: chainId || 0,
+    chainId,
   });
-
-  console.log("accountTokenBalance ", accountTokenBalance);
-  console.log("registerToken ", registerToken);
 
   const accountHasBalance = gte(
     accountTokenBalance?.value,
@@ -120,6 +121,22 @@ export function RegisterMember({
     functionName: "stakeAndRegisterMember",
   });
 
+  useWaitForTransaction({
+    confirmations: chainDataMap[chainId].confirmations,
+    hash: registerMemberData?.hash,
+    onSuccess: () => {
+      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
+      publish({
+        topic: "member",
+        type: "add",
+        containerId: communityAddress,
+        function: "stakeAndRegisterMember",
+        id: communityAddress,
+        chainId: chainId,
+      });
+    },
+  });
+
   const {
     data: unregisterMemberData,
     write: writeUnregisterMember,
@@ -128,6 +145,22 @@ export function RegisterMember({
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
+  });
+
+  useWaitForTransaction({
+    confirmations: chainDataMap[chainId].confirmations,
+    hash: unregisterMemberData?.hash,
+    onSuccess: () => {
+      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
+      publish({
+        topic: "member",
+        type: "delete",
+        containerId: communityAddress,
+        function: "unregisterMember",
+        id: communityAddress,
+        chainId: chainId,
+      });
+    },
   });
 
   const {
@@ -149,7 +182,7 @@ export function RegisterMember({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: 1,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: allowTokenData?.hash,
   });
 
@@ -264,9 +297,9 @@ export function RegisterMember({
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
       />
-      <div className="space-y-4 ">
-        <div className="flex">
-          <div className="flex-1 items-center rounded-lg bg-info px-4 py-3 text-sm font-bold text-white">
+      <div className="">
+        <div className="flex gap-4">
+          <div className="items-center rounded-lg bg-info px-4 py-3 text-sm font-bold text-white">
             <div className="flex items-center gap-2">
               <svg
                 className="mr-2 h-4 w-4 fill-current"
@@ -295,11 +328,11 @@ export function RegisterMember({
               </div>
             </div>
           </div>
-          <div className="stat flex-1 items-center gap-2">
+          <div className="flex items-center justify-center">
             <Button
               onClick={handleChange}
-              className="w-full bg-primary"
-              size="md"
+              btnStyle={isMember ? "outline" : "filled"}
+              color={isMember ? "danger" : "primary"}
               disabled={missmatchUrl || disabledRegMemberButton}
               tooltip={tooltipMessage}
             >

@@ -5,6 +5,7 @@ import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   Address,
   useBalance,
+  useChainId,
   useContractRead,
   useContractWrite,
   useWaitForTransaction,
@@ -20,7 +21,9 @@ import { getChainIdFromPath } from "@/utils/path";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import useErrorDetails from "@/utils/getErrorName";
+import { chainDataMap } from "@/configs/chainServer";
 import { DisplayNumber } from "./DisplayNumber";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -73,6 +76,9 @@ export const IncreasePower = ({
 
   const [increaseInput, setIncreaseInput] = useState<number | string>("");
 
+  const { publish } = usePubSubContext();
+  const chainId = getChainIdFromPath();
+
   //handeling states
   type states = "idle" | "loading" | "success" | "error";
   const [allowanceTransactionStatus, setAllowanceTransactionStatus] =
@@ -85,12 +91,10 @@ export const IncreasePower = ({
     registerTokenDecimals,
   );
 
-  const chainId = getChainIdFromPath();
-
   const { data: accountTokenBalance } = useBalance({
     address: connectedAccount,
     token: registerToken as `0x${string}` | undefined,
-    chainId: chainId || 0,
+    chainId,
   });
 
   //TODO: create a hook for this
@@ -130,7 +134,7 @@ export const IncreasePower = ({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: 1,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: allowTokenData?.hash,
   });
 
@@ -148,7 +152,7 @@ export const IncreasePower = ({
     isSuccess: isWaitResetAllowanceStatus,
     status: waitResetAllowanceStatus,
   } = useWaitForTransaction({
-    confirmations: 1,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: resetAllowance?.hash,
   });
 
@@ -170,6 +174,22 @@ export const IncreasePower = ({
     functionName: "increasePower",
     args: [requestedAmount as bigint],
   });
+
+  useWaitForTransaction({
+    hash: increasePowerData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "member",
+        type: "update",
+        function: "increasePower",
+        containerId: communityAddress,
+        id: connectedAccount,
+        chainId: chainId,
+      });
+    },
+  });
+
   const {
     data: decreasePowerData,
     write: writeDecreasePower,
@@ -182,6 +202,22 @@ export const IncreasePower = ({
     functionName: "decreasePower",
     args: [requestedAmount as bigint],
   });
+
+  useWaitForTransaction({
+    hash: decreasePowerData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "member",
+        type: "update",
+        containerId: communityAddress,
+        function: "decreasePower",
+        id: connectedAccount,
+        chainId: chainId,
+      });
+    },
+  });
+
   useErrorDetails(errorDecreasePower, "errorDecrease");
 
   const { updateTransactionStatus: updateDecreasePowerTransactionStatus } =
@@ -377,7 +413,6 @@ export const IncreasePower = ({
 
         <Button
           onClick={handleChange}
-          className="w-full"
           disabled={disabledIncPowerButton}
           tooltip={tooltipMessage}
         >
@@ -390,7 +425,8 @@ export const IncreasePower = ({
         {isMember && (
           <Button
             onClick={() => writeDecreasePower?.()}
-            className="w-full"
+            btnStyle="outline"
+            color="danger"
             disabled={disabledDecPowerButton}
             tooltip={decreaseTooltipMsg}
           >

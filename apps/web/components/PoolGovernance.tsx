@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { StatusBadge } from "./Badge";
 import { ActivatePoints } from "./ActivatePoints";
 import { SubmitPassport } from "./SubmitPassport";
 import { Address, useAccount, useContractRead } from "wagmi";
@@ -9,11 +8,13 @@ import { registryCommunityABI } from "@/src/generated";
 import { CVStrategy } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { Dnum } from "dnum";
+import { Badge } from "./Badge";
+import { LightCVStrategy } from "@/types";
 
 type PoolGovernanceProps = {
   memberPoolWeight: number;
   tokenDecimals: number;
-  strategy: CVStrategy;
+  strategy: LightCVStrategy;
   communityAddress: Address;
   memberTokensInCommunity: string;
 };
@@ -49,8 +50,7 @@ export const PoolGovernance = ({
   const showPoolGovernanceData =
     isMember && isMemberActivated !== undefined && isMemberActivated;
   return (
-    <section className="border2 flex w-full flex-col rounded-xl bg-white px-12 py-8">
-      <h3 className="mb-6 font-semibold">Your Pool Governance</h3>
+    <section className="section-layout">
       <div className="flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-10">
@@ -73,7 +73,7 @@ export const PoolGovernance = ({
                   <div className="flex w-full items-center gap-6">
                     <h5 className="">Status:</h5>
                     <div>
-                      <StatusBadge status={isMemberActivated ? 1 : 0} />
+                      <Badge status={isMemberActivated ? 1 : 0} />
                     </div>
                   </div>
                   <div className="flex w-full items-baseline gap-6">
@@ -88,7 +88,7 @@ export const PoolGovernance = ({
                 <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
-                    <StatusBadge status={isMemberActivated ? 1 : 0} />
+                    <Badge status={isMemberActivated ? 1 : 0} />
                   </div>
                 </div>
               )}

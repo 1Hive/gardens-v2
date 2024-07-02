@@ -24,7 +24,9 @@
         "SCORER_ID",
         "PASSPORT_SCORER_ADDRESS",
         "LIST_MANAGER_PRIVATE_KEY",
-        "CHAIN_ID"
+        "CHAIN_ID",
+        "NODE_ENV",
+        "NEXT_ABLY_API_KEY"
       ]
     },
     "test": {

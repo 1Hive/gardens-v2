@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import { useContractWrite } from "wagmi";
+import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -15,10 +15,11 @@ import { FormSelect } from "./FormSelect";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
-import { getChain } from "@/configs/chainServer";
+import { chainDataMap, getChain } from "@/configs/chainServer";
 import { getChainIdFromPath } from "@/utils/path";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 import { getContractsAddrByChain } from "@/constants/contracts";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -66,6 +67,8 @@ export const CommunityForm = ({
     watch,
   } = useForm<FormInputs>();
 
+  const { publish } = usePubSubContext();
+
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -73,10 +76,12 @@ export const CommunityForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
+  const chainId = getChainIdFromPath();
+
   // const [file, setFile] = useState<File | null>(null);
 
   const publicClient = createPublicClient({
-    chain: getChain(getChainIdFromPath()) as Chain,
+    chain: getChain(chainId) as Chain,
     transport: http(),
   });
 
@@ -150,7 +155,23 @@ export const CommunityForm = ({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-    onSuccess: () => router.push(pathname.replace(`/create-community`, "")),
+  });
+
+  useWaitForTransaction({
+    hash: data?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "community",
+        type: "add",
+        function: "createRegistry",
+        containerId: tokenGarden.id,
+        chainId: tokenGarden.chainId,
+      });
+      if (pathname) {
+        router.push(pathname?.replace(`/create-community`, ""));
+      }
+    },
     onError: (err) => {
       console.log(err);
       toast.error("Something went wrong creating Community");
@@ -408,21 +429,16 @@ export const CommunityForm = ({
         {showPreview ? (
           <div className="flex items-center gap-10">
             <Button
-              type="button"
-              onClick={() => createCommunity()}
-              isLoading={loading}
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="fill"
+              btnStyle="outline"
             >
               Edit
+            </Button>
+            <Button onClick={() => createCommunity()} isLoading={loading}>
+              Submit
             </Button>
           </div>
         ) : (
