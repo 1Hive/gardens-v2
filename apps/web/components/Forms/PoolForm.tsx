@@ -19,6 +19,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { chainDataMap } from "@/configs/chainServer";
 import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -254,11 +255,11 @@ export default function PoolForm({
     write({ args: args });
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write, error, isError, data } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "createPool",
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "pool",
         function: "createPool",

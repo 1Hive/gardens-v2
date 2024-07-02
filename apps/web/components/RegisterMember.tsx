@@ -20,6 +20,7 @@ import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { DisplayNumber } from "./DisplayNumber";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 type RegisterMemberProps = {
   name: string;
@@ -111,21 +112,14 @@ export function RegisterMember({
   );
 
   const {
-    data: registerMemberData,
+    transactionData: registerMemberTxData,
     write: writeRegisterMember,
-    isLoading: registerMemberIsLoading,
     error: registerMemberError,
     status: registerMemberStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "stakeAndRegisterMember",
-  });
-
-  useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
-    hash: registerMemberData?.hash,
-    onSuccess: () => {
-      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
+    onConfirmations: () => {
       publish({
         topic: "member",
         type: "add",
@@ -138,20 +132,14 @@ export function RegisterMember({
   });
 
   const {
-    data: unregisterMemberData,
+    transactionData: unregisterMemberTxData,
     write: writeUnregisterMember,
     error: unregisterMemberError,
     status: unregisterMemberStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
-  });
-
-  useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
-    hash: unregisterMemberData?.hash,
-    onSuccess: () => {
-      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
+    onConfirmations: () => {
       publish({
         topic: "member",
         type: "delete",
@@ -164,26 +152,16 @@ export function RegisterMember({
   });
 
   const {
-    data: allowTokenData,
+    transactionData: allowTokenTxData,
     write: writeAllowToken,
     error: allowTokenError,
-    status: allowTokenStatus,
-  } = useContractWrite({
+    confirmed: allowTokenConfirmed,
+    confirmationsStatus: allowTokenStatus,
+  } = useContractWriteWithConfirmations({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
     args: [communityAddress, registerStakeAmount as bigint], // [allowed spender address, amount ]
     functionName: "approve",
-  });
-
-  const {
-    data,
-    isError,
-    isLoading,
-    isSuccess: isWaitSuccess,
-    status: waitAllowTokenStatus,
-  } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
-    hash: allowTokenData?.hash,
   });
 
   const { data: dataAllowance } = useContractRead({
@@ -216,22 +194,20 @@ export function RegisterMember({
   }
 
   const { updateTransactionStatus: updateAllowTokenTransactionStatus } =
-    useTransactionNotification(allowTokenData);
+    useTransactionNotification(allowTokenTxData);
 
   const { updateTransactionStatus: updateRegisterMemberTransactionStatus } =
-    useTransactionNotification(registerMemberData);
+    useTransactionNotification(registerMemberTxData);
 
   const { updateTransactionStatus: updateUnregisterMemberTransactionStatus } =
-    useTransactionNotification(unregisterMemberData);
-
-  const approveToken = allowTokenStatus === "success";
+    useTransactionNotification(unregisterMemberTxData);
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
-    if (waitAllowTokenStatus === "success") {
+    if (allowTokenConfirmed) {
       writeRegisterMember();
     }
-  }, [waitAllowTokenStatus]);
+  }, [allowTokenConfirmed]);
 
   useEffect(() => {
     updateRegisterMemberTransactionStatus(registerMemberStatus);

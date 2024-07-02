@@ -23,6 +23,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { getProposals } from "@/actions/getProposals";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 type ProposalCard = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
@@ -81,22 +82,16 @@ export function ProposalCard({
 
   //executing proposal distribute function / alert error if not executable / notification if success
   const {
-    data: distributeData,
+    transactionData: distributeTxData,
     write: writeDistribute,
     error: errorDistribute,
-    isSuccess: isSuccessDistribute,
     isError: isErrorDistribute,
     status: distributeStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
-  });
-
-  useWaitForTransaction({
-    hash: distributeData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
@@ -118,7 +113,7 @@ export function ProposalCard({
   const {
     updateTransactionStatus: updateDistributeTransactionStatus,
     txConfirmationHash: distributeTxConfirmationHash,
-  } = useTransactionNotification(distributeData);
+  } = useTransactionNotification(distributeTxData);
 
   useEffect(() => {
     updateDistributeTransactionStatus(distributeStatus);

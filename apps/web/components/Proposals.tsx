@@ -37,6 +37,7 @@ import { toast } from "react-toastify";
 import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy } from "@/types";
 import LoadingSpinner from "./LoadingSpinner";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 export type ProposalInputItem = {
   id: string;
@@ -220,21 +221,15 @@ export function Proposals({
   }, [isMemberActived]);
 
   const {
-    data: allocateData,
+    transactionData: allocateTxData,
     write: writeAllocate,
     error: errorAllocate,
-    isSuccess: isSuccessAllocate,
     status: allocateStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
-  });
-
-  useWaitForTransaction({
-    hash: allocateData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
@@ -247,7 +242,7 @@ export function Proposals({
 
   useErrorDetails(errorAllocate, "errorAllocate");
   const { updateTransactionStatus, txConfirmationHash } =
-    useTransactionNotification(allocateData);
+    useTransactionNotification(allocateTxData);
 
   useEffect(() => {
     updateTransactionStatus(allocateStatus);

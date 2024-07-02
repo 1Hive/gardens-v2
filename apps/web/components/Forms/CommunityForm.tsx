@@ -20,6 +20,7 @@ import { getChainIdFromPath } from "@/utils/path";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -151,16 +152,11 @@ export const CommunityForm = ({
       });
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-  });
-
-  useWaitForTransaction({
-    hash: data?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "community",
         type: "add",

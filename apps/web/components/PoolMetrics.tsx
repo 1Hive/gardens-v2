@@ -23,6 +23,7 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -100,55 +101,42 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     watch: true,
   });
 
-  const {
-    data: allowTokenData,
-    write: writeAllowToken,
-    error: allowTokenError,
-    status: allowTokenStatus,
-  } = useContractWrite({
-    address: tokenGarden.address as Address,
-    abi: abiWithErrors(erc20ABI),
-    functionName: "approve",
-  });
-
-  const { isSuccess: isWaitAllowanceSuccess, status: waitAllowTokenStatus } =
-    useWaitForTransaction({
-      confirmations: chainDataMap[chainId].confirmations,
-      hash: allowTokenData?.hash,
+  const { write: writeAllowToken, status: allowTokenStatus } =
+    useContractWriteWithConfirmations({
+      address: tokenGarden.address as Address,
+      abi: abiWithErrors(erc20ABI),
+      functionName: "approve",
     });
 
   useEffect(() => {
-    if (isWaitAllowanceSuccess) {
+    if (allowTokenStatus === "success") {
       writeFundPool({
         args: [poolId, requestedAmount],
       });
     }
-  }, [isWaitAllowanceSuccess]);
+  }, [allowTokenStatus]);
 
-  const {
-    data: fundPool,
-    write: writeFundPool,
-    status: fundPoolStatus,
-  } = useContractWrite({
-    address: alloInfo?.id as Address,
-    abi: abiWithErrors(alloABI),
-    functionName: "fundPool",
-  });
-
-  useWaitForTransaction({
-    hash: fundPool?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
-      publish({
-        topic: "pool",
-        type: "update",
-        function: "fundPool",
-        id: poolId,
-        containerId: communityAddress,
-        chainId: tokenGarden.chainId,
-      });
-    },
-  });
+  const { write: writeFundPool, status: fundPoolStatus } =
+    useContractWriteWithConfirmations({
+      address: alloInfo?.id as Address,
+      abi: abiWithErrors(alloABI),
+      functionName: "fundPool",
+      onConfirmations: () => {
+        publish({
+          topic: "pool",
+          type: "update",
+          function: "fundPool",
+          id: poolId,
+          containerId: communityAddress,
+          chainId: tokenGarden.chainId,
+        });
+      },
+      onSuccess: () => {
+        closeModal();
+        setAmount(0);
+        setPendingAllowance(false);
+      },
+    });
 
   const writeContract = () => {
     writeAllowToken({
@@ -168,14 +156,6 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
       openModal();
     }
   };
-
-  useEffect(() => {
-    if (fundPoolStatus === "success") {
-      closeModal();
-      setAmount(0);
-      setPendingAllowance(false);
-    }
-  }, [fundPoolStatus]);
 
   //disable button condition
   const requestesMoreThanAllowance =

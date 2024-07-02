@@ -16,6 +16,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -36,20 +37,16 @@ export function ActivatePoints({
   const { publish } = usePubSubContext();
 
   const {
-    data: activatePointsData,
+    transactionData: activatePointsTxData,
     write: writeActivatePoints,
     error: errorActivatePoints,
     status: activatePointsStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
+    chainId,
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "activatePoints",
-  });
-
-  useWaitForTransaction({
-    hash: activatePointsData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "member",
         id: connectedAccount,
@@ -62,20 +59,15 @@ export function ActivatePoints({
   });
 
   const {
-    data: deactivatePointsData,
+    transactionData: deactivatePointsTxData,
     write: writeDeactivatePoints,
     error: errorDeactivatePoints,
     status: deactivatePointsStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
-  });
-
-  useWaitForTransaction({
-    hash: deactivatePointsData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "member",
         id: connectedAccount,
@@ -103,10 +95,10 @@ export function ActivatePoints({
   }
 
   const { updateTransactionStatus: updateActivePointsStatus } =
-    useTransactionNotification(activatePointsData);
+    useTransactionNotification(activatePointsTxData);
 
   const { updateTransactionStatus: updateDeactivePointsStatus } =
-    useTransactionNotification(deactivatePointsData);
+    useTransactionNotification(deactivatePointsTxData);
 
   useEffect(() => {
     updateActivePointsStatus(activatePointsStatus);

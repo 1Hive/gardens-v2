@@ -17,6 +17,7 @@ import { FormInput } from "./FormInput";
 import { usePathname, useRouter } from "next/navigation";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -155,16 +156,11 @@ export const ProposalForm = ({
     setShowPreview(true);
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
-  });
-
-  useWaitForTransaction({
-    hash: data?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",

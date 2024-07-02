@@ -24,6 +24,7 @@ import useErrorDetails from "@/utils/getErrorName";
 import { chainDataMap } from "@/configs/chainServer";
 import { DisplayNumber } from "./DisplayNumber";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -116,44 +117,25 @@ export const IncreasePower = ({
   //
 
   const {
-    data: allowTokenData,
+    transactionData: allowTokenTxData,
+    isSuccess: isWaitSuccess,
     write: writeAllowToken,
-    error: allowTokenError,
     status: allowTokenStatus,
-    isSuccess: isAllowTokenSuccess,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, requestedAmount as bigint], // [allowed spender address, amount ]
+    args: [communityAddress, requestedAmount], // [allowed spender address, amount ]
     functionName: "approve",
-  });
-  const {
-    data,
-    isError,
-    isLoading,
-    isSuccess: isWaitSuccess,
-    status: waitAllowTokenStatus,
-  } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
-    hash: allowTokenData?.hash,
   });
 
   const {
-    data: resetAllowance,
     write: writeResetAllowance,
     status: resetAllowanceStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, 0n as bigint], // [allowed spender address, amount ]
+    args: [communityAddress, 0n], // [allowed spender address, amount ]
     functionName: "approve",
-  });
-  const {
-    isSuccess: isWaitResetAllowanceStatus,
-    status: waitResetAllowanceStatus,
-  } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
-    hash: resetAllowance?.hash,
   });
 
   const { data: allowance } = useContractRead({
@@ -164,21 +146,14 @@ export const IncreasePower = ({
   });
 
   const {
-    data: increasePowerData,
+    transactionData: increasePowerTxData,
     write: writeIncreasePower,
-    error: errorIncreaseStake,
     status: increaseStakeStatus,
-    isLoading: increasePowerIsLoading,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "increasePower",
     args: [requestedAmount as bigint],
-  });
-
-  useWaitForTransaction({
-    hash: increasePowerData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "member",
         type: "update",
@@ -191,22 +166,16 @@ export const IncreasePower = ({
   });
 
   const {
-    data: decreasePowerData,
+    transactionData: decreasePowerTxData,
     write: writeDecreasePower,
     error: errorDecreasePower,
     status: decreasePowerStatus,
-    isLoading: decreasePowerIsLoading,
     isError: isErrordecreasePower,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "decreasePower",
     args: [requestedAmount as bigint],
-  });
-
-  useWaitForTransaction({
-    hash: decreasePowerData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "member",
         type: "update",
@@ -221,7 +190,7 @@ export const IncreasePower = ({
   useErrorDetails(errorDecreasePower, "errorDecrease");
 
   const { updateTransactionStatus: updateDecreasePowerTransactionStatus } =
-    useTransactionNotification(decreasePowerData);
+    useTransactionNotification(decreasePowerTxData);
 
   useEffect(() => {
     updateDecreasePowerTransactionStatus(decreasePowerStatus);
@@ -263,7 +232,7 @@ export const IncreasePower = ({
   };
 
   const { updateTransactionStatus: updateAllowTokenTransactionStatus } =
-    useTransactionNotification(allowTokenData);
+    useTransactionNotification(allowTokenTxData);
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
@@ -279,7 +248,7 @@ export const IncreasePower = ({
     if (isWaitSuccess) {
       writeIncreasePower?.();
     }
-  }, [waitResetAllowanceStatus, isWaitSuccess, allowTokenStatus]);
+  }, [resetAllowanceStatus, isWaitSuccess, allowTokenStatus]);
 
   useEffect(() => {
     if (increaseStakeStatus === "success") {
@@ -290,7 +259,7 @@ export const IncreasePower = ({
   }, [increaseStakeStatus]);
 
   const { updateTransactionStatus: updateIncreaseStakeTransactionStatus } =
-    useTransactionNotification(increasePowerData);
+    useTransactionNotification(increasePowerTxData);
 
   useEffect(() => {
     updateIncreaseStakeTransactionStatus(increaseStakeStatus);
