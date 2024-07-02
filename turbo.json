@@ -28,7 +28,9 @@
       "env": [
         "NEXT_PUBLIC_SUBGRAPH_URL",
         "NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP",
-        "PINATA_JWT"
+        "PINATA_JWT",
+        "NODE_ENV",
+        "NEXT_ABLY_API_KEY"
       ]
     },
     "test": {

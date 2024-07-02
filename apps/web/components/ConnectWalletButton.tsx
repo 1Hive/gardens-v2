@@ -14,11 +14,12 @@ import { Fragment } from "react";
 import { formatAddress } from "@/utils/formatAddress";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
+import { getChainIdFromPath } from "@/utils/path";
 
 export const ConnectWallet = () => {
   const path = usePathname();
   const account = useAccount();
-  const urlChainId = Number(path.split("/")[2]);
+  const urlChainId = getChainIdFromPath();
   const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
@@ -50,22 +51,15 @@ export const ConnectWallet = () => {
               //button to connect wallet
               if (!connected) {
                 return (
-                  <div className="relative flex text-black hover:brightness-90 active:scale-95">
-                    <button
-                      onClick={openConnectModal}
-                      type="button"
-                      className="border2 flex h-full w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 font-bold uppercase transition-all ease-out hover:brightness-90 active:scale-95"
-                    >
-                      <Image
-                        src={walletIcon}
-                        alt="wallet"
-                        height={26}
-                        width={26}
-                        className=""
-                      />
-                      Connect
-                    </button>
-                  </div>
+                  <Button onClick={openConnectModal}>
+                    <Image
+                      src={walletIcon}
+                      alt="wallet"
+                      height={20}
+                      width={20}
+                    />
+                    Connect
+                  </Button>
                 );
               }
               //WRONG NETWORK! button if wallet is connected to unsupported chains
@@ -73,9 +67,8 @@ export const ConnectWallet = () => {
                 return (
                   <Button
                     onClick={openChainModal}
-                    type="button"
-                    className="btn btn-error px-4 py-2 font-bold"
-                    variant="error"
+                    btnStyle="outline"
+                    color="danger"
                   >
                     Wrong network
                   </Button>
@@ -91,8 +84,10 @@ export const ConnectWallet = () => {
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
-                        "border-2 border-error":
-                          urlChainId !== chain.id && !isNaN(urlChainId),
+                        "border-danger border-2":
+                          urlChainId &&
+                          urlChainId !== chain.id &&
+                          !isNaN(urlChainId),
                       })} `}
                         >
                           <img
@@ -105,7 +100,9 @@ export const ConnectWallet = () => {
                               {formatAddress(account.address)}
                             </h4>
                             <div className="ml-[2px] flex items-center text-xs font-semibold text-success">
-                              {isNaN(urlChainId) || chain.id === urlChainId ? (
+                              {!urlChainId ||
+                              isNaN(urlChainId!) ||
+                              chain.id === urlChainId ? (
                                 <>
                                   <span>Connected to</span>
                                   <div className="mx-1">
@@ -114,7 +111,7 @@ export const ConnectWallet = () => {
                                   <span>{chain.name}</span>
                                 </>
                               ) : (
-                                <span className="text-error">
+                                <span className="text-danger">
                                   Network mismatch
                                 </span>
                               )}
@@ -162,6 +159,7 @@ export const ConnectWallet = () => {
                             {/* Switch network and Disconnect buttons */}
                             <Menu.Item as="div" className="flex flex-col gap-2">
                               {chain.id !== urlChainId &&
+                                urlChainId &&
                                 !isNaN(urlChainId) && (
                                   <Button
                                     className="overflow-hidden truncate"
@@ -169,16 +167,23 @@ export const ConnectWallet = () => {
                                       switchNetwork && switchNetwork(urlChainId)
                                     }
                                   >
-                                    Switch to {getChain(urlChainId)?.name}
+                                    Switch to{" "}
+                                    {urlChainId
+                                      ? getChain(urlChainId)?.name
+                                      : ""}
                                   </Button>
                                 )}
 
                               <Button
                                 onClick={() => disconnect()}
-                                variant="error"
+                                btnStyle="outline"
+                                color="danger"
                                 className="w-full"
                                 icon={
-                                  <PowerIcon className="stroke-10 mr-1 h-5 w-5" />
+                                  <PowerIcon
+                                    className="h-5 w-5"
+                                    strokeWidth={10}
+                                  />
                                 }
                               >
                                 Disconnect

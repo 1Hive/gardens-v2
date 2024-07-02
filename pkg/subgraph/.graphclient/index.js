@@ -192,6 +192,7 @@ export const getFactoriesDocument = gql `
     registryCommunities {
       id
       chainId
+      isValid
       communityName
       covenantIpfsHash
       registerToken
@@ -229,6 +230,7 @@ export const getTokenGardensDocument = gql `
       chainId
       covenantIpfsHash
       communityFee
+      isValid
       members {
         id
       }
@@ -267,6 +269,7 @@ export const isMemberDocument = gql `
           poolId
           registryCommunity {
             id
+            isValid
             garden {
               id
               symbol
@@ -295,6 +298,7 @@ export const getMemberDocument = gql `
       isRegistered
       registryCommunity {
         id
+        isValid
       }
     }
     stakes {
@@ -321,6 +325,7 @@ export const getPoolCreationDataDocument = gql `
   }
   registryCommunity(id: $communityAddr) {
     communityName
+    isValid
   }
 }
     `;
@@ -337,6 +342,7 @@ export const getCommunitiesByGardenDocument = gql `
     chainId
     communities {
       id
+      isValid
       covenantIpfsHash
       chainId
       communityName
@@ -386,6 +392,7 @@ export const getCommunityCreationDataDocument = gql `
     chainId
     communities {
       alloAddress
+      isValid
     }
   }
 }
@@ -425,6 +432,7 @@ export const getPoolDataDocument = gql `
     }
     registryCommunity {
       id
+      isValid
       garden {
         id
         symbol
@@ -504,6 +512,7 @@ export const getStrategyByPoolDocument = gql `
     }
     registryCommunity {
       id
+      isValid
       garden {
         id
         symbol

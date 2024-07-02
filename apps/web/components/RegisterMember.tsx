@@ -1,25 +1,25 @@
 "use client";
-import React, { forwardRef, useEffect, useRef, useState } from "react";
+
+import React, { useEffect, useRef, useState } from "react";
 import {
   useBalance,
   useContractWrite,
   useContractRead,
   Address,
   useWaitForTransaction,
-  useAccount,
 } from "wagmi";
 import { Button } from "./Button";
-import { toast } from "react-toastify";
 import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { dn, PERCENTAGE_PRECISION_DECIMALS, gte } from "@/utils/numbers";
+import { dn, SCALE_PRECISION_DECIMALS, gte } from "@/utils/numbers";
 import { getChainIdFromPath } from "@/utils/path";
-import { TransactionModal, TransactionStep } from "./TransactionModal";
+import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { formatUnits, parseUnits } from "viem";
 import { DisplayNumber } from "./DisplayNumber";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { chainDataMap } from "@/configs/chainServer";
 
 type RegisterMemberProps = {
   name: string;
@@ -27,7 +27,7 @@ type RegisterMemberProps = {
   communityAddress: Address;
   registerToken: Address;
   registerTokenDecimals: number;
-  membershipAmount: string;
+  membershipAmount: bigint;
   protocolFee: string;
   communityFee: string;
   connectedAccount: Address;
@@ -49,6 +49,9 @@ export function RegisterMember({
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
+
+  const { publish } = usePubSubContext();
+
   //
   //new logic
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
@@ -56,7 +59,6 @@ export function RegisterMember({
   );
 
   const parsedCommunityFee = () => {
-    // if (communityFee == "0") return "0";
     try {
       const membership = [
         BigInt(membershipAmount),
@@ -64,7 +66,7 @@ export function RegisterMember({
       ] as dn.Dnum;
       const feePercentage = [
         BigInt(communityFee),
-        Number(PERCENTAGE_PRECISION_DECIMALS),
+        SCALE_PRECISION_DECIMALS, // adding 2 decimals because 1% == 10.000 == 1e4
       ] as dn.Dnum;
 
       return dn.multiply(membership, feePercentage);
@@ -99,7 +101,7 @@ export function RegisterMember({
   const { data: accountTokenBalance } = useBalance({
     address: connectedAccount,
     token: registerToken as `0x${string}` | undefined,
-    chainId: chainId || 0,
+    chainId,
   });
 
   const accountHasBalance = gte(
@@ -119,6 +121,22 @@ export function RegisterMember({
     functionName: "stakeAndRegisterMember",
   });
 
+  useWaitForTransaction({
+    confirmations: chainDataMap[chainId].confirmations,
+    hash: registerMemberData?.hash,
+    onSuccess: () => {
+      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
+      publish({
+        topic: "member",
+        type: "add",
+        containerId: communityAddress,
+        function: "stakeAndRegisterMember",
+        id: communityAddress,
+        chainId: chainId,
+      });
+    },
+  });
+
   const {
     data: unregisterMemberData,
     write: writeUnregisterMember,
@@ -127,6 +145,22 @@ export function RegisterMember({
   } = useContractWrite({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
+  });
+
+  useWaitForTransaction({
+    confirmations: chainDataMap[chainId].confirmations,
+    hash: unregisterMemberData?.hash,
+    onSuccess: () => {
+      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
+      publish({
+        topic: "member",
+        type: "delete",
+        containerId: communityAddress,
+        function: "unregisterMember",
+        id: communityAddress,
+        chainId: chainId,
+      });
+    },
   });
 
   const {
@@ -148,7 +182,7 @@ export function RegisterMember({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: 1,
+    confirmations: chainDataMap[chainId].confirmations,
     hash: allowTokenData?.hash,
   });
 
@@ -214,7 +248,7 @@ export function RegisterMember({
   //RegisterMember Disable Button condition => message mapping
   const disableRegMemberBtnCondition: ConditionObject[] = [
     {
-      condition: !accountHasBalance,
+      condition: !isMember && !accountHasBalance,
       message: "Connected account has insufficient balance",
     },
   ];
@@ -263,9 +297,9 @@ export function RegisterMember({
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
       />
-      <div className="space-y-4 ">
-        <div className="flex">
-          <div className="flex-1 items-center rounded-lg bg-info px-4 py-3 text-sm font-bold text-white">
+      <div className="">
+        <div className="flex gap-4">
+          <div className="items-center rounded-lg bg-info px-4 py-3 text-sm font-bold text-white">
             <div className="flex items-center gap-2">
               <svg
                 className="mr-2 h-4 w-4 fill-current"
@@ -291,28 +325,14 @@ export function RegisterMember({
                     compact={true}
                   />
                 </div>
-                {/* 
-                <p>
-                  Community fee: {parseString(parsedCommunityFee())}{" "}
-                  {tokenSymbol}
-                </p> */}
-                {/* <p>
-                  Protocol fee:{" "}
-                  {calculateFees(
-                    membershipAmount,
-                    protocolFee,
-                    registerTokenDecimals,
-                  )}{" "}
-                  {tokenSymbol}
-                </p> */}
               </div>
             </div>
           </div>
-          <div className="stat flex-1 items-center gap-2">
+          <div className="flex items-center justify-center">
             <Button
               onClick={handleChange}
-              className="w-full bg-primary"
-              size="md"
+              btnStyle={isMember ? "outline" : "filled"}
+              color={isMember ? "danger" : "primary"}
               disabled={missmatchUrl || disabledRegMemberButton}
               tooltip={tooltipMessage}
             >

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
-import { StatusBadge } from "./Badge";
+import { Badge } from "./Badge";
 import { Button } from "./Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -8,16 +8,24 @@ import { ProposalInputItem, ProposalTypeVoter } from "./Proposals";
 import { Allo, CVStrategy } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
-import { Address, useContractWrite } from "wagmi";
+import {
+  Address,
+  useChainId,
+  useContractWrite,
+  useWaitForTransaction,
+} from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeAbiParameters, formatUnits } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
-import { proposalTypes } from "@/types";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { chainDataMap } from "@/configs/chainServer";
+import { LightCVStrategy, poolTypes } from "@/types";
+import { getProposals } from "@/actions/getProposals";
 
 type ProposalCard = {
-  proposalData: ProposalTypeVoter;
+  proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   i: number;
@@ -26,7 +34,7 @@ type ProposalCard = {
   memberActivatedPoints: number;
   memberPoolWeight: number;
   executeDisabled: boolean;
-  strategy: CVStrategy;
+  strategy: LightCVStrategy;
   tokenDecimals: number;
   alloInfo: Allo;
   inputHandler: (i: number, value: number) => void;
@@ -52,8 +60,13 @@ export function ProposalCard({
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
 
+  const { publish } = usePubSubContext();
+  const chainId = useChainId();
+
   const calcPoolWeightUsed = (number: number) => {
-    return ((number / 100) * memberPoolWeight).toFixed(2);
+    return memberPoolWeight == 0
+      ? 0
+      : ((number / 100) * memberPoolWeight).toFixed(2);
   };
 
   //encode proposal id to pass as argument to distribute function
@@ -80,6 +93,21 @@ export function ProposalCard({
     functionName: "distribute",
   });
 
+  useWaitForTransaction({
+    hash: distributeData?.hash,
+    confirmations: chainDataMap[chainId].confirmations,
+    onSuccess: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "distribute",
+        id,
+        containerId: strategy.poolId,
+        chainId,
+      });
+    },
+  });
+
   const distributeErrorName = useErrorDetails(errorDistribute);
   useEffect(() => {
     if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
@@ -102,7 +130,7 @@ export function ProposalCard({
 
   return (
     <div
-      className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
+      className="bg-surface flex flex-col items-center justify-center gap-4 rounded-lg p-8"
       key={title + "_" + proposalNumber}
     >
       <div className="flex w-full items-center justify-between ">
@@ -112,9 +140,9 @@ export function ProposalCard({
         </div>
 
         <div className="flex items-center gap-8">
-          <StatusBadge status={proposalStatus} />
+          <Badge status={proposalStatus} />
           {/* Button to test distribute */}
-          {!isEditView && proposalTypes[proposalData.type] == "funding" && (
+          {!isEditView && poolTypes[proposalData.type] == "funding" && (
             <Button
               // TODO: add flexible tooltip and func to check executability
               disabled={executeDisabled}
@@ -138,7 +166,7 @@ export function ProposalCard({
           )}
           <>
             <Link href={`${pathname}/proposals/${id}`}>
-              <Button variant="outline">View Proposal</Button>
+              <Button btnStyle="outline">View Proposal</Button>
             </Link>
           </>
         </div>

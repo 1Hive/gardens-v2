@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactory
-    network: sepolia
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 11155111
+        data: 421614
     source:
-      address: "0xbff8a6c13d6536d48dce27186fc3fb503539e5f0"
+      address: "0x197a3115f932df5aee2a4b5732e8586a00ccf243"
       abi: RegistryFactory
-      startBlock: 5998577
+      startBlock: 46157748
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -30,14 +30,17 @@ dataSources:
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
+        - event: CommunityValiditySet(address,bool)
+          handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
           handler: handleProtocolFeeSet
+        
       file: ./src/mappings/registry-factory.ts
 
 templates:
   - kind: ethereum/contract
     name: RegistryCommunity
-    network: sepolia
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunity
     mapping:
@@ -99,7 +102,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategy
-    network: sepolia
+    network: arbitrum-sepolia
     source:
       abi: CVStrategy
     mapping:

@@ -1,4 +1,3 @@
-import { proposalTypes } from "@/types";
 import React from "react";
 
 export type FormRow = { label: string; data: string | number | boolean };

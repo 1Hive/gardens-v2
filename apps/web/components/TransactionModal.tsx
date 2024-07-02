@@ -133,11 +133,8 @@ export const TransactionModal = forwardRef<
       <div className="modal-box relative max-w-md bg-white transition-all duration-500 ease-in-out">
         <div className="flex items-start justify-between">
           <h4 className="text-lg font-bold">{label}</h4>
-          <Button
-            className="border-none font-bold text-black"
-            size="sm"
-            onClick={handleModalClose}
-          >
+          {/* we should use other button here */}
+          <Button btnStyle="outline" color="danger" onClick={handleModalClose}>
             X
           </Button>
         </div>

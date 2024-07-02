@@ -10,18 +10,18 @@ import "react-toastify/dist/ReactToastify.css";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const chakra = Chakra_Petch({
   variable: "--font-chakra",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const metadata: Metadata = {
   title: "Gardens v2",
-//   description: "Gardens description...",
+  //   description: "Gardens description...",
 };
 
 export default function RootLayout({
@@ -33,9 +33,9 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="en"
-      className={`${inter.variable} ${chakra.variable} bg-white`}
+      className={`${inter.variable} ${chakra.variable} bg-primary`}
     >
-      <body className="min-h-screen bg-white font-chakra">
+      <body className="min-h-screen bg-primary font-chakra">
         <Providers>{children}</Providers>
         <ToastContainer
           position="top-right"

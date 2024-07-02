@@ -1,24 +1,23 @@
+"use client";
+
 import {
   TokenGarden,
   getPoolDataDocument,
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
+import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { MAX_RATIO_CONSTANT, PERCENTAGE_PRECISION } from "@/utils/numbers";
+import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
 import React from "react";
 import { Address } from "viem";
 
-const { urqlClient } = initUrqlClient();
-
-export default async function page({
+export default async function Page({
   params: { chain, poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data } = await queryByChain<getPoolDataQuery>(
-    urqlClient,
+  const { data } = useSubgraphQueryByChain<getPoolDataQuery>(
     chain,
     getPoolDataDocument,
     { poolId: poolId, garden: garden },
@@ -39,7 +38,7 @@ export default async function page({
   const metadata = data?.cvstrategies?.[0]?.metadata as string;
 
   const maxRatioDivPrecision =
-    (Number(strategyObj?.config?.maxRatio) / PERCENTAGE_PRECISION) *
+    (Number(strategyObj?.config?.maxRatio) / CV_SCALE_PRECISION) *
     MAX_RATIO_CONSTANT;
 
   const spendingLimitPct = maxRatioDivPrecision * 100;

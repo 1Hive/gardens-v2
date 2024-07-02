@@ -5,19 +5,19 @@ import ThemeProvider from "./ThemeProvider";
 import {
   connectorsForWallets,
   RainbowKitProvider,
-  midnightTheme,
-  darkTheme,
   lightTheme,
 } from "@rainbow-me/rainbowkit";
 import {
   rabbyWallet,
   frameWallet,
   injectedWallet,
+  coinbaseWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, WagmiConfig } from "wagmi";
 import { chains, publicClient } from "@/configs/wagmiConfig";
 import { AddrethConfig } from "addreth";
 import UrqlProvider from "./UrqlProvider";
+import { PubSubProvider } from "@/contexts/pubsub.context";
 
 type Props = {
   children: React.ReactNode;
@@ -30,6 +30,7 @@ const connectors = connectorsForWallets([
       injectedWallet({ chains }),
       rabbyWallet({ chains }),
       frameWallet({ chains }),
+      coinbaseWallet({ appName: "Gardens V2", chains }),
     ],
   },
 ]);
@@ -60,7 +61,9 @@ const Providers = ({ children }: Props) => {
                 borderRadius: "large",
               })}
             >
-              <ThemeProvider>{mounted && children}</ThemeProvider>
+              <ThemeProvider>
+                <PubSubProvider>{mounted && children}</PubSubProvider>
+              </ThemeProvider>
             </RainbowKitProvider>
           </AddrethConfig>
         </WagmiConfig>

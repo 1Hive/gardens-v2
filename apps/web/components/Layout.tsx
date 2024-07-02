@@ -7,6 +7,7 @@ type LayoutProps = {
   size?: Size;
   hover?: boolean;
   className?: string;
+  title?: string;
 };
 
 export const Layout = ({
@@ -14,12 +15,16 @@ export const Layout = ({
   size = "md",
   hover = false,
   className,
+  title,
 }: LayoutProps) => {
   return (
-    <div
-      className={`border1 cursor-pointer bg-white transition-all duration-200 ease-in-out ${hover && "hover:bg-surfaceHover hover:border-borderHover"} ${classNames({ "p-4": size === "sm", "rounded-[16px] p-6": size === "md", "rounded-[24px] p-8": size === "lg" })} ${className}`}
+    <section
+      className={`border1 relative bg-neutral transition-all duration-200 ease-in-out ${hover && "hover:bg-secondary-soft cursor-pointer hover:border-secondary-content"} ${classNames({ "p-4": size === "sm", "rounded-[16px] p-6": size === "md", "rounded-[24px] p-8": size === "lg" })} ${className}`}
     >
+      <header>
+        <h2>{title}</h2>
+      </header>
       {children}
-    </div>
+    </section>
   );
 };
