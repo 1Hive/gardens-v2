@@ -21,10 +21,10 @@ import {
 import { AddrethConfig } from "addreth";
 import UrqlProvider from "./UrqlProvider";
 import { PubSubProvider } from "@/contexts/pubsub.context";
-import { getChainIdFromPath } from "@/utils/path";
 import { getChain } from "@/configs/chainServer";
 import { publicProvider } from "wagmi/providers/public";
 import { alchemyProvider } from "wagmi/providers/alchemy";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 
 type Props = {
   children: React.ReactNode;
@@ -47,7 +47,7 @@ const Providers = ({ children }: Props) => {
   useEffect(() => setMounted(true), []);
   const [wagmiConfig, setWagmiConfig] =
     useState<ReturnType<typeof createCustomConfig>>();
-  const chainId = getChainIdFromPath();
+  const chainId = useChainIdFromPath();
 
   const createCustomConfig = () => {
     const chain = getChain(chainId);
@@ -71,7 +71,7 @@ const Providers = ({ children }: Props) => {
 
   useEffect(() => {
     setWagmiConfig(createCustomConfig());
-  }, []);
+  }, [chainId]);
 
   return (
     // if mounted UrlqProvider will be rendered
