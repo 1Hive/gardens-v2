@@ -40,15 +40,16 @@ export default function Pool({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data, fetching, error } = useSubgraphQueryByChain<getPoolDataQuery>({
-    query: getPoolDataDocument,
-    variables: { poolId: poolId, garden: garden },
-    changeScope: {
-      topic: "pool",
-      id: poolId,
-      chainId: chain,
-    },
-  });
+  const { data, error } =
+    useSubgraphQueryByChain<getPoolDataQuery>({
+      query: getPoolDataDocument,
+      variables: { poolId: poolId, garden: garden },
+      changeScope: {
+        topic: "pool",
+        id: poolId,
+        chainId: chain,
+      },
+    });
 
   useEffect(() => {
     if (error) {
@@ -69,7 +70,7 @@ export default function Pool({
     }
   }, [metadata]);
 
-  if (fetching || !ipfsResult) {
+  if (!data || !ipfsResult) {
     return (
       <div className="mt-96">
         <LoadingSpinner />

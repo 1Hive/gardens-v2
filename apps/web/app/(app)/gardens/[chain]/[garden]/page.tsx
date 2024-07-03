@@ -22,27 +22,24 @@ export default function Garden({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const {
-    data: result,
-    error: getCommunitiesByGardenQueryError,
-    fetching,
-  } = useSubgraphQueryByChain<getCommunitiesByGardenQuery>({
-    query: getCommunitiesByGardenDocument,
-    variables: { addr: garden },
-    changeScope: [
-      { topic: "member", chainId: chain },
-      {
-        topic: "community",
+  const { data: result, error: getCommunitiesByGardenQueryError } =
+    useSubgraphQueryByChain<getCommunitiesByGardenQuery>({
+      query: getCommunitiesByGardenDocument,
+      variables: { addr: garden },
+      changeScope: [
+        { topic: "member", chainId: chain },
+        {
+          topic: "community",
 
-        chainId: chain,
-      },
-      {
-        topic: "garden",
-        id: garden,
-        chainId: chain,
-      },
-    ],
-  });
+          chainId: chain,
+        },
+        {
+          topic: "garden",
+          id: garden,
+          chainId: chain,
+        },
+      ],
+    });
 
   useEffect(() => {
     if (getCommunitiesByGardenQueryError) {
@@ -97,7 +94,7 @@ export default function Garden({
   };
 
   const CommunityList = useMemo(() => {
-    if (fetching) {
+    if (!result) {
       return <LoadingSpinner />;
     } else if (communities?.length) {
       return communities.map((community, i) => (
@@ -110,7 +107,7 @@ export default function Garden({
     } else {
       return <div className="text-center">No communities found</div>;
     }
-  }, [communities?.length, fetching, tokenGarden]);
+  }, [communities?.length, result, tokenGarden]);
 
   return (
     <div className="bg-surface relative mx-auto max-w-6xl space-y-10 rounded-xl border-2 border-black bg-base-100 p-8">

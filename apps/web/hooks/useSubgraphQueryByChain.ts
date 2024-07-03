@@ -15,6 +15,9 @@ import {
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
 import { getChainIdFromPath } from "@/utils/path";
+import { toast } from "react-toastify";
+
+const pendingRefreshToastId = "pending-refresh";
 
 /**
  *  Fetches data from a subgraph by chain id
@@ -43,7 +46,7 @@ export default function useSubgraphQueryByChain<
 }) {
   const pathChainId = getChainIdFromPath();
   const { urqlClient } = initUrqlClient();
-  const { connected, subscribe, unsubscribe } = usePubSubContext();
+  const { connected, subscribe, unsubscribe, publish } = usePubSubContext();
   const [fetching, setFetching] = useState(true);
   const contractAddress = getContractsAddrByChain(chainId ?? pathChainId);
   const [response, setResponse] = useState<
@@ -99,6 +102,14 @@ export default function useSubgraphQueryByChain<
     const result = await fetch();
     if (!retryCount) {
       retryCount = 0;
+      toast.loading("Pulling new data", {
+        toastId: pendingRefreshToastId,
+        autoClose: false,
+        style: {
+          width: "fit-content",
+          marginLeft: "auto",
+        },
+      });
     }
 
     if (result.error) {
@@ -118,6 +129,8 @@ export default function useSubgraphQueryByChain<
           `⚡ Subgraph result updated after ${retryCount} retries.`,
         );
       }
+      setFetching(false);
+      toast.dismiss(pendingRefreshToastId);
       return result;
     } else {
       console.debug(
@@ -139,5 +152,9 @@ export default function useSubgraphQueryByChain<
     init();
   }, []);
 
-  return { ...response, refetch, fetching };
+  return {
+    ...response,
+    refetch,
+    fetching,
+  };
 }
