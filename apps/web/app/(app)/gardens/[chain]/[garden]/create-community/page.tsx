@@ -16,11 +16,10 @@ export default function Page({
   params: { chain: number; garden: string };
 }) {
   const { data: result, error: getCommunityCreationDataQueryError } =
-    useSubgraphQueryByChain<getCommunityCreationDataQuery>(
-      chain,
-      getCommunityCreationDataDocument,
-      { addr: garden },
-    );
+    useSubgraphQueryByChain<getCommunityCreationDataQuery>({
+      query: getCommunityCreationDataDocument,
+      variables: { addr: garden },
+    });
 
   useEffect(() => {
     if (getCommunityCreationDataQueryError) {

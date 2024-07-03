@@ -2,11 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button, PoolGovernance, FormLink, ProposalCard } from "@/components";
-import {
-  useAccount,
-  Address as AddressType,
-  useContractRead,
-} from "wagmi";
+import { useAccount, Address as AddressType, useContractRead } from "wagmi";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
@@ -92,21 +88,19 @@ export function Proposals({
     data: memberResult,
     error,
     refetch: refetchIsMemberQuery,
-  } = useSubgraphQueryByChain<isMemberQuery>(
-    chainId,
-    isMemberDocument,
-    {
+  } = useSubgraphQueryByChain<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
       me: address?.toLowerCase(),
       comm: strategy.registryCommunity.id.toLowerCase(),
     },
-    {},
-    {
+    changeScope: {
       topic: "member",
       id: communityAddress,
       type: ["add", "delete"],
       chainId,
     },
-  );
+  });
 
   if (error) {
     console.error("Error while fetching member data: ", error);
@@ -144,20 +138,18 @@ export function Proposals({
   }, [memberResult]);
 
   const { data: memberStrategyResult, error: errorMS } =
-    useSubgraphQueryByChain<getMemberStrategyQuery>(
-      chainId,
-      getMemberStrategyDocument,
-      {
+    useSubgraphQueryByChain<getMemberStrategyQuery>({
+      query: getMemberStrategyDocument,
+      variables: {
         meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
-      {},
-      {
+      changeScope: {
         topic: "proposal",
         id: strategy.id,
         type: "update",
         chainId: chainId,
       },
-    );
+    });
 
   useEffect(() => {
     if (address) {

@@ -14,6 +14,7 @@ import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
+import { getChainIdFromPath } from "@/utils/path";
 
 /**
  *  Fetches data from a subgraph by chain id
@@ -27,17 +28,24 @@ import {
 export default function useSubgraphQueryByChain<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
->(
-  chainId: ChainId,
-  query: DocumentInput<any, Variables>,
-  variables: Variables = {} as Variables,
-  context?: Omit<OperationContext, "topic">,
-  changeScope?: ChangeEventScope[] | ChangeEventScope,
-) {
+>({
+  chainId,
+  query,
+  variables = {} as Variables,
+  context,
+  changeScope,
+}: {
+  chainId?: ChainId;
+  query: DocumentInput<any, Variables>;
+  variables?: Variables;
+  context?: Omit<OperationContext, "topic">;
+  changeScope?: ChangeEventScope[] | ChangeEventScope;
+}) {
+  const pathChainId = getChainIdFromPath();
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const [fetching, setFetching] = useState(true);
-  const contractAddress = getContractsAddrByChain(chainId);
+  const contractAddress = getContractsAddrByChain(chainId ?? pathChainId);
   const [response, setResponse] = useState<
     Omit<Awaited<ReturnType<typeof fetch>>, "operation">
   >({ hasNext: true, stale: true, data: undefined, error: undefined });

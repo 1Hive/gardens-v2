@@ -16,11 +16,10 @@ export default function CreatePool({
   params: { chain: number; garden: string; community: string };
 }) {
   const { data: result, error: error } =
-    useSubgraphQueryByChain<getPoolCreationDataQuery>(
-      chain,
-      getPoolCreationDataDocument,
-      { communityAddr: community, tokenAddr: garden },
-    );
+    useSubgraphQueryByChain<getPoolCreationDataQuery>({
+      query: getPoolCreationDataDocument,
+      variables: { communityAddr: community, tokenAddr: garden },
+    });
   let token = result?.tokenGarden;
   let alloAddr = result?.allos[0]?.id as Address;
   let communityName = result?.registryCommunity?.communityName as string;

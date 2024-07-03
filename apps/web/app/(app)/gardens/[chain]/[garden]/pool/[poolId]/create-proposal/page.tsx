@@ -17,11 +17,10 @@ export default async function Page({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data } = useSubgraphQueryByChain<getPoolDataQuery>(
-    chain,
-    getPoolDataDocument,
-    { poolId: poolId, garden: garden },
-  );
+  const { data } = useSubgraphQueryByChain<getPoolDataQuery>({
+    query: getPoolDataDocument,
+    variables: { poolId: poolId, garden: garden },
+  });
   const strategyObj = data?.cvstrategies?.[0];
 
   if (!strategyObj) {

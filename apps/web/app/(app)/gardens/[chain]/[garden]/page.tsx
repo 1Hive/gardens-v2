@@ -26,12 +26,10 @@ export default function Garden({
     data: result,
     error: getCommunitiesByGardenQueryError,
     fetching,
-  } = useSubgraphQueryByChain<getCommunitiesByGardenQuery>(
-    chain,
-    getCommunitiesByGardenDocument,
-    { addr: garden },
-    {},
-    [
+  } = useSubgraphQueryByChain<getCommunitiesByGardenQuery>({
+    query: getCommunitiesByGardenDocument,
+    variables: { addr: garden },
+    changeScope: [
       { topic: "member", chainId: chain },
       {
         topic: "community",
@@ -44,7 +42,7 @@ export default function Garden({
         chainId: chain,
       },
     ],
-  );
+  });
 
   useEffect(() => {
     if (getCommunitiesByGardenQueryError) {

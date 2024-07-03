@@ -64,16 +64,19 @@ export default function Proposal({
   params: { proposalId: string; poolId: number; chain: number; garden: string };
 }) {
   // TODO: fetch garden decimals in query
-  const { data } = useSubgraphQueryByChain<getProposalDataQuery>(
-    chain,
-    getProposalDataDocument,
-    {
+  const { data } = useSubgraphQueryByChain<getProposalDataQuery>({
+    query: getProposalDataDocument,
+    variables: {
       garden: garden,
       proposalId: proposalId,
     },
-    {},
-    { topic: "proposal", id: proposalId, type: "update", chainId: chain },
-  );
+    changeScope: {
+      topic: "proposal",
+      id: proposalId,
+      type: "update",
+      chainId: chain,
+    },
+  });
 
   const proposalData = data?.cvproposal;
 
@@ -244,7 +247,7 @@ export default function Proposal({
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-10 p-1 sm:p-8">
       <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
-        <div className="flex items-center justify-center sm:w-auto w-full">
+        <div className="flex w-full items-center justify-center sm:w-auto">
           <Image
             src={proposalImg}
             alt={`proposal image ${proposalIdNumber}`}
@@ -253,7 +256,7 @@ export default function Proposal({
             className="min-h-[160px] min-w-[160px]"
           />
         </div>
-        <div className="flex flex-col gap-8 w-full">
+        <div className="flex w-full flex-col gap-8">
           <div>
             <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <h2>

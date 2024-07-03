@@ -53,21 +53,19 @@ export function CommunityCard({
 
   const chainId = getChainIdFromPath();
 
-  const { data: result, error } = useSubgraphQueryByChain<isMemberQuery>(
-    chainId,
-    isMemberDocument,
-    {
+  const { data: result, error } = useSubgraphQueryByChain<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
       me: accountAddress?.toLowerCase(),
       comm: communityAddress.toLowerCase(),
     },
-    {},
-    {
+    changeScope: {
       topic: "community",
       chainId,
       id: communityAddress,
       type: ["add", "delete"],
     },
-  );
+  });
 
   useEffect(() => {
     if (result && result.members.length > 0) {

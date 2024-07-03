@@ -40,17 +40,15 @@ export default function Pool({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data, fetching, error } = useSubgraphQueryByChain<getPoolDataQuery>(
-    chain,
-    getPoolDataDocument,
-    { poolId: poolId, garden: garden },
-    {},
-    {
+  const { data, fetching, error } = useSubgraphQueryByChain<getPoolDataQuery>({
+    query: getPoolDataDocument,
+    variables: { poolId: poolId, garden: garden },
+    changeScope: {
       topic: "pool",
       id: poolId,
       chainId: chain,
     },
-  );
+  });
 
   useEffect(() => {
     if (error) {
