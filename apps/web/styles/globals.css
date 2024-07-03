@@ -29,6 +29,9 @@
   --color-orange-50: #fff4e6;
   --color-cyan-500: #2baac7;
   --color-cyan-50: #e5f7fa;
+
+  --tooltip-color: #8c8c8c;
+  --tooltip-text-color: #ffffff;
 }
 
 * {
@@ -174,8 +177,22 @@ caption {
   @apply border1 relative rounded-3xl bg-neutral p-8;
 }
 
+.page-layout {
+  @apply flex w-full max-w-6xl flex-col gap-10 p-8;
+}
+
+.tooltip {
+  --tooltip-color: #8c8c8c;
+  --tooltip-text-color: #ffffff;
+}
+
+.tooltip:before {
+  white-space: pre-line;
+  text-align: left;
+}
+
 .banner {
-  @apply flex p-4 items-center gap-4 rounded-[20px] bg-secondary-soft
+  @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft p-4;
 }
 
 /* Hide number input arrows */

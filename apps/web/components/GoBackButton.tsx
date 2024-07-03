@@ -7,21 +7,17 @@ export const GoBackButton = () => {
   const router = useRouter();
   const path = usePathname();
 
-  const goBack = () => {
-    router.back();
-  };
-
   return (
     <>
       {path === "/gardens" ? null : (
         <Button
-          btnStyle="outline"
-          color="danger"
-          onClick={goBack}
-          className="fixed left-2 top-28 z-10 px-4 text-[16px]"
+          btnStyle="link"
+          color="primary"
+          onClick={() => router.back()}
+          className="ml-8 w-fit !p-0"
           icon={<ArrowLeftIcon className="h-4 w-4" />}
         >
-          {"Back"}
+          Back
         </Button>
       )}
     </>

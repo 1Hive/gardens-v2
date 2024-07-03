@@ -4,6 +4,7 @@ import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   Address,
+  useAccount,
   useBalance,
   useChainId,
   useContractRead,
@@ -12,27 +13,28 @@ import {
 } from "wagmi";
 import { Button } from "./Button";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { toast } from "react-toastify";
 import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import useErrorDetails from "@/utils/getErrorName";
 import { chainDataMap } from "@/configs/chainServer";
 import { DisplayNumber } from "./DisplayNumber";
+import { queryByChain } from "@/providers/urql";
+import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type IncreasePowerProps = {
   communityAddress: Address;
   registerToken: Address;
-  connectedAccount: Address;
   tokenSymbol: string;
   registerTokenDecimals: number;
   registerStakeAmount: bigint;
-  memberStakedTokens: bigint;
 };
 
 const InitialTransactionSteps: TransactionStep[] = [
@@ -58,26 +60,20 @@ const InitialTransactionSteps: TransactionStep[] = [
 export const IncreasePower = ({
   communityAddress,
   registerToken,
-  connectedAccount,
   tokenSymbol,
   registerTokenDecimals,
   registerStakeAmount,
-  memberStakedTokens,
 }: IncreasePowerProps) => {
-  //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
-  //
-  //new logic
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
     false,
   );
-
   const [increaseInput, setIncreaseInput] = useState<number | string>("");
 
   const { publish } = usePubSubContext();
-  const chainId = getChainIdFromPath();
+  const { address: connectedAccount } = useAccount();
 
   //handeling states
   type states = "idle" | "loading" | "success" | "error";
@@ -85,6 +81,40 @@ export const IncreasePower = ({
     useState<states>("idle");
   const [resetTransactionStatus, setResetTransactionStatus] =
     useState<states>("idle");
+  const { address: accountAddress } = useAccount();
+  const [memberStakedTokens, setMemberStakedTokens] = useState<bigint>(0n);
+
+  const urqlClient = useUrqlClient();
+
+  const urlChainId = useChainIdFromPath();
+
+  const runIsMemberQuery = useCallback(async () => {
+    if (accountAddress === undefined) {
+      return;
+    }
+    const { data: result, error } = await queryByChain<isMemberQuery>(
+      urqlClient,
+      urlChainId,
+      isMemberDocument,
+      {
+        me: accountAddress.toLowerCase(),
+        comm: communityAddress.toLowerCase(),
+      },
+    );
+
+    if (result && result.members.length > 0) {
+      const stakedTokens =
+        result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
+      const memberStakedTokens =
+        typeof stakedTokens === "string" ? stakedTokens : "0";
+
+      setMemberStakedTokens(BigInt(memberStakedTokens));
+    }
+  }, [accountAddress]);
+
+  useEffect(() => {
+    runIsMemberQuery();
+  }, [accountAddress]);
 
   const requestedAmount = parseUnits(
     (increaseInput ?? 0).toString(),
@@ -92,9 +122,9 @@ export const IncreasePower = ({
   );
 
   const { data: accountTokenBalance } = useBalance({
-    address: connectedAccount,
-    token: registerToken as `0x${string}` | undefined,
-    chainId,
+    address: accountAddress,
+    token: registerToken as Address,
+    chainId: urlChainId || 0,
   });
 
   //TODO: create a hook for this
@@ -110,10 +140,9 @@ export const IncreasePower = ({
   } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
-    args: [connectedAccount as Address],
-    //watch: true,
+    enabled: accountAddress !== undefined,
+    args: [accountAddress as Address],
   });
-  //
 
   const {
     data: allowTokenData,
@@ -127,6 +156,7 @@ export const IncreasePower = ({
     args: [communityAddress, requestedAmount as bigint], // [allowed spender address, amount ]
     functionName: "approve",
   });
+
   const {
     data,
     isError,
@@ -134,7 +164,7 @@ export const IncreasePower = ({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
     hash: allowTokenData?.hash,
   });
 
@@ -152,14 +182,15 @@ export const IncreasePower = ({
     isSuccess: isWaitResetAllowanceStatus,
     status: waitResetAllowanceStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
     hash: resetAllowance?.hash,
   });
 
   const { data: allowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    args: [connectedAccount, communityAddress], // [ owner,  spender address ]
+    enabled: accountAddress !== undefined,
+    args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
   });
 
@@ -177,17 +208,7 @@ export const IncreasePower = ({
 
   useWaitForTransaction({
     hash: increasePowerData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
-      publish({
-        topic: "member",
-        type: "update",
-        function: "increasePower",
-        containerId: communityAddress,
-        id: connectedAccount,
-        chainId: chainId,
-      });
-    },
+    confirmations: chainDataMap[urlChainId].confirmations,
   });
 
   const {
@@ -205,17 +226,7 @@ export const IncreasePower = ({
 
   useWaitForTransaction({
     hash: decreasePowerData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
-      publish({
-        topic: "member",
-        type: "update",
-        containerId: communityAddress,
-        function: "decreasePower",
-        id: connectedAccount,
-        chainId: chainId,
-      });
-    },
+    confirmations: chainDataMap[urlChainId].confirmations,
   });
 
   useErrorDetails(errorDecreasePower, "errorDecrease");
@@ -349,92 +360,93 @@ export const IncreasePower = ({
   const { tooltipMessage: decreaseTooltipMsg } = useDisableButtons(
     disableDecPowerBtnCondition,
   );
-  //
 
-  return (
-    <>
-      <TransactionModal
-        ref={modalRef}
-        label={`Stake ${tokenSymbol} in community`}
-        initialTransactionSteps={InitialTransactionSteps}
-        allowTokenStatus={allowTokenStatus}
-        stepTwoStatus={increaseStakeStatus}
-        token={tokenSymbol}
-        pendingAllowance={pendingAllowance}
-        setPendingAllowance={setPendingAllowance}
-      ></TransactionModal>
+  if (isMember) {
+    return (
+      <section className="section-layout">
+        <TransactionModal
+          ref={modalRef}
+          label={`Stake ${tokenSymbol} in community`}
+          initialTransactionSteps={InitialTransactionSteps}
+          allowTokenStatus={allowTokenStatus}
+          stepTwoStatus={increaseStakeStatus}
+          token={tokenSymbol}
+          pendingAllowance={pendingAllowance}
+          setPendingAllowance={setPendingAllowance}
+        ></TransactionModal>
 
-      {/* input */}
-      <div className="grid max-w-[460px] grid-cols-2 gap-4">
-        <div className="col-span-2 mt-3 flex items-center gap-2 rounded-lg bg-info px-2 py-4 text-white">
-          <ExclamationCircleIcon height={32} width={32} />
-          <p className="text-sm text-white">
-            Staking more tokens in the community will increase your voting power
-            to support proposals
-          </p>
-        </div>
-
-        <div className="col-span-2 flex flex-col gap-4">
-          {isMember && (
-            <div className="flex items-center justify-between">
-              <div className="flex-start flex">
-                <p>Balance:</p>
-                <DisplayNumber
-                  number={accountTokenBalance?.formatted ?? "0"}
-                  tokenSymbol={tokenSymbol}
-                  compact={true}
-                />
-              </div>
-              <div className="flex-start flex">
-                <p>Current Stake:</p>
-                <DisplayNumber
-                  number={[BigInt(memberStakedTokens), registerTokenDecimals]}
-                  tokenSymbol={tokenSymbol}
-                  compact={true}
-                />
-              </div>
+        <div className="flex justify-between gap-4">
+          <div className=" flex flex-col justify-between gap-4">
+            <div className="flex gap-4">
+              <ExclamationCircleIcon height={32} width={32} />
+              <p className="max-w-sm">
+                Staking more tokens in the community will increase your voting
+                power to support proposals
+              </p>
             </div>
-          )}
-          {/* <div className=""> */}
-          <div className="relative">
-            <input
-              type="number"
-              value={increaseInput}
-              placeholder="Amount"
-              className="input input-bordered input-info w-full disabled:bg-gray-300 disabled:text-black"
-              onChange={(e) => handleInputChange(e)}
-              disabled={!isMember}
-            />
-            <span className="absolute right-8 top-3.5 text-black">
-              {tokenSymbol}
-            </span>
+            {isMember && (
+              <div className="flex justify-between">
+                <div className="flex-start flex gap-2">
+                  <p>Balance:</p>
+                  <DisplayNumber
+                    number={accountTokenBalance?.formatted ?? "0"}
+                    tokenSymbol={tokenSymbol}
+                    compact={true}
+                  />
+                </div>
+                <div className="flex-start flex gap-2">
+                  <p>Current Stake:</p>
+                  <DisplayNumber
+                    number={[BigInt(memberStakedTokens), registerTokenDecimals]}
+                    tokenSymbol={tokenSymbol}
+                    compact={true}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="relative">
+              <input
+                type="number"
+                value={increaseInput}
+                placeholder="Amount"
+                className="input input-bordered input-info w-full disabled:bg-gray-300 disabled:text-black"
+                onChange={(e) => handleInputChange(e)}
+                disabled={!isMember}
+              />
+              <span className="absolute right-8 top-3.5 text-black">
+                {tokenSymbol}
+              </span>
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                onClick={handleChange}
+                disabled={disabledIncPowerButton}
+                tooltip={tooltipMessage}
+              >
+                Increase stake
+                <span className="loading-spinner"></span>
+              </Button>
+
+              <Button
+                onClick={() => writeDecreasePower?.()}
+                btnStyle="outline"
+                color="danger"
+                disabled={disabledDecPowerButton}
+                tooltip={decreaseTooltipMsg}
+              >
+                Decrease stake
+                <span className="loading-spinner"></span>
+              </Button>
+            </div>
           </div>
         </div>
-
-        <Button
-          onClick={handleChange}
-          disabled={disabledIncPowerButton}
-          tooltip={tooltipMessage}
-        >
-          {increaseInput !== undefined && Number(increaseInput) > 0
-            ? `Stake ${tokenSymbol}`
-            : "Increase stake"}
-          <span className="loading-spinner"></span>
-        </Button>
-
-        {isMember && (
-          <Button
-            onClick={() => writeDecreasePower?.()}
-            btnStyle="outline"
-            color="danger"
-            disabled={disabledDecPowerButton}
-            tooltip={decreaseTooltipMsg}
-          >
-            Decrease stake
-            <span className="loading-spinner"></span>
-          </Button>
-        )}
-      </div>
-    </>
-  );
+      </section>
+    );
+  } else {
+    return;
+  }
 };

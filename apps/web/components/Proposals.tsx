@@ -29,7 +29,7 @@ import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -81,7 +81,7 @@ export function Proposals({
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const { data: isMemberActivated } = useContractRead({
@@ -97,7 +97,7 @@ export function Proposals({
     error,
     refetch: refetchIsMemberQuery,
   } = useSubgraphQueryByChain<isMemberQuery>(
-    chainId,
+    urlChainId,
     isMemberDocument,
     {
       me: address?.toLowerCase(),
@@ -108,7 +108,7 @@ export function Proposals({
       topic: "member",
       id: communityAddress,
       type: ["add", "delete"],
-      chainId,
+      urlChainId,
     },
   );
 
@@ -149,7 +149,7 @@ export function Proposals({
 
   const { data: memberStrategyResult, error: errorMS } =
     useSubgraphQueryByChain<getMemberStrategyQuery>(
-      chainId,
+      urlChainId,
       getMemberStrategyDocument,
       {
         meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
@@ -159,7 +159,7 @@ export function Proposals({
         topic: "proposal",
         id: strategy.id,
         type: "update",
-        chainId: chainId,
+        chainId: urlChainId,
       },
     );
 
@@ -233,14 +233,14 @@ export function Proposals({
 
   useWaitForTransaction({
     hash: allocateData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
     onSuccess: () => {
       publish({
         topic: "proposal",
         type: "update",
         id: alloInfo.id,
         function: "allocate",
-        chainId,
+        urlChainId,
       });
     },
   });
