@@ -14,12 +14,12 @@ import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { dn, gte } from "@/utils/numbers";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
+import { gte } from "@/utils/numbers";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 
 type RegisterMemberProps = {
   tokenSymbol: string;
@@ -81,7 +81,7 @@ export function RegisterMember({
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
     token: registerToken as `0x${string}` | undefined,
-    chainId,
+    chainId: urlChainId,
   });
 
   const accountHasBalance = gte(
@@ -102,7 +102,7 @@ export function RegisterMember({
   });
 
   useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
     hash: registerMemberData?.hash,
     onSuccess: () => {
       // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
@@ -112,7 +112,7 @@ export function RegisterMember({
         containerId: communityAddress,
         function: "stakeAndRegisterMember",
         id: communityAddress,
-        chainId: chainId,
+        urlChainId: urlChainId,
       });
     },
   });
@@ -128,7 +128,7 @@ export function RegisterMember({
   });
 
   useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
     hash: unregisterMemberData?.hash,
     onSuccess: () => {
       // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
@@ -138,7 +138,7 @@ export function RegisterMember({
         containerId: communityAddress,
         function: "unregisterMember",
         id: communityAddress,
-        chainId: chainId,
+        urlChainId: urlChainId,
       });
     },
   });
@@ -162,7 +162,7 @@ export function RegisterMember({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
     hash: allowTokenData?.hash,
   });
 

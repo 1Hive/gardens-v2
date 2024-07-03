@@ -23,8 +23,7 @@ export function useDisableButtons(
   conditions?: ConditionObject[],
 ): disableButtonsHookProps {
   const { isConnected } = useAccount();
-  const path = usePathname();
-  const urlChainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
   const { chain } = useNetwork(); // wallet connected chain object
   const missmatchUrlAndWalletChain = chain?.id !== urlChainId;
 
