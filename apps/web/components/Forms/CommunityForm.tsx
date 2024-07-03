@@ -81,7 +81,7 @@ export const CommunityForm = ({
   // const [file, setFile] = useState<File | null>(null);
 
   const publicClient = createPublicClient({
-    chain: getChain(chainId) as Chain,
+    chain: getChain(urlChainId) as Chain,
     transport: http(),
   });
 
@@ -159,7 +159,7 @@ export const CommunityForm = ({
 
   useWaitForTransaction({
     hash: data?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
     onSuccess: () => {
       publish({
         topic: "community",
