@@ -52,9 +52,9 @@ export const EthAddress = ({
       icon={icon}
       address={address as Address}
       explorer={(address) => ({
-        name: chainDataMap[chainId].name,
-        url: `${chainDataMap[chainId].explorer}${address}`,
-        accountUrl: `${chainDataMap[chainId].explorer}${address}`,
+        name: chainDataMap[urlChainId].name,
+        url: `${chainDataMap[urlChainId].explorer}${address}`,
+        accountUrl: `${chainDataMap[urlChainId].explorer}${address}`,
       })}
     />
   ) : (

@@ -94,7 +94,7 @@ export const IncreasePower = ({
     }
     const { data: result, error } = await queryByChain<isMemberQuery>(
       urqlClient,
-      chainId,
+      urlChainId,
       isMemberDocument,
       {
         me: accountAddress.toLowerCase(),
@@ -124,7 +124,7 @@ export const IncreasePower = ({
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
     token: registerToken as Address,
-    chainId: chainId || 0,
+    chainId: urlChainId || 0,
   });
 
   //TODO: create a hook for this
@@ -164,7 +164,7 @@ export const IncreasePower = ({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
     hash: allowTokenData?.hash,
   });
 
@@ -182,7 +182,7 @@ export const IncreasePower = ({
     isSuccess: isWaitResetAllowanceStatus,
     status: waitResetAllowanceStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
     hash: resetAllowance?.hash,
   });
 
@@ -208,7 +208,7 @@ export const IncreasePower = ({
 
   useWaitForTransaction({
     hash: increasePowerData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
   });
 
   const {
@@ -226,7 +226,7 @@ export const IncreasePower = ({
 
   useWaitForTransaction({
     hash: decreasePowerData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[urlChainId].confirmations,
   });
 
   useErrorDetails(errorDecreasePower, "errorDecrease");
