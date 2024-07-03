@@ -4,7 +4,7 @@ import { WriteContractResult } from "wagmi/actions";
 import { useViemClient } from "./useViemClient";
 import { Address } from "viem";
 import { chainDataMap } from "@/configs/chainServer";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 
 type TransactionStatus = "error" | "success" | "loading" | "idle";
 type TransactionData = WriteContractResult | undefined;
@@ -32,7 +32,7 @@ export const useTransactionNotification = (
   const [promiseReject, setPromiseReject] = useState<
     TransactionFunction | undefined
   >(undefined);
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
   const viemClient = useViemClient();
 
   const transactionPromise = () => {
@@ -64,7 +64,7 @@ export const useTransactionNotification = (
           error: "Something went wrong",
         })
         .then((data) => {
-          console.log("Tx hash: "+data.transactionData?.hash)
+          console.log("Tx hash: " + data.transactionData?.hash);
           // const receipt = async () =>
           //   await viemClient.waitForTransactionReceipt({
           //     confirmations: chainDataMap[chainId].confirmations,
@@ -80,7 +80,7 @@ export const useTransactionNotification = (
           //   })
           //   .then((data) => {
           //     console.log(data);
-              setTxConfirmationHash(data.transactionData?.hash);
+          setTxConfirmationHash(data.transactionData?.hash);
           //   })
           //   .catch((error: any) => {
           //     console.error(`Tx failure: ${error}`);

@@ -1,4 +1,4 @@
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useAccount, useNetwork } from "wagmi";

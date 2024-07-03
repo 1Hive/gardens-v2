@@ -3,7 +3,7 @@ import React from "react";
 import { Addreth } from "addreth";
 import { Address } from "viem";
 import { chainDataMap } from "@/configs/chainServer";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import LoadingSpinner from "./LoadingSpinner";
 
 type EthAddressProps = {
@@ -36,7 +36,7 @@ export const EthAddress = ({
   //   popupRadius: 12,
   //   popupShadow: "black",
   // };
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
 
   return address ? (
     <Addreth

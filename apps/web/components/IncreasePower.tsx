@@ -18,7 +18,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { toast } from "react-toastify";
 import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import useErrorDetails from "@/utils/getErrorName";
@@ -86,7 +86,7 @@ export const IncreasePower = ({
 
   const urqlClient = useUrqlClient();
 
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
 
   const runIsMemberQuery = useCallback(async () => {
     if (accountAddress === undefined) {

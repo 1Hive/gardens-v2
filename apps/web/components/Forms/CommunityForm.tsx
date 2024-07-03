@@ -16,7 +16,7 @@ import { TokenGarden } from "#/subgraph/.graphclient";
 import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
 import { chainDataMap, getChain } from "@/configs/chainServer";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -76,7 +76,7 @@ export const CommunityForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
 
   // const [file, setFile] = useState<File | null>(null);
 

@@ -15,7 +15,7 @@ import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { dn, gte } from "@/utils/numbers";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { chainDataMap } from "@/configs/chainServer";
@@ -40,7 +40,7 @@ export function RegisterMember({
   protocolFee,
   communityFee,
 }: RegisterMemberProps) {
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
