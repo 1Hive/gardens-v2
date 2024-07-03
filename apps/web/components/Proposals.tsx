@@ -430,7 +430,7 @@ export function Proposals({
           </header>
         </div>
 
-        <div className="flex flex-col gap-6">
+        <div className="mt-10 flex flex-col gap-6">
           <div className="flex flex-col gap-6">
             {proposals?.map((proposalData, i) => (
               <React.Fragment key={proposalData.id + "_" + i}>
