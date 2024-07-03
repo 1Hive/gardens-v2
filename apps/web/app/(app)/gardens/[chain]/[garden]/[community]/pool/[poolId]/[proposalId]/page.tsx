@@ -8,15 +8,15 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { formatTokenAmount, calculatePercentageBigInt } from "@/utils/numbers";
+import {  calculatePercentageBigInt } from "@/utils/numbers";
 import Image from "next/image";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { proposalStatus, poolTypes } from "@/types";
 import { proposalImg } from "@/assets";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
-import { useState, useEffect, useMemo } from "react";
-import { useContractRead, useContractWrite } from "wagmi";
+import { useState, useEffect } from "react";
+import { useContractRead, } from "wagmi";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 export const dynamic = "force-dynamic";

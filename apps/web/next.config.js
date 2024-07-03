@@ -25,4 +25,5 @@ module.exports = {
   experimental: {
     serverComponentsExternalPackages: ["ably"],
   },
+  productionBrowserSourceMaps: true,
 };
