@@ -7,6 +7,12 @@
       "startBlock": 0,
       "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
       "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 0,
+      "address": "0x9Fcca440F19c62CDF7f973eB6DDF218B15d4C71D",
+      "customTemplate": "passportScorer"
     }
   ]
 }

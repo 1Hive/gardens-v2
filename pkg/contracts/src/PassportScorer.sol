@@ -15,6 +15,7 @@ contract PassportScorer is Ownable, ISybilScorer {
     event ListManagerChanged(address indexed oldManager, address indexed newManager);
     event StrategyAdded(address indexed strategy, uint256 threshold, bool active, address councilSafe);
     event StrategyRemoved(address indexed strategy);
+    event StrategyActivated(address indexed strategy);
     event ThresholdModified(address indexed strategy, uint256 newThreshold);
 
     error OnlyAuthorized();
@@ -106,6 +107,7 @@ contract PassportScorer is Ownable, ISybilScorer {
     function activateStrategy(address _strategy) external onlyCouncil(_strategy) {
         _revertZeroAddress(_strategy);
         strategies[_strategy].active = true;
+        emit StrategyActivated(_strategy);
     }
 
     /// @notice Modify the threshold of a strategy
