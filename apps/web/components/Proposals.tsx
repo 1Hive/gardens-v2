@@ -74,7 +74,7 @@ export function Proposals({
   const [memberTokensInCommunity, setMemberTokensInCommunity] =
     useState<string>("0");
 
-  const { address } = useAccount();
+  const { address: wallet } = useAccount();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
@@ -86,8 +86,9 @@ export function Proposals({
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
     functionName: "memberActivatedInStrategies",
-    args: [address as Address, strategy.id as Address],
+    args: [wallet as Address, strategy.id as Address],
     watch: true,
+    enabled: !!wallet,
   });
 
   const {
@@ -98,7 +99,7 @@ export function Proposals({
     urlChainId ?? 0,
     isMemberDocument,
     {
-      me: address?.toLowerCase(),
+      me: wallet?.toLowerCase(),
       comm: strategy.registryCommunity.id.toLowerCase(),
     },
     {},
@@ -108,6 +109,7 @@ export function Proposals({
       type: ["add", "delete"],
       urlChainId,
     },
+    !!wallet
   );
 
   if (error) {
@@ -145,12 +147,12 @@ export function Proposals({
     setStakedFilters(memberStakes);
   }, [memberResult]);
 
-  const { data: memberStrategyResult, error: errorMS } =
+  const { data: memberStrategyResult } =
     useSubgraphQueryByChain<getMemberStrategyQuery>(
       urlChainId ?? 0,
       getMemberStrategyDocument,
       {
-        meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
+        meStr: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
       {},
       {
@@ -159,13 +161,14 @@ export function Proposals({
         type: "update",
         chainId: urlChainId,
       },
+      !!wallet,
     );
 
   useEffect(() => {
-    if (address) {
+    if (wallet) {
       refetchIsMemberQuery();
     }
-  }, [address]);
+  }, [wallet]);
 
   useEffect(() => {
     setMemberActivatedPoints(
@@ -174,7 +177,7 @@ export function Proposals({
   }, [memberStrategyResult]);
 
   const triggerRenderProposals = () => {
-    getProposals(address as Address, strategy).then((res) => {
+    getProposals(strategy).then((res) => {
       if (res !== undefined) {
         setProposals(res);
       } else {
@@ -185,7 +188,7 @@ export function Proposals({
 
   useEffect(() => {
     triggerRenderProposals();
-  }, [address]);
+  }, []);
 
   useEffect(() => {
     if (!proposals) {
@@ -210,7 +213,7 @@ export function Proposals({
       );
     }
     setInputs(newInputs);
-  }, [proposals, address, stakedFilters]);
+  }, [proposals, wallet, stakedFilters]);
 
   useEffect(() => {
     if (isMemberActived === undefined) return;

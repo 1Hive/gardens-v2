@@ -1,10 +1,6 @@
-import { Address } from "viem";
 import { LightCVStrategy, LightProposal } from "@/types";
 
-export async function getProposals(
-  accountAddress: Address | undefined,
-  strategy: LightCVStrategy,
-) {
+export async function getProposals(strategy: LightCVStrategy) {
   try {
     async function fetchIPFSDataBatch(
       proposals: LightProposal[],

@@ -190,9 +190,9 @@ export const IncreasePower = ({
   const { data: allowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    enabled: accountAddress !== undefined,
     args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
+    enabled: accountAddress !== undefined,
   });
 
   const {

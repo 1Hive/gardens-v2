@@ -60,23 +60,20 @@ export function RegisterMember({
     abi: abiWithErrors2(registryCommunityABI),
   };
 
-  const {
-    data: isMember,
-    error,
-    isSuccess,
-  } = useContractRead({
+  const { data: isMember } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
     enabled: accountAddress !== undefined,
     args: [accountAddress as Address],
     watch: true,
+    chainId: urlChainId,
   });
 
-  const { data: registerStakeAmount, error: stakeAmountError } =
-    useContractRead({
-      ...registryContractCallConfig,
-      functionName: "getStakeAmountWithFees",
-    });
+  const { data: registerStakeAmount } = useContractRead({
+    ...registryContractCallConfig,
+    functionName: "getStakeAmountWithFees",
+    chainId: urlChainId,
+  });
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
@@ -169,10 +166,10 @@ export function RegisterMember({
   const { data: dataAllowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    enabled: accountAddress !== undefined,
     args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
     watch: true,
+    enabled: !!accountAddress,
   });
 
   useErrorDetails(registerMemberError, "stakeAndRegisterMember");
