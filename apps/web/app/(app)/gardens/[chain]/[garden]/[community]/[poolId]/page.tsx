@@ -185,7 +185,7 @@ export default function Pool({
             strategy={strategyObj}
             alloInfo={alloInfo}
             communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
+            createProposalUrl={`/gardens/${chain}/${garden}/${poolId}/create-proposal`}
             proposalType={proposalType}
           />
         </>
