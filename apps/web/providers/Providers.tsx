@@ -13,7 +13,7 @@ import {
   injectedWallet,
   coinbaseWallet,
 } from "@rainbow-me/rainbowkit/wallets";
-import { configureChains, createConfig, WagmiConfig } from "wagmi";
+import { Chain, configureChains, createConfig, WagmiConfig } from "wagmi";
 import {
   chains,
   publicClient as wagmiPublicClient,
@@ -21,10 +21,9 @@ import {
 import { AddrethConfig } from "addreth";
 import UrqlProvider from "./UrqlProvider";
 import { PubSubProvider } from "@/contexts/pubsub.context";
-import { getChain } from "@/configs/chainServer";
 import { publicProvider } from "wagmi/providers/public";
 import { alchemyProvider } from "wagmi/providers/alchemy";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
+import useChainFromPath from "@/hooks/useChainIdFromtPath";
 
 type Props = {
   children: React.ReactNode;
@@ -47,10 +46,9 @@ const Providers = ({ children }: Props) => {
   useEffect(() => setMounted(true), []);
   const [wagmiConfig, setWagmiConfig] =
     useState<ReturnType<typeof createCustomConfig>>();
-  const chainId = useChainIdFromPath();
+  const chain = useChainFromPath();
 
-  const createCustomConfig = () => {
-    const chain = getChain(chainId);
+  const createCustomConfig = (chain: Chain) => {
     const publicClient = chain
       ? configureChains(
           [chain],
@@ -70,8 +68,8 @@ const Providers = ({ children }: Props) => {
   };
 
   useEffect(() => {
-    setWagmiConfig(createCustomConfig());
-  }, [chainId]);
+    setWagmiConfig(createCustomConfig(chain));
+  }, [chain]);
 
   return (
     // if mounted UrlqProvider will be rendered

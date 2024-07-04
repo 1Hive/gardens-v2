@@ -5,7 +5,6 @@ import {
   Address,
   useContractWrite,
   useAccount,
-  useChainId,
   useWaitForTransaction,
 } from "wagmi";
 import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
@@ -16,6 +15,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
+import useChainFromPath from "@/hooks/useChainIdFromtPath";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -32,7 +32,7 @@ export function ActivatePoints({
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const chainId = useChainId();
+  const { id: chainId } = useChainFromPath();
   const { publish } = usePubSubContext();
 
   const {

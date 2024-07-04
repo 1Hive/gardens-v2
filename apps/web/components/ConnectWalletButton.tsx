@@ -2,7 +2,7 @@
 import React from "react";
 import { useBalance, useSwitchNetwork } from "wagmi";
 import { usePathname } from "next/navigation";
-import { ChainIcon, getChain } from "@/configs/chainServer";
+import { ChainIcon } from "@/configs/chainServer";
 import Image from "next/image";
 import { walletIcon } from "@/assets";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -13,12 +13,13 @@ import { Fragment } from "react";
 import { formatAddress } from "@/utils/formatAddress";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
+import useChainFromPath from "@/hooks/useChainIdFromtPath";
 
 export function ConnectWallet() {
   const path = usePathname();
   const account = useAccount();
-  const urlChainId = useChainIdFromPath();
+  const chainFromPath = useChainFromPath();
+  const { id: urlChainId } = chainFromPath;
   const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
@@ -83,7 +84,7 @@ export function ConnectWallet() {
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
-                        "border-danger-content border-2":
+                        "border-2 border-danger-content":
                           urlChainId !== chain.id && !isNaN(urlChainId),
                       })} `}
                         >
@@ -166,10 +167,7 @@ export function ConnectWallet() {
                                       switchNetwork && switchNetwork(urlChainId)
                                     }
                                   >
-                                    Switch to{" "}
-                                    {urlChainId
-                                      ? getChain(urlChainId)?.name
-                                      : ""}
+                                    Switch to {chainFromPath?.name ?? ""}
                                   </Button>
                                 )}
 

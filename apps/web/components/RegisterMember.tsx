@@ -19,7 +19,7 @@ import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
+import useChainFromPath from "@/hooks/useChainIdFromtPath";
 
 type RegisterMemberProps = {
   tokenSymbol: string;
@@ -40,7 +40,7 @@ export function RegisterMember({
   protocolFee,
   communityFee,
 }: RegisterMemberProps) {
-  const urlChainId = useChainIdFromPath();
+  const { id: urlChainId } = useChainFromPath();
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();

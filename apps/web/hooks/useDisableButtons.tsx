@@ -1,4 +1,4 @@
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
+import useChainFromPath from "@/hooks/useChainIdFromtPath";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useAccount, useNetwork } from "wagmi";
@@ -23,7 +23,7 @@ export function useDisableButtons(
   conditions?: ConditionObject[],
 ): disableButtonsHookProps {
   const { isConnected } = useAccount();
-  const urlChainId = useChainIdFromPath();
+  const { id: urlChainId } = useChainFromPath();
   const { chain } = useNetwork(); // wallet connected chain object
   const missmatchUrlAndWalletChain = chain?.id !== urlChainId;
 

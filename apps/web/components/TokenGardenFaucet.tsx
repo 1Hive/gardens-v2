@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { useContractWrite, useAccount, useChainId } from "wagmi";
+import { useContractWrite, useAccount } from "wagmi";
 import { parseAbi, formatUnits, Address } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
+import useChainFromPath from "@/hooks/useChainIdFromtPath";
 
 interface FaucetProps {
   token: Pick<TokenGarden, "id" | "decimals" | "symbol">;
@@ -12,7 +13,7 @@ interface FaucetProps {
 const MINT_AMMOUNT = 1000n;
 
 export default function TokenGardenFaucet({ token }: FaucetProps) {
-  const chain = useChainId();
+  const { id: urlChainId } = useChainFromPath();
   const { address: connectedAccount } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -23,7 +24,7 @@ export default function TokenGardenFaucet({ token }: FaucetProps) {
     address: token.id as Address,
     abi: parseAbi(erc20MintAbi),
     functionName: "mint",
-    chainId: chain,
+    chainId: urlChainId,
     account: connectedAccount,
     onSuccess: () => {
       const formattedAmount = formatUnits(mintAmount, token.decimals);
