@@ -49,7 +49,7 @@ const Providers = ({ children }: Props) => {
   const chain = useChainFromPath();
 
   const createCustomConfig = (chain: Chain) => {
-    const publicClient = chain
+    const publicClient = chain.id
       ? configureChains(
           [chain],
           [
