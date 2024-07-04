@@ -11,6 +11,7 @@ export const GoBackButton = () => {
     <>
       {path === "/gardens" ? null : (
         <Button
+          aria-label="Go back"
           btnStyle="link"
           color="primary"
           onClick={() => router.back()}
