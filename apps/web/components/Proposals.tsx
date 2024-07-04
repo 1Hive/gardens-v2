@@ -65,7 +65,7 @@ export function Proposals({
   createProposalUrl: string;
   proposalType: number;
 }) {
-  const [editView, setEditView] = useState(false);
+  const [allocationView, setAllocationView] = useState(false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
   const [proposals, setProposals] = useState<
@@ -216,7 +216,7 @@ export function Proposals({
 
   useEffect(() => {
     if (isMemberActived === undefined) return;
-    if (isMemberActived !== true) setEditView(false);
+    if (isMemberActived !== true) setAllocationView(false);
   }, [isMemberActived]);
 
   const {
@@ -297,15 +297,10 @@ export function Proposals({
   const inputHandler = (i: number, value: number) => {
     const currentPoints = calculateTotalTokens(i);
     const maxAllowableValue = memberActivatedPoints - currentPoints;
-    const toastId = "error-toast";
+
     // If the sum exceeds the memberActivatedPoints, adjust the value to the maximum allowable value
     if (currentPoints + value > memberActivatedPoints) {
       value = maxAllowableValue;
-      if (!toast.isActive(toastId)) {
-        toast.error("Can't exceed 100% in total support!", {
-          toastId,
-        });
-      }
       console.log("can't exceed 100% points");
     }
 
@@ -368,24 +363,26 @@ export function Proposals({
     }
   };
 
+  const poolWeightClassName = `bg-primary-soft text-primary-content ${calcPoolWeightUsed(memberSupportedProposalsPct) == memberPoolWeight && "bg-secondary-soft text-secondary-content"}`;
+
   const stats = [
     {
       id: 1,
-      name: "Your pool weight",
+      name: "Pool Weight",
       stat: memberPoolWeight,
-      className: "bg-primary-soft text-primary-content",
+      className: poolWeightClassName,
     },
     {
       id: 2,
-      name: "Pool weight allocation",
+      name: "Allocated Pool Weight",
       stat: calcPoolWeightUsed(memberSupportedProposalsPct),
-      className: "bg-primary-soft text-primary-content",
+      className: poolWeightClassName,
     },
     {
       id: 3,
-      name: "Total weight allocation",
+      name: "Total Allocation Percentage",
       stat: memberSupportedProposalsPct,
-      className: "bg-primary-content text-primary-soft border-primary-content",
+      className: `bg-primary-content text-primary-soft border-primary-content ${memberSupportedProposalsPct >= 100 && "bg-secondary-content text-secondary-soft border-secondary-content "}`,
     },
   ];
 
@@ -398,100 +395,97 @@ export function Proposals({
         communityAddress={communityAddress}
         memberTokensInCommunity={memberTokensInCommunity}
       />
-      <section className="section-layout">
-        <div className="mx-auto max-w-5xl space-y-10">
-          <header className="flex items-center justify-between">
-            <div className="flex w-full items-baseline justify-between">
-              <h2 className="font-semibold">Proposals</h2>
-              {proposals ? (
-                proposals.length === 0 ? (
-                  <h4 className="text-2xl">
-                    No submitted proposals to support
-                  </h4>
-                ) : (
-                  !editView && (
-                    <Button
-                      icon={
-                        <AdjustmentsHorizontalIcon height={24} width={24} />
-                      }
-                      onClick={() => setEditView((prev) => !prev)}
-                      disabled={disableManSupportButton}
-                      tooltip={String(tooltipMessage)}
-                    >
-                      Manage support
-                    </Button>
-                  )
-                )
+      <section className="section-layout flex flex-col gap-10">
+        <div>
+          <header className="flex items-center justify-between gap-10">
+            <h2>Proposals</h2>
+            {proposals ? (
+              proposals.length === 0 ? (
+                <h4 className="text-2xl">No submitted proposals to support</h4>
               ) : (
-                <LoadingSpinner></LoadingSpinner>
-              )}
-            </div>
+                !allocationView && (
+                  <Button
+                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                    onClick={() => setAllocationView((prev) => !prev)}
+                    disabled={disableManSupportButton}
+                    tooltip={String(tooltipMessage)}
+                  >
+                    Manage support
+                  </Button>
+                )
+              )
+            ) : (
+              <LoadingSpinner></LoadingSpinner>
+            )}
           </header>
-          {editView && (
+          {allocationView && (
             <>
               <UserAllocationStats stats={stats} />
             </>
           )}
         </div>
 
-        <div className="mt-10 flex flex-col gap-6">
-          <div className="flex flex-col gap-6">
-            {proposals?.map((proposalData, i) => (
-              <React.Fragment key={proposalData.id + "_" + i}>
-                <ProposalCard
-                  proposalData={proposalData}
-                  inputData={inputs[i]}
-                  stakedFilter={stakedFilters[i]}
-                  i={i}
-                  isEditView={editView}
-                  tooltipMessage={tooltipMessage}
-                  memberActivatedPoints={memberActivatedPoints}
-                  memberPoolWeight={memberPoolWeight}
-                  executeDisabled={
-                    proposalData.proposalStatus == 4 ||
-                    !isConnected ||
-                    missmatchUrl
-                  }
-                  strategy={strategy}
-                  tokenDecimals={tokenDecimals}
-                  alloInfo={alloInfo}
-                  triggerRenderProposals={triggerRenderProposals}
-                  inputHandler={inputHandler}
-                />
-              </React.Fragment>
-            ))}
-          </div>
-          <div className="flex justify-end gap-8">
-            {editView && (
-              <>
-                <Button
-                  btnStyle="outline"
-                  color="danger"
-                  onClick={() => setEditView((prev) => !prev)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => submit()}
-                  isLoading={allocateStatus === "loading"}
-                  disabled={
-                    !getProposalsInputsDifferences(inputs, stakedFilters).length
-                  }
-                  tooltip="Make changes in proposals support first"
-                >
-                  Save changes
-                </Button>
-              </>
-            )}
-          </div>
+        <div className="flex flex-col gap-6">
+          {proposals?.map((proposalData, i) => (
+            <React.Fragment key={proposalData.id + "_" + i}>
+              <ProposalCard
+                proposalData={proposalData}
+                inputData={inputs[i]}
+                stakedFilter={stakedFilters[i]}
+                i={i}
+                isAllocationView={allocationView}
+                tooltipMessage={tooltipMessage}
+                memberActivatedPoints={memberActivatedPoints}
+                memberPoolWeight={memberPoolWeight}
+                executeDisabled={
+                  proposalData.proposalStatus == 4 ||
+                  !isConnected ||
+                  missmatchUrl
+                }
+                strategy={strategy}
+                tokenDecimals={tokenDecimals}
+                alloInfo={alloInfo}
+                triggerRenderProposals={triggerRenderProposals}
+                inputHandler={inputHandler}
+              />
+            </React.Fragment>
+          ))}
         </div>
-        <div>
-          <h4 className="text-2xl">Do you have a great idea?</h4>
-          <div className="flex items-center gap-6">
-            <p>Share it with the community and get support !</p>
-            <FormLink href={createProposalUrl} label="Create Proposal" />
+        {allocationView && (
+          <div className="flex justify-end gap-4">
+            <>
+              <Button
+                btnStyle="outline"
+                color="danger"
+                onClick={() => setAllocationView((prev) => !prev)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => submit()}
+                isLoading={allocateStatus === "loading"}
+                disabled={
+                  !getProposalsInputsDifferences(inputs, stakedFilters).length
+                }
+                tooltip="Make changes in proposals support first"
+              >
+                Save changes
+              </Button>
+            </>
           </div>
-        </div>
+        )}
+
+        {!allocationView && (
+          <>
+            <div>
+              <h4>Do you have a great idea?</h4>
+              <div className="flex items-center gap-6">
+                <p>Share it with the community and get support!</p>
+                <FormLink href={createProposalUrl} label="Create Proposal" />
+              </div>
+            </div>
+          </>
+        )}
       </section>
     </>
   );
@@ -499,17 +493,15 @@ export function Proposals({
 
 export default function UserAllocationStats({ stats }: { stats: any[] }) {
   return (
-    <div className="">
-      <h3 className="text-base font-semibold text-gray-900">
-        Pool weight stats
-      </h3>
+    <div className="mt-10">
+      <h3>Your Allocation Overview</h3>
 
       <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <div key={stat.id} className="section-layout sm:px-6 sm:pt-6">
             <div>
               <div
-                className={`radial-progress absolute rounded-full border-4 border-neutral ${stat.className}`}
+                className={`radial-progress absolute rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
                 style={{
                   // @ts-ignore
                   "--value": stat.stat,

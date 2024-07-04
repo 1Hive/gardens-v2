@@ -31,7 +31,7 @@ type ProposalCard = {
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   i: number;
-  isEditView: boolean;
+  isAllocationView: boolean;
   tooltipMessage: string;
   memberActivatedPoints: number;
   memberPoolWeight: number;
@@ -48,7 +48,7 @@ export function ProposalCard({
   inputData,
   stakedFilter,
   i,
-  isEditView,
+  isAllocationView,
   tooltipMessage,
   memberActivatedPoints,
   memberPoolWeight,
@@ -131,6 +131,10 @@ export function ProposalCard({
     triggerRenderProposals();
   }, [distributeTxConfirmationHash]);
 
+  const inputValue = Number(
+    (inputData?.value * 100) / memberActivatedPoints,
+  ).toFixed(2);
+
   const ProposalCardContent = ({
     isAllocationMode,
   }: {
@@ -145,12 +149,10 @@ export function ProposalCard({
             <h4 className="overflow-hidden truncate">{capitalize(title)}</h4>
             <h6 className="text-sm">ID {proposalNumber}</h6>
           </div>
-
           <Badge
             status={proposalStatus}
             classNames={`self-center justify-self-start ${isAllocationMode && "justify-self-end"}`}
           />
-
           {!isAllocationMode && (
             <>
               <div className="col-span-3 ml-10 self-center justify-self-start">
@@ -163,8 +165,7 @@ export function ProposalCard({
               <div className="border2 col-span-3 self-center">mini CVChart</div>
             </>
           )}
-
-          {isEditView && (
+          {isAllocationView && (
             <div className="col-span-10 mt-4">
               <div className=" flex w-full flex-wrap items-center justify-between gap-6">
                 <div className="flex items-center gap-8">
@@ -174,11 +175,11 @@ export function ProposalCard({
                       min={0}
                       max={memberActivatedPoints}
                       value={inputData?.value ?? 0}
-                      className={`range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:#65AD18]`}
+                      className={`range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]`}
                       step={memberActivatedPoints / 100}
                       onChange={(e) => inputHandler(i, Number(e.target.value))}
                     />
-                    <div className="flex w-full justify-between px-[10px]">
+                    <div className="flex w-full justify-between px-2.5">
                       {[...Array(21)].map((_, i) => (
                         <span className="text-[8px]" key={"span_" + i}>
                           |
@@ -187,12 +188,19 @@ export function ProposalCard({
                     </div>
                   </div>
                   <div className="mb-2">
-                    <p className="text-xl font-semibold">
-                      {Number(
-                        (inputData?.value * 100) / memberActivatedPoints,
-                      ).toFixed(2)}
-                      %
-                    </p>
+                    {Number(inputValue) > 0 ? (
+                      <>
+                        <p className="flex items-center gap-2 text-primary-content">
+                          Total allocated{" "}
+                          <span className="font-chakra text-2xl font-semibold">
+                            {inputValue}{" "}
+                          </span>
+                          %
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-neutral-soft-content">No allocation</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -205,7 +213,7 @@ export function ProposalCard({
 
   return (
     <>
-      {isEditView ? (
+      {isAllocationView ? (
         <ProposalCardContent isAllocationMode />
       ) : (
         <Card href={`${pathname}/proposals/${id}`} className="py-4">
