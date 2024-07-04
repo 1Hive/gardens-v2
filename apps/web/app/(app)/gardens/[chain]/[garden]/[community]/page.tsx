@@ -10,7 +10,6 @@ import {
   RegisterMember,
   DisplayNumber,
   IncreasePower,
-  FormLink,
   Button,
 } from "@/components";
 import { Address } from "viem";

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, PoolGovernance, FormLink, ProposalCard } from "@/components";
+import { Button, PoolGovernance, ProposalCard } from "@/components";
 import {
   useAccount,
   useContractWrite,

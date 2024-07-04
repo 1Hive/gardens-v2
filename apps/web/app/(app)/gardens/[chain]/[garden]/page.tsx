@@ -10,7 +10,6 @@ import {
   TokenLabel,
 } from "@/components";
 import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
-import { FormLink } from "@/components";
 import React, { useEffect } from "react";
 import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/LoadingSpinner";
