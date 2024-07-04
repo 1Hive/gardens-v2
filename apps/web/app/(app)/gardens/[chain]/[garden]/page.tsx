@@ -2,16 +2,24 @@
 
 import { tree2, tree3, grassLarge, ecosystem } from "@/assets";
 import Image from "next/image";
-import { Communities, EthAddress, Statistic, TokenLabel } from "@/components";
+import {
+  Button,
+  Communities,
+  EthAddress,
+  Statistic,
+  TokenLabel,
+} from "@/components";
 import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
 import { FormLink } from "@/components";
 import React, { useEffect } from "react";
-import { CubeTransparentIcon } from "@heroicons/react/24/outline";
+import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
 import { Address } from "viem";
+import Link from "next/link";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +47,8 @@ export default function Garden({
       },
     ],
   );
+
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   useEffect(() => {
     if (error) {
@@ -75,7 +85,7 @@ export default function Garden({
   return (
     <div className="page-layout">
       <header className="section-layout flex flex-col gap-10 p-10 md:flex-row ">
-        <div className="flex h-[283px] w-[311px] items-center justify-center overflow-hidden rounded-2xl min-h-[283px] min-w-[311px]">
+        <div className="flex h-[283px] min-h-[283px] w-[311px] min-w-[311px] items-center justify-center overflow-hidden rounded-2xl">
           <Image
             src={ecosystem}
             width={311}
@@ -118,12 +128,19 @@ export default function Garden({
             </h4>
           </header>
           <div className="relative flex h-[219px] justify-center">
-            <FormLink
-              label="Create a community"
+            <Link
               href={`/gardens/${chain}/${garden}/create-community`}
               className="mt-6"
-            />
-
+            >
+              <Button
+                btnStyle="filled"
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+                icon={<PlusIcon height={24} width={24} />}
+              >
+                Create a community
+              </Button>
+            </Link>
             <Image
               src={tree2}
               alt="tree"

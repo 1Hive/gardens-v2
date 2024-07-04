@@ -11,6 +11,7 @@ import {
   DisplayNumber,
   IncreasePower,
   FormLink,
+  Button,
 } from "@/components";
 import { Address } from "viem";
 import {
@@ -20,6 +21,7 @@ import {
 import {
   CurrencyDollarIcon,
   ExclamationCircleIcon,
+  PlusIcon,
   RectangleGroupIcon,
 } from "@heroicons/react/24/outline";
 import { poolTypes } from "@/types";
@@ -32,6 +34,8 @@ import {
 import { Dnum } from "dnum";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import Link from "next/link";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 
 export default function CommunityPage({
   params: { chain, garden: tokenAddr, community: communityAddr },
@@ -49,6 +53,7 @@ export default function CommunityPage({
       { topic: "member", chainId: chain, containerId: communityAddr },
     ],
   );
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   useEffect(() => {
     if (error) {
@@ -235,10 +240,18 @@ export default function CommunityPage({
       <section className="section-layout flex flex-col gap-10">
         <header className="flex justify-between">
           <h2>Pools</h2>
-          <FormLink
+          <Link
             href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`}
-            label="Create Pool"
-          />
+          >
+            <Button
+              btnStyle="filled"
+              disabled={!isConnected || missmatchUrl}
+              tooltip={tooltipMessage}
+              icon={<PlusIcon height={24} width={24} />}
+            >
+              Create Pool
+            </Button>
+          </Link>
         </header>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">

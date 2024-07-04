@@ -28,7 +28,10 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
+import {
+  AdjustmentsHorizontalIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
 import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
@@ -37,6 +40,7 @@ import { toast } from "react-toastify";
 import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy } from "@/types";
 import LoadingSpinner from "./LoadingSpinner";
+import Link from "next/link";
 
 export type ProposalInputItem = {
   id: string;
@@ -485,7 +489,16 @@ export function Proposals({
           <h4 className="text-2xl">Do you have a great idea?</h4>
           <div className="flex items-center gap-6">
             <p>Share it with the community and get support !</p>
-            <FormLink href={createProposalUrl} label="Create Proposal" />
+            <Link href={createProposalUrl}>
+              <Button
+                btnStyle="filled"
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+                icon={<PlusIcon height={24} width={24} />}
+              >
+                Create Proposal
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
