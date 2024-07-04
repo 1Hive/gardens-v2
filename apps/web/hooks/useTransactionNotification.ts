@@ -32,8 +32,6 @@ export const useTransactionNotification = (
   const [promiseReject, setPromiseReject] = useState<
     TransactionFunction | undefined
   >(undefined);
-  const urlChainId = useChainIdFromPath();
-  const viemClient = useViemClient();
 
   const transactionPromise = () => {
     return new Promise<TransactionPayload>((resolve, reject) => {
