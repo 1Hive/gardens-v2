@@ -43,7 +43,7 @@ export default function Pool({
   const { data, error } = useSubgraphQueryByChain<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden },
-    changeScopes: [
+    changeScope: [
       {
         topic: "pool",
         id: poolId,

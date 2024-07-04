@@ -23,7 +23,7 @@ export default function Garden({
   const { data: result, error } = useSubgraphQueryByChain<getGardenQuery>({
     query: getGardenDocument,
     variables: { addr: garden },
-    changeScopes: [
+    changeScope: [
       { topic: "member", chainId: chain },
       {
         topic: "community",

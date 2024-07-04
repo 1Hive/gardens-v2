@@ -39,16 +39,14 @@ export default function CommunityPage({
   params: { chain: number; garden: string; community: string };
 }) {
   const [covenant, setCovenant] = useState<string | undefined>();
-  const { data: result, error } = useSubgraphQueryByChain<getCommunityQuery>(
-    chain,
-    getCommunityDocument,
-    { communityAddr: communityAddr, tokenAddr: tokenAddr },
-    {},
-    [
+  const { data: result, error } = useSubgraphQueryByChain<getCommunityQuery>({
+    query: getCommunityDocument,
+    variables: { communityAddr: communityAddr, tokenAddr: tokenAddr },
+    changeScope: [
       { topic: "community", id: communityAddr, chainId: chain },
       { topic: "member", chainId: chain, containerId: communityAddr },
     ],
-  );
+  });
 
   useEffect(() => {
     if (error) {

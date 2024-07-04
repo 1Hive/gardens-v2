@@ -94,7 +94,7 @@ export function Proposals({
       me: address?.toLowerCase(),
       comm: strategy.registryCommunity.id.toLowerCase(),
     },
-    changeScopes: {
+    changeScope: {
       topic: "member",
       id: communityAddress,
       type: ["add", "delete"],
@@ -143,7 +143,7 @@ export function Proposals({
       variables: {
         meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
-      changeScopes: {
+      changeScope: {
         topic: "proposal",
         id: strategy.id,
         type: "update",

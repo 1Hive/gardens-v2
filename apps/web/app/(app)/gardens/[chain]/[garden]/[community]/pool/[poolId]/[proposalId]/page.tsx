@@ -68,7 +68,7 @@ export default function Proposal({
       garden: garden,
       proposalId: proposalId,
     },
-    changeScopes: {
+    changeScope: {
       topic: "proposal",
       id: proposalId,
       type: "update",

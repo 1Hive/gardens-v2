@@ -36,13 +36,13 @@ export default function useSubgraphQueryByChain<
   query,
   variables = {} as Variables,
   context,
-  changeScopes: changeScope,
+  changeScope: changeScope,
 }: {
   chainId?: ChainId;
   query: DocumentInput<any, Variables>;
   variables?: Variables;
   context?: Omit<OperationContext, "topic">;
-  changeScopes?: ChangeEventScope[] | ChangeEventScope;
+  changeScope?: ChangeEventScope[] | ChangeEventScope;
 }) {
   const pathChainId = useChainIdFromPath();
   const { urqlClient } = initUrqlClient();
