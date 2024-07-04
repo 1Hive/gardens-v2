@@ -17,10 +17,8 @@ import useErrorDetails from "@/utils/getErrorName";
 import {
   Allo,
   CVProposal,
-  CVStrategy,
   getMemberStrategyDocument,
   getMemberStrategyQuery,
-  getPoolDataQuery,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
@@ -29,7 +27,6 @@ import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import useChainFromPath from "@/hooks/useChainIdFromtPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -37,6 +34,7 @@ import { toast } from "react-toastify";
 import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy } from "@/types";
 import LoadingSpinner from "./LoadingSpinner";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 export type ProposalInputItem = {
   id: string;
@@ -81,7 +79,7 @@ export function Proposals({
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-  const { id: urlChainId } = useChainFromPath();
+  const urlChainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const { data: isMemberActivated } = useContractRead({
@@ -97,7 +95,7 @@ export function Proposals({
     error,
     refetch: refetchIsMemberQuery,
   } = useSubgraphQueryByChain<isMemberQuery>(
-    urlChainId,
+    urlChainId ?? 0,
     isMemberDocument,
     {
       me: address?.toLowerCase(),
@@ -149,7 +147,7 @@ export function Proposals({
 
   const { data: memberStrategyResult, error: errorMS } =
     useSubgraphQueryByChain<getMemberStrategyQuery>(
-      urlChainId,
+      urlChainId ?? 0,
       getMemberStrategyDocument,
       {
         meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
@@ -233,7 +231,7 @@ export function Proposals({
 
   useWaitForTransaction({
     hash: allocateData?.hash,
-    confirmations: chainDataMap[urlChainId].confirmations,
+    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
     onSuccess: () => {
       publish({
         topic: "proposal",

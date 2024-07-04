@@ -16,10 +16,10 @@ import { TokenGarden } from "#/subgraph/.graphclient";
 import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
 import { chainDataMap, getChain } from "@/configs/chainServer";
-import useChainFromPath from "@/hooks/useChainIdFromtPath";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useChainFromPath from "@/hooks/useChainFromPath";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -77,7 +77,6 @@ export const CommunityForm = ({
   const pathname = usePathname();
 
   const chainFromPath = useChainFromPath();
-  const { id: urlChainId } = chainFromPath;
 
   // const [file, setFile] = useState<File | null>(null);
 
@@ -160,7 +159,7 @@ export const CommunityForm = ({
 
   useWaitForTransaction({
     hash: data?.hash,
-    confirmations: chainDataMap[urlChainId].confirmations,
+    confirmations: chainDataMap[chainFromPath?.id ?? 0].confirmations,
     onSuccess: () => {
       publish({
         topic: "community",

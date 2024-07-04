@@ -23,7 +23,7 @@ import UrqlProvider from "./UrqlProvider";
 import { PubSubProvider } from "@/contexts/pubsub.context";
 import { publicProvider } from "wagmi/providers/public";
 import { alchemyProvider } from "wagmi/providers/alchemy";
-import useChainFromPath from "@/hooks/useChainIdFromtPath";
+import useChainFromPath from "@/hooks/useChainFromPath";
 
 type Props = {
   children: React.ReactNode;
@@ -48,8 +48,8 @@ const Providers = ({ children }: Props) => {
     useState<ReturnType<typeof createCustomConfig>>();
   const chain = useChainFromPath();
 
-  const createCustomConfig = (chain: Chain) => {
-    const publicClient = chain.id
+  const createCustomConfig = () => {
+    const publicClient = chain?.id
       ? configureChains(
           [chain],
           [
@@ -68,7 +68,7 @@ const Providers = ({ children }: Props) => {
   };
 
   useEffect(() => {
-    setWagmiConfig(createCustomConfig(chain));
+    setWagmiConfig(createCustomConfig());
   }, [chain]);
 
   return (

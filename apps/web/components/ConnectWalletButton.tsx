@@ -13,13 +13,13 @@ import { Fragment } from "react";
 import { formatAddress } from "@/utils/formatAddress";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
-import useChainFromPath from "@/hooks/useChainIdFromtPath";
+import useChainFromPath from "@/hooks/useChainFromPath";
 
 export function ConnectWallet() {
   const path = usePathname();
   const account = useAccount();
   const chainFromPath = useChainFromPath();
-  const { id: urlChainId } = chainFromPath;
+  const urlChainId = chainFromPath?.id;
   const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
@@ -31,8 +31,10 @@ export function ConnectWallet() {
   const { data: token } = useBalance({
     address: account?.address,
     token: tokenUrlAddress as `0x${string}` | undefined,
-    chainId: urlChainId || 0,
+    chainId: urlChainId,
+    enabled: !!account && !!urlChainId,
   });
+
   return (
     <ConnectButton.Custom>
       {({
@@ -85,7 +87,7 @@ export function ConnectWallet() {
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
                         "border-2 border-danger-content":
-                          urlChainId !== chain.id && !isNaN(urlChainId),
+                          urlChainId && urlChainId !== chain.id,
                       })} `}
                         >
                           <Image

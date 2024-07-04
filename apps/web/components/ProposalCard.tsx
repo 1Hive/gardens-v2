@@ -18,7 +18,8 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { getProposals } from "@/actions/getProposals";
-import useChainFromPath from "@/hooks/useChainIdFromtPath";
+import useChainFromPath from "@/hooks/useChainIdFromPath";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type ProposalCard = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
@@ -57,7 +58,7 @@ export function ProposalCard({
   const pathname = usePathname();
 
   const { publish } = usePubSubContext();
-  const { id: chainId } = useChainFromPath();
+  const chainId = useChainIdFromPath();
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0
@@ -91,7 +92,7 @@ export function ProposalCard({
 
   useWaitForTransaction({
     hash: distributeData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[chainId ?? 0].confirmations,
     onSuccess: () => {
       publish({
         topic: "proposal",

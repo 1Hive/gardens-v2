@@ -3,8 +3,8 @@ import React from "react";
 import { Addreth } from "addreth";
 import { Address } from "viem";
 import { chainDataMap } from "@/configs/chainServer";
-import useChainFromPath from "@/hooks/useChainIdFromtPath";
 import LoadingSpinner from "./LoadingSpinner";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type EthAddressProps = {
   address?: Address;
@@ -36,9 +36,9 @@ export const EthAddress = ({
   //   popupRadius: 12,
   //   popupShadow: "black",
   // };
-  const { id: urlChainId } = useChainFromPath();
+  const urlChainId = useChainIdFromPath();
 
-  return address ? (
+  return address && urlChainId ? (
     <Addreth
       // theme={theme}
       theme={{

@@ -19,7 +19,7 @@ import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useChainFromPath from "@/hooks/useChainIdFromtPath";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type RegisterMemberProps = {
   tokenSymbol: string;
@@ -40,7 +40,7 @@ export function RegisterMember({
   protocolFee,
   communityFee,
 }: RegisterMemberProps) {
-  const { id: urlChainId } = useChainFromPath();
+  const urlChainId = useChainIdFromPath();
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
@@ -102,7 +102,7 @@ export function RegisterMember({
   });
 
   useWaitForTransaction({
-    confirmations: chainDataMap[urlChainId].confirmations,
+    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
     hash: registerMemberData?.hash,
     onSuccess: () => {
       // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
@@ -128,7 +128,7 @@ export function RegisterMember({
   });
 
   useWaitForTransaction({
-    confirmations: chainDataMap[urlChainId].confirmations,
+    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
     hash: unregisterMemberData?.hash,
     onSuccess: () => {
       // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
@@ -162,7 +162,7 @@ export function RegisterMember({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[urlChainId].confirmations,
+    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
     hash: allowTokenData?.hash,
   });
 

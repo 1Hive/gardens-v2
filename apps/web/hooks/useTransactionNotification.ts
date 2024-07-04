@@ -4,7 +4,7 @@ import { WriteContractResult } from "wagmi/actions";
 import { useViemClient } from "./useViemClient";
 import { Address } from "viem";
 import { chainDataMap } from "@/configs/chainServer";
-import useChainFromPath from "@/hooks/useChainIdFromtPath";
+import useChainFromPath from "@/hooks/useChainIdFromPath";
 
 type TransactionStatus = "error" | "success" | "loading" | "idle";
 type TransactionData = WriteContractResult | undefined;
@@ -32,7 +32,7 @@ export const useTransactionNotification = (
   const [promiseReject, setPromiseReject] = useState<
     TransactionFunction | undefined
   >(undefined);
-  const { id: urlChainId } = useChainFromPath();
+  const urlChainId = useChainIdFromPath();
   const viemClient = useViemClient();
 
   const transactionPromise = () => {

@@ -7,7 +7,7 @@ import {
   useAccount,
   useWaitForTransaction,
 } from "wagmi";
-import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { cvStrategyABI } from "@/src/generated";
 import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -15,7 +15,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
-import useChainFromPath from "@/hooks/useChainIdFromtPath";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -32,7 +32,7 @@ export function ActivatePoints({
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { id: chainId } = useChainFromPath();
+  const chainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const {
@@ -48,7 +48,7 @@ export function ActivatePoints({
 
   useWaitForTransaction({
     hash: activatePointsData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[chainId ?? 0].confirmations,
     onSuccess: () => {
       publish({
         topic: "member",
@@ -74,7 +74,7 @@ export function ActivatePoints({
 
   useWaitForTransaction({
     hash: deactivatePointsData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[chainId ?? 0].confirmations,
     onSuccess: () => {
       publish({
         topic: "member",
