@@ -142,7 +142,7 @@ export function ProposalCard({
         >
           <div className="flex w-full flex-1 justify-between gap-8">
             <div
-              className={`border2 flex items-center gap-1 ${isAllocationMode ? "flex-1" : "max-w-60"}`}
+              className={`flex items-center gap-1 ${isAllocationMode ? "flex-1" : "max-w-60"}`}
             >
               <div className="overflow-hidden truncate">
                 <h4 className="truncate">{title}</h4>
@@ -150,7 +150,7 @@ export function ProposalCard({
               </div>
             </div>
             <div
-              className={`border2 flex flex-1 items-center ${isAllocationMode ? "justify-end" : "justify-between"}`}
+              className={`flex flex-1 items-center ${isAllocationMode ? "justify-end" : "justify-between"}`}
             >
               <Badge status={proposalStatus} />
               {!isAllocationMode && (

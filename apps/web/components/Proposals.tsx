@@ -368,6 +368,27 @@ export function Proposals({
     }
   };
 
+  const stats = [
+    {
+      id: 1,
+      name: "Your pool weight",
+      stat: memberPoolWeight,
+      className: "bg-primary-soft text-primary-content",
+    },
+    {
+      id: 2,
+      name: "Pool weight allocated",
+      stat: calcPoolWeightUsed(memberSupportedProposalsPct),
+      className: "bg-primary-soft text-primary-content",
+    },
+    {
+      id: 3,
+      name: "Total weight allocated",
+      stat: memberSupportedProposalsPct,
+      className: "bg-primary-content text-primary-soft border-primary-content",
+    },
+  ];
+
   return (
     <>
       <PoolGovernance
@@ -384,7 +405,7 @@ export function Proposals({
               <h2 className="font-semibold">Proposals</h2>
               {proposals ? (
                 proposals.length === 0 ? (
-                  <h4 className="text-2xl text-info">
+                  <h4 className="text-2xl">
                     No submitted proposals to support
                   </h4>
                 ) : (
@@ -405,29 +426,12 @@ export function Proposals({
                 <LoadingSpinner></LoadingSpinner>
               )}
             </div>
-            {editView && (
-              <>
-                <div className="flex w-full items-start text-right">
-                  <div className="flex w-full flex-col items-center">
-                    <p className={`text-center text-4xl text-info`}>
-                      {calcPoolWeightUsed(memberSupportedProposalsPct)} %
-                    </p>
-                    <p className="text-md text-left">Pool weight used</p>
-                  </div>
-                  <div className="flex w-full flex-col items-center">
-                    <p
-                      className={`text-center text-5xl ${memberSupportedProposalsPct >= 100 && "text-warning"}`}
-                    >
-                      {memberSupportedProposalsPct} %
-                    </p>
-                    <p className="text-center text-lg">
-                      Of your governance weight is supporting proposals
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
           </header>
+          {editView && (
+            <>
+              <UserAllocationStats stats={stats} />
+            </>
+          )}
         </div>
 
         <div className="mt-10 flex flex-col gap-6">
@@ -490,5 +494,43 @@ export function Proposals({
         </div>
       </section>
     </>
+  );
+}
+
+export default function UserAllocationStats({ stats }: { stats: any[] }) {
+  return (
+    <div className="">
+      <h3 className="text-base font-semibold text-gray-900">
+        Pool weight stats
+      </h3>
+
+      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {stats.map((stat) => (
+          <div key={stat.id} className="section-layout sm:px-6 sm:pt-6">
+            <div>
+              <div
+                className={`radial-progress absolute rounded-full border-4 border-neutral transition-all duration-200 ease-in-out ${stat.className}`}
+                style={{
+                  // @ts-ignore
+                  "--value": stat.stat,
+                  "--size": "4rem",
+                  "--thickness": "0.35rem",
+                }}
+                role="progressbar"
+              >
+                <span className="text-xs">{stat.stat} %</span>
+              </div>
+
+              <p className="ml-20 truncate">{stat.name}</p>
+            </div>
+            <div className="stats-baseline ml-20 flex">
+              <p className="text-2xl font-semibold text-neutral-content">
+                {stat.stat} %
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
