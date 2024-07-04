@@ -24,6 +24,7 @@ import { LightCVStrategy, poolTypes } from "@/types";
 import { getProposals } from "@/actions/getProposals";
 import { DisplayNumber } from "./DisplayNumber";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { capitalize } from "@/utils/text";
 
 type ProposalCard = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
@@ -138,118 +139,63 @@ export function ProposalCard({
     return (
       <>
         <div
-          className={`flex items-center justify-between gap-3 ${isAllocationMode && "section-layout flex flex-col px-6 py-4"}`}
+          className={`grid grid-cols-10 gap-3 ${isAllocationMode && "section-layout"}`}
         >
-          <div className="flex w-full flex-1 justify-between gap-8">
-            <div
-              className={`flex items-center gap-1 ${isAllocationMode ? "flex-1" : "max-w-60"}`}
-            >
-              <div className="overflow-hidden truncate">
-                <h4 className="truncate">{title}</h4>
-                <h6 className="text-sm">ID {proposalNumber}</h6>
-              </div>
-            </div>
-            <div
-              className={`flex flex-1 items-center ${isAllocationMode ? "justify-end" : "justify-between"}`}
-            >
-              <Badge status={proposalStatus} />
-              {!isAllocationMode && (
-                <>
-                  <Statistic
-                    label={"requested amount"}
-                    icon={<InformationCircleIcon />}
-                    count={formatUnits(requestedAmount, 18)}
-                  ></Statistic>
-                  {stakedFilter?.value > 0 ? (
-                    <div className=" flex flex-col items-center">
-                      <div className="stat-title">Your allocation</div>
-                      <div className="stat-value text-lg text-tertiary-content">
-                        {" "}
-                        {calcPoolWeightUsed(
-                          calculatePercentage(
-                            inputData?.value ?? 0,
-                            memberActivatedPoints,
-                          ),
-                        )}{" "}
-                        %
-                      </div>
-                      <div className="stat-desc">
-                        {" "}
-                        {Number(
-                          (inputData?.value * 100) / memberActivatedPoints,
-                        ).toFixed(2)}{" "}
-                        % of you gorvernance weight
-                      </div>
-                    </div>
-                  ) : (
-                    <p className=" max-w-[150px] text-center text-sm text-neutral-soft-content">
-                      You have not allocate pool weight yet
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
+          <div className={`col-span-3 ${isAllocationMode && "col-span-9"}`}>
+            <h4 className="overflow-hidden truncate">{capitalize(title)}</h4>
+            <h6 className="text-sm">ID {proposalNumber}</h6>
           </div>
 
+          <Badge
+            status={proposalStatus}
+            classNames={`self-center justify-self-start ${isAllocationMode && "justify-self-end"}`}
+          />
+
+          {!isAllocationMode && (
+            <>
+              <div className="col-span-3 ml-10 self-center justify-self-start">
+                <Statistic
+                  label={"requested: "}
+                  icon={<InformationCircleIcon />}
+                  count={formatUnits(requestedAmount, 18)}
+                ></Statistic>
+              </div>
+              <div className="border2 col-span-3 self-center">mini CVChart</div>
+            </>
+          )}
+
           {isEditView && (
-            <div className=" flex w-full flex-wrap items-center justify-between gap-6">
-              <div className="flex items-center gap-8">
-                <div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={memberActivatedPoints}
-                    value={inputData?.value ?? 0}
-                    className={`range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:#65AD18]`}
-                    step={memberActivatedPoints / 100}
-                    onChange={(e) => inputHandler(i, Number(e.target.value))}
-                  />
-                  <div className="flex w-full justify-between px-[10px]">
-                    {[...Array(21)].map((_, i) => (
-                      <span className="text-[8px]" key={"span_" + i}>
-                        |
-                      </span>
-                    ))}
+            <div className="col-span-10 mt-4">
+              <div className=" flex w-full flex-wrap items-center justify-between gap-6">
+                <div className="flex items-center gap-8">
+                  <div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={memberActivatedPoints}
+                      value={inputData?.value ?? 0}
+                      className={`range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:#65AD18]`}
+                      step={memberActivatedPoints / 100}
+                      onChange={(e) => inputHandler(i, Number(e.target.value))}
+                    />
+                    <div className="flex w-full justify-between px-[10px]">
+                      {[...Array(21)].map((_, i) => (
+                        <span className="text-[8px]" key={"span_" + i}>
+                          |
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mb-2">
+                    <p className="text-xl font-semibold">
+                      {Number(
+                        (inputData?.value * 100) / memberActivatedPoints,
+                      ).toFixed(2)}
+                      %
+                    </p>
                   </div>
                 </div>
-                <div className="mb-2">
-                  <p className="text-xl font-semibold">
-                    {Number(
-                      (inputData?.value * 100) / memberActivatedPoints,
-                    ).toFixed(2)}
-                    %
-                  </p>
-                </div>
               </div>
-              {/* <div className="flex max-w-sm flex-1 items-baseline justify-center gap-2 px-8">
-                {inputData?.value < stakedFilter?.value ? (
-                  <p className="text-center">
-                    Removing to
-                    <span className="px-2 py-1 text-xl font-semibold text-info">
-                      {calcPoolWeightUsed(
-                        calculatePercentage(
-                          inputData?.value ?? 0,
-                          memberActivatedPoints,
-                        ),
-                      )}
-                    </span>
-                    % of pool weight
-                  </p>
-                ) : (
-                  <p className="text-center">
-                    Assigning
-                    <span className="px-2 py-2 text-2xl font-semibold text-info">
-                      {calcPoolWeightUsed(
-                        calculatePercentage(
-                          inputData?.value ?? 0,
-                          memberActivatedPoints,
-                        ),
-                      )}
-                    </span>
-                    % of pool weight
-                  </p>
-                )}
-              </div> */}
             </div>
           )}
         </div>
@@ -269,9 +215,3 @@ export function ProposalCard({
     </>
   );
 }
-
-// <div
-//   className="bg-surface flex flex-col items-center justify-center gap-4 rounded-lg p-8"
-//   key={title + "_" + proposalNumber}
-// >
-// </div>

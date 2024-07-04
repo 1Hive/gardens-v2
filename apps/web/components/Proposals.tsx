@@ -377,13 +377,13 @@ export function Proposals({
     },
     {
       id: 2,
-      name: "Pool weight allocated",
+      name: "Pool weight allocation",
       stat: calcPoolWeightUsed(memberSupportedProposalsPct),
       className: "bg-primary-soft text-primary-content",
     },
     {
       id: 3,
-      name: "Total weight allocated",
+      name: "Total weight allocation",
       stat: memberSupportedProposalsPct,
       className: "bg-primary-content text-primary-soft border-primary-content",
     },
@@ -509,7 +509,7 @@ export default function UserAllocationStats({ stats }: { stats: any[] }) {
           <div key={stat.id} className="section-layout sm:px-6 sm:pt-6">
             <div>
               <div
-                className={`radial-progress absolute rounded-full border-4 border-neutral transition-all duration-200 ease-in-out ${stat.className}`}
+                className={`radial-progress absolute rounded-full border-4 border-neutral ${stat.className}`}
                 style={{
                   // @ts-ignore
                   "--value": stat.stat,
