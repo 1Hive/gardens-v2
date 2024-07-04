@@ -9,7 +9,7 @@ export default function useChainFromPath() {
     const chainId = Number(path?.split("/")[2]);
     const chain = getChain(chainId);
     if (!chain) {
-      throw new Error(`Chain with id ${chainId} not found`);
+      return { id: chainId } as Chain;
     }
     setChain(chain);
     return chain;
