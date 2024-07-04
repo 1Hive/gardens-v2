@@ -56,6 +56,8 @@ export default function Page({
       />
     </div>
   ) : (
-    <LoadingSpinner />
+    <div className="mt-96">
+      <LoadingSpinner />
+    </div>
   );
 }

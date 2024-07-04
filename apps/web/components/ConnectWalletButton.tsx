@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import React from "react";
 import { useBalance, useSwitchNetwork } from "wagmi";
@@ -14,12 +13,12 @@ import { Fragment } from "react";
 import { formatAddress } from "@/utils/formatAddress";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 
-export const ConnectWallet = () => {
+export function ConnectWallet() {
   const path = usePathname();
   const account = useAccount();
-  const urlChainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
   const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
@@ -84,16 +83,16 @@ export const ConnectWallet = () => {
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
-                        "border-danger border-2":
-                          urlChainId &&
-                          urlChainId !== chain.id &&
-                          !isNaN(urlChainId),
+                        "border-danger-content border-2":
+                          urlChainId !== chain.id && !isNaN(urlChainId),
                       })} `}
                         >
-                          <img
+                          <Image
                             alt={"Chain icon"}
                             src={`https://effigy.im/a/${account.address}.png`}
                             className="h-8 w-8 rounded-full"
+                            width={32}
+                            height={32}
                           />
                           <div className="flex flex-col">
                             <h4 className="text-left">
@@ -111,7 +110,7 @@ export const ConnectWallet = () => {
                                   <span>{chain.name}</span>
                                 </>
                               ) : (
-                                <span className="text-danger">
+                                <span className="text-danger-content">
                                   Network mismatch
                                 </span>
                               )}
@@ -202,4 +201,4 @@ export const ConnectWallet = () => {
       }}
     </ConnectButton.Custom>
   );
-};
+}

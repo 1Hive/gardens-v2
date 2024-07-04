@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { WriteContractResult } from "wagmi/actions";
 import { useViemClient } from "./useViemClient";
 import { Address } from "viem";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 
 type TransactionStatus = "error" | "success" | "loading" | "idle";
 type TransactionData = WriteContractResult | undefined;
@@ -31,7 +31,7 @@ export const useTransactionNotification = (
   const [promiseReject, setPromiseReject] = useState<
     TransactionFunction | undefined
   >(undefined);
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
   const viemClient = useViemClient();
 
   const transactionPromise = () => {

@@ -1,13 +1,13 @@
 "use client";
 import React from "react";
-import { Addreth, ThemeDeclaration, Theme } from "addreth";
+import { Addreth } from "addreth";
 import { Address } from "viem";
-import { getChainIdFromPath } from "@/utils/path";
-import LoadingSpinner from "./LoadingSpinner";
 import { chainDataMap } from "@/configs/chainServer";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
+import LoadingSpinner from "./LoadingSpinner";
 
 type EthAddressProps = {
-  address?: string;
+  address?: Address;
   actions?: "all" | "copy" | "explorer" | "none";
   icon?: false | "ens" | "identicon" | ((address: Address) => string);
 };
@@ -36,7 +36,7 @@ export const EthAddress = ({
   //   popupRadius: 12,
   //   popupShadow: "black",
   // };
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
 
   return address ? (
     <Addreth
@@ -52,9 +52,9 @@ export const EthAddress = ({
       icon={icon}
       address={address as Address}
       explorer={(address) => ({
-        name: chainDataMap[chainId].name,
-        url: `${chainDataMap[chainId].explorer}${address}`,
-        accountUrl: `${chainDataMap[chainId].explorer}${address}`,
+        name: chainDataMap[urlChainId].name,
+        url: `${chainDataMap[urlChainId].explorer}${address}`,
+        accountUrl: `${chainDataMap[urlChainId].explorer}${address}`,
       })}
     />
   ) : (

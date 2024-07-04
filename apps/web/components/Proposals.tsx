@@ -21,7 +21,7 @@ import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -73,7 +73,7 @@ export function Proposals({
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const { data: isMemberActivated } = useContractRead({
@@ -94,11 +94,11 @@ export function Proposals({
       me: address?.toLowerCase(),
       comm: strategy.registryCommunity.id.toLowerCase(),
     },
-    changeScope: {
+    changeScopes: {
       topic: "member",
       id: communityAddress,
       type: ["add", "delete"],
-      chainId,
+      urlChainId,
     },
   });
 
@@ -143,11 +143,11 @@ export function Proposals({
       variables: {
         meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
-      changeScope: {
+      changeScopes: {
         topic: "proposal",
         id: strategy.id,
         type: "update",
-        chainId: chainId,
+        chainId: urlChainId,
       },
     });
 
@@ -222,7 +222,7 @@ export function Proposals({
         type: "update",
         id: alloInfo.id,
         function: "allocate",
-        chainId,
+        urlChainId,
       });
     },
   });

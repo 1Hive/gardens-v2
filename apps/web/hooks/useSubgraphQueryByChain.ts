@@ -14,8 +14,8 @@ import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
-import { getChainIdFromPath } from "@/utils/path";
 import { toast } from "react-toastify";
+import useChainIdFromPath from "./useChainIdFromtPath";
 
 const pendingRefreshToastId = "pending-refresh";
 
@@ -36,15 +36,15 @@ export default function useSubgraphQueryByChain<
   query,
   variables = {} as Variables,
   context,
-  changeScope,
+  changeScopes: changeScope,
 }: {
   chainId?: ChainId;
   query: DocumentInput<any, Variables>;
   variables?: Variables;
   context?: Omit<OperationContext, "topic">;
-  changeScope?: ChangeEventScope[] | ChangeEventScope;
+  changeScopes?: ChangeEventScope[] | ChangeEventScope;
 }) {
-  const pathChainId = getChainIdFromPath();
+  const pathChainId = useChainIdFromPath();
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe, publish } = usePubSubContext();
   const [fetching, setFetching] = useState(true);

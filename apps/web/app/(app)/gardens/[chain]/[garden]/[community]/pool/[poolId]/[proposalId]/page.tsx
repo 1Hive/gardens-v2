@@ -8,20 +8,18 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { formatTokenAmount, calculatePercentageBigInt } from "@/utils/numbers";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 import Image from "next/image";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { proposalStatus, poolTypes } from "@/types";
 import { proposalImg } from "@/assets";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
-import { useState, useEffect, useMemo } from "react";
-import { useContractRead, useContractWrite } from "wagmi";
+import { useState, useEffect } from "react";
+import { useContractRead } from "wagmi";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 export const dynamic = "force-dynamic";
-
-// export const EMPTY_BENEFICIARY = "0x0000000000000000000000000000000000000000";
 
 type ProposalsMock = {
   title: string;
@@ -61,7 +59,7 @@ const prettyTimestamp = (timestamp: number) => {
 export default function Proposal({
   params: { proposalId, poolId, chain, garden },
 }: {
-  params: { proposalId: string; poolId: number; chain: number; garden: string };
+  params: { proposalId: string; poolId: string; chain: string; garden: string };
 }) {
   // TODO: fetch garden decimals in query
   const { data } = useSubgraphQueryByChain<getProposalDataQuery>({
@@ -70,7 +68,7 @@ export default function Proposal({
       garden: garden,
       proposalId: proposalId,
     },
-    changeScope: {
+    changeScopes: {
       topic: "proposal",
       id: proposalId,
       type: "update",
@@ -140,8 +138,14 @@ export default function Proposal({
     args: [totalEffectiveActivePoints || 0n],
     enabled: !!proposalIdNumber,
   });
-
-  if (!proposalData || !ipfsResult) {
+  console.log("chainId: " + chain);
+  if (
+    !proposalData ||
+    !ipfsResult ||
+    !maxCVSupply ||
+    !totalEffectiveActivePoints ||
+    updateConvictionLast == null
+  ) {
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -155,21 +159,12 @@ export default function Proposal({
   const threshold = proposalData.threshold;
   const proposalType = proposalData.strategy.config?.proposalType;
   const requestedAmount = proposalData.requestedAmount;
-  const beneficiary = proposalData.beneficiary;
-  const submitter = proposalData.submitter;
+  const beneficiary = proposalData.beneficiary as Address;
+  const submitter = proposalData.submitter as Address;
   const status = proposalData.proposalStatus;
   const stakedAmount = proposalData.stakedAmount;
 
-  const isSignalingType = poolTypes[proposalType] == "signaling";
-
-  if (
-    !maxCVSupply ||
-    !totalEffectiveActivePoints ||
-    !updateConvictionLast ||
-    !maxCVSupply
-  ) {
-    return;
-  }
+  const isSignalingType = poolTypes[proposalType] === "signaling";
 
   //logs for debugging in arb sepolia - //TODO: remove before merge
   console.log("requesteAmount:              %s", requestedAmount);
@@ -228,24 +223,8 @@ export default function Proposal({
 
   console.log("currentConviction:           %s", currentConvictionPct);
 
-  if (!data) {
-    return (
-      <div className="w-full text-center">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
-
-  if (!proposalData) {
-    return (
-      <p className="text-center text-2xl text-error">
-        Proposal {proposalId} not found
-      </p>
-    );
-  }
-
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-10 p-1 sm:p-8">
+    <div className="page-layout">
       <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
         <div className="flex w-full items-center justify-center sm:w-auto">
           <Image
@@ -260,7 +239,7 @@ export default function Proposal({
           <div>
             <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <h2>
-                Proposal #{proposalIdNumber} - {ipfsResult?.title}
+                {ipfsResult?.title} - Proposal #{proposalIdNumber}
               </h2>
               <Badge type={proposalType} />
             </div>

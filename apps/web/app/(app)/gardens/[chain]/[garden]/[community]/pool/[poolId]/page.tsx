@@ -40,16 +40,23 @@ export default function Pool({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data, error } =
-    useSubgraphQueryByChain<getPoolDataQuery>({
-      query: getPoolDataDocument,
-      variables: { poolId: poolId, garden: garden },
-      changeScope: {
+  const { data, error } = useSubgraphQueryByChain<getPoolDataQuery>({
+    query: getPoolDataDocument,
+    variables: { poolId: poolId, garden: garden },
+    changeScopes: [
+      {
         topic: "pool",
         id: poolId,
         chainId: chain,
       },
-    });
+      {
+        topic: "proposal",
+        containerId: poolId,
+        chainId: chain,
+        type: "update",
+      },
+    ],
+  });
 
   useEffect(() => {
     if (error) {
@@ -103,17 +110,15 @@ export default function Pool({
   );
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-10">
+    <div className="page-layout">
       {/* Header */}
       <section className="section-layout flex flex-col gap-0 overflow-hidden">
-        <header>
+        <header className="mb-2">
           <h2>
-            Pool #{poolId} - {ipfsResult.title}
+            {ipfsResult.title} - Pool #{poolId}
           </h2>
-        </header>
-        <p className="mb-2">
           <EthAddress address={strategyAddr} />
-        </p>
+        </header>
         <p>{ipfsResult.description}</p>
         <div className="mb-10 mt-8 flex flex-col items-start gap-2">
           <Statistic label="pool type" icon={<InformationCircleIcon />}>
