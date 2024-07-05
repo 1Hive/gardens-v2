@@ -5,13 +5,10 @@ import { Button } from "./Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ProposalInputItem } from "./Proposals";
-import { Allo} from "#/subgraph/.graphclient";
+import { Allo } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
-import {
-  Address,
-  useChainId,
-} from "wagmi";
+import { Address } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeAbiParameters } from "viem";
 import { alloABI } from "@/src/generated";
@@ -21,6 +18,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { getProposals } from "@/actions/getProposals";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type ProposalCard = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
@@ -50,7 +48,6 @@ export function ProposalCard({
   memberPoolWeight,
   executeDisabled,
   strategy,
-  tokenDecimals,
   alloInfo,
   inputHandler,
   triggerRenderProposals,
