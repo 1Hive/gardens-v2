@@ -18,7 +18,6 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { getProposals } from "@/actions/getProposals";
-import useChainFromPath from "@/hooks/useChainIdFromPath";
 import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type ProposalCard = {

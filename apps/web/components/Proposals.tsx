@@ -177,7 +177,7 @@ export function Proposals({
   }, [memberStrategyResult]);
 
   const triggerRenderProposals = () => {
-    getProposals(strategy).then((res) => {
+    getProposals(wallet, strategy).then((res) => {
       if (res !== undefined) {
         setProposals(res);
       } else {
