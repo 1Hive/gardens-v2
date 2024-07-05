@@ -33,6 +33,7 @@ export default function useSubgraphQueryByChain<
   variables: Variables = {} as Variables,
   context?: Omit<OperationContext, "topic">,
   changeScope?: ChangeEventScope[] | ChangeEventScope,
+  enabled: boolean = true,
 ) {
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe } = usePubSubContext();
@@ -122,6 +123,7 @@ export default function useSubgraphQueryByChain<
   };
 
   useEffect(() => {
+    if (!enabled) return;
     const init = async () => {
       setFetching(true);
       const resp = await fetch();
@@ -129,7 +131,7 @@ export default function useSubgraphQueryByChain<
       setFetching(false);
     };
     init();
-  }, []);
+  }, [enabled]);
 
   return { ...response, refetch, fetching };
 }

@@ -62,8 +62,8 @@ for (const chainId in __contractsAddresses) {
   }
 }
 
-function __getContractsAddrByChain(chain: number | string) {
-  const currentChain = getChain(chain);
+function __getContractsAddrByChain(chainId: number | string) {
+  const currentChain = getChain(chainId);
   if (currentChain?.id) {
     return __contractsAddresses[currentChain.id];
   }

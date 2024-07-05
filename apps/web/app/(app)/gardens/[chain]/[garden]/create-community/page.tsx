@@ -50,7 +50,7 @@ export default function Page({
         </div>
       </div>
       <CommunityForm
-        chain={chain}
+        chainId={chain}
         tokenGarden={tokenGarden}
         registryFactoryAddr={registryFactoryAddr}
         alloContractAddr={alloContractAddr}

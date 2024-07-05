@@ -8,7 +8,7 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import {  calculatePercentageBigInt } from "@/utils/numbers";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 import Image from "next/image";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
@@ -16,7 +16,7 @@ import { proposalStatus, poolTypes } from "@/types";
 import { proposalImg } from "@/assets";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { useState, useEffect } from "react";
-import { useContractRead, } from "wagmi";
+import { useContractRead } from "wagmi";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 export const dynamic = "force-dynamic";
@@ -105,19 +105,11 @@ export default function Proposal({
   const { data: totalEffectiveActivePoints } = useContractRead({
     ...cvStrategyContract,
     functionName: "totalEffectiveActivePoints",
-    enabled: !!proposalIdNumber,
   });
 
   const { data: stakeAmountFromContract } = useContractRead({
     ...cvStrategyContract,
     functionName: "getProposalStakedAmount",
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  });
-
-  const { data: getProposal } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "getProposal",
     args: [proposalIdNumber],
     enabled: !!proposalIdNumber,
   });
@@ -133,9 +125,9 @@ export default function Proposal({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
     args: [totalEffectiveActivePoints || 0n],
-    enabled: !!proposalIdNumber,
+    enabled: !!totalEffectiveActivePoints,
   });
-  console.log("chainId: " + chain);
+
   if (
     !proposalData ||
     !ipfsResult ||

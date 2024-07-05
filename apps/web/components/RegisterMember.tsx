@@ -19,7 +19,7 @@ import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type RegisterMemberProps = {
   tokenSymbol: string;
@@ -60,23 +60,20 @@ export function RegisterMember({
     abi: abiWithErrors2(registryCommunityABI),
   };
 
-  const {
-    data: isMember,
-    error,
-    isSuccess,
-  } = useContractRead({
+  const { data: isMember } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
     enabled: accountAddress !== undefined,
     args: [accountAddress as Address],
     watch: true,
+    chainId: urlChainId,
   });
 
-  const { data: registerStakeAmount, error: stakeAmountError } =
-    useContractRead({
-      ...registryContractCallConfig,
-      functionName: "getStakeAmountWithFees",
-    });
+  const { data: registerStakeAmount } = useContractRead({
+    ...registryContractCallConfig,
+    functionName: "getStakeAmountWithFees",
+    chainId: urlChainId,
+  });
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
@@ -102,7 +99,7 @@ export function RegisterMember({
   });
 
   useWaitForTransaction({
-    confirmations: chainDataMap[urlChainId].confirmations,
+    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
     hash: registerMemberData?.hash,
     onSuccess: () => {
       // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
@@ -128,7 +125,7 @@ export function RegisterMember({
   });
 
   useWaitForTransaction({
-    confirmations: chainDataMap[urlChainId].confirmations,
+    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
     hash: unregisterMemberData?.hash,
     onSuccess: () => {
       // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
@@ -162,17 +159,17 @@ export function RegisterMember({
     isSuccess: isWaitSuccess,
     status: waitAllowTokenStatus,
   } = useWaitForTransaction({
-    confirmations: chainDataMap[urlChainId].confirmations,
+    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
     hash: allowTokenData?.hash,
   });
 
   const { data: dataAllowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    enabled: accountAddress !== undefined,
     args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
     watch: true,
+    enabled: !!accountAddress,
   });
 
   useErrorDetails(registerMemberError, "stakeAndRegisterMember");

@@ -4,18 +4,13 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ProposalInputItem, ProposalTypeVoter } from "./Proposals";
-import { Allo, CVStrategy } from "#/subgraph/.graphclient";
+import { ProposalInputItem } from "./Proposals";
+import { Allo } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
-import {
-  Address,
-  useChainId,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
+import { Address, useContractWrite, useWaitForTransaction } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { encodeAbiParameters, formatUnits } from "viem";
+import { encodeAbiParameters } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
@@ -23,6 +18,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { getProposals } from "@/actions/getProposals";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type ProposalCard = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
@@ -61,7 +57,7 @@ export function ProposalCard({
   const pathname = usePathname();
 
   const { publish } = usePubSubContext();
-  const chainId = useChainId();
+  const chainId = useChainIdFromPath();
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0
@@ -95,7 +91,7 @@ export function ProposalCard({
 
   useWaitForTransaction({
     hash: distributeData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
+    confirmations: chainDataMap[chainId ?? 0].confirmations,
     onSuccess: () => {
       publish({
         topic: "proposal",

@@ -16,10 +16,10 @@ import { TokenGarden } from "#/subgraph/.graphclient";
 import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
 import { chainDataMap, getChain } from "@/configs/chainServer";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useChainFromPath from "@/hooks/useChainFromPath";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -47,12 +47,12 @@ const feeOptions: Option[] = [
 ];
 
 export const CommunityForm = ({
-  chain,
+  chainId,
   tokenGarden,
   registryFactoryAddr,
   alloContractAddr,
 }: {
-  chain: number;
+  chainId: number;
   tokenGarden: TokenGarden;
   registryFactoryAddr: Address;
   alloContractAddr: Address;
@@ -76,12 +76,12 @@ export const CommunityForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const urlChainId = useChainIdFromPath();
+  const chainFromPath = useChainFromPath();
 
   // const [file, setFile] = useState<File | null>(null);
 
   const publicClient = createPublicClient({
-    chain: getChain(urlChainId) as Chain,
+    chain: chainFromPath as Chain,
     transport: http(),
   });
 
@@ -159,7 +159,7 @@ export const CommunityForm = ({
 
   useWaitForTransaction({
     hash: data?.hash,
-    confirmations: chainDataMap[urlChainId].confirmations,
+    confirmations: chainDataMap[chainFromPath?.id ?? 0].confirmations,
     onSuccess: () => {
       publish({
         topic: "community",
@@ -196,9 +196,9 @@ export const CommunityForm = ({
     const metadata = [1n, "ipfsHash"];
     const isKickMemberEnabled = previewData?.isKickMemberEnabled;
     const covenantIpfsHash = ipfsHash;
-    const strategyTemplate = getContractsAddrByChain(chain)?.strategyTemplate;
+    const strategyTemplate = getContractsAddrByChain(chainId)?.strategyTemplate;
     if (!strategyTemplate) {
-      console.log("No strategy template found for chain", chain);
+      console.log("No strategy template found for chain", chainId);
       toast.error("No strategy template found for chain");
     }
     const args = [
@@ -346,7 +346,7 @@ export const CommunityForm = ({
                 },
                 validate: async (value) =>
                   (await addressIsSAFE(value)) ||
-                  `Not a valid Safe address in ${getChain(chain)?.name} network`,
+                  `Not a valid Safe address in ${getChain(chainId)?.name} network`,
               }}
               errors={errors}
               registerKey="councilSafe"
