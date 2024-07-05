@@ -24,16 +24,13 @@ export default function Garden({
     query: getGardenDocument,
     variables: { addr: garden },
     changeScope: [
-      { topic: "member", chainId: chain },
+      { topic: "member" },
       {
         topic: "community",
-
-        chainId: chain,
       },
       {
         topic: "garden",
         id: garden,
-        chainId: chain,
       },
     ],
   });

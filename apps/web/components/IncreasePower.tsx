@@ -10,7 +10,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { toast } from "react-toastify";
 import { formatTokenAmount } from "@/utils/numbers";
 import { parseUnits } from "viem";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
+import useChainFromPath from "@/hooks/useChainIdFromPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import useErrorDetails from "@/utils/getErrorName";
@@ -20,6 +20,7 @@ import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -81,7 +82,7 @@ export const IncreasePower = ({
   const urlChainId = useChainIdFromPath();
 
   const runIsMemberQuery = useCallback(async () => {
-    if (accountAddress === undefined) {
+    if (!accountAddress || !urlChainId) {
       return;
     }
     const { data: result, error } = await queryByChain<isMemberQuery>(
@@ -159,9 +160,9 @@ export const IncreasePower = ({
   const { data: allowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    enabled: accountAddress !== undefined,
     args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
+    enabled: accountAddress !== undefined,
   });
 
   const {

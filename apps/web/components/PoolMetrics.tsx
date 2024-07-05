@@ -92,6 +92,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     args: [connectedAccount as Address, alloInfo?.id as Address],
     functionName: "allowance",
     watch: true,
+    enabled: !!connectedAccount,
   });
 
   const { write: writeAllowToken, status: allowTokenStatus } =

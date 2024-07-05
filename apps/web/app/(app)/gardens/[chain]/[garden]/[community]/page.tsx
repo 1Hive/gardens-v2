@@ -43,8 +43,8 @@ export default function CommunityPage({
     query: getCommunityDocument,
     variables: { communityAddr: communityAddr, tokenAddr: tokenAddr },
     changeScope: [
-      { topic: "community", id: communityAddr, chainId: chain },
-      { topic: "member", chainId: chain, containerId: communityAddr },
+      { topic: "community", id: communityAddr },
+      { topic: "member", containerId: communityAddr },
     ],
   });
 

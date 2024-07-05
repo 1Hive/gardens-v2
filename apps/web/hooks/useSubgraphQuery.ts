@@ -1,5 +1,5 @@
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { getContractsAddrByChain as getSubgraphAddrByChain } from "@/constants/contracts";
 import { useEffect, useRef, useState } from "react";
 import { ChainId } from "@/types";
 import { initUrqlClient } from "@/providers/urql";
@@ -16,7 +16,7 @@ import {
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
 import { toast } from "react-toastify";
-import useChainIdFromPath from "./useChainIdFromtPath";
+import useChainIdFromPath from "./useChainIdFromPath";
 
 const pendingRefreshToastId = "pending-refresh";
 
@@ -38,18 +38,21 @@ export default function useSubgraphQuery<
   variables = {} as Variables,
   context,
   changeScope: changeScope,
+  enabled = true,
 }: {
   chainId?: ChainId;
   query: DocumentInput<any, Variables>;
   variables?: Variables;
   context?: Omit<OperationContext, "topic">;
   changeScope?: ChangeEventScope[] | ChangeEventScope;
+  enabled?: boolean;
 }) {
   const pathChainId = useChainIdFromPath();
+  chainId = (chainId ?? pathChainId)!;
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const [fetching, setFetching] = useState(true);
-  const contractAddress = getContractsAddrByChain(chainId ?? pathChainId);
+  const subgraphAddress = getSubgraphAddrByChain(chainId);
   const [response, setResponse] = useState<
     Omit<Awaited<ReturnType<typeof fetch>>, "operation">
   >({ hasNext: true, stale: true, data: undefined, error: undefined });
@@ -61,14 +64,21 @@ export default function useSubgraphQuery<
     latestResponse.current = response; // Update ref on every response change
   }, [response]);
 
-  if (!contractAddress) {
-    console.error(`No contract address found for chain ${chainId}`);
+  if (!subgraphAddress) {
+    console.error(`No subgraph address found for chain ${chainId}`);
   }
 
   useEffect(() => {
     if (!connected || !changeScope || !changeScope.length) {
       return;
     }
+
+    changeScope = Array.isArray(changeScope) ? changeScope : [changeScope];
+    changeScope.forEach((scope) => {
+      if (!scope.chainId) {
+        scope.chainId = chainId;
+      }
+    });
 
     subscritionId.current = subscribe(
       changeScope,
@@ -89,7 +99,7 @@ export default function useSubgraphQuery<
   const fetch = () =>
     urqlClient.query<Data>(query, variables, {
       ...context,
-      url: contractAddress?.subgraphUrl,
+      url: subgraphAddress?.subgraphUrl,
       requestPolicy: "network-only",
     });
 
@@ -180,6 +190,7 @@ export default function useSubgraphQuery<
   };
 
   useEffect(() => {
+    if (!enabled) return;
     const init = async () => {
       setFetching(true);
       console.log("Fetching");
@@ -189,7 +200,7 @@ export default function useSubgraphQuery<
       setFetching(false);
     };
     init();
-  }, []);
+  }, [enabled]);
 
   return {
     ...response,

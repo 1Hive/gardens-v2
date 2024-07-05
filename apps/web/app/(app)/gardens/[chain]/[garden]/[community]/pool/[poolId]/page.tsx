@@ -47,12 +47,10 @@ export default function Pool({
       {
         topic: "pool",
         id: poolId,
-        chainId: chain,
       },
       {
         topic: "proposal",
         containerId: poolId,
-        chainId: chain,
         type: "update",
       },
     ],
@@ -70,7 +68,7 @@ export default function Pool({
   const metadata = data?.cvstrategies?.[0]?.metadata;
 
   useEffect(() => {
-    if (metadata) {
+    if (metadata && !ipfsResult) {
       getIpfsMetadata(metadata).then((data) => {
         setIpfsResult(data);
       });

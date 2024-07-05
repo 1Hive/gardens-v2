@@ -1,5 +1,4 @@
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
-import { usePathname } from "next/navigation";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 import { useMemo } from "react";
 import { useAccount, useNetwork } from "wagmi";
 
@@ -31,7 +30,7 @@ export function useDisableButtons(
     if (!isConnected) {
       return "Connect Wallet";
     }
-    if (missmatchUrlAndWalletChain) {
+    if (missmatchUrlAndWalletChain && urlChainId) {
       return `Switch to ${supportedChains[urlChainId] ?? ""} Network`;
     }
     if (conditions && conditions.length > 0) {

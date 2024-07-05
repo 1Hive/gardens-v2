@@ -21,7 +21,6 @@ import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -29,6 +28,7 @@ import { toast } from "react-toastify";
 import { LightCVStrategy } from "@/types";
 import LoadingSpinner from "./LoadingSpinner";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 export type ProposalInputItem = {
   id: string;
@@ -68,7 +68,7 @@ export function Proposals({
   const [memberTokensInCommunity, setMemberTokensInCommunity] =
     useState<string>("0");
 
-  const { address } = useAccount();
+  const { address: wallet } = useAccount();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
@@ -80,8 +80,9 @@ export function Proposals({
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
     functionName: "memberActivatedInStrategies",
-    args: [address as Address, strategy.id as Address],
+    args: [wallet as Address, strategy.id as Address],
     watch: true,
+    enabled: !!wallet,
   });
 
   const {
@@ -91,15 +92,15 @@ export function Proposals({
   } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
     variables: {
-      me: address?.toLowerCase(),
+      me: wallet?.toLowerCase(),
       comm: strategy.registryCommunity.id.toLowerCase(),
     },
     changeScope: {
       topic: "member",
       id: communityAddress,
       type: ["add", "delete"],
-      urlChainId,
     },
+    enabled: !!wallet,
   });
 
   if (error) {
@@ -137,25 +138,25 @@ export function Proposals({
     setStakedFilters(memberStakes);
   }, [memberResult]);
 
-  const { data: memberStrategyResult, error: errorMS } =
+  const { data: memberStrategyResult } =
     useSubgraphQuery<getMemberStrategyQuery>({
       query: getMemberStrategyDocument,
       variables: {
-        meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
+        meStr: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
       changeScope: {
         topic: "proposal",
         id: strategy.id,
         type: "update",
-        chainId: urlChainId,
       },
+      enabled: !!wallet,
     });
 
   useEffect(() => {
-    if (address) {
+    if (wallet) {
       refetchIsMemberQuery();
     }
-  }, [address]);
+  }, [wallet]);
 
   useEffect(() => {
     setMemberActivatedPoints(
@@ -164,7 +165,7 @@ export function Proposals({
   }, [memberStrategyResult]);
 
   const triggerRenderProposals = () => {
-    getProposals(address as Address, strategy).then((res) => {
+    getProposals(wallet, strategy).then((res) => {
       if (res !== undefined) {
         setProposals(res);
       } else {
@@ -175,7 +176,7 @@ export function Proposals({
 
   useEffect(() => {
     triggerRenderProposals();
-  }, [address]);
+  }, []);
 
   useEffect(() => {
     if (!proposals) {
@@ -200,7 +201,7 @@ export function Proposals({
       );
     }
     setInputs(newInputs);
-  }, [proposals, address, stakedFilters]);
+  }, [proposals, wallet, stakedFilters]);
 
   useEffect(() => {
     if (isMemberActived === undefined) return;

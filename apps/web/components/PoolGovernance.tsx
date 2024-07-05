@@ -37,6 +37,7 @@ export const PoolGovernance = ({
     functionName: "memberActivatedInStrategies",
     args: [connectedAccount as Address, strategy.id as Address],
     watch: true,
+    enabled: !!connectedAccount,
   });
 
   const { data: isMember } = useContractRead({
@@ -44,6 +45,7 @@ export const PoolGovernance = ({
     functionName: "isMember",
     args: [connectedAccount as Address],
     watch: true,
+    enabled: !!connectedAccount,
   });
 
   const showPoolGovernanceData =

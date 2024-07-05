@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
 import { Button } from "./Button";
-import { Address, useAccount, useChainId } from "wagmi";
+import { Address, useAccount } from "wagmi";
 import { cvStrategyABI } from "@/src/generated";
 import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -10,6 +10,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -26,7 +27,7 @@ export function ActivatePoints({
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const chainId = useChainId();
+  const chainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const {

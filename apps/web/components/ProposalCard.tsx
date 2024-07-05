@@ -59,7 +59,7 @@ export function ProposalCard({
   const pathname = usePathname();
 
   const { publish } = usePubSubContext();
-  const chainId = useChainId();
+  const chainId = useChainIdFromPath();
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0
