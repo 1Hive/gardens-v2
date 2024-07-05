@@ -5,6 +5,7 @@ import { ChainId } from "@/types";
 import { initUrqlClient } from "@/providers/urql";
 import { isEqual } from "lodash-es";
 import {
+  ChangeEventPayload,
   ChangeEventScope,
   SubscriptionId,
   usePubSubContext,
@@ -28,7 +29,7 @@ const pendingRefreshToastId = "pending-refresh";
  * @param changeScope  - optional, if provided, will subscribe to change events (see jsdoc in pubsub.context.tsx)
  * @returns
  */
-export default function useSubgraphQueryByChain<
+export default function useSubgraphQuery<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
 >({
@@ -46,7 +47,7 @@ export default function useSubgraphQueryByChain<
 }) {
   const pathChainId = useChainIdFromPath();
   const { urqlClient } = initUrqlClient();
-  const { connected, subscribe, unsubscribe, publish } = usePubSubContext();
+  const { connected, subscribe, unsubscribe } = usePubSubContext();
   const [fetching, setFetching] = useState(true);
   const contractAddress = getContractsAddrByChain(chainId ?? pathChainId);
   const [response, setResponse] = useState<
@@ -69,13 +70,9 @@ export default function useSubgraphQueryByChain<
       return;
     }
 
-    const onChangeEvent = () => {
-      refetch().then((res) => setResponse(res));
-    };
-
     subscritionId.current = subscribe(
       changeScope,
-      onChangeEvent.bind({
+      refetchFromOutside.bind({
         response,
         setResponse,
         chain: chainId,
@@ -96,10 +93,41 @@ export default function useSubgraphQueryByChain<
       requestPolicy: "network-only",
     });
 
+  const isDataAlreadyFetched = (
+    newFetchedData: Data,
+    payload: ChangeEventPayload,
+  ) => {
+    if (payload.type === "add") {
+      const dataJsonString = JSON.stringify(newFetchedData).toLowerCase();
+      if (
+        payload.id &&
+        dataJsonString.includes(payload.id.toString().toLowerCase())
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const refetchFromOutside = async (payload: ChangeEventPayload) => {
+    if (fetching) {
+      return;
+    }
+    console.log("Refetching from outside", { payload });
+    setFetching(true);
+    const res = await refetch(payload);
+    setResponse(res);
+    setFetching(false);
+    console.log("Refetched from outside", { payload, res });
+  };
+
   const refetch = async (
+    changePayload: ChangeEventPayload,
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
+    console.log("Refetching", { retryCount });
     const result = await fetch();
+    console.log("Refetched", { result, retryCount });
     if (!retryCount) {
       retryCount = 0;
       toast.loading("Pulling new data", {
@@ -117,8 +145,10 @@ export default function useSubgraphQueryByChain<
       return result;
     }
     if (
-      !isEqual(result.data, latestResponse.current.data) ||
-      retryCount >= CHANGE_EVENT_MAX_RETRIES
+      result.data &&
+      (!isEqual(result.data, latestResponse.current.data) ||
+        isDataAlreadyFetched(result.data, changePayload) ||
+        retryCount >= CHANGE_EVENT_MAX_RETRIES)
     ) {
       if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
         console.debug(
@@ -130,7 +160,11 @@ export default function useSubgraphQueryByChain<
         );
       }
       setFetching(false);
-      toast.dismiss(pendingRefreshToastId);
+      try {
+        toast.dismiss(pendingRefreshToastId);
+      } catch (error) {
+        console.error("Error dismissing toast", error);
+      }
       return result;
     } else {
       console.debug(
@@ -138,14 +172,16 @@ export default function useSubgraphQueryByChain<
       );
       const delay = CHANGE_EVENT_INITIAL_DELAY * 2 ** retryCount;
       await delayAsync(delay);
-      return refetch(retryCount + 1);
+      return refetch(changePayload, retryCount + 1);
     }
   };
 
   useEffect(() => {
     const init = async () => {
       setFetching(true);
+      console.log("Fetching");
       const resp = await fetch();
+      console.log("Fetched", { resp });
       setResponse(resp);
       setFetching(false);
     };
@@ -154,7 +190,7 @@ export default function useSubgraphQueryByChain<
 
   return {
     ...response,
-    refetch,
+    refetch: refetchFromOutside,
     fetching,
   };
 }

@@ -8,7 +8,7 @@ import { FormLink } from "@/components";
 import React, { useEffect } from "react";
 import { CubeTransparentIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
 import { Address } from "viem";
@@ -20,7 +20,7 @@ export default function Garden({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error } = useSubgraphQueryByChain<getGardenQuery>({
+  const { data: result, error } = useSubgraphQuery<getGardenQuery>({
     query: getGardenDocument,
     variables: { addr: garden },
     changeScope: [

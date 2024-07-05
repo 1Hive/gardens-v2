@@ -23,7 +23,7 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { toast } from "react-toastify";
 import { LightCVStrategy } from "@/types";
@@ -88,7 +88,7 @@ export function Proposals({
     data: memberResult,
     error,
     refetch: refetchIsMemberQuery,
-  } = useSubgraphQueryByChain<isMemberQuery>({
+  } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
     variables: {
       me: address?.toLowerCase(),
@@ -138,7 +138,7 @@ export function Proposals({
   }, [memberResult]);
 
   const { data: memberStrategyResult, error: errorMS } =
-    useSubgraphQueryByChain<getMemberStrategyQuery>({
+    useSubgraphQuery<getMemberStrategyQuery>({
       query: getMemberStrategyDocument,
       variables: {
         meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,

@@ -6,7 +6,7 @@ import {
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
 import React from "react";
@@ -17,7 +17,7 @@ export default async function Page({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data } = useSubgraphQueryByChain<getPoolDataQuery>({
+  const { data } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden },
   });

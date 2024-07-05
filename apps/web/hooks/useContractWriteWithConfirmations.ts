@@ -21,7 +21,6 @@ export default function useContractWriteWithConfirmations(
     confirmations:
       propsWithChainId.confirmations ??
       chainDataMap[+propsWithChainId.chainId].confirmations,
-    onSuccess: propsWithChainId.onConfirmations,
   });
 
   useEffect(() => {
