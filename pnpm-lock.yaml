@@ -66,6 +66,9 @@ importers:
       '@allo-team/allo-v2-sdk':
         specifier: ^1.0.34
         version: 1.0.76(@typechain/ethers-v6@0.5.1)(ethers@6.13.1)(typechain@8.3.2)(typescript@5.2.2)
+      '@emeraldpay/hashicon-react':
+        specifier: ^0.5.2
+        version: 0.5.2
       '@graphprotocol/client-urql':
         specifier: ^2.0.0
         version: 2.0.3(@graphql-mesh/runtime@0.99.8)(@graphql-tools/utils@10.2.2)(@urql/core@5.0.4)(graphql@16.8.2)(wonka@6.3.4)
@@ -257,7 +260,7 @@ importers:
         version: 8.10.0(eslint@8.57.0)
       eslint-config-turbo:
         specifier: latest
-        version: 2.0.4(eslint@8.57.0)
+        version: 2.0.6(eslint@8.57.0)
       eslint-plugin-html:
         specifier: ^7.1.0
         version: 7.1.0
@@ -1878,6 +1881,22 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
+
+  /@emeraldpay/hashicon-react@0.5.2:
+    resolution: {integrity: sha512-XCoYKpq8QQOniiSZf5ouzdvXbKfG6q4ICHRqCO/GNofiF0Ra+LR/7+tomHlXVcLPBS9sDAoZQQw/Sr24KRAbJg==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@emeraldpay/hashicon': 0.5.2
+      react: 16.14.0
+    dev: false
+
+  /@emeraldpay/hashicon@0.5.2:
+    resolution: {integrity: sha512-MNsjV+Vik+ofOYmGPcdAQW4CoSSrTE2Iq2xYNS8PxV84QrgOLTsC/pV6EWb1N/dTY9ndMV/RAAzGh6cmrZf4zA==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@stablelib/blake2s': 1.0.1
+      js-sha3: 0.8.0
+    dev: false
 
   /@emotion/hash@0.9.1:
     resolution: {integrity: sha512-gJB6HLm5rYwSLI6PQa+X1t5CFGrv1J1TWG+sOyMCeKz2ojaj6Fnl/rZEspogG+cvqbt4AE/2eIyD2QfLKTBNlQ==}
@@ -4982,6 +5001,14 @@ packages:
     resolution: {integrity: sha512-ClJWvmL6UBM/wjkvv/7m5VP3GMr9t0osr4yVgLZsLCOz4hGN9gIAFEqnJ0TsSMAN+n840nf2cHZnA5/KFqHC7Q==}
     dependencies:
       '@stablelib/int': 1.0.1
+
+  /@stablelib/blake2s@1.0.1:
+    resolution: {integrity: sha512-Nnp7ULL65b4zEOkf3IdfL74xHhZXMCg7HBjBYO666a0o+DIY6GDEhUCqH6dws8nsSZgZO+V5+s2VyYKKGdFMZw==}
+    dependencies:
+      '@stablelib/binary': 1.0.1
+      '@stablelib/hash': 1.0.1
+      '@stablelib/wipe': 1.0.1
+    dev: false
 
   /@stablelib/bytes@1.0.1:
     resolution: {integrity: sha512-Kre4Y4kdwuqL8BR2E9hV/R5sOrUj6NanZaZis0V6lX5yzqC3hBuVSDXUIBqQv/sCpmuWRiHLwqiT1pqqjuBXoQ==}
@@ -8975,13 +9002,13 @@ packages:
       eslint: 8.57.0
     dev: true
 
-  /eslint-config-turbo@2.0.4(eslint@8.57.0):
-    resolution: {integrity: sha512-zGvU+bxoNWVvSl0prGItrnH9FgeNzKEAjRmv8ruqql1psI37T8IoLF/XeOzT3CzzYzJxuI3wW1yb2agDFYQdHQ==}
+  /eslint-config-turbo@2.0.6(eslint@8.57.0):
+    resolution: {integrity: sha512-PkRjFnZUZWPcrYT4Xoi5OWOUtnn6xVGh88I6TsayiH4AQZuLs/MDmzfJRK+PiWIrI7Q7sbsVEQP+nUyyRE3uAw==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
       eslint: 8.57.0
-      eslint-plugin-turbo: 2.0.4(eslint@8.57.0)
+      eslint-plugin-turbo: 2.0.6(eslint@8.57.0)
     dev: true
 
   /eslint-import-resolver-node@0.3.9:
@@ -9165,8 +9192,8 @@ packages:
       string.prototype.matchall: 4.0.11
     dev: true
 
-  /eslint-plugin-turbo@2.0.4(eslint@8.57.0):
-    resolution: {integrity: sha512-Ozn//vTXJeqIEvEkThM2vuuldMckPqAne7vg/S3GxF+BBY516cjdp7+dYpCU5Q0083hVm638c8542ubccNE+8w==}
+  /eslint-plugin-turbo@2.0.6(eslint@8.57.0):
+    resolution: {integrity: sha512-yGnpMvyBxI09ZrF5bGpaniBz57MiExTCsRnNxP+JnbMFD+xU3jG3ukRzehVol8LYNdC/G7E4HoH+x7OEpoSGAQ==}
     peerDependencies:
       eslint: '>6.6.0'
     dependencies:
@@ -9497,7 +9524,6 @@ packages:
       is-hex-prefixed: 1.0.0
       strip-hex-prefix: 1.0.0
     dev: false
-    bundledDependencies: false
 
   /event-target-shim@5.0.1:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
@@ -13489,7 +13515,6 @@ packages:
       loose-envify: 1.4.0
       object-assign: 4.1.1
       react-is: 16.13.1
-    dev: true
 
   /protobufjs@6.11.4:
     resolution: {integrity: sha512-5kQWPaJHi1WoCpjTGszzQ32PG2F4+wRY6BmAT4Vfw56Q2FZ4YZzK20xUYQH4YkfehY1e6QSICrJquM6xXZNcrw==}
@@ -13649,7 +13674,6 @@ packages:
 
   /react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
-    dev: true
 
   /react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
@@ -13731,6 +13755,15 @@ packages:
       clsx: 2.1.1
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
+    dev: false
+
+  /react@16.14.0:
+    resolution: {integrity: sha512-0X2CImDkJGApiAlcf0ODKIneSwBPhqJawOa5wCtKbu7ZECrmS26NvtSILynQ66cgkT/RJ4LidJOc3bUESwmU8g==}
+    engines: {node: '>=0.10.0'}
+    dependencies:
+      loose-envify: 1.4.0
+      object-assign: 4.1.1
+      prop-types: 15.8.1
     dev: false
 
   /react@18.2.0:

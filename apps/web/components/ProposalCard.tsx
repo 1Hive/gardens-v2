@@ -25,6 +25,7 @@ import { getProposals } from "@/actions/getProposals";
 import { DisplayNumber } from "./DisplayNumber";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { capitalize } from "@/utils/text";
+import { Hashicon } from "@emeraldpay/hashicon-react";
 
 type ProposalCard = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
@@ -135,6 +136,11 @@ export function ProposalCard({
     (inputData?.value * 100) / memberActivatedPoints,
   ).toFixed(2);
 
+  // something that you want to represent visually. For example ID of an object on the screen.
+  const value = "9dddff8f-be81-4c27-80c8-099327865f3f";
+
+  // Same icon with 80px in size
+
   const ProposalCardContent = ({
     isAllocationMode,
   }: {
@@ -145,9 +151,14 @@ export function ProposalCard({
         <div
           className={`grid grid-cols-10 gap-3 ${isAllocationMode && "section-layout"}`}
         >
-          <div className={`col-span-3 ${isAllocationMode && "col-span-9"}`}>
-            <h4 className="overflow-hidden truncate">{capitalize(title)}</h4>
-            <h6 className="text-sm">ID {proposalNumber}</h6>
+          <div
+            className={`col-span-3 flex gap-6  ${isAllocationMode && "col-span-9"}`}
+          >
+            <Hashicon value={title} size={45} />
+            <div className="overflow-hidden">
+              <h4 className="truncate">{capitalize(title)}</h4>
+              <h6 className="text-sm">ID {proposalNumber}</h6>
+            </div>
           </div>
           <Badge
             status={proposalStatus}
@@ -157,8 +168,7 @@ export function ProposalCard({
             <>
               <div className="col-span-3 ml-10 self-center justify-self-start">
                 <Statistic
-                  label={"requested: "}
-                  icon={<InformationCircleIcon />}
+                  label={"requested amount"}
                   count={formatUnits(requestedAmount, 18)}
                 ></Statistic>
               </div>
