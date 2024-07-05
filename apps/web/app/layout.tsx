@@ -33,7 +33,7 @@ export default function RootLayout({
     <html
       suppressHydrationWarning
       lang="en"
-      className={`bg-primary`}
+      className={`${inter.variable} ${chakra.variable} bg-primary`}
     >
       <body className="min-h-screen bg-primary font-chakra">
         <Providers>{children}</Providers>
