@@ -60,7 +60,7 @@ export function ProposalCard({
   inputHandler,
   triggerRenderProposals,
 }: ProposalCard) {
-  const { title, id, proposalNumber, proposalStatus, requestedAmount } =
+  const { title, id, proposalNumber, proposalStatus, requestedAmount, type } =
     proposalData;
   const pathname = usePathname();
 
@@ -136,11 +136,6 @@ export function ProposalCard({
     (inputData?.value * 100) / memberActivatedPoints,
   ).toFixed(2);
 
-  // something that you want to represent visually. For example ID of an object on the screen.
-  const value = "9dddff8f-be81-4c27-80c8-099327865f3f";
-
-  // Same icon with 80px in size
-
   const ProposalCardContent = ({
     isAllocationMode,
   }: {
@@ -149,10 +144,10 @@ export function ProposalCard({
     return (
       <>
         <div
-          className={`grid grid-cols-10 gap-3 ${isAllocationMode && "section-layout"}`}
+          className={`grid grid-cols-10 gap-8 ${isAllocationMode && "section-layout"}`}
         >
           <div
-            className={`col-span-3 flex gap-6  ${isAllocationMode && "col-span-9"}`}
+            className={`col-span-3 flex gap-6 ${isAllocationMode && "col-span-9"}`}
           >
             <Hashicon value={title} size={45} />
             <div className="overflow-hidden">
@@ -172,7 +167,7 @@ export function ProposalCard({
                   count={formatUnits(requestedAmount, 18)}
                 ></Statistic>
               </div>
-              <div className="border2 col-span-3 self-center">mini CVChart</div>
+              <div className="col-span-3 self-center">mini CVChart</div>
             </>
           )}
           {isAllocationView && (

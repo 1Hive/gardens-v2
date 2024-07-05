@@ -18,6 +18,7 @@ import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { useState, useEffect, useMemo } from "react";
 import { useContractRead, useContractWrite } from "wagmi";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { Hashicon } from "@emeraldpay/hashicon-react";
 
 export const dynamic = "force-dynamic";
 
@@ -244,16 +245,10 @@ export default function Proposal({
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-10 p-1 sm:p-8">
       <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
-        <div className="flex items-center justify-center sm:w-auto w-full">
-          <Image
-            src={proposalImg}
-            alt={`proposal image ${proposalIdNumber}`}
-            height={160}
-            width={160}
-            className="min-h-[160px] min-w-[160px]"
-          />
+        <div className="flex w-full items-center justify-center sm:w-auto">
+          <Hashicon value={ipfsResult.title} size={90} />
         </div>
-        <div className="flex flex-col gap-8 w-full">
+        <div className="flex w-full flex-col gap-8">
           <div>
             <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <h2>
