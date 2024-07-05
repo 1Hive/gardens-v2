@@ -95,8 +95,11 @@ export default function useSubgraphQuery<
 
   const isDataAlreadyFetched = (
     newFetchedData: Data,
-    payload: ChangeEventPayload,
+    payload?: ChangeEventPayload,
   ) => {
+    if (!payload) {
+      return false;
+    }
     if (payload.type === "add") {
       const dataJsonString = JSON.stringify(newFetchedData).toLowerCase();
       if (
@@ -109,7 +112,7 @@ export default function useSubgraphQuery<
     return false;
   };
 
-  const refetchFromOutside = async (payload: ChangeEventPayload) => {
+  const refetchFromOutside = async (payload?: ChangeEventPayload) => {
     if (fetching) {
       return;
     }
@@ -122,7 +125,7 @@ export default function useSubgraphQuery<
   };
 
   const refetch = async (
-    changePayload: ChangeEventPayload,
+    changePayload?: ChangeEventPayload,
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
     console.log("Refetching", { retryCount });
