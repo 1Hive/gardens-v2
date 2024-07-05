@@ -1,4 +1,5 @@
 import {
+  CVStrategy,
   PassportScorer,
   PassportStrategy,
   PassportUser,
@@ -15,6 +16,7 @@ export function handleUserScoreAdded(event: UserScoreAdded): void {
   let passportScorer = PassportScorer.load(event.address.toHexString());
   if (passportScorer == null) {
     passportScorer = new PassportScorer(event.address.toHexString());
+    passportScorer.save();
   }
 
   let passportUser = PassportUser.load(event.params.user.toHexString());
@@ -24,8 +26,8 @@ export function handleUserScoreAdded(event: UserScoreAdded): void {
   passportUser.score = event.params.score;
   passportUser.userAddress = event.params.user.toHexString();
   passportUser.lastUpdated = event.block.timestamp;
-
-  passportScorer.save();
+  passportUser.passportScorer = passportScorer.id;
+  passportUser.save();
 }
 
 export function handleUserRemoved(event: UserRemoved): void {
@@ -42,12 +44,22 @@ export function handleStrategyAdded(event: StrategyAdded): void {
   let passportScorer = PassportScorer.load(event.address.toHexString());
   if (passportScorer == null) {
     passportScorer = new PassportScorer(event.address.toHexString());
+    passportScorer.save();
   }
+  let cvStrategy = CVStrategy.load(event.params.strategy.toHexString());
+  if (cvStrategy == null) {
+    log.debug("CvStrategy  not found: {}", [
+      event.params.strategy.toHexString(),
+    ]);
+    return;
+  }
+
   let strategy = new PassportStrategy(event.params.strategy.toHexString());
   strategy.passportScorer = event.address.toHexString();
   strategy.threshold = event.params.threshold;
   strategy.councilSafe = event.params.councilSafe.toHexString();
   strategy.active = false;
+  strategy.strategy = cvStrategy.id;
   strategy.save();
 }
 
