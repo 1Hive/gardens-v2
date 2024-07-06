@@ -1,8 +1,9 @@
 "use client";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import { getTitlesFromUrlSegments } from "@/services/getTitlesFromUrlSegments";
 
 interface Breadcrumb {
   href: string;
@@ -15,25 +16,42 @@ const truncateString = (str: string) => {
 
 export function Breadcrumbs() {
   const path = usePathname();
+  const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
 
-  const breadcrumbs = React.useMemo((): Breadcrumb[] => {
+  const breadcrumbsPromise = useMemo(async (): Promise<Breadcrumb[]> => {
     const segments = path.split("/").filter((segment) => segment !== "");
+
+    const titles = await getTitlesFromUrlSegments(segments);
 
     return segments
       .map((segment, index) => {
         if (index < 2) {
-          return null;
+          return undefined;
         }
 
         const href = `/${segments.slice(0, index + 1).join("/")}`;
-        const displayLabel = segment.startsWith("0x")
+        let displayLabel = segment.startsWith("0x")
           ? truncateString(segment)
           : segment;
 
+        if (!!titles) {
+          // index correction as first 2 segments are /gardens/[chainId]
+          const title = titles[index - 2];
+          if (!!title) displayLabel = title;
+        }
         return { href, label: displayLabel };
       })
-      .filter((segment): segment is Breadcrumb => segment !== null);
+      .filter((segment): segment is Breadcrumb => segment !== undefined);
   }, [path]);
+
+  useEffect(() => {
+    (async () => {
+      const result = await breadcrumbsPromise;
+      setBreadcrumbs(result);
+    })();
+  }, [breadcrumbsPromise]);
+
+  if (!breadcrumbs.length) return null;
 
   return (
     <div aria-label="Breadcrumbs" className="flex items-center justify-center">
