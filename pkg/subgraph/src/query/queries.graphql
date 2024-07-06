@@ -356,3 +356,46 @@ query getStrategyByPool($poolId: BigInt!) {
     }
   }
 }
+
+query getTokenTitle($tokenAddr: ID!) {
+  tokenGarden(id: $tokenAddr) {
+    name
+  }
+}
+
+query getCommunityTitles($communityAddr: ID!) {
+  registryCommunity(id: $communityAddr) {
+    communityName
+    garden {
+      name
+    }
+  }
+}
+
+query getPoolTitles($poolId: BigInt!) {
+  cvstrategies(where: { poolId: $poolId }) {
+    metadata
+    registryCommunity {
+      communityName
+      garden {
+        name
+      }
+    }
+    metadata
+  }
+}
+
+query getProposalTitles($proposalId: ID!) {
+  cvproposal(id: $proposalId) {
+    metadata
+    strategy {
+      metadata
+      registryCommunity {
+        communityName
+        garden {
+          name
+        }
+      }
+    }
+  }
+}
