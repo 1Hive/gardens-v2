@@ -1,5 +1,5 @@
 import { defineConfig } from "@wagmi/cli";
-import { react, foundry, actions } from "@wagmi/cli/plugins";
+import { actions } from "@wagmi/cli/plugins";
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
 import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
 import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunity.sol/RegistryCommunity.json";
