@@ -179,7 +179,8 @@ export const ConvictionBarChart = ({
         ...markLine,
         data: [
           {
-            xAxis: thresholdPct,
+            // xAxis: thresholdPct,
+            xAxis: 8,
             symbol:
               "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
             symbolSize: [20, 20],
@@ -187,32 +188,38 @@ export const ConvictionBarChart = ({
           },
         ],
         lineStyle: {
-          width: 2,
+          width: 1,
           color: "#191919",
         },
+        z: 50,
       };
 
   const markLineCv: MarkLineComponentOption =
-    currentConvictionPct === 0
-      ? {}
-      : {
-          ...markLine,
-          data: [
-            {
-              xAxis: currentConvictionPct,
-            },
-          ],
-          lineStyle: {
-            width: 2,
-            color: "#69db7c",
-            type: "solid",
-          },
-        };
+    // currentConvictionPct === 0
+    //   ? {}
+    {
+      ...markLine,
+      // data: [
+      //   {
+      //     xAxis: currentConvictionPct,
+      //   },
+      // ],
+      data: [
+        {
+          xAxis: 4,
+        },
+      ],
+      lineStyle: {
+        width: 2,
+        color: "#69db7c",
+        type: "solid",
+      },
+    };
 
   const option: EChartsOption = {
-    title: {
-      text: "Conviction voting chart",
-    },
+    // title: {
+    //   text: "Conviction voting chart",
+    // },
     emphasis: emphasis,
     yAxis: {
       data: ["cv"],
@@ -224,45 +231,46 @@ export const ConvictionBarChart = ({
         show: false,
       },
     },
-    legend: {
-      itemGap: 35,
-      selectedMode: false,
-      textStyle: {
-        fontSize: 13,
-      },
-      data: [
-        {
-          name: "Support",
-          icon: "rect",
-        },
-        {
-          name: "Conviction",
-          icon: "rect",
-        },
-        {
-          name: "Threshold",
-          icon: "rect",
-          itemStyle: {
-            color: "none",
-            borderType: "dashed",
-            borderColor: "#191919",
-            borderWidth: 2,
-          },
-        },
-      ],
-    },
-    toolbox: {
-      feature: {
-        saveAsImage: { show: true },
-      },
-    },
+
+    // legend: {
+    //   itemGap: 35,
+    //   selectedMode: false,
+    //   textStyle: {
+    //     fontSize: 13,
+    //   },
+    //   data: [
+    //     {
+    //       name: "Support",
+    //       icon: "rect",
+    //     },
+    //     {
+    //       name: "Conviction",
+    //       icon: "rect",
+    //     },
+    //     {
+    //       name: "Threshold",
+    //       icon: "rect",
+    //       itemStyle: {
+    //         color: "none",
+    //         borderType: "dashed",
+    //         borderColor: "#191919",
+    //         borderWidth: 2,
+    //       },
+    //     },
+    //   ],
+    // },
+    // toolbox: {
+    //   feature: {
+    //     saveAsImage: { show: true },
+    //   },
+    // },
     grid: {
       show: false,
       left: "5%",
       right: "5%",
-      top: "35%",
-      bottom: "35%",
-      containLabel: true,
+      top: "25%",
+      bottom: "25%",
+      containLabel: false,
     },
     xAxis: {
       splitLine: { show: false },
@@ -276,45 +284,55 @@ export const ConvictionBarChart = ({
       },
     },
     animationDurationUpdate: 1200,
-    barGap: "-69%",
+    barGap: "-100%",
     series: [
       {
         type: "bar",
         name: "Support",
         stack: "a",
-        label: {
-          show: true,
-          position: proposalSupportPct === 0 ? [2, -14] : "top",
-          color: "#191919",
-          fontSize: 12,
-          formatter: "{a}: {@score} %",
-        },
         itemStyle: {
-          color: "#b2f2bb",
+          color: "#9EE157",
+          borderRadius: [20, 20, 20, 20],
         },
-        barWidth: 50,
-        data: [proposalSupportPct],
+        // label: {
+        //   show: true,
+        //   position: proposalSupportPct === 0 ? [2, -14] : "top",
+        //   color: "#191919",
+        //   fontSize: 12,
+        //   formatter: "{a}: {@score} %",
+        // },
+        z: 1,
+        barWidth: 30,
+        //data: [proposalSupportPct],
+        data: [6],
       },
       {
         type: "bar",
         name: "Conviction",
         itemStyle: {
-          color: "#69db7c",
+          color: "#65AD18",
+          borderRadius: [20, 20, 20, 20],
         },
-        barWidth: 20,
-        data: [currentConvictionPct],
-        markLine: markLineCv,
+        barWidth: 30,
+        z: 2,
+        //data: [currentConvictionPct],
+        data: [4],
+        //markLine: markLineCv,
       },
       {
         type: "bar",
         name: !isSignalingType ? "Threshold" : "",
-        stack: "a",
-        barWidth: 50,
-        data: [
-          Number(supportNeeded) < 0 ? 0 : thresholdPct - proposalSupportPct,
-        ],
+        stack: "",
+        barWidth: 30,
+        data: [8],
+        itemStyle: {
+          borderRadius: [20, 20, 20, 20],
+        },
+        // data: [
+        //   Number(supportNeeded) < 0 ? 0 : thresholdPct - proposalSupportPct,
+        // ],
         color: "#e9ecef",
-        z: -10,
+        z: 0,
         markLine: {
           ...markLineTh,
         },
@@ -324,13 +342,17 @@ export const ConvictionBarChart = ({
 
   return (
     <>
-      <ChartWrapper
+      {/* <ChartWrapper
         title={"Proposal Conviction Chart"}
         message={message}
         growing={growing}
-      >
-        <EChartsReact option={option} />
-      </ChartWrapper>
+      > */}
+      {/* <div className="w-full border-2 border-violet-500"> */}
+
+      <EChartsReact option={option} style={{ height: "100%", width: "100%" }} />
+
+      {/* </div> */}
+      {/* </ChartWrapper> */}
     </>
   );
 };

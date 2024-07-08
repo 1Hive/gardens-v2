@@ -24,7 +24,7 @@ export const ChartWrapper = ({
 
   return (
     <>
-      <div className="flex h-[fit] w-full flex-col gap-0 rounded-lg rounded-t-lg">
+      <div className="border2 flex h-10 w-full flex-col gap-0 rounded-lg rounded-t-lg">
         {children}
 
         <div
