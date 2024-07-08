@@ -147,7 +147,7 @@ export async function getTitlesFromUrlSegments(
     if (isStaticSegment) {
       parsedResult.push(parseStaticSegment(segments[segmentsLength - 1]));
     }
-    parsedResult[parsedResult.length -1] = ("do m ksk ak mak nsj abj wwemdk mkjwkj wk wlk wlke mwlk dmfwe fw ed wasd as ja kasj ,na, ")
+
     return parsedResult;
   } catch (error) {
     console.error("Error fetching title from address:", error);
