@@ -73,7 +73,7 @@ export default function Page({
           poolId={poolId}
           proposalType={proposalType}
           alloInfo={alloInfo}
-          tokenGarden={tokenGarden as TokenGarden}
+          tokenGarden={tokenGarden}
           tokenAddress={garden as Address}
           spendingLimit={poolAmountSpendingLimit}
           spendingLimitPct={spendingLimitPct}
