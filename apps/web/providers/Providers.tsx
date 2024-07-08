@@ -21,6 +21,7 @@ import { PubSubProvider } from "@/contexts/pubsub.context";
 import { publicProvider } from "wagmi/providers/public";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import useChainFromPath from "@/hooks/useChainFromPath";
+import { chains } from "@/configs/chainServer";
 
 type Props = {
   children: React.ReactNode;
@@ -34,8 +35,7 @@ const Providers = ({ children }: Props) => {
   const chain = useChainFromPath();
 
   const createCustomConfig = () => {
-    const chains = chain ? [chain] : [mainnet];
-    const publicClient = configureChains(chains, [
+    const publicClient = configureChains(chain ? [chain] : [mainnet], [
       publicProvider(),
       alchemyProvider({
         apiKey: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "",
