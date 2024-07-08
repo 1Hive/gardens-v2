@@ -54,8 +54,8 @@ query getTokenGardens {
   }
 }
 
-query getMemberStrategy($meStr: ID!) {
-  memberStrategy(id: $meStr) {
+query getMemberStrategy($wallet: ID!) {
+  memberStrategy(id: $wallet) {
     id
     totalStakedPoints
     activatedPoints

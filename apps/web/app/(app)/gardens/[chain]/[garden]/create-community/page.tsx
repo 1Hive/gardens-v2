@@ -1,4 +1,4 @@
-"use client";
+z"use client";
 import {
   TokenGarden,
   getCommunityCreationDataDocument,
@@ -50,13 +50,13 @@ export default function Page({
             </p>
           </div>
         </div>
-        <CommunityForm
-          chain={chain}
-          tokenGarden={tokenGarden}
-          registryFactoryAddr={registryFactoryAddr}
-          alloContractAddr={alloContractAddr}
-        />
       </section>
+      <CommunityForm
+        chainId={chain}
+        tokenGarden={tokenGarden}
+        registryFactoryAddr={registryFactoryAddr}
+        alloContractAddr={alloContractAddr}
+      />
     </div>
   ) : (
     <div className="mt-96">

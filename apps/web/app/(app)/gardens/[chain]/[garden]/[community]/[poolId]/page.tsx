@@ -72,7 +72,7 @@ export default function Pool({
   const metadata = data?.cvstrategies?.[0]?.metadata;
 
   useEffect(() => {
-    if (metadata) {
+    if (metadata && !ipfsResult) {
       getIpfsMetadata(metadata).then((data) => {
         setIpfsResult(data);
       });

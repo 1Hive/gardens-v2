@@ -2,7 +2,7 @@
 import React from "react";
 import { useBalance, useSwitchNetwork } from "wagmi";
 import { usePathname } from "next/navigation";
-import { ChainIcon, getChain } from "@/configs/chainServer";
+import { ChainIcon } from "@/configs/chainServer";
 import Image from "next/image";
 import { walletIcon } from "@/assets";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -13,12 +13,13 @@ import { Fragment } from "react";
 import { formatAddress } from "@/utils/formatAddress";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
+import useChainFromPath from "@/hooks/useChainFromPath";
 
 export function ConnectWallet() {
   const path = usePathname();
   const account = useAccount();
-  const urlChainId = useChainIdFromPath();
+  const chainFromPath = useChainFromPath();
+  const urlChainId = chainFromPath?.id;
   const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
@@ -30,8 +31,10 @@ export function ConnectWallet() {
   const { data: token } = useBalance({
     address: account?.address,
     token: tokenUrlAddress as `0x${string}` | undefined,
-    chainId: urlChainId || 0,
+    chainId: urlChainId,
+    enabled: !!account && !!urlChainId,
   });
+
   return (
     <ConnectButton.Custom>
       {({
@@ -83,8 +86,8 @@ export function ConnectWallet() {
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
-                        "border-danger-content border-2":
-                          urlChainId !== chain.id && !isNaN(urlChainId),
+                        "border-2 border-danger-content":
+                          urlChainId && urlChainId !== chain.id,
                       })} `}
                         >
                           <Image
@@ -166,10 +169,7 @@ export function ConnectWallet() {
                                       switchNetwork && switchNetwork(urlChainId)
                                     }
                                   >
-                                    Switch to{" "}
-                                    {urlChainId
-                                      ? getChain(urlChainId)?.name
-                                      : ""}
+                                    Switch to {chainFromPath?.name ?? ""}
                                   </Button>
                                 )}
 
