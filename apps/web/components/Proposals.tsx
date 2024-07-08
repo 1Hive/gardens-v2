@@ -30,8 +30,6 @@ import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
-import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -39,8 +37,8 @@ import { toast } from "react-toastify";
 import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy } from "@/types";
 import LoadingSpinner from "./LoadingSpinner";
-import Link from "next/link";
 import useChainIdFromPath from "@/hooks/useChainIdFromPath";
+import Link from "next/link";
 
 export type ProposalInputItem = {
   id: string;
@@ -115,7 +113,7 @@ export function Proposals({
       type: ["add", "delete"],
       urlChainId,
     },
-    !!wallet
+    !!wallet,
   );
 
   if (error) {

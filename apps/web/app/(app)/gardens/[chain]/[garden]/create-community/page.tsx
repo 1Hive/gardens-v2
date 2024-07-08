@@ -1,4 +1,4 @@
-z"use client";
+"use client";
 import {
   TokenGarden,
   getCommunityCreationDataDocument,
