@@ -63,11 +63,14 @@ export function Breadcrumbs() {
           >
             {index !== 0 && <ChevronRightIcon className="mx-[6px] h-5 w-5" />}
             {index === breadcrumbs.length - 1 ? (
-              <span className="font-semibold text-neutral-soft-content">
+              <span className="truncate font-semibold text-neutral-soft-content">
                 {label}
               </span>
             ) : (
-              <Link href={href} className="font-semibold text-primary-content">
+              <Link
+                href={href}
+                className="truncate font-semibold text-primary-content"
+              >
                 {label}
               </Link>
             )}

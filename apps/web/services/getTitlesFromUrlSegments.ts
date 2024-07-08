@@ -6,6 +6,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { capitalize } from "@/utils/text";
 import { DocumentNode } from "graphql";
 
 const { urqlClient } = initUrqlClient();
@@ -118,15 +119,21 @@ const queryMap: Record<
   },
 };
 
+const parseStaticSegment = (str: string) => {
+  return capitalize(str.replace(/-/g, " "));
+};
+
 export async function getTitlesFromUrlSegments(
   segments: string[],
 ): Promise<(string | undefined)[] | undefined> {
   let segmentsLength = segments.length;
   if (segmentsLength < 3) return;
 
-  // chequear que no haya create forms si no corrijo
+  let entityIndex = segmentsLength - 1;
+  let isStaticSegment = segments[segmentsLength - 1].includes("create");
+  // As now static pages in router could be "create-community", "create-pool", "create-proposal"
+  if (isStaticSegment) entityIndex = segmentsLength - 2;
 
-  const entityIndex = segmentsLength - 1;
   try {
     const result = await queryByChain(
       urqlClient,
@@ -137,6 +144,10 @@ export async function getTitlesFromUrlSegments(
 
     const parsedResult = await queryMap[entityIndex].parseResult(result?.data);
 
+    if (isStaticSegment) {
+      parsedResult.push(parseStaticSegment(segments[segmentsLength - 1]));
+    }
+    parsedResult[parsedResult.length -1] = ("do m ksk ak mak nsj abj wwemdk mkjwkj wk wlk wlke mwlk dmfwe fw ed wasd as ja kasj ,na, ")
     return parsedResult;
   } catch (error) {
     console.error("Error fetching title from address:", error);
