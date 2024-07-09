@@ -2149,7 +2149,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
     getMemberStrategy(variables: Exact<{
-        meStr: string;
+        wallet: string;
     }>, options?: TOperationContext): Promise<getMemberStrategyQuery>;
     isMember(variables: Exact<{
         me: string;
@@ -2224,7 +2224,7 @@ export type getTokenGardensQuery = {
     })>;
 };
 export type getMemberStrategyQueryVariables = Exact<{
-    meStr: Scalars['ID']['input'];
+    wallet: Scalars['ID']['input'];
 }>;
 export type getMemberStrategyQuery = {
     memberStrategy?: Maybe<(Pick<MemberStrategy, 'id' | 'totalStakedPoints' | 'activatedPoints'> & {
@@ -2373,7 +2373,7 @@ export type getPoolTitlesQueryVariables = Exact<{
     poolId: Scalars['BigInt']['input'];
 }>;
 export type getPoolTitlesQuery = {
-    cvstrategies: Array<(Pick<CVStrategy, 'metadata'> & {
+    cvstrategies: Array<(Pick<CVStrategy, 'poolId' | 'metadata'> & {
         registryCommunity: (Pick<RegistryCommunity, 'communityName'> & {
             garden: Pick<TokenGarden, 'name'>;
         });
@@ -2383,8 +2383,8 @@ export type getProposalTitlesQueryVariables = Exact<{
     proposalId: Scalars['ID']['input'];
 }>;
 export type getProposalTitlesQuery = {
-    cvproposal?: Maybe<(Pick<CVProposal, 'metadata'> & {
-        strategy: (Pick<CVStrategy, 'metadata'> & {
+    cvproposal?: Maybe<(Pick<CVProposal, 'proposalNumber' | 'metadata'> & {
+        strategy: (Pick<CVStrategy, 'poolId' | 'metadata'> & {
             registryCommunity: (Pick<RegistryCommunity, 'communityName'> & {
                 garden: Pick<TokenGarden, 'name'>;
             });
@@ -2398,7 +2398,7 @@ export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery,
     [key: string]: never;
 }>>;
 export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQuery, Exact<{
-    meStr: Scalars['ID']['input'];
+    wallet: Scalars['ID']['input'];
 }>>;
 export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
     me: Scalars['ID']['input'];

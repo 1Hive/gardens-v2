@@ -374,6 +374,7 @@ query getCommunityTitles($communityAddr: ID!) {
 
 query getPoolTitles($poolId: BigInt!) {
   cvstrategies(where: { poolId: $poolId }) {
+    poolId
     metadata
     registryCommunity {
       communityName
@@ -387,8 +388,10 @@ query getPoolTitles($poolId: BigInt!) {
 
 query getProposalTitles($proposalId: ID!) {
   cvproposal(id: $proposalId) {
+    proposalNumber
     metadata
     strategy {
+      poolId
       metadata
       registryCommunity {
         communityName
