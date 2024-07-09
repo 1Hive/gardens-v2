@@ -30,7 +30,10 @@
         "NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP",
         "PINATA_JWT",
         "NODE_ENV",
-        "NEXT_ABLY_API_KEY"
+        "NEXT_ABLY_API_KEY",
+        "NEXT_RUNTIME",
+        "NEXT_PUBLIC_SENTRY_REPLAYS_ON_ERROR_SAMPLE_RATE",
+        "NEXT_PUBLIC_SENTRY_REPLAYS_SESSION_SAMPLE_RATE"
       ]
     },
     "test": {
