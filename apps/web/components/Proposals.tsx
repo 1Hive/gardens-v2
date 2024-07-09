@@ -215,7 +215,7 @@ export function Proposals({
   }, [proposals, address, stakedFilters]);
 
   useEffect(() => {
-    if (isMemberActived === undefined) return;
+    if (isMemberActived == null) return;
     if (isMemberActived !== true) setAllocationView(false);
   }, [isMemberActived]);
 
