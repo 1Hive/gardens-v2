@@ -9,17 +9,21 @@ type ScenarioMapping = {
   details: [{ message: string; growing: boolean | null }];
 };
 
+type ConvictionBarChartProps = {
+  currentConvictionPct: number;
+  thresholdPct: number;
+  proposalSupportPct: number;
+  isSignalingType: boolean;
+  compact?: boolean;
+};
+
 export const ConvictionBarChart = ({
   currentConvictionPct,
   thresholdPct,
   proposalSupportPct,
   isSignalingType,
-}: {
-  currentConvictionPct: number;
-  thresholdPct: number;
-  proposalSupportPct: number;
-  isSignalingType: boolean;
-}) => {
+  compact,
+}: ConvictionBarChartProps) => {
   console.log(
     "proposalSupportPct: " + proposalSupportPct,
     "currentConvictionPct: " + currentConvictionPct,
@@ -169,30 +173,34 @@ export const ConvictionBarChart = ({
     label: {
       position: "start",
       formatter: "{@score} %",
-      fontSize: 16,
+      fontSize: compact ? 10 : 16,
     },
   };
 
-  const markLineTh: MarkLineComponentOption = isSignalingType
-    ? {}
-    : {
-        ...markLine,
-        data: [
-          {
-            // xAxis: thresholdPct,
-            xAxis: 8,
-            symbol:
-              "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
-            symbolSize: [20, 20],
-            symbolOffset: [-9, 95],
+  const markLineTh: MarkLineComponentOption =
+    isSignalingType || compact
+      ? {}
+      : {
+          ...markLine,
+          data: [
+            {
+              // xAxis: thresholdPct,
+              xAxis: 8,
+              symbol:
+                "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
+              symbolSize: [16, 16],
+              symbolOffset: [-7, 46],
+            },
+          ],
+          // label: {
+          //   // distance: 0,
+          // },
+          lineStyle: {
+            width: 1,
+            color: "#191919",
           },
-        ],
-        lineStyle: {
-          width: 1,
-          color: "#191919",
-        },
-        z: 50,
-      };
+          z: 50,
+        };
 
   const markLineCv: MarkLineComponentOption =
     // currentConvictionPct === 0
@@ -222,7 +230,7 @@ export const ConvictionBarChart = ({
     // },
     emphasis: emphasis,
     yAxis: {
-      data: ["cv"],
+      data: ["Proposal #1"],
       axisTick: { show: false },
       axisLabel: {
         formatter: "",
@@ -231,39 +239,16 @@ export const ConvictionBarChart = ({
         show: false,
       },
     },
+    tooltip: {
+      trigger: compact ? "axis" : "none",
+      valueFormatter: (value) => value + "%",
+      borderWidth: 1,
+      borderColor: "#191919",
+      axisPointer: {
+        type: "shadow",
+      },
+    },
 
-    // legend: {
-    //   itemGap: 35,
-    //   selectedMode: false,
-    //   textStyle: {
-    //     fontSize: 13,
-    //   },
-    //   data: [
-    //     {
-    //       name: "Support",
-    //       icon: "rect",
-    //     },
-    //     {
-    //       name: "Conviction",
-    //       icon: "rect",
-    //     },
-    //     {
-    //       name: "Threshold",
-    //       icon: "rect",
-    //       itemStyle: {
-    //         color: "none",
-    //         borderType: "dashed",
-    //         borderColor: "#191919",
-    //         borderWidth: 2,
-    //       },
-    //     },
-    //   ],
-    // },
-    // toolbox: {
-    //   feature: {
-    //     saveAsImage: { show: true },
-    //   },
-    // },
     grid: {
       show: false,
       left: "5%",
