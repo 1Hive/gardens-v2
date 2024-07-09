@@ -216,7 +216,7 @@ export function Proposals({
 
   useEffect(() => {
     if (isMemberActived == null) return;
-    if (isMemberActived !== true) setAllocationView(false);
+    if (!isMemberActived) setAllocationView(false);
   }, [isMemberActived]);
 
   const {
