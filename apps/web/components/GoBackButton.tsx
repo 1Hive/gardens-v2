@@ -15,7 +15,7 @@ export const GoBackButton = () => {
           btnStyle="link"
           color="primary"
           onClick={() => router.back()}
-          className="ml-8 w-fit !p-0"
+          className="w-fit !p-0 subtitle2"
           icon={<ArrowLeftIcon className="h-4 w-4" />}
         >
           Back

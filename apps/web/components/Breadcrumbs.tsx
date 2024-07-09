@@ -1,7 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { RefAttributes, useEffect, useRef, useState } from "react";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { getTitlesFromUrlSegments } from "@/services/getTitlesFromUrlSegments";
 
@@ -18,7 +18,7 @@ export function Breadcrumbs() {
   const path = usePathname();
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
 
-  const breadcrumbsPromise = useMemo(async (): Promise<Breadcrumb[]> => {
+  const fetchBreadcrumbs = async (): Promise<Breadcrumb[]> => {
     const segments = path.split("/").filter((segment) => segment !== "");
 
     const titles = await getTitlesFromUrlSegments(segments);
@@ -42,41 +42,46 @@ export function Breadcrumbs() {
         return { href, label: displayLabel };
       })
       .filter((segment): segment is Breadcrumb => segment !== undefined);
-  }, [path]);
+  };
 
   useEffect(() => {
     (async () => {
-      const result = await breadcrumbsPromise;
+      const result = await fetchBreadcrumbs();
       setBreadcrumbs(result);
     })();
-  }, [breadcrumbsPromise]);
+  }, [path]);
 
-  if (!breadcrumbs.length) return null;
+  if (!breadcrumbs.length) return <></>;
 
   return (
-    <div aria-label="Breadcrumbs" className="flex items-center justify-center">
-      <ol className="flex items-center justify-center">
-        {breadcrumbs.map(({ href, label }, index) => (
-          <li
-            key={href}
-            className="flex items-center justify-center text-neutral-soft-content"
-          >
-            {index !== 0 && <ChevronRightIcon className="mx-[6px] h-5 w-5" />}
-            {index === breadcrumbs.length - 1 ? (
-              <span className="truncate font-semibold text-neutral-soft-content">
-                {label}
-              </span>
-            ) : (
-              <Link
-                href={href}
-                className="truncate font-semibold text-primary-content"
-              >
-                {label}
-              </Link>
-            )}
-          </li>
-        ))}
-      </ol>
-    </div>
+    <>
+      <div className="my-[2px] border-l-2 border-solid border-neutral-soft-content"></div>
+      <div aria-label="Breadcrumbs" className="flex w-full items-center">
+        <ol className="flex w-full items-center overflow-hidden">
+          {breadcrumbs.map(({ href, label }, index) => (
+            <li
+              key={href}
+              className="flex max-w-[30%] items-center overflow-hidden text-neutral-soft-content"
+            >
+              {index !== 0 && (
+                <ChevronRightIcon className="mx-1 h-5 w-5 flex-shrink-0" />
+              )}
+              {index === breadcrumbs.length - 1 ? (
+                <span className="subtitle2 truncate font-semibold text-neutral-soft-content">
+                  {label}
+                </span>
+              ) : (
+                <Link
+                  href={href}
+                  className="subtitle2 truncate font-semibold text-primary-content"
+                >
+                  {label}
+                </Link>
+              )}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </>
   );
 }
