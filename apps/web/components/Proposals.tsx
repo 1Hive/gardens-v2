@@ -2,13 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button, PoolGovernance, FormLink, ProposalCard } from "@/components";
-import {
-  useAccount,
-  useContractWrite,
-  Address as AddressType,
-  useContractRead,
-  useWaitForTransaction,
-} from "wagmi";
+import { useAccount, Address as AddressType, useContractRead } from "wagmi";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
@@ -28,12 +22,12 @@ import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { toast } from "react-toastify";
-import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy } from "@/types";
 import LoadingSpinner from "./LoadingSpinner";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 export type ProposalInputItem = {
@@ -95,22 +89,19 @@ export function Proposals({
     data: memberResult,
     error,
     refetch: refetchIsMemberQuery,
-  } = useSubgraphQueryByChain<isMemberQuery>(
-    urlChainId ?? 0,
-    isMemberDocument,
-    {
+  } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
       me: wallet?.toLowerCase(),
       comm: strategy.registryCommunity.id.toLowerCase(),
     },
-    {},
-    {
+    changeScope: {
       topic: "member",
       id: communityAddress,
       type: ["add", "delete"],
-      urlChainId,
     },
-    !!wallet
-  );
+    enabled: !!wallet,
+  });
 
   if (error) {
     console.error("Error while fetching member data: ", error);
@@ -148,21 +139,18 @@ export function Proposals({
   }, [memberResult]);
 
   const { data: memberStrategyResult } =
-    useSubgraphQueryByChain<getMemberStrategyQuery>(
-      urlChainId ?? 0,
-      getMemberStrategyDocument,
-      {
+    useSubgraphQuery<getMemberStrategyQuery>({
+      query: getMemberStrategyDocument,
+      variables: {
         meStr: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
-      {},
-      {
+      changeScope: {
         topic: "proposal",
         id: strategy.id,
         type: "update",
-        chainId: urlChainId,
       },
-      !!wallet,
-    );
+      enabled: !!wallet,
+    });
 
   useEffect(() => {
     if (wallet) {
@@ -221,21 +209,15 @@ export function Proposals({
   }, [isMemberActived]);
 
   const {
-    data: allocateData,
+    transactionData: allocateTxData,
     write: writeAllocate,
     error: errorAllocate,
-    isSuccess: isSuccessAllocate,
     status: allocateStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
-  });
-
-  useWaitForTransaction({
-    hash: allocateData?.hash,
-    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
@@ -248,7 +230,7 @@ export function Proposals({
 
   useErrorDetails(errorAllocate, "errorAllocate");
   const { updateTransactionStatus, txConfirmationHash } =
-    useTransactionNotification(allocateData);
+    useTransactionNotification(allocateTxData);
 
   useEffect(() => {
     updateTransactionStatus(allocateStatus);

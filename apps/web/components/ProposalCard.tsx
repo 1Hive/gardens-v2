@@ -8,16 +8,16 @@ import { ProposalInputItem } from "./Proposals";
 import { Allo } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
-import { Address, useContractWrite, useWaitForTransaction } from "wagmi";
+import { Address } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeAbiParameters } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { getProposals } from "@/actions/getProposals";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type ProposalCard = {
@@ -48,7 +48,6 @@ export function ProposalCard({
   memberPoolWeight,
   executeDisabled,
   strategy,
-  tokenDecimals,
   alloInfo,
   inputHandler,
   triggerRenderProposals,
@@ -77,22 +76,16 @@ export function ProposalCard({
 
   //executing proposal distribute function / alert error if not executable / notification if success
   const {
-    data: distributeData,
+    transactionData: distributeTxData,
     write: writeDistribute,
     error: errorDistribute,
-    isSuccess: isSuccessDistribute,
     isError: isErrorDistribute,
     status: distributeStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
-  });
-
-  useWaitForTransaction({
-    hash: distributeData?.hash,
-    confirmations: chainDataMap[chainId ?? 0].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
@@ -114,7 +107,7 @@ export function ProposalCard({
   const {
     updateTransactionStatus: updateDistributeTransactionStatus,
     txConfirmationHash: distributeTxConfirmationHash,
-  } = useTransactionNotification(distributeData);
+  } = useTransactionNotification(distributeTxData);
 
   useEffect(() => {
     updateDistributeTransactionStatus(distributeStatus);

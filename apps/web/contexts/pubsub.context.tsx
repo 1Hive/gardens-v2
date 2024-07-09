@@ -124,7 +124,12 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     ablyClient.channels.get(CHANGE_EVENT_CHANNEL_NAME).subscribe((message) => {
-      console.debug("⚡ WS: sub message", message);
+      console.debug("⚡ WS: sub message", {
+        message,
+        reDispatch: () => {
+          dispatch(message.data as ChangeEventPayload);
+        },
+      });
       const data = message.data as ChangeEventPayload;
       setMessages((prevMessages) => [...prevMessages, data]);
       dispatch(data);
@@ -184,6 +189,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       scope: ChangeEventScope[] | ChangeEventScope,
       onChangeEvent: (payload: ChangeEventPayload) => void,
     ) => {
+      console.debug("⚡ WS: subscribe", scope);
       const subscriptionId = uniqueId();
       subMap.set(subscriptionId, {
         scopes: (scope.length ? scope : [scope]) as ChangeEventScope[],

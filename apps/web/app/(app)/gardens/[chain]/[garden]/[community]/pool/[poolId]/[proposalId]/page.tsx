@@ -14,7 +14,7 @@ import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { proposalStatus, poolTypes } from "@/types";
 import { proposalImg } from "@/assets";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { useState, useEffect } from "react";
 import { useContractRead } from "wagmi";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -62,16 +62,18 @@ export default function Proposal({
   params: { proposalId: string; poolId: string; chain: string; garden: string };
 }) {
   // TODO: fetch garden decimals in query
-  const { data } = useSubgraphQueryByChain<getProposalDataQuery>(
-    chain,
-    getProposalDataDocument,
-    {
+  const { data } = useSubgraphQuery<getProposalDataQuery>({
+    query: getProposalDataDocument,
+    variables: {
       garden: garden,
       proposalId: proposalId,
     },
-    {},
-    { topic: "proposal", id: proposalId, type: "update", chainId: chain },
-  );
+    changeScope: {
+      topic: "proposal",
+      id: proposalId,
+      type: "update",
+    },
+  });
 
   const proposalData = data?.cvproposal;
 
