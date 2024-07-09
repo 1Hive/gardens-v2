@@ -163,7 +163,7 @@ export function ProposalCard({
             <>
               <div className="col-span-3 ml-10 self-center justify-self-start">
                 <Statistic
-                  label={"requested amount"}
+                  label="requested amount"
                   count={formatUnits(requestedAmount, 18)}
                 ></Statistic>
               </div>
