@@ -157,13 +157,13 @@ export function ProposalCard({
           </div>
           <Badge
             status={proposalStatus}
-            classNames={`self-center justify-self-start ${isAllocationMode && "justify-self-end"}`}
+            classNames={`self-center ${isAllocationMode ? "justify-self-end" : "justify-self-start"}`}
           />
           {!isAllocationMode && (
             <>
               <div className="col-span-3 ml-10 self-center justify-self-start">
                 <Statistic
-                  label={"requested amount"}
+                  label="requested amount"
                   count={formatUnits(requestedAmount, 18)}
                 ></Statistic>
               </div>
