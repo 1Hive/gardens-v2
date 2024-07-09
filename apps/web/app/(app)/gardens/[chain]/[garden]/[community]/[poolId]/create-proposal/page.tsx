@@ -6,6 +6,7 @@ import {
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
@@ -58,6 +59,10 @@ export default function Page({
   const spendingLimitPct = maxRatioDivPrecision * 100;
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
 
+  if (!tokenGarden) {
+    return <LoadingSpinner />;
+  }
+  
   return (
     <div className="page-layout">
       <section className="section-layout">

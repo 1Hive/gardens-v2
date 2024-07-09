@@ -117,7 +117,7 @@ export default function Pool({
       <section className="section-layout flex flex-col gap-0 overflow-hidden">
         <header className="mb-2">
           <h2>
-            {ipfsResult.title} - Pool #{poolId}
+            {ipfsResult.title} #{poolId}
           </h2>
           <EthAddress address={strategyAddr} />
         </header>
