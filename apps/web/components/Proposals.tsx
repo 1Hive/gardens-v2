@@ -52,6 +52,13 @@ export type ProposalTypeVoter = CVProposal & {
   type: number;
 };
 
+interface Stats {
+  id: number;
+  name: string;
+  stat: number | string;
+  className: string;
+}
+
 export function Proposals({
   strategy,
   alloInfo,
@@ -363,9 +370,9 @@ export function Proposals({
     }
   };
 
-  const poolWeightClassName = `bg-primary-soft text-primary-content ${calcPoolWeightUsed(memberSupportedProposalsPct) == memberPoolWeight && "bg-secondary-soft text-secondary-content"}`;
+  const poolWeightClassName = `${calcPoolWeightUsed(memberSupportedProposalsPct) === memberPoolWeight ? "bg-secondary-soft text-secondary-content" : "bg-primary-soft text-primary-content "}`;
 
-  const stats = [
+  const stats: Stats[] = [
     {
       id: 1,
       name: "Pool Weight",
@@ -382,7 +389,7 @@ export function Proposals({
       id: 3,
       name: "Total Allocation Percentage",
       stat: memberSupportedProposalsPct,
-      className: `bg-primary-content text-primary-soft border-primary-content ${memberSupportedProposalsPct >= 100 && "bg-secondary-content text-secondary-soft border-secondary-content "}`,
+      className: `${memberSupportedProposalsPct >= 100 ? "bg-secondary-content text-secondary-soft border-secondary-content" : "bg-primary-content text-primary-soft border-primary-content"}`,
     },
   ];
 
@@ -399,23 +406,21 @@ export function Proposals({
         <div>
           <header className="flex items-center justify-between gap-10">
             <h2>Proposals</h2>
-            {proposals ? (
-              proposals.length === 0 ? (
-                <h4 className="text-2xl">No submitted proposals to support</h4>
-              ) : (
-                !allocationView && (
-                  <Button
-                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                    onClick={() => setAllocationView((prev) => !prev)}
-                    disabled={disableManSupportButton}
-                    tooltip={String(tooltipMessage)}
-                  >
-                    Manage support
-                  </Button>
-                )
-              )
+            {!proposals ? (
+              <LoadingSpinner />
+            ) : proposals.length === 0 ? (
+              <h4 className="text-2xl">No submitted proposals to support</h4>
             ) : (
-              <LoadingSpinner></LoadingSpinner>
+              !allocationView && (
+                <Button
+                  icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                  onClick={() => setAllocationView((prev) => !prev)}
+                  disabled={disableManSupportButton}
+                  tooltip={String(tooltipMessage)}
+                >
+                  Manage support
+                </Button>
+              )
             )}
           </header>
           {allocationView && (

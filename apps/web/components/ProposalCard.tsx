@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
 import { Badge, Button, Card, Statistic } from "@/components";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ProposalInputItem, ProposalTypeVoter } from "./Proposals";
 import { Allo, CVStrategy } from "#/subgraph/.graphclient";
@@ -132,9 +131,17 @@ export function ProposalCard({
     triggerRenderProposals();
   }, [distributeTxConfirmationHash]);
 
-  const inputValue = Number(
-    (inputData?.value * 100) / memberActivatedPoints,
-  ).toFixed(2);
+  {
+    /* TODO: minor improve here: have this when loading the data?  */
+  }
+  if (!inputData) {
+    return <div>loading...</div>;
+  }
+
+  const inputValue = calculatePercentage(
+    inputData.value,
+    memberActivatedPoints,
+  );
 
   const ProposalCardContent = ({
     isAllocationMode,
@@ -149,7 +156,7 @@ export function ProposalCard({
           <div
             className={`col-span-3 flex gap-6 ${isAllocationMode && "col-span-9"}`}
           >
-            <Hashicon value={title} size={45} />
+            <Hashicon value={id} size={45} />
             <div className="overflow-hidden">
               <h4 className="truncate">{capitalize(title)}</h4>
               <h6 className="text-sm">ID {proposalNumber}</h6>
@@ -162,6 +169,7 @@ export function ProposalCard({
           {!isAllocationMode && (
             <>
               <div className="col-span-3 ml-10 self-center justify-self-start">
+                {/* TODO: minor improve here  */}
                 <Statistic
                   label="requested amount"
                   count={formatUnits(requestedAmount, 18)}
@@ -179,7 +187,7 @@ export function ProposalCard({
                       type="range"
                       min={0}
                       max={memberActivatedPoints}
-                      value={inputData?.value ?? 0}
+                      value={inputData.value}
                       className={`range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]`}
                       step={memberActivatedPoints / 100}
                       onChange={(e) => inputHandler(i, Number(e.target.value))}
