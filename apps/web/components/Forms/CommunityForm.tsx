@@ -20,6 +20,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 import useChainFromPath from "@/hooks/useChainFromPath";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
+import delayAsync from "@/utils/delayAsync";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -155,17 +156,23 @@ export const CommunityForm = ({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-    onConfirmations: () => {
+    onConfirmations: async (receipt) => {
+      const newCommunityAddr = receipt.logs[0].address;
+      if (pathname) {
+        router.push(
+          pathname?.replace(`/create-community`, `?new=${newCommunityAddr}`),
+        );
+      }
+      // Add some delay to l et time to the comunity list to subscribe to the published event
+      await delayAsync(1000);
       publish({
         topic: "community",
         type: "add",
         function: "createRegistry",
         containerId: tokenGarden.id,
         chainId: tokenGarden.chainId,
+        id: newCommunityAddr, // new community address
       });
-      if (pathname) {
-        router.push(pathname?.replace(`/create-community`, ""));
-      }
     },
     onError: (err) => {
       console.log(err);
