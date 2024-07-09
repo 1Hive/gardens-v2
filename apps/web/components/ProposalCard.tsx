@@ -157,7 +157,7 @@ export function ProposalCard({
           </div>
           <Badge
             status={proposalStatus}
-            classNames={`self-center justify-self-start ${isAllocationMode && "justify-self-end"}`}
+            classNames={`self-center ${isAllocationMode ? "justify-self-end" : "justify-self-start"}`}
           />
           {!isAllocationMode && (
             <>
