@@ -6,7 +6,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { CommunityForm } from "@/components/Forms";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import React, { useEffect } from "react";
 import { Address } from "viem";
 
@@ -16,11 +16,10 @@ export default function Page({
   params: { chain: number; garden: string };
 }) {
   const { data: result, error: getCommunityCreationDataQueryError } =
-    useSubgraphQueryByChain<getCommunityCreationDataQuery>(
-      chain,
-      getCommunityCreationDataDocument,
-      { addr: garden },
-    );
+    useSubgraphQuery<getCommunityCreationDataQuery>({
+      query: getCommunityCreationDataDocument,
+      variables: { addr: garden },
+    });
 
   useEffect(() => {
     if (getCommunityCreationDataQueryError) {

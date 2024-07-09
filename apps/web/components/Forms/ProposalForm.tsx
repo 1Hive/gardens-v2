@@ -3,20 +3,19 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { alloABI } from "@/src/generated";
 import { Address, parseUnits } from "viem";
-import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { encodeAbiParameters } from "viem";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { toast } from "react-toastify";
 import { poolTypes } from "@/types";
-import { Allo, Maybe, TokenGarden } from "#/subgraph/.graphclient";
+import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormInput } from "./FormInput";
 import { usePathname, useRouter } from "next/navigation";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { chainDataMap } from "@/configs/chainServer";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -155,16 +154,11 @@ export const ProposalForm = ({
     setShowPreview(true);
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
-  });
-
-  useWaitForTransaction({
-    hash: data?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",

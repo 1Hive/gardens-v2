@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -15,11 +14,13 @@ import { FormSelect } from "./FormSelect";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
-import { chainDataMap, getChain } from "@/configs/chainServer";
-import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
+import { getChain } from "@/configs/chainServer";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 import useChainFromPath from "@/hooks/useChainFromPath";
+import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
+import delayAsync from "@/utils/delayAsync";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -151,26 +152,27 @@ export const CommunityForm = ({
       });
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-  });
-
-  useWaitForTransaction({
-    hash: data?.hash,
-    confirmations: chainDataMap[chainFromPath?.id ?? 0].confirmations,
-    onSuccess: () => {
+    onConfirmations: async (receipt) => {
+      const newCommunityAddr = receipt.logs[0].address;
+      if (pathname) {
+        router.push(
+          pathname?.replace(`/create-community`, `?new=${newCommunityAddr}`),
+        );
+      }
+      // Add some delay to l et time to the comunity list to subscribe to the published event
+      await delayAsync(1000);
       publish({
         topic: "community",
         type: "add",
         function: "createRegistry",
         containerId: tokenGarden.id,
         chainId: tokenGarden.chainId,
+        id: newCommunityAddr, // new community address
       });
-      if (pathname) {
-        router.push(pathname?.replace(`/create-community`, ""));
-      }
     },
     onError: (err) => {
       console.log(err);

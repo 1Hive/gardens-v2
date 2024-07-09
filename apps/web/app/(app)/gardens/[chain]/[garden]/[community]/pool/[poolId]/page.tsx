@@ -29,7 +29,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -40,25 +40,21 @@ export default function Pool({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data, fetching, error } = useSubgraphQueryByChain<getPoolDataQuery>(
-    chain,
-    getPoolDataDocument,
-    { poolId: poolId, garden: garden },
-    {},
-    [
+  const { data, error } = useSubgraphQuery<getPoolDataQuery>({
+    query: getPoolDataDocument,
+    variables: { poolId: poolId, garden: garden },
+    changeScope: [
       {
         topic: "pool",
         id: poolId,
-        chainId: chain,
       },
       {
         topic: "proposal",
         containerId: poolId,
-        chainId: chain,
         type: "update",
       },
     ],
-  );
+  });
 
   useEffect(() => {
     if (error) {
@@ -79,7 +75,7 @@ export default function Pool({
     }
   }, [metadata]);
 
-  if (fetching || !ipfsResult) {
+  if (!data || !ipfsResult) {
     return (
       <div className="mt-96">
         <LoadingSpinner />

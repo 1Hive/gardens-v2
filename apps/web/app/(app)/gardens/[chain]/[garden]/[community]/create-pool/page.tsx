@@ -7,7 +7,7 @@ import {
 } from "#/subgraph/.graphclient";
 import PoolForm from "@/components/Forms/PoolForm";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import React from "react";
 import { Address } from "viem";
 
@@ -17,11 +17,10 @@ export default function CreatePool({
   params: { chain: number; garden: string; community: string };
 }) {
   const { data: result, error: error } =
-    useSubgraphQueryByChain<getPoolCreationDataQuery>(
-      chain,
-      getPoolCreationDataDocument,
-      { communityAddr: community, tokenAddr: garden },
-    );
+    useSubgraphQuery<getPoolCreationDataQuery>({
+      query: getPoolCreationDataDocument,
+      variables: { communityAddr: community, tokenAddr: garden },
+    });
   let token = result?.tokenGarden;
   let alloAddr = result?.allos[0]?.id as Address;
   let communityName = result?.registryCommunity?.communityName as string;
