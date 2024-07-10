@@ -69,8 +69,6 @@ export function Proposals({
   >([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
-  const [memberTokensInCommunity, setMemberTokensInCommunity] =
-    useState<string>("0");
 
   const { address: wallet } = useAccount();
 
@@ -146,7 +144,7 @@ export function Proposals({
     useSubgraphQuery<getMemberStrategyQuery>({
       query: getMemberStrategyDocument,
       variables: {
-        meStr: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
+        wallet: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
       changeScope: {
         topic: "proposal",
@@ -362,7 +360,7 @@ export function Proposals({
         tokenDecimals={tokenDecimals}
         strategy={strategy}
         communityAddress={communityAddress}
-        memberTokensInCommunity={memberTokensInCommunity}
+        memberTokensInCommunity={memberActivatedPoints}
       />
       <section className="section-layout">
         <div className="mx-auto max-w-5xl space-y-10">

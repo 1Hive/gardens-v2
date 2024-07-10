@@ -16,7 +16,7 @@ type PoolGovernanceProps = {
   tokenDecimals: number;
   strategy: LightCVStrategy;
   communityAddress: Address;
-  memberTokensInCommunity: string;
+  memberTokensInCommunity: number;
 };
 
 export const PoolGovernance = ({
@@ -27,7 +27,6 @@ export const PoolGovernance = ({
   memberTokensInCommunity,
 }: PoolGovernanceProps) => {
   const { address: connectedAccount } = useAccount();
-
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
