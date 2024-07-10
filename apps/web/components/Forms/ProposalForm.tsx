@@ -3,20 +3,19 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { alloABI } from "@/src/generated";
 import { Address, parseUnits } from "viem";
-import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { encodeAbiParameters } from "viem";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { toast } from "react-toastify";
 import { poolTypes } from "@/types";
-import { Allo, Maybe, TokenGarden } from "#/subgraph/.graphclient";
+import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormInput } from "./FormInput";
 import { usePathname, useRouter } from "next/navigation";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { chainDataMap } from "@/configs/chainServer";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -30,7 +29,7 @@ type ProposalFormProps = {
   poolId: number;
   proposalType: number;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
-  tokenGarden: TokenGarden;
+  tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   tokenAddress: Address;
   spendingLimit: number;
   spendingLimitPct: number;
@@ -88,7 +87,7 @@ export const ProposalForm = ({
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
       label: "Requested amount:",
-      parse: (value: number) => `${value} ${tokenGarden?.symbol}`,
+      parse: (value: number) => `${value} ${tokenGarden.symbol}`,
     },
     beneficiary: {
       label: "Beneficiary:",
@@ -99,16 +98,16 @@ export const ProposalForm = ({
     strategy: { label: "Strategy:" },
   };
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const tokenSymbol = tokenGarden?.symbol || "";
+  const tokenSymbol = tokenGarden.symbol || "";
 
-  const spendingLimitNumber = spendingLimit / 10 ** tokenGarden?.decimals;
+  const spendingLimitNumber = spendingLimit / 10 ** tokenGarden.decimals;
 
   // console.log("spendingLimit:               %s", spendingLimit);
   // console.log("spendingLimitNumber:         %s", spendingLimitNumber);
@@ -155,21 +154,16 @@ export const ProposalForm = ({
     setShowPreview(true);
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
-  });
-
-  useWaitForTransaction({
-    hash: data?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
         function: "registerRecipient",
-        chainId: tokenGarden.chainId,
+        chainId,
       });
       if (pathname) {
         router.push(pathname.replace(`/create-proposal`, ""));

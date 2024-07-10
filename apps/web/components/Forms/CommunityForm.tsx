@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import { useContractWrite, useWaitForTransaction } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -15,11 +14,13 @@ import { FormSelect } from "./FormSelect";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
-import { chainDataMap, getChain } from "@/configs/chainServer";
-import { getChainIdFromPath } from "@/utils/path";
-import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
+import { getChain } from "@/configs/chainServer";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import useChainFromPath from "@/hooks/useChainFromPath";
+import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
+import delayAsync from "@/utils/delayAsync";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -47,12 +48,12 @@ const feeOptions: Option[] = [
 ];
 
 export const CommunityForm = ({
-  chain,
+  chainId,
   tokenGarden,
   registryFactoryAddr,
   alloContractAddr,
 }: {
-  chain: number;
+  chainId: number;
   tokenGarden: TokenGarden;
   registryFactoryAddr: Address;
   alloContractAddr: Address;
@@ -76,12 +77,12 @@ export const CommunityForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const chainId = getChainIdFromPath();
+  const chainFromPath = useChainFromPath();
 
   // const [file, setFile] = useState<File | null>(null);
 
   const publicClient = createPublicClient({
-    chain: getChain(chainId) as Chain,
+    chain: chainFromPath as Chain,
     transport: http(),
   });
 
@@ -151,26 +152,27 @@ export const CommunityForm = ({
       });
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-  });
-
-  useWaitForTransaction({
-    hash: data?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: async (receipt) => {
+      const newCommunityAddr = receipt.logs[0].address;
+      if (pathname) {
+        router.push(
+          pathname?.replace(`/create-community`, `?new=${newCommunityAddr}`),
+        );
+      }
+      // Add some delay to l et time to the comunity list to subscribe to the published event
+      await delayAsync(1000);
       publish({
         topic: "community",
         type: "add",
         function: "createRegistry",
         containerId: tokenGarden.id,
         chainId: tokenGarden.chainId,
+        id: newCommunityAddr, // new community address
       });
-      if (pathname) {
-        router.push(pathname?.replace(`/create-community`, ""));
-      }
     },
     onError: (err) => {
       console.log(err);
@@ -196,9 +198,9 @@ export const CommunityForm = ({
     const metadata = [1n, "ipfsHash"];
     const isKickMemberEnabled = previewData?.isKickMemberEnabled;
     const covenantIpfsHash = ipfsHash;
-    const strategyTemplate = getContractsAddrByChain(chain)?.strategyTemplate;
+    const strategyTemplate = getContractsAddrByChain(chainId)?.strategyTemplate;
     if (!strategyTemplate) {
-      console.log("No strategy template found for chain", chain);
+      console.log("No strategy template found for chain", chainId);
       toast.error("No strategy template found for chain");
     }
     const args = [
@@ -346,7 +348,7 @@ export const CommunityForm = ({
                 },
                 validate: async (value) =>
                   (await addressIsSAFE(value)) ||
-                  `Not a valid Safe address in ${getChain(chain)?.name} network`,
+                  `Not a valid Safe address in ${getChain(chainId)?.name} network`,
               }}
               errors={errors}
               registerKey="councilSafe"

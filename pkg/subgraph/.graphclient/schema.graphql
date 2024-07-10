@@ -3,13 +3,17 @@ schema {
   subscription: Subscription
 }
 
-"Marks the GraphQL type as indexable entity.  Each type that should be an entity is required to be annotated with this directive."
+"""
+Marks the GraphQL type as indexable entity.  Each type that should be an entity is required to be annotated with this directive.
+"""
 directive @entity on OBJECT
 
-"Defined a Subgraph ID for an object type"
+"""Defined a Subgraph ID for an object type"""
 directive @subgraphId(id: String!) on OBJECT
 
-"creates a virtual field on the entity that may be queried but cannot be set manually through the mappings API."
+"""
+creates a virtual field on the entity that may be queried but cannot be set manually through the mappings API.
+"""
 directive @derivedFrom(field: String!) on FIELD_DEFINITION
 
 type Allo {

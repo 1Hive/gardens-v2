@@ -1,9 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import React from "react";
 import { useBalance, useSwitchNetwork } from "wagmi";
 import { usePathname } from "next/navigation";
-import { ChainIcon, getChain } from "@/configs/chainServer";
+import { ChainIcon } from "@/configs/chainServer";
 import Image from "next/image";
 import { walletIcon } from "@/assets";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -14,12 +13,13 @@ import { Fragment } from "react";
 import { formatAddress } from "@/utils/formatAddress";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
-import { getChainIdFromPath } from "@/utils/path";
+import useChainFromPath from "@/hooks/useChainFromPath";
 
-export const ConnectWallet = () => {
+export function ConnectWallet() {
   const path = usePathname();
   const account = useAccount();
-  const urlChainId = getChainIdFromPath();
+  const chainFromPath = useChainFromPath();
+  const urlChainId = chainFromPath?.id;
   const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
@@ -31,8 +31,10 @@ export const ConnectWallet = () => {
   const { data: token } = useBalance({
     address: account?.address,
     token: tokenUrlAddress as `0x${string}` | undefined,
-    chainId: urlChainId || 0,
+    chainId: urlChainId,
+    enabled: !!account && !!urlChainId,
   });
+
   return (
     <ConnectButton.Custom>
       {({
@@ -84,16 +86,16 @@ export const ConnectWallet = () => {
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
-                        "border-danger border-2":
-                          urlChainId &&
-                          urlChainId !== chain.id &&
-                          !isNaN(urlChainId),
+                        "border-2 border-danger-content":
+                          urlChainId && urlChainId !== chain.id,
                       })} `}
                         >
-                          <img
+                          <Image
                             alt={"Chain icon"}
                             src={`https://effigy.im/a/${account.address}.png`}
                             className="h-8 w-8 rounded-full"
+                            width={32}
+                            height={32}
                           />
                           <div className="flex flex-col">
                             <h4 className="text-left">
@@ -111,7 +113,7 @@ export const ConnectWallet = () => {
                                   <span>{chain.name}</span>
                                 </>
                               ) : (
-                                <span className="text-danger">
+                                <span className="text-danger-content">
                                   Network mismatch
                                 </span>
                               )}
@@ -167,10 +169,7 @@ export const ConnectWallet = () => {
                                       switchNetwork && switchNetwork(urlChainId)
                                     }
                                   >
-                                    Switch to{" "}
-                                    {urlChainId
-                                      ? getChain(urlChainId)?.name
-                                      : ""}
+                                    Switch to {chainFromPath?.name ?? ""}
                                   </Button>
                                 )}
 
@@ -202,4 +201,4 @@ export const ConnectWallet = () => {
       }}
     </ConnectButton.Custom>
   );
-};
+}

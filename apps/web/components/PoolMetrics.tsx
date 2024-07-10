@@ -1,12 +1,6 @@
 "use client";
 import React, { FC, useState, useRef, useEffect } from "react";
-import {
-  Address,
-  useAccount,
-  useContractRead,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
+import { Address, useAccount, useContractRead, useContractWrite } from "wagmi";
 import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
@@ -21,8 +15,8 @@ import { parseUnits } from "viem";
 import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
-import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -98,57 +92,45 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     args: [connectedAccount as Address, alloInfo?.id as Address],
     functionName: "allowance",
     watch: true,
+    enabled: !!connectedAccount,
   });
 
-  const {
-    data: allowTokenData,
-    write: writeAllowToken,
-    error: allowTokenError,
-    status: allowTokenStatus,
-  } = useContractWrite({
-    address: tokenGarden.address as Address,
-    abi: abiWithErrors(erc20ABI),
-    functionName: "approve",
-  });
-
-  const { isSuccess: isWaitAllowanceSuccess, status: waitAllowTokenStatus } =
-    useWaitForTransaction({
-      confirmations: chainDataMap[chainId].confirmations,
-      hash: allowTokenData?.hash,
+  const { write: writeAllowToken, status: allowTokenStatus } =
+    useContractWriteWithConfirmations({
+      address: tokenGarden.address as Address,
+      abi: abiWithErrors(erc20ABI),
+      functionName: "approve",
     });
 
   useEffect(() => {
-    if (isWaitAllowanceSuccess) {
+    if (allowTokenStatus === "success") {
       writeFundPool({
         args: [poolId, requestedAmount],
       });
     }
-  }, [isWaitAllowanceSuccess]);
+  }, [allowTokenStatus]);
 
-  const {
-    data: fundPool,
-    write: writeFundPool,
-    status: fundPoolStatus,
-  } = useContractWrite({
-    address: alloInfo?.id as Address,
-    abi: abiWithErrors(alloABI),
-    functionName: "fundPool",
-  });
-
-  useWaitForTransaction({
-    hash: fundPool?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
-      publish({
-        topic: "pool",
-        type: "update",
-        function: "fundPool",
-        id: poolId,
-        containerId: communityAddress,
-        chainId: tokenGarden.chainId,
-      });
-    },
-  });
+  const { write: writeFundPool, status: fundPoolStatus } =
+    useContractWriteWithConfirmations({
+      address: alloInfo?.id as Address,
+      abi: abiWithErrors(alloABI),
+      functionName: "fundPool",
+      onConfirmations: () => {
+        publish({
+          topic: "pool",
+          type: "update",
+          function: "fundPool",
+          id: poolId,
+          containerId: communityAddress,
+          chainId: tokenGarden.chainId,
+        });
+      },
+      onSuccess: () => {
+        closeModal();
+        setAmount(0);
+        setPendingAllowance(false);
+      },
+    });
 
   const writeContract = () => {
     writeAllowToken({
@@ -168,14 +150,6 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
       openModal();
     }
   };
-
-  useEffect(() => {
-    if (fundPoolStatus === "success") {
-      closeModal();
-      setAmount(0);
-      setPendingAllowance(false);
-    }
-  }, [fundPoolStatus]);
 
   //disable button condition
   const requestesMoreThanAllowance =
@@ -203,8 +177,11 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
       ></TransactionModal>
-      <section className="section-layout">
-        <section className="mt-10 flex w-full justify-between rounded-xl bg-white">
+      <section className="section-layout ">
+        <header>
+          <h2>Pool Metrics</h2>
+        </header>
+        <div className="mt-4 flex justify-between">
           <div className="flex flex-col">
             <div className="flex justify-between">
               <div className="flex flex-col justify-between">
@@ -261,7 +238,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
               Fund pool
             </Button>
           </div>
-        </section>
+        </div>
       </section>
     </>
   );

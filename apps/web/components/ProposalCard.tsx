@@ -4,25 +4,21 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ProposalInputItem, ProposalTypeVoter } from "./Proposals";
-import { Allo, CVStrategy } from "#/subgraph/.graphclient";
+import { ProposalInputItem } from "./Proposals";
+import { Allo } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
-import {
-  Address,
-  useChainId,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
+import { Address } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { encodeAbiParameters, formatUnits } from "viem";
+import { encodeAbiParameters } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { getProposals } from "@/actions/getProposals";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type ProposalCard = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
@@ -52,7 +48,6 @@ export function ProposalCard({
   memberPoolWeight,
   executeDisabled,
   strategy,
-  tokenDecimals,
   alloInfo,
   inputHandler,
   triggerRenderProposals,
@@ -61,7 +56,7 @@ export function ProposalCard({
   const pathname = usePathname();
 
   const { publish } = usePubSubContext();
-  const chainId = useChainId();
+  const chainId = useChainIdFromPath();
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0
@@ -81,22 +76,16 @@ export function ProposalCard({
 
   //executing proposal distribute function / alert error if not executable / notification if success
   const {
-    data: distributeData,
+    transactionData: distributeTxData,
     write: writeDistribute,
     error: errorDistribute,
-    isSuccess: isSuccessDistribute,
     isError: isErrorDistribute,
     status: distributeStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
-  });
-
-  useWaitForTransaction({
-    hash: distributeData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
@@ -118,7 +107,7 @@ export function ProposalCard({
   const {
     updateTransactionStatus: updateDistributeTransactionStatus,
     txConfirmationHash: distributeTxConfirmationHash,
-  } = useTransactionNotification(distributeData);
+  } = useTransactionNotification(distributeTxData);
 
   useEffect(() => {
     updateDistributeTransactionStatus(distributeStatus);
@@ -165,7 +154,7 @@ export function ProposalCard({
             </Button>
           )}
           <>
-            <Link href={`${pathname}/proposals/${id}`}>
+            <Link href={`${pathname}/${id}`}>
               <Button btnStyle="outline">View Proposal</Button>
             </Link>
           </>

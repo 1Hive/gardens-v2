@@ -1,14 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, PoolGovernance, FormLink, ProposalCard } from "@/components";
-import {
-  useAccount,
-  useContractWrite,
-  Address as AddressType,
-  useContractRead,
-  useWaitForTransaction,
-} from "wagmi";
+import { Button, PoolGovernance, ProposalCard } from "@/components";
+import { useAccount, Address as AddressType, useContractRead } from "wagmi";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
@@ -17,10 +11,8 @@ import useErrorDetails from "@/utils/getErrorName";
 import {
   Allo,
   CVProposal,
-  CVStrategy,
   getMemberStrategyDocument,
   getMemberStrategyQuery,
-  getPoolDataQuery,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
@@ -28,14 +20,19 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import { getChainIdFromPath } from "@/utils/path";
+import {
+  AdjustmentsHorizontalIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { toast } from "react-toastify";
-import { chainDataMap } from "@/configs/chainServer";
 import { LightCVStrategy } from "@/types";
+import LoadingSpinner from "./LoadingSpinner";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
+import Link from "next/link";
 
 export type ProposalInputItem = {
   id: string;
@@ -75,41 +72,44 @@ export function Proposals({
   const [memberTokensInCommunity, setMemberTokensInCommunity] =
     useState<string>("0");
 
-  const { address } = useAccount();
+  const { address: wallet } = useAccount();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const { data: isMemberActivated } = useContractRead({
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
     functionName: "memberActivatedInStrategies",
-    args: [address as Address, strategy.id as Address],
+    args: [wallet as Address, strategy.id as Address],
     watch: true,
+    enabled: !!wallet,
   });
 
   const {
     data: memberResult,
     error,
     refetch: refetchIsMemberQuery,
-  } = useSubgraphQueryByChain<isMemberQuery>(
-    chainId,
-    isMemberDocument,
-    {
-      me: address?.toLowerCase(),
+  } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: wallet?.toLowerCase(),
       comm: strategy.registryCommunity.id.toLowerCase(),
     },
-    {},
-    {
+    changeScope: {
       topic: "member",
       id: communityAddress,
       type: ["add", "delete"],
-      chainId,
     },
-  );
+    enabled: !!wallet,
+  });
+
+  if (error) {
+    console.error("Error while fetching member data: ", error);
+  }
 
   useEffect(() => {
     let _stakesFilteres: StakesMemberType = [];
@@ -142,27 +142,25 @@ export function Proposals({
     setStakedFilters(memberStakes);
   }, [memberResult]);
 
-  const { data: memberStrategyResult, error: errorMS } =
-    useSubgraphQueryByChain<getMemberStrategyQuery>(
-      chainId,
-      getMemberStrategyDocument,
-      {
-        meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
+  const { data: memberStrategyResult } =
+    useSubgraphQuery<getMemberStrategyQuery>({
+      query: getMemberStrategyDocument,
+      variables: {
+        meStr: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
-      {},
-      {
+      changeScope: {
         topic: "proposal",
         id: strategy.id,
         type: "update",
-        chainId: chainId,
       },
-    );
+      enabled: !!wallet,
+    });
 
   useEffect(() => {
-    if (address) {
+    if (wallet) {
       refetchIsMemberQuery();
     }
-  }, [address]);
+  }, [wallet]);
 
   useEffect(() => {
     setMemberActivatedPoints(
@@ -171,7 +169,7 @@ export function Proposals({
   }, [memberStrategyResult]);
 
   const triggerRenderProposals = () => {
-    getProposals(address as Address, strategy).then((res) => {
+    getProposals(wallet, strategy).then((res) => {
       if (res !== undefined) {
         setProposals(res);
       } else {
@@ -182,7 +180,7 @@ export function Proposals({
 
   useEffect(() => {
     triggerRenderProposals();
-  }, [address]);
+  }, []);
 
   useEffect(() => {
     if (!proposals) {
@@ -207,7 +205,7 @@ export function Proposals({
       );
     }
     setInputs(newInputs);
-  }, [proposals, address, stakedFilters]);
+  }, [proposals, wallet, stakedFilters]);
 
   useEffect(() => {
     if (isMemberActived === undefined) return;
@@ -215,34 +213,28 @@ export function Proposals({
   }, [isMemberActived]);
 
   const {
-    data: allocateData,
+    transactionData: allocateTxData,
     write: writeAllocate,
     error: errorAllocate,
-    isSuccess: isSuccessAllocate,
     status: allocateStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
-  });
-
-  useWaitForTransaction({
-    hash: allocateData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
         id: alloInfo.id,
         function: "allocate",
-        chainId,
+        urlChainId,
       });
     },
   });
 
   useErrorDetails(errorAllocate, "errorAllocate");
   const { updateTransactionStatus, txConfirmationHash } =
-    useTransactionNotification(allocateData);
+    useTransactionNotification(allocateTxData);
 
   useEffect(() => {
     updateTransactionStatus(allocateStatus);
@@ -372,26 +364,32 @@ export function Proposals({
         communityAddress={communityAddress}
         memberTokensInCommunity={memberTokensInCommunity}
       />
-      <section className="rounded-lg border-2 border-black bg-white p-12">
+      <section className="section-layout">
         <div className="mx-auto max-w-5xl space-y-10">
           <header className="flex items-center justify-between">
             <div className="flex w-full items-baseline justify-between">
-              <h3 className="font-semibold">Proposals</h3>
-              {proposals?.length === 0 ? (
-                <h4 className="text-2xl text-info">
-                  No submitted proposals to support
-                </h4>
-              ) : (
-                !editView && (
-                  <Button
-                    icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                    onClick={() => setEditView((prev) => !prev)}
-                    disabled={disableManSupportButton}
-                    tooltip={String(tooltipMessage)}
-                  >
-                    Manage support
-                  </Button>
+              <h2 className="font-semibold">Proposals</h2>
+              {proposals ? (
+                proposals.length === 0 ? (
+                  <h4 className="text-2xl text-info">
+                    No submitted proposals to support
+                  </h4>
+                ) : (
+                  !editView && (
+                    <Button
+                      icon={
+                        <AdjustmentsHorizontalIcon height={24} width={24} />
+                      }
+                      onClick={() => setEditView((prev) => !prev)}
+                      disabled={disableManSupportButton}
+                      tooltip={String(tooltipMessage)}
+                    >
+                      Manage support
+                    </Button>
+                  )
                 )
+              ) : (
+                <LoadingSpinner></LoadingSpinner>
               )}
             </div>
             {editView && (
@@ -474,7 +472,16 @@ export function Proposals({
           <h4 className="text-2xl">Do you have a great idea?</h4>
           <div className="flex items-center gap-6">
             <p>Share it with the community and get support !</p>
-            <FormLink href={createProposalUrl} label="Create Proposal" />
+            <Link href={createProposalUrl}>
+              <Button
+                btnStyle="filled"
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+                icon={<PlusIcon height={24} width={24} />}
+              >
+                Create Proposal
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

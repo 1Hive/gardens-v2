@@ -1,17 +1,18 @@
 "use client";
 import * as dn from "dnum";
-import { doesNotReject } from "assert";
 import { useEffect, useState } from "react";
 
 export const DisplayNumber = ({
   number,
   tokenSymbol,
   className,
+  disableTooltip = false,
   compact,
 }: {
   number: dn.Dnum | string;
   tokenSymbol?: string;
   className?: string;
+  disableTooltip?: boolean;
   compact?: boolean;
 }) => {
   const fullNumberStr =
@@ -47,7 +48,7 @@ export const DisplayNumber = ({
         "…" +
         str.slice(-charsLength)
       );
-    if (typeof number == "string")
+    if (typeof number === "string")
       return dn.format(dn.from(number), {
         compact: compact,
         digits: 2,
@@ -71,10 +72,10 @@ export const DisplayNumber = ({
   };
 
   return (
-    <div className="relative ml-2 flex items-center gap-1">
+    <div className="relative flex items-center gap-1">
       <div
         onClick={handleCopy}
-        className={`${showTooltip && "tooltip"} cursor-pointer`}
+        className={`${!disableTooltip && showTooltip && "tooltip"} cursor-pointer`}
         data-tip={isCopied ? "Copied!" : fullNumberStr}
       >
         <p className={className}>{shortNumber}</p>

@@ -32,20 +32,27 @@ const allChains: ChainId[] = [
   arbitrumSepolia.id,
   // optimismSepolia.id,
 ];
-
 if (process.env.NODE_ENV === "development") {
+  console.log("dev");
   allChains.push(localhost.id);
 }
 
 export default function useSubgraphQueryMultiChain<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
->(
-  query: DocumentInput<any, Variables>,
-  variables: Variables = {} as Variables,
-  context?: Partial<OperationContext>,
-  changeScope?: ChangeEventScope[] | ChangeEventScope,
-) {
+>({
+  query,
+  variables = {} as Variables,
+  queryContext,
+  changeScope,
+  chainIds,
+}: {
+  query: DocumentInput<any, Variables>;
+  variables?: Variables;
+  queryContext?: Partial<OperationContext>;
+  changeScope?: ChangeEventScope[] | ChangeEventScope;
+  chainIds?: ChainId[];
+}) {
   const { connected, subscribe, unsubscribe } = usePubSubContext();
 
   const [response, setResponse] = useState<Data[]>();
@@ -81,10 +88,12 @@ export default function useSubgraphQueryMultiChain<
 
   const fetchDebounce = debounce(
     async (chainsOverride?: ChainId[], retryOnNoChange?: boolean) => {
-      const chainSubgraphs = (chainsOverride ?? allChains).map((chain) => ({
-        chainId: chain,
-        url: getContractsAddrByChain(chain)?.subgraphUrl,
-      }));
+      const chainSubgraphs = (chainsOverride ?? chainIds ?? allChains).map(
+        (chain) => ({
+          chainId: chain,
+          url: getContractsAddrByChain(chain)?.subgraphUrl,
+        }),
+      );
       await Promise.all(
         chainSubgraphs.map(async ({ chainId, url }, i) => {
           const fetchSubgraphChain = async (retryCount?: number) => {
@@ -94,7 +103,7 @@ export default function useSubgraphQueryMultiChain<
                   chainId: (chainsOverride ?? allChains)[i],
                 });
                 return await urqlClient.query<Data>(query, variables, {
-                  ...context,
+                  ...queryContext,
                   url,
                   chainId,
                   requestPolicy: "network-only",

@@ -38,6 +38,7 @@ export const PoolGovernance = ({
     functionName: "memberActivatedInStrategies",
     args: [connectedAccount as Address, strategy.id as Address],
     watch: true,
+    enabled: !!connectedAccount,
   });
 
   const { data: isMember } = useContractRead({
@@ -45,13 +46,17 @@ export const PoolGovernance = ({
     functionName: "isMember",
     args: [connectedAccount as Address],
     watch: true,
+    enabled: !!connectedAccount,
   });
 
   const showPoolGovernanceData =
     isMember && isMemberActivated !== undefined && isMemberActivated;
   return (
     <section className="section-layout">
-      <div className="flex flex-col justify-between">
+      <header>
+        <h2>Pool Governance</h2>
+      </header>
+      <div className="mt-4 flex flex-col justify-between">
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-10">
             <div className="flex w-full max-w-xl flex-col items-center gap-2 font-semibold">
