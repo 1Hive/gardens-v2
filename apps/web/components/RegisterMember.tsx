@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import {
-  useBalance,
-  useContractWrite,
-  useContractRead,
-  Address,
-  useWaitForTransaction,
-  useAccount,
-} from "wagmi";
+import { useBalance, useContractRead, Address, useAccount } from "wagmi";
 import { Button } from "./Button";
 import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
@@ -17,8 +10,8 @@ import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { gte } from "@/utils/numbers";
 import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type RegisterMemberProps = {
@@ -88,21 +81,14 @@ export function RegisterMember({
   );
 
   const {
-    data: registerMemberData,
+    transactionData: registerMemberTxData,
     write: writeRegisterMember,
-    isLoading: registerMemberIsLoading,
     error: registerMemberError,
     status: registerMemberStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "stakeAndRegisterMember",
-  });
-
-  useWaitForTransaction({
-    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
-    hash: registerMemberData?.hash,
-    onSuccess: () => {
-      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
+    onConfirmations: () => {
       publish({
         topic: "member",
         type: "add",
@@ -115,20 +101,14 @@ export function RegisterMember({
   });
 
   const {
-    data: unregisterMemberData,
+    transactionData: unregisterMemberTxData,
     write: writeUnregisterMember,
     error: unregisterMemberError,
     status: unregisterMemberStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
-  });
-
-  useWaitForTransaction({
-    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
-    hash: unregisterMemberData?.hash,
-    onSuccess: () => {
-      // Deprecated but temporary until unified useContractWriteWithConfirmations is implemented
+    onConfirmations: () => {
       publish({
         topic: "member",
         type: "delete",
@@ -141,26 +121,16 @@ export function RegisterMember({
   });
 
   const {
-    data: allowTokenData,
+    transactionData: allowTokenTxData,
     write: writeAllowToken,
     error: allowTokenError,
-    status: allowTokenStatus,
-  } = useContractWrite({
+    confirmed: allowTokenConfirmed,
+    confirmationsStatus: allowTokenStatus,
+  } = useContractWriteWithConfirmations({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
     args: [communityAddress, registerStakeAmount as bigint], // [allowed spender address, amount ]
     functionName: "approve",
-  });
-
-  const {
-    data,
-    isError,
-    isLoading,
-    isSuccess: isWaitSuccess,
-    status: waitAllowTokenStatus,
-  } = useWaitForTransaction({
-    confirmations: chainDataMap[urlChainId ?? 0].confirmations,
-    hash: allowTokenData?.hash,
   });
 
   const { data: dataAllowance } = useContractRead({
@@ -194,20 +164,20 @@ export function RegisterMember({
   }
 
   const { updateTransactionStatus: updateAllowTokenTransactionStatus } =
-    useTransactionNotification(allowTokenData);
+    useTransactionNotification(allowTokenTxData);
 
   const { updateTransactionStatus: updateRegisterMemberTransactionStatus } =
-    useTransactionNotification(registerMemberData);
+    useTransactionNotification(registerMemberTxData);
 
   const { updateTransactionStatus: updateUnregisterMemberTransactionStatus } =
-    useTransactionNotification(unregisterMemberData);
+    useTransactionNotification(unregisterMemberTxData);
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
-    if (waitAllowTokenStatus === "success") {
+    if (allowTokenConfirmed) {
       writeRegisterMember();
     }
-  }, [waitAllowTokenStatus]);
+  }, [allowTokenConfirmed]);
 
   useEffect(() => {
     updateRegisterMemberTransactionStatus(registerMemberStatus);

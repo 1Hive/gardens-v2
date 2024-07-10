@@ -18,11 +18,9 @@ export default function Gardens() {
     data: gardens,
     fetching,
     errors,
-  } = useSubgraphQueryMultiChain<getTokenGardensQuery>(
-    getTokenGardensDocument,
-    {},
-    {},
-    [
+  } = useSubgraphQueryMultiChain<getTokenGardensQuery>({
+    query: getTokenGardensDocument,
+    changeScope: [
       {
         topic: "garden",
       },
@@ -30,7 +28,7 @@ export default function Gardens() {
         topic: "community",
       },
     ],
-  );
+  });
 
   useEffect(() => {
     if (errors.size) {

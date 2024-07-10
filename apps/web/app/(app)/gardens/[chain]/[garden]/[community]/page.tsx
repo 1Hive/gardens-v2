@@ -31,7 +31,7 @@ import {
   parseToken,
 } from "@/utils/numbers";
 import { Dnum } from "dnum";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Link from "next/link";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
@@ -42,14 +42,12 @@ export default function CommunityPage({
   params: { chain: number; garden: string; community: string };
 }) {
   const [covenant, setCovenant] = useState<string | undefined>();
-  const { data: result, error } = useSubgraphQueryByChain<getCommunityQuery>(
-    chain,
-    getCommunityDocument,
-    { communityAddr: communityAddr, tokenAddr: tokenAddr },
-    {},
-    [
-      { topic: "community", id: communityAddr, chainId: chain },
-      { topic: "member", chainId: chain, containerId: communityAddr },
+  const { data: result, error } = useSubgraphQuery<getCommunityQuery>({
+    query: getCommunityDocument,
+    variables: { communityAddr: communityAddr, tokenAddr: tokenAddr },
+    changeScope: [
+      { topic: "community", id: communityAddr },
+      { topic: "member", containerId: communityAddr },
     ],
   );
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();

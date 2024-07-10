@@ -13,7 +13,7 @@ import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
 import React, { useEffect } from "react";
 import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
 import { Address } from "viem";
@@ -27,25 +27,20 @@ export default function Garden({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error } = useSubgraphQueryByChain<getGardenQuery>(
-    chain,
-    getGardenDocument,
-    { addr: garden },
-    {},
-    [
-      { topic: "member", chainId: chain },
+  const { data: result, error } = useSubgraphQuery<getGardenQuery>({
+    query: getGardenDocument,
+    variables: { addr: garden },
+    changeScope: [
+      { topic: "member" },
       {
         topic: "community",
-
-        chainId: chain,
       },
       {
         topic: "garden",
         id: garden,
-        chainId: chain,
       },
     ],
-  );
+  });
 
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 

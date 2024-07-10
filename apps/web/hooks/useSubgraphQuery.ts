@@ -1,10 +1,11 @@
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { getContractsAddrByChain as getSubgraphAddrByChain } from "@/constants/contracts";
 import { useEffect, useRef, useState } from "react";
 import { ChainId } from "@/types";
 import { initUrqlClient } from "@/providers/urql";
 import { isEqual } from "lodash-es";
 import {
+  ChangeEventPayload,
   ChangeEventScope,
   SubscriptionId,
   usePubSubContext,
@@ -14,6 +15,10 @@ import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
+import { toast } from "react-toastify";
+import useChainIdFromPath from "./useChainIdFromPath";
+
+const pendingRefreshToastId = "pending-refresh";
 
 /**
  *  Fetches data from a subgraph by chain id
@@ -24,21 +29,30 @@ import {
  * @param changeScope  - optional, if provided, will subscribe to change events (see jsdoc in pubsub.context.tsx)
  * @returns
  */
-export default function useSubgraphQueryByChain<
+export default function useSubgraphQuery<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
->(
-  chainId: ChainId,
-  query: DocumentInput<any, Variables>,
-  variables: Variables = {} as Variables,
-  context?: Omit<OperationContext, "topic">,
-  changeScope?: ChangeEventScope[] | ChangeEventScope,
-  enabled: boolean = true,
-) {
+>({
+  chainId,
+  query,
+  variables = {} as Variables,
+  context,
+  changeScope: changeScope,
+  enabled = true,
+}: {
+  chainId?: ChainId;
+  query: DocumentInput<any, Variables>;
+  variables?: Variables;
+  context?: Omit<OperationContext, "topic">;
+  changeScope?: ChangeEventScope[] | ChangeEventScope;
+  enabled?: boolean;
+}) {
+  const pathChainId = useChainIdFromPath();
+  chainId = (chainId ?? pathChainId)!;
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const [fetching, setFetching] = useState(true);
-  const contractAddress = getContractsAddrByChain(chainId);
+  const subgraphAddress = getSubgraphAddrByChain(chainId);
   const [response, setResponse] = useState<
     Omit<Awaited<ReturnType<typeof fetch>>, "operation">
   >({ hasNext: true, stale: true, data: undefined, error: undefined });
@@ -50,8 +64,8 @@ export default function useSubgraphQueryByChain<
     latestResponse.current = response; // Update ref on every response change
   }, [response]);
 
-  if (!contractAddress) {
-    console.error(`No contract address found for chain ${chainId}`);
+  if (!subgraphAddress) {
+    console.error(`No subgraph address found for chain ${chainId}`);
   }
 
   useEffect(() => {
@@ -59,13 +73,16 @@ export default function useSubgraphQueryByChain<
       return;
     }
 
-    const onChangeEvent = () => {
-      refetch().then((res) => setResponse(res));
-    };
+    changeScope = Array.isArray(changeScope) ? changeScope : [changeScope];
+    changeScope.forEach((scope) => {
+      if (!scope.chainId) {
+        scope.chainId = chainId;
+      }
+    });
 
     subscritionId.current = subscribe(
       changeScope,
-      onChangeEvent.bind({
+      refetchFromOutside.bind({
         response,
         setResponse,
         chain: chainId,
@@ -82,16 +99,58 @@ export default function useSubgraphQueryByChain<
   const fetch = () =>
     urqlClient.query<Data>(query, variables, {
       ...context,
-      url: contractAddress?.subgraphUrl,
+      url: subgraphAddress?.subgraphUrl,
       requestPolicy: "network-only",
     });
 
+  const isDataAlreadyFetched = (
+    newFetchedData: Data,
+    payload?: ChangeEventPayload,
+  ) => {
+    if (!payload) {
+      return false;
+    }
+    if (payload.type === "add") {
+      const dataJsonString = JSON.stringify(newFetchedData).toLowerCase();
+      if (
+        payload.id &&
+        dataJsonString.includes(payload.id.toString().toLowerCase())
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const refetchFromOutside = async (payload?: ChangeEventPayload) => {
+    if (fetching) {
+      return;
+    }
+    console.log("Refetching from outside", { payload });
+    setFetching(true);
+    const res = await refetch(payload);
+    setResponse(res);
+    setFetching(false);
+    console.log("Refetched from outside", { payload, res });
+  };
+
   const refetch = async (
+    changePayload?: ChangeEventPayload,
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
+    console.log("Refetching", { retryCount });
     const result = await fetch();
+    console.log("Refetched", { result, retryCount });
     if (!retryCount) {
       retryCount = 0;
+      toast.loading("Pulling new data", {
+        toastId: pendingRefreshToastId,
+        autoClose: false,
+        style: {
+          width: "fit-content",
+          marginLeft: "auto",
+        },
+      });
     }
 
     if (result.error) {
@@ -99,8 +158,10 @@ export default function useSubgraphQueryByChain<
       return result;
     }
     if (
-      !isEqual(result.data, latestResponse.current.data) ||
-      retryCount >= CHANGE_EVENT_MAX_RETRIES
+      result.data &&
+      (!isEqual(result.data, latestResponse.current.data) ||
+        isDataAlreadyFetched(result.data, changePayload) ||
+        retryCount >= CHANGE_EVENT_MAX_RETRIES)
     ) {
       if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
         console.debug(
@@ -111,6 +172,12 @@ export default function useSubgraphQueryByChain<
           `⚡ Subgraph result updated after ${retryCount} retries.`,
         );
       }
+      setFetching(false);
+      try {
+        toast.dismiss(pendingRefreshToastId);
+      } catch (error) {
+        console.error("Error dismissing toast", error);
+      }
       return result;
     } else {
       console.debug(
@@ -118,7 +185,7 @@ export default function useSubgraphQueryByChain<
       );
       const delay = CHANGE_EVENT_INITIAL_DELAY * 2 ** retryCount;
       await delayAsync(delay);
-      return refetch(retryCount + 1);
+      return refetch(changePayload, retryCount + 1);
     }
   };
 
@@ -126,12 +193,18 @@ export default function useSubgraphQueryByChain<
     if (!enabled) return;
     const init = async () => {
       setFetching(true);
+      console.log("Fetching");
       const resp = await fetch();
+      console.log("Fetched", { resp });
       setResponse(resp);
       setFetching(false);
     };
     init();
   }, [enabled]);
 
-  return { ...response, refetch, fetching };
+  return {
+    ...response,
+    refetch: refetchFromOutside,
+    fetching,
+  };
 }
