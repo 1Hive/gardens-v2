@@ -62,7 +62,7 @@ export default function TokenGardenFaucet({ token }: FaucetProps) {
   };
 
   return connectedAccount ? (
-    <div className="fixed bottom-0 right-0 pb-3">
+    <div className="fixed bottom-0 left-2 pb-3">
       <button
         onClick={() => requestTokens()}
         disabled={isLoading}

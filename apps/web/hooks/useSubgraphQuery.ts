@@ -126,21 +126,17 @@ export default function useSubgraphQuery<
     if (fetching) {
       return;
     }
-    console.log("Refetching from outside", { payload });
     setFetching(true);
     const res = await refetch(payload);
     setResponse(res);
     setFetching(false);
-    console.log("Refetched from outside", { payload, res });
   };
 
   const refetch = async (
     changePayload?: ChangeEventPayload,
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
-    console.log("Refetching", { retryCount });
     const result = await fetch();
-    console.log("Refetched", { result, retryCount });
     if (!retryCount) {
       retryCount = 0;
       toast.loading("Pulling new data", {
@@ -193,9 +189,7 @@ export default function useSubgraphQuery<
     if (!enabled) return;
     const init = async () => {
       setFetching(true);
-      console.log("Fetching");
       const resp = await fetch();
-      console.log("Fetched", { resp });
       setResponse(resp);
       setFetching(false);
     };

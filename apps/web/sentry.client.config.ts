@@ -26,6 +26,10 @@ Sentry.init({
       blockAllMedia: true,
     }),
     Sentry.captureConsoleIntegration({ levels: ["error"] }),
-    Sentry.graphqlIntegration({}),
+    Sentry.feedbackIntegration({
+      // Additional SDK configuration goes in here, for example:
+      colorScheme: "light",
+      showBranding: false,
+    }),
   ],
 });
