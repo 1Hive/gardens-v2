@@ -7,7 +7,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "query-passport-account": "curl -X GET http://localhost:3000/api/passport/0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "query-all-scorer": "curl -X GET http://localhost:3000/api/passport/scores",
+    "get-sign-message": "curl -X GET http://localhost:3000/api/passport/signMessage",
+    "add-user-score": "curl -X POST http://localhost:3000/api/passport-oracle/writeScore -H 'Content-Type: application/json' -d '{\"user\":\"0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc\",\"score\":100}'",
+    "add-strategy": "curl -X POST http://localhost:3000/api/passport-oracle/addStrategy -H 'Content-Type: application/json' -d '{\"strategy\":\"0x4741b56dda17121054f6e286eefa2518f44f2b11\",\"threshold\":\"200000\"}'",
+    "daily-job": "curl -X GET http://localhost:3000/api/passport-oracle/dailyJob"
   },
   "dependencies": {
     "@allo-team/allo-v2-sdk": "^1.0.34",

@@ -13,21 +13,16 @@ export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> =
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  BigDecimal: { input: any; output: any; }
-  BigInt: { input: any; output: any; }
-  Bytes: { input: any; output: any; }
-  Int8: { input: any; output: any; }
-  Timestamp: { input: any; output: any; }
+  ID: string;
+  String: string;
+  Boolean: boolean;
+  Int: number;
+  Float: number;
+  BigDecimal: any;
+  BigInt: any;
+  Bytes: any;
+  Int8: any;
 };
-
-export type Aggregation_interval =
-  | 'hour'
-  | 'day';
 
 export type Allo = {
   id: Scalars['ID']['output'];
@@ -912,6 +907,254 @@ export type OrderDirection =
   | 'asc'
   | 'desc';
 
+export type PassportScorer = {
+  id: Scalars['ID'];
+  strategies?: Maybe<Array<PassportStrategy>>;
+  users?: Maybe<Array<PassportUser>>;
+};
+
+
+export type PassportScorerstrategiesArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PassportStrategy_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportStrategy_filter>;
+};
+
+
+export type PassportScorerusersArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PassportUser_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportUser_filter>;
+};
+
+export type PassportScorer_filter = {
+  id?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  strategies_?: InputMaybe<PassportStrategy_filter>;
+  users_?: InputMaybe<PassportUser_filter>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<PassportScorer_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<PassportScorer_filter>>>;
+};
+
+export type PassportScorer_orderBy =
+  | 'id'
+  | 'strategies'
+  | 'users';
+
+export type PassportStrategy = {
+  id: Scalars['ID'];
+  passportScorer: PassportScorer;
+  strategy: CVStrategy;
+  threshold: Scalars['BigInt'];
+  councilSafe: Scalars['String'];
+  active: Scalars['Boolean'];
+};
+
+export type PassportStrategy_filter = {
+  id?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  passportScorer?: InputMaybe<Scalars['String']>;
+  passportScorer_not?: InputMaybe<Scalars['String']>;
+  passportScorer_gt?: InputMaybe<Scalars['String']>;
+  passportScorer_lt?: InputMaybe<Scalars['String']>;
+  passportScorer_gte?: InputMaybe<Scalars['String']>;
+  passportScorer_lte?: InputMaybe<Scalars['String']>;
+  passportScorer_in?: InputMaybe<Array<Scalars['String']>>;
+  passportScorer_not_in?: InputMaybe<Array<Scalars['String']>>;
+  passportScorer_contains?: InputMaybe<Scalars['String']>;
+  passportScorer_contains_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_not_contains?: InputMaybe<Scalars['String']>;
+  passportScorer_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_starts_with?: InputMaybe<Scalars['String']>;
+  passportScorer_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_not_starts_with?: InputMaybe<Scalars['String']>;
+  passportScorer_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_ends_with?: InputMaybe<Scalars['String']>;
+  passportScorer_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_not_ends_with?: InputMaybe<Scalars['String']>;
+  passportScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_?: InputMaybe<PassportScorer_filter>;
+  strategy?: InputMaybe<Scalars['String']>;
+  strategy_not?: InputMaybe<Scalars['String']>;
+  strategy_gt?: InputMaybe<Scalars['String']>;
+  strategy_lt?: InputMaybe<Scalars['String']>;
+  strategy_gte?: InputMaybe<Scalars['String']>;
+  strategy_lte?: InputMaybe<Scalars['String']>;
+  strategy_in?: InputMaybe<Array<Scalars['String']>>;
+  strategy_not_in?: InputMaybe<Array<Scalars['String']>>;
+  strategy_contains?: InputMaybe<Scalars['String']>;
+  strategy_contains_nocase?: InputMaybe<Scalars['String']>;
+  strategy_not_contains?: InputMaybe<Scalars['String']>;
+  strategy_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  strategy_starts_with?: InputMaybe<Scalars['String']>;
+  strategy_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  strategy_not_starts_with?: InputMaybe<Scalars['String']>;
+  strategy_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  strategy_ends_with?: InputMaybe<Scalars['String']>;
+  strategy_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  strategy_not_ends_with?: InputMaybe<Scalars['String']>;
+  strategy_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  strategy_?: InputMaybe<CVStrategy_filter>;
+  threshold?: InputMaybe<Scalars['BigInt']>;
+  threshold_not?: InputMaybe<Scalars['BigInt']>;
+  threshold_gt?: InputMaybe<Scalars['BigInt']>;
+  threshold_lt?: InputMaybe<Scalars['BigInt']>;
+  threshold_gte?: InputMaybe<Scalars['BigInt']>;
+  threshold_lte?: InputMaybe<Scalars['BigInt']>;
+  threshold_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  threshold_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  councilSafe?: InputMaybe<Scalars['String']>;
+  councilSafe_not?: InputMaybe<Scalars['String']>;
+  councilSafe_gt?: InputMaybe<Scalars['String']>;
+  councilSafe_lt?: InputMaybe<Scalars['String']>;
+  councilSafe_gte?: InputMaybe<Scalars['String']>;
+  councilSafe_lte?: InputMaybe<Scalars['String']>;
+  councilSafe_in?: InputMaybe<Array<Scalars['String']>>;
+  councilSafe_not_in?: InputMaybe<Array<Scalars['String']>>;
+  councilSafe_contains?: InputMaybe<Scalars['String']>;
+  councilSafe_contains_nocase?: InputMaybe<Scalars['String']>;
+  councilSafe_not_contains?: InputMaybe<Scalars['String']>;
+  councilSafe_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  councilSafe_starts_with?: InputMaybe<Scalars['String']>;
+  councilSafe_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  councilSafe_not_starts_with?: InputMaybe<Scalars['String']>;
+  councilSafe_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  councilSafe_ends_with?: InputMaybe<Scalars['String']>;
+  councilSafe_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  councilSafe_not_ends_with?: InputMaybe<Scalars['String']>;
+  councilSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  active?: InputMaybe<Scalars['Boolean']>;
+  active_not?: InputMaybe<Scalars['Boolean']>;
+  active_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  active_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
+};
+
+export type PassportStrategy_orderBy =
+  | 'id'
+  | 'passportScorer'
+  | 'passportScorer__id'
+  | 'strategy'
+  | 'strategy__id'
+  | 'strategy__poolId'
+  | 'strategy__poolAmount'
+  | 'strategy__metadata'
+  | 'strategy__maxCVSupply'
+  | 'strategy__totalEffectiveActivePoints'
+  | 'strategy__isEnabled'
+  | 'threshold'
+  | 'councilSafe'
+  | 'active';
+
+export type PassportUser = {
+  id: Scalars['ID'];
+  passportScorer: PassportScorer;
+  userAddress: Scalars['String'];
+  score: Scalars['BigInt'];
+  lastUpdated: Scalars['BigInt'];
+};
+
+export type PassportUser_filter = {
+  id?: InputMaybe<Scalars['ID']>;
+  id_not?: InputMaybe<Scalars['ID']>;
+  id_gt?: InputMaybe<Scalars['ID']>;
+  id_lt?: InputMaybe<Scalars['ID']>;
+  id_gte?: InputMaybe<Scalars['ID']>;
+  id_lte?: InputMaybe<Scalars['ID']>;
+  id_in?: InputMaybe<Array<Scalars['ID']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+  passportScorer?: InputMaybe<Scalars['String']>;
+  passportScorer_not?: InputMaybe<Scalars['String']>;
+  passportScorer_gt?: InputMaybe<Scalars['String']>;
+  passportScorer_lt?: InputMaybe<Scalars['String']>;
+  passportScorer_gte?: InputMaybe<Scalars['String']>;
+  passportScorer_lte?: InputMaybe<Scalars['String']>;
+  passportScorer_in?: InputMaybe<Array<Scalars['String']>>;
+  passportScorer_not_in?: InputMaybe<Array<Scalars['String']>>;
+  passportScorer_contains?: InputMaybe<Scalars['String']>;
+  passportScorer_contains_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_not_contains?: InputMaybe<Scalars['String']>;
+  passportScorer_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_starts_with?: InputMaybe<Scalars['String']>;
+  passportScorer_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_not_starts_with?: InputMaybe<Scalars['String']>;
+  passportScorer_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_ends_with?: InputMaybe<Scalars['String']>;
+  passportScorer_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_not_ends_with?: InputMaybe<Scalars['String']>;
+  passportScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  passportScorer_?: InputMaybe<PassportScorer_filter>;
+  userAddress?: InputMaybe<Scalars['String']>;
+  userAddress_not?: InputMaybe<Scalars['String']>;
+  userAddress_gt?: InputMaybe<Scalars['String']>;
+  userAddress_lt?: InputMaybe<Scalars['String']>;
+  userAddress_gte?: InputMaybe<Scalars['String']>;
+  userAddress_lte?: InputMaybe<Scalars['String']>;
+  userAddress_in?: InputMaybe<Array<Scalars['String']>>;
+  userAddress_not_in?: InputMaybe<Array<Scalars['String']>>;
+  userAddress_contains?: InputMaybe<Scalars['String']>;
+  userAddress_contains_nocase?: InputMaybe<Scalars['String']>;
+  userAddress_not_contains?: InputMaybe<Scalars['String']>;
+  userAddress_not_contains_nocase?: InputMaybe<Scalars['String']>;
+  userAddress_starts_with?: InputMaybe<Scalars['String']>;
+  userAddress_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  userAddress_not_starts_with?: InputMaybe<Scalars['String']>;
+  userAddress_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+  userAddress_ends_with?: InputMaybe<Scalars['String']>;
+  userAddress_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  userAddress_not_ends_with?: InputMaybe<Scalars['String']>;
+  userAddress_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+  score?: InputMaybe<Scalars['BigInt']>;
+  score_not?: InputMaybe<Scalars['BigInt']>;
+  score_gt?: InputMaybe<Scalars['BigInt']>;
+  score_lt?: InputMaybe<Scalars['BigInt']>;
+  score_gte?: InputMaybe<Scalars['BigInt']>;
+  score_lte?: InputMaybe<Scalars['BigInt']>;
+  score_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  score_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  lastUpdated?: InputMaybe<Scalars['BigInt']>;
+  lastUpdated_not?: InputMaybe<Scalars['BigInt']>;
+  lastUpdated_gt?: InputMaybe<Scalars['BigInt']>;
+  lastUpdated_lt?: InputMaybe<Scalars['BigInt']>;
+  lastUpdated_gte?: InputMaybe<Scalars['BigInt']>;
+  lastUpdated_lte?: InputMaybe<Scalars['BigInt']>;
+  lastUpdated_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  lastUpdated_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<PassportUser_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<PassportUser_filter>>>;
+};
+
+export type PassportUser_orderBy =
+  | 'id'
+  | 'passportScorer'
+  | 'passportScorer__id'
+  | 'userAddress'
+  | 'score'
+  | 'lastUpdated';
+
 export type Query = {
   cvstrategy?: Maybe<CVStrategy>;
   cvstrategies: Array<CVStrategy>;
@@ -935,6 +1178,12 @@ export type Query = {
   tokenGardens: Array<TokenGarden>;
   allo?: Maybe<Allo>;
   allos: Array<Allo>;
+  passportScorer?: Maybe<PassportScorer>;
+  passportScorers: Array<PassportScorer>;
+  passportStrategy?: Maybe<PassportStrategy>;
+  passportStrategies: Array<PassportStrategy>;
+  passportUser?: Maybe<PassportUser>;
+  passportUsers: Array<PassportUser>;
   /** Access to subgraph metadata */
   _meta?: Maybe<_Meta_>;
 };
@@ -1133,6 +1382,60 @@ export type QueryallosArgs = {
   orderBy?: InputMaybe<Allo_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<Allo_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportScorerArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportScorersArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PassportScorer_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportScorer_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportStrategyArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportStrategiesArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PassportStrategy_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportStrategy_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportUserArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportUsersArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PassportUser_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportUser_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1633,6 +1936,12 @@ export type Subscription = {
   tokenGardens: Array<TokenGarden>;
   allo?: Maybe<Allo>;
   allos: Array<Allo>;
+  passportScorer?: Maybe<PassportScorer>;
+  passportScorers: Array<PassportScorer>;
+  passportStrategy?: Maybe<PassportStrategy>;
+  passportStrategies: Array<PassportStrategy>;
+  passportUser?: Maybe<PassportUser>;
+  passportUsers: Array<PassportUser>;
   /** Access to subgraph metadata */
   _meta?: Maybe<_Meta_>;
 };
@@ -1836,6 +2145,60 @@ export type SubscriptionallosArgs = {
 };
 
 
+export type SubscriptionpassportScorerArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportScorersArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PassportScorer_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportScorer_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportStrategyArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportStrategiesArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PassportStrategy_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportStrategy_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportUserArgs = {
+  id: Scalars['ID'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportUsersArgs = {
+  skip?: InputMaybe<Scalars['Int']>;
+  first?: InputMaybe<Scalars['Int']>;
+  orderBy?: InputMaybe<PassportUser_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportUser_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
 export type Subscription_metaArgs = {
   block?: InputMaybe<Block_height>;
 };
@@ -2020,9 +2383,7 @@ export type _Block_ = {
   /** The block number */
   number: Scalars['Int']['output'];
   /** Integer representation of the timestamp stored in blocks for the chain */
-  timestamp?: Maybe<Scalars['Int']['output']>;
-  /** The hash of the parent block */
-  parentHash?: Maybe<Scalars['Bytes']['output']>;
+  timestamp?: Maybe<Scalars['Int']>;
 };
 
 /** The type for the top-level _meta field */
@@ -2092,6 +2453,18 @@ export type _SubgraphErrorPolicy_ =
   allo: InContextSdkMethod<Query['allo'], QueryalloArgs, MeshContext>,
   /** null **/
   allos: InContextSdkMethod<Query['allos'], QueryallosArgs, MeshContext>,
+  /** null **/
+  passportScorer: InContextSdkMethod<Query['passportScorer'], QuerypassportScorerArgs, MeshContext>,
+  /** null **/
+  passportScorers: InContextSdkMethod<Query['passportScorers'], QuerypassportScorersArgs, MeshContext>,
+  /** null **/
+  passportStrategy: InContextSdkMethod<Query['passportStrategy'], QuerypassportStrategyArgs, MeshContext>,
+  /** null **/
+  passportStrategies: InContextSdkMethod<Query['passportStrategies'], QuerypassportStrategiesArgs, MeshContext>,
+  /** null **/
+  passportUser: InContextSdkMethod<Query['passportUser'], QuerypassportUserArgs, MeshContext>,
+  /** null **/
+  passportUsers: InContextSdkMethod<Query['passportUsers'], QuerypassportUsersArgs, MeshContext>,
   /** Access to subgraph metadata **/
   _meta: InContextSdkMethod<Query['_meta'], Query_metaArgs, MeshContext>
   };
@@ -2145,6 +2518,18 @@ export type _SubgraphErrorPolicy_ =
   allo: InContextSdkMethod<Subscription['allo'], SubscriptionalloArgs, MeshContext>,
   /** null **/
   allos: InContextSdkMethod<Subscription['allos'], SubscriptionallosArgs, MeshContext>,
+  /** null **/
+  passportScorer: InContextSdkMethod<Subscription['passportScorer'], SubscriptionpassportScorerArgs, MeshContext>,
+  /** null **/
+  passportScorers: InContextSdkMethod<Subscription['passportScorers'], SubscriptionpassportScorersArgs, MeshContext>,
+  /** null **/
+  passportStrategy: InContextSdkMethod<Subscription['passportStrategy'], SubscriptionpassportStrategyArgs, MeshContext>,
+  /** null **/
+  passportStrategies: InContextSdkMethod<Subscription['passportStrategies'], SubscriptionpassportStrategiesArgs, MeshContext>,
+  /** null **/
+  passportUser: InContextSdkMethod<Subscription['passportUser'], SubscriptionpassportUserArgs, MeshContext>,
+  /** null **/
+  passportUsers: InContextSdkMethod<Subscription['passportUsers'], SubscriptionpassportUsersArgs, MeshContext>,
   /** Access to subgraph metadata **/
   _meta: InContextSdkMethod<Subscription['_meta'], Subscription_metaArgs, MeshContext>
   };
