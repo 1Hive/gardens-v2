@@ -1,13 +1,9 @@
 "use client";
 
-import {
-  TokenGarden,
-  getPoolDataDocument,
-  getPoolDataQuery,
-} from "#/subgraph/.graphclient";
+import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
 import React, { useEffect, useState } from "react";
@@ -18,11 +14,10 @@ export default function Page({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data } = useSubgraphQueryByChain<getPoolDataQuery>(
-    chain,
-    getPoolDataDocument,
-    { poolId: poolId, garden: garden },
-  );
+  const { data } = useSubgraphQuery<getPoolDataQuery>({
+    query: getPoolDataDocument,
+    variables: { poolId: poolId, garden: garden },
+  });
   const strategyObj = data?.cvstrategies?.[0];
 
   const [metadata, setMetadata] = useState({ title: "", description: "" });
@@ -44,9 +39,6 @@ export default function Page({
     return <div>{`Pool ${poolId} not found`}</div>;
   }
 
-  const pointSystem = strategyObj.config?.pointSystem;
-  const strategyAddr = strategyObj.id as Address;
-  const communityAddress = strategyObj.registryCommunity.id as Address;
   const alloInfo = data?.allos[0];
   const proposalType = strategyObj.config?.proposalType as number;
   const poolAmount = strategyObj.poolAmount as number;
@@ -62,7 +54,7 @@ export default function Page({
   if (!tokenGarden) {
     return <LoadingSpinner />;
   }
-  
+
   return (
     <div className="page-layout">
       <section className="section-layout">
