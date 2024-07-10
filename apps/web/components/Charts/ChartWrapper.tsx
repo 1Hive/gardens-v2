@@ -20,35 +20,40 @@ export const ChartWrapper = ({
   message,
   growing,
 }: ChartWrapperProps) => {
-  const iconClassname = `h-6 w-6 text-bold ${growing ? "text-success" : "text-error"}`;
+  const growthClassname = growing
+    ? "text-primary-content"
+    : "text-danger-content";
+  const iconClassname = `h-6 w-6 text-bold ${growthClassname}`;
 
   return (
     <>
-      <div className="border2 flex h-10 w-full flex-col gap-0 rounded-lg rounded-t-lg">
-        {children}
+      <div className="mt-10 flex flex-col gap-6">
+        {/* chart title */}
+        <h3>Conviction voting chart</h3>
 
-        <div
-          className={`w-full px-2 text-left font-semibold text-black last:rounded-b-lg ${cn(
-            {
-              "text-xs": size === "sm",
-            },
-          )} `}
-        >
+        <div className="h-5">legends</div>
+
+        {/* CVChart - standard */}
+        <div className=" h-20">{children}</div>
+
+        {/* Growth and message to user */}
+        <div className="">
           <div className="space-y-2">
             {growing !== null && (
-              <p className="flex items-center gap-2">
-                Conviction {growing ? "is growing" : "is decreasing"}
-                <span>
-                  {growing ? (
-                    <ArrowUpRightIcon className={iconClassname} />
-                  ) : (
-                    <ArrowDownRightIcon className={iconClassname} />
-                  )}{" "}
-                </span>
-              </p>
+              <>
+                <p className={`flex items-center gap-2 ${growthClassname}`}>
+                  Conviction {growing ? "is growing" : "is decreasing"}!
+                  <span>
+                    {growing ? (
+                      <ArrowUpRightIcon className={iconClassname} />
+                    ) : (
+                      <ArrowDownRightIcon className={iconClassname} />
+                    )}{" "}
+                  </span>
+                </p>
+                <p>{message}</p>
+              </>
             )}
-
-            <p>{message}</p>
           </div>
         </div>
       </div>

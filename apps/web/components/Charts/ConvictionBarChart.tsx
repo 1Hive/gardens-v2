@@ -71,16 +71,17 @@ export const ConvictionBarChart = ({
       ],
     },
     //2) Conviction < Threshold < Total Support --- working ...
-    // convictionLTThresholdLTSupport: {
-    //   condition: () =>
-    //     currentConvictionPct < thresholdPct && thresholdPct < proposalSupportPct,
-    //   details: [
-    //     {
-    //       message: "This proposal will pass within X days ...",
-    //       growing: true,
-    //     },
-    //   ],
-    // },
+    convictionLTThresholdLTSupport: {
+      condition: () =>
+        currentConvictionPct < thresholdPct &&
+        thresholdPct < proposalSupportPct,
+      details: [
+        {
+          message: "This proposal will pass within X days ...",
+          growing: true,
+        },
+      ],
+    },
     //3) Total Support < Conviction < Threshold
     supportLTConvictionLTThreshold: {
       condition: () =>
@@ -184,8 +185,9 @@ export const ConvictionBarChart = ({
           ...markLine,
           data: [
             {
-              // xAxis: thresholdPct,
-              xAxis: 8,
+              //xAxis: thresholdPct,
+              xAxis: 7.5,
+
               symbol:
                 "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
               symbolSize: [16, 16],
@@ -196,7 +198,7 @@ export const ConvictionBarChart = ({
           //   // distance: 0,
           // },
           lineStyle: {
-            width: 1,
+            width: 2,
             color: "#191919",
           },
           z: 50,
@@ -223,6 +225,8 @@ export const ConvictionBarChart = ({
         type: "solid",
       },
     };
+
+  const SupportBgThanConv = proposalSupportPct > currentConvictionPct;
 
   const option: EChartsOption = {
     // title: {
@@ -251,8 +255,8 @@ export const ConvictionBarChart = ({
 
     grid: {
       show: false,
-      left: "5%",
-      right: "5%",
+      left: "0%",
+      right: "2%",
       top: "25%",
       bottom: "25%",
       containLabel: false,
@@ -277,7 +281,7 @@ export const ConvictionBarChart = ({
         stack: "a",
         itemStyle: {
           color: "#9EE157",
-          borderRadius: [20, 20, 20, 20],
+          borderRadius: [20, 20],
         },
         // label: {
         //   show: true,
@@ -286,22 +290,23 @@ export const ConvictionBarChart = ({
         //   fontSize: 12,
         //   formatter: "{a}: {@score} %",
         // },
-        z: 1,
+        z: SupportBgThanConv ? 2 : 1,
         barWidth: 30,
-        //data: [proposalSupportPct],
         data: [6],
+        //data: [proposalSupportPct],
       },
       {
         type: "bar",
         name: "Conviction",
         itemStyle: {
           color: "#65AD18",
-          borderRadius: [20, 20, 20, 20],
+          borderRadius: [20, 20],
         },
         barWidth: 30,
-        z: 2,
-        //data: [currentConvictionPct],
+        z: 1,
+
         data: [4],
+        //data: [currentConvictionPct],
         //markLine: markLineCv,
       },
       {
@@ -309,9 +314,10 @@ export const ConvictionBarChart = ({
         name: !isSignalingType ? "Threshold" : "",
         stack: "",
         barWidth: 30,
-        data: [8],
+        data: [7.5],
+        //data: [thresholdPct],
         itemStyle: {
-          borderRadius: [20, 20, 20, 20],
+          borderRadius: [20, 20],
         },
         // data: [
         //   Number(supportNeeded) < 0 ? 0 : thresholdPct - proposalSupportPct,
@@ -327,17 +333,23 @@ export const ConvictionBarChart = ({
 
   return (
     <>
-      {/* <ChartWrapper
-        title={"Proposal Conviction Chart"}
-        message={message}
-        growing={growing}
-      > */}
-      {/* <div className="w-full border-2 border-violet-500"> */}
-
-      <EChartsReact option={option} style={{ height: "100%", width: "100%" }} />
-
-      {/* </div> */}
-      {/* </ChartWrapper> */}
+      {compact ? (
+        <EChartsReact
+          option={option}
+          style={{ height: "100%", width: "100%" }}
+        />
+      ) : (
+        <ChartWrapper
+          title={"Proposal Conviction Chart"}
+          message={message}
+          growing={growing}
+        >
+          <EChartsReact
+            option={option}
+            style={{ height: "100%", width: "100%" }}
+          />
+        </ChartWrapper>
+      )}
     </>
   );
 };

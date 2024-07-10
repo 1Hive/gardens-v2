@@ -277,23 +277,21 @@ export default function Proposal({
         ) : (
           <>
             {/* TODO: momentary for test purposes */}
-            <div className="mt-10 flex h-10 w-[250px] justify-evenly">
-              <ConvictionBarChart
-                currentConvictionPct={currentConvictionPct}
-                thresholdPct={thresholdPct}
-                proposalSupportPct={totalSupportPct}
-                isSignalingType={isSignalingType}
-                compact
-              />
-            </div>
-            <div className="mt-10 flex h-20 w-full justify-evenly">
-              <ConvictionBarChart
-                currentConvictionPct={currentConvictionPct}
-                thresholdPct={thresholdPct}
-                proposalSupportPct={totalSupportPct}
-                isSignalingType={isSignalingType}
-              />
-            </div>
+
+            {/* <ConvictionBarChart
+              currentConvictionPct={currentConvictionPct}
+              thresholdPct={thresholdPct}
+              proposalSupportPct={totalSupportPct}
+              isSignalingType={isSignalingType}
+              compact
+            /> */}
+
+            <ConvictionBarChart
+              currentConvictionPct={currentConvictionPct}
+              thresholdPct={thresholdPct}
+              proposalSupportPct={totalSupportPct}
+              isSignalingType={isSignalingType}
+            />
           </>
         )}
       </section>
