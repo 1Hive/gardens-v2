@@ -1,9 +1,9 @@
 "use client";
-import React from "react";
-import { Addreth } from "addreth";
 import { Address } from "viem";
-import { chainDataMap } from "@/configs/chainServer";
+import { Addreth } from "addreth";
 import LoadingSpinner from "./LoadingSpinner";
+import React from "react";
+import { chainDataMap } from "@/configs/chainServer";
 import useChainFromPath from "@/hooks/useChainFromPath";
 
 type EthAddressProps = {

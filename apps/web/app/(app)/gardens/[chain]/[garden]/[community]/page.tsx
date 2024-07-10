@@ -1,16 +1,16 @@
 "use client";
 
-import { commImg, groupFlowers } from "@/assets";
 import React, { useEffect, useState } from "react";
+import { commImg, groupFlowers } from "@/assets";
 import Image from "next/image";
 import {
+  Button,
+  DisplayNumber,
   EthAddress,
-  Statistic,
+  IncreasePower,
   PoolCard,
   RegisterMember,
-  DisplayNumber,
-  IncreasePower,
-  Button,
+  Statistic,
 } from "@/components";
 import { Address } from "viem";
 import {
@@ -50,7 +50,7 @@ export default function CommunityPage({
       { topic: "member", containerId: communityAddr },
     ],
   });
-  
+
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   useEffect(() => {
     if (error) {
@@ -305,7 +305,7 @@ export default function CommunityPage({
           covenant ? (
             <p>{covenant}</p>
           ) : (
-            <LoadingSpinner></LoadingSpinner>
+            <LoadingSpinner />
           )
         ) : (
           <p className="italic">No covenant was submitted.</p>

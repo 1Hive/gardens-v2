@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       return NextResponse.json(
         { message: "Error uploading json to IPFS" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } else if (contentType?.startsWith("multipart/form-data")) {
