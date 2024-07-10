@@ -113,7 +113,7 @@ export default function Pool({
       <section className="section-layout flex flex-col gap-0 overflow-hidden">
         <header className="mb-2">
           <h2>
-            {ipfsResult.title} - Pool #{poolId}
+            {ipfsResult.title} #{poolId}
           </h2>
           <EthAddress address={strategyAddr} />
         </header>
@@ -181,7 +181,7 @@ export default function Pool({
             strategy={strategyObj}
             alloInfo={alloInfo}
             communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/pool/${poolId}/create-proposal`}
+            createProposalUrl={`/gardens/${chain}/${garden}/${poolId}/create-proposal`}
             proposalType={proposalType}
           />
         </>

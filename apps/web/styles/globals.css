@@ -80,7 +80,7 @@ h2 {
   font-family: var(--font-chakra);
   font-size: 36px;
   font-weight: 600;
-  line-height: 46.8px;
+  line-height: 46px;
   text-align: left;
 
   /* @media only screen and (max-width: 680px) {
@@ -88,23 +88,12 @@ h2 {
   } */
 }
 
-h3 {
-  font-family: var(--font-chakra);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 26.63px;
-  text-align: left;
-
-  /* @media only screen and (max-width: 680px) {
-    font-size: 1.75rem;
-  } */
-}
-
+h3,
 h4 {
   font-family: var(--font-inter);
   font-size: 24px;
   font-weight: 500;
-  line-height: 29.05px;
+  line-height: auto;
   text-align: left;
 
   /* @media only screen and (max-width: 680px) {
@@ -113,20 +102,22 @@ h4 {
 }
 
 /* subtitle 1 */
-h5 {
+h5,
+.subtitle {
   font-family: var(--font-inter);
   font-size: 18px;
   font-weight: 500;
-  line-height: 18.4px;
+  line-height: 22px;
   text-align: left;
 }
 
 /* subtitle 2 */
-h6 {
+h6,
+.subtitle2 {
   font-family: var(--font-inter);
   font-size: 16px;
   font-weight: 500;
-  line-height: 19.36px;
+  line-height: 20px;
   text-align: left;
 }
 

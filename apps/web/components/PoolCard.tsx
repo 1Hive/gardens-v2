@@ -39,7 +39,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
   const poolType = config?.proposalType as number | undefined;
 
   return (
-    <Card href={`${pathname}/pool/${poolId}`}>
+    <Card href={`${pathname}/${poolId}`}>
       <header className="mb-4 flex w-full items-center justify-between">
         <h4>Pool #{poolId}</h4>
         <Badge type={poolType} />
