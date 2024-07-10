@@ -1,4 +1,3 @@
-import cn from "classnames";
 import { ReactNode } from "react";
 import {
   ArrowDownRightIcon,
@@ -7,16 +6,12 @@ import {
 
 type ChartWrapperProps = {
   children?: ReactNode;
-  size?: "sm" | "md" | "lg";
-  title?: string;
   message?: string;
   growing?: boolean | null;
 };
 
 export const ChartWrapper = ({
   children,
-  size = "md",
-  title,
   message,
   growing,
 }: ChartWrapperProps) => {
@@ -34,7 +29,7 @@ export const ChartWrapper = ({
         <div className="h-5">legends</div>
 
         {/* CVChart - standard */}
-        <div className=" h-20">{children}</div>
+        <div className="h-30">{children}</div>
 
         {/* Growth and message to user */}
         <div className="">

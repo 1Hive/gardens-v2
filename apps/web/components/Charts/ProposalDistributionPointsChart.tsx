@@ -57,7 +57,7 @@ export const ProposalDistributionPointsChart = ({
     ],
   };
   return (
-    <ChartWrapper title="Proposals Support Distribution - %" size="md">
+    <ChartWrapper>
       <ChartSetup options={OPTION_TEST} />
     </ChartWrapper>
   );
