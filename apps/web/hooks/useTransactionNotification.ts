@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { WriteContractResult } from "wagmi/actions";
-import { useViemClient } from "./useViemClient";
 import { Address } from "viem";
-import { chainDataMap } from "@/configs/chainServer";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 
 type TransactionStatus = "error" | "success" | "loading" | "idle";
 type TransactionData = WriteContractResult | undefined;
@@ -32,8 +29,6 @@ export const useTransactionNotification = (
   const [promiseReject, setPromiseReject] = useState<
     TransactionFunction | undefined
   >(undefined);
-  const urlChainId = useChainIdFromPath();
-  const viemClient = useViemClient();
 
   const transactionPromise = () => {
     return new Promise<TransactionPayload>((resolve, reject) => {
@@ -67,7 +62,7 @@ export const useTransactionNotification = (
           console.log("Tx hash: " + data.transactionData?.hash);
           // const receipt = async () =>
           //   await viemClient.waitForTransactionReceipt({
-          //     confirmations: chainDataMap[chainId].confirmations,
+          //     confirmations: [chainId].confirmations,
           //     hash: data.transactionData?.hash || "0x",
           //   });
 
@@ -75,7 +70,7 @@ export const useTransactionNotification = (
           // toast
           //   .promise(receipt, {
           //     pending: "Waiting for block confirmations...",
-          //     success: `Transaction sent with ${chainDataMap[chainId].confirmations} confirmations`,
+          //     success: `Transaction sent with ${[chainId].confirmations} confirmations`,
           //     error: "Something went wrong",
           //   })
           //   .then((data) => {

@@ -8,7 +8,7 @@ import { FormLink } from "@/components";
 import React, { useEffect } from "react";
 import { CubeTransparentIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
 import { Address } from "viem";
@@ -20,25 +20,20 @@ export default function Garden({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error } = useSubgraphQueryByChain<getGardenQuery>(
-    chain,
-    getGardenDocument,
-    { addr: garden },
-    {},
-    [
-      { topic: "member", chainId: chain },
+  const { data: result, error } = useSubgraphQuery<getGardenQuery>({
+    query: getGardenDocument,
+    variables: { addr: garden },
+    changeScope: [
+      { topic: "member" },
       {
         topic: "community",
-
-        chainId: chain,
       },
       {
         topic: "garden",
         id: garden,
-        chainId: chain,
       },
     ],
-  );
+  });
 
   useEffect(() => {
     if (error) {
@@ -75,7 +70,7 @@ export default function Garden({
   return (
     <div className="page-layout">
       <header className="section-layout flex flex-col gap-10 p-10 md:flex-row ">
-        <div className="flex h-[283px] w-[311px] items-center justify-center overflow-hidden rounded-2xl min-h-[283px] min-w-[311px]">
+        <div className="flex h-[283px] min-h-[283px] w-[311px] min-w-[311px] items-center justify-center overflow-hidden rounded-2xl">
           <Image
             src={ecosystem}
             width={311}
