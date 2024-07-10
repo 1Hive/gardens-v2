@@ -49,9 +49,9 @@ export default function CommunityPage({
       { topic: "community", id: communityAddr },
       { topic: "member", containerId: communityAddr },
     ],
-  );
+  });
+  
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
-
   useEffect(() => {
     if (error) {
       console.error("Error while fetching community data: ", error);
