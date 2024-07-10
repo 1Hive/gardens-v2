@@ -3,8 +3,8 @@ import React from "react";
 import { Addreth } from "addreth";
 import { Address } from "viem";
 import { chainDataMap } from "@/configs/chainServer";
-import useChainIdFromPath from "@/hooks/useChainIdFromtPath";
 import LoadingSpinner from "./LoadingSpinner";
+import useChainFromPath from "@/hooks/useChainFromPath";
 
 type EthAddressProps = {
   address?: Address;
@@ -21,6 +21,7 @@ export const EthAddress = ({
   actions = "all",
   icon = false,
 }: EthAddressProps) => {
+  const chain = useChainFromPath();
   // const theme: ThemeDeclaration = {
   //   textColor: "black",
   //   // secondaryColor: "black",
@@ -36,9 +37,8 @@ export const EthAddress = ({
   //   popupRadius: 12,
   //   popupShadow: "black",
   // };
-  const urlChainId = useChainIdFromPath();
 
-  return address ? (
+  return address && chain ? (
     <Addreth
       // theme={theme}
       theme={{
@@ -52,10 +52,11 @@ export const EthAddress = ({
       icon={icon}
       address={address as Address}
       explorer={(address) => ({
-        name: chainDataMap[urlChainId].name,
-        url: `${chainDataMap[urlChainId].explorer}${address}`,
-        accountUrl: `${chainDataMap[urlChainId].explorer}${address}`,
+        name: chainDataMap[chain.id].name,
+        url: `${chainDataMap[chain.id].explorer}${address}`,
+        accountUrl: `${chainDataMap[chain.id].explorer}${address}`,
       })}
+      ens={!chain?.testnet}
     />
   ) : (
     <LoadingSpinner></LoadingSpinner>

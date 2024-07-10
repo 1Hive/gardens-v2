@@ -1,22 +1,17 @@
-import { getChain } from "@/configs/chainServer";
 import { useEffect, useState } from "react";
 import { PublicClient, createPublicClient, http } from "viem";
-import { useAccount, useChainId } from "wagmi";
+import { useChainId } from "wagmi";
+import { getChain } from "@/configs/chainServer";
+import useChainFromPath from "./useChainFromPath";
 
 export const useViemClient = function () {
-  const { isConnected } = useAccount();
+  const chainFromPath = useChainFromPath();
   const chainId = useChainId();
-
-  let chain: number | string = "";
-
-  // if (isConnected)
-  chain = chainId;
-
-  const chainObj = getChain(chain);
-
+  const chain = chainFromPath ?? getChain(chainId);
+  
   const [viemClient, setViemClient] = useState<PublicClient>(
     createPublicClient({
-      chain: chainObj,
+      chain,
       transport: http(),
     }),
   );
@@ -24,11 +19,11 @@ export const useViemClient = function () {
   useEffect(() => {
     setViemClient(
       createPublicClient({
-        chain: chainObj,
+        chain,
         transport: http(),
       }),
     );
-  }, [chainId]);
+  }, [chain]);
 
   return viemClient;
 };

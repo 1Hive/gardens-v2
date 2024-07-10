@@ -1,16 +1,7 @@
-import { extractAddr } from "#/subgraph/src/scripts/last-addr";
-import {
-  Abi,
-  AbiFunctionNotFoundError,
-  AbiItem,
-  Address,
-  GetAbiItemParameters,
-  getAbiItem,
-} from "viem";
-import { publicClient } from "@/configs/wagmiConfig";
+import { Abi, Address } from "viem";
 import "viem/window";
 import { createWalletClient, custom } from "viem";
-import { arbitrumSepolia, localhost, mainnet, sepolia } from "viem/chains";
+import { localhost } from "viem/chains";
 
 import cvStrategyJson from "../../../pkg/contracts/out/CVStrategy.sol/CVStrategy.json" assert { type: "json" };
 
