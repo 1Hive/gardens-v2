@@ -36,8 +36,7 @@ const schemaAST = {
       "kind": "DirectiveDefinition",
       "description": {
         "kind": "StringValue",
-        "value": "Marks the GraphQL type as indexable entity.  Each type that should be an entity is required to be annotated with this directive.",
-        "block": true
+        "value": "Marks the GraphQL type as indexable entity.  Each type that should be an entity is required to be annotated with this directive."
       },
       "name": {
         "kind": "Name",
@@ -56,8 +55,7 @@ const schemaAST = {
       "kind": "DirectiveDefinition",
       "description": {
         "kind": "StringValue",
-        "value": "Defined a Subgraph ID for an object type",
-        "block": true
+        "value": "Defined a Subgraph ID for an object type"
       },
       "name": {
         "kind": "Name",
@@ -95,8 +93,7 @@ const schemaAST = {
       "kind": "DirectiveDefinition",
       "description": {
         "kind": "StringValue",
-        "value": "creates a virtual field on the entity that may be queried but cannot be set manually through the mappings API.",
-        "block": true
+        "value": "creates a virtual field on the entity that may be queried but cannot be set manually through the mappings API."
       },
       "name": {
         "kind": "Name",
