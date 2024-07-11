@@ -9,7 +9,7 @@ module.exports = {
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
   ],
-  ignorePatterns: ["node_modules", "dist"],
+  ignorePatterns: ["node_modules", "dist", "src/generated.ts", "public"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: "./tsconfig.json",
