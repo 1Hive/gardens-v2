@@ -116,11 +116,16 @@ export default function Proposal({
     enabled: !!proposalIdNumber,
   });
 
+  const isProposalEnded =
+    !!proposalData &&
+    (proposalStatus[proposalData.proposalStatus] !== "executed" ||
+      proposalStatus[proposalData.proposalStatus] !== "cancelled");
+
   const { data: updateConvictionLast } = useContractRead({
     ...cvStrategyContract,
     functionName: "updateProposalConviction" as any, // TODO: fix CVStrategy.updateProposalConviction to view in contract
     args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
+    enabled: !!proposalIdNumber && !isProposalEnded,
   }) as { data: bigint | undefined };
 
   const { data: maxCVSupply } = useContractRead({
@@ -135,7 +140,7 @@ export default function Proposal({
     !ipfsResult ||
     !maxCVSupply ||
     !totalEffectiveActivePoints ||
-    updateConvictionLast == null
+    (updateConvictionLast == null && !isProposalEnded)
   ) {
     return (
       <div className="mt-96">
@@ -173,7 +178,7 @@ export default function Proposal({
   // console.log(totalEffectiveActivePoints);
   console.log("totalEffectiveActivePoints:  %s", totalEffectiveActivePoints);
   // console.log(updateConvictionLast);
-  console.log("updateConvictionLast:        %s", updateConvictionLast);
+  console.log("updateConvictionLast:        ", updateConvictionLast);
   // console.log(convictionLast);
   console.log("convictionLast:              %s", convictionLast);
 
@@ -207,7 +212,7 @@ export default function Proposal({
   // );
 
   let currentConvictionPct = calculatePercentageBigInt(
-    BigInt(updateConvictionLast),
+    BigInt(updateConvictionLast ?? 0),
     maxCVSupply,
     tokenDecimals,
   );
@@ -270,9 +275,11 @@ export default function Proposal({
       <section className="section-layout">
         <h2>Metrics</h2>
         {/* TODO: need designs for this entire section */}
-        {status && proposalStatus[status] == "executed" ? (
-          <div className="badge badge-success p-4 text-white">
-            Proposal passed and executed successfully
+        {status && proposalStatus[status] === "executed" ? (
+          <div className="my-8 flex w-full justify-center">
+            <div className="badge badge-success p-4 text-primary">
+              Proposal passed and executed successfully
+            </div>
           </div>
         ) : (
           <div className="mt-10 flex justify-evenly">
