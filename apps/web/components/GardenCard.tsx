@@ -2,11 +2,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import { Arbitrum, GnosisGno } from "@thirdweb-dev/chain-icons";
 import { Button } from ".";
 import { gardenLand } from "@/assets";
 import { getTokenGardensQuery } from "#/subgraph/.graphclient";
 import { getChain, ChainIcon } from "@/configs/chainServer";
-import { Arbitrum, GnosisGno } from "@thirdweb-dev/chain-icons";
 
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
@@ -22,7 +22,7 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
   return (
     <div className="border2 relative flex max-w-[320px] flex-col overflow-hidden rounded-lg border-black bg-surface shadow">
       <div className="flex flex-col gap-2 p-2">
-        <div className="card relative"></div>
+        <div className="card relative" />
         <div className="flex flex-col items-center gap-1">
           <h4 className="text-2xl font-bold">{name}</h4>
           <p className="text-center">{symbol}</p>

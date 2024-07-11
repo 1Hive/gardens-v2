@@ -34,10 +34,10 @@ export function Breadcrumbs() {
           ? truncateString(segment)
           : segment;
 
-        if (!!titles) {
+        if (titles) {
           // index correction as first 2 segments are /gardens/[chainId]
           const title = titles[index - 2];
-          if (!!title) displayLabel = title;
+          if (title) {displayLabel = title;}
         }
         return { href, label: displayLabel };
       })
@@ -51,11 +51,11 @@ export function Breadcrumbs() {
     })();
   }, [path]);
 
-  if (!breadcrumbs.length) return <></>;
+  if (!breadcrumbs.length) {return <></>;}
 
   return (
     <>
-      <div className="my-[2px] border-l-2 border-solid border-neutral-soft-content"></div>
+      <div className="my-[2px] border-l-2 border-solid border-neutral-soft-content" />
       <div aria-label="Breadcrumbs" className="flex w-full items-center">
         <ol className="flex w-full items-center overflow-hidden">
           {breadcrumbs.map(({ href, label }, index) => (

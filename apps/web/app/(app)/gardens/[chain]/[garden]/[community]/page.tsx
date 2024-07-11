@@ -1,8 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { commImg, groupFlowers } from "@/assets";
 import Image from "next/image";
+import { Address } from "viem";
+import {
+  CurrencyDollarIcon,
+  ExclamationCircleIcon,
+  PlusIcon,
+  RectangleGroupIcon,
+} from "@heroicons/react/24/outline";
+import { Dnum } from "dnum";
+import Link from "next/link";
+import { commImg, groupFlowers } from "@/assets";
 import {
   Button,
   DisplayNumber,
@@ -12,17 +21,10 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
-import { Address } from "viem";
 import {
   getCommunityDocument,
   getCommunityQuery,
 } from "#/subgraph/.graphclient";
-import {
-  CurrencyDollarIcon,
-  ExclamationCircleIcon,
-  PlusIcon,
-  RectangleGroupIcon,
-} from "@heroicons/react/24/outline";
 import { poolTypes } from "@/types";
 import {
   SCALE_PRECISION,
@@ -30,10 +32,8 @@ import {
   dn,
   parseToken,
 } from "@/utils/numbers";
-import { Dnum } from "dnum";
 import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import Link from "next/link";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 
 export default function CommunityPage({

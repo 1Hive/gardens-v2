@@ -1,12 +1,12 @@
 "use client";
 import React from "react";
-import { GardensLogo, newLogo } from "@/assets";
 import Link from "next/link";
-import { navItems } from "@/constants/navigation";
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { ConnectWallet } from "@/components";
 import Image from "next/image";
+import { ConnectWallet } from "@/components";
+import { navItems } from "@/constants/navigation";
+import { GardensLogo, newLogo } from "@/assets";
 
 export function NavBar() {
   return (

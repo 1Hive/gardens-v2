@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
-import { ChartWrapper } from "./ChartWrapper";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
+import { ChartWrapper } from "./ChartWrapper";
 
 type ScenarioMapping = {
   condition: () => boolean;

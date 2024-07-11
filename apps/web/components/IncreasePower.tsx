@@ -1,20 +1,20 @@
 "use client";
 
-import { erc20ABI, registryCommunityABI } from "@/src/generated";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { Address, useAccount, useBalance, useContractRead } from "wagmi";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
+import { parseUnits } from "viem";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Button } from "./Button";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { DisplayNumber } from "./DisplayNumber";
+import { erc20ABI, registryCommunityABI } from "@/src/generated";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { toast } from "react-toastify";
 import { formatTokenAmount } from "@/utils/numbers";
-import { parseUnits } from "viem";
 import useChainFromPath from "@/hooks/useChainIdFromPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import useErrorDetails from "@/utils/getErrorName";
-import { DisplayNumber } from "./DisplayNumber";
 import { queryByChain } from "@/providers/urql";
 import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
@@ -351,7 +351,7 @@ export const IncreasePower = ({
           token={tokenSymbol}
           pendingAllowance={pendingAllowance}
           setPendingAllowance={setPendingAllowance}
-        ></TransactionModal>
+         />
 
         <div className="flex justify-between gap-4">
           <div className=" flex flex-col justify-between gap-4">
@@ -406,7 +406,7 @@ export const IncreasePower = ({
                 tooltip={tooltipMessage}
               >
                 Increase stake
-                <span className="loading-spinner"></span>
+                <span className="loading-spinner" />
               </Button>
 
               <Button
@@ -417,7 +417,7 @@ export const IncreasePower = ({
                 tooltip={decreaseTooltipMsg}
               >
                 Decrease stake
-                <span className="loading-spinner"></span>
+                <span className="loading-spinner" />
               </Button>
             </div>
           </div>

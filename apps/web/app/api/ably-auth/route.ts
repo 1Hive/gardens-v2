@@ -1,8 +1,8 @@
-import { isProd } from "@/constants/contracts";
-import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 import Ably from "ably";
 import { NextResponse, NextRequest } from "next/server";
 import { HTTP_CODES } from "../utils";
+import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
+import { isProd } from "@/constants/contracts";
 
 export async function POST(req: NextRequest, res: NextResponse) {
   // Used for linter that fails

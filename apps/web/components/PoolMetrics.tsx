@@ -1,20 +1,20 @@
 "use client";
 import React, { FC, useState, useRef, useEffect } from "react";
 import { Address, useAccount, useContractRead, useContractWrite } from "wagmi";
+import { parseUnits } from "viem";
+import { Button } from "./Button";
+import { FormInput } from "./Forms";
+import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
-import { Button } from "./Button";
 import {
   Allo,
   CVStrategy,
   TokenGarden,
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
-import { parseUnits } from "viem";
-import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
@@ -176,7 +176,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
         token={tokenSymbol}
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
-      ></TransactionModal>
+       />
       <section className="section-layout ">
         <header>
           <h2>Pool Metrics</h2>

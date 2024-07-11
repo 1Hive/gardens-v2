@@ -68,7 +68,7 @@ export function Button({
   type = "button",
 }: ButtonProps) {
   const buttonContent = isLoading ? (
-    <span className="loading loading-spinner"></span>
+    <span className="loading loading-spinner" />
   ) : (
     children  
   );

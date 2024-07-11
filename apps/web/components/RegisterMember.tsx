@@ -3,12 +3,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useBalance, useContractRead, Address, useAccount } from "wagmi";
 import { Button } from "./Button";
+import { TransactionModal } from "./TransactionModal";
 import useErrorDetails from "@/utils/getErrorName";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { gte } from "@/utils/numbers";
-import { TransactionModal } from "./TransactionModal";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";

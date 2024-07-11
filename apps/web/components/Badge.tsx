@@ -1,9 +1,9 @@
 import React from "react";
-import { proposalStatus, poolTypes } from "@/types";
 import {
   CurrencyDollarIcon,
   HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
+import { proposalStatus, poolTypes } from "@/types";
 import { capitalize } from "@/utils/text";
 
 type BadgeProps = {

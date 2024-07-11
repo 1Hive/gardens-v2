@@ -2,17 +2,17 @@
 import React from "react";
 import { useBalance, useSwitchNetwork } from "wagmi";
 import { usePathname } from "next/navigation";
-import { ChainIcon } from "@/configs/chainServer";
 import Image from "next/image";
-import { walletIcon } from "@/assets";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useDisconnect, useConnect, useAccount } from "wagmi";
 import cn from "classnames";
-import { Button } from "@/components";
 import { Fragment } from "react";
-import { formatAddress } from "@/utils/formatAddress";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
+import { formatAddress } from "@/utils/formatAddress";
+import { Button } from "@/components";
+import { walletIcon } from "@/assets";
+import { ChainIcon } from "@/configs/chainServer";
 import useChainFromPath from "@/hooks/useChainFromPath";
 
 export function ConnectWallet() {

@@ -1,4 +1,6 @@
 "use client";
+import React, { useEffect } from "react";
+import { Address } from "viem";
 import {
   TokenGarden,
   getCommunityCreationDataDocument,
@@ -7,8 +9,6 @@ import {
 import { CommunityForm } from "@/components/Forms";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import React, { useEffect } from "react";
-import { Address } from "viem";
 
 export default function Page({
   params: { chain, garden },

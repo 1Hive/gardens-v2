@@ -3,19 +3,19 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { Address, parseUnits } from "viem";
+import { useAccount } from "wagmi";
+import { usePathname, useRouter } from "next/navigation";
+import { FormInput } from "./FormInput";
+import { FormSelect } from "./FormSelect";
+import FormPreview, { FormRow } from "./FormPreview";
 import { Button } from "@/components/Button";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { useAccount } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, poolTypes } from "@/types";
 import "viem/window";
 import { TokenGarden } from "#/subgraph/.graphclient";
-import { FormInput } from "./FormInput";
-import { FormSelect } from "./FormSelect";
-import FormPreview, { FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
-import { usePathname, useRouter } from "next/navigation";
 import { chainDataMap } from "@/configs/chainServer";
 import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -39,15 +39,15 @@ type FormInputs = {
 
 type InitializeParams = [
   Address,
-  BigInt,
-  BigInt,
-  BigInt,
-  BigInt,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
   number,
   number,
-  [BigInt],
+  [bigint],
 ];
-type Metadata = [BigInt, string];
+type Metadata = [bigint, string];
 type CreatePoolParams = [Address, InitializeParams, Metadata];
 
 type Props = {
@@ -305,7 +305,7 @@ export default function PoolForm({
       })
       .then((ipfsHash) => {
         console.log("https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) throw new Error("No preview data");
+        if (previewData === undefined) {throw new Error("No preview data");}
         contractWrite(ipfsHash);
       })
       .catch((error: any) => {
@@ -315,7 +315,7 @@ export default function PoolForm({
   };
 
   const formatFormRows = () => {
-    if (!previewData) return [];
+    if (!previewData) {return [];}
     let formattedRows: FormRow[] = [];
 
     const reorderedData = {
@@ -331,7 +331,7 @@ export default function PoolForm({
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (key == "maxAmount" && previewData.pointSystemType != 1) return;
+      if (key == "maxAmount" && previewData.pointSystemType != 1) {return;}
       if (formRow && isInInputMap(key, strategyType)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
@@ -363,7 +363,7 @@ export default function PoolForm({
               registerKey="title"
               type="text"
               placeholder="Your pool name..."
-            ></FormInput>
+             />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -375,7 +375,7 @@ export default function PoolForm({
               type="textarea"
               rows={7}
               placeholder="Enter a description of your pool..."
-            ></FormInput>
+             />
           </div>
           <div className="flex flex-col">
             <FormSelect
@@ -386,7 +386,7 @@ export default function PoolForm({
               options={Object.entries(poolTypes)
                 .slice(0, -1)
                 .map(([value, text]) => ({ label: text, value: value }))}
-            ></FormSelect>
+             />
           </div>
           <div className="flex flex-col">
             <h4 className="my-4 text-xl">Select pool settings</h4>
@@ -521,7 +521,7 @@ export default function PoolForm({
                 registerKey="minThresholdPoints"
                 type="number"
                 placeholder="0"
-              ></FormInput>
+               />
             </div>
           )}
 
@@ -535,7 +535,7 @@ export default function PoolForm({
                 label: text,
                 value: value,
               }))}
-            ></FormSelect>
+             />
           </div>
           {pointSystemType == 1 && (
             <div className="flex flex-col">

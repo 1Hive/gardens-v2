@@ -1,22 +1,22 @@
 "use client";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import {
+  CurrencyDollarIcon,
+  HandRaisedIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 import {
   CVStrategy,
   CVProposal,
   CVStrategyConfig,
 } from "#/subgraph/.graphclient";
 import { grass, blueLand } from "@/assets";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { Badge } from "@/components";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
 import { Card } from "@/components";
 import { Statistic } from "@/components";
-import {
-  CurrencyDollarIcon,
-  HandRaisedIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
 import { poolTypes } from "@/types";
 
 type Props = {

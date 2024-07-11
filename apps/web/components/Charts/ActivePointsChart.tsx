@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import type { EChartsOption } from "echarts";
 import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
-import type { EChartsOption } from "echarts";
 
 type ActivePointsChartProps = {
   stakedPoints: number;

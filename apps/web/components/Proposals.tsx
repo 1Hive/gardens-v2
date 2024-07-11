@@ -1,8 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, PoolGovernance, ProposalCard } from "@/components";
 import { useAccount, Address as AddressType, useContractRead } from "wagmi";
+import {
+  AdjustmentsHorizontalIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
+import { toast } from "react-toastify";
+import Link from "next/link";
+import LoadingSpinner from "./LoadingSpinner";
+import { Button, PoolGovernance, ProposalCard } from "@/components";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
@@ -20,19 +27,12 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import {
-  AdjustmentsHorizontalIcon,
-  PlusIcon,
-} from "@heroicons/react/24/outline";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { toast } from "react-toastify";
 import { LightCVStrategy } from "@/types";
-import LoadingSpinner from "./LoadingSpinner";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 import useChainIdFromPath from "@/hooks/useChainIdFromPath";
-import Link from "next/link";
 
 export type ProposalInputItem = {
   id: string;
@@ -208,8 +208,8 @@ export function Proposals({
   }, [proposals, wallet, stakedFilters]);
 
   useEffect(() => {
-    if (isMemberActived === undefined) return;
-    if (isMemberActived !== true) setEditView(false);
+    if (isMemberActived === undefined) {return;}
+    if (isMemberActived !== true) {setEditView(false);}
   }, [isMemberActived]);
 
   const {
@@ -259,26 +259,26 @@ export function Proposals({
     inputData: ProposalInputItem[],
     currentData: ProposalInputItem[],
   ) => {
-    const resultArr: [number, BigInt][] = [];
+    const resultArr: [number, bigint][] = [];
     inputData.forEach((input) => {
       let row: [number, bigint] | undefined = undefined;
       if (input.value > 0)
-        row = [Number(input.id), BigInt(Math.floor(input.value))];
+        {row = [Number(input.id), BigInt(Math.floor(input.value))];}
       currentData.forEach((current) => {
         if (input.id === current.id) {
           const dif = BigInt(Math.floor(input.value)) - BigInt(current.value);
           row = [Number(input.id), dif];
         }
       });
-      if (row && row[1] !== 0n) resultArr.push(row);
+      if (row && row[1] !== 0n) {resultArr.push(row);}
     });
 
     return resultArr;
   };
   const calculateTotalTokens = (exceptIndex?: number) =>
     inputs.reduce((acc, curr, i) => {
-      if (exceptIndex !== undefined && exceptIndex === i) return acc;
-      else return acc + Number(curr.value);
+      if (exceptIndex !== undefined && exceptIndex === i) {return acc;}
+      else {return acc + Number(curr.value);}
     }, 0);
 
   const inputHandler = (i: number, value: number) => {
@@ -389,7 +389,7 @@ export function Proposals({
                   )
                 )
               ) : (
-                <LoadingSpinner></LoadingSpinner>
+                <LoadingSpinner />
               )}
             </div>
             {editView && (

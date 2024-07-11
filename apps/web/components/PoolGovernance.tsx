@@ -1,13 +1,13 @@
 "use client";
 import React from "react";
-import { ActivatePoints } from "./ActivatePoints";
 import { Address, useAccount, useContractRead } from "wagmi";
+import { Dnum } from "dnum";
+import { ActivatePoints } from "./ActivatePoints";
+import { DisplayNumber } from "./DisplayNumber";
+import { Badge } from "./Badge";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
 import { CVStrategy } from "#/subgraph/.graphclient";
-import { DisplayNumber } from "./DisplayNumber";
-import { Dnum } from "dnum";
-import { Badge } from "./Badge";
 import { LightCVStrategy } from "@/types";
 
 type PoolGovernanceProps = {

@@ -1,7 +1,11 @@
 "use client";
 
-import { tree2, tree3, grassLarge, ecosystem } from "@/assets";
 import Image from "next/image";
+import React, { useEffect } from "react";
+import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { Address } from "viem";
+import Link from "next/link";
+import { tree2, tree3, grassLarge, ecosystem } from "@/assets";
 import {
   Button,
   Communities,
@@ -10,14 +14,10 @@ import {
   TokenLabel,
 } from "@/components";
 import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
-import React, { useEffect } from "react";
-import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { isProd } from "@/constants/contracts";
 import TokenGardenFaucet from "@/components/TokenGardenFaucet";
-import { Address } from "viem";
-import Link from "next/link";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 
 export const dynamic = "force-dynamic";
@@ -154,7 +154,7 @@ export default function Garden({
         </div>
       </section>
       {!isProd && tokenGarden && (
-        <TokenGardenFaucet token={tokenGarden}></TokenGardenFaucet>
+        <TokenGardenFaucet token={tokenGarden} />
       )}
     </div>
   );

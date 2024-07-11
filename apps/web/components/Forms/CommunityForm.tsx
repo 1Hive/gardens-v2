@@ -1,19 +1,19 @@
 "use client";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { registryFactoryABI, safeABI } from "@/src/generated";
 import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { Button } from "@/components";
-import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { toast } from "react-toastify";
+import { usePathname, useRouter } from "next/navigation";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormInput } from "./FormInput";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormSelect } from "./FormSelect";
-import { TokenGarden } from "#/subgraph/.graphclient";
 import { Option } from "./FormSelect";
-import { usePathname, useRouter } from "next/navigation";
+import { registryFactoryABI, safeABI } from "@/src/generated";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { Button } from "@/components";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
+import { TokenGarden } from "#/subgraph/.graphclient";
 import { getChain } from "@/configs/chainServer";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -142,7 +142,7 @@ export const CommunityForm = ({
       })
       .then((ipfsHash) => {
         console.log("https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) throw new Error("No preview data");
+        if (previewData === undefined) {throw new Error("No preview data");}
         const argsArray = contractWriteParsedData(ipfsHash);
         write?.({ args: [argsArray] });
       })
@@ -229,7 +229,7 @@ export const CommunityForm = ({
   };
 
   const formatFormRows = () => {
-    if (!previewData) return [];
+    if (!previewData) {return [];}
     let formattedRows: FormRow[] = [];
 
     Object.entries(previewData).forEach(([key, value]) => {
@@ -283,7 +283,7 @@ export const CommunityForm = ({
               registerKey="title"
               type="text"
               placeholder="1hive"
-            ></FormInput>
+             />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -317,7 +317,7 @@ export const CommunityForm = ({
               errors={errors}
               registerKey="feeAmount"
               options={feeOptions}
-            ></FormSelect>
+             />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -334,7 +334,7 @@ export const CommunityForm = ({
               registerKey="feeReceiver"
               placeholder="0x.."
               type="text"
-            ></FormInput>
+             />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -354,7 +354,7 @@ export const CommunityForm = ({
               registerKey="councilSafe"
               placeholder="0x.."
               type="text"
-            ></FormInput>
+             />
           </div>
 
           <div className="flex">
@@ -364,7 +364,7 @@ export const CommunityForm = ({
               errors={errors}
               registerKey="isKickMemberEnabled"
               type="checkbox"
-            ></FormCheckBox>
+             />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -376,7 +376,7 @@ export const CommunityForm = ({
               type="textarea"
               rows={7}
               placeholder="Covenant description..."
-            ></FormInput>
+             />
           </div>
 
           {/* Upload image */}

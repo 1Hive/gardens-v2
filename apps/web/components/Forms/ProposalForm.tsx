@@ -1,19 +1,19 @@
 "use client";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { alloABI } from "@/src/generated";
 import { Address, parseUnits } from "viem";
 import { encodeAbiParameters } from "viem";
+import { toast } from "react-toastify";
+import { usePathname, useRouter } from "next/navigation";
+import FormPreview, { FormRow } from "./FormPreview";
+import { FormInput } from "./FormInput";
+import { alloABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { toast } from "react-toastify";
 import { poolTypes } from "@/types";
 import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
-import FormPreview, { FormRow } from "./FormPreview";
-import { FormInput } from "./FormInput";
-import { usePathname, useRouter } from "next/navigation";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
@@ -219,7 +219,7 @@ export const ProposalForm = ({
   };
 
   const formatFormRows = () => {
-    if (!previewData) return [];
+    if (!previewData) {return [];}
     let formattedRows: FormRow[] = [];
 
     Object.entries(previewData).forEach(([key, value]) => {
@@ -304,7 +304,7 @@ export const ProposalForm = ({
                 registerKey="beneficiary"
                 type="text"
                 placeholder="0x000..."
-              ></FormInput>
+               />
             </div>
           )}
           <div className="flex flex-col">
@@ -316,7 +316,7 @@ export const ProposalForm = ({
               registerKey="title"
               type="text"
               placeholder="Example Title"
-            ></FormInput>
+             />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -328,7 +328,7 @@ export const ProposalForm = ({
               type="textarea"
               rows={10}
               placeholder="Proposal description"
-            ></FormInput>
+             />
           </div>
         </div>
       )}
