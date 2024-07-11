@@ -6,7 +6,7 @@ export async function getProposals(
   strategy: LightCVStrategy,
 ) {
   try {
-    async function fetchIPFSDataBatch(
+    const fetchIPFSDataBatch = async function (
       proposals: LightProposal[],
       batchSize = 5,
       delay = 300,
@@ -41,9 +41,9 @@ export async function getProposals(
       }
 
       return results;
-    }
+    };
 
-    async function transformProposals(strategy: LightCVStrategy) {
+    const transformProposals = async function (strategy: LightCVStrategy) {
       const proposalsData = await fetchIPFSDataBatch(strategy.proposals);
       const transformedProposals = proposalsData.map((data, index) => {
         const p = strategy.proposals[index];
@@ -58,7 +58,7 @@ export async function getProposals(
       });
 
       return transformedProposals;
-    }
+    };
     let transformedProposals = await transformProposals(strategy);
 
     return transformedProposals;

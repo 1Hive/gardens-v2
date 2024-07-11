@@ -2,9 +2,15 @@
  * @type {import('eslint').Linter.Config}
  */
 module.exports = {
-  extends: ["next/core-web-vitals", "turbo", "prettier", "eslint:recommended","plugin:@typescript-eslint/recommended"],
+  extends: [
+    "next/core-web-vitals",
+    "turbo",
+    "prettier",
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+  ],
   ignorePatterns: ["node_modules", "dist"],
-  parser: '@typescript-eslint/parser',
+  parser: "@typescript-eslint/parser",
   parserOptions: {
     project: "./tsconfig.json",
   },
@@ -32,9 +38,12 @@ module.exports = {
       },
     ],
     "no-unreachable": "warn",
-    "no-console": ["warn", {
-      allow: ["warn", "error", "info", "debug", "table"],
-    }],
+    "no-console": [
+      "warn",
+      {
+        allow: ["warn", "error", "info", "debug", "table"],
+      },
+    ],
     "prefer-const": "off",
     "@typescript-eslint/consistent-type-definitions": "off",
     "import/order": [
@@ -53,5 +62,7 @@ module.exports = {
     curly: "error",
     "no-unused-expressions": "error",
     "no-unsafe-optional-chaining": "error",
+    "comma-dangle": ["error", "always-multiline"],
+    semi: ["error", "always"],
   },
 };
