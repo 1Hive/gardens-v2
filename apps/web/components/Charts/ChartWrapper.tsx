@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { Fragment, ReactNode } from "react";
 import {
   ArrowDownRightIcon,
   ArrowUpRightIcon,
@@ -20,16 +20,41 @@ export const ChartWrapper = ({
     : "text-danger-content";
   const iconClassname = `h-6 w-6 text-bold ${growthClassname}`;
 
+  const legend = [
+    {
+      name: "Conviction",
+      className: "bg-primary-content  h-4 w-4 rounded-full",
+    },
+    {
+      name: "Support",
+      className: "bg-[#9EE157] h-4 w-4 rounded-full",
+    },
+    {
+      name: "Threshold",
+      className:
+        "bg-neutral-soft h-4 w-4 border-[1px] border-black border-dashed rounded-full",
+    },
+  ];
+
   return (
     <>
       <div className="mt-10 flex flex-col gap-6">
         {/* chart title */}
         <h3>Conviction voting chart</h3>
 
-        <div className="h-5">legends</div>
+        <div className="flex gap-4">
+          {legend.map((item) => (
+            <Fragment key={item.name}>
+              <div className="flex items-center gap-1">
+                <div key={item.name} className={`${item.className} `} />
+                <p>{item.name}</p>
+              </div>
+            </Fragment>
+          ))}
+        </div>
 
         {/* CVChart - standard */}
-        <div className="h-30">{children}</div>
+        <div className="h-20">{children}</div>
 
         {/* Growth and message to user */}
         <div className="">
@@ -46,9 +71,9 @@ export const ChartWrapper = ({
                     )}{" "}
                   </span>
                 </p>
-                <p>{message}</p>
               </>
             )}
+            <p>{message}</p>
           </div>
         </div>
       </div>

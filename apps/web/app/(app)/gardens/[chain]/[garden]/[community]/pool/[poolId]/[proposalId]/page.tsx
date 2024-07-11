@@ -276,17 +276,6 @@ export default function Proposal({
           </div>
         ) : (
           <>
-            {/* TODO: momentary for test purposes */}
-            <div className="h-4 w-[190px]">
-              <ConvictionBarChart
-                currentConvictionPct={currentConvictionPct}
-                thresholdPct={thresholdPct}
-                proposalSupportPct={totalSupportPct}
-                isSignalingType={isSignalingType}
-                compact
-              />
-            </div>
-
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
               thresholdPct={thresholdPct}

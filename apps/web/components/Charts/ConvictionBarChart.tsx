@@ -77,7 +77,8 @@ export const ConvictionBarChart = ({
         thresholdPct < proposalSupportPct,
       details: [
         {
-          message: "This proposal will pass within X days ...",
+          // TODO: add real date
+          message: "This proposal will pass",
           growing: true,
         },
       ],
@@ -101,7 +102,8 @@ export const ConvictionBarChart = ({
         thresholdPct < currentConvictionPct,
       details: [
         {
-          message: "This proposal is Executable until X date",
+          // TODO: add real date
+          message: "This proposal is Executable",
           growing: false,
         },
       ],
@@ -161,16 +163,29 @@ export const ConvictionBarChart = ({
   const { message, growing } = Object.values(scenarioMappings).find(
     ({ condition }) => condition(),
   )?.details[0] ?? {
-    message: proposalSupportPct == 0 ? "Proposal waiting for support ..." : "",
+    message:
+      proposalSupportPct == 0
+        ? "Proposal waiting for support ..."
+        : "Scenario not found",
     growing: null,
   };
 
+  console.log(message);
+
   const SupportGtConv = proposalSupportPct > currentConvictionPct;
+  const ConvEqSupport = proposalSupportPct == currentConvictionPct;
   const maxValue = Math.max(
     proposalSupportPct,
     currentConvictionPct,
     thresholdPct,
   );
+
+  const widthLabel = (param: number) => {
+    const relativeWidth = (param / maxValue) * 100;
+    return relativeWidth;
+  };
+
+  //console.log(widthLabel(0.1));
 
   const emphasis = {
     disabled: true,
@@ -181,7 +196,7 @@ export const ConvictionBarChart = ({
     label: {
       position: "start",
       formatter: "{@score} %",
-      fontSize: compact ? 10 : 14,
+      fontSize: compact ? 10 : 16,
     },
   };
 
@@ -196,14 +211,14 @@ export const ConvictionBarChart = ({
               symbol:
                 "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
               symbolSize: [16, 16],
-              symbolOffset: [-7, 67],
+              symbolOffset: [-7, 53],
             },
           ],
           // label: {
           //   // distance: 0,
           // },
           lineStyle: {
-            width: 2,
+            width: 1,
             color: "#191919",
             dashOffset: 30,
           },
@@ -270,9 +285,9 @@ export const ConvictionBarChart = ({
     grid: {
       show: false,
       left: "0%",
-      right: "2%",
-      top: compact ? "0%" : "20%",
-      bottom: compact ? "0%" : "20%",
+      right: "1.5%",
+      top: compact ? "0%" : "25%",
+      bottom: compact ? "0%" : "25%",
       containLabel: false,
     },
 
@@ -287,14 +302,14 @@ export const ConvictionBarChart = ({
           borderRadius: [20, 20, 20, 20],
         },
         label: {
-          show: true,
-          position: "top",
+          show: !compact ?? false,
+          position: "insideRight",
           color: "#191919",
-          fontSize: 12,
-          formatter: "{a}: {@score} %",
+          fontSize: 14,
+          formatter: "{@score} %",
         },
-        z: SupportGtConv ? 1 : 2,
-        barWidth: 30,
+        z: SupportGtConv ? 1 : ConvEqSupport ? 1 : 2,
+        barWidth: 23,
         data: [proposalSupportPct],
       },
       {
@@ -304,14 +319,27 @@ export const ConvictionBarChart = ({
           color: "#65AD18",
           borderRadius: [20, 20, 20, 20],
         },
+        // labelLayout: {
+        //   width: 200,
+        //   draggable: true,
+        // },
         label: {
-          show: true,
+          show: !compact ?? false,
+          //show: false,
           position: "inside",
           color: "#ffff",
-          fontSize: 12,
-          formatter: "{a}: {@score} %",
+          fontSize: 14,
+          formatter: "{@score} %",
+          //padding: [0, 50, 0, 50],
+
+          //overflow: "truncate",
+          //width: widthLabel(0.1),
+          width: 0,
+
+          // borderColor: "#191919",
+          // borderWidth: 1,
         },
-        barWidth: 30,
+        barWidth: 23,
         z: 1,
         data: [currentConvictionPct],
         //markLine: markLineCv,
@@ -319,7 +347,7 @@ export const ConvictionBarChart = ({
       {
         type: "bar",
         name: !isSignalingType ? "Threshold" : "",
-        barWidth: 30,
+        barWidth: 23,
         data: [thresholdPct],
         itemStyle: {
           borderRadius: [20, 20, 20, 20],
