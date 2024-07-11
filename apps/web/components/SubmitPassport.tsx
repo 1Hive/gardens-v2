@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
-import { Button } from "./Button";
 import { useAccount } from "wagmi";
 import { toast } from "react-toastify";
+import { Button } from "@/components/";
 
 interface SubmitPassportResponse {
   data: any;
