@@ -1,7 +1,8 @@
 "use client";
+
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import { Button } from "./Button";
 import { forwardRef, useEffect, useState } from "react";
+import { Button } from "./Button";
 
 export interface TransactionStep {
   transaction: string;
@@ -21,7 +22,7 @@ export type TransactionModalProps = {
   stepTwoStatus: statuses;
   allowance?: bigint;
   pendingAllowance?: boolean;
-  setPendingAllowance?: (value: boolean) => void;
+  setPendingAllowance?: (_: boolean) => void;
   token: string;
   initialTransactionSteps: TransactionStep[];
   children?: React.ReactNode;
@@ -41,7 +42,6 @@ export const TransactionModal = forwardRef<
   {
     label,
     allowTokenStatus,
-    allowance,
     stepTwoStatus,
     initialTransactionSteps,
     token,
@@ -89,8 +89,9 @@ export const TransactionModal = forwardRef<
     const updatedFirstStep = {
       ...transactionStepsState[0],
       dataContent: pendingAllowance ? "✓" : dataContent || "1",
-      message: pendingAllowance
-        ? "Allowance previously approved successfully!"
+      message:
+        pendingAllowance ?
+          "Allowance previously approved successfully!"
         : message,
       stepClassName: pendingAllowance ? "step-success" : className,
       messageClassName: pendingAllowance ? "text-success" : messageClassName,
@@ -102,9 +103,9 @@ export const TransactionModal = forwardRef<
       dataContent: statusConfig[stepTwoStatus].dataContent || "2",
       current: allowTokenStatus === "success",
       stepClassName:
-        stepTwoStatus === "success"
-          ? "idle"
-          : statusConfig[stepTwoStatus].className,
+        stepTwoStatus === "success" ? "idle" : (
+          statusConfig[stepTwoStatus].className
+        ),
       messageClassName: statusConfig[stepTwoStatus].messageClassName,
     };
 

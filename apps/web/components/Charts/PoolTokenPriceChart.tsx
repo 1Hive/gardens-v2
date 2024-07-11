@@ -1,7 +1,7 @@
 import React from "react";
+import type { EChartsOption } from "echarts";
 import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
-import type { EChartsOption } from "echarts";
 
 //Pool Token Price fluctuation over days ? weeks ? monthes ?
 //In this example is month with mock data

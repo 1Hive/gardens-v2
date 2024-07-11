@@ -17,7 +17,6 @@ export function FormSelect({
   label = "",
   registerKey,
   register,
-  errors,
   required = false,
   registerOptions,
   options,

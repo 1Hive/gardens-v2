@@ -5,25 +5,19 @@ import { Readable } from "stream";
 
 const pinata = new pinataSDK({ pinataJWTKey: process.env.PINATA_JWT });
 
-
 const saveFile = async (buffer: Buffer, fileName: string) => {
-  try {
-    const readable = new Readable();
-    readable.push(buffer);
-    readable.push(null);
+  const readable = new Readable();
+  readable.push(buffer);
+  readable.push(null);
 
-    const options = {
-      pinataMetadata: {
-        name: fileName,
-      },
-    };
-    const response = await pinata.pinFileToIPFS(readable, options);
+  const options = {
+    pinataMetadata: {
+      name: fileName,
+    },
+  };
+  const response = await pinata.pinFileToIPFS(readable, options);
 
-    return response;
-  } catch (error) {
-    // console.log(error);
-    throw error;
-  }
+  return response;
 };
 
 export async function POST(req: NextRequest) {
@@ -37,7 +31,7 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       return NextResponse.json(
         { message: "Error uploading json to IPFS" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } else if (contentType?.startsWith("multipart/form-data")) {
@@ -58,7 +52,7 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       return NextResponse.json(
         { message: "Error uploading file to IPFS" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } else {
