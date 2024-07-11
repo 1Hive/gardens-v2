@@ -1,19 +1,15 @@
 "use client";
-import React, { FC, useState, useRef, useEffect } from "react";
-import { Address, useAccount, useContractRead, useContractWrite } from "wagmi";
+
+import { FC, useState, useRef, useEffect } from "react";
+import { Address, useAccount, useContractRead } from "wagmi";
 import { parseUnits } from "viem";
 import { Button } from "./Button";
 import { FormInput } from "./Forms";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
-import {
-  Allo,
-  CVStrategy,
-  TokenGarden,
-  getPoolDataQuery,
-} from "#/subgraph/.graphclient";
+import { alloABI, erc20ABI } from "@/src/generated";
+import { Allo, TokenGarden, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
@@ -56,12 +52,10 @@ type PoolStatsProps = {
 export const PoolMetrics: FC<PoolStatsProps> = ({
   alloInfo,
   balance,
-  strategy,
   communityAddress,
   tokenGarden,
   spendingLimitPct,
   poolId,
-  chainId,
 }) => {
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
 
@@ -143,8 +137,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     if (requestedAmount <= (allowance ?? 0n)) {
       writeFundPool({
         args: [poolId, requestedAmount],
-      }),
-        setPendingAllowance(true);
+      });
+      setPendingAllowance(true);
     } else {
       writeContract?.();
       openModal();
@@ -176,7 +170,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
         token={tokenSymbol}
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
-       />
+      />
       <section className="section-layout ">
         <header>
           <h2>Pool Metrics</h2>
@@ -192,9 +186,9 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                         Funds Available:
                       </h4>
                       <span className="stat-value text-center text-2xl font-bold">
-                        {balance
-                          ? formatTokenAmount(balance, tokenGarden?.decimals)
-                          : "0"}{" "}
+                        {balance ?
+                          formatTokenAmount(balance, tokenGarden?.decimals)
+                        : "0"}{" "}
                         {tokenGarden?.symbol}
                       </span>
                     </div>
@@ -205,7 +199,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                     Spending Limit:
                   </h4>
                   <span className="stat-value ml-8 text-center text-xl">
-                    {`${((spendingLimitPct || 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
+                    {`${((spendingLimitPct ?? 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
                   </span>
                 </div>
               </div>

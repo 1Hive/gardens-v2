@@ -29,9 +29,6 @@ export function RegisterMember({
   communityAddress,
   registerToken,
   registerTokenDecimals,
-  membershipAmount,
-  protocolFee,
-  communityFee,
 }: RegisterMemberProps) {
   const urlChainId = useChainIdFromPath();
   const modalRef = useRef<HTMLDialogElement | null>(null);

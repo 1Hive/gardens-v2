@@ -16,7 +16,6 @@ export function FormCheckBox({
   label = "",
   registerKey,
   register,
-  errors,
   required = false,
   registerOptions,
   defaultChecked = false,

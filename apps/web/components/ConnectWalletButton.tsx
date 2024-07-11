@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import { useBalance, useSwitchNetwork } from "wagmi";
 import { usePathname } from "next/navigation";
@@ -40,7 +41,6 @@ export function ConnectWallet() {
       {({
         account,
         chain,
-        openAccountModal,
         openChainModal,
         openConnectModal,
         mounted,

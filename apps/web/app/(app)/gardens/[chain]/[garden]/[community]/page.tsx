@@ -73,7 +73,7 @@ export default function CommunityPage({
             setCovenant(json.covenant);
           }
         } catch (error) {
-          console.log(error);
+          console.error(error);
         }
       }
     };
@@ -135,7 +135,7 @@ export default function CommunityPage({
 
       return dn.multiply(membership, feePercentage);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
     return [0n, 0] as dn.Dnum;
   };

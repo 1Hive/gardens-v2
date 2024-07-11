@@ -1,10 +1,8 @@
 "use client";
+
 import { HTMLInputTypeAttribute } from "react";
 import {
-  FieldValues,
-  Path,
   RegisterOptions,
-  UseFormRegister,
 } from "react-hook-form";
 
 type Props = {

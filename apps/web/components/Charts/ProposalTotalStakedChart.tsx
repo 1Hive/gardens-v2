@@ -1,7 +1,6 @@
 import React from "react";
 import type { EChartsOption } from "echarts";
 import EChartsReact from "echarts-for-react";
-import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
 
 //Total Amount of points staked in each proposal within all Stakers / Members

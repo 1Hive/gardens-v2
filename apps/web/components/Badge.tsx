@@ -66,7 +66,7 @@ export function Badge({
         signaling: <HandThumbUpIcon className="h-6 w-6 text-inherit" />,
         funding: <CurrencyDollarIcon className="h-6 w-6 text-inherit" />,
       };
-      return type ? iconMap[poolTypes[type]] || null : null;
+      return type ? iconMap[poolTypes[type]] ?? null : null;
     })();
 
   return (

@@ -1,6 +1,6 @@
 "use client";
-import React, { FC, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+
+import React, { FC } from "react";
 import { ProposalTotalStakedChart } from "./Charts";
 import { ProposalDistributionPointsChart } from "./Charts";
 import { Proposals } from "./Charts/ProposalDistributionPointsChart";
@@ -11,10 +11,7 @@ type ProposalStatsProps = {
   distributedPoints: number;
 };
 
-export const ProposalStats: FC<ProposalStatsProps> = ({
-  proposals,
-  distributedPoints,
-}) => {
+export const ProposalStats: FC<ProposalStatsProps> = ({ proposals }) => {
   const proposalsDistributionPoints = proposals.map(({ title }) => {
     // console.log("voterStakedPointsPct", voterStakedPointsPct);
     return {

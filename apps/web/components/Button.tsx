@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import { Size } from "@/types";
 
@@ -60,7 +61,6 @@ export function Button({
   disabled = false,
   tooltip = "Connect wallet",
   children,
-  size,
   btnStyle = "filled",
   color = "primary",
   isLoading = false,

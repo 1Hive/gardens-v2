@@ -33,7 +33,7 @@ module.exports = {
     ],
     "no-unreachable": "warn",
     "no-console": ["warn", {
-      allow: ["warn", "error", "info", "debug"],
+      allow: ["warn", "error", "info", "debug", "table"],
     }],
     "prefer-const": "off",
     "@typescript-eslint/consistent-type-definitions": "off",
@@ -51,5 +51,7 @@ module.exports = {
       },
     ],
     curly: "error",
+    "no-unused-expressions": "error",
+    "no-unsafe-optional-chaining": "error",
   },
 };

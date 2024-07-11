@@ -1,7 +1,8 @@
 "use client";
+
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import React, { RefAttributes, useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { getTitlesFromUrlSegments } from "@/services/getTitlesFromUrlSegments";
 
@@ -30,14 +31,15 @@ export function Breadcrumbs() {
         }
 
         const href = `/${segments.slice(0, index + 1).join("/")}`;
-        let displayLabel = segment.startsWith("0x")
-          ? truncateString(segment)
-          : segment;
+        let displayLabel =
+          segment.startsWith("0x") ? truncateString(segment) : segment;
 
         if (titles) {
           // index correction as first 2 segments are /gardens/[chainId]
           const title = titles[index - 2];
-          if (title) {displayLabel = title;}
+          if (title) {
+            displayLabel = title;
+          }
         }
         return { href, label: displayLabel };
       })
@@ -51,7 +53,9 @@ export function Breadcrumbs() {
     })();
   }, [path]);
 
-  if (!breadcrumbs.length) {return <></>;}
+  if (!breadcrumbs.length) {
+    return <></>;
+  }
 
   return (
     <>
@@ -66,18 +70,17 @@ export function Breadcrumbs() {
               {index !== 0 && (
                 <ChevronRightIcon className="mx-1 h-5 w-5 flex-shrink-0" />
               )}
-              {index === breadcrumbs.length - 1 ? (
+              {index === breadcrumbs.length - 1 ?
                 <span className="subtitle2 truncate font-semibold text-neutral-soft-content">
                   {label}
                 </span>
-              ) : (
-                <Link
+              : <Link
                   href={href}
                   className="subtitle2 truncate font-semibold text-primary-content"
                 >
                   {label}
                 </Link>
-              )}
+              }
             </li>
           ))}
         </ol>

@@ -75,6 +75,19 @@ export default function Pool({
     }
   }, [metadata]);
 
+  const strategyObj = data?.cvstrategies?.[0];
+
+  useEffect(() => {
+    if (!strategyObj) {
+      return;
+    }
+    console.debug(
+      "maxRatio: " + strategyObj?.config?.maxRatio,
+      "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
+      "poolAmount: " + strategyObj?.poolAmount,
+    );
+  }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
+
   if (!data || !ipfsResult) {
     return (
       <div className="mt-96">
@@ -83,7 +96,6 @@ export default function Pool({
     );
   }
 
-  const strategyObj = data?.cvstrategies?.[0];
   if (!data || !strategyObj) {
     return <div className="mt-52 text-center">Pool {poolId} not found</div>;
   }
@@ -100,12 +112,6 @@ export default function Pool({
 
   const spendingLimitPct =
     (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
-
-  console.log(
-    "maxRatio: " + strategyObj?.config?.maxRatio,
-    "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
-    "poolAmount: " + poolAmount,
-  );
 
   return (
     <div className="page-layout">
@@ -147,18 +153,17 @@ export default function Pool({
             </div>
           </Statistic>
         </div>
-        {!isEnabled ? (
+        {!isEnabled ?
           <div className="banner">
             <ClockIcon className="h-8 w-8 text-secondary-content" />
             <h6>Waiting for council approval</h6>
           </div>
-        ) : (
-          <Image
+        : <Image
             src={poolTypes[proposalType] === "funding" ? blueLand : grassLarge}
             alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
           />
-        )}
+        }
       </section>
 
       {isEnabled && (

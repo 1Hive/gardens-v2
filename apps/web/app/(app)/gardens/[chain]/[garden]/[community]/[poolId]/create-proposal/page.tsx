@@ -10,7 +10,7 @@ import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export default function Page({
-  params: { chain, poolId, garden },
+  params: { poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {

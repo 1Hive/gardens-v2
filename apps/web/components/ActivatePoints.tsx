@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect } from "react";
 import { Address, useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";

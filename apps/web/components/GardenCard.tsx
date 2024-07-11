@@ -1,8 +1,7 @@
 "use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
-import { Arbitrum, GnosisGno } from "@thirdweb-dev/chain-icons";
 import { Button } from ".";
 import { gardenLand } from "@/assets";
 import { getTokenGardensQuery } from "#/subgraph/.graphclient";
@@ -11,7 +10,7 @@ import { getChain, ChainIcon } from "@/configs/chainServer";
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
 export function GardenCard({ garden }: { garden: TokenGarden }) {
-  const { id, name, decimals, symbol, totalBalance, chainId } = garden;
+  const { id, name, symbol, chainId } = garden;
   const link = `/gardens/${chainId}/${id}`;
   const communities = garden.communities?.filter((comm) => comm.isValid);
   const commLength = communities?.length ?? 0;
@@ -20,7 +19,7 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
       ?.map((comm) => comm.members?.length ?? 0)
       .reduce((a, b) => a + b, 0) ?? 0; //@todo temporary, that can be take from the subgraph
   return (
-    <div className="border2 relative flex max-w-[320px] flex-col overflow-hidden rounded-lg border-black bg-surface shadow">
+    <div className="border2 bg-surface relative flex max-w-[320px] flex-col overflow-hidden rounded-lg border-black shadow">
       <div className="flex flex-col gap-2 p-2">
         <div className="card relative" />
         <div className="flex flex-col items-center gap-1">
@@ -42,9 +41,7 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
 
         <div className="mb-2 mt-4">
           <Link href={link}>
-            <Button className="w-full">
-              View Communities
-            </Button>
+            <Button className="w-full">View Communities</Button>
           </Link>
         </div>
       </div>

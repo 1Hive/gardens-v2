@@ -12,7 +12,6 @@ import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { formatTokenAmount } from "@/utils/numbers";
-import useChainFromPath from "@/hooks/useChainIdFromPath";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useErrorDetails from "@/utils/getErrorName";
 import { queryByChain } from "@/providers/urql";
@@ -85,7 +84,7 @@ export const IncreasePower = ({
     if (!accountAddress || !urlChainId) {
       return;
     }
-    const { data: result, error } = await queryByChain<isMemberQuery>(
+    const { data: result } = await queryByChain<isMemberQuery>(
       urqlClient,
       urlChainId,
       isMemberDocument,
@@ -117,7 +116,7 @@ export const IncreasePower = ({
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
     token: registerToken as Address,
-    chainId: urlChainId || 0,
+    chainId: urlChainId ?? 0,
   });
 
   //TODO: create a hook for this
@@ -126,11 +125,7 @@ export const IncreasePower = ({
     abi: abiWithErrors2(registryCommunityABI),
   };
 
-  const {
-    data: isMember,
-    error,
-    isSuccess,
-  } = useContractRead({
+  const { data: isMember } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
     enabled: accountAddress !== undefined,
@@ -351,7 +346,7 @@ export const IncreasePower = ({
           token={tokenSymbol}
           pendingAllowance={pendingAllowance}
           setPendingAllowance={setPendingAllowance}
-         />
+        />
 
         <div className="flex justify-between gap-4">
           <div className=" flex flex-col justify-between gap-4">

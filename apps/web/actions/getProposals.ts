@@ -63,6 +63,6 @@ export async function getProposals(
 
     return transformedProposals;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }

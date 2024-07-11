@@ -1,12 +1,10 @@
 "use client";
+
 import React, { useMemo } from "react";
 import type { EChartsOption } from "echarts";
 import EChartsReact from "echarts-for-react";
-import { useTheme } from "next-themes";
 
 export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
-  const { resolvedTheme } = useTheme();
-
   const DEFAULT_OPTIONS = {
     tooltip: {
       trigger: "item",
@@ -46,18 +44,18 @@ export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
         ...DEFAULT_OPTIONS,
         tooltip: {
           ...DEFAULT_OPTIONS["tooltip"],
-          ...(options?.tooltip || {}),
+          ...(options?.tooltip ?? {}),
         },
         // legend: {
         //   ...DEFAULT_OPTIONS["legend"],
-        //   ...(options?.legend || {}),
+        //   ...(options?.legend ?? {}),
         // },
         xAxis: {
           ...DEFAULT_OPTIONS,
-          ...(options?.xAxis || { show: false }),
+          ...(options?.xAxis ?? { show: false }),
         },
         yAxis: {
-          ...(options?.yAxis || { show: false }),
+          ...(options?.yAxis ?? { show: false }),
         },
         series: processedSeries,
       }}

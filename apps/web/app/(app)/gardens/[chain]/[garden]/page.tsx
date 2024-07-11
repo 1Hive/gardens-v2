@@ -50,7 +50,7 @@ export default function Garden({
     }
   }, [error]);
 
-  let communities = result?.tokenGarden?.communities || [];
+  let communities = result?.tokenGarden?.communities ?? [];
 
   communities = communities.filter((com) => com.isValid);
 
