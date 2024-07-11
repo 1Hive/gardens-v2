@@ -125,7 +125,7 @@ export default function Proposal({
     ...cvStrategyContract,
     functionName: "updateProposalConviction" as any, // TODO: fix CVStrategy.updateProposalConviction to view in contract
     args: [proposalIdNumber],
-    enabled: !!proposalIdNumber && !isProposalEnded,
+    enabled: !!proposalIdNumber,
   }) as { data: bigint | undefined };
 
   const { data: maxCVSupply } = useContractRead({
