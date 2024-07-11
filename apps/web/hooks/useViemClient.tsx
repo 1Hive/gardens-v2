@@ -8,7 +8,7 @@ export const useViemClient = function () {
   const chainFromPath = useChainFromPath();
   const chainId = useChainId();
   const chain = chainFromPath ?? getChain(chainId);
-  
+
   const [viemClient, setViemClient] = useState<PublicClient>(
     createPublicClient({
       chain,

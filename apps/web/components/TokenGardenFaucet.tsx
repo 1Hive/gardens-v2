@@ -38,7 +38,7 @@ export default function TokenGardenFaucet({ token }: FaucetProps) {
   });
 
   const requestTokens = async () => {
-    if (!connectedAccount) return;
+    if (!connectedAccount) {return;}
     if (!connectedAccount) {
       console.warn("⛽: No connected account");
       return;
@@ -68,7 +68,7 @@ export default function TokenGardenFaucet({ token }: FaucetProps) {
         disabled={isLoading}
         title={`Get some test ${token.symbol}`}
       >
-        {isLoading ? <div className="loading-spinner"></div> : "⛽"}
+        {isLoading ? <div className="loading-spinner" /> : "⛽"}
       </button>
     </div>
   ) : (

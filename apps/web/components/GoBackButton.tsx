@@ -1,7 +1,8 @@
 "use client";
+
 import { useRouter, usePathname } from "next/navigation";
-import { Button } from "@/components";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { Button } from "@/components";
 
 export const GoBackButton = () => {
   const router = useRouter();

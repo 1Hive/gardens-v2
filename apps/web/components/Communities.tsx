@@ -44,7 +44,7 @@ export function Communities({
     if (!community?.members) {
       return false;
     }
-    for (let member of community?.members) {
+    for (let member of community?.members ?? []) {
       if (member?.memberAddress?.toLowerCase() === address?.toLowerCase()) {
         return true;
       }

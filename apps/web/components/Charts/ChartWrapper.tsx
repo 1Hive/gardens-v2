@@ -16,7 +16,6 @@ type ChartWrapperProps = {
 export const ChartWrapper = ({
   children,
   size = "md",
-  title,
   message,
   growing,
 }: ChartWrapperProps) => {

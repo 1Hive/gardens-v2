@@ -1,9 +1,8 @@
 import "@/styles/globals.css";
 import React from "react";
 import { Chakra_Petch, Inter } from "next/font/google";
-import Providers from "@/providers/Providers";
-import { Metadata } from "next";
 import { Bounce, ToastContainer } from "react-toastify";
+import Providers from "@/providers/Providers";
 
 import "react-toastify/dist/ReactToastify.css";
 
@@ -18,11 +17,6 @@ const chakra = Chakra_Petch({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
-
-const metadata: Metadata = {
-  title: "Gardens v2",
-  //   description: "Gardens description...",
-};
 
 export default function RootLayout({
   children,

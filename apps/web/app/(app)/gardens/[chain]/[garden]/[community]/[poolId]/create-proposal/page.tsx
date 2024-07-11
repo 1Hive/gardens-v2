@@ -1,16 +1,16 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
+import { Address } from "viem";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
-import React, { useEffect, useState } from "react";
-import { Address } from "viem";
 
 export default function Page({
-  params: { chain, poolId, garden },
+  params: { poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
