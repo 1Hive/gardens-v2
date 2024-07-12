@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
-import useChainIdFromPath from "./useChainIdFromPath";
-import { getContractsAddrByChain as getSubgraphAddrByChain } from "@/constants/contracts";
+import { useChainIdFromPath } from "./useChainIdFromPath";
+import { getConfigByChain } from "@/constants/contracts";
 import {
   ChangeEventPayload,
   ChangeEventScope,
@@ -16,7 +16,7 @@ import {
 } from "@/globals";
 import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
-import delayAsync from "@/utils/delayAsync";
+import { delayAsync } from "@/utils/delayAsync";
 
 const pendingRefreshToastId = "pending-refresh";
 /**
@@ -28,7 +28,7 @@ const pendingRefreshToastId = "pending-refresh";
  * @param changeScope  - optional, if provided, will subscribe to change events (see jsdoc in pubsub.context.tsx)
  * @returns
  */
-export default function useSubgraphQuery<
+export function useSubgraphQuery<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
 >({
@@ -51,10 +51,8 @@ export default function useSubgraphQuery<
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const [fetching, setFetching] = useState(true);
-  const subgraphAddress = getSubgraphAddrByChain(chainId);
-  const [response, setResponse] = useState<
-    Omit<Awaited<ReturnType<typeof fetch>>, "operation">
-  >({
+  const config = getConfigByChain(chainId);
+  const [response, setResponse] = useState<Omit<Awaited<ReturnType<typeof fetch>>, "operation">>({
     hasNext: true,
     stale: true,
     data: undefined,
@@ -68,7 +66,7 @@ export default function useSubgraphQuery<
     latestResponse.current = response; // Update ref on every response change
   }, [response]);
 
-  if (!subgraphAddress) {
+  if (!config) {
     console.error(`No subgraph address found for chain ${chainId}`);
   }
 
@@ -103,7 +101,7 @@ export default function useSubgraphQuery<
   const fetch = () =>
     urqlClient.query<Data>(query, variables, {
       ...context,
-      url: subgraphAddress?.subgraphUrl,
+      url: config?.subgraphUrl,
       requestPolicy: "network-only",
     });
 
@@ -154,7 +152,7 @@ export default function useSubgraphQuery<
     }
 
     if (result.error) {
-      console.error(`⚡ Error fetching subgraph data:`, result.error);
+      console.error("⚡ Error fetching subgraph data:", result.error);
       return result;
     }
     if (

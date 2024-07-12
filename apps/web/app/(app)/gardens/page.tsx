@@ -8,12 +8,12 @@ import {
 } from "#/subgraph/.graphclient";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import { GardenCard } from "@/components";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQueryMultiChain from "@/hooks/useSubgraphQueryMultiChain";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 
 export const dynamic = "force-dynamic";
 
-export default function Gardens() {
+export function Gardens() {
   const {
     data: gardens,
     fetching,

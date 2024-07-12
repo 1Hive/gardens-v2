@@ -82,6 +82,11 @@ export const DisplayNumber = ({
     <div className="relative flex items-center gap-1">
       <div
         onClick={handleCopy}
+        onKeyDown={(ev) => {
+          if (ev.key === "Enter" || ev.key === " ") {
+            handleCopy();
+          }
+        }}
         className={`${!disableTooltip && showTooltip && "tooltip"} cursor-pointer`}
         data-tip={isCopied ? "Copied!" : fullNumberStr}
       >

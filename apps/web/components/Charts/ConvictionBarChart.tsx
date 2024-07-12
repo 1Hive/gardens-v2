@@ -149,7 +149,7 @@ export const ConvictionBarChart = ({
         proposalSupportPct > thresholdPct,
       details: [
         {
-          message: `This proposal is ready to be executed!`,
+          message: "This proposal is ready to be executed!",
           growing: null,
         },
       ],

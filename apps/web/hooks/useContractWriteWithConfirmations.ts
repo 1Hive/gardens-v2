@@ -3,7 +3,7 @@ import { TransactionReceipt } from "viem";
 import { useChainId, useContractWrite, useWaitForTransaction } from "wagmi";
 import { chainDataMap } from "@/configs/chainServer";
 
-export default function useContractWriteWithConfirmations(
+export function useContractWriteWithConfirmations(
   props: Parameters<typeof useContractWrite>[0] & {
     onConfirmations?: (receipt: TransactionReceipt) => void;
     confirmations?: number;

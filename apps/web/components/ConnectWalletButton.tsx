@@ -17,7 +17,7 @@ import {
 import { walletIcon } from "@/assets";
 import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chainServer";
-import useChainFromPath from "@/hooks/useChainFromPath";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { formatAddress } from "@/utils/formatAddress";
 
 export function ConnectWallet() {
@@ -42,9 +42,15 @@ export function ConnectWallet() {
 
   return (
     <ConnectButton.Custom>
-      {({ account, chain, openChainModal, openConnectModal, mounted }) => {
+      {({
+        account: accountAddress,
+        chain,
+        openChainModal,
+        openConnectModal,
+        mounted,
+      }) => {
         const ready = mounted;
-        const connected = ready && account && chain;
+        const connected = ready && accountAddress && chain;
         return (
           <>
             {(() => {
@@ -82,22 +88,14 @@ export function ConnectWallet() {
                     <>
                       <Menu.Button>
                         <div
-                          className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
-                      ${cn({
-                      "border-2 border-danger-content":
-                          urlChainId && urlChainId !== chain.id,
-                    })} `}
+                          className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85            
+                          ${cn({ "border-2 border-danger-content": urlChainId && urlChainId !== chain.id })} `}
                         >
-                          <Image
-                            alt={"Chain icon"}
-                            src={`https://effigy.im/a/${account.address}.png`}
-                            className="h-8 w-8 rounded-full"
-                            width={32}
-                            height={32}
+                          <Image alt={"Chain icon"} src={`https://effigy.im/a/${accountAddress.address}.png`} className="h-8 w-8 rounded-full" width={32} height={32}
                           />
                           <div className="flex flex-col">
                             <h4 className="text-left">
-                              {formatAddress(account.address)}
+                              {formatAddress(accountAddress.address)}
                             </h4>
                             <div className="ml-[2px] flex items-center text-xs font-semibold text-success">
                               {(

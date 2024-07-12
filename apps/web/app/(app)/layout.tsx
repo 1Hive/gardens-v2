@@ -2,7 +2,7 @@ import React from "react";
 import { GoBackButton, NavBar } from "@/components";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 
-export default function layout({ children }: { children: React.ReactNode }) {
+export function layout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavBar />

@@ -1,3 +1,3 @@
-export default function delayAsync(ms: number) {
+export function delayAsync(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -20,15 +20,9 @@ export const useTransactionNotification = (
 ) => {
   const [transactionStatus, updateTransactionStatus] =
     useState<TransactionStatus>("idle");
-  const [txConfirmationHash, setTxConfirmationHash] = useState<
-    Address | undefined
-  >(undefined);
-  const [promiseResolve, setPromiseResolve] = useState<
-    TransactionFunction | undefined
-  >(undefined);
-  const [promiseReject, setPromiseReject] = useState<
-    TransactionFunction | undefined
-  >(undefined);
+  const [txConfirmationHash, setTxConfirmationHash] = useState<Address | undefined>(undefined);
+  const [promiseResolve, setPromiseResolve] = useState<TransactionFunction | undefined>(undefined);
+  const [promiseReject, setPromiseReject] = useState<TransactionFunction | undefined>(undefined);
 
   const transactionPromise = () => {
     return new Promise<TransactionPayload>((resolve, reject) => {

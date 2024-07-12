@@ -21,8 +21,8 @@ import { formatTokenAmount } from "@/utils/numbers";
 type Props = {
   tokenGarden: Pick<TokenGarden, "decimals">;
   pool: Pick<
-    CVStrategy,
-    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
+  CVStrategy,
+  "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType">;

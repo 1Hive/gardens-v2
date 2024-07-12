@@ -25,8 +25,8 @@ import {
   Proposals,
   Statistic,
 } from "@/components";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { pointSystems, poolTypes } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
@@ -35,7 +35,7 @@ export const dynamic = "force-dynamic";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
-export default function Pool({
+export function Pool({
   params: { chain, poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };
@@ -69,8 +69,8 @@ export default function Pool({
 
   useEffect(() => {
     if (metadata && !ipfsResult) {
-      getIpfsMetadata(metadata).then((data) => {
-        setIpfsResult(data);
+      getIpfsMetadata(metadata).then((d) => {
+        setIpfsResult(d);
       });
     }
   }, [metadata]);

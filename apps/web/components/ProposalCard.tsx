@@ -12,20 +12,20 @@ import { Button } from "./Button";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { alloABI } from "@/src/generated";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import useErrorDetails from "@/utils/getErrorName";
+import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
 
-type ProposalCard = {
+type Props = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
-  i: number;
+  index: number;
   isEditView: boolean;
   tooltipMessage: string;
   memberActivatedPoints: number;
@@ -42,7 +42,7 @@ export function ProposalCard({
   proposalData,
   inputData,
   stakedFilter,
-  i,
+  index,
   isEditView,
   tooltipMessage,
   memberActivatedPoints,
@@ -52,7 +52,7 @@ export function ProposalCard({
   alloInfo,
   inputHandler,
   triggerRenderProposals,
-}: ProposalCard) {
+}: Props) {
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
 
@@ -170,9 +170,9 @@ export function ProposalCard({
                 min={0}
                 max={memberActivatedPoints}
                 value={inputData?.value ?? 0}
-                className={`range range-success range-sm min-w-[420px] cursor-pointer`}
+                className={"range range-success range-sm min-w-[420px] cursor-pointer"}
                 step={memberActivatedPoints / 100}
-                onChange={(e) => inputHandler(i, Number(e.target.value))}
+                onChange={(e) => inputHandler(index, Number(e.target.value))}
               />
               <div className="flex w-full justify-between px-[10px]">
                 {[...Array(21)].map((_, i) => (

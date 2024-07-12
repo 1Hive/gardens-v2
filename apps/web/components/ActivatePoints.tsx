@@ -5,13 +5,13 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Address, useAccount } from "wagmi";
 import { Button } from "./Button";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { cvStrategyABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import useErrorDetails from "@/utils/getErrorName";
+import { useErrorDetails } from "@/utils/getErrorName";
 
 type ActiveMemberProps = {
   strategyAddress: Address;

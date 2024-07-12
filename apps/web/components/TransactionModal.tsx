@@ -14,12 +14,12 @@ export interface TransactionStep {
   messageClassName?: string;
 }
 
-type statuses = "idle" | "loading" | "success" | "error";
+type Statuses = "idle" | "loading" | "success" | "error";
 
 export type TransactionModalProps = {
   label: string;
-  allowTokenStatus: statuses;
-  stepTwoStatus: statuses;
+  allowTokenStatus: Statuses;
+  stepTwoStatus: Statuses;
   allowance?: bigint;
   pendingAllowance?: boolean;
   setPendingAllowance?: (_: boolean) => void;
@@ -36,8 +36,8 @@ interface StatusConfig {
 }
 
 export const TransactionModal = forwardRef<
-  HTMLDialogElement,
-  TransactionModalProps
+HTMLDialogElement,
+TransactionModalProps
 >(function TransactionModal(
   {
     label,

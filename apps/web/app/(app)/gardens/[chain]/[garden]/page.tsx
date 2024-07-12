@@ -14,15 +14,15 @@ import {
   Statistic,
   TokenLabel,
 } from "@/components";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import TokenGardenFaucet from "@/components/TokenGardenFaucet";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/constants/contracts";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export const dynamic = "force-dynamic";
 
-export default function Garden({
+export function Garden({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };

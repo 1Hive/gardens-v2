@@ -25,9 +25,11 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
+import { isProd } from "@/constants/contracts";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { poolTypes } from "@/types";
 import {
   dn,
@@ -36,7 +38,7 @@ import {
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
 
-export default function CommunityPage({
+export function CommunityPage({
   params: { chain, garden: tokenAddr, community: communityAddr },
 }: {
   params: { chain: number; garden: string; community: string };
@@ -72,8 +74,8 @@ export default function CommunityPage({
           if (typeof json.covenant === "string") {
             setCovenant(json.covenant);
           }
-        } catch (error) {
-          console.error(error);
+        } catch (err) {
+          console.error(err);
         }
       }
     };
@@ -134,8 +136,8 @@ export default function CommunityPage({
       ] as dn.Dnum;
 
       return dn.multiply(membership, feePercentage);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
     return [0n, 0] as dn.Dnum;
   };
@@ -316,6 +318,7 @@ export default function CommunityPage({
           />
         </div>
       </section>
+      {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
     </div>
   );
 }

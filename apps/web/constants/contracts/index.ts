@@ -26,9 +26,9 @@ type RPCSubgraphAddr = {
   };
 };
 
-let __subgraphAddresses: RPCSubgraphAddr = {
+let subgraphAddresses: RPCSubgraphAddr = {
   [localhost.id as number]: {
-    rpcUrl: `http://127.0.0.1:8545`,
+    rpcUrl: "http://127.0.0.1:8545",
     subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
   },
   [arbitrumSepolia.id as number]: {
@@ -45,25 +45,21 @@ let __subgraphAddresses: RPCSubgraphAddr = {
   },
 };
 
-for (const chainId in __subgraphAddresses) {
+for (const chainId in subgraphAddresses) {
   const chain = getChain(chainId);
   if (chain?.id) {
     const addrs = getRunLatestAddrs(chain.id);
     if (addrs) {
-      __subgraphAddresses[chain.id].strategyTemplate = addrs.strategyTemplate;
+      subgraphAddresses[chain.id].strategyTemplate = addrs.strategyTemplate;
     }
   }
 }
 
-function __getContractsAddrByChain(chainId: number | string) {
+export function getConfigByChain(chainId: number | string) {
   const currentChain = getChain(chainId);
   if (currentChain?.id) {
-    return __subgraphAddresses[currentChain.id];
+    return subgraphAddresses[currentChain.id];
   }
 }
 
-console.debug("env", ENV);
-// console.log("envs", __contractsAddresses);
-export type ContractsAddresses = (typeof __subgraphAddresses)[number];
-export const getContractsAddrByChain = __getContractsAddrByChain; //@todo rename to configByChain instead
-// export const contractsAddresses = __contractsAddresses;
+export type ContractsAddresses = (typeof subgraphAddresses)[number];

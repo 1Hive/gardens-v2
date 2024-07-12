@@ -12,39 +12,14 @@ import {
 import { proposalImg } from "@/assets";
 import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { cvStrategyABI } from "@/src/generated";
 import { poolTypes, proposalStatus } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { calculatePercentageBigInt } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
-
-type ProposalsMock = {
-  title: string;
-  type: "funding" | "streaming" | "signaling";
-  description: string;
-  value?: number;
-  id: number;
-};
-
-type UnparsedProposal = {
-  submitter: Address;
-  beneficiary: Address;
-  requestedToken: Address;
-  requestedAmount: number;
-  stakedTokens: number;
-  proposalType: any;
-  proposalStatus: any;
-  blockLast: number;
-  convictionLast: number;
-  agreementActionId: number;
-  threshold: number;
-  voterStakedPointsPct: number;
-};
-
-type Proposal = UnparsedProposal & ProposalsMock;
 
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -56,7 +31,7 @@ const prettyTimestamp = (timestamp: number) => {
   return `${day} ${month} ${year}`;
 };
 
-export default function Proposal({
+export function Proposal({
   params: { proposalId, garden },
 }: {
   params: { proposalId: string; poolId: string; chain: string; garden: string };
@@ -84,8 +59,8 @@ export default function Proposal({
 
   useEffect(() => {
     if (metadata) {
-      getIpfsMetadata(metadata).then((data) => {
-        setIpfsResult(data);
+      getIpfsMetadata(metadata).then((d) => {
+        setIpfsResult(d);
       });
     }
   }, [metadata]);
