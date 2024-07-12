@@ -19,8 +19,6 @@ import { poolTypes, proposalStatus } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { calculatePercentageBigInt } from "@/utils/numbers";
 
-export const dynamic = "force-dynamic";
-
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
 

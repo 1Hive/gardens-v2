@@ -11,8 +11,6 @@ import { GardenCard } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 
-export const dynamic = "force-dynamic";
-
 export default function Page() {
   const {
     data: gardens,
