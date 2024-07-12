@@ -28,6 +28,7 @@
       "env": [
         "NEXT_PUBLIC_SUBGRAPH_URL",
         "NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP",
+        "NEXT_PUBLIC_RPC_URL_ARB_TESTNET",
         "PINATA_JWT",
         "NODE_ENV",
         "NEXT_ABLY_API_KEY",

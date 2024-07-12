@@ -1,10 +1,8 @@
 "use client";
+
 import { HTMLInputTypeAttribute } from "react";
 import {
-  FieldValues,
-  Path,
   RegisterOptions,
-  UseFormRegister,
 } from "react-hook-form";
 
 type Props = {
@@ -64,7 +62,7 @@ export function FormInput({
             value={value}
             type={type}
             placeholder={placeholder}
-            className={`${className} hide-input-arrows input input-bordered ${!!errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname}`}
+            className={`${className} hide-input-arrows input input-bordered ${errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname}`}
             required={required}
             readOnly={readOnly}
             step={step}
@@ -77,7 +75,7 @@ export function FormInput({
         ) : (
           <textarea
             placeholder={placeholder}
-            className={`${className} textarea textarea-info line-clamp-5 w-full ${!!errors[registerKey] ? "input-error" : "input-info"}`}
+            className={`${className} textarea textarea-info line-clamp-5 w-full ${errors[registerKey] ? "input-error" : "input-info"}`}
             required={required}
             rows={rows}
             readOnly={readOnly}

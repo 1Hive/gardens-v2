@@ -1,7 +1,7 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import "@rainbow-me/rainbowkit/styles.css";
-import ThemeProvider from "./ThemeProvider";
 import {
   connectorsForWallets,
   RainbowKitProvider,
@@ -16,10 +16,11 @@ import {
 import { configureChains, createConfig, mainnet, WagmiConfig } from "wagmi";
 
 import { AddrethConfig } from "addreth";
-import UrqlProvider from "./UrqlProvider";
-import { PubSubProvider } from "@/contexts/pubsub.context";
 import { publicProvider } from "wagmi/providers/public";
 import { alchemyProvider } from "wagmi/providers/alchemy";
+import UrqlProvider from "./UrqlProvider";
+import ThemeProvider from "./ThemeProvider";
+import { PubSubProvider } from "@/contexts/pubsub.context";
 import useChainFromPath from "@/hooks/useChainFromPath";
 import { chains } from "@/configs/chainServer";
 
@@ -38,7 +39,7 @@ const Providers = ({ children }: Props) => {
     const publicClient = configureChains(chain ? [chain] : [mainnet], [
       publicProvider(),
       alchemyProvider({
-        apiKey: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET || "",
+        apiKey: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET ?? "",
       }),
     ]).publicClient;
     const connectors = connectorsForWallets([

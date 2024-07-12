@@ -1,13 +1,13 @@
 "use client";
+
 import React from "react";
-import { ActivatePoints } from "./ActivatePoints";
 import { Address, useAccount, useContractRead } from "wagmi";
+import { Dnum } from "dnum";
+import { ActivatePoints } from "./ActivatePoints";
+import { DisplayNumber } from "./DisplayNumber";
+import { Badge } from "./Badge";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
-import { CVStrategy } from "#/subgraph/.graphclient";
-import { DisplayNumber } from "./DisplayNumber";
-import { Dnum } from "dnum";
-import { Badge } from "./Badge";
 import { LightCVStrategy } from "@/types";
 
 type PoolGovernanceProps = {
@@ -59,7 +59,7 @@ export const PoolGovernance = ({
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-10">
             <div className="flex w-full max-w-xl flex-col items-center gap-2 font-semibold">
-              {showPoolGovernanceData ? (
+              {showPoolGovernanceData ?
                 <>
                   <div className="flex w-full items-center gap-6">
                     <h5 className="">Total staked in community:</h5>
@@ -88,14 +88,13 @@ export const PoolGovernance = ({
                     </p>
                   </div>
                 </>
-              ) : (
-                <div className="flex w-full items-center gap-6">
+              : <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
                     <Badge status={isMemberActivated ? 1 : 0} />
                   </div>
                 </div>
-              )}
+              }
             </div>
           </div>
           <ActivatePoints

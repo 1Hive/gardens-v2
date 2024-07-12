@@ -1,28 +1,30 @@
 "use client";
 
-import { commImg, groupFlowers } from "@/assets";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import {
-  EthAddress,
-  Statistic,
-  PoolCard,
-  RegisterMember,
-  DisplayNumber,
-  IncreasePower,
-  Button,
-} from "@/components";
 import { Address } from "viem";
-import {
-  getCommunityDocument,
-  getCommunityQuery,
-} from "#/subgraph/.graphclient";
 import {
   CurrencyDollarIcon,
   ExclamationCircleIcon,
   PlusIcon,
   RectangleGroupIcon,
 } from "@heroicons/react/24/outline";
+import { Dnum } from "dnum";
+import Link from "next/link";
+import { commImg, groupFlowers } from "@/assets";
+import {
+  Button,
+  DisplayNumber,
+  EthAddress,
+  IncreasePower,
+  PoolCard,
+  RegisterMember,
+  Statistic,
+} from "@/components";
+import {
+  getCommunityDocument,
+  getCommunityQuery,
+} from "#/subgraph/.graphclient";
 import { poolTypes } from "@/types";
 import {
   SCALE_PRECISION,
@@ -30,10 +32,8 @@ import {
   dn,
   parseToken,
 } from "@/utils/numbers";
-import { Dnum } from "dnum";
 import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import Link from "next/link";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 
 export default function CommunityPage({
@@ -50,7 +50,7 @@ export default function CommunityPage({
       { topic: "member", containerId: communityAddr },
     ],
   });
-  
+
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   useEffect(() => {
     if (error) {
@@ -73,7 +73,7 @@ export default function CommunityPage({
             setCovenant(json.covenant);
           }
         } catch (error) {
-          console.log(error);
+          console.error(error);
         }
       }
     };
@@ -135,7 +135,7 @@ export default function CommunityPage({
 
       return dn.multiply(membership, feePercentage);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
     return [0n, 0] as dn.Dnum;
   };
@@ -305,7 +305,7 @@ export default function CommunityPage({
           covenant ? (
             <p>{covenant}</p>
           ) : (
-            <LoadingSpinner></LoadingSpinner>
+            <LoadingSpinner />
           )
         ) : (
           <p className="italic">No covenant was submitted.</p>
