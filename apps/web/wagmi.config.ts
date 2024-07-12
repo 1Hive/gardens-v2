@@ -1,6 +1,6 @@
-import { Abi } from "viem";
 import { defineConfig } from "@wagmi/cli";
 import { actions } from "@wagmi/cli/plugins";
+import { Abi } from "viem";
 import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
 import { abi as SafeABI } from "#/contracts/out/ISafe.sol/ISafe.json";

@@ -256,7 +256,7 @@ export default function Proposal({
           <div className="badge badge-success p-4 text-white">
             Proposal passed and executed successfully
           </div>
-        : <div className="mt-10 flex justify-evenly">
+          : <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
               thresholdPct={thresholdPct}

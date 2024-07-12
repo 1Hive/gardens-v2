@@ -304,8 +304,8 @@ export default function CommunityPage({
         {covenantIpfsHash ?
           covenant ?
             <p>{covenant}</p>
-          : <LoadingSpinner />
-        : <p className="italic">No covenant was submitted.</p>}
+            : <LoadingSpinner />
+          : <p className="italic">No covenant was submitted.</p>}
         <div className="mt-10 flex justify-center">
           <Image
             src={groupFlowers}

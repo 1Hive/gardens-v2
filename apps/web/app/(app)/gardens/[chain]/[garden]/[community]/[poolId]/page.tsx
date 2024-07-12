@@ -158,7 +158,7 @@ export default function Pool({
             <ClockIcon className="h-8 w-8 text-secondary-content" />
             <h6>Waiting for council approval</h6>
           </div>
-        : <Image
+          : <Image
             src={poolTypes[proposalType] === "funding" ? blueLand : grassLarge}
             alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
