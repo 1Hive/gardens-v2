@@ -1,20 +1,29 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useAccount, Address as AddressType, useContractRead } from "wagmi";
+import Link from "next/link";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { Address as AddressType, useAccount, useContractRead } from "wagmi";
 import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
-import { toast } from "react-toastify";
-import Link from "next/link";
 import LoadingSpinner from "./LoadingSpinner";
-import { Button, PoolGovernance, ProposalCard } from "@/components";
-import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { getProposals } from "@/actions/getProposals";
-import { calculatePercentage } from "@/utils/numbers";
+import { Button, PoolGovernance, ProposalCard } from "@/components";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { LightCVStrategy } from "@/types";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import useErrorDetails from "@/utils/getErrorName";
+import { calculatePercentage } from "@/utils/numbers";
 import {
   Allo,
   CVProposal,
@@ -24,15 +33,6 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import { LightCVStrategy } from "@/types";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 export type ProposalInputItem = {
   id: string;

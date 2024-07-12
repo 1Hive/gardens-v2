@@ -1,3 +1,4 @@
+import { Realtime } from "ably";
 import { uniqueId } from "lodash-es";
 import React, {
   createContext,
@@ -8,10 +9,9 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Realtime } from "ably";
-import { ChainId } from "@/types";
-import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 import { createConfig } from "wagmi";
+import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
+import { ChainId } from "@/types";
 
 // Define the shape of your context data
 interface PubSubContextData {

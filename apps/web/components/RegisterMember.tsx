@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useBalance, useContractRead, Address, useAccount } from "wagmi";
+import { Address, useAccount, useBalance, useContractRead } from "wagmi";
 import { Button } from "./Button";
 import { TransactionModal } from "./TransactionModal";
-import useErrorDetails from "@/utils/getErrorName";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import useErrorDetails from "@/utils/getErrorName";
 import { gte } from "@/utils/numbers";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type RegisterMemberProps = {
   tokenSymbol: string;

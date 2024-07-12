@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useMemo } from "react";
 import type { EChartsOption } from "echarts";
 import EChartsReact from "echarts-for-react";
+import React, { useMemo } from "react";
 
 export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
   const DEFAULT_OPTIONS = {

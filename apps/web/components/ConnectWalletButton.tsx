@@ -1,20 +1,24 @@
 "use client";
 
-import React from "react";
-import { useBalance, useSwitchNetwork } from "wagmi";
-import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useDisconnect, useConnect, useAccount } from "wagmi";
+import { usePathname } from "next/navigation";
 import cn from "classnames";
-import { Fragment } from "react";
+import React, { Fragment } from "react";
+import {
+  useAccount,
+  useBalance,
+  useConnect,
+  useDisconnect,
+  useSwitchNetwork,
+} from "wagmi";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
-import { formatAddress } from "@/utils/formatAddress";
-import { Button } from "@/components";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { walletIcon } from "@/assets";
+import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chainServer";
 import useChainFromPath from "@/hooks/useChainFromPath";
+import { formatAddress } from "@/utils/formatAddress";
 
 export function ConnectWallet() {
   const path = usePathname();
@@ -38,13 +42,7 @@ export function ConnectWallet() {
 
   return (
     <ConnectButton.Custom>
-      {({
-        account,
-        chain,
-        openChainModal,
-        openConnectModal,
-        mounted,
-      }) => {
+      {({ account, chain, openChainModal, openConnectModal, mounted }) => {
         const ready = mounted;
         const connected = ready && account && chain;
         return (
@@ -102,9 +100,11 @@ export function ConnectWallet() {
                               {formatAddress(account.address)}
                             </h4>
                             <div className="ml-[2px] flex items-center text-xs font-semibold text-success">
-                              {!urlChainId ||
-                              isNaN(urlChainId!) ||
-                              chain.id === urlChainId ? (
+                              {(
+                                !urlChainId ||
+                                isNaN(urlChainId!) ||
+                                chain.id === urlChainId
+                              ) ?
                                 <>
                                   <span>Connected to</span>
                                   <div className="mx-1">
@@ -112,11 +112,10 @@ export function ConnectWallet() {
                                   </div>
                                   <span>{chain.name}</span>
                                 </>
-                              ) : (
-                                <span className="text-danger-content">
+                              : <span className="text-danger-content">
                                   Network mismatch
                                 </span>
-                              )}
+                              }
                             </div>
                           </div>
                           <ChevronUpIcon
@@ -150,9 +149,9 @@ export function ConnectWallet() {
                                 <span className="stat-title">Balance</span>
                                 <span className="text-sm">
                                   {" "}
-                                  {!tokenUrlAddress
-                                    ? "Unknow garden"
-                                    : Number(token?.formatted).toFixed(0)}{" "}
+                                  {!tokenUrlAddress ?
+                                    "Unknow garden"
+                                  : Number(token?.formatted).toFixed(0)}{" "}
                                   {token?.symbol === "ETH" ? "" : token?.symbol}
                                 </span>
                               </div>

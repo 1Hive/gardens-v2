@@ -1,24 +1,23 @@
-import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
-import { getContractsAddrByChain as getSubgraphAddrByChain } from "@/constants/contracts";
-import { useEffect, useRef, useState } from "react";
-import { ChainId } from "@/types";
-import { initUrqlClient } from "@/providers/urql";
 import { isEqual } from "lodash-es";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
+import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
+import useChainIdFromPath from "./useChainIdFromPath";
+import { getContractsAddrByChain as getSubgraphAddrByChain } from "@/constants/contracts";
 import {
   ChangeEventPayload,
   ChangeEventScope,
   SubscriptionId,
   usePubSubContext,
 } from "@/contexts/pubsub.context";
+import { initUrqlClient } from "@/providers/urql";
+import { ChainId } from "@/types";
 import delayAsync from "@/utils/delayAsync";
+const pendingRefreshToastId = "pending-refresh";
 import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
-import { toast } from "react-toastify";
-import useChainIdFromPath from "./useChainIdFromPath";
-
-const pendingRefreshToastId = "pending-refresh";
 
 /**
  *  Fetches data from a subgraph by chain id
@@ -55,7 +54,12 @@ export default function useSubgraphQuery<
   const subgraphAddress = getSubgraphAddrByChain(chainId);
   const [response, setResponse] = useState<
     Omit<Awaited<ReturnType<typeof fetch>>, "operation">
-  >({ hasNext: true, stale: true, data: undefined, error: undefined });
+  >({
+    hasNext: true,
+    stale: true,
+    data: undefined,
+    error: undefined,
+  });
 
   const latestResponse = useRef(response);
   const subscritionId = useRef<SubscriptionId>();
@@ -126,21 +130,17 @@ export default function useSubgraphQuery<
     if (fetching) {
       return;
     }
-    console.log("Refetching from outside", { payload });
     setFetching(true);
     const res = await refetch(payload);
     setResponse(res);
     setFetching(false);
-    console.log("Refetched from outside", { payload, res });
   };
 
   const refetch = async (
     changePayload?: ChangeEventPayload,
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
-    console.log("Refetching", { retryCount });
     const result = await fetch();
-    console.log("Refetched", { result, retryCount });
     if (!retryCount) {
       retryCount = 0;
       toast.loading("Pulling new data", {
@@ -190,12 +190,12 @@ export default function useSubgraphQuery<
   };
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
     const init = async () => {
       setFetching(true);
-      console.log("Fetching");
       const resp = await fetch();
-      console.log("Fetched", { resp });
       setResponse(resp);
       setFetching(false);
     };

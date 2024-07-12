@@ -5,7 +5,6 @@ const config = {
   jsxSingleQuote: false,
   singleQuote: false,
   trailingComma: "all",
-  
 };
 
 module.exports = config;

@@ -38,6 +38,13 @@ module.exports = {
       },
     ],
     "no-unreachable": "warn",
+    "import/order": [
+      "error",
+      {
+        groups: ["external", "builtin", "internal", "sibling", "parent", "index"],
+      },
+    ],
+
     "no-console": [
       "warn",
       {
@@ -46,23 +53,11 @@ module.exports = {
     ],
     "prefer-const": "off",
     "@typescript-eslint/consistent-type-definitions": "off",
-    "import/order": [
-      "error",
-      {
-        groups: [
-          "external",
-          "builtin",
-          "internal",
-          "sibling",
-          "parent",
-          "index",
-        ],
-      },
-    ],
     curly: "error",
     "no-unused-expressions": "error",
     "no-unsafe-optional-chaining": "error",
     "comma-dangle": ["error", "always-multiline"],
     semi: ["error", "always"],
+    "brace-style": "error",
   },
 };

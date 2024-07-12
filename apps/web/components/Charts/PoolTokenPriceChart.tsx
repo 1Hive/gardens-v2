@@ -1,5 +1,5 @@
-import React from "react";
 import type { EChartsOption } from "echarts";
+import React from "react";
 import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
 

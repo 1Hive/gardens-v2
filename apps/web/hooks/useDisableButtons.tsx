@@ -1,6 +1,6 @@
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 import { useMemo } from "react";
 import { useAccount, useNetwork } from "wagmi";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 export interface ConditionObject {
   condition?: boolean;

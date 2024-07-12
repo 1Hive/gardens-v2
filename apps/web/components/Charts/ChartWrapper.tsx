@@ -38,11 +38,9 @@ export const ChartWrapper = ({
               <p className="flex items-center gap-2">
                 Conviction {growing ? "is growing" : "is decreasing"}
                 <span>
-                  {growing ? (
+                  {growing ?
                     <ArrowUpRightIcon className={iconClassname} />
-                  ) : (
-                    <ArrowDownRightIcon className={iconClassname} />
-                  )}{" "}
+                  : <ArrowDownRightIcon className={iconClassname} />}{" "}
                 </span>
               </p>
             )}

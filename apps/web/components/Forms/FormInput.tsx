@@ -1,9 +1,7 @@
 "use client";
 
 import { HTMLInputTypeAttribute } from "react";
-import {
-  RegisterOptions,
-} from "react-hook-form";
+import { RegisterOptions } from "react-hook-form";
 
 type Props = {
   label?: string;
@@ -53,9 +51,9 @@ export function FormInput({
           {label}
         </label>
       )}
-      {subLabel && <p className="text-xs mb-1">{subLabel}</p>}
+      {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
       <div className={`relative ${type !== "textarea" && "max-w-md"}`}>
-        {type !== "textarea" ? (
+        {type !== "textarea" ?
           <input
             id={registerKey}
             onChange={onChange}
@@ -72,8 +70,7 @@ export function FormInput({
             })}
             {...otherProps}
           />
-        ) : (
-          <textarea
+        : <textarea
             placeholder={placeholder}
             className={`${className} textarea textarea-info line-clamp-5 w-full ${errors[registerKey] ? "input-error" : "input-info"}`}
             required={required}
@@ -86,11 +83,11 @@ export function FormInput({
             })}
             {...otherProps}
           />
-        )}
+        }
         {children}
       </div>
       {errors && (
-        <p className="mt-2 text-sm text-red">
+        <p className="text-red mt-2 text-sm">
           {errors[registerKey]?.message || ""}
         </p>
       )}

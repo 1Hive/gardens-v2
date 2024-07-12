@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
 import type { EChartsOption } from "echarts";
+import React, { useEffect, useMemo, useState } from "react";
 import { ChartSetup } from "./ChartSetup";
 import { ChartWrapper } from "./ChartWrapper";
 

@@ -1,24 +1,23 @@
 "use client";
 
-import { Address, formatUnits } from "viem";
 import Image from "next/image";
-import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Address, formatUnits } from "viem";
 import { useContractRead } from "wagmi";
-import { Badge, Statistic, DisplayNumber } from "@/components";
-import { EthAddress } from "@/components";
-import { cvStrategyABI } from "@/src/generated";
+import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
+import { proposalImg } from "@/assets";
+import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { cvStrategyABI } from "@/src/generated";
+import { poolTypes, proposalStatus } from "@/types";
+import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { calculatePercentageBigInt } from "@/utils/numbers";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { proposalStatus, poolTypes } from "@/types";
-import { proposalImg } from "@/assets";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import LoadingSpinner from "@/components/LoadingSpinner";
 
 export const dynamic = "force-dynamic";
 

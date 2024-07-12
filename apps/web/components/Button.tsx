@@ -67,11 +67,8 @@ export function Button({
   icon,
   type = "button",
 }: ButtonProps) {
-  const buttonContent = isLoading ? (
-    <span className="loading loading-spinner" />
-  ) : (
-    children  
-  );
+  const buttonContent =
+    isLoading ? <span className="loading loading-spinner" /> : children;
 
   const buttonElement = (
     <button
@@ -85,11 +82,9 @@ export function Button({
     </button>
   );
 
-  return disabled ? (
-    <div className={`tooltip ${styles}`} data-tip={tooltip}>
-      {buttonElement}
-    </div>
-  ) : (
-    buttonElement
-  );
+  return disabled ?
+      <div className={`tooltip ${styles}`} data-tip={tooltip}>
+        {buttonElement}
+      </div>
+    : buttonElement;
 }

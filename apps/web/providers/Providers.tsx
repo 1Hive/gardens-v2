@@ -2,27 +2,26 @@
 
 import React, { useEffect, useState } from "react";
 import "@rainbow-me/rainbowkit/styles.css";
-import {
-  connectorsForWallets,
-  RainbowKitProvider,
-  lightTheme,
-} from "@rainbow-me/rainbowkit";
-import {
-  rabbyWallet,
-  frameWallet,
-  injectedWallet,
-  coinbaseWallet,
-} from "@rainbow-me/rainbowkit/wallets";
-import { configureChains, createConfig, mainnet, WagmiConfig } from "wagmi";
-
 import { AddrethConfig } from "addreth";
-import { publicProvider } from "wagmi/providers/public";
+import { configureChains, createConfig, mainnet, WagmiConfig } from "wagmi";
 import { alchemyProvider } from "wagmi/providers/alchemy";
-import UrqlProvider from "./UrqlProvider";
-import ThemeProvider from "./ThemeProvider";
+import { publicProvider } from "wagmi/providers/public";
+import { chains } from "@/configs/chainServer";
 import { PubSubProvider } from "@/contexts/pubsub.context";
 import useChainFromPath from "@/hooks/useChainFromPath";
-import { chains } from "@/configs/chainServer";
+import {
+  connectorsForWallets,
+  lightTheme,
+  RainbowKitProvider,
+} from "@rainbow-me/rainbowkit";
+import {
+  coinbaseWallet,
+  frameWallet,
+  injectedWallet,
+  rabbyWallet,
+} from "@rainbow-me/rainbowkit/wallets";
+import ThemeProvider from "./ThemeProvider";
+import UrqlProvider from "./UrqlProvider";
 
 type Props = {
   children: React.ReactNode;

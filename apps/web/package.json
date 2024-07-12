@@ -41,9 +41,6 @@
     "wagmi": "~1"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.12",
-    "@babel/eslint-parser": "^7.23.3",
-    "@babel/preset-env": "^7.23.5",
     "@eslint/js": "^9.6.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
     "@stylistic/eslint-plugin": "^2.3.0",

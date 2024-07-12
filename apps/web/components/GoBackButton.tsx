@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components";
 
@@ -16,7 +16,7 @@ export const GoBackButton = () => {
           btnStyle="link"
           color="primary"
           onClick={() => router.back()}
-          className="w-fit !p-0 subtitle2"
+          className="subtitle2 w-fit !p-0"
           icon={<ArrowLeftIcon className="h-4 w-4" />}
         >
           Back

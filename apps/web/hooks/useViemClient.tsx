@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { PublicClient, createPublicClient, http } from "viem";
+import { createPublicClient, http, PublicClient } from "viem";
 import { useChainId } from "wagmi";
 import { getChain } from "@/configs/chainServer";
 import useChainFromPath from "./useChainFromPath";

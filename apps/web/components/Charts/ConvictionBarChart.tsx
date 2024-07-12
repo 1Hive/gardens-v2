@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
+import React, { useEffect } from "react";
 import { ChartWrapper } from "./ChartWrapper";
 
 type ScenarioMapping = {

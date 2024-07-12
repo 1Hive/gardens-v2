@@ -1,25 +1,25 @@
 "use client";
 
-import { Address, useAccount, useBalance, useContractRead } from "wagmi";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { parseUnits } from "viem";
+import { Address, useAccount, useBalance, useContractRead } from "wagmi";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Button } from "./Button";
-import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { DisplayNumber } from "./DisplayNumber";
+import { TransactionModal, TransactionStep } from "./TransactionModal";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { queryByChain } from "@/providers/urql";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { formatTokenAmount } from "@/utils/numbers";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import useErrorDetails from "@/utils/getErrorName";
-import { queryByChain } from "@/providers/urql";
+import { formatTokenAmount } from "@/utils/numbers";
 import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
-import { useUrqlClient } from "@/hooks/useUqrlClient";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type IncreasePowerProps = {
   communityAddress: Address;

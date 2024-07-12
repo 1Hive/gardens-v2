@@ -19,12 +19,10 @@ export const Statistic = ({
   const defaultIcon = <UserGroupIcon className={iconClassNames} />;
 
   return (
-    <div className="text-neutral-soft-content flex items-center gap-2">
-      {icon ? (
+    <div className="flex items-center gap-2 text-neutral-soft-content">
+      {icon ?
         <div className={iconClassNames}>{icon}</div>
-      ) : (
-        <div className={iconClassNames}>{defaultIcon}</div>
-      )}
+      : <div className={iconClassNames}>{defaultIcon}</div>}
       {label && (
         <p className="">
           {capitalize(label)}: {count}

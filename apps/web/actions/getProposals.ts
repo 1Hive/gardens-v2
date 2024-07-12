@@ -1,10 +1,7 @@
 import { Address } from "viem";
 import { LightCVStrategy, LightProposal } from "@/types";
 
-export async function getProposals(
-  accountAddress: Address | undefined,
-  strategy: LightCVStrategy,
-) {
+export async function getProposals(accountAddress: Address | undefined, strategy: LightCVStrategy) {
   try {
     const fetchIPFSDataBatch = async function (
       proposals: LightProposal[],
@@ -23,13 +20,11 @@ export async function getProposals(
         );
 
       // Introduce a delay
-      const sleep = (ms: number) =>
-        new Promise((resolve) => setTimeout(resolve, ms));
+      const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
       // Create proposal chunks
-      const chunks = Array.from(
-        { length: Math.ceil(proposals.length / batchSize) },
-        (_, i) => proposals.slice(i * batchSize, i * batchSize + batchSize),
+      const chunks = Array.from({ length: Math.ceil(proposals.length / batchSize) }, (_, i) =>
+        proposals.slice(i * batchSize, i * batchSize + batchSize),
       );
 
       // Process each chunk

@@ -3,6 +3,7 @@
 import { useEffect, useMemo } from "react";
 import { UrqlProvider as Provider } from "@urql/next";
 import { initUrqlClient } from "./urql";
+
 // urql provider for client components
 
 // urql docs: https://formidable.com/open-source/urql/docs/advanced/server-side-rendering/#nextjs

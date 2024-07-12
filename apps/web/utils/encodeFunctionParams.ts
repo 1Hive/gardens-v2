@@ -3,8 +3,8 @@ import {
   AbiFunctionNotFoundError,
   AbiItem,
   Address,
-  GetAbiItemParameters,
   getAbiItem,
+  GetAbiItemParameters,
 } from "viem";
 import { encodeAbiParameters } from "viem/utils";
 
@@ -31,9 +31,9 @@ export const encodeFunctionParams = function (
     });
   }
   const data =
-    "inputs" in abiItem && abiItem.inputs
-      ? encodeAbiParameters(abiItem.inputs, (args ?? []) as readonly unknown[])
-      : undefined;
+    "inputs" in abiItem && abiItem.inputs ?
+      encodeAbiParameters(abiItem.inputs, (args ?? []) as readonly unknown[])
+    : undefined;
 
   return data;
 };

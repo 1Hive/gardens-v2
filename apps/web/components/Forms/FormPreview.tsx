@@ -15,7 +15,9 @@ export default function FormPreview({
   previewTitle,
   formRows,
 }: Props) {
-  if (!formRows) {return <>Error no Data</>;}
+  if (!formRows) {
+    return <>Error no Data</>;
+  }
 
   // description or covenant
   {

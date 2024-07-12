@@ -1,31 +1,26 @@
+import { debounce, isEqual } from "lodash-es";
+import { useEffect, useRef, useState } from "react";
+import { arbitrumSepolia, localhost, sepolia } from "viem/chains";
 import {
   AnyVariables,
   CombinedError,
   DocumentInput,
   OperationContext,
 } from "@urql/next";
+import { HTTP_CODES } from "@/app/api/utils";
 import { getContractsAddrByChain } from "@/constants/contracts";
-import { useEffect, useRef, useState } from "react";
-import {
-  localhost,
-  arbitrumSepolia,
-  optimismSepolia,
-  sepolia,
-} from "viem/chains";
-import { initUrqlClient } from "@/providers/urql";
-import { ChainId } from "@/types";
 import {
   ChangeEventScope,
   SubscriptionId,
   usePubSubContext,
 } from "@/contexts/pubsub.context";
-import { debounce, isEqual } from "lodash-es";
 import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
+import { initUrqlClient } from "@/providers/urql";
+import { ChainId } from "@/types";
 import delayAsync from "@/utils/delayAsync";
-import { HTTP_CODES } from "@/app/api/utils";
 
 const allChains: ChainId[] = [
   sepolia.id,
@@ -33,7 +28,6 @@ const allChains: ChainId[] = [
   // optimismSepolia.id,
 ];
 if (process.env.NODE_ENV === "development") {
-  console.log("dev");
   allChains.push(localhost.id);
 }
 

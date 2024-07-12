@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
 import Image from "next/image";
+import React, { useEffect, useMemo } from "react";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import { GardenCard } from "@/components";
-import {
-  getTokenGardensQuery,
-  getTokenGardensDocument,
-} from "#/subgraph/.graphclient";
-import useSubgraphQueryMultiChain from "@/hooks/useSubgraphQueryMultiChain";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import useSubgraphQueryMultiChain from "@/hooks/useSubgraphQueryMultiChain";
+import {
+  getTokenGardensDocument,
+  getTokenGardensQuery,
+} from "#/subgraph/.graphclient";
 
 export const dynamic = "force-dynamic";
 

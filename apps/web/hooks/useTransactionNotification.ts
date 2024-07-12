@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { WriteContractResult } from "wagmi/actions";
 import { Address } from "viem";
+import { WriteContractResult } from "wagmi/actions";
 
 type TransactionStatus = "error" | "success" | "loading" | "idle";
 type TransactionData = WriteContractResult | undefined;

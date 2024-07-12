@@ -1,11 +1,11 @@
-import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
-import { cvStrategyABI } from "@/src/generated";
-import { useViemClient } from "./useViemClient";
-import { SCALE_PRECISION } from "@/utils/numbers";
 import { Abi } from "viem";
+import { useAccount } from "wagmi";
+import { useViemClient } from "./useViemClient";
 import { CVStrategy } from "#/subgraph/.graphclient";
+import { cvStrategyABI } from "@/src/generated";
+import { SCALE_PRECISION } from "@/utils/numbers";
+import { Address } from "#/subgraph/src/scripts/last-addr";
 
 export function useTotalVoterStakedPct(strategy: CVStrategy) {
   const { address } = useAccount();
@@ -14,7 +14,9 @@ export function useTotalVoterStakedPct(strategy: CVStrategy) {
   const [voterStake, setVoterStake] = useState<any>(null);
 
   useEffect(() => {
-    if (!address) return;
+    if (!address) {
+      return;
+    }
 
     fetchData();
   }, [address]);

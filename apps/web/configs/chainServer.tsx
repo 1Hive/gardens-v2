@@ -1,22 +1,22 @@
 import React, { FC } from "react";
 import {
-  Arbitrum,
-  GnosisGno,
-  Ethereum,
-  Optimism,
-} from "@thirdweb-dev/chain-icons";
-import {
-  Chain,
-  localhost,
-  arbitrumSepolia,
   arbitrum,
+  arbitrumSepolia,
+  Chain,
+  gnosis,
+  localhost,
   mainnet,
-  sepolia,
   optimism,
   optimismSepolia,
-  gnosis,
+  sepolia,
 } from "viem/chains";
 import { ChainId } from "@/types";
+import {
+  Arbitrum,
+  Ethereum,
+  GnosisGno,
+  Optimism,
+} from "@thirdweb-dev/chain-icons";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
   chain: number | string;

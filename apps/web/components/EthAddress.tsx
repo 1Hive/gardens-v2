@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { Addreth } from "addreth";
+import React from "react";
 import { Address } from "viem";
 import LoadingSpinner from "./LoadingSpinner";
 import { chainDataMap } from "@/configs/chainServer";

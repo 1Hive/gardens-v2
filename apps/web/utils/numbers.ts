@@ -18,9 +18,9 @@ export const CV_SCALE_PRECISION_DECIMALS = 7;
 
 export function parseToken(value: dn.Dnum | string, compact?: boolean) {
   const str =
-    typeof value === "string"
-      ? value
-      : dn.format([BigInt(value[0]), Number(value[1])]);
+    typeof value === "string" ? value : (
+      dn.format([BigInt(value[0]), Number(value[1])])
+    );
 
   const charsLength = 3;
   const prefixLength = 2; // "0."

@@ -1,5 +1,5 @@
-import { getChain } from "@/configs/chainServer";
 import { useMemo } from "react";
+import { getChain } from "@/configs/chainServer";
 import useChainIdFromPath from "./useChainIdFromPath";
 
 export default function useChainFromPath() {

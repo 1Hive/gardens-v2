@@ -1,9 +1,9 @@
-import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { registryCommunityABI } from "@/src/generated";
-import { useViemClient } from "./useViemClient";
 import { LightCVStrategy } from "@/types";
+import { Address } from "#/subgraph/src/scripts/last-addr";
+import { useViemClient } from "./useViemClient";
 
 export function useIsMemberActivated(strategy: LightCVStrategy) {
   const { address } = useAccount();

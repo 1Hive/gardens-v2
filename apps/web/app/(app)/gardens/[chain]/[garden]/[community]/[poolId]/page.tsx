@@ -1,35 +1,35 @@
 "use client";
 
 import Image from "next/image";
-import {
-  InformationCircleIcon,
-  ChartBarIcon,
-  BoltIcon,
-  Square3Stack3DIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import {
+  BoltIcon,
+  ChartBarIcon,
+  ClockIcon,
+  InformationCircleIcon,
+  Square3Stack3DIcon,
+} from "@heroicons/react/24/outline";
+import { blueLand, grassLarge } from "@/assets";
+import {
   Badge,
-  Proposals,
-  PoolMetrics,
   EthAddress,
+  PoolMetrics,
+  Proposals,
   Statistic,
 } from "@/components";
-import { grassLarge, blueLand } from "@/assets";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { pointSystems, poolTypes } from "@/types";
+import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { CV_SCALE_PRECISION } from "@/utils/numbers";
 import {
   Allo,
-  TokenGarden,
   getAlloQuery,
   getPoolDataDocument,
   getPoolDataQuery,
+  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { pointSystems, poolTypes } from "@/types";
-import { CV_SCALE_PRECISION } from "@/utils/numbers";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 
 export const dynamic = "force-dynamic";
 

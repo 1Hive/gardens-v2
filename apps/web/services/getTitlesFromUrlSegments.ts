@@ -1,17 +1,17 @@
 import { DocumentNode } from "graphql";
+import { initUrqlClient, queryByChain } from "@/providers/urql";
+// import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { capitalize } from "@/utils/text";
 import {
   CVProposal,
   CVStrategy,
-  RegistryCommunity,
-  TokenGarden,
   getCommunityTitlesDocument,
   getPoolTitlesDocument,
   getProposalTitlesDocument,
   getTokenTitleDocument,
+  RegistryCommunity,
+  TokenGarden,
 } from "#/subgraph/.graphclient";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
-// import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { capitalize } from "@/utils/text";
 
 const { urqlClient } = initUrqlClient();
 

@@ -1,13 +1,13 @@
 "use client";
 
-import React from "react";
+import Image from "next/image";
 import Link from "next/link";
+import React from "react";
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
+import { newLogo } from "@/assets";
 import { ConnectWallet } from "@/components";
 import { navItems } from "@/constants/navigation";
-import { newLogo } from "@/assets";
 
 export function NavBar() {
   return (

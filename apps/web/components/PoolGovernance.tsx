@@ -1,14 +1,14 @@
 "use client";
 
+import { Dnum } from "dnum";
 import React from "react";
 import { Address, useAccount, useContractRead } from "wagmi";
-import { Dnum } from "dnum";
 import { ActivatePoints } from "./ActivatePoints";
-import { DisplayNumber } from "./DisplayNumber";
 import { Badge } from "./Badge";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
+import { DisplayNumber } from "./DisplayNumber";
 import { registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
+import { abiWithErrors2 } from "@/utils/abiWithErrors";
 
 type PoolGovernanceProps = {
   memberPoolWeight: number;

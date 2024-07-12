@@ -1,7 +1,7 @@
-import { chainDataMap } from "@/configs/chainServer";
 import { useEffect } from "react";
 import { TransactionReceipt } from "viem";
 import { useChainId, useContractWrite, useWaitForTransaction } from "wagmi";
+import { chainDataMap } from "@/configs/chainServer";
 
 export default function useContractWriteWithConfirmations(
   props: Parameters<typeof useContractWrite>[0] & {
