@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export function Home() {
+export function Page() {
   redirect("/gardens");
 }
