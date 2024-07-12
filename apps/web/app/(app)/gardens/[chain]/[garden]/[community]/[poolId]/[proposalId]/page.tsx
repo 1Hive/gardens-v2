@@ -136,6 +136,17 @@ export default function Proposal({
     enabled: !!totalEffectiveActivePoints,
   });
 
+  const tokenSymbol = data?.tokenGarden?.symbol;
+  const tokenDecimals = data?.tokenGarden?.decimals;
+  const convictionLast = proposalData?.convictionLast;
+  const threshold = proposalData?.threshold;
+  const proposalType = proposalData?.strategy.config?.proposalType;
+  const requestedAmount = proposalData?.requestedAmount;
+  const beneficiary = proposalData?.beneficiary as Address | undefined;
+  const submitter = proposalData?.submitter as Address | undefined;
+  const status = proposalData?.proposalStatus;
+  const stakedAmount = proposalData?.stakedAmount;
+
   useEffect(() => {
     if (!proposalData) {
       return;
@@ -151,9 +162,6 @@ export default function Proposal({
       totalEffectiveActivePoints,
       updateConvictionLast,
       convictionLast,
-      thresholdPct,
-      totalSupportPct,
-      currentConvictionPct,
     });
   }, [proposalData]);
 
@@ -170,17 +178,6 @@ export default function Proposal({
       </div>
     );
   }
-
-  const tokenSymbol = data.tokenGarden?.symbol;
-  const tokenDecimals = data.tokenGarden?.decimals;
-  const convictionLast = proposalData.convictionLast;
-  const threshold = proposalData.threshold;
-  const proposalType = proposalData.strategy.config?.proposalType;
-  const requestedAmount = proposalData.requestedAmount;
-  const beneficiary = proposalData.beneficiary as Address;
-  const submitter = proposalData.submitter as Address;
-  const status = proposalData.proposalStatus;
-  const stakedAmount = proposalData.stakedAmount;
 
   const isSignalingType = poolTypes[proposalType] === "signaling";
 
@@ -201,6 +198,12 @@ export default function Proposal({
     maxCVSupply,
     tokenDecimals,
   );
+
+  console.debug({
+    thresholdPct,
+    totalSupportPct,
+    currentConvictionPct,
+  });
 
   return (
     <div className="page-layout">
