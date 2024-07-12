@@ -258,7 +258,7 @@ export default function Proposal({
       <section className="section-layout">
         <h2>Metrics</h2>
         {/* TODO: need designs for this entire section */}
-        {status && proposalStatus[status] === "executed" ? (
+        {status && proposalStatus[status] === "executed" ?
           <div className="my-8 flex w-full justify-center">
             <div className="badge badge-success p-4 text-primary">
               Proposal passed and executed successfully
