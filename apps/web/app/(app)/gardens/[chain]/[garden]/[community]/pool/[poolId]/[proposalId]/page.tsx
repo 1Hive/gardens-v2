@@ -281,6 +281,7 @@ export default function Proposal({
               thresholdPct={thresholdPct}
               proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
+              proposalId={proposalIdNumber as string}
             />
           </>
         )}
