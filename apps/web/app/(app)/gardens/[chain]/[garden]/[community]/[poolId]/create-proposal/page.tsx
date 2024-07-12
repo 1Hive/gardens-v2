@@ -9,7 +9,7 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
-export function Page({
+export default function Page({
   params: { poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };

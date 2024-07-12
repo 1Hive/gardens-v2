@@ -11,7 +11,7 @@ import { PoolForm } from "@/components/Forms/PoolForm";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
-export function CreatePool({
+export function Page({
   params: { chain, garden, community },
 }: {
   params: { chain: number; garden: string; community: string };

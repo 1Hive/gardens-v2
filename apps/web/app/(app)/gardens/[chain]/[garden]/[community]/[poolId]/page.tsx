@@ -35,7 +35,7 @@ export const dynamic = "force-dynamic";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
-export function Pool({
+export function Page({
   params: { chain, poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };

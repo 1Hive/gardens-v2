@@ -11,7 +11,7 @@ import { CommunityForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
-export function Page({
+export default function Page({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };

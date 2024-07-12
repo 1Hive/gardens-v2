@@ -17,7 +17,7 @@ const chakra = Chakra_Petch({
   weight: ["400", "500", "600", "700"],
 });
 
-export function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       suppressHydrationWarning

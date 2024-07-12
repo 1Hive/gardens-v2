@@ -38,7 +38,7 @@ import {
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
 
-export function Page({
+export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
 }: {
   params: { chain: number; garden: string; community: string };

@@ -22,7 +22,7 @@ import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export const dynamic = "force-dynamic";
 
-export function Page({
+export default function Page({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };

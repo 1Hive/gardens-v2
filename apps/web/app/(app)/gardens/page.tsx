@@ -13,7 +13,7 @@ import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 
 export const dynamic = "force-dynamic";
 
-export function Page() {
+export default function Page() {
   const {
     data: gardens,
     fetching,

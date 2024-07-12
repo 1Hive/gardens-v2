@@ -31,7 +31,7 @@ const prettyTimestamp = (timestamp: number) => {
   return `${day} ${month} ${year}`;
 };
 
-export function Proposal({
+export function Page({
   params: { proposalId, garden },
 }: {
   params: { proposalId: string; poolId: string; chain: string; garden: string };
