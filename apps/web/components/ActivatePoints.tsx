@@ -1,11 +1,12 @@
 "use client";
+
 import React, { useEffect } from "react";
-import { Button } from "./Button";
 import { Address, useAccount } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { Button } from "./Button";
 import { cvStrategyABI } from "@/src/generated";
 import useErrorDetails from "@/utils/getErrorName";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { usePubSubContext } from "@/contexts/pubsub.context";

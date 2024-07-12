@@ -15,7 +15,7 @@ export default function FormPreview({
   previewTitle,
   formRows,
 }: Props) {
-  if (!formRows) return <>Error no Data</>;
+  if (!formRows) {return <>Error no Data</>;}
 
   // description or covenant
   {
@@ -29,7 +29,7 @@ Covenant
 
   return (
     <>
-      <div className="divider-default divider"></div>
+      <div className="divider-default divider" />
       <div className="px-4 sm:px-0">
         <p className="mt-0 max-w-2xl text-sm leading-6 text-gray-500">
           {previewTitle}

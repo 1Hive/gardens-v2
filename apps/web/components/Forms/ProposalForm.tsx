@@ -1,19 +1,20 @@
 "use client";
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { alloABI } from "@/src/generated";
 import { Address, parseUnits } from "viem";
 import { encodeAbiParameters } from "viem";
+import { toast } from "react-toastify";
+import { usePathname, useRouter } from "next/navigation";
+import FormPreview, { FormRow } from "./FormPreview";
+import { FormInput } from "./FormInput";
+import { alloABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { toast } from "react-toastify";
 import { poolTypes } from "@/types";
 import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
-import FormPreview, { FormRow } from "./FormPreview";
-import { FormInput } from "./FormInput";
-import { usePathname, useRouter } from "next/navigation";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
@@ -71,7 +72,6 @@ export const ProposalForm = ({
   tokenAddress,
   spendingLimit,
   spendingLimitPct,
-  poolAmount,
 }: ProposalFormProps) => {
   const {
     register,
@@ -136,7 +136,7 @@ export const ProposalForm = ({
         error: "Error uploading data to IPFS",
       })
       .then((ipfsHash) => {
-        console.log("https://ipfs.io/ipfs/" + ipfsHash);
+        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
         if (previewData === undefined) {
           throw new Error("No preview data");
         }
@@ -170,7 +170,7 @@ export const ProposalForm = ({
       }
     },
     onError: (err) => {
-      console.log(err);
+      console.warn(err);
       toast.error("Something went wrong creating Proposal");
     },
     onSettled: () => setLoading(false),
@@ -189,13 +189,14 @@ export const ProposalForm = ({
       tokenGarden?.decimals as number,
     );
 
-    console.log([
+    console.debug([
       poolId,
       previewData.beneficiary,
       requestedAmount,
       tokenAddress,
       metadata,
     ]);
+
     const encodedData = encodeAbiParameters(abiParameters, [
       [
         poolId,
@@ -207,7 +208,7 @@ export const ProposalForm = ({
       ],
     ]);
 
-    console.log(
+    console.debug(
       poolId,
       previewData.beneficiary,
       requestedAmount,
@@ -219,7 +220,9 @@ export const ProposalForm = ({
   };
 
   const formatFormRows = () => {
-    if (!previewData) return [];
+    if (!previewData) {
+      return [];
+    }
     let formattedRows: FormRow[] = [];
 
     Object.entries(previewData).forEach(([key, value]) => {
@@ -246,15 +249,14 @@ export const ProposalForm = ({
   };
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
-      {showPreview ? (
+      {showPreview ?
         <FormPreview
-          title={previewData?.title || ""}
-          description={previewData?.description || ""}
+          title={previewData?.title ?? ""}
+          description={previewData?.description ?? ""}
           formRows={formatFormRows()}
           previewTitle="Check proposals details"
         />
-      ) : (
-        <div className="flex flex-col gap-2 overflow-hidden p-1">
+      : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
             <div className="relative flex flex-col">
               <FormInput
@@ -304,7 +306,7 @@ export const ProposalForm = ({
                 registerKey="beneficiary"
                 type="text"
                 placeholder="0x000..."
-              ></FormInput>
+              />
             </div>
           )}
           <div className="flex flex-col">
@@ -316,7 +318,7 @@ export const ProposalForm = ({
               registerKey="title"
               type="text"
               placeholder="Example Title"
-            ></FormInput>
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -328,12 +330,12 @@ export const ProposalForm = ({
               type="textarea"
               rows={10}
               placeholder="Proposal description"
-            ></FormInput>
+            />
           </div>
         </div>
-      )}
+      }
       <div className="flex w-full items-center justify-center py-6">
-        {showPreview ? (
+        {showPreview ?
           <div className="flex items-center gap-10">
             <Button
               onClick={() => {
@@ -348,9 +350,7 @@ export const ProposalForm = ({
               Submit
             </Button>
           </div>
-        ) : (
-          <Button type="submit">Preview</Button>
-        )}
+        : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

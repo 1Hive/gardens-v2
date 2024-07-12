@@ -1,9 +1,9 @@
 import React from "react";
-import { proposalStatus, poolTypes } from "@/types";
 import {
   CurrencyDollarIcon,
   HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
+import { proposalStatus, poolTypes } from "@/types";
 import { capitalize } from "@/utils/text";
 
 type BadgeProps = {
@@ -66,7 +66,7 @@ export function Badge({
         signaling: <HandThumbUpIcon className="h-6 w-6 text-inherit" />,
         funding: <CurrencyDollarIcon className="h-6 w-6 text-inherit" />,
       };
-      return type ? iconMap[poolTypes[type]] || null : null;
+      return type ? iconMap[poolTypes[type]] ?? null : null;
     })();
 
   return (

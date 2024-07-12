@@ -1,22 +1,23 @@
 "use client";
+
+import { Address, formatUnits } from "viem";
+import Image from "next/image";
+import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect } from "react";
+import { useContractRead } from "wagmi";
 import { Badge, Statistic, DisplayNumber } from "@/components";
 import { EthAddress } from "@/components";
 import { cvStrategyABI } from "@/src/generated";
-import { Address, formatUnits } from "viem";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
 import { calculatePercentageBigInt } from "@/utils/numbers";
-import Image from "next/image";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { proposalStatus, poolTypes } from "@/types";
 import { proposalImg } from "@/assets";
 import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import { useState, useEffect } from "react";
-import { useContractRead } from "wagmi";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ const prettyTimestamp = (timestamp: number) => {
 };
 
 export default function Proposal({
-  params: { proposalId, poolId, chain, garden },
+  params: { proposalId, garden },
 }: {
   params: { proposalId: string; poolId: string; chain: string; garden: string };
 }) {
@@ -131,9 +132,30 @@ export default function Proposal({
   const { data: maxCVSupply } = useContractRead({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
-    args: [totalEffectiveActivePoints || 0n],
+    args: [totalEffectiveActivePoints ?? 0n],
     enabled: !!totalEffectiveActivePoints,
   });
+
+  useEffect(() => {
+    if (!proposalData) {
+      return;
+    }
+
+    console.debug({
+      requestedAmount,
+      maxCVSupply,
+      threshold,
+      thFromContract,
+      stakedAmount,
+      stakeAmountFromContract: stakeAmountFromContract,
+      totalEffectiveActivePoints,
+      updateConvictionLast,
+      convictionLast,
+      thresholdPct,
+      totalSupportPct,
+      currentConvictionPct,
+    });
+  }, [proposalData]);
 
   if (
     !proposalData ||
@@ -162,41 +184,11 @@ export default function Proposal({
 
   const isSignalingType = poolTypes[proposalType] === "signaling";
 
-  //logs for debugging in arb sepolia - //TODO: remove before merge
-  console.log("requesteAmount:              %s", requestedAmount);
-  console.log("maxCVSupply:                 %s", maxCVSupply);
-  //thresholda
-  // console.log(threshold);
-  console.log("threshold:                   %s", threshold);
-  // console.log(thFromContract);
-  console.log("thFromContract:              %s", thFromContract);
-  //stakeAmount
-  // console.log(stakedAmount);
-  console.log("stakedAmount:                %s", stakedAmount);
-  // console.log(stakeAmountFromContract);
-  console.log("stakeAmountFromContract:     %s", stakeAmountFromContract);
-  // console.log(totalEffectiveActivePoints);
-  console.log("totalEffectiveActivePoints:  %s", totalEffectiveActivePoints);
-  // console.log(updateConvictionLast);
-  console.log("updateConvictionLast:        ", updateConvictionLast);
-  // console.log(convictionLast);
-  console.log("convictionLast:              %s", convictionLast);
-
   let thresholdPct = calculatePercentageBigInt(
     threshold,
     maxCVSupply,
     tokenDecimals,
   );
-
-  console.log("thresholdPct:                %s", thresholdPct);
-
-  // console.log("ff:                          %s", ff);
-
-  // const totalSupportPct = calculatePercentageDecimals(
-  //   stakedAmount,
-  //   totalEffectiveActivePoints,
-  //   tokenDecimals,
-  // );
 
   let totalSupportPct = calculatePercentageBigInt(
     stakedAmount,
@@ -204,20 +196,11 @@ export default function Proposal({
     tokenDecimals,
   );
 
-  console.log("totalSupportPct:             %s", totalSupportPct);
-  // const currentConvictionPct = calculatePercentageDecimals(
-  //   updateConvictionLast,
-  //   maxCVSupply,
-  //   tokenDecimals,
-  // );
-
   let currentConvictionPct = calculatePercentageBigInt(
     BigInt(updateConvictionLast ?? 0),
     maxCVSupply,
     tokenDecimals,
   );
-
-  console.log("currentConviction:           %s", currentConvictionPct);
 
   return (
     <div className="page-layout">
@@ -281,8 +264,7 @@ export default function Proposal({
               Proposal passed and executed successfully
             </div>
           </div>
-        ) : (
-          <div className="mt-10 flex justify-evenly">
+        : <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
               thresholdPct={thresholdPct}
@@ -290,7 +272,7 @@ export default function Proposal({
               isSignalingType={isSignalingType}
             />
           </div>
-        )}
+        }
       </section>
     </div>
   );

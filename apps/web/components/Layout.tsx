@@ -1,6 +1,6 @@
 import React from "react";
-import { Size } from "@/types";
 import classNames from "classnames";
+import { Size } from "@/types";
 
 type LayoutProps = {
   children: React.ReactNode;

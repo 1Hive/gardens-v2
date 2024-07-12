@@ -1,18 +1,19 @@
 "use client";
+
 import React, { useEffect } from "react";
-import { Badge } from "./Badge";
-import { Button } from "./Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Address } from "wagmi";
+import { encodeAbiParameters } from "viem";
+import { toast } from "react-toastify";
+import { Badge } from "./Badge";
+import { Button } from "./Button";
 import { ProposalInputItem } from "./Proposals";
 import { Allo } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
-import { Address } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { encodeAbiParameters } from "viem";
 import { alloABI } from "@/src/generated";
-import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { LightCVStrategy, poolTypes } from "@/types";
