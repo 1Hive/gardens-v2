@@ -9,8 +9,8 @@ import { initUrqlClient } from "./urql";
 // urql docs: https://formidable.com/open-source/urql/docs/advanced/server-side-rendering/#nextjs
 
 //Subgraph URL
-const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP || "";
-const subgraphOpSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP || "";
+const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP ?? "";
+const subgraphOpSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP ?? "";
 
 export default function UrqlProvider({ children }: React.PropsWithChildren) {
   const [client, ssr] = useMemo(() => {
@@ -19,8 +19,8 @@ export default function UrqlProvider({ children }: React.PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    console.log("subgraph ArbSepURL", subgraphArbSepURL);
-    console.log("subgraph OpSepURL", subgraphOpSepURL);
+    console.debug("subgraph ArbSepURL", subgraphArbSepURL);
+    console.debug("subgraph OpSepURL", subgraphOpSepURL);
   }, []);
 
   return (

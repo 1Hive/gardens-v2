@@ -59,7 +59,7 @@ export const useTransactionNotification = (
           error: "Something went wrong",
         })
         .then((data) => {
-          console.log("Tx hash: " + data.transactionData?.hash);
+          console.info("Tx hash: " + data.transactionData?.hash);
           // const receipt = async () =>
           //   await viemClient.waitForTransactionReceipt({
           //     confirmations: [chainId].confirmations,

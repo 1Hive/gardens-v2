@@ -1,10 +1,11 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
+import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
 import FormPreview, { FormRow } from "./FormPreview";
 import { Button } from "@/components";
@@ -15,7 +16,6 @@ import { poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { formatTokenAmount } from "@/utils/numbers";
-import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -255,7 +255,7 @@ export const ProposalForm = ({
           formRows={formatFormRows()}
           previewTitle="Check proposals details"
         />
-      : <div className="flex flex-col gap-2 overflow-hidden p-1">
+        : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
             <div className="relative flex flex-col">
               <FormInput
@@ -349,7 +349,7 @@ export const ProposalForm = ({
               Submit
             </Button>
           </div>
-        : <Button type="submit">Preview</Button>}
+          : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

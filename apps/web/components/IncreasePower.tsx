@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { parseUnits } from "viem";
 import { Address, useAccount, useBalance, useContractRead } from "wagmi";
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
@@ -19,7 +20,6 @@ import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import useErrorDetails from "@/utils/getErrorName";
 import { formatTokenAmount } from "@/utils/numbers";
-import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
 
 type IncreasePowerProps = {
   communityAddress: Address;

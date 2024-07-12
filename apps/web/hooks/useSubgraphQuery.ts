@@ -1,7 +1,7 @@
-import { isEqual } from "lodash-es";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
+import { isEqual } from "lodash-es";
+import { toast } from "react-toastify";
 import useChainIdFromPath from "./useChainIdFromPath";
 import { getContractsAddrByChain as getSubgraphAddrByChain } from "@/constants/contracts";
 import {
@@ -10,15 +10,15 @@ import {
   SubscriptionId,
   usePubSubContext,
 } from "@/contexts/pubsub.context";
-import { initUrqlClient } from "@/providers/urql";
-import { ChainId } from "@/types";
-import delayAsync from "@/utils/delayAsync";
-const pendingRefreshToastId = "pending-refresh";
 import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
+import { initUrqlClient } from "@/providers/urql";
+import { ChainId } from "@/types";
+import delayAsync from "@/utils/delayAsync";
 
+const pendingRefreshToastId = "pending-refresh";
 /**
  *  Fetches data from a subgraph by chain id
  * @param chainId

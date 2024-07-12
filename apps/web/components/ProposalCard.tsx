@@ -1,11 +1,12 @@
 "use client";
 
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useEffect } from "react";
 import { toast } from "react-toastify";
 import { encodeAbiParameters } from "viem";
 import { Address } from "wagmi";
+import { Allo } from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { ProposalInputItem } from "./Proposals";
@@ -19,7 +20,6 @@ import { LightCVStrategy, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import useErrorDetails from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
-import { Allo } from "#/subgraph/.graphclient";
 
 type ProposalCard = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
@@ -61,8 +61,8 @@ export function ProposalCard({
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0 ? 0 : (
-        ((number / 100) * memberPoolWeight).toFixed(2)
-      );
+      ((number / 100) * memberPoolWeight).toFixed(2)
+    );
   };
 
   //encode proposal id to pass as argument to distribute function
@@ -139,7 +139,7 @@ export function ProposalCard({
               tooltip={
                 proposalStatus == 4 ?
                   "Proposal already executed"
-                : tooltipMessage
+                  : tooltipMessage
               }
               onClick={() =>
                 writeDistribute?.({
@@ -205,7 +205,7 @@ export function ProposalCard({
                 </span>
                 % of pool weight
               </p>
-            : <p className="text-center">
+              : <p className="text-center">
                 Assigning
                 <span className="px-2 py-2 text-2xl font-semibold text-info">
                   {calcPoolWeightUsed(

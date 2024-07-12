@@ -41,10 +41,21 @@ module.exports = {
     "import/order": [
       "error",
       {
-        groups: ["external", "builtin", "internal", "sibling", "parent", "index"],
+        groups: ["builtin", "external", "internal"],
+        pathGroups: [
+          {
+            pattern: "react",
+            group: "external",
+            position: "before",
+          },
+        ],
+        pathGroupsExcludedImportTypes: ["react"],
+        alphabetize: {
+          order: "asc",
+          caseInsensitive: true,
+        },
       },
     ],
-
     "no-console": [
       "warn",
       {
@@ -59,5 +70,6 @@ module.exports = {
     "comma-dangle": ["error", "always-multiline"],
     semi: ["error", "always"],
     "brace-style": "error",
+    indent: ["error", 2],
   },
 };

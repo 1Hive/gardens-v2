@@ -70,7 +70,7 @@ export function FormInput({
             })}
             {...otherProps}
           />
-        : <textarea
+          : <textarea
             placeholder={placeholder}
             className={`${className} textarea textarea-info line-clamp-5 w-full ${errors[registerKey] ? "input-error" : "input-info"}`}
             required={required}

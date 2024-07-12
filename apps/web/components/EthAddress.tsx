@@ -1,7 +1,7 @@
 "use client";
 
-import { Addreth } from "addreth";
 import React from "react";
+import { Addreth } from "addreth";
 import { Address } from "viem";
 import LoadingSpinner from "./LoadingSpinner";
 import { chainDataMap } from "@/configs/chainServer";
@@ -40,24 +40,24 @@ export const EthAddress = ({
   // };
 
   return address && chain ?
-      <Addreth
-        // theme={theme}
-        theme={{
-          base: "simple-light",
-          textColor: "var(--color-green-500)",
-          badgeIconRadius: 12,
-          badgeHeight: 32,
-          fontSize: 16,
-        }}
-        actions={actions}
-        icon={icon}
-        address={address as Address}
-        explorer={(address) => ({
-          name: chainDataMap[chain.id].name,
-          url: `${chainDataMap[chain.id].explorer}${address}`,
-          accountUrl: `${chainDataMap[chain.id].explorer}${address}`,
-        })}
-        ens={!chain?.testnet}
-      />
+    <Addreth
+      // theme={theme}
+      theme={{
+        base: "simple-light",
+        textColor: "var(--color-green-500)",
+        badgeIconRadius: 12,
+        badgeHeight: 32,
+        fontSize: 16,
+      }}
+      actions={actions}
+      icon={icon}
+      address={address as Address}
+      explorer={(address) => ({
+        name: chainDataMap[chain.id].name,
+        url: `${chainDataMap[chain.id].explorer}${address}`,
+        accountUrl: `${chainDataMap[chain.id].explorer}${address}`,
+      })}
+      ens={!chain?.testnet}
+    />
     : <LoadingSpinner />;
 };

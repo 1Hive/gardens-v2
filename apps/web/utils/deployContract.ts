@@ -33,6 +33,6 @@ export const deployContract = async function (
     bytecode,
   });
 
-  console.log("hash", hash);
+  console.info("hash", hash);
   return data;
 };

@@ -4,8 +4,8 @@ import {
   optimismSepolia,
   sepolia,
 } from "viem/chains";
-import { getChain } from "@/configs/chainServer";
 import { Address, getRunLatestAddrs } from "#/subgraph/src/scripts/last-addr";
+import { getChain } from "@/configs/chainServer";
 
 // read env variables
 const ENV = process.env.NEXT_PUBLIC_ENV_GARDENS;

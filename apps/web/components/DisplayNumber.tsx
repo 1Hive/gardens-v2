@@ -1,7 +1,7 @@
 "use client";
 
-import * as dn from "dnum";
 import { useEffect, useState } from "react";
+import * as dn from "dnum";
 
 export const DisplayNumber = ({
   number,

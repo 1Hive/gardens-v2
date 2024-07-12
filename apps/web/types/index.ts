@@ -1,7 +1,4 @@
-import {
-  getPoolDataQuery,
-  getTokenGardensQuery,
-} from "#/subgraph/.graphclient";
+import { getPoolDataQuery } from "#/subgraph/.graphclient";
 
 export * from "./styles";
 

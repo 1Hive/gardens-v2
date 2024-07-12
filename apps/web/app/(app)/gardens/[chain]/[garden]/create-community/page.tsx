@@ -2,14 +2,14 @@
 
 import React, { useEffect } from "react";
 import { Address } from "viem";
-import { CommunityForm } from "@/components/Forms";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 import {
   getCommunityCreationDataDocument,
   getCommunityCreationDataQuery,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { CommunityForm } from "@/components/Forms";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 
 export default function Page({
   params: { chain, garden },

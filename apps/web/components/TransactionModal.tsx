@@ -92,7 +92,7 @@ export const TransactionModal = forwardRef<
       message:
         pendingAllowance ?
           "Allowance previously approved successfully!"
-        : message,
+          : message,
       stepClassName: pendingAllowance ? "step-success" : className,
       messageClassName: pendingAllowance ? "text-success" : messageClassName,
     };

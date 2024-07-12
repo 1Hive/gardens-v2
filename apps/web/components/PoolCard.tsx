@@ -1,22 +1,22 @@
 "use client";
 
-import Image from "next/image";
-import { usePathname } from "next/navigation";
 import {
   ClockIcon,
   CurrencyDollarIcon,
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
-import { blueLand, grass } from "@/assets";
-import { Badge, Card, Statistic } from "@/components";
-import { poolTypes } from "@/types";
-import { formatTokenAmount } from "@/utils/numbers";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { blueLand, grass } from "@/assets";
+import { Badge, Card, Statistic } from "@/components";
+import { poolTypes } from "@/types";
+import { formatTokenAmount } from "@/utils/numbers";
 
 type Props = {
   tokenGarden: Pick<TokenGarden, "decimals">;
@@ -62,7 +62,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           <ClockIcon className="h-8 w-8 text-secondary-content" />
           <h6>Waiting for approval</h6>
         </div>
-      : <Image
+        : <Image
           src={poolType && poolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
           className="h-10 w-full rounded-lg object-cover"

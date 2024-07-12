@@ -1,9 +1,9 @@
-import cn from "classnames";
 import { ReactNode } from "react";
 import {
   ArrowDownRightIcon,
   ArrowUpRightIcon,
 } from "@heroicons/react/24/solid";
+import cn from "classnames";
 
 type ChartWrapperProps = {
   children?: ReactNode;
@@ -40,7 +40,7 @@ export const ChartWrapper = ({
                 <span>
                   {growing ?
                     <ArrowUpRightIcon className={iconClassname} />
-                  : <ArrowDownRightIcon className={iconClassname} />}{" "}
+                    : <ArrowDownRightIcon className={iconClassname} />}{" "}
                 </span>
               </p>
             )}

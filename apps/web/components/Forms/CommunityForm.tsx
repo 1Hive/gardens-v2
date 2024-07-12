@@ -1,10 +1,11 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
+import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import FormPreview, { FormRow } from "./FormPreview";
@@ -20,7 +21,6 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import delayAsync from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
-import { TokenGarden } from "#/subgraph/.graphclient";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -272,7 +272,7 @@ export const CommunityForm = ({
           formRows={formatFormRows()}
           previewTitle="Check details and covenant description"
         />
-      : <div className="flex flex-col gap-2 overflow-hidden p-1">
+        : <div className="flex flex-col gap-2 overflow-hidden p-1">
           <div className="flex flex-col">
             <FormInput
               label="Community Name"
@@ -442,7 +442,7 @@ export const CommunityForm = ({
               Submit
             </Button>
           </div>
-        : <Button type="submit">Preview</Button>}
+          : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

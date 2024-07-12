@@ -3,6 +3,7 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { parseUnits } from "viem";
 import { Address, useAccount, useContractRead } from "wagmi";
+import { Allo, getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { FormInput } from "./Forms";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
@@ -12,7 +13,6 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI, erc20ABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { formatTokenAmount, MAX_RATIO_CONSTANT } from "@/utils/numbers";
-import { Allo, getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -188,7 +188,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                       <span className="stat-value text-center text-2xl font-bold">
                         {balance ?
                           formatTokenAmount(balance, tokenGarden?.decimals)
-                        : "0"}{" "}
+                          : "0"}{" "}
                         {tokenGarden?.symbol}
                       </span>
                     </div>

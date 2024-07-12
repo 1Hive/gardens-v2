@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import Ably from "ably";
+import { NextResponse } from "next/server";
 import { HTTP_CODES } from "../utils";
 import { isProd } from "@/constants/contracts";
 import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";

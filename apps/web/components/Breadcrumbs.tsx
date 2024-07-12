@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { getTitlesFromUrlSegments } from "@/services/getTitlesFromUrlSegments";
 
 interface Breadcrumb {
@@ -74,7 +74,7 @@ export function Breadcrumbs() {
                 <span className="subtitle2 truncate font-semibold text-neutral-soft-content">
                   {label}
                 </span>
-              : <Link
+                : <Link
                   href={href}
                   className="subtitle2 truncate font-semibold text-primary-content"
                 >

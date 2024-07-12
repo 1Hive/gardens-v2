@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import { Address, formatUnits, parseAbi } from "viem";
 import { useAccount, useContractWrite } from "wagmi";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 import { TokenGarden } from "#/subgraph/.graphclient";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 interface FaucetProps {
   token: Pick<TokenGarden, "id" | "decimals" | "symbol">;
@@ -64,16 +64,16 @@ export default function TokenGardenFaucet({ token }: FaucetProps) {
   };
 
   return connectedAccount ?
-      <div className="fixed bottom-0 right-0 pb-3">
-        <button
-          onClick={() => requestTokens()}
-          disabled={isLoading}
-          title={`Get some test ${token.symbol}`}
-        >
-          {isLoading ?
-            <div className="loading-spinner" />
+    <div className="fixed bottom-0 right-0 pb-3">
+      <button
+        onClick={() => requestTokens()}
+        disabled={isLoading}
+        title={`Get some test ${token.symbol}`}
+      >
+        {isLoading ?
+          <div className="loading-spinner" />
           : "⛽"}
-        </button>
-      </div>
+      </button>
+    </div>
     : <></>;
 }

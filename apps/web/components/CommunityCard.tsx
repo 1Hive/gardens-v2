@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
-import { usePathname } from "next/navigation";
 import React from "react";
 import { RectangleGroupIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import { commImg } from "@/assets";

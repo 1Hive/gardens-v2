@@ -83,8 +83,8 @@ export function Button({
   );
 
   return disabled ?
-      <div className={`tooltip ${styles}`} data-tip={tooltip}>
-        {buttonElement}
-      </div>
+    <div className={`tooltip ${styles}`} data-tip={tooltip}>
+      {buttonElement}
+    </div>
     : buttonElement;
 }

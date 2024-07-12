@@ -1,9 +1,12 @@
 "use client";
 
+import React, { Fragment } from "react";
+import { Menu, Transition } from "@headlessui/react";
+import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import cn from "classnames";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import cn from "classnames";
-import React, { Fragment } from "react";
 import {
   useAccount,
   useBalance,
@@ -11,9 +14,6 @@ import {
   useDisconnect,
   useSwitchNetwork,
 } from "wagmi";
-import { Menu, Transition } from "@headlessui/react";
-import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { walletIcon } from "@/assets";
 import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chainServer";
@@ -84,9 +84,9 @@ export function ConnectWallet() {
                         <div
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
                       ${cn({
-                        "border-2 border-danger-content":
+                      "border-2 border-danger-content":
                           urlChainId && urlChainId !== chain.id,
-                      })} `}
+                    })} `}
                         >
                           <Image
                             alt={"Chain icon"}
@@ -112,7 +112,7 @@ export function ConnectWallet() {
                                   </div>
                                   <span>{chain.name}</span>
                                 </>
-                              : <span className="text-danger-content">
+                                : <span className="text-danger-content">
                                   Network mismatch
                                 </span>
                               }
@@ -151,7 +151,7 @@ export function ConnectWallet() {
                                   {" "}
                                   {!tokenUrlAddress ?
                                     "Unknow garden"
-                                  : Number(token?.formatted).toFixed(0)}{" "}
+                                    : Number(token?.formatted).toFixed(0)}{" "}
                                   {token?.symbol === "ETH" ? "" : token?.symbol}
                                 </span>
                               </div>
@@ -162,15 +162,15 @@ export function ConnectWallet() {
                               {chain.id !== urlChainId &&
                                 urlChainId &&
                                 !isNaN(urlChainId) && (
-                                  <Button
-                                    className="overflow-hidden truncate"
-                                    onClick={() =>
-                                      switchNetwork && switchNetwork(urlChainId)
-                                    }
-                                  >
+                                <Button
+                                  className="overflow-hidden truncate"
+                                  onClick={() =>
+                                    switchNetwork && switchNetwork(urlChainId)
+                                  }
+                                >
                                     Switch to {chainFromPath?.name ?? ""}
-                                  </Button>
-                                )}
+                                </Button>
+                              )}
 
                               <Button
                                 onClick={() => disconnect()}

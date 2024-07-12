@@ -1,7 +1,4 @@
 import { DocumentNode } from "graphql";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
-// import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { capitalize } from "@/utils/text";
 import {
   CVProposal,
   CVStrategy,
@@ -12,6 +9,9 @@ import {
   RegistryCommunity,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { initUrqlClient, queryByChain } from "@/providers/urql";
+// import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { capitalize } from "@/utils/text";
 
 const { urqlClient } = initUrqlClient();
 
@@ -154,7 +154,9 @@ export async function getTitlesFromUrlSegments(
   segments: string[],
 ): Promise<(string | undefined)[] | undefined> {
   const segmentsLength = segments.length;
-  if (segmentsLength < 3) return undefined;
+  if (segmentsLength < 3) {
+    return undefined;
+  }
 
   const isStaticSegment = segments[segmentsLength - 1].includes("create");
   const entityIndex = isStaticSegment ? segmentsLength - 2 : segmentsLength - 1;

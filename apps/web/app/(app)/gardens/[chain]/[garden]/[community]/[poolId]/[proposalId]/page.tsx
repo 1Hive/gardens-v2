@@ -1,10 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
+import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 import { Address, formatUnits } from "viem";
 import { useContractRead } from "wagmi";
-import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
+import {
+  getProposalDataDocument,
+  getProposalDataQuery,
+} from "#/subgraph/.graphclient";
 import { proposalImg } from "@/assets";
 import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
@@ -14,10 +18,6 @@ import { cvStrategyABI } from "@/src/generated";
 import { poolTypes, proposalStatus } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { calculatePercentageBigInt } from "@/utils/numbers";
-import {
-  getProposalDataDocument,
-  getProposalDataQuery,
-} from "#/subgraph/.graphclient";
 
 export const dynamic = "force-dynamic";
 

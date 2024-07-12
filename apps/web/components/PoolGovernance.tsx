@@ -1,7 +1,7 @@
 "use client";
 
-import { Dnum } from "dnum";
 import React from "react";
+import { Dnum } from "dnum";
 import { Address, useAccount, useContractRead } from "wagmi";
 import { ActivatePoints } from "./ActivatePoints";
 import { Badge } from "./Badge";
@@ -88,7 +88,7 @@ export const PoolGovernance = ({
                     </p>
                   </div>
                 </>
-              : <div className="flex w-full items-center gap-6">
+                : <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
                     <Badge status={isMemberActivated ? 1 : 0} />

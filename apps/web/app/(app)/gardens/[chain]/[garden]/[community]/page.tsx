@@ -1,16 +1,20 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { Dnum } from "dnum";
 import React, { useEffect, useState } from "react";
-import { Address } from "viem";
 import {
   CurrencyDollarIcon,
   ExclamationCircleIcon,
   PlusIcon,
   RectangleGroupIcon,
 } from "@heroicons/react/24/outline";
+import { Dnum } from "dnum";
+import Image from "next/image";
+import Link from "next/link";
+import { Address } from "viem";
+import {
+  getCommunityDocument,
+  getCommunityQuery,
+} from "#/subgraph/.graphclient";
 import { commImg, groupFlowers } from "@/assets";
 import {
   Button,
@@ -31,10 +35,6 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
-import {
-  getCommunityDocument,
-  getCommunityQuery,
-} from "#/subgraph/.graphclient";
 
 export default function CommunityPage({
   params: { chain, garden: tokenAddr, community: communityAddr },

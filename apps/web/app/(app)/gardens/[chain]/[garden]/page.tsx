@@ -1,10 +1,11 @@
 "use client";
 
+import React, { useEffect } from "react";
+import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect } from "react";
 import { Address } from "viem";
-import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
 import { ecosystem, grassLarge, tree2, tree3 } from "@/assets";
 import {
   Button,
@@ -18,7 +19,6 @@ import TokenGardenFaucet from "@/components/TokenGardenFaucet";
 import { isProd } from "@/constants/contracts";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
 
 export const dynamic = "force-dynamic";
 

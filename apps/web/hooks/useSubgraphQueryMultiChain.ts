@@ -1,12 +1,12 @@
-import { debounce, isEqual } from "lodash-es";
 import { useEffect, useRef, useState } from "react";
-import { arbitrumSepolia, localhost, sepolia } from "viem/chains";
 import {
   AnyVariables,
   CombinedError,
   DocumentInput,
   OperationContext,
 } from "@urql/next";
+import { debounce, isEqual } from "lodash-es";
+import { arbitrumSepolia, localhost, sepolia } from "viem/chains";
 import { HTTP_CODES } from "@/app/api/utils";
 import { getContractsAddrByChain } from "@/constants/contracts";
 import {

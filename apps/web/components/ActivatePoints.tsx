@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Address, useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { Address, useAccount } from "wagmi";
 import { Button } from "./Button";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import useChainIdFromPath from "@/hooks/useChainIdFromPath";

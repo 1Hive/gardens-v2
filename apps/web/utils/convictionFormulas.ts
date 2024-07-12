@@ -1,5 +1,4 @@
 import * as dn from "dnum";
-import { formatTokenAmount } from "./numbers";
 
 function validateInput(input: any) {
   return Number.isInteger(Number(input));

@@ -1,13 +1,22 @@
 "use client";
 
-import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import { Address as AddressType, useAccount, useContractRead } from "wagmi";
 import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { toast } from "react-toastify";
+import { Address as AddressType, useAccount, useContractRead } from "wagmi";
+import {
+  Allo,
+  CVProposal,
+  getMemberStrategyDocument,
+  getMemberStrategyQuery,
+  isMemberDocument,
+  isMemberQuery,
+} from "#/subgraph/.graphclient";
+import { Address } from "#/subgraph/src/scripts/last-addr";
 import LoadingSpinner from "./LoadingSpinner";
 import { getProposals } from "@/actions/getProposals";
 import { Button, PoolGovernance, ProposalCard } from "@/components";
@@ -24,15 +33,6 @@ import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import useErrorDetails from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
-import {
-  Allo,
-  CVProposal,
-  getMemberStrategyDocument,
-  getMemberStrategyQuery,
-  isMemberDocument,
-  isMemberQuery,
-} from "#/subgraph/.graphclient";
-import { Address } from "#/subgraph/src/scripts/last-addr";
 
 export type ProposalInputItem = {
   id: string;
@@ -376,7 +376,7 @@ export function Proposals({
                   <h4 className="text-2xl text-info">
                     No submitted proposals to support
                   </h4>
-                : !editView && (
+                  : !editView && (
                     <Button
                       icon={
                         <AdjustmentsHorizontalIcon height={24} width={24} />
@@ -389,7 +389,7 @@ export function Proposals({
                     </Button>
                   )
 
-              : <LoadingSpinner />}
+                : <LoadingSpinner />}
             </div>
             {editView && (
               <>

@@ -1,5 +1,3 @@
-import { Realtime } from "ably";
-import { uniqueId } from "lodash-es";
 import React, {
   createContext,
   useCallback,
@@ -9,7 +7,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { createConfig } from "wagmi";
+import { Realtime } from "ably";
+import { uniqueId } from "lodash-es";
 import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 import { ChainId } from "@/types";
 
