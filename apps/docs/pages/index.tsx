@@ -1,6 +1,6 @@
 import { Button } from "ui";
 
-export function Docs() {
+export default function Docs() {
   return (
     <div>
       <h1>Docs</h1>
