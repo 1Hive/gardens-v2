@@ -2,12 +2,17 @@
  * @type {import('eslint').Linter.Config}
  */
 module.exports = {
+  env: {
+    browser: true,
+    es2021: true,
+    node: true,
+  },
   extends: [
-    "next/core-web-vitals",
-    "turbo",
-    "prettier",
-    "eslint:recommended",
+    "airbnb",
+    "airbnb/hooks",
+    "airbnb-typescript",
     "plugin:@typescript-eslint/recommended",
+    "next/core-web-vitals",
   ],
   ignorePatterns: ["node_modules", "dist", "src/generated.ts", "public"],
   parser: "@typescript-eslint/parser",
@@ -15,6 +20,10 @@ module.exports = {
     project: "./tsconfig.json",
   },
   rules: {
+    "react/jsx-filename-extension": [
+      2,
+      { extensions: [".js", ".jsx", ".ts", ".tsx"] },
+    ],
     "react-hooks/exhaustive-deps": "off",
     "@next/next/no-html-link-for-pages": "off",
     "@typescript-eslint/no-unused-vars": [
@@ -71,5 +80,6 @@ module.exports = {
     semi: ["error", "always"],
     "brace-style": "error",
     indent: ["error", 2],
+    quotes: ["error", "double"],
   },
 };

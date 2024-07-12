@@ -36,16 +36,14 @@ export default function Gardens() {
     }
   }, [errors.size]);
 
-  const tokenGardens = useMemo(() => {
-    return gardens
-      ?.flatMap((g) => g.tokenGardens)
-      .filter((x): x is NonNullable<typeof x> => !!x);
-  }, [gardens]);
+  const tokenGardens = useMemo(() => gardens
+    ?.flatMap((g) => g.tokenGardens)
+    .filter((x): x is NonNullable<typeof x> => !!x), [gardens]);
 
   const GardenList = useMemo(() => {
     if (fetching) {
       return <LoadingSpinner />;
-    } else if (tokenGardens?.length) {
+    } if (tokenGardens?.length) {
       return (
         <>
           {tokenGardens.map((garden, id) => (
@@ -55,11 +53,10 @@ export default function Gardens() {
           ))}
         </>
       );
-    } else {
-      return (
-        <p className="badge-info mb-8 rounded p-1 text-center">No Gardens</p>
-      );
     }
+    return (
+      <p className="badge-info mb-8 rounded p-1 text-center">No Gardens</p>
+    );
   }, [fetching, tokenGardens?.length]);
 
   return (
