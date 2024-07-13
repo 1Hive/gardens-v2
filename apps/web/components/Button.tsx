@@ -5,10 +5,10 @@ import { Size } from "@/types";
 
 type ButtonProps = {
   type?:
-    | "button"
-    | "submit"
-    | "reset"
-    | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+  | "button"
+  | "submit"
+  | "reset"
+  | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
   btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];

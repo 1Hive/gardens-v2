@@ -9,7 +9,7 @@ type Props = {
   description: string;
 };
 
-export default function FormPreview({
+export function FormPreview({
   title,
   description,
   previewTitle,

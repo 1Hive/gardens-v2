@@ -22,7 +22,7 @@ export function useTotalVoterStakedPct(strategy: CVStrategy) {
   }, [address]);
 
   const fetchData = async () => {
-    const _voterStakeData = await client.readContract({
+    const voterStakeData = await client.readContract({
       address: strategy.id as Address,
       abi: cvStrategyABI as Abi,
       functionName: "getTotalVoterStakePct",
@@ -30,7 +30,7 @@ export function useTotalVoterStakedPct(strategy: CVStrategy) {
     });
 
     setVoterStake(
-      (_voterStakeData as unknown as bigint) / BigInt(SCALE_PRECISION),
+      (voterStakeData as unknown as bigint) / BigInt(SCALE_PRECISION),
     );
   };
 

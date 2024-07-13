@@ -7,10 +7,10 @@ import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
 import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
-import FormPreview, { FormRow } from "./FormPreview";
+import { FormPreview, FormRow } from "./FormPreview";
 import { Button } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { alloABI } from "@/src/generated";
 import { poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -165,7 +165,7 @@ export const ProposalForm = ({
         chainId,
       });
       if (pathname) {
-        router.push(pathname.replace(`/create-proposal`, ""));
+        router.push(pathname.replace("/create-proposal", ""));
       }
     },
     onError: (err) => {
@@ -236,11 +236,11 @@ export const ProposalForm = ({
     });
 
     formattedRows.push({
-      label: formRowTypes["strategy"].label,
+      label: formRowTypes.strategy.label,
       data: "Conviction voting",
     });
     formattedRows.push({
-      label: formRowTypes["proposalType"].label,
+      label: formRowTypes.proposalType.label,
       data: proposalTypeName,
     });
 

@@ -7,13 +7,10 @@ import {
   OperationContext,
   ssrExchange,
 } from "urql";
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/constants/contracts";
 import { ChainId } from "@/types";
 
-let urqlRecord: Record<
-  ChainId | "default",
-  [Client, ReturnType<typeof ssrExchange>]
-> = {};
+let urqlRecord: Record<ChainId | "default", [Client, ReturnType<typeof ssrExchange>]> = {};
 
 const isServer = typeof window === "undefined";
 
@@ -101,15 +98,12 @@ export async function queryByChain<
   variables: Variables = {} as Variables,
   context?: Partial<OperationContext>,
 ) {
-  const addrs = getContractsAddrByChain(chainId);
-  if (!addrs) {
+  const config = getConfigByChain(chainId);
+  if (!config) {
     throw new Error("Chain not supported");
   }
-  return await urqlClient.query<Data>(query, variables, {
-    url: addrs.subgraphUrl,
+  return urqlClient.query<Data>(query, variables, {
+    url: config.subgraphUrl,
     ...context,
   });
-  // .subscribe((value) => {
-  //   console.log("value", value);
-  // });
 }

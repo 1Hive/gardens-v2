@@ -12,10 +12,10 @@ import { initUrqlClient } from "./urql";
 const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP ?? "";
 const subgraphOpSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP ?? "";
 
-export default function UrqlProvider({ children }: React.PropsWithChildren) {
+export function UrqlProvider({ children }: React.PropsWithChildren) {
   const [client, ssr] = useMemo(() => {
-    const { urqlClient: client, ssrCache: ssr } = initUrqlClient();
-    return [client, ssr];
+    const { urqlClient, ssrCache } = initUrqlClient();
+    return [urqlClient, ssrCache];
   }, []);
 
   useEffect(() => {

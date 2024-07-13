@@ -2,19 +2,31 @@
  * @type {import('eslint').Linter.Config}
  */
 module.exports = {
+  env: {
+    browser: true,
+    es2021: true,
+    node: true,
+  },
   extends: [
-    "next/core-web-vitals",
-    "turbo",
-    "prettier",
-    "eslint:recommended",
+    "airbnb/hooks",
+    "airbnb-typescript",
     "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:jsx-a11y/recommended",
+    "next/core-web-vitals",
+    "prettier/prettier",
   ],
+  plugins: ["react"],
   ignorePatterns: ["node_modules", "dist", "src/generated.ts", "public"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: "./tsconfig.json",
   },
   rules: {
+    "react/jsx-filename-extension": [
+      2,
+      { extensions: [".js", ".jsx", ".ts", ".tsx"] },
+    ],
     "react-hooks/exhaustive-deps": "off",
     "@next/next/no-html-link-for-pages": "off",
     "@typescript-eslint/no-unused-vars": [
@@ -64,12 +76,21 @@ module.exports = {
     ],
     "prefer-const": "off",
     "@typescript-eslint/consistent-type-definitions": "off",
-    curly: "error",
+    "curly": ["error", "multi-line"],
     "no-unused-expressions": "error",
     "no-unsafe-optional-chaining": "error",
     "comma-dangle": ["error", "always-multiline"],
     semi: ["error", "always"],
-    "brace-style": "error",
+    "brace-style": ["error"],
     indent: ["error", 2],
+    "@typescript-eslint/quotes": ["error", "double"],
+    "import/extensions": "off",
+    "no-multiple-empty-lines": ["error", { max: 1 }],
+    "no-trailing-spaces": "error",
+    "no-multi-spaces": "error",
+    "@typescript-eslint/no-use-before-define": "off",
+    "jsx-a11y/no-static-element-interactions": "off",
+    "no-irregular-whitespace": "error",
   },
+
 };

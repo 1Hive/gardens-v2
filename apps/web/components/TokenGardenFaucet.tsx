@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Address, formatUnits, parseAbi } from "viem";
 import { useAccount, useContractWrite } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 
 interface FaucetProps {
   token: Pick<TokenGarden, "id" | "decimals" | "symbol">;
@@ -12,7 +12,7 @@ interface FaucetProps {
 
 const MINT_AMMOUNT = 1000n;
 
-export default function TokenGardenFaucet({ token }: FaucetProps) {
+export function TokenGardenFaucet({ token }: FaucetProps) {
   const urlChainId = useChainIdFromPath();
   const { address: connectedAccount } = useAccount();
   const [isLoading, setIsLoading] = useState(false);

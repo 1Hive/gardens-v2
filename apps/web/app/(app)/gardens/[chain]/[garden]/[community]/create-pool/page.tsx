@@ -7,11 +7,11 @@ import {
   getPoolCreationDataQuery,
   TokenGarden,
 } from "#/subgraph/.graphclient";
-import PoolForm from "@/components/Forms/PoolForm";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { PoolForm } from "@/components/Forms/PoolForm";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
-export default function CreatePool({
+export default function Page({
   params: { chain, garden, community },
 }: {
   params: { chain: number; garden: string; community: string };

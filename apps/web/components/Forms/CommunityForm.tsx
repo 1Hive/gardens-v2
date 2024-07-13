@@ -8,17 +8,17 @@ import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
-import FormPreview, { FormRow } from "./FormPreview";
+import { FormPreview, FormRow } from "./FormPreview";
 import { FormSelect, Option } from "./FormSelect";
 import { Button } from "@/components";
 import { getChain } from "@/configs/chainServer";
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/constants/contracts";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useChainFromPath from "@/hooks/useChainFromPath";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import delayAsync from "@/utils/delayAsync";
+import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 
@@ -159,7 +159,7 @@ export const CommunityForm = ({
       const newCommunityAddr = receipt.logs[0].address;
       if (pathname) {
         router.push(
-          pathname?.replace(`/create-community`, `?new=${newCommunityAddr}`),
+          pathname?.replace("/create-community", `?new=${newCommunityAddr}`),
         );
       }
       // Add some delay to l et time to the comunity list to subscribe to the published event
@@ -197,7 +197,7 @@ export const CommunityForm = ({
     const metadata = [1n, "ipfsHash"];
     const isKickMemberEnabled = previewData?.isKickMemberEnabled;
     const covenantIpfsHash = ipfsHash;
-    const strategyTemplate = getContractsAddrByChain(chainId)?.strategyTemplate;
+    const strategyTemplate = getConfigByChain(chainId)?.strategyTemplate;
     if (!strategyTemplate) {
       console.warn("No strategy template found for chain", chainId);
       toast.error("No strategy template found for chain");

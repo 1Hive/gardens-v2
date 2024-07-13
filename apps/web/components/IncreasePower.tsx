@@ -10,15 +10,15 @@ import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { useUrqlClient } from "@/hooks/useUqrlClient";
 import { queryByChain } from "@/providers/urql";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import useErrorDetails from "@/utils/getErrorName";
+import { useErrorDetails } from "@/utils/getErrorName";
 import { formatTokenAmount } from "@/utils/numbers";
 
 type IncreasePowerProps = {
@@ -68,11 +68,11 @@ export const IncreasePower = ({
   const { address: connectedAccount } = useAccount();
 
   //handeling states
-  type states = "idle" | "loading" | "success" | "error";
+  type States = "idle" | "loading" | "success" | "error";
   const [allowanceTransactionStatus, setAllowanceTransactionStatus] =
-    useState<states>("idle");
+    useState<States>("idle");
   const [resetTransactionStatus, setResetTransactionStatus] =
-    useState<states>("idle");
+    useState<States>("idle");
   const { address: accountAddress } = useAccount();
   const [memberStakedTokens, setMemberStakedTokens] = useState<bigint>(0n);
 
@@ -97,10 +97,8 @@ export const IncreasePower = ({
     if (result && result.members.length > 0) {
       const stakedTokens =
         result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
-      const memberStakedTokens =
-        typeof stakedTokens === "string" ? stakedTokens : "0";
 
-      setMemberStakedTokens(BigInt(memberStakedTokens));
+      setMemberStakedTokens(BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"));
     }
   }, [accountAddress]);
 

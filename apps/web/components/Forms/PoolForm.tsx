@@ -8,13 +8,13 @@ import { toast } from "react-toastify";
 import { Address, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
-import FormPreview, { FormRow } from "./FormPreview";
+import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { Button } from "@/components/Button";
 import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -58,8 +58,8 @@ type Props = {
 };
 
 const poolSettingValues: Record<
-  number,
-  { label: string; description: string; values: PoolSettings }
+number,
+{ label: string; description: string; values: PoolSettings }
 > = {
   0: {
     label: "Custom",
@@ -114,7 +114,7 @@ function calculateDecay(blockTime: number, convictionGrowth: number) {
   return result;
 }
 
-export default function PoolForm({ token, communityAddr, chainId }: Props) {
+export function PoolForm({ token, communityAddr, chainId }: Props) {
   const {
     register,
     handleSubmit,
@@ -424,7 +424,7 @@ export default function PoolForm({ token, communityAddr, chainId }: Props) {
                     registerOptions={{
                       max: {
                         value: 100,
-                        message: `Max amount cannot exceed 100%`,
+                        message: "Max amount cannot exceed 100%",
                       },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
@@ -455,7 +455,7 @@ export default function PoolForm({ token, communityAddr, chainId }: Props) {
                     registerOptions={{
                       max: {
                         value: 100,
-                        message: `Max amount cannot exceed 100%`,
+                        message: "Max amount cannot exceed 100%",
                       },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
@@ -485,7 +485,7 @@ export default function PoolForm({ token, communityAddr, chainId }: Props) {
                   registerOptions={{
                     max: {
                       value: 100,
-                      message: `Max amount cannot exceed 100 DAYS`,
+                      message: "Max amount cannot exceed 100 DAYS",
                     },
                     min: {
                       value: INPUT_TOKEN_MIN_VALUE,

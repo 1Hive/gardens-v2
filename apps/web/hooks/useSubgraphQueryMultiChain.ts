@@ -8,7 +8,7 @@ import {
 import { debounce, isEqual } from "lodash-es";
 import { arbitrumSepolia, localhost, sepolia } from "viem/chains";
 import { HTTP_CODES } from "@/app/api/utils";
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/constants/contracts";
 import {
   ChangeEventScope,
   SubscriptionId,
@@ -20,7 +20,7 @@ import {
 } from "@/globals";
 import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
-import delayAsync from "@/utils/delayAsync";
+import { delayAsync } from "@/utils/delayAsync";
 
 const allChains: ChainId[] = [
   sepolia.id,
@@ -31,7 +31,7 @@ if (process.env.NODE_ENV === "development") {
   allChains.push(localhost.id);
 }
 
-export default function useSubgraphQueryMultiChain<
+export function useSubgraphQueryMultiChain<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
 >({
@@ -85,7 +85,7 @@ export default function useSubgraphQueryMultiChain<
       const chainSubgraphs = (chainsOverride ?? chainIds ?? allChains).map(
         (chain) => ({
           chainId: chain,
-          url: getContractsAddrByChain(chain)?.subgraphUrl,
+          url: getConfigByChain(chain)?.subgraphUrl,
         }),
       );
       await Promise.all(
@@ -96,7 +96,7 @@ export default function useSubgraphQueryMultiChain<
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
-                return await urqlClient.query<Data>(query, variables, {
+                return urqlClient.query<Data>(query, variables, {
                   ...queryContext,
                   url,
                   chainId,

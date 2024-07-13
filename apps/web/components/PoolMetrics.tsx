@@ -8,7 +8,7 @@ import { Button } from "./Button";
 import { FormInput } from "./Forms";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI, erc20ABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -163,7 +163,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     <>
       <TransactionModal
         ref={modalRef}
-        label={`Add funds to pool`}
+        label={"Add funds to pool"}
         initialTransactionSteps={InitialTransactionSteps}
         allowTokenStatus={allowTokenStatus}
         stepTwoStatus={fundPoolStatus}

@@ -8,8 +8,8 @@ import {
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { CommunityForm } from "@/components/Forms";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export default function Page({
   params: { chain, garden },

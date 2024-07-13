@@ -1,7 +1,10 @@
 import { Address } from "viem";
 import { LightCVStrategy, LightProposal } from "@/types";
 
-export async function getProposals(accountAddress: Address | undefined, strategy: LightCVStrategy) {
+export async function getProposals(
+  accountAddress: Address | undefined,
+  strategy: LightCVStrategy,
+) {
   try {
     const fetchIPFSDataBatch = async function (
       proposals: LightProposal[],
@@ -20,11 +23,13 @@ export async function getProposals(accountAddress: Address | undefined, strategy
         );
 
       // Introduce a delay
-      const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+      const sleep = (ms: number) =>
+        new Promise((resolve) => setTimeout(resolve, ms));
 
       // Create proposal chunks
-      const chunks = Array.from({ length: Math.ceil(proposals.length / batchSize) }, (_, i) =>
-        proposals.slice(i * batchSize, i * batchSize + batchSize),
+      const chunks = Array.from(
+        { length: Math.ceil(proposals.length / batchSize) },
+        (_, i) => proposals.slice(i * batchSize, i * batchSize + batchSize),
       );
 
       // Process each chunk
@@ -38,17 +43,17 @@ export async function getProposals(accountAddress: Address | undefined, strategy
       return results;
     };
 
-    const transformProposals = async function (strategy: LightCVStrategy) {
-      const proposalsData = await fetchIPFSDataBatch(strategy.proposals);
+    const transformProposals = async function (_strategy: LightCVStrategy) {
+      const proposalsData = await fetchIPFSDataBatch(_strategy.proposals);
       const transformedProposals = proposalsData.map((data, index) => {
-        const p = strategy.proposals[index];
+        const p = _strategy.proposals[index];
         return {
           ...p,
           voterStakedPointsPct: 0,
-          stakedAmount: strategy.proposals[index].stakedAmount,
+          stakedAmount: _strategy.proposals[index].stakedAmount,
           title: data.title,
-          type: strategy.config?.proposalType as number,
-          status: strategy.proposals[index].proposalStatus,
+          type: _strategy.config?.proposalType as number,
+          status: _strategy.proposals[index].proposalStatus,
         };
       });
 
