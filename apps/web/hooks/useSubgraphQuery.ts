@@ -104,7 +104,7 @@ export function useSubgraphQuery<
       try {
         toast.dismiss(pendingRefreshToastId);
       } catch (error) {
-        console.debug("Error dismissing toast", error);
+        // ignore when toast is already dismissed
       }
     };
   }, [connected]);
@@ -125,7 +125,6 @@ export function useSubgraphQuery<
       console.debug("⚡ Already fetching, skipping refetch");
       return;
     }
-    console.trace("⚡ Refetching from outside");
     setFetching(true);
     fetchingRef.current = true;
     const res = await refetch();
@@ -177,7 +176,7 @@ export function useSubgraphQuery<
       try {
         toast.dismiss(pendingRefreshToastId);
       } catch (error) {
-        console.error("Error dismissing toast", error);
+        // ignore when toast is already dismissed
       }
       return result;
     } else {
