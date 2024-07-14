@@ -117,6 +117,11 @@ export default function Proposal({
     enabled: !!proposalIdNumber,
   });
 
+  const isProposalEnded =
+    !!proposalData &&
+    (proposalStatus[proposalData.proposalStatus] !== "executed" ||
+      proposalStatus[proposalData.proposalStatus] !== "cancelled");
+
   const { data: updateConvictionLast } = useContractRead({
     ...cvStrategyContract,
     functionName: "updateProposalConviction" as any, // TODO: fix CVStrategy.updateProposalConviction to view in contract
@@ -130,6 +135,17 @@ export default function Proposal({
     args: [totalEffectiveActivePoints ?? 0n],
     enabled: !!totalEffectiveActivePoints,
   });
+
+  const tokenSymbol = data?.tokenGarden?.symbol;
+  const tokenDecimals = data?.tokenGarden?.decimals;
+  const convictionLast = proposalData?.convictionLast;
+  const threshold = proposalData?.threshold;
+  const proposalType = proposalData?.strategy.config?.proposalType;
+  const requestedAmount = proposalData?.requestedAmount;
+  const beneficiary = proposalData?.beneficiary as Address | undefined;
+  const submitter = proposalData?.submitter as Address | undefined;
+  const status = proposalData?.proposalStatus;
+  const stakedAmount = proposalData?.stakedAmount;
 
   useEffect(() => {
     if (!proposalData) {
@@ -146,9 +162,6 @@ export default function Proposal({
       totalEffectiveActivePoints,
       updateConvictionLast,
       convictionLast,
-      thresholdPct,
-      totalSupportPct,
-      currentConvictionPct,
     });
   }, [proposalData]);
 
@@ -157,7 +170,7 @@ export default function Proposal({
     !ipfsResult ||
     !maxCVSupply ||
     !totalEffectiveActivePoints ||
-    updateConvictionLast == null
+    (updateConvictionLast == null && !isProposalEnded)
   ) {
     return (
       <div className="mt-96">
@@ -165,17 +178,6 @@ export default function Proposal({
       </div>
     );
   }
-
-  const tokenSymbol = data.tokenGarden?.symbol;
-  const tokenDecimals = data.tokenGarden?.decimals;
-  const convictionLast = proposalData.convictionLast;
-  const threshold = proposalData.threshold;
-  const proposalType = proposalData.strategy.config?.proposalType;
-  const requestedAmount = proposalData.requestedAmount;
-  const beneficiary = proposalData.beneficiary as Address;
-  const submitter = proposalData.submitter as Address;
-  const status = proposalData.proposalStatus;
-  const stakedAmount = proposalData.stakedAmount;
 
   const isSignalingType = poolTypes[proposalType] === "signaling";
 
@@ -192,10 +194,16 @@ export default function Proposal({
   );
 
   let currentConvictionPct = calculatePercentageBigInt(
-    BigInt(updateConvictionLast),
+    BigInt(updateConvictionLast ?? 0),
     maxCVSupply,
     tokenDecimals,
   );
+
+  console.debug({
+    thresholdPct,
+    totalSupportPct,
+    currentConvictionPct,
+  });
 
   return (
     <div className="page-layout">
@@ -253,9 +261,11 @@ export default function Proposal({
       <section className="section-layout">
         <h2>Metrics</h2>
         {/* TODO: need designs for this entire section */}
-        {status && proposalStatus[status] == "executed" ?
-          <div className="badge badge-success p-4 text-white">
-            Proposal passed and executed successfully
+        {status && proposalStatus[status] === "executed" ?
+          <div className="my-8 flex w-full justify-center">
+            <div className="badge badge-success p-4 text-primary">
+              Proposal passed and executed successfully
+            </div>
           </div>
         : <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
