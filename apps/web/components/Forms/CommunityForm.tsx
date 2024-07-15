@@ -157,11 +157,6 @@ export const CommunityForm = ({
     functionName: "createRegistry",
     onConfirmations: async (receipt) => {
       const newCommunityAddr = receipt.logs[0].address;
-      if (pathname) {
-        router.push(
-          pathname?.replace("/create-community", `?${QUERY_PARAMS.gardenPage.newCommunity}=${newCommunityAddr}`),
-        );
-      }
       publish({
         topic: "community",
         type: "add",
@@ -170,6 +165,9 @@ export const CommunityForm = ({
         chainId: tokenGarden.chainId,
         id: newCommunityAddr, // new community address
       });
+      router.push(
+        pathname?.replace("/create-community", `?${QUERY_PARAMS.gardenPage.newCommunity}=${newCommunityAddr}`),
+      );
     },
     onError: (err) => {
       console.warn(err);
