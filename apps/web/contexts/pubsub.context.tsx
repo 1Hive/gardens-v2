@@ -63,7 +63,7 @@ export type ChangeEventTopic =
   | "pool"
   | "proposal"
   | "member";
-type Native = string | number | boolean | null | undefined;
+type Native = string | number | bigint | boolean | null | undefined;
 
 export type ChangeEventScope = {
   topic: ChangeEventTopic;
@@ -81,8 +81,8 @@ export type ChangeEventPayload = {
   type?: "add" | "update" | "delete";
   function?: string;
   chainId?: ChainId;
-  containerId?: string | number;
-  id?: string | number;
+  containerId?: string | number | bigint;
+  id?: string | number | bigint;
 } & { [key: string]: Native };
 
 // Create the context with an initial default value (optional)

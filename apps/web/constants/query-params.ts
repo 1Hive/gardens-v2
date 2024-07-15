@@ -5,4 +5,7 @@ export const QUERY_PARAMS = {
   communityPage: {
     newPool: "newPool",
   },
+  poolPage: {
+    newPropsoal: "newProposal",
+  },
 } as const;

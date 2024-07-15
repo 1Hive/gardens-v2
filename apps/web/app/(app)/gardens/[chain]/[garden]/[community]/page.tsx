@@ -119,7 +119,7 @@ export default function Page({
   const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
 
   useEffect(() => {
-    const newPoolId = searchParams.get(QUERY_PARAMS.communityPage.newPool)?.toLowerCase();
+    const newPoolId = searchParams.get(QUERY_PARAMS.communityPage.newPool);
     if (newPoolId && result && !poolsInReview.some(c => c.poolId === newPoolId)) {
       refetch();
     }

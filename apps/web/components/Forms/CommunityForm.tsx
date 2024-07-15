@@ -19,7 +19,7 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { getEventFromReceipt } from "@/utils/events";
+import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 
@@ -157,12 +157,7 @@ export const CommunityForm = ({
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
     onConfirmations: async (receipt) => {
-      const newCommunityAddr = getEventFromReceipt(receipt, "RegistryFactory", "RegistryInitialized").address;
-      if (pathname) {
-        router.push(
-          pathname?.replace("/create-community", `?${QUERY_PARAMS.gardenPage.newCommunity}=${newCommunityAddr}`),
-        );
-      }
+      const newCommunityAddr = getEventFromReceipt(receipt, "RegistryFactory", "CommunityCreated").args._registryCommunity;
       publish({
         topic: "community",
         type: "add",
@@ -171,6 +166,11 @@ export const CommunityForm = ({
         chainId: tokenGarden.chainId,
         id: newCommunityAddr, // new community address
       });
+      if (pathname) {
+        router.push(
+          pathname?.replace("/create-community", `?${QUERY_PARAMS.gardenPage.newCommunity}=${newCommunityAddr}`),
+        );
+      }
     },
     onError: (err) => {
       console.warn(err);
