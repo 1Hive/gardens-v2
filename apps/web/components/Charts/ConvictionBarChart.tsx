@@ -149,7 +149,7 @@ export const ConvictionBarChart = ({
         proposalSupportPct > thresholdPct,
       details: [
         {
-          message: `This proposal is ready to be executed!`,
+          message: "This proposal is ready to be executed!",
           growing: null,
         },
       ],
@@ -179,7 +179,7 @@ export const ConvictionBarChart = ({
   const markLineTh: MarkLineComponentOption =
     isSignalingType ?
       {}
-    : {
+      : {
         ...markLine,
         data: [
           {
@@ -199,7 +199,7 @@ export const ConvictionBarChart = ({
   const markLineCv: MarkLineComponentOption =
     currentConvictionPct === 0 ?
       {}
-    : {
+      : {
         ...markLine,
         data: [
           {

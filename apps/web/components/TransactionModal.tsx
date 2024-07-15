@@ -1,7 +1,7 @@
 "use client";
 
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { forwardRef, useEffect, useState } from "react";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Button } from "./Button";
 
 export interface TransactionStep {
@@ -14,12 +14,12 @@ export interface TransactionStep {
   messageClassName?: string;
 }
 
-type statuses = "idle" | "loading" | "success" | "error";
+type Statuses = "idle" | "loading" | "success" | "error";
 
 export type TransactionModalProps = {
   label: string;
-  allowTokenStatus: statuses;
-  stepTwoStatus: statuses;
+  allowTokenStatus: Statuses;
+  stepTwoStatus: Statuses;
   allowance?: bigint;
   pendingAllowance?: boolean;
   setPendingAllowance?: (_: boolean) => void;
@@ -36,8 +36,8 @@ interface StatusConfig {
 }
 
 export const TransactionModal = forwardRef<
-  HTMLDialogElement,
-  TransactionModalProps
+HTMLDialogElement,
+TransactionModalProps
 >(function TransactionModal(
   {
     label,
@@ -92,7 +92,7 @@ export const TransactionModal = forwardRef<
       message:
         pendingAllowance ?
           "Allowance previously approved successfully!"
-        : message,
+          : message,
       stepClassName: pendingAllowance ? "step-success" : className,
       messageClassName: pendingAllowance ? "text-success" : messageClassName,
     };

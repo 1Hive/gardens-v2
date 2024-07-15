@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { WriteContractResult } from "wagmi/actions";
 import { Address } from "viem";
+import { WriteContractResult } from "wagmi/actions";
 
 type TransactionStatus = "error" | "success" | "loading" | "idle";
 type TransactionData = WriteContractResult | undefined;
@@ -20,15 +20,9 @@ export const useTransactionNotification = (
 ) => {
   const [transactionStatus, updateTransactionStatus] =
     useState<TransactionStatus>("idle");
-  const [txConfirmationHash, setTxConfirmationHash] = useState<
-    Address | undefined
-  >(undefined);
-  const [promiseResolve, setPromiseResolve] = useState<
-    TransactionFunction | undefined
-  >(undefined);
-  const [promiseReject, setPromiseReject] = useState<
-    TransactionFunction | undefined
-  >(undefined);
+  const [txConfirmationHash, setTxConfirmationHash] = useState<Address | undefined>(undefined);
+  const [promiseResolve, setPromiseResolve] = useState<TransactionFunction | undefined>(undefined);
+  const [promiseReject, setPromiseReject] = useState<TransactionFunction | undefined>(undefined);
 
   const transactionPromise = () => {
     return new Promise<TransactionPayload>((resolve, reject) => {
@@ -59,7 +53,7 @@ export const useTransactionNotification = (
           error: "Something went wrong",
         })
         .then((data) => {
-          console.log("Tx hash: " + data.transactionData?.hash);
+          console.info("Tx hash: " + data.transactionData?.hash);
           // const receipt = async () =>
           //   await viemClient.waitForTransactionReceipt({
           //     confirmations: [chainId].confirmations,

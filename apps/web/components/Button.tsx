@@ -5,10 +5,10 @@ import { Size } from "@/types";
 
 type ButtonProps = {
   type?:
-    | "button"
-    | "submit"
-    | "reset"
-    | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+  | "button"
+  | "submit"
+  | "reset"
+  | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
   btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
@@ -67,11 +67,8 @@ export function Button({
   icon,
   type = "button",
 }: ButtonProps) {
-  const buttonContent = isLoading ? (
-    <span className="loading loading-spinner" />
-  ) : (
-    children  
-  );
+  const buttonContent =
+    isLoading ? <span className="loading loading-spinner" /> : children;
 
   const buttonElement = (
     <button
@@ -85,11 +82,9 @@ export function Button({
     </button>
   );
 
-  return disabled ? (
+  return disabled ?
     <div className={`tooltip ${styles}`} data-tip={tooltip}>
       {buttonElement}
     </div>
-  ) : (
-    buttonElement
-  );
+    : buttonElement;
 }

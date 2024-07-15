@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import Link from "next/link";
+import { newLogo } from "@/assets";
 import { ConnectWallet } from "@/components";
 import { navItems } from "@/constants/navigation";
-import { newLogo } from "@/assets";
 
 export function NavBar() {
   return (
@@ -61,7 +61,7 @@ export function NavBar() {
                       className="bg-surface block h-6 w-6"
                       aria-hidden="true"
                     />
-                  : <Bars3Icon
+                    : <Bars3Icon
                       className="bg-surface block h-6 w-6"
                       aria-hidden="true"
                     />

@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { getTokenGardensQuery } from "#/subgraph/.graphclient";
 import { Button } from ".";
 import { gardenLand } from "@/assets";
-import { getTokenGardensQuery } from "#/subgraph/.graphclient";
-import { getChain, ChainIcon } from "@/configs/chainServer";
+import { ChainIcon, getChain } from "@/configs/chainServer";
 
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 

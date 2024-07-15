@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import { Address } from "viem";
 import {
   CurrencyDollarIcon,
   ExclamationCircleIcon,
@@ -10,7 +8,13 @@ import {
   RectangleGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
+import Image from "next/image";
 import Link from "next/link";
+import { Address } from "viem";
+import {
+  getCommunityDocument,
+  getCommunityQuery,
+} from "#/subgraph/.graphclient";
 import { commImg, groupFlowers } from "@/assets";
 import {
   Button,
@@ -21,22 +25,20 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
-import {
-  getCommunityDocument,
-  getCommunityQuery,
-} from "#/subgraph/.graphclient";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
+import { isProd } from "@/constants/contracts";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { poolTypes } from "@/types";
 import {
-  SCALE_PRECISION,
-  SCALE_PRECISION_DECIMALS,
   dn,
   parseToken,
+  SCALE_PRECISION,
+  SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { useDisableButtons } from "@/hooks/useDisableButtons";
 
-export default function CommunityPage({
+export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
 }: {
   params: { chain: number; garden: string; community: string };
@@ -72,8 +74,8 @@ export default function CommunityPage({
           if (typeof json.covenant === "string") {
             setCovenant(json.covenant);
           }
-        } catch (error) {
-          console.error(error);
+        } catch (err) {
+          console.error(err);
         }
       }
     };
@@ -134,8 +136,8 @@ export default function CommunityPage({
       ] as dn.Dnum;
 
       return dn.multiply(membership, feePercentage);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
     return [0n, 0] as dn.Dnum;
   };
@@ -301,15 +303,11 @@ export default function CommunityPage({
       </section>
       <section className="section-layout">
         <h2 className="mb-4">Covenant</h2>
-        {covenantIpfsHash ? (
-          covenant ? (
+        {covenantIpfsHash ?
+          covenant ?
             <p>{covenant}</p>
-          ) : (
-            <LoadingSpinner />
-          )
-        ) : (
-          <p className="italic">No covenant was submitted.</p>
-        )}
+            : <LoadingSpinner />
+          : <p className="italic">No covenant was submitted.</p>}
         <div className="mt-10 flex justify-center">
           <Image
             src={groupFlowers}
@@ -320,6 +318,7 @@ export default function CommunityPage({
           />
         </div>
       </section>
+      {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
     </div>
   );
 }
