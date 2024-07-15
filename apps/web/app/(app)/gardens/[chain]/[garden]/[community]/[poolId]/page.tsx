@@ -9,6 +9,7 @@ import {
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   Allo,
   getAlloQuery,
@@ -26,6 +27,7 @@ import {
   Statistic,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { pointSystems, poolTypes } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
@@ -40,7 +42,8 @@ export default function Page({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data, error } = useSubgraphQuery<getPoolDataQuery>({
+  const searchParams = useSearchParams();
+  const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden },
     changeScope: [
@@ -87,6 +90,13 @@ export default function Page({
       "poolAmount: " + strategyObj?.poolAmount,
     );
   }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
+
+  useEffect(() => {
+    const newProposalId = searchParams.get(QUERY_PARAMS.poolPage.newPropsoal);
+    if (newProposalId && data && !strategyObj?.proposals.some(c => c.id === newProposalId)) {
+      refetch();
+    }
+  }, [searchParams, strategyObj?.proposals]);
 
   if (!data || !ipfsResult) {
     return (

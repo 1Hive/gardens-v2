@@ -19,7 +19,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { getEventFromReceipt } from "@/utils/events";
+import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
@@ -255,11 +255,13 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     abi: abiWithErrors(registryCommunityABI),
     functionName: "createPool",
     onConfirmations: (receipt) => {
-      const newPoolId = getEventFromReceipt(receipt, "RegistryCommunity", "PoolCreated").address;
+      const newPoolId = getEventFromReceipt(receipt, "RegistryCommunity", "PoolCreated").args._poolId;
       publish({
         topic: "pool",
         function: "createPool",
         type: "add",
+        id: newPoolId,
+        containerId: communityAddr,
         chainId: chainId,
       });
       router.push(pathname?.replace("/create-pool", `?${QUERY_PARAMS.communityPage.newPool}=${newPoolId}`));
