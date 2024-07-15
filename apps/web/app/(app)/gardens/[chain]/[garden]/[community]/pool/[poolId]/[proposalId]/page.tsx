@@ -275,15 +275,13 @@ export default function Proposal({
             Proposal passed and executed successfully
           </div>
         ) : (
-          <>
-            <ConvictionBarChart
-              currentConvictionPct={currentConvictionPct}
-              thresholdPct={thresholdPct}
-              proposalSupportPct={totalSupportPct}
-              isSignalingType={isSignalingType}
-              proposalId={proposalIdNumber as string}
-            />
-          </>
+          <ConvictionBarChart
+            currentConvictionPct={currentConvictionPct}
+            thresholdPct={thresholdPct}
+            proposalSupportPct={totalSupportPct}
+            isSignalingType={isSignalingType}
+            proposalId={proposalIdNumber}
+          />
         )}
       </section>
     </div>

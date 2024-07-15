@@ -41,9 +41,7 @@ export const ChartWrapper = ({
   return (
     <>
       <div className="mt-7 flex flex-col gap-6">
-        {/* chart title */}
         <h3>Conviction voting chart</h3>
-
         <div className="flex gap-4">
           {legend
             .filter((item) => !(isSignalingType && item.name === "Threshold"))
@@ -56,12 +54,10 @@ export const ChartWrapper = ({
               </Fragment>
             ))}
         </div>
-
         {/* CVChart - standard */}
         <div className="-my-4 h-20">{children}</div>
 
         {/* Growth and message to user */}
-
         <div className="space-y-2">
           {growing !== null && (
             <>

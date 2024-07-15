@@ -117,7 +117,7 @@ export const ConvictionBarChart = ({
         currentConvictionPct < proposalSupportPct,
       details: [
         {
-          message: "This proposal is ready to be executed !",
+          message: "This proposal is ready to be executed!",
           growing: true,
         },
       ],
@@ -155,7 +155,7 @@ export const ConvictionBarChart = ({
         proposalSupportPct > thresholdPct,
       details: [
         {
-          message: `This proposal is ready to be executed!`,
+          message: "This proposal is ready to be executed!",
           growing: null,
         },
       ],
@@ -167,7 +167,7 @@ export const ConvictionBarChart = ({
   )?.details[0] ?? {
     message:
       proposalSupportPct == 0
-        ? "Proposal waiting for support ..."
+        ? "Proposal waiting for support"
         : "Scenario not found",
     growing: null,
   };
