@@ -1,5 +1,5 @@
 import type { AbiEvent, ExtractAbiEvent, ExtractAbiEventNames, AbiParameter, AbiParameterToPrimitiveType } from "abitype";
-import { TransactionReceipt, TypedData, decodeEventLog, getEventSelector } from "viem";
+import { TransactionReceipt, decodeEventLog, getEventSelector } from "viem";
 import { cvStrategyABI, registryCommunityABI, registryFactoryABI } from "@/src/generated";
 
 export const ContractABIs = {
@@ -39,6 +39,6 @@ export const getEventFromReceipt = <TContractName extends keyof typeof ContractA
     data: event.data,
     topics: event.topics,
   });
-  console.log({ parsed });
+
   return { ...event, eventAbi, args: parsed.args as EventArgTypes<typeof eventAbi> };
 };
