@@ -2,6 +2,7 @@ import { Fragment, ReactNode } from "react";
 import {
   ArrowDownRightIcon,
   ArrowUpRightIcon,
+  FlagIcon,
 } from "@heroicons/react/24/solid";
 
 type ChartWrapperProps = {
@@ -24,17 +25,17 @@ export const ChartWrapper = ({
 
   const legend = [
     {
-      name: "Conviction",
-      className: "bg-primary-content  h-4 w-4 rounded-full",
-    },
-    {
       name: "Support",
       className: "bg-[#9EE157] h-4 w-4 rounded-full",
     },
     {
+      name: "Conviction",
+      className: "bg-primary-content  h-4 w-4 rounded-full",
+    },
+    {
       name: "Threshold",
       className:
-        "w-7 bg-neutral-soft border-t-[1px] border-black border-dashed rotate-90 -mx-2",
+        "w-5 bg-neutral-soft border-t-[1px] border-black border-dashed rotate-90 -mx-3",
     },
   ];
 
@@ -48,7 +49,14 @@ export const ChartWrapper = ({
             .map((item) => (
               <Fragment key={item.name}>
                 <div className="flex items-center gap-1">
-                  <div key={item.name} className={`${item.className}`} />
+                  {item.name === "Threshold" ? (
+                    <div className="relative">
+                      <div className={`${item.className}`} />
+                      <FlagIcon className="absolute -left-[3.5px] -top-5 h-3 w-3 text-black" />
+                    </div>
+                  ) : (
+                    <div className={`${item.className}`} />
+                  )}
                   <p className="text-xs font-medium">{item.name}</p>
                 </div>
               </Fragment>
