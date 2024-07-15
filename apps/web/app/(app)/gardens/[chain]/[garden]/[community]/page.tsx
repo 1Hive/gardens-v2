@@ -11,7 +11,7 @@ import { Dnum } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Address, GetEventArgsFromTopics } from "viem";
+import { Address } from "viem";
 import {
   getCommunityDocument,
   getCommunityQuery,

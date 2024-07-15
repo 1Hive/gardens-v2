@@ -14,12 +14,12 @@ import { FormSelect } from "./FormSelect";
 import { Button } from "@/components/Button";
 import { chainDataMap } from "@/configs/chainServer";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { TOPICS } from "@/constants/topics";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
+import { getEventFromReceipt } from "@/utils/events";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
@@ -255,7 +255,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     abi: abiWithErrors(registryCommunityABI),
     functionName: "createPool",
     onConfirmations: (receipt) => {
-      const newPoolId = receipt.logs.find(l => l.topics[0] === TOPICS.RegistryCommunity.PoolCreated);
+      const newPoolId = getEventFromReceipt(receipt, "RegistryCommunity", "PoolCreated").address;
       publish({
         topic: "pool",
         function: "createPool",
