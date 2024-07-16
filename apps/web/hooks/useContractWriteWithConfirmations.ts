@@ -10,6 +10,7 @@ export function useContractWriteWithConfirmations(
     onConfirmations?: (receipt: TransactionReceipt) => void;
     confirmations?: number;
     contractName: string;
+    showNotification?: boolean;
   },
 ) {
   const chainId = useChainId();
@@ -34,6 +35,7 @@ export function useContractWriteWithConfirmations(
     transactionStatus: txResult.status,
     transactionError: txResult.error,
     contractName: props.contractName,
+    enabled: props.showNotification ?? true, // default to true
   });
 
   useEffect(() => {

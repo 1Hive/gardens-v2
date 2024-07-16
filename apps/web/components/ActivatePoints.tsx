@@ -36,7 +36,7 @@ export function ActivatePoints({
   } = useContractWriteWithConfirmations({
     chainId,
     address: strategyAddress,
-    contractName: "CVStrategy",
+    contractName: "CV Strategy",
     abi: abiWithErrors(cvStrategyABI),
     functionName: "activatePoints",
     onConfirmations: () => {
@@ -57,7 +57,7 @@ export function ActivatePoints({
   } = useContractWriteWithConfirmations({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
-    contractName: "CVStrategy",
+    contractName: "CV Strategy",
     functionName: "deactivatePoints",
     onConfirmations: () => {
       publish({

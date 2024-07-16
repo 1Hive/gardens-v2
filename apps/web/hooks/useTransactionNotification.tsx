@@ -9,11 +9,12 @@ import { WaitingForSig, TxError, TxSuccess } from "@/assets";
 type TransactionData = WriteContractResult | undefined;
 
 export const useTransactionNotification = (
-  { transactionData, transactionError, transactionStatus, contractName }: {
+  { transactionData, transactionError, transactionStatus, contractName, enabled}: {
     transactionData: TransactionData | null | undefined,
     transactionError: Error | null | undefined,
     transactionStatus: ReturnType<typeof useContractWriteWithConfirmations>["status"],
     contractName: string,
+    enabled?: boolean,
   },
 ) => {
   const [toastId, setToastId] = useState<Id>();
@@ -25,7 +26,7 @@ export const useTransactionNotification = (
   }, [transactionData?.hash]);
 
   useEffect(() => {
-    if (!transactionStatus || transactionStatus === "idle") {
+    if (!enabled || !transactionStatus || transactionStatus === "idle") {
       return;
     }
 

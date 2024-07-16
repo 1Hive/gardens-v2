@@ -161,7 +161,7 @@ export const CommunityForm = ({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-    contractName: "RegistryFactory",
+    contractName: "Registry Factory",
     onConfirmations: async (receipt) => {
       const newCommunityAddr = receipt.logs[0].address;
       if (pathname) {

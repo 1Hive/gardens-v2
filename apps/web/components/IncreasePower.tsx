@@ -115,7 +115,7 @@ export const IncreasePower = ({
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
-    contractName: "RegistryCommunity",
+    contractName: "Registry Community",
   };
 
   const { data: isMember } = useContractRead({
