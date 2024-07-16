@@ -1,50 +1,23 @@
 "use client";
-import { Badge, Statistic, DisplayNumber } from "@/components";
-import { EthAddress } from "@/components";
-import { cvStrategyABI } from "@/src/generated";
+
+import { useEffect, useState } from "react";
+import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 import { Address, formatUnits } from "viem";
-import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { useContractRead } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { calculatePercentageBigInt } from "@/utils/numbers";
-import Image from "next/image";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
-import { proposalStatus, poolTypes } from "@/types";
 import { proposalImg } from "@/assets";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import { useState, useEffect } from "react";
-import { useContractRead } from "wagmi";
-import LoadingSpinner from "@/components/LoadingSpinner";
-
-export const dynamic = "force-dynamic";
-
-type ProposalsMock = {
-  title: string;
-  type: "funding" | "streaming" | "signaling";
-  description: string;
-  value?: number;
-  id: number;
-};
-
-type UnparsedProposal = {
-  submitter: Address;
-  beneficiary: Address;
-  requestedToken: Address;
-  requestedAmount: number;
-  stakedTokens: number;
-  proposalType: any;
-  proposalStatus: any;
-  blockLast: number;
-  convictionLast: number;
-  agreementActionId: number;
-  threshold: number;
-  voterStakedPointsPct: number;
-};
-
-type Proposal = UnparsedProposal & ProposalsMock;
+import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
+import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { cvStrategyABI } from "@/src/generated";
+import { poolTypes, proposalStatus } from "@/types";
+import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -56,8 +29,8 @@ const prettyTimestamp = (timestamp: number) => {
   return `${day} ${month} ${year}`;
 };
 
-export default function Proposal({
-  params: { proposalId, poolId, chain, garden },
+export default function Page({
+  params: { proposalId, garden },
 }: {
   params: { proposalId: string; poolId: string; chain: string; garden: string };
 }) {
@@ -84,8 +57,8 @@ export default function Proposal({
 
   useEffect(() => {
     if (metadata) {
-      getIpfsMetadata(metadata).then((data) => {
-        setIpfsResult(data);
+      getIpfsMetadata(metadata).then((d) => {
+        setIpfsResult(d);
       });
     }
   }, [metadata]);
@@ -116,6 +89,11 @@ export default function Proposal({
     enabled: !!proposalIdNumber,
   });
 
+  const isProposalEnded =
+    !!proposalData &&
+    (proposalStatus[proposalData.proposalStatus] !== "executed" ||
+      proposalStatus[proposalData.proposalStatus] !== "cancelled");
+
   const { data: updateConvictionLast } = useContractRead({
     ...cvStrategyContract,
     functionName: "updateProposalConviction" as any, // TODO: fix CVStrategy.updateProposalConviction to view in contract
@@ -126,16 +104,45 @@ export default function Proposal({
   const { data: maxCVSupply } = useContractRead({
     ...cvStrategyContract,
     functionName: "getMaxConviction",
-    args: [totalEffectiveActivePoints || 0n],
+    args: [totalEffectiveActivePoints ?? 0n],
     enabled: !!totalEffectiveActivePoints,
   });
+
+  const tokenSymbol = data?.tokenGarden?.symbol;
+  const tokenDecimals = data?.tokenGarden?.decimals;
+  const convictionLast = proposalData?.convictionLast;
+  const threshold = proposalData?.threshold;
+  const proposalType = proposalData?.strategy.config?.proposalType;
+  const requestedAmount = proposalData?.requestedAmount;
+  const beneficiary = proposalData?.beneficiary as Address | undefined;
+  const submitter = proposalData?.submitter as Address | undefined;
+  const status = proposalData?.proposalStatus;
+  const stakedAmount = proposalData?.stakedAmount;
+
+  useEffect(() => {
+    if (!proposalData) {
+      return;
+    }
+
+    console.debug({
+      requestedAmount,
+      maxCVSupply,
+      threshold,
+      thFromContract,
+      stakedAmount,
+      stakeAmountFromContract: stakeAmountFromContract,
+      totalEffectiveActivePoints,
+      updateConvictionLast,
+      convictionLast,
+    });
+  }, [proposalData]);
 
   if (
     !proposalData ||
     !ipfsResult ||
     !maxCVSupply ||
     !totalEffectiveActivePoints ||
-    updateConvictionLast == null
+    (updateConvictionLast == null && !isProposalEnded)
   ) {
     return (
       <div className="mt-96">
@@ -144,38 +151,7 @@ export default function Proposal({
     );
   }
 
-  const tokenSymbol = data.tokenGarden?.symbol;
-  const tokenDecimals = data.tokenGarden?.decimals;
-  const convictionLast = proposalData.convictionLast;
-  const threshold = proposalData.threshold;
-  const proposalType = proposalData.strategy.config?.proposalType;
-  const requestedAmount = proposalData.requestedAmount;
-  const beneficiary = proposalData.beneficiary as Address;
-  const submitter = proposalData.submitter as Address;
-  const status = proposalData.proposalStatus;
-  const stakedAmount = proposalData.stakedAmount;
-
   const isSignalingType = poolTypes[proposalType] === "signaling";
-
-  //logs for debugging in arb sepolia - //TODO: remove before merge
-  console.log("requesteAmount:              %s", requestedAmount);
-  console.log("maxCVSupply:                 %s", maxCVSupply);
-  //thresholda
-  // console.log(threshold);
-  console.log("threshold:                   %s", threshold);
-  // console.log(thFromContract);
-  console.log("thFromContract:              %s", thFromContract);
-  //stakeAmount
-  // console.log(stakedAmount);
-  console.log("stakedAmount:                %s", stakedAmount);
-  // console.log(stakeAmountFromContract);
-  console.log("stakeAmountFromContract:     %s", stakeAmountFromContract);
-  // console.log(totalEffectiveActivePoints);
-  console.log("totalEffectiveActivePoints:  %s", totalEffectiveActivePoints);
-  // console.log(updateConvictionLast);
-  console.log("updateConvictionLast:        %s", updateConvictionLast);
-  // console.log(convictionLast);
-  console.log("convictionLast:              %s", convictionLast);
 
   let thresholdPct = calculatePercentageBigInt(
     threshold,
@@ -183,36 +159,23 @@ export default function Proposal({
     tokenDecimals,
   );
 
-  console.log("thresholdPct:                %s", thresholdPct);
-
-  // console.log("ff:                          %s", ff);
-
-  // const totalSupportPct = calculatePercentageDecimals(
-  //   stakedAmount,
-  //   totalEffectiveActivePoints,
-  //   tokenDecimals,
-  // );
-
   let totalSupportPct = calculatePercentageBigInt(
     stakedAmount,
     totalEffectiveActivePoints,
     tokenDecimals,
   );
 
-  console.log("totalSupportPct:             %s", totalSupportPct);
-  // const currentConvictionPct = calculatePercentageDecimals(
-  //   updateConvictionLast,
-  //   maxCVSupply,
-  //   tokenDecimals,
-  // );
-
   let currentConvictionPct = calculatePercentageBigInt(
-    BigInt(updateConvictionLast),
+    BigInt(updateConvictionLast ?? 0),
     maxCVSupply,
     tokenDecimals,
   );
 
-  console.log("currentConviction:           %s", currentConvictionPct);
+  console.debug({
+    thresholdPct,
+    totalSupportPct,
+    currentConvictionPct,
+  });
 
   return (
     <div className="page-layout">
@@ -230,7 +193,7 @@ export default function Proposal({
           <div>
             <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <h2>
-                {ipfsResult?.title} - Proposal #{proposalIdNumber}
+                {ipfsResult?.title} #{proposalIdNumber}
               </h2>
               <Badge type={proposalType} />
             </div>
@@ -270,19 +233,20 @@ export default function Proposal({
       <section className="section-layout">
         <h2>Metrics</h2>
         {/* TODO: need designs for this entire section */}
-        {status && proposalStatus[status] == "executed" ? (
-          <div className="badge badge-success p-4 text-white">
-            Proposal passed and executed successfully
+        {status && proposalStatus[status] === "executed" ?
+          <div className="my-8 flex w-full justify-center">
+            <div className="badge badge-success p-4 text-primary">
+              Proposal passed and executed successfully
+            </div>
           </div>
-        ) : (
-          <ConvictionBarChart
+        : <ConvictionBarChart
             currentConvictionPct={currentConvictionPct}
             thresholdPct={thresholdPct}
             proposalSupportPct={totalSupportPct}
             isSignalingType={isSignalingType}
             proposalId={proposalIdNumber}
           />
-        )}
+        }
       </section>
     </div>
   );

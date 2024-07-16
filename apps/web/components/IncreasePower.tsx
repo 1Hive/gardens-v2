@@ -1,26 +1,25 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { toast } from "react-toastify";
+import { parseUnits } from "viem";
+import { Address, useAccount, useBalance, useContractRead } from "wagmi";
+import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
+import { Button } from "./Button";
+import { DisplayNumber } from "./DisplayNumber";
+import { TransactionModal, TransactionStep } from "./TransactionModal";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { queryByChain } from "@/providers/urql";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { Address, useAccount, useBalance, useContractRead } from "wagmi";
-import { Button } from "./Button";
-import { TransactionModal, TransactionStep } from "./TransactionModal";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { toast } from "react-toastify";
+import { useErrorDetails } from "@/utils/getErrorName";
 import { formatTokenAmount } from "@/utils/numbers";
-import { parseUnits } from "viem";
-import useChainFromPath from "@/hooks/useChainIdFromPath";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import useErrorDetails from "@/utils/getErrorName";
-import { DisplayNumber } from "./DisplayNumber";
-import { queryByChain } from "@/providers/urql";
-import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
-import { useUrqlClient } from "@/hooks/useUqrlClient";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type IncreasePowerProps = {
   communityAddress: Address;
@@ -69,11 +68,11 @@ export const IncreasePower = ({
   const { address: connectedAccount } = useAccount();
 
   //handeling states
-  type states = "idle" | "loading" | "success" | "error";
+  type States = "idle" | "loading" | "success" | "error";
   const [allowanceTransactionStatus, setAllowanceTransactionStatus] =
-    useState<states>("idle");
+    useState<States>("idle");
   const [resetTransactionStatus, setResetTransactionStatus] =
-    useState<states>("idle");
+    useState<States>("idle");
   const { address: accountAddress } = useAccount();
   const [memberStakedTokens, setMemberStakedTokens] = useState<bigint>(0n);
 
@@ -85,7 +84,7 @@ export const IncreasePower = ({
     if (!accountAddress || !urlChainId) {
       return;
     }
-    const { data: result, error } = await queryByChain<isMemberQuery>(
+    const { data: result } = await queryByChain<isMemberQuery>(
       urqlClient,
       urlChainId,
       isMemberDocument,
@@ -98,10 +97,8 @@ export const IncreasePower = ({
     if (result && result.members.length > 0) {
       const stakedTokens =
         result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
-      const memberStakedTokens =
-        typeof stakedTokens === "string" ? stakedTokens : "0";
 
-      setMemberStakedTokens(BigInt(memberStakedTokens));
+      setMemberStakedTokens(BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"));
     }
   }, [accountAddress]);
 
@@ -117,7 +114,7 @@ export const IncreasePower = ({
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
     token: registerToken as Address,
-    chainId: urlChainId || 0,
+    chainId: urlChainId ?? 0,
   });
 
   //TODO: create a hook for this
@@ -126,11 +123,7 @@ export const IncreasePower = ({
     abi: abiWithErrors2(registryCommunityABI),
   };
 
-  const {
-    data: isMember,
-    error,
-    isSuccess,
-  } = useContractRead({
+  const { data: isMember } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
     enabled: accountAddress !== undefined,
@@ -351,7 +344,7 @@ export const IncreasePower = ({
           token={tokenSymbol}
           pendingAllowance={pendingAllowance}
           setPendingAllowance={setPendingAllowance}
-        ></TransactionModal>
+        />
 
         <div className="flex justify-between gap-4">
           <div className=" flex flex-col justify-between gap-4">
@@ -406,7 +399,7 @@ export const IncreasePower = ({
                 tooltip={tooltipMessage}
               >
                 Increase stake
-                <span className="loading-spinner"></span>
+                <span className="loading-spinner" />
               </Button>
 
               <Button
@@ -417,7 +410,7 @@ export const IncreasePower = ({
                 tooltip={decreaseTooltipMsg}
               >
                 Decrease stake
-                <span className="loading-spinner"></span>
+                <span className="loading-spinner" />
               </Button>
             </div>
           </div>

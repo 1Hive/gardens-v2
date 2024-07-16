@@ -1,8 +1,9 @@
 "use client";
-import React from "react";
-import { ChartWrapper } from "./ChartWrapper";
+
+import React, { useEffect } from "react";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
+import { ChartWrapper } from "./ChartWrapper";
 
 type ScenarioMapping = {
   condition: () => boolean;
@@ -166,9 +167,9 @@ export const ConvictionBarChart = ({
     ({ condition }) => condition(),
   )?.details[0] ?? {
     message:
-      proposalSupportPct == 0
-        ? "Proposal waiting for support"
-        : "Scenario not found",
+      proposalSupportPct == 0 ?
+        "Proposal waiting for support"
+      : "Scenario not found",
     growing: null,
   };
 
@@ -194,26 +195,26 @@ export const ConvictionBarChart = ({
   };
 
   const markLineTh: MarkLineComponentOption =
-    isSignalingType || compact
-      ? {}
-      : {
-          ...markLine,
-          data: [
-            {
-              xAxis: thresholdPct,
-              symbol:
-                "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
-              symbolSize: [16, 16],
-              symbolOffset: [-7, 50],
-            },
-          ],
-          lineStyle: {
-            width: 1,
-            color: "#191919",
-            dashOffset: 30,
+    isSignalingType || compact ?
+      {}
+    : {
+        ...markLine,
+        data: [
+          {
+            xAxis: thresholdPct,
+            symbol:
+              "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
+            symbolSize: [16, 16],
+            symbolOffset: [-7, 50],
           },
-          z: 50,
-        };
+        ],
+        lineStyle: {
+          width: 1,
+          color: "#191919",
+          dashOffset: 30,
+        },
+        z: 50,
+      };
   const option: EChartsOption = {
     emphasis: emphasis,
     yAxis: {
@@ -271,7 +272,10 @@ export const ConvictionBarChart = ({
           fontSize: 10,
           formatter: "{@score} %",
         },
-        z: supportGtConv ? 1 : convEqSupport ? 1 : 2,
+        z:
+          supportGtConv ? 1
+          : convEqSupport ? 1
+          : 2,
         barWidth: 23,
         data: [proposalSupportPct],
       },
@@ -294,35 +298,34 @@ export const ConvictionBarChart = ({
         z: 1,
         data: [currentConvictionPct],
       },
-      isSignalingType
-        ? {}
-        : {
-            type: "bar",
-            name: "Threshold",
-            barWidth: 23,
-            data: [thresholdPct],
-            itemStyle: {
-              borderRadius: [20, 20, 20, 20],
-              color: "#EEEEEE",
-            },
+      isSignalingType ?
+        {}
+      : {
+          type: "bar",
+          name: "Threshold",
+          barWidth: 23,
+          data: [thresholdPct],
+          itemStyle: {
+            borderRadius: [20, 20, 20, 20],
             color: "#EEEEEE",
-            z: 0,
-            markLine: {
-              ...markLineTh,
-            },
           },
+          color: "#EEEEEE",
+          z: 0,
+          markLine: {
+            ...markLineTh,
+          },
+        },
     ],
   };
 
   return (
     <>
-      {compact ? (
+      {compact ?
         <EChartsReact
           option={option}
           style={{ height: "100%", width: "100%" }}
         />
-      ) : (
-        <ChartWrapper
+      : <ChartWrapper
           message={message}
           growing={growing}
           isSignalingType={isSignalingType}
@@ -332,7 +335,7 @@ export const ConvictionBarChart = ({
             style={{ height: "100%", width: "100%" }}
           />
         </ChartWrapper>
-      )}
+      }
     </>
   );
 };

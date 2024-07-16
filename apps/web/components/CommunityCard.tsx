@@ -1,11 +1,12 @@
 "use client";
+
 import React from "react";
-import { commImg } from "@/assets";
-import Image from "next/image";
-import { Statistic } from "./Statistic";
-import { Card } from "./Card";
-import { usePathname } from "next/navigation";
 import { RectangleGroupIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { Card } from "./Card";
+import { Statistic } from "./Statistic";
+import { commImg } from "@/assets";
 
 type CommunityCardProps = {
   name: string;

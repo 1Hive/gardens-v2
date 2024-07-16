@@ -1,5 +1,5 @@
-import { ChainIcon, getChain } from "@/configs/chainServer";
 import React from "react";
+import { ChainIcon, getChain } from "@/configs/chainServer";
 
 type TokenLabelProps = { chainId: string | number };
 

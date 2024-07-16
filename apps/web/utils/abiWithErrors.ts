@@ -1,12 +1,12 @@
+import { Abi } from "viem";
 import {
+  alloABI,
   cvStrategyABI,
+  erc20ABI,
   registryCommunityABI,
   registryFactoryABI,
-  alloABI,
-  erc20ABI,
-  safeABI
+  safeABI,
 } from "@/src/generated";
-import { Abi } from "viem";
 
 const FuncFilterError = (item: { type: string }) => item.type === "error";
 
@@ -17,7 +17,7 @@ const errorsABI = [
   ...registryCommunityABI.filter(FuncFilterError),
   ...registryFactoryABI.filter(FuncFilterError),
   ...erc20ABI.filter(FuncFilterError),
-  ...safeABI.filter(FuncFilterError)
+  ...safeABI.filter(FuncFilterError),
 ];
 
 // console.log("errorsABI", errorsABI);
