@@ -10,7 +10,7 @@ import {
 import { Dnum } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Address } from "viem";
 import {
   getCommunityDocument,
@@ -46,8 +46,14 @@ export default function Page({
   params: { chain: number; garden: string; community: string };
 }) {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const [covenant, setCovenant] = useState<string | undefined>();
-  const { data: result, error, refetch } = useSubgraphQuery<getCommunityQuery>({
+  const {
+    data: result,
+    error,
+    refetch,
+  } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
     variables: { communityAddr: communityAddr, tokenAddr: tokenAddr },
     changeScope: [
@@ -120,8 +126,17 @@ export default function Page({
 
   useEffect(() => {
     const newPoolId = searchParams.get(QUERY_PARAMS.communityPage.newPool);
-    if (newPoolId && result && !poolsInReview.some(c => c.poolId === newPoolId)) {
+    if (
+      newPoolId &&
+      result &&
+      !poolsInReview.some((c) => c.poolId === newPoolId)
+    ) {
       refetch();
+    } else {
+      // remove the query param if the community is already in the list
+      const nextSearchParams = new URLSearchParams(searchParams.toString());
+      nextSearchParams.delete(QUERY_PARAMS.communityPage.newPool);
+      router.replace(pathname.replace(searchParams.toString(), nextSearchParams.toString()));
     }
   }, [searchParams, poolsInReview]);
 
