@@ -63,7 +63,8 @@ export type ChangeEventTopic =
   | "pool"
   | "proposal"
   | "member";
-type Native = string | number | bigint | boolean | null | undefined;
+
+type Native = string | number | boolean | null | undefined;
 
 export type ChangeEventScope = {
   topic: ChangeEventTopic;
