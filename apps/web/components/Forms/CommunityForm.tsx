@@ -4,7 +4,13 @@ import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
+import {
+  Address,
+  Chain,
+  createPublicClient,
+  http,
+  parseUnits,
+} from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
@@ -155,6 +161,7 @@ export const CommunityForm = ({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
+    contractName: "RegistryFactory",
     onConfirmations: async (receipt) => {
       const newCommunityAddr = receipt.logs[0].address;
       if (pathname) {
@@ -174,8 +181,8 @@ export const CommunityForm = ({
       });
     },
     onError: (err) => {
-      console.warn(err);
-      toast.error("Something went wrong creating Community");
+      console.error(err);
+      toast.error("Error creating Community");
     },
     onSettled: () => setLoading(false),
   });

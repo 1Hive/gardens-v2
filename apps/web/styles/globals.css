@@ -196,3 +196,7 @@ caption {
 .hide-input-arrows {
   -moz-appearance: textfield; /* Firefox */
 }
+
+.no-icon .Toastify__toast-icon {
+  display: none;
+}

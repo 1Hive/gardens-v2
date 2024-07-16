@@ -54,7 +54,7 @@ export const chainDataMap: {
     icon: Arbitrum,
     explorer: "https://sepolia.arbiscan.io/address/",
     blockTime: 0.23,
-    confirmations: 1, // 7
+    confirmations: 5, // 7
   },
   42161: {
     name: arbitrum.name,

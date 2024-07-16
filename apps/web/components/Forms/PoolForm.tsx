@@ -251,6 +251,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
   const { write } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
+    contractName: "RegistryCommunity",
     functionName: "createPool",
     onConfirmations: () => {
       publish({

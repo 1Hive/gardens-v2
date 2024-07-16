@@ -156,6 +156,7 @@ export const ProposalForm = ({
   const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
+    contractName: "Allo",
     functionName: "registerRecipient",
     onConfirmations: () => {
       publish({

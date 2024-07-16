@@ -26,7 +26,6 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -209,7 +208,6 @@ export function Proposals({
   }, [isMemberActived]);
 
   const {
-    transactionData: allocateTxData,
     write: writeAllocate,
     error: errorAllocate,
     status: allocateStatus,
@@ -217,6 +215,7 @@ export function Proposals({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
+    contractName: "Allo",
     onConfirmations: () => {
       publish({
         topic: "proposal",
@@ -229,12 +228,6 @@ export function Proposals({
   });
 
   useErrorDetails(errorAllocate, "errorAllocate");
-  const { updateTransactionStatus } =
-    useTransactionNotification(allocateTxData);
-
-  useEffect(() => {
-    updateTransactionStatus(allocateStatus);
-  }, [allocateStatus]);
 
   const submit = async () => {
     const proposalsDifferencesArr = getProposalsInputsDifferences(

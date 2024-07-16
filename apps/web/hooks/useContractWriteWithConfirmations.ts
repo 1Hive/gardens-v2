@@ -1,16 +1,22 @@
 import { useEffect } from "react";
+
 import { TransactionReceipt } from "viem";
 import { useChainId, useContractWrite, useWaitForTransaction } from "wagmi";
+import { useTransactionNotification } from "./useTransactionNotification";
 import { chainDataMap } from "@/configs/chainServer";
 
 export function useContractWriteWithConfirmations(
   props: Parameters<typeof useContractWrite>[0] & {
     onConfirmations?: (receipt: TransactionReceipt) => void;
     confirmations?: number;
+    contractName: string;
   },
 ) {
   const chainId = useChainId();
-  let propsWithChainId = { ...props, chainId: props.chainId ?? chainId };
+  let propsWithChainId = {
+    ...props,
+    chainId: props.chainId ?? chainId,
+  };
 
   const txResult = useContractWrite(propsWithChainId as any);
 
@@ -19,8 +25,15 @@ export function useContractWriteWithConfirmations(
     hash: txResult.data?.hash,
     chainId: +propsWithChainId.chainId,
     confirmations:
-      propsWithChainId.confirmations ??
-      chainDataMap[+propsWithChainId.chainId].confirmations,
+    propsWithChainId.confirmations ??
+    chainDataMap[+propsWithChainId.chainId].confirmations,
+  });
+
+  useTransactionNotification({
+    transactionData: txResult.data,
+    transactionStatus: txResult.status,
+    transactionError: txResult.error,
+    contractName: props.contractName,
   });
 
   useEffect(() => {

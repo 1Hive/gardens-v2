@@ -8,7 +8,6 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -48,6 +47,7 @@ export function RegisterMember({
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
+    contractName: "RegistryCommunity",
   };
 
   const { data: isMember } = useContractRead({
@@ -78,7 +78,6 @@ export function RegisterMember({
   );
 
   const {
-    transactionData: registerMemberTxData,
     write: writeRegisterMember,
     error: registerMemberError,
     status: registerMemberStatus,
@@ -98,10 +97,8 @@ export function RegisterMember({
   });
 
   const {
-    transactionData: unregisterMemberTxData,
     write: writeUnregisterMember,
     error: unregisterMemberError,
-    status: unregisterMemberStatus,
   } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
@@ -118,7 +115,6 @@ export function RegisterMember({
   });
 
   const {
-    transactionData: allowTokenTxData,
     write: writeAllowToken,
     error: allowTokenError,
     confirmed: allowTokenConfirmed,
@@ -128,6 +124,10 @@ export function RegisterMember({
     abi: abiWithErrors(erc20ABI),
     args: [communityAddress, registerStakeAmount as bigint], // [allowed spender address, amount ]
     functionName: "approve",
+    contractName: "ERC20",
+    onConfirmations: () => {
+      writeRegisterMember();
+    },
   });
 
   const { data: dataAllowance } = useContractRead({
@@ -160,33 +160,18 @@ export function RegisterMember({
     }
   }
 
-  const { updateTransactionStatus: updateAllowTokenTransactionStatus } =
-    useTransactionNotification(allowTokenTxData);
-
-  const { updateTransactionStatus: updateRegisterMemberTransactionStatus } =
-    useTransactionNotification(registerMemberTxData);
-
-  const { updateTransactionStatus: updateUnregisterMemberTransactionStatus } =
-    useTransactionNotification(unregisterMemberTxData);
-
   useEffect(() => {
-    updateAllowTokenTransactionStatus(allowTokenStatus);
     if (allowTokenConfirmed) {
-      writeRegisterMember();
+
     }
   }, [allowTokenConfirmed]);
 
   useEffect(() => {
-    updateRegisterMemberTransactionStatus(registerMemberStatus);
     if (registerMemberStatus === "success") {
       closeModal();
       setPendingAllowance(false);
     }
   }, [registerMemberStatus]);
-
-  useEffect(() => {
-    updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
-  }, [unregisterMemberStatus]);
 
   //RegisterMember Disable Button condition => message mapping
   const disableRegMemberBtnCondition: ConditionObject[] = [

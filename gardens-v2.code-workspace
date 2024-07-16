@@ -39,6 +39,12 @@
       "forge-std/=lib/forge-std/src/",
       "allo-v2/=lib/allo-v2/contracts/",
     ],
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
   },
   "extensions": {
     "recommendations": [
