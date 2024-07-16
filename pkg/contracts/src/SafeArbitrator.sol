@@ -30,11 +30,23 @@ contract SafeArbitrator is IArbitrator {
 
 
     DisputeStruct[] public disputes; // Stores the dispute info. disputes[disputeID].
+    mapping(address arbitrable => address safe) public arbitrableTribunalSafe; //Map arbitrable address to tribunal safe address    
+
+    error OnlySafe();
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Can only be called by the owner.");
         _;
     }
+    
+    modifier onlySafe(address _arbitrable){
+        if(msg.sender == arbitrableTribunalSafe[_arbitrable]){
+            _;
+        } else {
+            revert OnlySafe();
+        }
+    }
+
 
     /// @dev Constructor.
     /// @param _arbitrationFee Amount to be paid for arbitration.
@@ -48,6 +60,10 @@ contract SafeArbitrator is IArbitrator {
     /// @param _arbitrationFee Amount to be paid for arbitration.
     function setArbitrationFee(uint256 _arbitrationFee) external onlyOwner {
         arbitrationFee = _arbitrationFee;
+    }
+
+    function registerSafe(address _safe) external {
+        arbitrableTribunalSafe[msg.sender] = _safe;
     }
 
 
@@ -86,7 +102,8 @@ contract SafeArbitrator is IArbitrator {
     /// @dev Give a ruling to a dispute.
     /// @param _disputeID ID of the dispute to rule.
     /// @param _ruling Ruling given by the arbitrator. Note that 0 means that arbitrator chose "Refused to rule".
-    function executeRuling(uint256 _disputeID, uint256 _ruling) external onlyOwner {
+    /// @param _arbitrable Address of the arbitrable that the safe rules for".
+    function executeRuling(uint256 _disputeID, uint256 _ruling, address _arbitrable) external onlySafe(_arbitrable) {
         DisputeStruct storage dispute = disputes[_disputeID];
         require(_ruling <= dispute.choices, "Invalid ruling.");
         require(dispute.status != DisputeStatus.Solved, "The dispute must not be solved.");
