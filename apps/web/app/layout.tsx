@@ -3,7 +3,6 @@ import React from "react";
 import { Chakra_Petch, Inter } from "next/font/google";
 import { Bounce, ToastContainer } from "react-toastify";
 import Providers from "@/providers/Providers";
-
 import "react-toastify/dist/ReactToastify.css";
 
 const inter = Inter({
@@ -18,11 +17,7 @@ const chakra = Chakra_Petch({
   weight: ["400", "500", "600", "700"],
 });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       suppressHydrationWarning

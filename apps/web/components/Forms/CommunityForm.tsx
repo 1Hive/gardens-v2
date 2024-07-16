@@ -1,27 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import { toast } from "react-toastify";
 import { usePathname, useRouter } from "next/navigation";
-import FormPreview, { FormRow } from "./FormPreview";
-import { FormInput } from "./FormInput";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
+import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormCheckBox } from "./FormCheckBox";
-import { FormSelect } from "./FormSelect";
-import { Option } from "./FormSelect";
+import { FormInput } from "./FormInput";
+import { FormPreview, FormRow } from "./FormPreview";
+import { FormSelect, Option } from "./FormSelect";
+import { Button } from "@/components";
+import { getChain } from "@/configs/chainServer";
+import { getConfigByChain } from "@/constants/contracts";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { Button } from "@/components";
+import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { TokenGarden } from "#/subgraph/.graphclient";
-import { getChain } from "@/configs/chainServer";
-import { getContractsAddrByChain } from "@/constants/contracts";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
-import useChainFromPath from "@/hooks/useChainFromPath";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
-import delayAsync from "@/utils/delayAsync";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -160,7 +159,7 @@ export const CommunityForm = ({
       const newCommunityAddr = receipt.logs[0].address;
       if (pathname) {
         router.push(
-          pathname?.replace(`/create-community`, `?new=${newCommunityAddr}`),
+          pathname?.replace("/create-community", `?new=${newCommunityAddr}`),
         );
       }
       // Add some delay to l et time to the comunity list to subscribe to the published event
@@ -198,7 +197,7 @@ export const CommunityForm = ({
     const metadata = [1n, "ipfsHash"];
     const isKickMemberEnabled = previewData?.isKickMemberEnabled;
     const covenantIpfsHash = ipfsHash;
-    const strategyTemplate = getContractsAddrByChain(chainId)?.strategyTemplate;
+    const strategyTemplate = getConfigByChain(chainId)?.strategyTemplate;
     if (!strategyTemplate) {
       console.warn("No strategy template found for chain", chainId);
       toast.error("No strategy template found for chain");
@@ -273,7 +272,7 @@ export const CommunityForm = ({
           formRows={formatFormRows()}
           previewTitle="Check details and covenant description"
         />
-      : <div className="flex flex-col gap-2 overflow-hidden p-1">
+        : <div className="flex flex-col gap-2 overflow-hidden p-1">
           <div className="flex flex-col">
             <FormInput
               label="Community Name"
@@ -443,7 +442,7 @@ export const CommunityForm = ({
               Submit
             </Button>
           </div>
-        : <Button type="submit">Preview</Button>}
+          : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

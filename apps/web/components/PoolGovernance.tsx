@@ -1,14 +1,14 @@
 "use client";
 
 import React from "react";
-import { Address, useAccount, useContractRead } from "wagmi";
 import { Dnum } from "dnum";
+import { Address, useAccount, useContractRead } from "wagmi";
 import { ActivatePoints } from "./ActivatePoints";
-import { DisplayNumber } from "./DisplayNumber";
 import { Badge } from "./Badge";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
+import { DisplayNumber } from "./DisplayNumber";
 import { registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
+import { abiWithErrors2 } from "@/utils/abiWithErrors";
 
 type PoolGovernanceProps = {
   memberPoolWeight: number;
@@ -88,7 +88,7 @@ export const PoolGovernance = ({
                     </p>
                   </div>
                 </>
-              : <div className="flex w-full items-center gap-6">
+                : <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
                     <Badge status={isMemberActivated ? 1 : 0} />

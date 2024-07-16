@@ -1,51 +1,23 @@
 "use client";
 
-import { Address, formatUnits } from "viem";
+import { useEffect, useState } from "react";
+import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
-import { useState, useEffect } from "react";
+import { Address, formatUnits } from "viem";
 import { useContractRead } from "wagmi";
-import { Badge, Statistic, DisplayNumber } from "@/components";
-import { EthAddress } from "@/components";
-import { cvStrategyABI } from "@/src/generated";
-import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { calculatePercentageBigInt } from "@/utils/numbers";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { proposalStatus, poolTypes } from "@/types";
 import { proposalImg } from "@/assets";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import LoadingSpinner from "@/components/LoadingSpinner";
-
-export const dynamic = "force-dynamic";
-
-type ProposalsMock = {
-  title: string;
-  type: "funding" | "streaming" | "signaling";
-  description: string;
-  value?: number;
-  id: number;
-};
-
-type UnparsedProposal = {
-  submitter: Address;
-  beneficiary: Address;
-  requestedToken: Address;
-  requestedAmount: number;
-  stakedTokens: number;
-  proposalType: any;
-  proposalStatus: any;
-  blockLast: number;
-  convictionLast: number;
-  agreementActionId: number;
-  threshold: number;
-  voterStakedPointsPct: number;
-};
-
-type Proposal = UnparsedProposal & ProposalsMock;
+import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
+import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { cvStrategyABI } from "@/src/generated";
+import { poolTypes, proposalStatus } from "@/types";
+import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -57,7 +29,7 @@ const prettyTimestamp = (timestamp: number) => {
   return `${day} ${month} ${year}`;
 };
 
-export default function Proposal({
+export default function Page({
   params: { proposalId, garden },
 }: {
   params: { proposalId: string; poolId: string; chain: string; garden: string };
@@ -85,8 +57,8 @@ export default function Proposal({
 
   useEffect(() => {
     if (metadata) {
-      getIpfsMetadata(metadata).then((data) => {
-        setIpfsResult(data);
+      getIpfsMetadata(metadata).then((d) => {
+        setIpfsResult(d);
       });
     }
   }, [metadata]);
@@ -267,7 +239,7 @@ export default function Proposal({
               Proposal passed and executed successfully
             </div>
           </div>
-        : <div className="mt-10 flex justify-evenly">
+          : <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
               thresholdPct={thresholdPct}
