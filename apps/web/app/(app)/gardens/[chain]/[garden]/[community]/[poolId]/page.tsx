@@ -93,7 +93,7 @@ export default function Page({
 
   useEffect(() => {
     const newProposalId = searchParams.get(QUERY_PARAMS.poolPage.newPropsoal);
-    if (newProposalId && data && !strategyObj?.proposals.some(c => c.id === newProposalId)) {
+    if (newProposalId && data && !strategyObj?.proposals.some(c => c.proposalNumber === newProposalId)) {
       refetch();
     }
   }, [searchParams, strategyObj?.proposals]);

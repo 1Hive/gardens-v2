@@ -95,5 +95,7 @@ module.exports = {
       "error",
       { allowAllPropertiesOnSameLine: true },
     ],
+    "semi-spacing": "error",
+    "react/no-array-index-key": "warn",
   },
 };

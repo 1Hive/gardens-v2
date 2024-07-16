@@ -26,7 +26,7 @@ export function CommunityCard({
   const searchParams = useSearchParams();
   const isNewCommunity = searchParams.get(QUERY_PARAMS.gardenPage.newCommunity)?.toLowerCase() === id.toLowerCase();
   return (
-    <Card key={id} href={`${pathname}/${id}`} className={`w-[273px] ${isNewCommunity ? "!border-accent" : ""}`}>
+    <Card key={id} href={`${pathname}/${id}`} className={`w-[273px] ${isNewCommunity ? "!border-accent !border-2" : ""}`}>
       <Image
         src={commImg}
         alt={`${name} community`}

@@ -101,7 +101,7 @@ export function useSubgraphQueryMultiChain<
       await Promise.all(
         chainSubgraphs.map(async ({ chainId, url }, i) => {
           const fetchSubgraphChain = async (retryCount?: number) => {
-            if (!retryCount) {
+            if (!retryCount && retryOnNoChange) {
               retryCount = 0;
               toast.loading("Pulling new data", {
                 toastId: pendingRefreshToastId,

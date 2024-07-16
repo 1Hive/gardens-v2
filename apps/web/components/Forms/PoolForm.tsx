@@ -260,7 +260,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
         topic: "pool",
         function: "createPool",
         type: "add",
-        id: newPoolId,
+        id: newPoolId.toString(), // Never propagate direct bigint outside of javascript environment
         containerId: communityAddr,
         chainId: chainId,
       });

@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { encodeAbiParameters } from "viem";
 import { Address } from "wagmi";
@@ -11,6 +11,7 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -55,6 +56,8 @@ export function ProposalCard({
 }: Props) {
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isNewProposal = searchParams.get(QUERY_PARAMS.poolPage.newPropsoal) === proposalData.proposalNumber;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
@@ -120,7 +123,7 @@ export function ProposalCard({
 
   return (
     <div
-      className="bg-surface flex flex-col items-center justify-center gap-4 rounded-lg p-8"
+      className={`bg-surface flex flex-col items-center justify-center gap-4 rounded-lg p-8 ${isNewProposal ? "outline outline-2 outline-accent" : ""}`}
       key={title + "_" + proposalNumber}
     >
       <div className="flex w-full items-center justify-between ">

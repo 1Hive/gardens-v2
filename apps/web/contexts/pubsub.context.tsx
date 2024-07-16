@@ -81,8 +81,8 @@ export type ChangeEventPayload = {
   type?: "add" | "update" | "delete";
   function?: string;
   chainId?: ChainId;
-  containerId?: string | number | bigint;
-  id?: string | number | bigint;
+  containerId?: string | number;
+  id?: string | number;
 } & { [key: string]: Native };
 
 // Create the context with an initial default value (optional)

@@ -166,7 +166,7 @@ export const ProposalForm = ({
         type: "update",
         function: "registerRecipient",
         containerId: poolId,
-        id: proposalId,
+        id: proposalId.toString(), // proposalId is a bigint
         chainId,
       });
       if (pathname) {
