@@ -9,7 +9,7 @@ import { WaitingForSig, TxError, TxSuccess } from "@/assets";
 type TransactionData = WriteContractResult | undefined;
 
 export const useTransactionNotification = (
-  { transactionData, transactionError, transactionStatus, contractName, enabled}: {
+  { transactionData, transactionError, transactionStatus, contractName, enabled }: {
     transactionData: TransactionData | null | undefined,
     transactionError: Error | null | undefined,
     transactionStatus: ReturnType<typeof useContractWriteWithConfirmations>["status"],
