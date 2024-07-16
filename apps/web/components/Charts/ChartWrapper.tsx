@@ -26,7 +26,8 @@ export const ChartWrapper = ({
   const legend = [
     {
       name: "Support",
-      className: "bg-[#9EE157] h-4 w-4 rounded-full",
+      // TODO: missing color in Design system: ask designer
+      className: "bg-[#A8E066] h-4 w-4 rounded-full",
     },
     {
       name: "Conviction",

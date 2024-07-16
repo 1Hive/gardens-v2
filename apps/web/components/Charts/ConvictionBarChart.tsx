@@ -214,15 +214,12 @@ export const ConvictionBarChart = ({
           },
           z: 50,
         };
-
   const option: EChartsOption = {
     emphasis: emphasis,
     yAxis: {
       data: [`Proposal #${proposalId}`],
       axisTick: { show: false },
-      axisLabel: {
-        formatter: "",
-      },
+
       axisLine: {
         show: false,
       },
@@ -245,7 +242,7 @@ export const ConvictionBarChart = ({
       borderWidth: 1,
       borderColor: "#191919",
       axisPointer: {
-        type: "shadow",
+        type: "none",
       },
     },
     grid: {
@@ -264,14 +261,14 @@ export const ConvictionBarChart = ({
         type: "bar",
         name: "Support",
         itemStyle: {
-          color: "#9EE157",
+          color: "#A8E066",
           borderRadius: [20, 20, 20, 20],
         },
         label: {
           show: !compact ?? false,
           position: "insideRight",
           color: "#191919",
-          fontSize: 12,
+          fontSize: 10,
           formatter: "{@score} %",
         },
         z: supportGtConv ? 1 : convEqSupport ? 1 : 2,
@@ -287,9 +284,9 @@ export const ConvictionBarChart = ({
         },
         label: {
           show: !compact ?? false,
-          position: !supportGtConv ? "insideRight" : "inside",
-          color: "#ffff",
-          fontSize: 12,
+          position: "insideRight",
+          color: "#FFFFFF",
+          fontSize: 10,
           formatter: "{@score} %",
           width: 0,
         },
@@ -306,8 +303,9 @@ export const ConvictionBarChart = ({
             data: [thresholdPct],
             itemStyle: {
               borderRadius: [20, 20, 20, 20],
+              color: "#EEEEEE",
             },
-            color: "#e9ecef",
+            color: "#EEEEEE",
             z: 0,
             markLine: {
               ...markLineTh,
