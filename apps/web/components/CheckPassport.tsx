@@ -125,7 +125,6 @@ export function CheckPassport({
       }
       setScore(score);
       setThreshold(threshold);
-      // as state change is async triggers openModal() with it and not before
       setShouldOpenModal(true);
     }
   };
@@ -136,10 +135,7 @@ export function CheckPassport({
       const passportResponse = await submitPassport(walletAddr);
       console.log(passportResponse);
       if (passportResponse?.data?.score) {
-        const writeScorerData = await writeScorer(
-          walletAddr,
-          passportResponse.data.score,
-        );
+        const writeScorerData = await writeScorer(walletAddr);
         if (!writeScorerData.error) {
           console.log("Passport submitted and score written successfully!");
         } else {
@@ -194,16 +190,15 @@ export function CheckPassport({
     }
   };
 
-  const writeScorer = async (address: string, score: string): Promise<any> => {
+  const writeScorer = async (address: string): Promise<any> => {
     const WRITE_SCORER_URI = "/api/passport-oracle/writeScore";
-    console.log(typeof score, score);
     try {
       const response = await fetch(WRITE_SCORER_URI, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ user: address, score }),
+        body: JSON.stringify({ user: address }),
       });
 
       if (!response.ok) {
