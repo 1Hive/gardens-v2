@@ -4,7 +4,6 @@ import {
   ArrowUpRightIcon,
   FlagIcon,
 } from "@heroicons/react/24/solid";
-import cn from "classnames";
 
 type ChartWrapperProps = {
   children?: ReactNode;
@@ -55,7 +54,7 @@ export const ChartWrapper = ({
                       <div className={`${item.className}`} />
                       <FlagIcon className="absolute -left-[3.5px] -top-5 h-3 w-3 text-black" />
                     </div>
-                  : <div className={`${item.className}`} />}
+                    : <div className={`${item.className}`} />}
                   <p className="text-xs font-medium">{item.name}</p>
                 </div>
               </Fragment>
@@ -73,7 +72,7 @@ export const ChartWrapper = ({
                 <span>
                   {growing ?
                     <ArrowUpRightIcon className={iconClassname} />
-                  : <ArrowDownRightIcon className={iconClassname} />}{" "}
+                    : <ArrowDownRightIcon className={iconClassname} />}{" "}
                 </span>
               </p>
             </>
