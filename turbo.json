@@ -27,7 +27,9 @@
         "LIST_MANAGER_PRIVATE_KEY",
         "CHAIN_ID",
         "NODE_ENV",
-        "NEXT_ABLY_API_KEY"
+        "NEXT_ABLY_API_KEY",
+        "HOST",
+        "PORT"
       ]
     },
     "test": {

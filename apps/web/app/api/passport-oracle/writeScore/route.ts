@@ -25,6 +25,8 @@ const RPC_URL = getContractsAddrByChain(CHAIN)?.rpcUrl ?? LOCAL_RPC;
 const CONTRACT_ADDRESS = getContractsAddrByChain(CHAIN)
   ?.passportScorer as Address;
 
+const API_ENDPOINT = "/api/passport";
+
 function getViemChain(chain: number): Chain {
   let viemChain: Chain;
 
@@ -60,19 +62,41 @@ const walletClient = createWalletClient({
   transport: custom(client.transport),
 });
 
-export async function POST(req: Request) {
-  const { user, score } = await req.json();
+const fetchScoreFromGitcoin = async (user: string) => {
+  const url = new URL(
+    API_ENDPOINT,
+    `http://${process.env.HOST || "localhost"}:${process.env.PORT || 3000}`,
+  );
+  const response = await fetch(`${url}/${user}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-  if (!user || !score) {
+  if (response.ok) {
+    const data = await response.json();
+    return data.score;
+  } else {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch score from Gitcoin");
+  }
+};
+
+export async function POST(req: Request) {
+  const { user } = await req.json();
+
+  if (!user) {
     return NextResponse.json(
       {
-        error: "User address and score are required",
+        error: "User address is required",
       },
       { status: 400 },
     );
   }
 
   try {
+    const score = await fetchScoreFromGitcoin(user);
     const integerScore = Number(score) * CV_PERCENTAGE_SCALE;
     const data = {
       abi: passportScorerABI,
