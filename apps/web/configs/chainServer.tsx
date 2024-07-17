@@ -1,21 +1,22 @@
 import React, { FC } from "react";
 import {
   Arbitrum,
-  GnosisGno,
   Ethereum,
+  GnosisGno,
   Optimism,
 } from "@thirdweb-dev/chain-icons";
 import {
-  Chain,
-  localhost,
-  arbitrumSepolia,
   arbitrum,
+  arbitrumSepolia,
+  Chain,
+  gnosis,
+  localhost,
   mainnet,
-  sepolia,
   optimism,
   optimismSepolia,
-  gnosis,
+  sepolia,
 } from "viem/chains";
+import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
   chain: number | string;
@@ -99,7 +100,7 @@ export const chainDataMap: {
   },
 };
 
-export function getChain(chainId: number | string): Chain | undefined {
+export function getChain(chainId: ChainId): Chain | undefined {
   return chains.find((chain) => chain.id === Number(chainId));
 }
 

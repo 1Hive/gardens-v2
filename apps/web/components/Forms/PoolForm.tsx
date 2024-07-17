@@ -1,23 +1,25 @@
 "use client";
+
+import "viem/window";
 import React, { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { Address, parseUnits } from "viem";
-import { Button } from "@/components/Button";
-import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { useAccount, useContractWrite } from "wagmi";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { registryCommunityABI } from "@/src/generated";
-import { pointSystems, proposalTypes } from "@/types";
-import "viem/window";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
-import { FormSelect } from "./FormSelect";
-import FormPreview, { FormRow } from "./FormPreview";
+import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
-import { usePathname, useRouter } from "next/navigation";
+import { FormSelect } from "./FormSelect";
+import { Button } from "@/components/Button";
 import { chainDataMap } from "@/configs/chainServer";
-import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { registryCommunityABI } from "@/src/generated";
+import { pointSystems, poolTypes } from "@/types";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
+import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -37,15 +39,15 @@ type FormInputs = {
 
 type InitializeParams = [
   Address,
-  BigInt,
-  BigInt,
-  BigInt,
-  BigInt,
+  bigint,
+  bigint,
+  bigint,
+  bigint,
   number,
   number,
-  [BigInt],
+  [bigint],
 ];
-type Metadata = [BigInt, string];
+type Metadata = [bigint, string];
 type CreatePoolParams = [Address, InitializeParams, Metadata];
 
 type Props = {
@@ -56,8 +58,8 @@ type Props = {
 };
 
 const poolSettingValues: Record<
-  number,
-  { label: string; description: string; values: PoolSettings }
+number,
+{ label: string; description: string; values: PoolSettings }
 > = {
   0: {
     label: "Custom",
@@ -112,19 +114,13 @@ function calculateDecay(blockTime: number, convictionGrowth: number) {
   return result;
 }
 
-export default function PoolForm({
-  alloAddr,
-  token,
-  communityAddr,
-  chainId,
-}: Props) {
+export function PoolForm({ token, communityAddr, chainId }: Props) {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitted },
+    formState: { errors },
     getValues,
     setValue,
-    reset,
     watch,
   } = useForm<FormInputs>({
     defaultValues: {
@@ -141,7 +137,7 @@ export default function PoolForm({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { address } = useAccount();
+  const { publish } = usePubSubContext();
 
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
@@ -165,7 +161,7 @@ export default function PoolForm({
     },
     strategyType: {
       label: "Strategy type:",
-      parse: (value: string) => proposalTypes[value],
+      parse: (value: string) => poolTypes[value],
     },
     pointSystemType: {
       label: "Voting Weight System:",
@@ -177,7 +173,7 @@ export default function PoolForm({
     minThresholdPoints: {
       label: "Minimum threshold points:",
       parse: (value: string) => {
-        return value && value == "" ? "0" : value;
+        return value ?? "0";
       },
     },
   };
@@ -228,13 +224,13 @@ export default function PoolForm({
     );
 
     const minThresholdPoints = parseUnits(
-      (previewData?.minThresholdPoints || 0).toString(),
+      (previewData?.minThresholdPoints ?? 0).toString(),
       token?.decimals,
     );
 
     const metadata: Metadata = [BigInt(1), ipfsHash];
 
-    const maxAmountStr = (previewData?.maxAmount || 0).toString();
+    const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
 
     const params: InitializeParams = [
       communityAddr as Address,
@@ -248,16 +244,25 @@ export default function PoolForm({
     ];
 
     const args: CreatePoolParams = [token?.id as Address, params, metadata];
-    console.log(args);
+    console.debug(args);
     write({ args: args });
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
     functionName: "createPool",
-    onSuccess: () =>
-      router.push(pathname.replace(`/${communityAddr}/create-pool`, "")),
+    onConfirmations: () => {
+      publish({
+        topic: "pool",
+        function: "createPool",
+        type: "add",
+        chainId: chainId,
+      });
+      if (pathname) {
+        router.push(pathname.replace(`/${communityAddr}/create-pool`, ""));
+      }
+    },
     onError: () =>
       toast.error("Something went wrong creating a pool, check logs"),
     onSettled: () => setLoading(false),
@@ -292,8 +297,10 @@ export default function PoolForm({
         error: "Error uploading data to IPFS",
       })
       .then((ipfsHash) => {
-        console.log("https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) throw new Error("No preview data");
+        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
+        if (previewData === undefined) {
+          throw new Error("No preview data");
+        }
         contractWrite(ipfsHash);
       })
       .catch((error: any) => {
@@ -303,7 +310,9 @@ export default function PoolForm({
   };
 
   const formatFormRows = () => {
-    if (!previewData) return [];
+    if (!previewData) {
+      return [];
+    }
     let formattedRows: FormRow[] = [];
 
     const reorderedData = {
@@ -319,7 +328,9 @@ export default function PoolForm({
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (key == "maxAmount" && previewData.pointSystemType != 1) return;
+      if (key == "maxAmount" && previewData.pointSystemType != 1) {
+        return;
+      }
       if (formRow && isInInputMap(key, strategyType)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
@@ -333,15 +344,14 @@ export default function PoolForm({
   };
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
-      {showPreview ? (
+      {showPreview ?
         <FormPreview
-          title={previewData?.title || ""}
-          description={previewData?.description || ""}
+          title={previewData?.title ?? ""}
+          description={previewData?.description ?? ""}
           formRows={formatFormRows()}
           previewTitle="Check pool creation details"
         />
-      ) : (
-        <div className="flex flex-col gap-6">
+        : <div className="flex flex-col gap-6">
           <div className="flex flex-col">
             <FormInput
               label="Pool Name"
@@ -351,7 +361,7 @@ export default function PoolForm({
               registerKey="title"
               type="text"
               placeholder="Your pool name..."
-            ></FormInput>
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -363,7 +373,7 @@ export default function PoolForm({
               type="textarea"
               rows={7}
               placeholder="Enter a description of your pool..."
-            ></FormInput>
+            />
           </div>
           <div className="flex flex-col">
             <FormSelect
@@ -371,10 +381,10 @@ export default function PoolForm({
               register={register}
               errors={errors}
               registerKey="strategyType"
-              options={Object.entries(proposalTypes)
+              options={Object.entries(poolTypes)
                 .slice(0, -1)
                 .map(([value, text]) => ({ label: text, value: value }))}
-            ></FormSelect>
+            />
           </div>
           <div className="flex flex-col">
             <h4 className="my-4 text-xl">Select pool settings</h4>
@@ -414,7 +424,7 @@ export default function PoolForm({
                     registerOptions={{
                       max: {
                         value: 100,
-                        message: `Max amount cannot exceed 100%`,
+                        message: "Max amount cannot exceed 100%",
                       },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
@@ -445,7 +455,7 @@ export default function PoolForm({
                     registerOptions={{
                       max: {
                         value: 100,
-                        message: `Max amount cannot exceed 100%`,
+                        message: "Max amount cannot exceed 100%",
                       },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
@@ -475,7 +485,7 @@ export default function PoolForm({
                   registerOptions={{
                     max: {
                       value: 100,
-                      message: `Max amount cannot exceed 100 DAYS`,
+                      message: "Max amount cannot exceed 100 DAYS",
                     },
                     min: {
                       value: INPUT_TOKEN_MIN_VALUE,
@@ -509,7 +519,7 @@ export default function PoolForm({
                 registerKey="minThresholdPoints"
                 type="number"
                 placeholder="0"
-              ></FormInput>
+              />
             </div>
           )}
 
@@ -523,7 +533,7 @@ export default function PoolForm({
                 label: text,
                 value: value,
               }))}
-            ></FormSelect>
+            />
           </div>
           {pointSystemType == 1 && (
             <div className="flex flex-col">
@@ -554,31 +564,24 @@ export default function PoolForm({
             </div>
           )}
         </div>
-      )}
+      }
       <div className="flex w-full items-center justify-center py-6">
-        {showPreview ? (
+        {showPreview ?
           <div className="flex items-center gap-10">
             <Button
-              type="button"
-              onClick={() => createPool()}
-              isLoading={loading}
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="fill"
+              btnStyle="outline"
             >
               Edit
             </Button>
+            <Button onClick={() => createPool()} isLoading={loading}>
+              Submit
+            </Button>
           </div>
-        ) : (
-          <Button type="submit">Preview</Button>
-        )}
+          : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

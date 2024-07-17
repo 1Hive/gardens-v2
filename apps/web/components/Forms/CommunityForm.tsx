@@ -1,24 +1,26 @@
 "use client";
+
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { registryFactoryABI, safeABI } from "@/src/generated";
-import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
-import { useContractWrite } from "wagmi";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { Button } from "@/components";
-import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { toast } from "react-toastify";
-import FormPreview, { FormRow } from "./FormPreview";
-import { FormInput } from "./FormInput";
-import { FormCheckBox } from "./FormCheckBox";
-import { FormSelect } from "./FormSelect";
-import { TokenGarden } from "#/subgraph/.graphclient";
-import { Option } from "./FormSelect";
 import { usePathname, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
+import { TokenGarden } from "#/subgraph/.graphclient";
+import { FormCheckBox } from "./FormCheckBox";
+import { FormInput } from "./FormInput";
+import { FormPreview, FormRow } from "./FormPreview";
+import { FormSelect, Option } from "./FormSelect";
+import { Button } from "@/components";
 import { getChain } from "@/configs/chainServer";
-import { getChainIdFromPath } from "@/utils/path";
+import { getConfigByChain } from "@/constants/contracts";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { registryFactoryABI, safeABI } from "@/src/generated";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { delayAsync } from "@/utils/delayAsync";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
-import { getContractsAddrByChain } from "@/constants/contracts";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -46,12 +48,12 @@ const feeOptions: Option[] = [
 ];
 
 export const CommunityForm = ({
-  chain,
+  chainId,
   tokenGarden,
   registryFactoryAddr,
   alloContractAddr,
 }: {
-  chain: number;
+  chainId: number;
   tokenGarden: TokenGarden;
   registryFactoryAddr: Address;
   alloContractAddr: Address;
@@ -59,12 +61,11 @@ export const CommunityForm = ({
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitted },
+    formState: { errors },
     getValues,
-    setValue,
-    reset,
-    watch,
   } = useForm<FormInputs>();
+
+  const { publish } = usePubSubContext();
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
   const [showPreview, setShowPreview] = useState<boolean>(false);
@@ -73,10 +74,12 @@ export const CommunityForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
+  const chainFromPath = useChainFromPath();
+
   // const [file, setFile] = useState<File | null>(null);
 
   const publicClient = createPublicClient({
-    chain: getChain(getChainIdFromPath()) as Chain,
+    chain: chainFromPath as Chain,
     transport: http(),
   });
 
@@ -135,8 +138,10 @@ export const CommunityForm = ({
         error: "Error uploading data to IPFS",
       })
       .then((ipfsHash) => {
-        console.log("https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) throw new Error("No preview data");
+        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
+        if (previewData === undefined) {
+          throw new Error("No preview data");
+        }
         const argsArray = contractWriteParsedData(ipfsHash);
         write?.({ args: [argsArray] });
       })
@@ -146,13 +151,30 @@ export const CommunityForm = ({
       });
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
-    onSuccess: () => router.push(pathname.replace(`/create-community`, "")),
+    onConfirmations: async (receipt) => {
+      const newCommunityAddr = receipt.logs[0].address;
+      if (pathname) {
+        router.push(
+          pathname?.replace("/create-community", `?new=${newCommunityAddr}`),
+        );
+      }
+      // Add some delay to l et time to the comunity list to subscribe to the published event
+      await delayAsync(1000);
+      publish({
+        topic: "community",
+        type: "add",
+        function: "createRegistry",
+        containerId: tokenGarden.id,
+        chainId: tokenGarden.chainId,
+        id: newCommunityAddr, // new community address
+      });
+    },
     onError: (err) => {
-      console.log(err);
+      console.warn(err);
       toast.error("Something went wrong creating Community");
     },
     onSettled: () => setLoading(false),
@@ -175,9 +197,9 @@ export const CommunityForm = ({
     const metadata = [1n, "ipfsHash"];
     const isKickMemberEnabled = previewData?.isKickMemberEnabled;
     const covenantIpfsHash = ipfsHash;
-    const strategyTemplate = getContractsAddrByChain(chain)?.strategyTemplate;
+    const strategyTemplate = getConfigByChain(chainId)?.strategyTemplate;
     if (!strategyTemplate) {
-      console.log("No strategy template found for chain", chain);
+      console.warn("No strategy template found for chain", chainId);
       toast.error("No strategy template found for chain");
     }
     const args = [
@@ -195,7 +217,6 @@ export const CommunityForm = ({
       covenantIpfsHash,
       strategyTemplate,
     ];
-    console.log(args);
 
     return args;
   };
@@ -206,7 +227,9 @@ export const CommunityForm = ({
   };
 
   const formatFormRows = () => {
-    if (!previewData) return [];
+    if (!previewData) {
+      return [];
+    }
     let formattedRows: FormRow[] = [];
 
     Object.entries(previewData).forEach(([key, value]) => {
@@ -233,7 +256,7 @@ export const CommunityForm = ({
       });
       isSafe = !!data;
     } catch (error) {
-      console.log(
+      console.warn(
         walletAddress + " is not a valid Safe address in the network",
       );
     }
@@ -242,15 +265,14 @@ export const CommunityForm = ({
 
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
-      {showPreview ? (
+      {showPreview ?
         <FormPreview
-          title={previewData?.title || ""}
-          description={previewData?.covenant || ""}
+          title={previewData?.title ?? ""}
+          description={previewData?.covenant ?? ""}
           formRows={formatFormRows()}
           previewTitle="Check details and covenant description"
         />
-      ) : (
-        <div className="flex flex-col gap-2 overflow-hidden p-1">
+        : <div className="flex flex-col gap-2 overflow-hidden p-1">
           <div className="flex flex-col">
             <FormInput
               label="Community Name"
@@ -260,7 +282,7 @@ export const CommunityForm = ({
               registerKey="title"
               type="text"
               placeholder="1hive"
-            ></FormInput>
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -294,7 +316,7 @@ export const CommunityForm = ({
               errors={errors}
               registerKey="feeAmount"
               options={feeOptions}
-            ></FormSelect>
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -311,7 +333,7 @@ export const CommunityForm = ({
               registerKey="feeReceiver"
               placeholder="0x.."
               type="text"
-            ></FormInput>
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -324,14 +346,14 @@ export const CommunityForm = ({
                   message: "Invalid Eth Address",
                 },
                 validate: async (value) =>
-                  (await addressIsSAFE(value)) ||
-                  `Not a valid Safe address in ${getChain(chain)?.name} network`,
+                  (await addressIsSAFE(value)) ??
+                  `Not a valid Safe address in ${getChain(chainId)?.name} network`,
               }}
               errors={errors}
               registerKey="councilSafe"
               placeholder="0x.."
               type="text"
-            ></FormInput>
+            />
           </div>
 
           <div className="flex">
@@ -341,7 +363,7 @@ export const CommunityForm = ({
               errors={errors}
               registerKey="isKickMemberEnabled"
               type="checkbox"
-            ></FormCheckBox>
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -353,7 +375,7 @@ export const CommunityForm = ({
               type="textarea"
               rows={7}
               placeholder="Covenant description..."
-            ></FormInput>
+            />
           </div>
 
           {/* Upload image */}
@@ -403,31 +425,24 @@ export const CommunityForm = ({
             </div>
           </div> */}
         </div>
-      )}
+      }
       <div className="flex w-full items-center justify-center py-6">
-        {showPreview ? (
+        {showPreview ?
           <div className="flex items-center gap-10">
             <Button
-              type="button"
-              onClick={() => createCommunity()}
-              isLoading={loading}
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="fill"
+              btnStyle="outline"
             >
               Edit
             </Button>
+            <Button onClick={() => createCommunity()} isLoading={loading}>
+              Submit
+            </Button>
           </div>
-        ) : (
-          <Button type="submit">Preview</Button>
-        )}
+          : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

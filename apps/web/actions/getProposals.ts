@@ -1,21 +1,20 @@
 import { Address } from "viem";
-import { ProposalTypeVoter } from "@/components/Proposals";
-import { CVProposal, CVStrategy } from "#/subgraph/.graphclient";
+import { LightCVStrategy, LightProposal } from "@/types";
 
 export async function getProposals(
   accountAddress: Address | undefined,
-  strategy: CVStrategy,
+  strategy: LightCVStrategy,
 ) {
   try {
-    async function fetchIPFSDataBatch(
-      proposals: CVProposal[],
+    const fetchIPFSDataBatch = async function (
+      proposals: LightProposal[],
       batchSize = 5,
       delay = 300,
     ) {
       // Fetch data for a batch of proposals
       const fetchBatch = async (batch: any) =>
         Promise.all(
-          batch.map((p: CVProposal) =>
+          batch.map((p: LightProposal) =>
             fetch(`https://ipfs.io/ipfs/${p.metadata}`, {
               method: "GET",
               headers: { "content-type": "application/json" },
@@ -42,29 +41,28 @@ export async function getProposals(
       }
 
       return results;
-    }
+    };
 
-    async function transformProposals(strategy: CVStrategy) {
-      const proposalsData = await fetchIPFSDataBatch(strategy.proposals);
+    const transformProposals = async function (_strategy: LightCVStrategy) {
+      const proposalsData = await fetchIPFSDataBatch(_strategy.proposals);
       const transformedProposals = proposalsData.map((data, index) => {
-        const p = strategy.proposals[index];
+        const p = _strategy.proposals[index];
         return {
           ...p,
           voterStakedPointsPct: 0,
-          stakedAmount: strategy.proposals[index].stakedAmount,
+          stakedAmount: _strategy.proposals[index].stakedAmount,
           title: data.title,
-          type: strategy.config?.proposalType as number,
-          status: strategy.proposals[index].proposalStatus,
+          type: _strategy.config?.proposalType as number,
+          status: _strategy.proposals[index].proposalStatus,
         };
       });
 
       return transformedProposals;
-    }
-    let transformedProposals: ProposalTypeVoter[] =
-      await transformProposals(strategy);
+    };
+    let transformedProposals = await transformProposals(strategy);
 
     return transformedProposals;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }

@@ -1,19 +1,20 @@
 "use client";
+
 import React from "react";
-import { GardensLogo, newLogo } from "@/assets";
-import Link from "next/link";
-import { navItems } from "@/constants/navigation";
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ConnectWallet } from "@/components";
-import { Badge } from "@/components";
-
 import Image from "next/image";
+import Link from "next/link";
+import { newLogo } from "@/assets";
+import { ConnectWallet } from "@/components";
+import { navItems } from "@/constants/navigation";
 
 export function NavBar() {
   return (
-    <Disclosure as="nav" className="sticky left-0 top-0 z-10 bg-surface shadow">
+    <Disclosure
+      as="nav"
+      className="sticky left-0 top-0 z-10 bg-primary-soft shadow"
+    >
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 md:py-0.5 lg:px-8">
@@ -53,19 +54,18 @@ export function NavBar() {
               </div>
               <div className="-mr-2 flex items-center sm:hidden">
                 {/* Mobile menu button */}
-                <Disclosure.Button className="relative inline-flex items-center justify-center rounded-md bg-surface p-2 text-gray-400 hover:bg-surface hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                <Disclosure.Button className="bg-surface hover:bg-surface relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
                   <span className="sr-only">Open main menu</span>
-                  {open ? (
+                  {open ?
                     <XMarkIcon
-                      className="block h-6 w-6 bg-surface"
+                      className="bg-surface block h-6 w-6"
                       aria-hidden="true"
                     />
-                  ) : (
-                    <Bars3Icon
-                      className="block h-6 w-6 bg-surface"
+                    : <Bars3Icon
+                      className="bg-surface block h-6 w-6"
                       aria-hidden="true"
                     />
-                  )}
+                  }
                 </Disclosure.Button>
               </div>
             </div>

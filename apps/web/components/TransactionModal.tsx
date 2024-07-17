@@ -1,7 +1,8 @@
 "use client";
+
+import { forwardRef, useEffect, useState } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Button } from "./Button";
-import { forwardRef, useEffect, useState } from "react";
 
 export interface TransactionStep {
   transaction: string;
@@ -13,15 +14,15 @@ export interface TransactionStep {
   messageClassName?: string;
 }
 
-type statuses = "idle" | "loading" | "success" | "error";
+type Statuses = "idle" | "loading" | "success" | "error";
 
 export type TransactionModalProps = {
   label: string;
-  allowTokenStatus: statuses;
-  stepTwoStatus: statuses;
+  allowTokenStatus: Statuses;
+  stepTwoStatus: Statuses;
   allowance?: bigint;
   pendingAllowance?: boolean;
-  setPendingAllowance?: (value: boolean) => void;
+  setPendingAllowance?: (_: boolean) => void;
   token: string;
   initialTransactionSteps: TransactionStep[];
   children?: React.ReactNode;
@@ -35,13 +36,12 @@ interface StatusConfig {
 }
 
 export const TransactionModal = forwardRef<
-  HTMLDialogElement,
-  TransactionModalProps
+HTMLDialogElement,
+TransactionModalProps
 >(function TransactionModal(
   {
     label,
     allowTokenStatus,
-    allowance,
     stepTwoStatus,
     initialTransactionSteps,
     token,
@@ -89,9 +89,10 @@ export const TransactionModal = forwardRef<
     const updatedFirstStep = {
       ...transactionStepsState[0],
       dataContent: pendingAllowance ? "✓" : dataContent || "1",
-      message: pendingAllowance
-        ? "Allowance previously approved successfully!"
-        : message,
+      message:
+        pendingAllowance ?
+          "Allowance previously approved successfully!"
+          : message,
       stepClassName: pendingAllowance ? "step-success" : className,
       messageClassName: pendingAllowance ? "text-success" : messageClassName,
     };
@@ -102,9 +103,9 @@ export const TransactionModal = forwardRef<
       dataContent: statusConfig[stepTwoStatus].dataContent || "2",
       current: allowTokenStatus === "success",
       stepClassName:
-        stepTwoStatus === "success"
-          ? "idle"
-          : statusConfig[stepTwoStatus].className,
+        stepTwoStatus === "success" ? "idle" : (
+          statusConfig[stepTwoStatus].className
+        ),
       messageClassName: statusConfig[stepTwoStatus].messageClassName,
     };
 
@@ -133,11 +134,8 @@ export const TransactionModal = forwardRef<
       <div className="modal-box relative max-w-md bg-white transition-all duration-500 ease-in-out">
         <div className="flex items-start justify-between">
           <h4 className="text-lg font-bold">{label}</h4>
-          <Button
-            className="border-none font-bold text-black"
-            size="sm"
-            onClick={handleModalClose}
-          >
+          {/* we should use other button here */}
+          <Button btnStyle="outline" color="danger" onClick={handleModalClose}>
             X
           </Button>
         </div>

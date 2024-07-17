@@ -1,12 +1,14 @@
 "use client";
+
 import React from "react";
-import { Addreth, ThemeDeclaration, Theme } from "addreth";
+import { Addreth } from "addreth";
 import { Address } from "viem";
+import { LoadingSpinner } from "./LoadingSpinner";
 import { chainDataMap } from "@/configs/chainServer";
-import { getChainIdFromPath } from "@/utils/path";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 
 type EthAddressProps = {
-  address: Address;
+  address?: Address;
   actions?: "all" | "copy" | "explorer" | "none";
   icon?: false | "ens" | "identicon" | ((address: Address) => string);
 };
@@ -20,6 +22,7 @@ export const EthAddress = ({
   actions = "all",
   icon = false,
 }: EthAddressProps) => {
+  const chain = useChainFromPath();
   // const theme: ThemeDeclaration = {
   //   textColor: "black",
   //   // secondaryColor: "black",
@@ -35,25 +38,26 @@ export const EthAddress = ({
   //   popupRadius: 12,
   //   popupShadow: "black",
   // };
-  const chainId = getChainIdFromPath();
 
-  return (
+  return address && chain ?
     <Addreth
       // theme={theme}
       theme={{
         base: "simple-light",
+        textColor: "var(--color-green-500)",
         badgeIconRadius: 12,
         badgeHeight: 32,
         fontSize: 16,
       }}
       actions={actions}
       icon={icon}
-      address={address}
-      explorer={(address) => ({
-        name: chainDataMap[chainId].name,
-        url: `${chainDataMap[chainId].explorer}${address}`,
-        accountUrl: `${chainDataMap[chainId].explorer}${address}`,
+      address={address as Address}
+      explorer={(addr) => ({
+        name: chainDataMap[chain.id].name,
+        url: `${chainDataMap[chain.id].explorer}${addr}`,
+        accountUrl: `${chainDataMap[chain.id].explorer}${addr}`,
       })}
+      ens={!chain?.testnet}
     />
-  );
+    : <LoadingSpinner />;
 };

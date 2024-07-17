@@ -1,20 +1,21 @@
 "use client";
+
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { alloABI } from "@/src/generated";
-import { Address, parseUnits } from "viem";
-import { useContractWrite } from "wagmi";
-import { encodeAbiParameters } from "viem";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { Button } from "@/components";
-import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { toast } from "react-toastify";
-import { proposalTypes } from "@/types";
-import { Allo, Maybe, TokenGarden } from "#/subgraph/.graphclient";
-import { formatTokenAmount } from "@/utils/numbers";
-import FormPreview, { FormRow } from "./FormPreview";
-import { FormInput } from "./FormInput";
 import { usePathname, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import { Address, encodeAbiParameters, parseUnits } from "viem";
+import { Allo, TokenGarden } from "#/subgraph/.graphclient";
+import { FormInput } from "./FormInput";
+import { FormPreview, FormRow } from "./FormPreview";
+import { Button } from "@/components";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { alloABI } from "@/src/generated";
+import { poolTypes } from "@/types";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
+import { formatTokenAmount } from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -28,7 +29,7 @@ type ProposalFormProps = {
   poolId: number;
   proposalType: number;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
-  tokenGarden: TokenGarden;
+  tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   tokenAddress: Address;
   spendingLimit: number;
   spendingLimitPct: number;
@@ -70,7 +71,6 @@ export const ProposalForm = ({
   tokenAddress,
   spendingLimit,
   spendingLimitPct,
-  poolAmount,
 }: ProposalFormProps) => {
   const {
     register,
@@ -79,10 +79,14 @@ export const ProposalForm = ({
     getValues,
   } = useForm<FormInputs>();
 
+  const { publish } = usePubSubContext();
+
+  const chainId = alloInfo.chainId;
+
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
       label: "Requested amount:",
-      parse: (value: number) => `${value} ${tokenGarden?.symbol}`,
+      parse: (value: number) => `${value} ${tokenGarden.symbol}`,
     },
     beneficiary: {
       label: "Beneficiary:",
@@ -93,16 +97,16 @@ export const ProposalForm = ({
     strategy: { label: "Strategy:" },
   };
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const tokenSymbol = tokenGarden?.symbol || "";
+  const tokenSymbol = tokenGarden.symbol || "";
 
-  const spendingLimitNumber = spendingLimit / 10 ** tokenGarden?.decimals;
+  const spendingLimitNumber = spendingLimit / 10 ** tokenGarden.decimals;
 
   // console.log("spendingLimit:               %s", spendingLimit);
   // console.log("spendingLimitNumber:         %s", spendingLimitNumber);
@@ -113,7 +117,7 @@ export const ProposalForm = ({
     tokenGarden?.decimals as number,
   );
 
-  const proposalTypeName = proposalTypes[proposalType];
+  const proposalTypeName = poolTypes[proposalType];
 
   const createProposal = () => {
     setLoading(true);
@@ -131,8 +135,10 @@ export const ProposalForm = ({
         error: "Error uploading data to IPFS",
       })
       .then((ipfsHash) => {
-        console.log("https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) throw new Error("No preview data");
+        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
+        if (previewData === undefined) {
+          throw new Error("No preview data");
+        }
         const encodedData = getEncodeData(ipfsHash);
         write({ args: [poolId, encodedData] });
       })
@@ -147,20 +153,32 @@ export const ProposalForm = ({
     setShowPreview(true);
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
-    onSuccess: () => router.push(pathname.replace(`/create-proposal`, "")),
+    onConfirmations: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "registerRecipient",
+        chainId,
+      });
+      if (pathname) {
+        router.push(pathname.replace("/create-proposal", ""));
+      }
+    },
     onError: (err) => {
-      console.log(err);
+      console.warn(err);
       toast.error("Something went wrong creating Proposal");
     },
     onSettled: () => setLoading(false),
   });
 
   const getEncodeData = (metadataIpfs: string) => {
-    if (previewData === undefined) throw new Error("no preview data");
+    if (previewData === undefined) {
+      throw new Error("no preview data");
+    }
 
     const metadata = [1, metadataIpfs as string];
 
@@ -170,13 +188,14 @@ export const ProposalForm = ({
       tokenGarden?.decimals as number,
     );
 
-    console.log([
+    console.debug([
       poolId,
       previewData.beneficiary,
       requestedAmount,
       tokenAddress,
       metadata,
     ]);
+
     const encodedData = encodeAbiParameters(abiParameters, [
       [
         poolId,
@@ -188,7 +207,7 @@ export const ProposalForm = ({
       ],
     ]);
 
-    console.log(
+    console.debug(
       poolId,
       previewData.beneficiary,
       requestedAmount,
@@ -200,7 +219,9 @@ export const ProposalForm = ({
   };
 
   const formatFormRows = () => {
-    if (!previewData) return [];
+    if (!previewData) {
+      return [];
+    }
     let formattedRows: FormRow[] = [];
 
     Object.entries(previewData).forEach(([key, value]) => {
@@ -215,35 +236,26 @@ export const ProposalForm = ({
     });
 
     formattedRows.push({
-      label: formRowTypes["strategy"].label,
+      label: formRowTypes.strategy.label,
       data: "Conviction voting",
     });
     formattedRows.push({
-      label: formRowTypes["proposalType"].label,
+      label: formRowTypes.proposalType.label,
       data: proposalTypeName,
     });
 
     return formattedRows;
   };
-  console.log(
-    "spendingLimitNumber: " + spendingLimitNumber,
-    "spendingLimitPct: " + spendingLimitPct,
-    Math.round(4.5),
-    Math.round(4.56),
-    Math.round(4.567457),
-    Math.round(0.111231),
-  );
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
-      {showPreview ? (
+      {showPreview ?
         <FormPreview
-          title={previewData?.title || ""}
-          description={previewData?.description || ""}
+          title={previewData?.title ?? ""}
+          description={previewData?.description ?? ""}
           formRows={formatFormRows()}
           previewTitle="Check proposals details"
         />
-      ) : (
-        <div className="flex flex-col gap-2 overflow-hidden p-1">
+        : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
             <div className="relative flex flex-col">
               <FormInput
@@ -293,7 +305,7 @@ export const ProposalForm = ({
                 registerKey="beneficiary"
                 type="text"
                 placeholder="0x000..."
-              ></FormInput>
+              />
             </div>
           )}
           <div className="flex flex-col">
@@ -305,7 +317,7 @@ export const ProposalForm = ({
               registerKey="title"
               type="text"
               placeholder="Example Title"
-            ></FormInput>
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -317,34 +329,27 @@ export const ProposalForm = ({
               type="textarea"
               rows={10}
               placeholder="Proposal description"
-            ></FormInput>
+            />
           </div>
         </div>
-      )}
+      }
       <div className="flex w-full items-center justify-center py-6">
-        {showPreview ? (
+        {showPreview ?
           <div className="flex items-center gap-10">
             <Button
-              type="button"
-              onClick={() => createProposal()}
-              isLoading={loading}
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="fill"
+              btnStyle="outline"
             >
               Edit
             </Button>
+            <Button onClick={() => createProposal()} isLoading={loading}>
+              Submit
+            </Button>
           </div>
-        ) : (
-          <Button type="submit">Preview</Button>
-        )}
+          : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

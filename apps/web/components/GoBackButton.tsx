@@ -1,28 +1,25 @@
 "use client";
-import { useRouter, usePathname } from "next/navigation";
-import { Button } from "@/components";
+
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@/components";
 
 export const GoBackButton = () => {
   const router = useRouter();
   const path = usePathname();
 
-  const goBack = () => {
-    router.back();
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   return (
     <>
       {path === "/gardens" ? null : (
         <Button
-          variant="link"
-          onClick={goBack}
-          className="fixed left-2 top-28 px-4 text-xs"
+          aria-label="Go back"
+          btnStyle="link"
+          color="primary"
+          onClick={() => router.back()}
+          className="subtitle2 w-fit !p-0"
           icon={<ArrowLeftIcon className="h-4 w-4" />}
         >
-          {"Back"}
+          Back
         </Button>
       )}
     </>

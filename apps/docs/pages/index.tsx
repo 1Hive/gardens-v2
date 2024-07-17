@@ -1,3 +1,4 @@
+import _ from "react";
 import { Button } from "ui";
 
 export default function Docs() {

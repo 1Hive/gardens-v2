@@ -6,14 +6,32 @@
   --color-primary: #82c837;
   --color-secondary: #4dafd6;
   --color-surface: #fcfff7;
-  --color-white: #ffffff;
-  --color-black: #2d2d2d;
   --color-accent: #ffe236;
   --color-red: #dc3030;
-  /* adding new figma color to alpha test */
   --border-neutral: #d5d5d5;
   --border-hover: #ff9500;
   --base-orange: #fff4e6;
+  /* add figma UI system color pallette light */
+  --color-grey-900: #000000;
+  --color-grey-500: #8c8c8c;
+  --color-grey-400: #acacac;
+  --color-grey-200: #eeeeee;
+  --color-grey-100: #f1f1f1;
+  --color-grey-0: #ffffff;
+  --color-green-600: #3e920f;
+  --color-green-500: #65ad18;
+  --color-green-50: #c7eb9a;
+  --color-green-25: #e2f5cb;
+  --color-red-600: #d03a3a;
+  --color-red-500: #eb4848;
+  --color-red-100: #ffcfcf;
+  --color-orange-500: #ff9500;
+  --color-orange-50: #fff4e6;
+  --color-cyan-500: #2baac7;
+  --color-cyan-50: #e5f7fa;
+
+  --tooltip-color: #8c8c8c;
+  --tooltip-text-color: #ffffff;
 }
 
 * {
@@ -40,73 +58,79 @@ html::-webkit-scrollbar-thumb {
 body {
   margin: 0;
   background-color: var(--color-background);
+  color: var(--color-grey-900);
   line-height: 1.15;
 }
-
-/* TODO: add Inter Font */
 
 h1 {
   margin-bottom: 1rem;
   margin-top: 0.5rem;
-  color: var(--color-black);
   font-family: var(--font-chakra);
-  font-size: 3.25rem;
-  font-weight: bold;
-  @media only screen and (max-width: 680px) {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 56px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
     font-size: 2.5rem;
-  }
+  } */
 }
 
 h2 {
-  color: var(--color-black);
   font-family: var(--font-chakra);
-  font-size: 2.25rem;
-  /*TODO: check the line-height from figma: I think it was too much ??, I put less here */
-  line-height: 2.25;
+  font-size: 36px;
   font-weight: 600;
-  @media only screen and (max-width: 680px) {
+  line-height: 46px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
     font-size: 2rem;
-  }
+  } */
 }
 
-h3 {
-  color: var(--color-black);
-  font-family: var(--font-chakra);
-  font-size: 2.25rem;
-  @media only screen and (max-width: 680px) {
-    font-size: 1.75rem;
-  }
-}
+h3,
 h4 {
-  color: var(--color-black);
   font-family: var(--font-inter);
-  font-size: 1.5rem;
-  line-height: 1.663;
-  font-weight: 600;
-  @media only screen and (max-width: 680px) {
-    font-size: 1.75rem;
-  }
-}
-h5 {
-  color: var(--color-black);
-  font-family: var(--font-inter);
-  font-size: 1.375rem;
-  line-height: 1.225;
+  font-size: 24px;
   font-weight: 500;
-  @media only screen and (max-width: 680px) {
+  line-height: auto;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
     font-size: 1.75rem;
-  }
+  } */
+}
+
+/* subtitle 1 */
+h5,
+.subtitle {
+  font-family: var(--font-inter);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 22px;
+  text-align: left;
+}
+
+/* subtitle 2 */
+h6,
+.subtitle2 {
+  font-family: var(--font-inter);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: left;
 }
 
 p {
-  color: var(--color-black);
   font-family: var(--font-inter);
-  font-size: 1rem;
+  font-size: 16px;
   font-weight: 400;
-  line-height: 1.5rem;
-  @media only screen and (max-width: 680px) {
+  line-height: 24px;
+  text-align: left;
+
+  /* @media only screen and (max-width: 680px) {
     font-size: 1rem;
-  }
+  } */
 }
 
 span {
@@ -115,12 +139,51 @@ span {
   font-weight: 400;
 }
 
+button {
+  font-family: var(--font-inter);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 18.4px;
+  text-align: left;
+}
+
+caption {
+  font-family: var(--font-inter);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 20px;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
 .border2 {
   border: 2px solid black;
 }
 
 .border1 {
   border: 1px solid var(--border-neutral);
+}
+
+.section-layout {
+  @apply border1 relative rounded-3xl bg-neutral p-8;
+}
+
+.page-layout {
+  @apply flex w-full max-w-6xl flex-col gap-10 p-8;
+}
+
+.tooltip {
+  --tooltip-color: #8c8c8c;
+  --tooltip-text-color: #ffffff;
+}
+
+.tooltip:before {
+  white-space: pre-line;
+  text-align: left;
+}
+
+.banner {
+  @apply flex items-center gap-4 rounded-[20px] bg-secondary-soft p-4;
 }
 
 /* Hide number input arrows */

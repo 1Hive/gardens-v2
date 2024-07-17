@@ -1,36 +1,32 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { toast } from "react-toastify";
+import { parseUnits } from "viem";
+import { Address, useAccount, useBalance, useContractRead } from "wagmi";
+import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
+import { Button } from "./Button";
+import { DisplayNumber } from "./DisplayNumber";
+import { TransactionModal, TransactionStep } from "./TransactionModal";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { useUrqlClient } from "@/hooks/useUqrlClient";
+import { queryByChain } from "@/providers/urql";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import {
-  Address,
-  useBalance,
-  useContractRead,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
-import { Button } from "./Button";
-import { TransactionModal, TransactionStep } from "./TransactionModal";
-import { useEffect, useRef, useState } from "react";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { toast } from "react-toastify";
+import { useErrorDetails } from "@/utils/getErrorName";
 import { formatTokenAmount } from "@/utils/numbers";
-import { parseUnits } from "viem";
-import { getChainIdFromPath } from "@/utils/path";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import useErrorDetails from "@/utils/getErrorName";
-import { chainDataMap } from "@/configs/chainServer";
-import { DisplayNumber } from "./DisplayNumber";
 
 type IncreasePowerProps = {
   communityAddress: Address;
   registerToken: Address;
-  connectedAccount: Address;
   tokenSymbol: string;
   registerTokenDecimals: number;
   registerStakeAmount: bigint;
-  memberStakedTokens: bigint;
 };
 
 const InitialTransactionSteps: TransactionStep[] = [
@@ -56,42 +52,69 @@ const InitialTransactionSteps: TransactionStep[] = [
 export const IncreasePower = ({
   communityAddress,
   registerToken,
-  connectedAccount,
   tokenSymbol,
   registerTokenDecimals,
   registerStakeAmount,
-  memberStakedTokens,
 }: IncreasePowerProps) => {
-  //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
   const closeModal = () => modalRef.current?.close();
-  //
-  //new logic
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
     false,
   );
-
   const [increaseInput, setIncreaseInput] = useState<number | string>("");
 
+  const { publish } = usePubSubContext();
+  const { address: connectedAccount } = useAccount();
+
   //handeling states
-  type states = "idle" | "loading" | "success" | "error";
+  type States = "idle" | "loading" | "success" | "error";
   const [allowanceTransactionStatus, setAllowanceTransactionStatus] =
-    useState<states>("idle");
+    useState<States>("idle");
   const [resetTransactionStatus, setResetTransactionStatus] =
-    useState<states>("idle");
+    useState<States>("idle");
+  const { address: accountAddress } = useAccount();
+  const [memberStakedTokens, setMemberStakedTokens] = useState<bigint>(0n);
+
+  const urqlClient = useUrqlClient();
+
+  const urlChainId = useChainIdFromPath();
+
+  const runIsMemberQuery = useCallback(async () => {
+    if (!accountAddress || !urlChainId) {
+      return;
+    }
+    const { data: result } = await queryByChain<isMemberQuery>(
+      urqlClient,
+      urlChainId,
+      isMemberDocument,
+      {
+        me: accountAddress.toLowerCase(),
+        comm: communityAddress.toLowerCase(),
+      },
+    );
+
+    if (result && result.members.length > 0) {
+      const stakedTokens =
+        result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
+
+      setMemberStakedTokens(BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"));
+    }
+  }, [accountAddress]);
+
+  useEffect(() => {
+    runIsMemberQuery();
+  }, [accountAddress]);
 
   const requestedAmount = parseUnits(
     (increaseInput ?? 0).toString(),
     registerTokenDecimals,
   );
 
-  const chainId = getChainIdFromPath();
-
   const { data: accountTokenBalance } = useBalance({
-    address: connectedAccount,
-    token: registerToken as `0x${string}` | undefined,
-    chainId: chainId || 0,
+    address: accountAddress,
+    token: registerToken as Address,
+    chainId: urlChainId ?? 0,
   });
 
   //TODO: create a hook for this
@@ -100,93 +123,87 @@ export const IncreasePower = ({
     abi: abiWithErrors2(registryCommunityABI),
   };
 
-  const {
-    data: isMember,
-    error,
-    isSuccess,
-  } = useContractRead({
+  const { data: isMember } = useContractRead({
     ...registryContractCallConfig,
     functionName: "isMember",
-    args: [connectedAccount as Address],
-    //watch: true,
+    enabled: accountAddress !== undefined,
+    args: [accountAddress as Address],
   });
-  //
 
   const {
-    data: allowTokenData,
-    write: writeAllowToken,
-    error: allowTokenError,
-    status: allowTokenStatus,
-    isSuccess: isAllowTokenSuccess,
-  } = useContractWrite({
-    address: registerToken,
-    abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, requestedAmount as bigint], // [allowed spender address, amount ]
-    functionName: "approve",
-  });
-  const {
-    data,
-    isError,
-    isLoading,
+    transactionData: allowTokenTxData,
     isSuccess: isWaitSuccess,
-    status: waitAllowTokenStatus,
-  } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
-    hash: allowTokenData?.hash,
-  });
-
-  const {
-    data: resetAllowance,
-    write: writeResetAllowance,
-    status: resetAllowanceStatus,
-  } = useContractWrite({
+    write: writeAllowToken,
+    status: allowTokenStatus,
+  } = useContractWriteWithConfirmations({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, 0n as bigint], // [allowed spender address, amount ]
+    args: [communityAddress, requestedAmount], // [allowed spender address, amount ]
     functionName: "approve",
   });
-  const {
-    isSuccess: isWaitResetAllowanceStatus,
-    status: waitResetAllowanceStatus,
-  } = useWaitForTransaction({
-    confirmations: chainDataMap[chainId].confirmations,
-    hash: resetAllowance?.hash,
-  });
+
+  const { write: writeResetAllowance, status: resetAllowanceStatus } =
+    useContractWriteWithConfirmations({
+      address: registerToken,
+      abi: abiWithErrors(erc20ABI),
+      args: [communityAddress, 0n], // [allowed spender address, amount ]
+      functionName: "approve",
+    });
 
   const { data: allowance } = useContractRead({
     address: registerToken,
     abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    args: [connectedAccount, communityAddress], // [ owner,  spender address ]
+    args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
     functionName: "allowance",
+    enabled: accountAddress !== undefined,
   });
 
   const {
-    data: increasePowerData,
+    transactionData: increasePowerTxData,
     write: writeIncreasePower,
-    error: errorIncreaseStake,
     status: increaseStakeStatus,
-    isLoading: increasePowerIsLoading,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "increasePower",
     args: [requestedAmount as bigint],
+    onConfirmations: () => {
+      publish({
+        topic: "member",
+        type: "update",
+        function: "increasePower",
+        containerId: communityAddress,
+        id: connectedAccount,
+        chainId: urlChainId,
+      });
+    },
   });
+
   const {
-    data: decreasePowerData,
+    transactionData: decreasePowerTxData,
     write: writeDecreasePower,
     error: errorDecreasePower,
     status: decreasePowerStatus,
-    isLoading: decreasePowerIsLoading,
     isError: isErrordecreasePower,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "decreasePower",
     args: [requestedAmount as bigint],
+    onConfirmations: () => {
+      publish({
+        topic: "member",
+        type: "update",
+        containerId: communityAddress,
+        function: "decreasePower",
+        id: connectedAccount,
+        chainId: urlChainId,
+      });
+    },
   });
+
   useErrorDetails(errorDecreasePower, "errorDecrease");
 
   const { updateTransactionStatus: updateDecreasePowerTransactionStatus } =
-    useTransactionNotification(decreasePowerData);
+    useTransactionNotification(decreasePowerTxData);
 
   useEffect(() => {
     updateDecreasePowerTransactionStatus(decreasePowerStatus);
@@ -228,7 +245,7 @@ export const IncreasePower = ({
   };
 
   const { updateTransactionStatus: updateAllowTokenTransactionStatus } =
-    useTransactionNotification(allowTokenData);
+    useTransactionNotification(allowTokenTxData);
 
   useEffect(() => {
     updateAllowTokenTransactionStatus(allowTokenStatus);
@@ -244,7 +261,7 @@ export const IncreasePower = ({
     if (isWaitSuccess) {
       writeIncreasePower?.();
     }
-  }, [waitResetAllowanceStatus, isWaitSuccess, allowTokenStatus]);
+  }, [resetAllowanceStatus, isWaitSuccess, allowTokenStatus]);
 
   useEffect(() => {
     if (increaseStakeStatus === "success") {
@@ -255,7 +272,7 @@ export const IncreasePower = ({
   }, [increaseStakeStatus]);
 
   const { updateTransactionStatus: updateIncreaseStakeTransactionStatus } =
-    useTransactionNotification(increasePowerData);
+    useTransactionNotification(increasePowerTxData);
 
   useEffect(() => {
     updateIncreaseStakeTransactionStatus(increaseStakeStatus);
@@ -314,92 +331,93 @@ export const IncreasePower = ({
   const { tooltipMessage: decreaseTooltipMsg } = useDisableButtons(
     disableDecPowerBtnCondition,
   );
-  //
 
-  return (
-    <>
-      <TransactionModal
-        ref={modalRef}
-        label={`Stake ${tokenSymbol} in community`}
-        initialTransactionSteps={InitialTransactionSteps}
-        allowTokenStatus={allowTokenStatus}
-        stepTwoStatus={increaseStakeStatus}
-        token={tokenSymbol}
-        pendingAllowance={pendingAllowance}
-        setPendingAllowance={setPendingAllowance}
-      ></TransactionModal>
+  if (isMember) {
+    return (
+      <section className="section-layout">
+        <TransactionModal
+          ref={modalRef}
+          label={`Stake ${tokenSymbol} in community`}
+          initialTransactionSteps={InitialTransactionSteps}
+          allowTokenStatus={allowTokenStatus}
+          stepTwoStatus={increaseStakeStatus}
+          token={tokenSymbol}
+          pendingAllowance={pendingAllowance}
+          setPendingAllowance={setPendingAllowance}
+        />
 
-      {/* input */}
-      <div className="grid max-w-[460px] grid-cols-2 gap-4">
-        <div className="col-span-2 mt-3 flex items-center gap-2 rounded-lg bg-info px-2 py-4 text-white">
-          <ExclamationCircleIcon height={32} width={32} />
-          <p className="text-sm text-white">
-            Staking more tokens in the community will increase your voting power
-            to support proposals
-          </p>
-        </div>
-
-        <div className="col-span-2 flex flex-col gap-4">
-          {isMember && (
-            <div className="flex items-center justify-between">
-              <div className="flex-start flex">
-                <p>Balance:</p>
-                <DisplayNumber
-                  number={accountTokenBalance?.formatted ?? "0"}
-                  tokenSymbol={tokenSymbol}
-                  compact={true}
-                />
-              </div>
-              <div className="flex-start flex">
-                <p>Current Stake:</p>
-                <DisplayNumber
-                  number={[BigInt(memberStakedTokens), registerTokenDecimals]}
-                  tokenSymbol={tokenSymbol}
-                  compact={true}
-                />
-              </div>
+        <div className="flex justify-between gap-4">
+          <div className=" flex flex-col justify-between gap-4">
+            <div className="flex gap-4">
+              <ExclamationCircleIcon height={32} width={32} />
+              <p className="max-w-sm">
+                Staking more tokens in the community will increase your voting
+                power to support proposals
+              </p>
             </div>
-          )}
-          {/* <div className=""> */}
-          <div className="relative">
-            <input
-              type="number"
-              value={increaseInput}
-              placeholder="Amount"
-              className="input input-bordered input-info w-full disabled:bg-gray-300 disabled:text-black"
-              onChange={(e) => handleInputChange(e)}
-              disabled={!isMember}
-            />
-            <span className="absolute right-8 top-3.5 text-black">
-              {tokenSymbol}
-            </span>
+            {isMember && (
+              <div className="flex justify-between">
+                <div className="flex-start flex gap-2">
+                  <p>Balance:</p>
+                  <DisplayNumber
+                    number={accountTokenBalance?.formatted ?? "0"}
+                    tokenSymbol={tokenSymbol}
+                    compact={true}
+                  />
+                </div>
+                <div className="flex-start flex gap-2">
+                  <p>Current Stake:</p>
+                  <DisplayNumber
+                    number={[BigInt(memberStakedTokens), registerTokenDecimals]}
+                    tokenSymbol={tokenSymbol}
+                    compact={true}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="relative">
+              <input
+                type="number"
+                value={increaseInput}
+                placeholder="Amount"
+                className="input input-bordered input-info w-full disabled:bg-gray-300 disabled:text-black"
+                onChange={(e) => handleInputChange(e)}
+                disabled={!isMember}
+              />
+              <span className="absolute right-8 top-3.5 text-black">
+                {tokenSymbol}
+              </span>
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                onClick={handleChange}
+                disabled={disabledIncPowerButton}
+                tooltip={tooltipMessage}
+              >
+                Increase stake
+                <span className="loading-spinner" />
+              </Button>
+
+              <Button
+                onClick={() => writeDecreasePower?.()}
+                btnStyle="outline"
+                color="danger"
+                disabled={disabledDecPowerButton}
+                tooltip={decreaseTooltipMsg}
+              >
+                Decrease stake
+                <span className="loading-spinner" />
+              </Button>
+            </div>
           </div>
         </div>
-
-        <Button
-          onClick={handleChange}
-          className="w-full"
-          disabled={disabledIncPowerButton}
-          tooltip={tooltipMessage}
-        >
-          {increaseInput !== undefined && Number(increaseInput) > 0
-            ? `Stake ${tokenSymbol}`
-            : "Increase stake"}
-          <span className="loading-spinner"></span>
-        </Button>
-
-        {isMember && (
-          <Button
-            onClick={() => writeDecreasePower?.()}
-            className="w-full"
-            disabled={disabledDecPowerButton}
-            tooltip={decreaseTooltipMsg}
-          >
-            Decrease stake
-            <span className="loading-spinner"></span>
-          </Button>
-        )}
-      </div>
-    </>
-  );
+      </section>
+    );
+  } else {
+    return;
+  }
 };
