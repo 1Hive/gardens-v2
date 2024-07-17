@@ -322,31 +322,11 @@ export function Proposals({
     inputAllocatedTokens,
     memberActivatedPoints,
   );
-  // console.log("inputAllocatedTokens:          %s", inputAllocatedTokens);
-  // console.log("memberSupportedProposalsPct:   %s", memberSupportedProposalsPct);
 
   const memberPoolWeight = calculatePercentage(
     memberActivatedPoints,
     strategy.totalEffectiveActivePoints,
   );
-  // const memberActivatePointsAsNum = Number(
-  //   BigInt(memberActivatedPoints) / BigInt(10 ** tokenDecimals),
-  // );
-  // const totalEAPasNum = Number(
-  //   BigInt(strategy.totalEffectiveActivePoints) / BigInt(10 ** tokenDecimals),
-  // );
-
-  // const memberPoolWeight = memberActivatePointsAsNum / totalEAPasNum;
-
-  // console.log("newLocal:                    %s", memberActivatePointsAsNum);
-  // console.log("newLocal_1:                  %s", totalEAPasNum);
-  // console.log("memberActivatedPoints:       %s", memberActivatedPoints);
-  // console.log("memberPoolWeight:            %s", memberPoolWeight);
-  // console.log(
-  //   "totalEffectiveActivePoints:  %s",
-  //   strategy.totalEffectiveActivePoints,
-  // );
-  // console.log("tokenDecimals:               %s", tokenDecimals);
 
   const calcPoolWeightUsed = (number: number) => {
     if (memberPoolWeight == 0) {

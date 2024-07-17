@@ -8,6 +8,7 @@ import {
   SubmitPassport,
   Badge,
   DisplayNumber,
+  CheckPassport,
 } from "@/components/";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { registryCommunityABI } from "@/src/generated";
@@ -61,7 +62,7 @@ export const PoolGovernance = ({
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-10">
             <div className="flex w-full max-w-xl flex-col items-center gap-2 font-semibold">
-              {showPoolGovernanceData ? (
+              {showPoolGovernanceData ?
                 <>
                   <div className="flex w-full items-center gap-6">
                     <h5 className="">Total staked in community:</h5>
@@ -90,23 +91,28 @@ export const PoolGovernance = ({
                     </p>
                   </div>
                 </>
-              ) : (
-                <div className="flex w-full items-center gap-6">
+              : <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
                     <Badge status={isMemberActivated ? 1 : 0} />
                   </div>
                 </div>
-              )}
+              }
             </div>
           </div>
-          <SubmitPassport />
-          <ActivatePoints
-            strategyAddress={strategy.id as Address}
-            communityAddress={communityAddress}
-            isMemberActivated={isMemberActivated as boolean | undefined}
-            isMember={isMember}
-          />
+          <div className="flex flex-col gap-2">
+            <CheckPassport
+              strategyAddr={strategy.id as Address}
+              enableCheck={true}
+            >
+              <ActivatePoints
+                strategyAddress={strategy.id as Address}
+                communityAddress={communityAddress}
+                isMemberActivated={isMemberActivated as boolean | undefined}
+                isMember={isMember}
+              />
+            </CheckPassport>
+          </div>
         </div>
       </div>
     </section>
