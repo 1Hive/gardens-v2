@@ -3,7 +3,7 @@ import React, { ReactElement, ReactNode, useEffect, useState } from "react";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
 import { Button } from "./Button";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import useModal from "@/hooks/useModal";
 import {
   getPassportStrategyDocument,

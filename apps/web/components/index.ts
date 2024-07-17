@@ -29,5 +29,4 @@ export { Communities } from "./Communities";
 export { Breadcrumbs } from "./Breadcrumbs";
 export { SubmitPassport } from "./SubmitPassport";
 export { CheckPassport } from "./CheckPassport";
-import Modal from "./Modal";
-export { Modal };
+export { Modal } from "./Modal";

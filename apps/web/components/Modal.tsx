@@ -11,7 +11,7 @@ interface ModalProps {
 
 export type Ref = HTMLDialogElement;
 
-export default forwardRef<Ref, ModalProps>(function Modal(
+export const Modal = forwardRef<Ref, ModalProps>(function Modal(
   { icon, title, onClose, children },
   ref,
 ) {
