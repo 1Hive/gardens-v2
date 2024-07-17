@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { PublicClient, createPublicClient, http } from "viem";
+import { createPublicClient, http, PublicClient } from "viem";
 import { useChainId } from "wagmi";
+import { useChainFromPath } from "./useChainFromPath";
 import { getChain } from "@/configs/chainServer";
-import useChainFromPath from "./useChainFromPath";
 
 export const useViemClient = function () {
   const chainFromPath = useChainFromPath();

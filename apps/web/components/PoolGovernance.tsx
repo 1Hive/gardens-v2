@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Address, useAccount, useContractRead } from "wagmi";
 import { Dnum } from "dnum";
 import {
   ActivatePoints,
@@ -11,6 +10,7 @@ import {
   CheckPassport,
 } from "@/components/";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
+import { Address, useAccount, useContractRead } from "wagmi";
 import { registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
 

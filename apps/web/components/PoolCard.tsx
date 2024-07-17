@@ -1,30 +1,28 @@
 "use client";
 
+import {
+  ClockIcon,
+  CurrencyDollarIcon,
+  HandRaisedIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  CurrencyDollarIcon,
-  HandRaisedIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
-import {
-  CVStrategy,
   CVProposal,
+  CVStrategy,
   CVStrategyConfig,
+  TokenGarden,
 } from "#/subgraph/.graphclient";
-import { grass, blueLand } from "@/assets";
-import { Badge } from "@/components";
-import { TokenGarden } from "#/subgraph/.graphclient";
-import { formatTokenAmount } from "@/utils/numbers";
-import { Card } from "@/components";
-import { Statistic } from "@/components";
+import { blueLand, grass } from "@/assets";
+import { Badge, Card, Statistic } from "@/components";
 import { poolTypes } from "@/types";
+import { formatTokenAmount } from "@/utils/numbers";
 
 type Props = {
   tokenGarden: Pick<TokenGarden, "decimals">;
   pool: Pick<
-    CVStrategy,
-    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
+  CVStrategy,
+  "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType">;
@@ -59,18 +57,17 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           />
         )}
       </div>
-      {!isEnabled ? (
+      {!isEnabled ?
         <div className="banner">
           <ClockIcon className="h-8 w-8 text-secondary-content" />
           <h6>Waiting for approval</h6>
         </div>
-      ) : (
-        <Image
+        : <Image
           src={poolType && poolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
           className="h-10 w-full rounded-lg object-cover"
         />
-      )}
+      }
     </Card>
   );
 }

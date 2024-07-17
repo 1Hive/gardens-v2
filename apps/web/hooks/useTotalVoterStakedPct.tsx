@@ -1,11 +1,11 @@
-import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
-import { cvStrategyABI } from "@/src/generated";
-import { useViemClient } from "./useViemClient";
-import { SCALE_PRECISION } from "@/utils/numbers";
 import { Abi } from "viem";
+import { useAccount } from "wagmi";
 import { CVStrategy } from "#/subgraph/.graphclient";
+import { Address } from "#/subgraph/src/scripts/last-addr";
+import { useViemClient } from "./useViemClient";
+import { cvStrategyABI } from "@/src/generated";
+import { SCALE_PRECISION } from "@/utils/numbers";
 
 export function useTotalVoterStakedPct(strategy: CVStrategy) {
   const { address } = useAccount();
@@ -14,13 +14,15 @@ export function useTotalVoterStakedPct(strategy: CVStrategy) {
   const [voterStake, setVoterStake] = useState<any>(null);
 
   useEffect(() => {
-    if (!address) return;
+    if (!address) {
+      return;
+    }
 
     fetchData();
   }, [address]);
 
   const fetchData = async () => {
-    const _voterStakeData = await client.readContract({
+    const voterStakeData = await client.readContract({
       address: strategy.id as Address,
       abi: cvStrategyABI as Abi,
       functionName: "getTotalVoterStakePct",
@@ -28,7 +30,7 @@ export function useTotalVoterStakedPct(strategy: CVStrategy) {
     });
 
     setVoterStake(
-      (_voterStakeData as unknown as bigint) / BigInt(SCALE_PRECISION),
+      (voterStakeData as unknown as bigint) / BigInt(SCALE_PRECISION),
     );
   };
 

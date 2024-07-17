@@ -3,9 +3,9 @@
 import React from "react";
 import { Addreth } from "addreth";
 import { Address } from "viem";
-import LoadingSpinner from "./LoadingSpinner";
+import { LoadingSpinner } from "./LoadingSpinner";
 import { chainDataMap } from "@/configs/chainServer";
-import useChainFromPath from "@/hooks/useChainFromPath";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 
 type EthAddressProps = {
   address?: Address;
@@ -40,24 +40,24 @@ export const EthAddress = ({
   // };
 
   return address && chain ?
-      <Addreth
-        // theme={theme}
-        theme={{
-          base: "simple-light",
-          textColor: "var(--color-green-500)",
-          badgeIconRadius: 12,
-          badgeHeight: 32,
-          fontSize: 16,
-        }}
-        actions={actions}
-        icon={icon}
-        address={address as Address}
-        explorer={(address) => ({
-          name: chainDataMap[chain.id].name,
-          url: `${chainDataMap[chain.id].explorer}${address}`,
-          accountUrl: `${chainDataMap[chain.id].explorer}${address}`,
-        })}
-        ens={!chain?.testnet}
-      />
+    <Addreth
+      // theme={theme}
+      theme={{
+        base: "simple-light",
+        textColor: "var(--color-green-500)",
+        badgeIconRadius: 12,
+        badgeHeight: 32,
+        fontSize: 16,
+      }}
+      actions={actions}
+      icon={icon}
+      address={address as Address}
+      explorer={(addr) => ({
+        name: chainDataMap[chain.id].name,
+        url: `${chainDataMap[chain.id].explorer}${addr}`,
+        accountUrl: `${chainDataMap[chain.id].explorer}${addr}`,
+      })}
+      ens={!chain?.testnet}
+    />
     : <LoadingSpinner />;
 };

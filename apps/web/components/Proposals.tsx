@@ -1,20 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useAccount, Address as AddressType, useContractRead } from "wagmi";
+import React, { useEffect, useState } from "react";
 import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
-import { toast } from "react-toastify";
 import Link from "next/link";
-import LoadingSpinner from "./LoadingSpinner";
-import { Button, PoolGovernance, ProposalCard } from "@/components";
-import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
-import { getProposals } from "@/actions/getProposals";
-import { calculatePercentage } from "@/utils/numbers";
-import useErrorDetails from "@/utils/getErrorName";
+import { toast } from "react-toastify";
+import { Address as AddressType, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -24,15 +17,22 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { LoadingSpinner } from "./LoadingSpinner";
+import { getProposals } from "@/actions/getProposals";
+import { Button, PoolGovernance, ProposalCard } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
+import { useErrorDetails } from "@/utils/getErrorName";
+import { calculatePercentage } from "@/utils/numbers";
 
 export type ProposalInputItem = {
   id: string;
@@ -64,7 +64,7 @@ export function Proposals({
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
   const [proposals, setProposals] = useState<
-    Awaited<ReturnType<typeof getProposals>>
+  Awaited<ReturnType<typeof getProposals>>
   >([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
@@ -109,11 +109,11 @@ export function Proposals({
   }
 
   useEffect(() => {
-    let _stakesFilteres: StakesMemberType = [];
+    let stakesFilteres: StakesMemberType = [];
     if (memberResult && memberResult.members.length > 0) {
       const stakes = memberResult.members[0].stakes;
       if (stakes && stakes.length > 0) {
-        _stakesFilteres = stakes.filter((stake) => {
+        stakesFilteres = stakes.filter((stake) => {
           return (
             stake.proposal.strategy.id.toLowerCase() ===
             strategy.id.toLowerCase()
@@ -122,15 +122,15 @@ export function Proposals({
       }
     }
 
-    _stakesFilteres.reduce((acc, curr) => {
+    stakesFilteres.reduce((acc, curr) => {
       return acc + BigInt(curr.amount);
     }, 0n);
 
-    const totalStaked = _stakesFilteres.reduce((acc, curr) => {
+    const totalStaked = stakesFilteres.reduce((acc, curr) => {
       return acc + BigInt(curr.amount);
     }, 0n);
 
-    const memberStakes: ProposalInputItem[] = _stakesFilteres.map((item) => ({
+    const memberStakes: ProposalInputItem[] = stakesFilteres.map((item) => ({
       id: item.proposal.proposalNumber,
       value: item.amount,
     }));
@@ -355,7 +355,7 @@ export function Proposals({
                   <h4 className="text-2xl text-info">
                     No submitted proposals to support
                   </h4>
-                : !editView && (
+                  : !editView && (
                     <Button
                       icon={
                         <AdjustmentsHorizontalIcon height={24} width={24} />
@@ -368,13 +368,13 @@ export function Proposals({
                     </Button>
                   )
 
-              : <LoadingSpinner />}
+                : <LoadingSpinner />}
             </div>
             {editView && (
               <>
                 <div className="flex w-full items-start text-right">
                   <div className="flex w-full flex-col items-center">
-                    <p className={`text-center text-4xl text-info`}>
+                    <p className={"text-center text-4xl text-info"}>
                       {calcPoolWeightUsed(memberSupportedProposalsPct)} %
                     </p>
                     <p className="text-md text-left">Pool weight used</p>
@@ -403,7 +403,7 @@ export function Proposals({
                   proposalData={proposalData}
                   inputData={inputs[i]}
                   stakedFilter={stakedFilters[i]}
-                  i={i}
+                  index={i}
                   isEditView={editView}
                   tooltipMessage={tooltipMessage}
                   memberActivatedPoints={memberActivatedPoints}

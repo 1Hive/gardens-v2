@@ -1,22 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { Address, parseUnits } from "viem";
-import { encodeAbiParameters } from "viem";
-import { toast } from "react-toastify";
 import { usePathname, useRouter } from "next/navigation";
-import FormPreview, { FormRow } from "./FormPreview";
-import { FormInput } from "./FormInput";
-import { alloABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { Button } from "@/components";
-import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { poolTypes } from "@/types";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import { Address, encodeAbiParameters, parseUnits } from "viem";
 import { Allo, TokenGarden } from "#/subgraph/.graphclient";
-import { formatTokenAmount } from "@/utils/numbers";
+import { FormInput } from "./FormInput";
+import { FormPreview, FormRow } from "./FormPreview";
+import { Button } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { alloABI } from "@/src/generated";
+import { poolTypes } from "@/types";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
+import { formatTokenAmount } from "@/utils/numbers";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -166,7 +165,7 @@ export const ProposalForm = ({
         chainId,
       });
       if (pathname) {
-        router.push(pathname.replace(`/create-proposal`, ""));
+        router.push(pathname.replace("/create-proposal", ""));
       }
     },
     onError: (err) => {
@@ -237,11 +236,11 @@ export const ProposalForm = ({
     });
 
     formattedRows.push({
-      label: formRowTypes["strategy"].label,
+      label: formRowTypes.strategy.label,
       data: "Conviction voting",
     });
     formattedRows.push({
-      label: formRowTypes["proposalType"].label,
+      label: formRowTypes.proposalType.label,
       data: proposalTypeName,
     });
 
@@ -256,7 +255,7 @@ export const ProposalForm = ({
           formRows={formatFormRows()}
           previewTitle="Check proposals details"
         />
-      : <div className="flex flex-col gap-2 overflow-hidden p-1">
+        : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
             <div className="relative flex flex-col">
               <FormInput
@@ -350,7 +349,7 @@ export const ProposalForm = ({
               Submit
             </Button>
           </div>
-        : <Button type="submit">Preview</Button>}
+          : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

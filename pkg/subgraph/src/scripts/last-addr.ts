@@ -124,20 +124,5 @@ switch (chainArg) {
     break;
 }
 
-if (chainArg == "local") {
-  const filePath = path.join(
-    process.cwd(),
-    "../../broadcast/DeployCV.s.sol/1337/run-latest.json",
-  );
-  fs.readFile(filePath, "utf8", (err, data) => {
-    if (err) {
-      console.error(`Error reading file from disk: ${err}`);
-    } else {
-      runLatestLocal = JSON.parse(data);
-      console.log(getRunLatestAddrs(defaultChain));
-    }
-  });
-} else {
-  const data = getRunLatestAddrs(defaultChain);
-  console.log(data);
-}
+const latestAddress = getRunLatestAddrs(defaultChain);
+console.debug({ latestAddress });

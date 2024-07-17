@@ -1,7 +1,4 @@
-import {
-  getPoolDataQuery,
-  getTokenGardensQuery,
-} from "#/subgraph/.graphclient";
+import { getPoolDataQuery } from "#/subgraph/.graphclient";
 
 export * from "./styles";
 
@@ -13,8 +10,8 @@ export const poolTypes: Record<string, "signaling" | "funding" | "streaming"> =
   };
 
 export const pointSystems: Record<
-  string,
-  "fixed" | "capped" | "capped" | "unlimited" | "quadratic"
+string,
+"fixed" | "capped" | "capped" | "unlimited" | "quadratic"
 > = {
   0: "fixed",
   1: "capped",
@@ -23,8 +20,8 @@ export const pointSystems: Record<
 };
 
 export const proposalStatus: Record<
-  string,
-  "inactive" | "active" | "disputed" | "cancelled" | "executed"
+string,
+"inactive" | "active" | "disputed" | "cancelled" | "executed"
 > = {
   0: "inactive",
   1: "active",

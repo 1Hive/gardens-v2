@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { CommunityCard } from "./CommunityCard";
 import {
   CVStrategy,
   Maybe,
   MemberCommunity,
   RegistryCommunity,
 } from "#/subgraph/.graphclient";
+import { CommunityCard } from "./CommunityCard";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
   members?: Maybe<Array<Pick<MemberCommunity, "id" | "memberAddress">>>;
