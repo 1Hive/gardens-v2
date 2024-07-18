@@ -8,7 +8,6 @@ interface PassportData {
 }
 
 export async function POST(request: Request) {
-  console.log("Received POST request");
   const apiKey = process.env.GITCOIN_PASSPORT_API_KEY;
   const scorerId = process.env.SCORER_ID;
   const endpoint = "https://api.scorer.gitcoin.co/registry/submit-passport";

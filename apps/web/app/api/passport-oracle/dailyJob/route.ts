@@ -10,18 +10,17 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { localhost, arbitrumSepolia, sepolia } from "viem/chains";
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/constants/contracts";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
 
-const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY || "";
+const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY ?? "";
 const CHAIN = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
 const LOCAL_RPC = "http://127.0.0.1:8545";
-const RPC_URL = getContractsAddrByChain(CHAIN)?.rpcUrl || LOCAL_RPC;
-const CONTRACT_ADDRESS = getContractsAddrByChain(CHAIN)
-  ?.passportScorer as Address;
-const SUBGRAPH = getContractsAddrByChain(CHAIN)?.subgraphUrl as string;
+const RPC_URL = getConfigByChain(CHAIN)?.rpcUrl ?? LOCAL_RPC;
+const CONTRACT_ADDRESS = getConfigByChain(CHAIN)?.passportScorer as Address;
+const SUBGRAPH = getConfigByChain(CHAIN)?.subgraphUrl as string;
 const API_ENDPOINT = "/api/passport/scores";
 
 interface PassportUser {
@@ -43,6 +42,7 @@ interface ApiScore {
 }
 
 function getViemChain(chain: number): Chain {
+
   switch (chain) {
     case localhost.id:
       return localhost;
@@ -61,9 +61,7 @@ const client = createPublicClient({
 });
 
 const walletClient = createWalletClient({
-  account: privateKeyToAccount(
-    (`${LIST_MANAGER_PRIVATE_KEY}` as Address) || "",
-  ),
+  account: privateKeyToAccount(LIST_MANAGER_PRIVATE_KEY as Address),
   chain: getViemChain(CHAIN),
   transport: custom(client.transport),
 });
@@ -84,7 +82,7 @@ const query = gql`
 const fetchScoresFromService = async (): Promise<ApiScore[]> => {
   const url = new URL(
     API_ENDPOINT,
-    `http://${process.env.HOST || "localhost"}:${process.env.PORT || 3000}`,
+    `http://${process.env.HOST ?? "localhost"}:${process.env.PORT ?? 3000}`,
   );
 
   const response = await fetch(url.toString(), {
@@ -160,17 +158,15 @@ const updateScoresOnChain = async (
 const updateScores = async () => {
   const subgraphResponse = await urqlClient
     .query<{ passportUsers: PassportUser[] }>(
-      query,
-      {},
-      {
-        url: SUBGRAPH,
-        requestPolicy: "network-only",
-      },
-    )
+    query,
+    {},
+    {
+      url: SUBGRAPH,
+      requestPolicy: "network-only",
+    },
+  )
     .toPromise();
 
-  console.log("subgraphResponse ", subgraphResponse);
-  console.log("DATA ", subgraphResponse.data);
   if (!subgraphResponse.data) {
     throw new Error("Failed to fetch data from subgraph");
   }

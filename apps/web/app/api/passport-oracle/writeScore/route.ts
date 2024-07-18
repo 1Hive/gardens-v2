@@ -64,7 +64,7 @@ const walletClient = createWalletClient({
 const fetchScoreFromGitcoin = async (user: string) => {
   const url = new URL(
     API_ENDPOINT,
-    `http://${process.env.HOST || "localhost"}:${process.env.PORT || 3000}`,
+    `http://${process.env.HOST ?? "localhost"}:${process.env.PORT ?? 3000}`,
   );
   const response = await fetch(`${url}/${user}`, {
     method: "GET",
