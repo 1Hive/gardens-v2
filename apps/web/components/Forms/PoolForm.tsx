@@ -293,7 +293,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     const ipfsUpload = ipfsJsonUpload(json);
     toast
       .promise(ipfsUpload, {
-        pending: "Preparing everything, wait a moment...",
+        pending: "Publishing data...",
         // success: "All ready!",
         error: "Error uploading data to IPFS",
       })

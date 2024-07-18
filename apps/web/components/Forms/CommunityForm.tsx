@@ -135,13 +135,25 @@ export const CommunityForm = ({
       covenant: getValues("covenant"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(json);
+    const ipfsUpload = ipfsJsonUpload(json).then(async (res) => {
+      await delayAsync(1001);
+      return res;
+    });
 
     toast
       .promise(ipfsUpload, {
-        pending: "Preparing everything, wait a moment...",
+        pending: {
+          render: "Uploading data...",
+          type: "default",
+          toastId: "ipfsUpload",
+          closeOnClick: true,
+          style: {
+            width: "fit-content",
+            marginLeft: "auto",
+          },
+        },
         // success: "All ready!",
-        error: "Error uploading data to IPFS",
+        error: "Error uploading data",
       })
       .then((ipfsHash) => {
         console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
@@ -182,7 +194,6 @@ export const CommunityForm = ({
     },
     onError: (err) => {
       console.error(err);
-      toast.error("Error creating Community");
     },
     onSettled: () => setLoading(false),
   });

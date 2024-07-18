@@ -23,3 +23,5 @@ export { default as GardensLogo } from "./GardensLogo";
 export { default as WaitingForSig } from "./WaitingForSig.svg";
 export { default as TxSuccess } from "./TxSuccess.svg";
 export { default as TxError } from "./TxError.svg";
+export { default as TxPreparing } from "./TxPreparing.svg";
+export { default as TxMinting } from "./TxMinting.svg";

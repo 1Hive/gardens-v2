@@ -135,6 +135,7 @@ export const IncreasePower = ({
     args: [communityAddress, requestedAmount], // [allowed spender address, amount ]
     functionName: "approve",
     contractName: "ERC20",
+    showNotification: false,
   });
 
   const { write: writeResetAllowance, status: resetAllowanceStatus } =
@@ -144,6 +145,7 @@ export const IncreasePower = ({
       args: [communityAddress, 0n], // [allowed spender address, amount ]
       functionName: "approve",
       contractName: "ERC20",
+      showNotification: false,
     });
 
   const { data: allowance } = useContractRead({
@@ -161,6 +163,7 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "increasePower",
     args: [requestedAmount as bigint],
+    showNotification: false,
     onConfirmations: () => {
       publish({
         topic: "member",

@@ -31,7 +31,7 @@ export const useTransactionNotification = (
     }
 
     const txNotifProps = {
-      transactionStatus,
+      status: transactionStatus,
       contractName,
     };
 
@@ -40,8 +40,6 @@ export const useTransactionNotification = (
         ...txNotifProps, message: "Waiting for signature",
       }), {
         autoClose: false,
-        closeButton: false,
-        closeOnClick: false,
         icon: <></>,
         type: "warning",
         className: "no-icon",
@@ -51,8 +49,6 @@ export const useTransactionNotification = (
         toast.update(toastId!, {
           render: TransactionStatusNotification({ ...txNotifProps, message:"Transaction sent successfully" }),
           autoClose: undefined,
-          closeButton: undefined,
-          closeOnClick: true,
           type: "success",
         });
         setToastId(undefined);
@@ -60,8 +56,6 @@ export const useTransactionNotification = (
         toast.update(toastId!, {
           render: TransactionStatusNotification({ ...txNotifProps, message:parseErrorMessage(transactionError as Error) }),
           autoClose: undefined,
-          closeButton: undefined,
-          closeOnClick: true,
           type: "error",
         });
         setToastId(undefined);
@@ -78,20 +72,41 @@ export const useTransactionNotification = (
   }
 };
 
-const TransactionStatusNotification = ({
+export const TransactionStatusNotification = ({
   message,
-  transactionStatus,
+  status,
   contractName,
 }: {
   message: string,
-  transactionStatus: ReturnType<typeof useContractWriteWithConfirmations>["status"],
+  status: ReturnType<typeof useContractWriteWithConfirmations>["status"],
   contractName: string,
 }) => {
+  let icon: any;
+  let textColor: string;
+
+  switch (status) {
+    case "idle":
+      textColor = "";
+      break;
+    case "loading":
+      icon = WaitingForSig;
+      textColor = "text-warning";
+      break;
+    case "success":
+      icon = TxSuccess;
+      textColor = "text-success";
+      break;
+    case "error":
+      icon = TxError;
+      textColor = "text-error";
+      break;
+  }
+
   return (<div className="flex flex-row items-center gap-2">
-    <Image width={48} src={transactionStatus === "loading" ? WaitingForSig : transactionStatus === "success" ? TxSuccess : TxError} alt="icon"/>
+    {icon && <Image width={40} src={icon} alt="icon" />}
     <div className="flex flex-col gap-1">
       <div className="font-bold">{contractName}</div>
-      <div className={`${transactionStatus === "loading" ? "text-warning" : transactionStatus === "success" ? "text-success" : "text-error"}`}>{message}</div>
+      <div className={textColor}>{message}</div>
     </div>
   </div>);
 };

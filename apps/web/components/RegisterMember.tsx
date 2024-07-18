@@ -84,6 +84,7 @@ export function RegisterMember({
   } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "stakeAndRegisterMember",
+    showNotification: false,
     onConfirmations: () => {
       publish({
         topic: "member",
@@ -125,6 +126,7 @@ export function RegisterMember({
     args: [communityAddress, registerStakeAmount as bigint], // [allowed spender address, amount ]
     functionName: "approve",
     contractName: "ERC20",
+    showNotification: false,
     onConfirmations: () => {
       writeRegisterMember();
     },
@@ -145,7 +147,7 @@ export function RegisterMember({
   useErrorDetails(allowTokenError, "approve");
   // useErrorDetails(errorGardenToken, "gardenToken");
 
-  async function handleChange() {
+  async function handleClick() {
     if (isMember) {
       writeUnregisterMember();
     } else {
@@ -222,7 +224,7 @@ export function RegisterMember({
       <div className="flex gap-4">
         <div className="flex items-center justify-center">
           <Button
-            onClick={handleChange}
+            onClick={handleClick}
             btnStyle={isMember ? "outline" : "filled"}
             color={isMember ? "danger" : "primary"}
             disabled={missmatchUrl || disabledRegMemberButton}

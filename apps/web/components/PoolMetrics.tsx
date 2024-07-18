@@ -95,6 +95,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
       abi: abiWithErrors(erc20ABI),
       functionName: "approve",
       contractName: "ERC20",
+      showNotification: false,
     });
 
   useEffect(() => {
@@ -111,6 +112,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
       abi: abiWithErrors(alloABI),
       functionName: "fundPool",
       contractName: "Allo",
+      showNotification: false,
       onConfirmations: () => {
         publish({
           topic: "pool",
