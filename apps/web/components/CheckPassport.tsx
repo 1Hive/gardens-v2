@@ -76,9 +76,9 @@ export function CheckPassport({
   const passportStrategy = passportStrategyData?.passportStrategy;
 
   //force active passport for testing
-  if (passportStrategy?.active !== undefined) {
-    passportStrategy.active = true;
-  }
+  // if (passportStrategy?.active !== undefined) {
+  //   passportStrategy.active = true;
+  // }
 
   const handleCheckPassport = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -89,7 +89,7 @@ export function CheckPassport({
         checkPassportRequirements(walletAddr, e);
       }
     } else {
-      // console.debug("No passport required, moving forward...");
+      console.debug("No passport required, moving forward...");
       closeModal();
     }
   };
@@ -105,7 +105,7 @@ export function CheckPassport({
         e,
       );
     } else {
-      // console.debug("No passport found, Submitting passport...");
+      console.debug("No passport found, Submitting passport...");
       e.preventDefault();
       e.stopPropagation();
       submitAndWriteScorer(walletAddr);
@@ -120,11 +120,11 @@ export function CheckPassport({
     score = Number(score);
     threshold = Number(threshold) / CV_PERCENTAGE_SCALE;
     if (score > threshold) {
-      // console.debug("Score meets threshold, moving forward...");
+      console.debug("Score meets threshold, moving forward...");
       setScore(score);
       setThreshold(threshold);
     } else {
-      // console.debug("Score is too low, opening modal...");
+      console.debug("Score is too low, opening modal...");
       e?.preventDefault();
       e?.stopPropagation();
       setScore(score);
