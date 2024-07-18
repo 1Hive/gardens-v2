@@ -40,15 +40,16 @@ export function useContractWriteWithConfirmations(
   });
 
   useTransactionNotification({
+    isWaitingForSig: txResult.status === "loading",
     transactionData: txResult.data,
-    transactionStatus: txResult.status,
+    transactionStatus: txWaitResult.status,
     transactionError: txResult.error,
     contractName: props.contractName,
     enabled: props.showNotification ?? true, // default to true
   });
 
   useEffect(() => {
-    if (txResult.isSuccess && txWaitResult.data) {
+    if (txWaitResult.isSuccess && txWaitResult.data) {
       propsWithChainId.onConfirmations?.(txWaitResult.data);
     }
   }, [txResult.isSuccess, txWaitResult.data]);
@@ -57,7 +58,7 @@ export function useContractWriteWithConfirmations(
     ...txResult,
     ...txWaitResult,
     transactionData: txResult.data,
-    status: txResult.status,
+    // status: txResult.status,
     confirmationsStatus: txWaitResult.status,
     confirmed: !!txWaitResult.isSuccess,
   };

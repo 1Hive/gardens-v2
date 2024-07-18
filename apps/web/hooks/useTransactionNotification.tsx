@@ -4,12 +4,13 @@ import { Id, toast } from "react-toastify";
 import { UserRejectedRequestError } from "viem";
 import { WriteContractResult } from "wagmi/actions";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
-import { WaitingForSig, TxError, TxSuccess } from "@/assets";
+import { WaitingForSig, TxError, TxSuccess, TxMinting } from "@/assets";
 
 type TransactionData = WriteContractResult | undefined;
 
 export const useTransactionNotification = (
-  { transactionData, transactionError, transactionStatus, contractName, enabled }: {
+  { isWaitingForSig, transactionData, transactionError, transactionStatus, contractName, enabled }: {
+    isWaitingForSig: boolean,
     transactionData: TransactionData | null | undefined,
     transactionError: Error | null | undefined,
     transactionStatus: ReturnType<typeof useContractWriteWithConfirmations>["status"],
@@ -26,7 +27,7 @@ export const useTransactionNotification = (
   }, [transactionData?.hash]);
 
   useEffect(() => {
-    if (!enabled || !transactionStatus || transactionStatus === "idle") {
+    if (!enabled || (!transactionStatus && !isWaitingForSig)) {
       return;
     }
 
@@ -35,7 +36,7 @@ export const useTransactionNotification = (
       contractName,
     };
 
-    if (!toastId) {
+    if (!toastId && isWaitingForSig) {
       setToastId(toast(TransactionStatusNotification({
         ...txNotifProps, message: "Waiting for signature",
       }), {
@@ -45,9 +46,14 @@ export const useTransactionNotification = (
         className: "no-icon",
       }));
     } else {
-      if (transactionStatus === "success") {
+      if (transactionStatus === "loading") {
         toast.update(toastId!, {
-          render: TransactionStatusNotification({ ...txNotifProps, message:"Transaction sent successfully" }),
+          render: TransactionStatusNotification({ ...txNotifProps, message:"Approving" }),
+          type: "info",
+        });
+      } else if (transactionStatus === "success") {
+        toast.update(toastId!, {
+          render: TransactionStatusNotification({ ...txNotifProps, message:"Transaction successfull" }),
           autoClose: undefined,
           type: "success",
         });
@@ -61,7 +67,7 @@ export const useTransactionNotification = (
         setToastId(undefined);
       }
     }
-  }, [transactionStatus]);
+  }, [transactionStatus, transactionData, enabled, isWaitingForSig]);
 
   function parseErrorMessage(error: Error) {
     if (error?.cause instanceof UserRejectedRequestError) {
@@ -86,11 +92,12 @@ export const TransactionStatusNotification = ({
 
   switch (status) {
     case "idle":
-      textColor = "";
-      break;
-    case "loading":
       icon = WaitingForSig;
       textColor = "text-warning";
+      break;
+    case "loading":
+      icon = TxMinting;
+      textColor = "text-info";
       break;
     case "success":
       icon = TxSuccess;
@@ -102,11 +109,13 @@ export const TransactionStatusNotification = ({
       break;
   }
 
-  return (<div className="flex flex-row items-center gap-2">
-    {icon && <Image width={40} src={icon} alt="icon" />}
-    <div className="flex flex-col gap-1">
-      <div className="font-bold">{contractName}</div>
-      <div className={textColor}>{message}</div>
+  return (
+    <div className="flex flex-row items-center gap-2">
+      {icon && <Image className={`${status === "loading" ? "animate-spin" : ""}`} width={40} src={icon} alt="icon" />}
+      <div className="flex flex-col gap-1">
+        <div className="font-bold">{contractName}</div>
+        <div className={textColor}>{message}</div>
+      </div>
     </div>
-  </div>);
+  );
 };
