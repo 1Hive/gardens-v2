@@ -98,7 +98,6 @@ export const PoolGovernance = ({
               )}
             </div>
           </div>
-          <SubmitPassport />
           <ActivatePoints
             strategyAddress={strategy.id as Address}
             communityAddress={communityAddress}

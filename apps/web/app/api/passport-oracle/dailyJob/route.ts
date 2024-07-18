@@ -12,16 +12,15 @@ import { privateKeyToAccount } from "viem/accounts";
 import { gql } from "urql";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/constants/contracts";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY || "";
 const CHAIN = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
 const LOCAL_RPC = "http://127.0.0.1:8545";
-const RPC_URL = getContractsAddrByChain(CHAIN)?.rpcUrl || LOCAL_RPC;
-const CONTRACT_ADDRESS = getContractsAddrByChain(CHAIN)
-  ?.passportScorer as Address;
-const SUBGRAPH = getContractsAddrByChain(CHAIN)?.subgraphUrl as string;
+const RPC_URL = getConfigByChain(CHAIN)?.rpcUrl || LOCAL_RPC;
+const CONTRACT_ADDRESS = getConfigByChain(CHAIN)?.passportScorer as Address;
+const SUBGRAPH = getConfigByChain(CHAIN)?.subgraphUrl as string;
 const API_ENDPOINT = "/api/passport/scores";
 
 interface PassportUser {
