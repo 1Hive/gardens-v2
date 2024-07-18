@@ -1,7 +1,15 @@
 "use client";
 import { useState } from "react";
 import { Dialog } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import {
+  Bars3Icon,
+  XMarkIcon,
+  ArrowPathIcon,
+  CloudArrowUpIcon,
+  FingerPrintIcon,
+  LockClosedIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { ecosystem, newLogo } from "@/assets";
 
@@ -10,6 +18,7 @@ export default function Page() {
     <>
       <Hero />
       <WhoIsFor />
+      <OurStack />
     </>
   );
 }
@@ -169,8 +178,6 @@ const Hero = () => {
   );
 };
 
-import { CheckIcon } from "@heroicons/react/20/solid";
-
 const whoIsFor = [
   {
     name: "Web3 token ecosystems",
@@ -188,7 +195,7 @@ const whoIsFor = [
       "Reward contributors and source community decisions to help grow your project.",
   },
   {
-    name: "Web3 communities and DAOs",
+    name: "Web3 communities and DAO's",
     description:
       "Harness collective intelligence to fund initiatives, make decisions and growth.",
   },
@@ -230,6 +237,74 @@ const WhoIsFor = () => {
                   {feature.name}
                 </h5>
                 <p className="mt-2">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ourStack = [
+  {
+    name: "Conviction voting",
+    description:
+      // TODO: ADD the best convicition voting description
+      "Description here",
+    icon: CloudArrowUpIcon,
+  },
+  {
+    name: "Allo protocol",
+    description:
+      "Born from Gitcoin’s Grants Stack, a smart contract framework enabling novel funding mechanisms securely linked to funding pools.",
+    icon: LockClosedIcon,
+  },
+  {
+    name: "Gnosis Safe",
+    description:
+      " Infinitely composable multisigs integrated into Gardens community management and proposal dispute resolution",
+    icon: ArrowPathIcon,
+  },
+  {
+    name: "Gitcoin Passport",
+    description:
+      "Web3’s leading tool for sybil resistance, enabling the custom voting weight systems that help improve collective decision making.",
+    icon: FingerPrintIcon,
+  },
+];
+
+const OurStack = () => {
+  return (
+    <div className="bg-white py-20">
+      <div className="mx-auto max-w-6xl px-4 lg:px-6">
+        <div className="mx-auto max-w-2xl lg:text-center">
+          <p className="mt-2 text-center text-3xl font-bold tracking-tight sm:text-4xl">
+            Comprehensive DAO Toolkit
+          </p>
+          <p className="mt-6 text-center text-lg leading-8">
+            {/* TODO: see if neccesary some minor description here */}
+            Quis tellus eget adipiscing convallis sit sit eget aliquet quis.
+            Suspendisse eget egestas a elementum pulvinar et feugiat blandit at.
+            In mi viverra elit nunc.
+          </p>
+        </div>
+        <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-6xl">
+          <div className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
+            {ourStack.map((feature) => (
+              <div key={feature.name} className="relative rounded-xl pl-16">
+                <div className="text-base font-semibold leading-7 text-gray-900">
+                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-primary-content">
+                    <feature.icon
+                      aria-hidden="true"
+                      className="h-6 w-6 text-white"
+                    />
+                  </div>
+                  {feature.name}
+                </div>
+                <p className="mt-2 text-base leading-7 text-gray-600">
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
