@@ -3,8 +3,8 @@ const config = {
   trailingComma: "es5",
   semi: true,
   tabWidth: 2,
-  singleQuote: true,
-  jsxSingleQuote: true,
+  singleQuote: false,
+  jsxSingleQuote: false,
   plugins: ["prettier-plugin-tailwindcss"],
 };
 
