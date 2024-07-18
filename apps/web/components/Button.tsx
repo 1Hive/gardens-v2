@@ -5,10 +5,10 @@ import { Size } from "@/types";
 
 type ButtonProps = {
   type?:
-    | "button"
-    | "submit"
-    | "reset"
-    | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+  | "button"
+  | "submit"
+  | "reset"
+  | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
   btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
@@ -76,7 +76,7 @@ export function Button({
       disabled={disabled || isLoading}
     >
       <div
-        className={`flex gap-2 transition-opacity ${isLoading ? "opacity-0" : "opacity-100"}`}
+        className={`flex gap-2 items-center justify-center transition-opacity ${isLoading ? "opacity-0" : "opacity-100"}`}
       >
         {icon && icon} {children}
       </div>
@@ -89,8 +89,8 @@ export function Button({
   );
 
   return disabled ?
-      <div className={`tooltip ${styles}`} data-tip={tooltip}>
-        {buttonElement}
-      </div>
+    <div className={`tooltip ${styles}`} data-tip={tooltip}>
+      {buttonElement}
+    </div>
     : buttonElement;
 }

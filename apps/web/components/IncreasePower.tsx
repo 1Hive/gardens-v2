@@ -93,7 +93,6 @@ export const IncreasePower = ({
         comm: communityAddress.toLowerCase(),
       },
     );
-
     if (result && result.members.length > 0) {
       const stakedTokens =
         result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
@@ -357,18 +356,26 @@ export const IncreasePower = ({
             </div>
             {isMember && (
               <div className="flex justify-between">
-                <div className="flex-start flex gap-2">
+                {/* <div className="flex-start flex gap-2">
                   <p>Balance:</p>
                   <DisplayNumber
                     number={accountTokenBalance?.formatted ?? "0"}
                     tokenSymbol={tokenSymbol}
                     compact={true}
                   />
-                </div>
+                </div> */}
                 <div className="flex-start flex gap-2">
-                  <p>Current Stake:</p>
+                  <p>Total Stake:</p>
                   <DisplayNumber
                     number={[BigInt(memberStakedTokens), registerTokenDecimals]}
+                    tokenSymbol={tokenSymbol}
+                    compact={true}
+                  />
+                </div>
+                <div className="flex-start flex gap-2">
+                  <p>Added Stake:</p>
+                  <DisplayNumber
+                    number={[BigInt(memberStakedTokens - registerStakeAmount), registerTokenDecimals]}
                     tokenSymbol={tokenSymbol}
                     compact={true}
                   />
@@ -376,7 +383,6 @@ export const IncreasePower = ({
               </div>
             )}
           </div>
-
           <div className="flex flex-col gap-4">
             <div className="relative">
               <input

@@ -9,10 +9,10 @@ import {
   Address,
   Chain,
 } from "viem";
-import { localhost, arbitrumSepolia, sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { passportScorerABI } from "@/src/generated";
+import { localhost, arbitrumSepolia, sepolia } from "viem/chains";
 import { getConfigByChain } from "@/constants/contracts";
+import { passportScorerABI } from "@/src/generated";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;

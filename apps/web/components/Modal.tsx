@@ -1,6 +1,6 @@
 "use client";
-import { LockClosedIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { MouseEventHandler, ReactElement, ReactNode, forwardRef } from "react";
+import { MouseEventHandler, ReactNode, forwardRef } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface ModalProps {
   icon?: ReactNode;

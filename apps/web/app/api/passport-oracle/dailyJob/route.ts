@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { gql } from "urql";
 import {
   createPublicClient,
   http,
@@ -7,12 +8,11 @@ import {
   Address,
   Chain,
 } from "viem";
-import { localhost, arbitrumSepolia, sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { gql } from "urql";
+import { localhost, arbitrumSepolia, sepolia } from "viem/chains";
+import { getContractsAddrByChain } from "@/constants/contracts";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
-import { getContractsAddrByChain } from "@/constants/contracts";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY || "";
