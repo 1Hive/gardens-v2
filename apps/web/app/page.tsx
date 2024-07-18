@@ -9,6 +9,7 @@ export default function Page() {
   return (
     <>
       <Hero />
+      <WhoIsFor />
     </>
   );
 }
@@ -163,6 +164,76 @@ const Hero = () => {
           </div>
         </div>
         <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-white sm:h-32" />
+      </div>
+    </div>
+  );
+};
+
+import { CheckIcon } from "@heroicons/react/20/solid";
+
+const whoIsFor = [
+  {
+    name: "Web3 token ecosystems",
+    description:
+      "Grow a diverse, healthy network of communities and public goods for your entire tokenomics.",
+  },
+  {
+    name: "Public goods organizations",
+    description:
+      "Coordinate a group of people to create value around a shared covenant.",
+  },
+  {
+    name: "Open source software",
+    description:
+      "Reward contributors and source community decisions to help grow your project.",
+  },
+  {
+    name: "Web3 communities and DAOs",
+    description:
+      "Harness collective intelligence to fund initiatives, make decisions and growth.",
+  },
+  {
+    name: "Doers and Dreamers",
+    description:
+      "Participate in the communities you care about by supporting proposals or flagging abuse",
+  },
+];
+
+const WhoIsFor = () => {
+  return (
+    <div className="bg-white py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+          <div>
+            <h2 className="text-base font-semibold leading-7 text-primary-content">
+              Who is garden for ?
+            </h2>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Our all-in one hub
+            </p>
+            <p className="mt-6 text-base leading-7 text-gray-600">
+              Gardens is a versatile platform designed to nurture and grow
+              decentralized ecosystems. Our intuitive tools empower a wide range
+              of organizations and individuals to harness the power of
+              collective intelligence, from token-based economies to public
+              goods initiatives.
+            </p>
+          </div>
+          <div className="col-span-2 grid grid-cols-1 gap-x-8 gap-y-10 text-base leading-7 text-gray-600 sm:grid-cols-2 lg:gap-y-16">
+            {whoIsFor.map((feature) => (
+              <div key={feature.name} className="relative pl-9">
+                <h5 className="font-chakra font-semibold text-gray-900">
+                  <CheckIcon
+                    aria-hidden="true"
+                    className="absolute left-0 top-1 h-5 w-5 text-primary-content"
+                  />
+                  {feature.name}
+                </h5>
+                <p className="mt-2">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
