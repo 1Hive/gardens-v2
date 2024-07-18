@@ -1,18 +1,20 @@
+/* eslint-disable @typescript-eslint/no-shadow */
+/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
-import React, { ReactElement, ReactNode, useEffect, useState } from "react";
+import React, { ReactElement, useEffect, useState } from "react";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
-import { Button } from "./Button";
-import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import useModal from "@/hooks/useModal";
 import {
   getPassportStrategyDocument,
   getPassportStrategyQuery,
   getPassportUserDocument,
   getPassportUserQuery,
 } from "#/subgraph/.graphclient";
-import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
+import { Button } from "./Button";
 import { Modal } from "@/components";
+import useModal from "@/hooks/useModal";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
 
 type SubmitPassportResponse = {
   data: any;
@@ -24,7 +26,7 @@ type CheckPassportProps = {
   children: ReactElement<{
     onClick: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   }>;
-  enableCheck: boolean;
+  enableCheck?: boolean;
 };
 
 // component should only wrap button component
@@ -32,7 +34,7 @@ type CheckPassportProps = {
 export function CheckPassport({
   strategyAddr,
   children,
-  enableCheck,
+  enableCheck = true,
 }: CheckPassportProps) {
   if (!enableCheck) {
     return <>{children}</>;
@@ -74,21 +76,20 @@ export function CheckPassport({
   const passportStrategy = passportStrategyData?.passportStrategy;
 
   //force active passport for testing
-  // if (passportStrategy?.active !== undefined) {
-  //   passportStrategy.active = true;
-  // }
+  if (passportStrategy?.active !== undefined) {
+    passportStrategy.active = true;
+  }
 
   const handleCheckPassport = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
+
     if (!!passportStrategy && passportStrategy.active) {
       if (walletAddr) {
         checkPassportRequirements(walletAddr, e);
-      } else {
-        console.log("No wallet connected...");
       }
     } else {
-      console.log("No passport required, you can continue...");
+      // console.debug("No passport required, moving forward...");
       closeModal();
     }
   };
@@ -99,12 +100,14 @@ export function CheckPassport({
   ) => {
     if (passportUser) {
       checkScoreRequirement(
-        passportUser?.score,
+        Number(passportUser?.score) / CV_PERCENTAGE_SCALE,
         passportStrategy?.threshold,
         e,
       );
     } else {
-      console.log("No passport found, Submitting passport...");
+      // console.debug("No passport found, Submitting passport...");
+      e.preventDefault();
+      e.stopPropagation();
       submitAndWriteScorer(walletAddr);
     }
   };
@@ -117,12 +120,13 @@ export function CheckPassport({
     score = Number(score);
     threshold = Number(threshold) / CV_PERCENTAGE_SCALE;
     if (score > threshold) {
-      closeModal();
+      // console.debug("Score meets threshold, moving forward...");
+      setScore(score);
+      setThreshold(threshold);
     } else {
-      if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-      }
+      // console.debug("Score is too low, opening modal...");
+      e?.preventDefault();
+      e?.stopPropagation();
       setScore(score);
       setThreshold(threshold);
       setShouldOpenModal(true);
@@ -130,21 +134,15 @@ export function CheckPassport({
   };
 
   const submitAndWriteScorer = async (walletAddr: Address) => {
+    openModal();
     setIsSubmiting(true);
     try {
       const passportResponse = await submitPassport(walletAddr);
-      console.log(passportResponse);
+      console.debug(passportResponse);
       if (passportResponse?.data?.score) {
-        const writeScorerData = await writeScorer(walletAddr);
-        if (!writeScorerData.error) {
-          console.log("Passport submitted and score written successfully!");
-        } else {
-          console.log("Failed to write score.");
-        }
-      } else {
-        console.log("Failed to submit passport.");
+        await writeScorer(walletAddr);
       }
-
+      // gitcoin passport score no need for formating
       if (passportResponse?.data?.score) {
         checkScoreRequirement(
           passportResponse?.data?.score,
@@ -209,7 +207,7 @@ export function CheckPassport({
       }
 
       const data = await response.json();
-      console.log("Response from writeScorer API:", data);
+      console.debug("Response from writeScorer API:", data);
       return data;
     } catch (err) {
       console.error("Error calling writeScorer API:", err);
@@ -231,38 +229,46 @@ export function CheckPassport({
           <div>
             <p>
               Passport score:{" "}
-              <span className="font-semibold"> {score.toFixed(2)}</span>
+              <span className="font-semibold">{score.toFixed(2)}</span>
             </p>
             <p>
               Pool requirement:{" "}
-              <span className="font-semibold"> {threshold.toFixed(2)}</span>
+              <span className="font-semibold">{threshold.toFixed(2)}</span>
             </p>
-            <p className="mt-6">
-              Your score is too low, please go to{" "}
-              <a
-                href="https://passport.gitcoin.co/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary-content underline hover:text-primary-hover-content"
-              >
-                Gitcoin passport website
-              </a>{" "}
-              to increment it before continuing.
-            </p>
+            {score > threshold ? (
+              <div>
+                <h5 className="mt-6">Congratulations!</h5>
+                <p>
+                 Your score meets the pool requirement. You can proceed.</p>
+              </div> ) : (
+              <p className="mt-6">
+                Your score is too low, please go to{" "}
+                <a
+                  href="https://passport.gitcoin.co/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-content underline hover:text-primary-hover-content"
+                >
+                  Gitcoin passport website
+                </a>{" "}
+                to increment it before continuing.
+              </p>
+            )}
           </div>
           {walletAddr && (
             <div className="flex justify-end">
-              {score > threshold ?
+              {score > threshold ? (
                 children
-              : <Button
-                  onClick={() => submitAndWriteScorer(walletAddr!)}
+              ) : (
+                <Button
+                  onClick={() => submitAndWriteScorer(walletAddr)}
                   className="w-fit"
                   btnStyle="outline"
                   isLoading={isSubmiting}
                 >
                   Check again
                 </Button>
-              }
+              )}
             </div>
           )}
         </div>
