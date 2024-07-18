@@ -2,14 +2,14 @@ import {
   AnyVariables,
   Client,
   createClient,
-  fetchExchange,
   DocumentInput,
+  fetchExchange,
   OperationContext,
   ssrExchange,
 } from "urql";
-
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/constants/contracts";
 import { ChainId } from "@/types";
+
 let urqlRecord: Record<
   ChainId | "default",
   [Client, ReturnType<typeof ssrExchange>]
@@ -18,8 +18,7 @@ let urqlRecord: Record<
 const isServer = typeof window === "undefined";
 
 //Subgraph URL
-const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP || "";
-const subgraphOpSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP || "";
+const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP ?? "";
 
 /**
  * Function to initialize urql client. can be used both on client and server
@@ -102,15 +101,12 @@ export async function queryByChain<
   variables: Variables = {} as Variables,
   context?: Partial<OperationContext>,
 ) {
-  const addrs = getContractsAddrByChain(chainId);
-  if (!addrs) {
+  const config = getConfigByChain(chainId);
+  if (!config) {
     throw new Error("Chain not supported");
   }
-  return await urqlClient.query<Data>(query, variables, {
-    url: addrs.subgraphUrl,
+  return urqlClient.query<Data>(query, variables, {
+    url: config.subgraphUrl,
     ...context,
   });
-  // .subscribe((value) => {
-  //   console.log("value", value);
-  // });
 }

@@ -1,15 +1,14 @@
 "use client";
+
 import React from "react";
-import { ActivatePoints } from "./ActivatePoints";
-import { SubmitPassport } from "./SubmitPassport";
-import { Address, useAccount, useContractRead } from "wagmi";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
-import { registryCommunityABI } from "@/src/generated";
-import { CVStrategy } from "#/subgraph/.graphclient";
-import { DisplayNumber } from "./DisplayNumber";
 import { Dnum } from "dnum";
+import { Address, useAccount, useContractRead } from "wagmi";
+import { ActivatePoints } from "./ActivatePoints";
 import { Badge } from "./Badge";
+import { DisplayNumber } from "./DisplayNumber";
+import { registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
+import { abiWithErrors2 } from "@/utils/abiWithErrors";
 
 type PoolGovernanceProps = {
   memberPoolWeight: number;

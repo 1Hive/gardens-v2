@@ -1,8 +1,9 @@
 "use client";
-import React from "react";
-import { ChartWrapper } from "./ChartWrapper";
+
+import React, { useEffect } from "react";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
+import { ChartWrapper } from "./ChartWrapper";
 
 type ScenarioMapping = {
   condition: () => boolean;
@@ -20,11 +21,13 @@ export const ConvictionBarChart = ({
   proposalSupportPct: number;
   isSignalingType: boolean;
 }) => {
-  console.log(
-    "proposalSupportPct: " + proposalSupportPct,
-    "currentConvictionPct: " + currentConvictionPct,
-    "thresholdPct: " + thresholdPct,
-  );
+  useEffect(() => {
+    console.debug(
+      "proposalSupportPct: " + proposalSupportPct,
+      "currentConvictionPct: " + currentConvictionPct,
+      "thresholdPct: " + thresholdPct,
+    );
+  }, [proposalSupportPct, currentConvictionPct, thresholdPct]);
 
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
@@ -146,7 +149,7 @@ export const ConvictionBarChart = ({
         proposalSupportPct > thresholdPct,
       details: [
         {
-          message: `This proposal is ready to be executed!`,
+          message: "This proposal is ready to be executed!",
           growing: null,
         },
       ],
@@ -173,9 +176,10 @@ export const ConvictionBarChart = ({
     },
   };
 
-  const markLineTh: MarkLineComponentOption = isSignalingType
-    ? {}
-    : {
+  const markLineTh: MarkLineComponentOption =
+    isSignalingType ?
+      {}
+      : {
         ...markLine,
         data: [
           {
@@ -193,21 +197,21 @@ export const ConvictionBarChart = ({
       };
 
   const markLineCv: MarkLineComponentOption =
-    currentConvictionPct === 0
-      ? {}
+    currentConvictionPct === 0 ?
+      {}
       : {
-          ...markLine,
-          data: [
-            {
-              xAxis: currentConvictionPct,
-            },
-          ],
-          lineStyle: {
-            width: 2,
-            color: "#69db7c",
-            type: "solid",
+        ...markLine,
+        data: [
+          {
+            xAxis: currentConvictionPct,
           },
-        };
+        ],
+        lineStyle: {
+          width: 2,
+          color: "#69db7c",
+          type: "solid",
+        },
+      };
 
   const option: EChartsOption = {
     title: {

@@ -2,12 +2,12 @@ import { DocumentNode } from "graphql";
 import {
   CVProposal,
   CVStrategy,
-  RegistryCommunity,
-  TokenGarden,
   getCommunityTitlesDocument,
   getPoolTitlesDocument,
   getProposalTitlesDocument,
   getTokenTitleDocument,
+  RegistryCommunity,
+  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { initUrqlClient, queryByChain } from "@/providers/urql";
 // import { getIpfsMetadata } from "@/utils/ipfsUtils";
@@ -27,11 +27,11 @@ interface CommunityTitlesResult {
 
 interface PoolTitlesResult {
   cvstrategies: Array<
-    Pick<CVStrategy, "poolId" | "metadata"> & {
-      registryCommunity: Pick<RegistryCommunity, "communityName"> & {
-        garden: Pick<TokenGarden, "name">;
-      };
-    }
+  Pick<CVStrategy, "poolId" | "metadata"> & {
+    registryCommunity: Pick<RegistryCommunity, "communityName"> & {
+      garden: Pick<TokenGarden, "name">;
+    };
+  }
   >;
 }
 
@@ -154,7 +154,9 @@ export async function getTitlesFromUrlSegments(
   segments: string[],
 ): Promise<(string | undefined)[] | undefined> {
   const segmentsLength = segments.length;
-  if (segmentsLength < 3) return undefined;
+  if (segmentsLength < 3) {
+    return undefined;
+  }
 
   const isStaticSegment = segments[segmentsLength - 1].includes("create");
   const entityIndex = isStaticSegment ? segmentsLength - 2 : segmentsLength - 1;

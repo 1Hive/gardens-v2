@@ -1,8 +1,8 @@
 import React from "react";
-import { NavBar } from "@/components";
-import { GoBackButton } from "@/components";
+import { GoBackButton, NavBar } from "@/components";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-export default function layout({ children }: { children: React.ReactNode }) {
+
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavBar />

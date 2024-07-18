@@ -3,7 +3,7 @@ type MetadataV1 = {
   description: string;
 };
 
-export const ipfsJsonUpload = async (form: {}) => {
+export const ipfsJsonUpload = async (form: object) => {
   try {
     const res = await fetch("/api/ipfs", {
       method: "POST",
@@ -14,9 +14,9 @@ export const ipfsJsonUpload = async (form: {}) => {
     });
     const json = await res.json();
     if (json?.IpfsHash) {
-      return Promise.resolve(json.IpfsHash);
+      return await Promise.resolve(json.IpfsHash);
     } else {
-      return Promise.reject(json);
+      return await Promise.reject(json);
     }
   } catch (err) {
     console.error(err);
@@ -33,9 +33,9 @@ export const ipfsFileUpload = async (selectedFile: File) => {
     });
     const json = await res.json();
     if (json?.IpfsHash) {
-      return Promise.resolve(json.IpfsHash);
+      return await Promise.resolve(json.IpfsHash);
     } else {
-      return Promise.reject(json);
+      return await Promise.reject(json);
     }
   } catch (err) {
     console.error(err);
@@ -60,7 +60,7 @@ export const getIpfsMetadata = async (ipfsHash: string) => {
     if (title) title = proposalMetadata?.title;
     if (description) description = proposalMetadata?.description;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
   return { title: title, description: description };
 };

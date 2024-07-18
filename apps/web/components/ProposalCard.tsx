@@ -1,30 +1,31 @@
 "use client";
+
 import React, { useEffect } from "react";
-import { Badge } from "./Badge";
-import { Button } from "./Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ProposalInputItem } from "./Proposals";
-import { Allo } from "#/subgraph/.graphclient";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import useErrorDetails from "@/utils/getErrorName";
-import { Address } from "wagmi";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { encodeAbiParameters } from "viem";
-import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
-import { calculatePercentage } from "@/utils/numbers";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import { LightCVStrategy, poolTypes } from "@/types";
+import { encodeAbiParameters } from "viem";
+import { Address } from "wagmi";
+import { Allo } from "#/subgraph/.graphclient";
+import { Badge } from "./Badge";
+import { Button } from "./Button";
+import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { alloABI } from "@/src/generated";
+import { LightCVStrategy, poolTypes } from "@/types";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { useErrorDetails } from "@/utils/getErrorName";
+import { calculatePercentage } from "@/utils/numbers";
 
-type ProposalCard = {
+type Props = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
-  i: number;
+  index: number;
   isEditView: boolean;
   tooltipMessage: string;
   memberActivatedPoints: number;
@@ -41,7 +42,7 @@ export function ProposalCard({
   proposalData,
   inputData,
   stakedFilter,
-  i,
+  index,
   isEditView,
   tooltipMessage,
   memberActivatedPoints,
@@ -51,7 +52,7 @@ export function ProposalCard({
   alloInfo,
   inputHandler,
   triggerRenderProposals,
-}: ProposalCard) {
+}: Props) {
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
 
@@ -59,9 +60,9 @@ export function ProposalCard({
   const chainId = useChainIdFromPath();
 
   const calcPoolWeightUsed = (number: number) => {
-    return memberPoolWeight == 0
-      ? 0
-      : ((number / 100) * memberPoolWeight).toFixed(2);
+    return memberPoolWeight == 0 ? 0 : (
+      ((number / 100) * memberPoolWeight).toFixed(2)
+    );
   };
 
   //encode proposal id to pass as argument to distribute function
@@ -136,8 +137,8 @@ export function ProposalCard({
               // TODO: add flexible tooltip and func to check executability
               disabled={executeDisabled}
               tooltip={
-                proposalStatus == 4
-                  ? "Proposal already executed"
+                proposalStatus == 4 ?
+                  "Proposal already executed"
                   : tooltipMessage
               }
               onClick={() =>
@@ -169,9 +170,9 @@ export function ProposalCard({
                 min={0}
                 max={memberActivatedPoints}
                 value={inputData?.value ?? 0}
-                className={`range range-success range-sm min-w-[420px] cursor-pointer`}
+                className={"range range-success range-sm min-w-[420px] cursor-pointer"}
                 step={memberActivatedPoints / 100}
-                onChange={(e) => inputHandler(i, Number(e.target.value))}
+                onChange={(e) => inputHandler(index, Number(e.target.value))}
               />
               <div className="flex w-full justify-between px-[10px]">
                 {[...Array(21)].map((_, i) => (
@@ -191,7 +192,7 @@ export function ProposalCard({
             </div>
           </div>
           <div className="flex max-w-sm flex-1 items-baseline justify-center gap-2 px-8">
-            {inputData?.value < stakedFilter?.value ? (
+            {inputData?.value < stakedFilter?.value ?
               <p className="text-center">
                 Removing to
                 <span className="px-2 py-1 text-xl font-semibold text-info">
@@ -204,8 +205,7 @@ export function ProposalCard({
                 </span>
                 % of pool weight
               </p>
-            ) : (
-              <p className="text-center">
+              : <p className="text-center">
                 Assigning
                 <span className="px-2 py-2 text-2xl font-semibold text-info">
                   {calcPoolWeightUsed(
@@ -217,7 +217,7 @@ export function ProposalCard({
                 </span>
                 % of pool weight
               </p>
-            )}
+            }
           </div>
         </div>
       )}
