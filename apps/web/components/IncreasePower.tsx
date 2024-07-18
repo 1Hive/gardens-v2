@@ -356,14 +356,6 @@ export const IncreasePower = ({
             </div>
             {isMember && (
               <div className="flex justify-between">
-                {/* <div className="flex-start flex gap-2">
-                  <p>Balance:</p>
-                  <DisplayNumber
-                    number={accountTokenBalance?.formatted ?? "0"}
-                    tokenSymbol={tokenSymbol}
-                    compact={true}
-                  />
-                </div> */}
                 <div className="flex-start flex gap-2">
                   <p>Total Stake:</p>
                   <DisplayNumber

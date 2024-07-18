@@ -55,7 +55,9 @@ export function CheckPassport({
   }, [shouldOpenModal]);
 
   useEffect(() => {
-    refetchPassportUser();
+    if (walletAddr) {
+      refetchPassportUser();
+    }
   }, [walletAddr]);
 
   const { data: passportUserData, refetch: refetchPassportUser } =
