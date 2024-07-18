@@ -19,7 +19,7 @@ import {
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { getProposals } from "@/actions/getProposals";
-import { Button, PoolGovernance, ProposalCard } from "@/components";
+import { Button, CheckPassport, PoolGovernance, ProposalCard } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -356,18 +356,21 @@ export function Proposals({
                     No submitted proposals to support
                   </h4>
                   : !editView && (
-                    <Button
-                      icon={
-                        <AdjustmentsHorizontalIcon height={24} width={24} />
-                      }
-                      onClick={() => setEditView((prev) => !prev)}
-                      disabled={disableManSupportButton}
-                      tooltip={String(tooltipMessage)}
+                    <CheckPassport
+                      strategyAddr={strategy.id as Address}
                     >
-                      Manage support
-                    </Button>
+                      <Button
+                        icon={
+                          <AdjustmentsHorizontalIcon height={24} width={24} />
+                        }
+                        onClick={() => setEditView((prev) => !prev)}
+                        disabled={disableManSupportButton}
+                        tooltip={String(tooltipMessage)}
+                      >
+                        Manage support
+                      </Button>
+                    </CheckPassport>
                   )
-
                 : <LoadingSpinner />}
             </div>
             {editView && (
@@ -449,17 +452,21 @@ export function Proposals({
         <div>
           <h4 className="text-2xl">Do you have a great idea?</h4>
           <div className="flex items-center gap-6">
-            <p>Share it with the community and get support !</p>
-            <Link href={createProposalUrl}>
-              <Button
-                btnStyle="filled"
-                disabled={!isConnected || missmatchUrl}
-                tooltip={tooltipMessage}
-                icon={<PlusIcon height={24} width={24} />}
-              >
-                Create Proposal
-              </Button>
-            </Link>
+            <p>Share it with the community and get support!</p>
+            <CheckPassport
+              strategyAddr={strategy.id as Address}
+            >
+              <Link href={createProposalUrl}>
+                <Button
+                  btnStyle="filled"
+                  disabled={!isConnected || missmatchUrl}
+                  tooltip={tooltipMessage}
+                  icon={<PlusIcon height={24} width={24} />}
+                >
+                  Create Proposal
+                </Button>
+              </Link>
+            </CheckPassport>
           </div>
         </div>
       </section>

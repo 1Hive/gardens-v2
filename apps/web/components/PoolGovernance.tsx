@@ -2,17 +2,16 @@
 
 import React from "react";
 import { Dnum } from "dnum";
+import { Address, useAccount, useContractRead } from "wagmi";
 import {
   ActivatePoints,
-  SubmitPassport,
   Badge,
   DisplayNumber,
   CheckPassport,
 } from "@/components/";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
-import { Address, useAccount, useContractRead } from "wagmi";
 import { registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
+import { abiWithErrors2 } from "@/utils/abiWithErrors";
 
 type PoolGovernanceProps = {
   memberPoolWeight: number;
@@ -91,7 +90,7 @@ export const PoolGovernance = ({
                     </p>
                   </div>
                 </>
-              : <div className="flex w-full items-center gap-6">
+                : <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
                     <Badge status={isMemberActivated ? 1 : 0} />
@@ -103,7 +102,7 @@ export const PoolGovernance = ({
           <div className="flex flex-col gap-2">
             <CheckPassport
               strategyAddr={strategy.id as Address}
-              enableCheck={true}
+              enableCheck={!isMemberActivated}
             >
               <ActivatePoints
                 strategyAddress={strategy.id as Address}
