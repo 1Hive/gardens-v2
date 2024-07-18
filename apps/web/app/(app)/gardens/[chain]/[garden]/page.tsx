@@ -1,112 +1,161 @@
-import { tree2, tree3, grassLarge } from "@/assets";
+"use client";
+
+import { tree2, tree3, grassLarge, ecosystem } from "@/assets";
 import Image from "next/image";
-import { CommunityCard } from "@/components";
 import {
-  RegistryCommunity,
-  TokenGarden,
-  getCommunitiesByGardenDocument,
-  getCommunitiesByGardenQuery,
-} from "#/subgraph/.graphclient";
-import { initUrqlClient, queryByChain } from "@/providers/urql";
-import { FormLink } from "@/components";
+  Button,
+  Communities,
+  EthAddress,
+  Statistic,
+  TokenLabel,
+} from "@/components";
+import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
+import React, { useEffect } from "react";
+import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { isProd } from "@/constants/contracts";
+import TokenGardenFaucet from "@/components/TokenGardenFaucet";
+import { Address } from "viem";
+import Link from "next/link";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 
 export const dynamic = "force-dynamic";
 
-const { urqlClient } = initUrqlClient();
-
-export default async function Garden({
+export default function Garden({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error: error } =
-    await queryByChain<getCommunitiesByGardenQuery>(
-      urqlClient,
-      chain,
-      getCommunitiesByGardenDocument,
-      { addr: garden },
-    );
+  const { data: result, error } = useSubgraphQuery<getGardenQuery>({
+    query: getGardenDocument,
+    variables: { addr: garden },
+    changeScope: [
+      { topic: "member" },
+      {
+        topic: "community",
+      },
+      {
+        topic: "garden",
+        id: garden,
+      },
+    ],
+  });
+
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
+
+  useEffect(() => {
+    if (error) {
+      console.error("Error while fetching garden data: ", error);
+    }
+  }, [error]);
 
   let communities = result?.tokenGarden?.communities || [];
 
   communities = communities.filter((com) => com.isValid);
 
-  const tokenGarden = result?.tokenGarden as TokenGarden;
+  const tokenGarden = result?.tokenGarden;
 
-  const fetchAndUpdateCommunities = async (communities: any) => {
-    const promises = communities.map(async (com: any) => {
-      if (com?.covenantIpfsHash) {
-        const ipfsHash = com.covenantIpfsHash;
-        try {
-          const response = await fetch("https://ipfs.io/ipfs/" + ipfsHash);
-          const json = await response.json();
-          // Return a new object with the updated covenantIpfsHash
-          return { ...com, covenantData: json };
-        } catch (error) {
-          console.log(error);
-          // Return the original community object in case of an error
-          return com;
-        }
-      }
-      // Return the original community object if there's no covenantIpfsHash
-      return com;
-    });
+  if (!tokenGarden) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
-    // Wait for all promises to resolve and update the communities array
-    const updatedCommunities = await Promise.all(promises);
-    return updatedCommunities;
+  const gardenTotalMembers = () => {
+    const uniqueMembers = new Set();
+
+    communities.forEach((community) =>
+      community.members?.forEach((member) =>
+        uniqueMembers.add(member?.memberAddress),
+      ),
+    );
+
+    return uniqueMembers.size;
   };
 
-  // Use the function
-  await fetchAndUpdateCommunities(communities)
-    .then((updatedCommunities) => {
-      communities = updatedCommunities; // Here you'll have the communities array with updated covenantIpfsHashes
-    })
-    .catch((error) => {
-      console.error("An error occurred:", error);
-    });
-
   return (
-    <div className="relative mx-auto max-w-6xl space-y-10 rounded-xl border-2 border-black bg-base-100 bg-surface p-8">
-      <header className="relative flex min-h-[500px] flex-col items-center justify-between gap-6 px-3">
-        <div className="flex h-full min-h-96 flex-col items-center justify-between p-1">
-          <h3 className="text-center font-press">
-            {tokenGarden?.symbol} Token Ecosystem
-          </h3>
-          <p className="max-w-lg text-center font-semibold leading-7">
-            Discover communities in the
-            <span className="text-primary"> {tokenGarden?.name} Garden</span>,
-            where you connect with people and support proposals bounded by a
-            shared
-            <span className="text-primary"> covenant.</span>
-          </p>
-          <FormLink
-            label="Create Community"
-            href={`/gardens/${chain}/${garden}/create-community`}
+    <div className="page-layout">
+      <header className="section-layout flex flex-col gap-10 p-10 md:flex-row ">
+        <div className="flex h-[283px] min-h-[283px] w-[311px] min-w-[311px] items-center justify-center overflow-hidden rounded-2xl">
+          <Image
+            src={ecosystem}
+            width={311}
+            height={283}
+            alt={`${tokenGarden?.name}`}
           />
         </div>
-        <Image src={tree2} alt="tree" className="absolute bottom-0 left-5" />
-        <Image src={tree3} alt="tree" className="absolute bottom-0 right-5" />
-        <Image
-          src={grassLarge}
-          alt="grass"
-          className="absolute -bottom-1 h-10 overflow-hidden"
-        />
+        <div className="flex flex-col gap-6">
+          <div>
+            <div className="mb-2 flex flex-col">
+              <div className="flex items-center gap-4">
+                <h2>{tokenGarden?.name}</h2> <TokenLabel chainId={chain} />
+              </div>
+              <EthAddress address={tokenGarden?.id as Address} />
+            </div>
+            <p className="max-w-lg">
+              Discover communities in the
+              <span className="font-bold"> {tokenGarden?.name} Garden</span>,
+              where you connect with people and support proposals bounded by a
+              shared
+              <span className="font-bold"> covenant.</span>
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Statistic
+              label="communities"
+              icon={<CubeTransparentIcon />}
+              count={communities?.length ?? 0}
+            />
+            <Statistic label="members" count={gardenTotalMembers()} />
+          </div>
+        </div>
       </header>
-      <section className="mx-auto flex flex-col gap-8">
-        <h4 className="rounded-b-xl bg-surface py-6 text-center font-press shadow">
-          {tokenGarden?.name} Communities
-        </h4>
-
-        {/* communites */}
-        {communities.map((community, i) => (
-          <CommunityCard
-            {...community}
-            tokenGarden={tokenGarden}
-            key={`${community.communityName}_${i}`}
-          />
-        ))}
+      <Communities communities={communities} />
+      <section className="section-layout ">
+        <div className="flex flex-col gap-10 overflow-x-hidden">
+          <header>
+            <h4 className="text-secondary-content">
+              Create your own community
+            </h4>
+          </header>
+          <div className="relative flex h-[219px] justify-center">
+            <Link
+              href={`/gardens/${chain}/${garden}/create-community`}
+              className="mt-6"
+            >
+              <Button
+                btnStyle="filled"
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+                icon={<PlusIcon height={24} width={24} />}
+              >
+                Create a community
+              </Button>
+            </Link>
+            <Image
+              src={tree2}
+              alt="tree"
+              className="absolute bottom-0 left-5"
+            />
+            <Image
+              src={tree3}
+              alt="tree"
+              className="absolute bottom-0 right-5"
+            />
+            <Image
+              src={grassLarge}
+              alt="grass"
+              className="absolute bottom-0 min-w-[1080px]"
+            />
+          </div>
+        </div>
       </section>
+      {!isProd && tokenGarden && (
+        <TokenGardenFaucet token={tokenGarden}></TokenGardenFaucet>
+      )}
     </div>
   );
 }

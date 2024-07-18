@@ -14,17 +14,11 @@
     "^~/(.*)$",
     "^[./]"
   ],
-  "importOrderParserPlugins": [
-    "typescript",
-    "jsx",
-    "decorators-legacy"
-  ],
+  "importOrderParserPlugins": ["typescript", "jsx", "decorators-legacy"],
   "importOrderTypeScriptVersion": "4.4.0",
   "overrides": [
     {
-      "files": [
-        "*.yaml|*.yml"
-      ],
+      "files": ["*.yaml|*.yml"],
       "options": {
         "bracketSpacing": false
       }

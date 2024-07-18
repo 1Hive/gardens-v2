@@ -7,22 +7,18 @@ export const GoBackButton = () => {
   const router = useRouter();
   const path = usePathname();
 
-  const goBack = () => {
-    router.back();
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   return (
     <>
       {path === "/gardens" ? null : (
         <Button
-          variant="link"
-          onClick={goBack}
-          className="fixed left-2 top-28 px-4 text-xs"
+          aria-label="Go back"
+          btnStyle="link"
+          color="primary"
+          onClick={() => router.back()}
+          className="w-fit !p-0 subtitle2"
           icon={<ArrowLeftIcon className="h-4 w-4" />}
         >
-          {"Back"}
+          Back
         </Button>
       )}
     </>

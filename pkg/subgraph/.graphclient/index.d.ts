@@ -32,9 +32,7 @@ export type Scalars = {
     BigInt: any;
     Bytes: any;
     Int8: any;
-    Timestamp: any;
 };
-export type Aggregation_interval = 'hour' | 'day';
 export type Allo = {
     id: Scalars['ID'];
     chainId: Scalars['BigInt'];
@@ -769,6 +767,218 @@ export type Member_filter = {
 export type Member_orderBy = 'id' | 'memberCommunity' | 'stakes';
 /** Defines the order direction, either ascending or descending */
 export type OrderDirection = 'asc' | 'desc';
+export type PassportScorer = {
+    id: Scalars['ID'];
+    strategies?: Maybe<Array<PassportStrategy>>;
+    users?: Maybe<Array<PassportUser>>;
+};
+export type PassportScorerstrategiesArgs = {
+    skip?: InputMaybe<Scalars['Int']>;
+    first?: InputMaybe<Scalars['Int']>;
+    orderBy?: InputMaybe<PassportStrategy_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<PassportStrategy_filter>;
+};
+export type PassportScorerusersArgs = {
+    skip?: InputMaybe<Scalars['Int']>;
+    first?: InputMaybe<Scalars['Int']>;
+    orderBy?: InputMaybe<PassportUser_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<PassportUser_filter>;
+};
+export type PassportScorer_filter = {
+    id?: InputMaybe<Scalars['ID']>;
+    id_not?: InputMaybe<Scalars['ID']>;
+    id_gt?: InputMaybe<Scalars['ID']>;
+    id_lt?: InputMaybe<Scalars['ID']>;
+    id_gte?: InputMaybe<Scalars['ID']>;
+    id_lte?: InputMaybe<Scalars['ID']>;
+    id_in?: InputMaybe<Array<Scalars['ID']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+    strategies_?: InputMaybe<PassportStrategy_filter>;
+    users_?: InputMaybe<PassportUser_filter>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<PassportScorer_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<PassportScorer_filter>>>;
+};
+export type PassportScorer_orderBy = 'id' | 'strategies' | 'users';
+export type PassportStrategy = {
+    id: Scalars['ID'];
+    passportScorer: PassportScorer;
+    strategy: CVStrategy;
+    threshold: Scalars['BigInt'];
+    councilSafe: Scalars['String'];
+    active: Scalars['Boolean'];
+};
+export type PassportStrategy_filter = {
+    id?: InputMaybe<Scalars['ID']>;
+    id_not?: InputMaybe<Scalars['ID']>;
+    id_gt?: InputMaybe<Scalars['ID']>;
+    id_lt?: InputMaybe<Scalars['ID']>;
+    id_gte?: InputMaybe<Scalars['ID']>;
+    id_lte?: InputMaybe<Scalars['ID']>;
+    id_in?: InputMaybe<Array<Scalars['ID']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+    passportScorer?: InputMaybe<Scalars['String']>;
+    passportScorer_not?: InputMaybe<Scalars['String']>;
+    passportScorer_gt?: InputMaybe<Scalars['String']>;
+    passportScorer_lt?: InputMaybe<Scalars['String']>;
+    passportScorer_gte?: InputMaybe<Scalars['String']>;
+    passportScorer_lte?: InputMaybe<Scalars['String']>;
+    passportScorer_in?: InputMaybe<Array<Scalars['String']>>;
+    passportScorer_not_in?: InputMaybe<Array<Scalars['String']>>;
+    passportScorer_contains?: InputMaybe<Scalars['String']>;
+    passportScorer_contains_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_not_contains?: InputMaybe<Scalars['String']>;
+    passportScorer_not_contains_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_starts_with?: InputMaybe<Scalars['String']>;
+    passportScorer_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_not_starts_with?: InputMaybe<Scalars['String']>;
+    passportScorer_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_ends_with?: InputMaybe<Scalars['String']>;
+    passportScorer_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_not_ends_with?: InputMaybe<Scalars['String']>;
+    passportScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_?: InputMaybe<PassportScorer_filter>;
+    strategy?: InputMaybe<Scalars['String']>;
+    strategy_not?: InputMaybe<Scalars['String']>;
+    strategy_gt?: InputMaybe<Scalars['String']>;
+    strategy_lt?: InputMaybe<Scalars['String']>;
+    strategy_gte?: InputMaybe<Scalars['String']>;
+    strategy_lte?: InputMaybe<Scalars['String']>;
+    strategy_in?: InputMaybe<Array<Scalars['String']>>;
+    strategy_not_in?: InputMaybe<Array<Scalars['String']>>;
+    strategy_contains?: InputMaybe<Scalars['String']>;
+    strategy_contains_nocase?: InputMaybe<Scalars['String']>;
+    strategy_not_contains?: InputMaybe<Scalars['String']>;
+    strategy_not_contains_nocase?: InputMaybe<Scalars['String']>;
+    strategy_starts_with?: InputMaybe<Scalars['String']>;
+    strategy_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    strategy_not_starts_with?: InputMaybe<Scalars['String']>;
+    strategy_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    strategy_ends_with?: InputMaybe<Scalars['String']>;
+    strategy_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    strategy_not_ends_with?: InputMaybe<Scalars['String']>;
+    strategy_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    strategy_?: InputMaybe<CVStrategy_filter>;
+    threshold?: InputMaybe<Scalars['BigInt']>;
+    threshold_not?: InputMaybe<Scalars['BigInt']>;
+    threshold_gt?: InputMaybe<Scalars['BigInt']>;
+    threshold_lt?: InputMaybe<Scalars['BigInt']>;
+    threshold_gte?: InputMaybe<Scalars['BigInt']>;
+    threshold_lte?: InputMaybe<Scalars['BigInt']>;
+    threshold_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    threshold_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    councilSafe?: InputMaybe<Scalars['String']>;
+    councilSafe_not?: InputMaybe<Scalars['String']>;
+    councilSafe_gt?: InputMaybe<Scalars['String']>;
+    councilSafe_lt?: InputMaybe<Scalars['String']>;
+    councilSafe_gte?: InputMaybe<Scalars['String']>;
+    councilSafe_lte?: InputMaybe<Scalars['String']>;
+    councilSafe_in?: InputMaybe<Array<Scalars['String']>>;
+    councilSafe_not_in?: InputMaybe<Array<Scalars['String']>>;
+    councilSafe_contains?: InputMaybe<Scalars['String']>;
+    councilSafe_contains_nocase?: InputMaybe<Scalars['String']>;
+    councilSafe_not_contains?: InputMaybe<Scalars['String']>;
+    councilSafe_not_contains_nocase?: InputMaybe<Scalars['String']>;
+    councilSafe_starts_with?: InputMaybe<Scalars['String']>;
+    councilSafe_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    councilSafe_not_starts_with?: InputMaybe<Scalars['String']>;
+    councilSafe_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    councilSafe_ends_with?: InputMaybe<Scalars['String']>;
+    councilSafe_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    councilSafe_not_ends_with?: InputMaybe<Scalars['String']>;
+    councilSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    active?: InputMaybe<Scalars['Boolean']>;
+    active_not?: InputMaybe<Scalars['Boolean']>;
+    active_in?: InputMaybe<Array<Scalars['Boolean']>>;
+    active_not_in?: InputMaybe<Array<Scalars['Boolean']>>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
+};
+export type PassportStrategy_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'threshold' | 'councilSafe' | 'active';
+export type PassportUser = {
+    id: Scalars['ID'];
+    passportScorer: PassportScorer;
+    userAddress: Scalars['String'];
+    score: Scalars['BigInt'];
+    lastUpdated: Scalars['BigInt'];
+};
+export type PassportUser_filter = {
+    id?: InputMaybe<Scalars['ID']>;
+    id_not?: InputMaybe<Scalars['ID']>;
+    id_gt?: InputMaybe<Scalars['ID']>;
+    id_lt?: InputMaybe<Scalars['ID']>;
+    id_gte?: InputMaybe<Scalars['ID']>;
+    id_lte?: InputMaybe<Scalars['ID']>;
+    id_in?: InputMaybe<Array<Scalars['ID']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']>>;
+    passportScorer?: InputMaybe<Scalars['String']>;
+    passportScorer_not?: InputMaybe<Scalars['String']>;
+    passportScorer_gt?: InputMaybe<Scalars['String']>;
+    passportScorer_lt?: InputMaybe<Scalars['String']>;
+    passportScorer_gte?: InputMaybe<Scalars['String']>;
+    passportScorer_lte?: InputMaybe<Scalars['String']>;
+    passportScorer_in?: InputMaybe<Array<Scalars['String']>>;
+    passportScorer_not_in?: InputMaybe<Array<Scalars['String']>>;
+    passportScorer_contains?: InputMaybe<Scalars['String']>;
+    passportScorer_contains_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_not_contains?: InputMaybe<Scalars['String']>;
+    passportScorer_not_contains_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_starts_with?: InputMaybe<Scalars['String']>;
+    passportScorer_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_not_starts_with?: InputMaybe<Scalars['String']>;
+    passportScorer_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_ends_with?: InputMaybe<Scalars['String']>;
+    passportScorer_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_not_ends_with?: InputMaybe<Scalars['String']>;
+    passportScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    passportScorer_?: InputMaybe<PassportScorer_filter>;
+    userAddress?: InputMaybe<Scalars['String']>;
+    userAddress_not?: InputMaybe<Scalars['String']>;
+    userAddress_gt?: InputMaybe<Scalars['String']>;
+    userAddress_lt?: InputMaybe<Scalars['String']>;
+    userAddress_gte?: InputMaybe<Scalars['String']>;
+    userAddress_lte?: InputMaybe<Scalars['String']>;
+    userAddress_in?: InputMaybe<Array<Scalars['String']>>;
+    userAddress_not_in?: InputMaybe<Array<Scalars['String']>>;
+    userAddress_contains?: InputMaybe<Scalars['String']>;
+    userAddress_contains_nocase?: InputMaybe<Scalars['String']>;
+    userAddress_not_contains?: InputMaybe<Scalars['String']>;
+    userAddress_not_contains_nocase?: InputMaybe<Scalars['String']>;
+    userAddress_starts_with?: InputMaybe<Scalars['String']>;
+    userAddress_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    userAddress_not_starts_with?: InputMaybe<Scalars['String']>;
+    userAddress_not_starts_with_nocase?: InputMaybe<Scalars['String']>;
+    userAddress_ends_with?: InputMaybe<Scalars['String']>;
+    userAddress_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    userAddress_not_ends_with?: InputMaybe<Scalars['String']>;
+    userAddress_not_ends_with_nocase?: InputMaybe<Scalars['String']>;
+    score?: InputMaybe<Scalars['BigInt']>;
+    score_not?: InputMaybe<Scalars['BigInt']>;
+    score_gt?: InputMaybe<Scalars['BigInt']>;
+    score_lt?: InputMaybe<Scalars['BigInt']>;
+    score_gte?: InputMaybe<Scalars['BigInt']>;
+    score_lte?: InputMaybe<Scalars['BigInt']>;
+    score_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    score_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    lastUpdated?: InputMaybe<Scalars['BigInt']>;
+    lastUpdated_not?: InputMaybe<Scalars['BigInt']>;
+    lastUpdated_gt?: InputMaybe<Scalars['BigInt']>;
+    lastUpdated_lt?: InputMaybe<Scalars['BigInt']>;
+    lastUpdated_gte?: InputMaybe<Scalars['BigInt']>;
+    lastUpdated_lte?: InputMaybe<Scalars['BigInt']>;
+    lastUpdated_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    lastUpdated_not_in?: InputMaybe<Array<Scalars['BigInt']>>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<PassportUser_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<PassportUser_filter>>>;
+};
+export type PassportUser_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'userAddress' | 'score' | 'lastUpdated';
 export type Query = {
     cvstrategy?: Maybe<CVStrategy>;
     cvstrategies: Array<CVStrategy>;
@@ -792,6 +1002,12 @@ export type Query = {
     tokenGardens: Array<TokenGarden>;
     allo?: Maybe<Allo>;
     allos: Array<Allo>;
+    passportScorer?: Maybe<PassportScorer>;
+    passportScorers: Array<PassportScorer>;
+    passportStrategy?: Maybe<PassportStrategy>;
+    passportStrategies: Array<PassportStrategy>;
+    passportUser?: Maybe<PassportUser>;
+    passportUsers: Array<PassportUser>;
     /** Access to subgraph metadata */
     _meta?: Maybe<_Meta_>;
 };
@@ -946,6 +1162,48 @@ export type QueryallosArgs = {
     orderBy?: InputMaybe<Allo_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
     where?: InputMaybe<Allo_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerypassportScorerArgs = {
+    id: Scalars['ID'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerypassportScorersArgs = {
+    skip?: InputMaybe<Scalars['Int']>;
+    first?: InputMaybe<Scalars['Int']>;
+    orderBy?: InputMaybe<PassportScorer_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<PassportScorer_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerypassportStrategyArgs = {
+    id: Scalars['ID'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerypassportStrategiesArgs = {
+    skip?: InputMaybe<Scalars['Int']>;
+    first?: InputMaybe<Scalars['Int']>;
+    orderBy?: InputMaybe<PassportStrategy_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<PassportStrategy_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerypassportUserArgs = {
+    id: Scalars['ID'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerypassportUsersArgs = {
+    skip?: InputMaybe<Scalars['Int']>;
+    first?: InputMaybe<Scalars['Int']>;
+    orderBy?: InputMaybe<PassportUser_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<PassportUser_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1373,6 +1631,12 @@ export type Subscription = {
     tokenGardens: Array<TokenGarden>;
     allo?: Maybe<Allo>;
     allos: Array<Allo>;
+    passportScorer?: Maybe<PassportScorer>;
+    passportScorers: Array<PassportScorer>;
+    passportStrategy?: Maybe<PassportStrategy>;
+    passportStrategies: Array<PassportStrategy>;
+    passportUser?: Maybe<PassportUser>;
+    passportUsers: Array<PassportUser>;
     /** Access to subgraph metadata */
     _meta?: Maybe<_Meta_>;
 };
@@ -1527,6 +1791,48 @@ export type SubscriptionallosArgs = {
     orderBy?: InputMaybe<Allo_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
     where?: InputMaybe<Allo_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptionpassportScorerArgs = {
+    id: Scalars['ID'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptionpassportScorersArgs = {
+    skip?: InputMaybe<Scalars['Int']>;
+    first?: InputMaybe<Scalars['Int']>;
+    orderBy?: InputMaybe<PassportScorer_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<PassportScorer_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptionpassportStrategyArgs = {
+    id: Scalars['ID'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptionpassportStrategiesArgs = {
+    skip?: InputMaybe<Scalars['Int']>;
+    first?: InputMaybe<Scalars['Int']>;
+    orderBy?: InputMaybe<PassportStrategy_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<PassportStrategy_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptionpassportUserArgs = {
+    id: Scalars['ID'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptionpassportUsersArgs = {
+    skip?: InputMaybe<Scalars['Int']>;
+    first?: InputMaybe<Scalars['Int']>;
+    orderBy?: InputMaybe<PassportUser_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<PassportUser_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1699,8 +2005,6 @@ export type _Block_ = {
     number: Scalars['Int'];
     /** Integer representation of the timestamp stored in blocks for the chain */
     timestamp?: Maybe<Scalars['Int']>;
-    /** The hash of the parent block */
-    parentHash?: Maybe<Scalars['Bytes']>;
 };
 /** The type for the top-level _meta field */
 export type _Meta_ = {
@@ -1761,7 +2065,6 @@ export type NextResolverFn<T> = () => Promise<T>;
 export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs = {}> = (next: NextResolverFn<TResult>, parent: TParent, args: TArgs, context: TContext, info: GraphQLResolveInfo) => TResult | Promise<TResult>;
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
-    Aggregation_interval: Aggregation_interval;
     Allo: ResolverTypeWrapper<Allo>;
     Allo_filter: Allo_filter;
     Allo_orderBy: Allo_orderBy;
@@ -1794,6 +2097,15 @@ export type ResolversTypes = ResolversObject<{
     Member_filter: Member_filter;
     Member_orderBy: Member_orderBy;
     OrderDirection: OrderDirection;
+    PassportScorer: ResolverTypeWrapper<PassportScorer>;
+    PassportScorer_filter: PassportScorer_filter;
+    PassportScorer_orderBy: PassportScorer_orderBy;
+    PassportStrategy: ResolverTypeWrapper<PassportStrategy>;
+    PassportStrategy_filter: PassportStrategy_filter;
+    PassportStrategy_orderBy: PassportStrategy_orderBy;
+    PassportUser: ResolverTypeWrapper<PassportUser>;
+    PassportUser_filter: PassportUser_filter;
+    PassportUser_orderBy: PassportUser_orderBy;
     Query: ResolverTypeWrapper<{}>;
     RegistryCommunity: ResolverTypeWrapper<RegistryCommunity>;
     RegistryCommunity_filter: RegistryCommunity_filter;
@@ -1806,7 +2118,6 @@ export type ResolversTypes = ResolversObject<{
     Stake_orderBy: Stake_orderBy;
     String: ResolverTypeWrapper<Scalars['String']>;
     Subscription: ResolverTypeWrapper<{}>;
-    Timestamp: ResolverTypeWrapper<Scalars['Timestamp']>;
     TokenGarden: ResolverTypeWrapper<TokenGarden>;
     TokenGarden_filter: TokenGarden_filter;
     TokenGarden_orderBy: TokenGarden_orderBy;
@@ -1840,6 +2151,12 @@ export type ResolversParentTypes = ResolversObject<{
     MemberStrategy: MemberStrategy;
     MemberStrategy_filter: MemberStrategy_filter;
     Member_filter: Member_filter;
+    PassportScorer: PassportScorer;
+    PassportScorer_filter: PassportScorer_filter;
+    PassportStrategy: PassportStrategy;
+    PassportStrategy_filter: PassportStrategy_filter;
+    PassportUser: PassportUser;
+    PassportUser_filter: PassportUser_filter;
     Query: {};
     RegistryCommunity: RegistryCommunity;
     RegistryCommunity_filter: RegistryCommunity_filter;
@@ -1849,7 +2166,6 @@ export type ResolversParentTypes = ResolversObject<{
     Stake_filter: Stake_filter;
     String: Scalars['String'];
     Subscription: {};
-    Timestamp: Scalars['Timestamp'];
     TokenGarden: TokenGarden;
     TokenGarden_filter: TokenGarden_filter;
     _Block_: _Block_;
@@ -1953,6 +2269,29 @@ export type MemberStrategyResolvers<ContextType = MeshContext, ParentType extend
     activatedPoints?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
+export type PassportScorerResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['PassportScorer'] = ResolversParentTypes['PassportScorer']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    strategies?: Resolver<Maybe<Array<ResolversTypes['PassportStrategy']>>, ParentType, ContextType, RequireFields<PassportScorerstrategiesArgs, 'skip' | 'first'>>;
+    users?: Resolver<Maybe<Array<ResolversTypes['PassportUser']>>, ParentType, ContextType, RequireFields<PassportScorerusersArgs, 'skip' | 'first'>>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+export type PassportStrategyResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['PassportStrategy'] = ResolversParentTypes['PassportStrategy']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    passportScorer?: Resolver<ResolversTypes['PassportScorer'], ParentType, ContextType>;
+    strategy?: Resolver<ResolversTypes['CVStrategy'], ParentType, ContextType>;
+    threshold?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    councilSafe?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+    active?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+export type PassportUserResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['PassportUser'] = ResolversParentTypes['PassportUser']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    passportScorer?: Resolver<ResolversTypes['PassportScorer'], ParentType, ContextType>;
+    userAddress?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+    score?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    lastUpdated?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
 export type QueryResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
     cvstrategy?: Resolver<Maybe<ResolversTypes['CVStrategy']>, ParentType, ContextType, RequireFields<QuerycvstrategyArgs, 'id' | 'subgraphError'>>;
     cvstrategies?: Resolver<Array<ResolversTypes['CVStrategy']>, ParentType, ContextType, RequireFields<QuerycvstrategiesArgs, 'skip' | 'first' | 'subgraphError'>>;
@@ -1976,6 +2315,12 @@ export type QueryResolvers<ContextType = MeshContext, ParentType extends Resolve
     tokenGardens?: Resolver<Array<ResolversTypes['TokenGarden']>, ParentType, ContextType, RequireFields<QuerytokenGardensArgs, 'skip' | 'first' | 'subgraphError'>>;
     allo?: Resolver<Maybe<ResolversTypes['Allo']>, ParentType, ContextType, RequireFields<QueryalloArgs, 'id' | 'subgraphError'>>;
     allos?: Resolver<Array<ResolversTypes['Allo']>, ParentType, ContextType, RequireFields<QueryallosArgs, 'skip' | 'first' | 'subgraphError'>>;
+    passportScorer?: Resolver<Maybe<ResolversTypes['PassportScorer']>, ParentType, ContextType, RequireFields<QuerypassportScorerArgs, 'id' | 'subgraphError'>>;
+    passportScorers?: Resolver<Array<ResolversTypes['PassportScorer']>, ParentType, ContextType, RequireFields<QuerypassportScorersArgs, 'skip' | 'first' | 'subgraphError'>>;
+    passportStrategy?: Resolver<Maybe<ResolversTypes['PassportStrategy']>, ParentType, ContextType, RequireFields<QuerypassportStrategyArgs, 'id' | 'subgraphError'>>;
+    passportStrategies?: Resolver<Array<ResolversTypes['PassportStrategy']>, ParentType, ContextType, RequireFields<QuerypassportStrategiesArgs, 'skip' | 'first' | 'subgraphError'>>;
+    passportUser?: Resolver<Maybe<ResolversTypes['PassportUser']>, ParentType, ContextType, RequireFields<QuerypassportUserArgs, 'id' | 'subgraphError'>>;
+    passportUsers?: Resolver<Array<ResolversTypes['PassportUser']>, ParentType, ContextType, RequireFields<QuerypassportUsersArgs, 'skip' | 'first' | 'subgraphError'>>;
     _meta?: Resolver<Maybe<ResolversTypes['_Meta_']>, ParentType, ContextType, Partial<Query_metaArgs>>;
 }>;
 export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['RegistryCommunity'] = ResolversParentTypes['RegistryCommunity']> = ResolversObject<{
@@ -2037,11 +2382,14 @@ export type SubscriptionResolvers<ContextType = MeshContext, ParentType extends 
     tokenGardens?: SubscriptionResolver<Array<ResolversTypes['TokenGarden']>, "tokenGardens", ParentType, ContextType, RequireFields<SubscriptiontokenGardensArgs, 'skip' | 'first' | 'subgraphError'>>;
     allo?: SubscriptionResolver<Maybe<ResolversTypes['Allo']>, "allo", ParentType, ContextType, RequireFields<SubscriptionalloArgs, 'id' | 'subgraphError'>>;
     allos?: SubscriptionResolver<Array<ResolversTypes['Allo']>, "allos", ParentType, ContextType, RequireFields<SubscriptionallosArgs, 'skip' | 'first' | 'subgraphError'>>;
+    passportScorer?: SubscriptionResolver<Maybe<ResolversTypes['PassportScorer']>, "passportScorer", ParentType, ContextType, RequireFields<SubscriptionpassportScorerArgs, 'id' | 'subgraphError'>>;
+    passportScorers?: SubscriptionResolver<Array<ResolversTypes['PassportScorer']>, "passportScorers", ParentType, ContextType, RequireFields<SubscriptionpassportScorersArgs, 'skip' | 'first' | 'subgraphError'>>;
+    passportStrategy?: SubscriptionResolver<Maybe<ResolversTypes['PassportStrategy']>, "passportStrategy", ParentType, ContextType, RequireFields<SubscriptionpassportStrategyArgs, 'id' | 'subgraphError'>>;
+    passportStrategies?: SubscriptionResolver<Array<ResolversTypes['PassportStrategy']>, "passportStrategies", ParentType, ContextType, RequireFields<SubscriptionpassportStrategiesArgs, 'skip' | 'first' | 'subgraphError'>>;
+    passportUser?: SubscriptionResolver<Maybe<ResolversTypes['PassportUser']>, "passportUser", ParentType, ContextType, RequireFields<SubscriptionpassportUserArgs, 'id' | 'subgraphError'>>;
+    passportUsers?: SubscriptionResolver<Array<ResolversTypes['PassportUser']>, "passportUsers", ParentType, ContextType, RequireFields<SubscriptionpassportUsersArgs, 'skip' | 'first' | 'subgraphError'>>;
     _meta?: SubscriptionResolver<Maybe<ResolversTypes['_Meta_']>, "_meta", ParentType, ContextType, Partial<Subscription_metaArgs>>;
 }>;
-export interface TimestampScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Timestamp'], any> {
-    name: 'Timestamp';
-}
 export type TokenGardenResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['TokenGarden'] = ResolversParentTypes['TokenGarden']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2059,7 +2407,6 @@ export type _Block_Resolvers<ContextType = MeshContext, ParentType extends Resol
     hash?: Resolver<Maybe<ResolversTypes['Bytes']>, ParentType, ContextType>;
     number?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
     timestamp?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-    parentHash?: Resolver<Maybe<ResolversTypes['Bytes']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type _Meta_Resolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['_Meta_'] = ResolversParentTypes['_Meta_']> = ResolversObject<{
@@ -2080,12 +2427,14 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     Member?: MemberResolvers<ContextType>;
     MemberCommunity?: MemberCommunityResolvers<ContextType>;
     MemberStrategy?: MemberStrategyResolvers<ContextType>;
+    PassportScorer?: PassportScorerResolvers<ContextType>;
+    PassportStrategy?: PassportStrategyResolvers<ContextType>;
+    PassportUser?: PassportUserResolvers<ContextType>;
     Query?: QueryResolvers<ContextType>;
     RegistryCommunity?: RegistryCommunityResolvers<ContextType>;
     RegistryFactory?: RegistryFactoryResolvers<ContextType>;
     Stake?: StakeResolvers<ContextType>;
     Subscription?: SubscriptionResolvers<ContextType>;
-    Timestamp?: GraphQLScalarType;
     TokenGarden?: TokenGardenResolvers<ContextType>;
     _Block_?: _Block_Resolvers<ContextType>;
     _Meta_?: _Meta_Resolvers<ContextType>;
@@ -2110,7 +2459,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
     getMemberStrategy(variables: Exact<{
-        meStr: string;
+        wallet: string;
     }>, options?: TOperationContext): Promise<getMemberStrategyQuery>;
     isMember(variables: Exact<{
         me: string;
@@ -2123,9 +2472,13 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         communityAddr: string;
         tokenAddr: string;
     }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
-    getCommunitiesByGarden(variables: Exact<{
+    getGarden(variables: Exact<{
         addr: string;
-    }>, options?: TOperationContext): Promise<getCommunitiesByGardenQuery>;
+    }>, options?: TOperationContext): Promise<getGardenQuery>;
+    getCommunity(variables: Exact<{
+        communityAddr: string;
+        tokenAddr: string;
+    }>, options?: TOperationContext): Promise<getCommunityQuery>;
     getCommunityCreationData(variables: Exact<{
         addr: string;
     }>, options?: TOperationContext): Promise<getCommunityCreationDataQuery>;
@@ -2143,6 +2496,27 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getStrategyByPool(variables: Exact<{
         poolId: any;
     }>, options?: TOperationContext): Promise<getStrategyByPoolQuery>;
+    getTokenTitle(variables: Exact<{
+        tokenAddr: string;
+    }>, options?: TOperationContext): Promise<getTokenTitleQuery>;
+    getCommunityTitles(variables: Exact<{
+        communityAddr: string;
+    }>, options?: TOperationContext): Promise<getCommunityTitlesQuery>;
+    getPoolTitles(variables: Exact<{
+        poolId: any;
+    }>, options?: TOperationContext): Promise<getPoolTitlesQuery>;
+    getProposalTitles(variables: Exact<{
+        proposalId: string;
+    }>, options?: TOperationContext): Promise<getProposalTitlesQuery>;
+    getPassportScorer(variables: Exact<{
+        scorerId: string;
+    }>, options?: TOperationContext): Promise<getPassportScorerQuery>;
+    getPassportStrategy(variables: Exact<{
+        strategyId: string;
+    }>, options?: TOperationContext): Promise<getPassportStrategyQuery>;
+    getPassportUser(variables: Exact<{
+        userId: string;
+    }>, options?: TOperationContext): Promise<getPassportUserQuery>;
 };
 export type getFactoriesQueryVariables = Exact<{
     [key: string]: never;
@@ -2162,13 +2536,14 @@ export type getTokenGardensQueryVariables = Exact<{
 }>;
 export type getTokenGardensQuery = {
     tokenGardens: Array<(Pick<TokenGarden, 'id' | 'chainId' | 'name' | 'symbol' | 'decimals' | 'totalBalance'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'covenantIpfsHash' | 'communityFee' | 'isValid'> & {
-            members?: Maybe<Array<Pick<MemberCommunity, 'id'>>>;
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'covenantIpfsHash' | 'communityFee' | 'isValid' | 'communityName'> & {
+            strategies?: Maybe<Array<Pick<CVStrategy, 'id'>>>;
+            members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
         })>>;
     })>;
 };
 export type getMemberStrategyQueryVariables = Exact<{
-    meStr: Scalars['ID'];
+    wallet: Scalars['ID'];
 }>;
 export type getMemberStrategyQuery = {
     memberStrategy?: Maybe<(Pick<MemberStrategy, 'id' | 'totalStakedPoints' | 'activatedPoints'> & {
@@ -2218,21 +2593,30 @@ export type getPoolCreationDataQuery = {
     allos: Array<Pick<Allo, 'id'>>;
     registryCommunity?: Maybe<Pick<RegistryCommunity, 'communityName' | 'isValid'>>;
 };
-export type getCommunitiesByGardenQueryVariables = Exact<{
+export type getGardenQueryVariables = Exact<{
     addr: Scalars['ID'];
 }>;
-export type getCommunitiesByGardenQuery = {
-    registryFactories: Array<Pick<RegistryFactory, 'id'>>;
+export type getGardenQuery = {
     tokenGarden?: Maybe<(Pick<TokenGarden, 'id' | 'name' | 'symbol' | 'decimals' | 'chainId'> & {
-        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'isValid' | 'covenantIpfsHash' | 'chainId' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
+        communities?: Maybe<Array<(Pick<RegistryCommunity, 'id' | 'isValid' | 'covenantIpfsHash' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
             members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
-            strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount' | 'isEnabled'> & {
-                registryCommunity: Pick<RegistryCommunity, 'registerStakeAmount'>;
-                config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;
-                proposals: Array<Pick<CVProposal, 'id' | 'proposalNumber'>>;
-            })>>;
+            strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount'>>>;
         })>>;
     })>;
+};
+export type getCommunityQueryVariables = Exact<{
+    communityAddr: Scalars['ID'];
+    tokenAddr: Scalars['ID'];
+}>;
+export type getCommunityQuery = {
+    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName' | 'id' | 'covenantIpfsHash' | 'communityFee' | 'protocolFee' | 'registerStakeAmount' | 'registerToken'> & {
+        members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'stakedTokens'>>>;
+        strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'isEnabled' | 'poolAmount' | 'poolId' | 'metadata'> & {
+            proposals: Array<Pick<CVProposal, 'id'>>;
+            config: Pick<CVStrategyConfig, 'proposalType'>;
+        })>>;
+    })>;
+    tokenGarden?: Maybe<Pick<TokenGarden, 'symbol' | 'decimals' | 'id'>>;
 };
 export type getCommunityCreationDataQueryVariables = Exact<{
     addr: Scalars['ID'];
@@ -2290,6 +2674,67 @@ export type getStrategyByPoolQuery = {
         proposals: Array<Pick<CVProposal, 'id' | 'proposalNumber' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount'>>;
     })>;
 };
+export type getTokenTitleQueryVariables = Exact<{
+    tokenAddr: Scalars['ID'];
+}>;
+export type getTokenTitleQuery = {
+    tokenGarden?: Maybe<Pick<TokenGarden, 'name'>>;
+};
+export type getCommunityTitlesQueryVariables = Exact<{
+    communityAddr: Scalars['ID'];
+}>;
+export type getCommunityTitlesQuery = {
+    registryCommunity?: Maybe<(Pick<RegistryCommunity, 'communityName'> & {
+        garden: Pick<TokenGarden, 'name'>;
+    })>;
+};
+export type getPoolTitlesQueryVariables = Exact<{
+    poolId: Scalars['BigInt'];
+}>;
+export type getPoolTitlesQuery = {
+    cvstrategies: Array<(Pick<CVStrategy, 'poolId' | 'metadata'> & {
+        registryCommunity: (Pick<RegistryCommunity, 'communityName'> & {
+            garden: Pick<TokenGarden, 'name'>;
+        });
+    })>;
+};
+export type getProposalTitlesQueryVariables = Exact<{
+    proposalId: Scalars['ID'];
+}>;
+export type getProposalTitlesQuery = {
+    cvproposal?: Maybe<(Pick<CVProposal, 'proposalNumber' | 'metadata'> & {
+        strategy: (Pick<CVStrategy, 'poolId' | 'metadata'> & {
+            registryCommunity: (Pick<RegistryCommunity, 'communityName'> & {
+                garden: Pick<TokenGarden, 'name'>;
+            });
+        });
+    })>;
+};
+export type getPassportScorerQueryVariables = Exact<{
+    scorerId: Scalars['ID'];
+}>;
+export type getPassportScorerQuery = {
+    passportScorer?: Maybe<(Pick<PassportScorer, 'id'> & {
+        strategies?: Maybe<Array<(Pick<PassportStrategy, 'id' | 'threshold' | 'councilSafe' | 'active'> & {
+            strategy: Pick<CVStrategy, 'id'>;
+        })>>;
+        users?: Maybe<Array<Pick<PassportUser, 'id' | 'userAddress' | 'score' | 'lastUpdated'>>>;
+    })>;
+};
+export type getPassportStrategyQueryVariables = Exact<{
+    strategyId: Scalars['ID'];
+}>;
+export type getPassportStrategyQuery = {
+    passportStrategy?: Maybe<(Pick<PassportStrategy, 'id' | 'threshold' | 'councilSafe' | 'active'> & {
+        strategy: Pick<CVStrategy, 'id'>;
+    })>;
+};
+export type getPassportUserQueryVariables = Exact<{
+    userId: Scalars['ID'];
+}>;
+export type getPassportUserQuery = {
+    passportUser?: Maybe<Pick<PassportUser, 'id' | 'userAddress' | 'score' | 'lastUpdated'>>;
+};
 export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact<{
     [key: string]: never;
 }>>;
@@ -2297,7 +2742,7 @@ export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery,
     [key: string]: never;
 }>>;
 export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQuery, Exact<{
-    meStr: Scalars['ID'];
+    wallet: Scalars['ID'];
 }>>;
 export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
     me: Scalars['ID'];
@@ -2310,8 +2755,12 @@ export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDa
     communityAddr: Scalars['ID'];
     tokenAddr: Scalars['ID'];
 }>>;
-export declare const getCommunitiesByGardenDocument: DocumentNode<getCommunitiesByGardenQuery, Exact<{
+export declare const getGardenDocument: DocumentNode<getGardenQuery, Exact<{
     addr: Scalars['ID'];
+}>>;
+export declare const getCommunityDocument: DocumentNode<getCommunityQuery, Exact<{
+    communityAddr: Scalars['ID'];
+    tokenAddr: Scalars['ID'];
 }>>;
 export declare const getCommunityCreationDataDocument: DocumentNode<getCommunityCreationDataQuery, Exact<{
     addr: Scalars['ID'];
@@ -2330,6 +2779,27 @@ export declare const getAlloDocument: DocumentNode<getAlloQuery, Exact<{
 export declare const getStrategyByPoolDocument: DocumentNode<getStrategyByPoolQuery, Exact<{
     poolId: Scalars['BigInt'];
 }>>;
+export declare const getTokenTitleDocument: DocumentNode<getTokenTitleQuery, Exact<{
+    tokenAddr: Scalars['ID'];
+}>>;
+export declare const getCommunityTitlesDocument: DocumentNode<getCommunityTitlesQuery, Exact<{
+    communityAddr: Scalars['ID'];
+}>>;
+export declare const getPoolTitlesDocument: DocumentNode<getPoolTitlesQuery, Exact<{
+    poolId: Scalars['BigInt'];
+}>>;
+export declare const getProposalTitlesDocument: DocumentNode<getProposalTitlesQuery, Exact<{
+    proposalId: Scalars['ID'];
+}>>;
+export declare const getPassportScorerDocument: DocumentNode<getPassportScorerQuery, Exact<{
+    scorerId: Scalars['ID'];
+}>>;
+export declare const getPassportStrategyDocument: DocumentNode<getPassportStrategyQuery, Exact<{
+    strategyId: Scalars['ID'];
+}>>;
+export declare const getPassportUserDocument: DocumentNode<getPassportUserQuery, Exact<{
+    userId: Scalars['ID'];
+}>>;
 export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V, options?: C) => Promise<R> | AsyncIterable<R>;
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
@@ -2338,11 +2808,19 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     isMember(variables: isMemberQueryVariables, options?: C): Promise<isMemberQuery>;
     getMember(variables: getMemberQueryVariables, options?: C): Promise<getMemberQuery>;
     getPoolCreationData(variables: getPoolCreationDataQueryVariables, options?: C): Promise<getPoolCreationDataQuery>;
-    getCommunitiesByGarden(variables: getCommunitiesByGardenQueryVariables, options?: C): Promise<getCommunitiesByGardenQuery>;
+    getGarden(variables: getGardenQueryVariables, options?: C): Promise<getGardenQuery>;
+    getCommunity(variables: getCommunityQueryVariables, options?: C): Promise<getCommunityQuery>;
     getCommunityCreationData(variables: getCommunityCreationDataQueryVariables, options?: C): Promise<getCommunityCreationDataQuery>;
     getPoolData(variables: getPoolDataQueryVariables, options?: C): Promise<getPoolDataQuery>;
     getProposalData(variables: getProposalDataQueryVariables, options?: C): Promise<getProposalDataQuery>;
     getAllo(variables?: getAlloQueryVariables, options?: C): Promise<getAlloQuery>;
     getStrategyByPool(variables: getStrategyByPoolQueryVariables, options?: C): Promise<getStrategyByPoolQuery>;
+    getTokenTitle(variables: getTokenTitleQueryVariables, options?: C): Promise<getTokenTitleQuery>;
+    getCommunityTitles(variables: getCommunityTitlesQueryVariables, options?: C): Promise<getCommunityTitlesQuery>;
+    getPoolTitles(variables: getPoolTitlesQueryVariables, options?: C): Promise<getPoolTitlesQuery>;
+    getProposalTitles(variables: getProposalTitlesQueryVariables, options?: C): Promise<getProposalTitlesQuery>;
+    getPassportScorer(variables: getPassportScorerQueryVariables, options?: C): Promise<getPassportScorerQuery>;
+    getPassportStrategy(variables: getPassportStrategyQueryVariables, options?: C): Promise<getPassportStrategyQuery>;
+    getPassportUser(variables: getPassportUserQueryVariables, options?: C): Promise<getPassportUserQuery>;
 };
 export type Sdk = ReturnType<typeof getSdk>;

@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { WriteContractResult } from "wagmi/actions";
-import { useViemClient } from "./useViemClient";
 import { Address } from "viem";
-import { chainDataMap } from "@/configs/chainServer";
-import { getChainIdFromPath } from "@/utils/path";
 
 type TransactionStatus = "error" | "success" | "loading" | "idle";
 type TransactionData = WriteContractResult | undefined;
@@ -32,8 +29,6 @@ export const useTransactionNotification = (
   const [promiseReject, setPromiseReject] = useState<
     TransactionFunction | undefined
   >(undefined);
-  const chainId = getChainIdFromPath();
-  const viemClient = useViemClient();
 
   const transactionPromise = () => {
     return new Promise<TransactionPayload>((resolve, reject) => {
@@ -64,10 +59,10 @@ export const useTransactionNotification = (
           error: "Something went wrong",
         })
         .then((data) => {
-          console.log("Tx hash: "+data.transactionData?.hash)
+          console.log("Tx hash: " + data.transactionData?.hash);
           // const receipt = async () =>
           //   await viemClient.waitForTransactionReceipt({
-          //     confirmations: chainDataMap[chainId].confirmations,
+          //     confirmations: [chainId].confirmations,
           //     hash: data.transactionData?.hash || "0x",
           //   });
 
@@ -75,12 +70,12 @@ export const useTransactionNotification = (
           // toast
           //   .promise(receipt, {
           //     pending: "Waiting for block confirmations...",
-          //     success: `Transaction sent with ${chainDataMap[chainId].confirmations} confirmations`,
+          //     success: `Transaction sent with ${[chainId].confirmations} confirmations`,
           //     error: "Something went wrong",
           //   })
           //   .then((data) => {
           //     console.log(data);
-              setTxConfirmationHash(data.transactionData?.hash);
+          setTxConfirmationHash(data.transactionData?.hash);
           //   })
           //   .catch((error: any) => {
           //     console.error(`Tx failure: ${error}`);

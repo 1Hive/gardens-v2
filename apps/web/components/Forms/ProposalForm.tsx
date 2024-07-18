@@ -3,18 +3,19 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { alloABI } from "@/src/generated";
 import { Address, parseUnits } from "viem";
-import { useContractWrite } from "wagmi";
 import { encodeAbiParameters } from "viem";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { Button } from "@/components";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { toast } from "react-toastify";
-import { proposalTypes } from "@/types";
-import { Allo, Maybe, TokenGarden } from "#/subgraph/.graphclient";
+import { poolTypes } from "@/types";
+import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
 import FormPreview, { FormRow } from "./FormPreview";
 import { FormInput } from "./FormInput";
 import { usePathname, useRouter } from "next/navigation";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -28,7 +29,7 @@ type ProposalFormProps = {
   poolId: number;
   proposalType: number;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
-  tokenGarden: TokenGarden;
+  tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
   tokenAddress: Address;
   spendingLimit: number;
   spendingLimitPct: number;
@@ -79,10 +80,14 @@ export const ProposalForm = ({
     getValues,
   } = useForm<FormInputs>();
 
+  const { publish } = usePubSubContext();
+
+  const chainId = alloInfo.chainId;
+
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
       label: "Requested amount:",
-      parse: (value: number) => `${value} ${tokenGarden?.symbol}`,
+      parse: (value: number) => `${value} ${tokenGarden.symbol}`,
     },
     beneficiary: {
       label: "Beneficiary:",
@@ -93,16 +98,16 @@ export const ProposalForm = ({
     strategy: { label: "Strategy:" },
   };
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const tokenSymbol = tokenGarden?.symbol || "";
+  const tokenSymbol = tokenGarden.symbol || "";
 
-  const spendingLimitNumber = spendingLimit / 10 ** tokenGarden?.decimals;
+  const spendingLimitNumber = spendingLimit / 10 ** tokenGarden.decimals;
 
   // console.log("spendingLimit:               %s", spendingLimit);
   // console.log("spendingLimitNumber:         %s", spendingLimitNumber);
@@ -113,7 +118,7 @@ export const ProposalForm = ({
     tokenGarden?.decimals as number,
   );
 
-  const proposalTypeName = proposalTypes[proposalType];
+  const proposalTypeName = poolTypes[proposalType];
 
   const createProposal = () => {
     setLoading(true);
@@ -132,7 +137,9 @@ export const ProposalForm = ({
       })
       .then((ipfsHash) => {
         console.log("https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) throw new Error("No preview data");
+        if (previewData === undefined) {
+          throw new Error("No preview data");
+        }
         const encodedData = getEncodeData(ipfsHash);
         write({ args: [poolId, encodedData] });
       })
@@ -147,11 +154,21 @@ export const ProposalForm = ({
     setShowPreview(true);
   };
 
-  const { write, error, isError, data } = useContractWrite({
+  const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
-    onSuccess: () => router.push(pathname.replace(`/create-proposal`, "")),
+    onConfirmations: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "registerRecipient",
+        chainId,
+      });
+      if (pathname) {
+        router.push(pathname.replace(`/create-proposal`, ""));
+      }
+    },
     onError: (err) => {
       console.log(err);
       toast.error("Something went wrong creating Proposal");
@@ -160,7 +177,9 @@ export const ProposalForm = ({
   });
 
   const getEncodeData = (metadataIpfs: string) => {
-    if (previewData === undefined) throw new Error("no preview data");
+    if (previewData === undefined) {
+      throw new Error("no preview data");
+    }
 
     const metadata = [1, metadataIpfs as string];
 
@@ -225,14 +244,6 @@ export const ProposalForm = ({
 
     return formattedRows;
   };
-  console.log(
-    "spendingLimitNumber: " + spendingLimitNumber,
-    "spendingLimitPct: " + spendingLimitPct,
-    Math.round(4.5),
-    Math.round(4.56),
-    Math.round(4.567457),
-    Math.round(0.111231),
-  );
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ? (
@@ -325,21 +336,16 @@ export const ProposalForm = ({
         {showPreview ? (
           <div className="flex items-center gap-10">
             <Button
-              type="button"
-              onClick={() => createProposal()}
-              isLoading={loading}
-            >
-              Submit
-            </Button>
-            <Button
-              type="button"
               onClick={() => {
                 setShowPreview(false);
                 setLoading(false);
               }}
-              variant="fill"
+              btnStyle="outline"
             >
               Edit
+            </Button>
+            <Button onClick={() => createProposal()} isLoading={loading}>
+              Submit
             </Button>
           </div>
         ) : (

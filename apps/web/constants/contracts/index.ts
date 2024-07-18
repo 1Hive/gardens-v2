@@ -34,11 +34,11 @@ type RPCSubgraphAddr = {
   };
 };
 
-let __contractsAddresses: RPCSubgraphAddr = {
+let __subgraphAddresses: RPCSubgraphAddr = {
   [localhost.id as number]: {
     rpcUrl: `http://127.0.0.1:8545`,
     subgraphUrl: "http://localhost:8000/subgraphs/name/kamikazebr/gv2",
-    passportScorer: "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707",
+    passportScorer: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
   },
   [arbitrumSepolia.id as number]: {
     rpcUrl: envRpcUrlArbTestnet,
@@ -54,25 +54,25 @@ let __contractsAddresses: RPCSubgraphAddr = {
   },
 };
 
-for (const chainId in __contractsAddresses) {
+for (const chainId in __subgraphAddresses) {
   const chain = getChain(chainId);
   if (chain?.id) {
     const addrs = getRunLatestAddrs(chain.id);
     if (addrs) {
-      __contractsAddresses[chain.id].strategyTemplate = addrs.strategyTemplate;
+      __subgraphAddresses[chain.id].strategyTemplate = addrs.strategyTemplate;
     }
   }
 }
 
-function __getContractsAddrByChain(chain: number | string) {
-  const currentChain = getChain(chain);
+function __getContractsAddrByChain(chainId: number | string) {
+  const currentChain = getChain(chainId);
   if (currentChain?.id) {
-    return __contractsAddresses[currentChain.id];
+    return __subgraphAddresses[currentChain.id];
   }
 }
 
 console.log("env", ENV);
 // console.log("envs", __contractsAddresses);
-export type ContractsAddresses = (typeof __contractsAddresses)[number];
+export type ContractsAddresses = (typeof __subgraphAddresses)[number];
 export const getContractsAddrByChain = __getContractsAddrByChain; //@todo rename to configByChain instead
 // export const contractsAddresses = __contractsAddresses;

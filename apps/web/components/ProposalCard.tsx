@@ -1,23 +1,27 @@
 "use client";
 import React, { useEffect } from "react";
-import { StatusBadge } from "./Badge";
+import { Badge } from "./Badge";
 import { Button } from "./Button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ProposalInputItem, ProposalTypeVoter } from "./Proposals";
-import { Allo, CVStrategy } from "#/subgraph/.graphclient";
+import { ProposalInputItem } from "./Proposals";
+import { Allo } from "#/subgraph/.graphclient";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import useErrorDetails from "@/utils/getErrorName";
-import { Address, useContractWrite } from "wagmi";
+import { Address } from "wagmi";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { encodeAbiParameters, formatUnits } from "viem";
+import { encodeAbiParameters } from "viem";
 import { alloABI } from "@/src/generated";
 import { toast } from "react-toastify";
 import { calculatePercentage } from "@/utils/numbers";
-import { proposalTypes } from "@/types";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { LightCVStrategy, poolTypes } from "@/types";
+import { getProposals } from "@/actions/getProposals";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type ProposalCard = {
-  proposalData: ProposalTypeVoter;
+  proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   i: number;
@@ -26,7 +30,7 @@ type ProposalCard = {
   memberActivatedPoints: number;
   memberPoolWeight: number;
   executeDisabled: boolean;
-  strategy: CVStrategy;
+  strategy: LightCVStrategy;
   tokenDecimals: number;
   alloInfo: Allo;
   inputHandler: (i: number, value: number) => void;
@@ -44,13 +48,15 @@ export function ProposalCard({
   memberPoolWeight,
   executeDisabled,
   strategy,
-  tokenDecimals,
   alloInfo,
   inputHandler,
   triggerRenderProposals,
 }: ProposalCard) {
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
+
+  const { publish } = usePubSubContext();
+  const chainId = useChainIdFromPath();
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0
@@ -70,16 +76,25 @@ export function ProposalCard({
 
   //executing proposal distribute function / alert error if not executable / notification if success
   const {
-    data: distributeData,
+    transactionData: distributeTxData,
     write: writeDistribute,
     error: errorDistribute,
-    isSuccess: isSuccessDistribute,
     isError: isErrorDistribute,
     status: distributeStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
+    onConfirmations: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "distribute",
+        id,
+        containerId: strategy.poolId,
+        chainId,
+      });
+    },
   });
 
   const distributeErrorName = useErrorDetails(errorDistribute);
@@ -92,7 +107,7 @@ export function ProposalCard({
   const {
     updateTransactionStatus: updateDistributeTransactionStatus,
     txConfirmationHash: distributeTxConfirmationHash,
-  } = useTransactionNotification(distributeData);
+  } = useTransactionNotification(distributeTxData);
 
   useEffect(() => {
     updateDistributeTransactionStatus(distributeStatus);
@@ -104,7 +119,7 @@ export function ProposalCard({
 
   return (
     <div
-      className="flex flex-col items-center justify-center gap-4 rounded-lg bg-surface p-8"
+      className="bg-surface flex flex-col items-center justify-center gap-4 rounded-lg p-8"
       key={title + "_" + proposalNumber}
     >
       <div className="flex w-full items-center justify-between ">
@@ -114,9 +129,9 @@ export function ProposalCard({
         </div>
 
         <div className="flex items-center gap-8">
-          <StatusBadge status={proposalStatus} />
+          <Badge status={proposalStatus} />
           {/* Button to test distribute */}
-          {!isEditView && proposalTypes[proposalData.type] == "funding" && (
+          {!isEditView && poolTypes[proposalData.type] == "funding" && (
             <Button
               // TODO: add flexible tooltip and func to check executability
               disabled={executeDisabled}
@@ -139,8 +154,8 @@ export function ProposalCard({
             </Button>
           )}
           <>
-            <Link href={`${pathname}/proposals/${id}`}>
-              <Button variant="outline">View Proposal</Button>
+            <Link href={`${pathname}/${id}`}>
+              <Button btnStyle="outline">View Proposal</Button>
             </Link>
           </>
         </div>

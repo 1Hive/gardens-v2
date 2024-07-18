@@ -1,22 +1,22 @@
 "use client";
 import React, { FC, useState, useRef, useEffect } from "react";
-import {
-  Address,
-  useAccount,
-  useContractRead,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
+import { Address, useAccount, useContractRead, useContractWrite } from "wagmi";
 import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
 import { Button } from "./Button";
-import { Allo, CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
+import {
+  Allo,
+  CVStrategy,
+  TokenGarden,
+  getPoolDataQuery,
+} from "#/subgraph/.graphclient";
 import { parseUnits } from "viem";
 import { FormInput } from "./Forms";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
-import { chainDataMap } from "@/configs/chainServer";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -38,10 +38,12 @@ const InitialTransactionSteps: TransactionStep[] = [
   },
 ];
 
+type LightCVStrategy = getPoolDataQuery["cvstrategies"][0];
+
 type PoolStatsProps = {
   balance: string | number;
   strategyAddress: Address;
-  strategy: CVStrategy;
+  strategy: LightCVStrategy;
   communityAddress: Address;
   tokenGarden: TokenGarden;
   pointSystem: string;
@@ -67,6 +69,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
   const { address: connectedAccount } = useAccount();
   const tokenSymbol = tokenGarden?.symbol;
 
+  const { publish } = usePubSubContext();
+
   //modal ref
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const openModal = () => modalRef.current?.showModal();
@@ -88,42 +92,45 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     args: [connectedAccount as Address, alloInfo?.id as Address],
     functionName: "allowance",
     watch: true,
+    enabled: !!connectedAccount,
   });
 
-  const {
-    data: allowTokenData,
-    write: writeAllowToken,
-    error: allowTokenError,
-    status: allowTokenStatus,
-  } = useContractWrite({
-    address: tokenGarden.address as Address,
-    abi: abiWithErrors(erc20ABI),
-    functionName: "approve",
-  });
-
-  const { isSuccess: isWaitAllowanceSuccess, status: waitAllowTokenStatus } =
-    useWaitForTransaction({
-      confirmations: chainDataMap[chainId].confirmations,
-      hash: allowTokenData?.hash,
+  const { write: writeAllowToken, status: allowTokenStatus } =
+    useContractWriteWithConfirmations({
+      address: tokenGarden.address as Address,
+      abi: abiWithErrors(erc20ABI),
+      functionName: "approve",
     });
 
   useEffect(() => {
-    if (isWaitAllowanceSuccess) {
+    if (allowTokenStatus === "success") {
       writeFundPool({
         args: [poolId, requestedAmount],
       });
     }
-  }, [isWaitAllowanceSuccess]);
+  }, [allowTokenStatus]);
 
-  const {
-    data: fundPool,
-    write: writeFundPool,
-    status: fundPoolStatus,
-  } = useContractWrite({
-    address: alloInfo?.id as Address,
-    abi: abiWithErrors(alloABI),
-    functionName: "fundPool",
-  });
+  const { write: writeFundPool, status: fundPoolStatus } =
+    useContractWriteWithConfirmations({
+      address: alloInfo?.id as Address,
+      abi: abiWithErrors(alloABI),
+      functionName: "fundPool",
+      onConfirmations: () => {
+        publish({
+          topic: "pool",
+          type: "update",
+          function: "fundPool",
+          id: poolId,
+          containerId: communityAddress,
+          chainId: tokenGarden.chainId,
+        });
+      },
+      onSuccess: () => {
+        closeModal();
+        setAmount(0);
+        setPendingAllowance(false);
+      },
+    });
 
   const writeContract = () => {
     writeAllowToken({
@@ -143,14 +150,6 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
       openModal();
     }
   };
-
-  useEffect(() => {
-    if (fundPoolStatus === "success") {
-      closeModal();
-      setAmount(0);
-      setPendingAllowance(false);
-    }
-  }, [fundPoolStatus]);
 
   //disable button condition
   const requestesMoreThanAllowance =
@@ -178,63 +177,67 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
       ></TransactionModal>
-      <section className="border2 flex w-full justify-between rounded-xl bg-white px-12 py-8">
-        <div className="flex flex-col">
-          <h3 className="mb-6 font-semibold">Pool Metrics</h3>
-          <div className="flex justify-between">
-            <div className="flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-10">
-                  <div className="flex w-full items-baseline gap-8">
-                    <h4 className="stat-title text-center text-xl font-bold">
-                      Funds Available:
-                    </h4>
-                    <span className="stat-value text-center text-2xl font-bold">
-                      {balance
-                        ? formatTokenAmount(balance, tokenGarden?.decimals)
-                        : "0"}{" "}
-                      {tokenGarden?.symbol}
-                    </span>
+      <section className="section-layout ">
+        <header>
+          <h2>Pool Metrics</h2>
+        </header>
+        <div className="mt-4 flex justify-between">
+          <div className="flex flex-col">
+            <div className="flex justify-between">
+              <div className="flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-10">
+                    <div className="flex w-full items-baseline gap-8">
+                      <h4 className="stat-title text-center text-xl font-bold">
+                        Funds Available:
+                      </h4>
+                      <span className="stat-value text-center text-2xl font-bold">
+                        {balance
+                          ? formatTokenAmount(balance, tokenGarden?.decimals)
+                          : "0"}{" "}
+                        {tokenGarden?.symbol}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-4 flex w-full items-baseline gap-8">
-                <h4 className="stat-title text-center text-lg font-bold">
-                  Spending Limit:
-                </h4>
-                <span className="stat-value ml-8 text-center text-xl">
-                  {`${((spendingLimitPct || 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
-                </span>
+                <div className="mt-4 flex w-full items-baseline gap-8">
+                  <h4 className="stat-title text-center text-lg font-bold">
+                    Spending Limit:
+                  </h4>
+                  <span className="stat-value ml-8 text-center text-xl">
+                    {`${((spendingLimitPct || 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className="flex flex-col justify-center gap-4">
-          <FormInput
-            type="number"
-            placeholder="0"
-            required
-            className="pr-14"
-            step={INPUT_TOKEN_MIN_VALUE}
-            onChange={(e) => setAmount(Number(e.target.value))}
-            otherProps={{
-              step: INPUT_TOKEN_MIN_VALUE,
-              min: INPUT_TOKEN_MIN_VALUE,
-            }}
-          >
-            <span className="absolute right-4 top-4 text-black">
-              {tokenGarden.symbol}
-            </span>
-          </FormInput>
-          <Button
-            disabled={
-              missmatchUrl || !connectedAccount || requestesMoreThanAllowance
-            }
-            tooltip={tooltipMessage}
-            onClick={handleFundPool}
-          >
-            Fund pool
-          </Button>
+          <div className="flex flex-col items-start justify-center gap-4">
+            <FormInput
+              type="number"
+              placeholder="0"
+              required
+              className="pr-14"
+              step={INPUT_TOKEN_MIN_VALUE}
+              onChange={(e) => setAmount(Number(e.target.value))}
+              otherProps={{
+                step: INPUT_TOKEN_MIN_VALUE,
+                min: INPUT_TOKEN_MIN_VALUE,
+              }}
+            >
+              <span className="absolute right-4 top-4 text-black">
+                {tokenGarden.symbol}
+              </span>
+            </FormInput>
+            <Button
+              disabled={
+                missmatchUrl || !connectedAccount || requestesMoreThanAllowance
+              }
+              tooltip={tooltipMessage}
+              onClick={handleFundPool}
+            >
+              Fund pool
+            </Button>
+          </div>
         </div>
       </section>
     </>

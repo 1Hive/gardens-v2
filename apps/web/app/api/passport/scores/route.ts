@@ -6,15 +6,13 @@ export async function GET() {
   const scorerId = process.env.SCORER_ID;
   const endpoint = `https://api.scorer.gitcoin.co/registry/score/${scorerId}`;
 
-  console.log("scorerId ", scorerId);
-  console.log("apiKey ", apiKey);
-
   if (!apiKey) {
     return NextResponse.json({ error: "API key is missing" }, { status: 500 });
   }
 
   try {
     const response = await fetch(endpoint, {
+      method: "GET",
       headers: {
         "X-API-KEY": apiKey,
         "Content-Type": "application/json",

@@ -59,8 +59,6 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         sybilScorer = new PassportScorer(scorer_list_manager());
 
-        sybilScorer.setThreshold(MINIMUM_SCORER_THRESHOLD);
-
         registryFactory = new RegistryFactory();
 
         console2.log("Registry Factory Addr: %s", address(registryFactory));

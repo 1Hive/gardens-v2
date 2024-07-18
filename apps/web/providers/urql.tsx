@@ -9,9 +9,11 @@ import {
 } from "urql";
 
 import { getContractsAddrByChain } from "@/constants/contracts";
-let urqlClient: Client | null = null;
-
-let ssrCache: ReturnType<typeof ssrExchange>;
+import { ChainId } from "@/types";
+let urqlRecord: Record<
+  ChainId | "default",
+  [Client, ReturnType<typeof ssrExchange>]
+> = {};
 
 const isServer = typeof window === "undefined";
 
@@ -25,12 +27,18 @@ const subgraphOpSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP || "";
  * @param url - graphql endpoint
  * @returns and object with urqlClient and ssrCache
  */
-export function initUrqlClient({ initialState }: { initialState?: any } = {}) {
-  if (!urqlClient) {
+export function initUrqlClient(
+  {
+    initialState,
+    chainId,
+  }: { initialState?: any; chainId: ChainId | "default" } = {
+    chainId: "default",
+  },
+) {
+  if (!urqlRecord[chainId]) {
     //fill the client with initial state from the server.
-    ssrCache = ssrExchange({ initialState, isClient: !isServer });
-
-    urqlClient = createClient({
+    const ssr = ssrExchange({ initialState, isClient: !isServer });
+    const urqlClient = createClient({
       url: subgraphArbSepURL,
       exchanges: [
         // cacheExchange,
@@ -69,14 +77,19 @@ export function initUrqlClient({ initialState }: { initialState?: any } = {}) {
       ],
       suspense: true,
     });
+
+    urqlRecord[chainId] = [urqlClient, ssr];
   } else {
     //when navigating to another page, client is already initialized.
     //lets restore that page's initial state
-    ssrCache.restoreData(initialState);
+    urqlRecord[chainId][1].restoreData(initialState);
   }
 
   // Return both the Client instance and the ssrCache.
-  return { urqlClient, ssrCache };
+  return {
+    urqlClient: urqlRecord[chainId][0],
+    ssrCache: urqlRecord[chainId][1],
+  };
 }
 
 export async function queryByChain<

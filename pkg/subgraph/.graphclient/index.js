@@ -118,11 +118,17 @@ export async function getMeshOptions() {
                     },
                     location: 'GetPoolCreationDataDocument.graphql'
                 }, {
-                    document: GetCommunitiesByGardenDocument,
+                    document: GetGardenDocument,
                     get rawSDL() {
-                        return printWithCache(GetCommunitiesByGardenDocument);
+                        return printWithCache(GetGardenDocument);
                     },
-                    location: 'GetCommunitiesByGardenDocument.graphql'
+                    location: 'GetGardenDocument.graphql'
+                }, {
+                    document: GetCommunityDocument,
+                    get rawSDL() {
+                        return printWithCache(GetCommunityDocument);
+                    },
+                    location: 'GetCommunityDocument.graphql'
                 }, {
                     document: GetCommunityCreationDataDocument,
                     get rawSDL() {
@@ -153,6 +159,48 @@ export async function getMeshOptions() {
                         return printWithCache(GetStrategyByPoolDocument);
                     },
                     location: 'GetStrategyByPoolDocument.graphql'
+                }, {
+                    document: GetTokenTitleDocument,
+                    get rawSDL() {
+                        return printWithCache(GetTokenTitleDocument);
+                    },
+                    location: 'GetTokenTitleDocument.graphql'
+                }, {
+                    document: GetCommunityTitlesDocument,
+                    get rawSDL() {
+                        return printWithCache(GetCommunityTitlesDocument);
+                    },
+                    location: 'GetCommunityTitlesDocument.graphql'
+                }, {
+                    document: GetPoolTitlesDocument,
+                    get rawSDL() {
+                        return printWithCache(GetPoolTitlesDocument);
+                    },
+                    location: 'GetPoolTitlesDocument.graphql'
+                }, {
+                    document: GetProposalTitlesDocument,
+                    get rawSDL() {
+                        return printWithCache(GetProposalTitlesDocument);
+                    },
+                    location: 'GetProposalTitlesDocument.graphql'
+                }, {
+                    document: GetPassportScorerDocument,
+                    get rawSDL() {
+                        return printWithCache(GetPassportScorerDocument);
+                    },
+                    location: 'GetPassportScorerDocument.graphql'
+                }, {
+                    document: GetPassportStrategyDocument,
+                    get rawSDL() {
+                        return printWithCache(GetPassportStrategyDocument);
+                    },
+                    location: 'GetPassportStrategyDocument.graphql'
+                }, {
+                    document: GetPassportUserDocument,
+                    get rawSDL() {
+                        return printWithCache(GetPassportUserDocument);
+                    },
+                    location: 'GetPassportUserDocument.graphql'
                 }
             ];
         },
@@ -231,16 +279,21 @@ export const getTokenGardensDocument = gql `
       covenantIpfsHash
       communityFee
       isValid
+      communityName
+      strategies {
+        id
+      }
       members {
         id
+        memberAddress
       }
     }
   }
 }
     `;
 export const getMemberStrategyDocument = gql `
-    query getMemberStrategy($meStr: ID!) {
-  memberStrategy(id: $meStr) {
+    query getMemberStrategy($wallet: ID!) {
+  memberStrategy(id: $wallet) {
     id
     totalStakedPoints
     activatedPoints
@@ -329,11 +382,8 @@ export const getPoolCreationDataDocument = gql `
   }
 }
     `;
-export const getCommunitiesByGardenDocument = gql `
-    query getCommunitiesByGarden($addr: ID!) {
-  registryFactories {
-    id
-  }
+export const getGardenDocument = gql `
+    query getGarden($addr: ID!) {
   tokenGarden(id: $addr) {
     id
     name
@@ -344,7 +394,6 @@ export const getCommunitiesByGardenDocument = gql `
       id
       isValid
       covenantIpfsHash
-      chainId
       communityName
       protocolFee
       communityFee
@@ -355,27 +404,51 @@ export const getCommunitiesByGardenDocument = gql `
         id
         memberAddress
       }
-      strategies {
-        registryCommunity {
-          registerStakeAmount
-        }
+      strategies(where: {isEnabled: true}) {
         id
         totalEffectiveActivePoints
         poolId
         poolAmount
-        isEnabled
-        config {
-          id
-          proposalType
-          pointSystem
-          minThresholdPoints
-        }
-        proposals {
-          id
-          proposalNumber
-        }
       }
     }
+  }
+}
+    `;
+export const getCommunityDocument = gql `
+    query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
+  registryCommunity(id: $communityAddr) {
+    communityName
+    id
+    members(where: {stakedTokens_gt: "0"}) {
+      id
+      stakedTokens
+    }
+    strategies {
+      id
+      proposals {
+        id
+      }
+      isEnabled
+      poolAmount
+      poolId
+      metadata
+      config {
+        proposalType
+      }
+      proposals {
+        id
+      }
+    }
+    covenantIpfsHash
+    communityFee
+    protocolFee
+    registerStakeAmount
+    registerToken
+  }
+  tokenGarden(id: $tokenAddr) {
+    symbol
+    decimals
+    id
   }
 }
     `;
@@ -532,6 +605,101 @@ export const getStrategyByPoolDocument = gql `
   }
 }
     `;
+export const getTokenTitleDocument = gql `
+    query getTokenTitle($tokenAddr: ID!) {
+  tokenGarden(id: $tokenAddr) {
+    name
+  }
+}
+    `;
+export const getCommunityTitlesDocument = gql `
+    query getCommunityTitles($communityAddr: ID!) {
+  registryCommunity(id: $communityAddr) {
+    communityName
+    garden {
+      name
+    }
+  }
+}
+    `;
+export const getPoolTitlesDocument = gql `
+    query getPoolTitles($poolId: BigInt!) {
+  cvstrategies(where: {poolId: $poolId}) {
+    poolId
+    metadata
+    registryCommunity {
+      communityName
+      garden {
+        name
+      }
+    }
+    metadata
+  }
+}
+    `;
+export const getProposalTitlesDocument = gql `
+    query getProposalTitles($proposalId: ID!) {
+  cvproposal(id: $proposalId) {
+    proposalNumber
+    metadata
+    strategy {
+      poolId
+      metadata
+      registryCommunity {
+        communityName
+        garden {
+          name
+        }
+      }
+    }
+  }
+}
+    `;
+export const getPassportScorerDocument = gql `
+    query getPassportScorer($scorerId: ID!) {
+  passportScorer(id: $scorerId) {
+    id
+    strategies {
+      id
+      strategy {
+        id
+      }
+      threshold
+      councilSafe
+      active
+    }
+    users {
+      id
+      userAddress
+      score
+      lastUpdated
+    }
+  }
+}
+    `;
+export const getPassportStrategyDocument = gql `
+    query getPassportStrategy($strategyId: ID!) {
+  passportStrategy(id: $strategyId) {
+    id
+    strategy {
+      id
+    }
+    threshold
+    councilSafe
+    active
+  }
+}
+    `;
+export const getPassportUserDocument = gql `
+    query getPassportUser($userId: ID!) {
+  passportUser(id: $userId) {
+    id
+    userAddress
+    score
+    lastUpdated
+  }
+}
+    `;
 export function getSdk(requester) {
     return {
         getFactories(variables, options) {
@@ -552,8 +720,11 @@ export function getSdk(requester) {
         getPoolCreationData(variables, options) {
             return requester(getPoolCreationDataDocument, variables, options);
         },
-        getCommunitiesByGarden(variables, options) {
-            return requester(getCommunitiesByGardenDocument, variables, options);
+        getGarden(variables, options) {
+            return requester(getGardenDocument, variables, options);
+        },
+        getCommunity(variables, options) {
+            return requester(getCommunityDocument, variables, options);
         },
         getCommunityCreationData(variables, options) {
             return requester(getCommunityCreationDataDocument, variables, options);
@@ -569,6 +740,27 @@ export function getSdk(requester) {
         },
         getStrategyByPool(variables, options) {
             return requester(getStrategyByPoolDocument, variables, options);
+        },
+        getTokenTitle(variables, options) {
+            return requester(getTokenTitleDocument, variables, options);
+        },
+        getCommunityTitles(variables, options) {
+            return requester(getCommunityTitlesDocument, variables, options);
+        },
+        getPoolTitles(variables, options) {
+            return requester(getPoolTitlesDocument, variables, options);
+        },
+        getProposalTitles(variables, options) {
+            return requester(getProposalTitlesDocument, variables, options);
+        },
+        getPassportScorer(variables, options) {
+            return requester(getPassportScorerDocument, variables, options);
+        },
+        getPassportStrategy(variables, options) {
+            return requester(getPassportStrategyDocument, variables, options);
+        },
+        getPassportUser(variables, options) {
+            return requester(getPassportUserDocument, variables, options);
         }
     };
 }

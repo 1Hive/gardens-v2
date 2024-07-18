@@ -1,12 +1,20 @@
 import React from "react";
 import { NavBar } from "@/components";
 import { GoBackButton } from "@/components";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 export default function layout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <NavBar />
-      <GoBackButton />
-      <main className="mx-6 my-10">{children}</main>
+      <main className="my-10 flex flex-col items-center bg-primary">
+        <nav className="w-full max-w-6xl">
+          <div className="mx-8 flex gap-4 truncate">
+            <GoBackButton />
+            <Breadcrumbs />
+          </div>
+        </nav>
+        {children}
+      </main>
       {/* footer */}
     </>
   );

@@ -1,83 +1,75 @@
 "use client";
-import { getCommunitiesByGardenQuery } from "#/subgraph/.graphclient";
-import { gardenLand } from "@/assets";
+import {
+  CVStrategy,
+  CVProposal,
+  CVStrategyConfig,
+} from "#/subgraph/.graphclient";
+import { grass, blueLand } from "@/assets";
 import Image from "next/image";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BuildingOffice2Icon } from "@heroicons/react/24/outline";
 import { Badge } from "@/components";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { formatTokenAmount } from "@/utils/numbers";
+import { Card } from "@/components";
+import { Statistic } from "@/components";
+import {
+  CurrencyDollarIcon,
+  HandRaisedIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
+import { poolTypes } from "@/types";
 
-type StrategyQuery = NonNullable<
-  NonNullable<
-    NonNullable<getCommunitiesByGardenQuery["tokenGarden"]>["communities"]
-  >[number]["strategies"]
->[number] & { enabled?: boolean }; // Add 'enabled' property to the type definition
+type Props = {
+  tokenGarden: Pick<TokenGarden, "decimals">;
+  pool: Pick<
+    CVStrategy,
+    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
+  > & {
+    proposals: Pick<CVProposal, "id">[];
+    config: Pick<CVStrategyConfig, "proposalType">;
+  };
+};
 
-export function PoolCard({
-  proposals,
-  config,
-  poolAmount,
-  poolId,
-  tokenGarden,
-  enabled = true,
-}: StrategyQuery & { tokenGarden: TokenGarden | undefined }) {
+export function PoolCard({ pool, tokenGarden }: Props) {
   const pathname = usePathname();
 
+  let { poolAmount, poolId, proposals, isEnabled, config } = pool;
+
   poolAmount = poolAmount || 0;
+  const poolType = config?.proposalType as number | undefined;
+
   return (
-    <div className="relative flex max-w-56 rounded-md bg-white shadow transition-all duration-150 ease-out ">
-      {!enabled && (
-        <div className="border2 absolute top-10 z-50 w-full bg-warning">
-          <p className="text-center text-sm font-semibold">
-            waiting for council approval
-          </p>
-        </div>
-      )}
-
-      <Link
-        className={`border2 z-10 flex max-w-56 flex-1 snap-center flex-col items-start rounded-md bg-white  shadow transition-all duration-150 ease-out hover:border-2 hover:border-secondary ${!enabled && "opacity-70"}`}
-        href={`${pathname}/pool/${poolId}`}
-      >
-        <div className="flex w-full items-center justify-around py-2">
-          <div className="text-xs">
-            <BuildingOffice2Icon className="h-7 w-7 text-secondary" />
-          </div>
-          <h4 className="w-fit text-center font-press text-secondary">
-            {poolId}
-          </h4>
-        </div>
-        <div className="flex w-full flex-col p-1">
-          <div className="flex items-center justify-between text-xs">
-            <p className="stat-title">pool type:</p>
-
-            <Badge
-              type={config?.proposalType as number}
-              classNames="scale-75"
-            />
-          </div>
-          {(config?.proposalType as number) == 1 && (
-            <div className="flex items-baseline justify-between">
-              <p className="stat-title">funds available:</p>
-              <p className="overflow-hidden truncate px-2 text-right text-lg font-semibold">
-                {formatTokenAmount(poolAmount, tokenGarden?.decimals)}
-              </p>
-            </div>
-          )}
-          <div className="flex items-baseline justify-between">
-            <p className="stat-title">proposals:</p>
-            <p className="px-2 text-right text-lg font-semibold">
-              {proposals.length}
-            </p>
-          </div>
-        </div>
-        <Image
-          src={gardenLand}
-          alt="Garden land"
-          className="h-10 w-full object-cover"
+    <Card href={`${pathname}/${poolId}`}>
+      <header className="mb-4 flex w-full items-center justify-between">
+        <h4>Pool #{poolId}</h4>
+        <Badge type={poolType} />
+      </header>
+      <div className="mb-10 flex min-h-[60px] flex-col gap-2">
+        <Statistic
+          icon={<HandRaisedIcon />}
+          count={proposals.length}
+          label="proposals"
         />
-      </Link>
-    </div>
+        {poolType && poolTypes[poolType] === "funding" && (
+          <Statistic
+            icon={<CurrencyDollarIcon />}
+            count={formatTokenAmount(poolAmount, tokenGarden?.decimals)}
+            label="funds available"
+          />
+        )}
+      </div>
+      {!isEnabled ? (
+        <div className="banner">
+          <ClockIcon className="h-8 w-8 text-secondary-content" />
+          <h6>Waiting for approval</h6>
+        </div>
+      ) : (
+        <Image
+          src={poolType && poolTypes[poolType] === "funding" ? blueLand : grass}
+          alt="Garden land"
+          className="h-10 w-full rounded-lg object-cover"
+        />
+      )}
+    </Card>
   );
 }
