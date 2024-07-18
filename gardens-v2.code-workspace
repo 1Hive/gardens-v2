@@ -42,9 +42,9 @@
   },
   "extensions": {
     "recommendations": [
-      "esbenp.prettier-vscode",
       "dsznajder.es7-react-js-snippets",
       "dbaeumer.vscode-eslint",
+      "rvest.vs-code-prettier-eslint",
       "xabikos.javascriptsnippets",
       "styled-components.vscode-styled-components",
       "nomicfoundation.hardhat-solidity",

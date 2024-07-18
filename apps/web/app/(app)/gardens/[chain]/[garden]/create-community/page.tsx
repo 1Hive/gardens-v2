@@ -17,10 +17,10 @@ export default function Page({
   params: { chain: number; garden: string };
 }) {
   const { data: result, error: getCommunityCreationDataQueryError } =
-    useSubgraphQuery<getCommunityCreationDataQuery>({
-      query: getCommunityCreationDataDocument,
-      variables: { addr: garden },
-    });
+        useSubgraphQuery<getCommunityCreationDataQuery>({
+          query: getCommunityCreationDataDocument,
+          variables: { addr: garden },
+        });
 
   useEffect(() => {
     if (getCommunityCreationDataQueryError) {
@@ -36,17 +36,18 @@ export default function Page({
   const alloContractAddr = result?.tokenGarden?.communities?.[0]
     .alloAddress as Address;
 
-  return tokenGarden ?
+  return tokenGarden ? (
     <div className="page-layout">
       <section className="section-layout">
         <div className="text-center sm:mt-5">
           <h2 className="text-xl font-semibold leading-6 text-gray-900">
-              Welcome to the {tokenGarden.symbol} Community Form!
+                        Welcome to the {tokenGarden.symbol} Community Form!
           </h2>
           <div className="mt-1">
             <p className="text-sm">
-                Create a vibrant community around the {tokenGarden.name} by
-                providing the necessary details below.
+                            Create a vibrant community around the{" "}
+              {tokenGarden.name} by providing the necessary
+                            details below.
             </p>
           </div>
         </div>
@@ -58,7 +59,9 @@ export default function Page({
         alloContractAddr={alloContractAddr}
       />
     </div>
-    : <div className="mt-96">
+  ) : (
+    <div className="mt-96">
       <LoadingSpinner />
-    </div>;
+    </div>
+  );
 }
