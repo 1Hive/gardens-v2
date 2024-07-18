@@ -9,6 +9,7 @@ import {
   CloudArrowUpIcon,
   FingerPrintIcon,
   LockClosedIcon,
+  ArrowLongRightIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { newLogo, commF } from "@/assets";
@@ -82,9 +83,10 @@ const Hero = () => {
             {/* TODO: make it a link to garden form */}
             <a
               href="/"
-              className="text-sm font-semibold leading-6 text-gray-900"
+              className="text-sm font-semibold leading-6 text-gray-900 flex items-center justify-center"
             >
-              Sign up <span aria-hidden="true">&rarr;</span>
+              <span>Sign up </span>
+              <ArrowLongRightIcon className="ml-2 h-5 w-5" />
             </a>
           </div>
         </nav>
@@ -129,9 +131,13 @@ const Hero = () => {
                   ))} */}
                 </div>
                 <div className="py-6">
-                  <span className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50">
-                    Sign up
-                  </span>
+                  <a
+                    href="/"
+                    className="w-full py-1 flex items-center justify-center bg-neutral-inverted-content text-center text-sm font-semibold leading-6 hover:opacity-95"
+                  >
+                    <span>Sign up </span>
+                    <ArrowLongRightIcon className="ml-2 h-5 w-5" />
+                  </a>
                 </div>
               </div>
             </div>
@@ -220,10 +226,10 @@ const WhoIsFor = () => {
         <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
           <div>
             <h2 className="text-base font-semibold leading-7 text-primary-content">
-              Who is garden for ?
+              Who is gardens for ?
             </h2>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Our all-in one hub
+              Our all-in-one hub
             </p>
             <p className="mt-6 text-base leading-7 text-gray-600">
               Gardens is a versatile platform designed to nurture and grow
@@ -236,13 +242,13 @@ const WhoIsFor = () => {
           <div className="col-span-2 grid grid-cols-1 gap-x-8 gap-y-10 text-base leading-7 text-gray-600 sm:grid-cols-2 lg:gap-y-16">
             {whoIsFor.map((feature) => (
               <div key={feature.name} className="relative pl-9">
-                <h5 className="font-chakra font-semibold text-gray-900">
+                <h3 className="font-chakra font-semibold text-gray-900">
                   <CheckIcon
                     aria-hidden="true"
                     className="absolute left-0 top-1 h-5 w-5 text-primary-content"
                   />
                   {feature.name}
-                </h5>
+                </h3>
                 <p className="mt-2">{feature.description}</p>
               </div>
             ))}
@@ -284,12 +290,12 @@ const ourStack = [
 const OurStack = () => {
   return (
     <div className="bg-white py-20">
-      <div className="mx-auto max-w-6xl px-4 lg:px-6">
-        <div className="mx-auto max-w-2xl lg:text-center">
-          <p className="mt-2 text-center text-3xl font-bold tracking-tight sm:text-4xl">
+      <div className="mx-auto max-w-6xl px-6 lg:px-0">
+        <div className=" max-w-2xl">
+          <p className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
             Comprehensive DAO Toolkit
           </p>
-          <p className="mt-6 text-center text-lg leading-8">
+          <p className="mt-6 text-lg leading-8">
             {/* TODO: see if neccesary some minor description here */}
             Quis tellus eget adipiscing convallis sit sit eget aliquet quis.
             Suspendisse eget egestas a elementum pulvinar et feugiat blandit at.
@@ -307,7 +313,11 @@ const OurStack = () => {
                       className="h-6 w-6 text-white"
                     />
                   </div>
-                  {feature.name}
+                  <div className="min-h-[40px] flex items-center">
+                    <h3 >
+                      {feature.name}
+                    </h3>
+                  </div>
                 </div>
                 <p className="mt-2 text-base leading-7 text-gray-600">
                   {feature.description}
@@ -326,23 +336,23 @@ const ChainsDeploy = () => {
     <div className="bg-neutral py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:max-w-none">
-          <h2 className="text-lg font-semibold leading-8">Soon available on</h2>
-          <div className="mx-auto mt-10 grid grid-cols-4 items-center gap-x-8 gap-y-10 sm:grid-cols-6 sm:gap-x-10 lg:mx-0 lg:grid-cols-5">
+          <h2 className="font-semibold leading-8">Soon available on</h2>
+          <div className="mx-auto mt-10 grid grid-cols-4 items-center gap-x-8 gap-y-10 sm:grid-cols-4 sm:gap-x-10 lg:mx-0 lg:grid-cols-4">
             <div className="col-span-2 flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={100} height={48} />
-              <h3 className="text-center">Gnosis</h3>
+              <h5 className="text-center">Gnosis</h5>
             </div>
             <div className="flec-col col-span-2 flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={10} height={48} />
-              <h3 className="text-center"> Optimism</h3>
+              <h5 className="text-center"> Optimism</h5>
             </div>
             <div className="flec-col col-span-2 flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={42161} height={48} />
-              <h3 className="text-center">Arbitrum</h3>
+              <h5 className="text-center">Arbitrum</h5>
             </div>
             <div className="flec-col col-span-2 flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={1} height={48} />
-              <h3 className="text-center">Polygon</h3>
+              <h5 className="text-center">Polygon</h5>
             </div>
           </div>
         </div>
@@ -355,7 +365,7 @@ const SignUp = () => {
   return (
     <div className="bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="relative isolate overflow-hidden bg-gray-900 px-6 py-24 shadow-2xl sm:rounded-3xl sm:px-24 xl:py-32">
+        <div className="relative isolate overflow-hidden bg-neutral-content px-6 py-24 shadow-2xl sm:rounded-3xl sm:px-24 xl:py-32">
           <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight text-neutral sm:text-4xl">
             Get ready for our beta release
           </h2>
@@ -366,9 +376,10 @@ const SignUp = () => {
             {/* TODO: link to gardnes form */}
             <a
               href="/"
-              className="w-full bg-neutral-inverted-content text-center text-sm font-semibold leading-6 hover:opacity-95"
+              className="w-full py-1 flex items-center justify-center bg-neutral-inverted-content text-center text-sm font-semibold leading-6 hover:opacity-95"
             >
-              Sign up <span aria-hidden="true">&rarr;</span>
+              <span>Sign up </span>
+              <ArrowLongRightIcon className="ml-2 h-5 w-5" />
             </a>
           </div>
           <svg
