@@ -6,10 +6,10 @@ import {
   Bars3Icon,
   XMarkIcon,
   ArrowPathIcon,
-  CloudArrowUpIcon,
   FingerPrintIcon,
   LockClosedIcon,
   ArrowLongRightIcon,
+  Battery50Icon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { newLogo, commF } from "@/assets";
@@ -27,13 +27,6 @@ export default function Page() {
     </>
   );
 }
-
-// const navigation = [
-//   { name: "Product", href: "#" },
-//   { name: "Features", href: "#" },
-//   { name: "Marketplace", href: "#" },
-//   { name: "Company", href: "#" },
-// ];
 
 const Hero = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -82,8 +75,9 @@ const Hero = () => {
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
             {/* TODO: make it a link to garden form */}
             <a
-              href="/"
-              className="text-sm font-semibold leading-6 text-gray-900 flex items-center justify-center"
+              href="https://la74xhyqvjj.typeform.com/to/ocrTRQFb"
+              className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
+              target="_blank"
             >
               <span>Sign up </span>
               <ArrowLongRightIcon className="ml-2 h-5 w-5" />
@@ -133,7 +127,7 @@ const Hero = () => {
                 <div className="py-6">
                   <a
                     href="/"
-                    className="w-full py-1 flex items-center justify-center bg-neutral-inverted-content text-center text-sm font-semibold leading-6 hover:opacity-95"
+                    className="flex w-full items-center justify-center bg-neutral-inverted-content py-1 text-center text-sm font-semibold leading-6 hover:opacity-95"
                   >
                     <span>Sign up </span>
                     <ArrowLongRightIcon className="ml-2 h-5 w-5" />
@@ -159,9 +153,11 @@ const Hero = () => {
                 Gardens is a coordination platform giving communities
                 streamlined access to web3’s best decision-sourcing mechanisms.
               </p>
-              <p className="text-lg leading-8">
-                Our emphasis is on a community experience that’s healthy, fun,
-                intuitive, secure, and open.
+              <p className="mt-2 text-lg leading-8">
+                Our emphasis is on a community experience that’s{" "}
+                <span className="text-lg font-bold">
+                  healthy, fun, intuitive, secure, and open.
+                </span>
               </p>
               {/* <div className="mt-10 flex items-center gap-x-6">
                 <a
@@ -195,7 +191,7 @@ const whoIsFor = [
   {
     name: "Web3 token ecosystems",
     description:
-      "Grow a diverse, healthy network of communities and public goods for your entire tokenomics.",
+      "Grow a diverse, healthy network of communities and public goods for your entire token economy.",
   },
   {
     name: "Public goods organizations",
@@ -215,7 +211,7 @@ const whoIsFor = [
   {
     name: "Doers and Dreamers",
     description:
-      "Participate in the communities you care about by supporting proposals or flagging abuse",
+      "Participate in the communities you care about by supporting proposals or flagging abuse.",
   },
 ];
 
@@ -263,9 +259,8 @@ const ourStack = [
   {
     name: "Conviction voting",
     description:
-      // TODO: ADD the best convicition voting description
-      "Description here",
-    icon: CloudArrowUpIcon,
+      "A continuous voting system where your support gains strength over time. Encourages ongoing participation, favors consistent long-term members and ideas, and protects communities from short-term manipulation.",
+    icon: Battery50Icon,
   },
   {
     name: "Allo protocol",
@@ -276,13 +271,13 @@ const ourStack = [
   {
     name: "Gnosis Safe",
     description:
-      " Infinitely composable multisigs integrated into Gardens community management and proposal dispute resolution",
+      "Infinitely composable multisigs integrated into Gardens community management and proposal dispute resolution.",
     icon: ArrowPathIcon,
   },
   {
     name: "Gitcoin Passport",
     description:
-      "Web3’s leading tool for sybil resistance, enabling the custom voting weight systems that help improve collective decision making.",
+      "Web3’s leading tool for sybil resistance, enabling custom voting weight systems that help improve collective decision making.",
     icon: FingerPrintIcon,
   },
 ];
@@ -297,9 +292,8 @@ const OurStack = () => {
           </p>
           <p className="mt-6 text-lg leading-8">
             {/* TODO: see if neccesary some minor description here */}
-            Quis tellus eget adipiscing convallis sit sit eget aliquet quis.
-            Suspendisse eget egestas a elementum pulvinar et feugiat blandit at.
-            In mi viverra elit nunc.
+            Gardens leverages cutting-edge Web3 technology to deliver a secure,
+            transparent, and decentralized platform.
           </p>
         </div>
         <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-6xl">
@@ -313,10 +307,8 @@ const OurStack = () => {
                       className="h-6 w-6 text-white"
                     />
                   </div>
-                  <div className="min-h-[40px] flex items-center">
-                    <h3 >
-                      {feature.name}
-                    </h3>
+                  <div className="flex min-h-[40px] items-center">
+                    <h3>{feature.name}</h3>
                   </div>
                 </div>
                 <p className="mt-2 text-base leading-7 text-gray-600">
@@ -351,7 +343,7 @@ const ChainsDeploy = () => {
               <h5 className="text-center">Arbitrum</h5>
             </div>
             <div className="flec-col col-span-2 flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
-              <ChainIcon chain={1} height={48} />
+              <ChainIcon chain={137} height={48} />
               <h5 className="text-center">Polygon</h5>
             </div>
           </div>
@@ -372,11 +364,12 @@ const SignUp = () => {
           <p className="mx-auto mt-2 max-w-xl text-center text-lg leading-8 text-neutral-soft">
             aim to lunch in August 2024!
           </p>
-          <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-4 border-2">
+          <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-4 rounded-xl">
             {/* TODO: link to gardnes form */}
             <a
-              href="/"
-              className="w-full py-1 flex items-center justify-center bg-neutral-inverted-content text-center text-sm font-semibold leading-6 hover:opacity-95"
+              href="https://la74xhyqvjj.typeform.com/to/ocrTRQFb"
+              className="flex w-full items-center justify-center rounded-md bg-neutral-inverted-content py-1 text-center text-sm font-semibold leading-6 hover:opacity-95"
+              target="_blank"
             >
               <span>Sign up </span>
               <ArrowLongRightIcon className="ml-2 h-5 w-5" />
@@ -417,7 +410,7 @@ const SignUp = () => {
 const navigation = [
   {
     name: "X",
-    href: "#",
+    href: "https://x.com/gardens_fund",
     icon: (props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) => (
       <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
         <path d="M13.6823 10.6218L20.2391 3H18.6854L12.9921 9.61788L8.44486 3H3.2002L10.0765 13.0074L3.2002 21H4.75404L10.7663 14.0113L15.5685 21H20.8131L13.6819 10.6218H13.6823ZM11.5541 13.0956L10.8574 12.0991L5.31391 4.16971H7.70053L12.1742 10.5689L12.8709 11.5655L18.6861 19.8835H16.2995L11.5541 13.096V13.0956Z" />
@@ -426,7 +419,7 @@ const navigation = [
   },
   {
     name: "GitHub",
-    href: "#",
+    href: "https://github.com/1Hive/gardens-v2",
     icon: (props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) => (
       <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
         <path
@@ -439,7 +432,7 @@ const navigation = [
   },
   {
     name: "Discord",
-    href: "#",
+    href: "https://discord.gg/sBspY3Rn",
     icon: (props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) => (
       <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
         <path
@@ -451,8 +444,8 @@ const navigation = [
     ),
   },
   {
-    name: "Farecaster",
-    href: "#",
+    name: "Wrapcast",
+    href: "https://warpcast.com/gardens",
     icon: (props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) => (
       <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
         <path
@@ -475,6 +468,7 @@ const Footer = () => {
               key={item.name}
               href={item.href}
               className="easy-in-out text-neutral-soft-content transition-colors duration-300 hover:text-primary-content"
+              target="_blank"
             >
               <span className="sr-only">{item.name}</span>
               <item.icon aria-hidden="true" className="h-6 w-6" />
