@@ -25,7 +25,7 @@ export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
 
   const processedSeries = useMemo(
     () =>
-      // @ts-ignore
+    // @ts-ignore
       options?.series?.map((series: { data: unknown[] }) => {
         const { data } = series;
         let newData = data;
