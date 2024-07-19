@@ -7,5 +7,4 @@
   },
   "solidity.formatter": "forge",
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
