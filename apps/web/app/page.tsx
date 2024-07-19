@@ -73,11 +73,11 @@ const Hero = () => {
             ))} */}
           </div>
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-            {/* TODO: make it a link to garden form */}
             <a
               href="https://la74xhyqvjj.typeform.com/to/ocrTRQFb"
               className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
               target="_blank"
+              rel="noreferrer"
             >
               <span>Sign up </span>
               <ArrowLongRightIcon className="ml-2 h-5 w-5" />
@@ -126,8 +126,10 @@ const Hero = () => {
                 </div>
                 <div className="py-6">
                   <a
-                    href="/"
+                    href="https://la74xhyqvjj.typeform.com/to/ocrTRQFb"
                     className="flex w-full items-center justify-center bg-neutral-inverted-content py-1 text-center text-sm font-semibold leading-6 hover:opacity-95"
+                    target="_blank"
+                    rel="noreferrer"
                   >
                     <span>Sign up </span>
                     <ArrowLongRightIcon className="ml-2 h-5 w-5" />
@@ -155,7 +157,7 @@ const Hero = () => {
               </p>
               <p className="mt-2 text-lg leading-8">
                 Our emphasis is on a community experience that’s{" "}
-                <span className="text-lg font-bold">
+                <span className="text-lg font-bold text-primary-content">
                   healthy, fun, intuitive, secure, and open.
                 </span>
               </p>
@@ -370,6 +372,7 @@ const SignUp = () => {
               href="https://la74xhyqvjj.typeform.com/to/ocrTRQFb"
               className="flex w-full items-center justify-center rounded-md bg-neutral-inverted-content py-1 text-center text-sm font-semibold leading-6 hover:opacity-95"
               target="_blank"
+              rel="noreferrer"
             >
               <span>Sign up </span>
               <ArrowLongRightIcon className="ml-2 h-5 w-5" />
@@ -469,6 +472,7 @@ const Footer = () => {
               href={item.href}
               className="easy-in-out text-neutral-soft-content transition-colors duration-300 hover:text-primary-content"
               target="_blank"
+              rel="noreferrer"
             >
               <span className="sr-only">{item.name}</span>
               <item.icon aria-hidden="true" className="h-6 w-6" />
