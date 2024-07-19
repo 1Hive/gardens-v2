@@ -82,7 +82,7 @@ module.exports = {
     "comma-dangle": ["error", "always-multiline"],
     semi: ["error", "always"],
     "brace-style": ["error"],
-    indent: ["error", 2],
+    "@typescript-eslint/indent": ["error", 2],
     "@typescript-eslint/quotes": ["error", "double"],
     "import/extensions": "off",
     "no-multiple-empty-lines": ["error", { max: 1 }],
