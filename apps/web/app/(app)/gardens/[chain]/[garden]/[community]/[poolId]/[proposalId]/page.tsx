@@ -32,7 +32,12 @@ const prettyTimestamp = (timestamp: number) => {
 export default function Page({
   params: { proposalId, garden },
 }: {
-  params: { proposalId: string; poolId: string; chain: string; garden: string };
+  params: {
+    proposalId: string;
+    poolId: string;
+    chain: string;
+    garden: string;
+  };
 }) {
   // TODO: fetch garden decimals in query
   const { data } = useSubgraphQuery<getProposalDataQuery>({
@@ -239,7 +244,7 @@ export default function Page({
               Proposal passed and executed successfully
             </div>
           </div>
-          : <ConvictionBarChart
+        : <ConvictionBarChart
             currentConvictionPct={currentConvictionPct}
             thresholdPct={thresholdPct}
             proposalSupportPct={totalSupportPct}

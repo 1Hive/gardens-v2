@@ -63,7 +63,7 @@ export default function Page({
   }, [error]);
 
   const [ipfsResult, setIpfsResult] =
-    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
+        useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
 
   const metadata = data?.cvstrategies?.[0]?.metadata;
 
@@ -111,7 +111,7 @@ export default function Page({
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
   const spendingLimitPct =
-    (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
+        (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
   return (
     <div className="page-layout">
@@ -125,12 +125,18 @@ export default function Page({
         </header>
         <p>{ipfsResult.description}</p>
         <div className="mb-10 mt-8 flex flex-col items-start gap-2">
-          <Statistic label="pool type" icon={<InformationCircleIcon />}>
+          <Statistic
+            label="pool type"
+            icon={<InformationCircleIcon />}
+          >
             <Badge type={proposalType} />
           </Statistic>
 
           {poolTypes[proposalType] === "funding" && (
-            <Statistic label="funding token" icon={<InformationCircleIcon />}>
+            <Statistic
+              label="funding token"
+              icon={<InformationCircleIcon />}
+            >
               <Badge
                 isCapitalize
                 label={tokenGarden.symbol}
@@ -149,21 +155,29 @@ export default function Page({
                 classNames="text-secondary-content"
                 icon={<ChartBarIcon />}
               />
-              <Badge label={pointSystems[pointSystem]} icon={<BoltIcon />} />
+              <Badge
+                label={pointSystems[pointSystem]}
+                icon={<BoltIcon />}
+              />
             </div>
           </Statistic>
         </div>
-        {!isEnabled ?
+        {!isEnabled ? (
           <div className="banner">
             <ClockIcon className="h-8 w-8 text-secondary-content" />
             <h6>Waiting for council approval</h6>
           </div>
-          : <Image
-            src={poolTypes[proposalType] === "funding" ? blueLand : grassLarge}
+        ) : (
+          <Image
+            src={
+              poolTypes[proposalType] === "funding"
+                ? blueLand
+                : grassLarge
+            }
             alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
           />
-        }
+        )}
       </section>
 
       {isEnabled && (
