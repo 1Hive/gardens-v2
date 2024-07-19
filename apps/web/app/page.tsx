@@ -223,12 +223,7 @@ const WhoIsFor = () => {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
           <div>
-            <h2 className="text-base font-semibold leading-7 text-primary-content">
-              Who is gardens for ?
-            </h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Our all-in-one hub
-            </p>
+            <h2 className="font-semibold leading-7">Who is Gardens for ?</h2>
             <p className="mt-6 text-base leading-7 text-gray-600">
               Gardens is a versatile platform designed to nurture and grow
               decentralized ecosystems. Our intuitive tools empower a wide range
@@ -364,7 +359,7 @@ const SignUp = () => {
             Get ready for our beta release
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-center text-lg leading-8 text-neutral-soft">
-            aim to lunch in August 2024!
+            Coming August 2024!
           </p>
           <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-4 rounded-xl">
             {/* TODO: link to gardnes form */}
