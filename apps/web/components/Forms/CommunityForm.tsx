@@ -128,45 +128,22 @@ export const CommunityForm = ({
   //     });
   // };
 
-  const createCommunity = () => {
+  const createCommunity = async () => {
     setLoading(true);
     const json = {
       // image: getValues("image IPFS"), ???
       covenant: getValues("covenant"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(json).then(async (res) => {
-      await delayAsync(1001);
-      return res;
-    });
-
-    toast
-      .promise(ipfsUpload, {
-        pending: {
-          render: "Uploading data...",
-          type: "default",
-          toastId: "ipfsUpload",
-          closeOnClick: true,
-          style: {
-            width: "fit-content",
-            marginLeft: "auto",
-          },
-        },
-        // success: "All ready!",
-        error: "Error uploading data",
-      })
-      .then((ipfsHash) => {
-        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) {
-          throw new Error("No preview data");
-        }
-        const argsArray = contractWriteParsedData(ipfsHash);
-        write?.({ args: [argsArray] });
-      })
-      .catch((error: any) => {
-        console.error(error);
-        setLoading(false);
-      });
+    const ipfsHash = await ipfsJsonUpload(json);
+    if (ipfsHash) {
+      if (previewData === undefined) {
+        throw new Error("No preview data");
+      }
+      const argsArray = contractWriteParsedData(ipfsHash);
+      write?.({ args: [argsArray] });
+    }
+    setLoading(false);
   };
 
   const { write } = useContractWriteWithConfirmations({
@@ -174,6 +151,7 @@ export const CommunityForm = ({
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
     contractName: "Registry Factory",
+    fallbackErrorMessage: "Problem creating community. Please try again.",
     onConfirmations: async (receipt) => {
       const newCommunityAddr = receipt.logs[0].address;
       if (pathname) {
@@ -191,9 +169,6 @@ export const CommunityForm = ({
         chainId: tokenGarden.chainId,
         id: newCommunityAddr, // new community address
       });
-    },
-    onError: (err) => {
-      console.error(err);
     },
     onSettled: () => setLoading(false),
   });

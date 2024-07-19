@@ -1,24 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { uniqueId } from "lodash-es";
 import Image from "next/image";
-import { Id, toast } from "react-toastify";
+import { toast, ToastOptions } from "react-toastify";
 import { UserRejectedRequestError } from "viem";
 import { WriteContractResult } from "wagmi/actions";
+import { useChainFromPath } from "./useChainFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { WaitingForSig, TxError, TxSuccess, TxMinting } from "@/assets";
+import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
 type TransactionData = WriteContractResult | undefined;
 
 export const useTransactionNotification = (
-  { isWaitingForSig, transactionData, transactionError, transactionStatus, contractName, enabled }: {
-    isWaitingForSig: boolean,
+  { toastId: toastIdProp, transactionData, transactionError, transactionStatus, contractName, enabled, fallbackErrorMessage }: {
+    toastId?: string,
     transactionData: TransactionData | null | undefined,
     transactionError: Error | null | undefined,
-    transactionStatus: ReturnType<typeof useContractWriteWithConfirmations>["status"],
+    transactionStatus?: ReturnType<typeof useContractWriteWithConfirmations>["status"],
     contractName: string,
     enabled?: boolean,
+    fallbackErrorMessage?: string,
   },
 ) => {
-  const [toastId, setToastId] = useState<Id>();
+  const toastId = toastIdProp ?? uniqueId();
+  const chain = useChainFromPath();
 
   useEffect(() => {
     if (transactionData?.hash) {
@@ -27,7 +32,7 @@ export const useTransactionNotification = (
   }, [transactionData?.hash]);
 
   useEffect(() => {
-    if (!enabled || (!transactionStatus && !isWaitingForSig)) {
+    if ((!enabled && transactionStatus !== "error" && transactionStatus !== "success") || !transactionStatus) {
       return;
     }
 
@@ -36,42 +41,50 @@ export const useTransactionNotification = (
       contractName,
     };
 
-    if (!toastId && isWaitingForSig) {
-      setToastId(toast(TransactionStatusNotification({
-        ...txNotifProps, message: "Waiting for signature",
-      }), {
-        autoClose: false,
-        icon: <></>,
-        type: "warning",
-        className: "no-icon",
-      }));
-    } else {
-      if (transactionStatus === "loading") {
-        toast.update(toastId!, {
-          render: TransactionStatusNotification({ ...txNotifProps, message:"Approving" }),
-          type: "info",
-        });
-      } else if (transactionStatus === "success") {
-        toast.update(toastId!, {
-          render: TransactionStatusNotification({ ...txNotifProps, message:"Transaction successfull" }),
-          autoClose: undefined,
-          type: "success",
-        });
-        setToastId(undefined);
-      } else if (transactionStatus === "error") {
-        toast.update(toastId!, {
-          render: TransactionStatusNotification({ ...txNotifProps, message:parseErrorMessage(transactionError as Error) }),
-          autoClose: undefined,
-          type: "error",
-        });
-        setToastId(undefined);
-      }
+    let notifProps: Parameters<typeof TransactionStatusNotification>[0];
+    let toastOptions: Partial<ToastOptions>;
+
+    const clickToExplorer = () => window.open(`${chain?.blockExplorers?.default.url}/tx/${transactionData?.hash}`, "_blank");
+
+    switch (transactionStatus) {
+      case "idle":
+        notifProps = { ...txNotifProps, message: "Waiting for signature" };
+        toastOptions = { autoClose: false, type: "warning" };
+        break;
+      case "loading":
+        notifProps = { ...txNotifProps, message: "Minting transaction..." };
+        toastOptions = { autoClose: false, type: "info", onClick: clickToExplorer };
+        break;
+      case "success":
+        notifProps = { ...txNotifProps, message: "Transaction successfull" };
+        toastOptions = { type: "success", onClick: clickToExplorer };
+        break;
+      case "error":
+        notifProps = { ...txNotifProps, message: parseErrorMessage(transactionError as Error) };
+        toastOptions = { type: "error", onClick: clickToExplorer };
+        break;
     }
-  }, [transactionStatus, transactionData, enabled, isWaitingForSig]);
+
+    toastOptions = {
+      toastId,
+      icon: <></>,
+      autoClose: NOTIFICATION_AUTO_CLOSE_DELAY,
+      className: "no-icon",
+      ...toastOptions,
+    } satisfies ToastOptions;
+
+    if (toast.isActive(toastId)) {
+      toast.update(toastId, { ...toastOptions, render: <TransactionStatusNotification {...notifProps} /> });
+    } else {
+      toast(<TransactionStatusNotification {...notifProps} />, toastOptions);
+    }
+  }, [transactionStatus, transactionData, enabled]);
 
   function parseErrorMessage(error: Error) {
     if (error?.cause instanceof UserRejectedRequestError) {
       return "User rejected the request";
+    } else if (fallbackErrorMessage) {
+      return fallbackErrorMessage;
     } else {
       return "Transaction failed. Please try again";
     }

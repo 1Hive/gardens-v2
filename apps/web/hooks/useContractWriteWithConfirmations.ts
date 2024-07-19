@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { TransactionReceipt } from "viem";
 import { useChainId, useContractWrite, useWaitForTransaction } from "wagmi";
@@ -20,12 +20,19 @@ export function useContractWriteWithConfirmations(
     confirmations?: number;
     contractName: string;
     showNotification?: boolean;
+    fallbackErrorMessage?: string;
   },
 ) {
+  const toastId = props.contractName + "_" + props.functionName;
   const chainId = useChainId();
   let propsWithChainId = {
     ...props,
     chainId: props.chainId ?? chainId,
+  };
+
+  propsWithChainId.onError = (...params : Parameters<NonNullable<typeof props.onError>>) => {
+    console.error(`Error with transaction [${props.contractName} -> ${props.functionName}]`, { error: params[0], variables: params[1], context: params[2] });
+    props.onError?.(...params);
   };
 
   const txResult = useContractWrite(propsWithChainId as any);
@@ -36,16 +43,28 @@ export function useContractWriteWithConfirmations(
     chainId: +propsWithChainId.chainId,
     confirmations:
     propsWithChainId.confirmations ??
-    chainDataMap[+propsWithChainId.chainId].confirmations,
+      chainDataMap[+propsWithChainId.chainId].confirmations,
   });
 
+  const computedStatus = useMemo(() => {
+    if (txResult.status === "idle") {
+      return undefined;
+    } else if (txWaitResult.status === "loading") {
+      return "loading";
+    } else if (txResult.status === "success" || txResult.status === "error") {
+      return txResult.status;
+    }
+    return txWaitResult.status;
+  }, [txResult.status, txWaitResult.status]);
+
   useTransactionNotification({
-    isWaitingForSig: txResult.status === "loading",
+    toastId,
     transactionData: txResult.data,
-    transactionStatus: txWaitResult.status,
+    transactionStatus: computedStatus,
     transactionError: txResult.error,
     contractName: props.contractName,
     enabled: props.showNotification ?? true, // default to true
+    fallbackErrorMessage: props.fallbackErrorMessage,
   });
 
   useEffect(() => {
@@ -58,7 +77,6 @@ export function useContractWriteWithConfirmations(
     ...txResult,
     ...txWaitResult,
     transactionData: txResult.data,
-    // status: txResult.status,
     confirmationsStatus: txWaitResult.status,
     confirmed: !!txWaitResult.isSuccess,
   };

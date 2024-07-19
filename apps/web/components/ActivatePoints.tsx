@@ -39,6 +39,7 @@ export function ActivatePoints({
     contractName: "CV Strategy",
     abi: abiWithErrors(cvStrategyABI),
     functionName: "activatePoints",
+    fallbackErrorMessage: "Problem activating points. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "member",
@@ -59,6 +60,7 @@ export function ActivatePoints({
     abi: abiWithErrors(cvStrategyABI),
     contractName: "CV Strategy",
     functionName: "deactivatePoints",
+    fallbackErrorMessage: "Problem deactivating points. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "member",

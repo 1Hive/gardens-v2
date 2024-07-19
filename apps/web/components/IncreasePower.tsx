@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { parseUnits } from "viem";
@@ -13,8 +13,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { useUrqlClient } from "@/hooks/useUqrlClient";
-import { queryByChain } from "@/providers/urql";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -70,34 +69,28 @@ export const IncreasePower = ({
   const { address: accountAddress } = useAccount();
   const [memberStakedTokens, setMemberStakedTokens] = useState<bigint>(0n);
 
-  const urqlClient = useUrqlClient();
-
   const urlChainId = useChainIdFromPath();
 
-  const runIsMemberQuery = useCallback(async () => {
-    if (!accountAddress || !urlChainId) {
-      return;
-    }
-    const { data: result } = await queryByChain<isMemberQuery>(
-      urqlClient,
-      urlChainId,
-      isMemberDocument,
-      {
-        me: accountAddress.toLowerCase(),
+  const { data: isMemberResult, refetch: refetchIsMember, fetching } = useSubgraphQuery<isMemberQuery>(
+    {
+      query: isMemberDocument,
+      variables:{
+        me: accountAddress?.toLowerCase(),
         comm: communityAddress.toLowerCase(),
       },
-    );
-
-    if (result && result.members.length > 0) {
-      const stakedTokens =
-        result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
-
-      setMemberStakedTokens(BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"));
-    }
-  }, [accountAddress]);
+      enabled: accountAddress !== undefined,
+    },
+  );
 
   useEffect(() => {
-    runIsMemberQuery();
+    if (accountAddress && isMemberResult && !fetching) {
+      refetchIsMember().then(result => {
+        if (result?.data && result?.data.members.length > 0) {
+          const stakedTokens = result?.data.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
+          setMemberStakedTokens(BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"));
+        }
+      });
+    }
   }, [accountAddress]);
 
   const requestedAmount = parseUnits(
@@ -185,6 +178,7 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "decreasePower",
     args: [requestedAmount as bigint],
+    fallbackErrorMessage: "Problem decreasing power. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "member",
