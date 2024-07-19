@@ -1,20 +1,20 @@
 import React, { FC } from "react";
 import {
   Arbitrum,
-  GnosisGno,
   Ethereum,
+  GnosisGno,
   Optimism,
 } from "@thirdweb-dev/chain-icons";
 import {
-  Chain,
-  localhost,
-  arbitrumSepolia,
   arbitrum,
+  arbitrumSepolia,
+  Chain,
+  gnosis,
+  localhost,
   mainnet,
-  sepolia,
   optimism,
   optimismSepolia,
-  gnosis,
+  sepolia,
 } from "viem/chains";
 import { ChainId } from "@/types";
 

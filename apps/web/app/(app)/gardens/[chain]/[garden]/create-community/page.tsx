@@ -1,14 +1,15 @@
 "use client";
-import {
-  TokenGarden,
-  getCommunityCreationDataDocument,
-  getCommunityCreationDataQuery,
-} from "#/subgraph/.graphclient";
-import { CommunityForm } from "@/components/Forms";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+
 import React, { useEffect } from "react";
 import { Address } from "viem";
+import {
+  getCommunityCreationDataDocument,
+  getCommunityCreationDataQuery,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
+import { CommunityForm } from "@/components/Forms";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export default function Page({
   params: { chain, garden },
@@ -35,19 +36,21 @@ export default function Page({
   const alloContractAddr = result?.tokenGarden?.communities?.[0]
     .alloAddress as Address;
 
-  return tokenGarden ? (
-    <div className="mx-auto flex max-w-[820px] flex-col items-center justify-center gap-4">
-      <div className="text-center sm:mt-5">
-        <h2 className="text-xl font-semibold leading-6 text-gray-900">
-          Welcome to the {tokenGarden.symbol} Community Form!
-        </h2>
-        <div className="mt-1">
-          <p className="text-sm">
-            Create a vibrant community around the {tokenGarden.name} by
-            providing the necessary details below.
-          </p>
+  return tokenGarden ?
+    <div className="page-layout">
+      <section className="section-layout">
+        <div className="text-center sm:mt-5">
+          <h2 className="text-xl font-semibold leading-6 text-gray-900">
+              Welcome to the {tokenGarden.symbol} Community Form!
+          </h2>
+          <div className="mt-1">
+            <p className="text-sm">
+                Create a vibrant community around the {tokenGarden.name} by
+                providing the necessary details below.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
       <CommunityForm
         chainId={chain}
         tokenGarden={tokenGarden}
@@ -55,9 +58,7 @@ export default function Page({
         alloContractAddr={alloContractAddr}
       />
     </div>
-  ) : (
-    <div className="mt-96">
+    : <div className="mt-96">
       <LoadingSpinner />
-    </div>
-  );
+    </div>;
 }

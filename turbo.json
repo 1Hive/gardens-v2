@@ -28,9 +28,15 @@
       "env": [
         "NEXT_PUBLIC_SUBGRAPH_URL",
         "NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP",
+        "NEXT_PUBLIC_RPC_URL_ARB_TESTNET",
+        "NEXT_PUBLIC_RPC_URL_OP_TESTNET",
+        "NEXT_PUBLIC_RPC_URL_ETH_TESTNET",
         "PINATA_JWT",
         "NODE_ENV",
-        "NEXT_ABLY_API_KEY"
+        "NEXT_ABLY_API_KEY",
+        "NEXT_PUBLIC_ENV_GARDENS",
+        "NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP",
+        "NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP"
       ]
     },
     "test": {

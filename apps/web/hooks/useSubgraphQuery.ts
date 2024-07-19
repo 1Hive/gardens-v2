@@ -1,25 +1,24 @@
-import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
-import { getContractsAddrByChain as getSubgraphAddrByChain } from "@/constants/contracts";
 import { useEffect, useRef, useState } from "react";
-import { ChainId } from "@/types";
-import { initUrqlClient } from "@/providers/urql";
+import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import { isEqual } from "lodash-es";
+import { toast } from "react-toastify";
+import { useChainIdFromPath } from "./useChainIdFromPath";
+import { getConfigByChain } from "@/constants/contracts";
 import {
   ChangeEventPayload,
   ChangeEventScope,
   SubscriptionId,
   usePubSubContext,
 } from "@/contexts/pubsub.context";
-import delayAsync from "@/utils/delayAsync";
 import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
-import { toast } from "react-toastify";
-import useChainIdFromPath from "./useChainIdFromPath";
+import { initUrqlClient } from "@/providers/urql";
+import { ChainId } from "@/types";
+import { delayAsync } from "@/utils/delayAsync";
 
 const pendingRefreshToastId = "pending-refresh";
-
 /**
  *  Fetches data from a subgraph by chain id
  * @param chainId
@@ -29,7 +28,7 @@ const pendingRefreshToastId = "pending-refresh";
  * @param changeScope  - optional, if provided, will subscribe to change events (see jsdoc in pubsub.context.tsx)
  * @returns
  */
-export default function useSubgraphQuery<
+export function useSubgraphQuery<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
 >({
@@ -52,10 +51,13 @@ export default function useSubgraphQuery<
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const [fetching, setFetching] = useState(true);
-  const subgraphAddress = getSubgraphAddrByChain(chainId);
-  const [response, setResponse] = useState<
-    Omit<Awaited<ReturnType<typeof fetch>>, "operation">
-  >({ hasNext: true, stale: true, data: undefined, error: undefined });
+  const config = getConfigByChain(chainId);
+  const [response, setResponse] = useState<Omit<Awaited<ReturnType<typeof fetch>>, "operation">>({
+    hasNext: true,
+    stale: true,
+    data: undefined,
+    error: undefined,
+  });
 
   const latestResponse = useRef(response);
   const subscritionId = useRef<SubscriptionId>();
@@ -64,7 +66,7 @@ export default function useSubgraphQuery<
     latestResponse.current = response; // Update ref on every response change
   }, [response]);
 
-  if (!subgraphAddress) {
+  if (!config) {
     console.error(`No subgraph address found for chain ${chainId}`);
   }
 
@@ -99,7 +101,7 @@ export default function useSubgraphQuery<
   const fetch = () =>
     urqlClient.query<Data>(query, variables, {
       ...context,
-      url: subgraphAddress?.subgraphUrl,
+      url: config?.subgraphUrl,
       requestPolicy: "network-only",
     });
 
@@ -126,21 +128,17 @@ export default function useSubgraphQuery<
     if (fetching) {
       return;
     }
-    console.log("Refetching from outside", { payload });
     setFetching(true);
     const res = await refetch(payload);
     setResponse(res);
     setFetching(false);
-    console.log("Refetched from outside", { payload, res });
   };
 
   const refetch = async (
     changePayload?: ChangeEventPayload,
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
-    console.log("Refetching", { retryCount });
     const result = await fetch();
-    console.log("Refetched", { result, retryCount });
     if (!retryCount) {
       retryCount = 0;
       toast.loading("Pulling new data", {
@@ -154,7 +152,7 @@ export default function useSubgraphQuery<
     }
 
     if (result.error) {
-      console.error(`⚡ Error fetching subgraph data:`, result.error);
+      console.error("⚡ Error fetching subgraph data:", result.error);
       return result;
     }
     if (
@@ -190,12 +188,12 @@ export default function useSubgraphQuery<
   };
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
     const init = async () => {
       setFetching(true);
-      console.log("Fetching");
       const resp = await fetch();
-      console.log("Fetched", { resp });
       setResponse(resp);
       setFetching(false);
     };

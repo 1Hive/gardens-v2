@@ -1,31 +1,26 @@
+import { useEffect, useRef, useState } from "react";
 import {
   AnyVariables,
   CombinedError,
   DocumentInput,
   OperationContext,
 } from "@urql/next";
-import { getContractsAddrByChain } from "@/constants/contracts";
-import { useEffect, useRef, useState } from "react";
-import {
-  localhost,
-  arbitrumSepolia,
-  optimismSepolia,
-  sepolia,
-} from "viem/chains";
-import { initUrqlClient } from "@/providers/urql";
-import { ChainId } from "@/types";
+import { debounce, isEqual } from "lodash-es";
+import { arbitrumSepolia, localhost, sepolia } from "viem/chains";
+import { HTTP_CODES } from "@/app/api/utils";
+import { getConfigByChain } from "@/constants/contracts";
 import {
   ChangeEventScope,
   SubscriptionId,
   usePubSubContext,
 } from "@/contexts/pubsub.context";
-import { debounce, isEqual } from "lodash-es";
 import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
-import delayAsync from "@/utils/delayAsync";
-import { HTTP_CODES } from "@/app/api/utils";
+import { initUrqlClient } from "@/providers/urql";
+import { ChainId } from "@/types";
+import { delayAsync } from "@/utils/delayAsync";
 
 const allChains: ChainId[] = [
   sepolia.id,
@@ -33,11 +28,10 @@ const allChains: ChainId[] = [
   // optimismSepolia.id,
 ];
 if (process.env.NODE_ENV === "development") {
-  console.log("dev");
   allChains.push(localhost.id);
 }
 
-export default function useSubgraphQueryMultiChain<
+export function useSubgraphQueryMultiChain<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
 >({
@@ -91,7 +85,7 @@ export default function useSubgraphQueryMultiChain<
       const chainSubgraphs = (chainsOverride ?? chainIds ?? allChains).map(
         (chain) => ({
           chainId: chain,
-          url: getContractsAddrByChain(chain)?.subgraphUrl,
+          url: getConfigByChain(chain)?.subgraphUrl,
         }),
       );
       await Promise.all(
@@ -102,7 +96,7 @@ export default function useSubgraphQueryMultiChain<
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
-                return await urqlClient.query<Data>(query, variables, {
+                return urqlClient.query<Data>(query, variables, {
                   ...queryContext,
                   url,
                   chainId,

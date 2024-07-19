@@ -2,21 +2,20 @@ import {
   AnyVariables,
   Client,
   createClient,
-  fetchExchange,
   DocumentInput,
+  fetchExchange,
   OperationContext,
   ssrExchange,
 } from "urql";
-
-import { getContractsAddrByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/constants/contracts";
 import { ChainId } from "@/types";
-let urqlRecord: Record<ChainId | 'default', [Client, ReturnType<typeof ssrExchange>]> = {};
+
+let urqlRecord: Record<ChainId | "default", [Client, ReturnType<typeof ssrExchange>]> = {};
 
 const isServer = typeof window === "undefined";
 
 //Subgraph URL
-const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP || "";
-const subgraphOpSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP || "";
+const subgraphArbSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP ?? "";
 
 /**
  * Function to initialize urql client. can be used both on client and server
@@ -24,9 +23,15 @@ const subgraphOpSepURL = process.env.NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP || "";
  * @param url - graphql endpoint
  * @returns and object with urqlClient and ssrCache
  */
-export function initUrqlClient({ initialState, chainId }: { initialState?: any, chainId: ChainId | 'default' } = { chainId: 'default' }) {
+export function initUrqlClient(
+  {
+    initialState,
+    chainId,
+  }: { initialState?: any; chainId: ChainId | "default" } = {
+    chainId: "default",
+  },
+) {
   if (!urqlRecord[chainId]) {
-
     //fill the client with initial state from the server.
     const ssr = ssrExchange({ initialState, isClient: !isServer });
     const urqlClient = createClient({
@@ -77,7 +82,10 @@ export function initUrqlClient({ initialState, chainId }: { initialState?: any, 
   }
 
   // Return both the Client instance and the ssrCache.
-  return { urqlClient: urqlRecord[chainId][0], ssrCache: urqlRecord[chainId][1] };
+  return {
+    urqlClient: urqlRecord[chainId][0],
+    ssrCache: urqlRecord[chainId][1],
+  };
 }
 
 export async function queryByChain<
@@ -90,15 +98,12 @@ export async function queryByChain<
   variables: Variables = {} as Variables,
   context?: Partial<OperationContext>,
 ) {
-  const addrs = getContractsAddrByChain(chainId);
-  if (!addrs) {
+  const config = getConfigByChain(chainId);
+  if (!config) {
     throw new Error("Chain not supported");
   }
-  return await urqlClient.query<Data>(query, variables, {
-    url: addrs.subgraphUrl,
+  return urqlClient.query<Data>(query, variables, {
+    url: config.subgraphUrl,
     ...context,
   });
-  // .subscribe((value) => {
-  //   console.log("value", value);
-  // });
 }

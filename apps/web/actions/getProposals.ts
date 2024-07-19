@@ -6,7 +6,7 @@ export async function getProposals(
   strategy: LightCVStrategy,
 ) {
   try {
-    async function fetchIPFSDataBatch(
+    const fetchIPFSDataBatch = async function (
       proposals: LightProposal[],
       batchSize = 5,
       delay = 300,
@@ -41,28 +41,28 @@ export async function getProposals(
       }
 
       return results;
-    }
+    };
 
-    async function transformProposals(strategy: LightCVStrategy) {
-      const proposalsData = await fetchIPFSDataBatch(strategy.proposals);
+    const transformProposals = async function (_strategy: LightCVStrategy) {
+      const proposalsData = await fetchIPFSDataBatch(_strategy.proposals);
       const transformedProposals = proposalsData.map((data, index) => {
-        const p = strategy.proposals[index];
+        const p = _strategy.proposals[index];
         return {
           ...p,
           voterStakedPointsPct: 0,
-          stakedAmount: strategy.proposals[index].stakedAmount,
+          stakedAmount: _strategy.proposals[index].stakedAmount,
           title: data.title,
-          type: strategy.config?.proposalType as number,
-          status: strategy.proposals[index].proposalStatus,
+          type: _strategy.config?.proposalType as number,
+          status: _strategy.proposals[index].proposalStatus,
         };
       });
 
       return transformedProposals;
-    }
+    };
     let transformedProposals = await transformProposals(strategy);
 
     return transformedProposals;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 }
