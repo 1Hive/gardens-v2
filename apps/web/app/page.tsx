@@ -179,7 +179,7 @@ const Hero = () => {
             <Image
               src={commF}
               alt={"ecosystem img"}
-              className="mt-10 aspect-[6/5] w-full max-w-lg rounded-2xl object-cover sm:mt-16 lg:mt-0 lg:max-w-none xl:row-span-2 xl:row-end-2 xl:mt-36"
+              className="mx-auto mt-10 aspect-[6/5] w-full max-w-lg rounded-2xl object-cover sm:mt-16 lg:mt-0 lg:max-w-none xl:row-span-2 xl:row-end-2 xl:mt-36"
             />
           </div>
         </div>
@@ -223,7 +223,7 @@ const WhoIsFor = () => {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
           <div>
-            <h2 className="font-semibold leading-7">Who is Gardens for ?</h2>
+            <h2 className="font-semibold leading-7">Who is Gardens for?</h2>
             <p className="mt-6 text-base leading-7 text-gray-600">
               Gardens is a versatile platform designed to nurture and grow
               decentralized ecosystems. Our intuitive tools empower a wide range
@@ -282,8 +282,8 @@ const ourStack = [
 const OurStack = () => {
   return (
     <div className="bg-white py-20">
-      <div className="mx-auto max-w-6xl px-6 lg:px-0">
-        <div className=" max-w-2xl">
+      <div className="mx-auto max-w-6xl px-6 lg:px-8 xl:px-0">
+        <div className="max-w-2xl ">
           <p className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
             Comprehensive DAO Toolkit
           </p>
@@ -326,20 +326,20 @@ const ChainsDeploy = () => {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:max-w-none">
           <h2 className="font-semibold leading-8">Soon available on</h2>
-          <div className="mx-auto mt-10 grid grid-cols-4 items-center gap-x-8 gap-y-10 sm:grid-cols-4 sm:gap-x-10 lg:mx-0 lg:grid-cols-4">
-            <div className="col-span-2 flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
+          <div className="mx-auto mt-10 grid grid-cols-2 items-center gap-x-8 gap-y-10 sm:gap-x-10 lg:mx-0 lg:grid-cols-4">
+            <div className=" flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={100} height={48} />
               <h5 className="text-center">Gnosis</h5>
             </div>
-            <div className="flec-col col-span-2 flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
+            <div className="flec-col flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={10} height={48} />
               <h5 className="text-center"> Optimism</h5>
             </div>
-            <div className="flec-col col-span-2 flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
+            <div className="flec-col flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={42161} height={48} />
               <h5 className="text-center">Arbitrum</h5>
             </div>
-            <div className="flec-col col-span-2 flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
+            <div className="flec-col flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={137} height={48} />
               <h5 className="text-center">Polygon</h5>
             </div>
