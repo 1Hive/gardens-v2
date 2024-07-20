@@ -12,7 +12,7 @@ dataSources:
         type: Int
         data: 1337
     source:
-      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      address: "0x0165878A594ca255338adfa4d48449f69242Eb8F"
       abi: RegistryFactory
       startBlock: 0
     mapping:
@@ -35,6 +35,37 @@ dataSources:
         - event: ProtocolFeeSet(address,uint256)
           handler: handleProtocolFeeSet  
       file: ./src/mappings/registry-factory.ts
+
+  - kind: ethereum/contract
+    name: PassportScorer
+    network: localhost
+    context:
+      chainId: 
+        type: Int
+        data: 1337
+    source:
+      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      abi: PassportScorer
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - PassportScorer
+      abis:
+        - name: PassportScorer
+          file: ../contracts/out/PassportScorer.sol/PassportScorer.json
+      eventHandlers:
+        - event: UserScoreAdded(indexed address,uint256,uint256)
+          handler: handleUserScoreAdded
+        - event: UserRemoved(indexed address)
+          handler: handleUserRemoved
+        - event: StrategyAdded(indexed address,uint256,bool,address)
+          handler: handleStrategyAdded
+        - event: StrategyActivated(indexed address)
+          handler: handleStrategyActivated
+      file: ./src/mappings/passport-scorer.ts
 
 templates:
   - kind: ethereum/contract
@@ -121,7 +152,7 @@ templates:
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256))) 
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256),address))
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated

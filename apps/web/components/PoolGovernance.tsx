@@ -3,9 +3,12 @@
 import React from "react";
 import { Dnum } from "dnum";
 import { Address, useAccount, useContractRead } from "wagmi";
-import { ActivatePoints } from "./ActivatePoints";
-import { Badge } from "./Badge";
-import { DisplayNumber } from "./DisplayNumber";
+import {
+  ActivatePoints,
+  Badge,
+  DisplayNumber,
+  CheckPassport,
+} from "@/components/";
 import { registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -15,7 +18,7 @@ type PoolGovernanceProps = {
   tokenDecimals: number;
   strategy: LightCVStrategy;
   communityAddress: Address;
-  memberTokensInCommunity: string;
+  memberTokensInCommunity: number;
 };
 
 export const PoolGovernance = ({
@@ -26,7 +29,6 @@ export const PoolGovernance = ({
   memberTokensInCommunity,
 }: PoolGovernanceProps) => {
   const { address: connectedAccount } = useAccount();
-
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
@@ -59,7 +61,7 @@ export const PoolGovernance = ({
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-10">
             <div className="flex w-full max-w-xl flex-col items-center gap-2 font-semibold">
-              {showPoolGovernanceData ?
+              {showPoolGovernanceData ? (
                 <>
                   <div className="flex w-full items-center gap-6">
                     <h5 className="">Total staked in community:</h5>
@@ -88,21 +90,29 @@ export const PoolGovernance = ({
                     </p>
                   </div>
                 </>
-                : <div className="flex w-full items-center gap-6">
+              ) : (
+                <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
                     <Badge status={isMemberActivated ? 1 : 0} />
                   </div>
                 </div>
-              }
+              )}
             </div>
           </div>
-          <ActivatePoints
-            strategyAddress={strategy.id as Address}
-            communityAddress={communityAddress}
-            isMemberActivated={isMemberActivated as boolean | undefined}
-            isMember={isMember}
-          />
+          <div className="flex flex-col gap-2">
+            <CheckPassport
+              strategyAddr={strategy.id as Address}
+              enableCheck={!isMemberActivated}
+            >
+              <ActivatePoints
+                strategyAddress={strategy.id as Address}
+                communityAddress={communityAddress}
+                isMemberActivated={isMemberActivated as boolean | undefined}
+                isMember={isMember}
+              />
+            </CheckPassport>
+          </div>
         </div>
       </div>
     </section>

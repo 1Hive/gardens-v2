@@ -27,3 +27,6 @@ export { Card } from "./Card";
 export { TokenLabel } from "./TokenLabel";
 export { Communities } from "./Communities";
 export { Breadcrumbs } from "./Breadcrumbs";
+export { SubmitPassport } from "./SubmitPassport";
+export { CheckPassport } from "./CheckPassport";
+export { Modal } from "./Modal";

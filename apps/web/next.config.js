@@ -26,4 +26,7 @@ module.exports = {
     serverComponentsExternalPackages: ["ably"],
   },
   productionBrowserSourceMaps: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };

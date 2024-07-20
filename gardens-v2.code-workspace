@@ -39,6 +39,9 @@
       "forge-std/=lib/forge-std/src/",
       "allo-v2/=lib/allo-v2/contracts/",
     ],
+    "[jsonc]": {
+      "editor.defaultFormatter": "vscode.json-language-features"
+    },
   },
   "extensions": {
     "recommendations": [
