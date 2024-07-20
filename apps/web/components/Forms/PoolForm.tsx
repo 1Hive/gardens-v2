@@ -1,25 +1,25 @@
 "use client";
 
+import "viem/window";
 import React, { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { Address, parseUnits } from "viem";
-import { usePathname, useRouter } from "next/navigation";
+import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
-import { FormSelect } from "./FormSelect";
-import FormPreview, { FormRow } from "./FormPreview";
+import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
+import { FormSelect } from "./FormSelect";
 import { Button } from "@/components/Button";
-import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { chainDataMap } from "@/configs/chainServer";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, poolTypes } from "@/types";
-import "viem/window";
-import { TokenGarden } from "#/subgraph/.graphclient";
-import { chainDataMap } from "@/configs/chainServer";
-import { MAX_RATIO_CONSTANT, CV_SCALE_PRECISION } from "@/utils/numbers";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { ipfsJsonUpload } from "@/utils/ipfsUtils";
+import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -58,8 +58,8 @@ type Props = {
 };
 
 const poolSettingValues: Record<
-  number,
-  { label: string; description: string; values: PoolSettings }
+number,
+{ label: string; description: string; values: PoolSettings }
 > = {
   0: {
     label: "Custom",
@@ -114,7 +114,7 @@ function calculateDecay(blockTime: number, convictionGrowth: number) {
   return result;
 }
 
-export default function PoolForm({ token, communityAddr, chainId }: Props) {
+export function PoolForm({ token, communityAddr, chainId }: Props) {
   const {
     register,
     handleSubmit,
@@ -351,7 +351,7 @@ export default function PoolForm({ token, communityAddr, chainId }: Props) {
           formRows={formatFormRows()}
           previewTitle="Check pool creation details"
         />
-      : <div className="flex flex-col gap-6">
+        : <div className="flex flex-col gap-6">
           <div className="flex flex-col">
             <FormInput
               label="Pool Name"
@@ -424,7 +424,7 @@ export default function PoolForm({ token, communityAddr, chainId }: Props) {
                     registerOptions={{
                       max: {
                         value: 100,
-                        message: `Max amount cannot exceed 100%`,
+                        message: "Max amount cannot exceed 100%",
                       },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
@@ -455,7 +455,7 @@ export default function PoolForm({ token, communityAddr, chainId }: Props) {
                     registerOptions={{
                       max: {
                         value: 100,
-                        message: `Max amount cannot exceed 100%`,
+                        message: "Max amount cannot exceed 100%",
                       },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
@@ -485,7 +485,7 @@ export default function PoolForm({ token, communityAddr, chainId }: Props) {
                   registerOptions={{
                     max: {
                       value: 100,
-                      message: `Max amount cannot exceed 100 DAYS`,
+                      message: "Max amount cannot exceed 100 DAYS",
                     },
                     min: {
                       value: INPUT_TOKEN_MIN_VALUE,
@@ -581,7 +581,7 @@ export default function PoolForm({ token, communityAddr, chainId }: Props) {
               Submit
             </Button>
           </div>
-        : <Button type="submit">Preview</Button>}
+          : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

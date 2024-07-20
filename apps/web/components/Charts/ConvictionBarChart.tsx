@@ -35,8 +35,8 @@ export const ConvictionBarChart = ({
     isSignalingTypeAndCovictionEqSupport: {
       condition: () =>
         isSignalingType &&
-        proposalSupportPct !== 0 &&
-        proposalSupportPct > currentConvictionPct,
+                proposalSupportPct !== 0 &&
+                proposalSupportPct > currentConvictionPct,
       details: [
         {
           message: "",
@@ -48,8 +48,8 @@ export const ConvictionBarChart = ({
     isSignalingTypeAndCovictionGtSupport: {
       condition: () =>
         isSignalingType &&
-        proposalSupportPct !== 0 &&
-        proposalSupportPct < currentConvictionPct,
+                proposalSupportPct !== 0 &&
+                proposalSupportPct < currentConvictionPct,
       details: [
         {
           message: "",
@@ -61,7 +61,7 @@ export const ConvictionBarChart = ({
     convictionLTSupportLTThreshold: {
       condition: () =>
         currentConvictionPct < proposalSupportPct &&
-        proposalSupportPct < thresholdPct,
+                proposalSupportPct < thresholdPct,
       details: [
         {
           message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
@@ -84,7 +84,7 @@ export const ConvictionBarChart = ({
     supportLTConvictionLTThreshold: {
       condition: () =>
         proposalSupportPct < currentConvictionPct &&
-        currentConvictionPct < thresholdPct,
+                currentConvictionPct < thresholdPct,
       details: [
         {
           message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
@@ -96,7 +96,7 @@ export const ConvictionBarChart = ({
     supportLTThresholdLTConviction: {
       condition: () =>
         proposalSupportPct < thresholdPct &&
-        thresholdPct < currentConvictionPct,
+                thresholdPct < currentConvictionPct,
       details: [
         {
           message: "This proposal is Executable until X date",
@@ -108,7 +108,7 @@ export const ConvictionBarChart = ({
     thresholdLTConvictionLTSupport: {
       condition: () =>
         thresholdPct < currentConvictionPct &&
-        currentConvictionPct < proposalSupportPct,
+                currentConvictionPct < proposalSupportPct,
       details: [
         {
           message: "This proposal is ready to be executed !",
@@ -120,7 +120,7 @@ export const ConvictionBarChart = ({
     thresholdLTSupportLTConviction: {
       condition: () =>
         thresholdPct < proposalSupportPct &&
-        proposalSupportPct < currentConvictionPct,
+                proposalSupportPct < currentConvictionPct,
       details: [
         {
           message: "This proposal is ready to be executed!",
@@ -132,8 +132,8 @@ export const ConvictionBarChart = ({
     CovictionEqSupportLTthreshold: {
       condition: () =>
         proposalSupportPct == currentConvictionPct &&
-        proposalSupportPct !== 0 &&
-        proposalSupportPct < thresholdPct,
+                proposalSupportPct !== 0 &&
+                proposalSupportPct < thresholdPct,
       details: [
         {
           message: `This proposal needs ${supportNeeded} % more support to reach ${thresholdPct}%`,
@@ -145,11 +145,11 @@ export const ConvictionBarChart = ({
     CovictionEqSupportGTthreshold: {
       condition: () =>
         proposalSupportPct == currentConvictionPct &&
-        proposalSupportPct !== 0 &&
-        proposalSupportPct > thresholdPct,
+                proposalSupportPct !== 0 &&
+                proposalSupportPct > thresholdPct,
       details: [
         {
-          message: `This proposal is ready to be executed!`,
+          message: "This proposal is ready to be executed!",
           growing: null,
         },
       ],
@@ -159,7 +159,8 @@ export const ConvictionBarChart = ({
   const { message, growing } = Object.values(scenarioMappings).find(
     ({ condition }) => condition(),
   )?.details[0] ?? {
-    message: proposalSupportPct == 0 ? "Proposal waiting for support ..." : "",
+    message:
+            proposalSupportPct == 0 ? "Proposal waiting for support ..." : "",
     growing: null,
   };
 
@@ -176,42 +177,40 @@ export const ConvictionBarChart = ({
     },
   };
 
-  const markLineTh: MarkLineComponentOption =
-    isSignalingType ?
-      {}
+  const markLineTh: MarkLineComponentOption = isSignalingType
+    ? {}
     : {
-        ...markLine,
-        data: [
-          {
-            xAxis: thresholdPct,
-            symbol:
-              "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
-            symbolSize: [20, 20],
-            symbolOffset: [-9, 95],
-          },
-        ],
-        lineStyle: {
-          width: 2,
-          color: "#191919",
+      ...markLine,
+      data: [
+        {
+          xAxis: thresholdPct,
+          symbol: "path://M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5",
+          symbolSize: [20, 20],
+          symbolOffset: [-9, 95],
         },
-      };
+      ],
+      lineStyle: {
+        width: 2,
+        color: "#191919",
+      },
+    };
 
   const markLineCv: MarkLineComponentOption =
-    currentConvictionPct === 0 ?
-      {}
-    : {
-        ...markLine,
-        data: [
-          {
-            xAxis: currentConvictionPct,
-          },
-        ],
-        lineStyle: {
-          width: 2,
-          color: "#69db7c",
-          type: "solid",
-        },
-      };
+        currentConvictionPct === 0
+          ? {}
+          : {
+            ...markLine,
+            data: [
+              {
+                xAxis: currentConvictionPct,
+              },
+            ],
+            lineStyle: {
+              width: 2,
+              color: "#69db7c",
+              type: "solid",
+            },
+          };
 
   const option: EChartsOption = {
     title: {
@@ -315,7 +314,9 @@ export const ConvictionBarChart = ({
         stack: "a",
         barWidth: 50,
         data: [
-          Number(supportNeeded) < 0 ? 0 : thresholdPct - proposalSupportPct,
+          Number(supportNeeded) < 0
+            ? 0
+            : thresholdPct - proposalSupportPct,
         ],
         color: "#e9ecef",
         z: -10,
@@ -331,8 +332,7 @@ export const ConvictionBarChart = ({
       <ChartWrapper
         title={"Proposal Conviction Chart"}
         message={message}
-        growing={growing}
-      >
+        growing={growing}>
         <EChartsReact option={option} />
       </ChartWrapper>
     </>

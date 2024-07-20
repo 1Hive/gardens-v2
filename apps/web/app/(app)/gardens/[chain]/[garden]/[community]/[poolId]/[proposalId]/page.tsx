@@ -1,51 +1,23 @@
 "use client";
 
-import { Address, formatUnits } from "viem";
+import { useEffect, useState } from "react";
+import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
-import { useState, useEffect } from "react";
+import { Address, formatUnits } from "viem";
 import { useContractRead } from "wagmi";
-import { Badge, Statistic, DisplayNumber } from "@/components";
-import { EthAddress } from "@/components";
-import { cvStrategyABI } from "@/src/generated";
-import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { calculatePercentageBigInt } from "@/utils/numbers";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { proposalStatus, poolTypes } from "@/types";
 import { proposalImg } from "@/assets";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import LoadingSpinner from "@/components/LoadingSpinner";
-
-export const dynamic = "force-dynamic";
-
-type ProposalsMock = {
-  title: string;
-  type: "funding" | "streaming" | "signaling";
-  description: string;
-  value?: number;
-  id: number;
-};
-
-type UnparsedProposal = {
-  submitter: Address;
-  beneficiary: Address;
-  requestedToken: Address;
-  requestedAmount: number;
-  stakedTokens: number;
-  proposalType: any;
-  proposalStatus: any;
-  blockLast: number;
-  convictionLast: number;
-  agreementActionId: number;
-  threshold: number;
-  voterStakedPointsPct: number;
-};
-
-type Proposal = UnparsedProposal & ProposalsMock;
+import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
+import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { cvStrategyABI } from "@/src/generated";
+import { poolTypes, proposalStatus } from "@/types";
+import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { calculatePercentageBigInt } from "@/utils/numbers";
 
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -57,10 +29,15 @@ const prettyTimestamp = (timestamp: number) => {
   return `${day} ${month} ${year}`;
 };
 
-export default function Proposal({
+export default function Page({
   params: { proposalId, garden },
 }: {
-  params: { proposalId: string; poolId: string; chain: string; garden: string };
+  params: {
+    proposalId: string;
+    poolId: string;
+    chain: string;
+    garden: string;
+  };
 }) {
   // TODO: fetch garden decimals in query
   const { data } = useSubgraphQuery<getProposalDataQuery>({
@@ -81,12 +58,12 @@ export default function Proposal({
   const metadata = proposalData?.metadata;
 
   const [ipfsResult, setIpfsResult] =
-    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
+        useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
 
   useEffect(() => {
     if (metadata) {
-      getIpfsMetadata(metadata).then((data) => {
-        setIpfsResult(data);
+      getIpfsMetadata(metadata).then((d) => {
+        setIpfsResult(d);
       });
     }
   }, [metadata]);
@@ -118,9 +95,9 @@ export default function Proposal({
   });
 
   const isProposalEnded =
-    !!proposalData &&
-    (proposalStatus[proposalData.proposalStatus] !== "executed" ||
-      proposalStatus[proposalData.proposalStatus] !== "cancelled");
+        !!proposalData &&
+        (proposalStatus[proposalData.proposalStatus] !== "executed" ||
+            proposalStatus[proposalData.proposalStatus] !== "cancelled");
 
   const { data: updateConvictionLast } = useContractRead({
     ...cvStrategyContract,
@@ -167,10 +144,10 @@ export default function Proposal({
 
   if (
     !proposalData ||
-    !ipfsResult ||
-    !maxCVSupply ||
-    !totalEffectiveActivePoints ||
-    (updateConvictionLast == null && !isProposalEnded)
+        !ipfsResult ||
+        !maxCVSupply ||
+        !totalEffectiveActivePoints ||
+        (updateConvictionLast == null && !isProposalEnded)
   ) {
     return (
       <div className="mt-96">
@@ -241,14 +218,23 @@ export default function Proposal({
                   icon={<InformationCircleIcon />}
                 >
                   <DisplayNumber
-                    number={formatUnits(requestedAmount, 18)}
+                    number={formatUnits(
+                      requestedAmount,
+                      18,
+                    )}
                     tokenSymbol={tokenSymbol}
                     compact={true}
                     className="font-bold text-black"
                   />
                 </Statistic>
-                <Statistic label={"beneficiary"} icon={<UserIcon />}>
-                  <EthAddress address={beneficiary} actions="copy" />
+                <Statistic
+                  label={"beneficiary"}
+                  icon={<UserIcon />}
+                >
+                  <EthAddress
+                    address={beneficiary}
+                    actions="copy"
+                  />
                 </Statistic>
               </>
             )}
@@ -261,13 +247,14 @@ export default function Proposal({
       <section className="section-layout">
         <h2>Metrics</h2>
         {/* TODO: need designs for this entire section */}
-        {status && proposalStatus[status] === "executed" ?
+        {status && proposalStatus[status] === "executed" ? (
           <div className="my-8 flex w-full justify-center">
             <div className="badge badge-success p-4 text-primary">
-              Proposal passed and executed successfully
+                            Proposal passed and executed successfully
             </div>
           </div>
-        : <div className="mt-10 flex justify-evenly">
+        ) : (
+          <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
               thresholdPct={thresholdPct}
@@ -275,7 +262,7 @@ export default function Proposal({
               isSignalingType={isSignalingType}
             />
           </div>
-        }
+        )}
       </section>
     </div>
   );

@@ -25,7 +25,7 @@ export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
 
   const processedSeries = useMemo(
     () =>
-      // @ts-ignore
+    // @ts-ignore
       options?.series?.map((series: { data: unknown[] }) => {
         const { data } = series;
         let newData = data;
@@ -43,7 +43,7 @@ export const ChartSetup = ({ options }: { options?: EChartsOption }) => {
       option={{
         ...DEFAULT_OPTIONS,
         tooltip: {
-          ...DEFAULT_OPTIONS["tooltip"],
+          ...DEFAULT_OPTIONS.tooltip,
           ...(options?.tooltip ?? {}),
         },
         // legend: {

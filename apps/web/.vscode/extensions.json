@@ -1,6 +1,3 @@
 {
-  "recommendations": [
-    "skillhub.daisy-ui-latest-snippets",
-    "bradlc.vscode-tailwindcss"
-  ]
+  "recommendations": ["skillhub.daisy-ui-latest-snippets", "bradlc.vscode-tailwindcss"]
 }

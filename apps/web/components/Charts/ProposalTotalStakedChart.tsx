@@ -22,7 +22,6 @@ const truncateText = (text: string, maxWords: number): string => {
 export const ProposalTotalStakedChart = ({
   proposals,
 }: ProposalTotalStakedChartProps) => {
-
   const xAxisData = proposals.map((proposal) => truncateText(proposal.name, 2));
   const seriesData = proposals.map((proposal) => proposal.value);
   const OPTION_TEST: EChartsOption = {

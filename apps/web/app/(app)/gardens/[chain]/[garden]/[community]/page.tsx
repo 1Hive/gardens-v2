@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import { Address } from "viem";
 import {
   CurrencyDollarIcon,
   ExclamationCircleIcon,
@@ -10,7 +8,13 @@ import {
   RectangleGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
+import Image from "next/image";
 import Link from "next/link";
+import { Address } from "viem";
+import {
+  getCommunityDocument,
+  getCommunityQuery,
+} from "#/subgraph/.graphclient";
 import { commImg, groupFlowers } from "@/assets";
 import {
   Button,
@@ -21,22 +25,20 @@ import {
   RegisterMember,
   Statistic,
 } from "@/components";
-import {
-  getCommunityDocument,
-  getCommunityQuery,
-} from "#/subgraph/.graphclient";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
+import { isProd } from "@/constants/contracts";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { poolTypes } from "@/types";
 import {
-  SCALE_PRECISION,
-  SCALE_PRECISION_DECIMALS,
   dn,
   parseToken,
+  SCALE_PRECISION,
+  SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { useDisableButtons } from "@/hooks/useDisableButtons";
 
-export default function CommunityPage({
+export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
 }: {
   params: { chain: number; garden: string; community: string };
@@ -72,8 +74,8 @@ export default function CommunityPage({
           if (typeof json.covenant === "string") {
             setCovenant(json.covenant);
           }
-        } catch (error) {
-          console.error(error);
+        } catch (err) {
+          console.error(err);
         }
       }
     };
@@ -99,23 +101,23 @@ export default function CommunityPage({
   } = result.registryCommunity;
 
   const communityStakedTokens =
-    members?.reduce(
-      (acc: bigint, member) => acc + BigInt(member?.stakedTokens),
-      0n,
-    ) ?? 0;
+        members?.reduce(
+          (acc: bigint, member) => acc + BigInt(member?.stakedTokens),
+          0n,
+        ) ?? 0;
 
   strategies = strategies ?? [];
 
   const signalingPools = strategies.filter(
     (strategy) =>
       poolTypes[strategy.config?.proposalType] === "signaling" &&
-      strategy.isEnabled,
+            strategy.isEnabled,
   );
 
   const fundingPools = strategies.filter(
     (strategy) =>
       poolTypes[strategy.config?.proposalType] === "funding" &&
-      strategy.isEnabled,
+            strategy.isEnabled,
   );
 
   const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
@@ -134,8 +136,8 @@ export default function CommunityPage({
       ] as dn.Dnum;
 
       return dn.multiply(membership, feePercentage);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
     return [0n, 0] as dn.Dnum;
   };
@@ -153,8 +155,8 @@ export default function CommunityPage({
       } else {
         return (
           BigInt(registerStakeAmount) +
-          BigInt(registerStakeAmount) /
-            (BigInt(SCALE_PRECISION) / BigInt(communityFee))
+                    BigInt(registerStakeAmount) /
+                        (BigInt(SCALE_PRECISION) / BigInt(communityFee))
         );
       }
     } else {
@@ -180,15 +182,24 @@ export default function CommunityPage({
             <EthAddress address={communityAddr as Address} />
           </div>
           <div className="flex flex-col gap-2">
-            <Statistic label="members" count={members?.length ?? 0} />
+            <Statistic
+              label="members"
+              count={members?.length ?? 0}
+            />
             <Statistic
               label="pools"
               icon={<RectangleGroupIcon />}
               count={activePools.length ?? 0}
             />
-            <Statistic label="staked tokens" icon={<CurrencyDollarIcon />}>
+            <Statistic
+              label="staked tokens"
+              icon={<CurrencyDollarIcon />}
+            >
               <DisplayNumber
-                number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
+                number={[
+                  BigInt(communityStakedTokens),
+                  tokenGarden.decimals,
+                ]}
                 compact={true}
                 tokenSymbol={tokenGarden.symbol}
               />
@@ -200,7 +211,10 @@ export default function CommunityPage({
                 data-tip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
-                  number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
+                  number={[
+                    getTotalRegistrationCost(),
+                    tokenGarden?.decimals,
+                  ]}
                   className="font-semibold"
                   disableTooltip={true}
                   compact={true}
@@ -246,13 +260,13 @@ export default function CommunityPage({
               tooltip={tooltipMessage}
               icon={<PlusIcon height={24} width={24} />}
             >
-              Create Pool
+                            Create Pool
             </Button>
           </Link>
         </header>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-            Funding pools ({fundingPools.length})
+                        Funding pools ({fundingPools.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {fundingPools.map((pool) => (
@@ -268,7 +282,7 @@ export default function CommunityPage({
         </div>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-            Signaling pools ({signalingPools.length})
+                        Signaling pools ({signalingPools.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {signalingPools.map((pool) => (
@@ -284,7 +298,7 @@ export default function CommunityPage({
         </div>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-            Pools in Review ({poolsInReview.length})
+                        Pools in Review ({poolsInReview.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {poolsInReview.map((pool) => (
@@ -320,6 +334,9 @@ export default function CommunityPage({
           />
         </div>
       </section>
+      {!isProd && tokenGarden && (
+        <TokenGardenFaucet token={tokenGarden} />
+      )}
     </div>
   );
 }

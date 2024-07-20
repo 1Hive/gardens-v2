@@ -1,4 +1,4 @@
-import React from "react";
-export default function Button() {
+import _ from "react";
+export function Button() {
   return <button>Boop</button>;
 }

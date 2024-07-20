@@ -1,4 +1,3 @@
-import { uniqueId } from "lodash-es";
 import React, {
   createContext,
   useCallback,
@@ -9,9 +8,9 @@ import React, {
   useState,
 } from "react";
 import { Realtime } from "ably";
-import { ChainId } from "@/types";
+import { uniqueId } from "lodash-es";
 import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
-import { createConfig } from "wagmi";
+import { ChainId } from "@/types";
 
 // Define the shape of your context data
 interface PubSubContextData {
@@ -70,8 +69,8 @@ export type ChangeEventScope = {
   topic: ChangeEventTopic;
   type?: ChangeEventPayload["type"] | ChangeEventPayload["type"][];
   containerId?:
-    | ChangeEventPayload["containerId"]
-    | ChangeEventPayload["containerId"][];
+  | ChangeEventPayload["containerId"]
+  | ChangeEventPayload["containerId"][];
   action?: ChangeEventPayload["function"] | ChangeEventPayload["function"][];
   chainId?: ChangeEventPayload["chainId"] | ChangeEventPayload["chainId"][];
   id?: ChangeEventPayload["id"] | ChangeEventPayload["id"][];
@@ -114,11 +113,11 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
 
   const subscriptionsMap = useRef(
     new Map<
-      SubscriptionId,
-      {
-        scopes: ChangeEventScope[];
-        onChangeEvent: (payload: ChangeEventPayload) => void;
-      }
+    SubscriptionId,
+    {
+      scopes: ChangeEventScope[];
+      onChangeEvent: (payload: ChangeEventPayload) => void;
+    }
     >(),
   );
 

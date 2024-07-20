@@ -1,18 +1,18 @@
 "use client";
 
-import { FC, useState, useRef, useEffect } from "react";
-import { Address, useAccount, useContractRead } from "wagmi";
+import { FC, useEffect, useRef, useState } from "react";
 import { parseUnits } from "viem";
+import { Address, useAccount, useContractRead } from "wagmi";
+import { Allo, getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { FormInput } from "./Forms";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
-import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { alloABI, erc20ABI } from "@/src/generated";
-import { Allo, TokenGarden, getPoolDataQuery } from "#/subgraph/.graphclient";
-import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { alloABI, erc20ABI } from "@/src/generated";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { formatTokenAmount, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -163,7 +163,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     <>
       <TransactionModal
         ref={modalRef}
-        label={`Add funds to pool`}
+        label={"Add funds to pool"}
         initialTransactionSteps={InitialTransactionSteps}
         allowTokenStatus={allowTokenStatus}
         stepTwoStatus={fundPoolStatus}
@@ -188,7 +188,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                       <span className="stat-value text-center text-2xl font-bold">
                         {balance ?
                           formatTokenAmount(balance, tokenGarden?.decimals)
-                        : "0"}{" "}
+                          : "0"}{" "}
                         {tokenGarden?.symbol}
                       </span>
                     </div>

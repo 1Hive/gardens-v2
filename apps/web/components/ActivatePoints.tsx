@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Address, useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { Address, useAccount } from "wagmi";
 import { Button } from "./Button";
-import { cvStrategyABI } from "@/src/generated";
-import useErrorDetails from "@/utils/getErrorName";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { cvStrategyABI } from "@/src/generated";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { useErrorDetails } from "@/utils/getErrorName";
 
 type ActiveMemberProps = {
   strategyAddress: Address;

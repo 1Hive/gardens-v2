@@ -1,8 +1,10 @@
 "use client";
 
 import React, { FC } from "react";
-import { ProposalTotalStakedChart } from "./Charts";
-import { ProposalDistributionPointsChart } from "./Charts";
+import {
+  ProposalDistributionPointsChart,
+  ProposalTotalStakedChart,
+} from "./Charts";
 import { Proposals } from "./Charts/ProposalDistributionPointsChart";
 import { ProposalTypeVoter } from "./Proposals";
 

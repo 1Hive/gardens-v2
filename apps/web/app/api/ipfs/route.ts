@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
-import { NextRequest } from "next/server";
-import pinataSDK from "@pinata/sdk";
 import { Readable } from "stream";
+import pinataSDK from "@pinata/sdk";
+import { NextRequest, NextResponse } from "next/server";
 
 const pinata = new pinataSDK({ pinataJWTKey: process.env.PINATA_JWT });
 
@@ -56,6 +55,9 @@ export async function POST(req: NextRequest) {
       );
     }
   } else {
-    return NextResponse.json({ message: "Invalid request" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid request" },
+      { status: 400 },
+    );
   }
 }

@@ -1,41 +1,41 @@
 "use client";
 
-import Image from "next/image";
-import {
-  InformationCircleIcon,
-  ChartBarIcon,
-  BoltIcon,
-  Square3Stack3DIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import {
-  Badge,
-  Proposals,
-  PoolMetrics,
-  EthAddress,
-  Statistic,
-} from "@/components";
-import { grassLarge, blueLand } from "@/assets";
+  BoltIcon,
+  ChartBarIcon,
+  ClockIcon,
+  InformationCircleIcon,
+  Square3Stack3DIcon,
+} from "@heroicons/react/24/outline";
+import Image from "next/image";
 import {
   Allo,
-  TokenGarden,
   getAlloQuery,
   getPoolDataDocument,
   getPoolDataQuery,
+  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { blueLand, grassLarge } from "@/assets";
+import {
+  Badge,
+  EthAddress,
+  PoolMetrics,
+  Proposals,
+  Statistic,
+} from "@/components";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { pointSystems, poolTypes } from "@/types";
+import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
 
 export const dynamic = "force-dynamic";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
-export default function Pool({
+export default function Page({
   params: { chain, poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };
@@ -63,14 +63,14 @@ export default function Pool({
   }, [error]);
 
   const [ipfsResult, setIpfsResult] =
-    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
+        useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
 
   const metadata = data?.cvstrategies?.[0]?.metadata;
 
   useEffect(() => {
     if (metadata && !ipfsResult) {
-      getIpfsMetadata(metadata).then((data) => {
-        setIpfsResult(data);
+      getIpfsMetadata(metadata).then((d) => {
+        setIpfsResult(d);
       });
     }
   }, [metadata]);
@@ -111,7 +111,7 @@ export default function Pool({
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
   const spendingLimitPct =
-    (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
+        (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
   return (
     <div className="page-layout">
@@ -125,12 +125,18 @@ export default function Pool({
         </header>
         <p>{ipfsResult.description}</p>
         <div className="mb-10 mt-8 flex flex-col items-start gap-2">
-          <Statistic label="pool type" icon={<InformationCircleIcon />}>
+          <Statistic
+            label="pool type"
+            icon={<InformationCircleIcon />}
+          >
             <Badge type={proposalType} />
           </Statistic>
 
           {poolTypes[proposalType] === "funding" && (
-            <Statistic label="funding token" icon={<InformationCircleIcon />}>
+            <Statistic
+              label="funding token"
+              icon={<InformationCircleIcon />}
+            >
               <Badge
                 isCapitalize
                 label={tokenGarden.symbol}
@@ -149,21 +155,29 @@ export default function Pool({
                 classNames="text-secondary-content"
                 icon={<ChartBarIcon />}
               />
-              <Badge label={pointSystems[pointSystem]} icon={<BoltIcon />} />
+              <Badge
+                label={pointSystems[pointSystem]}
+                icon={<BoltIcon />}
+              />
             </div>
           </Statistic>
         </div>
-        {!isEnabled ?
+        {!isEnabled ? (
           <div className="banner">
             <ClockIcon className="h-8 w-8 text-secondary-content" />
             <h6>Waiting for council approval</h6>
           </div>
-        : <Image
-            src={poolTypes[proposalType] === "funding" ? blueLand : grassLarge}
+        ) : (
+          <Image
+            src={
+              poolTypes[proposalType] === "funding"
+                ? blueLand
+                : grassLarge
+            }
             alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
           />
-        }
+        )}
       </section>
 
       {isEnabled && (

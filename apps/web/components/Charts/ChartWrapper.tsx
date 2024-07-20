@@ -1,9 +1,9 @@
-import cn from "classnames";
 import { ReactNode } from "react";
 import {
   ArrowDownRightIcon,
   ArrowUpRightIcon,
 } from "@heroicons/react/24/solid";
+import cn from "classnames";
 
 type ChartWrapperProps = {
   children?: ReactNode;
@@ -36,12 +36,17 @@ export const ChartWrapper = ({
           <div className="space-y-2">
             {growing !== null && (
               <p className="flex items-center gap-2">
-                Conviction {growing ? "is growing" : "is decreasing"}
+                                Conviction{" "}
+                {growing ? "is growing" : "is decreasing"}
                 <span>
                   {growing ? (
-                    <ArrowUpRightIcon className={iconClassname} />
+                    <ArrowUpRightIcon
+                      className={iconClassname}
+                    />
                   ) : (
-                    <ArrowDownRightIcon className={iconClassname} />
+                    <ArrowDownRightIcon
+                      className={iconClassname}
+                    />
                   )}{" "}
                 </span>
               </p>

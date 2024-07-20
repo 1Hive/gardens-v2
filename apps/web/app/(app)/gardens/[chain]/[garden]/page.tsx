@@ -1,11 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import React, { useEffect } from "react";
 import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { Address } from "viem";
+import Image from "next/image";
 import Link from "next/link";
-import { tree2, tree3, grassLarge, ecosystem } from "@/assets";
+import { Address } from "viem";
+import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
+import { ecosystem, grassLarge, tree2, tree3 } from "@/assets";
 import {
   Button,
   Communities,
@@ -13,16 +14,15 @@ import {
   Statistic,
   TokenLabel,
 } from "@/components";
-import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/constants/contracts";
-import TokenGardenFaucet from "@/components/TokenGardenFaucet";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export const dynamic = "force-dynamic";
 
-export default function Garden({
+export default function Page({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };
@@ -91,15 +91,19 @@ export default function Garden({
           <div>
             <div className="mb-2 flex flex-col">
               <div className="flex items-center gap-4">
-                <h2>{tokenGarden?.name}</h2> <TokenLabel chainId={chain} />
+                <h2>{tokenGarden?.name}</h2>{" "}
+                <TokenLabel chainId={chain} />
               </div>
               <EthAddress address={tokenGarden?.id as Address} />
             </div>
             <p className="max-w-lg">
-              Discover communities in the
-              <span className="font-bold"> {tokenGarden?.name} Garden</span>,
-              where you connect with people and support proposals bounded by a
-              shared
+                            Discover communities in the
+              <span className="font-bold">
+                {" "}
+                {tokenGarden?.name} Garden
+              </span>
+                            , where you connect with people and support
+                            proposals bounded by a shared
               <span className="font-bold"> covenant.</span>
             </p>
           </div>
@@ -109,7 +113,10 @@ export default function Garden({
               icon={<CubeTransparentIcon />}
               count={communities?.length ?? 0}
             />
-            <Statistic label="members" count={gardenTotalMembers()} />
+            <Statistic
+              label="members"
+              count={gardenTotalMembers()}
+            />
           </div>
         </div>
       </header>
@@ -118,7 +125,7 @@ export default function Garden({
         <div className="flex flex-col gap-10 overflow-x-hidden">
           <header>
             <h4 className="text-secondary-content">
-              Create your own community
+                            Create your own community
             </h4>
           </header>
           <div className="relative flex h-[219px] justify-center">
@@ -132,7 +139,7 @@ export default function Garden({
                 tooltip={tooltipMessage}
                 icon={<PlusIcon height={24} width={24} />}
               >
-                Create a community
+                                Create a community
               </Button>
             </Link>
             <Image
