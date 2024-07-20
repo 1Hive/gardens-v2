@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Address } from "viem";
 import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
 import { ecosystem, grassLarge, tree2, tree3 } from "@/assets";
@@ -17,6 +18,7 @@ import {
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/constants/contracts";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
@@ -27,7 +29,14 @@ export default function Page({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error } = useSubgraphQuery<getGardenQuery>({
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const {
+    data: result,
+    error,
+    refetch,
+  } = useSubgraphQuery<getGardenQuery>({
     query: getGardenDocument,
     variables: { addr: garden },
     changeScope: [
@@ -50,9 +59,27 @@ export default function Page({
     }
   }, [error]);
 
-  let communities = result?.tokenGarden?.communities ?? [];
+  let communities =
+    result?.tokenGarden?.communities?.filter((com) => com.isValid) ?? [];
 
-  communities = communities.filter((com) => com.isValid);
+  useEffect(() => {
+    const newCommunityId = searchParams
+      .get(QUERY_PARAMS.gardenPage.newCommunity)
+      ?.toLowerCase();
+
+    if (
+      newCommunityId &&
+      result &&
+      !communities.some((c) => c.id.toLowerCase() === newCommunityId)
+    ) {
+      refetch();
+    } else {
+      // remove the query param if the community is already in the list
+      const nextSearchParams = new URLSearchParams(searchParams.toString());
+      nextSearchParams.delete(QUERY_PARAMS.gardenPage.newCommunity);
+      router.replace(pathname.replace(searchParams.toString(), nextSearchParams.toString()));
+    }
+  }, [searchParams, result]);
 
   const tokenGarden = result?.tokenGarden;
 

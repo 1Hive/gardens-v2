@@ -9,6 +9,7 @@ import {
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Allo,
   getAlloQuery,
@@ -26,6 +27,7 @@ import {
   Statistic,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { pointSystems, poolTypes } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
@@ -40,7 +42,10 @@ export default function Page({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data, error } = useSubgraphQuery<getPoolDataQuery>({
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden },
     changeScope: [
@@ -87,6 +92,18 @@ export default function Page({
       "poolAmount: " + strategyObj?.poolAmount,
     );
   }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
+
+  useEffect(() => {
+    const newProposalId = searchParams.get(QUERY_PARAMS.poolPage.newPropsoal);
+    if (newProposalId && data && !strategyObj?.proposals.some(c => c.proposalNumber === newProposalId)) {
+      refetch();
+    } else {
+      // remove the query param if the community is already in the list
+      const nextSearchParams = new URLSearchParams(searchParams.toString());
+      nextSearchParams.delete(QUERY_PARAMS.poolPage.newPropsoal);
+      router.replace(pathname.replace(searchParams.toString(), nextSearchParams.toString()));
+    }
+  }, [searchParams, strategyObj?.proposals]);
 
   if (!data || !ipfsResult) {
     return (
@@ -200,7 +217,7 @@ export default function Page({
             strategy={strategyObj}
             alloInfo={alloInfo}
             communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/${poolId}/create-proposal`}
+            createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
             proposalType={proposalType}
           />
         </>

@@ -6,7 +6,7 @@ import {
   HandRaisedIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   CVProposal,
   CVStrategy,
@@ -15,6 +15,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { blueLand, grass } from "@/assets";
 import { Badge, Card, Statistic } from "@/components";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { poolTypes } from "@/types";
 import { formatTokenAmount } from "@/utils/numbers";
 
@@ -31,14 +32,17 @@ type Props = {
 
 export function PoolCard({ pool, tokenGarden }: Props) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   let { poolAmount, poolId, proposals, isEnabled, config } = pool;
 
   poolAmount = poolAmount || 0;
   const poolType = config?.proposalType as number | undefined;
 
+  const isNewPool = searchParams.get(QUERY_PARAMS.communityPage.newPool) === pool.poolId;
+
   return (
-    <Card href={`${pathname}/${poolId}`}>
+    <Card href={`${pathname}/${poolId}`} className={isNewPool ? "!border-accent !border-2" : ""}>
       <header className="mb-4 flex w-full items-center justify-between">
         <h4>Pool #{poolId}</h4>
         <Badge type={poolType} />

@@ -19,7 +19,12 @@ import {
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { getProposals } from "@/actions/getProposals";
-import { Button, CheckPassport, PoolGovernance, ProposalCard } from "@/components";
+import {
+  Button,
+  CheckPassport,
+  PoolGovernance,
+  ProposalCard,
+} from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -64,10 +69,14 @@ export function Proposals({
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
   const [proposals, setProposals] = useState<
-  Awaited<ReturnType<typeof getProposals>>
+    Awaited<ReturnType<typeof getProposals>>
   >([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
+  const [fetchingProposals, setFetchingProposals] = useState<
+    boolean | undefined
+  >();
+  const memberTokensInCommunity = "0";
 
   const { address: wallet } = useAccount();
 
@@ -166,18 +175,33 @@ export function Proposals({
   }, [memberStrategyResult]);
 
   const triggerRenderProposals = () => {
-    getProposals(wallet, strategy).then((res) => {
-      if (res !== undefined) {
-        setProposals(res);
-      } else {
-        console.debug("No proposals");
-      }
-    });
+    if (fetchingProposals == null) {
+      setFetchingProposals(true);
+    }
+    getProposals(wallet, strategy)
+      .then((res) => {
+        if (res !== undefined) {
+          setProposals(res);
+        } else {
+          console.debug("No proposals");
+        }
+      })
+      .catch((err) => {
+        console.error("Error while fetching proposals: ", {
+          error: err,
+          strategy,
+        });
+      })
+      .finally(() => {
+        return setFetchingProposals(false);
+      });
   };
 
   useEffect(() => {
-    triggerRenderProposals();
-  }, []);
+    if (wallet && !fetchingProposals) {
+      triggerRenderProposals();
+    }
+  }, [wallet, strategy]);
 
   useEffect(() => {
     if (!proposals) {
@@ -350,28 +374,25 @@ export function Proposals({
           <header className="flex items-center justify-between">
             <div className="flex w-full items-baseline justify-between">
               <h2 className="font-semibold">Proposals</h2>
-              {proposals ?
-                proposals.length === 0 ?
+              {!proposals && !fetchingProposals && (
+                <>
                   <h4 className="text-2xl text-info">
                     No submitted proposals to support
                   </h4>
-                  : !editView && (
-                    <CheckPassport
-                      strategyAddr={strategy.id as Address}
+                  {!editView && (
+                    <Button
+                      icon={
+                        <AdjustmentsHorizontalIcon height={24} width={24} />
+                      }
+                      onClick={() => setEditView((prev) => !prev)}
+                      disabled={disableManSupportButton}
+                      tooltip={String(tooltipMessage)}
                     >
-                      <Button
-                        icon={
-                          <AdjustmentsHorizontalIcon height={24} width={24} />
-                        }
-                        onClick={() => setEditView((prev) => !prev)}
-                        disabled={disableManSupportButton}
-                        tooltip={String(tooltipMessage)}
-                      >
-                        Manage support
-                      </Button>
-                    </CheckPassport>
-                  )
-                : <LoadingSpinner />}
+                      Manage support
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
             {editView && (
               <>
@@ -400,30 +421,35 @@ export function Proposals({
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-6">
-            {proposals?.map((proposalData, i) => (
-              <React.Fragment key={proposalData.id + "_" + i}>
-                <ProposalCard
-                  proposalData={proposalData}
-                  inputData={inputs[i]}
-                  stakedFilter={stakedFilters[i]}
-                  index={i}
-                  isEditView={editView}
-                  tooltipMessage={tooltipMessage}
-                  memberActivatedPoints={memberActivatedPoints}
-                  memberPoolWeight={memberPoolWeight}
-                  executeDisabled={
-                    proposalData.proposalStatus == 4 ||
-                    !isConnected ||
-                    missmatchUrl
-                  }
-                  strategy={strategy}
-                  tokenDecimals={tokenDecimals}
-                  alloInfo={alloInfo}
-                  triggerRenderProposals={triggerRenderProposals}
-                  inputHandler={inputHandler}
-                />
-              </React.Fragment>
-            ))}
+            {!fetchingProposals ?
+              proposals?.map((proposalData, index) => (
+                <React.Fragment key={proposalData.id}>
+                  <ProposalCard
+                    proposalData={proposalData}
+                    inputData={inputs[index]}
+                    stakedFilter={stakedFilters[index]}
+                    index={index}
+                    isEditView={editView}
+                    tooltipMessage={tooltipMessage}
+                    memberActivatedPoints={memberActivatedPoints}
+                    memberPoolWeight={memberPoolWeight}
+                    executeDisabled={
+                      proposalData.proposalStatus == 4 ||
+                      !isConnected ||
+                      missmatchUrl
+                    }
+                    strategy={strategy}
+                    tokenDecimals={tokenDecimals}
+                    alloInfo={alloInfo}
+                    triggerRenderProposals={triggerRenderProposals}
+                    inputHandler={inputHandler}
+                  />
+                </React.Fragment>
+              ))
+            : <div className="w-full text-center">
+                <LoadingSpinner />
+              </div>
+            }
           </div>
           <div className="flex justify-end gap-8">
             {editView && (
@@ -453,9 +479,7 @@ export function Proposals({
           <h4 className="text-2xl">Do you have a great idea?</h4>
           <div className="flex items-center gap-6">
             <p>Share it with the community and get support!</p>
-            <CheckPassport
-              strategyAddr={strategy.id as Address}
-            >
+            <CheckPassport strategyAddr={strategy.id as Address}>
               <Link href={createProposalUrl}>
                 <Button
                   btnStyle="filled"
