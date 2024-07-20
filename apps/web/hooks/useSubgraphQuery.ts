@@ -130,7 +130,7 @@ export function useSubgraphQuery<
     const res = await refetch();
     setResponse(res);
     setFetching(false);
-    fetchingRef.current = false;
+    return res;
   };
 
   const refetch = async (
@@ -174,9 +174,11 @@ export function useSubgraphQuery<
       setFetching(false);
       fetchingRef.current = false;
       try {
-        toast.dismiss(pendingRefreshToastId);
+        if (toast.isActive(pendingRefreshToastId)) {
+          toast.dismiss(pendingRefreshToastId);
+        }
       } catch (error) {
-        // ignore when toast is already dismissed
+        // ignore dismiss when not toast
       }
       return result;
     } else {

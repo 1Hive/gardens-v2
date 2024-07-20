@@ -4,7 +4,6 @@ import "viem/window";
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { Address, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
@@ -253,6 +252,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
   const { write } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
+    contractName: "Registry Community",
     functionName: "createPool",
     onConfirmations: (receipt) => {
       const newPoolId = getEventFromReceipt(receipt, "RegistryCommunity", "PoolCreated").args._poolId;
@@ -266,8 +266,6 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
       });
       router.push(pathname?.replace("/create-pool", `?${QUERY_PARAMS.communityPage.newPool}=${newPoolId}`));
     },
-    onError: () =>
-      toast.error("Something went wrong creating a pool, check logs"),
     onSettled: () => setLoading(false),
   });
 
@@ -285,31 +283,21 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     }
   };
 
-  const createPool = () => {
+  const createPool = async () => {
     setLoading(true);
     const json = {
       title: getValues("title"),
       description: getValues("description"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(json);
-    toast
-      .promise(ipfsUpload, {
-        pending: "Preparing everything, wait a moment...",
-        // success: "All ready!",
-        error: "Error uploading data to IPFS",
-      })
-      .then((ipfsHash) => {
-        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) {
-          throw new Error("No preview data");
-        }
-        contractWrite(ipfsHash);
-      })
-      .catch((error: any) => {
-        console.error(error);
-        setLoading(false);
-      });
+    const ipfsHash = await ipfsJsonUpload(json);
+    if (ipfsHash) {
+      if (previewData === undefined) {
+        throw new Error("No preview data");
+      }
+      contractWrite(ipfsHash);
+    }
+    setLoading(false);
   };
 
   const formatFormRows = () => {

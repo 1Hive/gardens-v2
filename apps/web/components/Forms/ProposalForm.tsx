@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
 import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
@@ -121,33 +120,22 @@ export const ProposalForm = ({
 
   const proposalTypeName = poolTypes[proposalType];
 
-  const createProposal = () => {
+  const createProposal = async () => {
     setLoading(true);
     const json = {
       title: getValues("title"),
       description: getValues("description"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(json);
-
-    toast
-      .promise(ipfsUpload, {
-        pending: "Preparing everything, wait a moment...",
-        // success: "All ready!",
-        error: "Error uploading data to IPFS",
-      })
-      .then((ipfsHash) => {
-        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) {
-          throw new Error("No preview data");
-        }
-        const encodedData = getEncodeData(ipfsHash);
-        write({ args: [poolId, encodedData] });
-      })
-      .catch((error: any) => {
-        setLoading(false);
-        console.error(error);
-      });
+    const ipfsHash = await ipfsJsonUpload(json);
+    if (ipfsHash) {
+      if (previewData === undefined) {
+        throw new Error("No preview data");
+      }
+      const encodedData = getEncodeData(ipfsHash);
+      write({ args: [poolId, encodedData] });
+    }
+    setLoading(false);
   };
 
   const handlePreview = (data: FormInputs) => {
@@ -158,6 +146,7 @@ export const ProposalForm = ({
   const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
+    contractName: "Allo",
     functionName: "registerRecipient",
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(receipt, "CVStrategy", "ProposalCreated").args.proposalId;
@@ -172,10 +161,6 @@ export const ProposalForm = ({
       if (pathname) {
         router.push(pathname.replace("/create-proposal", `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`));
       }
-    },
-    onError: (err) => {
-      console.warn(err);
-      toast.error("Something went wrong creating Proposal");
     },
     onSettled: () => setLoading(false),
   });

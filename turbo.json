@@ -43,7 +43,8 @@
         "PORT",
         "NEXT_PUBLIC_ENV_GARDENS",
         "NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP",
-        "NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP"
+        "NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP",
+        "NEXT_PUBLIC_IPFS_GATEWAY"
       ]
     },
     "test": {
