@@ -146,7 +146,7 @@ export const ProposalForm = ({
     abi: abiWithErrors(alloABI),
     contractName: "Allo",
     functionName: "registerRecipient",
-    fallbackErrorMessage: "Problem creating Proposal. Please try again.",
+    fallbackErrorMessage: "Error creating Proposal. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "proposal",

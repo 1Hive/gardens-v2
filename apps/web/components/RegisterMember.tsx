@@ -103,7 +103,7 @@ export function RegisterMember({
   } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "unregisterMember",
-    fallbackErrorMessage: "Problem unregistering member. Please try again.",
+    fallbackErrorMessage: "Error unregistering member. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "member",

@@ -178,7 +178,7 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "decreasePower",
     args: [requestedAmount as bigint],
-    fallbackErrorMessage: "Problem decreasing power. Please try again.",
+    fallbackErrorMessage: "Error decreasing power. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "member",

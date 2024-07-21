@@ -252,7 +252,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "createPool",
-    fallbackErrorMessage: "Problem creating a pool. Please ty again.",
+    fallbackErrorMessage: "Error creating a pool. Please ty again.",
     onConfirmations: () => {
       publish({
         topic: "pool",
