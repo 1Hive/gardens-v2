@@ -9,7 +9,6 @@ import {
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Allo,
   getAlloQuery,
@@ -28,6 +27,7 @@ import {
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { pointSystems, poolTypes } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
@@ -42,9 +42,7 @@ export default function Page({
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
+  const searchParams = useCollectQueryParams();
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden },
@@ -94,14 +92,9 @@ export default function Page({
   }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
 
   useEffect(() => {
-    const newProposalId = searchParams.get(QUERY_PARAMS.poolPage.newPropsoal);
+    const newProposalId = searchParams[QUERY_PARAMS.poolPage.newPropsoal];
     if (newProposalId && data && !strategyObj?.proposals.some(c => c.proposalNumber === newProposalId)) {
       refetch();
-    } else {
-      // remove the query param if the community is already in the list
-      const nextSearchParams = new URLSearchParams(searchParams.toString());
-      nextSearchParams.delete(QUERY_PARAMS.poolPage.newPropsoal);
-      router.replace(pathname.replace(searchParams.toString(), nextSearchParams.toString()));
     }
   }, [searchParams, strategyObj?.proposals]);
 

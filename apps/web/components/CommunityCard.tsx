@@ -3,11 +3,12 @@
 import React from "react";
 import { RectangleGroupIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import { commImg } from "@/assets";
 import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 
 type CommunityCardProps = {
   name: string;
@@ -23,8 +24,9 @@ export function CommunityCard({
   id,
 }: CommunityCardProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const isNewCommunity = searchParams.get(QUERY_PARAMS.gardenPage.newCommunity)?.toLowerCase() === id.toLowerCase();
+  const searchParams = useCollectQueryParams();
+  const isNewCommunity = searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() === id.toLowerCase();
+
   return (
     <Card key={id} href={`${pathname}/${id}`} className={`w-[273px] ${isNewCommunity ? "!border-accent !border-2" : ""}`}>
       <Image
