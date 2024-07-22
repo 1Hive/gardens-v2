@@ -55,7 +55,7 @@ export const ProposalTotalStakedChart = ({
     ],
   };
   return (
-    <ChartWrapper title="Proposals Total Support (tokens)" size="md">
+    <ChartWrapper>
       <EChartsReact option={OPTION_TEST} />
     </ChartWrapper>
   );
