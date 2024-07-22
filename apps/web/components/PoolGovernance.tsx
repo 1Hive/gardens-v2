@@ -108,7 +108,7 @@ export const PoolGovernance = ({
               <ActivatePoints
                 strategyAddress={strategy.id as Address}
                 communityAddress={communityAddress}
-                isMemberActivated={isMemberActivated as boolean | undefined}
+                isMemberActivated={isMemberActivated}
                 isMember={isMember}
               />
             </CheckPassport>
