@@ -58,7 +58,7 @@ export default function Page({
   const metadata = proposalData?.metadata;
 
   const [ipfsResult, setIpfsResult] =
-        useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
+    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
 
   useEffect(() => {
     if (metadata) {
@@ -95,9 +95,9 @@ export default function Page({
   });
 
   const isProposalEnded =
-        !!proposalData &&
-        (proposalStatus[proposalData.proposalStatus] !== "executed" ||
-            proposalStatus[proposalData.proposalStatus] !== "cancelled");
+    !!proposalData &&
+    (proposalStatus[proposalData.proposalStatus] !== "executed" ||
+      proposalStatus[proposalData.proposalStatus] !== "cancelled");
 
   const { data: updateConvictionLast } = useContractRead({
     ...cvStrategyContract,
@@ -144,10 +144,10 @@ export default function Page({
 
   if (
     !proposalData ||
-        !ipfsResult ||
-        !maxCVSupply ||
-        !totalEffectiveActivePoints ||
-        (updateConvictionLast == null && !isProposalEnded)
+    !ipfsResult ||
+    !maxCVSupply ||
+    !totalEffectiveActivePoints ||
+    (updateConvictionLast == null && !isProposalEnded)
   ) {
     return (
       <div className="mt-96">
@@ -218,23 +218,14 @@ export default function Page({
                   icon={<InformationCircleIcon />}
                 >
                   <DisplayNumber
-                    number={formatUnits(
-                      requestedAmount,
-                      18,
-                    )}
+                    number={formatUnits(requestedAmount, 18)}
                     tokenSymbol={tokenSymbol}
                     compact={true}
                     className="font-bold text-black"
                   />
                 </Statistic>
-                <Statistic
-                  label={"beneficiary"}
-                  icon={<UserIcon />}
-                >
-                  <EthAddress
-                    address={beneficiary}
-                    actions="copy"
-                  />
+                <Statistic label={"beneficiary"} icon={<UserIcon />}>
+                  <EthAddress address={beneficiary} actions="copy" />
                 </Statistic>
               </>
             )}
@@ -247,22 +238,20 @@ export default function Page({
       <section className="section-layout">
         <h2>Metrics</h2>
         {/* TODO: need designs for this entire section */}
-        {status && proposalStatus[status] === "executed" ? (
+        {status && proposalStatus[status] === "executed" ?
           <div className="my-8 flex w-full justify-center">
             <div className="badge badge-success p-4 text-primary">
-                            Proposal passed and executed successfully
+              Proposal passed and executed successfully
             </div>
           </div>
-        ) : (
-          <div className="mt-10 flex justify-evenly">
-            <ConvictionBarChart
-              currentConvictionPct={currentConvictionPct}
-              thresholdPct={thresholdPct}
-              proposalSupportPct={totalSupportPct}
-              isSignalingType={isSignalingType}
-            />
-          </div>
-        )}
+          : ( <ConvictionBarChart
+            currentConvictionPct={currentConvictionPct}
+            thresholdPct={thresholdPct}
+            proposalSupportPct={totalSupportPct}
+            isSignalingType={isSignalingType}
+            proposalId={proposalIdNumber}
+          />
+          )}
       </section>
     </div>
   );
