@@ -11,8 +11,10 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { alloABI } from "@/src/generated";
@@ -55,6 +57,8 @@ export function ProposalCard({
 }: Props) {
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
+  const searchParams = useCollectQueryParams();
+  const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] === proposalData.proposalNumber;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
@@ -120,7 +124,7 @@ export function ProposalCard({
 
   return (
     <div
-      className="bg-surface flex flex-col items-center justify-center gap-4 rounded-lg p-8"
+      className={`bg-surface flex flex-col items-center justify-center gap-4 rounded-lg p-8 ${isNewProposal ? "outline outline-2 outline-accent" : ""}`}
       key={title + "_" + proposalNumber}
     >
       <div className="flex w-full items-center justify-between ">
@@ -176,6 +180,7 @@ export function ProposalCard({
               />
               <div className="flex w-full justify-between px-[10px]">
                 {[...Array(21)].map((_, i) => (
+                  // eslint-disable-next-line react/no-array-index-key
                   <span className="text-[8px]" key={"span_" + i}>
                     |
                   </span>

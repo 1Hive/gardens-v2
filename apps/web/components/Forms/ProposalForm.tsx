@@ -9,11 +9,13 @@ import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { Button } from "@/components";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { alloABI } from "@/src/generated";
 import { poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
+import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { formatTokenAmount } from "@/utils/numbers";
 
@@ -157,15 +159,18 @@ export const ProposalForm = ({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "registerRecipient",
-    onConfirmations: () => {
+    onConfirmations: (receipt) => {
+      const proposalId = getEventFromReceipt(receipt, "CVStrategy", "ProposalCreated").args.proposalId;
       publish({
         topic: "proposal",
         type: "update",
         function: "registerRecipient",
+        containerId: poolId,
+        id: proposalId.toString(), // proposalId is a bigint
         chainId,
       });
       if (pathname) {
-        router.push(pathname.replace("/create-proposal", ""));
+        router.push(pathname.replace("/create-proposal", `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`));
       }
     },
     onError: (err) => {

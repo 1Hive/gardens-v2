@@ -49,8 +49,8 @@ export default function Page() {
     if (tokenGardens?.length) {
       return (
         <>
-          {tokenGardens.map((garden, id) => (
-            <div key={`${garden.id}-${id}`}>
+          {tokenGardens.map((garden) => (
+            <div key={garden.id}>
               <GardenCard garden={garden} />
             </div>
           ))}
