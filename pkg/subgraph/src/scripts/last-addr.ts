@@ -117,6 +117,5 @@ switch (chainArg) {
     break;
 }
 
-const data = getRunLatestAddrs(defaultChain);
-
-console.log(data);
+const latestAddress = getRunLatestAddrs(defaultChain);
+console.debug({latestAddress});

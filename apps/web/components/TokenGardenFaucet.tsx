@@ -1,18 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { useContractWrite, useAccount, useChainId } from "wagmi";
-import { parseAbi, formatUnits, Address } from "viem";
+import { Address, formatUnits, parseAbi } from "viem";
+import { useAccount, useContractWrite } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 
 interface FaucetProps {
-  token: TokenGarden;
+  token: Pick<TokenGarden, "id" | "decimals" | "symbol">;
 }
 
 const MINT_AMMOUNT = 1000n;
 
-export default function TokenGardenFaucet({ token }: FaucetProps) {
-  const chain = useChainId();
+export function TokenGardenFaucet({ token }: FaucetProps) {
+  const urlChainId = useChainIdFromPath();
   const { address: connectedAccount } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -23,7 +24,7 @@ export default function TokenGardenFaucet({ token }: FaucetProps) {
     address: token.id as Address,
     abi: parseAbi(erc20MintAbi),
     functionName: "mint",
-    chainId: chain,
+    chainId: urlChainId,
     account: connectedAccount,
     onSuccess: () => {
       const formattedAmount = formatUnits(mintAmount, token.decimals);
@@ -37,7 +38,9 @@ export default function TokenGardenFaucet({ token }: FaucetProps) {
   });
 
   const requestTokens = async () => {
-    if (!connectedAccount) return;
+    if (!connectedAccount) {
+      return;
+    }
     if (!connectedAccount) {
       console.warn("⛽: No connected account");
       return;
@@ -60,17 +63,17 @@ export default function TokenGardenFaucet({ token }: FaucetProps) {
     }
   };
 
-  return connectedAccount ? (
-    <div className="fixed bottom-0 right-0 pb-3">
+  return connectedAccount ?
+    <div className="fixed bottom-0 left-2 pb-3">
       <button
         onClick={() => requestTokens()}
         disabled={isLoading}
         title={`Get some test ${token.symbol}`}
       >
-        {isLoading ? <div className="loading-spinner"></div> : "⛽"}
+        {isLoading ?
+          <div className="loading-spinner" />
+          : "⛽"}
       </button>
     </div>
-  ) : (
-    <></>
-  );
+    : <></>;
 }

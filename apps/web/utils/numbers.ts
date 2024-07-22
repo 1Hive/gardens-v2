@@ -16,6 +16,38 @@ export const SCALE_PRECISION_DECIMALS =
 export const CV_SCALE_PRECISION = 10 ** 7;
 export const CV_SCALE_PRECISION_DECIMALS = 7;
 
+export function parseToken(value: dn.Dnum | string, compact?: boolean) {
+  const str =
+    typeof value === "string" ? value : (
+      dn.format([BigInt(value[0]), Number(value[1])])
+    );
+
+  const charsLength = 3;
+  const prefixLength = 2; // "0."
+
+  if (!str) {
+    return "";
+  }
+  if (str.length < charsLength * 2 + prefixLength) {
+    return str;
+  }
+  if (str.slice(0, 2) === "0.") {
+    return (
+      str.slice(0, charsLength + prefixLength - 1) +
+      "…" +
+      str.slice(-charsLength)
+    );
+  }
+  if (typeof value === "string") {
+    return dn.format(dn.from(value), {
+      compact: compact,
+      digits: 2,
+    });
+  }
+
+  return dn.format(value, { compact: compact, digits: 2 });
+}
+
 function formatTokenAmount(
   value: string | number | bigint | undefined,
   decimals: number,
@@ -110,7 +142,7 @@ function calculatePercentageDecimals(
     dnumValue1 = dn.from(value1);
     dnumValue2 = dn.from(value2);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return 0;
   }
 
@@ -125,11 +157,8 @@ function calculatePercentageDecimals(
     decimals,
   );
 
-  console.log(percentage);
-
   const formattedPercentage = dn.format(percentage, 2);
 
-  // console.log(formattedPercentage);
   return Number(formattedPercentage);
 }
 

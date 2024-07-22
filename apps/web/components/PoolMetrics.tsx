@@ -1,28 +1,18 @@
 "use client";
-import React, { FC, useState, useRef, useEffect } from "react";
-import {
-  Address,
-  useAccount,
-  useContractRead,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
-import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
-import { Button } from "./Button";
-import {
-  Allo,
-  CVStrategy,
-  TokenGarden,
-  getPoolDataQuery,
-} from "#/subgraph/.graphclient";
+
+import { FC, useEffect, useRef, useState } from "react";
 import { parseUnits } from "viem";
+import { Address, useAccount, useContractRead } from "wagmi";
+import { Allo, getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
+import { Button } from "./Button";
 import { FormInput } from "./Forms";
-import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
-import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { alloABI, erc20ABI } from "@/src/generated";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { formatTokenAmount, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -62,12 +52,10 @@ type PoolStatsProps = {
 export const PoolMetrics: FC<PoolStatsProps> = ({
   alloInfo,
   balance,
-  strategy,
   communityAddress,
   tokenGarden,
   spendingLimitPct,
   poolId,
-  chainId,
 }) => {
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
 
@@ -98,57 +86,45 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     args: [connectedAccount as Address, alloInfo?.id as Address],
     functionName: "allowance",
     watch: true,
+    enabled: !!connectedAccount,
   });
 
-  const {
-    data: allowTokenData,
-    write: writeAllowToken,
-    error: allowTokenError,
-    status: allowTokenStatus,
-  } = useContractWrite({
-    address: tokenGarden.address as Address,
-    abi: abiWithErrors(erc20ABI),
-    functionName: "approve",
-  });
-
-  const { isSuccess: isWaitAllowanceSuccess, status: waitAllowTokenStatus } =
-    useWaitForTransaction({
-      confirmations: chainDataMap[chainId].confirmations,
-      hash: allowTokenData?.hash,
+  const { write: writeAllowToken, status: allowTokenStatus } =
+    useContractWriteWithConfirmations({
+      address: tokenGarden.address as Address,
+      abi: abiWithErrors(erc20ABI),
+      functionName: "approve",
     });
 
   useEffect(() => {
-    if (isWaitAllowanceSuccess) {
+    if (allowTokenStatus === "success") {
       writeFundPool({
         args: [poolId, requestedAmount],
       });
     }
-  }, [isWaitAllowanceSuccess]);
+  }, [allowTokenStatus]);
 
-  const {
-    data: fundPool,
-    write: writeFundPool,
-    status: fundPoolStatus,
-  } = useContractWrite({
-    address: alloInfo?.id as Address,
-    abi: abiWithErrors(alloABI),
-    functionName: "fundPool",
-  });
-
-  useWaitForTransaction({
-    hash: fundPool?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
-      publish({
-        topic: "pool",
-        type: "update",
-        function: "fundPool",
-        id: poolId,
-        containerId: communityAddress,
-        chainId: tokenGarden.chainId,
-      });
-    },
-  });
+  const { write: writeFundPool, status: fundPoolStatus } =
+    useContractWriteWithConfirmations({
+      address: alloInfo?.id as Address,
+      abi: abiWithErrors(alloABI),
+      functionName: "fundPool",
+      onConfirmations: () => {
+        publish({
+          topic: "pool",
+          type: "update",
+          function: "fundPool",
+          id: poolId,
+          containerId: communityAddress,
+          chainId: tokenGarden.chainId,
+        });
+      },
+      onSuccess: () => {
+        closeModal();
+        setAmount(0);
+        setPendingAllowance(false);
+      },
+    });
 
   const writeContract = () => {
     writeAllowToken({
@@ -161,21 +137,13 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     if (requestedAmount <= (allowance ?? 0n)) {
       writeFundPool({
         args: [poolId, requestedAmount],
-      }),
-        setPendingAllowance(true);
+      });
+      setPendingAllowance(true);
     } else {
       writeContract?.();
       openModal();
     }
   };
-
-  useEffect(() => {
-    if (fundPoolStatus === "success") {
-      closeModal();
-      setAmount(0);
-      setPendingAllowance(false);
-    }
-  }, [fundPoolStatus]);
 
   //disable button condition
   const requestesMoreThanAllowance =
@@ -195,14 +163,14 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     <>
       <TransactionModal
         ref={modalRef}
-        label={`Add funds to pool`}
+        label={"Add funds to pool"}
         initialTransactionSteps={InitialTransactionSteps}
         allowTokenStatus={allowTokenStatus}
         stepTwoStatus={fundPoolStatus}
         token={tokenSymbol}
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
-      ></TransactionModal>
+      />
       <section className="section-layout ">
         <header>
           <h2>Pool Metrics</h2>
@@ -218,8 +186,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                         Funds Available:
                       </h4>
                       <span className="stat-value text-center text-2xl font-bold">
-                        {balance
-                          ? formatTokenAmount(balance, tokenGarden?.decimals)
+                        {balance ?
+                          formatTokenAmount(balance, tokenGarden?.decimals)
                           : "0"}{" "}
                         {tokenGarden?.symbol}
                       </span>
@@ -231,7 +199,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                     Spending Limit:
                   </h4>
                   <span className="stat-value ml-8 text-center text-xl">
-                    {`${((spendingLimitPct || 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
+                    {`${((spendingLimitPct ?? 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
                   </span>
                 </div>
               </div>

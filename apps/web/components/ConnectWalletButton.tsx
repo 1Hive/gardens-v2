@@ -1,25 +1,30 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
-import React from "react";
-import { useBalance, useSwitchNetwork } from "wagmi";
-import { usePathname } from "next/navigation";
-import { ChainIcon, getChain } from "@/configs/chainServer";
-import Image from "next/image";
-import { walletIcon } from "@/assets";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useDisconnect, useConnect, useAccount } from "wagmi";
-import cn from "classnames";
-import { Button } from "@/components";
-import { Fragment } from "react";
-import { formatAddress } from "@/utils/formatAddress";
+
+import React, { Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
-import { getChainIdFromPath } from "@/utils/path";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import cn from "classnames";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import {
+  useAccount,
+  useBalance,
+  useConnect,
+  useDisconnect,
+  useSwitchNetwork,
+} from "wagmi";
+import { walletIcon } from "@/assets";
+import { Button } from "@/components";
+import { ChainIcon } from "@/configs/chainServer";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
+import { formatAddress } from "@/utils/formatAddress";
 
-export const ConnectWallet = () => {
+export function ConnectWallet() {
   const path = usePathname();
   const account = useAccount();
-  const urlChainId = getChainIdFromPath();
+  const chainFromPath = useChainFromPath();
+  const urlChainId = chainFromPath?.id;
   const tokenUrlAddress = path.split("/")[3];
 
   const { switchNetwork } = useSwitchNetwork();
@@ -31,20 +36,21 @@ export const ConnectWallet = () => {
   const { data: token } = useBalance({
     address: account?.address,
     token: tokenUrlAddress as `0x${string}` | undefined,
-    chainId: urlChainId || 0,
+    chainId: urlChainId,
+    enabled: !!account && !!urlChainId,
   });
+
   return (
     <ConnectButton.Custom>
       {({
-        account,
+        account: accountAddress,
         chain,
-        openAccountModal,
         openChainModal,
         openConnectModal,
         mounted,
       }) => {
         const ready = mounted;
-        const connected = ready && account && chain;
+        const connected = ready && accountAddress && chain;
         return (
           <>
             {(() => {
@@ -82,27 +88,21 @@ export const ConnectWallet = () => {
                     <>
                       <Menu.Button>
                         <div
-                          className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85 
-                      ${cn({
-                        "border-danger border-2":
-                          urlChainId &&
-                          urlChainId !== chain.id &&
-                          !isNaN(urlChainId),
-                      })} `}
+                          className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85            
+                          ${cn({ "border-2 border-danger-content": urlChainId && urlChainId !== chain.id })} `}
                         >
-                          <img
-                            alt={"Chain icon"}
-                            src={`https://effigy.im/a/${account.address}.png`}
-                            className="h-8 w-8 rounded-full"
+                          <Image alt={"Chain icon"} src={`https://effigy.im/a/${accountAddress.address}.png`} className="h-8 w-8 rounded-full" width={32} height={32}
                           />
                           <div className="flex flex-col">
                             <h4 className="text-left">
-                              {formatAddress(account.address)}
+                              {formatAddress(accountAddress.address)}
                             </h4>
                             <div className="ml-[2px] flex items-center text-xs font-semibold text-success">
-                              {!urlChainId ||
-                              isNaN(urlChainId!) ||
-                              chain.id === urlChainId ? (
+                              {(
+                                !urlChainId ||
+                                isNaN(urlChainId!) ||
+                                chain.id === urlChainId
+                              ) ?
                                 <>
                                   <span>Connected to</span>
                                   <div className="mx-1">
@@ -110,11 +110,10 @@ export const ConnectWallet = () => {
                                   </div>
                                   <span>{chain.name}</span>
                                 </>
-                              ) : (
-                                <span className="text-danger">
+                                : <span className="text-danger-content">
                                   Network mismatch
                                 </span>
-                              )}
+                              }
                             </div>
                           </div>
                           <ChevronUpIcon
@@ -148,8 +147,8 @@ export const ConnectWallet = () => {
                                 <span className="stat-title">Balance</span>
                                 <span className="text-sm">
                                   {" "}
-                                  {!tokenUrlAddress
-                                    ? "Unknow garden"
+                                  {!tokenUrlAddress ?
+                                    "Unknow garden"
                                     : Number(token?.formatted).toFixed(0)}{" "}
                                   {token?.symbol === "ETH" ? "" : token?.symbol}
                                 </span>
@@ -161,18 +160,15 @@ export const ConnectWallet = () => {
                               {chain.id !== urlChainId &&
                                 urlChainId &&
                                 !isNaN(urlChainId) && (
-                                  <Button
-                                    className="overflow-hidden truncate"
-                                    onClick={() =>
-                                      switchNetwork && switchNetwork(urlChainId)
-                                    }
-                                  >
-                                    Switch to{" "}
-                                    {urlChainId
-                                      ? getChain(urlChainId)?.name
-                                      : ""}
-                                  </Button>
-                                )}
+                                <Button
+                                  className="overflow-hidden truncate"
+                                  onClick={() =>
+                                    switchNetwork && switchNetwork(urlChainId)
+                                  }
+                                >
+                                    Switch to {chainFromPath?.name ?? ""}
+                                </Button>
+                              )}
 
                               <Button
                                 onClick={() => disconnect()}
@@ -202,4 +198,4 @@ export const ConnectWallet = () => {
       }}
     </ConnectButton.Custom>
   );
-};
+}

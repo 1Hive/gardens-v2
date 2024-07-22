@@ -1,42 +1,38 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Button, PoolGovernance, FormLink, ProposalCard } from "@/components";
+import React, { useEffect, useState } from "react";
 import {
-  useAccount,
-  useContractWrite,
-  Address as AddressType,
-  useContractRead,
-  useWaitForTransaction,
-} from "wagmi";
-import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
-import { getProposals } from "@/actions/getProposals";
-import { calculatePercentage } from "@/utils/numbers";
-import useErrorDetails from "@/utils/getErrorName";
+  AdjustmentsHorizontalIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { toast } from "react-toastify";
+import { Address as AddressType, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
   CVProposal,
-  CVStrategy,
   getMemberStrategyDocument,
   getMemberStrategyQuery,
-  getPoolDataQuery,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
-import { getChainIdFromPath } from "@/utils/path";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import useSubgraphQueryByChain from "@/hooks/useSubgraphQueryByChain";
+import { LoadingSpinner } from "./LoadingSpinner";
+import { getProposals } from "@/actions/getProposals";
+import { Button, PoolGovernance, ProposalCard } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { toast } from "react-toastify";
-import { chainDataMap } from "@/configs/chainServer";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
-import LoadingSpinner from "./LoadingSpinner";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
+import { useErrorDetails } from "@/utils/getErrorName";
+import { calculatePercentage } from "@/utils/numbers";
 
 export type ProposalInputItem = {
   id: string;
@@ -64,7 +60,6 @@ export function Proposals({
   alloInfo,
   communityAddress,
   createProposalUrl,
-  proposalType,
 }: {
   strategy: LightCVStrategy;
   alloInfo: Allo;
@@ -76,59 +71,58 @@ export function Proposals({
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
   const [proposals, setProposals] = useState<
-    Awaited<ReturnType<typeof getProposals>>
+  Awaited<ReturnType<typeof getProposals>>
   >([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
-  const [memberTokensInCommunity, setMemberTokensInCommunity] =
-    useState<string>("0");
+  const [fetchingProposals, setFetchingProposals] = useState<boolean | undefined>();
+  const memberTokensInCommunity = "0";
 
-  const { address } = useAccount();
+  const { address: wallet } = useAccount();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   const { isMemberActived } = useIsMemberActivated(strategy);
-  const chainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const { data: isMemberActivated } = useContractRead({
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
     functionName: "memberActivatedInStrategies",
-    args: [address as Address, strategy.id as Address],
+    args: [wallet as Address, strategy.id as Address],
     watch: true,
+    enabled: !!wallet,
   });
 
   const {
     data: memberResult,
     error,
     refetch: refetchIsMemberQuery,
-  } = useSubgraphQueryByChain<isMemberQuery>(
-    chainId,
-    isMemberDocument,
-    {
-      me: address?.toLowerCase(),
+  } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: wallet?.toLowerCase(),
       comm: strategy.registryCommunity.id.toLowerCase(),
     },
-    {},
-    {
+    changeScope: {
       topic: "member",
       id: communityAddress,
       type: ["add", "delete"],
-      chainId,
     },
-  );
+    enabled: !!wallet,
+  });
 
   if (error) {
     console.error("Error while fetching member data: ", error);
   }
 
   useEffect(() => {
-    let _stakesFilteres: StakesMemberType = [];
+    let stakesFilteres: StakesMemberType = [];
     if (memberResult && memberResult.members.length > 0) {
       const stakes = memberResult.members[0].stakes;
       if (stakes && stakes.length > 0) {
-        _stakesFilteres = stakes.filter((stake) => {
+        stakesFilteres = stakes.filter((stake) => {
           return (
             stake.proposal.strategy.id.toLowerCase() ===
             strategy.id.toLowerCase()
@@ -137,15 +131,15 @@ export function Proposals({
       }
     }
 
-    _stakesFilteres.reduce((acc, curr) => {
+    stakesFilteres.reduce((acc, curr) => {
       return acc + BigInt(curr.amount);
     }, 0n);
 
-    const totalStaked = _stakesFilteres.reduce((acc, curr) => {
+    const totalStaked = stakesFilteres.reduce((acc, curr) => {
       return acc + BigInt(curr.amount);
     }, 0n);
 
-    const memberStakes: ProposalInputItem[] = _stakesFilteres.map((item) => ({
+    const memberStakes: ProposalInputItem[] = stakesFilteres.map((item) => ({
       id: item.proposal.proposalNumber,
       value: item.amount,
     }));
@@ -154,27 +148,25 @@ export function Proposals({
     setStakedFilters(memberStakes);
   }, [memberResult]);
 
-  const { data: memberStrategyResult, error: errorMS } =
-    useSubgraphQueryByChain<getMemberStrategyQuery>(
-      chainId,
-      getMemberStrategyDocument,
-      {
-        meStr: `${address?.toLowerCase()}-${strategy.id.toLowerCase()}`,
+  const { data: memberStrategyResult } =
+    useSubgraphQuery<getMemberStrategyQuery>({
+      query: getMemberStrategyDocument,
+      variables: {
+        meStr: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
-      {},
-      {
+      changeScope: {
         topic: "proposal",
         id: strategy.id,
         type: "update",
-        chainId: chainId,
       },
-    );
+      enabled: !!wallet,
+    });
 
   useEffect(() => {
-    if (address) {
+    if (wallet) {
       refetchIsMemberQuery();
     }
-  }, [address]);
+  }, [wallet]);
 
   useEffect(() => {
     setMemberActivatedPoints(
@@ -183,24 +175,33 @@ export function Proposals({
   }, [memberStrategyResult]);
 
   const triggerRenderProposals = () => {
-    getProposals(address as Address, strategy).then((res) => {
+    if (fetchingProposals == null) {
+      setFetchingProposals(true);
+    }
+    getProposals(wallet, strategy).then((res) => {
       if (res !== undefined) {
         setProposals(res);
       } else {
-        console.log("no proposals");
+        console.debug("No proposals");
       }
+    }).catch((err) => {
+      console.error("Error while fetching proposals: ", { error: err, strategy });
+    }).finally(() => {
+      return setFetchingProposals(false);
     });
   };
 
   useEffect(() => {
-    triggerRenderProposals();
-  }, [address]);
+    if (wallet && !fetchingProposals) {
+      triggerRenderProposals();
+    }
+  }, [wallet, strategy]);
 
   useEffect(() => {
     if (!proposals) {
       return;
     }
-    const newInputs = proposals.map(({ proposalNumber, stakedAmount }) => {
+    let newInputs = proposals.map(({ proposalNumber }) => {
       let returnItem = { id: proposalNumber, value: 0 };
       stakedFilters.forEach((item, index) => {
         if (proposalNumber === item.id) {
@@ -212,14 +213,8 @@ export function Proposals({
       });
       return returnItem;
     });
-    if (newInputs.length > 0) {
-      let sum = newInputs?.reduce(
-        (prev, curr) => prev + BigInt(curr.value),
-        0n,
-      );
-    }
     setInputs(newInputs);
-  }, [proposals, address, stakedFilters]);
+  }, [proposals, wallet, stakedFilters]);
 
   useEffect(() => {
     if (isMemberActived == null) return;
@@ -227,34 +222,28 @@ export function Proposals({
   }, [isMemberActived]);
 
   const {
-    data: allocateData,
+    transactionData: allocateTxData,
     write: writeAllocate,
     error: errorAllocate,
-    isSuccess: isSuccessAllocate,
     status: allocateStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
-  });
-
-  useWaitForTransaction({
-    hash: allocateData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
         id: alloInfo.id,
         function: "allocate",
-        chainId,
+        urlChainId,
       });
     },
   });
 
   useErrorDetails(errorAllocate, "errorAllocate");
-  const { updateTransactionStatus, txConfirmationHash } =
-    useTransactionNotification(allocateData);
+  const { updateTransactionStatus } =
+    useTransactionNotification(allocateTxData);
 
   useEffect(() => {
     updateTransactionStatus(allocateStatus);
@@ -279,26 +268,32 @@ export function Proposals({
     inputData: ProposalInputItem[],
     currentData: ProposalInputItem[],
   ) => {
-    const resultArr: [number, BigInt][] = [];
+    const resultArr: [number, bigint][] = [];
     inputData.forEach((input) => {
       let row: [number, bigint] | undefined = undefined;
-      if (input.value > 0)
+      if (input.value > 0) {
         row = [Number(input.id), BigInt(Math.floor(input.value))];
+      }
       currentData.forEach((current) => {
         if (input.id === current.id) {
           const dif = BigInt(Math.floor(input.value)) - BigInt(current.value);
           row = [Number(input.id), dif];
         }
       });
-      if (row && row[1] !== 0n) resultArr.push(row);
+      if (row && row[1] !== 0n) {
+        resultArr.push(row);
+      }
     });
 
     return resultArr;
   };
   const calculateTotalTokens = (exceptIndex?: number) =>
     inputs.reduce((acc, curr, i) => {
-      if (exceptIndex !== undefined && exceptIndex === i) return acc;
-      else return acc + Number(curr.value);
+      if (exceptIndex !== undefined && exceptIndex === i) {
+        return acc;
+      } else {
+        return acc + Number(curr.value);
+      }
     }, 0);
 
   const inputHandler = (i: number, value: number) => {
@@ -437,7 +432,7 @@ export function Proposals({
                 proposalData={proposalData}
                 inputData={inputs[i]}
                 stakedFilter={stakedFilters[i]}
-                i={i}
+                index={i}
                 isAllocationView={allocationView}
                 tooltipMessage={tooltipMessage}
                 memberActivatedPoints={memberActivatedPoints}
@@ -479,14 +474,17 @@ export function Proposals({
             </>
           </div>
         )}
-
         {!allocationView && (
           <>
             <div>
               <h4>Do you have a great idea?</h4>
               <div className="flex items-center gap-6">
                 <p>Share it with the community and get support!</p>
-                <FormLink href={createProposalUrl} label="Create Proposal" />
+                <Link href={createProposalUrl} >
+                  <Button icon={<PlusIcon height={24} width={24} />}>
+                    Create a proposal
+                  </Button>
+                </Link>
               </div>
             </div>
           </>

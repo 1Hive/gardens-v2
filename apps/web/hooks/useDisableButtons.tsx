@@ -1,7 +1,6 @@
-import { getChainIdFromPath } from "@/utils/path";
-import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useAccount, useNetwork } from "wagmi";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 
 export interface ConditionObject {
   condition?: boolean;
@@ -13,7 +12,7 @@ const supportedChains: { [key: number]: string } = {
   1337: "Localhost",
 };
 
-export interface disableButtonsHookProps {
+export interface DisableButtonsHookProps {
   tooltipMessage: string;
   isConnected: boolean;
   missmatchUrl: boolean;
@@ -21,10 +20,9 @@ export interface disableButtonsHookProps {
 
 export function useDisableButtons(
   conditions?: ConditionObject[],
-): disableButtonsHookProps {
+): DisableButtonsHookProps {
   const { isConnected } = useAccount();
-  const path = usePathname();
-  const urlChainId = getChainIdFromPath();
+  const urlChainId = useChainIdFromPath();
   const { chain } = useNetwork(); // wallet connected chain object
   const missmatchUrlAndWalletChain = chain?.id !== urlChainId;
 
@@ -32,7 +30,7 @@ export function useDisableButtons(
     if (!isConnected) {
       return "Connect Wallet";
     }
-    if (missmatchUrlAndWalletChain) {
+    if (missmatchUrlAndWalletChain && urlChainId) {
       return `Switch to ${supportedChains[urlChainId] ?? ""} Network`;
     }
     if (conditions && conditions.length > 0) {

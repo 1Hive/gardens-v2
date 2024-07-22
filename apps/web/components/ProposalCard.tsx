@@ -1,36 +1,35 @@
 "use client";
-import React, { useEffect } from "react";
-import { Badge, Button, Card, Statistic } from "@/components";
-import { usePathname } from "next/navigation";
-import { ProposalInputItem, ProposalTypeVoter } from "./Proposals";
-import { Allo, CVStrategy } from "#/subgraph/.graphclient";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import useErrorDetails from "@/utils/getErrorName";
-import {
-  Address,
-  useChainId,
-  useContractWrite,
-  useWaitForTransaction,
-} from "wagmi";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { encodeAbiParameters, formatUnits } from "viem";
-import { alloABI } from "@/src/generated";
-import { toast } from "react-toastify";
-import { calculatePercentage } from "@/utils/numbers";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import { chainDataMap } from "@/configs/chainServer";
-import { LightCVStrategy, poolTypes } from "@/types";
-import { getProposals } from "@/actions/getProposals";
-import { DisplayNumber } from "./DisplayNumber";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { capitalize } from "@/utils/text";
-import { Hashicon } from "@emeraldpay/hashicon-react";
 
-type ProposalCard = {
+import React, { useEffect } from "react";
+import { Hashicon } from "@emeraldpay/hashicon-react";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { usePathname } from "next/navigation";
+import { toast } from "react-toastify";
+import { encodeAbiParameters, formatUnits } from "viem";
+import { Address } from "wagmi";
+import { Allo } from "#/subgraph/.graphclient";
+import { DisplayNumber } from "./DisplayNumber";
+import { ProposalInputItem } from "./Proposals";
+import { getProposals } from "@/actions/getProposals";
+import { Badge, Button, Card, Statistic } from "@/components";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { alloABI } from "@/src/generated";
+import { LightCVStrategy } from "@/types";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { useErrorDetails } from "@/utils/getErrorName";
+import { calculatePercentage } from "@/utils/numbers";
+import { capitalize } from "@/utils/text";
+
+type ProposalCardProps = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
-  i: number;
+  index: number;
   isAllocationView: boolean;
   tooltipMessage: string;
   memberActivatedPoints: number;
@@ -47,29 +46,30 @@ export function ProposalCard({
   proposalData,
   inputData,
   stakedFilter,
-  i,
+  index,
   isAllocationView,
   tooltipMessage,
   memberActivatedPoints,
   memberPoolWeight,
   executeDisabled,
   strategy,
-  tokenDecimals,
   alloInfo,
   inputHandler,
   triggerRenderProposals,
-}: ProposalCard) {
+}: ProposalCardProps) {
   const { title, id, proposalNumber, proposalStatus, requestedAmount, type } =
     proposalData;
   const pathname = usePathname();
+  const searchParams = useCollectQueryParams();
+  const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] === proposalData.proposalNumber;
 
   const { publish } = usePubSubContext();
-  const chainId = useChainId();
+  const chainId = useChainIdFromPath();
 
   const calcPoolWeightUsed = (number: number) => {
-    return memberPoolWeight == 0
-      ? 0
-      : ((number / 100) * memberPoolWeight).toFixed(2);
+    return memberPoolWeight == 0 ? 0 : (
+      ((number / 100) * memberPoolWeight).toFixed(2)
+    );
   };
 
   //encode proposal id to pass as argument to distribute function
@@ -84,22 +84,16 @@ export function ProposalCard({
 
   //executing proposal distribute function / alert error if not executable / notification if success
   const {
-    data: distributeData,
+    transactionData: distributeTxData,
     write: writeDistribute,
     error: errorDistribute,
-    isSuccess: isSuccessDistribute,
     isError: isErrorDistribute,
     status: distributeStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
-  });
-
-  useWaitForTransaction({
-    hash: distributeData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
@@ -121,7 +115,7 @@ export function ProposalCard({
   const {
     updateTransactionStatus: updateDistributeTransactionStatus,
     txConfirmationHash: distributeTxConfirmationHash,
-  } = useTransactionNotification(distributeData);
+  } = useTransactionNotification(distributeTxData);
 
   useEffect(() => {
     updateDistributeTransactionStatus(distributeStatus);
@@ -151,7 +145,7 @@ export function ProposalCard({
     return (
       <>
         <div
-          className={`grid grid-cols-10 gap-8 ${isAllocationMode && "section-layout"}`}
+          className={`grid grid-cols-10 gap-8 border2 w-full ${isAllocationMode && "section-layout"}`}
         >
           <div
             className={`col-span-3 flex gap-6 ${isAllocationMode && "col-span-9"}`}
@@ -173,7 +167,7 @@ export function ProposalCard({
                 <Statistic
                   label="requested amount"
                   count={formatUnits(requestedAmount, 18)}
-                ></Statistic>
+                />
               </div>
               <div className="col-span-3 self-center">mini CVChart</div>
             </>
@@ -188,9 +182,9 @@ export function ProposalCard({
                       min={0}
                       max={memberActivatedPoints}
                       value={inputData.value}
-                      className={`range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]`}
+                      className={"range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]"}
                       step={memberActivatedPoints / 100}
-                      onChange={(e) => inputHandler(i, Number(e.target.value))}
+                      onChange={(e) => inputHandler(index, Number(e.target.value))}
                     />
                     <div className="flex w-full justify-between px-2.5">
                       {[...Array(21)].map((_, i) => (
@@ -229,7 +223,7 @@ export function ProposalCard({
       {isAllocationView ? (
         <ProposalCardContent isAllocationMode />
       ) : (
-        <Card href={`${pathname}/proposals/${id}`} className="py-4">
+        <Card href={`${pathname}/${id}`} className="py-4">
           <ProposalCardContent />
         </Card>
       )}

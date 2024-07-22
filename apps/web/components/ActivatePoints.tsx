@@ -1,21 +1,17 @@
 "use client";
+
 import React, { useEffect } from "react";
-import { Button } from "./Button";
-import {
-  Address,
-  useContractWrite,
-  useAccount,
-  useChainId,
-  useWaitForTransaction,
-} from "wagmi";
-import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
-import useErrorDetails from "@/utils/getErrorName";
-import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
+import { Address, useAccount } from "wagmi";
+import { Button } from "./Button";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { chainDataMap } from "@/configs/chainServer";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { cvStrategyABI } from "@/src/generated";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { useErrorDetails } from "@/utils/getErrorName";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -32,24 +28,20 @@ export function ActivatePoints({
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const chainId = useChainId();
+  const chainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const {
-    data: activatePointsData,
+    transactionData: activatePointsTxData,
     write: writeActivatePoints,
     error: errorActivatePoints,
     status: activatePointsStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
+    chainId,
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "activatePoints",
-  });
-
-  useWaitForTransaction({
-    hash: activatePointsData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "member",
         id: connectedAccount,
@@ -62,20 +54,15 @@ export function ActivatePoints({
   });
 
   const {
-    data: deactivatePointsData,
+    transactionData: deactivatePointsTxData,
     write: writeDeactivatePoints,
     error: errorDeactivatePoints,
     status: deactivatePointsStatus,
-  } = useContractWrite({
+  } = useContractWriteWithConfirmations({
     address: strategyAddress,
     abi: abiWithErrors(cvStrategyABI),
     functionName: "deactivatePoints",
-  });
-
-  useWaitForTransaction({
-    hash: deactivatePointsData?.hash,
-    confirmations: chainDataMap[chainId].confirmations,
-    onSuccess: () => {
+    onConfirmations: () => {
       publish({
         topic: "member",
         id: connectedAccount,
@@ -103,10 +90,10 @@ export function ActivatePoints({
   }
 
   const { updateTransactionStatus: updateActivePointsStatus } =
-    useTransactionNotification(activatePointsData);
+    useTransactionNotification(activatePointsTxData);
 
   const { updateTransactionStatus: updateDeactivePointsStatus } =
-    useTransactionNotification(deactivatePointsData);
+    useTransactionNotification(deactivatePointsTxData);
 
   useEffect(() => {
     updateActivePointsStatus(activatePointsStatus);
