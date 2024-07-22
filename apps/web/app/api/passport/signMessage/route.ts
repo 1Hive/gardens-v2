@@ -1,4 +1,5 @@
-// app/api/passport/getSigningMessage/route.ts
+// app/api/passport/sign-message/route.ts
+
 import { NextResponse } from "next/server";
 
 export async function GET() {

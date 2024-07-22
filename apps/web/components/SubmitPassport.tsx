@@ -34,7 +34,7 @@ export function SubmitPassport() {
       }
 
       const data = await response.json();
-      console.log("Response from server:", data);
+      console.debug("Response from server:", data);
 
       return { error: false, data };
     } catch (err) {
@@ -65,7 +65,7 @@ export function SubmitPassport() {
       }
 
       const data = await response.json();
-      console.log("Response from writeScorer API:", data);
+      console.debug("Response from writeScorer API:", data);
       return data;
     } catch (err) {
       console.error("Error calling writeScorer API:", err);

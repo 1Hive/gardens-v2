@@ -10,7 +10,7 @@ import {
   Chain,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { localhost, arbitrumSepolia, sepolia } from "viem/chains";
+import { arbitrum, localhost, arbitrumSepolia, sepolia } from "viem/chains";
 import { getConfigByChain } from "@/constants/contracts";
 import { passportScorerABI } from "@/src/generated";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
@@ -39,6 +39,9 @@ function getViemChain(chain: number): Chain {
     case sepolia.id:
       viemChain = sepolia;
       break;
+    case arbitrum.id:
+      viemChain = arbitrum;
+      break;
 
     default:
       viemChain = localhost;
@@ -57,7 +60,7 @@ const walletClient = createWalletClient({
   account: privateKeyToAccount(
     (`${LIST_MANAGER_PRIVATE_KEY}` as Address) || "",
   ),
-  chain: localhost,
+  chain: getViemChain(CHAIN),
   transport: custom(client.transport),
 });
 
