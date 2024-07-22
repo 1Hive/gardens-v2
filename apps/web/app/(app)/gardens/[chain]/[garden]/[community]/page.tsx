@@ -28,6 +28,8 @@ import {
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/constants/contracts";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { poolTypes } from "@/types";
@@ -43,8 +45,13 @@ export default function Page({
 }: {
   params: { chain: number; garden: string; community: string };
 }) {
+  const searchParams = useCollectQueryParams();
   const [covenant, setCovenant] = useState<string | undefined>();
-  const { data: result, error } = useSubgraphQuery<getCommunityQuery>({
+  const {
+    data: result,
+    error,
+    refetch,
+  } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
     variables: { communityAddr: communityAddr, tokenAddr: tokenAddr },
     changeScope: [
@@ -82,14 +89,6 @@ export default function Page({
     fetchCovenant();
   }, [covenantIpfsHash]);
 
-  if (!tokenGarden || !result?.registryCommunity) {
-    return (
-      <div className="mt-96">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
   let {
     communityName,
     members,
@@ -98,7 +97,7 @@ export default function Page({
     registerStakeAmount,
     registerToken,
     protocolFee,
-  } = result.registryCommunity;
+  } = result?.registryCommunity ?? {};
 
   const communityStakedTokens =
         members?.reduce(
@@ -119,10 +118,28 @@ export default function Page({
       poolTypes[strategy.config?.proposalType] === "funding" &&
             strategy.isEnabled,
   );
+  const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
   const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
 
-  const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
+  useEffect(() => {
+    const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
+    if (
+      newPoolId &&
+      result &&
+      !poolsInReview.some((c) => c.poolId === newPoolId)
+    ) {
+      refetch();
+    }
+  }, [searchParams, poolsInReview]);
+
+  if (!tokenGarden || !result?.registryCommunity) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   const parsedCommunityFee = () => {
     try {

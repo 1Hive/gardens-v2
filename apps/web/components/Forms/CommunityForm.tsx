@@ -19,12 +19,13 @@ import { FormSelect, Option } from "./FormSelect";
 import { Button } from "@/components";
 import { getChain } from "@/configs/chainServer";
 import { getConfigByChain } from "@/constants/contracts";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { delayAsync } from "@/utils/delayAsync";
+import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 
@@ -153,14 +154,7 @@ export const CommunityForm = ({
     contractName: "Registry Factory",
     fallbackErrorMessage: "Error creating community. Please try again.",
     onConfirmations: async (receipt) => {
-      const newCommunityAddr = receipt.logs[0].address;
-      if (pathname) {
-        router.push(
-          pathname?.replace("/create-community", `?new=${newCommunityAddr}`),
-        );
-      }
-      // Add some delay to l et time to the comunity list to subscribe to the published event
-      await delayAsync(1000);
+      const newCommunityAddr = getEventFromReceipt(receipt, "RegistryFactory", "CommunityCreated").args._registryCommunity;
       publish({
         topic: "community",
         type: "add",
@@ -169,6 +163,11 @@ export const CommunityForm = ({
         chainId: tokenGarden.chainId,
         id: newCommunityAddr, // new community address
       });
+      if (pathname) {
+        router.push(
+          pathname?.replace("/create-community", `?${QUERY_PARAMS.gardenPage.newCommunity}=${newCommunityAddr}`),
+        );
+      }
     },
     onSettled: () => setLoading(false),
   });

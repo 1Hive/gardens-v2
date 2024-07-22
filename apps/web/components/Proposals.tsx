@@ -67,6 +67,7 @@ export function Proposals({
   >([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
+  const [fetchingProposals, setFetchingProposals] = useState<boolean | undefined>();
   const memberTokensInCommunity = "0";
 
   const { address: wallet } = useAccount();
@@ -166,18 +167,27 @@ export function Proposals({
   }, [memberStrategyResult]);
 
   const triggerRenderProposals = () => {
+    if (fetchingProposals == null) {
+      setFetchingProposals(true);
+    }
     getProposals(wallet, strategy).then((res) => {
       if (res !== undefined) {
         setProposals(res);
       } else {
         console.debug("No proposals");
       }
+    }).catch((err) => {
+      console.error("Error while fetching proposals: ", { error: err, strategy });
+    }).finally(() => {
+      return setFetchingProposals(false);
     });
   };
 
   useEffect(() => {
-    triggerRenderProposals();
-  }, []);
+    if (wallet && !fetchingProposals) {
+      triggerRenderProposals();
+    }
+  }, [wallet, strategy]);
 
   useEffect(() => {
     if (!proposals) {
@@ -365,12 +375,12 @@ export function Proposals({
           <header className="flex items-center justify-between">
             <div className="flex w-full items-baseline justify-between">
               <h2 className="font-semibold">Proposals</h2>
-              {proposals ?
-                proposals.length === 0 ?
+              {!proposals && !fetchingProposals &&
+                <>
                   <h4 className="text-2xl text-info">
-                    No submitted proposals to support
+                  No submitted proposals to support
                   </h4>
-                  : !editView && (
+                  {!editView && (
                     <Button
                       icon={
                         <AdjustmentsHorizontalIcon height={24} width={24} />
@@ -379,11 +389,11 @@ export function Proposals({
                       disabled={disableManSupportButton}
                       tooltip={String(tooltipMessage)}
                     >
-                      Manage support
+                    Manage support
                     </Button>
-                  )
-
-                : <LoadingSpinner />}
+                  )}
+                </>
+              }
             </div>
             {editView && (
               <>
@@ -412,13 +422,13 @@ export function Proposals({
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-6">
-            {proposals?.map((proposalData, i) => (
-              <React.Fragment key={proposalData.id + "_" + i}>
+            {!fetchingProposals ? proposals?.map((proposalData, index) => (
+              <React.Fragment key={proposalData.id}>
                 <ProposalCard
                   proposalData={proposalData}
-                  inputData={inputs[i]}
-                  stakedFilter={stakedFilters[i]}
-                  index={i}
+                  inputData={inputs[index]}
+                  stakedFilter={stakedFilters[index]}
+                  index={index}
                   isEditView={editView}
                   tooltipMessage={tooltipMessage}
                   memberActivatedPoints={memberActivatedPoints}
@@ -435,7 +445,7 @@ export function Proposals({
                   inputHandler={inputHandler}
                 />
               </React.Fragment>
-            ))}
+            )) : <div className="w-full text-center"><LoadingSpinner /></div>}
           </div>
           <div className="flex justify-end gap-8">
             {editView && (

@@ -44,7 +44,7 @@ export const ActivePointsChart = ({
 
   return (
     <>
-      <ChartWrapper title="">
+      <ChartWrapper>
         <ChartSetup options={OPTIONS} />
       </ChartWrapper>
     </>

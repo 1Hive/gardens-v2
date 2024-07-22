@@ -12,11 +12,13 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { Button } from "@/components/Button";
 import { chainDataMap } from "@/configs/chainServer";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
+import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
@@ -253,16 +255,17 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     contractName: "Registry Community",
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool. Please ty again.",
-    onConfirmations: () => {
+    onConfirmations: (receipt) => {
+      const newPoolId = getEventFromReceipt(receipt, "RegistryCommunity", "PoolCreated").args._poolId;
       publish({
         topic: "pool",
         function: "createPool",
         type: "add",
+        id: newPoolId.toString(), // Never propagate direct bigint outside of javascript environment
+        containerId: communityAddr,
         chainId: chainId,
       });
-      if (pathname) {
-        router.push(pathname.replace(`/${communityAddr}/create-pool`, ""));
-      }
+      router.push(pathname?.replace("/create-pool", `?${QUERY_PARAMS.communityPage.newPool}=${newPoolId}`));
     },
     onSettled: () => setLoading(false),
   });
@@ -379,18 +382,19 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
             <h4 className="my-4 text-xl">Select pool settings</h4>
             <div className="flex gap-8">
               {Object.entries(poolSettingValues).map(
-                ([key, { label, description }]) => (
-                  <React.Fragment key={key}>
-                    <FormRadioButton
-                      label={label}
-                      description={description}
-                      value={parseInt(key)}
-                      checked={optionType === parseInt(key)}
-                      onChange={handleOptionTypeChange}
-                      registerKey="poolSettings"
-                    />
-                  </React.Fragment>
-                ),
+                ([key, { label, description }]) => {
+                  return (
+                    <React.Fragment key={key}>
+                      <FormRadioButton
+                        label={label}
+                        description={description}
+                        value={parseInt(key)}
+                        checked={optionType === parseInt(key)}
+                        onChange={handleOptionTypeChange}
+                        registerKey="poolSettings" />
+                    </React.Fragment>
+                  );
+                },
               )}
             </div>
             <div className="mb-6 mt-2 flex flex-col">

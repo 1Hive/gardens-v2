@@ -34,8 +34,8 @@ export function FormSelect({
           ...registerOptions,
         })}
       >
-        {options.map(({ value, label: lab }, index) => (
-          <option value={value} key={index + "_" + value}>
+        {options.map(({ value, label: lab }) => (
+          <option value={value} key={value}>
             {lab}
           </option>
         ))}

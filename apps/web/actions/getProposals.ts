@@ -55,7 +55,7 @@ export async function getProposals(
           type: _strategy.config?.proposalType as number,
           status: _strategy.proposals[index].proposalStatus,
         };
-      });
+      }).sort((a, b) => +a.proposalNumber - +b.proposalNumber); // Sort by proposal number ascending
 
       return transformedProposals;
     };
@@ -63,6 +63,6 @@ export async function getProposals(
 
     return transformedProposals;
   } catch (error) {
-    console.error(error);
+    console.error("Error while getting proposal ipfs metadata", error);
   }
 }
