@@ -22,6 +22,7 @@
     "@urql/next": "^1.1.0",
     "@wagmi/cli": "1.5.2",
     "@wagmi/core": "~1",
+    "abitype": "^1.0.5",
     "ably": "^2.1.0",
     "addreth": "1.2.0",
     "classnames": "^2.5.1",
