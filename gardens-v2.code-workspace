@@ -40,17 +40,14 @@
       "allo-v2/=lib/allo-v2/contracts/",
     ],
     "[typescriptreact]": {
-      "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
-    },
-    "[typescript]": {
-      "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     },
   },
   "extensions": {
     "recommendations": [
-      "esbenp.prettier-vscode",
       "dsznajder.es7-react-js-snippets",
       "dbaeumer.vscode-eslint",
+      "rvest.vs-code-prettier-eslint",
       "xabikos.javascriptsnippets",
       "styled-components.vscode-styled-components",
       "nomicfoundation.hardhat-solidity",

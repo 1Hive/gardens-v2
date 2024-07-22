@@ -76,12 +76,13 @@ module.exports = {
     ],
     "prefer-const": "off",
     "@typescript-eslint/consistent-type-definitions": "off",
-    "curly": ["error", "multi-line"],
+    curly: ["error", "multi-line"],
     "no-unused-expressions": "error",
     "no-unsafe-optional-chaining": "error",
     "comma-dangle": ["error", "always-multiline"],
     semi: ["error", "always"],
     "brace-style": ["error"],
+    "@typescript-eslint/indent": ["error", 2],
     "@typescript-eslint/quotes": ["error", "double"],
     "import/extensions": "off",
     "no-multiple-empty-lines": ["error", { max: 1 }],
@@ -90,6 +91,11 @@ module.exports = {
     "@typescript-eslint/no-use-before-define": "off",
     "jsx-a11y/no-static-element-interactions": "off",
     "no-irregular-whitespace": "error",
+    "object-property-newline": [
+      "error",
+      { allowAllPropertiesOnSameLine: true },
+    ],
+    "semi-spacing": "error",
+    "react/no-array-index-key": "warn",
   },
-
 };
