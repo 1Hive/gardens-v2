@@ -41,7 +41,7 @@ export const ChartWrapper = ({
 
   return (
     <>
-      <div className="mt-7 flex flex-col gap-6">
+      <div className="mt-7 flex flex-col gap-12">
         <h3>Conviction voting chart</h3>
         <div className="flex gap-4">
           {legend

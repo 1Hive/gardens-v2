@@ -48,12 +48,12 @@ export type ProposalTypeVoter = CVProposal & {
   type: number;
 };
 
-interface Stats {
+type Stats = {
   id: number;
   name: string;
   stat: number | string;
   className: string;
-}
+};
 
 export function Proposals({
   strategy,
@@ -494,7 +494,7 @@ export function Proposals({
   );
 }
 
-export default function UserAllocationStats({ stats }: { stats: any[] }) {
+export default function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
     <div className="mt-10">
       <h3>Your Allocation Overview</h3>

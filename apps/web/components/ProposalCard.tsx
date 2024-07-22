@@ -12,6 +12,7 @@ import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
 import { Badge, Button, Card, Statistic } from "@/components";
+import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
@@ -61,6 +62,7 @@ export function ProposalCard({
     proposalData;
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
+  // TODO: ADD border color when new proposal is added
   const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] === proposalData.proposalNumber;
 
   const { publish } = usePubSubContext();
@@ -145,7 +147,7 @@ export function ProposalCard({
     return (
       <>
         <div
-          className={`grid grid-cols-10 gap-8 border2 w-full ${isAllocationMode && "section-layout"}`}
+          className={`grid grid-cols-10 gap-8 ${isAllocationMode && "section-layout"}`}
         >
           <div
             className={`col-span-3 flex gap-6 ${isAllocationMode && "col-span-9"}`}
@@ -163,13 +165,17 @@ export function ProposalCard({
           {!isAllocationMode && (
             <>
               <div className="col-span-3 ml-10 self-center justify-self-start">
-                {/* TODO: minor improve here  */}
+                {/* TODO: what to inform here ?  */}
+                <p className="text-xs text-neutral-soft-content text-center">You have not allocate any support</p>
+              </div>
+
+              <div className="col-span-3 self-center flex flex-col gap-1">
+                <div className="h-4"><ConvictionBarChart compact currentConvictionPct={1} thresholdPct={6} proposalSupportPct={3} isSignalingType={false} proposalId={proposalNumber} /></div>
                 <Statistic
                   label="requested amount"
                   count={formatUnits(requestedAmount, 18)}
                 />
               </div>
-              <div className="col-span-3 self-center">mini CVChart</div>
             </>
           )}
           {isAllocationView && (

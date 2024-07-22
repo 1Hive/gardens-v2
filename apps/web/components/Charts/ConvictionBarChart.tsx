@@ -248,8 +248,9 @@ export const ConvictionBarChart = ({
       bottom: compact ? "0%" : "25%",
       containLabel: false,
     },
-
-    animationDurationUpdate: 1200,
+    // TODO: realted to re render in PoolId page (check tomor)
+    animation: false,
+    //animationDurationUpdate: 1200,
     barGap: "-100%",
     series: [
       {
