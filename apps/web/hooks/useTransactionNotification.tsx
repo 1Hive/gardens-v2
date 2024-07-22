@@ -6,7 +6,7 @@ import { UserRejectedRequestError } from "viem";
 import { WriteContractResult } from "wagmi/actions";
 import { useChainFromPath } from "./useChainFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
-import { WaitingForSig, TxError, TxSuccess, TxMinting } from "@/assets";
+import { TxWaitingForSig, TxError, TxSuccess, TxInProgress } from "@/assets";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
 type TransactionData = WriteContractResult | undefined;
@@ -105,11 +105,11 @@ export const TransactionStatusNotification = ({
 
   switch (status) {
     case "idle":
-      icon = WaitingForSig;
+      icon = TxWaitingForSig;
       textColor = "text-warning";
       break;
     case "loading":
-      icon = TxMinting;
+      icon = TxInProgress;
       textColor = "text-info";
       break;
     case "success":
