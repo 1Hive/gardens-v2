@@ -12,6 +12,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { Modal } from "@/components";
+import { isProd } from "@/constants/contracts";
 import useModal from "@/hooks/useModal";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
@@ -78,9 +79,13 @@ export function CheckPassport({
   const passportStrategy = passportStrategyData?.passportStrategy;
 
   //force active passport for testing
-  // if (passportStrategy?.active !== undefined) {
-  //   passportStrategy.active = true;
-  // }
+  if (!isProd ) {
+    (window as any).togglePassportEnable = ( enable: boolean) => {
+      if (passportStrategy) {
+        passportStrategy.active = enable;
+      }
+    };
+  }
 
   const handleCheckPassport = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
