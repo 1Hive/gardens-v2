@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.19;
 
-import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ISybilScorer, PassportData, Strategy} from "./ISybilScorer.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 
-contract PassportScorer is Ownable, ISybilScorer {
+contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, ISybilScorer {
     address public listManager;
 
     mapping(address => PassportData) public userScores;
@@ -53,7 +55,8 @@ contract PassportScorer is Ownable, ISybilScorer {
         }
     }
 
-    constructor(address _listManager) Ownable() {
+    function initialize(address _listManager) public initializer {
+        __Ownable_init();
         _revertZeroAddress(_listManager);
         listManager = _listManager;
     }
@@ -132,9 +135,9 @@ contract PassportScorer is Ownable, ISybilScorer {
 
         return userScore.score >= strategy.threshold;
     }
+
     /// @notice Get the score of a user
     /// @param _user address of the user to check
-
     function getUserScore(address _user) external view returns (PassportData memory) {
         return userScores[_user];
     }
@@ -144,4 +147,6 @@ contract PassportScorer is Ownable, ISybilScorer {
     function getStrategy(address _strategy) external view returns (Strategy memory) {
         return strategies[_strategy];
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
