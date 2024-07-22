@@ -104,7 +104,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
 
-        passportScorer = new PassportScorer(factoryOwner);
+        passportScorer = new PassportScorer();
+        passportScorer.initialize(factoryOwner);
+
         // passportScorer.transferOwnership(factoryOwner);
 
         vm.startPrank(factoryOwner);

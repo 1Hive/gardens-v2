@@ -58,7 +58,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         registry = allo.getRegistry();
 
-        sybilScorer = new PassportScorer(scorer_list_manager());
+        sybilScorer = new PassportScorer();
+        sybilScorer.initialize(scorer_list_manager());
 
         registryFactory = new RegistryFactory();
 

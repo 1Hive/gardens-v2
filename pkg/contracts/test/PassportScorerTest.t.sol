@@ -14,7 +14,8 @@ contract PassportScorerTest is Test {
     PassportData public passportData;
 
     function setUp() public {
-        passportScorer = new PassportScorer(listManager);
+        passportScorer = new PassportScorer();
+        passportScorer.initialize(listManager);
         passportData = PassportData({score: 100, lastUpdated: block.timestamp});
     }
 
