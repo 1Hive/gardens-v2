@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from "react";
 
-import { TransactionReceipt } from "viem";
-import { useChainId, useContractWrite, useWaitForTransaction } from "wagmi";
+import { WriteContractMode } from "@wagmi/core";
+import { Abi, TransactionReceipt } from "viem";
+import { useChainId, useContractWrite, UseContractWriteConfig, useWaitForTransaction } from "wagmi";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainDataMap } from "@/configs/chainServer";
 
@@ -14,8 +15,8 @@ import { chainDataMap } from "@/configs/chainServer";
  * - showNotification: to show status update with toast
  * @returns
  */
-export function useContractWriteWithConfirmations(
-  props: Parameters<typeof useContractWrite>[0] & {
+export function useContractWriteWithConfirmations<TAbi extends Abi | readonly unknown[], TFunctionName extends string, TMode extends WriteContractMode = undefined>(
+  props: UseContractWriteConfig<TAbi, TFunctionName, TMode> & {
     onConfirmations?: (receipt: TransactionReceipt) => void;
     confirmations?: number;
     contractName: string;

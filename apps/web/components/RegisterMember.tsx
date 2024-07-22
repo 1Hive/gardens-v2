@@ -73,7 +73,7 @@ export function RegisterMember({
 
   const accountHasBalance = gte(
     accountTokenBalance?.value,
-    registerStakeAmount as bigint,
+    registerStakeAmount,
     registerTokenDecimals,
   );
 
@@ -124,7 +124,7 @@ export function RegisterMember({
   } = useContractWriteWithConfirmations({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, registerStakeAmount as bigint], // [allowed spender address, amount ]
+    args: [communityAddress, registerStakeAmount], // [allowed spender address, amount ]
     functionName: "approve",
     contractName: "ERC20",
     showNotification: false,
