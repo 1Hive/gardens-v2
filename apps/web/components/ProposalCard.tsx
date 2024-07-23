@@ -63,7 +63,7 @@ export function ProposalCard({
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
   // TODO: ADD border color when new proposal is added
-  const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] === proposalData.proposalNumber;
+  const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalData.proposalNumber;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
@@ -237,7 +237,8 @@ export function ProposalCard({
       {isAllocationView ? (
         <ProposalCardContent isAllocationMode />
       ) : (
-        <Card href={`${pathname}/${id}`} className="py-4">
+
+        <Card href={`${pathname}/${id}`} className={`py-4 ${isNewProposal ? "!border-accent !border-2" : ""}`}>
           <ProposalCardContent />
         </Card>
       )}
