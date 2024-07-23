@@ -63,7 +63,7 @@ contract RegistryUpgradeableTest is
 
     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
-    RegistryFactoryV0_1 internal registryFactory;
+    RegistryFactoryV0_0 internal registryFactory;
     RegistryCommunityV0_0 internal registryCommunity;
     RegistryCommunityV0_0 internal nonKickableCommunity;
 
@@ -109,7 +109,7 @@ contract RegistryUpgradeableTest is
             abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(protocolFeeReceiver))
         );
 
-        registryFactory = RegistryFactoryV0_1(address(proxy));
+        registryFactory = RegistryFactoryV0_0(address(proxy));
 
         // registryFactory = new RegistryFactory();
         // _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
