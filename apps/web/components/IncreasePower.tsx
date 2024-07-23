@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { parseUnits } from "viem";
 import { Address, useAccount, useBalance, useContractRead } from "wagmi";
 import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
+import { InfoBox } from "./InfoBox";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
@@ -98,7 +98,9 @@ export const IncreasePower = ({
       const stakedTokens =
         result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
 
-      setMemberStakedTokens(BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"));
+      setMemberStakedTokens(
+        BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"),
+      );
     }
   }, [accountAddress]);
 
@@ -349,11 +351,17 @@ export const IncreasePower = ({
         <div className="flex justify-between gap-4">
           <div className=" flex flex-col justify-between gap-4">
             <div className="flex gap-4">
-              <ExclamationCircleIcon height={32} width={32} />
-              <p className="max-w-sm">
+              <InfoBox
+                content="Staking more tokens in the community will increase your voting
+                power to support proposals"
+                infoBoxType="info"
+                classNames="max-w-lg"
+                //icon={<XCircleIcon className="h-9 w-9" />}
+              />
+              {/* <p className="max-w-sm">
                 Staking more tokens in the community will increase your voting
                 power to support proposals
-              </p>
+              </p> */}
             </div>
             {isMember && (
               <div className="flex justify-between">
