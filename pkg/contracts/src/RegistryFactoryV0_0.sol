@@ -48,6 +48,7 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
     function initialize(address _gardensFeeReceiver) public virtual initializer {
         __Ownable_init();
         nonce = 0;
+        _revertZeroAddress(_gardensFeeReceiver);
         gardensFeeReceiver = _gardensFeeReceiver;
         emit FeeReceiverSet(_gardensFeeReceiver);
         // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
