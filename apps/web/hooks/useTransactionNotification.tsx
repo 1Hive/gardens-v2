@@ -52,7 +52,7 @@ export const useTransactionNotification = (
         toastOptions = { autoClose: false, type: "warning" };
         break;
       case "loading":
-        notifProps = { ...txNotifProps, message: "Minting transaction..." };
+        notifProps = { ...txNotifProps, message: "Transaction in progress..." };
         toastOptions = { autoClose: false, type: "info", onClick: clickToExplorer };
         break;
       case "success":
