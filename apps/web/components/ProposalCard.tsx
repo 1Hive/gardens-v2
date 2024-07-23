@@ -2,7 +2,6 @@
 
 import React, { useEffect } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 import { encodeAbiParameters, formatUnits } from "viem";
@@ -11,7 +10,7 @@ import { Allo } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
-import { Badge, Button, Card, Statistic } from "@/components";
+import { Badge, Card } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -20,7 +19,7 @@ import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { alloABI } from "@/src/generated";
-import { LightCVStrategy } from "@/types";
+import { LightCVStrategy, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
@@ -139,6 +138,8 @@ export function ProposalCard({
     memberActivatedPoints,
   );
 
+  const isSiganlingType = poolTypes[type] === "signaling";
+
   const ProposalCardContent = ({
     isAllocationMode,
   }: {
@@ -166,22 +167,27 @@ export function ProposalCard({
             <>
               <div className="col-span-3 ml-10 self-center justify-self-start">
                 {/* TODO: what to inform here ?  */}
-                <p className="text-xs text-neutral-soft-content text-center">You have not allocate any support</p>
+                <p className="text-xs text-neutral-soft-content text-center">You have not allocate support</p>
+                {/* TODO: just for testing is new feature */}
+                {/* <p>{isNewProposal ? "new" : "not new"}</p> */}
               </div>
 
-              <div className="col-span-3 self-center flex flex-col gap-1">
+              <div className="col-span-3 self-center flex flex-col gap-2">
                 <div className="h-4">
-                  <ConvictionBarChart compact currentConvictionPct={1} thresholdPct={6} proposalSupportPct={3} isSignalingType={false} proposalId={proposalNumber} />
+                  <ConvictionBarChart compact currentConvictionPct={1} thresholdPct={isSiganlingType ? 0 : 6} proposalSupportPct={3} isSignalingType={isSiganlingType} proposalId={proposalNumber} />
                 </div>
-                <div className="flex items-baseline gap-1">
-                  <p className="text-xs text-neutral-soft-content">Requested amount: </p>
-                  <DisplayNumber
-                    number={formatUnits(requestedAmount, 18)}
-                    tokenSymbol={strategy.registryCommunity.garden.symbol}
-                    compact={true}
-                    className="text-neutral-soft-content text-xs"
-                  />
-                </div>
+                {!isSiganlingType && (
+                  <div className="flex items-baseline gap-1">
+
+                    <p className="text-xs text-neutral-soft-content">Requested amount: </p>
+                    <DisplayNumber
+                      number={formatUnits(requestedAmount, 18)}
+                      tokenSymbol={strategy.registryCommunity.garden.symbol}
+                      compact={true}
+                      className="text-neutral-soft-content text-xs"
+                    />
+                  </div>
+                )}
 
               </div>
             </>

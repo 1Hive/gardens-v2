@@ -1,5 +1,4 @@
 import React from "react";
-import { UserGroupIcon } from "@heroicons/react/24/outline";
 import { capitalize } from "@/utils/text";
 
 type IdentifierProps = {
