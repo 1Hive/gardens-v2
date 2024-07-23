@@ -185,7 +185,8 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     minThresholdPoints: {
       label: "Minimum threshold points:",
       parse: (value: string) => {
-        return value ?? "0";
+        // check if string is empty or undefined with ||
+        return value || "0";
       },
     },
     isSybilResistanceRequired: {
@@ -340,7 +341,6 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     toast
       .promise(ipfsUpload, {
         pending: "Preparing everything, wait a moment...",
-        // success: "All ready!",
         error: "Error uploading data to IPFS",
       })
       .then((ipfsHash) => {
