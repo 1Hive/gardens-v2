@@ -170,11 +170,19 @@ export function ProposalCard({
               </div>
 
               <div className="col-span-3 self-center flex flex-col gap-1">
-                <div className="h-4"><ConvictionBarChart compact currentConvictionPct={1} thresholdPct={6} proposalSupportPct={3} isSignalingType={false} proposalId={proposalNumber} /></div>
-                <Statistic
-                  label="requested amount"
-                  count={formatUnits(requestedAmount, 18)}
-                />
+                <div className="h-4">
+                  <ConvictionBarChart compact currentConvictionPct={1} thresholdPct={6} proposalSupportPct={3} isSignalingType={false} proposalId={proposalNumber} />
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xs text-neutral-soft-content">Requested amount: </p>
+                  <DisplayNumber
+                    number={formatUnits(requestedAmount, 18)}
+                    tokenSymbol={strategy.registryCommunity.garden.symbol}
+                    compact={true}
+                    className="text-neutral-soft-content text-xs"
+                  />
+                </div>
+
               </div>
             </>
           )}

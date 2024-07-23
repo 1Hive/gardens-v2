@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { Address, formatUnits } from "viem";
@@ -185,13 +186,7 @@ export default function Page({
     <div className="page-layout">
       <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
         <div className="flex w-full items-center justify-center sm:w-auto">
-          <Image
-            src={proposalImg}
-            alt={`proposal image ${proposalIdNumber}`}
-            height={160}
-            width={160}
-            className="min-h-[160px] min-w-[160px]"
-          />
+          <Hashicon value={proposalId} size={90} />
         </div>
         <div className="flex w-full flex-col gap-8">
           <div>
