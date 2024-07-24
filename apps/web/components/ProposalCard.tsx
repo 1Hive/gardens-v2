@@ -17,7 +17,6 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { alloABI } from "@/src/generated";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -85,15 +84,15 @@ export function ProposalCard({
 
   //executing proposal distribute function / alert error if not executable / notification if success
   const {
-    transactionData: distributeTxData,
     write: writeDistribute,
     error: errorDistribute,
     isError: isErrorDistribute,
-    status: distributeStatus,
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
+    contractName: "Allo",
+    fallbackErrorMessage: "Error executing proposal. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "proposal",
@@ -103,6 +102,7 @@ export function ProposalCard({
         containerId: strategy.poolId,
         chainId,
       });
+      triggerRenderProposals();
     },
   });
 
@@ -112,19 +112,6 @@ export function ProposalCard({
       toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
     }
   }, [isErrorDistribute]);
-
-  const {
-    updateTransactionStatus: updateDistributeTransactionStatus,
-    txConfirmationHash: distributeTxConfirmationHash,
-  } = useTransactionNotification(distributeTxData);
-
-  useEffect(() => {
-    updateDistributeTransactionStatus(distributeStatus);
-  }, [distributeStatus]);
-
-  useEffect(() => {
-    triggerRenderProposals();
-  }, [distributeTxConfirmationHash]);
 
   {
     /* TODO: minor improve here: have this when loading the data?  */

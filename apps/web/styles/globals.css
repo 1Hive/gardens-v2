@@ -196,3 +196,20 @@ caption {
 .hide-input-arrows {
   -moz-appearance: textfield; /* Firefox */
 }
+
+.no-icon .Toastify__toast-icon {
+  display: none;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
