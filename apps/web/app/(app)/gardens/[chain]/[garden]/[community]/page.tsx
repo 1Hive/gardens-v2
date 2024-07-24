@@ -10,7 +10,6 @@ import {
 import { Dnum } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Address } from "viem";
 import { useAccount, useContractRead } from "wagmi";
 import {
@@ -33,6 +32,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/constants/contracts";
 import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { erc20ABI } from "@/src/generated";
@@ -50,9 +50,7 @@ export default function Page({
 }: {
   params: { chain: number; garden: string; community: string };
 }) {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
+  const searchParams = useCollectQueryParams();
   const [covenant, setCovenant] = useState<string | undefined>();
   const { address: accountAddress } = useAccount();
 
@@ -166,18 +164,13 @@ export default function Page({
   const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
 
   useEffect(() => {
-    const newPoolId = searchParams.get(QUERY_PARAMS.communityPage.newPool);
+    const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
     if (
       newPoolId &&
       result &&
       !poolsInReview.some((c) => c.poolId === newPoolId)
     ) {
       refetch();
-    } else {
-      // remove the query param if the community is already in the list
-      const nextSearchParams = new URLSearchParams(searchParams.toString());
-      nextSearchParams.delete(QUERY_PARAMS.communityPage.newPool);
-      router.replace(pathname.replace(searchParams.toString(), nextSearchParams.toString()));
     }
   }, [searchParams, poolsInReview]);
 

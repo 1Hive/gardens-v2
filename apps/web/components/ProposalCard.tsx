@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 import { encodeAbiParameters } from "viem";
 import { Address } from "wagmi";
@@ -14,6 +14,7 @@ import { getProposals } from "@/actions/getProposals";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { alloABI } from "@/src/generated";
 import { LightCVStrategy, poolTypes } from "@/types";
@@ -55,8 +56,8 @@ export function ProposalCard({
 }: Props) {
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const isNewProposal = searchParams.get(QUERY_PARAMS.poolPage.newPropsoal) === proposalData.proposalNumber;
+  const searchParams = useCollectQueryParams();
+  const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] === proposalData.proposalNumber;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
@@ -166,6 +167,7 @@ export function ProposalCard({
               />
               <div className="flex w-full justify-between px-[10px]">
                 {[...Array(21)].map((_, i) => (
+                  // eslint-disable-next-line react/no-array-index-key
                   <span className="text-[8px]" key={"span_" + i}>
                     |
                   </span>

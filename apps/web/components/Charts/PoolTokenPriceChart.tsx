@@ -29,7 +29,7 @@ export const PoolTokenPriceChart = () => {
 
   return (
     <>
-      <ChartWrapper title="Tokens in Pool" size="sm">
+      <ChartWrapper>
         <ChartSetup options={OPTION_TEST} />
       </ChartWrapper>
     </>
