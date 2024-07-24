@@ -347,6 +347,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
             StrategyStruct.PointSystem.Capped
         );
         console.log("PoolId: %s", poolId);
+        assertEq(strategy.getMaxAmount(), 200 * DECIMALS);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
