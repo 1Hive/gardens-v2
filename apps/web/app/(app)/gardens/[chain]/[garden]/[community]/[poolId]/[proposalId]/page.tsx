@@ -2,22 +2,19 @@
 import { useEffect, useState } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
 import { Address, formatUnits } from "viem";
-import { useContractRead } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { proposalImg } from "@/assets";
 import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { cvStrategyABI } from "@/src/generated";
 import { poolTypes, proposalStatus } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { calculatePercentageBigInt } from "@/utils/numbers";
+import { logOnce } from "@/utils/log";
 
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -68,87 +65,44 @@ export default function Page({
     }
   }, [metadata]);
 
-  const cvStrategyContract = {
-    address: proposalData?.strategy.id as Address,
-    abi: cvStrategyABI,
-  };
-
-  const proposalIdNumber = proposalData?.proposalNumber;
-
-  const { data: thFromContract } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "calculateThreshold",
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  });
-
-  const { data: totalEffectiveActivePoints } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "totalEffectiveActivePoints",
-  });
-
-  const { data: stakeAmountFromContract } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "getProposalStakedAmount",
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  });
+  const proposalIdNumber = proposalData?.proposalNumber as string | undefined;
 
   const isProposalEnded =
     !!proposalData &&
-    (proposalStatus[proposalData.proposalStatus] !== "executed" ||
-      proposalStatus[proposalData.proposalStatus] !== "cancelled");
+    (proposalStatus[proposalData.proposalStatus] === "executed" ||
+      proposalStatus[proposalData.proposalStatus] === "cancelled");
+  logOnce("debug", { isProposalEnded, proposalStatus: proposalStatus[proposalData?.proposalStatus] });
 
-  const { data: updateConvictionLast } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "updateProposalConviction" as any, // TODO: fix CVStrategy.updateProposalConviction to view in contract
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  }) as { data: bigint | undefined };
-
-  const { data: maxCVSupply } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "getMaxConviction",
-    args: [totalEffectiveActivePoints ?? 0n],
-    enabled: !!totalEffectiveActivePoints,
+  const { currentConvictionPct, thresholdPct, totalSupportPct, updateConvictionLast } = useConvictionRead({
+    proposalData,
+    tokenData: data?.tokenGarden,
   });
 
   const tokenSymbol = data?.tokenGarden?.symbol;
-  const tokenDecimals = data?.tokenGarden?.decimals;
-  const convictionLast = proposalData?.convictionLast;
-  const threshold = proposalData?.threshold;
   const proposalType = proposalData?.strategy.config?.proposalType;
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
   const status = proposalData?.proposalStatus;
-  const stakedAmount = proposalData?.stakedAmount;
-
-  useEffect(() => {
-    if (!proposalData) {
-      return;
-    }
-
-    console.debug({
-      requestedAmount,
-      maxCVSupply,
-      threshold,
-      thFromContract,
-      stakedAmount,
-      stakeAmountFromContract: stakeAmountFromContract,
-      totalEffectiveActivePoints,
-      updateConvictionLast,
-      convictionLast,
-    });
-  }, [proposalData]);
 
   if (
     !proposalData ||
     !ipfsResult ||
-    !maxCVSupply ||
-    !totalEffectiveActivePoints ||
+    currentConvictionPct == null ||
+    thresholdPct == null ||
+    totalSupportPct == null ||
+    !proposalIdNumber ||
     (updateConvictionLast == null && !isProposalEnded)
   ) {
+    console.log({
+      proposalData,
+      ipfsResult,
+      currentConvictionPct,
+      thresholdPct,
+      totalSupportPct,
+      proposalIdNumber,
+      updateConvictionLast,
+    });
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -157,30 +111,6 @@ export default function Page({
   }
 
   const isSignalingType = poolTypes[proposalType] === "signaling";
-
-  let thresholdPct = calculatePercentageBigInt(
-    threshold,
-    maxCVSupply,
-    tokenDecimals,
-  );
-
-  let totalSupportPct = calculatePercentageBigInt(
-    stakedAmount,
-    totalEffectiveActivePoints,
-    tokenDecimals,
-  );
-
-  let currentConvictionPct = calculatePercentageBigInt(
-    BigInt(updateConvictionLast ?? 0),
-    maxCVSupply,
-    tokenDecimals,
-  );
-
-  console.debug({
-    thresholdPct,
-    totalSupportPct,
-    currentConvictionPct,
-  });
 
   return (
     <div className="page-layout">

@@ -17,7 +17,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { alloABI } from "@/src/generated";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -38,6 +38,7 @@ type ProposalCardProps = {
   strategy: LightCVStrategy;
   tokenDecimals: number;
   alloInfo: Allo;
+  tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
   inputHandler: (i: number, value: number) => void;
   triggerRenderProposals: () => void;
 };
@@ -54,6 +55,7 @@ export function ProposalCard({
   executeDisabled,
   strategy,
   alloInfo,
+  tokenData,
   inputHandler,
   triggerRenderProposals,
 }: ProposalCardProps) {
@@ -62,10 +64,15 @@ export function ProposalCard({
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
   // TODO: ADD border color when new proposal is added
-  const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] === proposalData.proposalNumber;
+  const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalData.proposalNumber;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
+
+  const { currentConvictionPct, thresholdPct, totalSupportPct } = useConvictionRead({
+    proposalData,
+    tokenData,
+  });
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0 ? 0 : (
@@ -85,15 +92,15 @@ export function ProposalCard({
 
   //executing proposal distribute function / alert error if not executable / notification if success
   const {
-    transactionData: distributeTxData,
     write: writeDistribute,
     error: errorDistribute,
     isError: isErrorDistribute,
-    status: distributeStatus,
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
+    contractName: "Allo",
+    fallbackErrorMessage: "Error executing proposal. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "proposal",
@@ -103,6 +110,7 @@ export function ProposalCard({
         containerId: strategy.poolId,
         chainId,
       });
+      triggerRenderProposals();
     },
   });
 
@@ -112,26 +120,6 @@ export function ProposalCard({
       toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
     }
   }, [isErrorDistribute]);
-
-  const {
-    updateTransactionStatus: updateDistributeTransactionStatus,
-    txConfirmationHash: distributeTxConfirmationHash,
-  } = useTransactionNotification(distributeTxData);
-
-  useEffect(() => {
-    updateDistributeTransactionStatus(distributeStatus);
-  }, [distributeStatus]);
-
-  useEffect(() => {
-    triggerRenderProposals();
-  }, [distributeTxConfirmationHash]);
-
-  {
-    /* TODO: minor improve here: have this when loading the data?  */
-  }
-  if (!inputData) {
-    return <div>loading...</div>;
-  }
 
   const inputValue = calculatePercentage(
     inputData.value,
@@ -171,11 +159,12 @@ export function ProposalCard({
                 {/* TODO: just for testing is new feature */}
                 {/* <p>{isNewProposal ? "new" : "not new"}</p> */}
               </div>
-
               <div className="col-span-3 self-center flex flex-col gap-2">
-                <div className="h-4">
-                  <ConvictionBarChart compact currentConvictionPct={1} thresholdPct={isSiganlingType ? 0 : 6} proposalSupportPct={3} isSignalingType={isSiganlingType} proposalId={proposalNumber} />
-                </div>
+                {currentConvictionPct != null && thresholdPct != null && totalSupportPct != null &&
+                  <div className="h-4">
+                    <ConvictionBarChart compact currentConvictionPct={currentConvictionPct} thresholdPct={isSiganlingType ? 0 : thresholdPct} proposalSupportPct={totalSupportPct} isSignalingType={isSiganlingType} proposalId={proposalNumber} />
+                  </div>
+                }
                 {!isSiganlingType && (
                   <div className="flex items-baseline gap-1">
 
@@ -243,7 +232,8 @@ export function ProposalCard({
       {isAllocationView ? (
         <ProposalCardContent isAllocationMode />
       ) : (
-        <Card href={`${pathname}/${id}`} className="py-4">
+
+        <Card href={`${pathname}/${id}`} className={`py-4 ${isNewProposal ? "!border-accent !border-2" : ""}`}>
           <ProposalCardContent />
         </Card>
       )}

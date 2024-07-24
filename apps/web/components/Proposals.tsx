@@ -6,7 +6,6 @@ import {
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { toast } from "react-toastify";
 import { Address as AddressType, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
@@ -26,7 +25,6 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -69,10 +67,10 @@ export function Proposals({
 }) {
   const [allocationView, setAllocationView] = useState(false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
-  const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
+  const [inputs, setInputs] = useState<ProposalInputItem[]>();
   const [proposals, setProposals] = useState<
   Awaited<ReturnType<typeof getProposals>>
-  >([]);
+  >();
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
   const [fetchingProposals, setFetchingProposals] = useState<boolean | undefined>();
@@ -222,7 +220,6 @@ export function Proposals({
   }, [isMemberActived]);
 
   const {
-    transactionData: allocateTxData,
     write: writeAllocate,
     error: errorAllocate,
     status: allocateStatus,
@@ -230,6 +227,8 @@ export function Proposals({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
+    contractName: "Allo",
+    fallbackErrorMessage: "Error allocating points. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "proposal",
@@ -242,14 +241,12 @@ export function Proposals({
   });
 
   useErrorDetails(errorAllocate, "errorAllocate");
-  const { updateTransactionStatus } =
-    useTransactionNotification(allocateTxData);
-
-  useEffect(() => {
-    updateTransactionStatus(allocateStatus);
-  }, [allocateStatus]);
 
   const submit = async () => {
+    if (!inputs) {
+      console.error("Inputs not yet computed");
+      return;
+    }
     const proposalsDifferencesArr = getProposalsInputsDifferences(
       inputs,
       stakedFilters,
@@ -287,27 +284,35 @@ export function Proposals({
 
     return resultArr;
   };
-  const calculateTotalTokens = (exceptIndex?: number) =>
-    inputs.reduce((acc, curr, i) => {
+  const calculateTotalTokens = (exceptIndex?: number) => {
+    if (!inputs) {
+      console.error("Inputs not yet computed");
+      return;
+    }
+    return inputs.reduce((acc, curr, i) => {
       if (exceptIndex !== undefined && exceptIndex === i) {
         return acc;
       } else {
         return acc + Number(curr.value);
       }
     }, 0);
+  };
 
   const inputHandler = (i: number, value: number) => {
     const currentPoints = calculateTotalTokens(i);
+    if (!currentPoints) {
+      console.error("CurrentPoints should not be undefined");
+      return;
+    }
     const maxAllowableValue = memberActivatedPoints - currentPoints;
 
     // If the sum exceeds the memberActivatedPoints, adjust the value to the maximum allowable value
     if (currentPoints + value > memberActivatedPoints) {
       value = maxAllowableValue;
-      console.log("can't exceed 100% points");
     }
 
     setInputs(
-      inputs.map((input, index) =>
+      inputs?.map((input, index) =>
         index === i ? { ...input, value: value } : input,
       ),
     );
@@ -401,9 +406,7 @@ export function Proposals({
         <div>
           <header className="flex items-center justify-between gap-10">
             <h2>Proposals</h2>
-            {!proposals ? (
-              <LoadingSpinner />
-            ) : proposals.length === 0 ? (
+            {!!proposals && (proposals.length === 0 ? (
               <h4 className="text-2xl">No submitted proposals to support</h4>
             ) : (
               !allocationView && (
@@ -416,7 +419,7 @@ export function Proposals({
                   Manage support
                 </Button>
               )
-            )}
+            ))}
           </header>
           {allocationView && (
             <>
@@ -426,8 +429,8 @@ export function Proposals({
         </div>
 
         <div className="flex flex-col gap-6">
-          {proposals?.map((proposalData, i) => (
-            <React.Fragment key={proposalData.id + "_" + i}>
+          {proposals && inputs ? proposals.map((proposalData, i) => (
+            <React.Fragment key={proposalData.id}>
               <ProposalCard
                 proposalData={proposalData}
                 inputData={inputs[i]}
@@ -447,9 +450,10 @@ export function Proposals({
                 alloInfo={alloInfo}
                 triggerRenderProposals={triggerRenderProposals}
                 inputHandler={inputHandler}
+                tokenData={strategy.registryCommunity.garden}
               />
             </React.Fragment>
-          ))}
+          )) : <LoadingSpinner />}
         </div>
         {allocationView && (
           <div className="flex justify-end gap-4">
@@ -465,7 +469,7 @@ export function Proposals({
                 onClick={() => submit()}
                 isLoading={allocateStatus === "loading"}
                 disabled={
-                  !getProposalsInputsDifferences(inputs, stakedFilters).length
+                  !inputs || !getProposalsInputsDifferences(inputs, stakedFilters).length
                 }
                 tooltip="Make changes in proposals support first"
               >
