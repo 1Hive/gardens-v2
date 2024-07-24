@@ -9,9 +9,7 @@ interface ModalProps {
   children: ReactNode;
 }
 
-export type Ref = HTMLDialogElement;
-
-export const Modal = forwardRef<Ref, ModalProps>(function Modal(
+export const Modal = forwardRef<HTMLDialogElement, ModalProps>(function Modal(
   { icon, title, onClose, children },
   ref,
 ) {
@@ -28,7 +26,7 @@ export const Modal = forwardRef<Ref, ModalProps>(function Modal(
             )}
             <h3>{title}</h3>
           </div>
-          <div className="">
+          <div className="flex items-center">
             <button onClick={onClose} className="h-8 w-8 cursor-pointer ">
               <XMarkIcon />
             </button>
