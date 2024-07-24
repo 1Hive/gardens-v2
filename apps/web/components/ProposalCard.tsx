@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 import { encodeAbiParameters, formatUnits } from "viem";
 import { Address } from "wagmi";
-import { Allo } from "#/subgraph/.graphclient";
+import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
@@ -17,6 +17,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { alloABI } from "@/src/generated";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -37,6 +38,7 @@ type ProposalCardProps = {
   strategy: LightCVStrategy;
   tokenDecimals: number;
   alloInfo: Allo;
+  tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
   inputHandler: (i: number, value: number) => void;
   triggerRenderProposals: () => void;
 };
@@ -53,6 +55,7 @@ export function ProposalCard({
   executeDisabled,
   strategy,
   alloInfo,
+  tokenData,
   inputHandler,
   triggerRenderProposals,
 }: ProposalCardProps) {
@@ -65,6 +68,11 @@ export function ProposalCard({
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
+
+  const { currentConvictionPct, thresholdPct, totalSupportPct } = useConvictionRead({
+    proposalData,
+    tokenData,
+  });
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0 ? 0 : (
@@ -151,11 +159,12 @@ export function ProposalCard({
                 {/* TODO: just for testing is new feature */}
                 {/* <p>{isNewProposal ? "new" : "not new"}</p> */}
               </div>
-
               <div className="col-span-3 self-center flex flex-col gap-2">
-                <div className="h-4">
-                  <ConvictionBarChart compact currentConvictionPct={1} thresholdPct={isSiganlingType ? 0 : 6} proposalSupportPct={3} isSignalingType={isSiganlingType} proposalId={proposalNumber} />
-                </div>
+                {currentConvictionPct != null && thresholdPct != null && totalSupportPct != null &&
+                  <div className="h-4">
+                    <ConvictionBarChart compact currentConvictionPct={currentConvictionPct} thresholdPct={isSiganlingType ? 0 : thresholdPct} proposalSupportPct={totalSupportPct} isSignalingType={isSiganlingType} proposalId={proposalNumber} />
+                  </div>
+                }
                 {!isSiganlingType && (
                   <div className="flex items-baseline gap-1">
 

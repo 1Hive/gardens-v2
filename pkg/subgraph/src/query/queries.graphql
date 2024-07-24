@@ -276,6 +276,13 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       requestedToken
       proposalStatus
       stakedAmount
+      convictionLast
+      threshold
+      strategy {
+        id
+        maxCVSupply
+        totalEffectiveActivePoints
+      }
     }
   }
 }

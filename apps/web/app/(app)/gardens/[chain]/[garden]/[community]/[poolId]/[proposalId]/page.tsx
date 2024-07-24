@@ -75,7 +75,7 @@ export default function Page({
 
   const { currentConvictionPct, thresholdPct, totalSupportPct, updateConvictionLast } = useConvictionRead({
     proposalData,
-    token: data?.tokenGarden,
+    tokenData: data?.tokenGarden,
   });
 
   const tokenSymbol = data?.tokenGarden?.symbol;
@@ -88,12 +88,21 @@ export default function Page({
   if (
     !proposalData ||
     !ipfsResult ||
-    !currentConvictionPct ||
-    !thresholdPct ||
-    !totalSupportPct ||
+    currentConvictionPct == null ||
+    thresholdPct == null ||
+    totalSupportPct == null ||
     !proposalIdNumber ||
     (updateConvictionLast == null && !isProposalEnded)
   ) {
+    console.log({
+      proposalData,
+      ipfsResult,
+      currentConvictionPct,
+      thresholdPct,
+      totalSupportPct,
+      proposalIdNumber,
+      updateConvictionLast,
+    });
     return (
       <div className="mt-96">
         <LoadingSpinner />

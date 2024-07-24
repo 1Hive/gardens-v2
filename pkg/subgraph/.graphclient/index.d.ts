@@ -2682,7 +2682,9 @@ export type getPoolDataQuery = {
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });
-        proposals: Array<Pick<CVProposal, 'id' | 'proposalNumber' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount'>>;
+        proposals: Array<(Pick<CVProposal, 'id' | 'proposalNumber' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount' | 'convictionLast' | 'threshold'> & {
+            strategy: Pick<CVStrategy, 'id' | 'maxCVSupply' | 'totalEffectiveActivePoints'>;
+        })>;
     })>;
 };
 export type getProposalDataQueryVariables = Exact<{

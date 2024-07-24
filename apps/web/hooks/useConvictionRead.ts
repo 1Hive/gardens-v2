@@ -1,17 +1,15 @@
 import { zeroAddress } from "viem";
 import { Address, useContractRead } from "wagmi";
-import { CVProposal, CVStrategy, CVStrategyConfig, Maybe, TokenGarden } from "#/subgraph/.graphclient";
+import { CVProposal, CVStrategy, Maybe, TokenGarden } from "#/subgraph/.graphclient";
 import { cvStrategyABI } from "@/src/generated";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt } from "@/utils/numbers";
 
-type ProposalDataLight = Maybe<(Pick<CVProposal, "proposalNumber" | "beneficiary" | "blockLast" | "convictionLast" | "createdAt" | "metadata" | "proposalStatus" | "requestedAmount" | "requestedToken" | "stakedAmount" | "submitter" | "threshold" | "updatedAt" | "version"> & {
-  strategy: (Pick<CVStrategy, "id" | "maxCVSupply" | "totalEffectiveActivePoints"> & {
-    config: Pick<CVStrategyConfig, "proposalType" | "pointSystem" | "minThresholdPoints">;
-  });
+type ProposalDataLight = Maybe<(Pick<CVProposal, "proposalNumber" | "convictionLast" | "stakedAmount" | "threshold"> & {
+  strategy: (Pick<CVStrategy, "id" | "maxCVSupply" | "totalEffectiveActivePoints">);
 })>;
 
-export const useConvictionRead = ({ proposalData, token }: { proposalData: ProposalDataLight | undefined, token: Maybe<Pick<TokenGarden, "name" | "symbol" | "decimals">> | undefined } ) => {
+export const useConvictionRead = ({ proposalData, tokenData: token }: { proposalData: ProposalDataLight | undefined, tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined } ) => {
   const cvStrategyContract = {
     address: (proposalData?.strategy.id ?? zeroAddress) as Address,
     abi: cvStrategyABI,
@@ -24,7 +22,7 @@ export const useConvictionRead = ({ proposalData, token }: { proposalData: Propo
     args: [BigInt(proposalData?.proposalNumber ?? 0)],
   });
 
-  if (!proposalData || !updateConvictionLast) {
+  if (!proposalData || updateConvictionLast == null) {
     return { thresholdPct: undefined, totalSupportPct: undefined, currentConvictionPct: undefined, updateConvictionLast: undefined };
   }
 
