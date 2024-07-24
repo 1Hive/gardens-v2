@@ -12,9 +12,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Address } from "viem";
+import { useAccount, useContractRead } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
+  isMemberDocument,
+  isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { commImg, groupFlowers } from "@/assets";
 import {
@@ -32,7 +35,9 @@ import { isProd } from "@/constants/contracts";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { erc20ABI } from "@/src/generated";
 import { poolTypes } from "@/types";
+import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   dn,
   parseToken,
@@ -49,6 +54,8 @@ export default function Page({
   const pathname = usePathname();
   const router = useRouter();
   const [covenant, setCovenant] = useState<string | undefined>();
+  const { address: accountAddress } = useAccount();
+
   const {
     data: result,
     error,
@@ -61,6 +68,40 @@ export default function Page({
       { topic: "member", containerId: communityAddr },
     ],
   });
+  const { data: isMemberResult, refetch: refetchIsMember, fetching } = useSubgraphQuery<isMemberQuery>(
+    {
+      query: isMemberDocument,
+      variables:{
+        me: accountAddress?.toLowerCase(),
+        comm: communityAddr.toLowerCase(),
+      },
+      changeScope: [
+        { topic: "community", id: communityAddr },
+        { topic: "member", containerId: communityAddr },
+      ],
+      enabled: accountAddress !== undefined,
+    },
+  );
+
+  const { data: allowance } = useContractRead({
+    address: tokenAddr as Address,
+    abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
+    args: [accountAddress as Address, communityAddr as Address], // [ owner,  spender address ]
+    functionName: "allowance",
+    enabled: accountAddress !== undefined,
+  });
+
+  useEffect(() => {
+    if (accountAddress && isMemberResult && !fetching) {
+      refetchIsMember();
+      // .then(result => {
+      //   if (result?.data && result?.data.members.length > 0) {
+      //     const stakedTokens = result?.data.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
+      //     setMemberStakedTokens(BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"));
+      //   }
+      // });
+    }
+  }, [accountAddress]);
 
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   useEffect(() => {
@@ -255,17 +296,18 @@ export default function Page({
         </div>
         <div className="flex flex-col gap-4">
           <RegisterMember
-            tokenSymbol={tokenGarden.symbol ?? ""}
+            allowance={allowance}
+            memberData={isMemberResult}
+            registrationCost={getTotalRegistrationCost()}
+            token={tokenGarden}
             communityAddress={communityAddr as Address}
-            registerToken={tokenAddr as Address}
-            registerTokenDecimals={tokenGarden.decimals}
-            membershipAmount={registerStakeAmount}
-            protocolFee={protocolFee}
-            communityFee={communityFee}
           />
         </div>
       </header>
       <IncreasePower
+        allowance={allowance}
+        accountAddress={accountAddress}
+        memberData={isMemberResult}
         communityAddress={communityAddr as Address}
         registerToken={registerToken as Address}
         tokenSymbol={tokenGarden.symbol ?? ""}
@@ -284,13 +326,13 @@ export default function Page({
               tooltip={tooltipMessage}
               icon={<PlusIcon height={24} width={24} />}
             >
-                            Create Pool
+              Create Pool
             </Button>
           </Link>
         </header>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-                        Funding pools ({fundingPools.length})
+            Funding pools ({fundingPools.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {fundingPools.map((pool) => (
@@ -306,7 +348,7 @@ export default function Page({
         </div>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-                        Signaling pools ({signalingPools.length})
+            Signaling pools ({signalingPools.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {signalingPools.map((pool) => (
@@ -322,7 +364,7 @@ export default function Page({
         </div>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-                        Pools in Review ({poolsInReview.length})
+            Pools in Review ({poolsInReview.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {poolsInReview.map((pool) => (

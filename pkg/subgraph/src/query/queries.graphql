@@ -69,6 +69,7 @@ query getMemberStrategy($wallet: ID!) {
 }
 
 query isMember($me: ID!, $comm: String!) {
+  # TODO: change to fetch only a member
   members(where: { id: $me }) {
     id
     stakes {
