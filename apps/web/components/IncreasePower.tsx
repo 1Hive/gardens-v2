@@ -356,12 +356,7 @@ export const IncreasePower = ({
                 power to support proposals"
                 infoBoxType="info"
                 classNames="max-w-lg"
-                //icon={<XCircleIcon className="h-9 w-9" />}
               />
-              {/* <p className="max-w-sm">
-                Staking more tokens in the community will increase your voting
-                power to support proposals
-              </p> */}
             </div>
             {isMember && (
               <div className="flex justify-between">
