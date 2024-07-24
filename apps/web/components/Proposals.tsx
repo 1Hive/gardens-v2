@@ -6,7 +6,6 @@ import {
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { toast } from "react-toastify";
 import { Address as AddressType, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
@@ -297,7 +296,6 @@ export function Proposals({
     // If the sum exceeds the memberActivatedPoints, adjust the value to the maximum allowable value
     if (currentPoints + value > memberActivatedPoints) {
       value = maxAllowableValue;
-      console.log("can't exceed 100% points");
     }
 
     setInputs(
@@ -421,7 +419,7 @@ export function Proposals({
 
         <div className="flex flex-col gap-6">
           {proposals?.map((proposalData, i) => (
-            <React.Fragment key={proposalData.id + "_" + i}>
+            <React.Fragment key={proposalData.id}>
               <ProposalCard
                 proposalData={proposalData}
                 inputData={inputs[i]}

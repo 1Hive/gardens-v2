@@ -303,6 +303,8 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     version
     strategy {
       id
+      maxCVSupply
+      totalEffectiveActivePoints
       config {
         proposalType
         pointSystem

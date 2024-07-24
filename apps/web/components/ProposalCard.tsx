@@ -113,13 +113,6 @@ export function ProposalCard({
     }
   }, [isErrorDistribute]);
 
-  {
-    /* TODO: minor improve here: have this when loading the data?  */
-  }
-  if (!inputData) {
-    return <div>loading...</div>;
-  }
-
   const inputValue = calculatePercentage(
     inputData.value,
     memberActivatedPoints,
