@@ -11,16 +11,23 @@ import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
 type TransactionData = WriteContractResult | undefined;
 
-export const useTransactionNotification = (
-  { toastId: toastIdProp, transactionData, transactionError, transactionStatus, enabled, fallbackErrorMessage }: {
-    toastId?: string,
-    transactionData: TransactionData | null | undefined,
-    transactionError: Error | null | undefined,
-    transactionStatus?: ReturnType<typeof useContractWriteWithConfirmations>["status"],
-    enabled?: boolean,
-    fallbackErrorMessage?: string,
-  },
-) => {
+export const useTransactionNotification = ({
+  toastId: toastIdProp,
+  transactionData,
+  transactionError,
+  transactionStatus,
+  enabled,
+  fallbackErrorMessage,
+}: {
+  toastId?: string;
+  transactionData: TransactionData | null | undefined;
+  transactionError: Error | null | undefined;
+  transactionStatus?: ReturnType<
+    typeof useContractWriteWithConfirmations
+  >["status"];
+  enabled?: boolean;
+  fallbackErrorMessage?: string;
+}) => {
   const toastId = toastIdProp ?? uniqueId();
   const chain = useChainFromPath();
 
@@ -31,7 +38,12 @@ export const useTransactionNotification = (
   }, [transactionData?.hash]);
 
   useEffect(() => {
-    if ((!enabled && transactionStatus !== "error" && transactionStatus !== "success") || !transactionStatus) {
+    if (
+      (!enabled &&
+        transactionStatus !== "error" &&
+        transactionStatus !== "success") ||
+      !transactionStatus
+    ) {
       return;
     }
 
@@ -42,7 +54,11 @@ export const useTransactionNotification = (
     let notifProps: Parameters<typeof TransactionStatusNotification>[0];
     let toastOptions: Partial<ToastOptions>;
 
-    const clickToExplorer = () => window.open(`${chain?.blockExplorers?.default.url}/tx/${transactionData?.hash}`, "_blank");
+    const clickToExplorer = () =>
+      window.open(
+        `${chain?.blockExplorers?.default.url}/tx/${transactionData?.hash}`,
+        "_blank"
+      );
 
     switch (transactionStatus) {
       case "idle":
@@ -50,16 +66,41 @@ export const useTransactionNotification = (
         toastOptions = { autoClose: false, type: "warning" };
         break;
       case "loading":
-        notifProps = { ...txNotifProps, message: "Transaction in progress..." };
-        toastOptions = { autoClose: false, type: "info", onClick: clickToExplorer };
+        notifProps = {
+          ...txNotifProps,
+          message: "Transaction in progress...",
+          showClickToExplorer: true,
+        };
+        toastOptions = {
+          autoClose: false,
+          type: "info",
+          onClick: clickToExplorer,
+        };
         break;
       case "success":
-        notifProps = { ...txNotifProps, message: "Transaction successfull" };
-        toastOptions = { type: "success", onClick: clickToExplorer };
+        notifProps = {
+          ...txNotifProps,
+          message: "Transaction successfull",
+          showClickToExplorer: true,
+        };
+        toastOptions = {
+          type: "success",
+          onClick: clickToExplorer,
+        };
         break;
       case "error":
-        notifProps = { ...txNotifProps, message: parseErrorMessage(transactionError as Error) };
-        toastOptions = { type: "error", onClick: clickToExplorer };
+        notifProps = {
+          ...txNotifProps,
+          message: transactionError
+            ? parseErrorMessage(transactionError)
+            : "Error processing transaction",
+          showClickToExplorer: !!transactionData?.hash,
+        };
+        console.log("transactionData?.hash", transactionData?.hash);
+        toastOptions = {
+          type: "error",
+          onClick: clickToExplorer,
+        };
         break;
     }
 
@@ -72,7 +113,10 @@ export const useTransactionNotification = (
     } satisfies ToastOptions;
 
     if (toast.isActive(toastId)) {
-      toast.update(toastId, { ...toastOptions, render: <TransactionStatusNotification {...notifProps} /> });
+      toast.update(toastId, {
+        ...toastOptions,
+        render: <TransactionStatusNotification {...notifProps} />,
+      });
     } else {
       toast(<TransactionStatusNotification {...notifProps} />, toastOptions);
     }
@@ -93,10 +137,12 @@ export const TransactionStatusNotification = ({
   message,
   status,
   contractName,
+  showClickToExplorer,
 }: {
-  message: string,
-  status: ReturnType<typeof useContractWriteWithConfirmations>["status"],
-  contractName?: string,
+  message: string;
+  status: ReturnType<typeof useContractWriteWithConfirmations>["status"];
+  contractName?: string;
+  showClickToExplorer?: boolean;
 }) => {
   let icon: any;
   let textColor: string;
@@ -123,11 +169,24 @@ export const TransactionStatusNotification = ({
 
   return (
     <div className="flex flex-row items-center gap-2">
-      {icon && <Image className={`${status === "loading" ? "animate-spin" : ""}`} width={40} src={icon} alt="icon" />}
+      {icon && (
+        <Image
+          className={`${status === "loading" ? "animate-spin" : ""}`}
+          width={40}
+          src={icon}
+          alt="icon"
+        />
+      )}
       <div className="flex flex-col gap-1">
-        {contractName && <div className="font-bold text-gray-700">{contractName}</div>}
-        <div className={textColor}>{message}</div>
-        {chain?.blockExplorers?.default.url && <div className="w-full text-sm italic">Click to see in {chain.blockExplorers.default.name}</div>}
+        {contractName && (
+          <div className="font-bold text-gray-700">{contractName}</div>
+        )}
+        <div className={showClickToExplorer ? textColor : ""}>{message}</div>
+        {chain?.blockExplorers?.default.url && showClickToExplorer && (
+          <div className="w-full text-sm italic">
+            Click to see in {chain.blockExplorers.default.name}
+          </div>
+        )}
       </div>
     </div>
   );
