@@ -148,6 +148,7 @@ export const ProposalForm = ({
     abi: abiWithErrors(alloABI),
     contractName: "Allo",
     functionName: "registerRecipient",
+    fallbackErrorMessage: "Error creating Proposal. Please try again.",
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(receipt, "CVStrategy", "ProposalCreated").args.proposalId;
       publish({

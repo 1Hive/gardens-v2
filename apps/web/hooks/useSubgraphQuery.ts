@@ -130,6 +130,7 @@ export function useSubgraphQuery<
     const res = await refetch();
     setResponse(res);
     setFetching(false);
+    fetchingRef.current = false;
     return res;
   };
 
@@ -178,7 +179,7 @@ export function useSubgraphQuery<
           toast.dismiss(pendingRefreshToastId);
         }
       } catch (error) {
-        // ignore dismiss when not toast
+        // ignore dismiss error
       }
       return result;
     } else {

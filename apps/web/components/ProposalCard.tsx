@@ -88,7 +88,7 @@ export function ProposalCard({
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
     contractName: "Allo",
-    fallbackErrorMessage: "Problem executing proposal. Please try again.",
+    fallbackErrorMessage: "Error executing proposal. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "proposal",

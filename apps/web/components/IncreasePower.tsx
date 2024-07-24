@@ -121,7 +121,7 @@ export const IncreasePower = ({
   } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "increasePower",
-    args: [requestedAmount as bigint],
+    args: [requestedAmount],
     showNotification: false,
     onConfirmations: () => {
       publish({
@@ -143,8 +143,8 @@ export const IncreasePower = ({
   } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "decreasePower",
-    args: [requestedAmount as bigint],
-    fallbackErrorMessage: "Problem decreasing power. Please try again.",
+    args: [requestedAmount],
+    fallbackErrorMessage: "Error decreasing power. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "member",

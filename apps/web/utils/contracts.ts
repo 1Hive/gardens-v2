@@ -21,7 +21,7 @@ type EventArgTypes<TAbiEvent extends AbiEvent> = {
 };
 
 export const getEventFromReceipt = <TContractName extends keyof typeof ContractABIs, TEventName extends ExtractAbiEventNames<ContractAbi<TContractName>>>
-  (receipt: TransactionReceipt, contractName: TContractName, eventName: TEventName) => {
+(receipt: TransactionReceipt, contractName: TContractName, eventName: TEventName) => {
   const eventAbi = ContractABIs[contractName].find(
     abi => abi.type === "event" && abi.name === eventName,
   ) as ExtractAbiEvent<ContractAbi<TContractName>, TEventName>;
