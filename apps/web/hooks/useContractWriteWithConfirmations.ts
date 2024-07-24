@@ -63,7 +63,6 @@ export function useContractWriteWithConfirmations<TAbi extends Abi | readonly un
     transactionData: txResult.data,
     transactionStatus: computedStatus,
     transactionError: txResult.error,
-    contractName: props.contractName,
     enabled: props.showNotification ?? true, // default to true
     fallbackErrorMessage: props.fallbackErrorMessage,
   });

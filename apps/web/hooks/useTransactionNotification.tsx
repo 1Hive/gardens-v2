@@ -12,12 +12,11 @@ import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 type TransactionData = WriteContractResult | undefined;
 
 export const useTransactionNotification = (
-  { toastId: toastIdProp, transactionData, transactionError, transactionStatus, contractName, enabled, fallbackErrorMessage }: {
+  { toastId: toastIdProp, transactionData, transactionError, transactionStatus, enabled, fallbackErrorMessage }: {
     toastId?: string,
     transactionData: TransactionData | null | undefined,
     transactionError: Error | null | undefined,
     transactionStatus?: ReturnType<typeof useContractWriteWithConfirmations>["status"],
-    contractName: string,
     enabled?: boolean,
     fallbackErrorMessage?: string,
   },
@@ -38,7 +37,6 @@ export const useTransactionNotification = (
 
     const txNotifProps = {
       status: transactionStatus,
-      contractName,
     };
 
     let notifProps: Parameters<typeof TransactionStatusNotification>[0];
@@ -98,10 +96,11 @@ export const TransactionStatusNotification = ({
 }: {
   message: string,
   status: ReturnType<typeof useContractWriteWithConfirmations>["status"],
-  contractName: string,
+  contractName?: string,
 }) => {
   let icon: any;
   let textColor: string;
+  const chain = useChainFromPath();
 
   switch (status) {
     case "idle":
@@ -126,8 +125,9 @@ export const TransactionStatusNotification = ({
     <div className="flex flex-row items-center gap-2">
       {icon && <Image className={`${status === "loading" ? "animate-spin" : ""}`} width={40} src={icon} alt="icon" />}
       <div className="flex flex-col gap-1">
-        <div className="font-bold">{contractName}</div>
+        {contractName && <div className="font-bold text-gray-700">{contractName}</div>}
         <div className={textColor}>{message}</div>
+        {chain?.blockExplorers?.default.url && <div className="w-full text-sm italic">Click to see in {chain.blockExplorers.default.name}</div>}
       </div>
     </div>
   );
