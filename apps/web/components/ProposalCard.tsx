@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 import { encodeAbiParameters, formatUnits } from "viem";
 import { Address } from "wagmi";
-import { Allo, TokenGarden } from "#/subgraph/.graphclient";
+import { Allo } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
