@@ -10,7 +10,7 @@ import { Allo } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
-import { Badge, Card } from "@/components";
+import { Badge, Button, Card } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -31,10 +31,10 @@ type ProposalCardProps = {
   stakedFilter: ProposalInputItem;
   index: number;
   isAllocationView: boolean;
-  tooltipMessage: string;
   memberActivatedPoints: number;
   memberPoolWeight: number;
   executeDisabled: boolean;
+  tooltipMessage: string;
   strategy: LightCVStrategy;
   tokenDecimals: number;
   alloInfo: Allo;
@@ -49,10 +49,10 @@ export function ProposalCard({
   stakedFilter,
   index,
   isAllocationView,
-  tooltipMessage,
   memberActivatedPoints,
   memberPoolWeight,
   executeDisabled,
+  tooltipMessage,
   strategy,
   alloInfo,
   tokenData,
@@ -62,6 +62,7 @@ export function ProposalCard({
   const { title, id, proposalNumber, proposalStatus, requestedAmount, type } =
     proposalData;
   const pathname = usePathname();
+
   const searchParams = useCollectQueryParams();
   // TODO: ADD border color when new proposal is added
   const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalData.proposalNumber;
@@ -126,6 +127,10 @@ export function ProposalCard({
     memberActivatedPoints,
   );
 
+  const allocatedInProposal = calculatePercentage(stakedFilter?.value, memberActivatedPoints);
+
+  console.log();
+
   const isSiganlingType = poolTypes[type] === "signaling";
 
   const ProposalCardContent = ({
@@ -136,7 +141,7 @@ export function ProposalCard({
     return (
       <>
         <div
-          className={`grid grid-cols-10 gap-8 ${isAllocationMode && "section-layout"}`}
+          className={`grid grid-cols-10 gap-8  py-3 ${isAllocationMode && "section-layout"}`}
         >
           <div
             className={`col-span-3 flex gap-6 ${isAllocationMode && "col-span-9"}`}
@@ -154,10 +159,10 @@ export function ProposalCard({
           {!isAllocationMode && (
             <>
               <div className="col-span-3 ml-10 self-center justify-self-start">
-                {/* TODO: what to inform here ?  */}
-                <p className="text-xs text-neutral-soft-content text-center">You have not allocate support</p>
-                {/* TODO: just for testing is new feature */}
-                {/* <p>{isNewProposal ? "new" : "not new"}</p> */}
+                {stakedFilter?.value > 0 ? (<p className="text-primary-content text-xs flex items-center justify-center
+                  // TODO: calculate data when fetching ok from subgrpah
+                gap-1">You allocate <span className="font-medium text-2xl">
+                    {`${allocatedInProposal.toString()}%`}</span> pool weight</p>) : ( <p className="text-xs text-neutral-soft-content text-center">You have not allocate yet</p>)}
               </div>
               <div className="col-span-3 self-center flex flex-col gap-2">
                 {currentConvictionPct != null && thresholdPct != null && totalSupportPct != null &&
@@ -165,6 +170,9 @@ export function ProposalCard({
                     <ConvictionBarChart compact currentConvictionPct={currentConvictionPct} thresholdPct={isSiganlingType ? 0 : thresholdPct} proposalSupportPct={totalSupportPct} isSignalingType={isSiganlingType} proposalId={proposalNumber} />
                   </div>
                 }
+                {/* <div className="z-50">
+                  <Button onClick={() => writeDistribute?.()}>Execute</Button>
+                </div> */}
                 {!isSiganlingType && (
                   <div className="flex items-baseline gap-1">
 
