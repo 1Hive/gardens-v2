@@ -5,8 +5,8 @@ import { toast, ToastOptions } from "react-toastify";
 import { UserRejectedRequestError } from "viem";
 import { WriteContractResult } from "wagmi/actions";
 import { useChainFromPath } from "./useChainFromPath";
-import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
-import { TxWaitingForSig, TxError, TxSuccess, TxInProgress } from "@/assets";
+import { ComputedStatus } from "./useContractWriteWithConfirmations";
+import { TxWaitingForSig, TxError, TxSuccess, TxInProgress, TxIdle } from "@/assets";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
 type TransactionData = WriteContractResult | undefined;
@@ -22,9 +22,7 @@ export const useTransactionNotification = ({
   toastId?: string;
   transactionData: TransactionData | null | undefined;
   transactionError: Error | null | undefined;
-  transactionStatus?: ReturnType<
-    typeof useContractWriteWithConfirmations
-  >["status"];
+  transactionStatus?: ComputedStatus;
   enabled?: boolean;
   fallbackErrorMessage?: string;
 }) => {
@@ -38,12 +36,7 @@ export const useTransactionNotification = ({
   }, [transactionData?.hash]);
 
   useEffect(() => {
-    if (
-      (!enabled &&
-        transactionStatus !== "error" &&
-        transactionStatus !== "success") ||
-      !transactionStatus
-    ) {
+    if (!enabled || !transactionStatus) {
       return;
     }
 
@@ -57,11 +50,11 @@ export const useTransactionNotification = ({
     const clickToExplorer = () =>
       window.open(
         `${chain?.blockExplorers?.default.url}/tx/${transactionData?.hash}`,
-        "_blank"
+        "_blank",
       );
 
     switch (transactionStatus) {
-      case "idle":
+      case "waiting":
         notifProps = { ...txNotifProps, message: "Waiting for signature" };
         toastOptions = { autoClose: false, type: "warning" };
         break;
@@ -96,7 +89,7 @@ export const useTransactionNotification = ({
             : "Error processing transaction",
           showClickToExplorer: !!transactionData?.hash,
         };
-        console.log("transactionData?.hash", transactionData?.hash);
+        console.debug("transactionData?.hash", transactionData?.hash);
         toastOptions = {
           type: "error",
           onClick: clickToExplorer,
@@ -138,11 +131,13 @@ export const TransactionStatusNotification = ({
   status,
   contractName,
   showClickToExplorer,
+  index,
 }: {
   message: string;
-  status: ReturnType<typeof useContractWriteWithConfirmations>["status"];
+  status: "idle" | "waiting" | "loading" | "success" | "error";
   contractName?: string;
   showClickToExplorer?: boolean;
+  index?: number;
 }) => {
   let icon: any;
   let textColor: string;
@@ -150,6 +145,10 @@ export const TransactionStatusNotification = ({
 
   switch (status) {
     case "idle":
+      icon = TxIdle;
+      textColor = "";
+      break;
+    case "waiting":
       icon = TxWaitingForSig;
       textColor = "text-warning";
       break;
@@ -170,18 +169,25 @@ export const TransactionStatusNotification = ({
   return (
     <div className="flex flex-row items-center gap-2">
       {icon && (
-        <Image
-          className={`${status === "loading" ? "animate-spin" : ""}`}
-          width={40}
-          src={icon}
-          alt="icon"
-        />
+        <div className="relative flex items-center justify-center">
+          <Image
+            className={`${status === "loading" ? "animate-spin" : ""}`}
+            width={40}
+            src={icon}
+            alt="icon"
+          />
+          {index !== undefined && status === "idle" && (
+            <label className="absolute font-medium text-xl">
+              {index}
+            </label>
+          )}
+        </div>
       )}
       <div className="flex flex-col gap-1">
         {contractName && (
-          <div className="font-bold text-gray-700">{contractName}</div>
+          <div className="font-semibold text-gray-700 text-[22px]">{contractName}</div>
         )}
-        <div className={showClickToExplorer ? textColor : ""}>{message}</div>
+        <div className={`${showClickToExplorer ? textColor : ""} font-medium text-[20px]`}>{message}</div>
         {chain?.blockExplorers?.default.url && showClickToExplorer && (
           <div className="w-full text-sm italic">
             Click to see in {chain.blockExplorers.default.name}

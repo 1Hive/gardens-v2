@@ -6,8 +6,10 @@ import { useChainId, useContractWrite, UseContractWriteConfig, useWaitForTransac
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainDataMap } from "@/configs/chainServer";
 
+export type ComputedStatus = "loading" | "success" | "error" | "waiting" | undefined;
+
 /**
- * his hook is used to write to a contract and wait for confirmations.
+ * this hook is used to write to a contract and wait for confirmations.
  * @param props
  * - onConfirmations: callback function to run after waited blocks
  * - confirmations: amount of block confirmations to wait for
@@ -54,6 +56,8 @@ export function useContractWriteWithConfirmations<TAbi extends Abi | readonly un
       return "loading";
     } else if (txResult.status === "success" || txResult.status === "error") {
       return txResult.status;
+    } else if (txWaitResult.status === "idle") {
+      return "waiting";
     }
     return txWaitResult.status;
   }, [txResult.status, txWaitResult.status]);
