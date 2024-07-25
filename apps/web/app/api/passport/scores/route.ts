@@ -1,4 +1,5 @@
-// app/api/passport/scores/route.ts
+// api/passport/scores
+
 import { NextResponse } from "next/server";
 
 export async function GET() {

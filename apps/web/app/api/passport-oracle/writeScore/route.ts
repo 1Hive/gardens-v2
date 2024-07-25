@@ -1,4 +1,4 @@
-// pages/api/addUserScore.ts
+// api/passport-oracle/write-score
 
 import { NextResponse } from "next/server";
 import {

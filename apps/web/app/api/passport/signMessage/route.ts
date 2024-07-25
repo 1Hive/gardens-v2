@@ -1,4 +1,4 @@
-// app/api/passport/sign-message/route.ts
+// api/passport/sign-message
 
 import { NextResponse } from "next/server";
 

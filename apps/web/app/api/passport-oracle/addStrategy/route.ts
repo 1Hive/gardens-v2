@@ -1,4 +1,4 @@
-// pages/api/addStrategy.ts
+// api/add-strategy
 
 import { NextResponse } from "next/server";
 import {

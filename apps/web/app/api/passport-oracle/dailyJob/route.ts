@@ -1,4 +1,4 @@
-// pages/api/passport-oracles/daily-job
+// api/passport-oracles/daily-job
 
 import { NextResponse } from "next/server";
 import { gql } from "urql";
