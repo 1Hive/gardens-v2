@@ -15,7 +15,7 @@ type PoolGovernanceProps = {
   tokenDecimals: number;
   strategy: LightCVStrategy;
   communityAddress: Address;
-  memberTokensInCommunity: string;
+  memberTokensInCommunity: number;
 };
 
 export const PoolGovernance = ({

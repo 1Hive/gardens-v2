@@ -40,7 +40,7 @@ export type ProposalInputItem = {
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 // export type Proposal = CVStrategy["proposals"][number];
-export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
+export type StakesMemberType = NonNullable<isMemberQuery["member"]>["stakes"];
 
 export type ProposalTypeVoter = CVProposal & {
   title: string;
@@ -67,8 +67,9 @@ export function Proposals({
   >([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
-  const [fetchingProposals, setFetchingProposals] = useState<boolean | undefined>();
-  const memberTokensInCommunity = "0";
+  const [fetchingProposals, setFetchingProposals] = useState<
+  boolean | undefined
+  >();
 
   const { address: wallet } = useAccount();
 
@@ -111,8 +112,8 @@ export function Proposals({
 
   useEffect(() => {
     let stakesFilteres: StakesMemberType = [];
-    if (memberResult && memberResult.members.length > 0) {
-      const stakes = memberResult.members[0].stakes;
+    if (memberResult?.member) {
+      const stakes = memberResult?.member?.stakes;
       if (stakes && stakes.length > 0) {
         stakesFilteres = stakes.filter((stake) => {
           return (
@@ -368,7 +369,7 @@ export function Proposals({
         tokenDecimals={tokenDecimals}
         strategy={strategy}
         communityAddress={communityAddress}
-        memberTokensInCommunity={memberTokensInCommunity}
+        memberTokensInCommunity={memberActivatedPoints}
       />
       <section className="section-layout">
         <div className="mx-auto max-w-5xl space-y-10">
@@ -422,30 +423,35 @@ export function Proposals({
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-6">
-            {!fetchingProposals ? proposals?.map((proposalData, index) => (
-              <React.Fragment key={proposalData.id}>
-                <ProposalCard
-                  proposalData={proposalData}
-                  inputData={inputs[index]}
-                  stakedFilter={stakedFilters[index]}
-                  index={index}
-                  isEditView={editView}
-                  tooltipMessage={tooltipMessage}
-                  memberActivatedPoints={memberActivatedPoints}
-                  memberPoolWeight={memberPoolWeight}
-                  executeDisabled={
-                    proposalData.proposalStatus == 4 ||
-                    !isConnected ||
-                    missmatchUrl
-                  }
-                  strategy={strategy}
-                  tokenDecimals={tokenDecimals}
-                  alloInfo={alloInfo}
-                  triggerRenderProposals={triggerRenderProposals}
-                  inputHandler={inputHandler}
-                />
-              </React.Fragment>
-            )) : <div className="w-full text-center"><LoadingSpinner /></div>}
+            {!fetchingProposals ?
+              proposals?.map((proposalData, index) => (
+                <React.Fragment key={proposalData.id}>
+                  <ProposalCard
+                    proposalData={proposalData}
+                    inputData={inputs[index]}
+                    stakedFilter={stakedFilters[index]}
+                    index={index}
+                    isEditView={editView}
+                    tooltipMessage={tooltipMessage}
+                    memberActivatedPoints={memberActivatedPoints}
+                    memberPoolWeight={memberPoolWeight}
+                    executeDisabled={
+                      proposalData.proposalStatus == 4 ||
+                      !isConnected ||
+                      missmatchUrl
+                    }
+                    strategy={strategy}
+                    tokenDecimals={tokenDecimals}
+                    alloInfo={alloInfo}
+                    triggerRenderProposals={triggerRenderProposals}
+                    inputHandler={inputHandler}
+                  />
+                </React.Fragment>
+              ))
+              : <div className="w-full text-center">
+                <LoadingSpinner />
+              </div>
+            }
           </div>
           <div className="flex justify-end gap-8">
             {editView && (
