@@ -10,7 +10,10 @@ import {
 import { getConfigByChain } from "@/constants/contracts";
 import { ChainId } from "@/types";
 
-let urqlRecord: Record<ChainId | "default", [Client, ReturnType<typeof ssrExchange>]> = {};
+let urqlRecord: Record<
+  ChainId | "default",
+  [Client, ReturnType<typeof ssrExchange>]
+> = {};
 
 const isServer = typeof window === "undefined";
 

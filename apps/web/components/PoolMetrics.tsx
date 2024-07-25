@@ -192,7 +192,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                       <span className="stat-value text-center text-2xl font-bold">
                         {balance ?
                           formatTokenAmount(balance, tokenGarden?.decimals)
-                          : "0"}{" "}
+                        : "0"}{" "}
                         {tokenGarden?.symbol}
                       </span>
                     </div>

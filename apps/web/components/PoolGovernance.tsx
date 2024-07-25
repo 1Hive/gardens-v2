@@ -88,7 +88,7 @@ export const PoolGovernance = ({
                     </p>
                   </div>
                 </>
-                : <div className="flex w-full items-center gap-6">
+              : <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
                     <Badge status={isMemberActivated ? 1 : 0} />
