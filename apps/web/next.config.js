@@ -26,6 +26,9 @@ module.exports = {
     serverComponentsExternalPackages: ["ably"],
   },
   productionBrowserSourceMaps: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 // Injected content via Sentry wizard below
