@@ -2149,7 +2149,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
     getMemberStrategy(variables: Exact<{
-        wallet: string;
+        member_strategy: string;
     }>, options?: TOperationContext): Promise<getMemberStrategyQuery>;
     isMember(variables: Exact<{
         me: string;
@@ -2224,7 +2224,7 @@ export type getTokenGardensQuery = {
     })>;
 };
 export type getMemberStrategyQueryVariables = Exact<{
-    wallet: Scalars['ID']['input'];
+    member_strategy: Scalars['ID']['input'];
 }>;
 export type getMemberStrategyQuery = {
     memberStrategy?: Maybe<(Pick<MemberStrategy, 'id' | 'totalStakedPoints' | 'activatedPoints'> & {
@@ -2237,7 +2237,7 @@ export type isMemberQueryVariables = Exact<{
     comm: Scalars['String']['input'];
 }>;
 export type isMemberQuery = {
-    members: Array<(Pick<Member, 'id'> & {
+    member?: Maybe<(Pick<Member, 'id'> & {
         stakes?: Maybe<Array<(Pick<Stake, 'id' | 'amount'> & {
             proposal: (Pick<CVProposal, 'id' | 'proposalNumber' | 'stakedAmount'> & {
                 strategy: (Pick<CVStrategy, 'id' | 'poolId'> & {
@@ -2247,7 +2247,7 @@ export type isMemberQuery = {
                 });
             });
         })>>;
-        memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'stakedTokens'> & {
+        memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'stakedTokens' | 'isRegistered'> & {
             registryCommunity: Pick<RegistryCommunity, 'id'>;
         })>>;
     })>;
@@ -2398,7 +2398,7 @@ export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery,
     [key: string]: never;
 }>>;
 export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQuery, Exact<{
-    wallet: Scalars['ID']['input'];
+    member_strategy: Scalars['ID']['input'];
 }>>;
 export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
     me: Scalars['ID']['input'];
