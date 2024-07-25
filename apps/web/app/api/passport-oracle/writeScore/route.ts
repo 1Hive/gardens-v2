@@ -7,52 +7,26 @@ import {
   createWalletClient,
   custom,
   Address,
-  Chain,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { arbitrum, localhost, arbitrumSepolia, sepolia } from "viem/chains";
 import { getConfigByChain } from "@/constants/contracts";
 import { passportScorerABI } from "@/src/generated";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
+import { getViemChain } from "@/utils/viem";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
 
-const CHAIN = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
+const CHAIN_ID = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
-const RPC_URL = getConfigByChain(CHAIN)?.rpcUrl ?? LOCAL_RPC;
+const RPC_URL = getConfigByChain(CHAIN_ID)?.rpcUrl ?? LOCAL_RPC;
 
-const CONTRACT_ADDRESS = getConfigByChain(CHAIN)?.passportScorer as Address;
+const CONTRACT_ADDRESS = getConfigByChain(CHAIN_ID)?.passportScorer as Address;
 
 const API_ENDPOINT = "/api/passport";
 
-function getViemChain(chain: number): Chain {
-  let viemChain: Chain;
-
-  switch (chain) {
-    case localhost.id:
-      viemChain = localhost;
-      break;
-    case arbitrumSepolia.id:
-      viemChain = arbitrumSepolia;
-      break;
-    case sepolia.id:
-      viemChain = sepolia;
-      break;
-    case arbitrum.id:
-      viemChain = arbitrum;
-      break;
-
-    default:
-      viemChain = localhost;
-      break;
-  }
-
-  return viemChain;
-}
-
 const client = createPublicClient({
-  chain: getViemChain(CHAIN),
+  chain: getViemChain(CHAIN_ID),
   transport: http(RPC_URL),
 });
 
@@ -60,7 +34,7 @@ const walletClient = createWalletClient({
   account: privateKeyToAccount(
     (`${LIST_MANAGER_PRIVATE_KEY}` as Address) || "",
   ),
-  chain: getViemChain(CHAIN),
+  chain: getViemChain(CHAIN_ID),
   transport: custom(client.transport),
 });
 

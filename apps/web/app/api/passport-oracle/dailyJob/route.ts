@@ -8,21 +8,20 @@ import {
   createWalletClient,
   custom,
   Address,
-  Chain,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { localhost, arbitrumSepolia, sepolia } from "viem/chains";
 import { getConfigByChain } from "@/constants/contracts";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
+import { getViemChain } from "@/utils/viem";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY ?? "";
-const CHAIN = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
+const CHAIN_ID = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
 const LOCAL_RPC = "http://127.0.0.1:8545";
-const RPC_URL = getConfigByChain(CHAIN)?.rpcUrl ?? LOCAL_RPC;
-const CONTRACT_ADDRESS = getConfigByChain(CHAIN)?.passportScorer as Address;
-const SUBGRAPH = getConfigByChain(CHAIN)?.subgraphUrl as string;
+const RPC_URL = getConfigByChain(CHAIN_ID)?.rpcUrl ?? LOCAL_RPC;
+const CONTRACT_ADDRESS = getConfigByChain(CHAIN_ID)?.passportScorer as Address;
+const SUBGRAPH = getConfigByChain(CHAIN_ID)?.subgraphUrl as string;
 const API_ENDPOINT = "/api/passport/scores";
 
 interface PassportUser {
@@ -43,32 +42,18 @@ interface ApiScore {
   stamp_scores: Record<string, number>;
 }
 
-function getViemChain(chain: number): Chain {
-
-  switch (chain) {
-    case localhost.id:
-      return localhost;
-    case arbitrumSepolia.id:
-      return arbitrumSepolia;
-    case sepolia.id:
-      return sepolia;
-    default:
-      return localhost;
-  }
-}
-
 const client = createPublicClient({
-  chain: getViemChain(CHAIN),
+  chain: getViemChain(CHAIN_ID),
   transport: http(RPC_URL),
 });
 
 const walletClient = createWalletClient({
   account: privateKeyToAccount(LIST_MANAGER_PRIVATE_KEY as Address),
-  chain: getViemChain(CHAIN),
+  chain: getViemChain(CHAIN_ID),
   transport: custom(client.transport),
 });
 
-const { urqlClient } = initUrqlClient({ chainId: CHAIN });
+const { urqlClient } = initUrqlClient({ chainId: CHAIN_ID });
 
 const query = gql`
   query {
