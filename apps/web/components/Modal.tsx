@@ -13,10 +13,11 @@ export const Modal = forwardRef<HTMLDialogElement, ModalProps>(function Modal(
   { icon, title, onClose, children },
   ref,
 ) {
+
   return (
-    <dialog className="modal " ref={ref}>
+    <dialog className="modal" ref={ref}>
       {/* Modal box */}
-      <div className="flex max-w-xl flex-col gap-8 rounded-md bg-white p-8 transition-all duration-500 ease-in-out">
+      <div className="flex max-w-xl flex-col gap-8 rounded-md bg-primary p-8 transition-all duration-500 ease-in-out">
         <div className="flex flex-1 items-center justify-between gap-6">
           <div className="flex gap-4">
             {icon && (
