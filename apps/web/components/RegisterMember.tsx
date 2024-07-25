@@ -1,80 +1,84 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { Address, useAccount, useBalance, useContractRead } from "wagmi";
+import React, { useCallback, useMemo, useEffect } from "react";
+import { Address, useAccount, useBalance } from "wagmi";
+import { RegistryCommunity, TokenGarden, isMemberQuery } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
-import { TransactionModal } from "./TransactionModal";
+import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import useModal from "@/hooks/useModal";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { gte } from "@/utils/numbers";
 
 type RegisterMemberProps = {
-  tokenSymbol: string;
-  communityAddress: Address;
-  registerToken: Address;
-  registerTokenDecimals: number;
-  membershipAmount: bigint;
-  protocolFee: string;
-  communityFee: string;
+  allowance: bigint | undefined;
+  registrationCost: bigint;
+  token: Pick<TokenGarden, "symbol" | "id" | "decimals">;
+  registryCommunity: Pick<RegistryCommunity, "communityName" | "id" | "covenantIpfsHash" | "communityFee" | "protocolFee" | "registerStakeAmount" | "registerToken">;
+  memberData: isMemberQuery | undefined;
 };
 
 export function RegisterMember({
-  tokenSymbol,
-  communityAddress,
-  registerToken,
-  registerTokenDecimals,
+  allowance,
+  registrationCost,
+  token,
+  registryCommunity,
+  memberData,
 }: RegisterMemberProps) {
-  const urlChainId = useChainIdFromPath();
-  const modalRef = useRef<HTMLDialogElement | null>(null);
-  const openModal = () => modalRef.current?.showModal();
-  const closeModal = () => modalRef.current?.close();
-
-  const { publish } = usePubSubContext();
+  const { id: communityAddress, communityName } = registryCommunity;
+  const { symbol: tokenSymbol, decimals: tokenDecimals, id: registerToken } = token;
 
   const { address: accountAddress } = useAccount();
 
-  //
-  //new logic
-  const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
-    false,
-  );
+  const urlChainId = useChainIdFromPath();
+  const { openModal, closeModal, ref } = useModal();
 
-  const registryContractCallConfig = {
-    address: communityAddress,
+  const { publish } = usePubSubContext();
+
+  // //
+  // //new logic
+  // const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
+  //   false,
+  // );
+
+  const isMember = memberData?.member?.memberCommunity?.[0]?.isRegistered ?? false;
+
+  const registryContractCallConfig = useMemo(() => ({
+    address: communityAddress as Address,
     abi: abiWithErrors2(registryCommunityABI),
     contractName: "Registry Community",
-  };
+  }), [communityAddress]);
 
-  const { data: isMember } = useContractRead({
-    ...registryContractCallConfig,
-    functionName: "isMember",
-    enabled: accountAddress !== undefined,
-    args: [accountAddress as Address],
-    watch: true,
-    chainId: urlChainId,
-  });
+  // const { data: isMember } = useContractRead({
+  //   ...registryContractCallConfig,
+  //   functionName: "isMember",
+  //   enabled: accountAddress !== undefined,
+  //   args: [accountAddress as Address],
+  //   watch: true,
+  //   chainId: urlChainId,
+  // });
 
-  const { data: registerStakeAmount } = useContractRead({
-    ...registryContractCallConfig,
-    functionName: "getStakeAmountWithFees",
-    chainId: urlChainId,
-  });
+  // const { data: registerStakeAmount } = useContractRead({
+  //   ...registryContractCallConfig,
+  //   functionName: "getStakeAmountWithFees",
+  //   chainId: urlChainId,
+  // });
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
-    token: registerToken as `0x${string}` | undefined,
+    token: registerToken as Address,
     chainId: urlChainId,
   });
 
   const accountHasBalance = gte(
     accountTokenBalance?.value,
-    registerStakeAmount,
-    registerTokenDecimals,
+    registrationCost,
+    tokenDecimals,
   );
 
   const {
@@ -122,9 +126,9 @@ export function RegisterMember({
     confirmed: allowTokenConfirmed,
     confirmationsStatus: allowTokenStatus,
   } = useContractWriteWithConfirmations({
-    address: registerToken,
+    address: registerToken as Address,
     abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, registerStakeAmount], // [allowed spender address, amount ]
+    args: [communityAddress, registrationCost], // [allowed spender address, amount ]
     functionName: "approve",
     contractName: "ERC20",
     showNotification: false,
@@ -133,46 +137,43 @@ export function RegisterMember({
     },
   });
 
-  const { data: dataAllowance } = useContractRead({
-    address: registerToken,
-    abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
-    functionName: "allowance",
-    watch: true,
-    enabled: !!accountAddress,
-  });
+  // const { data: dataAllowance } = useContractRead({
+  //   address: registerToken,
+  //   abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
+  //   args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
+  //   functionName: "allowance",
+  //   watch: true,
+  //   enabled: !!accountAddress,
+  // });
 
+  console.log({ memberData });
+  // Error handling
   useErrorDetails(registerMemberError, "stakeAndRegisterMember");
   useErrorDetails(unregisterMemberError, "unregisterMember");
   // useErrorDetails(errorMemberRegistered, "isMember");
   useErrorDetails(allowTokenError, "approve");
   // useErrorDetails(errorGardenToken, "gardenToken");
 
-  async function handleClick() {
+  // Event handlers
+  const handleClick = useCallback(async () => {
     if (isMember) {
       writeUnregisterMember();
     } else {
-      if (dataAllowance !== 0n) {
+      if (allowance !== 0n) {
         writeRegisterMember();
         openModal();
-        setPendingAllowance(true);
+        // setPendingAllowance(true);
       } else {
         writeAllowToken();
         openModal();
       }
     }
-  }
-
-  useEffect(() => {
-    if (allowTokenConfirmed) {
-
-    }
-  }, [allowTokenConfirmed]);
+  }, [isMember, allowance, writeUnregisterMember, writeRegisterMember, writeAllowToken, openModal]);
 
   useEffect(() => {
     if (registerMemberStatus === "success") {
       closeModal();
-      setPendingAllowance(false);
+      // setPendingAllowance(false);
     }
   }, [registerMemberStatus]);
 
@@ -183,6 +184,7 @@ export function RegisterMember({
       message: "Connected account has insufficient balance",
     },
   ];
+
   const disabledRegMemberButton = disableRegMemberBtnCondition.some(
     (cond) => cond.condition,
   );
@@ -210,17 +212,29 @@ export function RegisterMember({
     },
   ];
 
+  const transactions: TransactionProps[] = [{
+    message: "Test...",
+    status: "idle",
+    contractName: "Contract Test",
+  }, {
+    message: "Test 2...",
+    status: "idle",
+    contractName: "Contract Test 2",
+  }];
+
   return (
     <>
       <TransactionModal
-        ref={modalRef}
-        label="Register in community"
-        allowTokenStatus={allowTokenStatus}
-        stepTwoStatus={registerMemberStatus}
-        initialTransactionSteps={InitialTransactionSteps}
-        token={tokenSymbol}
-        pendingAllowance={pendingAllowance}
-        setPendingAllowance={setPendingAllowance}
+        ref={ref}
+        label={`Register in ${communityName}`}
+        // allowTokenStatus={allowTokenStatus}
+        // stepTwoStatus={registerMemberStatus}
+        // initialTransactionSteps={InitialTransactionSteps}
+        // token={token.symbol}
+        transactions={transactions}
+        // pendingAllowance={pendingAllowance}
+        // setPendingAllowance={setPendingAllowance}
+        closeModal={closeModal}
       />
       <div className="flex gap-4">
         <div className="flex items-center justify-center">

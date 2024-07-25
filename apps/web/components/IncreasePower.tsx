@@ -4,15 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { parseUnits } from "viem";
-import { Address, useAccount, useBalance, useContractRead } from "wagmi";
-import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
+import { Address, useAccount, useBalance } from "wagmi";
+import { isMemberQuery, RegistryCommunity, TokenGarden } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
-import { TransactionModal, TransactionStep } from "./TransactionModal";
+import { TransactionModal, TransactionProps, TransactionStep } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import useModal from "@/hooks/useModal";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -20,11 +21,11 @@ import { useErrorDetails } from "@/utils/getErrorName";
 import { formatTokenAmount } from "@/utils/numbers";
 
 type IncreasePowerProps = {
-  communityAddress: Address;
-  registerToken: Address;
-  tokenSymbol: string;
-  registerTokenDecimals: number;
-  registerStakeAmount: bigint;
+  allowance: bigint | undefined;
+  accountAddress: Address | undefined;
+  memberData: isMemberQuery | undefined;
+  registryCommunity: Pick<RegistryCommunity, "communityName" | "id" | "covenantIpfsHash" | "communityFee" | "protocolFee" | "registerStakeAmount" | "registerToken">;
+  tokenGarden: Pick<TokenGarden, "symbol" | "decimals" | "id">;
 };
 
 const InitialTransactionSteps: TransactionStep[] = [
@@ -48,15 +49,17 @@ const InitialTransactionSteps: TransactionStep[] = [
 ];
 
 export const IncreasePower = ({
-  communityAddress,
-  registerToken,
-  tokenSymbol,
-  registerTokenDecimals,
-  registerStakeAmount,
+  allowance,
+  accountAddress,
+  memberData,
+  registryCommunity,
+  tokenGarden,
 }: IncreasePowerProps) => {
-  const modalRef = useRef<HTMLDialogElement | null>(null);
-  const openModal = () => modalRef.current?.showModal();
-  const closeModal = () => modalRef.current?.close();
+  const { symbol: tokenSymbol, decimals: tokenDecimals, id: registerToken } = tokenGarden;
+  let { communityName, registerStakeAmount, id: communityAddress } = registryCommunity;
+
+  const { openModal, closeModal, ref } = useModal();
+
   const [pendingAllowance, setPendingAllowance] = useState<boolean | undefined>(
     false,
   );
@@ -65,37 +68,39 @@ export const IncreasePower = ({
   const { publish } = usePubSubContext();
   const { address: connectedAccount } = useAccount();
 
-  //handeling states
-  const { address: accountAddress } = useAccount();
-  const [memberStakedTokens, setMemberStakedTokens] = useState<bigint>(0n);
+  const stakedTokens = memberData?.member?.memberCommunity?.[0]?.stakedTokens;
+  const isMember = memberData?.member?.memberCommunity?.[0]?.isRegistered;
+
+  const memberStakedTokens = BigInt(typeof stakedTokens === "string" ? stakedTokens : "0");
+  registerStakeAmount = BigInt(typeof registerStakeAmount === "string" ? registerStakeAmount : "0");
 
   const urlChainId = useChainIdFromPath();
 
-  const { data: isMemberResult, refetch: refetchIsMember, fetching } = useSubgraphQuery<isMemberQuery>(
-    {
-      query: isMemberDocument,
-      variables:{
-        me: accountAddress?.toLowerCase(),
-        comm: communityAddress.toLowerCase(),
-      },
-      enabled: accountAddress !== undefined,
-    },
-  );
+  // const { data: isMemberResult, refetch: refetchIsMember, fetching } = useSubgraphQuery<isMemberQuery>(
+  //   {
+  //     query: isMemberDocument,
+  //     variables:{
+  //       me: accountAddress?.toLowerCase(),
+  //       comm: communityAddress.toLowerCase(),
+  //     },
+  //     enabled: accountAddress !== undefined,
+  //   },
+  // );
 
-  useEffect(() => {
-    if (accountAddress && isMemberResult && !fetching) {
-      refetchIsMember().then(result => {
-        if (result?.data && result?.data.members.length > 0) {
-          const stakedTokens = result?.data.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
-          setMemberStakedTokens(BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"));
-        }
-      });
-    }
-  }, [accountAddress]);
+  // useEffect(() => {
+  //   if (accountAddress && isMemberResult && !fetching) {
+  //     refetchIsMember().then(result => {
+  //       if (result?.data && result?.data.members.length > 0) {
+  //         const stakedTokens = result?.data.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
+  //         setMemberStakedTokens(BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"));
+  //       }
+  //     });
+  //   }
+  // }, [accountAddress]);
 
   const requestedAmount = parseUnits(
     (increaseInput ?? 0).toString(),
-    registerTokenDecimals,
+    tokenDecimals,
   );
 
   const { data: accountTokenBalance } = useBalance({
@@ -106,24 +111,24 @@ export const IncreasePower = ({
 
   //TODO: create a hook for this
   const registryContractCallConfig = {
-    address: communityAddress,
+    address: communityAddress as Address,
     abi: abiWithErrors2(registryCommunityABI),
     contractName: "Registry Community",
   };
 
-  const { data: isMember } = useContractRead({
-    ...registryContractCallConfig,
-    functionName: "isMember",
-    enabled: accountAddress !== undefined,
-    args: [accountAddress as Address],
-  });
+  // const { data: isMember } = useContractRead({
+  //   ...registryContractCallConfig,
+  //   functionName: "isMember",
+  //   enabled: accountAddress !== undefined,
+  //   args: [accountAddress as Address],
+  // });
 
   const {
     isSuccess: isWaitSuccess,
     write: writeAllowToken,
     status: allowanceTokenStatus,
   } = useContractWriteWithConfirmations({
-    address: registerToken,
+    address: registerToken as Address,
     abi: abiWithErrors(erc20ABI),
     args: [communityAddress, requestedAmount], // [allowed spender address, amount ]
     functionName: "approve",
@@ -133,7 +138,7 @@ export const IncreasePower = ({
 
   const { write: writeResetAllowance, status: resetAllowanceStatus } =
     useContractWriteWithConfirmations({
-      address: registerToken,
+      address: registerToken as Address,
       abi: abiWithErrors(erc20ABI),
       args: [communityAddress, 0n], // [allowed spender address, amount ]
       functionName: "approve",
@@ -141,13 +146,13 @@ export const IncreasePower = ({
       showNotification: false,
     });
 
-  const { data: allowance } = useContractRead({
-    address: registerToken,
-    abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
-    functionName: "allowance",
-    enabled: accountAddress !== undefined,
-  });
+  // const { data: allowance } = useContractRead({
+  //   address: registerToken,
+  //   abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
+  //   args: [accountAddress as Address, communityAddress], // [ owner,  spender address ]
+  //   functionName: "allowance",
+  //   enabled: accountAddress !== undefined,
+  // });
 
   const {
     write: writeIncreasePower,
@@ -277,7 +282,7 @@ export const IncreasePower = ({
 
     {
       condition: requestesMoreThanAllowance,
-      message: `You have a pending allowance of ${formatTokenAmount(allowance ?? 0n, registerTokenDecimals)} ${tokenSymbol}. In order to stake more tokens, plaese stake the pending allowance first`,
+      message: `You have a pending allowance of ${formatTokenAmount(allowance ?? 0n, tokenDecimals)} ${tokenSymbol}. In order to stake more tokens, plaese stake the pending allowance first`,
     },
   ];
 
@@ -285,7 +290,7 @@ export const IncreasePower = ({
     ...disablePowerBtnCondition,
     {
       condition:
-        parseUnits(increaseInput.toString(), registerTokenDecimals) >
+        parseUnits(increaseInput.toString(), tokenDecimals) >
         memberStakedTokens - registerStakeAmount,
       message: "You can only decrease your added stake.",
     },
@@ -303,18 +308,30 @@ export const IncreasePower = ({
     disableDecPowerBtnCondition,
   );
 
+  const transactions: TransactionProps[] = [{
+    message: "Test...",
+    status: "idle",
+    contractName: "Contract Test",
+  }, {
+    message: "Test 2...",
+    status: "waiting",
+    contractName: "Contract Test 2",
+  }];
+
   if (isMember) {
     return (
       <section className="section-layout">
         <TransactionModal
-          ref={modalRef}
-          label={`Stake ${tokenSymbol} in community`}
-          initialTransactionSteps={InitialTransactionSteps}
-          allowTokenStatus={allowanceTokenStatus}
-          stepTwoStatus={increaseStakeStatus}
-          token={tokenSymbol}
-          pendingAllowance={pendingAllowance}
-          setPendingAllowance={setPendingAllowance}
+          ref={ref}
+          label={`Stake ${tokenSymbol} in ${communityName}`}
+          // initialTransactionSteps={InitialTransactionSteps}
+          // allowTokenStatus={allowanceTokenStatus}
+          // stepTwoStatus={increaseStakeStatus}
+          // token={tokenSymbol}
+          // pendingAllowance={pendingAllowance}
+          transactions={transactions}
+          // setPendingAllowance={setPendingAllowance}
+          closeModal={closeModal}
         />
 
         <div className="flex justify-between gap-4">
@@ -331,7 +348,7 @@ export const IncreasePower = ({
                 <div className="flex-start flex gap-2">
                   <p>Balance:</p>
                   <DisplayNumber
-                    number={accountTokenBalance?.formatted ?? "0"}
+                    number={[memberStakedTokens, tokenDecimals]}
                     tokenSymbol={tokenSymbol}
                     compact={true}
                   />
@@ -339,7 +356,7 @@ export const IncreasePower = ({
                 <div className="flex-start flex gap-2">
                   <p>Current Stake:</p>
                   <DisplayNumber
-                    number={[BigInt(memberStakedTokens), registerTokenDecimals]}
+                    number={[memberStakedTokens - BigInt(registerStakeAmount), tokenDecimals]}
                     tokenSymbol={tokenSymbol}
                     compact={true}
                   />
