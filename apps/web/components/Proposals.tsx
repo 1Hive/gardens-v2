@@ -26,7 +26,6 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
@@ -64,7 +63,7 @@ export function Proposals({
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
   const [proposals, setProposals] = useState<
-  Awaited<ReturnType<typeof getProposals>>
+    Awaited<ReturnType<typeof getProposals>>
   >([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
@@ -170,17 +169,23 @@ export function Proposals({
     if (fetchingProposals == null) {
       setFetchingProposals(true);
     }
-    getProposals(wallet, strategy).then((res) => {
-      if (res !== undefined) {
-        setProposals(res);
-      } else {
-        console.debug("No proposals");
-      }
-    }).catch((err) => {
-      console.error("Error while fetching proposals: ", { error: err, strategy });
-    }).finally(() => {
-      return setFetchingProposals(false);
-    });
+    getProposals(wallet, strategy)
+      .then((res) => {
+        if (res !== undefined) {
+          setProposals(res);
+        } else {
+          console.debug("No proposals");
+        }
+      })
+      .catch((err) => {
+        console.error("Error while fetching proposals: ", {
+          error: err,
+          strategy,
+        });
+      })
+      .finally(() => {
+        return setFetchingProposals(false);
+      });
   };
 
   useEffect(() => {
@@ -218,7 +223,6 @@ export function Proposals({
   }, [isMemberActived]);
 
   const {
-    transactionData: allocateTxData,
     write: writeAllocate,
     error: errorAllocate,
     status: allocateStatus,
@@ -226,6 +230,8 @@ export function Proposals({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
+    contractName: "Allo",
+    fallbackErrorMessage: "Error allocating points. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "proposal",
@@ -238,12 +244,6 @@ export function Proposals({
   });
 
   useErrorDetails(errorAllocate, "errorAllocate");
-  const { updateTransactionStatus } =
-    useTransactionNotification(allocateTxData);
-
-  useEffect(() => {
-    updateTransactionStatus(allocateStatus);
-  }, [allocateStatus]);
 
   const submit = async () => {
     const proposalsDifferencesArr = getProposalsInputsDifferences(
@@ -360,10 +360,10 @@ export function Proposals({
           <header className="flex items-center justify-between">
             <div className="flex w-full items-baseline justify-between">
               <h2 className="font-semibold">Proposals</h2>
-              {!proposals && !fetchingProposals &&
+              {!proposals && !fetchingProposals && (
                 <>
                   <h4 className="text-2xl text-info">
-                  No submitted proposals to support
+                    No submitted proposals to support
                   </h4>
                   {!editView && (
                     <CheckPassport
@@ -382,7 +382,7 @@ export function Proposals({
                     </CheckPassport>
                   )}
                 </>
-              }
+              )}
             </div>
             {editView && (
               <>
@@ -411,30 +411,35 @@ export function Proposals({
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-6">
-            {!fetchingProposals ? proposals?.map((proposalData, index) => (
-              <React.Fragment key={proposalData.id}>
-                <ProposalCard
-                  proposalData={proposalData}
-                  inputData={inputs[index]}
-                  stakedFilter={stakedFilters[index]}
-                  index={index}
-                  isEditView={editView}
-                  tooltipMessage={tooltipMessage}
-                  memberActivatedPoints={memberActivatedPoints}
-                  memberPoolWeight={memberPoolWeight}
-                  executeDisabled={
-                    proposalData.proposalStatus == 4 ||
-                    !isConnected ||
-                    missmatchUrl
-                  }
-                  strategy={strategy}
-                  tokenDecimals={tokenDecimals}
-                  alloInfo={alloInfo}
-                  triggerRenderProposals={triggerRenderProposals}
-                  inputHandler={inputHandler}
-                />
-              </React.Fragment>
-            )) : <div className="w-full text-center"><LoadingSpinner /></div>}
+            {!fetchingProposals ?
+              proposals?.map((proposalData, index) => (
+                <React.Fragment key={proposalData.id}>
+                  <ProposalCard
+                    proposalData={proposalData}
+                    inputData={inputs[index]}
+                    stakedFilter={stakedFilters[index]}
+                    index={index}
+                    isEditView={editView}
+                    tooltipMessage={tooltipMessage}
+                    memberActivatedPoints={memberActivatedPoints}
+                    memberPoolWeight={memberPoolWeight}
+                    executeDisabled={
+                      proposalData.proposalStatus == 4 ||
+                      !isConnected ||
+                      missmatchUrl
+                    }
+                    strategy={strategy}
+                    tokenDecimals={tokenDecimals}
+                    alloInfo={alloInfo}
+                    triggerRenderProposals={triggerRenderProposals}
+                    inputHandler={inputHandler}
+                  />
+                </React.Fragment>
+              ))
+            : <div className="w-full text-center">
+                <LoadingSpinner />
+              </div>
+            }
           </div>
           <div className="flex justify-end gap-8">
             {editView && (

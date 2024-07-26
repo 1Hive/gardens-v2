@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Address, useAccount } from "wagmi";
 import { Button } from "./Button";
@@ -8,7 +8,6 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { cvStrategyABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -31,48 +30,44 @@ export function ActivatePoints({
   const chainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
-  const {
-    transactionData: activatePointsTxData,
-    write: writeActivatePoints,
-    error: errorActivatePoints,
-    status: activatePointsStatus,
-  } = useContractWriteWithConfirmations({
-    chainId,
-    address: strategyAddress,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "activatePoints",
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        id: connectedAccount,
-        type: "update",
-        function: "activatePoints",
-        containerId: communityAddress,
-        chainId,
-      });
-    },
-  });
+  const { write: writeActivatePoints, error: errorActivatePoints } =
+    useContractWriteWithConfirmations({
+      chainId,
+      address: strategyAddress,
+      contractName: "CV Strategy",
+      abi: abiWithErrors(cvStrategyABI),
+      functionName: "activatePoints",
+      fallbackErrorMessage: "Error activating points. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          id: connectedAccount,
+          type: "update",
+          function: "activatePoints",
+          containerId: communityAddress,
+          chainId,
+        });
+      },
+    });
 
-  const {
-    transactionData: deactivatePointsTxData,
-    write: writeDeactivatePoints,
-    error: errorDeactivatePoints,
-    status: deactivatePointsStatus,
-  } = useContractWriteWithConfirmations({
-    address: strategyAddress,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "deactivatePoints",
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        id: connectedAccount,
-        containerId: communityAddress,
-        type: "update",
-        function: "deactivatePoints",
-        chainId,
-      });
-    },
-  });
+  const { write: writeDeactivatePoints, error: errorDeactivatePoints } =
+    useContractWriteWithConfirmations({
+      address: strategyAddress,
+      abi: abiWithErrors(cvStrategyABI),
+      contractName: "CV Strategy",
+      functionName: "deactivatePoints",
+      fallbackErrorMessage: "Error deactivating points. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          id: connectedAccount,
+          containerId: communityAddress,
+          type: "update",
+          function: "deactivatePoints",
+          chainId,
+        });
+      },
+    });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
@@ -88,20 +83,6 @@ export function ActivatePoints({
       openConnectModal?.();
     }
   }
-
-  const { updateTransactionStatus: updateActivePointsStatus } =
-    useTransactionNotification(activatePointsTxData);
-
-  const { updateTransactionStatus: updateDeactivePointsStatus } =
-    useTransactionNotification(deactivatePointsTxData);
-
-  useEffect(() => {
-    updateActivePointsStatus(activatePointsStatus);
-  }, [activatePointsStatus]);
-
-  useEffect(() => {
-    updateDeactivePointsStatus(deactivatePointsStatus);
-  }, [deactivatePointsStatus]);
 
   // Activate Disable Button condition => message mapping
   const disableActiveBtnCondition: ConditionObject[] = [

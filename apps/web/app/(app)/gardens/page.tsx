@@ -58,9 +58,7 @@ export default function Page() {
       );
     }
     return (
-      <p className="badge-info mb-8 rounded p-1 text-center">
-                No Gardens
-      </p>
+      <p className="badge-info mb-8 rounded p-1 text-center">No Gardens</p>
     );
   }, [fetching, tokenGardens?.length]);
 
@@ -74,10 +72,10 @@ export default function Page() {
           <div className="mx-10 flex flex-col items-center gap-5">
             <div className="flex flex-col items-center">
               <h1 className="max-w-xl text-center text-[#084D21]">
-                                Explore and Join Gardens Ecosystems
+                Explore and Join Gardens Ecosystems
               </h1>
               <p className="text-xl">
-                                A place where you help shape digital economies
+                A place where you help shape digital economies
               </p>
             </div>
           </div>

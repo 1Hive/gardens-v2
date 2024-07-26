@@ -1,4 +1,5 @@
-// app/api/passport/submit-passport/route.ts
+// api/passport/submit-passport
+
 import { NextResponse } from "next/server";
 
 interface PassportData {

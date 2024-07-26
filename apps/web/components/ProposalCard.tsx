@@ -16,7 +16,6 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
 import { alloABI } from "@/src/generated";
 import { LightCVStrategy, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -58,15 +57,17 @@ export function ProposalCard({
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
-  const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] === proposalData.proposalNumber;
+  const isNewProposal =
+    searchParams[QUERY_PARAMS.poolPage.newPropsoal] ===
+    proposalData.proposalNumber;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0 ? 0 : (
-      ((number / 100) * memberPoolWeight).toFixed(2)
-    );
+        ((number / 100) * memberPoolWeight).toFixed(2)
+      );
   };
 
   //encode proposal id to pass as argument to distribute function
@@ -81,15 +82,15 @@ export function ProposalCard({
 
   //executing proposal distribute function / alert error if not executable / notification if success
   const {
-    transactionData: distributeTxData,
     write: writeDistribute,
     error: errorDistribute,
     isError: isErrorDistribute,
-    status: distributeStatus,
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
+    contractName: "Allo",
+    fallbackErrorMessage: "Error executing proposal. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "proposal",
@@ -99,6 +100,7 @@ export function ProposalCard({
         containerId: strategy.poolId,
         chainId,
       });
+      triggerRenderProposals();
     },
   });
 
@@ -108,19 +110,6 @@ export function ProposalCard({
       toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
     }
   }, [isErrorDistribute]);
-
-  const {
-    updateTransactionStatus: updateDistributeTransactionStatus,
-    txConfirmationHash: distributeTxConfirmationHash,
-  } = useTransactionNotification(distributeTxData);
-
-  useEffect(() => {
-    updateDistributeTransactionStatus(distributeStatus);
-  }, [distributeStatus]);
-
-  useEffect(() => {
-    triggerRenderProposals();
-  }, [distributeTxConfirmationHash]);
 
   return (
     <div
@@ -143,7 +132,7 @@ export function ProposalCard({
               tooltip={
                 proposalStatus == 4 ?
                   "Proposal already executed"
-                  : tooltipMessage
+                : tooltipMessage
               }
               onClick={() =>
                 writeDistribute?.({
@@ -174,7 +163,9 @@ export function ProposalCard({
                 min={0}
                 max={memberActivatedPoints}
                 value={inputData?.value ?? 0}
-                className={"range range-success range-sm min-w-[420px] cursor-pointer"}
+                className={
+                  "range range-success range-sm min-w-[420px] cursor-pointer"
+                }
                 step={memberActivatedPoints / 100}
                 onChange={(e) => inputHandler(index, Number(e.target.value))}
               />
@@ -210,7 +201,7 @@ export function ProposalCard({
                 </span>
                 % of pool weight
               </p>
-              : <p className="text-center">
+            : <p className="text-center">
                 Assigning
                 <span className="px-2 py-2 text-2xl font-semibold text-info">
                   {calcPoolWeightUsed(

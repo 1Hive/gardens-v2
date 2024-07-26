@@ -20,7 +20,7 @@ export function ThemeButton() {
     >
       {resolvedTheme === "dark" ?
         <SunIcon className="h-5 w-5" aria-hidden="true" />
-        : <MoonIcon className="h-5 w-5" aria-hidden="true" />}
+      : <MoonIcon className="h-5 w-5" aria-hidden="true" />}
     </button>
   );
 }

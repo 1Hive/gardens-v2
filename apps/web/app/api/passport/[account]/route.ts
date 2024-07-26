@@ -1,4 +1,5 @@
-// app/api/passport/[account]/route.ts
+// api/passport/[account]
+
 import { NextResponse } from "next/server";
 
 interface Params {
