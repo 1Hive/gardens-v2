@@ -1,27 +1,18 @@
 "use client";
 
-import React, { useEffect } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
 import { usePathname } from "next/navigation";
-import { toast } from "react-toastify";
-import { encodeAbiParameters, formatUnits } from "viem";
-import { Address } from "wagmi";
+import { formatUnits } from "viem";
 import { Allo } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
-import { Badge, Button, Card } from "@/components";
+import { Badge, Card } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
-import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
-import { alloABI } from "@/src/generated";
 import { LightCVStrategy, poolTypes } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
 import { capitalize } from "@/utils/text";
 
@@ -50,14 +41,9 @@ export function ProposalCard({
   index,
   isAllocationView,
   memberActivatedPoints,
-  memberPoolWeight,
-  executeDisabled,
-  tooltipMessage,
   strategy,
-  alloInfo,
   tokenData,
   inputHandler,
-  triggerRenderProposals,
 }: ProposalCardProps) {
   const { title, id, proposalNumber, proposalStatus, requestedAmount, type } =
     proposalData;
@@ -67,60 +53,12 @@ export function ProposalCard({
   // TODO: ADD border color when new proposal is added
   const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalData.proposalNumber;
 
-  const { publish } = usePubSubContext();
-  const chainId = useChainIdFromPath();
-
   const { currentConvictionPct, thresholdPct, totalSupportPct } = useConvictionRead({
     proposalData,
     tokenData,
   });
 
-  const calcPoolWeightUsed = (number: number) => {
-    return memberPoolWeight == 0 ? 0 : (
-      ((number / 100) * memberPoolWeight).toFixed(2)
-    );
-  };
-
-  //encode proposal id to pass as argument to distribute function
-  const encodedDataProposalId = (proposalId: number) => {
-    const encodedProposalId = encodeAbiParameters(
-      [{ name: "proposalId", type: "uint" }],
-      [BigInt(proposalId)],
-    );
-
-    return encodedProposalId;
-  };
-
-  //executing proposal distribute function / alert error if not executable / notification if success
-  const {
-    write: writeDistribute,
-    error: errorDistribute,
-    isError: isErrorDistribute,
-  } = useContractWriteWithConfirmations({
-    address: alloInfo.id as Address,
-    abi: abiWithErrors(alloABI),
-    functionName: "distribute",
-    contractName: "Allo",
-    fallbackErrorMessage: "Error executing proposal. Please try again.",
-    onConfirmations: () => {
-      publish({
-        topic: "proposal",
-        type: "update",
-        function: "distribute",
-        id,
-        containerId: strategy.poolId,
-        chainId,
-      });
-      triggerRenderProposals();
-    },
-  });
-
-  const distributeErrorName = useErrorDetails(errorDistribute);
-  useEffect(() => {
-    if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
-      toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
-    }
-  }, [isErrorDistribute]);
+  //TODO: move execute func to proposalId page
 
   const inputValue = calculatePercentage(
     inputData.value,
@@ -128,8 +66,6 @@ export function ProposalCard({
   );
 
   const allocatedInProposal = calculatePercentage(stakedFilter?.value, memberActivatedPoints);
-
-  console.log();
 
   const isSiganlingType = poolTypes[type] === "signaling";
 
@@ -170,9 +106,6 @@ export function ProposalCard({
                     <ConvictionBarChart compact currentConvictionPct={currentConvictionPct} thresholdPct={isSiganlingType ? 0 : thresholdPct} proposalSupportPct={totalSupportPct} isSignalingType={isSiganlingType} proposalId={proposalNumber} />
                   </div>
                 }
-                {/* <div className="z-50">
-                  <Button onClick={() => writeDistribute?.()}>Execute</Button>
-                </div> */}
                 {!isSiganlingType && (
                   <div className="flex items-baseline gap-1">
 
@@ -204,8 +137,8 @@ export function ProposalCard({
                       onChange={(e) => inputHandler(index, Number(e.target.value))}
                     />
                     <div className="flex w-full justify-between px-2.5">
-                      {[...Array(21)].map((_, i) => (
-                        <span className="text-[8px]" key={"span_" + i}>
+                      {[...Array(21)].map((_) => (
+                        <span className="text-[8px]" key={"span_"}>
                           |
                         </span>
                       ))}
@@ -240,7 +173,6 @@ export function ProposalCard({
       {isAllocationView ? (
         <ProposalCardContent isAllocationMode />
       ) : (
-
         <Card href={`${pathname}/${id}`} className={`py-4 ${isNewProposal ? "!border-accent !border-2" : ""}`}>
           <ProposalCardContent />
         </Card>

@@ -2,17 +2,24 @@
 import { useEffect, useState } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
-import { Address, formatUnits } from "viem";
+import { toast } from "react-toastify";
+import { Address, encodeAbiParameters, formatUnits } from "viem";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
+import { Badge, Button, DisplayNumber, EthAddress, Statistic } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { alloABI } from "@/src/generated";
 import { poolTypes, proposalStatus } from "@/types";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { useErrorDetails } from "@/utils/getErrorName";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { logOnce } from "@/utils/log";
 
@@ -27,7 +34,7 @@ const prettyTimestamp = (timestamp: number) => {
 };
 
 export default function Page({
-  params: { proposalId, garden },
+  params: { proposalId, garden, poolId },
 }: {
   params: {
     proposalId: string;
@@ -36,7 +43,6 @@ export default function Page({
     garden: string;
   };
 }) {
-  // TODO: fetch garden decimals in query
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -54,6 +60,11 @@ export default function Page({
 
   const metadata = proposalData?.metadata;
 
+  const proposalIdNumber = proposalData?.proposalNumber as number;
+
+  const { publish } = usePubSubContext();
+  const chainId = useChainIdFromPath();
+
   const [ipfsResult, setIpfsResult] =
     useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
 
@@ -64,8 +75,6 @@ export default function Page({
       });
     }
   }, [metadata]);
-
-  const proposalIdNumber = proposalData?.proposalNumber as string | undefined;
 
   const isProposalEnded =
     !!proposalData &&
@@ -85,6 +94,51 @@ export default function Page({
   const submitter = proposalData?.submitter as Address | undefined;
   const status = proposalData?.proposalStatus;
 
+  const isSignalingType = poolTypes[proposalType] === "signaling";
+
+  //encode proposal id to pass as argument to distribute function
+  const encodedDataProposalId = (proposalId_: number) => {
+    if (!proposalId_) {
+      return;
+    }
+    const encodedProposalId = encodeAbiParameters(
+      [{ name: "proposalId", type: "uint" }],
+      [BigInt(proposalId_)],
+    );
+    return encodedProposalId;
+  };
+
+  //distribution function from Allo contract
+  //args: poolId, strategyId, encoded proposalId
+  const {
+    write: writeDistribute,
+    error: errorDistribute,
+    isError: isErrorDistribute,
+  } = useContractWriteWithConfirmations({
+    address: data?.allos[0]?.id as Address,
+    abi: abiWithErrors(alloABI),
+    functionName: "distribute",
+    contractName: "Allo",
+    fallbackErrorMessage: "Error executing proposal. Please try again.",
+    onConfirmations: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "distribute",
+        id:proposalId,
+        containerId: data?.cvproposal?.strategy?.id,
+        chainId,
+      });
+    },
+  });
+
+  const distributeErrorName = useErrorDetails(errorDistribute);
+  useEffect(() => {
+    if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
+      toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
+    }
+  }, [isErrorDistribute]);
+
   if (
     !proposalData ||
     !ipfsResult ||
@@ -94,23 +148,12 @@ export default function Page({
     !proposalIdNumber ||
     (updateConvictionLast == null && !isProposalEnded)
   ) {
-    console.log({
-      proposalData,
-      ipfsResult,
-      currentConvictionPct,
-      thresholdPct,
-      totalSupportPct,
-      proposalIdNumber,
-      updateConvictionLast,
-    });
     return (
       <div className="mt-96">
         <LoadingSpinner />
       </div>
     );
   }
-
-  const isSignalingType = poolTypes[proposalType] === "signaling";
 
   return (
     <div className="page-layout">
@@ -177,7 +220,12 @@ export default function Page({
               proposalId={proposalIdNumber}
             />
           )}
+        <div className="absolute top-8 right-10">
+          {proposalStatus[status] !== "executed" && !isSignalingType && ( <Button onClick={() => writeDistribute?.({ args:[poolId, [data.cvproposal?.strategy.id], encodedDataProposalId(Number(proposalIdNumber))] })} disabled={currentConvictionPct < thresholdPct} tooltip="Proposal not executable">Execute</Button>)}
+
+        </div>
       </section>
     </div>
   );
 }
+

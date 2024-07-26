@@ -288,6 +288,11 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
 }
 
 query getProposalData($garden: ID!, $proposalId: ID!) {
+  allos {
+    id
+    chainId
+    tokenNative
+  }
   tokenGarden(id: $garden) {
     name
     symbol
