@@ -78,7 +78,7 @@ export const ChartWrapper = ({
                 <span>
                   {growing ?
                     <ArrowUpRightIcon className={iconClassname} />
-                    : <ArrowDownRightIcon className={iconClassname} />}{" "}
+                  : <ArrowDownRightIcon className={iconClassname} />}{" "}
                 </span>
               </p>
             </>

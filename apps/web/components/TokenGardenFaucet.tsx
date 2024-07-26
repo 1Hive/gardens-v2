@@ -64,16 +64,16 @@ export function TokenGardenFaucet({ token }: FaucetProps) {
   };
 
   return connectedAccount ?
-    <div className="fixed bottom-0 left-2 pb-3">
-      <button
-        onClick={() => requestTokens()}
-        disabled={isLoading}
-        title={`Get some test ${token.symbol}`}
-      >
-        {isLoading ?
-          <div className="loading-spinner" />
+      <div className="fixed bottom-0 left-2 pb-3">
+        <button
+          onClick={() => requestTokens()}
+          disabled={isLoading}
+          title={`Get some test ${token.symbol}`}
+        >
+          {isLoading ?
+            <div className="loading-spinner" />
           : "⛽"}
-      </button>
-    </div>
+        </button>
+      </div>
     : <></>;
 }

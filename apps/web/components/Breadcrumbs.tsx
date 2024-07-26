@@ -74,7 +74,7 @@ export function Breadcrumbs() {
                 <span className="subtitle2 truncate font-semibold text-neutral-soft-content">
                   {label}
                 </span>
-                : <Link
+              : <Link
                   href={href}
                   className="subtitle2 truncate font-semibold text-primary-content"
                 >

@@ -244,14 +244,14 @@ export default function Page({
               Proposal passed and executed successfully
             </div>
           </div>
-          : ( <ConvictionBarChart
+        : <ConvictionBarChart
             currentConvictionPct={currentConvictionPct}
             thresholdPct={thresholdPct}
             proposalSupportPct={totalSupportPct}
             isSignalingType={isSignalingType}
             proposalId={proposalIdNumber}
           />
-          )}
+        }
       </section>
     </div>
   );

@@ -100,23 +100,23 @@ export default function Page({
   } = result?.registryCommunity ?? {};
 
   const communityStakedTokens =
-        members?.reduce(
-          (acc: bigint, member) => acc + BigInt(member?.stakedTokens),
-          0n,
-        ) ?? 0;
+    members?.reduce(
+      (acc: bigint, member) => acc + BigInt(member?.stakedTokens),
+      0n,
+    ) ?? 0;
 
   strategies = strategies ?? [];
 
   const signalingPools = strategies.filter(
     (strategy) =>
       poolTypes[strategy.config?.proposalType] === "signaling" &&
-            strategy.isEnabled,
+      strategy.isEnabled,
   );
 
   const fundingPools = strategies.filter(
     (strategy) =>
       poolTypes[strategy.config?.proposalType] === "funding" &&
-            strategy.isEnabled,
+      strategy.isEnabled,
   );
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
@@ -172,8 +172,8 @@ export default function Page({
       } else {
         return (
           BigInt(registerStakeAmount) +
-                    BigInt(registerStakeAmount) /
-                        (BigInt(SCALE_PRECISION) / BigInt(communityFee))
+          BigInt(registerStakeAmount) /
+            (BigInt(SCALE_PRECISION) / BigInt(communityFee))
         );
       }
     } else {
@@ -199,24 +199,15 @@ export default function Page({
             <EthAddress address={communityAddr as Address} />
           </div>
           <div className="flex flex-col gap-2">
-            <Statistic
-              label="members"
-              count={members?.length ?? 0}
-            />
+            <Statistic label="members" count={members?.length ?? 0} />
             <Statistic
               label="pools"
               icon={<RectangleGroupIcon />}
               count={activePools.length ?? 0}
             />
-            <Statistic
-              label="staked tokens"
-              icon={<CurrencyDollarIcon />}
-            >
+            <Statistic label="staked tokens" icon={<CurrencyDollarIcon />}>
               <DisplayNumber
-                number={[
-                  BigInt(communityStakedTokens),
-                  tokenGarden.decimals,
-                ]}
+                number={[BigInt(communityStakedTokens), tokenGarden.decimals]}
                 compact={true}
                 tokenSymbol={tokenGarden.symbol}
               />
@@ -269,13 +260,13 @@ export default function Page({
               tooltip={tooltipMessage}
               icon={<PlusIcon height={24} width={24} />}
             >
-                            Create Pool
+              Create Pool
             </Button>
           </Link>
         </header>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-                        Funding pools ({fundingPools.length})
+            Funding pools ({fundingPools.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {fundingPools.map((pool) => (
@@ -291,7 +282,7 @@ export default function Page({
         </div>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-                        Signaling pools ({signalingPools.length})
+            Signaling pools ({signalingPools.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {signalingPools.map((pool) => (
@@ -307,7 +298,7 @@ export default function Page({
         </div>
         <div className="flex flex-col gap-4">
           <h4 className="text-secondary-content">
-                        Pools in Review ({poolsInReview.length})
+            Pools in Review ({poolsInReview.length})
           </h4>
           <div className="flex flex-row flex-wrap gap-10">
             {poolsInReview.map((pool) => (
@@ -324,15 +315,11 @@ export default function Page({
       </section>
       <section className="section-layout">
         <h2 className="mb-4">Covenant</h2>
-        {covenantIpfsHash ? (
-          covenant ? (
+        {covenantIpfsHash ?
+          covenant ?
             <p>{covenant}</p>
-          ) : (
-            <LoadingSpinner />
-          )
-        ) : (
-          <p className="italic">No covenant was submitted.</p>
-        )}
+          : <LoadingSpinner />
+        : <p className="italic">No covenant was submitted.</p>}
         <div className="mt-10 flex justify-center">
           <Image
             src={groupFlowers}
@@ -343,9 +330,7 @@ export default function Page({
           />
         </div>
       </section>
-      {!isProd && tokenGarden && (
-        <TokenGardenFaucet token={tokenGarden} />
-      )}
+      {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
     </div>
   );
 }
