@@ -407,8 +407,23 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         bytes memory data = abi.encode(proposal);
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.TokenNotAllowed.selector));
         allo().registerRecipient(poolId, data);
+        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0), metadata);
+        data = abi.encode(proposal);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.TokenCannotBeZero.selector));
+        allo().registerRecipient(poolId, data);
     }
 
+    function testRevert_registerRecipient_PoolIdCannotBeZero() public {
+        (, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+
+        // address wrong_token = address(new GV2ERC20());
+        StrategyStruct.CreateProposal memory proposal =
+            StrategyStruct.CreateProposal(0, pool_admin(), REQUESTED_AMOUNT, address(token), metadata);
+        bytes memory data = abi.encode(proposal);
+
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.PoolIdCannotBeZero.selector));
+        allo().registerRecipient(poolId, data);
+    }
     function test_proposalSupported_change_support() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
@@ -1631,6 +1646,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("Beneficienry After amount: %s", amount);
         assertEq(amount, requestedAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotActive.selector,proposalId));
+        cv.updateProposalConviction(proposalId);
     }
 
     function test_distribute_with_token() public {
@@ -1804,6 +1821,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // startMeasuringGas("Support a Proposal");
         stopMeasuringGas();
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+        
+        uint256 wrongProposalId = 4;
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotInList.selector, wrongProposalId));
+        cv.updateProposalConviction(wrongProposalId);
 
         cv.updateProposalConviction(proposalId);
         address[] memory recipients = new address[](0);
@@ -1872,6 +1893,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         address sender = address(this);
         vm.expectRevert(abi.encodeWithSelector(UNAUTHORIZED.selector));
         cv.distribute(recipientIds, data, sender);
+        uint256 wrongId = 4;
+        data = abi.encode(wrongId);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotInList.selector, wrongId));
+        allo().distribute(poolId, recipientIds, data);
     }
 
     function testRevert_distribute_onlyAllo() public {
