@@ -67,7 +67,7 @@ export function ProposalCard({
 
   const allocatedInProposal = calculatePercentage(stakedFilter?.value, memberActivatedPoints);
 
-  const isSiganlingType = poolTypes[type] === "signaling";
+  const isSignalingType = poolTypes[type] === "signaling";
 
   const ProposalCardContent = ({
     isAllocationMode,
@@ -103,10 +103,10 @@ export function ProposalCard({
               <div className="col-span-3 self-center flex flex-col gap-2">
                 {currentConvictionPct != null && thresholdPct != null && totalSupportPct != null &&
                   <div className="h-4">
-                    <ConvictionBarChart compact currentConvictionPct={currentConvictionPct} thresholdPct={isSiganlingType ? 0 : thresholdPct} proposalSupportPct={totalSupportPct} isSignalingType={isSiganlingType} proposalId={proposalNumber} />
+                    <ConvictionBarChart compact currentConvictionPct={currentConvictionPct} thresholdPct={isSignalingType ? 0 : thresholdPct} proposalSupportPct={totalSupportPct} isSignalingType={isSignalingType} proposalId={proposalNumber} />
                   </div>
                 }
-                {!isSiganlingType && (
+                {!isSignalingType && (
                   <div className="flex items-baseline gap-1">
 
                     <p className="text-xs text-neutral-soft-content">Requested amount: </p>
