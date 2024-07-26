@@ -173,8 +173,8 @@ caption {
 }
 
 .tooltip {
-  --tooltip-color: #8c8c8c;
-  --tooltip-text-color: #ffffff;
+ --tooltip-color: #1F2937;
+ --tooltip-text-color: #ffffff;
 }
 
 .tooltip:before {
