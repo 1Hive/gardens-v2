@@ -57,7 +57,7 @@ export const useTransactionNotification = ({
     const clickToExplorer = () =>
       window.open(
         `${chain?.blockExplorers?.default.url}/tx/${transactionData?.hash}`,
-        "_blank"
+        "_blank",
       );
 
     switch (transactionStatus) {
@@ -91,8 +91,9 @@ export const useTransactionNotification = ({
       case "error":
         notifProps = {
           ...txNotifProps,
-          message: transactionError
-            ? parseErrorMessage(transactionError)
+          message:
+            transactionError ?
+              parseErrorMessage(transactionError)
             : "Error processing transaction",
           showClickToExplorer: !!transactionData?.hash,
         };

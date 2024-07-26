@@ -163,7 +163,7 @@ export const ConvictionBarChart = ({
     message:
       proposalSupportPct == 0 ?
         "Proposal waiting for support"
-        : "Scenario not found",
+      : "Scenario not found",
     growing: null,
   };
 
@@ -191,7 +191,7 @@ export const ConvictionBarChart = ({
   const markLineTh: MarkLineComponentOption =
     isSignalingType ?
       {}
-      : {
+    : {
         ...markLine,
         data: [
           {
@@ -274,8 +274,8 @@ export const ConvictionBarChart = ({
         },
         z:
           supportGtConv ? 1
-            : convEqSupport ? 1
-              : 2,
+          : convEqSupport ? 1
+          : 2,
         barWidth: 23,
         data: [proposalSupportPct],
       },
@@ -300,7 +300,7 @@ export const ConvictionBarChart = ({
       },
       isSignalingType ?
         {}
-        : {
+      : {
           type: "bar",
           name: "Threshold",
           barWidth: 23,
@@ -325,7 +325,7 @@ export const ConvictionBarChart = ({
           option={option}
           style={{ height: "100%", width: "100%" }}
         />
-        : <ChartWrapper
+      : <ChartWrapper
           message={message}
           growing={growing}
           isSignalingType={isSignalingType}

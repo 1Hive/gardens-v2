@@ -73,7 +73,9 @@ export function Proposals({
   >();
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
-  const [fetchingProposals, setFetchingProposals] = useState<boolean | undefined>();
+  const [fetchingProposals, setFetchingProposals] = useState<
+    boolean | undefined
+  >();
   const memberTokensInCommunity = "0";
 
   const { address: wallet } = useAccount();
@@ -176,17 +178,23 @@ export function Proposals({
     if (fetchingProposals == null) {
       setFetchingProposals(true);
     }
-    getProposals(wallet, strategy).then((res) => {
-      if (res !== undefined) {
-        setProposals(res);
-      } else {
-        console.debug("No proposals");
-      }
-    }).catch((err) => {
-      console.error("Error while fetching proposals: ", { error: err, strategy });
-    }).finally(() => {
-      return setFetchingProposals(false);
-    });
+    getProposals(wallet, strategy)
+      .then((res) => {
+        if (res !== undefined) {
+          setProposals(res);
+        } else {
+          console.debug("No proposals");
+        }
+      })
+      .catch((err) => {
+        console.error("Error while fetching proposals: ", {
+          error: err,
+          strategy,
+        });
+      })
+      .finally(() => {
+        return setFetchingProposals(false);
+      });
   };
 
   useEffect(() => {

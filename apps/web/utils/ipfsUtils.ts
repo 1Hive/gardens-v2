@@ -6,7 +6,8 @@ type MetadataV1 = {
   description: string;
 };
 
-const ipfsGateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "https://ipfs.io/ipfs/";
+const ipfsGateway =
+  process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "https://ipfs.io/ipfs/";
 
 export const ipfsJsonUpload = async (payload: object, toastId?: string) => {
   const fetchPromise = fetch("/api/ipfs", {
@@ -21,30 +22,31 @@ export const ipfsJsonUpload = async (payload: object, toastId?: string) => {
     return json.IpfsHash;
   });
 
-  return toast.promise(fetchPromise, {
-    pending: {
-      toastId,
-      render: "Uploading data...",
-      type: "default",
-      closeOnClick: true,
-      isLoading: true,
-      style: {
-        width: "fit-content",
-        marginLeft: "auto",
+  return toast
+    .promise(fetchPromise, {
+      pending: {
+        toastId,
+        render: "Uploading data...",
+        type: "default",
+        closeOnClick: true,
+        isLoading: true,
+        style: {
+          width: "fit-content",
+          marginLeft: "auto",
+        },
       },
-    },
-    error: {
-      toastId,
-      render: "Error uploading data. Please try again.",
-      type: "error",
-      closeOnClick: true,
-      autoClose: NOTIFICATION_AUTO_CLOSE_DELAY,
-    },
-  }).catch((error) => {
-    console.error("Error uploading data to IPFS", { payload, error });
-    return null;
-  });
-
+      error: {
+        toastId,
+        render: "Error uploading data. Please try again.",
+        type: "error",
+        closeOnClick: true,
+        autoClose: NOTIFICATION_AUTO_CLOSE_DELAY,
+      },
+    })
+    .catch((error) => {
+      console.error("Error uploading data to IPFS", { payload, error });
+      return null;
+    });
 };
 
 export const ipfsFileUpload = async (selectedFile: File) => {
@@ -70,15 +72,12 @@ export const getIpfsMetadata = async (ipfsHash: string) => {
   let title = "No title found";
   let description = "No description found";
   try {
-    const rawProposalMetadata = await fetch(
-      `${ipfsGateway}${ipfsHash}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-        },
+    const rawProposalMetadata = await fetch(`${ipfsGateway}${ipfsHash}`, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
       },
-    );
+    });
 
     const proposalMetadata: MetadataV1 = await rawProposalMetadata.json();
     if (title) title = proposalMetadata?.title;

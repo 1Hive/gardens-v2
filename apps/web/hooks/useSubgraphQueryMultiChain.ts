@@ -133,7 +133,8 @@ export function useSubgraphQueryMultiChain<
                 if (
                   !isEqual(res.data, responseMap.current.get(chainId)) ||
                   retryCount === undefined ||
-                  retryCount >= CHANGE_EVENT_MAX_RETRIES || !mounted.current
+                  retryCount >= CHANGE_EVENT_MAX_RETRIES ||
+                  !mounted.current
                 ) {
                   if (retryCount === CHANGE_EVENT_MAX_RETRIES) {
                     console.debug(

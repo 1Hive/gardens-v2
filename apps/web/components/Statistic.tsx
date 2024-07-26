@@ -20,7 +20,6 @@ export const Statistic = ({
     <div className="flex items-center gap-2 text-neutral-soft-content">
       {icon && <div className={iconClassNames}>{icon}</div>}
       {label && (
-        // TODO: maybe have differnet sizes ???
         <p>
           {capitalize(label)}: {count}
         </p>

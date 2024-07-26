@@ -27,11 +27,11 @@ interface CommunityTitlesResult {
 
 interface PoolTitlesResult {
   cvstrategies: Array<
-  Pick<CVStrategy, "poolId" | "metadata"> & {
-    registryCommunity: Pick<RegistryCommunity, "communityName"> & {
-      garden: Pick<TokenGarden, "name">;
-    };
-  }
+    Pick<CVStrategy, "poolId" | "metadata"> & {
+      registryCommunity: Pick<RegistryCommunity, "communityName"> & {
+        garden: Pick<TokenGarden, "name">;
+      };
+    }
   >;
 }
 
