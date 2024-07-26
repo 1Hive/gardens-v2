@@ -912,6 +912,254 @@ export type OrderDirection =
   | 'asc'
   | 'desc';
 
+export type PassportScorer = {
+  id: Scalars['ID']['output'];
+  strategies?: Maybe<Array<PassportStrategy>>;
+  users?: Maybe<Array<PassportUser>>;
+};
+
+
+export type PassportScorerstrategiesArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<PassportStrategy_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportStrategy_filter>;
+};
+
+
+export type PassportScorerusersArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<PassportUser_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportUser_filter>;
+};
+
+export type PassportScorer_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  strategies_?: InputMaybe<PassportStrategy_filter>;
+  users_?: InputMaybe<PassportUser_filter>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<PassportScorer_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<PassportScorer_filter>>>;
+};
+
+export type PassportScorer_orderBy =
+  | 'id'
+  | 'strategies'
+  | 'users';
+
+export type PassportStrategy = {
+  id: Scalars['ID']['output'];
+  passportScorer: PassportScorer;
+  strategy: CVStrategy;
+  threshold: Scalars['BigInt']['output'];
+  councilSafe: Scalars['String']['output'];
+  active: Scalars['Boolean']['output'];
+};
+
+export type PassportStrategy_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  passportScorer?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_gt?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_lt?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_gte?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_lte?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  passportScorer_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  passportScorer_contains?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_contains?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_starts_with?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_ends_with?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_?: InputMaybe<PassportScorer_filter>;
+  strategy?: InputMaybe<Scalars['String']['input']>;
+  strategy_not?: InputMaybe<Scalars['String']['input']>;
+  strategy_gt?: InputMaybe<Scalars['String']['input']>;
+  strategy_lt?: InputMaybe<Scalars['String']['input']>;
+  strategy_gte?: InputMaybe<Scalars['String']['input']>;
+  strategy_lte?: InputMaybe<Scalars['String']['input']>;
+  strategy_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  strategy_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  strategy_contains?: InputMaybe<Scalars['String']['input']>;
+  strategy_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_contains?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_starts_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_ends_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_?: InputMaybe<CVStrategy_filter>;
+  threshold?: InputMaybe<Scalars['BigInt']['input']>;
+  threshold_not?: InputMaybe<Scalars['BigInt']['input']>;
+  threshold_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  threshold_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  threshold_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  threshold_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  threshold_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  threshold_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  councilSafe?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_not?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_gt?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_lt?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_gte?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_lte?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  councilSafe_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  councilSafe_contains?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_not_contains?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_starts_with?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_ends_with?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  councilSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  active?: InputMaybe<Scalars['Boolean']['input']>;
+  active_not?: InputMaybe<Scalars['Boolean']['input']>;
+  active_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  active_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<PassportStrategy_filter>>>;
+};
+
+export type PassportStrategy_orderBy =
+  | 'id'
+  | 'passportScorer'
+  | 'passportScorer__id'
+  | 'strategy'
+  | 'strategy__id'
+  | 'strategy__poolId'
+  | 'strategy__poolAmount'
+  | 'strategy__metadata'
+  | 'strategy__maxCVSupply'
+  | 'strategy__totalEffectiveActivePoints'
+  | 'strategy__isEnabled'
+  | 'threshold'
+  | 'councilSafe'
+  | 'active';
+
+export type PassportUser = {
+  id: Scalars['ID']['output'];
+  passportScorer: PassportScorer;
+  userAddress: Scalars['String']['output'];
+  score: Scalars['BigInt']['output'];
+  lastUpdated: Scalars['BigInt']['output'];
+};
+
+export type PassportUser_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  passportScorer?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_gt?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_lt?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_gte?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_lte?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  passportScorer_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  passportScorer_contains?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_contains?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_starts_with?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_ends_with?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  passportScorer_?: InputMaybe<PassportScorer_filter>;
+  userAddress?: InputMaybe<Scalars['String']['input']>;
+  userAddress_not?: InputMaybe<Scalars['String']['input']>;
+  userAddress_gt?: InputMaybe<Scalars['String']['input']>;
+  userAddress_lt?: InputMaybe<Scalars['String']['input']>;
+  userAddress_gte?: InputMaybe<Scalars['String']['input']>;
+  userAddress_lte?: InputMaybe<Scalars['String']['input']>;
+  userAddress_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  userAddress_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  userAddress_contains?: InputMaybe<Scalars['String']['input']>;
+  userAddress_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  userAddress_not_contains?: InputMaybe<Scalars['String']['input']>;
+  userAddress_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  userAddress_starts_with?: InputMaybe<Scalars['String']['input']>;
+  userAddress_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  userAddress_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  userAddress_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  userAddress_ends_with?: InputMaybe<Scalars['String']['input']>;
+  userAddress_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  userAddress_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  userAddress_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  score?: InputMaybe<Scalars['BigInt']['input']>;
+  score_not?: InputMaybe<Scalars['BigInt']['input']>;
+  score_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  score_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  score_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  score_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  score_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  score_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  lastUpdated?: InputMaybe<Scalars['BigInt']['input']>;
+  lastUpdated_not?: InputMaybe<Scalars['BigInt']['input']>;
+  lastUpdated_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  lastUpdated_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  lastUpdated_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  lastUpdated_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  lastUpdated_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  lastUpdated_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<PassportUser_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<PassportUser_filter>>>;
+};
+
+export type PassportUser_orderBy =
+  | 'id'
+  | 'passportScorer'
+  | 'passportScorer__id'
+  | 'userAddress'
+  | 'score'
+  | 'lastUpdated';
+
 export type Query = {
   cvstrategy?: Maybe<CVStrategy>;
   cvstrategies: Array<CVStrategy>;
@@ -935,6 +1183,12 @@ export type Query = {
   tokenGardens: Array<TokenGarden>;
   allo?: Maybe<Allo>;
   allos: Array<Allo>;
+  passportScorer?: Maybe<PassportScorer>;
+  passportScorers: Array<PassportScorer>;
+  passportStrategy?: Maybe<PassportStrategy>;
+  passportStrategies: Array<PassportStrategy>;
+  passportUser?: Maybe<PassportUser>;
+  passportUsers: Array<PassportUser>;
   /** Access to subgraph metadata */
   _meta?: Maybe<_Meta_>;
 };
@@ -1133,6 +1387,60 @@ export type QueryallosArgs = {
   orderBy?: InputMaybe<Allo_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<Allo_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportScorerArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportScorersArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<PassportScorer_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportScorer_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportStrategyArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportStrategiesArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<PassportStrategy_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportStrategy_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportUserArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QuerypassportUsersArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<PassportUser_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportUser_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -1633,6 +1941,12 @@ export type Subscription = {
   tokenGardens: Array<TokenGarden>;
   allo?: Maybe<Allo>;
   allos: Array<Allo>;
+  passportScorer?: Maybe<PassportScorer>;
+  passportScorers: Array<PassportScorer>;
+  passportStrategy?: Maybe<PassportStrategy>;
+  passportStrategies: Array<PassportStrategy>;
+  passportUser?: Maybe<PassportUser>;
+  passportUsers: Array<PassportUser>;
   /** Access to subgraph metadata */
   _meta?: Maybe<_Meta_>;
 };
@@ -1831,6 +2145,60 @@ export type SubscriptionallosArgs = {
   orderBy?: InputMaybe<Allo_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<Allo_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportScorerArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportScorersArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<PassportScorer_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportScorer_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportStrategyArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportStrategiesArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<PassportStrategy_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportStrategy_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportUserArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionpassportUsersArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<PassportUser_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<PassportUser_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -2092,6 +2460,18 @@ export type _SubgraphErrorPolicy_ =
   allo: InContextSdkMethod<Query['allo'], QueryalloArgs, MeshContext>,
   /** null **/
   allos: InContextSdkMethod<Query['allos'], QueryallosArgs, MeshContext>,
+  /** null **/
+  passportScorer: InContextSdkMethod<Query['passportScorer'], QuerypassportScorerArgs, MeshContext>,
+  /** null **/
+  passportScorers: InContextSdkMethod<Query['passportScorers'], QuerypassportScorersArgs, MeshContext>,
+  /** null **/
+  passportStrategy: InContextSdkMethod<Query['passportStrategy'], QuerypassportStrategyArgs, MeshContext>,
+  /** null **/
+  passportStrategies: InContextSdkMethod<Query['passportStrategies'], QuerypassportStrategiesArgs, MeshContext>,
+  /** null **/
+  passportUser: InContextSdkMethod<Query['passportUser'], QuerypassportUserArgs, MeshContext>,
+  /** null **/
+  passportUsers: InContextSdkMethod<Query['passportUsers'], QuerypassportUsersArgs, MeshContext>,
   /** Access to subgraph metadata **/
   _meta: InContextSdkMethod<Query['_meta'], Query_metaArgs, MeshContext>
   };
@@ -2145,6 +2525,18 @@ export type _SubgraphErrorPolicy_ =
   allo: InContextSdkMethod<Subscription['allo'], SubscriptionalloArgs, MeshContext>,
   /** null **/
   allos: InContextSdkMethod<Subscription['allos'], SubscriptionallosArgs, MeshContext>,
+  /** null **/
+  passportScorer: InContextSdkMethod<Subscription['passportScorer'], SubscriptionpassportScorerArgs, MeshContext>,
+  /** null **/
+  passportScorers: InContextSdkMethod<Subscription['passportScorers'], SubscriptionpassportScorersArgs, MeshContext>,
+  /** null **/
+  passportStrategy: InContextSdkMethod<Subscription['passportStrategy'], SubscriptionpassportStrategyArgs, MeshContext>,
+  /** null **/
+  passportStrategies: InContextSdkMethod<Subscription['passportStrategies'], SubscriptionpassportStrategiesArgs, MeshContext>,
+  /** null **/
+  passportUser: InContextSdkMethod<Subscription['passportUser'], SubscriptionpassportUserArgs, MeshContext>,
+  /** null **/
+  passportUsers: InContextSdkMethod<Subscription['passportUsers'], SubscriptionpassportUsersArgs, MeshContext>,
   /** Access to subgraph metadata **/
   _meta: InContextSdkMethod<Subscription['_meta'], Subscription_metaArgs, MeshContext>
   };

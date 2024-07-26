@@ -215,8 +215,12 @@ export function Proposals({
   }, [proposals, wallet, stakedFilters]);
 
   useEffect(() => {
-    if (isMemberActived == null) return;
-    if (!isMemberActived) setAllocationView(false);
+    if (isMemberActived == null) {
+      return;
+    }
+    if (!isMemberActived) {
+      setAllocationView(false);
+    }
   }, [isMemberActived]);
 
   const {
@@ -422,9 +426,7 @@ export function Proposals({
             ))}
           </header>
           {allocationView && (
-            <>
-              <UserAllocationStats stats={stats} />
-            </>
+            <UserAllocationStats stats={stats} />
           )}
         </div>
 
@@ -479,19 +481,17 @@ export function Proposals({
           </div>
         )}
         {!allocationView && (
-          <>
-            <div>
-              <h4>Do you have a great idea?</h4>
-              <div className="flex items-center gap-6">
-                <p>Share it with the community and get support!</p>
-                <Link href={createProposalUrl} >
-                  <Button icon={<PlusIcon height={24} width={24} />}>
+          <div>
+            <h4>Do you have a great idea?</h4>
+            <div className="flex items-center gap-6">
+              <p>Share it with the community and get support!</p>
+              <Link href={createProposalUrl} >
+                <Button icon={<PlusIcon height={24} width={24} />}>
                     Create a proposal
-                  </Button>
-                </Link>
-              </div>
+                </Button>
+              </Link>
             </div>
-          </>
+          </div>
         )}
       </section>
     </>
