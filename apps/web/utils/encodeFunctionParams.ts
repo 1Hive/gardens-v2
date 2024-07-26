@@ -32,7 +32,7 @@ export const encodeFunctionParams = function (
   const data =
     "inputs" in abiItem && abiItem.inputs ?
       encodeAbiParameters(abiItem.inputs, (args ?? []) as readonly unknown[])
-      : undefined;
+    : undefined;
 
   return data;
 };

@@ -2,7 +2,12 @@ import { useEffect, useMemo } from "react";
 
 import { WriteContractMode } from "@wagmi/core";
 import { Abi, TransactionReceipt } from "viem";
-import { useChainId, useContractWrite, UseContractWriteConfig, useWaitForTransaction } from "wagmi";
+import {
+  useChainId,
+  useContractWrite,
+  UseContractWriteConfig,
+  useWaitForTransaction,
+} from "wagmi";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainDataMap } from "@/configs/chainServer";
 
@@ -15,7 +20,11 @@ import { chainDataMap } from "@/configs/chainServer";
  * - showNotification: to show status update with toast
  * @returns
  */
-export function useContractWriteWithConfirmations<TAbi extends Abi | readonly unknown[], TFunctionName extends string, TMode extends WriteContractMode = undefined>(
+export function useContractWriteWithConfirmations<
+  TAbi extends Abi | readonly unknown[],
+  TFunctionName extends string,
+  TMode extends WriteContractMode = undefined,
+>(
   props: UseContractWriteConfig<TAbi, TFunctionName, TMode> & {
     onConfirmations?: (receipt: TransactionReceipt) => void;
     confirmations?: number;
@@ -31,8 +40,13 @@ export function useContractWriteWithConfirmations<TAbi extends Abi | readonly un
     chainId: props.chainId ?? chainId,
   };
 
-  propsWithChainId.onError = (...params : Parameters<NonNullable<typeof props.onError>>) => {
-    console.error(`Error with transaction [${props.contractName} -> ${props.functionName}]`, { error: params[0], variables: params[1], context: params[2] });
+  propsWithChainId.onError = (
+    ...params: Parameters<NonNullable<typeof props.onError>>
+  ) => {
+    console.error(
+      `Error with transaction [${props.contractName} -> ${props.functionName}]`,
+      { error: params[0], variables: params[1], context: params[2] },
+    );
     props.onError?.(...params);
   };
 
@@ -43,7 +57,7 @@ export function useContractWriteWithConfirmations<TAbi extends Abi | readonly un
     hash: txResult.data?.hash,
     chainId: +propsWithChainId.chainId,
     confirmations:
-    propsWithChainId.confirmations ??
+      propsWithChainId.confirmations ??
       chainDataMap[+propsWithChainId.chainId].confirmations,
   });
 

@@ -97,24 +97,22 @@ export function RegisterMember({
     },
   });
 
-  const {
-    write: writeUnregisterMember,
-    error: unregisterMemberError,
-  } = useContractWriteWithConfirmations({
-    ...registryContractCallConfig,
-    functionName: "unregisterMember",
-    fallbackErrorMessage: "Error unregistering member. Please try again.",
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        type: "delete",
-        containerId: communityAddress,
-        function: "unregisterMember",
-        id: communityAddress,
-        urlChainId: urlChainId,
-      });
-    },
-  });
+  const { write: writeUnregisterMember, error: unregisterMemberError } =
+    useContractWriteWithConfirmations({
+      ...registryContractCallConfig,
+      functionName: "unregisterMember",
+      fallbackErrorMessage: "Error unregistering member. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          type: "delete",
+          containerId: communityAddress,
+          function: "unregisterMember",
+          id: communityAddress,
+          urlChainId: urlChainId,
+        });
+      },
+    });
 
   const {
     write: writeAllowToken,
@@ -165,7 +163,6 @@ export function RegisterMember({
 
   useEffect(() => {
     if (allowTokenConfirmed) {
-
     }
   }, [allowTokenConfirmed]);
 
