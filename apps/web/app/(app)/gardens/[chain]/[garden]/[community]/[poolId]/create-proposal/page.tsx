@@ -45,8 +45,8 @@ export default function Page({
   const tokenGarden = data.tokenGarden;
 
   const maxRatioDivPrecision =
-        (Number(strategyObj.config?.maxRatio) / CV_SCALE_PRECISION) *
-        MAX_RATIO_CONSTANT;
+    (Number(strategyObj.config?.maxRatio) / CV_SCALE_PRECISION) *
+    MAX_RATIO_CONSTANT;
 
   const spendingLimitPct = maxRatioDivPrecision * 100;
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
@@ -60,7 +60,7 @@ export default function Page({
       <section className="section-layout">
         <div className="text-center sm:mt-5">
           <h2 className="text-xl font-semibold leading-6 text-gray-900">
-                        Create a Proposal in Pool
+            Create a Proposal in Pool
           </h2>
           <div className="mt-1">
             <p className="text-sm">{metadata.title}</p>

@@ -61,7 +61,7 @@ export function NavBar() {
                       className="bg-surface block h-6 w-6"
                       aria-hidden="true"
                     />
-                    : <Bars3Icon
+                  : <Bars3Icon
                       className="bg-surface block h-6 w-6"
                       aria-hidden="true"
                     />

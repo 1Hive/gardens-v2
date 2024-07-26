@@ -46,15 +46,15 @@ export function Badge({
   // Determine the appropriate styles based on whether it's a proposal status badge or a pool type badge
   const styles =
     isStatusBadge ? `${PROPOSAL_STATUS_STYLES[status] ?? "bg-secondary-soft"}`
-      : ispoolTypeDefined ?
-        `${POOL_TYPE_STYLES[type] ?? "bg-tertiary-soft text-tertiary-content"}`
-        : "bg-tertiary-soft text-tertiary-content";
+    : ispoolTypeDefined ?
+      `${POOL_TYPE_STYLES[type] ?? "bg-tertiary-soft text-tertiary-content"}`
+    : "bg-tertiary-soft text-tertiary-content";
 
   // Determine the label content
   const content =
     isStatusBadge ? proposalStatus[status]
-      : ispoolTypeDefined ? poolTypes[type] ?? label
-        : label;
+    : ispoolTypeDefined ? poolTypes[type] ?? label
+    : label;
 
   //For type => conditionally set the icon based on type === poolTypes[type]
   const iconIncluded =

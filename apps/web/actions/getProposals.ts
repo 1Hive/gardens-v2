@@ -45,17 +45,19 @@ export async function getProposals(
 
     const transformProposals = async function (_strategy: LightCVStrategy) {
       const proposalsData = await fetchIPFSDataBatch(_strategy.proposals);
-      const transformedProposals = proposalsData.map((data, index) => {
-        const p = _strategy.proposals[index];
-        return {
-          ...p,
-          voterStakedPointsPct: 0,
-          stakedAmount: _strategy.proposals[index].stakedAmount,
-          title: data.title,
-          type: _strategy.config?.proposalType as number,
-          status: _strategy.proposals[index].proposalStatus,
-        };
-      }).sort((a, b) => +a.proposalNumber - +b.proposalNumber); // Sort by proposal number ascending
+      const transformedProposals = proposalsData
+        .map((data, index) => {
+          const p = _strategy.proposals[index];
+          return {
+            ...p,
+            voterStakedPointsPct: 0,
+            stakedAmount: _strategy.proposals[index].stakedAmount,
+            title: data.title,
+            type: _strategy.config?.proposalType as number,
+            status: _strategy.proposals[index].proposalStatus,
+          };
+        })
+        .sort((a, b) => +a.proposalNumber - +b.proposalNumber); // Sort by proposal number ascending
 
       return transformedProposals;
     };

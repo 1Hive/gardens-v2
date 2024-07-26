@@ -23,8 +23,8 @@ import { formatTokenAmount } from "@/utils/numbers";
 type Props = {
   tokenGarden: Pick<TokenGarden, "decimals">;
   pool: Pick<
-  CVStrategy,
-  "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
+    CVStrategy,
+    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType">;
@@ -40,10 +40,14 @@ export function PoolCard({ pool, tokenGarden }: Props) {
   poolAmount = poolAmount || 0;
   const poolType = config?.proposalType as number | undefined;
 
-  const isNewPool = searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId;
+  const isNewPool =
+    searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId;
 
   return (
-    <Card href={`${pathname}/${poolId}`} className={isNewPool ? "!border-accent !border-2" : ""}>
+    <Card
+      href={`${pathname}/${poolId}`}
+      className={isNewPool ? "!border-accent !border-2" : ""}
+    >
       <header className="mb-4 flex w-full items-center justify-between">
         <h4>Pool #{poolId}</h4>
         <Badge type={poolType} />
@@ -67,7 +71,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           <ClockIcon className="h-8 w-8 text-secondary-content" />
           <h6>Waiting for approval</h6>
         </div>
-        : <Image
+      : <Image
           src={poolType && poolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
           className="h-10 w-full rounded-lg object-cover"
