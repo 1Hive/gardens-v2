@@ -21,7 +21,6 @@ export function Communities({
   communities: LightCommunity[];
 }) {
   const { address } = useAccount();
-
   const [otherCommunities, setOtherCommunities] =
     useState<LightCommunity[]>(communities);
   const [userCommunities, setUserCommunities] = useState<LightCommunity[]>([]);
@@ -38,7 +37,7 @@ export function Communities({
     }
     setUserCommunities(auxUserCommunities);
     setOtherCommunities(auxOtherCommunities);
-  }, [address]);
+  }, [address, communities]);
 
   function memberInCommunity(community: LightCommunity) {
     if (!community?.members) {

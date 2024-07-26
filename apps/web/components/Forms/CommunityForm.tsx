@@ -4,7 +4,13 @@ import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
+import {
+  Address,
+  Chain,
+  createPublicClient,
+  http,
+  parseUnits,
+} from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
@@ -13,12 +19,13 @@ import { FormSelect, Option } from "./FormSelect";
 import { Button } from "@/components";
 import { getChain } from "@/configs/chainServer";
 import { getConfigByChain } from "@/constants/contracts";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { delayAsync } from "@/utils/delayAsync";
+import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { SCALE_PRECISION_DECIMALS } from "@/utils/numbers";
 
@@ -122,48 +129,32 @@ export const CommunityForm = ({
   //     });
   // };
 
-  const createCommunity = () => {
+  const createCommunity = async () => {
     setLoading(true);
     const json = {
       // image: getValues("image IPFS"), ???
       covenant: getValues("covenant"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(json);
-
-    toast
-      .promise(ipfsUpload, {
-        pending: "Preparing everything, wait a moment...",
-        // success: "All ready!",
-        error: "Error uploading data to IPFS",
-      })
-      .then((ipfsHash) => {
-        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) {
-          throw new Error("No preview data");
-        }
-        const argsArray = contractWriteParsedData(ipfsHash);
-        write?.({ args: [argsArray] });
-      })
-      .catch((error: any) => {
-        console.error(error);
-        setLoading(false);
-      });
+    const ipfsHash = await ipfsJsonUpload(json);
+    if (ipfsHash) {
+      if (previewData === undefined) {
+        throw new Error("No preview data");
+      }
+      const argsArray = contractWriteParsedData(ipfsHash);
+      write?.({ args: [argsArray] });
+    }
+    setLoading(false);
   };
 
   const { write } = useContractWriteWithConfirmations({
     address: registryFactoryAddr,
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
+    contractName: "Registry Factory",
+    fallbackErrorMessage: "Error creating community. Please try again.",
     onConfirmations: async (receipt) => {
-      const newCommunityAddr = receipt.logs[0].address;
-      if (pathname) {
-        router.push(
-          pathname?.replace("/create-community", `?new=${newCommunityAddr}`),
-        );
-      }
-      // Add some delay to l et time to the comunity list to subscribe to the published event
-      await delayAsync(1000);
+      const newCommunityAddr = getEventFromReceipt(receipt, "RegistryFactory", "CommunityCreated").args._registryCommunity;
       publish({
         topic: "community",
         type: "add",
@@ -172,10 +163,11 @@ export const CommunityForm = ({
         chainId: tokenGarden.chainId,
         id: newCommunityAddr, // new community address
       });
-    },
-    onError: (err) => {
-      console.warn(err);
-      toast.error("Something went wrong creating Community");
+      if (pathname) {
+        router.push(
+          pathname?.replace("/create-community", `?${QUERY_PARAMS.gardenPage.newCommunity}=${newCommunityAddr}`),
+        );
+      }
     },
     onSettled: () => setLoading(false),
   });

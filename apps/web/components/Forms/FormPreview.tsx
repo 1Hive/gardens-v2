@@ -44,8 +44,8 @@ Covenant
         </p>
       </div>
       <div className="relative">
-        {formRows.map(({ label, data }, id) => (
-          <React.Fragment key={label + "_" + id}>
+        {formRows.map(({ label, data }) => (
+          <React.Fragment key={label}>
             <PreviewDataRow label={label} data={data} />
           </React.Fragment>
         ))}

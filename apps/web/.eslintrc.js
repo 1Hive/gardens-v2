@@ -91,5 +91,11 @@ module.exports = {
     "@typescript-eslint/no-use-before-define": "off",
     "jsx-a11y/no-static-element-interactions": "off",
     "no-irregular-whitespace": "error",
+    "object-property-newline": [
+      "error",
+      { allowAllPropertiesOnSameLine: true },
+    ],
+    "semi-spacing": "error",
+    "react/no-array-index-key": "warn",
   },
 };

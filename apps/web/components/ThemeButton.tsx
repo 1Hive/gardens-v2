@@ -9,8 +9,8 @@ export function ThemeButton() {
   const { resolvedTheme, setTheme } = useTheme();
   const isMounted = useIsMounted();
 
-  if (!isMounted) {
-    return null;
+  if (!isMounted.current) {
+    return <></>;
   }
 
   return (

@@ -4,7 +4,6 @@ import "viem/window";
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { Address, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
@@ -13,11 +12,13 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { Button } from "@/components/Button";
 import { chainDataMap } from "@/configs/chainServer";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
+import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
@@ -251,20 +252,21 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
   const { write } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
+    contractName: "Registry Community",
     functionName: "createPool",
-    onConfirmations: () => {
+    fallbackErrorMessage: "Error creating a pool. Please ty again.",
+    onConfirmations: (receipt) => {
+      const newPoolId = getEventFromReceipt(receipt, "RegistryCommunity", "PoolCreated").args._poolId;
       publish({
         topic: "pool",
         function: "createPool",
         type: "add",
+        id: newPoolId.toString(), // Never propagate direct bigint outside of javascript environment
+        containerId: communityAddr,
         chainId: chainId,
       });
-      if (pathname) {
-        router.push(pathname.replace(`/${communityAddr}/create-pool`, ""));
-      }
+      router.push(pathname?.replace("/create-pool", `?${QUERY_PARAMS.communityPage.newPool}=${newPoolId}`));
     },
-    onError: () =>
-      toast.error("Something went wrong creating a pool, check logs"),
     onSettled: () => setLoading(false),
   });
 
@@ -282,31 +284,21 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     }
   };
 
-  const createPool = () => {
+  const createPool = async () => {
     setLoading(true);
     const json = {
       title: getValues("title"),
       description: getValues("description"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(json);
-    toast
-      .promise(ipfsUpload, {
-        pending: "Preparing everything, wait a moment...",
-        // success: "All ready!",
-        error: "Error uploading data to IPFS",
-      })
-      .then((ipfsHash) => {
-        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) {
-          throw new Error("No preview data");
-        }
-        contractWrite(ipfsHash);
-      })
-      .catch((error: any) => {
-        console.error(error);
-        setLoading(false);
-      });
+    const ipfsHash = await ipfsJsonUpload(json);
+    if (ipfsHash) {
+      if (previewData === undefined) {
+        throw new Error("No preview data");
+      }
+      contractWrite(ipfsHash);
+    }
+    setLoading(false);
   };
 
   const formatFormRows = () => {
@@ -390,18 +382,19 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
             <h4 className="my-4 text-xl">Select pool settings</h4>
             <div className="flex gap-8">
               {Object.entries(poolSettingValues).map(
-                ([key, { label, description }]) => (
-                  <React.Fragment key={key}>
-                    <FormRadioButton
-                      label={label}
-                      description={description}
-                      value={parseInt(key)}
-                      checked={optionType === parseInt(key)}
-                      onChange={handleOptionTypeChange}
-                      registerKey="poolSettings"
-                    />
-                  </React.Fragment>
-                ),
+                ([key, { label, description }]) => {
+                  return (
+                    <React.Fragment key={key}>
+                      <FormRadioButton
+                        label={label}
+                        description={description}
+                        value={parseInt(key)}
+                        checked={optionType === parseInt(key)}
+                        onChange={handleOptionTypeChange}
+                        registerKey="poolSettings" />
+                    </React.Fragment>
+                  );
+                },
               )}
             </div>
             <div className="mb-6 mt-2 flex flex-col">

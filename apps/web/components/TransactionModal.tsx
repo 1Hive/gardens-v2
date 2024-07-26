@@ -150,9 +150,9 @@ TransactionModalProps
         </div>
         <div className="w-full">
           <ul className="steps steps-vertical min-h-48 w-full">
-            {transactionStepsState.map((step, index) => (
+            {transactionStepsState.map((step) => (
               <li
-                key={index}
+                key={step.transaction}
                 data-content={step.dataContent}
                 className={`step ${step.stepClassName}`}
               >

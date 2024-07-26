@@ -137,3 +137,26 @@ type Allo @entity(immutable: false) {
   chainId: BigInt!
   tokenNative: String!
 }
+
+type PassportScorer @entity(immutable: false) {
+  id: ID!
+  strategies: [PassportStrategy!] @derivedFrom(field: "passportScorer")
+  users: [PassportUser!] @derivedFrom(field: "passportScorer")
+}
+
+type PassportStrategy @entity(immutable: false) {
+  id: ID!
+  passportScorer: PassportScorer!
+  strategy: CVStrategy!
+  threshold: BigInt!
+  councilSafe: String!
+  active: Boolean!
+}
+
+type PassportUser @entity(immutable: false) {
+  id: ID!
+  passportScorer: PassportScorer!
+  userAddress: String!
+  score: BigInt!
+  lastUpdated: BigInt!
+}

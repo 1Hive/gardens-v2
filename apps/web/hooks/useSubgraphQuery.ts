@@ -3,9 +3,9 @@ import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
+import { useIsMounted } from "./useIsMounted";
 import { getConfigByChain } from "@/constants/contracts";
 import {
-  ChangeEventPayload,
   ChangeEventScope,
   SubscriptionId,
   usePubSubContext,
@@ -46,11 +46,12 @@ export function useSubgraphQuery<
   changeScope?: ChangeEventScope[] | ChangeEventScope;
   enabled?: boolean;
 }) {
+  const mounted = useIsMounted();
   const pathChainId = useChainIdFromPath();
   chainId = (chainId ?? pathChainId)!;
   const { urqlClient } = initUrqlClient();
   const { connected, subscribe, unsubscribe } = usePubSubContext();
-  const [fetching, setFetching] = useState(true);
+  const [fetching, setFetching] = useState(false);
   const config = getConfigByChain(chainId);
   const [response, setResponse] = useState<Omit<Awaited<ReturnType<typeof fetch>>, "operation">>({
     hasNext: true,
@@ -61,6 +62,7 @@ export function useSubgraphQuery<
 
   const latestResponse = useRef(response);
   const subscritionId = useRef<SubscriptionId>();
+  const fetchingRef = useRef(false);
 
   useEffect(() => {
     latestResponse.current = response; // Update ref on every response change
@@ -84,16 +86,25 @@ export function useSubgraphQuery<
 
     subscritionId.current = subscribe(
       changeScope,
-      refetchFromOutside.bind({
-        response,
-        setResponse,
-        chain: chainId,
-      }),
+      () => {
+        return refetchFromOutside.call({
+          response,
+          fetching,
+          setResponse,
+          chain: chainId,
+          mounted,
+        });
+      },
     );
 
     return () => {
       if (subscritionId.current) {
         unsubscribe(subscritionId.current);
+      }
+      try {
+        toast.dismiss(pendingRefreshToastId);
+      } catch (error) {
+        // ignore when toast is already dismissed
       }
     };
   }, [connected]);
@@ -105,37 +116,25 @@ export function useSubgraphQuery<
       requestPolicy: "network-only",
     });
 
-  const isDataAlreadyFetched = (
-    newFetchedData: Data,
-    payload?: ChangeEventPayload,
-  ) => {
-    if (!payload) {
-      return false;
+  const refetchFromOutside = async () => {
+    if (!enabled) {
+      console.debug("⚡ Query not enabled when refetching from outside, skipping");
+      return;
     }
-    if (payload.type === "add") {
-      const dataJsonString = JSON.stringify(newFetchedData).toLowerCase();
-      if (
-        payload.id &&
-        dataJsonString.includes(payload.id.toString().toLowerCase())
-      ) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  const refetchFromOutside = async (payload?: ChangeEventPayload) => {
-    if (fetching) {
+    if (fetchingRef.current) {
+      console.debug("⚡ Already fetching, skipping refetch");
       return;
     }
     setFetching(true);
-    const res = await refetch(payload);
+    fetchingRef.current = true;
+    const res = await refetch();
     setResponse(res);
     setFetching(false);
+    fetchingRef.current = false;
+    return res;
   };
 
   const refetch = async (
-    changePayload?: ChangeEventPayload,
     retryCount?: number,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
     const result = await fetch();
@@ -158,12 +157,15 @@ export function useSubgraphQuery<
     if (
       result.data &&
       (!isEqual(result.data, latestResponse.current.data) ||
-        isDataAlreadyFetched(result.data, changePayload) ||
-        retryCount >= CHANGE_EVENT_MAX_RETRIES)
+        retryCount >= CHANGE_EVENT_MAX_RETRIES || !mounted.current)
     ) {
       if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
         console.debug(
           `⚡ Still not updated but max retries reached. (retry count: ${retryCount})`,
+        );
+      } else if (!mounted.current) {
+        console.debug(
+          "⚡ Component unmounted, cancelling",
         );
       } else {
         console.debug(
@@ -171,38 +173,46 @@ export function useSubgraphQuery<
         );
       }
       setFetching(false);
+      fetchingRef.current = false;
       try {
-        toast.dismiss(pendingRefreshToastId);
+        if (toast.isActive(pendingRefreshToastId)) {
+          toast.dismiss(pendingRefreshToastId);
+        }
       } catch (error) {
-        console.error("Error dismissing toast", error);
+        // ignore dismiss error
       }
       return result;
     } else {
       console.debug(
         `⚡ Subgraph result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
+        { latestResult: latestResponse.current.data, result: result.data },
       );
       const delay = CHANGE_EVENT_INITIAL_DELAY * 2 ** retryCount;
       await delayAsync(delay);
-      return refetch(changePayload, retryCount + 1);
+      return refetch(retryCount + 1);
     }
   };
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || fetching) {
       return;
     }
     const init = async () => {
       setFetching(true);
+      fetchingRef.current = true;
       const resp = await fetch();
       setResponse(resp);
       setFetching(false);
+      fetchingRef.current = false;
     };
     init();
   }, [enabled]);
 
   return {
     ...response,
-    refetch: refetchFromOutside,
+    refetch: () => {
+      return refetchFromOutside();
+    },
     fetching,
   };
 }

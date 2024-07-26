@@ -3,17 +3,18 @@
 import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
 import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { Button } from "@/components";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { alloABI } from "@/src/generated";
 import { poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
+import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { formatTokenAmount } from "@/utils/numbers";
 
@@ -119,33 +120,22 @@ export const ProposalForm = ({
 
   const proposalTypeName = poolTypes[proposalType];
 
-  const createProposal = () => {
+  const createProposal = async () => {
     setLoading(true);
     const json = {
       title: getValues("title"),
       description: getValues("description"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(json);
-
-    toast
-      .promise(ipfsUpload, {
-        pending: "Preparing everything, wait a moment...",
-        // success: "All ready!",
-        error: "Error uploading data to IPFS",
-      })
-      .then((ipfsHash) => {
-        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) {
-          throw new Error("No preview data");
-        }
-        const encodedData = getEncodeData(ipfsHash);
-        write({ args: [poolId, encodedData] });
-      })
-      .catch((error: any) => {
-        setLoading(false);
-        console.error(error);
-      });
+    const ipfsHash = await ipfsJsonUpload(json);
+    if (ipfsHash) {
+      if (previewData === undefined) {
+        throw new Error("No preview data");
+      }
+      const encodedData = getEncodeData(ipfsHash);
+      write({ args: [poolId, encodedData] });
+    }
+    setLoading(false);
   };
 
   const handlePreview = (data: FormInputs) => {
@@ -156,21 +146,22 @@ export const ProposalForm = ({
   const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
+    contractName: "Allo",
     functionName: "registerRecipient",
-    onConfirmations: () => {
+    fallbackErrorMessage: "Error creating Proposal. Please try again.",
+    onConfirmations: (receipt) => {
+      const proposalId = getEventFromReceipt(receipt, "CVStrategy", "ProposalCreated").args.proposalId;
       publish({
         topic: "proposal",
         type: "update",
         function: "registerRecipient",
+        containerId: poolId,
+        id: proposalId.toString(), // proposalId is a bigint
         chainId,
       });
       if (pathname) {
-        router.push(pathname.replace("/create-proposal", ""));
+        router.push(pathname.replace("/create-proposal", `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`));
       }
-    },
-    onError: (err) => {
-      console.warn(err);
-      toast.error("Something went wrong creating Proposal");
     },
     onSettled: () => setLoading(false),
   });

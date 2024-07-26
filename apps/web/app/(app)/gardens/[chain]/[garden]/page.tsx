@@ -17,6 +17,8 @@ import {
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/constants/contracts";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
@@ -27,7 +29,12 @@ export default function Page({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error } = useSubgraphQuery<getGardenQuery>({
+  const searchParams = useCollectQueryParams();
+  const {
+    data: result,
+    error,
+    refetch,
+  } = useSubgraphQuery<getGardenQuery>({
     query: getGardenDocument,
     variables: { addr: garden },
     changeScope: [
@@ -50,9 +57,20 @@ export default function Page({
     }
   }, [error]);
 
-  let communities = result?.tokenGarden?.communities ?? [];
+  let communities =
+    result?.tokenGarden?.communities?.filter((com) => com.isValid) ?? [];
 
-  communities = communities.filter((com) => com.isValid);
+  useEffect(() => {
+    const newCommunityId = searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase();
+
+    if (
+      newCommunityId &&
+      result &&
+      !communities.some((c) => c.id.toLowerCase() === newCommunityId)
+    ) {
+      refetch();
+    }
+  }, [searchParams, result]);
 
   const tokenGarden = result?.tokenGarden;
 
