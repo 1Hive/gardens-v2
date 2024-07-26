@@ -1,10 +1,13 @@
 import React, { FC, useEffect, useRef, useState } from "react";
 import { Address, useAccount, useBalance } from "wagmi";
+import { Statistic } from "./Statistic";
+import { CurrencyDollarIcon, WalletIcon } from "@heroicons/react/24/outline";
 
 type Props = {
   label: string;
   token: "native" | Address;
   askedAmount: number;
+  tooltip?: string;
   setIsEnoughBalance: (isEnoughBalance: boolean) => void;
 };
 
@@ -20,6 +23,7 @@ export const WalletBalance: FC<Props> = ({
   token,
   askedAmount,
   label,
+  tooltip,
   setIsEnoughBalance,
 }) => {
   const { address } = useAccount();
@@ -53,14 +57,26 @@ export const WalletBalance: FC<Props> = ({
     <div
       className={`rounded-xl p-3 shadow border border-solid ${isEnoughBalanceRef.current ? "border-success bg-[#f8fffa]" : "border-error bg-[#fff5f5]"} ${isFetching ? "skeleton" : ""}`}
     >
-      <div className="font-bold">{label}</div>
-      <div className="text-base">
-        {askedAmount} {data?.symbol}
-      </div>
       <div
-        className={`${isEnoughBalanceRef.current ? "text-success" : "text-error"}`}
+        className={`font-bold ${isEnoughBalanceRef.current ? "text-success" : "text-error"}`}
       >
-        Wallet: {formatedWith3Decimals} {data?.symbol}
+        {label}
+      </div>
+      <div className="text-base">
+        <Statistic
+          count={askedAmount}
+          icon={<CurrencyDollarIcon></CurrencyDollarIcon>}
+        >
+          {data?.symbol}
+        </Statistic>
+      </div>
+      <div>
+        <Statistic
+          count={formatedWith3Decimals}
+          icon={<WalletIcon></WalletIcon>}
+        >
+          {data?.symbol}
+        </Statistic>
       </div>
     </div>
   );

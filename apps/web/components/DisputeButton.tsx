@@ -1,18 +1,18 @@
 import { FC, useRef, useState } from "react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
 import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
   Maybe,
 } from "#/subgraph/.graphclient";
+import { Button } from "./Button";
 import { WalletBalance } from "./WalletBalance";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { cvStrategyABI } from "@/src/generated";
 import { getIpfsMetadata, ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
-import { Button } from "./Button";
 type Props = {
   proposalData: Maybe<
     Pick<
@@ -49,7 +49,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const [isEnoughBalance, setIsEnoughBalance] = useState(false);
   const { publish } = usePubSubContext();
 
-  const askedAmount = 0.001;
+  const askedAmount = 2.001;
 
   const { write } = useContractWriteWithConfirmations({
     contractName: "CVStrategy",
@@ -83,7 +83,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
       <Button
         btnStyle="outline"
         color="danger"
-        className="px-8"
         onClick={() => modalRef.current?.showModal()}
       >
         Dispute
@@ -95,10 +94,11 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             method="dialog"
           >
             <h3 className="font-bold text-lg ">
-              Dispute {`${proposalData.title} #${proposalData.proposalNumber}`}
+              Dispute proposal{" "}
+              {`${proposalData.title} #${proposalData.proposalNumber}`}
             </h3>
             <button>
-              <XMarkIcon className="w-4"></XMarkIcon>
+              <XMarkIcon className="w-4" />
             </button>
           </form>
           <textarea
@@ -118,17 +118,17 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             />
             {/* Buttons */}
             <div className="flex gap-2">
+              <button className="btn btn-error btn-outline">Dispute</button>
               <Button
                 onClick={() => modalRef.current?.close()}
-                btnStyle="outline"
-                color="secondary"
+                btnStyle="link"
+                color="danger"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
                 color="danger"
-                btnStyle="outline"
                 tooltip={isEnoughBalance ? "" : "Insufficient balance"}
                 disabled={!isEnoughBalance}
               >
