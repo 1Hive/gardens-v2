@@ -12,6 +12,7 @@ import {
 import { proposalImg } from "@/assets";
 import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { cvStrategyABI } from "@/src/generated";
@@ -184,55 +185,60 @@ export default function Page({
 
   return (
     <div className="page-layout">
-      <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
-        <div className="flex w-full items-center justify-center sm:w-auto">
-          <Image
-            src={proposalImg}
-            alt={`proposal image ${proposalIdNumber}`}
-            height={160}
-            width={160}
-            className="min-h-[160px] min-w-[160px]"
-          />
+      <header className="section-layout">
+        <div className="flex flex-col items-start gap-10 sm:flex-row">
+          <div className="flex w-full items-center justify-center sm:w-auto">
+            <Image
+              src={proposalImg}
+              alt={`proposal image ${proposalIdNumber}`}
+              height={160}
+              width={160}
+              className="min-h-[160px] min-w-[160px]"
+            />
+          </div>
+          <div className="flex w-full flex-col gap-8">
+            <div>
+              <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                <h2>
+                  {ipfsResult?.title} #{proposalIdNumber}
+                </h2>
+                <Badge type={proposalType} />
+              </div>
+              <div className="flex items-center justify-between gap-4 sm:justify-start">
+                <Badge status={status} />
+                <p className="font-semibold">
+                  {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                </p>
+              </div>
+            </div>
+            <p>{ipfsResult?.description}</p>
+            <div className="flex flex-col gap-2">
+              {!isSignalingType && (
+                <>
+                  <Statistic
+                    label={"requested amount"}
+                    icon={<InformationCircleIcon />}
+                  >
+                    <DisplayNumber
+                      number={formatUnits(requestedAmount, 18)}
+                      tokenSymbol={tokenSymbol}
+                      compact={true}
+                      className="font-bold text-black"
+                    />
+                  </Statistic>
+                  <Statistic label={"beneficiary"} icon={<UserIcon />}>
+                    <EthAddress address={beneficiary} actions="copy" />
+                  </Statistic>
+                </>
+              )}
+              <Statistic label={"created by"} icon={<UserIcon />}>
+                <EthAddress address={submitter} actions="copy" />
+              </Statistic>
+            </div>
+          </div>
         </div>
-        <div className="flex w-full flex-col gap-8">
-          <div>
-            <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-              <h2>
-                {ipfsResult?.title} #{proposalIdNumber}
-              </h2>
-              <Badge type={proposalType} />
-            </div>
-            <div className="flex items-center justify-between gap-4 sm:justify-start">
-              <Badge status={status} />
-              <p className="font-semibold">
-                {prettyTimestamp(proposalData?.createdAt ?? 0)}
-              </p>
-            </div>
-          </div>
-          <p>{ipfsResult?.description}</p>
-          <div className="flex flex-col gap-2">
-            {!isSignalingType && (
-              <>
-                <Statistic
-                  label={"requested amount"}
-                  icon={<InformationCircleIcon />}
-                >
-                  <DisplayNumber
-                    number={formatUnits(requestedAmount, 18)}
-                    tokenSymbol={tokenSymbol}
-                    compact={true}
-                    className="font-bold text-black"
-                  />
-                </Statistic>
-                <Statistic label={"beneficiary"} icon={<UserIcon />}>
-                  <EthAddress address={beneficiary} actions="copy" />
-                </Statistic>
-              </>
-            )}
-            <Statistic label={"created by"} icon={<UserIcon />}>
-              <EthAddress address={submitter} actions="copy" />
-            </Statistic>
-          </div>
+        <div className="flex w-full justify-end">
+          <DisputeButton proposalData={{ ...proposalData, ...ipfsResult }} />
         </div>
       </header>
       <section className="section-layout">
@@ -244,14 +250,14 @@ export default function Page({
               Proposal passed and executed successfully
             </div>
           </div>
-          : ( <ConvictionBarChart
+        : <ConvictionBarChart
             currentConvictionPct={currentConvictionPct}
             thresholdPct={thresholdPct}
             proposalSupportPct={totalSupportPct}
             isSignalingType={isSignalingType}
             proposalId={proposalIdNumber}
           />
-          )}
+        }
       </section>
     </div>
   );

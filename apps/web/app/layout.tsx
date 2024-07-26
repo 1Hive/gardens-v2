@@ -31,6 +31,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-primary font-chakra">
         <Providers>{children}</Providers>
         <ToastContainer
+          style={{ zIndex: 1000 }}
           position="top-right"
           autoClose={5000}
           hideProgressBar={false}

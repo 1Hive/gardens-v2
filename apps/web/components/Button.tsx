@@ -5,10 +5,10 @@ import { Size } from "@/types";
 
 type ButtonProps = {
   type?:
-  | "button"
-  | "submit"
-  | "reset"
-  | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+    | "button"
+    | "submit"
+    | "reset"
+    | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
   btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
@@ -31,7 +31,8 @@ const btnStyles: BtnStyles = {
   filled: {
     primary:
       "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content",
-    secondary: "",
+    secondary:
+      "bg-secondary-button text-neutral-inverted-content hover:bg-secondary-hover-content",
     tertiary: "",
     danger:
       "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content",
@@ -39,17 +40,19 @@ const btnStyles: BtnStyles = {
   },
   outline: {
     primary:
-      "text-primary-content outline outline-2 outline-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
-    secondary: "",
-    tertiary: "",
+      "text-primary-content border border-2 border-primary-content hover:text-primary-hover-content hover:border-primary-hover-content",
+    secondary:
+      "text-secondary-content border border-2 border-secondary-content hover:text-secondary-hover-content hover:border-secondary-hover-content",
+    tertiary:
+      "text-tertiary-content border border-2 border-tertiary-content hover:text-tertiary-hover-content hover:border-tertiary-hover-content",
     danger:
-      "text-danger-button outline outline-2 outline-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
-    disabled: "text-neutral-soft outline outline-2 outline-neutral-soft",
+      "text-danger-button border border-2 border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content",
+    disabled: "text-neutral-soft border border-2 border-neutral-soft",
   },
   link: {
     primary: "text-primary-content",
-    secondary: "",
-    tertiary: "",
+    secondary: "text-secondary-content",
+    tertiary: "text-tertiary-content",
     danger: "text-danger-button",
     disabled: "text-neutral-soft",
   },
@@ -66,12 +69,13 @@ export function Button({
   isLoading = false,
   icon,
   type = "button",
+  size = "md",
 }: ButtonProps) {
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
-      relative cursor-pointer items-center justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} btn-${size}
+      relative cursor-pointer items-center justify-center rounded-lg px-6 ${size === "sm" ? "py-2" : "py-4"} transition-all ease-out disabled:cursor-not-allowed ${styles} hover:shadow-md disabled:shadow-none`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
@@ -89,8 +93,8 @@ export function Button({
   );
 
   return disabled ?
-    <div className={`tooltip ${styles}`} data-tip={tooltip}>
-      {buttonElement}
-    </div>
+      <div className={`tooltip ${styles}`} data-tip={tooltip}>
+        {buttonElement}
+      </div>
     : buttonElement;
 }
