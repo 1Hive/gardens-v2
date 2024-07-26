@@ -352,7 +352,7 @@ export const IncreasePower = ({
           <div className=" flex flex-col justify-between gap-4">
             <div className="flex gap-4">
               <InfoBox
-                content="Staking more tokens in the community will increase your voting
+                content="staking more tokens in the community will increase your voting
                 power to support proposals"
                 infoBoxType="info"
                 classNames="max-w-lg"
