@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import {
   CurrencyDollarIcon,
-  ExclamationCircleIcon,
   PlusIcon,
   RectangleGroupIcon,
 } from "@heroicons/react/24/outline";
@@ -24,6 +23,7 @@ import {
   PoolCard,
   RegisterMember,
   Statistic,
+  InfoIcon,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
@@ -214,23 +214,18 @@ export default function Page({
             </Statistic>
             <div className="flex">
               <p className="font-medium">Registration cost:</p>
-              <div
-                className="tooltip ml-2 flex cursor-pointer items-center text-primary-content"
-                data-tip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
-              >
+              <InfoIcon content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}>
                 <DisplayNumber
-                  number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
-                  className="font-semibold"
+                  number={[
+                    getTotalRegistrationCost(),
+                    tokenGarden?.decimals,
+                  ]}
+                  className="font-semibold text-primary-content"
                   disableTooltip={true}
                   compact={true}
                   tokenSymbol={tokenGarden.symbol}
                 />
-                <ExclamationCircleIcon
-                  className="ml-2 stroke-2"
-                  width={22}
-                  height={22}
-                />
-              </div>
+              </InfoIcon>
             </div>
           </div>
         </div>

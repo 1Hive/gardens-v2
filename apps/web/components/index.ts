@@ -27,3 +27,5 @@ export { Card } from "./Card";
 export { TokenLabel } from "./TokenLabel";
 export { Communities } from "./Communities";
 export { Breadcrumbs } from "./Breadcrumbs";
+export { InfoBox } from "./InfoBox";
+export { InfoIcon } from "./InfoIcon";
