@@ -954,11 +954,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         emit WeightUpdated(_weight);
     }
 
-    function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
-        registryCommunity = RegistryCommunity(_registryCommunity);
-        emit RegistryUpdated(_registryCommunity);
-    }
-
     function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {
         emit MinThresholdPointsUpdated(_minThresholdPoints, minThresholdPoints_);
         _minThresholdPoints = minThresholdPoints_;
