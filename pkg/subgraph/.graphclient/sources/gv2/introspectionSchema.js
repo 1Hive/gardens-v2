@@ -36,7 +36,8 @@ const schemaAST = {
       "kind": "DirectiveDefinition",
       "description": {
         "kind": "StringValue",
-        "value": "Marks the GraphQL type as indexable entity.  Each type that should be an entity is required to be annotated with this directive."
+        "value": "Marks the GraphQL type as indexable entity.  Each type that should be an entity is required to be annotated with this directive.",
+        "block": true
       },
       "name": {
         "kind": "Name",
@@ -55,7 +56,8 @@ const schemaAST = {
       "kind": "DirectiveDefinition",
       "description": {
         "kind": "StringValue",
-        "value": "Defined a Subgraph ID for an object type"
+        "value": "Defined a Subgraph ID for an object type",
+        "block": true
       },
       "name": {
         "kind": "Name",
@@ -93,7 +95,8 @@ const schemaAST = {
       "kind": "DirectiveDefinition",
       "description": {
         "kind": "StringValue",
-        "value": "creates a virtual field on the entity that may be queried but cannot be set manually through the mappings API."
+        "value": "creates a virtual field on the entity that may be queried but cannot be set manually through the mappings API.",
+        "block": true
       },
       "name": {
         "kind": "Name",
@@ -126,6 +129,32 @@ const schemaAST = {
           "value": "FIELD_DEFINITION"
         }
       ]
+    },
+    {
+      "kind": "EnumTypeDefinition",
+      "name": {
+        "kind": "Name",
+        "value": "Aggregation_interval"
+      },
+      "values": [
+        {
+          "kind": "EnumValueDefinition",
+          "name": {
+            "kind": "Name",
+            "value": "hour"
+          },
+          "directives": []
+        },
+        {
+          "kind": "EnumValueDefinition",
+          "name": {
+            "kind": "Name",
+            "value": "day"
+          },
+          "directives": []
+        }
+      ],
+      "directives": []
     },
     {
       "kind": "ObjectTypeDefinition",
@@ -29214,6 +29243,19 @@ const schemaAST = {
       "directives": []
     },
     {
+      "kind": "ScalarTypeDefinition",
+      "description": {
+        "kind": "StringValue",
+        "value": "A string representation of microseconds UNIX timestamp (16 digits)\n",
+        "block": true
+      },
+      "name": {
+        "kind": "Name",
+        "value": "Timestamp"
+      },
+      "directives": []
+    },
+    {
       "kind": "ObjectTypeDefinition",
       "name": {
         "kind": "Name",
@@ -31823,6 +31865,27 @@ const schemaAST = {
             "name": {
               "kind": "Name",
               "value": "Int"
+            }
+          },
+          "directives": []
+        },
+        {
+          "kind": "FieldDefinition",
+          "description": {
+            "kind": "StringValue",
+            "value": "The hash of the parent block",
+            "block": true
+          },
+          "name": {
+            "kind": "Name",
+            "value": "parentHash"
+          },
+          "arguments": [],
+          "type": {
+            "kind": "NamedType",
+            "name": {
+              "kind": "Name",
+              "value": "Bytes"
             }
           },
           "directives": []
