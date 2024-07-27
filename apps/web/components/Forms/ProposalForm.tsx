@@ -150,7 +150,11 @@ export const ProposalForm = ({
     functionName: "registerRecipient",
     fallbackErrorMessage: "Error creating Proposal. Please try again.",
     onConfirmations: (receipt) => {
-      const proposalId = getEventFromReceipt(receipt, "CVStrategy", "ProposalCreated").args.proposalId;
+      const proposalId = getEventFromReceipt(
+        receipt,
+        "CVStrategy",
+        "ProposalCreated",
+      ).args.proposalId;
       publish({
         topic: "proposal",
         type: "update",
@@ -160,7 +164,12 @@ export const ProposalForm = ({
         chainId,
       });
       if (pathname) {
-        router.push(pathname.replace("/create-proposal", `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`));
+        router.push(
+          pathname.replace(
+            "/create-proposal",
+            `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`,
+          ),
+        );
       }
     },
     onSettled: () => setLoading(false),
@@ -246,7 +255,7 @@ export const ProposalForm = ({
           formRows={formatFormRows()}
           previewTitle="Check proposals details"
         />
-        : <div className="flex flex-col gap-2 overflow-hidden p-1">
+      : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
             <div className="relative flex flex-col">
               <FormInput
@@ -340,7 +349,7 @@ export const ProposalForm = ({
               Submit
             </Button>
           </div>
-          : <Button type="submit">Preview</Button>}
+        : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

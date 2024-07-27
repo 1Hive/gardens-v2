@@ -28,3 +28,5 @@ export { TokenLabel } from "./TokenLabel";
 export { Communities } from "./Communities";
 export { Breadcrumbs } from "./Breadcrumbs";
 export { Modal } from "./Modal";
+export { InfoBox } from "./InfoBox";
+export { InfoIcon } from "./InfoIcon";

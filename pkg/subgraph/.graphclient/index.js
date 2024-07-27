@@ -6,7 +6,6 @@ import { fetch as fetchFn } from '@whatwg-node/fetch';
 import GraphqlHandler from "@graphql-mesh/graphql";
 import BareMerger from "@graphql-mesh/merger-bare";
 import { printWithCache } from '@graphql-mesh/utils';
-import { usePersistedOperations } from '@graphql-yoga/plugin-persisted-operations';
 import { createMeshHTTPHandler } from '@graphql-mesh/http';
 import { getMesh } from '@graphql-mesh/runtime';
 import { MeshStore, FsStoreStorageAdapter } from '@graphql-mesh/store';
@@ -50,7 +49,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "https://api.studio.thegraph.com/query/29898/gv2-arbsepolia/version/latest/" },
+        config: { "endpoint": "http://localhost:8000/subgraphs/name/kamikazebr/gv2" },
         baseDir,
         cache,
         pubsub,
@@ -240,21 +239,8 @@ export function createBuiltMeshHTTPHandler() {
     });
 }
 let meshInstance$;
-export const pollingInterval = null;
 export function getBuiltGraphClient() {
     if (meshInstance$ == null) {
-        if (pollingInterval) {
-            setInterval(() => {
-                getMeshOptions()
-                    .then(meshOptions => getMesh(meshOptions))
-                    .then(newMesh => meshInstance$.then(oldMesh => {
-                    oldMesh.destroy();
-                    meshInstance$ = Promise.resolve(newMesh);
-                })).catch(err => {
-                    console.error("Mesh polling failed so the existing version will be used:", err);
-                });
-            }, pollingInterval);
-        }
         meshInstance$ = getMeshOptions().then(meshOptions => getMesh(meshOptions)).then(mesh => {
             const id = mesh.pubsub.subscribe('destroy', () => {
                 meshInstance$ = undefined;
@@ -694,6 +680,51 @@ export const getProposalTitlesDocument = gql `
   }
 }
     `;
+export const getPassportScorerDocument = gql `
+    query getPassportScorer($scorerId: ID!) {
+  passportScorer(id: $scorerId) {
+    id
+    strategies {
+      id
+      strategy {
+        id
+      }
+      threshold
+      councilSafe
+      active
+    }
+    users {
+      id
+      userAddress
+      score
+      lastUpdated
+    }
+  }
+}
+    `;
+export const getPassportStrategyDocument = gql `
+    query getPassportStrategy($strategyId: ID!) {
+  passportStrategy(id: $strategyId) {
+    id
+    strategy {
+      id
+    }
+    threshold
+    councilSafe
+    active
+  }
+}
+    `;
+export const getPassportUserDocument = gql `
+    query getPassportUser($userId: ID!) {
+  passportUser(id: $userId) {
+    id
+    userAddress
+    score
+    lastUpdated
+  }
+}
+    `;
 export function getSdk(requester) {
     return {
         getFactories(variables, options) {
@@ -746,6 +777,15 @@ export function getSdk(requester) {
         },
         getProposalTitles(variables, options) {
             return requester(getProposalTitlesDocument, variables, options);
+        },
+        getPassportScorer(variables, options) {
+            return requester(getPassportScorerDocument, variables, options);
+        },
+        getPassportStrategy(variables, options) {
+            return requester(getPassportStrategyDocument, variables, options);
+        },
+        getPassportUser(variables, options) {
+            return requester(getPassportUserDocument, variables, options);
         }
     };
 }

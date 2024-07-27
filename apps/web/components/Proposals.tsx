@@ -63,12 +63,12 @@ export function Proposals({
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
   const [proposals, setProposals] = useState<
-  Awaited<ReturnType<typeof getProposals>>
+    Awaited<ReturnType<typeof getProposals>>
   >([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
   const [fetchingProposals, setFetchingProposals] = useState<
-  boolean | undefined
+    boolean | undefined
   >();
 
   const { address: wallet } = useAccount();
@@ -171,17 +171,23 @@ export function Proposals({
     if (fetchingProposals == null) {
       setFetchingProposals(true);
     }
-    getProposals(wallet, strategy).then((res) => {
-      if (res !== undefined) {
-        setProposals(res);
-      } else {
-        console.debug("No proposals");
-      }
-    }).catch((err) => {
-      console.error("Error while fetching proposals: ", { error: err, strategy });
-    }).finally(() => {
-      return setFetchingProposals(false);
-    });
+    getProposals(wallet, strategy)
+      .then((res) => {
+        if (res !== undefined) {
+          setProposals(res);
+        } else {
+          console.debug("No proposals");
+        }
+      })
+      .catch((err) => {
+        console.error("Error while fetching proposals: ", {
+          error: err,
+          strategy,
+        });
+      })
+      .finally(() => {
+        return setFetchingProposals(false);
+      });
   };
 
   useEffect(() => {
@@ -376,10 +382,10 @@ export function Proposals({
           <header className="flex items-center justify-between">
             <div className="flex w-full items-baseline justify-between">
               <h2 className="font-semibold">Proposals</h2>
-              {!proposals && !fetchingProposals &&
+              {!proposals && !fetchingProposals && (
                 <>
                   <h4 className="text-2xl text-info">
-                  No submitted proposals to support
+                    No submitted proposals to support
                   </h4>
                   {!editView && (
                     <Button
@@ -390,11 +396,11 @@ export function Proposals({
                       disabled={disableManSupportButton}
                       tooltip={String(tooltipMessage)}
                     >
-                    Manage support
+                      Manage support
                     </Button>
                   )}
                 </>
-              }
+              )}
             </div>
             {editView && (
               <>
@@ -448,7 +454,7 @@ export function Proposals({
                   />
                 </React.Fragment>
               ))
-              : <div className="w-full text-center">
+            : <div className="w-full text-center">
                 <LoadingSpinner />
               </div>
             }

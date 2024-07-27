@@ -1,22 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDotEnv": [
-    ".env"
-  ],
+  "globalDotEnv": [".env"],
   "pipeline": {
     "generate": {
-      "dependsOn": [
-        "^generate"
-      ],
-      "outputs": [
-        "src/**"
-      ]
+      "dependsOn": ["^generate"],
+      "outputs": ["src/**"]
     },
     "build": {
-      "dependsOn": [
-        "^build",
-        "web#generate"
-      ],
+      "dependsOn": ["^build", "web#generate"],
       "outputs": [
         "dist/**",
         ".next/**",
@@ -32,8 +23,15 @@
         "NEXT_PUBLIC_RPC_URL_OP_TESTNET",
         "NEXT_PUBLIC_RPC_URL_ETH_TESTNET",
         "PINATA_JWT",
+        "GITCOIN_PASSPORT_API_KEY",
+        "SCORER_ID",
+        "PASSPORT_SCORER_ADDRESS",
+        "LIST_MANAGER_PRIVATE_KEY",
+        "CHAIN_ID",
         "NODE_ENV",
         "NEXT_ABLY_API_KEY",
+        "HOST",
+        "PORT",
         "NEXT_PUBLIC_ENV_GARDENS",
         "NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP",
         "NEXT_PUBLIC_SUBGRAPH_URL_OP_SEP",
@@ -45,12 +43,8 @@
       ]
     },
     "test": {
-      "dependsOn": [
-        "build"
-      ],
-      "inputs": [
-        "test/**/*.t.sol"
-      ],
+      "dependsOn": ["build"],
+      "inputs": ["test/**/*.t.sol"],
       "outputs": []
     },
     "test:watch": {
@@ -60,10 +54,7 @@
       "outputs": []
     },
     "dev": {
-      "dependsOn": [
-        "web#generate",
-        "^dev"
-      ],
+      "dependsOn": ["web#generate", "^dev"],
       "cache": false
     },
     "foundry#dev": {
@@ -76,9 +67,7 @@
       "cache": false
     },
     "subgraph#build": {
-      "dependsOn": [
-        "foundry#build"
-      ]
+      "dependsOn": ["foundry#build"]
     }
   }
 }

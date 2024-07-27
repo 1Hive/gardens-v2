@@ -59,8 +59,8 @@ type Props = {
 };
 
 const poolSettingValues: Record<
-number,
-{ label: string; description: string; values: PoolSettings }
+  number,
+  { label: string; description: string; values: PoolSettings }
 > = {
   0: {
     label: "Custom",
@@ -256,7 +256,11 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool. Please ty again.",
     onConfirmations: (receipt) => {
-      const newPoolId = getEventFromReceipt(receipt, "RegistryCommunity", "PoolCreated").args._poolId;
+      const newPoolId = getEventFromReceipt(
+        receipt,
+        "RegistryCommunity",
+        "PoolCreated",
+      ).args._poolId;
       publish({
         topic: "pool",
         function: "createPool",
@@ -265,7 +269,12 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
         containerId: communityAddr,
         chainId: chainId,
       });
-      router.push(pathname?.replace("/create-pool", `?${QUERY_PARAMS.communityPage.newPool}=${newPoolId}`));
+      router.push(
+        pathname?.replace(
+          "/create-pool",
+          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolId}`,
+        ),
+      );
     },
     onSettled: () => setLoading(false),
   });
@@ -343,7 +352,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
           formRows={formatFormRows()}
           previewTitle="Check pool creation details"
         />
-        : <div className="flex flex-col gap-6">
+      : <div className="flex flex-col gap-6">
           <div className="flex flex-col">
             <FormInput
               label="Pool Name"
@@ -391,7 +400,8 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
                         value={parseInt(key)}
                         checked={optionType === parseInt(key)}
                         onChange={handleOptionTypeChange}
-                        registerKey="poolSettings" />
+                        registerKey="poolSettings"
+                      />
                     </React.Fragment>
                   );
                 },
@@ -574,7 +584,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               Submit
             </Button>
           </div>
-          : <Button type="submit">Preview</Button>}
+        : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

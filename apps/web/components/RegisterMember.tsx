@@ -2,7 +2,11 @@
 
 import React, { useCallback, useMemo, useEffect } from "react";
 import { Address, useAccount, useBalance } from "wagmi";
-import { RegistryCommunity, TokenGarden, isMemberQuery } from "#/subgraph/.graphclient";
+import {
+  RegistryCommunity,
+  TokenGarden,
+  isMemberQuery,
+} from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -19,7 +23,16 @@ type RegisterMemberProps = {
   allowance: bigint | undefined;
   registrationCost: bigint;
   token: Pick<TokenGarden, "symbol" | "id" | "decimals">;
-  registryCommunity: Pick<RegistryCommunity, "communityName" | "id" | "covenantIpfsHash" | "communityFee" | "protocolFee" | "registerStakeAmount" | "registerToken">;
+  registryCommunity: Pick<
+    RegistryCommunity,
+    | "communityName"
+    | "id"
+    | "covenantIpfsHash"
+    | "communityFee"
+    | "protocolFee"
+    | "registerStakeAmount"
+    | "registerToken"
+  >;
   memberData: isMemberQuery | undefined;
 };
 
@@ -31,7 +44,11 @@ export function RegisterMember({
   memberData,
 }: RegisterMemberProps) {
   const { id: communityAddress, communityName } = registryCommunity;
-  const { symbol: tokenSymbol, decimals: tokenDecimals, id: registerToken } = token;
+  const {
+    symbol: tokenSymbol,
+    decimals: tokenDecimals,
+    id: registerToken,
+  } = token;
 
   const { address: accountAddress } = useAccount();
 
@@ -46,13 +63,17 @@ export function RegisterMember({
   //   false,
   // );
 
-  const isMember = memberData?.member?.memberCommunity?.[0]?.isRegistered ?? false;
+  const isMember =
+    memberData?.member?.memberCommunity?.[0]?.isRegistered ?? false;
 
-  const registryContractCallConfig = useMemo(() => ({
-    address: communityAddress as Address,
-    abi: abiWithErrors2(registryCommunityABI),
-    contractName: "Registry Community",
-  }), [communityAddress]);
+  const registryContractCallConfig = useMemo(
+    () => ({
+      address: communityAddress as Address,
+      abi: abiWithErrors2(registryCommunityABI),
+      contractName: "Registry Community",
+    }),
+    [communityAddress],
+  );
 
   // const { data: isMember } = useContractRead({
   //   ...registryContractCallConfig,
@@ -101,24 +122,22 @@ export function RegisterMember({
     },
   });
 
-  const {
-    write: writeUnregisterMember,
-    error: unregisterMemberError,
-  } = useContractWriteWithConfirmations({
-    ...registryContractCallConfig,
-    functionName: "unregisterMember",
-    fallbackErrorMessage: "Error unregistering member. Please try again.",
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        type: "delete",
-        containerId: communityAddress,
-        function: "unregisterMember",
-        id: communityAddress,
-        urlChainId: urlChainId,
-      });
-    },
-  });
+  const { write: writeUnregisterMember, error: unregisterMemberError } =
+    useContractWriteWithConfirmations({
+      ...registryContractCallConfig,
+      functionName: "unregisterMember",
+      fallbackErrorMessage: "Error unregistering member. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          type: "delete",
+          containerId: communityAddress,
+          function: "unregisterMember",
+          id: communityAddress,
+          urlChainId: urlChainId,
+        });
+      },
+    });
 
   const {
     write: writeAllowToken,
@@ -168,7 +187,14 @@ export function RegisterMember({
         openModal();
       }
     }
-  }, [isMember, allowance, writeUnregisterMember, writeRegisterMember, writeAllowToken, openModal]);
+  }, [
+    isMember,
+    allowance,
+    writeUnregisterMember,
+    writeRegisterMember,
+    writeAllowToken,
+    openModal,
+  ]);
 
   useEffect(() => {
     if (registerMemberStatus === "success") {
@@ -212,15 +238,18 @@ export function RegisterMember({
     },
   ];
 
-  const transactions: TransactionProps[] = [{
-    message: "Test...",
-    status: "idle",
-    contractName: "Contract Test",
-  }, {
-    message: "Test 2...",
-    status: "idle",
-    contractName: "Contract Test 2",
-  }];
+  const transactions: TransactionProps[] = [
+    {
+      message: "Test...",
+      status: "idle",
+      contractName: "Contract Test",
+    },
+    {
+      message: "Test 2...",
+      status: "idle",
+      contractName: "Contract Test 2",
+    },
+  ];
 
   return (
     <>

@@ -242,7 +242,7 @@ importers:
         specifier: ^16.3.0
         version: 16.3.0
       prettier-plugin-tailwindcss:
-        specifier: ^0.5.7
+        specifier: ^0.5.14
         version: 0.5.14(@ianvs/prettier-plugin-sort-imports@4.2.1)(prettier@3.3.2)
       tailwindcss:
         specifier: ^3.3.6

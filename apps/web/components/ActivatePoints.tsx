@@ -30,48 +30,44 @@ export function ActivatePoints({
   const chainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
-  const {
-    write: writeActivatePoints,
-    error: errorActivatePoints,
-  } = useContractWriteWithConfirmations({
-    chainId,
-    address: strategyAddress,
-    contractName: "CV Strategy",
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "activatePoints",
-    fallbackErrorMessage: "Error activating points. Please try again.",
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        id: connectedAccount,
-        type: "update",
-        function: "activatePoints",
-        containerId: communityAddress,
-        chainId,
-      });
-    },
-  });
+  const { write: writeActivatePoints, error: errorActivatePoints } =
+    useContractWriteWithConfirmations({
+      chainId,
+      address: strategyAddress,
+      contractName: "CV Strategy",
+      abi: abiWithErrors(cvStrategyABI),
+      functionName: "activatePoints",
+      fallbackErrorMessage: "Error activating points. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          id: connectedAccount,
+          type: "update",
+          function: "activatePoints",
+          containerId: communityAddress,
+          chainId,
+        });
+      },
+    });
 
-  const {
-    write: writeDeactivatePoints,
-    error: errorDeactivatePoints,
-  } = useContractWriteWithConfirmations({
-    address: strategyAddress,
-    abi: abiWithErrors(cvStrategyABI),
-    contractName: "CV Strategy",
-    functionName: "deactivatePoints",
-    fallbackErrorMessage: "Error deactivating points. Please try again.",
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        id: connectedAccount,
-        containerId: communityAddress,
-        type: "update",
-        function: "deactivatePoints",
-        chainId,
-      });
-    },
-  });
+  const { write: writeDeactivatePoints, error: errorDeactivatePoints } =
+    useContractWriteWithConfirmations({
+      address: strategyAddress,
+      abi: abiWithErrors(cvStrategyABI),
+      contractName: "CV Strategy",
+      functionName: "deactivatePoints",
+      fallbackErrorMessage: "Error deactivating points. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          id: connectedAccount,
+          containerId: communityAddress,
+          type: "update",
+          function: "deactivatePoints",
+          chainId,
+        });
+      },
+    });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");

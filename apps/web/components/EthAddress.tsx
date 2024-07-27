@@ -40,24 +40,24 @@ export const EthAddress = ({
   // };
 
   return address && chain ?
-    <Addreth
-      // theme={theme}
-      theme={{
-        base: "simple-light",
-        textColor: "var(--color-green-500)",
-        badgeIconRadius: 12,
-        badgeHeight: 32,
-        fontSize: 16,
-      }}
-      actions={actions}
-      icon={icon}
-      address={address as Address}
-      explorer={(addr) => ({
-        name: chainDataMap[chain.id].name,
-        url: `${chainDataMap[chain.id].explorer}${addr}`,
-        accountUrl: `${chainDataMap[chain.id].explorer}${addr}`,
-      })}
-      ens={!chain?.testnet}
-    />
+      <Addreth
+        // theme={theme}
+        theme={{
+          base: "simple-light",
+          textColor: "var(--color-green-500)",
+          badgeIconRadius: 12,
+          badgeHeight: 32,
+          fontSize: 16,
+        }}
+        actions={actions}
+        icon={icon}
+        address={address as Address}
+        explorer={(addr) => ({
+          name: chainDataMap[chain.id].name,
+          url: `${chainDataMap[chain.id].explorer}${addr}`,
+          accountUrl: `${chainDataMap[chain.id].explorer}${addr}`,
+        })}
+        ens={!chain?.testnet}
+      />
     : <LoadingSpinner />;
 };

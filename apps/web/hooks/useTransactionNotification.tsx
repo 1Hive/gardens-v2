@@ -84,8 +84,9 @@ export const useTransactionNotification = ({
       case "error":
         notifProps = {
           ...txNotifProps,
-          message: transactionError
-            ? parseErrorMessage(transactionError)
+          message:
+            transactionError ?
+              parseErrorMessage(transactionError)
             : "Error processing transaction",
           showClickToExplorer: !!transactionData?.hash,
         };

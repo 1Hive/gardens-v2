@@ -1,6 +1,7 @@
 export { default as clouds1 } from "./clouds1.svg";
 export { default as clouds2 } from "./clouds2.svg";
 export { default as commImg } from "./CommunityImage.png";
+export { default as commF } from "./GardenF.png";
 export { default as ecosystem } from "./ecosystem.png";
 export { default as gardenFlower } from "./garden-flower.svg";
 export { default as gardenHeader } from "./garden-header.svg";

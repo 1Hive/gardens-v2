@@ -22,7 +22,7 @@ export const Statistic = ({
     <div className="flex items-center gap-2 text-neutral-soft-content">
       {icon ?
         <div className={iconClassNames}>{icon}</div>
-        : <div className={iconClassNames}>{defaultIcon}</div>}
+      : <div className={iconClassNames}>{defaultIcon}</div>}
       {label && (
         <p className="">
           {capitalize(label)}: {count}
