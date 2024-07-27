@@ -264,7 +264,7 @@ export default function Page({
             </Statistic>
             <div className="flex">
               <p className="font-medium">Registration cost:</p>
-              <InfoIcon content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}>
+              <InfoIcon classNames="ml-2" content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}>
                 <DisplayNumber
                   number={[
                     getTotalRegistrationCost(),

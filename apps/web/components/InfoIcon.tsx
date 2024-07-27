@@ -25,7 +25,7 @@ export function InfoIcon({
 
   return (
     <div
-      className={`tooltip ml-2 flex cursor-pointer items-center max-w-sm ${classNames}`}
+      className={`tooltip flex cursor-pointer items-center max-w-sm ${classNames}`}
       data-tip={content}
     >
       {children}

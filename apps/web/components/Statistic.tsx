@@ -1,12 +1,12 @@
 import React from "react";
 import { UserGroupIcon } from "@heroicons/react/24/outline";
-import { capitalize } from "@/utils/text";
 
 type IdentifierProps = {
   icon?: React.ReactNode;
-  count?: number | string;
-  label: string;
+  count?: number | string | React.ReactNode;
+  label?: string | React.ReactNode;
   children?: React.ReactNode;
+  className?: string;
 };
 
 export const Statistic = ({
@@ -14,19 +14,25 @@ export const Statistic = ({
   count,
   label,
   children,
+  className,
 }: IdentifierProps) => {
   const iconClassNames = "h-6 w-6";
   const defaultIcon = <UserGroupIcon className={iconClassNames} />;
 
   return (
-    <div className="flex items-center gap-2 text-neutral-soft-content">
+    <div
+      className={`flex items-center gap-2 text-neutral-soft-content ${className ?? ""}`}
+    >
       {icon ?
         <div className={iconClassNames}>{icon}</div>
-        : <div className={iconClassNames}>{defaultIcon}</div>}
-      {label && (
-        <p className="">
-          {capitalize(label)}: {count}
-        </p>
+      : <div className={iconClassNames}>{defaultIcon}</div>}
+      {(label ?? count) && (
+        <span>
+          {label ?
+            <span className="capitalize">{label}:</span>
+          : ""}{" "}
+          {count}
+        </span>
       )}
       {children}
     </div>

@@ -1,7 +1,8 @@
-import React, { FC, useEffect, useRef, useState } from "react";
-import { Address, useAccount, useBalance } from "wagmi";
-import { Statistic } from "./Statistic";
+import { FC, useEffect, useRef, useState } from "react";
 import { CurrencyDollarIcon, WalletIcon } from "@heroicons/react/24/outline";
+import { Address, useAccount, useBalance } from "wagmi";
+import { InfoIcon } from "./InfoIcon";
+import { Statistic } from "./Statistic";
 
 type Props = {
   label: string;
@@ -35,23 +36,14 @@ export const WalletBalance: FC<Props> = ({
     watch: true,
   });
 
+  const balance = data && +data.formatted;
+
   useEffect(() => {
     if (data?.value) {
-      isEnoughBalanceRef.current =
-        !!data?.value && +data?.formatted >= askedAmount;
+      isEnoughBalanceRef.current = !!balance && balance >= askedAmount;
       setIsEnoughBalance(isEnoughBalanceRef.current);
-
-      console.log({
-        data: data?.value,
-        askedAmount,
-        isEnoughBalance: isEnoughBalanceRef.current,
-      });
     }
   }, [data?.value, askedAmount, setIsEnoughBalance]);
-
-  const formatedWith3Decimals = parseFloat(
-    data?.formatted?.toString() ?? "0",
-  ).toFixed(3);
 
   return (
     <div
@@ -60,20 +52,22 @@ export const WalletBalance: FC<Props> = ({
       <div
         className={`font-bold ${isEnoughBalanceRef.current ? "text-success" : "text-error"}`}
       >
-        {label}
+        {tooltip ?
+          <InfoIcon content={tooltip}>{label}</InfoIcon>
+        : label}
       </div>
       <div className="text-base">
         <Statistic
-          count={askedAmount}
-          icon={<CurrencyDollarIcon></CurrencyDollarIcon>}
+          count={<div className="w-14">{askedAmount.toFixed(4)}</div>}
+          icon={<CurrencyDollarIcon />}
         >
           {data?.symbol}
         </Statistic>
       </div>
       <div>
         <Statistic
-          count={formatedWith3Decimals}
-          icon={<WalletIcon></WalletIcon>}
+          count={<div className="w-14">{balance?.toFixed(4)}</div>}
+          icon={<WalletIcon />}
         >
           {data?.symbol}
         </Statistic>

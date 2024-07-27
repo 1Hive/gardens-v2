@@ -1,6 +1,5 @@
 import { FC, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
 import {
   CVProposal,
   CVStrategy,
@@ -8,6 +7,7 @@ import {
   Maybe,
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
+import { InfoBox } from "./InfoBox";
 import { WalletBalance } from "./WalletBalance";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -49,7 +49,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const [isEnoughBalance, setIsEnoughBalance] = useState(false);
   const { publish } = usePubSubContext();
 
-  const askedAmount = 2.001;
+  const collateral = 0.002;
+  const disputeFee = 0.001;
 
   const { write } = useContractWriteWithConfirmations({
     contractName: "CVStrategy",
@@ -109,19 +110,25 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             className="textarea textarea-accent w-full  mb-4"
             rows={5}
           />
+          <InfoBox
+            infoBoxType="info"
+            content="Disputing this proposal will prevent its execution but not its
+            growth and support, and the Tribunal will have one week to resolve
+            any dispute before it can be closed and collateral restored."
+          />
           <div className="modal-action justify-between items-end flex-wrap gap-4">
             <WalletBalance
               label="Fees + Collateral"
               token="native"
-              askedAmount={askedAmount}
+              askedAmount={collateral + disputeFee}
+              tooltip={`Collateral: ${collateral} ETH \n Dispute Fee: ${disputeFee} ETH`}
               setIsEnoughBalance={setIsEnoughBalance}
             />
             {/* Buttons */}
             <div className="flex gap-2">
-              <button className="btn btn-error btn-outline">Dispute</button>
               <Button
                 onClick={() => modalRef.current?.close()}
-                btnStyle="link"
+                btnStyle="outline"
                 color="danger"
               >
                 Cancel
