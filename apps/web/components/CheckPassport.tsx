@@ -66,31 +66,35 @@ export function CheckPassport({
       query: getPassportUserDocument,
       variables: { userId: walletAddr?.toLowerCase() },
       enabled: !!walletAddr,
-      //TODO: add changeScope = passport
+      //TODO: add changeScope = passportUserData
     });
   const passportUser = passportUserData?.passportUser;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
-      variables: { strategyId: strategyAddr },
-      //TODO: add changeScope = passport
+      variables: { strategyId: strategyAddr.toLowerCase() },
+      //TODO: add changeScope = passportStrategyData
     });
+
   const passportStrategy = passportStrategyData?.passportStrategy;
 
   //force active passport for testing
-  if (!isProd ) {
-    (window as any).togglePassportEnable = ( enable: boolean) => {
+  if (!isProd) {
+    (window as any).togglePassportEnable = (enable: boolean): string => {
       if (passportStrategy) {
         passportStrategy.active = enable;
+        return "passportStrategy.active set to " + enable;
+      } else {
+        return "No passportStrategy found";
       }
     };
   }
+  console.log(passportStrategy, strategyAddr);
 
   const handleCheckPassport = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
-
     if (!!passportStrategy && passportStrategy.active) {
       if (walletAddr) {
         checkPassportRequirements(walletAddr, e);
@@ -242,13 +246,12 @@ export function CheckPassport({
               Pool requirement:{" "}
               <span className="font-semibold">{threshold.toFixed(2)}</span>
             </p>
-            {score > threshold ? (
+            {score > threshold ?
               <div>
                 <h5 className="mt-6">Congratulations!</h5>
-                <p>
-                 Your score meets the pool requirement. You can proceed.</p>
-              </div> ) : (
-              <p className="mt-6">
+                <p>Your score meets the pool requirement. You can proceed.</p>
+              </div>
+            : <p className="mt-6">
                 Your score is too low, please go to{" "}
                 <a
                   href="https://passport.gitcoin.co/"
@@ -260,14 +263,13 @@ export function CheckPassport({
                 </a>{" "}
                 to increment it before continuing.
               </p>
-            )}
+            }
           </div>
           {walletAddr && (
             <div className="flex justify-end">
-              {score > threshold ? (
+              {score > threshold ?
                 children
-              ) : (
-                <Button
+              : <Button
                   onClick={() => submitAndWriteScorer(walletAddr)}
                   className="w-fit"
                   btnStyle="outline"
@@ -275,7 +277,7 @@ export function CheckPassport({
                 >
                   Check again
                 </Button>
-              )}
+              }
             </div>
           )}
         </div>

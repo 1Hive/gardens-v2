@@ -19,6 +19,8 @@ type PoolGovernanceProps = {
   strategy: LightCVStrategy;
   communityAddress: Address;
   memberTokensInCommunity: number;
+  isMemberCommunity: boolean;
+  memberActivatedStrategy: boolean;
 };
 
 export const PoolGovernance = ({
@@ -27,6 +29,8 @@ export const PoolGovernance = ({
   strategy,
   communityAddress,
   memberTokensInCommunity,
+  isMemberCommunity,
+  memberActivatedStrategy,
 }: PoolGovernanceProps) => {
   const { address: connectedAccount } = useAccount();
   const registryContractCallConfig = {
@@ -34,24 +38,24 @@ export const PoolGovernance = ({
     abi: abiWithErrors2(registryCommunityABI),
   };
 
-  const { data: isMemberActivated } = useContractRead({
-    ...registryContractCallConfig,
-    functionName: "memberActivatedInStrategies",
-    args: [connectedAccount as Address, strategy.id as Address],
-    watch: true,
-    enabled: !!connectedAccount,
-  });
+  // const { data: isMemberActivated } = useContractRead({
+  //   ...registryContractCallConfig,
+  //   functionName: "memberActivatedInStrategies",
+  //   args: [connectedAccount as Address, strategy.id as Address],
+  //   watch: true,
+  //   enabled: !!connectedAccount,
+  // });
 
-  const { data: isMember } = useContractRead({
-    ...registryContractCallConfig,
-    functionName: "isMember",
-    args: [connectedAccount as Address],
-    watch: true,
-    enabled: !!connectedAccount,
-  });
+  // const { data: isMember } = useContractRead({
+  //   ...registryContractCallConfig,
+  //   functionName: "isMember",
+  //   args: [connectedAccount as Address],
+  //   watch: true,
+  //   enabled: !!connectedAccount,
+  // });
 
   const showPoolGovernanceData =
-    isMember && isMemberActivated !== undefined && isMemberActivated;
+  isMemberCommunity && memberActivatedStrategy !== undefined && memberActivatedStrategy;
   return (
     <section className="section-layout">
       <header>
@@ -79,7 +83,7 @@ export const PoolGovernance = ({
                   <div className="flex w-full items-center gap-6">
                     <h5 className="">Status:</h5>
                     <div>
-                      <Badge status={isMemberActivated ? 1 : 0} />
+                      <Badge status={memberActivatedStrategy ? 1 : 0} />
                     </div>
                   </div>
                   <div className="flex w-full items-baseline gap-6">
@@ -94,7 +98,7 @@ export const PoolGovernance = ({
                 <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
-                    <Badge status={isMemberActivated ? 1 : 0} />
+                    <Badge status={memberActivatedStrategy ? 1 : 0} />
                   </div>
                 </div>
               )}
@@ -103,13 +107,13 @@ export const PoolGovernance = ({
           <div className="flex flex-col gap-2">
             <CheckPassport
               strategyAddr={strategy.id as Address}
-              enableCheck={!isMemberActivated}
+              enableCheck={!memberActivatedStrategy}
             >
               <ActivatePoints
                 strategyAddress={strategy.id as Address}
                 communityAddress={communityAddress}
-                isMemberActivated={isMemberActivated}
-                isMember={isMember}
+                isMemberActivated={memberActivatedStrategy}
+                isMember={isMemberCommunity}
               />
             </CheckPassport>
           </div>

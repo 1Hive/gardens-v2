@@ -87,9 +87,9 @@ export const IncreasePower = ({
   useEffect(() => {
     if (accountAddress && isMemberResult && !fetching) {
       refetchIsMember().then((result) => {
-        if (result?.data && result?.data.members.length > 0) {
+        if (result?.data?.member) {
           const stakedTokens =
-            result?.data.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
+            result?.data.member?.memberCommunity?.[0]?.stakedTokens;
           setMemberStakedTokens(
             BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"),
           );

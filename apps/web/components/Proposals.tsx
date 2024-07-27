@@ -7,7 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { toast } from "react-toastify";
-import { Address as AddressType, useAccount, useContractRead } from "wagmi";
+import { Address as AddressType, useAccount } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -19,16 +19,20 @@ import {
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { getProposals } from "@/actions/getProposals";
-import { Button, CheckPassport, PoolGovernance, ProposalCard } from "@/components";
+import {
+  Button,
+  CheckPassport,
+  PoolGovernance,
+  ProposalCard,
+} from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
+import { alloABI, cvStrategyABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
@@ -40,7 +44,7 @@ export type ProposalInputItem = {
 
 // export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
 // export type Proposal = CVStrategy["proposals"][number];
-export type StakesMemberType = isMemberQuery["members"][number]["stakes"];
+export type StakesMemberType = NonNullable<isMemberQuery["member"]>["stakes"];
 
 export type ProposalTypeVoter = CVProposal & {
   title: string;
@@ -67,27 +71,28 @@ export function Proposals({
   >([]);
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
-  const [fetchingProposals, setFetchingProposals] = useState<boolean | undefined>();
+  const [fetchingProposals, setFetchingProposals] = useState<
+    boolean | undefined
+  >();
 
   const { address: wallet } = useAccount();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
-  const { isMemberActived } = useIsMemberActivated(strategy);
   const urlChainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
-  const { data: isMemberActivated } = useContractRead({
-    address: communityAddress,
-    abi: abiWithErrors2(registryCommunityABI),
-    functionName: "memberActivatedInStrategies",
-    args: [wallet as Address, strategy.id as Address],
-    watch: true,
-    enabled: !!wallet,
-  });
+  // const { data: isMemberActivated } = useContractRead({
+  //   address: communityAddress,
+  //   abi: abiWithErrors2(registryCommunityABI),
+  //   functionName: "memberActivatedInStrategies",
+  //   args: [wallet as Address, strategy.id as Address],
+  //   watch: true,
+  //   enabled: !!wallet,
+  // });
 
   const {
-    data: memberResult,
+    data: memberData,
     error,
     refetch: refetchIsMemberQuery,
   } = useSubgraphQuery<isMemberQuery>({
@@ -104,14 +109,17 @@ export function Proposals({
     enabled: !!wallet,
   });
 
+  const isMemberCommunity =
+    !!memberData?.member?.memberCommunity?.[0]?.isRegistered;
+
   if (error) {
     console.error("Error while fetching member data: ", error);
   }
 
   useEffect(() => {
     let stakesFilteres: StakesMemberType = [];
-    if (memberResult && memberResult.members.length > 0) {
-      const stakes = memberResult.members[0].stakes;
+    if (memberData?.member) {
+      const stakes = memberData.member.stakes;
       if (stakes && stakes.length > 0) {
         stakesFilteres = stakes.filter((stake) => {
           return (
@@ -137,13 +145,15 @@ export function Proposals({
 
     setInputAllocatedTokens(Number(totalStaked));
     setStakedFilters(memberStakes);
-  }, [memberResult]);
+  }, [memberData?.member]);
 
-  const { data: memberStrategyResult } =
+  console.log(memberData);
+
+  const { data: memberStrategyData, refetch: refetchgetMemberStrategyQuery } =
     useSubgraphQuery<getMemberStrategyQuery>({
       query: getMemberStrategyDocument,
       variables: {
-        wallet: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
+        member_strategy: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
       changeScope: {
         topic: "proposal",
@@ -153,17 +163,23 @@ export function Proposals({
       enabled: !!wallet,
     });
 
+  console.log(memberStrategyData);
+
+  const memberActivatedStrategy =
+    Number(memberStrategyData?.memberStrategy?.activatedPoints) > 0;
+
   useEffect(() => {
     if (wallet) {
       refetchIsMemberQuery();
+      refetchgetMemberStrategyQuery();
     }
   }, [wallet]);
 
   useEffect(() => {
     setMemberActivatedPoints(
-      Number(memberStrategyResult?.memberStrategy?.activatedPoints ?? 0n),
+      Number(memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0n),
     );
-  }, [memberStrategyResult]);
+  }, [memberStrategyData]);
 
   const triggerRenderProposals = () => {
     if (fetchingProposals == null) {
@@ -214,13 +230,13 @@ export function Proposals({
   }, [proposals, wallet, stakedFilters]);
 
   useEffect(() => {
-    if (isMemberActived === undefined) {
+    if (memberActivatedStrategy === undefined) {
       return;
     }
-    if (isMemberActived !== true) {
+    if (memberActivatedStrategy !== true) {
       setEditView(false);
     }
-  }, [isMemberActived]);
+  }, [memberActivatedStrategy]);
 
   const {
     write: writeAllocate,
@@ -317,7 +333,7 @@ export function Proposals({
 
   const disableManageSupportBtnCondition: ConditionObject[] = [
     {
-      condition: !isMemberActivated,
+      condition: !memberActivatedStrategy,
       message: "Must have points activated to support proposals",
     },
   ];
@@ -354,6 +370,8 @@ export function Proposals({
         strategy={strategy}
         communityAddress={communityAddress}
         memberTokensInCommunity={memberActivatedPoints}
+        isMemberCommunity={isMemberCommunity}
+        memberActivatedStrategy={memberActivatedStrategy}
       />
       <section className="section-layout">
         <div className="mx-auto max-w-5xl space-y-10">
@@ -366,9 +384,7 @@ export function Proposals({
                     No submitted proposals to support
                   </h4>
                   {!editView && (
-                    <CheckPassport
-                      strategyAddr={strategy.id as Address}
-                    >
+                    <CheckPassport strategyAddr={strategy.id as Address}>
                       <Button
                         icon={
                           <AdjustmentsHorizontalIcon height={24} width={24} />
@@ -377,7 +393,7 @@ export function Proposals({
                         disabled={disableManSupportButton}
                         tooltip={String(tooltipMessage)}
                       >
-                     Manage support
+                        Manage support
                       </Button>
                     </CheckPassport>
                   )}
@@ -469,9 +485,7 @@ export function Proposals({
           <h4 className="text-2xl">Do you have a great idea?</h4>
           <div className="flex items-center gap-6">
             <p>Share it with the community and get support!</p>
-            <CheckPassport
-              strategyAddr={strategy.id as Address}
-            >
+            <CheckPassport strategyAddr={strategy.id as Address}>
               <Link href={createProposalUrl}>
                 <Button
                   btnStyle="filled"
