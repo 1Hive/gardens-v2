@@ -93,7 +93,7 @@ const PubSubContext = createContext<PubSubContextData | undefined>(undefined);
 export function usePubSubContext() {
   const context = useContext(PubSubContext);
   if (!context) {
-    throw new Error("usePubSubContext must be used within a WebSocketProvider");
+    throw new Error("⚡ WS: usePubSubContext must be used within a WebSocketProvider");
   }
   return context;
 }

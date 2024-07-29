@@ -59,7 +59,11 @@ export const WalletBalance: FC<Props> = ({
       <div className="text-base">
         <Statistic
           count={<div className="w-14">{askedAmount.toFixed(4)}</div>}
-          icon={<CurrencyDollarIcon />}
+          icon={
+            <div className="tooltip" data-tooltip="Cost">
+              <CurrencyDollarIcon />
+            </div>
+          }
         >
           {data?.symbol}
         </Statistic>
@@ -67,7 +71,11 @@ export const WalletBalance: FC<Props> = ({
       <div>
         <Statistic
           count={<div className="w-14">{balance?.toFixed(4)}</div>}
-          icon={<WalletIcon />}
+          icon={
+            <div className="tooltip" data-tooltip="Wallet balance">
+              <WalletIcon />
+            </div>
+          }
         >
           {data?.symbol}
         </Statistic>
