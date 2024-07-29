@@ -10,10 +10,10 @@ import {IArbitrator} from "./interfaces/IArbitrator.sol";
 /// @title Safe Arbitrator
 /// @dev This is an arbitrator middleware that will allow a safe to decide on the result of disputes.
 contract SafeArbitrator is IArbitrator {
-
     enum DisputeStatus {
         Waiting, // The dispute is waiting for the ruling or not created.
         Solved // The dispute is resolved.
+
     }
 
     struct DisputeStruct {
@@ -28,9 +28,8 @@ contract SafeArbitrator is IArbitrator {
     address public owner = msg.sender; // Owner of the contract.
     uint256 private arbitrationFee; // The cost to create a dispute. Made private because of the arbitrationCost() getter.
 
-
     DisputeStruct[] public disputes; // Stores the dispute info. disputes[disputeID].
-    mapping(address arbitrable => address safe) public arbitrableTribunalSafe; //Map arbitrable address to tribunal safe address    
+    mapping(address arbitrable => address safe) public arbitrableTribunalSafe; //Map arbitrable address to tribunal safe address
 
     error OnlySafe();
 
@@ -38,23 +37,20 @@ contract SafeArbitrator is IArbitrator {
         require(msg.sender == owner, "Can only be called by the owner.");
         _;
     }
-    
-    modifier onlySafe(address _arbitrable){
-        if(msg.sender == arbitrableTribunalSafe[_arbitrable]){
+
+    modifier onlySafe(address _arbitrable) {
+        if (msg.sender == arbitrableTribunalSafe[_arbitrable]) {
             _;
         } else {
             revert OnlySafe();
         }
     }
 
-
     /// @dev Constructor.
     /// @param _arbitrationFee Amount to be paid for arbitration.
     constructor(uint256 _arbitrationFee) {
         arbitrationFee = _arbitrationFee;
-
     }
-
 
     /// @dev Set the arbitration fee. Only callable by the owner.
     /// @param _arbitrationFee Amount to be paid for arbitration.
@@ -66,12 +62,13 @@ contract SafeArbitrator is IArbitrator {
         arbitrableTribunalSafe[msg.sender] = _safe;
     }
 
-
     /// @inheritdoc IArbitrator
-    function createDispute(
-        uint256 _choices,
-        bytes calldata _extraData
-    ) external payable override returns (uint256 disputeID) {
+    function createDispute(uint256 _choices, bytes calldata _extraData)
+        external
+        payable
+        override
+        returns (uint256 disputeID)
+    {
         require(msg.value >= arbitrationCost(_extraData), "Arbitration fees: not enough.");
         disputeID = disputes.length;
         disputes.push(
@@ -90,14 +87,13 @@ contract SafeArbitrator is IArbitrator {
 
     /// @inheritdoc IArbitrator
     function createDispute(
-        uint256 /*_choices*/,
-        bytes calldata /*_extraData*/,
-        IERC20 /*_feeToken*/,
+        uint256, /*_choices*/
+        bytes calldata, /*_extraData*/
+        IERC20, /*_feeToken*/
         uint256 /*_feeAmount*/
     ) external pure override returns (uint256) {
         revert("Not supported");
     }
-
 
     /// @dev Give a ruling to a dispute.
     /// @param _disputeID ID of the dispute to rule.
@@ -111,29 +107,26 @@ contract SafeArbitrator is IArbitrator {
         dispute.ruling = _ruling;
         dispute.status = DisputeStatus.Solved;
 
-        payable(msg.sender).send(dispute.arbitrationFee); // Avoid blocking.
+        payable(msg.sender).send(dispute.arbitrationFee);
         dispute.arbitrated.rule(_disputeID, dispute.ruling);
-        
     }
 
-
     /// @inheritdoc IArbitrator
-    function arbitrationCost(bytes calldata /*_extraData*/) public view override returns (uint256 fee) {
+    function arbitrationCost(bytes calldata /*_extraData*/ ) public view override returns (uint256 fee) {
         return arbitrationFee;
     }
 
     /// @inheritdoc IArbitrator
-    function arbitrationCost(
-        bytes calldata /*_extraData*/,
-        IERC20 /*_feeToken*/
-    ) public pure override returns (uint256 /*cost*/) {
+    function arbitrationCost(bytes calldata, /*_extraData*/ IERC20 /*_feeToken*/ )
+        public
+        pure
+        override
+        returns (uint256 /*cost*/ )
+    {
         revert("Not supported");
     }
 
-
-    function currentRuling(
-        uint256 _disputeID
-    ) public view returns (uint256 ruling, bool tied, bool overridden) {
+    function currentRuling(uint256 _disputeID) public view returns (uint256 ruling, bool tied, bool overridden) {
         DisputeStruct storage dispute = disputes[_disputeID];
         ruling = dispute.ruling;
         tied = false;
