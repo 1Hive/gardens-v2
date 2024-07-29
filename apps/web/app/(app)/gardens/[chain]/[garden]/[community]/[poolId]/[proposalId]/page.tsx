@@ -237,9 +237,11 @@ export default function Page({
             </div>
           </div>
         </div>
-        <div className="flex w-full justify-end">
-          <DisputeButton proposalData={{ ...proposalData, ...ipfsResult }} />
-        </div>
+        {proposalStatus[proposalData.proposalStatus] === "active" && (
+          <div className="flex w-full justify-end">
+            <DisputeButton proposalData={{ ...proposalData, ...ipfsResult }} />
+          </div>
+        )}
       </header>
       <section className="section-layout">
         <h2>Metrics</h2>

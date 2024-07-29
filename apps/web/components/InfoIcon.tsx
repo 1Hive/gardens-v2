@@ -2,9 +2,10 @@ import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 type InfoIconProps = {
-  content: string
-  children: React.ReactNode;
+  content: string;
+  children?: React.ReactNode;
   classNames?: string;
+  customIcon?: React.ReactNode;
   size?: "sm" | "md" | "lg";
 };
 
@@ -18,22 +19,18 @@ export function InfoIcon({
   content,
   children,
   classNames,
+  customIcon,
   size = "md",
 }: InfoIconProps): JSX.Element {
-
   const { width, height } = sizeMap[size];
 
   return (
     <div
-      className={`tooltip flex cursor-pointer items-center max-w-sm ${classNames}`}
+      className={`tooltip flex gap-2 cursor-pointer items-center max-w-sm [&>svg]:text-primary-content [&>svg]:stroke-2 ${classNames}`}
       data-tip={content}
     >
       {children}
-      <InformationCircleIcon
-        className="ml-2 stroke-2 text-primary-content"
-        width={width}
-        height={height}
-      />
+      {customIcon ?? <InformationCircleIcon width={width} height={height} />}
     </div>
   );
 }

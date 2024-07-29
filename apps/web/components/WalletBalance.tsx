@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useEffect, useRef } from "react";
 import { CurrencyDollarIcon, WalletIcon } from "@heroicons/react/24/outline";
 import { Address, useAccount, useBalance } from "wagmi";
 import { InfoIcon } from "./InfoIcon";
@@ -60,9 +60,11 @@ export const WalletBalance: FC<Props> = ({
         <Statistic
           count={<div className="w-14">{askedAmount.toFixed(4)}</div>}
           icon={
-            <div className="tooltip" data-tooltip="Cost">
-              <CurrencyDollarIcon />
-            </div>
+            <InfoIcon
+              content="Cost amount"
+              customIcon={<CurrencyDollarIcon />}
+              classNames="[&:before]:ml-2"
+            />
           }
         >
           {data?.symbol}
@@ -72,9 +74,11 @@ export const WalletBalance: FC<Props> = ({
         <Statistic
           count={<div className="w-14">{balance?.toFixed(4)}</div>}
           icon={
-            <div className="tooltip" data-tooltip="Wallet balance">
-              <WalletIcon />
-            </div>
+            <InfoIcon
+              content="Wallet balance"
+              customIcon={<WalletIcon />}
+              classNames="[&:before]:ml-2"
+            />
           }
         >
           {data?.symbol}
