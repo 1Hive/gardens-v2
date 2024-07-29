@@ -50,6 +50,7 @@ export const PoolGovernance = ({
 
   const showPoolGovernanceData =
     isMember && isMemberActivated !== undefined && isMemberActivated;
+
   return (
     <section className="section-layout">
       <header>

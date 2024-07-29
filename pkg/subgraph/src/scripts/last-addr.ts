@@ -125,4 +125,3 @@ switch (chainArg) {
 }
 
 const latestAddress = getRunLatestAddrs(defaultChain);
-console.debug({ latestAddress });
