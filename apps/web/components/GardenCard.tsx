@@ -2,6 +2,7 @@
 
 import { BuildingStorefrontIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { Address } from "viem";
 import { getTokenGardensQuery } from "#/subgraph/.graphclient";
 import { Statistic, TokenLabel } from ".";
 import { gardenLand } from "@/assets";
@@ -15,10 +16,25 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
   const link = `/gardens/${chainId}/${id}`;
   const communities = garden.communities?.filter((comm) => comm.isValid);
   const commLength = communities?.length ?? 0;
-  const totalMembers =
-    communities
-      ?.map((comm) => comm.members?.length ?? 0)
-      .reduce((a, b) => a + b, 0) ?? 0; //@todo temporary, that can be take from the subgraph
+
+  // TODO: improve the types ?
+  function countUniqueMemberAddresses(communitiesArray: any[] | undefined) {
+    const uniqueAddresses = new Set();
+
+    communitiesArray?.forEach(community => {
+      if (community.members && Array.isArray(community.members)) {
+        community.members.forEach((member: { memberAddress: Address; }) => {
+          if (member.memberAddress) {
+            uniqueAddresses.add(member.memberAddress);
+          }
+        });
+      }
+    });
+    return uniqueAddresses.size;
+  }
+
+  const totalMembers = countUniqueMemberAddresses(communities);
+
   return (
     <Card href={link} >
       <div className="flex flex-col gap-7">
