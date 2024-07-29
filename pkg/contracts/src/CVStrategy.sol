@@ -51,7 +51,8 @@ library StrategyStruct {
         Cancelled, // A vote that has been cancelled
         Executed, // A vote that has been executed
         Disputed, // A vote that has been disputed
-        Blocked, // A vote that has been blocked
+        Blocked // A vote that has been blocked
+
     }
 
     struct Proposal {
@@ -108,7 +109,7 @@ library StrategyStruct {
 contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrategy, ERC165 {
     using Math for uint256;
 
-     error UserCannotBeZero(); // 0xd1f28288
+    error UserCannotBeZero(); // 0xd1f28288
     error UserNotInRegistry(); //0x6a5cfb6d
     error UserIsInactive(); // 0x5fccb67f
     error PoolIsEmpty(); // 0xed4421ad
@@ -465,7 +466,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
-        }//signaling do nothing @todo write tests @todo add end date
+        } //signaling do nothing @todo write tests @todo add end date
     }
 
     function canExecuteProposal(uint256 proposalId) public view returns (bool canBeExecuted) {
@@ -642,8 +643,8 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             uint256 proposalId = _proposalSupport[i].proposalId;
             if (proposalsIds.length == 0) {
-                proposalsIds = new uint256;
-                proposalsIds[0] = proposalId;
+                proposalsIds = new uint256[](1);
+                proposalsIds[0] = proposalId; // 0 => 1
             } else {
                 bool exist = false;
                 for (uint256 j = 0; j < proposalsIds.length; j++) {
@@ -930,15 +931,15 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
                 proposalId, proposal.submitter, arbitrableConfig.collateralAmount
             );
             arbitrableConfig.collateralVault.withdrawCollateral(
-                proposalId, address(registryCommunity.getCouncilSafe()), arbitrableConfig.collateralAmount
+                proposalId, address(registryCommunity.councilSafe()), arbitrableConfig.collateralAmount
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Blocked;
             arbitrableConfig.collateralVault.withdrawCollateral(
-                proposalId, proposal.challenger, 1.5 * arbitrableConfig.collateralAmount
+                proposalId, proposal.challenger, (arbitrableConfig.collateralAmount * 3) / 2
             );
             arbitrableConfig.collateralVault.withdrawCollateral(
-                proposalId, address(registryCommunity.getCouncilSafe()), 0.5 * arbitrableConfig.collateralAmount
+                proposalId, address(registryCommunity.councilSafe()), arbitrableConfig.collateralAmount / 2
             );
         }
 
