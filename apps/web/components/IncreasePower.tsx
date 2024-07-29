@@ -69,7 +69,7 @@ export const IncreasePower = ({
   const { address: connectedAccount } = useAccount();
 
   const stakedTokens =
-    memberData?.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
+    memberData?.member?.memberCommunity?.[0]?.stakedTokens;
   const memberStakedTokens = BigInt(
     typeof stakedTokens === "string" ? stakedTokens : "0",
   );

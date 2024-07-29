@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-shadow */
-/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 import React, { ReactElement, useEffect, useState } from "react";
 import { Address } from "viem";
@@ -12,6 +10,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { Modal } from "@/components";
+import { isProd } from "@/constants/contracts";
 import useModal from "@/hooks/useModal";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
@@ -36,10 +35,6 @@ export function CheckPassport({
   children,
   enableCheck = true,
 }: CheckPassportProps) {
-  if (!enableCheck) {
-    return <>{children}</>;
-  }
-
   const { address: walletAddr } = useAccount();
   const { ref, openModal, closeModal } = useModal();
   const [score, setScore] = useState<number>(0);
@@ -48,44 +43,52 @@ export function CheckPassport({
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!enableCheck) {
+      return;
+    }
     if (shouldOpenModal) {
       openModal();
       setShouldOpenModal(false);
     }
   }, [shouldOpenModal]);
 
-  useEffect(() => {
-    if (walletAddr) {
-      refetchPassportUser();
-    }
-  }, [walletAddr]);
-
-  const { data: passportUserData, refetch: refetchPassportUser } =
-    useSubgraphQuery<getPassportUserQuery>({
-      query: getPassportUserDocument,
-      variables: { userId: walletAddr?.toLowerCase() },
-      enabled: !!walletAddr,
-      //TODO: add changeScope = passport
-    });
+  const { data: passportUserData } = useSubgraphQuery<getPassportUserQuery>({
+    query: getPassportUserDocument,
+    variables: { userId: walletAddr?.toLowerCase() },
+    enabled: !!walletAddr && enableCheck,
+    //TODO: add changeScope = passportUserData
+  });
   const passportUser = passportUserData?.passportUser;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
       variables: { strategyId: strategyAddr },
+      enabled: enableCheck,
       //TODO: add changeScope = passport
     });
+
   const passportStrategy = passportStrategyData?.passportStrategy;
 
+  if (!enableCheck) {
+    return <>{children}</>;
+  }
+
   //force active passport for testing
-  // if (passportStrategy?.active !== undefined) {
-  //   passportStrategy.active = true;
-  // }
+  if (!isProd) {
+    (window as any).togglePassportEnable = (enable: boolean): string => {
+      if (passportStrategy) {
+        passportStrategy.active = enable;
+        return "passportStrategy.active set to " + enable;
+      } else {
+        return "No passportStrategy found";
+      }
+    };
+  }
 
   const handleCheckPassport = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
-
     if (!!passportStrategy && passportStrategy.active) {
       if (walletAddr) {
         checkPassportRequirements(walletAddr, e);
@@ -97,7 +100,7 @@ export function CheckPassport({
   };
 
   const checkPassportRequirements = (
-    walletAddr: Address,
+    _walletAddr: Address,
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     if (passportUser) {
@@ -110,17 +113,17 @@ export function CheckPassport({
       console.debug("No passport found, Submitting passport...");
       e.preventDefault();
       e.stopPropagation();
-      submitAndWriteScorer(walletAddr);
+      submitAndWriteScorer(_walletAddr);
     }
   };
 
   const checkScoreRequirement = (
-    score: number | string,
-    threshold: number | string,
+    _score: number | string,
+    _threshold: number | string,
     e?: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
-    score = Number(score);
-    threshold = Number(threshold) / CV_PERCENTAGE_SCALE;
+    _score = Number(_score);
+    _threshold = Number(_threshold) / CV_PERCENTAGE_SCALE;
     if (score > threshold) {
       console.debug("Score meets threshold, moving forward...");
       setScore(score);
@@ -135,14 +138,14 @@ export function CheckPassport({
     }
   };
 
-  const submitAndWriteScorer = async (walletAddr: Address) => {
+  const submitAndWriteScorer = async (_walletAddr: Address) => {
     openModal();
     setIsSubmiting(true);
     try {
-      const passportResponse = await submitPassport(walletAddr);
+      const passportResponse = await submitPassport(_walletAddr);
       console.debug(passportResponse);
       if (passportResponse?.data?.score) {
-        await writeScorer(walletAddr);
+        await writeScorer(_walletAddr);
       }
       // gitcoin passport score no need for formating
       if (passportResponse?.data?.score) {
@@ -237,13 +240,12 @@ export function CheckPassport({
               Pool requirement:{" "}
               <span className="font-semibold">{threshold.toFixed(2)}</span>
             </p>
-            {score > threshold ? (
+            {score > threshold ?
               <div>
                 <h5 className="mt-6">Congratulations!</h5>
-                <p>
-                 Your score meets the pool requirement. You can proceed.</p>
-              </div> ) : (
-              <p className="mt-6">
+                <p>Your score meets the pool requirement. You can proceed.</p>
+              </div>
+            : <p className="mt-6">
                 Your score is too low, please go to{" "}
                 <a
                   href="https://passport.gitcoin.co/"
@@ -255,14 +257,13 @@ export function CheckPassport({
                 </a>{" "}
                 to increment it before continuing.
               </p>
-            )}
+            }
           </div>
           {walletAddr && (
             <div className="flex justify-end">
-              {score > threshold ? (
+              {score > threshold ?
                 children
-              ) : (
-                <Button
+              : <Button
                   onClick={() => submitAndWriteScorer(walletAddr)}
                   className="w-fit"
                   btnStyle="outline"
@@ -270,7 +271,7 @@ export function CheckPassport({
                 >
                   Check again
                 </Button>
-              )}
+              }
             </div>
           )}
         </div>

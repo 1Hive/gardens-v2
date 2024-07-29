@@ -57,15 +57,17 @@ export function ProposalCard({
   const { title, id, proposalNumber, proposalStatus } = proposalData;
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
-  const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] === proposalData.proposalNumber;
+  const isNewProposal =
+    searchParams[QUERY_PARAMS.poolPage.newPropsoal] ===
+    proposalData.proposalNumber;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
 
   const calcPoolWeightUsed = (number: number) => {
     return memberPoolWeight == 0 ? 0 : (
-      ((number / 100) * memberPoolWeight).toFixed(2)
-    );
+        ((number / 100) * memberPoolWeight).toFixed(2)
+      );
   };
 
   //encode proposal id to pass as argument to distribute function
@@ -130,7 +132,7 @@ export function ProposalCard({
               tooltip={
                 proposalStatus == 4 ?
                   "Proposal already executed"
-                  : tooltipMessage
+                : tooltipMessage
               }
               onClick={() =>
                 writeDistribute?.({
@@ -161,7 +163,9 @@ export function ProposalCard({
                 min={0}
                 max={memberActivatedPoints}
                 value={inputData?.value ?? 0}
-                className={"range range-success range-sm min-w-[420px] cursor-pointer"}
+                className={
+                  "range range-success range-sm min-w-[420px] cursor-pointer"
+                }
                 step={memberActivatedPoints / 100}
                 onChange={(e) => inputHandler(index, Number(e.target.value))}
               />
@@ -197,7 +201,7 @@ export function ProposalCard({
                 </span>
                 % of pool weight
               </p>
-              : <p className="text-center">
+            : <p className="text-center">
                 Assigning
                 <span className="px-2 py-2 text-2xl font-semibold text-info">
                   {calcPoolWeightUsed(

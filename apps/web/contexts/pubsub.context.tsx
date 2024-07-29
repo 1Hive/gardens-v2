@@ -70,8 +70,8 @@ export type ChangeEventScope = {
   topic: ChangeEventTopic;
   type?: ChangeEventPayload["type"] | ChangeEventPayload["type"][];
   containerId?:
-  | ChangeEventPayload["containerId"]
-  | ChangeEventPayload["containerId"][];
+    | ChangeEventPayload["containerId"]
+    | ChangeEventPayload["containerId"][];
   action?: ChangeEventPayload["function"] | ChangeEventPayload["function"][];
   chainId?: ChangeEventPayload["chainId"] | ChangeEventPayload["chainId"][];
   id?: ChangeEventPayload["id"] | ChangeEventPayload["id"][];
@@ -114,11 +114,11 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
 
   const subscriptionsMap = useRef(
     new Map<
-    SubscriptionId,
-    {
-      scopes: ChangeEventScope[];
-      onChangeEvent: (payload: ChangeEventPayload) => void;
-    }
+      SubscriptionId,
+      {
+        scopes: ChangeEventScope[];
+        onChangeEvent: (payload: ChangeEventPayload) => void;
+      }
     >(),
   );
 

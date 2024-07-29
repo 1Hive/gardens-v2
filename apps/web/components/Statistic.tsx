@@ -29,8 +29,8 @@ export const Statistic = ({
       {(label ?? count) && (
         <span>
           {label ?
-            <span className="capitalize">{label}:</span>
-          : ""}{" "}
+            <span className="capitalize">{label}: </span>
+          : ""}
           {count}
         </span>
       )}
