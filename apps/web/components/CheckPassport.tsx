@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-shadow */
-/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 import React, { ReactElement, useEffect, useState } from "react";
 import { Address } from "viem";
@@ -37,10 +35,6 @@ export function CheckPassport({
   children,
   enableCheck = true,
 }: CheckPassportProps) {
-  if (!enableCheck) {
-    return <>{children}</>;
-  }
-
   const { address: walletAddr } = useAccount();
   const { ref, openModal, closeModal } = useModal();
   const [score, setScore] = useState<number>(0);
@@ -49,35 +43,36 @@ export function CheckPassport({
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!enableCheck) {
+      return;
+    }
     if (shouldOpenModal) {
       openModal();
       setShouldOpenModal(false);
     }
   }, [shouldOpenModal]);
 
-  useEffect(() => {
-    if (walletAddr) {
-      refetchPassportUser();
-    }
-  }, [walletAddr]);
-
-  const { data: passportUserData, refetch: refetchPassportUser } =
-    useSubgraphQuery<getPassportUserQuery>({
-      query: getPassportUserDocument,
-      variables: { userId: walletAddr?.toLowerCase() },
-      enabled: !!walletAddr,
-      //TODO: add changeScope = passportUserData
-    });
+  const { data: passportUserData } = useSubgraphQuery<getPassportUserQuery>({
+    query: getPassportUserDocument,
+    variables: { userId: walletAddr?.toLowerCase() },
+    enabled: !!walletAddr && enableCheck,
+    //TODO: add changeScope = passportUserData
+  });
   const passportUser = passportUserData?.passportUser;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
-      variables: { strategyId: strategyAddr.toLowerCase() },
-      //TODO: add changeScope = passportStrategyData
+      variables: { strategyId: strategyAddr },
+      enabled: enableCheck,
+      //TODO: add changeScope = passport
     });
 
   const passportStrategy = passportStrategyData?.passportStrategy;
+
+  if (!enableCheck) {
+    return <>{children}</>;
+  }
 
   //force active passport for testing
   if (!isProd) {
@@ -90,7 +85,6 @@ export function CheckPassport({
       }
     };
   }
-  console.log(passportStrategy, strategyAddr);
 
   const handleCheckPassport = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -106,7 +100,7 @@ export function CheckPassport({
   };
 
   const checkPassportRequirements = (
-    walletAddr: Address,
+    _walletAddr: Address,
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     if (passportUser) {
@@ -119,17 +113,17 @@ export function CheckPassport({
       console.debug("No passport found, Submitting passport...");
       e.preventDefault();
       e.stopPropagation();
-      submitAndWriteScorer(walletAddr);
+      submitAndWriteScorer(_walletAddr);
     }
   };
 
   const checkScoreRequirement = (
-    score: number | string,
-    threshold: number | string,
+    _score: number | string,
+    _threshold: number | string,
     e?: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
-    score = Number(score);
-    threshold = Number(threshold) / CV_PERCENTAGE_SCALE;
+    _score = Number(_score);
+    _threshold = Number(_threshold) / CV_PERCENTAGE_SCALE;
     if (score > threshold) {
       console.debug("Score meets threshold, moving forward...");
       setScore(score);
@@ -144,14 +138,14 @@ export function CheckPassport({
     }
   };
 
-  const submitAndWriteScorer = async (walletAddr: Address) => {
+  const submitAndWriteScorer = async (_walletAddr: Address) => {
     openModal();
     setIsSubmiting(true);
     try {
-      const passportResponse = await submitPassport(walletAddr);
+      const passportResponse = await submitPassport(_walletAddr);
       console.debug(passportResponse);
       if (passportResponse?.data?.score) {
-        await writeScorer(walletAddr);
+        await writeScorer(_walletAddr);
       }
       // gitcoin passport score no need for formating
       if (passportResponse?.data?.score) {
