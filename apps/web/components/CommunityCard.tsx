@@ -37,9 +37,8 @@ export function CommunityCard({
         width={100}
       />
       <div className="flex flex-col gap-2">
-        {/* fixed height for 2row title */}
-        <div className="flex h-[37px] items-center">
-          <h5>{name}</h5>
+        <div className="flex items-start max-w-full">
+          <h3 className="truncate">{name}</h3>
         </div>
         <Statistic label="members" count={membersCount} />
         <Statistic
