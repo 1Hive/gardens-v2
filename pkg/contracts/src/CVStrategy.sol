@@ -45,13 +45,13 @@ library StrategyStruct {
     }
 
     enum ProposalStatus {
-        Inactive,
-        Active,
-        Paused,
-        Cancelled,
-        Executed,
-        Disputed,
-        Blocked
+        Inactive, // Inactive
+        Active, // A vote that has been reported to Agreements
+        Paused, // A vote that is being challenged by Agreements
+        Cancelled, // A vote that has been cancelled
+        Executed, // A vote that has been executed
+        Disputed, // A vote that has been disputed
+        Blocked, // A vote that has been blocked
     }
 
     struct Proposal {
@@ -64,7 +64,7 @@ library StrategyStruct {
         address requestedToken;
         uint256 blockLast;
         ProposalStatus proposalStatus;
-        mapping(address => uint256) voterStakedPoints;
+        mapping(address => uint256) voterStakedPoints; // voter staked points
         Metadata metadata;
         uint256 disputeId;
         uint256 disputeTimestamp;
@@ -73,10 +73,11 @@ library StrategyStruct {
 
     struct ProposalSupport {
         uint256 proposalId;
-        int256 deltaSupport;
+        int256 deltaSupport; // use int256 to allow negative values
     }
 
     struct PointSystemConfig {
+        //Capped point system
         uint256 maxAmount;
     }
 
@@ -90,8 +91,11 @@ library StrategyStruct {
 
     struct InitializeParams {
         address registryCommunity;
+        // Alpha | Decay | a
         uint256 decay;
+        // MaxRatio | Beta | b | SpendingLimit
         uint256 maxRatio;
+        // Weight | RHO | p
         uint256 weight;
         uint256 minThresholdPoints;
         ProposalType proposalType;
@@ -104,33 +108,33 @@ library StrategyStruct {
 contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrategy, ERC165 {
     using Math for uint256;
 
-    error UserCannotBeZero();
-    error UserNotInRegistry();
-    error UserIsInactive();
-    error PoolIsEmpty();
-    error NotImplemented();
-    error TokenCannotBeZero();
-    error TokenNotAllowed();
-    error AmountOverMaxRatio();
-    error PoolIdCannotBeZero();
-    error AddressCannotBeZero();
-    error RegistryCannotBeZero();
-    error SupportUnderflow(uint256 _support, int256 _delta, int256 _result);
-    error MaxPointsReached();
-    error CantIncreaseFixedSystem();
-    error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance);
+     error UserCannotBeZero(); // 0xd1f28288
+    error UserNotInRegistry(); //0x6a5cfb6d
+    error UserIsInactive(); // 0x5fccb67f
+    error PoolIsEmpty(); // 0xed4421ad
+    error NotImplemented(); //0xd6234725
+    error TokenCannotBeZero(); //0x596a094c
+    error TokenNotAllowed(); // 0xa29c4986
+    error AmountOverMaxRatio(); // 0x3bf5ca14
+    error PoolIdCannotBeZero(); //0x4e791786
+    error AddressCannotBeZero(); //0xe622e040
+    error RegistryCannotBeZero(); // 0x5df4b1ef
+    error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
+    error MaxPointsReached(); // 0x8402b474
+    error CantIncreaseFixedSystem(); // 0x573c3e93
+    error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
-    error ProposalDataIsEmpty();
-    error ProposalIdCannotBeZero();
-    error ProposalNotActive(uint256 _proposalId);
-    error ProposalNotInList(uint256 _proposalId);
-    error ProposalNotDisputed(uint256 _proposalId);
-    error ProposalSupportDuplicated(uint256 _proposalId, uint256 index);
-    error ConvictionUnderMinimumThreshold();
-    error OnlyCommunityAllowed();
-    error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount);
+    error ProposalDataIsEmpty(); //0xc5f7c4c0
+    error ProposalIdCannotBeZero(); //0xf881a10d
+    error ProposalNotActive(uint256 _proposalId); // 0x44980d8f
+    error ProposalNotInList(uint256 _proposalId); // 0xc1d17bef
+    error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
+    error ConvictionUnderMinimumThreshold(); // 0xcce79308
+    error OnlyCommunityAllowed(); // 0xaf0916a2
+    error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount); //0x5863b0b6
     error InsufficientCollateral(uint256 sentAmount, uint256 requiredAmount);
     error OnlyArbitrator();
+    error ProposalNotDisputed(uint256 _proposalId);
 
     event InitializedCV(uint256 poolId, StrategyStruct.InitializeParams data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
@@ -151,11 +155,19 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         uint256 proposalId, uint256 disputeId, address challenger, uint256 arbitrationFee, string context
     );
 
-    uint256 public constant D = 10000000;
-    uint256 private constant TWO_128 = 0x100000000000000000000000000000000;
-    uint256 private constant TWO_127 = 0x80000000000000000000000000000000;
-    uint256 private constant TWO_64 = 0x10000000000000000;
-    uint256 public constant MAX_STAKED_PROPOSALS = 10;
+    /*|-------------------------------------/-------|*o
+    /*|              STRUCTS/ENUMS                 |*/
+    /*|--------------------------------------------|*/
+
+    /*|--------------------------------------------|*/
+    /*|                VARIABLES                   |*/
+    /*|--------------------------------------------|*/
+
+    uint256 public constant D = 10000000; //10**7
+    uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
+    uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
+    uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
+    uint256 public constant MAX_STAKED_PROPOSALS = 10; // @todo not allow stake more than 10 proposals per user, don't count executed?
     uint256 public constant RULING_OPTIONS = 3;
 
     uint256 public decay;
@@ -164,21 +176,27 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     uint256 public proposalCounter = 0;
     uint256 public totalStaked;
     uint256 public totalPointsActivated;
-    uint256 public _minThresholdPoints = 0;
-    uint256 internal surpressStateMutabilityWarning;
+    uint256 public _minThresholdPoints = 0; // starting with a default of zero
+    uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
 
     StrategyStruct.ProposalType public proposalType;
+
+    // Struct variables for complex data structures
     StrategyStruct.PointSystem public pointSystem;
     StrategyStruct.PointSystemConfig public pointConfig;
     StrategyStruct.ArbitrableConfig public arbitrableConfig;
 
+    // Contract reference
     RegistryCommunity public registryCommunity;
 
-    mapping(uint256 => StrategyStruct.Proposal) public proposals;
-    mapping(address => uint256) public totalVoterStakePct;
-    mapping(address => uint256[]) public voterStakedProposals;
+    mapping(uint256 => StrategyStruct.Proposal) public proposals; // Mapping of proposal IDs to Proposal structures
+    mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
+    mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
     mapping(uint256 => uint256) public disputeIdToProposalId;
 
+    /*|--------------------------------------------|*/
+    /*|              CONSTRUCTORS                  |*/
+    /*|--------------------------------------------|*/
     constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
     function initialize(uint256 _poolId, bytes memory _data) external {
@@ -202,13 +220,22 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         emit InitializedCV(_poolId, ip);
     }
 
-    fallback() external payable {}
+    fallback() external payable {
+        // // surpressStateMutabilityWarning++;
+    }
 
-    receive() external payable {}
+    receive() external payable {
+        //@todo allow only allo protocol to fund it.
+        // // surpressStateMutabilityWarning++;
+    }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IPointStrategy).interfaceId || super.supportsInterface(interfaceId);
     }
+
+    /*|--------------------------------------------|*/
+    /*|                 MODIFIERS                  |*/
+    /*|--------------------------------------------|*/
 
     function checkSenderIsMember(address _sender) private view {
         if (_sender == address(0)) {
@@ -231,6 +258,11 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     function revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
+
+    // this is called via allo.sol to register recipients
+    // it can change their status all the way to Accepted, or to Pending if there are more steps
+    // if there are more steps, additional functions should be added to allow the owner to check
+    // this could also check attestations directly and then Accept
 
     function _registerRecipient(bytes memory _data, address _sender) internal override returns (address) {
         _data;
@@ -287,6 +319,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     function _deactivatePoints(address _member) internal {
         totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
+        // remove support from all proposals
         withdraw(_member);
         emit PointsDeactivated(_member);
     }
@@ -311,6 +344,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
 
     function decreasePower(address _member, uint256 _amountToUnstake) external returns (uint256) {
         onlyRegistryCommunity();
+        //requireMemberActivatedInStrategies
         uint256 pointsToDecrease = 0;
         if (pointSystem == StrategyStruct.PointSystem.Unlimited || pointSystem == StrategyStruct.PointSystem.Capped) {
             pointsToDecrease = decreasePowerCappedUnlimited(_amountToUnstake);
@@ -340,7 +374,9 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         uint256 decimal = 18;
         try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
-        } catch {}
+        } catch {
+            console.log("Error getting decimal");
+        }
         uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
         uint256 currentPoints = registryCommunity.getMemberPowerInStrategy(_member, address(this));
         uint256 pointsToIncrease = newTotalPoints - currentPoints;
@@ -355,7 +391,9 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         uint256 decimal = 18;
         try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
-        } catch {}
+        } catch {
+            console.log("Error getting decimal");
+        }
         uint256 newTotalStake = registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake;
         uint256 newTotalPoints = Math.sqrt(newTotalStake * 10 ** decimal);
         uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
@@ -370,12 +408,20 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         return pointSystem;
     }
 
+    // [[[proposalId, delta],[proposalId, delta]]]
+    // layout.txs -> console.log(data)
+    // data = bytes
     function supportProposal(StrategyStruct.ProposalSupport[] memory) public pure {
+        // // surpressStateMutabilityWarning++;
         revert NotImplemented();
+        // allo().allocate(poolId, abi.encode(proposalId));
     }
 
+    // only called via allo.sol by users to allocate to a recipient
+    // this will update some data in this contract to store votes, etc.
     function _allocate(bytes memory _data, address _sender) internal override {
         checkSenderIsMember(_sender);
+        // surpressStateMutabilityWarning++;
         bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
         if (!isMemberActivatedPoints) {
             revert UserIsInactive();
@@ -385,7 +431,12 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         _addSupport(_sender, pv);
     }
 
+    // this will distribute tokens to recipients
+    // most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
+    // this contract will need to track the amount paid already, so that it doesn't double pay
     function _distribute(address[] memory, bytes memory _data, address) internal override {
+        //@todo could reentrancy?
+        // surpressStateMutabilityWarning++;
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty();
         }
@@ -414,7 +465,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
-        }
+        }//signaling do nothing @todo write tests @todo add end date
     }
 
     function canExecuteProposal(uint256 proposalId) public view returns (bool canBeExecuted) {
@@ -428,10 +479,15 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         canBeExecuted = convictionLast >= threshold;
     }
 
+    // simply returns the status of a recipient
+    // probably tracked in a mapping, but will depend on the implementation
+    // for example, the OpenSelfRegistration only maps users to bool, and then assumes Accepted for those
+    // since there is no need for Pending or Rejected
     function _getRecipientStatus(address _recipientId) internal pure override returns (Status) {
         return _recipientId == address(0) ? Status.Rejected : Status.Accepted;
     }
 
+    /// @return Input the values you would send to distribute(), get the amounts each recipient in the array would receive
     function getPayouts(address[] memory, bytes[] memory) external pure override returns (PayoutSummary[] memory) {
         revert NotImplemented();
     }
@@ -450,6 +506,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         emit PoolAmountIncreased(_amount);
     }
 
+    // simply returns whether a allocator is valid or not, will usually be true for all
     function _isValidAllocator(address _allocator) internal pure override returns (bool) {
         return _allocator != address(0);
     }
@@ -459,6 +516,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     }
 
     function withdraw(address _member) internal {
+        // remove all proposals from the member
         uint256[] memory proposalsIds = voterStakedProposals[_member];
         for (uint256 i = 0; i < proposalsIds.length; i++) {
             uint256 proposalId = proposalsIds[i];
@@ -473,6 +531,19 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         }
     }
 
+    /**
+     * @dev Get proposal details
+     * @param _proposalId Proposal id
+     * @return submitter Proposal submitter
+     * @return beneficiary Proposal beneficiary
+     * @return requestedToken Proposal requested token
+     * @return requestedAmount Proposal requested amount
+     * @return stakedAmount Proposal staked points
+     * @return proposalStatus Proposal status
+     * @return blockLast Last block when conviction was calculated
+     * @return convictionLast Last conviction calculated
+     * @return threshold Proposal threshold
+     */
     function getProposal(uint256 _proposalId)
         external
         view
@@ -510,6 +581,12 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         return proposal.metadata;
     }
 
+    /**
+     * @notice Get stake of voter `_voter` on proposal #`_proposalId`
+     * @param _proposalId Proposal id
+     * @param _voter Voter address
+     * @return Proposal voter stake
+     */
     function getProposalVoterStake(uint256 _proposalId, address _voter) external view returns (uint256) {
         return _internal_getProposalVoterStake(_proposalId, _voter);
     }
@@ -623,16 +700,46 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         return uint256(result);
     }
 
+    /**
+     * @dev Conviction formula: a^t * y(0) + x * (1 - a^t) / (1 - a)
+     * Solidity implementation: y = (2^128 * a^t * y0 + x * D * (2^128 - 2^128 * a^t) / (D - aD) + 2^127) / 2^128
+     * @param _timePassed Number of blocks since last conviction record
+     * @param _lastConv Last conviction record
+     * @param _oldAmount Amount of tokens staked until now
+     * @return Current conviction
+     */
     function calculateConviction(uint256 _timePassed, uint256 _lastConv, uint256 _oldAmount)
         public
         view
         returns (uint256)
     {
         uint256 t = _timePassed;
+        // atTWO_128 = 2^128 * a^t
+        //        @audit-issue why that _pow require that need be less than TWO_128? why dont use 256?
+        //        @audit-ok they use 2^128 as the container for the result of the _pow function
+
+        //        uint256 atTWO_128 = _pow((decay << 128).div(D), t);
         uint256 atTWO_128 = _pow((decay << 128) / D, t);
+        // solium-disable-previous-line
+        // conviction = (atTWO_128 * _lastConv + _oldAmount * D * (2^128 - atTWO_128) / (D - aD) + 2^127) / 2^128
+        //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
+        //            >> 128;
+        //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
+        //            >> 128;
         return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - decay))) + TWO_127) >> 128;
     }
 
+    /**
+     * @dev Formula: ρ * totalStaked / (1 - a) / (β - requestedAmount / total)**2
+     * For the Solidity implementation we amplify ρ and β and simplify the formula:
+     * weight = ρ * D
+     * maxRatio = β * D
+     * decay = a * D
+     * threshold = weight * totalStaked * D ** 2 * funds ** 2 / (D - decay) / (maxRatio * funds - requestedAmount * D) ** 2
+     * @param _requestedAmount Requested amount of tokens on certain proposal
+     * @return _threshold Threshold a proposal's conviction should surpass in order to be able to
+     * executed it.
+     */
     function calculateThreshold(uint256 _requestedAmount) public view returns (uint256 _threshold) {
         if (poolAmount <= 0) {
             revert PoolIsEmpty();
@@ -646,12 +753,26 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         _threshold = _threshold > _minThresholdPoints ? _threshold : _minThresholdPoints;
     }
 
+    /**
+     * Multiply _a by _b / 2^128.  Parameter _a should be less than or equal to
+     * 2^128 and parameter _b should be less than 2^128.
+     * @param _a left argument
+     * @param _b right argument
+     * @return _result _a * _b / 2^128
+     */
     function _mul(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {
         require(_a <= TWO_128, "_a should be less than or equal to 2^128");
         require(_b < TWO_128, "_b should be less than 2^128");
         return ((_a * _b) + TWO_127) >> 128;
     }
 
+    /**
+     * Calculate (_a / 2^128)^_b * 2^128.  Parameter _a should be less than 2^128.
+     *
+     * @param _a left argument
+     * @param _b right argument
+     * @return _result (_a / 2^128)^_b * 2^128
+     */
     function _pow(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {
         require(_a < TWO_128, "_a should be less than 2^128");
         uint256 a = _a;
@@ -672,6 +793,11 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         return totalPointsActivated;
     }
 
+    /**
+     * @dev Calculate conviction and store it on the proposal
+     * @param _proposal Proposal
+     * @param _oldStaked Amount of tokens staked on a proposal until now
+     */
     function _calculateAndSetConviction(StrategyStruct.Proposal storage _proposal, uint256 _oldStaked) internal {
         (uint256 conviction, uint256 blockNumber) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
         if (conviction == 0 && blockNumber == 0) {
