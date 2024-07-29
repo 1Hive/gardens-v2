@@ -291,6 +291,7 @@ export default function Page({
                 key={pool.poolId}
                 tokenGarden={{
                   decimals: tokenGarden?.decimals ?? 18,
+                  symbol: tokenGarden?.symbol ?? "",
                 }}
                 pool={pool}
               />
@@ -306,6 +307,7 @@ export default function Page({
               <PoolCard
                 key={pool.poolId}
                 tokenGarden={{
+                  symbol: tokenGarden?.symbol ?? "",
                   decimals: tokenGarden?.decimals ?? 18,
                 }}
                 pool={pool}
@@ -323,6 +325,7 @@ export default function Page({
                 key={pool.poolId}
                 tokenGarden={{
                   decimals: tokenGarden?.decimals ?? 18,
+                  symbol: tokenGarden?.symbol ?? "",
                 }}
                 pool={pool}
               />
