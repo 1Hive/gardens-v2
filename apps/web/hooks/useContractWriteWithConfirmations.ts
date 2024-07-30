@@ -11,7 +11,12 @@ import {
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainDataMap } from "@/configs/chainServer";
 
-export type ComputedStatus = "loading" | "success" | "error" | "waiting" | undefined;
+export type ComputedStatus =
+  | "loading"
+  | "success"
+  | "error"
+  | "waiting"
+  | undefined;
 
 /**
  * this hook is used to write to a contract and wait for confirmations.
@@ -94,6 +99,7 @@ export function useContractWriteWithConfirmations<
   return {
     ...txResult,
     ...txWaitResult,
+    transactionStatus: computedStatus,
     transactionData: txResult.data,
     confirmationsStatus: txWaitResult.status,
     confirmed: !!txWaitResult.isSuccess,

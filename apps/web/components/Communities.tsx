@@ -26,15 +26,26 @@ export function Communities({
   const [userCommunities, setUserCommunities] = useState<LightCommunity[]>([]);
 
   useEffect(() => {
+    // Sort communities by length of members in descending order
+    const sortedCommunities = [...communities].sort((a, b) => {
+      if (a?.members && b?.members) {
+        return b.members.length - a.members.length;
+      } else {
+        return 0;
+      }
+    });
+
     const auxOtherCommunities: LightCommunity[] = [];
     const auxUserCommunities: LightCommunity[] = [];
-    for (let community of communities) {
+
+    for (let community of sortedCommunities) {
       if (memberInCommunity(community)) {
         auxUserCommunities.push(community);
       } else {
         auxOtherCommunities.push(community);
       }
     }
+
     setUserCommunities(auxUserCommunities);
     setOtherCommunities(auxOtherCommunities);
   }, [address, communities]);
