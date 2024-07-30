@@ -107,7 +107,7 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
         return communityToInfo[_community].fee;
     }
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 
     uint256[50] private __gap;
 }

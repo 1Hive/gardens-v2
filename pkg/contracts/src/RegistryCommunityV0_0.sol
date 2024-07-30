@@ -22,6 +22,10 @@ import {ISafe} from "./interfaces/ISafe.sol";
 import {RegistryFactory} from "./RegistryFactory.sol";
 import {IPointStrategy, StrategyStruct, CVStrategyV0_0} from "./CVStrategyV0_0.sol";
 
+import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
+
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+
 contract RegistryCommunityV0_0 is
     OwnableUpgradeable,
     UUPSUpgradeable,
@@ -281,9 +285,14 @@ contract RegistryCommunityV0_0 is
         returns (uint256 poolId, address strategy)
     {
         // address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
-        address strategyClone = address(new CVStrategyV0_0());
+        // address strategyClone = address(new CVStrategyV0_0());
+        address strategyProxy = address(
+            new ERC1967Proxy(
+                address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+            )
+        );
 
-        return createPool(strategyClone, _token, _params, _metadata);
+        return createPool(strategyProxy, _token, _params, _metadata);
     }
 
     function createPool(

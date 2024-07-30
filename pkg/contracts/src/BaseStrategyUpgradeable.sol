@@ -136,6 +136,7 @@ abstract contract BaseStrategyUpgradeable is UUPSUpgradeable, IStrategy, Transfe
     /// @dev Will revert if the poolId is invalid or already initialized
     /// @param _poolId ID of the pool
     function __BaseStrategy_init(uint256 _poolId) internal virtual onlyAllo {
+        //@todo rename init to InitAllo
         // check if pool ID is not initialized already, if it is, revert
         if (poolId != 0) revert ALREADY_INITIALIZED();
 
