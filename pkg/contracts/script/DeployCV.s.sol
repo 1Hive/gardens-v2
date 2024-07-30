@@ -9,6 +9,9 @@ import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
+import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
+import {SafeArbitrator} from "../src/SafeArbitrator.sol";
+import {CollateralVault} from "../src/CollateralVault.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
 // import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
@@ -30,6 +33,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     Allo allo;
     IRegistry registry;
     RegistryFactory registryFactory;
+    IArbitrator safeArbitrator;
 
     function pool_admin() public virtual override returns (address) {
         return address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
@@ -53,6 +57,9 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         registryFactory = new RegistryFactory();
 
         console2.log("Registry Factory Addr: %s", address(registryFactory));
+
+        safeArbitrator = new SafeArbitrator(2 ether);
+        console2.log("Safe Arbitrator Addr: %s", address(safeArbitrator));
 
         RegistryCommunity.InitializeParams memory params;
 
@@ -80,8 +87,12 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             pointConfig
         );
 
+        paramsCV.arbitrableConfig =
+            StrategyStruct.ArbitrableConfig(IArbitrator(address(safeArbitrator)), 2 ether, 1, 300);
+
         // FAST 1 MIN GROWTH
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
+        console2.log("Collateral Vault 1 Addr: %s", CVStrategy(payable(_strategy1)).getCollateralVault());
 
         CVStrategy strategy1 = CVStrategy(payable(_strategy1));
 
@@ -94,7 +105,11 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Fixed;
 
+        paramsCV.arbitrableConfig =
+            StrategyStruct.ArbitrableConfig(IArbitrator(address(safeArbitrator)), 3 ether, 1, 600);
+
         (uint256 poolIdFixed, address _strategy2) = registryCommunity.createPool(address(token), paramsCV, metadata);
+        console2.log("Collateral Vault 1 Addr: %s", CVStrategy(payable(_strategy2)).getCollateralVault());
 
         CVStrategy strategy2 = CVStrategy(payable(_strategy2));
 

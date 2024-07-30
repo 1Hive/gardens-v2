@@ -107,7 +107,8 @@ contract SafeArbitrator is IArbitrator {
         dispute.ruling = _ruling;
         dispute.status = DisputeStatus.Solved;
 
-        payable(msg.sender).send(dispute.arbitrationFee);
+        (bool success,) = payable(msg.sender).call{value: dispute.arbitrationFee}("");
+        require(success, "Transfer failed");
         dispute.arbitrated.rule(_disputeID, dispute.ruling);
     }
 

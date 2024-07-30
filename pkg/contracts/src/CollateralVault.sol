@@ -6,19 +6,11 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract CollateralVault is Ownable, ReentrancyGuard {
-    mapping(uint256 => mapping(address => uint256)) public proposalCollateral;
+    mapping(uint256 proposalId => mapping(address user => uint256 amount)) public proposalCollateral;
     address public strategy;
 
-    event CollateralDeposited(
-        uint256 proposalId,
-        address indexed user,
-        uint256 amount
-    );
-    event CollateralWithdrawn(
-        uint256 proposalId,
-        address indexed user,
-        uint256 amount
-    );
+    event CollateralDeposited(uint256 proposalId, address indexed user, uint256 amount);
+    event CollateralWithdrawn(uint256 proposalId, address indexed user, uint256 amount);
 
     error NotAuthorized();
     error InsufficientCollateral(uint256 requested, uint256 available);
@@ -34,24 +26,18 @@ contract CollateralVault is Ownable, ReentrancyGuard {
         strategy = _strategy;
     }
 
-    function depositCollateral(
-        uint256 proposalId,
-        address user
-    ) external payable onlyStrategy nonReentrant {
+    function depositCollateral(uint256 proposalId, address user) external payable onlyStrategy nonReentrant {
         proposalCollateral[proposalId][user] += msg.value;
         emit CollateralDeposited(proposalId, user, msg.value);
     }
 
-    function withdrawCollateral(
-        uint256 proposalId,
-        address user,
-        uint256 amount
-    ) external onlyStrategy nonReentrant {
+    function withdrawCollateral(uint256 proposalId, address user, uint256 amount) external onlyStrategy nonReentrant {
         uint256 availableAmount = proposalCollateral[proposalId][user];
-        if (amount == 0 || amount > availableAmount)
+        if (amount == 0 || amount > availableAmount) {
             revert InsufficientCollateral(amount, availableAmount);
+        }
         proposalCollateral[proposalId][user] -= amount;
-        (bool success, ) = user.call{value: amount}("");
+        (bool success,) = user.call{value: amount}("");
         require(success, "Transfer failed");
         emit CollateralWithdrawn(proposalId, user, amount);
     }

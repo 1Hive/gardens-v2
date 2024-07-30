@@ -84,7 +84,6 @@ library StrategyStruct {
 
     struct ArbitrableConfig {
         IArbitrator arbitrator;
-        CollateralVault collateralVault;
         uint256 collateralAmount;
         uint256 defaultRuling;
         uint256 defaultRulingTimeout;
@@ -136,6 +135,8 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     error InsufficientCollateral(uint256 sentAmount, uint256 requiredAmount);
     error OnlyArbitrator();
     error ProposalNotDisputed(uint256 _proposalId);
+    error ArbitratorCannotBeZero();
+    error CollateralVaultCannotBeZero();
 
     event InitializedCV(uint256 poolId, StrategyStruct.InitializeParams data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
@@ -155,6 +156,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     event ProposalDisputed(
         uint256 proposalId, uint256 disputeId, address challenger, uint256 arbitrationFee, string context
     );
+    event CollateralVaultUpdated(address collateralVault);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -189,6 +191,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
 
     // Contract reference
     RegistryCommunity public registryCommunity;
+    CollateralVault public collateralVault;
 
     mapping(uint256 => StrategyStruct.Proposal) public proposals; // Mapping of proposal IDs to Proposal structures
     mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
@@ -869,6 +872,12 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
+        if (address(arbitrableConfig.arbitrator) == address(0)) {
+            revert ArbitratorCannotBeZero();
+        }
+        if (address(collateralVault) == address(0)) {
+            revert CollateralVaultCannotBeZero();
+        }
         if (proposal.proposalId != proposalId) {
             revert ProposalNotInList(proposalId);
         }
@@ -881,9 +890,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
 
         uint256 arbitrationFee = msg.value - arbitrableConfig.collateralAmount;
 
-        arbitrableConfig.collateralVault.depositCollateral{value: arbitrableConfig.collateralAmount}(
-            proposalId, msg.sender
-        );
+        collateralVault.depositCollateral{value: arbitrableConfig.collateralAmount}(proposalId, msg.sender);
 
         uint256 disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
@@ -919,30 +926,34 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
             if (arbitrableConfig.defaultRuling == 2) {
                 proposal.proposalStatus = StrategyStruct.ProposalStatus.Blocked;
             }
-            arbitrableConfig.collateralVault.withdrawCollateral(
-                proposalId, proposal.challenger, arbitrableConfig.collateralAmount
-            );
-            arbitrableConfig.collateralVault.withdrawCollateral(
-                proposalId, proposal.submitter, arbitrableConfig.collateralAmount
-            );
+            collateralVault.withdrawCollateral(proposalId, proposal.challenger, arbitrableConfig.collateralAmount);
+            collateralVault.withdrawCollateral(proposalId, proposal.submitter, arbitrableConfig.collateralAmount);
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
-            arbitrableConfig.collateralVault.withdrawCollateral(
-                proposalId, proposal.submitter, arbitrableConfig.collateralAmount
-            );
-            arbitrableConfig.collateralVault.withdrawCollateral(
+            collateralVault.withdrawCollateral(proposalId, proposal.submitter, arbitrableConfig.collateralAmount);
+            collateralVault.withdrawCollateral(
                 proposalId, address(registryCommunity.councilSafe()), arbitrableConfig.collateralAmount
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Blocked;
-            arbitrableConfig.collateralVault.withdrawCollateral(
+            collateralVault.withdrawCollateral(
                 proposalId, proposal.challenger, (arbitrableConfig.collateralAmount * 3) / 2
             );
-            arbitrableConfig.collateralVault.withdrawCollateral(
+            collateralVault.withdrawCollateral(
                 proposalId, address(registryCommunity.councilSafe()), arbitrableConfig.collateralAmount / 2
             );
         }
 
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
+    }
+
+    function setCollateralVault(address _collateralVault) external {
+        onlyRegistryCommunity();
+        collateralVault = CollateralVault(_collateralVault);
+        emit CollateralVaultUpdated(_collateralVault);
+    }
+
+    function getCollateralVault() external view returns (address) {
+        return address(collateralVault);
     }
 }
