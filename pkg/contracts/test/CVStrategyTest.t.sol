@@ -302,7 +302,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     }
 
     function testRevert_allocate_UserInactive() public {
-        ( IAllo.Pool memory pool , uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         /**
          * ASSERTS
@@ -321,7 +321,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     }
 
     function testRevert_allocate_InvalidProposal() public {
-        ( IAllo.Pool memory pool , uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         /**
          * ASSERTS
@@ -331,13 +331,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
         votes[0] = StrategyStruct.ProposalSupport(10, SUPPORT_PCT); // 0 + 70 = 70% = 35
         bytes memory data = abi.encode(votes);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotInList.selector,10));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotInList.selector, 10));
         allo().allocate(poolId, data);
         vm.stopPrank();
     }
 
     function testRevert_allocate_InsufficientPoints() public {
-        ( IAllo.Pool memory pool , uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         /**
          * ASSERTS
@@ -349,13 +349,17 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         bytes memory data = abi.encode(votes);
         uint256 newTotalVotingSupport = 500000000000000000000;
         uint256 participantBalance = 50000000000000000000;
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.NotEnoughPointsToSupport.selector,newTotalVotingSupport,participantBalance));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVStrategy.NotEnoughPointsToSupport.selector, newTotalVotingSupport, participantBalance
+            )
+        );
         allo().allocate(poolId, data);
         vm.stopPrank();
     }
 
     function testRevert_allocate_SupportUnderflow() public {
-        ( IAllo.Pool memory pool , uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         /**
          * ASSERTS
@@ -365,19 +369,19 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
         votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 70 = 70% = 35
         bytes memory data = abi.encode(votes);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.SupportUnderflow.selector,0,SUPPORT_PCT,SUPPORT_PCT));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.SupportUnderflow.selector, 0, SUPPORT_PCT, SUPPORT_PCT));
         allo().allocate(poolId, data);
         vm.stopPrank();
     }
 
     function testRevert_calculateThreshold_requestOverMax() public {
-        ( IAllo.Pool memory pool , uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0 , 0);
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
          * ASSERTS
          *
          */
         //Revert on create already tested, here checking the revert in calculateThreshold
-        uint256 requestedAmount = REQUESTED_AMOUNT*100000;
+        uint256 requestedAmount = REQUESTED_AMOUNT * 100000;
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.AmountOverMaxRatio.selector));
         cv.calculateThreshold(requestedAmount);
@@ -438,6 +442,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.PoolIdCannotBeZero.selector));
         allo().registerRecipient(poolId, data);
     }
+
     function test_proposalSupported_change_support() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
@@ -548,7 +553,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // startMeasuringGas("Support a Proposal");
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         cv.setPoolActive(false);
-        assertEq(cv.isPoolActive(),false);
+        assertEq(cv.isPoolActive(), false);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         registryCommunity.stakeAndRegisterMember();
         // Checking that poolActive doesnt influence allocate behavior
@@ -558,7 +563,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         votes[0] = StrategyStruct.ProposalSupport(proposalId, int256(AMOUNT_STAKED));
         bytes memory data = abi.encode(votes);
         allo().allocate(poolId, data);
-        
     }
 
     function test_getMetadata() public {
@@ -568,7 +572,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          */
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         Metadata memory meta = cv.getMetadata(proposalId);
-        assertEq(meta.protocol,1);
+        assertEq(meta.protocol, 1);
     }
 
     function test_conviction_check_function() public {
@@ -1660,7 +1664,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("Beneficienry After amount: %s", amount);
         assertEq(amount, requestedAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotActive.selector,proposalId));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotActive.selector, proposalId));
         cv.updateProposalConviction(proposalId);
     }
 
@@ -1816,7 +1820,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().distribute(poolId, recipients, dataProposal);
         //@todo chec ProposalStatus
 
-        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotActive.selector,proposalId));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotActive.selector, proposalId));
         allo().distribute(poolId, recipients, dataProposal);
 
         amount = getBalance(pool.token, beneficiary);
@@ -1835,7 +1839,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // startMeasuringGas("Support a Proposal");
         stopMeasuringGas();
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-        
+
         uint256 wrongProposalId = 4;
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotInList.selector, wrongProposalId));
         cv.updateProposalConviction(wrongProposalId);
