@@ -110,7 +110,7 @@ export default function Page({
             <div className="mb-2 flex flex-col">
               <div className="flex items-center gap-4">
                 <h2>{tokenGarden?.name}</h2>{" "}
-                <TokenLabel chainId={chain} />
+                <TokenLabel chainId={chain} classNames="bg-neutral-soft-2" />
               </div>
               <EthAddress address={tokenGarden?.id as Address} />
             </div>
