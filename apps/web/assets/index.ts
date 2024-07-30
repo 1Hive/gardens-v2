@@ -1,6 +1,7 @@
 export { default as clouds1 } from "./clouds1.svg";
 export { default as clouds2 } from "./clouds2.svg";
 export { default as commImg } from "./CommunityImage.png";
+export { default as commF } from "./GardenF.png";
 export { default as ecosystem } from "./ecosystem.png";
 export { default as gardenFlower } from "./garden-flower.svg";
 export { default as gardenHeader } from "./garden-header.svg";
@@ -20,3 +21,8 @@ export { default as tree2 } from "./TreeTwo.svg";
 export { default as walletIcon } from "./WalletIcon.svg";
 export { default as flowers } from "./yellow-blue-flowers.svg";
 export { default as GardensLogo } from "./GardensLogo";
+export { default as TxWaitingForSig } from "./TxWaitingForSig.svg";
+export { default as TxSuccess } from "./TxSuccess.svg";
+export { default as TxError } from "./TxError.svg";
+export { default as TxPreparing } from "./TxPreparing.svg";
+export { default as TxInProgress } from "./TxInProgress.svg";

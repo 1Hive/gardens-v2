@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";

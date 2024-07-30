@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
 import { Allo, TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
@@ -121,33 +120,22 @@ export const ProposalForm = ({
 
   const proposalTypeName = poolTypes[proposalType];
 
-  const createProposal = () => {
+  const createProposal = async () => {
     setLoading(true);
     const json = {
       title: getValues("title"),
       description: getValues("description"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(json);
-
-    toast
-      .promise(ipfsUpload, {
-        pending: "Preparing everything, wait a moment...",
-        // success: "All ready!",
-        error: "Error uploading data to IPFS",
-      })
-      .then((ipfsHash) => {
-        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) {
-          throw new Error("No preview data");
-        }
-        const encodedData = getEncodeData(ipfsHash);
-        write({ args: [poolId, encodedData] });
-      })
-      .catch((error: any) => {
-        setLoading(false);
-        console.error(error);
-      });
+    const ipfsHash = await ipfsJsonUpload(json);
+    if (ipfsHash) {
+      if (previewData === undefined) {
+        throw new Error("No preview data");
+      }
+      const encodedData = getEncodeData(ipfsHash);
+      write({ args: [poolId, encodedData] });
+    }
+    setLoading(false);
   };
 
   const handlePreview = (data: FormInputs) => {
@@ -158,9 +146,15 @@ export const ProposalForm = ({
   const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
+    contractName: "Allo",
     functionName: "registerRecipient",
+    fallbackErrorMessage: "Error creating Proposal. Please try again.",
     onConfirmations: (receipt) => {
-      const proposalId = getEventFromReceipt(receipt, "CVStrategy", "ProposalCreated").args.proposalId;
+      const proposalId = getEventFromReceipt(
+        receipt,
+        "CVStrategy",
+        "ProposalCreated",
+      ).args.proposalId;
       publish({
         topic: "proposal",
         type: "update",
@@ -170,12 +164,13 @@ export const ProposalForm = ({
         chainId,
       });
       if (pathname) {
-        router.push(pathname.replace("/create-proposal", `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`));
+        router.push(
+          pathname.replace(
+            "/create-proposal",
+            `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`,
+          ),
+        );
       }
-    },
-    onError: (err) => {
-      console.warn(err);
-      toast.error("Something went wrong creating Proposal");
     },
     onSettled: () => setLoading(false),
   });
@@ -260,7 +255,7 @@ export const ProposalForm = ({
           formRows={formatFormRows()}
           previewTitle="Check proposals details"
         />
-        : <div className="flex flex-col gap-2 overflow-hidden p-1">
+      : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
             <div className="relative flex flex-col">
               <FormInput
@@ -354,7 +349,7 @@ export const ProposalForm = ({
               Submit
             </Button>
           </div>
-          : <Button type="submit">Preview</Button>}
+        : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

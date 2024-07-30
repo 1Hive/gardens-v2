@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
@@ -25,6 +25,8 @@ import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
+import {ISybilScorer, PassportData} from "../src/ISybilScorer.sol";
+import {PassportScorer} from "../src/PassportScorer.sol";
 
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
@@ -48,15 +50,19 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     uint256 public constant TOTAL_SUPPLY = 45000 ether;
     uint256 public constant POOL_AMOUNT = 15000 ether;
     uint256 public constant MINIMUM_STAKE = 50 ether;
+    uint256 public constant MINIMUM_SCORE = 40 ether;
     uint256 public constant PROTOCOL_FEE_PERCENTAGE = 1;
     uint256 public constant COMMUNITY_FEE_PERCENTAGE = 2;
     uint256 public constant STAKE_WITH_FEES =
         MINIMUM_STAKE + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / 100;
     uint256 public constant REQUESTED_AMOUNT = 1000 ether;
-    // uint256 public constant PRECISION_SCALE = 10 ** 4;
+    uint256 public constant PRECISION_SCALE = 10 ** 4;
     uint256 public constant MIN_THRESHOLD_PTS = 5e23;
 
     RegistryCommunity internal registryCommunity;
+
+    ISybilScorer public passportScorer;
+
     address factoryOwner = makeAddr("registryFactoryDeployer");
 
     function setUp() public {
@@ -69,8 +75,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
 
         token = new GV2ERC20("Mock Token", "MTK", 18);
-        token.mint(local(), TOTAL_SUPPLY / 2);
-        token.mint(pool_admin(), TOTAL_SUPPLY / 2);
+        token.mint(local(), TOTAL_SUPPLY / 3);
+        token.mint(pool_admin(), TOTAL_SUPPLY / 3);
+        //PassportScorer test
+        token.mint(address(6), TOTAL_SUPPLY / 3);
         token.approve(address(allo()), mintAmount);
 
         vm.startPrank(allo_owner());
@@ -95,6 +103,12 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         params._councilSafe = payable(address(_councilSafe()));
 
         registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+
+        passportScorer = new PassportScorer();
+        passportScorer.initialize(factoryOwner);
+
+        // passportScorer.transferOwnership(factoryOwner);
+
         vm.startPrank(factoryOwner);
         registryFactory.setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
         vm.stopPrank();
@@ -2179,5 +2193,210 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
 
         // assertEq(registryCommunity.isMember(pool_admin()), false, "isMember");
+    }
+
+    function test_activatePoints_with_enough_score() public {
+        (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
+        vm.startPrank(address(_councilSafe()));
+        cv.setSybilScorer(address(passportScorer));
+        passportScorer.activateStrategy(address(cv));
+        vm.stopPrank();
+
+        PassportData memory passportData = PassportData({score: MINIMUM_SCORE + 1, lastUpdated: block.timestamp});
+        passportScorer.addUserScore(address(6), passportData);
+
+        vm.startPrank(address(6));
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+
+        registryCommunity.stakeAndRegisterMember();
+
+        cv.activatePoints();
+
+        vm.stopPrank();
+
+        assertEq(cv.totalPointsActivated(), MINIMUM_STAKE * 2, "Points should be activated");
+    }
+
+    function test_activatePoints_fails_not_enough_score() public {
+        (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
+        vm.startPrank(address(_councilSafe()));
+        cv.setSybilScorer(address(passportScorer));
+        passportScorer.activateStrategy(address(cv));
+        vm.stopPrank();
+
+        PassportData memory passportData = PassportData({score: MINIMUM_SCORE - 1, lastUpdated: block.timestamp});
+        passportScorer.addUserScore(address(6), passportData);
+
+        vm.startPrank(address(6));
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+
+        registryCommunity.stakeAndRegisterMember();
+
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
+        cv.activatePoints();
+
+        vm.stopPrank();
+    }
+
+    function test_activatePoints_success_not_activated_strategy() public {
+        (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
+        vm.startPrank(address(_councilSafe()));
+        cv.setSybilScorer(address(passportScorer));
+
+        // passportScorer.activateStrategy(address(cv));
+        vm.stopPrank();
+
+        //notice how we set the score to the user as 0
+        PassportData memory passportData = PassportData({score: 0, lastUpdated: block.timestamp});
+        passportScorer.addUserScore(address(6), passportData);
+
+        vm.startPrank(address(6));
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+
+        registryCommunity.stakeAndRegisterMember();
+
+        cv.activatePoints();
+
+        vm.stopPrank();
+
+        assertEq(cv.totalPointsActivated(), MINIMUM_STAKE * 2, "Points should be activated");
+    }
+
+    function test_activatePoints_success_not_sybyl_scorer_set() public {
+        (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
+
+        //notice how we set the score to the user as 0
+        PassportData memory passportData = PassportData({score: 0, lastUpdated: block.timestamp});
+        passportScorer.addUserScore(address(6), passportData);
+
+        vm.startPrank(address(6));
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+
+        registryCommunity.stakeAndRegisterMember();
+
+        cv.activatePoints();
+
+        vm.stopPrank();
+
+        assertEq(cv.totalPointsActivated(), MINIMUM_STAKE * 2, "Points should be activated");
+    }
+
+    function test_createProposal_fails_not_enough_score() public {
+        (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
+        vm.startPrank(address(_councilSafe()));
+        cv.setSybilScorer(address(passportScorer));
+        passportScorer.activateStrategy(address(cv));
+        vm.stopPrank();
+
+        PassportData memory passportData = PassportData({score: MINIMUM_SCORE - 1, lastUpdated: block.timestamp});
+        passportScorer.addUserScore(address(6), passportData);
+
+        vm.startPrank(address(6));
+        StrategyStruct.CreateProposal memory proposal =
+            StrategyStruct.CreateProposal(poolId, pool_admin(), 11000 ether, NATIVE, metadata);
+        bytes memory data = abi.encode(proposal);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
+        allo().registerRecipient(poolId, data);
+        vm.stopPrank();
+    }
+
+    function test_createProposal_success_enough_score() public {
+        (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
+        vm.startPrank(address(_councilSafe()));
+        cv.setSybilScorer(address(passportScorer));
+        passportScorer.activateStrategy(address(cv));
+        vm.stopPrank();
+
+        PassportData memory passportData = PassportData({score: MINIMUM_SCORE + 1, lastUpdated: block.timestamp});
+        passportScorer.addUserScore(address(6), passportData);
+
+        vm.startPrank(address(6));
+
+        StrategyStruct.CreateProposal memory proposal =
+            StrategyStruct.CreateProposal(poolId, pool_admin(), 110 ether, NATIVE, metadata);
+        bytes memory data = abi.encode(proposal);
+
+        uint256 PROPOSAL_ID = uint160(allo().registerRecipient(poolId, data));
+        vm.stopPrank();
+        _assertProposalStatus(cv, PROPOSAL_ID, StrategyStruct.ProposalStatus.Active);
+    }
+
+    function test_allocate_not_enough_score() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
+        vm.startPrank(address(_councilSafe()));
+        cv.setSybilScorer(address(passportScorer));
+        passportScorer.activateStrategy(address(cv));
+        vm.stopPrank();
+
+        PassportData memory passportData = PassportData({score: MINIMUM_SCORE - 1, lastUpdated: block.timestamp});
+        passportScorer.addUserScore(address(6), passportData);
+
+        StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80);
+
+        bytes memory data = abi.encode(votes);
+
+        vm.startPrank(address(6));
+
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember();
+
+        vm.expectRevert(abi.encodeWithSelector(CVStrategy.UserCannotExecuteAction.selector));
+        allo().allocate(poolId, data);
+        vm.stopPrank();
+    }
+
+    function test_allocate_success_enough_score() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+
+        CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
+        vm.startPrank(address(_councilSafe()));
+        cv.setSybilScorer(address(passportScorer));
+        passportScorer.activateStrategy(address(cv));
+        vm.stopPrank();
+
+        PassportData memory passportData = PassportData({score: MINIMUM_SCORE + 1, lastUpdated: block.timestamp});
+        passportScorer.addUserScore(address(6), passportData);
+
+        StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80);
+
+        bytes memory data = abi.encode(votes);
+
+        vm.startPrank(address(6));
+
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember();
+        cv.activatePoints();
+
+        allo().allocate(poolId, data);
+
+        assertEq(cv.getProposalVoterStake(proposalId, address(6)), 80);
+        assertEq(cv.getProposalStakedAmount(proposalId), 80);
+        vm.stopPrank();
     }
 }

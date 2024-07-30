@@ -15,7 +15,7 @@ type ConvictionBarChartProps = {
   thresholdPct: number;
   proposalSupportPct: number;
   isSignalingType: boolean;
-  proposalId: string;
+  proposalId: number;
   compact?: boolean;
 };
 
@@ -163,7 +163,7 @@ export const ConvictionBarChart = ({
     message:
       proposalSupportPct == 0 ?
         "Proposal waiting for support"
-        : "Scenario not found",
+      : "Scenario not found",
     growing: null,
   };
 
@@ -189,9 +189,9 @@ export const ConvictionBarChart = ({
   };
 
   const markLineTh: MarkLineComponentOption =
-    isSignalingType || compact ?
+    isSignalingType ?
       {}
-      : {
+    : {
         ...markLine,
         data: [
           {
@@ -203,7 +203,7 @@ export const ConvictionBarChart = ({
           },
         ],
         lineStyle: {
-          width: 1,
+          width: compact ? 0.5 : 1,
           color: "#191919",
           dashOffset: 30,
         },
@@ -248,8 +248,9 @@ export const ConvictionBarChart = ({
       bottom: compact ? "0%" : "25%",
       containLabel: false,
     },
-
-    animationDurationUpdate: 1200,
+    // TODO: realted to re render in PoolId page (check)
+    animation: false,
+    //animationDurationUpdate: 1200,
     barGap: "-100%",
     series: [
       {
@@ -257,6 +258,11 @@ export const ConvictionBarChart = ({
         name: "Support",
         itemStyle: {
           color: "#A8E066",
+          borderRadius: [20, 20, 20, 20],
+        },
+        showBackground: true,
+        backgroundStyle:{
+          color: "#F0F0F0",
           borderRadius: [20, 20, 20, 20],
         },
         label: {
@@ -268,8 +274,8 @@ export const ConvictionBarChart = ({
         },
         z:
           supportGtConv ? 1
-            : convEqSupport ? 1
-              : 2,
+          : convEqSupport ? 1
+          : 2,
         barWidth: 23,
         data: [proposalSupportPct],
       },
@@ -294,7 +300,7 @@ export const ConvictionBarChart = ({
       },
       isSignalingType ?
         {}
-        : {
+      : {
           type: "bar",
           name: "Threshold",
           barWidth: 23,
@@ -319,7 +325,7 @@ export const ConvictionBarChart = ({
           option={option}
           style={{ height: "100%", width: "100%" }}
         />
-        : <ChartWrapper
+      : <ChartWrapper
           message={message}
           growing={growing}
           isSignalingType={isSignalingType}

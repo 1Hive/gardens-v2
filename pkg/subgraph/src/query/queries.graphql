@@ -276,11 +276,23 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       requestedToken
       proposalStatus
       stakedAmount
+      convictionLast
+      threshold
+      strategy {
+        id
+        maxCVSupply
+        totalEffectiveActivePoints
+      }
     }
   }
 }
 
 query getProposalData($garden: ID!, $proposalId: ID!) {
+  allos {
+    id
+    chainId
+    tokenNative
+  }
   tokenGarden(id: $garden) {
     name
     symbol
@@ -303,6 +315,8 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     version
     strategy {
       id
+      maxCVSupply
+      totalEffectiveActivePoints
       config {
         proposalType
         pointSystem
@@ -400,5 +414,46 @@ query getProposalTitles($proposalId: ID!) {
         }
       }
     }
+  }
+}
+
+query getPassportScorer($scorerId: ID!) {
+  passportScorer(id: $scorerId) {
+    id
+    strategies {
+      id
+      strategy {
+        id
+      }
+      threshold
+      councilSafe
+      active
+    }
+    users {
+      id
+      userAddress
+      score
+      lastUpdated
+    }
+  }
+}
+
+query getPassportStrategy($strategyId: ID!) {
+  passportStrategy(id: $strategyId) {
+    id
+    strategy {
+      id
+    }
+    threshold
+    councilSafe
+    active
+  }
+}
+query getPassportUser($userId: ID!) {
+  passportUser(id: $userId) {
+    id
+    userAddress
+    score
+    lastUpdated
   }
 }

@@ -1,21 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { parseUnits } from "viem";
 import { Address, useAccount, useBalance, useContractRead } from "wagmi";
 import { isMemberDocument, isMemberQuery } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
+import { InfoBox } from "./InfoBox";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { useUrqlClient } from "@/hooks/useUqrlClient";
-import { queryByChain } from "@/providers/urql";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -68,42 +66,36 @@ export const IncreasePower = ({
   const { address: connectedAccount } = useAccount();
 
   //handeling states
-  type States = "idle" | "loading" | "success" | "error";
-  const [allowanceTransactionStatus, setAllowanceTransactionStatus] =
-    useState<States>("idle");
-  const [resetTransactionStatus, setResetTransactionStatus] =
-    useState<States>("idle");
   const { address: accountAddress } = useAccount();
   const [memberStakedTokens, setMemberStakedTokens] = useState<bigint>(0n);
 
-  const urqlClient = useUrqlClient();
-
   const urlChainId = useChainIdFromPath();
 
-  const runIsMemberQuery = useCallback(async () => {
-    if (!accountAddress || !urlChainId) {
-      return;
-    }
-    const { data: result } = await queryByChain<isMemberQuery>(
-      urqlClient,
-      urlChainId,
-      isMemberDocument,
-      {
-        me: accountAddress.toLowerCase(),
-        comm: communityAddress.toLowerCase(),
-      },
-    );
-
-    if (result && result.members.length > 0) {
-      const stakedTokens =
-        result.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
-
-      setMemberStakedTokens(BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"));
-    }
-  }, [accountAddress]);
+  const {
+    data: isMemberResult,
+    refetch: refetchIsMember,
+    fetching,
+  } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: accountAddress?.toLowerCase(),
+      comm: communityAddress.toLowerCase(),
+    },
+    enabled: accountAddress !== undefined,
+  });
 
   useEffect(() => {
-    runIsMemberQuery();
+    if (accountAddress && isMemberResult && !fetching) {
+      refetchIsMember().then((result) => {
+        if (result?.data && result?.data.members.length > 0) {
+          const stakedTokens =
+            result?.data.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
+          setMemberStakedTokens(
+            BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"),
+          );
+        }
+      });
+    }
   }, [accountAddress]);
 
   const requestedAmount = parseUnits(
@@ -121,6 +113,7 @@ export const IncreasePower = ({
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
+    contractName: "Registry Community",
   };
 
   const { data: isMember } = useContractRead({
@@ -131,15 +124,16 @@ export const IncreasePower = ({
   });
 
   const {
-    transactionData: allowTokenTxData,
     isSuccess: isWaitSuccess,
     write: writeAllowToken,
-    status: allowTokenStatus,
+    status: allowanceTokenStatus,
   } = useContractWriteWithConfirmations({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
     args: [communityAddress, requestedAmount], // [allowed spender address, amount ]
     functionName: "approve",
+    contractName: "ERC20",
+    showNotification: false,
   });
 
   const { write: writeResetAllowance, status: resetAllowanceStatus } =
@@ -148,6 +142,8 @@ export const IncreasePower = ({
       abi: abiWithErrors(erc20ABI),
       args: [communityAddress, 0n], // [allowed spender address, amount ]
       functionName: "approve",
+      contractName: "ERC20",
+      showNotification: false,
     });
 
   const { data: allowance } = useContractRead({
@@ -158,28 +154,25 @@ export const IncreasePower = ({
     enabled: accountAddress !== undefined,
   });
 
-  const {
-    transactionData: increasePowerTxData,
-    write: writeIncreasePower,
-    status: increaseStakeStatus,
-  } = useContractWriteWithConfirmations({
-    ...registryContractCallConfig,
-    functionName: "increasePower",
-    args: [requestedAmount as bigint],
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        type: "update",
-        function: "increasePower",
-        containerId: communityAddress,
-        id: connectedAccount,
-        chainId: urlChainId,
-      });
-    },
-  });
+  const { write: writeIncreasePower, status: increaseStakeStatus } =
+    useContractWriteWithConfirmations({
+      ...registryContractCallConfig,
+      functionName: "increasePower",
+      args: [requestedAmount],
+      showNotification: false,
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          type: "update",
+          function: "increasePower",
+          containerId: communityAddress,
+          id: connectedAccount,
+          chainId: urlChainId,
+        });
+      },
+    });
 
   const {
-    transactionData: decreasePowerTxData,
     write: writeDecreasePower,
     error: errorDecreasePower,
     status: decreasePowerStatus,
@@ -187,7 +180,8 @@ export const IncreasePower = ({
   } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "decreasePower",
-    args: [requestedAmount as bigint],
+    args: [requestedAmount],
+    fallbackErrorMessage: "Error decreasing power. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "member",
@@ -202,11 +196,7 @@ export const IncreasePower = ({
 
   useErrorDetails(errorDecreasePower, "errorDecrease");
 
-  const { updateTransactionStatus: updateDecreasePowerTransactionStatus } =
-    useTransactionNotification(decreasePowerTxData);
-
   useEffect(() => {
-    updateDecreasePowerTransactionStatus(decreasePowerStatus);
     if (decreasePowerStatus === "success") {
       setIncreaseInput("");
     }
@@ -223,8 +213,6 @@ export const IncreasePower = ({
     (allowance ?? 0n) > 0n && requestedAmount > (allowance ?? 0n);
 
   async function handleChange() {
-    setAllowanceTransactionStatus("idle");
-    setResetTransactionStatus("idle");
     if (requestesMoreThanAllowance) {
       writeResetAllowance?.();
       return;
@@ -244,24 +232,14 @@ export const IncreasePower = ({
     setIncreaseInput(e.target.value);
   };
 
-  const { updateTransactionStatus: updateAllowTokenTransactionStatus } =
-    useTransactionNotification(allowTokenTxData);
-
   useEffect(() => {
-    updateAllowTokenTransactionStatus(allowTokenStatus);
-    setAllowanceTransactionStatus(allowTokenStatus);
-    setResetTransactionStatus(resetAllowanceStatus);
-    if (
-      resetTransactionStatus === "success" &&
-      allowanceTransactionStatus === "idle"
-    ) {
+    if (resetAllowanceStatus === "success" && allowanceTokenStatus === "idle") {
       writeAllowToken?.();
-      setResetTransactionStatus("idle");
     }
     if (isWaitSuccess) {
       writeIncreasePower?.();
     }
-  }, [resetAllowanceStatus, isWaitSuccess, allowTokenStatus]);
+  }, [resetAllowanceStatus, isWaitSuccess, allowanceTokenStatus]);
 
   useEffect(() => {
     if (increaseStakeStatus === "success") {
@@ -269,13 +247,6 @@ export const IncreasePower = ({
       setIncreaseInput("");
       setPendingAllowance(false);
     }
-  }, [increaseStakeStatus]);
-
-  const { updateTransactionStatus: updateIncreaseStakeTransactionStatus } =
-    useTransactionNotification(increasePowerTxData);
-
-  useEffect(() => {
-    updateIncreaseStakeTransactionStatus(increaseStakeStatus);
   }, [increaseStakeStatus]);
 
   const isInputIncreaseGreaterThanBalance =
@@ -339,7 +310,7 @@ export const IncreasePower = ({
           ref={modalRef}
           label={`Stake ${tokenSymbol} in community`}
           initialTransactionSteps={InitialTransactionSteps}
-          allowTokenStatus={allowTokenStatus}
+          allowTokenStatus={allowanceTokenStatus}
           stepTwoStatus={increaseStakeStatus}
           token={tokenSymbol}
           pendingAllowance={pendingAllowance}
@@ -349,11 +320,12 @@ export const IncreasePower = ({
         <div className="flex justify-between gap-4">
           <div className=" flex flex-col justify-between gap-4">
             <div className="flex gap-4">
-              <ExclamationCircleIcon height={32} width={32} />
-              <p className="max-w-sm">
-                Staking more tokens in the community will increase your voting
-                power to support proposals
-              </p>
+              <InfoBox
+                content="staking more tokens in the community will increase your voting
+                power to support proposals"
+                infoBoxType="info"
+                classNames="max-w-lg"
+              />
             </div>
             {isMember && (
               <div className="flex justify-between">

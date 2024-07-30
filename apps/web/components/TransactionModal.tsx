@@ -36,8 +36,8 @@ interface StatusConfig {
 }
 
 export const TransactionModal = forwardRef<
-HTMLDialogElement,
-TransactionModalProps
+  HTMLDialogElement,
+  TransactionModalProps
 >(function TransactionModal(
   {
     label,
@@ -92,7 +92,7 @@ TransactionModalProps
       message:
         pendingAllowance ?
           "Allowance previously approved successfully!"
-          : message,
+        : message,
       stepClassName: pendingAllowance ? "step-success" : className,
       messageClassName: pendingAllowance ? "text-success" : messageClassName,
     };

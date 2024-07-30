@@ -94,6 +94,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
       address: tokenGarden.address as Address,
       abi: abiWithErrors(erc20ABI),
       functionName: "approve",
+      contractName: "ERC20",
+      showNotification: false,
     });
 
   useEffect(() => {
@@ -109,6 +111,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
       address: alloInfo?.id as Address,
       abi: abiWithErrors(alloABI),
       functionName: "fundPool",
+      contractName: "Allo",
+      showNotification: false,
       onConfirmations: () => {
         publish({
           topic: "pool",
@@ -188,7 +192,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                       <span className="stat-value text-center text-2xl font-bold">
                         {balance ?
                           formatTokenAmount(balance, tokenGarden?.decimals)
-                          : "0"}{" "}
+                        : "0"}{" "}
                         {tokenGarden?.symbol}
                       </span>
                     </div>
