@@ -1,4 +1,4 @@
-import "@/styles/globals.css";
+import "@/styles/globals.scss";
 import React from "react";
 import { Chakra_Petch, Inter } from "next/font/google";
 import { Bounce, ToastContainer } from "react-toastify";
@@ -29,7 +29,10 @@ export default function RootLayout({
       className={`${inter.variable} ${chakra.variable} bg-primary`}
     >
       <body className="min-h-screen bg-primary font-chakra">
-        <Providers>{children}</Providers>
+        <div id="modal-root" />
+        <Providers>
+          <>{children}</>
+        </Providers>
         <ToastContainer
           style={{ zIndex: 1000 }}
           position="top-right"

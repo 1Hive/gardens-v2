@@ -25,7 +25,7 @@ importers:
     dependencies:
       next:
         specifier: 14.0.3
-        version: 14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)
+        version: 14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -108,6 +108,9 @@ importers:
       addreth:
         specifier: 1.2.0
         version: 1.2.0(react-dom@18.2.0)(react@18.2.0)(wagmi@1.4.13)
+      blo:
+        specifier: ^1.2.0
+        version: 1.2.0
       classnames:
         specifier: ^2.5.1
         version: 2.5.1
@@ -134,7 +137,7 @@ importers:
         version: 1.5.12
       next:
         specifier: 14.0.3
-        version: 14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)
+        version: 14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
       next-themes:
         specifier: ^0.2.1
         version: 0.2.1(next@14.0.3)(react-dom@18.2.0)(react@18.2.0)
@@ -153,6 +156,9 @@ importers:
       react-toastify:
         specifier: ^10.0.4
         version: 10.0.5(react-dom@18.2.0)(react@18.2.0)
+      sass:
+        specifier: ^1.77.8
+        version: 1.77.8
       ui:
         specifier: workspace:*
         version: link:../../pkg/ui
@@ -4818,7 +4824,7 @@ packages:
       '@sentry/vercel-edge': 8.17.0
       '@sentry/webpack-plugin': 2.20.1(webpack@5.93.0)
       chalk: 3.0.0
-      next: 14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)
+      next: 14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
       resolve: 1.22.8
       rollup: 3.29.4
       stacktrace-parser: 0.1.10
@@ -6017,7 +6023,7 @@ packages:
       react: '>=18.0.0'
       urql: ^4.0.0
     dependencies:
-      next: 14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)
+      next: 14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
       react: 18.2.0
       urql: 4.1.0(@urql/core@5.0.4)(react@18.2.0)
     dev: false
@@ -7702,6 +7708,11 @@ packages:
 
   /blakejs@1.2.1:
     resolution: {integrity: sha512-QXUSXI3QVc/gJME0dBpXrag1kbzOqCjCX8/b54ntNyW6sjtoqxqRk3LTmXzaJoh71zMsDCjM+47jS7XiwN/+fQ==}
+    dev: false
+
+  /blo@1.2.0:
+    resolution: {integrity: sha512-bZES7RzJ14B4WBT3JuOHSOAvCBmUhqznrojQ8xRjN1Fx9X9N7R+rygOFS3k4wXel2nFg4lwzL3luAYzObaDLng==}
+    engines: {node: '>=16'}
     dev: false
 
   /blob-to-it@1.0.4:
@@ -13189,12 +13200,12 @@ packages:
       react: '*'
       react-dom: '*'
     dependencies:
-      next: 14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)
+      next: 14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
     dev: false
 
-  /next@14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0):
+  /next@14.0.3(@babel/core@7.24.7)(@opentelemetry/api@1.9.0)(react-dom@18.2.0)(react@18.2.0)(sass@1.77.8):
     resolution: {integrity: sha512-AbYdRNfImBr3XGtvnwOxq8ekVCwbFTv/UJoLwmaX89nk9i051AEY4/HAWzU0YpaTDw8IofUpmuIlvzWF13jxIw==}
     engines: {node: '>=18.17.0'}
     hasBin: true
@@ -13217,6 +13228,7 @@ packages:
       postcss: 8.4.31
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
+      sass: 1.77.8
       styled-jsx: 5.1.1(@babel/core@7.24.7)(react@18.2.0)
       watchpack: 2.4.0
     optionalDependencies:
@@ -14923,6 +14935,16 @@ packages:
 
   /safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
+
+  /sass@1.77.8:
+    resolution: {integrity: sha512-4UHg6prsrycW20fqLGPShtEvo/WyHRVRHwOP4DzkUrObWoWI05QBSfzU71TVB7PFaL104TwNaHpjlWXAZbQiNQ==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+    dependencies:
+      chokidar: 3.6.0
+      immutable: 4.3.6
+      source-map-js: 1.2.0
+    dev: false
 
   /saxes@6.0.0:
     resolution: {integrity: sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA==}

@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Address } from "viem";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 export default function Page({
@@ -20,20 +20,7 @@ export default function Page({
   });
   const strategyObj = data?.cvstrategies?.[0];
 
-  const [metadata, setMetadata] = useState({ title: "", description: "" });
-
-  useEffect(() => {
-    const fetchMetadata = async () => {
-      if (strategyObj?.metadata) {
-        const fetchedMetadata = await getIpfsMetadata(
-          strategyObj.metadata as string,
-        );
-        setMetadata(fetchedMetadata);
-      }
-    };
-
-    fetchMetadata();
-  }, [strategyObj]);
+  const { metadata } = useProposalMetadataIpfsFetch(strategyObj?.metadata);
 
   if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;
@@ -51,7 +38,7 @@ export default function Page({
   const spendingLimitPct = maxRatioDivPrecision * 100;
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
 
-  if (!tokenGarden) {
+  if (!tokenGarden || !metadata) {
     return <LoadingSpinner />;
   }
 

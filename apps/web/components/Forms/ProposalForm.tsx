@@ -12,7 +12,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { alloABI } from "@/src/generated";
-import { poolTypes } from "@/types";
+import { PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -118,7 +118,7 @@ export const ProposalForm = ({
     tokenGarden?.decimals as number,
   );
 
-  const proposalTypeName = poolTypes[proposalType];
+  const proposalTypeName = PoolTypes[proposalType];
 
   const createProposal = async () => {
     setLoading(true);

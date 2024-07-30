@@ -17,7 +17,7 @@ import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { alloABI } from "@/src/generated";
-import { LightCVStrategy, poolTypes } from "@/types";
+import { LightCVStrategy, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
@@ -125,7 +125,7 @@ export function ProposalCard({
         <div className="flex items-center gap-8">
           <Badge status={proposalStatus} />
           {/* Button to test distribute */}
-          {!isEditView && poolTypes[proposalData.type] == "funding" && (
+          {!isEditView && PoolTypes[proposalData.type] == "funding" && (
             <Button
               // TODO: add flexible tooltip and func to check executability
               disabled={executeDisabled}

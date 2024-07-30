@@ -19,11 +19,15 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
-import { pointSystems, poolTypes } from "@/types";
+import { PointSystems, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { CV_PERCENTAGE_SCALE, CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
+import {
+  CV_PERCENTAGE_SCALE,
+  CV_SCALE_PRECISION,
+  MAX_RATIO_CONSTANT,
+} from "@/utils/numbers";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -173,11 +177,11 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     },
     strategyType: {
       label: "Strategy type:",
-      parse: (value: string) => poolTypes[value],
+      parse: (value: string) => PoolTypes[value],
     },
     pointSystemType: {
       label: "Voting Weight System:",
-      parse: (value: string) => pointSystems[value],
+      parse: (value: string) => PointSystems[value],
     },
     maxAmount: {
       label: "Token max amount:",
@@ -252,7 +256,8 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     const metadata: Metadata = [BigInt(1), ipfsHash];
 
     const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
-    const passportScorerAddr = getConfigByChain(chainId)?.passportScorer ?? "0x";
+    const passportScorerAddr =
+      getConfigByChain(chainId)?.passportScorer ?? "0x";
 
     const params: InitializeParams = [
       communityAddr as Address,
@@ -278,7 +283,11 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool. Please ty again.",
     onConfirmations: (receipt) => {
-      const newPoolData = getEventFromReceipt(receipt, "RegistryCommunity", "PoolCreated").args;
+      const newPoolData = getEventFromReceipt(
+        receipt,
+        "RegistryCommunity",
+        "PoolCreated",
+      ).args;
       publish({
         topic: "pool",
         function: "createPool",
@@ -297,13 +306,18 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
       toast.error("Something went wrong creating a pool, check logs"),
   });
 
-  const addStrategy = async (newPoolData: ReturnType<typeof getEventFromReceipt<"RegistryCommunity", "PoolCreated">>["args"]) => {
+  const addStrategy = async (
+    newPoolData: ReturnType<
+      typeof getEventFromReceipt<"RegistryCommunity", "PoolCreated">
+    >["args"],
+  ) => {
     try {
       const res = await fetch("/api/passport-oracle/addStrategy", {
         method: "POST",
         body: JSON.stringify({
           strategy: newPoolData._strategy,
-          threshold: (previewData?.passportThreshold ?? 0) * CV_PERCENTAGE_SCALE,
+          threshold:
+            (previewData?.passportThreshold ?? 0) * CV_PERCENTAGE_SCALE,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -311,7 +325,12 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
       });
       console.debug(res);
       setLoading(false);
-      router.push(pathname?.replace("/create-pool", `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId.toString()}`));
+      router.push(
+        pathname?.replace(
+          "/create-pool",
+          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId.toString()}`,
+        ),
+      );
     } catch (error) {
       console.error(error);
       setLoading(false);
@@ -388,9 +407,9 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
   const shouldRenderInPreview = (key: string) => {
     if (key === "passportThreshold") {
       return previewData?.isSybilResistanceRequired;
-    } else if (key === "maxAmount" ) {
-      if ( previewData?.pointSystemType) {
-        return pointSystems[previewData?.pointSystemType] === "capped";
+    } else if (key === "maxAmount") {
+      if (previewData?.pointSystemType) {
+        return PointSystems[previewData?.pointSystemType] === "capped";
       } else {
         return false;
       }
@@ -438,7 +457,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               register={register}
               errors={errors}
               registerKey="strategyType"
-              options={Object.entries(poolTypes)
+              options={Object.entries(PoolTypes)
                 .slice(0, -1)
                 .map(([value, text]) => ({ label: text, value: value }))}
             />
@@ -588,13 +607,13 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               register={register}
               errors={errors}
               registerKey="pointSystemType"
-              options={Object.entries(pointSystems).map(([value, text]) => ({
+              options={Object.entries(PointSystems).map(([value, text]) => ({
                 label: text,
                 value: value,
               }))}
             />
           </div>
-          {pointSystems[pointSystemType] === "capped" && (
+          {PointSystems[pointSystemType] === "capped" && (
             <div className="flex flex-col">
               <FormInput
                 label="Token max amount"
@@ -622,37 +641,38 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               </FormInput>
             </div>
           )}
-          {renderInputMap("isSybilResistanceRequired", strategyType) && <div className="flex flex-col">
-            <FormCheckBox
-              label="Add sybil resistance with Gitcoin Passport"
-              register={register}
-              errors={errors}
-              registerKey="isSybilResistanceRequired"
-              type="checkbox"
-            />
-            {isSybilResistanceRequired &&
-            <FormInput
-              label="Gitcoin Passport score required"
-              register={register}
-              required
-              registerOptions={{
-                min: {
-                  value: 1 / CV_PERCENTAGE_SCALE,
-                  message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
-                },
-              }}
-              otherProps={{
-                step: 1 / CV_PERCENTAGE_SCALE,
-                min: 1 / CV_PERCENTAGE_SCALE,
-              }}
-              errors={errors}
-              registerKey="passportThreshold"
-              type="number"
-              placeholder="0"
-            />
-            }
-          </div>
-          }
+          {renderInputMap("isSybilResistanceRequired", strategyType) && (
+            <div className="flex flex-col">
+              <FormCheckBox
+                label="Add sybil resistance with Gitcoin Passport"
+                register={register}
+                errors={errors}
+                registerKey="isSybilResistanceRequired"
+                type="checkbox"
+              />
+              {isSybilResistanceRequired && (
+                <FormInput
+                  label="Gitcoin Passport score required"
+                  register={register}
+                  required
+                  registerOptions={{
+                    min: {
+                      value: 1 / CV_PERCENTAGE_SCALE,
+                      message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                    },
+                  }}
+                  otherProps={{
+                    step: 1 / CV_PERCENTAGE_SCALE,
+                    min: 1 / CV_PERCENTAGE_SCALE,
+                  }}
+                  errors={errors}
+                  registerKey="passportThreshold"
+                  type="number"
+                  placeholder="0"
+                />
+              )}
+            </div>
+          )}
         </div>
       }
       <div className="flex w-full items-center justify-center py-6">

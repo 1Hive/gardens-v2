@@ -35,7 +35,7 @@ const Providers = ({ children }: Props) => {
   const chain = useChainFromPath();
 
   const createCustomConfig = () => {
-    const publicClient = configureChains(chain ? [chain] : [mainnet], [
+    const publicClient = configureChains(chain ? [mainnet, chain] : [mainnet], [
       publicProvider(),
       alchemyProvider({
         apiKey: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET ?? "",

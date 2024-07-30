@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { Address, formatUnits } from "viem";
@@ -14,10 +14,10 @@ import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { cvStrategyABI } from "@/src/generated";
-import { poolTypes, proposalStatus } from "@/types";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { PoolTypes, ProposalStatus } from "@/types";
 import { calculatePercentageBigInt } from "@/utils/numbers";
 
 const prettyTimestamp = (timestamp: number) => {
@@ -58,16 +58,7 @@ export default function Page({
 
   const metadata = proposalData?.metadata;
 
-  const [ipfsResult, setIpfsResult] =
-    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
-
-  useEffect(() => {
-    if (metadata) {
-      getIpfsMetadata(metadata).then((d) => {
-        setIpfsResult(d);
-      });
-    }
-  }, [metadata]);
+  const { data: ipfsResult } = useProposalMetadataIpfsFetch(metadata);
 
   const cvStrategyContract = {
     address: proposalData?.strategy.id as Address,
@@ -96,9 +87,9 @@ export default function Page({
   });
 
   const isProposalEnded =
-    !!proposalData &&
-    (proposalStatus[proposalData.proposalStatus] !== "executed" ||
-      proposalStatus[proposalData.proposalStatus] !== "cancelled");
+    proposalData?.proposalStatus &&
+    (ProposalStatus[proposalData.proposalStatus] !== "executed" ||
+      ProposalStatus[proposalData.proposalStatus] !== "cancelled");
 
   const { data: updateConvictionLast } = useContractRead({
     ...cvStrategyContract,
@@ -157,7 +148,7 @@ export default function Page({
     );
   }
 
-  const isSignalingType = poolTypes[proposalType] === "signaling";
+  const isSignalingType = PoolTypes[proposalType] === "signaling";
 
   let thresholdPct = calculatePercentageBigInt(
     threshold,
@@ -237,7 +228,8 @@ export default function Page({
             </div>
           </div>
         </div>
-        {proposalStatus[proposalData.proposalStatus] === "active" && (
+        {(ProposalStatus[proposalData.proposalStatus] === "active" ||
+          ProposalStatus[proposalData.proposalStatus] === "disputed") && (
           <div className="flex w-full justify-end">
             <DisputeButton proposalData={{ ...proposalData, ...ipfsResult }} />
           </div>
@@ -246,7 +238,7 @@ export default function Page({
       <section className="section-layout">
         <h2>Metrics</h2>
         {/* TODO: need designs for this entire section */}
-        {status && proposalStatus[status] === "executed" ?
+        {status && ProposalStatus[status] === "executed" ?
           <div className="my-8 flex w-full justify-center">
             <div className="badge badge-success p-4 text-primary">
               Proposal passed and executed successfully

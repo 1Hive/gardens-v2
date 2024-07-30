@@ -74,7 +74,7 @@ export function Button({
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} btn-${size}
+      className={`btn ${btnStyles[btnStyle][disabled ? "disabled" : color]} btn-${size}
       relative cursor-pointer items-center justify-center rounded-lg px-6 ${size === "sm" ? "py-2" : "py-4"} transition-all ease-out disabled:cursor-not-allowed ${styles} hover:shadow-md disabled:shadow-none`}
       onClick={onClick}
       disabled={disabled || isLoading}
