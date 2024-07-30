@@ -20,7 +20,7 @@ import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.s
 import {FAllo} from "./interfaces/FAllo.sol";
 import {ISafe} from "./interfaces/ISafe.sol";
 import {RegistryFactory} from "./RegistryFactory.sol";
-import {IPointStrategy, CVStrategy, StrategyStruct} from "./CVStrategy.sol";
+import {IPointStrategy, StrategyStruct, CVStrategyV0_0} from "./CVStrategyV0_0.sol";
 
 contract RegistryCommunityV0_0 is
     OwnableUpgradeable,
@@ -280,7 +280,9 @@ contract RegistryCommunityV0_0 is
         public
         returns (uint256 poolId, address strategy)
     {
-        address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
+        // address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
+        address strategyClone = address(new CVStrategyV0_0());
+
         return createPool(strategyClone, _token, _params, _metadata);
     }
 

@@ -112,7 +112,6 @@ deploy-testnet-multi-sep-v0:
 	--sig "run(string)" 'sepolia' \
 	--ffi \
 	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
-	--broadcast \
 	--legacy \
 	-vvv
 deploy-verify-multi-sep: 

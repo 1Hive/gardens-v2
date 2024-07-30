@@ -7,13 +7,13 @@ import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "../src/CVStrategy.sol";
+import "../src/CVStrategyV0_0.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
+import {CVStrategyHelpersV0_0} from "../test/CVStrategyHelpersV0_0.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -30,7 +30,7 @@ import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
+contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     using stdJson for string;
 
     uint256 public MINIMUM_STAKE = 1 ether;
@@ -171,7 +171,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         // params._communityName = "Alpha Seedling";
         params._communityName = "Alpha Centaurians";
         params._allo = address(allo);
-        params._strategyTemplate = address(new CVStrategy(address(allo)));
+        // params._strategyTemplate = address(new CVStrategy(address(allo)));
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 0;
@@ -203,7 +203,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             address(token), paramsCV, Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
         );
 
-        CVStrategy strategy1 = CVStrategy(payable(_strategy1));
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
 
         // strategy1.setDecay(_etherToFloat(0.9965402 ether));
         // strategy1.setDecay(_etherToFloat(0.8705505 ether)); // alpha = decay
@@ -220,7 +220,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
         );
 
-        CVStrategy strategy2 = CVStrategy(payable(_strategy2));
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
 
         strategy2.setDecay(_etherToFloat(0.9999903 ether)); // alpha = decay
         strategy2.setMaxRatio(_etherToFloat(0.3219782 ether)); // beta = maxRatio

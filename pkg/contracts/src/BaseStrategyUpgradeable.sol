@@ -37,10 +37,15 @@ abstract contract BaseStrategyUpgradeable is UUPSUpgradeable, IStrategy, Transfe
     // / @param _name Name of the strategy
     // constructor( {}
 
-    function initialize(address _allo, string memory _name) external onlyAllo {
+    function init(address _allo, string memory _name) public virtual {
         allo = IAllo(_allo);
         strategyId = keccak256(abi.encode(_name));
     }
+
+    // function initialize(address _allo, string memory _name) external onlyAllo {
+    //     allo = IAllo(_allo);
+    //     strategyId = keccak256(abi.encode(_name));
+    // }
 
     /// ====================================
     /// =========== Modifiers ==============

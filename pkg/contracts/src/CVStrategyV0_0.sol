@@ -3,13 +3,14 @@ pragma solidity ^0.8.19;
 
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 
-import {RegistryCommunity, Metadata} from "./RegistryCommunity.sol";
+import {RegistryCommunityV0_0, Metadata} from "./RegistryCommunityV0_0.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import {console} from "forge-std/console.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
@@ -79,11 +80,6 @@ library StrategyStruct {
         uint256 maxAmount;
     }
 
-    struct SybilConfig {
-        address sybilOracleScorer;
-        uint256 threshold;
-    }
-
     struct InitializeParams {
         address registryCommunity;
         // Alpha | Decay | a
@@ -98,7 +94,7 @@ library StrategyStruct {
         //NEXT: use this for tests
         PointSystem pointSystem;
         PointSystemConfig pointConfig;
-        SybilConfig sybilConfig;
+        address sybilScorer;
     }
 }
 
@@ -132,6 +128,8 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
     error ConvictionUnderMinimumThreshold(); // 0xcce79308
     error OnlyCommunityAllowed(); // 0xaf0916a2
     error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount); //0x5863b0b6
+    error OnlyCouncilSafe();
+    error UserCannotExecuteAction();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -186,20 +184,33 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
     StrategyStruct.PointSystemConfig public pointConfig;
 
     // Contract reference
-    RegistryCommunity public registryCommunity;
+    RegistryCommunityV0_0 public registryCommunity;
+    ISybilScorer public sybilScorer;
 
     // Mappings to handle relationships and staking details
     mapping(uint256 => StrategyStruct.Proposal) public proposals; // Mapping of proposal IDs to Proposal structures
     mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
     mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
 
+    modifier onlyCouncilSafe() {
+        if (msg.sender == address(registryCommunity.councilSafe())) {
+            _;
+        } else {
+            revert OnlyCouncilSafe();
+        }
+    }
+
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
-    function initialize(uint256 _poolId, bytes memory _data) external override initializer onlyAllo {
+    function init(address _allo) external virtual initializer {
+        super.init(_allo, "CVStrategy");
         __Ownable_init();
+    }
+
+    function initialize(uint256 _poolId, bytes memory _data) external virtual onlyAllo {
         __BaseStrategy_init(_poolId);
         StrategyStruct.InitializeParams memory ip = abi.decode(_data, (StrategyStruct.InitializeParams));
 
@@ -207,7 +218,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
             revert RegistryCannotBeZero();
         }
 
-        registryCommunity = RegistryCommunity(ip.registryCommunity);
+        registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
         decay = ip.decay;
         maxRatio = ip.maxRatio;
         weight = ip.weight;
@@ -215,6 +226,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         _minThresholdPoints = ip.minThresholdPoints;
+        sybilScorer = ISybilScorer(ip.sybilScorer);
 
         emit InitializedCV(_poolId, ip);
     }
@@ -258,8 +270,15 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
         }
     }
 
-    function revertZeroAddress(address _address) internal pure {
+    function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
+    }
+
+    function _canExecuteAction(address _user) internal view returns (bool) {
+        if (address(sybilScorer) == address(0)) {
+            return true;
+        }
+        return sybilScorer.canExecuteAction(_user, address(this));
     }
 
     // this is called via allo.sol to register recipients
@@ -268,6 +287,9 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
     // this could also check attestations directly and then Accept
 
     function _registerRecipient(bytes memory _data, address _sender) internal override returns (address) {
+        if (!_canExecuteAction(_sender)) {
+            revert UserCannotExecuteAction();
+        }
         // surpressStateMutabilityWarning++;
         _data;
         StrategyStruct.CreateProposal memory proposal = abi.decode(_data, (StrategyStruct.CreateProposal));
@@ -280,7 +302,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
         }
         // console.log("proposalType", uint256(proposalType));
         if (proposalType == StrategyStruct.ProposalType.Funding) {
-            revertZeroAddress(proposal.beneficiary);
+            _revertZeroAddress(proposal.beneficiary);
             // getAllo().getPool(poolId).token;
             if (proposal.requestedToken == address(0)) {
                 revert TokenCannotBeZero();
@@ -316,6 +338,9 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
 
     function activatePoints() external {
         address member = msg.sender;
+        if (!_canExecuteAction(member)) {
+            revert UserCannotExecuteAction();
+        }
         registryCommunity.activateMemberInStrategy(member, address(this));
         totalPointsActivated += registryCommunity.getMemberPowerInStrategy(member, address(this));
     }
@@ -340,6 +365,9 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
         //requireMemberActivatedInStrategies
         onlyRegistryCommunity();
+        if (!_canExecuteAction(_member)) {
+            revert UserCannotExecuteAction();
+        }
         uint256 pointsToIncrease = 0;
         if (pointSystem == StrategyStruct.PointSystem.Unlimited) {
             pointsToIncrease = increasePowerUnlimited(_amountToStake);
@@ -445,6 +473,9 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
     // this will update some data in this contract to store votes, etc.
     function _allocate(bytes memory _data, address _sender) internal override {
         checkSenderIsMember(_sender);
+        if (!_canExecuteAction(_sender)) {
+            revert UserCannotExecuteAction();
+        }
         // surpressStateMutabilityWarning++;
 
         bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
@@ -962,13 +993,18 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointSt
     }
 
     function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
-        registryCommunity = RegistryCommunity(_registryCommunity);
+        registryCommunity = RegistryCommunityV0_0(_registryCommunity);
         emit RegistryUpdated(_registryCommunity);
     }
 
     function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {
         emit MinThresholdPointsUpdated(_minThresholdPoints, minThresholdPoints_);
         _minThresholdPoints = minThresholdPoints_;
+    }
+
+    function setSybilScorer(address _sybilScorer) external onlyCouncilSafe {
+        _revertZeroAddress(_sybilScorer);
+        sybilScorer = ISybilScorer(_sybilScorer);
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
