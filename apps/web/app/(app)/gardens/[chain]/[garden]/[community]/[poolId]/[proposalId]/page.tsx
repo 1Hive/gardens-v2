@@ -24,7 +24,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, cvStrategyABI } from "@/src/generated";
+import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -74,11 +74,6 @@ export default function Page({
 
   const { data: ipfsResult } = useProposalMetadataIpfsFetch(metadata);
 
-  const cvStrategyContract = {
-    address: proposalData?.strategy.id as Address,
-    abi: cvStrategyABI,
-  };
-
   const isProposalEnded =
     !!proposalData &&
     (ProposalStatus[proposalData.proposalStatus] === "executed" ||
@@ -105,7 +100,7 @@ export default function Page({
   const submitter = proposalData?.submitter as Address | undefined;
   const status = proposalData?.proposalStatus;
 
-  const isSignalingType = poolTypes[proposalType] === "signaling";
+  const isSignalingType = PoolTypes[proposalType] === "signaling";
 
   //encode proposal id to pass as argument to distribute function
   const encodedDataProposalId = (proposalId_: number) => {
