@@ -138,7 +138,13 @@ contract CVStrategyTestUpgradeable is
 
         registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
 
-        passportScorer = new PassportScorer(factoryOwner);
+        proxy = new ERC1967Proxy(
+            address(new PassportScorer()),
+            abi.encodeWithSelector(PassportScorer.initialize.selector, address(factoryOwner))
+        );
+
+        passportScorer = PassportScorer(payable(address(proxy)));
+
         // passportScorer.transferOwnership(factoryOwner);
 
         vm.startPrank(factoryOwner);
