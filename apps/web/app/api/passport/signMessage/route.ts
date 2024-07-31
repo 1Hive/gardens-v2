@@ -1,4 +1,5 @@
-// app/api/passport/getSigningMessage/route.ts
+// api/passport/sign-message
+
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -19,10 +20,10 @@ export async function GET() {
       cache: "no-store",
     });
 
-    console.log("SignMessage response ", response);
+    console.info("SignMessage response ", response);
     if (response.ok) {
       const data = await response.json();
-      console.log("DATA ", data);
+      console.info("DATA ", data);
       return NextResponse.json(data, { status: 200 });
     } else {
       const errorData = await response.json();

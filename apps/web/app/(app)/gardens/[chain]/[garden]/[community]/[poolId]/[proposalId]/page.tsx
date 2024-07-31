@@ -1,50 +1,27 @@
 "use client";
-import { Badge, Statistic, DisplayNumber } from "@/components";
-import { EthAddress } from "@/components";
-import { cvStrategyABI } from "@/src/generated";
-import { Address, formatUnits } from "viem";
-import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { useEffect, useState } from "react";
+import { Hashicon } from "@emeraldpay/hashicon-react";
+import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
+import { toast } from "react-toastify";
+import { Address, encodeAbiParameters, formatUnits } from "viem";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { calculatePercentageBigInt } from "@/utils/numbers";
-import Image from "next/image";
+import { Badge, Button, DisplayNumber, EthAddress, Statistic } from "@/components";
+import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useConvictionRead } from "@/hooks/useConvictionRead";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { alloABI } from "@/src/generated";
+import { poolTypes, proposalStatus } from "@/types";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { useErrorDetails } from "@/utils/getErrorName";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { UserIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
-import { proposalStatus, poolTypes } from "@/types";
-import { proposalImg } from "@/assets";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import { useState, useEffect } from "react";
-import { useContractRead } from "wagmi";
-import LoadingSpinner from "@/components/LoadingSpinner";
-
-export const dynamic = "force-dynamic";
-
-type ProposalsMock = {
-  title: string;
-  type: "funding" | "streaming" | "signaling";
-  description: string;
-  value?: number;
-  id: number;
-};
-
-type UnparsedProposal = {
-  submitter: Address;
-  beneficiary: Address;
-  requestedToken: Address;
-  requestedAmount: number;
-  stakedTokens: number;
-  proposalType: any;
-  proposalStatus: any;
-  blockLast: number;
-  convictionLast: number;
-  agreementActionId: number;
-  threshold: number;
-  voterStakedPointsPct: number;
-};
-
-type Proposal = UnparsedProposal & ProposalsMock;
+import { logOnce } from "@/utils/log";
 
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -56,12 +33,16 @@ const prettyTimestamp = (timestamp: number) => {
   return `${day} ${month} ${year}`;
 };
 
-export default function Proposal({
-  params: { proposalId, poolId, chain, garden },
+export default function Page({
+  params: { proposalId, garden, poolId },
 }: {
-  params: { proposalId: string; poolId: string; chain: string; garden: string };
+  params: {
+    proposalId: string;
+    poolId: string;
+    chain: string;
+    garden: string;
+  };
 }) {
-  // TODO: fetch garden decimals in query
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -79,63 +60,93 @@ export default function Proposal({
 
   const metadata = proposalData?.metadata;
 
+  const proposalIdNumber = proposalData?.proposalNumber as number;
+
+  const { publish } = usePubSubContext();
+  const chainId = useChainIdFromPath();
+
   const [ipfsResult, setIpfsResult] =
     useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
 
   useEffect(() => {
     if (metadata) {
-      getIpfsMetadata(metadata).then((data) => {
-        setIpfsResult(data);
+      getIpfsMetadata(metadata).then((d) => {
+        setIpfsResult(d);
       });
     }
   }, [metadata]);
 
-  const cvStrategyContract = {
-    address: proposalData?.strategy.id as Address,
-    abi: cvStrategyABI,
+  const isProposalEnded =
+    !!proposalData &&
+    (proposalStatus[proposalData.proposalStatus] === "executed" ||
+      proposalStatus[proposalData.proposalStatus] === "cancelled");
+  logOnce("debug", { isProposalEnded, proposalStatus: proposalStatus[proposalData?.proposalStatus] });
+
+  const { currentConvictionPct, thresholdPct, totalSupportPct, updateConvictionLast } = useConvictionRead({
+    proposalData,
+    tokenData: data?.tokenGarden,
+  });
+
+  const tokenSymbol = data?.tokenGarden?.symbol;
+  const proposalType = proposalData?.strategy.config?.proposalType;
+  const requestedAmount = proposalData?.requestedAmount;
+  const beneficiary = proposalData?.beneficiary as Address | undefined;
+  const submitter = proposalData?.submitter as Address | undefined;
+  const status = proposalData?.proposalStatus;
+
+  const isSignalingType = poolTypes[proposalType] === "signaling";
+
+  //encode proposal id to pass as argument to distribute function
+  const encodedDataProposalId = (proposalId_: number) => {
+    if (!proposalId_) {
+      return;
+    }
+    const encodedProposalId = encodeAbiParameters(
+      [{ name: "proposalId", type: "uint" }],
+      [BigInt(proposalId_)],
+    );
+    return encodedProposalId;
   };
 
-  const proposalIdNumber = proposalData?.proposalNumber;
-
-  const { data: thFromContract } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "calculateThreshold",
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
+  //distribution function from Allo contract
+  //args: poolId, strategyId, encoded proposalId
+  const {
+    write: writeDistribute,
+    error: errorDistribute,
+    isError: isErrorDistribute,
+  } = useContractWriteWithConfirmations({
+    address: data?.allos[0]?.id as Address,
+    abi: abiWithErrors(alloABI),
+    functionName: "distribute",
+    contractName: "Allo",
+    fallbackErrorMessage: "Error executing proposal. Please try again.",
+    onConfirmations: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "distribute",
+        id:proposalId,
+        containerId: data?.cvproposal?.strategy?.id,
+        chainId,
+      });
+    },
   });
 
-  const { data: totalEffectiveActivePoints } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "totalEffectiveActivePoints",
-  });
-
-  const { data: stakeAmountFromContract } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "getProposalStakedAmount",
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  });
-
-  const { data: updateConvictionLast } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "updateProposalConviction" as any, // TODO: fix CVStrategy.updateProposalConviction to view in contract
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  }) as { data: bigint | undefined };
-
-  const { data: maxCVSupply } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "getMaxConviction",
-    args: [totalEffectiveActivePoints || 0n],
-    enabled: !!totalEffectiveActivePoints,
-  });
+  const distributeErrorName = useErrorDetails(errorDistribute);
+  useEffect(() => {
+    if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
+      toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
+    }
+  }, [isErrorDistribute]);
 
   if (
     !proposalData ||
     !ipfsResult ||
-    !maxCVSupply ||
-    !totalEffectiveActivePoints ||
-    updateConvictionLast == null
+    currentConvictionPct == null ||
+    thresholdPct == null ||
+    totalSupportPct == null ||
+    !proposalIdNumber ||
+    (updateConvictionLast == null && !isProposalEnded)
   ) {
     return (
       <div className="mt-96">
@@ -144,87 +155,11 @@ export default function Proposal({
     );
   }
 
-  const tokenSymbol = data.tokenGarden?.symbol;
-  const tokenDecimals = data.tokenGarden?.decimals;
-  const convictionLast = proposalData.convictionLast;
-  const threshold = proposalData.threshold;
-  const proposalType = proposalData.strategy.config?.proposalType;
-  const requestedAmount = proposalData.requestedAmount;
-  const beneficiary = proposalData.beneficiary as Address;
-  const submitter = proposalData.submitter as Address;
-  const status = proposalData.proposalStatus;
-  const stakedAmount = proposalData.stakedAmount;
-
-  const isSignalingType = poolTypes[proposalType] === "signaling";
-
-  //logs for debugging in arb sepolia - //TODO: remove before merge
-  console.log("requesteAmount:              %s", requestedAmount);
-  console.log("maxCVSupply:                 %s", maxCVSupply);
-  //thresholda
-  // console.log(threshold);
-  console.log("threshold:                   %s", threshold);
-  // console.log(thFromContract);
-  console.log("thFromContract:              %s", thFromContract);
-  //stakeAmount
-  // console.log(stakedAmount);
-  console.log("stakedAmount:                %s", stakedAmount);
-  // console.log(stakeAmountFromContract);
-  console.log("stakeAmountFromContract:     %s", stakeAmountFromContract);
-  // console.log(totalEffectiveActivePoints);
-  console.log("totalEffectiveActivePoints:  %s", totalEffectiveActivePoints);
-  // console.log(updateConvictionLast);
-  console.log("updateConvictionLast:        %s", updateConvictionLast);
-  // console.log(convictionLast);
-  console.log("convictionLast:              %s", convictionLast);
-
-  let thresholdPct = calculatePercentageBigInt(
-    threshold,
-    maxCVSupply,
-    tokenDecimals,
-  );
-
-  console.log("thresholdPct:                %s", thresholdPct);
-
-  // console.log("ff:                          %s", ff);
-
-  // const totalSupportPct = calculatePercentageDecimals(
-  //   stakedAmount,
-  //   totalEffectiveActivePoints,
-  //   tokenDecimals,
-  // );
-
-  let totalSupportPct = calculatePercentageBigInt(
-    stakedAmount,
-    totalEffectiveActivePoints,
-    tokenDecimals,
-  );
-
-  console.log("totalSupportPct:             %s", totalSupportPct);
-  // const currentConvictionPct = calculatePercentageDecimals(
-  //   updateConvictionLast,
-  //   maxCVSupply,
-  //   tokenDecimals,
-  // );
-
-  let currentConvictionPct = calculatePercentageBigInt(
-    BigInt(updateConvictionLast),
-    maxCVSupply,
-    tokenDecimals,
-  );
-
-  console.log("currentConviction:           %s", currentConvictionPct);
-
   return (
     <div className="page-layout">
       <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
         <div className="flex w-full items-center justify-center sm:w-auto">
-          <Image
-            src={proposalImg}
-            alt={`proposal image ${proposalIdNumber}`}
-            height={160}
-            width={160}
-            className="min-h-[160px] min-w-[160px]"
-          />
+          <Hashicon value={proposalId} size={90} />
         </div>
         <div className="flex w-full flex-col gap-8">
           <div>
@@ -270,21 +205,27 @@ export default function Proposal({
       <section className="section-layout">
         <h2>Metrics</h2>
         {/* TODO: need designs for this entire section */}
-        {status && proposalStatus[status] == "executed" ? (
-          <div className="badge badge-success p-4 text-white">
-            Proposal passed and executed successfully
+        {status && proposalStatus[status] === "executed" ?
+          <div className="my-8 flex w-full justify-center">
+            <div className="badge badge-success p-4 text-primary">
+              Proposal passed and executed successfully
+            </div>
           </div>
-        ) : (
-          <div className="mt-10 flex justify-evenly">
+          : (
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
               thresholdPct={thresholdPct}
               proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
+              proposalId={proposalIdNumber}
             />
-          </div>
-        )}
+          )}
+        <div className="absolute top-8 right-10">
+          {proposalStatus[status] !== "executed" && !isSignalingType && ( <Button onClick={() => writeDistribute?.({ args:[poolId, [data.cvproposal?.strategy.id], encodedDataProposalId(Number(proposalIdNumber))] })} disabled={currentConvictionPct < thresholdPct} tooltip="Proposal not executable">Execute</Button>)}
+
+        </div>
       </section>
     </div>
   );
 }
+

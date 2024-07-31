@@ -1,48 +1,57 @@
 "use client";
 
-import { commImg, groupFlowers } from "@/assets";
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import {
-  EthAddress,
-  Statistic,
-  PoolCard,
-  RegisterMember,
-  DisplayNumber,
-  IncreasePower,
-  Button,
-} from "@/components";
+  CurrencyDollarIcon,
+  PlusIcon,
+  RectangleGroupIcon,
+} from "@heroicons/react/24/outline";
+import { Dnum } from "dnum";
+import Image from "next/image";
+import Link from "next/link";
 import { Address } from "viem";
 import {
   getCommunityDocument,
   getCommunityQuery,
 } from "#/subgraph/.graphclient";
+import { commImg, groupFlowers } from "@/assets";
 import {
-  CurrencyDollarIcon,
-  ExclamationCircleIcon,
-  PlusIcon,
-  RectangleGroupIcon,
-} from "@heroicons/react/24/outline";
+  Button,
+  DisplayNumber,
+  EthAddress,
+  IncreasePower,
+  PoolCard,
+  RegisterMember,
+  Statistic,
+  InfoIcon,
+} from "@/components";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
+import { isProd } from "@/constants/contracts";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { poolTypes } from "@/types";
 import {
-  SCALE_PRECISION,
-  SCALE_PRECISION_DECIMALS,
   dn,
   parseToken,
+  SCALE_PRECISION,
+  SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
-import { Dnum } from "dnum";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import Link from "next/link";
-import { useDisableButtons } from "@/hooks/useDisableButtons";
 
-export default function CommunityPage({
+export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
 }: {
   params: { chain: number; garden: string; community: string };
 }) {
+  const searchParams = useCollectQueryParams();
   const [covenant, setCovenant] = useState<string | undefined>();
-  const { data: result, error } = useSubgraphQuery<getCommunityQuery>({
+  const {
+    data: result,
+    error,
+    refetch,
+  } = useSubgraphQuery<getCommunityQuery>({
     query: getCommunityDocument,
     variables: { communityAddr: communityAddr, tokenAddr: tokenAddr },
     changeScope: [
@@ -50,7 +59,7 @@ export default function CommunityPage({
       { topic: "member", containerId: communityAddr },
     ],
   });
-  
+
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   useEffect(() => {
     if (error) {
@@ -72,21 +81,13 @@ export default function CommunityPage({
           if (typeof json.covenant === "string") {
             setCovenant(json.covenant);
           }
-        } catch (error) {
-          console.log(error);
+        } catch (err) {
+          console.error(err);
         }
       }
     };
     fetchCovenant();
   }, [covenantIpfsHash]);
-
-  if (!tokenGarden || !result?.registryCommunity) {
-    return (
-      <div className="mt-96">
-        <LoadingSpinner />
-      </div>
-    );
-  }
 
   let {
     communityName,
@@ -96,7 +97,7 @@ export default function CommunityPage({
     registerStakeAmount,
     registerToken,
     protocolFee,
-  } = result.registryCommunity;
+  } = result?.registryCommunity ?? {};
 
   const communityStakedTokens =
     members?.reduce(
@@ -117,10 +118,28 @@ export default function CommunityPage({
       poolTypes[strategy.config?.proposalType] === "funding" &&
       strategy.isEnabled,
   );
+  const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
 
   const poolsInReview = strategies.filter((strategy) => !strategy.isEnabled);
 
-  const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
+  useEffect(() => {
+    const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
+    if (
+      newPoolId &&
+      result &&
+      !poolsInReview.some((c) => c.poolId === newPoolId)
+    ) {
+      refetch();
+    }
+  }, [searchParams, poolsInReview]);
+
+  if (!tokenGarden || !result?.registryCommunity) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   const parsedCommunityFee = () => {
     try {
@@ -134,8 +153,8 @@ export default function CommunityPage({
       ] as dn.Dnum;
 
       return dn.multiply(membership, feePercentage);
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.error(err);
     }
     return [0n, 0] as dn.Dnum;
   };
@@ -195,23 +214,18 @@ export default function CommunityPage({
             </Statistic>
             <div className="flex">
               <p className="font-medium">Registration cost:</p>
-              <div
-                className="tooltip ml-2 flex cursor-pointer items-center text-primary-content"
-                data-tip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
-              >
+              <InfoIcon content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}>
                 <DisplayNumber
-                  number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
-                  className="font-semibold"
+                  number={[
+                    getTotalRegistrationCost(),
+                    tokenGarden?.decimals,
+                  ]}
+                  className="font-semibold text-primary-content"
                   disableTooltip={true}
                   compact={true}
                   tokenSymbol={tokenGarden.symbol}
                 />
-                <ExclamationCircleIcon
-                  className="ml-2 stroke-2"
-                  width={22}
-                  height={22}
-                />
-              </div>
+              </InfoIcon>
             </div>
           </div>
         </div>
@@ -301,15 +315,11 @@ export default function CommunityPage({
       </section>
       <section className="section-layout">
         <h2 className="mb-4">Covenant</h2>
-        {covenantIpfsHash ? (
-          covenant ? (
+        {covenantIpfsHash ?
+          covenant ?
             <p>{covenant}</p>
-          ) : (
-            <LoadingSpinner></LoadingSpinner>
-          )
-        ) : (
-          <p className="italic">No covenant was submitted.</p>
-        )}
+          : <LoadingSpinner />
+        : <p className="italic">No covenant was submitted.</p>}
         <div className="mt-10 flex justify-center">
           <Image
             src={groupFlowers}
@@ -320,6 +330,7 @@ export default function CommunityPage({
           />
         </div>
       </section>
+      {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
     </div>
   );
 }

@@ -1,31 +1,28 @@
+import { useEffect, useRef, useState } from "react";
 import {
   AnyVariables,
   CombinedError,
   DocumentInput,
   OperationContext,
 } from "@urql/next";
-import { getContractsAddrByChain } from "@/constants/contracts";
-import { useEffect, useRef, useState } from "react";
-import {
-  localhost,
-  arbitrumSepolia,
-  optimismSepolia,
-  sepolia,
-} from "viem/chains";
-import { initUrqlClient } from "@/providers/urql";
-import { ChainId } from "@/types";
+import { debounce, isEqual } from "lodash-es";
+import { toast } from "react-toastify";
+import { arbitrumSepolia, localhost, sepolia } from "viem/chains";
+import { useIsMounted } from "./useIsMounted";
+import { HTTP_CODES } from "@/app/api/utils";
+import { getConfigByChain } from "@/constants/contracts";
 import {
   ChangeEventScope,
   SubscriptionId,
   usePubSubContext,
 } from "@/contexts/pubsub.context";
-import { debounce, isEqual } from "lodash-es";
 import {
   CHANGE_EVENT_INITIAL_DELAY,
   CHANGE_EVENT_MAX_RETRIES,
 } from "@/globals";
-import delayAsync from "@/utils/delayAsync";
-import { HTTP_CODES } from "@/app/api/utils";
+import { initUrqlClient } from "@/providers/urql";
+import { ChainId } from "@/types";
+import { delayAsync } from "@/utils/delayAsync";
 
 const allChains: ChainId[] = [
   sepolia.id,
@@ -33,11 +30,11 @@ const allChains: ChainId[] = [
   // optimismSepolia.id,
 ];
 if (process.env.NODE_ENV === "development") {
-  console.log("dev");
   allChains.push(localhost.id);
 }
+const pendingRefreshToastId = "pending-refresh";
 
-export default function useSubgraphQueryMultiChain<
+export function useSubgraphQueryMultiChain<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
 >({
@@ -54,17 +51,19 @@ export default function useSubgraphQueryMultiChain<
   chainIds?: ChainId[];
 }) {
   const { connected, subscribe, unsubscribe } = usePubSubContext();
-
+  const mounted = useIsMounted();
   const [response, setResponse] = useState<Data[]>();
-  const [fetching, setFetching] = useState(true);
+  const [fetching, setFetching] = useState(false);
 
   const responseMap = useRef(new Map<ChainId, Data>());
   const errorsMap = useRef(new Map<ChainId, CombinedError>());
   const subscritionId = useRef<SubscriptionId>();
+  const fetchingRef = useRef(false);
 
   useEffect(() => {
     const init = async () => {
       setFetching(true);
+      fetchingRef.current = true;
       await fetchDebounce();
     };
     init();
@@ -83,6 +82,11 @@ export default function useSubgraphQueryMultiChain<
       if (subscritionId.current) {
         unsubscribe(subscritionId.current);
       }
+      try {
+        toast.dismiss(pendingRefreshToastId);
+      } catch (error) {
+        // ignore when toast is already dismissed
+      }
     };
   }, [connected]);
 
@@ -91,18 +95,29 @@ export default function useSubgraphQueryMultiChain<
       const chainSubgraphs = (chainsOverride ?? chainIds ?? allChains).map(
         (chain) => ({
           chainId: chain,
-          url: getContractsAddrByChain(chain)?.subgraphUrl,
+          url: getConfigByChain(chain)?.subgraphUrl,
         }),
       );
       await Promise.all(
         chainSubgraphs.map(async ({ chainId, url }, i) => {
           const fetchSubgraphChain = async (retryCount?: number) => {
+            if (!retryCount && retryOnNoChange) {
+              retryCount = 0;
+              toast.loading("Pulling new data", {
+                toastId: pendingRefreshToastId,
+                autoClose: false,
+                style: {
+                  width: "fit-content",
+                  marginLeft: "auto",
+                },
+              });
+            }
             try {
               const fetchQuery = async () => {
                 const { urqlClient } = initUrqlClient({
                   chainId: (chainsOverride ?? allChains)[i],
                 });
-                return await urqlClient.query<Data>(query, variables, {
+                return urqlClient.query<Data>(query, variables, {
                   ...queryContext,
                   url,
                   chainId,
@@ -118,17 +133,31 @@ export default function useSubgraphQueryMultiChain<
                 if (
                   !isEqual(res.data, responseMap.current.get(chainId)) ||
                   retryCount === undefined ||
-                  retryCount >= CHANGE_EVENT_MAX_RETRIES
+                  retryCount >= CHANGE_EVENT_MAX_RETRIES ||
+                  !mounted.current
                 ) {
                   if (retryCount === CHANGE_EVENT_MAX_RETRIES) {
                     console.debug(
-                      `Still not updated but max retries reached. (retry count: ${retryCount})`,
+                      `⚡ Still not updated but max retries reached. (retry count: ${retryCount})`,
+                    );
+                  } else if (!mounted.current) {
+                    console.debug("⚡ Component unmounted, skipping update");
+                  } else {
+                    console.debug(
+                      `⚡ Subgraph-${chainId} result updated, retry count: ${retryCount}`,
                     );
                   }
                   responseMap.current.set(chainId, res.data!);
+                  setFetching(false);
+                  fetchingRef.current = false;
+                  try {
+                    toast.dismiss(pendingRefreshToastId);
+                  } catch (error) {
+                    // ignore when toast is already dismissed
+                  }
                 } else {
                   console.debug(
-                    `Subgraph-${chainId} result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
+                    `⚡ Subgraph-${chainId} result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
                   );
                   const delay = CHANGE_EVENT_INITIAL_DELAY * 2 ** retryCount;
                   await delayAsync(delay);
@@ -136,7 +165,7 @@ export default function useSubgraphQueryMultiChain<
                 }
               }
             } catch (error: any) {
-              console.error("Error occured while fetching query", error);
+              console.error("⚡ Error occured while fetching query", error);
             }
           };
 
@@ -147,6 +176,7 @@ export default function useSubgraphQueryMultiChain<
       // Make sure unique values are returned
       setResponse(Array.from(new Set(responseMap.current.values())));
       setFetching(false);
+      fetchingRef.current = false;
     },
     HTTP_CODES.SUCCESS,
   );
@@ -154,7 +184,12 @@ export default function useSubgraphQueryMultiChain<
   return {
     data: response,
     errors: errorsMap.current,
-    refetch: fetchDebounce,
+    refetch: () => {
+      if (fetchingRef.current) {
+        console.debug("⚡ Already fetching, skipping...");
+      }
+      return fetchDebounce();
+    },
     fetching,
   };
 }

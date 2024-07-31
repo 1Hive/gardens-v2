@@ -1,46 +1,49 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
-  Badge,
-  Proposals,
-  PoolMetrics,
-  EthAddress,
-  Statistic,
-} from "@/components";
-import { grassLarge, blueLand } from "@/assets";
+  BoltIcon,
+  ChartBarIcon,
+  ClockIcon,
+  InformationCircleIcon,
+  Square3Stack3DIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import {
   Allo,
-  TokenGarden,
   getAlloQuery,
   getPoolDataDocument,
   getPoolDataQuery,
+  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { pointSystems, poolTypes } from "@/types";
-import { CV_SCALE_PRECISION } from "@/utils/numbers";
+import { blueLand, grassLarge } from "@/assets";
 import {
-  InformationCircleIcon,
-  ChartBarIcon,
-  BoltIcon,
-  Square3Stack3DIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+  Badge,
+  EthAddress,
+  PoolMetrics,
+  Proposals,
+  Statistic,
+} from "@/components";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { pointSystems, poolTypes } from "@/types";
+import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
 
 export type AlloQuery = getAlloQuery["allos"][number];
 
-export default function Pool({
+export default function Page({
   params: { chain, poolId, garden },
 }: {
   params: { chain: string; poolId: number; garden: string };
 }) {
-  const { data, error } = useSubgraphQuery<getPoolDataQuery>({
+  const searchParams = useCollectQueryParams();
+  const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden },
     changeScope: [
@@ -69,11 +72,35 @@ export default function Pool({
 
   useEffect(() => {
     if (metadata && !ipfsResult) {
-      getIpfsMetadata(metadata).then((data) => {
-        setIpfsResult(data);
+      getIpfsMetadata(metadata).then((d) => {
+        setIpfsResult(d);
       });
     }
   }, [metadata]);
+
+  const strategyObj = data?.cvstrategies?.[0];
+
+  useEffect(() => {
+    if (!strategyObj) {
+      return;
+    }
+    console.debug(
+      "maxRatio: " + strategyObj?.config?.maxRatio,
+      "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
+      "poolAmount: " + strategyObj?.poolAmount,
+    );
+  }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
+
+  useEffect(() => {
+    const newProposalId = searchParams[QUERY_PARAMS.poolPage.newPropsoal];
+    if (
+      newProposalId &&
+      data &&
+      !strategyObj?.proposals.some((c) => c.proposalNumber === newProposalId)
+    ) {
+      refetch();
+    }
+  }, [searchParams, strategyObj?.proposals]);
 
   if (!data || !ipfsResult) {
     return (
@@ -83,7 +110,6 @@ export default function Pool({
     );
   }
 
-  const strategyObj = data?.cvstrategies?.[0];
   if (!data || !strategyObj) {
     return <div className="mt-52 text-center">Pool {poolId} not found</div>;
   }
@@ -100,12 +126,6 @@ export default function Pool({
 
   const spendingLimitPct =
     (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
-
-  console.log(
-    "maxRatio: " + strategyObj?.config?.maxRatio,
-    "minThresholdPoints: " + strategyObj?.config?.minThresholdPoints,
-    "poolAmount: " + poolAmount,
-  );
 
   return (
     <div className="page-layout">
@@ -147,18 +167,17 @@ export default function Pool({
             </div>
           </Statistic>
         </div>
-        {!isEnabled ? (
+        {!isEnabled ?
           <div className="banner">
             <ClockIcon className="h-8 w-8 text-secondary-content" />
             <h6>Waiting for council approval</h6>
           </div>
-        ) : (
-          <Image
+        : <Image
             src={poolTypes[proposalType] === "funding" ? blueLand : grassLarge}
             alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
           />
-        )}
+        }
       </section>
 
       {isEnabled && (
@@ -181,7 +200,7 @@ export default function Pool({
             strategy={strategyObj}
             alloInfo={alloInfo}
             communityAddress={communityAddress}
-            createProposalUrl={`/gardens/${chain}/${garden}/${poolId}/create-proposal`}
+            createProposalUrl={`/gardens/${chain}/${garden}/${communityAddress}/${poolId}/create-proposal`}
             proposalType={proposalType}
           />
         </>

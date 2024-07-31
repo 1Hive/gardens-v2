@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Button, PoolGovernance, ProposalCard } from "@/components";
-import { useAccount, Address as AddressType, useContractRead } from "wagmi";
-import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
-import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
-import { getProposals } from "@/actions/getProposals";
-import { calculatePercentage } from "@/utils/numbers";
-import useErrorDetails from "@/utils/getErrorName";
+import React, { useEffect, useState } from "react";
+import {
+  AdjustmentsHorizontalIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { Address as AddressType, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -17,22 +16,21 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
-import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import {
-  AdjustmentsHorizontalIcon,
-  PlusIcon,
-} from "@heroicons/react/24/outline";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { LoadingSpinner } from "./LoadingSpinner";
+import { getProposals } from "@/actions/getProposals";
+import { Button, PoolGovernance, ProposalCard } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { toast } from "react-toastify";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { useIsMemberActivated } from "@/hooks/useIsMemberActivated";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
+import { alloABI, cvStrategyABI, registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
-import LoadingSpinner from "./LoadingSpinner";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
-import Link from "next/link";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
+import { useErrorDetails } from "@/utils/getErrorName";
+import { calculatePercentage } from "@/utils/numbers";
 
 export type ProposalInputItem = {
   id: string;
@@ -48,12 +46,18 @@ export type ProposalTypeVoter = CVProposal & {
   type: number;
 };
 
+type Stats = {
+  id: number;
+  name: string;
+  stat: number | string;
+  className: string;
+};
+
 export function Proposals({
   strategy,
   alloInfo,
   communityAddress,
   createProposalUrl,
-  proposalType,
 }: {
   strategy: LightCVStrategy;
   alloInfo: Allo;
@@ -61,16 +65,18 @@ export function Proposals({
   createProposalUrl: string;
   proposalType: number;
 }) {
-  const [editView, setEditView] = useState(false);
+  const [allocationView, setAllocationView] = useState(false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
-  const [inputs, setInputs] = useState<ProposalInputItem[]>([]);
+  const [inputs, setInputs] = useState<ProposalInputItem[]>();
   const [proposals, setProposals] = useState<
-    Awaited<ReturnType<typeof getProposals>>
-  >([]);
+  Awaited<ReturnType<typeof getProposals>>
+  >();
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
-  const [memberTokensInCommunity, setMemberTokensInCommunity] =
-    useState<string>("0");
+  const [fetchingProposals, setFetchingProposals] = useState<
+    boolean | undefined
+  >();
+  const memberTokensInCommunity = "0";
 
   const { address: wallet } = useAccount();
 
@@ -112,11 +118,11 @@ export function Proposals({
   }
 
   useEffect(() => {
-    let _stakesFilteres: StakesMemberType = [];
+    let stakesFilteres: StakesMemberType = [];
     if (memberResult && memberResult.members.length > 0) {
       const stakes = memberResult.members[0].stakes;
       if (stakes && stakes.length > 0) {
-        _stakesFilteres = stakes.filter((stake) => {
+        stakesFilteres = stakes.filter((stake) => {
           return (
             stake.proposal.strategy.id.toLowerCase() ===
             strategy.id.toLowerCase()
@@ -125,15 +131,15 @@ export function Proposals({
       }
     }
 
-    _stakesFilteres.reduce((acc, curr) => {
+    stakesFilteres.reduce((acc, curr) => {
       return acc + BigInt(curr.amount);
     }, 0n);
 
-    const totalStaked = _stakesFilteres.reduce((acc, curr) => {
+    const totalStaked = stakesFilteres.reduce((acc, curr) => {
       return acc + BigInt(curr.amount);
     }, 0n);
 
-    const memberStakes: ProposalInputItem[] = _stakesFilteres.map((item) => ({
+    const memberStakes: ProposalInputItem[] = stakesFilteres.map((item) => ({
       id: item.proposal.proposalNumber,
       value: item.amount,
     }));
@@ -169,24 +175,39 @@ export function Proposals({
   }, [memberStrategyResult]);
 
   const triggerRenderProposals = () => {
-    getProposals(wallet, strategy).then((res) => {
-      if (res !== undefined) {
-        setProposals(res);
-      } else {
-        console.log("no proposals");
-      }
-    });
+    if (fetchingProposals == null) {
+      setFetchingProposals(true);
+    }
+    getProposals(wallet, strategy)
+      .then((res) => {
+        if (res !== undefined) {
+          setProposals(res);
+        } else {
+          console.debug("No proposals");
+        }
+      })
+      .catch((err) => {
+        console.error("Error while fetching proposals: ", {
+          error: err,
+          strategy,
+        });
+      })
+      .finally(() => {
+        return setFetchingProposals(false);
+      });
   };
 
   useEffect(() => {
-    triggerRenderProposals();
-  }, []);
+    if (wallet && !fetchingProposals) {
+      triggerRenderProposals();
+    }
+  }, [wallet, strategy]);
 
   useEffect(() => {
     if (!proposals) {
       return;
     }
-    const newInputs = proposals.map(({ proposalNumber, stakedAmount }) => {
+    let newInputs = proposals.map(({ proposalNumber }) => {
       let returnItem = { id: proposalNumber, value: 0 };
       stakedFilters.forEach((item, index) => {
         if (proposalNumber === item.id) {
@@ -198,22 +219,19 @@ export function Proposals({
       });
       return returnItem;
     });
-    if (newInputs.length > 0) {
-      let sum = newInputs?.reduce(
-        (prev, curr) => prev + BigInt(curr.value),
-        0n,
-      );
-    }
     setInputs(newInputs);
   }, [proposals, wallet, stakedFilters]);
 
   useEffect(() => {
-    if (isMemberActived === undefined) return;
-    if (isMemberActived !== true) setEditView(false);
+    if (isMemberActived == null) {
+      return;
+    }
+    if (!isMemberActived) {
+      setAllocationView(false);
+    }
   }, [isMemberActived]);
 
   const {
-    transactionData: allocateTxData,
     write: writeAllocate,
     error: errorAllocate,
     status: allocateStatus,
@@ -221,6 +239,8 @@ export function Proposals({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
+    contractName: "Allo",
+    fallbackErrorMessage: "Error allocating points. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "proposal",
@@ -233,14 +253,12 @@ export function Proposals({
   });
 
   useErrorDetails(errorAllocate, "errorAllocate");
-  const { updateTransactionStatus, txConfirmationHash } =
-    useTransactionNotification(allocateTxData);
-
-  useEffect(() => {
-    updateTransactionStatus(allocateStatus);
-  }, [allocateStatus]);
 
   const submit = async () => {
+    if (!inputs) {
+      console.error("Inputs not yet computed");
+      return;
+    }
     const proposalsDifferencesArr = getProposalsInputsDifferences(
       inputs,
       stakedFilters,
@@ -259,45 +277,54 @@ export function Proposals({
     inputData: ProposalInputItem[],
     currentData: ProposalInputItem[],
   ) => {
-    const resultArr: [number, BigInt][] = [];
+    const resultArr: [number, bigint][] = [];
     inputData.forEach((input) => {
       let row: [number, bigint] | undefined = undefined;
-      if (input.value > 0)
+      if (input.value > 0) {
         row = [Number(input.id), BigInt(Math.floor(input.value))];
+      }
       currentData.forEach((current) => {
         if (input.id === current.id) {
           const dif = BigInt(Math.floor(input.value)) - BigInt(current.value);
           row = [Number(input.id), dif];
         }
       });
-      if (row && row[1] !== 0n) resultArr.push(row);
+      if (row && row[1] !== 0n) {
+        resultArr.push(row);
+      }
     });
 
     return resultArr;
   };
-  const calculateTotalTokens = (exceptIndex?: number) =>
-    inputs.reduce((acc, curr, i) => {
-      if (exceptIndex !== undefined && exceptIndex === i) return acc;
-      else return acc + Number(curr.value);
+  const calculateTotalTokens = (exceptIndex?: number) => {
+    if (!inputs) {
+      console.error("Inputs not yet computed");
+      return;
+    }
+    return inputs.reduce((acc, curr, i) => {
+      if (exceptIndex !== undefined && exceptIndex === i) {
+        return acc;
+      } else {
+        return acc + Number(curr.value);
+      }
     }, 0);
+  };
 
   const inputHandler = (i: number, value: number) => {
     const currentPoints = calculateTotalTokens(i);
+    if (!currentPoints) {
+      console.error("CurrentPoints should not be undefined");
+      return;
+    }
     const maxAllowableValue = memberActivatedPoints - currentPoints;
-    const toastId = "error-toast";
+
     // If the sum exceeds the memberActivatedPoints, adjust the value to the maximum allowable value
     if (currentPoints + value > memberActivatedPoints) {
       value = maxAllowableValue;
-      if (!toast.isActive(toastId)) {
-        toast.error("Can't exceed 100% in total support!", {
-          toastId,
-        });
-      }
-      console.log("can't exceed 100% points");
     }
 
     setInputs(
-      inputs.map((input, index) =>
+      inputs?.map((input, index) =>
         index === i ? { ...input, value: value } : input,
       ),
     );
@@ -355,6 +382,29 @@ export function Proposals({
     }
   };
 
+  const poolWeightClassName = `${calcPoolWeightUsed(memberSupportedProposalsPct) === memberPoolWeight ? "bg-secondary-soft text-secondary-content" : "bg-primary-soft text-primary-content "}`;
+
+  const stats: Stats[] = [
+    {
+      id: 1,
+      name: "Pool Weight",
+      stat: memberPoolWeight,
+      className: poolWeightClassName,
+    },
+    {
+      id: 2,
+      name: "Allocated Pool Weight",
+      stat: calcPoolWeightUsed(memberSupportedProposalsPct),
+      className: poolWeightClassName,
+    },
+    {
+      id: 3,
+      name: "Total Allocation Percentage",
+      stat: memberSupportedProposalsPct,
+      className: `${memberSupportedProposalsPct >= 100 ? "bg-secondary-content text-secondary-soft border-secondary-content" : "bg-primary-content text-primary-soft border-primary-content"}`,
+    },
+  ];
+
   return (
     <>
       <PoolGovernance
@@ -364,127 +414,130 @@ export function Proposals({
         communityAddress={communityAddress}
         memberTokensInCommunity={memberTokensInCommunity}
       />
-      <section className="section-layout">
-        <div className="mx-auto max-w-5xl space-y-10">
-          <header className="flex items-center justify-between">
-            <div className="flex w-full items-baseline justify-between">
-              <h2 className="font-semibold">Proposals</h2>
-              {proposals ? (
-                proposals.length === 0 ? (
-                  <h4 className="text-2xl text-info">
-                    No submitted proposals to support
-                  </h4>
-                ) : (
-                  !editView && (
-                    <Button
-                      icon={
-                        <AdjustmentsHorizontalIcon height={24} width={24} />
-                      }
-                      onClick={() => setEditView((prev) => !prev)}
-                      disabled={disableManSupportButton}
-                      tooltip={String(tooltipMessage)}
-                    >
-                      Manage support
-                    </Button>
-                  )
-                )
-              ) : (
-                <LoadingSpinner></LoadingSpinner>
-              )}
-            </div>
-            {editView && (
-              <>
-                <div className="flex w-full items-start text-right">
-                  <div className="flex w-full flex-col items-center">
-                    <p className={`text-center text-4xl text-info`}>
-                      {calcPoolWeightUsed(memberSupportedProposalsPct)} %
-                    </p>
-                    <p className="text-md text-left">Pool weight used</p>
-                  </div>
-                  <div className="flex w-full flex-col items-center">
-                    <p
-                      className={`text-center text-5xl ${memberSupportedProposalsPct >= 100 && "text-warning"}`}
-                    >
-                      {memberSupportedProposalsPct} %
-                    </p>
-                    <p className="text-center text-lg">
-                      Of your governance weight is supporting proposals
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
+      <section className="section-layout flex flex-col gap-10">
+        <div>
+          <header className="flex items-center justify-between gap-10">
+            <h2>Proposals</h2>
+            {!!proposals && (proposals.length === 0 ? (
+              <h4 className="text-2xl">No submitted proposals to support</h4>
+            ) : (
+              !allocationView && (
+                <Button
+                  icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
+                  onClick={() => setAllocationView((prev) => !prev)}
+                  disabled={disableManSupportButton}
+                  tooltip={String(tooltipMessage)}
+                >
+                  Manage support
+                </Button>
+              )
+            ))}
           </header>
+          {allocationView && (
+            <UserAllocationStats stats={stats} />
+          )}
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-6">
-            {proposals?.map((proposalData, i) => (
-              <React.Fragment key={proposalData.id + "_" + i}>
-                <ProposalCard
-                  proposalData={proposalData}
-                  inputData={inputs[i]}
-                  stakedFilter={stakedFilters[i]}
-                  i={i}
-                  isEditView={editView}
-                  tooltipMessage={tooltipMessage}
-                  memberActivatedPoints={memberActivatedPoints}
-                  memberPoolWeight={memberPoolWeight}
-                  executeDisabled={
-                    proposalData.proposalStatus == 4 ||
-                    !isConnected ||
-                    missmatchUrl
-                  }
-                  strategy={strategy}
-                  tokenDecimals={tokenDecimals}
-                  alloInfo={alloInfo}
-                  triggerRenderProposals={triggerRenderProposals}
-                  inputHandler={inputHandler}
-                />
-              </React.Fragment>
-            ))}
-          </div>
-          <div className="flex justify-end gap-8">
-            {editView && (
-              <>
-                <Button
-                  btnStyle="outline"
-                  color="danger"
-                  onClick={() => setEditView((prev) => !prev)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => submit()}
-                  isLoading={allocateStatus === "loading"}
-                  disabled={
-                    !getProposalsInputsDifferences(inputs, stakedFilters).length
-                  }
-                  tooltip="Make changes in proposals support first"
-                >
-                  Save changes
-                </Button>
-              </>
-            )}
-          </div>
+          {proposals && inputs ? proposals.map((proposalData, i) => (
+            <React.Fragment key={proposalData.id}>
+              <ProposalCard
+                proposalData={proposalData}
+                inputData={inputs[i]}
+                stakedFilter={stakedFilters[i]}
+                index={i}
+                isAllocationView={allocationView}
+                tooltipMessage={tooltipMessage}
+                memberActivatedPoints={memberActivatedPoints}
+                memberPoolWeight={memberPoolWeight}
+                executeDisabled={
+                  proposalData.proposalStatus == 4 ||
+                  !isConnected ||
+                  missmatchUrl
+                }
+                strategy={strategy}
+                tokenDecimals={tokenDecimals}
+                alloInfo={alloInfo}
+                triggerRenderProposals={triggerRenderProposals}
+                inputHandler={inputHandler}
+                tokenData={strategy.registryCommunity.garden}
+              />
+            </React.Fragment>
+          )) : <LoadingSpinner />}
         </div>
-        <div>
-          <h4 className="text-2xl">Do you have a great idea?</h4>
-          <div className="flex items-center gap-6">
-            <p>Share it with the community and get support !</p>
-            <Link href={createProposalUrl}>
+        {allocationView && (
+          <div className="flex justify-end gap-4">
+            <>
               <Button
-                btnStyle="filled"
-                disabled={!isConnected || missmatchUrl}
-                tooltip={tooltipMessage}
-                icon={<PlusIcon height={24} width={24} />}
+                btnStyle="outline"
+                color="danger"
+                onClick={() => setAllocationView((prev) => !prev)}
               >
-                Create Proposal
+                Cancel
               </Button>
-            </Link>
+              <Button
+                onClick={() => submit()}
+                isLoading={allocateStatus === "loading"}
+                disabled={
+                  !inputs || !getProposalsInputsDifferences(inputs, stakedFilters).length
+                }
+                tooltip="Make changes in proposals support first"
+              >
+                Save changes
+              </Button>
+            </>
           </div>
-        </div>
+        )}
+        {!allocationView && (
+          <div>
+            <h4>Do you have a great idea?</h4>
+            <div className="flex items-center gap-6">
+              <p>Share it with the community and get support!</p>
+              <Link href={createProposalUrl} >
+                <Button icon={<PlusIcon height={24} width={24} />}>
+                    Create a proposal
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </section>
     </>
+  );
+}
+
+export default function UserAllocationStats({ stats }: { stats: Stats[] }) {
+  return (
+    <div className="mt-10">
+      <h3>Your Allocation Overview</h3>
+
+      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {stats.map((stat) => (
+          <div key={stat.id} className="section-layout sm:px-6 sm:pt-6">
+            <div>
+              <div
+                className={`radial-progress absolute rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
+                style={{
+                  // @ts-ignore
+                  "--value": stat.stat,
+                  "--size": "4rem",
+                  "--thickness": "0.35rem",
+                }}
+                role="progressbar"
+              >
+                <span className="text-xs">{stat.stat} %</span>
+              </div>
+
+              <p className="ml-20 truncate">{stat.name}</p>
+            </div>
+            <div className="stats-baseline ml-20 flex">
+              <p className="text-2xl font-semibold text-neutral-content">
+                {stat.stat} %
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

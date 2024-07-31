@@ -1,27 +1,27 @@
+// api/passport-oracles/daily-job
+
 import { NextResponse } from "next/server";
+import { gql } from "urql";
 import {
   createPublicClient,
   http,
   createWalletClient,
   custom,
   Address,
-  Chain,
 } from "viem";
-import { localhost, arbitrumSepolia, sepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { gql } from "urql";
+import { getConfigByChain } from "@/constants/contracts";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
-import { getContractsAddrByChain } from "@/constants/contracts";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
+import { getViemChain } from "@/utils/viem";
 
-const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY || "";
-const CHAIN = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
+const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY ?? "";
+const CHAIN_ID = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
 const LOCAL_RPC = "http://127.0.0.1:8545";
-const RPC_URL = getContractsAddrByChain(CHAIN)?.rpcUrl || LOCAL_RPC;
-const CONTRACT_ADDRESS = getContractsAddrByChain(CHAIN)
-  ?.passportScorer as Address;
-const SUBGRAPH = getContractsAddrByChain(CHAIN)?.subgraphUrl as string;
+const RPC_URL = getConfigByChain(CHAIN_ID)?.rpcUrl ?? LOCAL_RPC;
+const CONTRACT_ADDRESS = getConfigByChain(CHAIN_ID)?.passportScorer as Address;
+const SUBGRAPH = getConfigByChain(CHAIN_ID)?.subgraphUrl as string;
 const API_ENDPOINT = "/api/passport/scores";
 
 interface PassportUser {
@@ -42,33 +42,18 @@ interface ApiScore {
   stamp_scores: Record<string, number>;
 }
 
-function getViemChain(chain: number): Chain {
-  switch (chain) {
-    case localhost.id:
-      return localhost;
-    case arbitrumSepolia.id:
-      return arbitrumSepolia;
-    case sepolia.id:
-      return sepolia;
-    default:
-      return localhost;
-  }
-}
-
 const client = createPublicClient({
-  chain: getViemChain(CHAIN),
+  chain: getViemChain(CHAIN_ID),
   transport: http(RPC_URL),
 });
 
 const walletClient = createWalletClient({
-  account: privateKeyToAccount(
-    (`${LIST_MANAGER_PRIVATE_KEY}` as Address) || "",
-  ),
-  chain: getViemChain(CHAIN),
+  account: privateKeyToAccount(LIST_MANAGER_PRIVATE_KEY as Address),
+  chain: getViemChain(CHAIN_ID),
   transport: custom(client.transport),
 });
 
-const { urqlClient } = initUrqlClient({ chainId: CHAIN });
+const { urqlClient } = initUrqlClient({ chainId: CHAIN_ID });
 
 const query = gql`
   query {
@@ -84,7 +69,7 @@ const query = gql`
 const fetchScoresFromService = async (): Promise<ApiScore[]> => {
   const url = new URL(
     API_ENDPOINT,
-    `http://${process.env.HOST || "localhost"}:${process.env.PORT || 3000}`,
+    `http://${process.env.HOST ?? "localhost"}:${process.env.PORT ?? 3000}`,
   );
 
   const response = await fetch(url.toString(), {
@@ -160,17 +145,15 @@ const updateScoresOnChain = async (
 const updateScores = async () => {
   const subgraphResponse = await urqlClient
     .query<{ passportUsers: PassportUser[] }>(
-      query,
-      {},
-      {
-        url: SUBGRAPH,
-        requestPolicy: "network-only",
-      },
-    )
+    query,
+    {},
+    {
+      url: SUBGRAPH,
+      requestPolicy: "network-only",
+    },
+  )
     .toPromise();
 
-  console.log("subgraphResponse ", subgraphResponse);
-  console.log("DATA ", subgraphResponse.data);
   if (!subgraphResponse.data) {
     throw new Error("Failed to fetch data from subgraph");
   }

@@ -1,7 +1,12 @@
 "use client";
 
-import { tree2, tree3, grassLarge, ecosystem } from "@/assets";
+import React, { useEffect } from "react";
+import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import Link from "next/link";
+import { Address } from "viem";
+import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
+import { ecosystem, grassLarge, tree2, tree3 } from "@/assets";
 import {
   Button,
   Communities,
@@ -9,25 +14,27 @@ import {
   Statistic,
   TokenLabel,
 } from "@/components";
-import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
-import React, { useEffect } from "react";
-import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/constants/contracts";
-import TokenGardenFaucet from "@/components/TokenGardenFaucet";
-import { Address } from "viem";
-import Link from "next/link";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export const dynamic = "force-dynamic";
 
-export default function Garden({
+export default function Page({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error } = useSubgraphQuery<getGardenQuery>({
+  const searchParams = useCollectQueryParams();
+  const {
+    data: result,
+    error,
+    refetch,
+  } = useSubgraphQuery<getGardenQuery>({
     query: getGardenDocument,
     variables: { addr: garden },
     changeScope: [
@@ -50,9 +57,21 @@ export default function Garden({
     }
   }, [error]);
 
-  let communities = result?.tokenGarden?.communities || [];
+  let communities =
+    result?.tokenGarden?.communities?.filter((com) => com.isValid) ?? [];
 
-  communities = communities.filter((com) => com.isValid);
+  useEffect(() => {
+    const newCommunityId =
+      searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase();
+
+    if (
+      newCommunityId &&
+      result &&
+      !communities.some((c) => c.id.toLowerCase() === newCommunityId)
+    ) {
+      refetch();
+    }
+  }, [searchParams, result]);
 
   const tokenGarden = result?.tokenGarden;
 
@@ -153,9 +172,7 @@ export default function Garden({
           </div>
         </div>
       </section>
-      {!isProd && tokenGarden && (
-        <TokenGardenFaucet token={tokenGarden}></TokenGardenFaucet>
-      )}
+      {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
     </div>
   );
 }

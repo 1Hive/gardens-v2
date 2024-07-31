@@ -1,4 +1,5 @@
-// app/api/passport/[account]/route.ts
+// api/passport/[account]
+
 import { NextResponse } from "next/server";
 
 interface Params {
@@ -25,7 +26,7 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: "API key is missing" }, { status: 500 });
   }
 
-  console.log("Making request to endpoint:", endpoint);
+  console.info("Making request to endpoint:", endpoint);
 
   try {
     const response = await fetch(endpoint, {
@@ -36,15 +37,15 @@ export async function GET(request: Request, { params }: Params) {
       },
     });
 
-    console.log("Response status:", response.status);
-    console.log("Response status text:", response.statusText);
+    console.info("Response status:", response.status);
+    console.info("Response status text:", response.statusText);
 
     if (response.ok) {
       const data = await response.json();
       return NextResponse.json(data, { status: 200 });
     } else {
       const errorData = await response.json();
-      console.log("Error data:", errorData);
+      console.info("Error data:", errorData);
       return NextResponse.json(
         { error: errorData.message },
         { status: response.status },

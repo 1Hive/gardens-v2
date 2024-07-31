@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { CommunityCard } from "./CommunityCard";
 import {
   CVStrategy,
   Maybe,
   MemberCommunity,
   RegistryCommunity,
 } from "#/subgraph/.graphclient";
+import { CommunityCard } from "./CommunityCard";
 
 export type LightCommunity = Pick<RegistryCommunity, "id" | "communityName"> & {
   members?: Maybe<Array<Pick<MemberCommunity, "id" | "memberAddress">>>;
@@ -21,7 +21,6 @@ export function Communities({
   communities: LightCommunity[];
 }) {
   const { address } = useAccount();
-
   const [otherCommunities, setOtherCommunities] =
     useState<LightCommunity[]>(communities);
   const [userCommunities, setUserCommunities] = useState<LightCommunity[]>([]);
@@ -38,13 +37,13 @@ export function Communities({
     }
     setUserCommunities(auxUserCommunities);
     setOtherCommunities(auxOtherCommunities);
-  }, [address]);
+  }, [address, communities]);
 
   function memberInCommunity(community: LightCommunity) {
     if (!community?.members) {
       return false;
     }
-    for (let member of community?.members) {
+    for (let member of community?.members ?? []) {
       if (member?.memberAddress?.toLowerCase() === address?.toLowerCase()) {
         return true;
       }

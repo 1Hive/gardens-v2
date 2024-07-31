@@ -2,18 +2,16 @@
 
 import React, { useEffect, useMemo } from "react";
 import Image from "next/image";
+import {
+  getTokenGardensDocument,
+  getTokenGardensQuery,
+} from "#/subgraph/.graphclient";
 import { clouds1, clouds2, gardenHeader } from "@/assets";
 import { GardenCard } from "@/components";
-import {
-  getTokenGardensQuery,
-  getTokenGardensDocument,
-} from "#/subgraph/.graphclient";
-import useSubgraphQueryMultiChain from "@/hooks/useSubgraphQueryMultiChain";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 
-export const dynamic = "force-dynamic";
-
-export default function Gardens() {
+export default function Page() {
   const {
     data: gardens,
     fetching,
@@ -36,30 +34,32 @@ export default function Gardens() {
     }
   }, [errors.size]);
 
-  const tokenGardens = useMemo(() => {
-    return gardens
-      ?.flatMap((g) => g.tokenGardens)
-      .filter((x): x is NonNullable<typeof x> => !!x);
-  }, [gardens]);
+  const tokenGardens = useMemo(
+    () =>
+      gardens
+        ?.flatMap((g) => g.tokenGardens)
+        .filter((x): x is NonNullable<typeof x> => !!x),
+    [gardens],
+  );
 
   const GardenList = useMemo(() => {
     if (fetching) {
       return <LoadingSpinner />;
-    } else if (tokenGardens?.length) {
+    }
+    if (tokenGardens?.length) {
       return (
         <>
-          {tokenGardens.map((garden, id) => (
-            <div key={`${garden.id}-${id}`}>
+          {tokenGardens.map((garden) => (
+            <div key={garden.id}>
               <GardenCard garden={garden} />
             </div>
           ))}
         </>
       );
-    } else {
-      return (
-        <p className="badge-info mb-8 rounded p-1 text-center">No Gardens</p>
-      );
     }
+    return (
+      <p className="badge-info mb-8 rounded p-1 text-center">No Gardens</p>
+    );
   }, [fetching, tokenGardens?.length]);
 
   return (
@@ -83,7 +83,7 @@ export default function Gardens() {
             <Image src={clouds2} alt="clouds" />
           </div>
         </div>
-        <div className="relative"></div>
+        <div className="relative" />
       </header>
       <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8">
         <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">

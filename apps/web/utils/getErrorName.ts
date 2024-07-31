@@ -19,15 +19,12 @@ export function getErrorName(error: Error | null) {
   return { errorName, args };
 }
 
-export default function useErrorDetails(error: Error | null, name?: string) {
+export function useErrorDetails(error: Error | null, name?: string) {
   const { errorName, args } = getErrorName(error);
 
   useEffect(() => {
-    if (!error) return;
-
-    const { errorName, args } = getErrorName(error);
-    console.log(name ? `ErrorDetails:${name}` : "errorName", errorName);
-  }, [error]);
+    console.debug(name ? `ErrorDetails:${name}` : "errorName", errorName);
+  }, [errorName]);
 
   return { errorName, args };
 }

@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.19;
 
-import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ISybilScorer, PassportData, Strategy} from "./ISybilScorer.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 
-contract PassportScorer is Ownable, ISybilScorer {
+contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, ISybilScorer {
     address public listManager;
 
     mapping(address => PassportData) public userScores;
@@ -22,6 +24,7 @@ contract PassportScorer is Ownable, ISybilScorer {
     error OnlyCouncilOrAuthorized();
     error OnlyCouncil();
     error ZeroAddress();
+    error StrategyAlreadyExists();
 
     modifier onlyAuthorized() {
         if (msg.sender == owner() || msg.sender == listManager) {
@@ -53,7 +56,8 @@ contract PassportScorer is Ownable, ISybilScorer {
         }
     }
 
-    constructor(address _listManager) Ownable() {
+    function initialize(address _listManager) public initializer {
+        __Ownable_init();
         _revertZeroAddress(_listManager);
         listManager = _listManager;
     }
@@ -85,10 +89,14 @@ contract PassportScorer is Ownable, ISybilScorer {
     }
 
     /// @notice Add a strategy to the contract
-    /// @param _threshold is expresed on a scale of 10**4
+    /// @param _threshold is expressed on a scale of 10**4
+    /// @param _councilSafe address of the council safe
     function addStrategy(address _strategy, uint256 _threshold, address _councilSafe) external onlyAuthorized {
         _revertZeroAddress(_strategy);
         _revertZeroAddress(_councilSafe);
+        if (strategies[_strategy].threshold != 0 || strategies[_strategy].councilSafe != address(0)) {
+            revert StrategyAlreadyExists();
+        }
         strategies[_strategy] = Strategy({threshold: _threshold, active: false, councilSafe: _councilSafe});
         emit StrategyAdded(_strategy, _threshold, false, _councilSafe);
     }
@@ -132,9 +140,9 @@ contract PassportScorer is Ownable, ISybilScorer {
 
         return userScore.score >= strategy.threshold;
     }
+
     /// @notice Get the score of a user
     /// @param _user address of the user to check
-
     function getUserScore(address _user) external view returns (PassportData memory) {
         return userScores[_user];
     }
@@ -144,4 +152,6 @@ contract PassportScorer is Ownable, ISybilScorer {
     function getStrategy(address _strategy) external view returns (Strategy memory) {
         return strategies[_strategy];
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
