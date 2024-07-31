@@ -37,8 +37,8 @@ export function CommunityCard({
         width={100}
       />
       <div className="flex flex-col gap-2">
-        <div className="flex items-start max-w-full">
-          <h3 className="truncate">{name}</h3>
+        <div className="flex items-start w-fit max-w-full tooltip" data-tip={name}>
+          <h3 className="truncate tooltip">{name}</h3>
         </div>
         <Statistic label="members" count={membersCount} />
         <Statistic
