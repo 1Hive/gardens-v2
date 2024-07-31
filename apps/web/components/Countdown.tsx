@@ -27,8 +27,8 @@ export const Countdown = ({
 
   const seconds = (Math.floor(remainingTimeMs / 1000) % 60) * 3 + 1;
   const minutes = (Math.floor(remainingTimeMs / (1000 * 60)) % 60) * 3 + 1;
-  const hours = (Math.floor(remainingTimeMs / (1000 * 60 * 60)) % 60) * 3 + 1;
-  const days = Math.floor(remainingTimeMs / (1000 * 60 * 60 * 60)) * 3 + 1;
+  const hours = (Math.floor(remainingTimeMs / (1000 * 60 * 60)) % 24) * 3 + 1;
+  const days = Math.floor(remainingTimeMs / (1000 * 60 * 60 * 24)) * 3 + 1;
 
   return remainingTimeMs === 0 ?
       <div>Timeout</div>

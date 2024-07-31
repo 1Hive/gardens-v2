@@ -108,8 +108,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const collateral = 0.002;
   const disputeFee = 0.001;
 
-  const isDisputed = false;
-  // proposalData && ProposalStatus[proposalData.proposalStatus] === "disputed";
+  const isDisputed =
+    proposalData && ProposalStatus[proposalData.proposalStatus] === "disputed";
 
   const { write } = useContractWriteWithConfirmations({
     contractName: "CVStrategy",
@@ -146,21 +146,23 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   }
 
   const countdown = useMemo(() => {
-    // timestamp of now + 1 min
-    return (Date.now() + 60 * 1000 * 2) / 1000;
+    // timestamp of now + 2 days
+    return Date.now() + 2 * 24 * 60 * 60 * 1000;
   }, []);
 
   const timeline = (
     <ul className="timeline mt-5">
       <li className="w-1/4">
-        <div className="timeline-end">Proposal created</div>
+        <div className="timeline-start text-sm">March, 7th</div>
         <div className="timeline-middle rounded-full text-tertiary-soft bg-tertiary-content m-0.5">
           <CheckIcon className="w-4 m-0.5" />
         </div>
+        <div className="timeline-end">Proposal created</div>
         <hr className="bg-tertiary-content" />
       </li>
       <li>
         <hr className="bg-tertiary-content w-8" />
+        <div className="timeline-start text-sm">March, 10th</div>
         <div className="timeline-middle rounded-full text-tertiary-soft bg-tertiary-content m-0.5">
           <CheckIcon className="w-4 m-0.5" />
         </div>
@@ -226,7 +228,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
       </Button>
       <dialog ref={modalRef} className="modal">
         <div className="modal-backdrop">Close</div>
-        <div className="modal-box w-full md:w-6/12 md:max-w-3xl overflow-x-clip">
+        <div className="modal-box w-full md:w-6/12 md:max-w-3xl overflow-x-clip gap-10 flex flex-col">
           <form
             className="flex flex-row justify-between items-start mb-4"
             method="dialog"
