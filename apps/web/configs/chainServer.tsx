@@ -4,6 +4,7 @@ import {
   Ethereum,
   GnosisGno,
   Optimism,
+  Polygon,
 } from "@thirdweb-dev/chain-icons";
 import {
   arbitrum,
@@ -15,6 +16,7 @@ import {
   optimism,
   optimismSepolia,
   sepolia,
+  polygon,
 } from "viem/chains";
 import { ChainId } from "@/types";
 
@@ -96,6 +98,13 @@ export const chainDataMap: {
     icon: GnosisGno,
     explorer: "https://gnosisscan.io/address/",
     blockTime: 5.2,
+    confirmations: 1, // 4
+  },
+  137: {
+    name: polygon.name,
+    icon: Polygon,
+    explorer: "https://polygonscan.com/address/",
+    blockTime: 2.1,
     confirmations: 1, // 4
   },
 };

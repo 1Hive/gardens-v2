@@ -1,3 +1,5 @@
+// api/ably-auth
+
 import Ably from "ably";
 import { NextResponse } from "next/server";
 import { HTTP_CODES } from "../utils";
@@ -19,15 +21,10 @@ export async function POST() {
   try {
     const tokenRequestData = {
       capability: JSON.stringify({
-        [CHANGE_EVENT_CHANNEL_NAME]: [
-          "publish",
-          "subscribe",
-          "presence",
-        ],
+        [CHANGE_EVENT_CHANNEL_NAME]: ["publish", "subscribe", "presence"],
       }),
     };
-    const tokenDetails =
-            await ably.auth.createTokenRequest(tokenRequestData);
+    const tokenDetails = await ably.auth.createTokenRequest(tokenRequestData);
     return NextResponse.json(tokenDetails);
   } catch (error) {
     console.error(error);

@@ -4,13 +4,7 @@ import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import {
-  Address,
-  Chain,
-  createPublicClient,
-  http,
-  parseUnits,
-} from "viem";
+import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
@@ -154,7 +148,11 @@ export const CommunityForm = ({
     contractName: "Registry Factory",
     fallbackErrorMessage: "Error creating community. Please try again.",
     onConfirmations: async (receipt) => {
-      const newCommunityAddr = getEventFromReceipt(receipt, "RegistryFactory", "CommunityCreated").args._registryCommunity;
+      const newCommunityAddr = getEventFromReceipt(
+        receipt,
+        "RegistryFactory",
+        "CommunityCreated",
+      ).args._registryCommunity;
       publish({
         topic: "community",
         type: "add",
@@ -165,7 +163,10 @@ export const CommunityForm = ({
       });
       if (pathname) {
         router.push(
-          pathname?.replace("/create-community", `?${QUERY_PARAMS.gardenPage.newCommunity}=${newCommunityAddr}`),
+          pathname?.replace(
+            "/create-community",
+            `?${QUERY_PARAMS.gardenPage.newCommunity}=${newCommunityAddr}`,
+          ),
         );
       }
     },
@@ -264,7 +265,7 @@ export const CommunityForm = ({
           formRows={formatFormRows()}
           previewTitle="Check details and covenant description"
         />
-        : <div className="flex flex-col gap-2 overflow-hidden p-1">
+      : <div className="flex flex-col gap-2 overflow-hidden p-1">
           <div className="flex flex-col">
             <FormInput
               label="Community Name"
@@ -434,7 +435,7 @@ export const CommunityForm = ({
               Submit
             </Button>
           </div>
-          : <Button type="submit">Preview</Button>}
+        : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

@@ -40,7 +40,7 @@
       "allo-v2/=lib/allo-v2/contracts/",
     ],
     "[typescriptreact]": {
-      "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+      "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     },
   },
   "extensions": {

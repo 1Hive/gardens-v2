@@ -91,7 +91,12 @@ export function ConnectWallet() {
                           className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85            
                           ${cn({ "border-2 border-danger-content": urlChainId && urlChainId !== chain.id })} `}
                         >
-                          <Image alt={"Chain icon"} src={`https://effigy.im/a/${accountAddress.address}.png`} className="h-8 w-8 rounded-full" width={32} height={32}
+                          <Image
+                            alt={"Chain icon"}
+                            src={`https://effigy.im/a/${accountAddress.address}.png`}
+                            className="h-8 w-8 rounded-full"
+                            width={32}
+                            height={32}
                           />
                           <div className="flex flex-col">
                             <h4 className="text-left">
@@ -110,7 +115,7 @@ export function ConnectWallet() {
                                   </div>
                                   <span>{chain.name}</span>
                                 </>
-                                : <span className="text-danger-content">
+                              : <span className="text-danger-content">
                                   Network mismatch
                                 </span>
                               }
@@ -149,7 +154,7 @@ export function ConnectWallet() {
                                   {" "}
                                   {!tokenUrlAddress ?
                                     "Unknow garden"
-                                    : Number(token?.formatted).toFixed(0)}{" "}
+                                  : Number(token?.formatted).toFixed(0)}{" "}
                                   {token?.symbol === "ETH" ? "" : token?.symbol}
                                 </span>
                               </div>
@@ -160,15 +165,15 @@ export function ConnectWallet() {
                               {chain.id !== urlChainId &&
                                 urlChainId &&
                                 !isNaN(urlChainId) && (
-                                <Button
-                                  className="overflow-hidden truncate"
-                                  onClick={() =>
-                                    switchNetwork && switchNetwork(urlChainId)
-                                  }
-                                >
+                                  <Button
+                                    className="overflow-hidden truncate"
+                                    onClick={() =>
+                                      switchNetwork && switchNetwork(urlChainId)
+                                    }
+                                  >
                                     Switch to {chainFromPath?.name ?? ""}
-                                </Button>
-                              )}
+                                  </Button>
+                                )}
 
                               <Button
                                 onClick={() => disconnect()}

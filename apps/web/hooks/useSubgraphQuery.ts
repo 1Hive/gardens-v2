@@ -53,7 +53,9 @@ export function useSubgraphQuery<
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const [fetching, setFetching] = useState(false);
   const config = getConfigByChain(chainId);
-  const [response, setResponse] = useState<Omit<Awaited<ReturnType<typeof fetch>>, "operation">>({
+  const [response, setResponse] = useState<
+    Omit<Awaited<ReturnType<typeof fetch>>, "operation">
+  >({
     hasNext: true,
     stale: true,
     data: undefined,
@@ -84,18 +86,15 @@ export function useSubgraphQuery<
       }
     });
 
-    subscritionId.current = subscribe(
-      changeScope,
-      () => {
-        return refetchFromOutside.call({
-          response,
-          fetching,
-          setResponse,
-          chain: chainId,
-          mounted,
-        });
-      },
-    );
+    subscritionId.current = subscribe(changeScope, () => {
+      return refetchFromOutside.call({
+        response,
+        fetching,
+        setResponse,
+        chain: chainId,
+        mounted,
+      });
+    });
 
     return () => {
       if (subscritionId.current) {
@@ -118,7 +117,9 @@ export function useSubgraphQuery<
 
   const refetchFromOutside = async () => {
     if (!enabled) {
-      console.debug("⚡ Query not enabled when refetching from outside, skipping");
+      console.debug(
+        "⚡ Query not enabled when refetching from outside, skipping",
+      );
       return;
     }
     if (fetchingRef.current) {
@@ -157,16 +158,15 @@ export function useSubgraphQuery<
     if (
       result.data &&
       (!isEqual(result.data, latestResponse.current.data) ||
-        retryCount >= CHANGE_EVENT_MAX_RETRIES || !mounted.current)
+        retryCount >= CHANGE_EVENT_MAX_RETRIES ||
+        !mounted.current)
     ) {
       if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
         console.debug(
           `⚡ Still not updated but max retries reached. (retry count: ${retryCount})`,
         );
       } else if (!mounted.current) {
-        console.debug(
-          "⚡ Component unmounted, cancelling",
-        );
+        console.debug("⚡ Component unmounted, cancelling");
       } else {
         console.debug(
           `⚡ Subgraph result updated after ${retryCount} retries.`,

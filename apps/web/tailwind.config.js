@@ -22,7 +22,7 @@ module.exports = {
           "neutral-inverted-content": "#FFFFFF",
           "tertiary-soft": "#E5F7FA",
           "tertiary-content": "#2AAAE5",
-          "accent": "#37CDFA",
+          accent: "#37CDFA",
           "danger-button": "#EB4848",
           "danger-content": "#EB4848",
           //additions:

@@ -25,10 +25,16 @@ export function CommunityCard({
 }: CommunityCardProps) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
-  const isNewCommunity = searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() === id.toLowerCase();
+  const isNewCommunity =
+    searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() ===
+    id.toLowerCase();
 
   return (
-    <Card key={id} href={`${pathname}/${id}`} className={`w-[273px] ${isNewCommunity ? "!border-accent !border-2" : ""}`}>
+    <Card
+      key={id}
+      href={`${pathname}/${id}`}
+      className={`w-[273px] ${isNewCommunity ? "!border-accent !border-2" : ""}`}
+    >
       <Image
         src={commImg}
         alt={`${name} community`}

@@ -61,7 +61,8 @@ export default function Page({
     result?.tokenGarden?.communities?.filter((com) => com.isValid) ?? [];
 
   useEffect(() => {
-    const newCommunityId = searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase();
+    const newCommunityId =
+      searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase();
 
     if (
       newCommunityId &&
@@ -115,13 +116,10 @@ export default function Page({
               <EthAddress address={tokenGarden?.id as Address} />
             </div>
             <p className="max-w-lg">
-                            Discover communities in the
-              <span className="font-bold">
-                {" "}
-                {tokenGarden?.name} Garden
-              </span>
-                            , where you connect with people and support
-                            proposals bounded by a shared
+              Discover communities in the
+              <span className="font-bold"> {tokenGarden?.name} Garden</span>,
+              where you connect with people and support proposals bounded by a
+              shared
               <span className="font-bold"> covenant.</span>
             </p>
           </div>
@@ -131,10 +129,7 @@ export default function Page({
               icon={<CubeTransparentIcon />}
               count={communities?.length ?? 0}
             />
-            <Statistic
-              label="members"
-              count={gardenTotalMembers()}
-            />
+            <Statistic label="members" count={gardenTotalMembers()} />
           </div>
         </div>
       </header>
@@ -143,7 +138,7 @@ export default function Page({
         <div className="flex flex-col gap-10 overflow-x-hidden">
           <header>
             <h4 className="text-secondary-content">
-                            Create your own community
+              Create your own community
             </h4>
           </header>
           <div className="relative flex h-[219px] justify-center">
@@ -157,7 +152,7 @@ export default function Page({
                 tooltip={tooltipMessage}
                 icon={<PlusIcon height={24} width={24} />}
               >
-                                Create a community
+                Create a community
               </Button>
             </Link>
             <Image
@@ -178,9 +173,7 @@ export default function Page({
           </div>
         </div>
       </section>
-      {!isProd && tokenGarden && (
-        <TokenGardenFaucet token={tokenGarden} />
-      )}
+      {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
     </div>
   );
 }

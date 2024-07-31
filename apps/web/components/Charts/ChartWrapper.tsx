@@ -4,6 +4,7 @@ import {
   ArrowUpRightIcon,
   FlagIcon,
 } from "@heroicons/react/24/solid";
+import { InfoIcon } from "../InfoIcon";
 
 type ChartWrapperProps = {
   children?: ReactNode;
@@ -27,36 +28,41 @@ export const ChartWrapper = ({
       name: "Support",
       // TODO: missing color in Design system: ask designer
       className: "bg-[#A8E066] h-4 w-4 rounded-full",
+      info: "Represents the pool weight allocated in favor of a proposal.",
     },
     {
       name: "Conviction",
       className: "bg-primary-content  h-4 w-4 rounded-full",
+      info: "Accumulated allocation power for a proposal, increasing over time.",
     },
     {
       name: "Threshold",
       className:
         "w-5 bg-neutral-soft border-t-[1px] border-black border-dashed rotate-90 -mx-3",
+      info: "The minimum level of conviction required for a proposal to pass.",
     },
   ];
 
   return (
     <>
-      <div className="mt-7 flex flex-col gap-6">
+      <div className="mt-7 flex flex-col gap-12">
         <h3>Conviction voting chart</h3>
         <div className="flex gap-4">
           {legend
             .filter((item) => !(isSignalingType && item.name === "Threshold"))
             .map((item) => (
               <Fragment key={item.name}>
-                <div className="flex items-center gap-1">
-                  {item.name === "Threshold" ?
-                    <div className="relative">
-                      <div className={`${item.className}`} />
-                      <FlagIcon className="absolute -left-[3.5px] -top-5 h-3 w-3 text-black" />
-                    </div>
-                    : <div className={`${item.className}`} />}
-                  <p className="text-xs font-medium">{item.name}</p>
-                </div>
+                <InfoIcon content={item.info} size="sm">
+                  <div className="flex items-center gap-1">
+                    {item.name === "Threshold" ?
+                      <div className="relative">
+                        <div className={`${item.className}`} />
+                        <FlagIcon className="absolute -left-[3.5px] -top-5 h-3 w-3 text-black" />
+                      </div>
+                      : <div className={`${item.className}`} />}
+                    <p className="text-xs font-medium">{item.name}</p>
+                  </div>
+                </InfoIcon>
               </Fragment>
             ))}
         </div>
@@ -72,7 +78,7 @@ export const ChartWrapper = ({
                 <span>
                   {growing ?
                     <ArrowUpRightIcon className={iconClassname} />
-                    : <ArrowDownRightIcon className={iconClassname} />}{" "}
+                  : <ArrowDownRightIcon className={iconClassname} />}{" "}
                 </span>
               </p>
             </>
