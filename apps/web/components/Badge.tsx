@@ -4,7 +4,6 @@ import {
   HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
 import { PoolTypes, ProposalStatus } from "@/types";
-import { capitalize } from "@/utils/text";
 
 type BadgeProps = {
   type?: number;
@@ -72,9 +71,13 @@ export function Badge({
       className={`${BASE_STYLES} ${styles} ${classNames} flex items-center gap-2`}
     >
       {iconIncluded && (
-        <div className="h-6 w-6 text-inherit">{iconIncluded}</div>
+        <div
+          className={`h-6 w-6 text-inherit ${isCapitalize ? "capitalize" : ""}`}
+        >
+          {iconIncluded}
+        </div>
       )}
-      <h6>{isCapitalize ? content : capitalize(content ?? "")}</h6>
+      <h6>{content}</h6>
     </div>
   );
 }

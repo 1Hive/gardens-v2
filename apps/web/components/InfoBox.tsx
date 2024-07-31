@@ -39,7 +39,7 @@ export function InfoBox({
       {!hideIcon && (
         <div className="h-9 w-9 text-inherit">
           {" "}
-          {icon ?? <InformationCircleIcon className=" h-9 w-9" />}
+          {icon ?? <InformationCircleIcon className="h-9 w-9" />}
         </div>
       )}
       <p className={`leading-5 text-neutral-content ${contentStyle}`}>

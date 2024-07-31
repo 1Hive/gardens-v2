@@ -26,7 +26,7 @@ export function InfoIcon({
 
   return (
     <div
-      className={`tooltip flex gap-2 cursor-pointer items-center max-w-sm [&>svg]:text-primary-content [&>svg]:stroke-2 ${classNames}`}
+      className={`tooltip flex gap-2 cursor-pointer items-center max-w-sm [&>svg]:stroke-2 ${classNames}`}
       data-tip={content}
     >
       {children}

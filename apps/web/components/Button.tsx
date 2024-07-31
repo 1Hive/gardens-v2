@@ -29,25 +29,20 @@ type BtnStyles = Record<BtnStyle, Record<Color, string>>;
 
 const btnStyles: BtnStyles = {
   filled: {
-    primary:
-      "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content",
-    secondary:
-      "bg-secondary-button text-neutral-inverted-content hover:bg-secondary-hover-content",
-    tertiary: "",
-    danger:
-      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content",
-    disabled: "bg-neutral-button text-neutral-inverted-content",
+    primary: "btn !bg-primary-button !text-neutral-inverted-content",
+    secondary: "btn !bg-secondary-button !text-neutral-inverted-content",
+    tertiary: "btn !bg-tertiary-button !text-neutral-inverted-content",
+    danger: "btn !bg-danger-button !text-neutral-inverted-content",
+    disabled: "btn !bg-neutral-button !text-neutral-inverted-content",
   },
   outline: {
-    primary:
-      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:border-primary-hover-content",
+    primary: "btn btn-outline !text-primary-content !border-primary-content",
     secondary:
-      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:border-secondary-hover-content",
+      "btn btn-outline !text-secondary-content !border-secondary-content",
     tertiary:
-      "text-tertiary-content border border-tertiary-content hover:text-tertiary-hover-content hover:border-tertiary-hover-content",
-    danger:
-      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:border-danger-hover-content",
-    disabled: "text-neutral-soft border border-neutral-soft",
+      "btn btn-outline !text-secondary-content !border-tertiary-content",
+    danger: "btn btn-outline !text-danger-button !border-danger-button",
+    disabled: "btn btn-outline !text-neutral-soft !border-neutral-soft",
   },
   link: {
     primary: "text-primary-content",
@@ -74,8 +69,8 @@ export function Button({
   const buttonElement = (
     <button
       type={type}
-      className={`btn ${btnStyles[btnStyle][disabled ? "disabled" : color]} btn-${size}
-      relative cursor-pointer items-center justify-center rounded-lg px-6 ${size === "sm" ? "py-2" : "py-4"} transition-all ease-out disabled:cursor-not-allowed ${styles} hover:shadow-md disabled:shadow-none`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} btn-${size}
+      relative cursor-pointer items-center justify-center rounded-lg px-6 transition-all ease-out disabled:cursor-not-allowed ${styles} hover:shadow-md disabled:shadow-none`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >

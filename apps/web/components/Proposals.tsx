@@ -427,35 +427,38 @@ export function Proposals({
                 ))}
           </header>
           {allocationView && <UserAllocationStats stats={stats} />}
+          {allocationView && <UserAllocationStats stats={stats} />}
         </div>
 
         <div className="flex flex-col gap-6">
           {proposals && inputs ?
+           
             proposals.map((proposalData, i) => (
-              <React.Fragment key={proposalData.id}>
-                <ProposalCard
-                  proposalData={proposalData}
-                  inputData={inputs[i]}
-                  stakedFilter={stakedFilters[i]}
-                  index={i}
-                  isAllocationView={allocationView}
-                  tooltipMessage={tooltipMessage}
-                  memberActivatedPoints={memberActivatedPoints}
-                  memberPoolWeight={memberPoolWeight}
-                  executeDisabled={
-                    proposalData.proposalStatus == 4 ||
-                    !isConnected ||
-                    missmatchUrl
-                  }
-                  strategy={strategy}
-                  tokenDecimals={tokenDecimals}
-                  alloInfo={alloInfo}
-                  triggerRenderProposals={triggerRenderProposals}
-                  inputHandler={inputHandler}
-                  tokenData={strategy.registryCommunity.garden}
-                />
-              </React.Fragment>
-            ))
+                <React.Fragment key={proposalData.id}>
+                  <ProposalCard
+                    proposalData={proposalData}
+                    inputData={inputs[i]}
+                    stakedFilter={stakedFilters[i]}
+                    index={i}
+                    isAllocationView={allocationView}
+                    tooltipMessage={tooltipMessage}
+                    memberActivatedPoints={memberActivatedPoints}
+                    memberPoolWeight={memberPoolWeight}
+                    executeDisabled={
+                      proposalData.proposalStatus == 4 ||
+                      !isConnected ||
+                      missmatchUrl
+                    }
+                    strategy={strategy}
+                    tokenDecimals={tokenDecimals}
+                    alloInfo={alloInfo}
+                    triggerRenderProposals={triggerRenderProposals}
+                    inputHandler={inputHandler}
+                    tokenData={strategy.registryCommunity.garden}
+                  />
+                </React.Fragment>
+              ))
+         
           : <LoadingSpinner />}
         </div>
         {allocationView && (
