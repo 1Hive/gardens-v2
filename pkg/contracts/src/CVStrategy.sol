@@ -137,6 +137,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     error ProposalNotDisputed(uint256 _proposalId);
     error ArbitratorCannotBeZero();
     error CollateralVaultCannotBeZero();
+    error OnlyCouncilSafe();
 
     event InitializedCV(uint256 poolId, StrategyStruct.InitializeParams data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
@@ -221,6 +222,10 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         _minThresholdPoints = ip.minThresholdPoints;
         arbitrableConfig = ip.arbitrableConfig;
 
+        if (address(arbitrableConfig.arbitrator) != address(0)) {
+            collateralVault = new CollateralVault(address(this));
+        }
+
         emit InitializedCV(_poolId, ip);
     }
 
@@ -261,6 +266,11 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
 
     function revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
+    }
+
+    modifier onlyCouncilSafe() {
+        if (msg.sender != address(registryCommunity.councilSafe())) revert OnlyCouncilSafe();
+        _;
     }
 
     // this is called via allo.sol to register recipients
@@ -947,8 +957,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
     }
 
-    function setCollateralVault(address _collateralVault) external {
-        onlyRegistryCommunity();
+    function setCollateralVault(address _collateralVault) external onlyCouncilSafe {
         collateralVault = CollateralVault(_collateralVault);
         emit CollateralVaultUpdated(_collateralVault);
     }

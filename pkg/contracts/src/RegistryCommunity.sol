@@ -10,7 +10,6 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {RegistryFactory} from "./RegistryFactory.sol";
-import {CollateralVault} from "../src/CollateralVault.sol";
 import {ISafe} from "./ISafe.sol";
 // import {Safe} from "safe-contracts/contracts/Safe.sol";
 import "forge-std/console.sol";
@@ -192,7 +191,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     mapping(address member => Member) public addressToMemberInfo;
     mapping(address member => address[] strategiesAddresses) public strategiesByMember;
     mapping(address member => mapping(address strategy => bool isActivated)) public memberActivatedInStrategies;
-    mapping(address strategy => address collateralVault) public collateralVaults;
 
     address[] initialMembers;
 
@@ -277,12 +275,6 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         poolId = allo.createPoolWithCustomStrategy(
             profileId, strategy, abi.encode(_params), token, 0, _metadata, _pool_managers
         );
-
-        if (address(_params.arbitrableConfig.arbitrator) != address(0)) {
-            CollateralVault collateralVault = new CollateralVault(strategy);
-            collateralVaults[strategy] = address(collateralVault);
-            CVStrategy(payable(_strategy)).setCollateralVault(address(collateralVault));
-        }
 
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
     }
