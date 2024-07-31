@@ -220,7 +220,7 @@ export default function Page({
               >
                 <DisplayNumber
                   number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
-                  className="font-semibold"
+                  className="font-semibold text-primary-content"
                   disableTooltip={true}
                   compact={true}
                   tokenSymbol={tokenGarden.symbol}

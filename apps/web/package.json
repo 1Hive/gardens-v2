@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@allo-team/allo-v2-sdk": "^1.0.34",
+    "@emeraldpay/hashicon-react": "^0.5.2",
     "@graphprotocol/client-urql": "^2.0.0",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.1.1",

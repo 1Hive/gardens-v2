@@ -2510,7 +2510,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         [key: string]: never;
     }>, options?: TOperationContext): Promise<getTokenGardensQuery>;
     getMemberStrategy(variables: Exact<{
-        member_strategy: string;
+        wallet: string;
     }>, options?: TOperationContext): Promise<getMemberStrategyQuery>;
     isMember(variables: Exact<{
         me: string;
@@ -2594,7 +2594,7 @@ export type getTokenGardensQuery = {
     })>;
 };
 export type getMemberStrategyQueryVariables = Exact<{
-    member_strategy: Scalars['ID']['input'];
+    wallet: Scalars['ID']['input'];
 }>;
 export type getMemberStrategyQuery = {
     memberStrategy?: Maybe<(Pick<MemberStrategy, 'id' | 'totalStakedPoints' | 'activatedPoints'> & {
@@ -2607,7 +2607,7 @@ export type isMemberQueryVariables = Exact<{
     comm: Scalars['String']['input'];
 }>;
 export type isMemberQuery = {
-    member?: Maybe<(Pick<Member, 'id'> & {
+    members: Array<(Pick<Member, 'id'> & {
         stakes?: Maybe<Array<(Pick<Stake, 'id' | 'amount'> & {
             proposal: (Pick<CVProposal, 'id' | 'proposalNumber' | 'stakedAmount'> & {
                 strategy: (Pick<CVStrategy, 'id' | 'poolId'> & {
@@ -2617,7 +2617,7 @@ export type isMemberQuery = {
                 });
             });
         })>>;
-        memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'stakedTokens' | 'isRegistered'> & {
+        memberCommunity?: Maybe<Array<(Pick<MemberCommunity, 'stakedTokens'> & {
             registryCommunity: Pick<RegistryCommunity, 'id'>;
         })>>;
     })>;
@@ -2691,7 +2691,9 @@ export type getPoolDataQuery = {
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });
-        proposals: Array<Pick<CVProposal, 'id' | 'proposalNumber' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount'>>;
+        proposals: Array<(Pick<CVProposal, 'id' | 'proposalNumber' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount' | 'convictionLast' | 'threshold'> & {
+            strategy: Pick<CVStrategy, 'id' | 'maxCVSupply' | 'totalEffectiveActivePoints'>;
+        })>;
     })>;
 };
 export type getProposalDataQueryVariables = Exact<{
@@ -2699,9 +2701,10 @@ export type getProposalDataQueryVariables = Exact<{
     proposalId: Scalars['ID']['input'];
 }>;
 export type getProposalDataQuery = {
+    allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'decimals'>>;
     cvproposal?: Maybe<(Pick<CVProposal, 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadata' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
-        strategy: (Pick<CVStrategy, 'id'> & {
+        strategy: (Pick<CVStrategy, 'id' | 'maxCVSupply' | 'totalEffectiveActivePoints'> & {
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;
         });
     })>;
@@ -2793,7 +2796,7 @@ export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery,
     [key: string]: never;
 }>>;
 export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQuery, Exact<{
-    member_strategy: Scalars['ID']['input'];
+    wallet: Scalars['ID']['input'];
 }>>;
 export declare const isMemberDocument: DocumentNode<isMemberQuery, Exact<{
     me: Scalars['ID']['input'];

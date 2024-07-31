@@ -2,16 +2,14 @@
 
 import React from "react";
 import { Dnum } from "dnum";
-import { Address, useAccount, useContractRead } from "wagmi";
+import { Address } from "wagmi";
 import {
   ActivatePoints,
   Badge,
   DisplayNumber,
   CheckPassport,
 } from "@/components/";
-import { registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
 
 type PoolGovernanceProps = {
   memberPoolWeight: number;
@@ -32,30 +30,11 @@ export const PoolGovernance = ({
   isMemberCommunity,
   memberActivatedStrategy,
 }: PoolGovernanceProps) => {
-  const { address: connectedAccount } = useAccount();
-  const registryContractCallConfig = {
-    address: communityAddress,
-    abi: abiWithErrors2(registryCommunityABI),
-  };
-
-  // const { data: isMemberActivated } = useContractRead({
-  //   ...registryContractCallConfig,
-  //   functionName: "memberActivatedInStrategies",
-  //   args: [connectedAccount as Address, strategy.id as Address],
-  //   watch: true,
-  //   enabled: !!connectedAccount,
-  // });
-
-  // const { data: isMember } = useContractRead({
-  //   ...registryContractCallConfig,
-  //   functionName: "isMember",
-  //   args: [connectedAccount as Address],
-  //   watch: true,
-  //   enabled: !!connectedAccount,
-  // });
-
   const showPoolGovernanceData =
-  isMemberCommunity && memberActivatedStrategy !== undefined && memberActivatedStrategy;
+    isMemberCommunity &&
+    memberActivatedStrategy !== undefined &&
+    memberActivatedStrategy;
+
   return (
     <section className="section-layout">
       <header>
@@ -65,7 +44,7 @@ export const PoolGovernance = ({
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-10">
             <div className="flex w-full max-w-xl flex-col items-center gap-2 font-semibold">
-              {showPoolGovernanceData ? (
+              {showPoolGovernanceData ?
                 <>
                   <div className="flex w-full items-center gap-6">
                     <h5 className="">Total staked in community:</h5>
@@ -76,9 +55,6 @@ export const PoolGovernance = ({
                         [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
                       }
                     />
-                    {/* <span className="px-2 text-lg">
-                        {strategy.registryCommunity.garden.symbol}
-                      </span> */}
                   </div>
                   <div className="flex w-full items-center gap-6">
                     <h5 className="">Status:</h5>
@@ -94,14 +70,13 @@ export const PoolGovernance = ({
                     </p>
                   </div>
                 </>
-              ) : (
-                <div className="flex w-full items-center gap-6">
+              : <div className="flex w-full items-center gap-6">
                   <h5 className="">Status:</h5>
                   <div>
                     <Badge status={memberActivatedStrategy ? 1 : 0} />
                   </div>
                 </div>
-              )}
+              }
             </div>
           </div>
           <div className="flex flex-col gap-2">
