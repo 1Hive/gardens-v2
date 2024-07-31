@@ -72,9 +72,8 @@ export function Proposals({
   const [allocationView, setAllocationView] = useState(false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<ProposalInputItem[]>();
-  const [proposals, setProposals] = useState<
-  Awaited<ReturnType<typeof getProposals>>
-  >();
+  const [proposals, setProposals] =
+    useState<Awaited<ReturnType<typeof getProposals>>>();
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
   const [fetchingProposals, setFetchingProposals] = useState<
@@ -153,8 +152,6 @@ export function Proposals({
     setStakedFilters(memberStakes);
   }, [memberData?.member]);
 
-  console.log(memberData);
-
   const { data: memberStrategyData, refetch: refetchgetMemberStrategyQuery } =
     useSubgraphQuery<getMemberStrategyQuery>({
       query: getMemberStrategyDocument,
@@ -168,8 +165,6 @@ export function Proposals({
       },
       enabled: !!wallet,
     });
-
-  console.log(memberStrategyData);
 
   const memberActivatedStrategy =
     Number(memberStrategyData?.memberStrategy?.activatedPoints) > 0;
@@ -413,77 +408,78 @@ export function Proposals({
         <div>
           <header className="flex items-center justify-between gap-10">
             <h2>Proposals</h2>
-            {!!proposals && (proposals.length === 0 ? (
-              <h4 className="text-2xl">No submitted proposals to support</h4>
-            ) : (
-                !allocationView && (
+            {!!proposals &&
+              (proposals.length === 0 ?
+                <h4 className="text-2xl">No submitted proposals to support</h4>
+              : !allocationView && (
                   <CheckPassport strategyAddr={strategy.id as Address}>
-                <Button
-                  icon={<AdjustmentsHorizontalIcon height={24} width={24} />}
-                  onClick={() => setAllocationView((prev) => !prev)}
-                  disabled={disableManSupportButton}
-                  tooltip={String(tooltipMessage)}
-                >
-                  Manage support
-                </Button></CheckPassport>
-              )
-            ))}
+                    <Button
+                      icon={
+                        <AdjustmentsHorizontalIcon height={24} width={24} />
+                      }
+                      onClick={() => setAllocationView((prev) => !prev)}
+                      disabled={disableManSupportButton}
+                      tooltip={String(tooltipMessage)}
+                    >
+                      Manage support
+                    </Button>
+                  </CheckPassport>
+                ))}
           </header>
-          {allocationView && (
-            <UserAllocationStats stats={stats} />
-          )}
+          {allocationView && <UserAllocationStats stats={stats} />}
         </div>
 
         <div className="flex flex-col gap-6">
-          {proposals && inputs ? proposals.map((proposalData, i) => (
-            <React.Fragment key={proposalData.id}>
-              <ProposalCard
-                proposalData={proposalData}
-                inputData={inputs[i]}
-                stakedFilter={stakedFilters[i]}
-                index={i}
-                isAllocationView={allocationView}
-                tooltipMessage={tooltipMessage}
-                memberActivatedPoints={memberActivatedPoints}
-                memberPoolWeight={memberPoolWeight}
-                executeDisabled={
-                  proposalData.proposalStatus == 4 ||
-                  !isConnected ||
-                  missmatchUrl
-                }
-                strategy={strategy}
-                tokenDecimals={tokenDecimals}
-                alloInfo={alloInfo}
-                triggerRenderProposals={triggerRenderProposals}
-                inputHandler={inputHandler}
-                tokenData={strategy.registryCommunity.garden}
-              />
-            </React.Fragment>
-          )) : <LoadingSpinner />}
+          {proposals && inputs ?
+            proposals.map((proposalData, i) => (
+              <React.Fragment key={proposalData.id}>
+                <ProposalCard
+                  proposalData={proposalData}
+                  inputData={inputs[i]}
+                  stakedFilter={stakedFilters[i]}
+                  index={i}
+                  isAllocationView={allocationView}
+                  tooltipMessage={tooltipMessage}
+                  memberActivatedPoints={memberActivatedPoints}
+                  memberPoolWeight={memberPoolWeight}
+                  executeDisabled={
+                    proposalData.proposalStatus == 4 ||
+                    !isConnected ||
+                    missmatchUrl
+                  }
+                  strategy={strategy}
+                  tokenDecimals={tokenDecimals}
+                  alloInfo={alloInfo}
+                  triggerRenderProposals={triggerRenderProposals}
+                  inputHandler={inputHandler}
+                  tokenData={strategy.registryCommunity.garden}
+                />
+              </React.Fragment>
+            ))
+          : <LoadingSpinner />}
         </div>
         {allocationView && (
           <div className="flex justify-end gap-4">
-            <>
-              <Button
-                btnStyle="outline"
-                color="danger"
-                onClick={() => setAllocationView((prev) => !prev)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => submit()}
-                isLoading={allocateStatus === "loading"}
-                disabled={
-                  !inputs || !getProposalsInputsDifferences(inputs, stakedFilters).length
-                }
-                tooltip="Make changes in proposals support first"
-              >
-                Save changes
-              </Button>
-            </>
+            <Button
+              btnStyle="outline"
+              color="danger"
+              onClick={() => setAllocationView((prev) => !prev)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => submit()}
+              isLoading={allocateStatus === "loading"}
+              disabled={
+                !inputs ||
+                !getProposalsInputsDifferences(inputs, stakedFilters).length
+              }
+              tooltip="Make changes in proposals support first"
+            >
+              Save changes
+            </Button>
           </div>
-        </div>
+        )}
         <div>
           <h4 className="text-2xl">Do you have a great idea?</h4>
           <div className="flex items-center gap-6">

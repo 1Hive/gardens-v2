@@ -40,7 +40,7 @@ export const useIpfsFetch = <TResult>(
     })();
   }, [hash]);
 
-  return { data, loading: fetching, error };
+  return { data, fetching, error };
 };
 
 export type MetadataV1 = {

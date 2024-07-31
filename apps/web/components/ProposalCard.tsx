@@ -14,7 +14,6 @@ import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { LightCVStrategy, PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
-import { capitalize } from "@/utils/text";
 
 type ProposalCardProps = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
