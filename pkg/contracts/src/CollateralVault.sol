@@ -15,6 +15,7 @@ contract CollateralVault is Ownable, ReentrancyGuard {
     error NotAuthorized();
     error InsufficientCollateral(uint256 requested, uint256 available);
     error InvalidAddress();
+    error AmountCanNotBeZero();
 
     modifier onlyStrategy() {
         if (msg.sender != strategy) revert NotAuthorized();
@@ -33,7 +34,10 @@ contract CollateralVault is Ownable, ReentrancyGuard {
 
     function withdrawCollateral(uint256 proposalId, address user, uint256 amount) external onlyStrategy nonReentrant {
         uint256 availableAmount = proposalCollateral[proposalId][user];
-        if (amount == 0 || amount > availableAmount) {
+        if (amount == 0) {
+            revert AmountCanNotBeZero();
+        }
+        if (amount > availableAmount) {
             revert InsufficientCollateral(amount, availableAmount);
         }
         proposalCollateral[proposalId][user] -= amount;

@@ -101,7 +101,7 @@ contract SafeArbitrator is IArbitrator {
     /// @param _arbitrable Address of the arbitrable that the safe rules for".
     function executeRuling(uint256 _disputeID, uint256 _ruling, address _arbitrable) external onlySafe(_arbitrable) {
         DisputeStruct storage dispute = disputes[_disputeID];
-        require(_ruling <= dispute.choices, "Invalid ruling.");
+        require(_ruling < dispute.choices, "Invalid ruling.");
         require(dispute.status != DisputeStatus.Solved, "The dispute must not be solved.");
 
         dispute.ruling = _ruling;

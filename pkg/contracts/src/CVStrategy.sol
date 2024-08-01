@@ -51,7 +51,7 @@ library StrategyStruct {
         Cancelled, // A vote that has been cancelled
         Executed, // A vote that has been executed
         Disputed, // A vote that has been disputed
-        Blocked // A vote that has been blocked
+        Rejected // A vote that has been rejected
 
     }
 
@@ -155,7 +155,13 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     event RegistryUpdated(address registryCommunity);
     event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
     event ProposalDisputed(
-        uint256 proposalId, uint256 disputeId, address challenger, uint256 arbitrationFee, string context
+        uint256 proposalId,
+        uint256 disputeId,
+        address challenger,
+        uint256 arbitrationFee,
+        string context,
+        uint256 timestamp,
+        uint256 collateralAmount
     );
     event CollateralVaultUpdated(address collateralVault);
 
@@ -268,9 +274,8 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
-    modifier onlyCouncilSafe() {
+    function onlyCouncilSafe() internal view {
         if (msg.sender != address(registryCommunity.councilSafe())) revert OnlyCouncilSafe();
-        _;
     }
 
     // this is called via allo.sol to register recipients
@@ -909,7 +914,15 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         proposal.disputeTimestamp = block.timestamp;
         proposal.challenger = msg.sender;
         disputeIdToProposalId[disputeId] = proposalId;
-        emit ProposalDisputed(proposalId, disputeId, msg.sender, arbitrationFee, context);
+        emit ProposalDisputed(
+            proposalId,
+            disputeId,
+            msg.sender,
+            arbitrationFee,
+            context,
+            proposal.disputeTimestamp,
+            arbitrableConfig.collateralAmount
+        );
     }
 
     function rule(uint256 _disputeID, uint256 _ruling) external override {
@@ -934,7 +947,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
                 proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
             }
             if (arbitrableConfig.defaultRuling == 2) {
-                proposal.proposalStatus = StrategyStruct.ProposalStatus.Blocked;
+                proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
             }
             collateralVault.withdrawCollateral(proposalId, proposal.challenger, arbitrableConfig.collateralAmount);
             collateralVault.withdrawCollateral(proposalId, proposal.submitter, arbitrableConfig.collateralAmount);
@@ -945,7 +958,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
                 proposalId, address(registryCommunity.councilSafe()), arbitrableConfig.collateralAmount
             );
         } else if (_ruling == 2) {
-            proposal.proposalStatus = StrategyStruct.ProposalStatus.Blocked;
+            proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
             collateralVault.withdrawCollateral(
                 proposalId, proposal.challenger, (arbitrableConfig.collateralAmount * 3) / 2
             );
@@ -957,7 +970,8 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
     }
 
-    function setCollateralVault(address _collateralVault) external onlyCouncilSafe {
+    function setCollateralVault(address _collateralVault) external {
+        onlyCouncilSafe();
         collateralVault = CollateralVault(_collateralVault);
         emit CollateralVaultUpdated(_collateralVault);
     }
