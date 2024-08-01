@@ -16,26 +16,17 @@ import {
   useContractWriteWithConfirmations,
 } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
-import { getTxMessage, useHandleAllowance } from "@/hooks/useHandleAllowance";
+import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { gte } from "@/utils/numbers";
+import { getTxMessage } from "@/utils/transactionMessages";
 
 type RegisterMemberProps = {
-  allowance: bigint | undefined;
   registrationCost: bigint;
   token: Pick<TokenGarden, "symbol" | "id" | "decimals">;
-  registryCommunity: Pick<
-    RegistryCommunity,
-    | "communityName"
-    | "id"
-    | "covenantIpfsHash"
-    | "communityFee"
-    | "protocolFee"
-    | "registerStakeAmount"
-    | "registerToken"
-  >;
+  registryCommunity: Pick<RegistryCommunity, "communityName" | "id">;
   memberData: isMemberQuery | undefined;
 };
 
@@ -87,7 +78,7 @@ export function RegisterMember({
           containerId: communityAddress,
           function: "unregisterMember",
           id: communityAddress,
-          urlChainId: urlChainId,
+          urlChainId,
         });
       },
     });
@@ -119,7 +110,7 @@ export function RegisterMember({
         containerId: communityAddress,
         function: "stakeAndRegisterMember",
         id: communityAddress,
-        urlChainId: urlChainId,
+        urlChainId,
       });
     },
   });
@@ -130,47 +121,37 @@ export function RegisterMember({
     token.symbol,
     communityAddress as Address,
     registrationCost,
-    () => writeRegisterMember(),
+    writeRegisterMember,
+  );
+
+  const [registrationTx, setRegistrationTx] = useState<TransactionProps>(
+    () => ({
+      contractName: `Register in ${communityName}`,
+      message: getTxMessage("idle"),
+      status: "idle",
+    }),
   );
 
   useEffect(() => {
-    setRegistrationTx({
-      contractName: `Register in ${communityName}`,
+    setRegistrationTx((prev) => ({
+      ...prev,
       message: getTxMessage(registerMemberTxStatus),
       status: (registerMemberTxStatus as ComputedStatus) ?? "idle",
-    });
-  }, [registerMemberTxStatus]);
-
-  // useEffect(() => {
-  //   if (allowanceTx.status === "success") {
-  //     // handleRegistration();
-  //     writeRegisterMember();
-  //     console.log("render register member");
-  //   }
-  // }, [allowanceTx.status]);
+    }));
+  }, [registerMemberTxStatus, communityName]);
 
   const handleClick = () => {
     if (isMember) {
       writeUnregisterMember();
     } else {
       setIsOpenModal(true);
-      setRegistrationTx({
-        contractName: `Register in ${communityName}`,
+      setRegistrationTx((prev) => ({
+        ...prev,
         message: getTxMessage("idle"),
         status: "idle",
-      });
+      }));
       handleAllowance();
     }
-  };
-
-  const [registrationTx, setRegistrationTx] = useState<TransactionProps>({
-    contractName: `Register in ${communityName}`,
-    message: getTxMessage(registerMemberTxStatus),
-    status: (registerMemberTxStatus as ComputedStatus) ?? "idle",
-  });
-
-  const onClose = () => {
-    setIsOpenModal(false);
   };
 
   return (
@@ -178,7 +159,7 @@ export function RegisterMember({
       <TransactionModal
         label={`Register in ${communityName}`}
         transactions={[allowanceTx, registrationTx]}
-        onClose={onClose}
+        onClose={() => setIsOpenModal(false)}
         isOpen={isOpenModal}
       />
       <div className="flex gap-4">
