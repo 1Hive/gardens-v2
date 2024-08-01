@@ -1,6 +1,9 @@
 "use client";
 
-import { BuildingStorefrontIcon } from "@heroicons/react/24/outline";
+import {
+  BuildingStorefrontIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { Address } from "viem";
 import { getTokenGardensQuery } from "#/subgraph/.graphclient";
@@ -21,9 +24,9 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
   function countUniqueMemberAddresses(communitiesArray: any[] | undefined) {
     const uniqueAddresses = new Set();
 
-    communitiesArray?.forEach(community => {
+    communitiesArray?.forEach((community) => {
       if (community.members && Array.isArray(community.members)) {
-        community.members.forEach((member: { memberAddress: Address; }) => {
+        community.members.forEach((member: { memberAddress: Address }) => {
           if (member.memberAddress) {
             uniqueAddresses.add(member.memberAddress);
           }
@@ -36,25 +39,35 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
   const totalMembers = countUniqueMemberAddresses(communities);
 
   return (
-    <Card href={link} >
+    <Card href={link}>
       <div className="flex flex-col gap-7">
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           {/* TODO: find appropiate token image */}
-          <TokenLabel chainId={chainId} noSymbol />
           <h3 className="text-neutral-content">{name}</h3>
+          <TokenLabel chainId={chainId} noSymbol iconSize={34} />
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col">
             <div className="align-start flex flex-col justify-start">
               <p className="text-neutral-content text-sm">Network:</p>
               <div className="flex gap-2.5 items-center">
-                <h5 className="text-neutral-content">{getChain(chainId)?.name}</h5>
+                <h5 className="text-neutral-content">
+                  {getChain(chainId)?.name}
+                </h5>
               </div>
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <Statistic label={`Communit${commLength > 1 ? "ies" : "y"}`} count={commLength} icon={<BuildingStorefrontIcon />} />
-            <Statistic label={"Members"} count={totalMembers} />
+            <Statistic
+              label={`Communit${commLength > 1 ? "ies" : "y"}`}
+              count={commLength}
+              icon={<BuildingStorefrontIcon />}
+            />
+            <Statistic
+              label={"Members"}
+              count={totalMembers}
+              icon={<UserGroupIcon />}
+            />
           </div>
         </div>
         <Image src={gardenLand} alt="garden land" className="rounded-xl" />
@@ -62,4 +75,3 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
     </Card>
   );
 }
-

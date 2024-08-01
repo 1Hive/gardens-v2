@@ -5,6 +5,7 @@ import {
   CurrencyDollarIcon,
   PlusIcon,
   RectangleGroupIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
 import Image from "next/image";
@@ -199,7 +200,11 @@ export default function Page({
             <EthAddress address={communityAddr as Address} />
           </div>
           <div className="flex flex-col gap-2">
-            <Statistic label="members" count={members?.length ?? 0} />
+            <Statistic
+              label="members"
+              count={members?.length ?? 0}
+              icon={<UserGroupIcon />}
+            />
             <Statistic
               label="pools"
               icon={<RectangleGroupIcon />}
@@ -214,12 +219,11 @@ export default function Page({
             </Statistic>
             <div className="flex">
               <p className="font-medium">Registration cost:</p>
-              <InfoIcon content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}>
+              <InfoIcon
+                content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
+              >
                 <DisplayNumber
-                  number={[
-                    getTotalRegistrationCost(),
-                    tokenGarden?.decimals,
-                  ]}
+                  number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
                   className="font-semibold text-primary-content"
                   disableTooltip={true}
                   compact={true}

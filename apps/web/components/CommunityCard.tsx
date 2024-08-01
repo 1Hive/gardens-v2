@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { RectangleGroupIcon } from "@heroicons/react/24/outline";
+import { RectangleGroupIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Card } from "./Card";
@@ -43,10 +43,17 @@ export function CommunityCard({
         width={100}
       />
       <div className="flex flex-col gap-2">
-        <div className="flex items-start w-fit max-w-full tooltip" data-tip={name}>
+        <div
+          className="flex items-start w-fit max-w-full tooltip"
+          data-tip={name}
+        >
           <h3 className="truncate tooltip">{name}</h3>
         </div>
-        <Statistic label="members" count={membersCount} />
+        <Statistic
+          label="members"
+          count={membersCount}
+          icon={<UserGroupIcon />}
+        />
         <Statistic
           label="pools"
           icon={<RectangleGroupIcon />}
