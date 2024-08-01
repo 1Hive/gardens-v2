@@ -48,7 +48,7 @@ export const Countdown = ({
             <span className="countdown font-mono text-5xl">
               <span style={{ "--value": hours } as React.CSSProperties} />
             </span>
-            hours
+            hrs
           </div>
         )}
         {(computedMode === "datetime" ||

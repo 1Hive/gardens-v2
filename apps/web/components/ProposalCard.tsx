@@ -89,7 +89,7 @@ export function ProposalCard({
           >
             <Hashicon value={id} size={45} />
             <div className="overflow-hidden">
-              <h4 className="truncate capitalize">{title}</h4>
+              <h4 className="truncate first-letter:uppercase">{title}</h4>
               <h6 className="text-sm">ID {proposalNumber}</h6>
             </div>
           </div>

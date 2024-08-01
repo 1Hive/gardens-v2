@@ -21,7 +21,7 @@ export const Statistic = ({
     >
       {icon && <div className="h-6 w-6">{icon}</div>}
       {(label ?? count) && (
-        <p className="capitalize">
+        <p className="normal-case">
           {label}: {count}
         </p>
       )}

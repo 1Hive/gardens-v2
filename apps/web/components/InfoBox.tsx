@@ -1,6 +1,5 @@
 import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { capitalize } from "@/utils/text";
 
 type InfoBoxStyles = "success" | "warning" | "error" | "info";
 
@@ -42,8 +41,10 @@ export function InfoBox({
           {icon ?? <InformationCircleIcon className="h-9 w-9" />}
         </div>
       )}
-      <p className={`leading-5 text-neutral-content ${contentStyle}`}>
-        {capitalize(content)}
+      <p
+        className={`leading-5 text-neutral-content first-letter:uppercase ${contentStyle}`}
+      >
+        {content}
       </p>
     </div>
   );

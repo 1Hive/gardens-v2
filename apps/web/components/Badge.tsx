@@ -72,7 +72,7 @@ export function Badge({
     >
       {iconIncluded && (
         <div
-          className={`h-6 w-6 text-inherit ${isCapitalize ? "capitalize" : ""}`}
+          className={`h-6 w-6 text-inherit ${isCapitalize ? "first-letter:uppercase" : ""}`}
         >
           {iconIncluded}
         </div>
