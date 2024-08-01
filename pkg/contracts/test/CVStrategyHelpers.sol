@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
+// import {StrategyStruct} from "../src/libraries/StrategyStruct.sol";
 import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";

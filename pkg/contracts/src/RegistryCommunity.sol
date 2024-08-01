@@ -10,7 +10,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {RegistryFactory} from "./RegistryFactory.sol";
-import {ISafe} from "./ISafe.sol";
+import {ISafe} from "./interfaces/ISafe.sol";
 // import {Safe} from "safe-contracts/contracts/Safe.sol";
 import "forge-std/console.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";

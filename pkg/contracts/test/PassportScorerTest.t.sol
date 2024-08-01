@@ -4,6 +4,10 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import "../src/PassportScorer.sol";
 
+import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
+
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+
 contract PassportScorerTest is Test {
     PassportScorer public passportScorer;
     address public listManager = address(1);
@@ -14,8 +18,13 @@ contract PassportScorerTest is Test {
     PassportData public passportData;
 
     function setUp() public {
-        passportScorer = new PassportScorer();
-        passportScorer.initialize(listManager);
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(new PassportScorer()),
+            abi.encodeWithSelector(PassportScorer.initialize.selector, address(listManager))
+        );
+
+        passportScorer = PassportScorer(payable(address(proxy)));
+
         passportData = PassportData({score: 100, lastUpdated: block.timestamp});
     }
 
