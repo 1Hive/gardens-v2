@@ -216,7 +216,7 @@ any dispute before it can be closed and collateral restored."
               <Button color="secondary" btnStyle="outline">
                 <InfoIcon
                   classNames="[&>svg]:text-secondary-content"
-                  content={
+                  tooltip={
                     "Abstain to let other tribunal-safe members decide the outcome."
                   }
                 >
@@ -228,7 +228,7 @@ any dispute before it can be closed and collateral restored."
                   <Button color="primary" btnStyle="outline">
                     <InfoIcon
                       classNames="[&>svg]:text-primary-content"
-                      content={
+                      tooltip={
                         "Approve if the dispute is invalid and the proposal should be kept active."
                       }
                     >
@@ -238,7 +238,7 @@ any dispute before it can be closed and collateral restored."
                   <Button color="danger" btnStyle="outline">
                     <InfoIcon
                       classNames="[&>svg]:text-danger-content [&:before]:mr-10"
-                      content={
+                      tooltip={
                         "Reject if, regarding the community covenant, the proposal is violating the rules."
                       }
                     >

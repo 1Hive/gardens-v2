@@ -52,7 +52,7 @@ export const ChartWrapper = ({
             .filter((item) => !(isSignalingType && item.name === "Threshold"))
             .map((item) => (
               <Fragment key={item.name}>
-                <InfoIcon content={item.info} size="sm" classNames="ml-2">
+                <InfoIcon tooltip={item.info} size="sm" classNames="ml-2">
                   <div className="flex items-center gap-1">
                     {item.name === "Threshold" ?
                       <div className="relative">

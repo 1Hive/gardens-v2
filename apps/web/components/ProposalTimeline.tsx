@@ -80,7 +80,7 @@ export const ProposalTimeline: FC<Props> = ({
           <div className="timeline-start shadow-lg p-2 border border-tertiary-content rounded-lg flex items-center">
             <InfoIcon
               classNames="[&>svg]:text-tertiary-content m-0.5"
-              content={`The tribunal safe has 3 days to rule the dispute. Past this delay and considering the abstain behavior on this pool, this proposal will be ${dispute.abstainOutcome ? "cancelled" : "back to active"} and both collateral will be restored.`}
+              tooltip={`The tribunal safe has 3 days to rule the dispute. Past this delay and considering the abstain behavior on this pool, this proposal will be ${dispute.abstainOutcome ? "cancelled" : "back to active"} and both collateral will be restored.`}
             >
               <Countdown timestamp={dispute.timestamp + dispute.maxDelaySec} />
             </InfoIcon>
@@ -105,7 +105,7 @@ export const ProposalTimeline: FC<Props> = ({
               >
                 {isRuled ?
                   "Rejected"
-                : <InfoIcon content="The proposal will be cancelled.">
+                : <InfoIcon tooltip="The proposal will be cancelled.">
                     Rejected
                   </InfoIcon>
                 }
@@ -117,7 +117,7 @@ export const ProposalTimeline: FC<Props> = ({
               <div className={"timeline-end text-primary-content"}>
                 {isRuled ?
                   "Approved"
-                : <InfoIcon content="The proposal will keep the accumulated growth and be back to active.">
+                : <InfoIcon tooltip="The proposal will keep the accumulated growth and be back to active.">
                     Approved
                   </InfoIcon>
                 }
