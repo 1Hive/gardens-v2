@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { parseUnits } from "viem";
-import { Address, useBalance } from "wagmi";
+import { Address, useAccount, useBalance } from "wagmi";
 import {
   isMemberQuery,
   RegistryCommunity,
@@ -25,7 +25,6 @@ import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 type IncreasePowerProps = {
-  accountAddress: Address | undefined;
   memberData: isMemberQuery | undefined;
   registryCommunity: Pick<
     RegistryCommunity,
@@ -41,7 +40,6 @@ type IncreasePowerProps = {
 };
 
 export const IncreasePower = ({
-  accountAddress,
   memberData,
   registryCommunity,
   tokenGarden,
@@ -59,6 +57,7 @@ export const IncreasePower = ({
 
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [amount, setAmount] = useState<string>("");
+  const { address: accountAddress } = useAccount();
 
   const stakedTokens = memberData?.member?.memberCommunity?.[0]?.stakedTokens;
   const isMember = memberData?.member?.memberCommunity?.[0]?.isRegistered;
@@ -135,7 +134,7 @@ export const IncreasePower = ({
       message: getTxMessage(increasePowerStatus),
       status: (increasePowerStatus as ComputedStatus) ?? "idle",
     }));
-  }, [increasePowerStatus, communityName]);
+  }, [increasePowerStatus]);
 
   function handleClick() {
     setVotingPowerTx((prev) => ({
@@ -198,7 +197,7 @@ export const IncreasePower = ({
     tokenSymbol,
     communityAddress as Address,
     parseUnits(amount, tokenDecimals),
-    () => writeIncreasePower(),
+    writeIncreasePower,
   );
 
   // useEffect(() => {

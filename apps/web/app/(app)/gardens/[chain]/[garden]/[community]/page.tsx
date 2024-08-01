@@ -275,7 +275,6 @@ export default function Page({
         </div>
       </header>
       <IncreasePower
-        accountAddress={accountAddress}
         memberData={isMemberResult}
         registryCommunity={registryCommunity}
         tokenGarden={tokenGarden}

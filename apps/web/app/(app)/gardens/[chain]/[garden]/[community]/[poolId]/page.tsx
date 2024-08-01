@@ -117,15 +117,23 @@ export default function Page({
   const pointSystem = data.cvstrategies?.[0].config?.pointSystem;
   const strategyAddr = strategyObj.id as Address;
   const communityAddress = strategyObj.registryCommunity.id as Address;
-  const alloInfo = data.allos[0] as Allo;
+  const alloInfo = data.allos[0];
   const proposalType = strategyObj?.config?.proposalType as number;
   const poolAmount = strategyObj?.poolAmount as number;
-  const tokenGarden = data.tokenGarden as TokenGarden;
+  const tokenGarden = data.tokenGarden;
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
   const spendingLimitPct =
     (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
+
+  if (!tokenGarden || !strategyObj.registryCommunity) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="page-layout">
@@ -147,7 +155,7 @@ export default function Page({
             <Statistic label="funding token" icon={<InformationCircleIcon />}>
               <Badge
                 isCapitalize
-                label={tokenGarden.symbol}
+                label={tokenGarden?.symbol}
                 icon={<Square3Stack3DIcon />}
               />
             </Statistic>
@@ -186,13 +194,10 @@ export default function Page({
             <PoolMetrics
               alloInfo={alloInfo}
               poolId={poolId}
-              balance={poolAmount}
-              strategyAddress={strategyAddr}
-              strategy={strategyObj}
+              poolAmount={poolAmount}
               communityAddress={communityAddress}
               tokenGarden={tokenGarden}
-              pointSystem={pointSystem}
-              chainId={parseInt(chain)}
+              chainId={chain}
               spendingLimitPct={spendingLimitPct}
             />
           )}
