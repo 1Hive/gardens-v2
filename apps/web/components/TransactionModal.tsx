@@ -38,6 +38,7 @@ export function TransactionModal({
 }: TransactionModalProps) {
   return (
     <Modal title={label} onClose={onClose} isOpen={isOpen}>
+      {children}
       <div className="w-[420px]">
         {transactions.map((props, index) => {
           return (
@@ -50,7 +51,6 @@ export function TransactionModal({
           );
         })}
       </div>
-      {children}
     </Modal>
   );
 }

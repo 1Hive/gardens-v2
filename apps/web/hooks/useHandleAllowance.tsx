@@ -7,6 +7,7 @@ import {
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
+import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
   accountAddr: Address | undefined,
@@ -76,25 +77,3 @@ export function useHandleAllowance(
     handleAllowance,
   };
 }
-
-export const getTxMessage = (transactionStatus: string | undefined) => {
-  let message = "";
-  switch (transactionStatus) {
-    case "idle":
-      message = "";
-      break;
-    case "waiting":
-      message = "Waiting for signature...";
-      break;
-    case "loading":
-      message = "Transaction in progress...";
-      break;
-    case "success":
-      message = "Approved";
-      break;
-    case "error":
-      message = "User rejected the request";
-      break;
-  }
-  return message;
-};

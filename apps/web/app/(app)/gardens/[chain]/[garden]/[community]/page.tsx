@@ -103,8 +103,6 @@ export default function Page({
     enabled: accountAddress !== undefined,
   });
 
-  console.log(allowance);
-
   useEffect(() => {
     if (accountAddress && isMemberResult && !fetching) {
       refetchIsMember();
@@ -269,7 +267,6 @@ export default function Page({
         </div>
         <div className="flex flex-col gap-4">
           <RegisterMember
-            allowance={allowance}
             memberData={isMemberResult}
             registrationCost={getTotalRegistrationCost()}
             token={tokenGarden}
@@ -278,7 +275,6 @@ export default function Page({
         </div>
       </header>
       <IncreasePower
-        allowance={allowance}
         accountAddress={accountAddress}
         memberData={isMemberResult}
         registryCommunity={registryCommunity}
