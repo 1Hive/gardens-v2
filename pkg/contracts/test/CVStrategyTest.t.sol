@@ -267,8 +267,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // startMeasuringGas("Support a Proposal");
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](2);
         // votes[0] = StrategyStruct.ProposalSupport(proposalId, 70
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80);
-        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20); // 70 + 20 = 90% = 45
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80); // 0 + 80 = 80% = 40
+        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20); // 80 + 20 = 100% = 50
         // votes[2] = StrategyStruct.ProposalSupport(proposalId, -10 ); // 90 - 10 = 80% = 40
         // 35 + 45 + 40 = 120
         bytes memory data = abi.encode(votes);
@@ -285,13 +285,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          * ASSERTS
          *
          */
-        // startMeasuringGas("Support a Proposal");
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](2);
-        // votes[0] = StrategyStruct.ProposalSupport(proposalId, 70 ); // 0 + 70 = 70% = 35
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80); // 0 + 70 = 70% = 35
-        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20); // 70 + 20 = 90% = 45
-        // votes[2] = StrategyStruct.ProposalSupport(proposalId, -10 ); // 90 - 10 = 80% = 40
-        // 35 + 45 + 40 = 120
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80); // 0 + 80 = 80% = 40
+        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20); // 80 + 20 = 100% = 50
         bytes memory data = abi.encode(votes);
         vm.startPrank(pool_admin());
         vm.expectRevert(CVStrategy.UserNotInRegistry.selector);
@@ -309,15 +305,13 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          *
          */
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](2);
-        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80); // 0 + 70 = 70% = 35
-        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20); // 70 + 20 = 90% = 45
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80); // 0 + 80 = 80% = 40
+        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20); // 80 + 20 = 100% = 50
         bytes memory data = abi.encode(votes);
         CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
         cv.deactivatePoints();
         vm.expectRevert(CVStrategy.UserIsInactive.selector);
         allo().allocate(poolId, data);
-
-        vm.stopPrank();
     }
 
     function testRevert_allocate_InvalidProposal() public {
