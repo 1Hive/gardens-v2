@@ -18,10 +18,7 @@ contract CollateralVault is Ownable, ReentrancyGuard {
     error InvalidAddress();
     error AmountCanNotBeZero();
 
-    constructor(address _strategy) {
-        if (_strategy == address(0)) revert InvalidAddress();
-        strategy = _strategy;
-    }
+    constructor() {}
 
     function depositCollateral(uint256 proposalId, address user) external payable onlyOwner nonReentrant {
         proposalCollateral[proposalId][user] += msg.value;

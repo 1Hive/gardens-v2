@@ -87,8 +87,16 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             pointConfig
         );
 
-        paramsCV.arbitrableConfig =
-            StrategyStruct.ArbitrableConfig(IArbitrator(address(safeArbitrator)), 2 ether, 1, 300);
+        address collateralVaultTemplate = address(new CollateralVault());
+
+        paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            IArbitrator(address(safeArbitrator)),
+            payable(address(_councilSafe())),
+            2 ether,
+            1,
+            300,
+            collateralVaultTemplate
+        ); // Using council safe as tribinal just for testing
 
         // FAST 1 MIN GROWTH
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
@@ -105,8 +113,14 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Fixed;
 
-        paramsCV.arbitrableConfig =
-            StrategyStruct.ArbitrableConfig(IArbitrator(address(safeArbitrator)), 3 ether, 1, 600);
+        paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            IArbitrator(address(safeArbitrator)),
+            payable(address(_councilSafe())),
+            3 ether,
+            1,
+            600,
+            collateralVaultTemplate
+        );
 
         (uint256 poolIdFixed, address _strategy2) = registryCommunity.createPool(address(token), paramsCV, metadata);
         console2.log("Collateral Vault 1 Addr: %s", CVStrategy(payable(_strategy2)).getCollateralVault());
