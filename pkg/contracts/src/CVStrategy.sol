@@ -1025,4 +1025,10 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         arbitrableConfig = _arbitrableConfig;
         emit ArbitrationConfigUpdated(address(this), _arbitrableConfig);
     }
+
+    function registerTribunalSafe(address _tribunalSafe) external {
+        onlyCouncilSafe();
+        SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(_tribunalSafe);
+        emit TribunaSafeRegistered(address(this), address(arbitrableConfig.arbitrator), _tribunalSafe);
+    }
 }
