@@ -11,38 +11,52 @@ contract CollateralVault is Ownable, ReentrancyGuard {
 
     event CollateralDeposited(uint256 proposalId, address indexed user, uint256 amount);
     event CollateralWithdrawn(uint256 proposalId, address indexed user, uint256 amount);
+    event CollateralWithdrawn(uint256 proposalId, address indexed fromUser, address indexed toUser, uint256 amount);
 
     error NotAuthorized();
     error InsufficientCollateral(uint256 requested, uint256 available);
     error InvalidAddress();
     error AmountCanNotBeZero();
 
-    modifier onlyStrategy() {
-        if (msg.sender != strategy) revert NotAuthorized();
-        _;
-    }
-
     constructor(address _strategy) {
         if (_strategy == address(0)) revert InvalidAddress();
         strategy = _strategy;
     }
 
-    function depositCollateral(uint256 proposalId, address user) external payable onlyStrategy nonReentrant {
+    function depositCollateral(uint256 proposalId, address user) external payable onlyOwner nonReentrant {
         proposalCollateral[proposalId][user] += msg.value;
         emit CollateralDeposited(proposalId, user, msg.value);
     }
 
-    function withdrawCollateral(uint256 proposalId, address user, uint256 amount) external onlyStrategy nonReentrant {
-        uint256 availableAmount = proposalCollateral[proposalId][user];
-        if (amount == 0) {
+    function withdrawCollateral(uint256 _proposalId, address _user, uint256 _amount) external onlyOwner nonReentrant {
+        uint256 availableAmount = proposalCollateral[_proposalId][_user];
+        if (_amount == 0) {
             revert AmountCanNotBeZero();
         }
-        if (amount > availableAmount) {
-            revert InsufficientCollateral(amount, availableAmount);
+        if (_amount > availableAmount) {
+            revert InsufficientCollateral(_amount, availableAmount);
         }
-        proposalCollateral[proposalId][user] -= amount;
-        (bool success,) = user.call{value: amount}("");
+        proposalCollateral[_proposalId][_user] -= _amount;
+        (bool success,) = _user.call{value: _amount}("");
         require(success, "Transfer failed");
-        emit CollateralWithdrawn(proposalId, user, amount);
+        emit CollateralWithdrawn(_proposalId, _user, _amount);
+    }
+
+    function withdrawCollateralFor(uint256 _proposalId, address _fromUser, address _toUser, uint256 _amount)
+        external
+        onlyOwner
+        nonReentrant
+    {
+        uint256 availableAmount = proposalCollateral[_proposalId][_fromUser];
+        if (_amount == 0) {
+            revert AmountCanNotBeZero();
+        }
+        if (_amount > availableAmount) {
+            revert InsufficientCollateral(_amount, availableAmount);
+        }
+        proposalCollateral[_proposalId][_fromUser] -= _amount;
+        (bool success,) = _toUser.call{value: _amount}("");
+        require(success, "Transfer failed");
+        emit CollateralWithdrawn(_proposalId, _fromUser, _toUser, _amount);
     }
 }

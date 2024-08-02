@@ -87,6 +87,7 @@ library StrategyStruct {
         uint256 collateralAmount;
         uint256 defaultRuling;
         uint256 defaultRulingTimeout;
+        address collateralVaultTemplate;
     }
 
     struct InitializeParams {
@@ -138,6 +139,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     error ArbitratorCannotBeZero();
     error CollateralVaultCannotBeZero();
     error OnlyCouncilSafe();
+    error DefaultRulingNotSet();
 
     event InitializedCV(uint256 poolId, StrategyStruct.InitializeParams data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
@@ -228,9 +230,9 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         _minThresholdPoints = ip.minThresholdPoints;
         arbitrableConfig = ip.arbitrableConfig;
 
-        if (address(arbitrableConfig.arbitrator) != address(0)) {
-            collateralVault = new CollateralVault(address(this));
-        }
+        // if (address(arbitrableConfig.arbitrator) != address(0)) {
+        //     collateralVault = new CollateralVault(address(this));
+        // }
 
         emit InitializedCV(_poolId, ip);
     }
@@ -303,6 +305,10 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
                 revert AmountOverMaxRatio();
             }
         }
+
+        if (address(arbitrableConfig.arbitrator) != address(0) && msg.value < arbitrableConfig.collateralAmount) {
+            revert InsufficientCollateral(msg.value, arbitrableConfig.collateralAmount);
+        }
         uint256 proposalId = ++proposalCounter;
         StrategyStruct.Proposal storage p = proposals[proposalId];
 
@@ -315,6 +321,8 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         p.blockLast = block.number;
         p.convictionLast = 0;
         p.metadata = proposal.metadata;
+
+        collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
         emit ProposalCreated(poolId, proposalId);
         return address(uint160(proposalId));
@@ -482,6 +490,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
             IAllo.Pool memory pool = allo.getPool(poolId);
             poolAmount -= proposal.requestedAmount;
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
+            collateralVault.withdrawCollateral(proposalId, proposal.submitter, arbitrableConfig.collateralAmount);
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
         } //signaling do nothing @todo write tests @todo add end date
@@ -943,6 +952,9 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         }
 
         if (isTimeOut || _ruling == 0) {
+            if (arbitrableConfig.defaultRuling == 0) {
+                revert DefaultRulingNotSet();
+            }
             if (arbitrableConfig.defaultRuling == 1) {
                 proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
             }
@@ -953,17 +965,23 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
             collateralVault.withdrawCollateral(proposalId, proposal.submitter, arbitrableConfig.collateralAmount);
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
-            collateralVault.withdrawCollateral(proposalId, proposal.submitter, arbitrableConfig.collateralAmount);
-            collateralVault.withdrawCollateral(
-                proposalId, address(registryCommunity.councilSafe()), arbitrableConfig.collateralAmount
+            collateralVault.withdrawCollateralFor(
+                proposalId,
+                proposal.challenger,
+                address(registryCommunity.councilSafe()),
+                arbitrableConfig.collateralAmount
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
-            collateralVault.withdrawCollateral(
-                proposalId, proposal.challenger, (arbitrableConfig.collateralAmount * 3) / 2
+            collateralVault.withdrawCollateral(proposalId, proposal.challenger, arbitrableConfig.collateralAmount);
+            collateralVault.withdrawCollateralFor(
+                proposalId,
+                proposal.submitter,
+                address(registryCommunity.councilSafe()),
+                arbitrableConfig.collateralAmount / 2
             );
-            collateralVault.withdrawCollateral(
-                proposalId, address(registryCommunity.councilSafe()), arbitrableConfig.collateralAmount / 2
+            collateralVault.withdrawCollateralFor(
+                proposalId, proposal.submitter, proposal.challenger, arbitrableConfig.collateralAmount / 2
             );
         }
 
