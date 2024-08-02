@@ -294,7 +294,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalSupportDuplicated.selector, proposalId, 0));
         allo().allocate(poolId, data);
 
-        vm.stopPrank();
     }
 
     function testRevert_allocate_UserInactive() public {
@@ -327,7 +326,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         bytes memory data = abi.encode(votes);
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.ProposalNotInList.selector, 10));
         allo().allocate(poolId, data);
-        vm.stopPrank();
     }
 
     function testRevert_allocate_InsufficientPoints() public {
@@ -349,7 +347,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             )
         );
         allo().allocate(poolId, data);
-        vm.stopPrank();
     }
 
     function testRevert_allocate_SupportUnderflow() public {
@@ -365,7 +362,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         bytes memory data = abi.encode(votes);
         vm.expectRevert(abi.encodeWithSelector(CVStrategy.SupportUnderflow.selector, 0, SUPPORT_PCT, SUPPORT_PCT));
         allo().allocate(poolId, data);
-        vm.stopPrank();
     }
 
     function testRevert_calculateThreshold_requestOverMax() public {
