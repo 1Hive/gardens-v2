@@ -21,6 +21,7 @@ import { blueLand, grassLarge } from "@/assets";
 import {
   Badge,
   EthAddress,
+  InfoIcon,
   PoolMetrics,
   Proposals,
   Statistic,
@@ -31,7 +32,7 @@ import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { pointSystems, poolTypes } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { CV_SCALE_PRECISION } from "@/utils/numbers";
+import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -121,11 +122,43 @@ export default function Page({
   const proposalType = strategyObj?.config?.proposalType as number;
   const poolAmount = strategyObj?.poolAmount as number;
   const tokenGarden = data.tokenGarden as TokenGarden;
-
-  const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
-
   const spendingLimitPct =
     (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
+
+  const poolConfig = [
+    {
+      label: "Min conviction",
+      value: 0,
+      // TODO: add description and weight to query and perfom calculation
+      info: "description here",
+    },
+    {
+      // TODO: add decay to query and perfom calculation
+      label: "Conviction growth",
+      value: 0,
+      info: "description here",
+    },
+    {
+      label: "Min Threshold",
+      value: strategyObj?.config.minThresholdPoints,
+      // TODO: add better description
+      info: "description here",
+    },
+    {
+      label: "Spending limit",
+      value: `${((spendingLimitPct ?? 0) * MAX_RATIO_CONSTANT).toFixed(2)}%`,
+      info: "Max percentage of the pool that can be spent in a single proposal",
+    },
+  ];
+
+  const filteredPoolConfig =
+    poolTypes[proposalType] === "signaling" ?
+      poolConfig.filter(
+        (config) => !["Spending limit", "Min Threshold"].includes(config.label),
+      )
+    : poolConfig;
+
+  const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
   return (
     <div className="page-layout">
@@ -138,34 +171,44 @@ export default function Page({
           <EthAddress address={strategyAddr} />
         </header>
         <p>{ipfsResult.description}</p>
-        <div className="mb-10 mt-8 flex flex-col items-start gap-2">
-          <Statistic label="pool type" icon={<InformationCircleIcon />}>
-            <Badge type={proposalType} />
-          </Statistic>
-
-          {poolTypes[proposalType] === "funding" && (
-            <Statistic label="funding token" icon={<InformationCircleIcon />}>
-              <Badge
-                isCapitalize
-                label={tokenGarden.symbol}
-                icon={<Square3Stack3DIcon />}
-              />
+        <div className="mb-10 mt-8 flex items-start gap-24">
+          <div className="flex flex-col gap-2 max-w-fit">
+            <Statistic label="pool type">
+              <Badge type={proposalType} />
             </Statistic>
-          )}
 
-          <Statistic
-            label="voting weight system"
-            icon={<InformationCircleIcon />}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Badge
-                label="conviction voting"
-                classNames="text-secondary-content"
-                icon={<ChartBarIcon />}
-              />
-              <Badge label={pointSystems[pointSystem]} icon={<BoltIcon />} />
-            </div>
-          </Statistic>
+            {poolTypes[proposalType] === "funding" && (
+              <Statistic label="funding token">
+                <Badge
+                  isCapitalize
+                  label={tokenGarden.symbol}
+                  icon={<Square3Stack3DIcon />}
+                />
+              </Statistic>
+            )}
+
+            <Statistic label="voting weight system">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Badge
+                  label="conviction voting"
+                  classNames="text-secondary-content"
+                  icon={<ChartBarIcon />}
+                />
+                <Badge label={pointSystems[pointSystem]} icon={<BoltIcon />} />
+              </div>
+            </Statistic>
+          </div>
+          <div className="flex flex-col gap-4">
+            {filteredPoolConfig.map((config) => (
+              <div key={config.label} className="flex items-center gap-4">
+                <Statistic label={config.label}>
+                  <InfoIcon content={config.info}>
+                    <h3 className="text-neutral-content">{config.value} </h3>
+                  </InfoIcon>
+                </Statistic>
+              </div>
+            ))}
+          </div>
         </div>
         {!isEnabled ?
           <div className="banner">
