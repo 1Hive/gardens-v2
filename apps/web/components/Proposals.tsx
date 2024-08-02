@@ -37,14 +37,14 @@ import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
 
 // Types
-type ProposalInputItem = {
+export type ProposalInputItem = {
   id: string;
   value: number;
 };
 
-type StakesMemberType = NonNullable<isMemberQuery["member"]>["stakes"];
+export type StakesMemberType = NonNullable<isMemberQuery["member"]>["stakes"];
 
-type ProposalTypeVoter = CVProposal & {
+export type ProposalTypeVoter = CVProposal & {
   title: string;
   type: number;
 };
