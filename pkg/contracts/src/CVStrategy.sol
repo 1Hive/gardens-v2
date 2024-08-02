@@ -596,6 +596,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 proposal.stakedAmount -= stakedPoints;
                 totalStaked -= stakedPoints;
                 _calculateAndSetConviction(proposal, stakedPoints);
+                emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
             }
         }
     }

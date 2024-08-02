@@ -1,23 +1,27 @@
 "use client";
-
 import { useEffect, useState } from "react";
+import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
-import { Address, formatUnits } from "viem";
-import { useContractRead } from "wagmi";
+import { toast } from "react-toastify";
+import { Address, encodeAbiParameters, formatUnits } from "viem";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { proposalImg } from "@/assets";
-import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
+import { Badge, Button, DisplayNumber, EthAddress, Statistic } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { cvStrategyABI } from "@/src/generated";
+import { alloABI } from "@/src/generated";
 import { poolTypes, proposalStatus } from "@/types";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { useErrorDetails } from "@/utils/getErrorName";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { calculatePercentageBigInt } from "@/utils/numbers";
+import { logOnce } from "@/utils/log";
 
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -30,7 +34,7 @@ const prettyTimestamp = (timestamp: number) => {
 };
 
 export default function Page({
-  params: { proposalId, garden },
+  params: { proposalId, garden, poolId },
 }: {
   params: {
     proposalId: string;
@@ -39,7 +43,6 @@ export default function Page({
     garden: string;
   };
 }) {
-  // TODO: fetch garden decimals in query
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -57,6 +60,11 @@ export default function Page({
 
   const metadata = proposalData?.metadata;
 
+  const proposalIdNumber = proposalData?.proposalNumber as number;
+
+  const { publish } = usePubSubContext();
+  const chainId = useChainIdFromPath();
+
   const [ipfsResult, setIpfsResult] =
     useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
 
@@ -68,85 +76,76 @@ export default function Page({
     }
   }, [metadata]);
 
-  const cvStrategyContract = {
-    address: proposalData?.strategy.id as Address,
-    abi: cvStrategyABI,
-  };
-
-  const proposalIdNumber = proposalData?.proposalNumber;
-
-  const { data: thFromContract } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "calculateThreshold",
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  });
-
-  const { data: totalEffectiveActivePoints } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "totalEffectiveActivePoints",
-  });
-
-  const { data: stakeAmountFromContract } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "getProposalStakedAmount",
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  });
-
   const isProposalEnded =
     !!proposalData &&
-    (proposalStatus[proposalData.proposalStatus] !== "executed" ||
-      proposalStatus[proposalData.proposalStatus] !== "cancelled");
+    (proposalStatus[proposalData.proposalStatus] === "executed" ||
+      proposalStatus[proposalData.proposalStatus] === "cancelled");
+  logOnce("debug", { isProposalEnded, proposalStatus: proposalStatus[proposalData?.proposalStatus] });
 
-  const { data: updateConvictionLast } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "updateProposalConviction" as any, // TODO: fix CVStrategy.updateProposalConviction to view in contract
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  }) as { data: bigint | undefined };
-
-  const { data: maxCVSupply } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "getMaxConviction",
-    args: [totalEffectiveActivePoints ?? 0n],
-    enabled: !!totalEffectiveActivePoints,
+  const { currentConvictionPct, thresholdPct, totalSupportPct, updateConvictionLast } = useConvictionRead({
+    proposalData,
+    tokenData: data?.tokenGarden,
   });
 
   const tokenSymbol = data?.tokenGarden?.symbol;
-  const tokenDecimals = data?.tokenGarden?.decimals;
-  const convictionLast = proposalData?.convictionLast;
-  const threshold = proposalData?.threshold;
   const proposalType = proposalData?.strategy.config?.proposalType;
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
   const status = proposalData?.proposalStatus;
-  const stakedAmount = proposalData?.stakedAmount;
 
-  useEffect(() => {
-    if (!proposalData) {
+  const isSignalingType = poolTypes[proposalType] === "signaling";
+
+  //encode proposal id to pass as argument to distribute function
+  const encodedDataProposalId = (proposalId_: number) => {
+    if (!proposalId_) {
       return;
     }
+    const encodedProposalId = encodeAbiParameters(
+      [{ name: "proposalId", type: "uint" }],
+      [BigInt(proposalId_)],
+    );
+    return encodedProposalId;
+  };
 
-    console.debug({
-      requestedAmount,
-      maxCVSupply,
-      threshold,
-      thFromContract,
-      stakedAmount,
-      stakeAmountFromContract: stakeAmountFromContract,
-      totalEffectiveActivePoints,
-      updateConvictionLast,
-      convictionLast,
-    });
-  }, [proposalData]);
+  //distribution function from Allo contract
+  //args: poolId, strategyId, encoded proposalId
+  const {
+    write: writeDistribute,
+    error: errorDistribute,
+    isError: isErrorDistribute,
+  } = useContractWriteWithConfirmations({
+    address: data?.allos[0]?.id as Address,
+    abi: abiWithErrors(alloABI),
+    functionName: "distribute",
+    contractName: "Allo",
+    fallbackErrorMessage: "Error executing proposal. Please try again.",
+    onConfirmations: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "distribute",
+        id:proposalId,
+        containerId: data?.cvproposal?.strategy?.id,
+        chainId,
+      });
+    },
+  });
+
+  const distributeErrorName = useErrorDetails(errorDistribute);
+  useEffect(() => {
+    if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
+      toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
+    }
+  }, [isErrorDistribute]);
 
   if (
     !proposalData ||
     !ipfsResult ||
-    !maxCVSupply ||
-    !totalEffectiveActivePoints ||
+    currentConvictionPct == null ||
+    thresholdPct == null ||
+    totalSupportPct == null ||
+    !proposalIdNumber ||
     (updateConvictionLast == null && !isProposalEnded)
   ) {
     return (
@@ -156,43 +155,11 @@ export default function Page({
     );
   }
 
-  const isSignalingType = poolTypes[proposalType] === "signaling";
-
-  let thresholdPct = calculatePercentageBigInt(
-    threshold,
-    maxCVSupply,
-    tokenDecimals,
-  );
-
-  let totalSupportPct = calculatePercentageBigInt(
-    stakedAmount,
-    totalEffectiveActivePoints,
-    tokenDecimals,
-  );
-
-  let currentConvictionPct = calculatePercentageBigInt(
-    BigInt(updateConvictionLast ?? 0),
-    maxCVSupply,
-    tokenDecimals,
-  );
-
-  console.debug({
-    thresholdPct,
-    totalSupportPct,
-    currentConvictionPct,
-  });
-
   return (
     <div className="page-layout">
       <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
         <div className="flex w-full items-center justify-center sm:w-auto">
-          <Image
-            src={proposalImg}
-            alt={`proposal image ${proposalIdNumber}`}
-            height={160}
-            width={160}
-            className="min-h-[160px] min-w-[160px]"
-          />
+          <Hashicon value={proposalId} size={90} />
         </div>
         <div className="flex w-full flex-col gap-8">
           <div>
@@ -244,15 +211,21 @@ export default function Page({
               Proposal passed and executed successfully
             </div>
           </div>
-        : <ConvictionBarChart
-            currentConvictionPct={currentConvictionPct}
-            thresholdPct={thresholdPct}
-            proposalSupportPct={totalSupportPct}
-            isSignalingType={isSignalingType}
-            proposalId={proposalIdNumber}
-          />
-        }
+          : (
+            <ConvictionBarChart
+              currentConvictionPct={currentConvictionPct}
+              thresholdPct={thresholdPct}
+              proposalSupportPct={totalSupportPct}
+              isSignalingType={isSignalingType}
+              proposalId={proposalIdNumber}
+            />
+          )}
+        <div className="absolute top-8 right-10">
+          {proposalStatus[status] !== "executed" && !isSignalingType && ( <Button onClick={() => writeDistribute?.({ args:[poolId, [data.cvproposal?.strategy.id], encodedDataProposalId(Number(proposalIdNumber))] })} disabled={currentConvictionPct < thresholdPct} tooltip="Proposal not executable">Execute</Button>)}
+
+        </div>
       </section>
     </div>
   );
 }
+

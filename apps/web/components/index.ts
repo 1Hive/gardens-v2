@@ -30,3 +30,5 @@ export { Breadcrumbs } from "./Breadcrumbs";
 export { SubmitPassport } from "./SubmitPassport";
 export { CheckPassport } from "./CheckPassport";
 export { Modal } from "./Modal";
+export { InfoBox } from "./InfoBox";
+export { InfoIcon } from "./InfoIcon";
