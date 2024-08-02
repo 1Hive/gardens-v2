@@ -1,9 +1,9 @@
 import React from "react";
-import { proposalStatus, poolTypes } from "@/types";
 import {
   CurrencyDollarIcon,
   HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
+import { poolTypes, proposalStatus } from "@/types";
 import { capitalize } from "@/utils/text";
 
 type BadgeProps = {
@@ -40,22 +40,20 @@ export function Badge({
   icon,
   isCapitalize = false,
 }: BadgeProps): JSX.Element {
-
   const isStatusBadge = status !== undefined;
   const ispoolTypeDefined = type !== undefined;
-  
+
   // Determine the appropriate styles based on whether it's a proposal status badge or a pool type badge
-  const styles = isStatusBadge
-    ? `${PROPOSAL_STATUS_STYLES[status] ?? "bg-secondary-soft"}`
-    : ispoolTypeDefined
-    ? `${POOL_TYPE_STYLES[type] ?? "bg-tertiary-soft text-tertiary-content"}`
+  const styles =
+    isStatusBadge ? `${PROPOSAL_STATUS_STYLES[status] ?? "bg-secondary-soft"}`
+    : ispoolTypeDefined ?
+      `${POOL_TYPE_STYLES[type] ?? "bg-tertiary-soft text-tertiary-content"}`
     : "bg-tertiary-soft text-tertiary-content";
-  
+
   // Determine the label content
-  const content = isStatusBadge
-    ? proposalStatus[status]
-    : ispoolTypeDefined
-    ? poolTypes[type] ?? label
+  const content =
+    isStatusBadge ? proposalStatus[status]
+    : ispoolTypeDefined ? poolTypes[type] ?? label
     : label;
 
   //For type => conditionally set the icon based on type === poolTypes[type]
@@ -66,7 +64,7 @@ export function Badge({
         signaling: <HandThumbUpIcon className="h-6 w-6 text-inherit" />,
         funding: <CurrencyDollarIcon className="h-6 w-6 text-inherit" />,
       };
-      return type ? iconMap[poolTypes[type]] || null : null;
+      return type ? iconMap[poolTypes[type]] ?? null : null;
     })();
 
   return (

@@ -1,26 +1,40 @@
 "use client";
 
-import { tree2, tree3, grassLarge, ecosystem } from "@/assets";
-import Image from "next/image";
-import { Communities, EthAddress, Statistic, TokenLabel } from "@/components";
-import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
-import { FormLink } from "@/components";
 import React, { useEffect } from "react";
-import { CubeTransparentIcon } from "@heroicons/react/24/outline";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import useSubgraphQuery from "@/hooks/useSubgraphQuery";
-import { isProd } from "@/constants/contracts";
-import TokenGardenFaucet from "@/components/TokenGardenFaucet";
+import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
+import Link from "next/link";
 import { Address } from "viem";
+import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
+import { ecosystem, grassLarge, tree2, tree3 } from "@/assets";
+import {
+  Button,
+  Communities,
+  EthAddress,
+  Statistic,
+  TokenLabel,
+} from "@/components";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
+import { isProd } from "@/constants/contracts";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export const dynamic = "force-dynamic";
 
-export default function Garden({
+export default function Page({
   params: { chain, garden },
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error } = useSubgraphQuery<getGardenQuery>({
+  const searchParams = useCollectQueryParams();
+  const {
+    data: result,
+    error,
+    refetch,
+  } = useSubgraphQuery<getGardenQuery>({
     query: getGardenDocument,
     variables: { addr: garden },
     changeScope: [
@@ -35,15 +49,29 @@ export default function Garden({
     ],
   });
 
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
+
   useEffect(() => {
     if (error) {
       console.error("Error while fetching garden data: ", error);
     }
   }, [error]);
 
-  let communities = result?.tokenGarden?.communities || [];
+  let communities =
+    result?.tokenGarden?.communities?.filter((com) => com.isValid) ?? [];
 
-  communities = communities.filter((com) => com.isValid);
+  useEffect(() => {
+    const newCommunityId =
+      searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase();
+
+    if (
+      newCommunityId &&
+      result &&
+      !communities.some((c) => c.id.toLowerCase() === newCommunityId)
+    ) {
+      refetch();
+    }
+  }, [searchParams, result]);
 
   const tokenGarden = result?.tokenGarden;
 
@@ -113,12 +141,19 @@ export default function Garden({
             </h4>
           </header>
           <div className="relative flex h-[219px] justify-center">
-            <FormLink
-              label="Create a community"
+            <Link
               href={`/gardens/${chain}/${garden}/create-community`}
               className="mt-6"
-            />
-
+            >
+              <Button
+                btnStyle="filled"
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+                icon={<PlusIcon height={24} width={24} />}
+              >
+                Create a community
+              </Button>
+            </Link>
             <Image
               src={tree2}
               alt="tree"
@@ -137,9 +172,7 @@ export default function Garden({
           </div>
         </div>
       </section>
-      {!isProd && tokenGarden && (
-        <TokenGardenFaucet token={tokenGarden}></TokenGardenFaucet>
-      )}
+      {!isProd && tokenGarden && <TokenGardenFaucet token={tokenGarden} />}
     </div>
   );
 }

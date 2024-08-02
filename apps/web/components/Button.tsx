@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import { Size } from "@/types";
 
@@ -60,18 +61,14 @@ export function Button({
   disabled = false,
   tooltip = "Connect wallet",
   children,
-  size,
   btnStyle = "filled",
   color = "primary",
   isLoading = false,
   icon,
   type = "button",
 }: ButtonProps) {
-  const buttonContent = isLoading ? (
-    <span className="loading loading-spinner"></span>
-  ) : (
-    children  
-  );
+  const buttonContent =
+    isLoading ? <span className="loading loading-spinner" /> : children;
 
   const buttonElement = (
     <button
@@ -85,11 +82,9 @@ export function Button({
     </button>
   );
 
-  return disabled ? (
-    <div className={`tooltip ${styles}`} data-tip={tooltip}>
-      {buttonElement}
-    </div>
-  ) : (
-    buttonElement
-  );
+  return disabled ?
+      <div className={`tooltip ${styles}`} data-tip={tooltip}>
+        {buttonElement}
+      </div>
+    : buttonElement;
 }

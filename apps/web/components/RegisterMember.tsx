@@ -1,18 +1,17 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useBalance, useContractRead, Address, useAccount } from "wagmi";
+import { Address, useAccount, useBalance, useContractRead } from "wagmi";
 import { Button } from "./Button";
-import useErrorDetails from "@/utils/getErrorName";
+import { TransactionModal } from "./TransactionModal";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { erc20ABI, registryCommunityABI } from "@/src/generated";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
+import { useErrorDetails } from "@/utils/getErrorName";
 import { gte } from "@/utils/numbers";
-import { TransactionModal } from "./TransactionModal";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
-import useChainIdFromPath from "@/hooks/useChainIdFromPath";
 
 type RegisterMemberProps = {
   tokenSymbol: string;
@@ -29,9 +28,6 @@ export function RegisterMember({
   communityAddress,
   registerToken,
   registerTokenDecimals,
-  membershipAmount,
-  protocolFee,
-  communityFee,
 }: RegisterMemberProps) {
   const urlChainId = useChainIdFromPath();
   const modalRef = useRef<HTMLDialogElement | null>(null);
@@ -51,6 +47,7 @@ export function RegisterMember({
   const registryContractCallConfig = {
     address: communityAddress,
     abi: abiWithErrors2(registryCommunityABI),
+    contractName: "Registry Community",
   };
 
   const { data: isMember } = useContractRead({
@@ -76,18 +73,18 @@ export function RegisterMember({
 
   const accountHasBalance = gte(
     accountTokenBalance?.value,
-    registerStakeAmount as bigint,
+    registerStakeAmount,
     registerTokenDecimals,
   );
 
   const {
-    transactionData: registerMemberTxData,
     write: writeRegisterMember,
     error: registerMemberError,
     status: registerMemberStatus,
   } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "stakeAndRegisterMember",
+    showNotification: false,
     onConfirmations: () => {
       publish({
         topic: "member",
@@ -100,28 +97,24 @@ export function RegisterMember({
     },
   });
 
-  const {
-    transactionData: unregisterMemberTxData,
-    write: writeUnregisterMember,
-    error: unregisterMemberError,
-    status: unregisterMemberStatus,
-  } = useContractWriteWithConfirmations({
-    ...registryContractCallConfig,
-    functionName: "unregisterMember",
-    onConfirmations: () => {
-      publish({
-        topic: "member",
-        type: "delete",
-        containerId: communityAddress,
-        function: "unregisterMember",
-        id: communityAddress,
-        urlChainId: urlChainId,
-      });
-    },
-  });
+  const { write: writeUnregisterMember, error: unregisterMemberError } =
+    useContractWriteWithConfirmations({
+      ...registryContractCallConfig,
+      functionName: "unregisterMember",
+      fallbackErrorMessage: "Error unregistering member. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          type: "delete",
+          containerId: communityAddress,
+          function: "unregisterMember",
+          id: communityAddress,
+          urlChainId: urlChainId,
+        });
+      },
+    });
 
   const {
-    transactionData: allowTokenTxData,
     write: writeAllowToken,
     error: allowTokenError,
     confirmed: allowTokenConfirmed,
@@ -129,8 +122,13 @@ export function RegisterMember({
   } = useContractWriteWithConfirmations({
     address: registerToken,
     abi: abiWithErrors(erc20ABI),
-    args: [communityAddress, registerStakeAmount as bigint], // [allowed spender address, amount ]
+    args: [communityAddress, registerStakeAmount], // [allowed spender address, amount ]
     functionName: "approve",
+    contractName: "ERC20",
+    showNotification: false,
+    onConfirmations: () => {
+      writeRegisterMember();
+    },
   });
 
   const { data: dataAllowance } = useContractRead({
@@ -148,7 +146,7 @@ export function RegisterMember({
   useErrorDetails(allowTokenError, "approve");
   // useErrorDetails(errorGardenToken, "gardenToken");
 
-  async function handleChange() {
+  async function handleClick() {
     if (isMember) {
       writeUnregisterMember();
     } else {
@@ -163,33 +161,17 @@ export function RegisterMember({
     }
   }
 
-  const { updateTransactionStatus: updateAllowTokenTransactionStatus } =
-    useTransactionNotification(allowTokenTxData);
-
-  const { updateTransactionStatus: updateRegisterMemberTransactionStatus } =
-    useTransactionNotification(registerMemberTxData);
-
-  const { updateTransactionStatus: updateUnregisterMemberTransactionStatus } =
-    useTransactionNotification(unregisterMemberTxData);
-
   useEffect(() => {
-    updateAllowTokenTransactionStatus(allowTokenStatus);
     if (allowTokenConfirmed) {
-      writeRegisterMember();
     }
   }, [allowTokenConfirmed]);
 
   useEffect(() => {
-    updateRegisterMemberTransactionStatus(registerMemberStatus);
     if (registerMemberStatus === "success") {
       closeModal();
       setPendingAllowance(false);
     }
   }, [registerMemberStatus]);
-
-  useEffect(() => {
-    updateUnregisterMemberTransactionStatus(unregisterMemberStatus);
-  }, [unregisterMemberStatus]);
 
   //RegisterMember Disable Button condition => message mapping
   const disableRegMemberBtnCondition: ConditionObject[] = [
@@ -240,7 +222,7 @@ export function RegisterMember({
       <div className="flex gap-4">
         <div className="flex items-center justify-center">
           <Button
-            onClick={handleChange}
+            onClick={handleClick}
             btnStyle={isMember ? "outline" : "filled"}
             color={isMember ? "danger" : "primary"}
             disabled={missmatchUrl || disabledRegMemberButton}

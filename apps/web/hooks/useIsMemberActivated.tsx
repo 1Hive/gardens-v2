@@ -1,8 +1,8 @@
-import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { registryCommunityABI } from "@/src/generated";
+import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useViemClient } from "./useViemClient";
+import { registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
 
 export function useIsMemberActivated(strategy: LightCVStrategy) {
@@ -14,7 +14,9 @@ export function useIsMemberActivated(strategy: LightCVStrategy) {
     useState<Error | null>(null);
 
   useEffect(() => {
-    if (!address) return;
+    if (!address) {
+      return;
+    }
 
     fetchData();
   }, [address]);

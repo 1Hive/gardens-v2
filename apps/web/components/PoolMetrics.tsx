@@ -1,22 +1,18 @@
 "use client";
-import React, { FC, useState, useRef, useEffect } from "react";
-import { Address, useAccount, useContractRead, useContractWrite } from "wagmi";
-import { MAX_RATIO_CONSTANT, formatTokenAmount } from "@/utils/numbers";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
-import { alloABI, erc20ABI, registryCommunityABI } from "@/src/generated";
-import { Button } from "./Button";
-import {
-  Allo,
-  CVStrategy,
-  TokenGarden,
-  getPoolDataQuery,
-} from "#/subgraph/.graphclient";
+
+import { FC, useEffect, useRef, useState } from "react";
 import { parseUnits } from "viem";
+import { Address, useAccount, useContractRead } from "wagmi";
+import { Allo, getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
+import { Button } from "./Button";
 import { FormInput } from "./Forms";
-import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { TransactionModal, TransactionStep } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import useContractWriteWithConfirmations from "@/hooks/useContractWriteWithConfirmations";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { alloABI, erc20ABI } from "@/src/generated";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { formatTokenAmount, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 const InitialTransactionSteps: TransactionStep[] = [
   {
@@ -56,12 +52,10 @@ type PoolStatsProps = {
 export const PoolMetrics: FC<PoolStatsProps> = ({
   alloInfo,
   balance,
-  strategy,
   communityAddress,
   tokenGarden,
   spendingLimitPct,
   poolId,
-  chainId,
 }) => {
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden?.decimals;
 
@@ -100,6 +94,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
       address: tokenGarden.address as Address,
       abi: abiWithErrors(erc20ABI),
       functionName: "approve",
+      contractName: "ERC20",
+      showNotification: false,
     });
 
   useEffect(() => {
@@ -115,6 +111,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
       address: alloInfo?.id as Address,
       abi: abiWithErrors(alloABI),
       functionName: "fundPool",
+      contractName: "Allo",
+      showNotification: false,
       onConfirmations: () => {
         publish({
           topic: "pool",
@@ -143,8 +141,8 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     if (requestedAmount <= (allowance ?? 0n)) {
       writeFundPool({
         args: [poolId, requestedAmount],
-      }),
-        setPendingAllowance(true);
+      });
+      setPendingAllowance(true);
     } else {
       writeContract?.();
       openModal();
@@ -169,14 +167,14 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
     <>
       <TransactionModal
         ref={modalRef}
-        label={`Add funds to pool`}
+        label={"Add funds to pool"}
         initialTransactionSteps={InitialTransactionSteps}
         allowTokenStatus={allowTokenStatus}
         stepTwoStatus={fundPoolStatus}
         token={tokenSymbol}
         pendingAllowance={pendingAllowance}
         setPendingAllowance={setPendingAllowance}
-      ></TransactionModal>
+      />
       <section className="section-layout ">
         <header>
           <h2>Pool Metrics</h2>
@@ -192,9 +190,9 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                         Funds Available:
                       </h4>
                       <span className="stat-value text-center text-2xl font-bold">
-                        {balance
-                          ? formatTokenAmount(balance, tokenGarden?.decimals)
-                          : "0"}{" "}
+                        {balance ?
+                          formatTokenAmount(balance, tokenGarden?.decimals)
+                        : "0"}{" "}
                         {tokenGarden?.symbol}
                       </span>
                     </div>
@@ -205,7 +203,7 @@ export const PoolMetrics: FC<PoolStatsProps> = ({
                     Spending Limit:
                   </h4>
                   <span className="stat-value ml-8 text-center text-xl">
-                    {`${((spendingLimitPct || 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
+                    {`${((spendingLimitPct ?? 0) * MAX_RATIO_CONSTANT).toFixed(2)} %`}
                   </span>
                 </div>
               </div>

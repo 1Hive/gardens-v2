@@ -6,4 +6,5 @@
     "editor.formatOnSave": true
   },
   "solidity.formatter": "forge",
+  "editor.formatOnSave": true,
 }

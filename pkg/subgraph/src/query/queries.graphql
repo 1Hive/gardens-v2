@@ -276,11 +276,23 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       requestedToken
       proposalStatus
       stakedAmount
+      convictionLast
+      threshold
+      strategy {
+        id
+        maxCVSupply
+        totalEffectiveActivePoints
+      }
     }
   }
 }
 
 query getProposalData($garden: ID!, $proposalId: ID!) {
+  allos {
+    id
+    chainId
+    tokenNative
+  }
   tokenGarden(id: $garden) {
     name
     symbol
@@ -303,6 +315,8 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     version
     strategy {
       id
+      maxCVSupply
+      totalEffectiveActivePoints
       config {
         proposalType
         pointSystem
@@ -354,5 +368,92 @@ query getStrategyByPool($poolId: BigInt!) {
       proposalStatus
       stakedAmount
     }
+  }
+}
+
+query getTokenTitle($tokenAddr: ID!) {
+  tokenGarden(id: $tokenAddr) {
+    name
+  }
+}
+
+query getCommunityTitles($communityAddr: ID!) {
+  registryCommunity(id: $communityAddr) {
+    communityName
+    garden {
+      name
+    }
+  }
+}
+
+query getPoolTitles($poolId: BigInt!) {
+  cvstrategies(where: { poolId: $poolId }) {
+    poolId
+    metadata
+    registryCommunity {
+      communityName
+      garden {
+        name
+      }
+    }
+    metadata
+  }
+}
+
+query getProposalTitles($proposalId: ID!) {
+  cvproposal(id: $proposalId) {
+    proposalNumber
+    metadata
+    strategy {
+      poolId
+      metadata
+      registryCommunity {
+        communityName
+        garden {
+          name
+        }
+      }
+    }
+  }
+}
+
+query getPassportScorer($scorerId: ID!) {
+  passportScorer(id: $scorerId) {
+    id
+    strategies {
+      id
+      strategy {
+        id
+      }
+      threshold
+      councilSafe
+      active
+    }
+    users {
+      id
+      userAddress
+      score
+      lastUpdated
+    }
+  }
+}
+
+query getPassportStrategy($strategyId: ID!) {
+  passportStrategy(id: $strategyId) {
+    id
+    strategy {
+      id
+    }
+    threshold
+    councilSafe
+    active
+  }
+}
+query getPassportUser($userId: ID!) {
+  passportUser(id: $userId) {
+    id
+    userAddress
+    score
+    lastUpdated
   }
 }

@@ -1,4 +1,3 @@
-import { uniqueId } from "lodash-es";
 import React, {
   createContext,
   useCallback,
@@ -9,9 +8,9 @@ import React, {
   useState,
 } from "react";
 import { Realtime } from "ably";
-import { ChainId } from "@/types";
+import { uniqueId } from "lodash-es";
 import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
-import { createConfig } from "wagmi";
+import { ChainId } from "@/types";
 
 // Define the shape of your context data
 interface PubSubContextData {
@@ -64,6 +63,7 @@ export type ChangeEventTopic =
   | "pool"
   | "proposal"
   | "member";
+
 type Native = string | number | boolean | null | undefined;
 
 export type ChangeEventScope = {

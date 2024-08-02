@@ -7,15 +7,17 @@ import {
 import runLatestArbSep from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
 import runLatestEthSep from "../../../../broadcast/DeployCVMultiChain.s.sol/11155111/run-latest.json" assert { type: "json" };
 import { fromHex } from "viem";
+import fs from "fs";
+import path from "path";
+
+const chainArg = process.argv[process.argv.length - 1];
+
+let runLatestLocal: any | undefined = undefined;
+
 // import runLatestLocal from "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json" assert { type: "json" };
 
-export type RunLatest =
-  // | typeof runLatestLocal
-  typeof runLatestArbSep | typeof runLatestEthSep;
+export type RunLatest = typeof runLatestArbSep | typeof runLatestEthSep;
 export type Address = `0x${string}`;
-// export type AddressOrUndefined = Address | undefined;
-// console.log(runLatest);
-// return;
 
 export type AddressChain = {
   blockNumber: number;
@@ -24,6 +26,7 @@ export type AddressChain = {
   factory: Address;
   registryCommunity: Address;
   strategyTemplate: Address;
+  passportScorer: Address;
 };
 export function extractAddr(runLatest: RunLatest): AddressChain {
   let registryCommunity: Address = "0x";
@@ -32,6 +35,7 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
   let safe: Address = "0x";
   let strategyTemplate: Address = "0x";
   let blockNumber: number = 0;
+  let passportScorer: Address = "0x";
 
   if (runLatest) {
     const txs = runLatest.transactions;
@@ -64,6 +68,8 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
         token = tx.contractAddress as Address;
       } else if (tx.contractName == "TERC20") {
         token = tx.contractAddress as Address;
+      } else if (tx.contractName == "PassportScorer") {
+        passportScorer = tx.contractAddress as Address;
       } else if (tx.contractName == "GV2ERC20") {
         token = tx.contractAddress as Address;
       }
@@ -76,6 +82,7 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
     factory,
     registryCommunity,
     strategyTemplate,
+    passportScorer,
   };
 }
 
@@ -84,7 +91,7 @@ export function getRunLatestAddrs(chain: number): AddressChain | undefined {
 
   switch (chain) {
     case localhost.id:
-      // runLatest = runLatestLocal;
+      runLatest = runLatestLocal;
       break;
     case arbitrumSepolia.id:
       runLatest = runLatestArbSep;
@@ -99,7 +106,7 @@ export function getRunLatestAddrs(chain: number): AddressChain | undefined {
   }
   return result;
 }
-const chainArg = process.argv[process.argv.length - 1];
+
 let defaultChain: number = sepolia.id;
 
 switch (chainArg) {
@@ -117,6 +124,4 @@ switch (chainArg) {
     break;
 }
 
-const data = getRunLatestAddrs(defaultChain);
-
-console.log(data);
+const latestAddress = getRunLatestAddrs(defaultChain);

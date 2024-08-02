@@ -16,6 +16,7 @@ import {console} from "forge-std/console.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
 interface IPointStrategy {
     function deactivatePoints(address _member) external;
@@ -106,6 +107,7 @@ library StrategyStruct {
         PointSystem pointSystem;
         PointSystemConfig pointConfig;
         ArbitrableConfig arbitrableConfig;
+        address sybilScorer;
     }
 }
 
@@ -143,6 +145,11 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     error CollateralVaultCannotBeZero();
     error OnlyCouncilSafe();
     error DefaultRulingNotSet();
+    error UserCannotExecuteAction();
+
+    /*|--------------------------------------------|*/
+    /*|              CUSTOM EVENTS                 |*/
+    /*|--------------------------------------------|*/
 
     event InitializedCV(uint256 poolId, StrategyStruct.InitializeParams data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
@@ -207,6 +214,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     // Contract reference
     RegistryCommunity public registryCommunity;
     address public collateralVault;
+    ISybilScorer public sybilScorer;
 
     mapping(uint256 => StrategyStruct.Proposal) public proposals; // Mapping of proposal IDs to Proposal structures
     mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
@@ -245,6 +253,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
                 );
             }
         }
+        sybilScorer = ISybilScorer(ip.sybilScorer);
 
         emit InitializedCV(_poolId, ip);
     }
@@ -284,12 +293,19 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         }
     }
 
-    function revertZeroAddress(address _address) internal pure {
+    function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
     function onlyCouncilSafe() internal view {
         if (msg.sender != address(registryCommunity.councilSafe())) revert OnlyCouncilSafe();
+    }
+
+    function _canExecuteAction(address _user) internal view returns (bool) {
+        if (address(sybilScorer) == address(0)) {
+            return true;
+        }
+        return sybilScorer.canExecuteAction(_user, address(this));
     }
 
     // this is called via allo.sol to register recipients
@@ -298,6 +314,10 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     // this could also check attestations directly and then Accept
 
     function _registerRecipient(bytes memory _data, address _sender) internal override returns (address) {
+        if (!_canExecuteAction(_sender)) {
+            revert UserCannotExecuteAction();
+        }
+        // surpressStateMutabilityWarning++;
         _data;
         StrategyStruct.CreateProposal memory proposal = abi.decode(_data, (StrategyStruct.CreateProposal));
 
@@ -305,7 +325,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
             revert PoolIdCannotBeZero();
         }
         if (proposalType == StrategyStruct.ProposalType.Funding) {
-            revertZeroAddress(proposal.beneficiary);
+            _revertZeroAddress(proposal.beneficiary);
             if (proposal.requestedToken == address(0)) {
                 revert TokenCannotBeZero();
             }
@@ -342,6 +362,9 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
 
     function activatePoints() external {
         address member = msg.sender;
+        if (!_canExecuteAction(member)) {
+            revert UserCannotExecuteAction();
+        }
         registryCommunity.activateMemberInStrategy(member, address(this));
         totalPointsActivated += registryCommunity.getMemberPowerInStrategy(member, address(this));
     }
@@ -365,6 +388,9 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
 
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
         onlyRegistryCommunity();
+        if (!_canExecuteAction(_member)) {
+            revert UserCannotExecuteAction();
+        }
         uint256 pointsToIncrease = 0;
         if (pointSystem == StrategyStruct.PointSystem.Unlimited) {
             pointsToIncrease = increasePowerUnlimited(_amountToStake);
@@ -460,7 +486,9 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     // this will update some data in this contract to store votes, etc.
     function _allocate(bytes memory _data, address _sender) internal override {
         checkSenderIsMember(_sender);
-        // surpressStateMutabilityWarning++;
+        if (!_canExecuteAction(_sender)) {
+            revert UserCannotExecuteAction();
+        }
         bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
         if (!isMemberActivatedPoints) {
             revert UserIsInactive();
@@ -506,6 +534,9 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
                 proposalId, proposal.submitter, arbitrableConfig.collateralAmount
             );
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
+            CollateralVault(collateralVault).withdrawCollateral(
+                proposalId, proposal.submitter, arbitrableConfig.collateralAmount
+            );
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
         } //signaling do nothing @todo write tests @todo add end date
     }
@@ -569,6 +600,7 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
                 proposal.stakedAmount -= stakedPoints;
                 totalStaked -= stakedPoints;
                 _calculateAndSetConviction(proposal, stakedPoints);
+                emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
             }
         }
     }
@@ -901,6 +933,12 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
     function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {
         emit MinThresholdPointsUpdated(_minThresholdPoints, minThresholdPoints_);
         _minThresholdPoints = minThresholdPoints_;
+    }
+
+    function setSybilScorer(address _sybilScorer) external {
+        onlyCouncilSafe();
+        _revertZeroAddress(_sybilScorer);
+        sybilScorer = ISybilScorer(_sybilScorer);
     }
 
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
