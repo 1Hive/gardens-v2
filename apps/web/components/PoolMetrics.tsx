@@ -9,10 +9,7 @@ import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import {
-  ComputedStatus,
-  useContractWriteWithConfirmations,
-} from "@/hooks/useContractWriteWithConfirmations";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
@@ -52,7 +49,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     useContractWriteWithConfirmations({
       address: alloInfo.id as Address,
       abi: abiWithErrors(alloABI),
-      args: [poolId, amount],
+      args: [BigInt(poolId), BigInt(amount)],
       functionName: "fundPool",
       contractName: "Allo",
       showNotification: false,
@@ -89,7 +86,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
     setAddFundsTx((prev) => ({
       ...prev,
       message: getTxMessage(fundPoolStatus),
-      status: (fundPoolStatus as ComputedStatus) ?? "idle",
+      status: fundPoolStatus ?? "idle",
     }));
   }, [fundPoolStatus]);
 

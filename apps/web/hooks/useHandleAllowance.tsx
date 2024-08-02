@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Address, useContractRead } from "wagmi";
 import {
-  ComputedStatus,
   useContractWriteWithConfirmations,
 } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
@@ -29,7 +28,7 @@ export function useHandleAllowance(
   const { refetch: refetchAllowance } = useContractRead({
     address: tokenAddr,
     abi: abiWithErrors(erc20ABI),
-    args: [accountAddr, spenderAddr],
+    args: [accountAddr as Address, spenderAddr],
     functionName: "allowance",
     enabled: accountAddr !== undefined,
   });
@@ -65,7 +64,7 @@ export function useHandleAllowance(
     setAllowanceTxProps({
       contractName: `${tokenSymbol} expenditure approval`,
       message: getTxMessage(transactionStatus),
-      status: (transactionStatus as ComputedStatus) ?? "idle",
+      status: transactionStatus ?? "idle",
     });
     if (transactionStatus === "success") {
       triggerNextTx();

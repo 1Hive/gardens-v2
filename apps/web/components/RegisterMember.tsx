@@ -11,10 +11,7 @@ import { Button } from "./Button";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
-import {
-  ComputedStatus,
-  useContractWriteWithConfirmations,
-} from "@/hooks/useContractWriteWithConfirmations";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
@@ -136,7 +133,7 @@ export function RegisterMember({
     setRegistrationTx((prev) => ({
       ...prev,
       message: getTxMessage(registerMemberTxStatus),
-      status: (registerMemberTxStatus as ComputedStatus) ?? "idle",
+      status: registerMemberTxStatus ?? "idle",
     }));
   }, [registerMemberTxStatus, communityName]);
 

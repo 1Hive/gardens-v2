@@ -99,7 +99,7 @@ export function useContractWriteWithConfirmations<
   return {
     ...txResult,
     ...txWaitResult,
-    transactionStatus: computedStatus,
+    transactionStatus: computedStatus as ComputedStatus | undefined,
     transactionData: txResult.data,
     confirmationsStatus: txWaitResult.status,
     confirmed: !!txWaitResult.isSuccess,

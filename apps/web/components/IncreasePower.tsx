@@ -14,10 +14,7 @@ import { InfoBox } from "./InfoBox";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
-import {
-  ComputedStatus,
-  useContractWriteWithConfirmations,
-} from "@/hooks/useContractWriteWithConfirmations";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
@@ -70,7 +67,7 @@ export const IncreasePower = ({
   );
 
   const urlChainId = useChainIdFromPath();
-  const requestedAmount = parseUnits((amount ?? 0).toString(), tokenDecimals);
+  const requestedAmount = parseUnits((amount || 0).toString(), tokenDecimals);
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
@@ -132,7 +129,7 @@ export const IncreasePower = ({
     setVotingPowerTx((prev) => ({
       ...prev,
       message: getTxMessage(increasePowerStatus),
-      status: (increasePowerStatus as ComputedStatus) ?? "idle",
+      status: increasePowerStatus ?? "idle",
     }));
   }, [increasePowerStatus]);
 
