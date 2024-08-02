@@ -11,7 +11,6 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
-// import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
 import {TERC20} from "../test/shared/TERC20.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
