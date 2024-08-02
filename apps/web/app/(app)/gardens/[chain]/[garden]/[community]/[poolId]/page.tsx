@@ -5,7 +5,8 @@ import {
   BoltIcon,
   ChartBarIcon,
   ClockIcon,
-  InformationCircleIcon,
+  Cog6ToothIcon,
+  CheckIcon,
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
@@ -20,6 +21,7 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { blueLand, grassLarge } from "@/assets";
 import {
   Badge,
+  Button,
   EthAddress,
   InfoIcon,
   PoolMetrics,
@@ -140,8 +142,8 @@ export default function Page({
     },
     {
       label: "Min Threshold",
-      value: strategyObj?.config.minThresholdPoints,
-      // TODO: add better description
+      value: `${strategyObj?.config.minThresholdPoints}`,
+      // TODO: add better description and understand but it does
       info: "description here",
     },
     {
@@ -164,11 +166,28 @@ export default function Page({
     <div className="page-layout">
       {/* Header */}
       <section className="section-layout flex flex-col gap-0 overflow-hidden">
-        <header className="mb-2">
-          <h2>
-            {ipfsResult.title} #{poolId}
-          </h2>
-          <EthAddress address={strategyAddr} />
+        <header className="mb-2 flex flex-col">
+          <div className="flex justify-between">
+            <h2>
+              {ipfsResult.title} #{poolId}
+            </h2>
+            <div className="flex gap-2">
+              <Button
+                btnStyle="outline"
+                icon={<Cog6ToothIcon height={24} width={24} />}
+              >
+                Edit
+              </Button>
+              {!isEnabled && (
+                <Button icon={<CheckIcon height={24} width={24} />}>
+                  Approve
+                </Button>
+              )}
+            </div>
+          </div>
+          <div>
+            <EthAddress address={strategyAddr} />
+          </div>
         </header>
         <p>{ipfsResult.description}</p>
         <div className="mb-10 mt-8 flex items-start gap-24">
