@@ -169,6 +169,8 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
         uint256 collateralAmount
     );
     event CollateralVaultUpdated(address collateralVault);
+    event TribunaSafeRegistered(address strategy, address arbitrator, address tribunalSafe);
+    event ArbitrationConfigUpdated(address strategy, StrategyStruct.ArbitrableConfig arbitrableConfig);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -238,6 +240,9 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
             collateralVault = Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++);
             if (arbitrableConfig.tribunalSafe != address(0)) {
                 SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(arbitrableConfig.tribunalSafe);
+                emit TribunaSafeRegistered(
+                    address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
+                );
             }
         }
 
@@ -1013,5 +1018,11 @@ contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrateg
 
     function getCollateralVault() external view returns (address) {
         return address(collateralVault);
+    }
+
+    function setArbitrationConfig(StrategyStruct.ArbitrableConfig memory _arbitrableConfig) external {
+        onlyCouncilSafe();
+        arbitrableConfig = _arbitrableConfig;
+        emit ArbitrationConfigUpdated(address(this), _arbitrableConfig);
     }
 }
