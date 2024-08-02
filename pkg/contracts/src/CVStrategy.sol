@@ -6,10 +6,16 @@ import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol
 import {RegistryCommunity, Metadata} from "./RegistryCommunity.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IArbitrator} from "./interfaces/IArbitrator.sol";
+import {IArbitrable} from "./interfaces/IArbitrable.sol";
+import {CollateralVault} from "./CollateralVault.sol";
+import {SafeArbitrator} from "./SafeArbitrator.sol";
+import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 
 import {console} from "forge-std/console.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
 interface IPointStrategy {
@@ -34,10 +40,8 @@ library StrategyStruct {
     }
 
     struct CreateProposal {
-        // uint256 proposalId;
         uint256 poolId;
         address beneficiary;
-        // ProposalType proposalType;
         uint256 amountRequested;
         address requestedToken;
         Metadata metadata;
@@ -48,7 +52,9 @@ library StrategyStruct {
         Active, // A vote that has been reported to Agreements
         Paused, // A vote that is being challenged by Agreements
         Cancelled, // A vote that has been cancelled
-        Executed // A vote that has been executed
+        Executed, // A vote that has been executed
+        Disputed, // A vote that has been disputed
+        Rejected // A vote that has been rejected
 
     }
 
@@ -64,6 +70,9 @@ library StrategyStruct {
         ProposalStatus proposalStatus;
         mapping(address => uint256) voterStakedPoints; // voter staked points
         Metadata metadata;
+        uint256 disputeId;
+        uint256 disputeTimestamp;
+        address challenger;
     }
 
     struct ProposalSupport {
@@ -76,6 +85,15 @@ library StrategyStruct {
         uint256 maxAmount;
     }
 
+    struct ArbitrableConfig {
+        IArbitrator arbitrator;
+        address tribunalSafe;
+        uint256 collateralAmount;
+        uint256 defaultRuling;
+        uint256 defaultRulingTimeout;
+        address collateralVaultTemplate;
+    }
+
     struct InitializeParams {
         address registryCommunity;
         // Alpha | Decay | a
@@ -85,20 +103,16 @@ library StrategyStruct {
         // Weight | RHO | p
         uint256 weight;
         uint256 minThresholdPoints;
-        // Proposal Type
         ProposalType proposalType;
-        //NEXT: use this for tests
         PointSystem pointSystem;
         PointSystemConfig pointConfig;
+        ArbitrableConfig arbitrableConfig;
         address sybilScorer;
     }
 }
 
-contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
+contract CVStrategy is BaseStrategy, IArbitrable, ReentrancyGuard, IPointStrategy, ERC165 {
     using Math for uint256;
-    /*|--------------------------------------------|*/
-    /*|              CUSTOM ERRORS                 |*/
-    /*|--------------------------------------------|*/
 
     error UserCannotBeZero(); // 0xd1f28288
     error UserNotInRegistry(); //0x6a5cfb6d
@@ -124,7 +138,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     error ConvictionUnderMinimumThreshold(); // 0xcce79308
     error OnlyCommunityAllowed(); // 0xaf0916a2
     error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount); //0x5863b0b6
+    error InsufficientCollateral(uint256 sentAmount, uint256 requiredAmount);
+    error OnlyArbitrator();
+    error ProposalNotDisputed(uint256 _proposalId);
+    error ArbitratorCannotBeZero();
+    error CollateralVaultCannotBeZero();
     error OnlyCouncilSafe();
+    error DefaultRulingNotSet();
     error UserCannotExecuteAction();
 
     /*|--------------------------------------------|*/
@@ -146,6 +166,18 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     event WeightUpdated(uint256 weight);
     event RegistryUpdated(address registryCommunity);
     event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
+    event ProposalDisputed(
+        uint256 proposalId,
+        uint256 disputeId,
+        address challenger,
+        uint256 arbitrationFee,
+        string context,
+        uint256 timestamp,
+        uint256 collateralAmount
+    );
+    event CollateralVaultUpdated(address collateralVault);
+    event TribunaSafeRegistered(address strategy, address arbitrator, address tribunalSafe);
+    event ArbitrationConfigUpdated(address strategy, StrategyStruct.ArbitrableConfig arbitrableConfig);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -155,14 +187,13 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     /*|                VARIABLES                   |*/
     /*|--------------------------------------------|*/
 
-    // Constants for fixed numbers
     uint256 public constant D = 10000000; //10**7
     uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
     uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
     uint256 public constant MAX_STAKED_PROPOSALS = 10; // @todo not allow stake more than 10 proposals per user, don't count executed?
+    uint256 public constant RULING_OPTIONS = 3;
 
-    // uint256 variables packed together
     uint256 public decay;
     uint256 public maxRatio;
     uint256 public weight;
@@ -171,30 +202,24 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     uint256 public totalPointsActivated;
     uint256 public _minThresholdPoints = 0; // starting with a default of zero
     uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
+    uint256 public cloneNonce;
 
-    // Enum for handling proposal types
     StrategyStruct.ProposalType public proposalType;
 
     // Struct variables for complex data structures
     StrategyStruct.PointSystem public pointSystem;
     StrategyStruct.PointSystemConfig public pointConfig;
+    StrategyStruct.ArbitrableConfig public arbitrableConfig;
 
     // Contract reference
     RegistryCommunity public registryCommunity;
+    address public collateralVault;
     ISybilScorer public sybilScorer;
 
-    // Mappings to handle relationships and staking details
     mapping(uint256 => StrategyStruct.Proposal) public proposals; // Mapping of proposal IDs to Proposal structures
     mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
     mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
-
-    modifier onlyCouncilSafe() {
-        if (msg.sender == address(registryCommunity.councilSafe())) {
-            _;
-        } else {
-            revert OnlyCouncilSafe();
-        }
-    }
+    mapping(uint256 => uint256) public disputeIdToProposalId;
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -217,14 +242,21 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         _minThresholdPoints = ip.minThresholdPoints;
+        arbitrableConfig = ip.arbitrableConfig;
+
+        if (address(arbitrableConfig.arbitrator) != address(0)) {
+            collateralVault = Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++);
+            if (arbitrableConfig.tribunalSafe != address(0)) {
+                SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(arbitrableConfig.tribunalSafe);
+                emit TribunaSafeRegistered(
+                    address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
+                );
+            }
+        }
         sybilScorer = ISybilScorer(ip.sybilScorer);
 
         emit InitializedCV(_poolId, ip);
     }
-
-    /*|--------------------------------------------|*/
-    /*|                 FALLBACK                  |*/
-    /*|--------------------------------------------|*/
 
     fallback() external payable {
         // // surpressStateMutabilityWarning++;
@@ -242,6 +274,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
+
     function checkSenderIsMember(address _sender) private view {
         if (_sender == address(0)) {
             revert UserCannotBeZero();
@@ -252,7 +285,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         if (!registryCommunity.isMember(_sender)) {
             revert UserNotInRegistry();
         }
-        // _;
     }
 
     function onlyRegistryCommunity() private view {
@@ -263,6 +295,10 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
+    }
+
+    function onlyCouncilSafe() internal view {
+        if (msg.sender != address(registryCommunity.councilSafe())) revert OnlyCouncilSafe();
     }
 
     function _canExecuteAction(address _user) internal view returns (bool) {
@@ -285,28 +321,25 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         _data;
         StrategyStruct.CreateProposal memory proposal = abi.decode(_data, (StrategyStruct.CreateProposal));
 
-        // if (proposal.proposalId == 0) {
-        // revert ProposalIdCannotBeZero();
-        // }
         if (proposal.poolId == 0) {
             revert PoolIdCannotBeZero();
         }
-        // console.log("proposalType", uint256(proposalType));
         if (proposalType == StrategyStruct.ProposalType.Funding) {
             _revertZeroAddress(proposal.beneficiary);
-            // getAllo().getPool(poolId).token;
             if (proposal.requestedToken == address(0)) {
                 revert TokenCannotBeZero();
             }
             address poolToken = this.getAllo().getPool(poolId).token;
             if (proposal.requestedToken != poolToken) {
-                // console.log("::requestedToken", proposal.requestedToken);
-                // console.log("::PookToken", poolToken);
                 revert TokenNotAllowed();
             }
             if (_isOverMaxRatio(proposal.amountRequested)) {
                 revert AmountOverMaxRatio();
             }
+        }
+
+        if (address(arbitrableConfig.arbitrator) != address(0) && msg.value < arbitrableConfig.collateralAmount) {
+            revert InsufficientCollateral(msg.value, arbitrableConfig.collateralAmount);
         }
         uint256 proposalId = ++proposalCounter;
         StrategyStruct.Proposal storage p = proposals[proposalId];
@@ -316,12 +349,12 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         p.beneficiary = proposal.beneficiary;
         p.requestedToken = proposal.requestedToken;
         p.requestedAmount = proposal.amountRequested;
-        // p.proposalType = proposal.proposalType;
         p.proposalStatus = StrategyStruct.ProposalStatus.Active;
         p.blockLast = block.number;
         p.convictionLast = 0;
-        // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
+
+        CollateralVault(collateralVault).depositCollateral{value: msg.value}(proposalId, p.submitter);
 
         emit ProposalCreated(poolId, proposalId);
         return address(uint160(proposalId));
@@ -377,7 +410,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     function decreasePower(address _member, uint256 _amountToUnstake) external returns (uint256) {
         onlyRegistryCommunity();
         //requireMemberActivatedInStrategies
-
         uint256 pointsToDecrease = 0;
         if (pointSystem == StrategyStruct.PointSystem.Unlimited || pointSystem == StrategyStruct.PointSystem.Capped) {
             pointsToDecrease = decreasePowerCappedUnlimited(_amountToUnstake);
@@ -395,20 +427,15 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function increasePowerCapped(address _member, uint256 _amountToStake) internal view returns (uint256) {
         uint256 pointsToIncrease = _amountToStake;
-        console.log("POINTS TO INCREASE", pointsToIncrease);
         uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
-        console.log("MEMBERPOWER", memberPower);
         if (memberPower + pointsToIncrease > pointConfig.maxAmount) {
             pointsToIncrease = pointConfig.maxAmount - memberPower;
         }
-        console.log("POINTS TO INCREASE END", pointsToIncrease);
-
         return pointsToIncrease;
     }
 
     function increasePowerQuadratic(address _member, uint256 _amountToStake) internal view returns (uint256) {
         uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
-
         uint256 decimal = 18;
         try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
@@ -417,9 +444,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         }
         uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
         uint256 currentPoints = registryCommunity.getMemberPowerInStrategy(_member, address(this));
-
         uint256 pointsToIncrease = newTotalPoints - currentPoints;
-
         return pointsToIncrease;
     }
 
@@ -434,9 +459,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         } catch {
             console.log("Error getting decimal");
         }
-        console.log("_amountToUnstake", _amountToUnstake);
         uint256 newTotalStake = registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake;
-        console.log("newTotalStake", newTotalStake);
         uint256 newTotalPoints = Math.sqrt(newTotalStake * 10 ** decimal);
         uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
         return pointsToDecrease;
@@ -484,60 +507,48 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty();
         }
-
         uint256 proposalId = abi.decode(_data, (uint256));
-
         if (proposalId == 0) {
             revert ProposalIdCannotBeZero();
         }
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
-
         if (proposalType == StrategyStruct.ProposalType.Funding) {
             if (proposal.proposalId != proposalId) {
                 revert ProposalNotInList(proposalId);
             }
-
             if (proposal.requestedAmount > poolAmount) {
                 revert PoolAmountNotEnough(proposalId, proposal.requestedAmount, poolAmount);
             }
-
             if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
                 revert ProposalNotActive(proposalId);
             }
-
             uint256 convictionLast = updateProposalConviction(proposalId);
             uint256 threshold = calculateThreshold(proposal.requestedAmount);
-
             if (convictionLast < threshold && proposal.requestedAmount > 0) {
                 revert ConvictionUnderMinimumThreshold();
             }
-
             IAllo.Pool memory pool = allo.getPool(poolId);
-
-            poolAmount -= proposal.requestedAmount; // CEI
-
-            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
-
+            poolAmount -= proposal.requestedAmount;
+            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
+            CollateralVault(collateralVault).withdrawCollateral(
+                proposalId, proposal.submitter, arbitrableConfig.collateralAmount
+            );
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
-
+            CollateralVault(collateralVault).withdrawCollateral(
+                proposalId, proposal.submitter, arbitrableConfig.collateralAmount
+            );
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
         } //signaling do nothing @todo write tests @todo add end date
     }
 
     function canExecuteProposal(uint256 proposalId) public view returns (bool canBeExecuted) {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
-
-        // uint256 convictionLast = updateProposalConviction(proposalId);
         (uint256 convictionLast, uint256 blockNumber) =
             _checkBlockAndCalculateConviction(proposal, proposal.stakedAmount);
-
         if (convictionLast == 0 && blockNumber == 0) {
             convictionLast = proposal.convictionLast;
         }
         uint256 threshold = calculateThreshold(proposal.requestedAmount);
-
-        // console.log("convictionLast", convictionLast);
-        // console.log("threshold", threshold);
         canBeExecuted = convictionLast >= threshold;
     }
 
@@ -546,16 +557,12 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     // for example, the OpenSelfRegistration only maps users to bool, and then assumes Accepted for those
     // since there is no need for Pending or Rejected
     function _getRecipientStatus(address _recipientId) internal pure override returns (Status) {
-        // surpressStateMutabilityWarning;
         return _recipientId == address(0) ? Status.Rejected : Status.Accepted;
     }
 
     /// @return Input the values you would send to distribute(), get the amounts each recipient in the array would receive
     function getPayouts(address[] memory, bytes[] memory) external pure override returns (PayoutSummary[] memory) {
-        // surpressStateMutabilityWarning;
         revert NotImplemented();
-        // PayoutSummary[] memory payouts = new PayoutSummary[](0);
-        // return payouts;
     }
 
     function _getPayout(address _recipientId, bytes memory _data)
@@ -564,7 +571,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         override
         returns (PayoutSummary memory)
     {
-        // surpressStateMutabilityWarning;
         _data;
         return PayoutSummary(_recipientId, 0);
     }
@@ -574,10 +580,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     // simply returns whether a allocator is valid or not, will usually be true for all
-
     function _isValidAllocator(address _allocator) internal pure override returns (bool) {
-        // surpressStateMutabilityWarning;
-        return _allocator == address(0) ? false : true;
+        return _allocator != address(0);
     }
 
     function setPoolActive(bool _active) external {
@@ -596,6 +600,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 proposal.stakedAmount -= stakedPoints;
                 totalStaked -= stakedPoints;
                 _calculateAndSetConviction(proposal, stakedPoints);
+                emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
             }
         }
     }
@@ -630,7 +635,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         )
     {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
-
         threshold = proposal.requestedAmount == 0 ? 0 : calculateThreshold(proposal.requestedAmount);
         return (
             proposal.submitter,
@@ -665,8 +669,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         return proposals[_proposalId].stakedAmount;
     }
 
-    //    do a internal function to get the total voter stake
-
     function getTotalVoterStakePct(address _voter) public view returns (uint256) {
         return totalVoterStakePct[_voter];
     }
@@ -676,7 +678,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function getBasisStakedAmount() internal view returns (uint256) {
-        return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
+        return registryCommunity.getBasisStakedAmount();
     }
 
     function proposalExists(uint256 _proposalID) internal view returns (bool) {
@@ -692,30 +694,20 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     {
         int256 deltaSupportSum = 0;
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
-            // check if _proposalSupport index i exist
             if (_proposalSupport[i].proposalId == 0) {
-                //@todo: check better way to do that.
-                // console.log("proposalId == 0");
                 continue;
             }
             uint256 proposalId = _proposalSupport[i].proposalId;
             if (!proposalExists(proposalId)) {
-                revert ProposalNotInList(proposalId); //@TODO: maybe we should skip emitting a event instead of revert
+                revert ProposalNotInList(proposalId);
             }
             deltaSupportSum += _proposalSupport[i].deltaSupport;
         }
-        // console.log("deltaSupportSum");
-        // console.logInt(deltaSupportSum);
         uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
-        // console.log("newTotalVotingSupport", newTotalVotingSupport);
         uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
-
-        // console.log("participantBalance", participantBalance);
-        // Check that the sum of support is not greater than the participant balance
         if (newTotalVotingSupport > participantBalance) {
             revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
         }
-
         totalVoterStakePct[_sender] = newTotalVotingSupport;
     }
 
@@ -723,18 +715,15 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         uint256[] memory proposalsIds;
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             uint256 proposalId = _proposalSupport[i].proposalId;
-            // add proposalid to the list if not exist
             if (proposalsIds.length == 0) {
                 proposalsIds = new uint256[](1);
                 proposalsIds[0] = proposalId; // 0 => 1
             } else {
                 bool exist = false;
                 for (uint256 j = 0; j < proposalsIds.length; j++) {
-                    // 1
                     if (proposalsIds[j] == proposalId) {
                         exist = true;
                         revert ProposalSupportDuplicated(proposalId, j);
-                        // break;
                     }
                 }
                 if (!exist) {
@@ -747,26 +736,10 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
                 }
             }
             int256 delta = _proposalSupport[i].deltaSupport;
-
             StrategyStruct.Proposal storage proposal = proposals[proposalId];
-
-            // uint256 beforeStakedPointsPct = proposal.voterStakedPointsPct[_sender];
             uint256 previousStakedPoints = proposal.voterStakedPoints[_sender];
-            // console.log("beforeStakedPointsPct", beforeStakedPointsPct);
-            // console.log("previousStakedAmount", previousStakedAmount);
-
             uint256 stakedPoints = _applyDelta(previousStakedPoints, delta);
-
-            // console.log("proposalID", proposalId);
-            // console.log("stakedPointsPct%", stakedPointsPct);
-
             proposal.voterStakedPoints[_sender] = stakedPoints;
-
-            // console.log("_sender", _sender);
-            // uint2stakedPointsunt = stakedPoints;
-            // console.log("stakedAmount", stakedAmount);
-            // proposal.voterStake[_sender]stakedPointsunt;
-
             bool hasProposal = false;
             for (uint256 k = 0; k < voterStakedProposals[_sender].length; k++) {
                 if (voterStakedProposals[_sender][k] == proposal.proposalId) {
@@ -777,8 +750,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             if (!hasProposal) {
                 voterStakedProposals[_sender].push(proposal.proposalId);
             }
-            // proposal.stakedAmount += stakedAmount;
-            // uint256 diff =_diffStakedTokens(previousStakedAmount, stakedAmount);
             if (previousStakedPoints <= stakedPoints) {
                 totalStaked += stakedPoints - previousStakedPoints;
                 proposal.stakedAmount += stakedPoints - previousStakedPoints;
@@ -797,7 +768,6 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
 
     function _applyDelta(uint256 _support, int256 _delta) internal pure returns (uint256) {
         int256 result = int256(_support) + _delta;
-
         if (result < 0) {
             revert SupportUnderflow(_support, _delta, result);
         }
@@ -845,30 +815,15 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
      * executed it.
      */
     function calculateThreshold(uint256 _requestedAmount) public view returns (uint256 _threshold) {
-        //       @todo: we should replace it with
-        //        uint256 funds = fundsManager.balance(requestToken);
         if (poolAmount <= 0) {
             revert PoolIsEmpty();
         }
-        //        require(maxRatio.mul(funds) > _requestedAmount.mul(D), ERROR_AMOUNT_OVER_MAX_RATIO);
-        // console.log("maxRatio", maxRatio);
-        // console.log("funds=poolAmount", funds);
-        // console.log("_requestedAmount", _requestedAmount);
-        // console.log("D", D);
-        // console.log("maxRatio * funds", maxRatio * funds);
-        // console.log("_requestedAmount * D", _requestedAmount * D);
-
         if (_isOverMaxRatio(_requestedAmount)) {
             revert AmountOverMaxRatio();
         }
-        // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
-        // denom = maxRatio / 1 - _requestedAmount / funds;
         uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
-        _threshold = (
-            (((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * totalEffectiveActivePoints()
-        ) >> 64;
-        //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
-        // console.log("_threshold", _threshold);
+        _threshold =
+            (((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * totalEffectiveActivePoints() >> 64;
         _threshold = _threshold > _minThresholdPoints ? _threshold : _minThresholdPoints;
     }
 
@@ -934,28 +889,19 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
-            // console.log("blockNumber == _proposal.blockLast");
-            return (0, 0); // Conviction already stored
+            return (0, 0);
         }
-        // calculateConviction and store it
-        conviction = calculateConviction(
-            blockNumber - _proposal.blockLast, // we assert it doesn't overflow above
-            _proposal.convictionLast,
-            _oldStaked
-        );
+        conviction = calculateConviction(blockNumber - _proposal.blockLast, _proposal.convictionLast, _oldStaked);
     }
 
     function updateProposalConviction(uint256 proposalId) public returns (uint256) {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
-
         if (proposal.proposalId != proposalId) {
             revert ProposalNotInList(proposalId);
         }
-
         if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
             revert ProposalNotActive(proposalId);
         }
-
         _calculateAndSetConviction(proposal, proposal.stakedAmount);
         return proposal.convictionLast;
     }
@@ -989,8 +935,138 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         _minThresholdPoints = minThresholdPoints_;
     }
 
-    function setSybilScorer(address _sybilScorer) external onlyCouncilSafe {
+    function setSybilScorer(address _sybilScorer) external {
+        onlyCouncilSafe();
         _revertZeroAddress(_sybilScorer);
         sybilScorer = ISybilScorer(_sybilScorer);
+    }
+
+    function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
+        external
+        payable
+        nonReentrant
+    {
+        StrategyStruct.Proposal storage proposal = proposals[proposalId];
+
+        if (address(arbitrableConfig.arbitrator) == address(0)) {
+            revert ArbitratorCannotBeZero();
+        }
+        if (address(collateralVault) == address(0)) {
+            revert CollateralVaultCannotBeZero();
+        }
+        if (proposal.proposalId != proposalId) {
+            revert ProposalNotInList(proposalId);
+        }
+        if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
+            revert ProposalNotActive(proposalId);
+        }
+        if (msg.value <= arbitrableConfig.collateralAmount) {
+            revert InsufficientCollateral(msg.value, arbitrableConfig.collateralAmount);
+        }
+
+        uint256 arbitrationFee = msg.value - arbitrableConfig.collateralAmount;
+
+        CollateralVault(collateralVault).depositCollateral{value: arbitrableConfig.collateralAmount}(
+            proposalId, msg.sender
+        );
+
+        uint256 disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
+
+        proposal.proposalStatus = StrategyStruct.ProposalStatus.Disputed;
+        proposal.disputeId = disputeId;
+        proposal.disputeTimestamp = block.timestamp;
+        proposal.challenger = msg.sender;
+        disputeIdToProposalId[disputeId] = proposalId;
+        emit ProposalDisputed(
+            proposalId,
+            disputeId,
+            msg.sender,
+            arbitrationFee,
+            context,
+            proposal.disputeTimestamp,
+            arbitrableConfig.collateralAmount
+        );
+    }
+
+    function rule(uint256 _disputeID, uint256 _ruling) external override {
+        uint256 proposalId = disputeIdToProposalId[_disputeID];
+        StrategyStruct.Proposal storage proposal = proposals[proposalId];
+
+        if (proposalId == 0) {
+            revert ProposalNotInList(proposalId);
+        }
+        if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Disputed) {
+            revert ProposalNotDisputed(proposalId);
+        }
+
+        bool isTimeOut = block.timestamp > proposal.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
+
+        if (!isTimeOut && msg.sender != address(arbitrableConfig.arbitrator)) {
+            revert OnlyArbitrator();
+        }
+
+        if (isTimeOut || _ruling == 0) {
+            if (arbitrableConfig.defaultRuling == 0) {
+                revert DefaultRulingNotSet();
+            }
+            if (arbitrableConfig.defaultRuling == 1) {
+                proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
+            }
+            if (arbitrableConfig.defaultRuling == 2) {
+                proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
+            }
+            CollateralVault(collateralVault).withdrawCollateral(
+                proposalId, proposal.challenger, arbitrableConfig.collateralAmount
+            );
+            CollateralVault(collateralVault).withdrawCollateral(
+                proposalId, proposal.submitter, arbitrableConfig.collateralAmount
+            );
+        } else if (_ruling == 1) {
+            proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
+            CollateralVault(collateralVault).withdrawCollateralFor(
+                proposalId,
+                proposal.challenger,
+                address(registryCommunity.councilSafe()),
+                arbitrableConfig.collateralAmount
+            );
+        } else if (_ruling == 2) {
+            proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
+            CollateralVault(collateralVault).withdrawCollateral(
+                proposalId, proposal.challenger, arbitrableConfig.collateralAmount
+            );
+            CollateralVault(collateralVault).withdrawCollateralFor(
+                proposalId,
+                proposal.submitter,
+                address(registryCommunity.councilSafe()),
+                arbitrableConfig.collateralAmount / 2
+            );
+            CollateralVault(collateralVault).withdrawCollateralFor(
+                proposalId, proposal.submitter, proposal.challenger, arbitrableConfig.collateralAmount / 2
+            );
+        }
+
+        emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
+    }
+
+    function setCollateralVault(address _collateralVault) external {
+        onlyCouncilSafe();
+        collateralVault = _collateralVault;
+        emit CollateralVaultUpdated(_collateralVault);
+    }
+
+    function getCollateralVault() external view returns (address) {
+        return address(collateralVault);
+    }
+
+    function setArbitrationConfig(StrategyStruct.ArbitrableConfig memory _arbitrableConfig) external {
+        onlyCouncilSafe();
+        arbitrableConfig = _arbitrableConfig;
+        emit ArbitrationConfigUpdated(address(this), _arbitrableConfig);
+    }
+
+    function registerTribunalSafe(address _tribunalSafe) external {
+        onlyCouncilSafe();
+        SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(_tribunalSafe);
+        emit TribunaSafeRegistered(address(this), address(arbitrableConfig.arbitrator), _tribunalSafe);
     }
 }
