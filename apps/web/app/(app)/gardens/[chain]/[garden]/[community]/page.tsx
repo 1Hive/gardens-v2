@@ -95,20 +95,6 @@ export default function Page({
     enabled: accountAddress !== undefined,
   });
 
-  const { data: allowance } = useContractRead({
-    address: tokenAddr as Address,
-    abi: abiWithErrors2<typeof erc20ABI>(erc20ABI),
-    args: [accountAddress as Address, communityAddr as Address], // [ owner,  spender address ]
-    functionName: "allowance",
-    enabled: accountAddress !== undefined,
-  });
-
-  useEffect(() => {
-    if (accountAddress && isMemberResult && !fetching) {
-      refetchIsMember();
-    }
-  }, [accountAddress]);
-
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
 
   useEffect(() => {
@@ -122,7 +108,7 @@ export default function Page({
       if (registryCommunity?.covenantIpfsHash) {
         try {
           const response = await fetch(
-            "https://ipfs.io/ipfs/" + registryCommunity?.covenantIpfsHash,
+            "https://ipfs.io/ipfs/" + registryCommunity.covenantIpfsHash,
           );
           const json = await response.json();
           if (typeof json.covenant === "string") {

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { ForwardedRef, forwardRef } from "react";
-import { EthAddress, Modal } from "@/components";
+import React from "react";
+import { Modal } from "@/components";
 import { TransactionStatusNotification } from "@/hooks/useTransactionNotification";
 
 export interface TransactionStep {

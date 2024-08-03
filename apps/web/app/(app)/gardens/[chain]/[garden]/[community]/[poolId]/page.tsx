@@ -155,7 +155,7 @@ export default function Page({
             <Statistic label="funding token" icon={<InformationCircleIcon />}>
               <Badge
                 isCapitalize
-                label={tokenGarden?.symbol}
+                label={tokenGarden.symbol}
                 icon={<Square3Stack3DIcon />}
               />
             </Statistic>

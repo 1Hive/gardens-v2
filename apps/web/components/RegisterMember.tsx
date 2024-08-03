@@ -107,7 +107,7 @@ export function RegisterMember({
         containerId: communityAddress,
         function: "stakeAndRegisterMember",
         id: communityAddress,
-        urlChainId,
+        chainId: urlChainId,
       });
     },
   });

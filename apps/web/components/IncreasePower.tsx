@@ -53,7 +53,7 @@ export const IncreasePower = ({
   } = registryCommunity;
 
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const [amount, setAmount] = useState<string>("");
+  const [amount, setAmount] = useState<string>("0");
   const { address: accountAddress } = useAccount();
 
   const stakedTokens = memberData?.member?.memberCommunity?.[0]?.stakedTokens;
@@ -67,7 +67,7 @@ export const IncreasePower = ({
   );
 
   const urlChainId = useChainIdFromPath();
-  const requestedAmount = parseUnits((amount || 0).toString(), tokenDecimals);
+  const requestedAmount = parseUnits(amount, tokenDecimals);
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
@@ -107,23 +107,22 @@ export const IncreasePower = ({
       },
     });
 
-  const { write: writeDecreasePower, transactionStatus: decreasePowerStatus } =
-    useContractWriteWithConfirmations({
-      ...registryContractCallConfig,
-      functionName: "decreasePower",
-      args: [requestedAmount],
-      fallbackErrorMessage: "Error decreasing power. Please try again.",
-      onConfirmations: () => {
-        publish({
-          topic: "member",
-          type: "update",
-          containerId: communityAddress,
-          function: "decreasePower",
-          id: accountAddress,
-          chainId: urlChainId,
-        });
-      },
-    });
+  const { write: writeDecreasePower } = useContractWriteWithConfirmations({
+    ...registryContractCallConfig,
+    functionName: "decreasePower",
+    args: [requestedAmount],
+    fallbackErrorMessage: "Error decreasing power. Please try again.",
+    onConfirmations: () => {
+      publish({
+        topic: "member",
+        type: "update",
+        containerId: communityAddress,
+        function: "decreasePower",
+        id: accountAddress,
+        chainId: urlChainId,
+      });
+    },
+  });
 
   useEffect(() => {
     setVotingPowerTx((prev) => ({
