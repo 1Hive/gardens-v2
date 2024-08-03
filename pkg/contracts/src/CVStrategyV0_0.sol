@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
+import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 
-import {RegistryCommunityV0_0, Metadata} from "./RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "./interfaces/IArbitrator.sol";
@@ -221,7 +222,7 @@ contract CVStrategyV0_0 is
     uint256 public proposalCounter = 0;
     uint256 public totalStaked;
     uint256 public totalPointsActivated;
-    uint256 public _minThresholdPoints = 0; // starting with a default of zero
+    uint256 public minThresholdPoints = 0; // starting with a default of zero
     uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
     uint256 public cloneNonce;
 
@@ -270,7 +271,7 @@ contract CVStrategyV0_0 is
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
-        _minThresholdPoints = ip.minThresholdPoints;
+        minThresholdPoints = ip.minThresholdPoints;
         sybilScorer = ISybilScorer(ip.sybilScorer);
         arbitrableConfig = ip.arbitrableConfig;
 
@@ -953,7 +954,7 @@ contract CVStrategyV0_0 is
         ) >> 64;
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
-        _threshold = _threshold > _minThresholdPoints ? _threshold : _minThresholdPoints;
+        _threshold = _threshold > minThresholdPoints ? _threshold : minThresholdPoints;
     }
 
     /**
@@ -1069,8 +1070,51 @@ contract CVStrategyV0_0 is
     }
 
     function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {
-        emit MinThresholdPointsUpdated(_minThresholdPoints, minThresholdPoints_);
-        _minThresholdPoints = minThresholdPoints_;
+        emit MinThresholdPointsUpdated(minThresholdPoints, minThresholdPoints_);
+        minThresholdPoints = minThresholdPoints_;
+    }
+
+    function setPoolParams(bytes memory data) public {
+        onlyCouncilSafe();
+        (StrategyStruct.ArbitrableConfig memory _arbitrableConfig, uint256 _newMinThreshold, uint256 _newDecay, uint256 _newMaxRatio, uint256 _newWeight) = abi.decode(data, (StrategyStruct.ArbitrableConfig, uint256, uint256, uint256, uint256));
+        
+        // Update only if the new value is different
+        
+        if (_arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe) {
+            arbitrableConfig.tribunalSafe = _arbitrableConfig.tribunalSafe;
+        }
+        
+        if (_arbitrableConfig.collateralAmount != arbitrableConfig.collateralAmount) {
+            arbitrableConfig.collateralAmount = _arbitrableConfig.collateralAmount;
+        }
+        
+        if (_arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling) {
+            arbitrableConfig.defaultRuling = _arbitrableConfig.defaultRuling;
+        }
+        
+        if (_arbitrableConfig.defaultRulingTimeout != arbitrableConfig.defaultRulingTimeout) {
+            arbitrableConfig.defaultRulingTimeout = _arbitrableConfig.defaultRulingTimeout;
+        }
+        
+        if (_arbitrableConfig.collateralVaultTemplate != arbitrableConfig.collateralVaultTemplate) {
+            arbitrableConfig.collateralVaultTemplate = _arbitrableConfig.collateralVaultTemplate;
+        }
+        
+        if (_newMinThreshold != minThresholdPoints) {
+            minThresholdPoints = _newMinThreshold;
+        }
+
+        if (_newDecay != decay) {
+            decay = _newDecay;
+        }
+        
+        if (_newMaxRatio != maxRatio) {
+            maxRatio = _newMaxRatio;
+        }
+        
+        if (_newWeight != weight) {
+            weight = _newWeight;
+        }
     }
 
     function setSybilScorer(address _sybilScorer) external {
