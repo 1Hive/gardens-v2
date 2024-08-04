@@ -11,13 +11,13 @@ import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
-import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 import {Safe} from "safe-contracts/contracts/Safe.sol";
+import {TERC20} from "../test/shared/TERC20.sol";
 
 contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50 * DECIMALS;
@@ -50,7 +50,7 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
         Allo allo = Allo(allo_proxy);
 
         // console2.log("Allo Addr: %s", address(allo));
-        AMockERC20 token = AMockERC20(TOKEN);
+        TERC20 token = TERC20(TOKEN);
 
         // IRegistry registry = allo.getRegistry();
         // console2.log("Registry Addr: %s", address(registry));
@@ -59,7 +59,6 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup 
 
         vm.startBroadcast(pool_admin());
 
-        // AMockERC20 token = new AMockERC20();
         // console2.log("Token Addr: %s", address(token));
         // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
         Safe councilSafeDeploy = Safe(payable(SAFE));

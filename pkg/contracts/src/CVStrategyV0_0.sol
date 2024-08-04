@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 
-import {RegistryCommunity, Metadata} from "./RegistryCommunity.sol";
+import {RegistryCommunityV0_0, Metadata} from "./RegistryCommunityV0_0.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -11,6 +11,10 @@ import {console} from "forge-std/console.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
+
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
 
 interface IPointStrategy {
     function deactivatePoints(address _member) external;
@@ -94,7 +98,7 @@ library StrategyStruct {
     }
 }
 
-contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
+contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IPointStrategy, ERC165 {
     using Math for uint256;
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
@@ -180,7 +184,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     StrategyStruct.PointSystemConfig public pointConfig;
 
     // Contract reference
-    RegistryCommunity public registryCommunity;
+    RegistryCommunityV0_0 public registryCommunity;
     ISybilScorer public sybilScorer;
 
     // Mappings to handle relationships and staking details
@@ -199,9 +203,14 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
     /*|--------------------------------------------|*/
-    constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
+    // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
-    function initialize(uint256 _poolId, bytes memory _data) external {
+    function init(address _allo) external virtual initializer {
+        super.init(_allo, "CVStrategy");
+        __Ownable_init();
+    }
+
+    function initialize(uint256 _poolId, bytes memory _data) external virtual onlyAllo {
         __BaseStrategy_init(_poolId);
         StrategyStruct.InitializeParams memory ip = abi.decode(_data, (StrategyStruct.InitializeParams));
 
@@ -209,7 +218,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
             revert RegistryCannotBeZero();
         }
 
-        registryCommunity = RegistryCommunity(ip.registryCommunity);
+        registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
         decay = ip.decay;
         maxRatio = ip.maxRatio;
         weight = ip.weight;
@@ -354,6 +363,7 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
     }
 
     function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
+        //requireMemberActivatedInStrategies
         onlyRegistryCommunity();
         if (!_canExecuteAction(_member)) {
             revert UserCannotExecuteAction();
@@ -466,6 +476,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         if (!_canExecuteAction(_sender)) {
             revert UserCannotExecuteAction();
         }
+        // surpressStateMutabilityWarning++;
+
         bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
         if (!isMemberActivatedPoints) {
             revert UserIsInactive();
@@ -980,6 +992,11 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         emit WeightUpdated(_weight);
     }
 
+    function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
+        registryCommunity = RegistryCommunityV0_0(_registryCommunity);
+        emit RegistryUpdated(_registryCommunity);
+    }
+
     function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {
         emit MinThresholdPointsUpdated(_minThresholdPoints, minThresholdPoints_);
         _minThresholdPoints = minThresholdPoints_;
@@ -989,4 +1006,8 @@ contract CVStrategy is BaseStrategy, IPointStrategy, ERC165 {
         _revertZeroAddress(_sybilScorer);
         sybilScorer = ISybilScorer(_sybilScorer);
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    uint256[50] private __gap;
 }

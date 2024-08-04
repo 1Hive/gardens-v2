@@ -1,50 +1,105 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-// import {Metadata} from "allo-v2-contracts/core/interfaces/IAllo.sol";
-// import {Allo} from "allo-v2-contracts/core/Allo.sol";
-import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
-import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
-import {RegistryFactory} from "./RegistryFactory.sol";
-import {ISafe} from "./interfaces/ISafe.sol";
-// import {Safe} from "safe-contracts/contracts/Safe.sol";
 import "forge-std/console.sol";
+
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
-import {IPointStrategy, CVStrategy, StrategyStruct} from "./CVStrategy.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {AccessControlUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 
+import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
-// import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
+import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
+import {FAllo} from "./interfaces/FAllo.sol";
+import {ISafe} from "./interfaces/ISafe.sol";
+import {RegistryFactory} from "./RegistryFactory.sol";
+import {IPointStrategy, StrategyStruct, CVStrategyV0_0} from "./CVStrategyV0_0.sol";
 
-interface FAllo {
-    function createPoolWithCustomStrategy(
-        bytes32 _profileId,
-        address _strategy,
-        bytes memory _initStrategyData,
-        address _token,
-        uint256 _amount,
-        Metadata memory _metadata,
-        address[] memory _managers
-    ) external payable returns (uint256 poolId);
+import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
-    function getRegistry() external view returns (address);
-    function getPool(uint256 _poolId) external view returns (IAllo.Pool memory);
-}
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract RegistryCommunity is ReentrancyGuard, AccessControl {
+contract RegistryCommunityV0_0 is
+    OwnableUpgradeable,
+    UUPSUpgradeable,
+    ReentrancyGuardUpgradeable,
+    AccessControlUpgradeable
+{
     using ERC165Checker for address;
     using SafeERC20 for IERC20;
     using Clone for address;
 
+    /// @notice The native address to represent native token eg: ETH in mainnet
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    /// @notice The precision scale used in the contract to avoid loss of precision
+    uint256 public constant PRECISION_SCALE = 10 ** 4;
+    /// @notice The maximum fee that can be charged to the community
+    uint256 public constant MAX_FEE = 10 * PRECISION_SCALE;
+
+    /// @notice Enable or disable the kick feature
+    bool public isKickEnabled;
+
+    /// @notice The amount of tokens required to register a member
+    uint256 public registerStakeAmount;
+    /// @notice The fee charged to the community for each registration
+    uint256 public communityFee;
+    /// @notice The profileId of the community in the Allo Registry
+    bytes32 public profileId;
+
+    /// @notice The address that receives the community fee
+    address public feeReceiver;
+    /// @notice The address of the registry factory
+    address public registryFactory;
+    /// @notice The address of the strategy template
+    address public strategyTemplate;
+    /// @notice The nonce used to create new strategy clones
+    uint256 public cloneNonce;
+    /// @notice The address of the pending council safe owner
+    address payable public pendingCouncilSafe;
+
+    /// @notice The Registry Allo contract
+    IRegistry public registry;
+    /// @notice The token used to stake in the community
+    IERC20 public gardenToken;
+    /// @notice The council safe contract address
+    ISafe public councilSafe;
+    /// @notice The Allo contract address
+    FAllo public allo;
+
+    /// @notice The community name
+    string public communityName;
+    /// @notice The covenant IPFS hash of community
+    string public covenantIpfsHash;
+
+    // mapping(address => bool) public tribunalMembers;
+
+    /// @notice List of enabled/disabled strategies
+    mapping(address strategy => bool isEnabled) public enabledStrategies;
+    /// @notice Power points for each member in each strategy
+    mapping(address strategy => mapping(address member => uint256 power)) public memberPowerInStrategy;
+    /// @notice Member information as the staked amount and if is registered in the community
+    mapping(address member => Member) public addressToMemberInfo;
+    /// @notice List of strategies for each member are activated
+    mapping(address member => address[] strategiesAddresses) public strategiesByMember;
+    /// @notice Mapping to check if a member is activated in a strategy
+    mapping(address member => mapping(address strategy => bool isActivated)) public memberActivatedInStrategies;
+
+    /// @notice List of initial members to be added as pool managers in the Allo Pool
+    address[] initialMembers;
+
     /*|--------------------------------------------|*/
     /*|                 ROLES                      |*/
     /*|--------------------------------------------|*/
-    bytes32 public constant COUNCIL_MEMBER_CHANGE = keccak256("COUNCIL_MEMBER_CHANGE");
+    /// @notice Role to council safe members
+    bytes32 public constant COUNCIL_MEMBER = keccak256("COUNCIL_MEMBER");
+
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
     /*|--------------------------------------------|*/
@@ -70,7 +125,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     /*|--------------------------------------------|*/
 
     function onlyCouncilSafe() private view {
-        if (!hasRole(COUNCIL_MEMBER_CHANGE, msg.sender)) {
+        if (!hasRole(COUNCIL_MEMBER, msg.sender)) {
             revert UserNotInCouncil();
         }
     }
@@ -141,11 +196,25 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         address[] strategies;
     }
 
+    /// @notice Initialize the contract with the required parameters
+    /// @param _allo The Allo contract address
+    /// @param _gardenToken The token used to stake in the community
+    /// @param _registerStakeAmount The amount of tokens required to register a member
+    /// @param _communityFee The fee charged to the community for each registration
+    /// @param _nonce The nonce used to create new profiles in the Allo Registry
+    /// @param _registryFactory The address of the registry factory
+    /// @param _feeReceiver The address that receives the community fee
+    /// @param _metadata The covenant IPFS hash of community
+    /// @param _councilSafe The council safe contract address
+    /// @param _communityName The community name
+    /// @param _isKickEnabled Enable or disable the kick feature
+    /// @param covenantIpfsHash The covenant IPFS hash of community
+    /// @param _strategyTemplate The address of the strategy template
     struct InitializeParams {
         address _allo;
         IERC20 _gardenToken;
         uint256 _registerStakeAmount;
-        uint256 _communityFee; //@todo if remove the protocol fee, also remove it here
+        uint256 _communityFee;
         uint256 _nonce;
         address _registryFactory;
         address _feeReceiver;
@@ -157,52 +226,13 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         address _strategyTemplate;
     }
 
-    //DONE: grouping and order of variables
-    // Smaller uints and bools packed together
-    bool public isKickEnabled; // 1 byte, consider aligning with other small data types or bools if available
+    function initialize(RegistryCommunityV0_0.InitializeParams memory params) public initializer {
+        __Ownable_init();
+        __ReentrancyGuard_init();
+        __AccessControl_init();
 
-    // 256-bit (32 bytes) uints and bytes packed together
-    uint256 public registerStakeAmount;
-    uint256 public communityFee;
-    bytes32 public profileId;
+        _setRoleAdmin(COUNCIL_MEMBER, DEFAULT_ADMIN_ROLE);
 
-    // Address types packed (20 bytes each)
-    address public feeReceiver;
-    address public registryFactory;
-    address public strategyTemplate;
-    uint256 public cloneNonce;
-    address payable public pendingCouncilSafe;
-
-    // Contract interfaces (addresses internally, hence 20 bytes each)
-    IRegistry public registry;
-    IERC20 public gardenToken;
-    ISafe public councilSafe;
-    FAllo public allo;
-
-    // Dynamic string types (variable size, stored last)
-    string public communityName;
-    string public covenantIpfsHash;
-
-    // mapping(address => bool) public tribunalMembers;
-
-    mapping(address strategy => bool isEnabled) public enabledStrategies;
-    mapping(address strategy => mapping(address member => uint256 power)) public memberPowerInStrategy;
-
-    mapping(address member => Member) public addressToMemberInfo;
-    mapping(address member => address[] strategiesAddresses) public strategiesByMember;
-    mapping(address member => mapping(address strategy => bool isActivated)) public memberActivatedInStrategies;
-
-    address[] initialMembers;
-
-    uint256 public constant PRECISION_SCALE = 10 ** 4;
-    uint256 public constant MAX_FEE = 10 * PRECISION_SCALE;
-
-    constructor() {
-        // _grantRole(DEFAULT_ADMIN_ROLE, address(this));
-        _setRoleAdmin(COUNCIL_MEMBER_CHANGE, DEFAULT_ADMIN_ROLE);
-    }
-
-    function initialize(RegistryCommunity.InitializeParams memory params) public {
         _revertZeroAddress(address(params._gardenToken));
         _revertZeroAddress(params._councilSafe);
         _revertZeroAddress(params._allo);
@@ -227,7 +257,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         councilSafe = ISafe(params._councilSafe);
         strategyTemplate = params._strategyTemplate;
 
-        _grantRole(COUNCIL_MEMBER_CHANGE, params._councilSafe);
+        _grantRole(COUNCIL_MEMBER, params._councilSafe);
 
         registry = IRegistry(allo.getRegistry());
 
@@ -254,8 +284,15 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         public
         returns (uint256 poolId, address strategy)
     {
-        address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
-        return createPool(strategyClone, _token, _params, _metadata);
+        // address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
+        // address strategyClone = address(new CVStrategyV0_0());
+        address strategyProxy = address(
+            new ERC1967Proxy(
+                address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+            )
+        );
+
+        return createPool(strategyProxy, _token, _params, _metadata);
     }
 
     function createPool(
@@ -540,7 +577,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
     //function updateMinimumStake()
 
     function isCouncilMember(address _member) public view returns (bool) {
-        return hasRole(COUNCIL_MEMBER_CHANGE, _member);
+        return hasRole(COUNCIL_MEMBER, _member);
     }
 
     function unregisterMember() public nonReentrant {
@@ -551,7 +588,7 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         delete addressToMemberInfo[_member];
         delete strategiesByMember[_member];
 
-        gardenToken.safeTransfer(_member, member.stakedAmount);
+        gardenToken.transfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
 
@@ -577,7 +614,11 @@ contract RegistryCommunity is ReentrancyGuard, AccessControl {
         deactivateAllStrategies(_member);
         delete addressToMemberInfo[_member];
 
-        gardenToken.safeTransfer(_transferAddress, member.stakedAmount);
+        gardenToken.transfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    uint256[50] private __gap;
 }

@@ -5,13 +5,13 @@ import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 // import {StrategyStruct} from "../src/libraries/StrategyStruct.sol";
-import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
+import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategyV0_0.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
-contract CVStrategyHelpers is Native, Accounts {
+contract CVStrategyHelpersV0_0 is Native, Accounts {
     Metadata public metadata = Metadata({protocol: 1, pointer: "QmW4zFLFJRN7J67EzNmdC2r2M9u2iJDha2fj5Gee6hJzSY"}); //@todo CID from IPFS
 
     uint256 public constant DECIMALS = 10 ** 18;
@@ -98,7 +98,7 @@ contract CVStrategyHelpers is Native, Accounts {
             _pool_managers
         );
 
-        assert(CVStrategy(payable(strategy)).proposalType() == proposalType);
+        assert(CVStrategyV0_0(payable(strategy)).proposalType() == proposalType);
     }
 
     function createPool(
