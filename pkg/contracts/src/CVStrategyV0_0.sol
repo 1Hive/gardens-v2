@@ -356,7 +356,7 @@ contract CVStrategyV0_0 is
         p.convictionLast = 0;
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
-
+        console.log("Depositing to collateral vault", address(this));
         CollateralVault(collateralVault).depositCollateral{value: msg.value}(
             proposalId,
             p.submitter

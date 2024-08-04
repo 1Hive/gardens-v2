@@ -159,7 +159,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
             IArbitrator(address(safeArbitrator)),
             payable(address(_councilSafe())),
-            2 ether,
+            3 ether,
             2 ether,
             1,
             300,
@@ -198,7 +198,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             IArbitrator(address(safeArbitrator)),
             payable(address(_councilSafe())),
             3 ether,
-            3 ether,
+            2 ether,
             1,
             600,
             collateralVaultTemplate
@@ -321,15 +321,15 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         // StrategyStruct.CreateProposal memory proposal =
         //     StrategyStruct.CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
         // bytes memory data = abi.encode(proposal);
-        // allo.registerRecipient(poolId, data);
+        // allo.registerRecipient{value:2 ether}(poolId, data);
 
         // proposal = StrategyStruct.CreateProposal(poolId, membersStaked[1], 25 ether, address(token), metadata);
         // data = abi.encode(proposal);
-        // allo.registerRecipient(poolId, data);
+        // allo.registerRecipient{value:2 ether}(poolId, data);
 
         // proposal = StrategyStruct.CreateProposal(poolId, membersStaked[2], 10 ether, address(token), metadata);
         // data = abi.encode(proposal);
-        // allo.registerRecipient(poolId, data);
+        // allo.registerRecipient{value:2 ether}(poolId, data);
 
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
@@ -342,7 +342,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
                 metadata
             );
         bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdFixed, data2);
+        allo.registerRecipient{value: 3 ether}(poolIdFixed, data2);
         vm.stopBroadcast();
 
         console2.log("Scorer Address: %s", address(sybilScorer));
@@ -503,7 +503,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
                 metadata
             );
         bytes memory data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        allo.registerRecipient{value: 3 ether}(poolId, data);
 
         proposal = StrategyStruct.CreateProposal(
             poolId,
@@ -513,7 +513,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             metadata
         );
         data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        allo.registerRecipient{value: 3 ether}(poolId, data);
 
         proposal = StrategyStruct.CreateProposal(
             poolId,
@@ -523,7 +523,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             metadata
         );
         data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        allo.registerRecipient{value: 3 ether}(poolId, data);
 
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
@@ -536,7 +536,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
                 metadata
             );
         bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdFixed, data2);
+        allo.registerRecipient{value: 3 ether}(poolIdFixed, data2);
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);
