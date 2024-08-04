@@ -300,11 +300,11 @@ contract CVStrategy is
 
         if (
             address(arbitrableConfig.arbitrator) != address(0) &&
-            msg.value < arbitrableConfig.collateralAmount
+            msg.value < arbitrableConfig.submitterCollateralAmount
         ) {
             revert InsufficientCollateral(
                 msg.value,
-                arbitrableConfig.collateralAmount
+                arbitrableConfig.submitterCollateralAmount
             );
         }
         uint256 proposalId = ++proposalCounter;
@@ -572,7 +572,7 @@ contract CVStrategy is
             CollateralVault(collateralVault).withdrawCollateral(
                 proposalId,
                 proposal.submitter,
-                arbitrableConfig.collateralAmount
+                arbitrableConfig.submitterCollateralAmount
             );
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             emit Distributed(
@@ -1101,17 +1101,17 @@ contract CVStrategy is
         if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
             revert ProposalNotActive(proposalId);
         }
-        if (msg.value <= arbitrableConfig.collateralAmount) {
+        if (msg.value <= arbitrableConfig.challengerCollateralAmount) {
             revert InsufficientCollateral(
                 msg.value,
-                arbitrableConfig.collateralAmount
+                arbitrableConfig.challengerCollateralAmount
             );
         }
 
-        uint256 arbitrationFee = msg.value - arbitrableConfig.collateralAmount;
+        uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
 
         CollateralVault(collateralVault).depositCollateral{
-            value: arbitrableConfig.collateralAmount
+            value: arbitrableConfig.challengerCollateralAmount
         }(proposalId, msg.sender);
 
         uint256 disputeId = arbitrableConfig.arbitrator.createDispute{
@@ -1166,12 +1166,12 @@ contract CVStrategy is
             CollateralVault(collateralVault).withdrawCollateral(
                 proposalId,
                 proposal.challenger,
-                arbitrableConfig.collateralAmount
+                arbitrableConfig.challengerCollateralAmount
             );
             CollateralVault(collateralVault).withdrawCollateral(
                 proposalId,
                 proposal.submitter,
-                arbitrableConfig.collateralAmount
+                arbitrableConfig.submitterCollateralAmount
             );
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
@@ -1179,26 +1179,26 @@ contract CVStrategy is
                 proposalId,
                 proposal.challenger,
                 address(registryCommunity.councilSafe()),
-                arbitrableConfig.collateralAmount
+                arbitrableConfig.challengerCollateralAmount
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
             CollateralVault(collateralVault).withdrawCollateral(
                 proposalId,
                 proposal.challenger,
-                arbitrableConfig.collateralAmount
+                arbitrableConfig.challengerCollateralAmount
             );
             CollateralVault(collateralVault).withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 address(registryCommunity.councilSafe()),
-                arbitrableConfig.collateralAmount / 2
+                arbitrableConfig.submitterCollateralAmount / 2
             );
             CollateralVault(collateralVault).withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 proposal.challenger,
-                arbitrableConfig.collateralAmount / 2
+                arbitrableConfig.submitterCollateralAmount / 2
             );
         }
 

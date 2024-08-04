@@ -160,6 +160,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             IArbitrator(address(safeArbitrator)),
             payable(address(_councilSafe())),
             2 ether,
+            2 ether,
             1,
             300,
             collateralVaultTemplate
@@ -196,6 +197,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
             IArbitrator(address(safeArbitrator)),
             payable(address(_councilSafe())),
+            3 ether,
             3 ether,
             1,
             600,

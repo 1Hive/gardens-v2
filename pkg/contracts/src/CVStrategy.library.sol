@@ -98,7 +98,8 @@ library StrategyStruct {
     struct ArbitrableConfig {
         IArbitrator arbitrator;
         address tribunalSafe;
-        uint256 collateralAmount;
+        uint256 submitterCollateralAmount;
+        uint256 challengerCollateralAmount;
         uint256 defaultRuling;
         uint256 defaultRulingTimeout;
         address collateralVaultTemplate;
