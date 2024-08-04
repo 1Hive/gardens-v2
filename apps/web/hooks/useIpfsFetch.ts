@@ -12,17 +12,22 @@ import { fetchIpfs } from "@/utils/ipfsUtils";
  * error: Error | null;
  * }
  */
-export const useIpfsFetch = <TResult>(
-  hash: Maybe<string>,
-  modifier?: (rawResult: TResult) => TResult | Promise<TResult>,
-) => {
+export const useIpfsFetch = <TResult>({
+  hash,
+  modifier,
+  enabled,
+}: {
+  hash: Maybe<string>;
+  modifier?: (rawResult: TResult) => TResult | Promise<TResult>;
+  enabled?: boolean;
+}): any => {
   const [data, setData] = useState<TResult | null>(null);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     (async () => {
-      if (!hash) {
+      if (!hash || !enabled) {
         return;
       }
       setFetching(true);
@@ -38,7 +43,7 @@ export const useIpfsFetch = <TResult>(
         setFetching(false);
       }
     })();
-  }, [hash]);
+  }, [hash, enabled]);
 
   return { data, fetching, error };
 };
@@ -48,13 +53,23 @@ export type MetadataV1 = {
   description: string;
 };
 
-export const useProposalMetadataIpfsFetch = (hash: Maybe<string>) => {
-  const ipfs = useIpfsFetch<MetadataV1>(hash, (res) => {
-    return {
-      ...res,
-      title: res.title || "No title found",
-      description: res.description || "No description found",
-    };
+export const useProposalMetadataIpfsFetch = ({
+  hash,
+  enabled,
+}: {
+  hash: Maybe<string>;
+  enabled?: boolean;
+}) => {
+  const ipfs = useIpfsFetch<MetadataV1>({
+    hash,
+    enabled,
+    modifier: (res) => {
+      return {
+        ...res,
+        title: res.title || "No title found",
+        description: res.description || "No description found",
+      };
+    },
   });
   return { ...ipfs, metadata: ipfs.data };
 };

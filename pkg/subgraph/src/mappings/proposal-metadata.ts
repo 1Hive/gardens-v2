@@ -1,6 +1,10 @@
 // import { Bytes, dataSource, log, json, BigInt } from "@graphprotocol/graph-ts";
 // import { ProposalMeta as ProposalMetadata } from "../../generated/schema";
 // import { CTX_METADATA_ID, CTX_PROPOSAL_ID } from "./cv-strategy";
+
+import { Bytes, dataSource, json, log } from "@graphprotocol/graph-ts";
+import { ProposalDisputeMetadata } from "../../generated/schema";
+
 // https://kdghxz4drlsffkptavafm6ws2qkdwpdqauxstqioi3xdli7yjo4q.arweave.net/UMx754OK5FKp8wVAVnrS1BQ7PHAFLynBDkbuNaP4S7k
 // export function handleProposalMetadata(content: Bytes): void {
 //   let hash = dataSource.stringParam();
@@ -26,3 +30,16 @@
 //     }
 //   }
 // }
+
+export function handleProposalDisputeMetadata(content: Bytes): void {
+  const cid = dataSource.stringParam();
+  log.debug("Received dispute metadata with CID {}", [cid.toString()]);
+
+  let metadata = new ProposalDisputeMetadata(cid);
+  const value = json.fromBytes(content).toObject();
+
+  metadata.id = cid;
+  metadata.reason = value.mustGet("reason").toString();
+
+  metadata.save();
+}

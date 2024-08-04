@@ -6,6 +6,10 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
+  getProposalDisputeDocument,
+  getProposalDisputeQuery,
+  getStrategyArbitrationConfigDocument,
+  getStrategyArbitrationConfigQuery,
   Maybe,
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
@@ -18,6 +22,7 @@ import { WalletBalance } from "./WalletBalance";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { MetadataV1, useIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { cvStrategyABI } from "@/src/generated";
 import { DisputeOutcome, DisputeStatus, ProposalStatus } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
@@ -27,6 +32,7 @@ type Props = {
   proposalData: Maybe<
     Pick<
       CVProposal,
+      | "id"
       | "proposalNumber"
       | "beneficiary"
       | "blockLast"
@@ -65,28 +71,59 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const [copied, setCopied] = useState(false);
 
   // TODO: Remove fake
-  const disputeTimestamp = useMemo(() => {
-    // timestamp of now -  2days
-    return (Date.now() - 1 * 24 * 3600_000) / 1000;
-  }, []);
-  let dispute = {
-    id: 1,
-    reasonHash: "QmSoxngvbp1k1Dy5SV5YchrQFDaNwf94dRHuHXpxFQMNcc",
-    status: 0, // 0: Waiting, 1: Solved
-    outcome: 1, // 0: Abstained, 1: Approved, 2: Rejected
-    maxDelaySec: 259200, // 3 days -> 259200
-    challenger: "0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6",
-    abstainOutcome: 2, // 1: Approved, 2: Rejected
-    timestamp: disputeTimestamp,
-    ruledAt: disputeTimestamp + 259200,
-  };
+  // const disputeTimestamp = useMemo(() => {
+  //   // timestamp of now -  2days
+  //   return (Date.now() - 1 * 24 * 3600_000) / 1000;
+  // }, []);
+  // let dispute = {
+  //   id: 1,
+  //   reasonHash: "QmSoxngvbp1k1Dy5SV5YchrQFDaNwf94dRHuHXpxFQMNcc",
+  //   status: 0, // 0: Waiting, 1: Solved
+  //   outcome: 1, // 0: Abstained, 1: Approved, 2: Rejected
+  //   maxDelaySec: 259200, // 3 days -> 259200
+  //   challenger: "0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6",
+  //   abstainOutcome: 2, // 1: Approved, 2: Rejected
+  //   timestamp: disputeTimestamp,
+  //   ruledAt: disputeTimestamp + 259200,
+  // };
   proposalData.proposalStatus = 2;
   // End of TODO
 
+  const { data: disputes } = useSubgraphQuery<getProposalDisputeQuery>({
+    query: getProposalDisputeDocument,
+    variables: {
+      proposalId: proposalData!.id,
+    },
+    changeScope: {
+      topic: "proposal",
+      id: proposalData?.proposalNumber,
+      containerId: proposalData?.strategy.id,
+      type: "update",
+    },
+    enabled: !!proposalData,
+  });
+
+  const { data: arbitrationConfig } =
+    useSubgraphQuery<getStrategyArbitrationConfigQuery>({
+      query: getStrategyArbitrationConfigDocument,
+      variables: {
+        strategyId: proposalData!.strategy.id,
+      },
+      changeScope: {
+        topic: "proposal",
+        id: proposalData?.proposalNumber,
+        containerId: proposalData?.strategy.id,
+        type: "update",
+      },
+      enabled: !!proposalData,
+    });
+
+  const lastDispute = disputes?.proposalDisputes[0];
+
   const { data: ensName } = useEnsName({
-    address: dispute.challenger as Address,
+    address: lastDispute!.challenger as Address,
     chainId: mainnet.id,
-    enabled: !!dispute.challenger,
+    enabled: !!lastDispute!.challenger,
   });
 
   const { data: avatarUrl } = useEnsAvatar({
@@ -95,30 +132,36 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     enabled: !!ensName,
   });
 
-  const { data: disputeMetadata } = useIpfsFetch<DisputeMetadata>(
-    dispute.reasonHash,
+  const { data: disputeMetadata } = useIpfsFetch<DisputeMetadata>({
+    hash: lastDispute?.context,
+    enabled: !lastDispute?.metadata,
+  });
+
+  const { data: dispute } = useSubgraphQuery<getStrategyArbitrationConfigQuery>(
+    {
+      query: getStrategyArbitrationConfigDocument,
+      variables: {
+        proposalId: proposalData?.proposalNumber,
+        poolId: proposalData?.strategy.id,
+      },
+      changeScope: {
+        topic: "proposal",
+        id: proposalData?.proposalNumber,
+        containerId: proposalData?.strategy.id,
+        type: "update",
+      },
+      enabled: !!proposalData,
+    },
   );
-  //  const { data: dispute } = useSubgraphQuery<getDisputeQuery>({
-  //    query: getDisputeDocument,
-  //    variables: {
-  //      proposalId: proposalData?.proposalNumber,
-  //      poolId: proposalData?.strategy.id,
-  //    },
-  //    changeScope: {
-  //      topic: "proposal",
-  //      id: proposalData?.proposalNumber,
-  //      containerId: proposalData?.strategy.id,
-  //      type: "update",
-  //    },
-  //    enabled: !!proposalData,
-  //  });
 
   const collateral = 0.002;
   const disputeFee = 0.001;
 
   const isDisputed =
     proposalData && ProposalStatus[proposalData.proposalStatus] === "disputed";
-  const isTimeout = dispute.timestamp + dispute.maxDelaySec < Date.now() / 1000;
+  const isTimeout =
+    lastDispute &&
+    lastDispute.timestamp + arbitrationConfig?.cvstrategy?.maxDelaySec < Date.now() / 1000;
 
   const { write } = useContractWriteWithConfirmations({
     contractName: "CVStrategy",
