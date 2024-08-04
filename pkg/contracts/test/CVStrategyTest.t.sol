@@ -22,7 +22,8 @@ import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 
-import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
+import {CVStrategy} from "../src/CVStrategy.sol";
+import {StrategyStruct} from "../src/CVStrategy.library.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
 import {ISybilScorer, PassportData} from "../src/ISybilScorer.sol";
