@@ -96,9 +96,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         safeArbitrator = new SafeArbitrator(2 ether);
         console2.log("Safe Arbitrator Addr: %s", address(safeArbitrator));
 
-        safeArbitrator = new SafeArbitrator(2 ether);
-        console2.log("Safe Arbitrator Addr: %s", address(safeArbitrator));
-
         RegistryCommunityV0_0.InitializeParams memory params;
 
         proxy = new ERC1967Proxy(
@@ -449,6 +446,19 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         console.log("#####0");
         // FAST 1 MIN GROWTH
 
+        address collateralVaultTemplate = address(new CollateralVault());
+
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct
+            .ArbitrableConfig(
+                IArbitrator(address(safeArbitrator)),
+                payable(address(_councilSafe())),
+                3 ether,
+                2 ether,
+                1,
+                600,
+                collateralVaultTemplate
+            );
+
         uint256 poolId = createPool(
             Allo(address(allo)),
             address(strategy1),
@@ -457,7 +467,8 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             address(token),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Unlimited,
-            _getPointConfig()
+            _getPointConfig(),
+            arbitrableConfig
         );
 
         console.log("#####1");
@@ -470,7 +481,8 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             address(token),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Fixed,
-            _getPointConfig()
+            _getPointConfig(),
+            arbitrableConfig
         );
 
         console.log("#####2");
@@ -521,7 +533,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             vm.stopBroadcast();
         }
         vm.startBroadcast(pool_admin());
-
 
         console.log("#####6");
 

@@ -26,7 +26,7 @@ import {GV2ERC20} from "../script/GV2ERC20.sol";
 // import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
-import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategyV0_0.sol";
+import {CVStrategyV0_0, StrategyStruct, CollateralVault, IArbitrator, SafeArbitrator} from "../src/CVStrategyV0_0.sol";
 
 import {ISybilScorer, PassportData} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
@@ -82,6 +82,7 @@ contract CVStrategyTestUpgradeable is
     CVStrategyV0_0 internal cvStrategyTemplate;
 
     ISybilScorer public passportScorer;
+    IArbitrator public safeArbitrator;
 
     address factoryOwner = makeAddr("registryFactoryDeployer");
     address protocolFeeReceiver = makeAddr("multisigReceiver");
@@ -108,6 +109,9 @@ contract CVStrategyTestUpgradeable is
 
         // registryCommunity = new RegistryCommunityV0_0();
         vm.startPrank(factoryOwner);
+
+        safeArbitrator = new SafeArbitrator(2 ether);
+
         // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(new RegistryFactoryV0_0()),
@@ -235,6 +239,17 @@ contract CVStrategyTestUpgradeable is
             proposalType,
             StrategyStruct.PointSystem.Unlimited,
             StrategyStruct.PointSystemConfig(200 * DECIMALS)
+        );
+
+        address collateralVaultTemplate = address(new CollateralVault());
+        params.arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            IArbitrator(address(safeArbitrator)),
+            payable(address(_councilSafe())),
+            3 ether,
+            2 ether,
+            1,
+            600,
+            collateralVaultTemplate
         );
 
         // CVStrategyV0_0 strategy = new CVStrategyV0_0(address(allo()));
@@ -2592,6 +2607,16 @@ contract CVStrategyTestUpgradeable is
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Unlimited,
             StrategyStruct.PointSystemConfig(200 * DECIMALS)
+        );
+        address collateralVaultTemplate = address(new CollateralVault());
+        params.arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            IArbitrator(address(safeArbitrator)),
+            payable(address(_councilSafe())),
+            3 ether,
+            2 ether,
+            1,
+            600,
+            collateralVaultTemplate
         );
         vm.expectRevert(
             abi.encodeWithSelector(CVStrategyV0_0.RegistryCannotBeZero.selector)

@@ -24,104 +24,104 @@ import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/con
 import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
 
 interface IPointStrategy {
-  function deactivatePoints(address _member) external;
+    function deactivatePoints(address _member) external;
 
-  function increasePower(
-      address _member,
-      uint256 _amountToStake
-  ) external returns (uint256);
+    function increasePower(
+        address _member,
+        uint256 _amountToStake
+    ) external returns (uint256);
 
-  function decreasePower(
-      address _member,
-      uint256 _amountToUntake
-  ) external returns (uint256);
+    function decreasePower(
+        address _member,
+        uint256 _amountToUntake
+    ) external returns (uint256);
 
-  function getPointSystem() external returns (StrategyStruct.PointSystem);
+    function getPointSystem() external returns (StrategyStruct.PointSystem);
 }
 
 library StrategyStruct {
-  enum ProposalType {
-      Signaling,
-      Funding,
-      Streaming
-  }
+    enum ProposalType {
+        Signaling,
+        Funding,
+        Streaming
+    }
 
-  enum PointSystem {
-      Fixed,
-      Capped,
-      Unlimited,
-      Quadratic
-  }
+    enum PointSystem {
+        Fixed,
+        Capped,
+        Unlimited,
+        Quadratic
+    }
 
-  struct CreateProposal {
-      // uint256 proposalId;
-      uint256 poolId;
-      address beneficiary;
-      // ProposalType proposalType;
-      uint256 amountRequested;
-      address requestedToken;
-      Metadata metadata;
-  }
+    struct CreateProposal {
+        // uint256 proposalId;
+        uint256 poolId;
+        address beneficiary;
+        // ProposalType proposalType;
+        uint256 amountRequested;
+        address requestedToken;
+        Metadata metadata;
+    }
 
-  enum ProposalStatus {
-      Inactive, // Inactive
-      Active, // A vote that has been reported to Agreements
-      Paused, // A vote that is being challenged by Agreements
-      Cancelled, // A vote that has been cancelled
-      Executed, // A vote that has been executed
-      Disputed, // A vote that has been disputed
-      Rejected // A vote that has been rejected
-  }
+    enum ProposalStatus {
+        Inactive, // Inactive
+        Active, // A vote that has been reported to Agreements
+        Paused, // A vote that is being challenged by Agreements
+        Cancelled, // A vote that has been cancelled
+        Executed, // A vote that has been executed
+        Disputed, // A vote that has been disputed
+        Rejected // A vote that has been rejected
+    }
 
-  struct Proposal {
-      uint256 proposalId;
-      uint256 requestedAmount;
-      uint256 stakedAmount;
-      uint256 convictionLast;
-      address beneficiary;
-      address submitter;
-      address requestedToken;
-      uint256 blockLast;
-      ProposalStatus proposalStatus;
-      mapping(address => uint256) voterStakedPoints; // voter staked points
-      Metadata metadata;
-      uint256 disputeId;
-      uint256 disputeTimestamp;
-      address challenger;
-  }
+    struct Proposal {
+        uint256 proposalId;
+        uint256 requestedAmount;
+        uint256 stakedAmount;
+        uint256 convictionLast;
+        address beneficiary;
+        address submitter;
+        address requestedToken;
+        uint256 blockLast;
+        ProposalStatus proposalStatus;
+        mapping(address => uint256) voterStakedPoints; // voter staked points
+        Metadata metadata;
+        uint256 disputeId;
+        uint256 disputeTimestamp;
+        address challenger;
+    }
 
-  struct ProposalSupport {
-      uint256 proposalId;
-      int256 deltaSupport; // use int256 to allow negative values
-  }
+    struct ProposalSupport {
+        uint256 proposalId;
+        int256 deltaSupport; // use int256 to allow negative values
+    }
 
-  struct PointSystemConfig {
-      //Capped point system
-      uint256 maxAmount;
-  }
+    struct PointSystemConfig {
+        //Capped point system
+        uint256 maxAmount;
+    }
 
-  struct ArbitrableConfig {
-      IArbitrator arbitrator;
-      address tribunalSafe;
-      uint256 submitterCollateralAmount;
-      uint256 challengerCollateralAmount;
-      uint256 defaultRuling;
-      uint256 defaultRulingTimeout;
-      address collateralVaultTemplate;
-  }
+    struct ArbitrableConfig {
+        IArbitrator arbitrator;
+        address tribunalSafe;
+        uint256 submitterCollateralAmount;
+        uint256 challengerCollateralAmount;
+        uint256 defaultRuling;
+        uint256 defaultRulingTimeout;
+        address collateralVaultTemplate;
+    }
 
-  struct InitializeParams {
-      address registryCommunity;
-      uint256 decay;
-      uint256 maxRatio;
-      uint256 weight;
-      uint256 minThresholdPoints;
-      ProposalType proposalType;
-      PointSystem pointSystem;
-      PointSystemConfig pointConfig;
-      ArbitrableConfig arbitrableConfig;
-      address sybilScorer;
-  }
+    struct InitializeParams {
+        address registryCommunity;
+        uint256 decay;
+        uint256 maxRatio;
+        uint256 weight;
+        uint256 minThresholdPoints;
+        ProposalType proposalType;
+        PointSystem pointSystem;
+        PointSystemConfig pointConfig;
+        ArbitrableConfig arbitrableConfig;
+        address sybilScorer;
+    }
 }
 
 contract CVStrategyV0_0 is
@@ -288,15 +288,19 @@ contract CVStrategyV0_0 is
         uint256 _poolId,
         bytes memory _data
     ) external virtual onlyAllo {
+        console.log("###~0", address(arbitrableConfig.arbitrator));
         __BaseStrategy_init(_poolId);
+        console.log("###~1");
         StrategyStruct.InitializeParams memory ip = abi.decode(
             _data,
             (StrategyStruct.InitializeParams)
         );
+        console.log("###~2");
 
         if (ip.registryCommunity == address(0)) {
             revert RegistryCannotBeZero();
         }
+        console.log("###~3");
 
         registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
         decay = ip.decay;
@@ -308,14 +312,20 @@ contract CVStrategyV0_0 is
         minThresholdPoints = ip.minThresholdPoints;
         sybilScorer = ISybilScorer(ip.sybilScorer);
         arbitrableConfig = ip.arbitrableConfig;
-
+        console.log("###~4");
         if (address(arbitrableConfig.arbitrator) != address(0)) {
-            collateralVault = CollateralVault(Clone.createClone(
-                arbitrableConfig.collateralVaultTemplate,
-                cloneNonce++
-            ));
+          console.log("###~5: ");
+            collateralVault = CollateralVault(
+                Clone.createClone(
+                    arbitrableConfig.collateralVaultTemplate,
+                    cloneNonce++
+                )
+            );
+
+      console.log("###~6", address(collateralVault));
             collateralVault.initialize();
-            if (arbitrableConfig.tribunalSafe != address(0)) {
+      console.log("###~7");
+      if (arbitrableConfig.tribunalSafe != address(0)) {
                 SafeArbitrator(address(arbitrableConfig.arbitrator))
                     .registerSafe(arbitrableConfig.tribunalSafe);
                 emit TribunaSafeRegistered(
@@ -325,7 +335,10 @@ contract CVStrategyV0_0 is
                 );
             }
         }
+        console.log("###~8");
         sybilScorer = ISybilScorer(ip.sybilScorer);
+
+      console.log("###~9");
 
         emit InitializedCV(_poolId, ip);
     }
@@ -421,7 +434,7 @@ contract CVStrategyV0_0 is
         console.log("#####__2__5", gasleft());
         // console.log("proposalType", uint256(proposalType));
         if (proposalType == StrategyStruct.ProposalType.Funding) {
-          console.log("#####__2__6", gasleft());
+            console.log("#####__2__6", gasleft());
             _revertZeroAddress(proposal.beneficiary);
             console.log("#####__2__7", gasleft());
             // getAllo().getPool(poolId).token;
@@ -471,7 +484,8 @@ contract CVStrategyV0_0 is
         p.convictionLast = 0;
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
-        console.log("#####__2__15", gasleft());
+        console.log("#####__2__15", msg.value);
+        console.log(address(collateralVault));
         collateralVault.depositCollateral{value: msg.value}(
             proposalId,
             p.submitter

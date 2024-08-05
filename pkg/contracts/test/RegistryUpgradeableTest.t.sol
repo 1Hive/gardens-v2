@@ -23,7 +23,7 @@ import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 import {RegistryFactoryV0_1} from "../src/RegistryFactoryV0_1.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
-import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategyV0_0.sol";
+import {CVStrategyV0_0, StrategyStruct, CollateralVault, IArbitrator, SafeArbitrator} from "../src/CVStrategyV0_0.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
@@ -50,6 +50,8 @@ contract RegistryUpgradeableTest is
     SafeSetup
 {
     CVStrategyV0_0 public strategy;
+    IArbitrator safeArbitrator;
+
     GV2ERC20 public token;
     uint256 public mintAmount = 1_000_000 * DECIMALS;
 
@@ -93,7 +95,9 @@ contract RegistryUpgradeableTest is
         token.approve(address(allo()), mintAmount);
 
         //        strategy = address(new CVMockStrategy(address(allo())));
-        
+
+        safeArbitrator = new SafeArbitrator(2 ether);
+
         ERC1967Proxy strategyProxy = new ERC1967Proxy(
           address(new CVStrategyV0_0()),
           abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()))
@@ -164,6 +168,19 @@ contract RegistryUpgradeableTest is
 
     function _nonKickableCommunity() internal view returns (RegistryCommunityV0_0) {
         return nonKickableCommunity;
+    }
+
+    function _generateArbitrationConfig() internal returns (StrategyStruct.ArbitrableConfig memory) {
+      address collateralVaultTemplate = address(new CollateralVault());
+      return StrategyStruct.ArbitrableConfig(
+          IArbitrator(address(safeArbitrator)),
+          payable(address(_councilSafe())),
+          3 ether,
+          2 ether,
+          1,
+          600,
+          collateralVaultTemplate
+      );
     }
 
     function test_stakeAndRegisterMember() public {
@@ -264,6 +281,7 @@ contract RegistryUpgradeableTest is
 
     function test_activate_totalActivatedPoints_fixed_system() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -271,7 +289,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Fixed
+            StrategyStruct.PointSystem.Fixed,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -302,6 +321,7 @@ contract RegistryUpgradeableTest is
 
     function test_activate_deactivate_totalActivatedPoints_fixed_system() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -309,7 +329,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Fixed
+            StrategyStruct.PointSystem.Fixed,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -344,6 +365,9 @@ contract RegistryUpgradeableTest is
     function testFuzz_increasePower(uint256 tokenAmount) public {
         vm.assume(tokenAmount > 2 && tokenAmount < 100);
         vm.startPrank(pool_admin());
+        
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
+        
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -351,7 +375,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -385,6 +410,8 @@ contract RegistryUpgradeableTest is
         vm.assume(tokenAmount >= MIN_AMOUNT_TO_MAX);
         // vm.assume(tokenAmount > 0);
 
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
+
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
             allo(),
@@ -393,7 +420,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Capped
+            StrategyStruct.PointSystem.Capped,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -431,6 +459,7 @@ contract RegistryUpgradeableTest is
         vm.assume(firstIncrease < 10000 && firstIncrease > 0);
         vm.assume(secondIncrease < 10000 && secondIncrease > 0);
 
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         vm.startPrank(pool_admin());
         {
             uint256 poolId = createPool(
@@ -440,7 +469,8 @@ contract RegistryUpgradeableTest is
                 registry(),
                 NATIVE,
                 StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Quadratic
+                StrategyStruct.PointSystem.Quadratic,
+                arbitrableConfig
             );
             console.log("PoolId: %s", poolId);
         }
@@ -486,6 +516,7 @@ contract RegistryUpgradeableTest is
 
     function test_increasePowerQuadraticFixedValues() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -493,7 +524,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Quadratic
+            StrategyStruct.PointSystem.Quadratic,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -577,6 +609,7 @@ contract RegistryUpgradeableTest is
 
     function test_activateAfterIncreasePowerQuadratic() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -584,7 +617,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Quadratic
+            StrategyStruct.PointSystem.Quadratic,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -624,6 +658,7 @@ contract RegistryUpgradeableTest is
         //To avoid InsufficientBalance
         vm.assume(tokenAmount < 100000);
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -631,7 +666,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -658,6 +694,7 @@ contract RegistryUpgradeableTest is
 
     function test_DecreasePower_after_increasePower_diff_orders() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -665,7 +702,8 @@ contract RegistryUpgradeableTest is
             registry(),
             address(token),
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -710,6 +748,7 @@ contract RegistryUpgradeableTest is
 
     function test_DecreasePower_after_increasePower() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -717,7 +756,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -755,6 +795,7 @@ contract RegistryUpgradeableTest is
 
     function test_decreasePowerQuadratic_FixedValues() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -762,7 +803,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Quadratic
+            StrategyStruct.PointSystem.Quadratic,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -812,6 +854,7 @@ contract RegistryUpgradeableTest is
         //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -819,7 +862,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -866,6 +910,7 @@ contract RegistryUpgradeableTest is
         //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -873,7 +918,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         vm.stopPrank();
         //Commented to test revert if strategy not enabled
@@ -894,6 +940,7 @@ contract RegistryUpgradeableTest is
         //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -901,7 +948,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -964,6 +1012,7 @@ contract RegistryUpgradeableTest is
 
     function test_revertDecreasePower() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -971,7 +1020,8 @@ contract RegistryUpgradeableTest is
             registry(),
             NATIVE,
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -1128,6 +1178,7 @@ contract RegistryUpgradeableTest is
 
     function test_removeStrategyByPoolId() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -1135,7 +1186,8 @@ contract RegistryUpgradeableTest is
             registry(),
             address(token),
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -1156,6 +1208,7 @@ contract RegistryUpgradeableTest is
 
     function test_addStrategyByPoolId() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -1163,7 +1216,8 @@ contract RegistryUpgradeableTest is
             registry(),
             address(token),
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -1179,6 +1233,7 @@ contract RegistryUpgradeableTest is
 
     function test_Revert_removeStrategyByPoolId() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -1186,7 +1241,8 @@ contract RegistryUpgradeableTest is
             registry(),
             address(token),
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
@@ -1212,6 +1268,7 @@ contract RegistryUpgradeableTest is
 
     function test_Revert_addStrategyByPoolId() public {
         vm.startPrank(pool_admin());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
@@ -1219,7 +1276,8 @@ contract RegistryUpgradeableTest is
             registry(),
             address(token),
             StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited
+            StrategyStruct.PointSystem.Unlimited,
+            arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
         vm.stopPrank();

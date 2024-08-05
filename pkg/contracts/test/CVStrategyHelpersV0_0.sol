@@ -77,7 +77,8 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
         address token,
         StrategyStruct.ProposalType proposalType,
         StrategyStruct.PointSystem pointSystem,
-        StrategyStruct.PointSystemConfig memory pointConfig
+        StrategyStruct.PointSystemConfig memory pointConfig,
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         StrategyStruct.InitializeParams memory params = getParams(
@@ -86,6 +87,8 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
             pointSystem,
             pointConfig
         );
+
+        params.arbitrableConfig = arbitrableConfig;
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
@@ -122,7 +125,8 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
         IRegistry registry,
         address token,
         StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem
+        StrategyStruct.PointSystem pointSystem,
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         return
             createPool(
@@ -133,7 +137,8 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
                 token,
                 proposalType,
                 pointSystem,
-                StrategyStruct.PointSystemConfig(0)
+                StrategyStruct.PointSystemConfig(0),
+                arbitrableConfig
             );
     }
 
