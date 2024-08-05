@@ -34,15 +34,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 // @dev Run forge test --mc RegistryTest -vvvvv
 
-contract RegistryTest is
-    Test,
-    AlloSetup,
-    RegistrySetupFull,
-    CVStrategyHelpers,
-    Errors,
-    GasHelpers2,
-    SafeSetup
-{
+contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
     CVStrategy public strategy;
     GV2ERC20 public token;
     uint256 public mintAmount = 1_000_000 * DECIMALS;
@@ -52,11 +44,8 @@ contract RegistryTest is
     // uint256 public constant PRECISION = 10 ** 4;
     uint256 public constant PROTOCOL_FEE_PERCENTAGE = 22525; // 2.2525  * 10 ** 4
     uint256 public constant COMMUNITY_FEE_PERCENTAGE = 3 * PERCENTAGE_SCALE;
-    uint256 public constant STAKE_WITH_FEES =
-        MINIMUM_STAKE +
-            (MINIMUM_STAKE *
-                (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) /
-            (100 * PERCENTAGE_SCALE);
+    uint256 public constant STAKE_WITH_FEES = MINIMUM_STAKE
+        + (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / (100 * PERCENTAGE_SCALE);
 
     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
@@ -114,19 +103,12 @@ contract RegistryTest is
         params._councilSafe = payable(address(_councilSafe()));
 
         params._isKickEnabled = true;
-        registryCommunity = RegistryCommunity(
-            registryFactory.createRegistry(params)
-        );
+        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
         vm.startPrank(gardenOwner);
-        _registryFactory().setProtocolFee(
-            address(registryCommunity),
-            PROTOCOL_FEE_PERCENTAGE
-        );
+        _registryFactory().setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
         vm.stopPrank();
         params._isKickEnabled = false;
-        nonKickableCommunity = RegistryCommunity(
-            registryFactory.createRegistry(params)
-        );
+        nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
     }
 
     function _registryCommunity() internal view returns (RegistryCommunity) {
@@ -149,14 +131,9 @@ contract RegistryTest is
 
         _registryCommunity().stakeAndRegisterMember();
         assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE);
-        assertEq(
-            token.balanceOf(address(gardenMember)),
-            mintAmount - STAKE_WITH_FEES
-        );
-        uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE) /
-            (100 * PERCENTAGE_SCALE);
-        uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE) /
-            (100 * PERCENTAGE_SCALE);
+        assertEq(token.balanceOf(address(gardenMember)), mintAmount - STAKE_WITH_FEES);
+        uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE) / (100 * PERCENTAGE_SCALE);
+        uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE) / (100 * PERCENTAGE_SCALE);
         assertEq(token.balanceOf(address(protocolFeeReceiver)), protocolAmount);
         assertEq(token.balanceOf(address(daoFeeReceiver)), feeAmount);
         vm.stopPrank();
@@ -180,33 +157,13 @@ contract RegistryTest is
             _registryCommunity().stakeAndRegisterMember();
             vm.stopPrank();
 
-            assertEq(
-                token.balanceOf(address(registryCommunity)),
-                MINIMUM_STAKE * (i + 1),
-                "Registry balance"
-            );
-            assertEq(
-                token.balanceOf(members[i]),
-                mintAmount - STAKE_WITH_FEES,
-                "Member balance"
-            );
+            assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE * (i + 1), "Registry balance");
+            assertEq(token.balanceOf(members[i]), mintAmount - STAKE_WITH_FEES, "Member balance");
 
-            uint256 protocolAmount = (MINIMUM_STAKE *
-                PROTOCOL_FEE_PERCENTAGE *
-                (i + 1)) / (100 * PERCENTAGE_SCALE);
-            uint256 feeAmount = (MINIMUM_STAKE *
-                COMMUNITY_FEE_PERCENTAGE *
-                (i + 1)) / (100 * PERCENTAGE_SCALE);
-            assertEq(
-                token.balanceOf(address(protocolFeeReceiver)),
-                protocolAmount,
-                "Protocol balance"
-            );
-            assertEq(
-                token.balanceOf(address(daoFeeReceiver)),
-                feeAmount,
-                "DAO balance"
-            );
+            uint256 protocolAmount = (MINIMUM_STAKE * PROTOCOL_FEE_PERCENTAGE * (i + 1)) / (100 * PERCENTAGE_SCALE);
+            uint256 feeAmount = (MINIMUM_STAKE * COMMUNITY_FEE_PERCENTAGE * (i + 1)) / (100 * PERCENTAGE_SCALE);
+            assertEq(token.balanceOf(address(protocolFeeReceiver)), protocolAmount, "Protocol balance");
+            assertEq(token.balanceOf(address(daoFeeReceiver)), feeAmount, "DAO balance");
         }
 
         stopMeasuringGas();
@@ -219,21 +176,11 @@ contract RegistryTest is
         _registryCommunity().stakeAndRegisterMember();
         _registryCommunity().unregisterMember();
         assertTrue(!_registryCommunity().isMember(gardenMember));
-        uint256 feesAmount = (MINIMUM_STAKE *
-            (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) /
-            (100 * PERCENTAGE_SCALE);
+        uint256 feesAmount =
+            (MINIMUM_STAKE * (COMMUNITY_FEE_PERCENTAGE + PROTOCOL_FEE_PERCENTAGE)) / (100 * PERCENTAGE_SCALE);
         assertEq(token.balanceOf(address(registryCommunity)), 0);
-        assertEq(
-            token.balanceOf(address(gardenMember)),
-            mintAmount - feesAmount
-        );
-        assertEq(
-            registryCommunity.memberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
-            0
-        );
+        assertEq(token.balanceOf(address(gardenMember)), mintAmount - feesAmount);
+        assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)), 0);
         vm.stopPrank();
         stopMeasuringGas();
     }
@@ -242,10 +189,7 @@ contract RegistryTest is
         startMeasuringGas("Setting protocol fee");
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), 2);
-        assertEq(
-            _registryFactory().getProtocolFee(address(registryCommunity)),
-            2
-        );
+        assertEq(_registryFactory().getProtocolFee(address(registryCommunity)), 2);
         vm.stopPrank();
         stopMeasuringGas();
     }
@@ -254,16 +198,8 @@ contract RegistryTest is
         startMeasuringGas("Setting protocol fee");
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), 2);
-        _registryFactory().setCommunityValidity(
-            address(registryCommunity),
-            false
-        );
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RegistryFactory.CommunityInvalid.selector,
-                address(registryCommunity)
-            )
-        );
+        _registryFactory().setCommunityValidity(address(registryCommunity), false);
+        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.CommunityInvalid.selector, address(registryCommunity)));
         _registryFactory().getProtocolFee(address(registryCommunity));
         vm.stopPrank();
         stopMeasuringGas();
@@ -272,25 +208,13 @@ contract RegistryTest is
     function test_setCommunityValidity() public {
         startMeasuringGas("Setting community Validity");
         vm.startPrank(gardenOwner);
-        _registryFactory().setCommunityValidity(
-            address(registryCommunity),
-            false
-        );
+        _registryFactory().setCommunityValidity(address(registryCommunity), false);
 
-        assertEq(
-            _registryFactory().getCommunityValidity(address(registryCommunity)),
-            false
-        );
+        assertEq(_registryFactory().getCommunityValidity(address(registryCommunity)), false);
 
-        _registryFactory().setCommunityValidity(
-            address(registryCommunity),
-            true
-        );
+        _registryFactory().setCommunityValidity(address(registryCommunity), true);
 
-        assertEq(
-            _registryFactory().getCommunityValidity(address(registryCommunity)),
-            true
-        );
+        assertEq(_registryFactory().getCommunityValidity(address(registryCommunity)), true);
     }
 
     function test_activate_totalActivatedPoints_fixed_system() public {
@@ -320,27 +244,18 @@ contract RegistryTest is
         // token.approve(address(registryCommunity), tokenAmount * DECIMALS);
         // _registryCommunity().increasePower(tokenAmount * DECIMALS);
 
-        assertEq(
-            token.balanceOf(address(registryCommunity)),
-            MINIMUM_STAKE,
-            "balance"
-        );
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE, "balance");
 
         vm.stopPrank();
 
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.getMemberStakedAmount(gardenMember),
             "memberPower"
         );
     }
 
-    function test_activate_deactivate_totalActivatedPoints_fixed_system()
-        public
-    {
+    function test_activate_deactivate_totalActivatedPoints_fixed_system() public {
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
             allo(),
@@ -367,11 +282,7 @@ contract RegistryTest is
         // token.approve(address(registryCommunity), tokenAmount * DECIMALS);
         // _registryCommunity().increasePower(tokenAmount * DECIMALS);
 
-        assertEq(
-            token.balanceOf(address(registryCommunity)),
-            MINIMUM_STAKE,
-            "balance"
-        );
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE, "balance");
         token.approve(address(registryCommunity), 20 * DECIMALS);
         _registryCommunity().increasePower(20 * DECIMALS);
         strategy.deactivatePoints();
@@ -379,10 +290,7 @@ contract RegistryTest is
         vm.stopPrank();
 
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.registerStakeAmount(),
             "memberPower"
         );
@@ -413,25 +321,18 @@ contract RegistryTest is
 
         token.approve(address(registryCommunity), tokenAmount * DECIMALS);
         _registryCommunity().increasePower(tokenAmount * DECIMALS);
-        assertEq(
-            token.balanceOf(address(registryCommunity)),
-            MINIMUM_STAKE + (tokenAmount * DECIMALS)
-        );
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (tokenAmount * DECIMALS));
 
         vm.stopPrank();
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.getMemberStakedAmount(gardenMember)
         );
     }
 
     function testFuzz_increasePowerCapped(uint256 tokenAmount) public {
         uint256 CAPPED_MAX_AMOUNT = 200 * DECIMALS;
-        uint256 MIN_AMOUNT_TO_MAX = (CAPPED_MAX_AMOUNT - MINIMUM_STAKE) /
-            DECIMALS;
+        uint256 MIN_AMOUNT_TO_MAX = (CAPPED_MAX_AMOUNT - MINIMUM_STAKE) / DECIMALS;
         console.log("MINIMUM_STAKE: %s", MINIMUM_STAKE / DECIMALS);
         console.log("CAPPED_MAX_AMOUNT- MINIMUM_STAKE: %s", MIN_AMOUNT_TO_MAX);
 
@@ -465,10 +366,7 @@ contract RegistryTest is
 
         _registryCommunity().increasePower(tokenAmount * DECIMALS);
 
-        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(
-            gardenMember,
-            address(strategy)
-        );
+        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy));
 
         uint256 current = tokenAmount * DECIMALS + MINIMUM_STAKE;
 
@@ -484,10 +382,7 @@ contract RegistryTest is
         // }
     }
 
-    function testFuzz_increasePowerQuadratic(
-        uint256 firstIncrease,
-        uint256 secondIncrease
-    ) public {
+    function testFuzz_increasePowerQuadratic(uint256 firstIncrease, uint256 secondIncrease) public {
         vm.assume(firstIncrease < 10000 && firstIncrease > 0);
         vm.assume(secondIncrease < 10000 && secondIncrease > 0);
 
@@ -523,42 +418,20 @@ contract RegistryTest is
 
             _registryCommunity().increasePower(firstIncrease * DECIMALS);
 
-            assertEq(
-                token.balanceOf(address(registryCommunity)),
-                MINIMUM_STAKE + (firstIncrease * DECIMALS)
-            );
+            assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (firstIncrease * DECIMALS));
 
             assertEq(
-                registryCommunity.getMemberPowerInStrategy(
-                    gardenMember,
-                    address(strategy)
-                ),
-                (
-                    Math.sqrt(
-                        (MINIMUM_STAKE + firstIncrease * DECIMALS) * DECIMALS
-                    )
-                ),
+                registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+                (Math.sqrt((MINIMUM_STAKE + firstIncrease * DECIMALS) * DECIMALS)),
                 "power1"
             );
             //assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 110 );
-            token.approve(
-                address(registryCommunity),
-                secondIncrease * DECIMALS
-            );
+            token.approve(address(registryCommunity), secondIncrease * DECIMALS);
 
             _registryCommunity().increasePower(secondIncrease * DECIMALS);
             assertEq(
-                registryCommunity.getMemberPowerInStrategy(
-                    gardenMember,
-                    address(strategy)
-                ),
-                Math.sqrt(
-                    (MINIMUM_STAKE +
-                        firstIncrease *
-                        DECIMALS +
-                        secondIncrease *
-                        DECIMALS) * DECIMALS
-                ),
+                registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
+                Math.sqrt((MINIMUM_STAKE + firstIncrease * DECIMALS + secondIncrease * DECIMALS) * DECIMALS),
                 "power2"
             );
             // assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), 120  );
@@ -593,23 +466,14 @@ contract RegistryTest is
 
         _registryCommunity().increasePower(TO_INCREASE);
 
-        assertEq(
-            token.balanceOf(address(registryCommunity)),
-            MINIMUM_STAKE + TO_INCREASE,
-            "After increase"
-        );
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + TO_INCREASE, "After increase");
         //Sqrt of 1100
 
         strategy.activatePoints();
 
         uint256 sqrtValue = 33166247903553998491;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
-            sqrtValue,
-            "power for 1100"
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1100"
         );
 
         token.approve(address(registryCommunity), 300 * DECIMALS);
@@ -617,12 +481,7 @@ contract RegistryTest is
         //sqrt of 1400
         sqrtValue = 37416573867739413855;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
-            sqrtValue,
-            "power for 1200"
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1200"
         );
         vm.stopPrank();
     }
@@ -699,20 +558,11 @@ contract RegistryTest is
 
         _registryCommunity().increasePower(TO_INCREASE);
 
-        assertEq(
-            token.balanceOf(address(registryCommunity)),
-            MINIMUM_STAKE + TO_INCREASE,
-            "After increase"
-        );
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + TO_INCREASE, "After increase");
         //Sqrt of 1100
         uint256 sqrtValue = 33166247903553998491;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
-            sqrtValue,
-            "power for 1100"
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1100"
         );
 
         token.approve(address(registryCommunity), 300 * DECIMALS);
@@ -720,12 +570,7 @@ contract RegistryTest is
         //sqrt of 1400
         sqrtValue = 37416573867739413855;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
-            sqrtValue,
-            "power for 1200"
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue, "power for 1200"
         );
         vm.stopPrank();
     }
@@ -755,19 +600,13 @@ contract RegistryTest is
 
         token.approve(address(registryCommunity), tokenAmount * DECIMALS);
         _registryCommunity().increasePower(tokenAmount * DECIMALS);
-        assertEq(
-            token.balanceOf(address(registryCommunity)),
-            MINIMUM_STAKE + (tokenAmount * DECIMALS)
-        );
+        assertEq(token.balanceOf(address(registryCommunity)), MINIMUM_STAKE + (tokenAmount * DECIMALS));
 
         strategy.activatePoints();
 
         vm.stopPrank();
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.getMemberStakedAmount(gardenMember)
         );
     }
@@ -817,10 +656,7 @@ contract RegistryTest is
         // );
 
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.registerStakeAmount()
         );
         // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
@@ -858,20 +694,14 @@ contract RegistryTest is
         strategy.activatePoints();
 
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.registerStakeAmount() + (150 * DECIMALS)
         );
 
         _registryCommunity().decreasePower(150 * DECIMALS);
 
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.registerStakeAmount()
         );
         // vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
@@ -906,10 +736,7 @@ contract RegistryTest is
 
         uint256 sqrtValue = 20 * DECIMALS;
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             sqrtValue,
             "powerrrrrrrrrrrr for 1100"
         );
@@ -917,39 +744,20 @@ contract RegistryTest is
         _registryCommunity().decreasePower(300 * DECIMALS);
 
         sqrtValue = 10 * DECIMALS;
-        assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
-            sqrtValue
-        );
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue);
 
         _registryCommunity().decreasePower(36 * DECIMALS);
 
         sqrtValue = 8 * DECIMALS;
-        assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
-            sqrtValue
-        );
+        assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RegistryCommunity.DecreaseUnderMinimum.selector
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(50 * DECIMALS);
         vm.stopPrank();
     }
 
     function test_isCouncilMember() public view {
-        assertEq(
-            _registryCommunity().isCouncilMember(address(councilSafe)),
-            true
-        );
+        assertEq(_registryCommunity().isCouncilMember(address(councilSafe)), true);
         assertEq(_registryCommunity().isCouncilMember(gardenMember), false);
     }
 
@@ -980,27 +788,15 @@ contract RegistryTest is
         strategy.activatePoints();
         vm.stopPrank();
         assertEq(
-            registryCommunity.memberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            )
+            registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy))
         );
         //assertEq(strategy.activatedPointsIn)
         vm.startPrank(address(councilSafe));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         assertTrue(!_registryCommunity().isMember(gardenMember));
         assertEq(token.balanceOf(address(councilSafe)), MINIMUM_STAKE);
-        assertEq(
-            registryCommunity.memberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
-            0
-        );
+        assertEq(registryCommunity.memberPowerInStrategy(gardenMember, address(strategy)), 0);
         // assertTrue(!_registryCommunity().memberActivatedInStrategies(gardenMember,address(strategy)));
         vm.stopPrank();
         stopMeasuringGas();
@@ -1013,9 +809,7 @@ contract RegistryTest is
         _nonKickableCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.KickNotEnabled.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.KickNotEnabled.selector));
         _nonKickableCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -1044,9 +838,7 @@ contract RegistryTest is
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.StrategyDisabled.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.StrategyDisabled.selector));
         strategy.activatePoints();
         vm.stopPrank();
     }
@@ -1069,9 +861,7 @@ contract RegistryTest is
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.StrategyExists.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.StrategyExists.selector));
         _registryCommunity().addStrategy(address(strategy));
         vm.stopPrank();
     }
@@ -1087,12 +877,8 @@ contract RegistryTest is
         params._feeReceiver = address(daoFeeReceiver);
         params._councilSafe = payable(address(_councilSafe()));
         params._isKickEnabled = true;
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.ValueCannotBeZero.selector)
-        );
-        registryCommunity = RegistryCommunity(
-            registryFactory.createRegistry(params)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.ValueCannotBeZero.selector));
+        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
     }
 
     function test_revert_deactivateMemberInStrategyCaller() public {
@@ -1104,13 +890,8 @@ contract RegistryTest is
 
         _registryCommunity().stakeAndRegisterMember();
 
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.SenderNotStrategy.selector)
-        );
-        _registryCommunity().deactivateMemberInStrategy(
-            gardenMember,
-            address(strategy)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.SenderNotStrategy.selector));
+        _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
 
         vm.stopPrank();
 
@@ -1124,24 +905,15 @@ contract RegistryTest is
         _registryCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(address(strategy));
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RegistryCommunity.UserAlreadyDeactivated.selector
-            )
-        );
-        _registryCommunity().deactivateMemberInStrategy(
-            gardenMember,
-            address(strategy)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserAlreadyDeactivated.selector));
+        _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
         vm.stopPrank();
         stopMeasuringGas();
     }
 
     function test_revertIncreasePower() public {
         vm.startPrank(gardenMember);
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
         _registryCommunity().increasePower(20 * DECIMALS);
     }
 
@@ -1170,17 +942,10 @@ contract RegistryTest is
         token.approve(address(registryCommunity), 100 * DECIMALS);
         _registryCommunity().increasePower(100 * DECIMALS);
         assertEq(
-            registryCommunity.getMemberPowerInStrategy(
-                gardenMember,
-                address(strategy)
-            ),
+            registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.getMemberStakedAmount(gardenMember)
         );
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RegistryCommunity.DecreaseUnderMinimum.selector
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(101 * DECIMALS);
 
         //Test if decreasing by 100 doesn't revert as it shouldn't
@@ -1192,9 +957,7 @@ contract RegistryTest is
     function test_revertKickUnregisteredMember() public {
         startMeasuringGas("Registering and kicking member");
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -1207,9 +970,7 @@ contract RegistryTest is
         _registryCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(gardenOwner);
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -1228,17 +989,11 @@ contract RegistryTest is
         startMeasuringGas("Setting council safe");
         vm.startPrank(address(councilSafe));
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
-        assertEq(
-            address(_registryCommunity().pendingCouncilSafe()),
-            address(newCouncilSafe)
-        );
+        assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(newCouncilSafe);
         _registryCommunity().acceptCouncilSafe();
-        assertEq(
-            address(_registryCommunity().councilSafe()),
-            address(newCouncilSafe)
-        );
+        assertEq(address(_registryCommunity().councilSafe()), address(newCouncilSafe));
         vm.stopPrank();
     }
 
@@ -1246,38 +1001,24 @@ contract RegistryTest is
         startMeasuringGas("Adding strategy");
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            true
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
         vm.stopPrank();
         stopMeasuringGas();
     }
 
     function test_revertSetCouncilSafe() public {
         vm.startPrank(gardenMember);
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RegistryCommunity.AddressCannotBeZero.selector
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
         _registryCommunity().setCouncilSafe(payable(address(0)));
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
-        assertEq(
-            address(_registryCommunity().pendingCouncilSafe()),
-            address(newCouncilSafe)
-        );
+        assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(gardenMember);
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.SenderNotNewOwner.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.SenderNotNewOwner.selector));
         _registryCommunity().acceptCouncilSafe();
         vm.stopPrank();
     }
@@ -1286,15 +1027,9 @@ contract RegistryTest is
         startMeasuringGas("Testing strategy removal");
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            true
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
         _registryCommunity().removeStrategy(address(strategy));
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            false
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
         vm.stopPrank();
         stopMeasuringGas();
     }
@@ -1311,9 +1046,7 @@ contract RegistryTest is
     function test_revertUnregisterMember() public {
         startMeasuringGas("Testing kick member revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInRegistry.selector));
         _registryCommunity().unregisterMember();
         vm.stopPrank();
         stopMeasuringGas();
@@ -1322,18 +1055,12 @@ contract RegistryTest is
     function test_revertSetCommunityFee() public {
         startMeasuringGas("Testing update protocol revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
         _registryCommunity().setCommunityFee(5);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RegistryCommunity.NewFeeGreaterThanMax.selector
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.NewFeeGreaterThanMax.selector));
         _registryCommunity().setCommunityFee(11 * PERCENTAGE_SCALE);
         _registryCommunity().setCommunityFee(10 * PERCENTAGE_SCALE);
         assertEq(_registryCommunity().communityFee(), 10 * PERCENTAGE_SCALE);
@@ -1343,9 +1070,7 @@ contract RegistryTest is
     function test_revertSetBasisStakeAmount() public {
         startMeasuringGas("Testing setBasisStake revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
         _registryCommunity().setBasisStakedAmount(500);
         vm.stopPrank();
         stopMeasuringGas();
@@ -1370,25 +1095,16 @@ contract RegistryTest is
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
 
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            false
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategyByPoolId(poolId);
 
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            true
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
 
         _registryCommunity().removeStrategyByPoolId(poolId);
 
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            false
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.stopPrank();
     }
@@ -1407,19 +1123,13 @@ contract RegistryTest is
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
 
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            false
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategyByPoolId(poolId);
         vm.stopPrank();
 
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            true
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
     }
 
     function test_Revert_removeStrategyByPoolId() public {
@@ -1436,35 +1146,23 @@ contract RegistryTest is
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
 
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            false
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategyByPoolId(poolId);
         vm.stopPrank();
 
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
         _registryCommunity().removeStrategyByPoolId(poolId);
 
         vm.startPrank(address(councilSafe));
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RegistryCommunity.AddressCannotBeZero.selector
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
         _registryCommunity().removeStrategyByPoolId(poolId + 1);
 
         vm.stopPrank();
 
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            true
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), true);
     }
 
     function test_Revert_addStrategyByPoolId() public {
@@ -1481,28 +1179,16 @@ contract RegistryTest is
         console.log("PoolId: %s", poolId);
         vm.stopPrank();
 
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            false
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector)
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.UserNotInCouncil.selector));
         _registryCommunity().addStrategyByPoolId(poolId);
 
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                RegistryCommunity.AddressCannotBeZero.selector
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.AddressCannotBeZero.selector));
         _registryCommunity().addStrategyByPoolId(poolId + 1);
         vm.stopPrank();
 
-        assertEq(
-            _registryCommunity().enabledStrategies(address(strategy)),
-            false
-        );
+        assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
     }
 }

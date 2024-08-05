@@ -99,8 +99,7 @@ contract RegistryUpgradeableTest is
         safeArbitrator = new SafeArbitrator(2 ether);
 
         ERC1967Proxy strategyProxy = new ERC1967Proxy(
-          address(new CVStrategyV0_0()),
-          abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()))
+            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()))
         );
 
         strategy = CVStrategyV0_0(payable(strategyProxy));
@@ -171,16 +170,16 @@ contract RegistryUpgradeableTest is
     }
 
     function _generateArbitrationConfig() internal returns (StrategyStruct.ArbitrableConfig memory) {
-      address collateralVaultTemplate = address(new CollateralVault());
-      return StrategyStruct.ArbitrableConfig(
-          IArbitrator(address(safeArbitrator)),
-          payable(address(_councilSafe())),
-          3 ether,
-          2 ether,
-          1,
-          600,
-          collateralVaultTemplate
-      );
+        address collateralVaultTemplate = address(new CollateralVault());
+        return StrategyStruct.ArbitrableConfig(
+            IArbitrator(address(safeArbitrator)),
+            payable(address(_councilSafe())),
+            3 ether,
+            2 ether,
+            1,
+            600,
+            collateralVaultTemplate
+        );
     }
 
     function test_stakeAndRegisterMember() public {
@@ -365,9 +364,9 @@ contract RegistryUpgradeableTest is
     function testFuzz_increasePower(uint256 tokenAmount) public {
         vm.assume(tokenAmount > 2 && tokenAmount < 100);
         vm.startPrank(pool_admin());
-        
+
         StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrationConfig();
-        
+
         uint256 poolId = createPool(
             allo(),
             address(strategy),
