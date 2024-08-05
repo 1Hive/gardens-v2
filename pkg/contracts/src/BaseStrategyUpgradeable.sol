@@ -169,13 +169,9 @@ abstract contract BaseStrategyUpgradeable is UUPSUpgradeable, IStrategy, Transfe
         onlyInitialized
         returns (address recipientId)
     {
-        console.log("#####__1");
         _beforeRegisterRecipient(_data, _sender);
-        console.log("#####__2");
         recipientId = _registerRecipient(_data, _sender);
-        console.log("#####__3");
         _afterRegisterRecipient(_data, _sender);
-        console.log("#####__4");
     }
 
     /// @notice Allocates to a recipient.

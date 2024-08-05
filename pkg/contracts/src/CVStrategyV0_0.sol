@@ -263,7 +263,6 @@ contract CVStrategyV0_0 is
         if (ip.registryCommunity == address(0)) {
             revert RegistryCannotBeZero();
         }
-        console.log("###~3");
 
         registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
         decay = ip.decay;
@@ -275,11 +274,9 @@ contract CVStrategyV0_0 is
         minThresholdPoints = ip.minThresholdPoints;
         sybilScorer = ISybilScorer(ip.sybilScorer);
         arbitrableConfig = ip.arbitrableConfig;
-        console.log("###~4");
         if (address(arbitrableConfig.arbitrator) != address(0)) {
             collateralVault = CollateralVault(Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++));
             collateralVault.initialize();
-            console.log("###~7");
             if (arbitrableConfig.tribunalSafe != address(0)) {
                 SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(arbitrableConfig.tribunalSafe);
                 emit TribunaSafeRegistered(
@@ -287,10 +284,7 @@ contract CVStrategyV0_0 is
                 );
             }
         }
-        console.log("###~8");
         sybilScorer = ISybilScorer(ip.sybilScorer);
-
-        console.log("###~9");
 
         emit InitializedCV(_poolId, ip);
     }
@@ -357,16 +351,12 @@ contract CVStrategyV0_0 is
     // this could also check attestations directly and then Accept
 
     function _registerRecipient(bytes memory _data, address _sender) internal override returns (address) {
-        console.log("#####__2__1", gasleft());
         if (!_canExecuteAction(_sender)) {
             revert UserCannotExecuteAction();
         }
-        console.log("#####__2__2", gasleft());
         // surpressStateMutabilityWarning++;
         _data;
-        console.log("#####__2__3", gasleft());
         StrategyStruct.CreateProposal memory proposal = abi.decode(_data, (StrategyStruct.CreateProposal));
-        console.log("#####__2__4", gasleft());
 
         // if (proposal.proposalId == 0) {
         // revert ProposalIdCannotBeZero();
@@ -374,31 +364,23 @@ contract CVStrategyV0_0 is
         if (proposal.poolId == 0) {
             revert PoolIdCannotBeZero();
         }
-        console.log("#####__2__5", gasleft());
         // console.log("proposalType", uint256(proposalType));
         if (proposalType == StrategyStruct.ProposalType.Funding) {
-            console.log("#####__2__6", gasleft());
             _revertZeroAddress(proposal.beneficiary);
-            console.log("#####__2__7", gasleft());
             // getAllo().getPool(poolId).token;
             if (proposal.requestedToken == address(0)) {
                 revert TokenCannotBeZero();
             }
-            console.log("#####__2__8", gasleft());
             IAllo _allo = this.getAllo();
-            console.log("#####__2__9", gasleft());
             IAllo.Pool memory pool = _allo.getPool(proposal.poolId);
-            console.log("#####__2__10", gasleft());
             if (proposal.requestedToken != pool.token) {
                 // console.log("::requestedToken", proposal.requestedToken);
                 // console.log("::PookToken", poolToken);
                 revert TokenNotAllowed();
             }
-            console.log("#####__2__11", gasleft());
             if (_isOverMaxRatio(proposal.amountRequested)) {
                 revert AmountOverMaxRatio();
             }
-            console.log("#####__2__12", gasleft());
         }
 
         if (
@@ -406,12 +388,10 @@ contract CVStrategyV0_0 is
         ) {
             revert InsufficientCollateral(msg.value, arbitrableConfig.submitterCollateralAmount);
         }
-        console.log("#####__2__13", gasleft());
 
         uint256 proposalId = ++proposalCounter;
         StrategyStruct.Proposal storage p = proposals[proposalId];
 
-        console.log("#####__2__14", gasleft());
         p.proposalId = proposalId;
         p.submitter = _sender;
         p.beneficiary = proposal.beneficiary;
@@ -423,9 +403,7 @@ contract CVStrategyV0_0 is
         p.convictionLast = 0;
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
-        console.log("#####__2__15", gasleft());
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
-        console.log("#####__2__16", gasleft());
 
         emit ProposalCreated(poolId, proposalId);
         console.log("Gaz left: ", gasleft());

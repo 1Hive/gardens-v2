@@ -37,11 +37,8 @@ contract CollateralVault is ReentrancyGuard {
     }
 
     function depositCollateral(uint256 proposalId, address user) external payable onlyOwner nonReentrant {
-        console.log("#####__2__15__1", gasleft());
         proposalCollateral[proposalId][user] += msg.value;
-        console.log("#####__2__15__2", gasleft());
         emit CollateralDeposited(proposalId, user, msg.value);
-        console.log("#####__2__15__3", gasleft());
     }
 
     function withdrawCollateral(uint256 _proposalId, address _user, uint256 _amount) external onlyOwner nonReentrant {
