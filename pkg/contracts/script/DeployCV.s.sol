@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../src/CVStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 // import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
@@ -24,7 +23,7 @@ import {SafeSetup} from "../test/shared/SafeSetup.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
-
+import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategyV0_0.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -114,7 +113,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         assertEq(
             address(cvStrategyTemplate.getAllo()),
             address(allo),
-            "CVStrategy initialized"
+            "CVStrategyV0_0 initialized"
         );
 
         params._strategyTemplate = address(cvStrategyTemplate);
@@ -177,10 +176,10 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         );
         console2.log(
             "Collateral Vault 1 Addr: %s",
-            CVStrategy(payable(_strategy1)).getCollateralVault()
+            CVStrategyV0_0(payable(_strategy1)).getCollateralVault()
         );
 
-        CVStrategy strategy1 = CVStrategy(payable(_strategy1));
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
 
         safeHelper(
             address(registryCommunity),
@@ -208,10 +207,10 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             .createPool(address(token), paramsCV, metadata);
         console2.log(
             "Collateral Vault 1 Addr: %s",
-            CVStrategy(payable(_strategy2)).getCollateralVault()
+            CVStrategyV0_0(payable(_strategy2)).getCollateralVault()
         );
 
-        CVStrategy strategy2 = CVStrategy(payable(_strategy2));
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
 
         safeHelper(
             address(registryCommunity),
@@ -388,7 +387,14 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         RegistryCommunityV0_0.InitializeParams memory params;
 
         params._allo = address(allo);
-        params._strategyTemplate = address(new CVStrategy(address(allo)));
+        ERC1967Proxy strategyProxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()),
+            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+        params._strategyTemplate = address(
+            CVStrategyV0_0(payable(strategyProxy))
+        );
+
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = COMMUNITY_FEE;
@@ -403,7 +409,11 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
 
         token.mint(address(pool_admin()), 10_000 ether);
 
-        CVStrategy strategy1 = new CVStrategy(address(allo));
+        ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()),
+            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(strategyProxy));
 
         safeHelper(
             address(registryCommunity),
@@ -413,7 +423,12 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
                 address(strategy1)
             )
         );
-        CVStrategy strategy2 = new CVStrategy(address(allo));
+        ERC1967Proxy strategy2Proxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()),
+            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(strategyProxy));
+
         safeHelper(
             address(registryCommunity),
             0,
@@ -494,6 +509,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         allo.fundPool(poolId, 3_000 ether); // ether
         allo.fundPool(poolIdFixed, 1_000 ether); // ether
 
+        console.log("#####-3");
         StrategyStruct.CreateProposal memory proposal = StrategyStruct
             .CreateProposal(
                 poolId,
@@ -503,8 +519,10 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
                 metadata
             );
         bytes memory data = abi.encode(proposal);
+        console.log("#####-2", gasleft());
         allo.registerRecipient{value: 3 ether}(poolId, data);
 
+        console.log("#####-1");
         proposal = StrategyStruct.CreateProposal(
             poolId,
             membersStaked[1],
@@ -512,8 +530,12 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             address(token),
             metadata
         );
+        console.log("#####-");
         data = abi.encode(proposal);
+        console.log("#####1");
+
         allo.registerRecipient{value: 3 ether}(poolId, data);
+        console.log("#####2");
 
         proposal = StrategyStruct.CreateProposal(
             poolId,
@@ -522,6 +544,8 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             address(token),
             metadata
         );
+        console.log("#####3");
+
         data = abi.encode(proposal);
         allo.registerRecipient{value: 3 ether}(poolId, data);
 
@@ -537,6 +561,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             );
         bytes memory data2 = abi.encode(proposal2);
         allo.registerRecipient{value: 3 ether}(poolIdFixed, data2);
+
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);

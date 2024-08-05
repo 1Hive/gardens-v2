@@ -18,9 +18,8 @@ import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.s
 import {FAllo} from "./interfaces/FAllo.sol";
 import {ISafe} from "./interfaces/ISafe.sol";
 import {RegistryFactory} from "./RegistryFactory.sol";
-import {CVStrategyV0_0} from "./CVStrategyV0_0.sol";
+import {CVStrategyV0_0, StrategyStruct, IPointStrategy} from "./CVStrategyV0_0.sol";
 
-import {StrategyStruct, IPointStrategy} from "../src/CVStrategy.library.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";

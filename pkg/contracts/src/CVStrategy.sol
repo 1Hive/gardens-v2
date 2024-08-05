@@ -17,7 +17,106 @@ import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
-import {StrategyStruct, IPointStrategy} from "../src/CVStrategy.library.sol";
+
+interface IPointStrategy {
+    function deactivatePoints(address _member) external;
+
+    function increasePower(
+        address _member,
+        uint256 _amountToStake
+    ) external returns (uint256);
+
+    function decreasePower(
+        address _member,
+        uint256 _amountToUntake
+    ) external returns (uint256);
+
+    function getPointSystem() external returns (StrategyStruct.PointSystem);
+}
+
+library StrategyStruct {
+    enum ProposalType {
+        Signaling,
+        Funding,
+        Streaming
+    }
+
+    enum PointSystem {
+        Fixed,
+        Capped,
+        Unlimited,
+        Quadratic
+    }
+
+    struct CreateProposal {
+        // uint256 proposalId;
+        uint256 poolId;
+        address beneficiary;
+        // ProposalType proposalType;
+        uint256 amountRequested;
+        address requestedToken;
+        Metadata metadata;
+    }
+
+    enum ProposalStatus {
+        Inactive, // Inactive
+        Active, // A vote that has been reported to Agreements
+        Paused, // A vote that is being challenged by Agreements
+        Cancelled, // A vote that has been cancelled
+        Executed, // A vote that has been executed
+        Disputed, // A vote that has been disputed
+        Rejected // A vote that has been rejected
+    }
+
+    struct Proposal {
+        uint256 proposalId;
+        uint256 requestedAmount;
+        uint256 stakedAmount;
+        uint256 convictionLast;
+        address beneficiary;
+        address submitter;
+        address requestedToken;
+        uint256 blockLast;
+        ProposalStatus proposalStatus;
+        mapping(address => uint256) voterStakedPoints; // voter staked points
+        Metadata metadata;
+        uint256 disputeId;
+        uint256 disputeTimestamp;
+        address challenger;
+    }
+
+    struct ProposalSupport {
+        uint256 proposalId;
+        int256 deltaSupport; // use int256 to allow negative values
+    }
+
+    struct PointSystemConfig {
+        //Capped point system
+        uint256 maxAmount;
+    }
+
+    struct ArbitrableConfig {
+        IArbitrator arbitrator;
+        address tribunalSafe;
+        uint256 collateralAmount;
+        uint256 defaultRuling;
+        uint256 defaultRulingTimeout;
+        address collateralVaultTemplate;
+    }
+
+    struct InitializeParams {
+        address registryCommunity;
+        uint256 decay;
+        uint256 maxRatio;
+        uint256 weight;
+        uint256 minThresholdPoints;
+        ProposalType proposalType;
+        PointSystem pointSystem;
+        PointSystemConfig pointConfig;
+        ArbitrableConfig arbitrableConfig;
+        address sybilScorer;
+    }
+}
 
 contract CVStrategy is
     BaseStrategy,
@@ -300,11 +399,11 @@ contract CVStrategy is
 
         if (
             address(arbitrableConfig.arbitrator) != address(0) &&
-            msg.value < arbitrableConfig.submitterCollateralAmount
+            msg.value < arbitrableConfig.collateralAmount
         ) {
             revert InsufficientCollateral(
                 msg.value,
-                arbitrableConfig.submitterCollateralAmount
+                arbitrableConfig.collateralAmount
             );
         }
         uint256 proposalId = ++proposalCounter;
@@ -572,7 +671,7 @@ contract CVStrategy is
             CollateralVault(collateralVault).withdrawCollateral(
                 proposalId,
                 proposal.submitter,
-                arbitrableConfig.submitterCollateralAmount
+                arbitrableConfig.collateralAmount
             );
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             emit Distributed(
@@ -1101,17 +1200,18 @@ contract CVStrategy is
         if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
             revert ProposalNotActive(proposalId);
         }
-        if (msg.value <= arbitrableConfig.challengerCollateralAmount) {
+        if (msg.value <= arbitrableConfig.collateralAmount) {
             revert InsufficientCollateral(
                 msg.value,
-                arbitrableConfig.challengerCollateralAmount
+                arbitrableConfig.collateralAmount
             );
         }
 
-        uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
+        uint256 arbitrationFee = msg.value -
+            arbitrableConfig.collateralAmount;
 
         CollateralVault(collateralVault).depositCollateral{
-            value: arbitrableConfig.challengerCollateralAmount
+            value: arbitrableConfig.collateralAmount
         }(proposalId, msg.sender);
 
         uint256 disputeId = arbitrableConfig.arbitrator.createDispute{
@@ -1166,12 +1266,12 @@ contract CVStrategy is
             CollateralVault(collateralVault).withdrawCollateral(
                 proposalId,
                 proposal.challenger,
-                arbitrableConfig.challengerCollateralAmount
+                arbitrableConfig.collateralAmount
             );
             CollateralVault(collateralVault).withdrawCollateral(
                 proposalId,
                 proposal.submitter,
-                arbitrableConfig.submitterCollateralAmount
+                arbitrableConfig.collateralAmount
             );
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
@@ -1179,26 +1279,26 @@ contract CVStrategy is
                 proposalId,
                 proposal.challenger,
                 address(registryCommunity.councilSafe()),
-                arbitrableConfig.challengerCollateralAmount
+                arbitrableConfig.collateralAmount
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
             CollateralVault(collateralVault).withdrawCollateral(
                 proposalId,
                 proposal.challenger,
-                arbitrableConfig.challengerCollateralAmount
+                arbitrableConfig.collateralAmount
             );
             CollateralVault(collateralVault).withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 address(registryCommunity.councilSafe()),
-                arbitrableConfig.submitterCollateralAmount / 2
+                arbitrableConfig.collateralAmount / 2
             );
             CollateralVault(collateralVault).withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 proposal.challenger,
-                arbitrableConfig.submitterCollateralAmount / 2
+                arbitrableConfig.collateralAmount / 2
             );
         }
 

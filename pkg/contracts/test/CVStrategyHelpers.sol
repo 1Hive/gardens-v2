@@ -5,8 +5,7 @@ import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 // import {StrategyStruct} from "../src/libraries/StrategyStruct.sol";
-import {CVStrategy} from "../src/CVStrategy.sol";
-import {StrategyStruct} from "../src/CVStrategy.library.sol";
+import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 

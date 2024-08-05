@@ -23,7 +23,106 @@ import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/a
 import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
 
-import {StrategyStruct, IPointStrategy} from "../src/CVStrategy.library.sol";
+interface IPointStrategy {
+  function deactivatePoints(address _member) external;
+
+  function increasePower(
+      address _member,
+      uint256 _amountToStake
+  ) external returns (uint256);
+
+  function decreasePower(
+      address _member,
+      uint256 _amountToUntake
+  ) external returns (uint256);
+
+  function getPointSystem() external returns (StrategyStruct.PointSystem);
+}
+
+library StrategyStruct {
+  enum ProposalType {
+      Signaling,
+      Funding,
+      Streaming
+  }
+
+  enum PointSystem {
+      Fixed,
+      Capped,
+      Unlimited,
+      Quadratic
+  }
+
+  struct CreateProposal {
+      // uint256 proposalId;
+      uint256 poolId;
+      address beneficiary;
+      // ProposalType proposalType;
+      uint256 amountRequested;
+      address requestedToken;
+      Metadata metadata;
+  }
+
+  enum ProposalStatus {
+      Inactive, // Inactive
+      Active, // A vote that has been reported to Agreements
+      Paused, // A vote that is being challenged by Agreements
+      Cancelled, // A vote that has been cancelled
+      Executed, // A vote that has been executed
+      Disputed, // A vote that has been disputed
+      Rejected // A vote that has been rejected
+  }
+
+  struct Proposal {
+      uint256 proposalId;
+      uint256 requestedAmount;
+      uint256 stakedAmount;
+      uint256 convictionLast;
+      address beneficiary;
+      address submitter;
+      address requestedToken;
+      uint256 blockLast;
+      ProposalStatus proposalStatus;
+      mapping(address => uint256) voterStakedPoints; // voter staked points
+      Metadata metadata;
+      uint256 disputeId;
+      uint256 disputeTimestamp;
+      address challenger;
+  }
+
+  struct ProposalSupport {
+      uint256 proposalId;
+      int256 deltaSupport; // use int256 to allow negative values
+  }
+
+  struct PointSystemConfig {
+      //Capped point system
+      uint256 maxAmount;
+  }
+
+  struct ArbitrableConfig {
+      IArbitrator arbitrator;
+      address tribunalSafe;
+      uint256 submitterCollateralAmount;
+      uint256 challengerCollateralAmount;
+      uint256 defaultRuling;
+      uint256 defaultRulingTimeout;
+      address collateralVaultTemplate;
+  }
+
+  struct InitializeParams {
+      address registryCommunity;
+      uint256 decay;
+      uint256 maxRatio;
+      uint256 weight;
+      uint256 minThresholdPoints;
+      ProposalType proposalType;
+      PointSystem pointSystem;
+      PointSystemConfig pointConfig;
+      ArbitrableConfig arbitrableConfig;
+      address sybilScorer;
+  }
+}
 
 contract CVStrategyV0_0 is
     OwnableUpgradeable,
@@ -215,6 +314,7 @@ contract CVStrategyV0_0 is
                 arbitrableConfig.collateralVaultTemplate,
                 cloneNonce++
             );
+            CollateralVault(collateralVault).initialize();
             if (arbitrableConfig.tribunalSafe != address(0)) {
                 SafeArbitrator(address(arbitrableConfig.arbitrator))
                     .registerSafe(arbitrableConfig.tribunalSafe);
@@ -321,8 +421,9 @@ contract CVStrategyV0_0 is
             if (proposal.requestedToken == address(0)) {
                 revert TokenCannotBeZero();
             }
-            address poolToken = this.getAllo().getPool(poolId).token;
-            if (proposal.requestedToken != poolToken) {
+            IAllo allo = this.getAllo();
+            IAllo.Pool memory pool = allo.getPool(proposal.poolId);
+            if (proposal.requestedToken != pool.token) {
                 // console.log("::requestedToken", proposal.requestedToken);
                 // console.log("::PookToken", poolToken);
                 revert TokenNotAllowed();
@@ -356,13 +457,13 @@ contract CVStrategyV0_0 is
         p.convictionLast = 0;
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
-        console.log("Depositing to collateral vault", address(this));
         CollateralVault(collateralVault).depositCollateral{value: msg.value}(
             proposalId,
             p.submitter
         );
 
         emit ProposalCreated(poolId, proposalId);
+        console.log("Gaz left: ", gasleft());
         return address(uint160(proposalId));
     }
 

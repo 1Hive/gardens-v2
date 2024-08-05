@@ -296,7 +296,7 @@ contract CVStrategyTestUpgradeable is
                 metadata
             );
         bytes memory data = abi.encode(proposal);
-        proposalId = uint160(allo().registerRecipient(poolId, data));
+        proposalId = uint160(allo().registerRecipient{value: 3000}(poolId, data));
 
         stopMeasuringGas();
     }
@@ -341,6 +341,10 @@ contract CVStrategyTestUpgradeable is
     /**
      *    TESTS
      */
+
+     function test_createProposal_working() public{
+        (, uint256 poolId, ) = _createProposal(NATIVE, 0, 0);
+     }
 
     function testRevert_createProposal_OverMaxRatio() public {
         (, uint256 poolId, ) = _createProposal(NATIVE, 0, 0);
