@@ -7,11 +7,9 @@ import {
 import runLatestArbSep from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
 import runLatestEthSep from "../../../../broadcast/DeployCVMultiChain.s.sol/11155111/run-latest.json" assert { type: "json" };
 import { fromHex } from "viem";
-import fs from "fs";
-import path from "path";
+import { argv } from 'process';
 
-const chainArg = process.argv[process.argv.length - 1];
-
+const chainArg = argv[argv.length - 1];
 let runLatestLocal: any | undefined = undefined;
 
 // import runLatestLocal from "../../../../broadcast/DeployCV.s.sol/1337/run-latest.json" assert { type: "json" };
@@ -49,18 +47,18 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
         continue;
       }
 
-      if (tx.contractName == "RegistryCommunity") {
+      if (tx.contractName == "RegistryCommunityV0_0") {
         registryCommunity = tx.contractAddress as Address;
       } else if (
         tx.contractName ==
-        "pkg/contracts/src/RegistryCommunity.sol:RegistryCommunity"
+        "pkg/contracts/src/RegistryCommunityV0_0.sol:RegistryCommunityV0_0"
       ) {
         registryCommunity = tx.contractAddress as Address;
-      } else if (tx.contractName == "RegistryFactory") {
+      } else if (tx.contractName == "RegistryFactoryV0_0") {
         factory = tx.contractAddress as Address;
       } else if (tx.contractName == "SafeProxy") {
         safe = tx.contractAddress as Address;
-      } else if (tx.contractName == "CVStrategy") {
+      } else if (tx.contractName == "CVStrategyV0_0") {
         strategyTemplate = tx.contractAddress as Address;
       } else if (
         tx.contractName == "lib/allo-v2/test/utils/MockERC20.sol:MockERC20"

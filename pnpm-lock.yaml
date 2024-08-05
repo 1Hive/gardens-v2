@@ -326,6 +326,9 @@ importers:
       node-fetch:
         specifier: '*'
         version: 3.3.2
+      process:
+        specifier: ^0.11.10
+        version: 0.11.10
       typescript:
         specifier: '>=2.7'
         version: 5.4.5
@@ -4404,7 +4407,7 @@ packages:
   /@pinata/sdk@2.1.0:
     resolution: {integrity: sha512-hkS0tcKtsjf9xhsEBs2Nbey5s+Db7x5rlOH9TaWHBXkJ7IwwOs2xnEDigNaxAHKjYAwcw+m2hzpO5QgOfeF7Zw==}
     dependencies:
-      axios: 0.21.4(debug@4.3.4)
+      axios: 0.21.4
       form-data: 2.5.1
       is-ipfs: 0.6.3
       path: 0.12.7
@@ -7625,6 +7628,14 @@ packages:
     resolution: {integrity: sha512-M0JtH+hlOL5pLQwHOLNYZaXuhqmvS8oExsqB1SBYgA4Dk7u/xx+YdGHXaK5pyUfed5mYXdlYiphWq3G8cRi5JQ==}
     engines: {node: '>=4'}
     dev: true
+
+  /axios@0.21.4:
+    resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
+    dependencies:
+      follow-redirects: 1.15.6(debug@4.3.5)
+    transitivePeerDependencies:
+      - debug
+    dev: false
 
   /axios@0.21.4(debug@4.3.4):
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}

@@ -1,4 +1,4 @@
-import { CVStrategy as CVStrategyTemplate } from "../../generated/templates";
+import { CVStrategyV0_0 as CVStrategyTemplate } from "../../generated/templates";
 import {
   Member,
   RegistryCommunity,

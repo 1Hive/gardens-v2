@@ -459,3 +459,33 @@ query getPassportUser($userId: ID!) {
     lastUpdated
   }
 }
+
+query getProposalDisputes($proposalId: ID!) {
+  proposalDisputes(
+    where: { proposal_: { id: $proposalId } }
+    orderBy: timestamp
+    orderDirection: desc
+  ) {
+    id
+    disputeId
+    status
+    challenger
+    context
+    metadata {
+      reason
+    }
+    timestamp
+  }
+}
+
+query getStrategyArbitrationConfig($strategyId: ID!) {
+  cvstrategy(id: $strategyId) {
+    id
+    config {
+      id
+      arbitrator
+      tribunalSafe
+      collateralAmount
+    }
+  }
+}
