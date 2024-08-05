@@ -1,18 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {console} from "forge-std/console.sol";
 
-contract CollateralVault is
-    UUPSUpgradeable,
-    OwnableUpgradeable,
-    ReentrancyGuardUpgradeable
-{
+contract CollateralVault is ReentrancyGuard {
     mapping(uint256 proposalId => mapping(address user => uint256 amount))
         public proposalCollateral;
-    address public strategy;
+    address public owner;
 
     event CollateralDeposited(
         uint256 proposalId,
@@ -31,27 +26,37 @@ contract CollateralVault is
         uint256 amount
     );
 
+    error AlreadyInitialized();
     error NotAuthorized();
     error InsufficientCollateral(uint256 requested, uint256 available);
     error InvalidAddress();
     error AmountCanNotBeZero();
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert NotAuthorized();
+        }
+        _;
     }
 
-    function initialize() public initializer {
-        __Ownable_init();
-        __ReentrancyGuard_init();
+    constructor() {}
+
+    function initialize() external {
+      if(owner != address(0)){
+        revert AlreadyInitialized();
+      }
+      owner = msg.sender;
     }
 
     function depositCollateral(
         uint256 proposalId,
         address user
     ) external payable onlyOwner nonReentrant {
+        console.log("#####__2__15__1", gasleft());
         proposalCollateral[proposalId][user] += msg.value;
+        console.log("#####__2__15__2", gasleft());
         emit CollateralDeposited(proposalId, user, msg.value);
+        console.log("#####__2__15__3", gasleft());
     }
 
     function withdrawCollateral(
@@ -90,8 +95,4 @@ contract CollateralVault is
         require(success, "Transfer failed");
         emit CollateralWithdrawn(_proposalId, _fromUser, _toUser, _amount);
     }
-
-    function _authorizeUpgrade(address) internal override onlyOwner {}
-
-    uint256[50] private __gap;
 }

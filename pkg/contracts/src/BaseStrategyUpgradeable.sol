@@ -11,6 +11,8 @@ import {Errors} from "allo-v2-contracts/core/libraries/Errors.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
+import "forge-std/console.sol";
+
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 /// @title BaseStrategy Contract
 /// @author @thelostone-mc <aditya@gitcoin.co>, @0xKurt <kurt@gitcoin.co>, @codenamejason <jason@gitcoin.co>, @0xZakk <zakk@gitcoin.co>, @nfrgosselin <nate@gitcoin.co>
@@ -167,9 +169,13 @@ abstract contract BaseStrategyUpgradeable is UUPSUpgradeable, IStrategy, Transfe
         onlyInitialized
         returns (address recipientId)
     {
+        console.log("#####__1");
         _beforeRegisterRecipient(_data, _sender);
+        console.log("#####__2");
         recipientId = _registerRecipient(_data, _sender);
+        console.log("#####__3");
         _afterRegisterRecipient(_data, _sender);
+        console.log("#####__4");
     }
 
     /// @notice Allocates to a recipient.
