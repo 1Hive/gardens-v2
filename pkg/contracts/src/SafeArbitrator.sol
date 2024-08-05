@@ -42,9 +42,8 @@ contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    /// @dev Constructor.
-    /// @param _arbitrationFee Amount to be paid for arbitration.
-    constructor(uint256 _arbitrationFee) {
+    function initialize(uint256 _arbitrationFee) public initializer {
+        __Ownable_init();
         arbitrationFee = _arbitrationFee;
     }
 

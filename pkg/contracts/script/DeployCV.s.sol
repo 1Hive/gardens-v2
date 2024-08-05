@@ -67,35 +67,40 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
 
         registry = allo.getRegistry();
 
-        ERC1967Proxy proxy = new ERC1967Proxy(
+        ERC1967Proxy scorerProxy = new ERC1967Proxy(
             address(new PassportScorer()),
             abi.encodeWithSelector(PassportScorer.initialize.selector, address(scorer_list_manager()))
         );
 
-        sybilScorer = PassportScorer(payable(address(proxy)));
+        sybilScorer = PassportScorer(payable(address(scorerProxy)));
 
         // registryFactory = new RegistryFactoryV0_0();
         address protocolFeeReceiver = address(this);
 
-        proxy = new ERC1967Proxy(
+        ERC1967Proxy factoryProxy = new ERC1967Proxy(
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(protocolFeeReceiver))
         );
 
-        registryFactory = RegistryFactoryV0_0(address(proxy));
+        registryFactory = RegistryFactoryV0_0(address(factoryProxy));
 
         console2.log("Registry Factory Addr: %s", address(registryFactory));
 
-        safeArbitrator = new SafeArbitrator(2 ether);
+        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+        );
+
+        safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
+
         console2.log("Safe Arbitrator Addr: %s", address(safeArbitrator));
 
         RegistryCommunityV0_0.InitializeParams memory params;
 
-        proxy = new ERC1967Proxy(
+        ERC1967Proxy cvProxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
         );
 
-        CVStrategyV0_0 cvStrategyTemplate = CVStrategyV0_0(payable(address(proxy)));
+        CVStrategyV0_0 cvStrategyTemplate = CVStrategyV0_0(payable(address(cvProxy)));
 
         assertEq(address(cvStrategyTemplate.getAllo()), address(allo), "CVStrategyV0_0 initialized");
 

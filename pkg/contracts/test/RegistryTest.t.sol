@@ -100,7 +100,10 @@ contract RegistryUpgradeableTest is
             address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()))
         );
 
-        safeArbitrator = new SafeArbitrator(2 ether);
+        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+        );
+        safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
 
         strategy = CVStrategyV0_0(payable(strategyProxy));
         //        strategy = address(new MockStrategy(address(allo())));
