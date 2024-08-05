@@ -31,6 +31,7 @@ import {
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { pointSystems, poolTypes } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
@@ -62,9 +63,10 @@ export default function Page({
     ],
   });
 
+  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   useEffect(() => {
     if (error) {
-      console.error("Error while fetching pool data: ", error);
+      console.error("Error while fetching community data: ", error);
     }
   }, [error]);
 
@@ -138,16 +140,17 @@ export default function Page({
       // TODO: add decay to query and perfom calculation
       label: "Conviction growth",
       value: 0,
-      info: "description here",
+      info: "Conviction growth determines how quickly voting power accumulates over time.",
     },
     {
       label: "Min Threshold",
       value: `${strategyObj?.config.minThresholdPoints}`,
-      // TODO: add better description and understand but it does
+      // TODO: add description
       info: "description here",
     },
     {
       label: "Spending limit",
+      // TODO: check number for not approved pools, they have more zeros or another config ?
       value: `${((spendingLimitPct ?? 0) * MAX_RATIO_CONSTANT).toFixed(2)}%`,
       info: "Max percentage of the pool that can be spent in a single proposal",
     },
@@ -175,11 +178,17 @@ export default function Page({
               <Button
                 btnStyle="outline"
                 icon={<Cog6ToothIcon height={24} width={24} />}
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
               >
                 Edit
               </Button>
               {!isEnabled && (
-                <Button icon={<CheckIcon height={24} width={24} />}>
+                <Button
+                  icon={<CheckIcon height={24} width={24} />}
+                  disabled={!isConnected || missmatchUrl}
+                  tooltip={tooltipMessage}
+                >
                   Approve
                 </Button>
               )}
