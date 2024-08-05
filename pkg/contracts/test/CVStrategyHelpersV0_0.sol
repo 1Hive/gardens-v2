@@ -75,7 +75,8 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
         StrategyStruct.ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        StrategyStruct.InitializeParams memory params = getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig);
+        StrategyStruct.InitializeParams memory params =
+            getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig);
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);

@@ -190,14 +190,14 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             StrategyStruct.PointSystem.Fixed,
             pointConfig,
             StrategyStruct.ArbitrableConfig(
-              IArbitrator(address(new SafeArbitrator(2 ether))),
-              payable(address(_councilSafe())),
-              3 ether,
-              2 ether,
-              1,
-              300,
-              address(new CollateralVault())
-          )
+                IArbitrator(address(new SafeArbitrator(2 ether))),
+                payable(address(_councilSafe())),
+                3 ether,
+                2 ether,
+                1,
+                300,
+                address(new CollateralVault())
+            )
         );
 
         // paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay

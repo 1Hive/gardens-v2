@@ -110,7 +110,7 @@ contract CVStrategyTestUpgradeable is
         vm.startPrank(factoryOwner);
 
         safeArbitrator = new SafeArbitrator(2 ether);
-        
+
         // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(new RegistryFactoryV0_0()),
