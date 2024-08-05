@@ -10,7 +10,7 @@ import { Dnum } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
-import { useAccount, useContractRead } from "wagmi";
+import { useAccount } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
@@ -35,9 +35,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { erc20ABI } from "@/src/generated";
 import { poolTypes } from "@/types";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   dn,
   parseToken,
@@ -78,11 +76,7 @@ export default function Page({
     registerStakeAmount,
   } = registryCommunity ?? {};
 
-  const {
-    data: isMemberResult,
-    refetch: refetchIsMember,
-    fetching,
-  } = useSubgraphQuery<isMemberQuery>({
+  const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
     variables: {
       me: accountAddress?.toLowerCase(),

@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo, useEffect, useState, useCallback } from "react";
 import { Address, useAccount, useBalance } from "wagmi";
 import {
   RegistryCommunity,
   TokenGarden,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { Button } from "./Button";
+import { BtnStyle, Button, Color } from "./Button";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
@@ -39,8 +39,10 @@ export function RegisterMember({
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { publish } = usePubSubContext();
 
-  const isMember =
-    memberData?.member?.memberCommunity?.[0]?.isRegistered ?? false;
+  const isMember = useMemo(
+    () => memberData?.member?.memberCommunity?.[0]?.isRegistered ?? false,
+    [memberData],
+  );
 
   const registryContractCallConfig = useMemo(
     () => ({
@@ -57,10 +59,9 @@ export function RegisterMember({
     chainId: urlChainId,
   });
 
-  const accountHasBalance = gte(
-    accountTokenBalance?.value,
-    registrationCost,
-    token.decimals,
+  const accountHasBalance = useMemo(
+    () => gte(accountTokenBalance?.value, registrationCost, token.decimals),
+    [accountTokenBalance?.value, registrationCost, token.decimals],
   );
 
   const { write: writeUnregisterMember, error: unregisterMemberError } =
@@ -68,26 +69,29 @@ export function RegisterMember({
       ...registryContractCallConfig,
       functionName: "unregisterMember",
       fallbackErrorMessage: "Error unregistering member. Please try again.",
-      onConfirmations: () => {
+      onConfirmations: useCallback(() => {
         publish({
           topic: "member",
           type: "delete",
           containerId: communityAddress,
           function: "unregisterMember",
           id: communityAddress,
-          urlChainId,
+          chainId: urlChainId,
         });
-      },
+      }, [publish, communityAddress, urlChainId]),
     });
 
   useErrorDetails(unregisterMemberError, "unregisterMember");
 
-  const disableRegMemberBtnCondition: ConditionObject[] = [
-    {
-      condition: !isMember && !accountHasBalance,
-      message: "Connected account has insufficient balance",
-    },
-  ];
+  const disableRegMemberBtnCondition = useMemo<ConditionObject[]>(
+    () => [
+      {
+        condition: !isMember && !accountHasBalance,
+        message: "Connected account has insufficient balance",
+      },
+    ],
+    [isMember, accountHasBalance],
+  );
 
   const { tooltipMessage, missmatchUrl } = useDisableButtons(
     disableRegMemberBtnCondition,
@@ -96,11 +100,12 @@ export function RegisterMember({
   const {
     write: writeRegisterMember,
     transactionStatus: registerMemberTxStatus,
+    error: registerMemberTxError,
   } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
     functionName: "stakeAndRegisterMember",
     showNotification: false,
-    onConfirmations: () => {
+    onConfirmations: useCallback(() => {
       publish({
         topic: "member",
         type: "add",
@@ -109,7 +114,7 @@ export function RegisterMember({
         id: communityAddress,
         chainId: urlChainId,
       });
-    },
+    }, [publish, communityAddress, urlChainId]),
   });
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
@@ -132,12 +137,12 @@ export function RegisterMember({
   useEffect(() => {
     setRegistrationTx((prev) => ({
       ...prev,
-      message: getTxMessage(registerMemberTxStatus),
+      message: getTxMessage(registerMemberTxStatus, registerMemberTxError),
       status: registerMemberTxStatus ?? "idle",
     }));
   }, [registerMemberTxStatus, communityName]);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (isMember) {
       writeUnregisterMember();
     } else {
@@ -149,7 +154,32 @@ export function RegisterMember({
       }));
       handleAllowance();
     }
-  };
+  }, [isMember, writeUnregisterMember, handleAllowance]);
+
+  const buttonProps: {
+    onClick: () => void;
+    btnStyle: BtnStyle;
+    color: Color;
+    disabled: boolean;
+    tooltip: string;
+  } = useMemo(
+    () => ({
+      onClick: handleClick,
+      btnStyle: isMember ? "outline" : "filled",
+      color: isMember ? "danger" : "primary",
+      disabled:
+        missmatchUrl ||
+        disableRegMemberBtnCondition.some((cond) => cond.condition),
+      tooltip: tooltipMessage,
+    }),
+    [
+      isMember,
+      handleClick,
+      missmatchUrl,
+      disableRegMemberBtnCondition,
+      tooltipMessage,
+    ],
+  );
 
   return (
     <>
@@ -161,16 +191,7 @@ export function RegisterMember({
       />
       <div className="flex gap-4">
         <div className="flex items-center justify-center">
-          <Button
-            onClick={handleClick}
-            btnStyle={isMember ? "outline" : "filled"}
-            color={isMember ? "danger" : "primary"}
-            disabled={
-              missmatchUrl ||
-              disableRegMemberBtnCondition.some((cond) => cond.condition)
-            }
-            tooltip={tooltipMessage}
-          >
+          <Button {...buttonProps}>
             {isMember ? "Leave community" : "Register in community"}
           </Button>
         </div>

@@ -10,11 +10,9 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import {
-  Allo,
   getAlloQuery,
   getPoolDataDocument,
   getPoolDataQuery,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { Address } from "#/subgraph/src/scripts/last-addr";
 import { blueLand, grassLarge } from "@/assets";
