@@ -9,8 +9,10 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
-import {AccessControlUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {AccessControlUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
@@ -81,16 +83,13 @@ contract RegistryCommunityV0_0 is
     /// @notice List of enabled/disabled strategies
     mapping(address strategy => bool isEnabled) public enabledStrategies;
     /// @notice Power points for each member in each strategy
-    mapping(address strategy => mapping(address member => uint256 power))
-        public memberPowerInStrategy;
+    mapping(address strategy => mapping(address member => uint256 power)) public memberPowerInStrategy;
     /// @notice Member information as the staked amount and if is registered in the community
     mapping(address member => Member) public addressToMemberInfo;
     /// @notice List of strategies for each member are activated
-    mapping(address member => address[] strategiesAddresses)
-        public strategiesByMember;
+    mapping(address member => address[] strategiesAddresses) public strategiesByMember;
     /// @notice Mapping to check if a member is activated in a strategy
-    mapping(address member => mapping(address strategy => bool isActivated))
-        public memberActivatedInStrategies;
+    mapping(address member => mapping(address strategy => bool isActivated)) public memberActivatedInStrategies;
 
     /// @notice List of initial members to be added as pool managers in the Allo Pool
     address[] initialMembers;
@@ -110,35 +109,17 @@ contract RegistryCommunityV0_0 is
     event CouncilSafeChangeStarted(address _safeOwner, address _newSafeOwner);
     event MemberRegistered(address _member, uint256 _amountStaked);
     event MemberUnregistered(address _member, uint256 _amountReturned);
-    event MemberKicked(
-        address _member,
-        address _transferAddress,
-        uint256 _amountReturned
-    );
+    event MemberKicked(address _member, address _transferAddress, uint256 _amountReturned);
     event CommunityFeeUpdated(uint256 _newFee);
-    event RegistryInitialized(
-        bytes32 _profileId,
-        string _communityName,
-        Metadata _metadata
-    );
+    event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
     event StrategyAdded(address _strategy);
     event StrategyRemoved(address _strategy);
-    event MemberActivatedStrategy(
-        address _member,
-        address _strategy,
-        uint256 _pointsToIncrease
-    );
+    event MemberActivatedStrategy(address _member, address _strategy, uint256 _pointsToIncrease);
     event MemberDeactivatedStrategy(address _member, address _strategy);
     event BasisStakedAmountSet(uint256 _newAmount);
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
     event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
-    event PoolCreated(
-        uint256 _poolId,
-        address _strategy,
-        address _community,
-        address _token,
-        Metadata _metadata
-    );
+    event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata);
 
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
@@ -168,10 +149,7 @@ contract RegistryCommunityV0_0 is
         }
     }
 
-    function onlyStrategyAddress(
-        address _sender,
-        address _strategy
-    ) private pure {
+    function onlyStrategyAddress(address _sender, address _strategy) private pure {
         if (_sender != _strategy) {
             revert SenderNotStrategy();
         }
@@ -204,10 +182,7 @@ contract RegistryCommunityV0_0 is
     error KickNotEnabled();
     error PointsDeactivated();
     error DecreaseUnderMinimum();
-    error CantDecreaseMoreThanPower(
-        uint256 _decreaseAmount,
-        uint256 _currentPower
-    );
+    error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower);
 
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -252,9 +227,7 @@ contract RegistryCommunityV0_0 is
         address _strategyTemplate;
     }
 
-    function initialize(
-        RegistryCommunityV0_0.InitializeParams memory params
-    ) public initializer {
+    function initialize(RegistryCommunityV0_0.InitializeParams memory params) public initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
         __AccessControl_init();
@@ -296,39 +269,27 @@ contract RegistryCommunityV0_0 is
             pool_initialMembers[i] = owners[i];
         }
 
-        pool_initialMembers[pool_initialMembers.length - 1] = address(
-            councilSafe
-        );
+        pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);
         pool_initialMembers[pool_initialMembers.length - 2] = address(this);
 
         // console.log("initialMembers length", pool_initialMembers.length);
-        profileId = registry.createProfile(
-            params._nonce,
-            communityName,
-            params._metadata,
-            address(this),
-            pool_initialMembers
-        );
+        profileId =
+            registry.createProfile(params._nonce, communityName, params._metadata, address(this), pool_initialMembers);
 
         initialMembers = pool_initialMembers;
 
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
-    function createPool(
-        address _token,
-        StrategyStruct.InitializeParams memory _params,
-        Metadata memory _metadata
-    ) public returns (uint256 poolId, address strategy) {
+    function createPool(address _token, StrategyStruct.InitializeParams memory _params, Metadata memory _metadata)
+        public
+        returns (uint256 poolId, address strategy)
+    {
         // address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
         // address strategyClone = address(new CVStrategyV0_0());
         address strategyProxy = address(
             new ERC1967Proxy(
-                address(new CVStrategyV0_0()),
-                abi.encodeWithSelector(
-                    CVStrategyV0_0.init.selector,
-                    address(allo)
-                )
+                address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
             )
         );
 
@@ -350,22 +311,13 @@ contract RegistryCommunityV0_0 is
         address[] memory _pool_managers = initialMembers;
 
         poolId = allo.createPoolWithCustomStrategy(
-            profileId,
-            strategy,
-            abi.encode(_params),
-            token,
-            0,
-            _metadata,
-            _pool_managers
+            profileId, strategy, abi.encode(_params), token, 0, _metadata, _pool_managers
         );
 
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
     }
 
-    function activateMemberInStrategy(
-        address _member,
-        address _strategy
-    ) public {
+    function activateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
         _revertZeroAddress(_strategy);
@@ -379,22 +331,10 @@ contract RegistryCommunityV0_0 is
         uint256 totalStakedAmount = member.stakedAmount;
         uint256 pointsToIncrease = registerStakeAmount;
 
-        if (
-            IPointStrategy(_strategy).getPointSystem() ==
-            StrategyStruct.PointSystem.Quadratic
-        ) {
-            pointsToIncrease = IPointStrategy(_strategy).increasePower(
-                _member,
-                0
-            );
-        } else if (
-            IPointStrategy(_strategy).getPointSystem() !=
-            StrategyStruct.PointSystem.Fixed
-        ) {
-            pointsToIncrease = IPointStrategy(_strategy).increasePower(
-                _member,
-                totalStakedAmount
-            );
+        if (IPointStrategy(_strategy).getPointSystem() == StrategyStruct.PointSystem.Quadratic) {
+            pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, 0);
+        } else if (IPointStrategy(_strategy).getPointSystem() != StrategyStruct.PointSystem.Fixed) {
+            pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, totalStakedAmount);
         }
 
         memberPowerInStrategy[_member][_strategy] = pointsToIncrease; // can be all zero
@@ -405,10 +345,7 @@ contract RegistryCommunityV0_0 is
         emit MemberActivatedStrategy(_member, _strategy, pointsToIncrease);
     }
 
-    function deactivateMemberInStrategy(
-        address _member,
-        address _strategy
-    ) public {
+    function deactivateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
         _revertZeroAddress(_strategy);
         onlyStrategyAddress(msg.sender, _strategy);
@@ -425,16 +362,11 @@ contract RegistryCommunityV0_0 is
         emit MemberDeactivatedStrategy(_member, _strategy);
     }
 
-    function removeStrategyFromMember(
-        address _member,
-        address _strategy
-    ) internal {
+    function removeStrategyFromMember(address _member, address _strategy) internal {
         address[] storage memberStrategies = strategiesByMember[_member];
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             if (memberStrategies[i] == _strategy) {
-                memberStrategies[i] = memberStrategies[
-                    memberStrategies.length - 1
-                ];
+                memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
                 memberStrategies.pop();
             }
         }
@@ -450,16 +382,10 @@ contract RegistryCommunityV0_0 is
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             //FIX support interface check
             //if (address(memberStrategies[i]) == _strategy) {
-            pointsToIncrease = IPointStrategy(memberStrategies[i])
-                .increasePower(member, _amountStaked);
+            pointsToIncrease = IPointStrategy(memberStrategies[i]).increasePower(member, _amountStaked);
             if (pointsToIncrease != 0) {
-                memberPowerInStrategy[member][
-                    memberStrategies[i]
-                ] += pointsToIncrease;
-                console.log(
-                    "Strategy power",
-                    memberPowerInStrategy[member][memberStrategies[i]]
-                );
+                memberPowerInStrategy[member][memberStrategies[i]] += pointsToIncrease;
+                console.log("Strategy power", memberPowerInStrategy[member][memberStrategies[i]]);
             }
             //}
         }
@@ -480,38 +406,23 @@ contract RegistryCommunityV0_0 is
 
         uint256 pointsToDecrease;
 
-        if (
-            addressToMemberInfo[member].stakedAmount - _amountUnstaked <
-            registerStakeAmount
-        ) {
+        if (addressToMemberInfo[member].stakedAmount - _amountUnstaked < registerStakeAmount) {
             revert DecreaseUnderMinimum();
         }
         gardenToken.safeTransfer(member, _amountUnstaked);
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             address strategy = memberStrategies[i];
             if (strategy.supportsInterface(type(IPointStrategy).interfaceId)) {
-                pointsToDecrease = IPointStrategy(strategy).decreasePower(
-                    member,
-                    _amountUnstaked
-                );
-                uint256 currentPower = memberPowerInStrategy[member][
-                    memberStrategies[i]
-                ];
+                pointsToDecrease = IPointStrategy(strategy).decreasePower(member, _amountUnstaked);
+                uint256 currentPower = memberPowerInStrategy[member][memberStrategies[i]];
                 if (pointsToDecrease > currentPower) {
-                    revert CantDecreaseMoreThanPower(
-                        pointsToDecrease,
-                        currentPower
-                    );
+                    revert CantDecreaseMoreThanPower(pointsToDecrease, currentPower);
                 } else {
-                    memberPowerInStrategy[member][
-                        memberStrategies[i]
-                    ] -= pointsToDecrease;
+                    memberPowerInStrategy[member][memberStrategies[i]] -= pointsToDecrease;
                 }
             } else {
                 // emit StrategyShouldBeRemoved(strategy, member);
-                memberStrategies[i] = memberStrategies[
-                    memberStrategies.length - 1
-                ];
+                memberStrategies[i] = memberStrategies[memberStrategies.length - 1];
                 memberStrategies.pop();
                 _removeStrategy(strategy);
             }
@@ -521,16 +432,11 @@ contract RegistryCommunityV0_0 is
         emit MemberPowerDecreased(member, _amountUnstaked);
     }
 
-    function getMemberPowerInStrategy(
-        address _member,
-        address _strategy
-    ) public view returns (uint256) {
+    function getMemberPowerInStrategy(address _member, address _strategy) public view returns (uint256) {
         return memberPowerInStrategy[_member][_strategy];
     }
 
-    function getMemberStakedAmount(
-        address _member
-    ) public view returns (uint256) {
+    function getMemberStakedAmount(address _member) public view returns (uint256) {
         return addressToMemberInfo[_member].stakedAmount;
     }
 
@@ -552,7 +458,7 @@ contract RegistryCommunityV0_0 is
     }
 
     function _addStrategy(address _newStrategy) internal {
-      console.log("enabledStrategies[_newStrategy]", enabledStrategies[_newStrategy]);
+        console.log("enabledStrategies[_newStrategy]", enabledStrategies[_newStrategy]);
         if (enabledStrategies[_newStrategy]) {
             revert StrategyExists();
         }
@@ -612,11 +518,9 @@ contract RegistryCommunityV0_0 is
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
         RegistryFactory gardensFactory = RegistryFactory(registryFactory);
-        uint256 communityFeeAmount = (registerStakeAmount * communityFee) /
-            (100 * PRECISION_SCALE);
-        uint256 gardensFeeAmount = (registerStakeAmount *
-            gardensFactory.getProtocolFee(address(this))) /
-            (100 * PRECISION_SCALE);
+        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
+        uint256 gardensFeeAmount =
+            (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
         if (!isMember(_member)) {
             newMember.isRegistered = true;
 
@@ -625,9 +529,7 @@ contract RegistryCommunityV0_0 is
             console.log("gardenToken", address(gardenToken));
 
             gardenToken.safeTransferFrom(
-                _member,
-                address(this),
-                registerStakeAmount + communityFeeAmount + gardensFeeAmount
+                _member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
             );
             //TODO: Test if revert because of approve on contract, if doesnt work, transfer all to this contract, and then transfer to each receiver
             //individually. Check vulnerabilites for that with Felipe
@@ -640,14 +542,8 @@ contract RegistryCommunityV0_0 is
             }
             console.log("gardensFeeAmount", gardensFeeAmount);
             if (gardensFeeAmount > 0) {
-                console.log(
-                    "gardensFactory.getGardensFeeReceiver()",
-                    gardensFactory.getGardensFeeReceiver()
-                );
-                gardenToken.safeTransfer(
-                    gardensFactory.getGardensFeeReceiver(),
-                    gardensFeeAmount
-                );
+                console.log("gardensFactory.getGardensFeeReceiver()", gardensFactory.getGardensFeeReceiver());
+                gardenToken.safeTransfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
             }
 
             emit MemberRegistered(_member, registerStakeAmount);
@@ -656,11 +552,9 @@ contract RegistryCommunityV0_0 is
 
     function getStakeAmountWithFees() public view returns (uint256) {
         RegistryFactory gardensFactory = RegistryFactory(registryFactory);
-        uint256 communityFeeAmount = (registerStakeAmount * communityFee) /
-            (100 * PRECISION_SCALE);
-        uint256 gardensFeeAmount = (registerStakeAmount *
-            gardensFactory.getProtocolFee(address(this))) /
-            (100 * PRECISION_SCALE);
+        uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
+        uint256 gardensFeeAmount =
+            (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
 
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
@@ -712,10 +606,7 @@ contract RegistryCommunityV0_0 is
         }
     }
 
-    function kickMember(
-        address _member,
-        address _transferAddress
-    ) public nonReentrant {
+    function kickMember(address _member, address _transferAddress) public nonReentrant {
         onlyCouncilSafe();
         if (!isKickEnabled) {
             revert KickNotEnabled();
