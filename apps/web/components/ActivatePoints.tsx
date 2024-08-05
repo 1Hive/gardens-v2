@@ -101,18 +101,14 @@ export function ActivatePoints({
   );
 
   return (
-    <>
-      <div className="flex flex-col gap-4 pl-4">
-        <Button
-          onClick={handleChange}
-          btnStyle={isMemberActivated ? "outline" : "filled"}
-          color={isMemberActivated ? "danger" : "primary"}
-          disabled={missmatchUrl || disableActiveBtn}
-          tooltip={String(tooltipMessage)}
-        >
-          {isMemberActivated ? "Deactivate governance" : "Activate governance"}
-        </Button>
-      </div>
-    </>
+    <Button
+      onClick={handleChange}
+      btnStyle={isMemberActivated ? "outline" : "filled"}
+      color={isMemberActivated ? "danger" : "primary"}
+      disabled={missmatchUrl || disableActiveBtn}
+      tooltip={String(tooltipMessage)}
+    >
+      {isMemberActivated ? "Deactivate governance" : "Activate governance"}
+    </Button>
   );
 }

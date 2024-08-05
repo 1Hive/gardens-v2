@@ -2,7 +2,7 @@
 import React from "react";
 import { toast } from "react-toastify";
 import { useAccount } from "wagmi";
-import { Button } from "./Button";
+import { Button } from "@/components/";
 
 interface SubmitPassportResponse {
   data: any;

@@ -450,6 +450,7 @@ query getPassportStrategy($strategyId: ID!) {
     active
   }
 }
+
 query getPassportUser($userId: ID!) {
   passportUser(id: $userId) {
     id

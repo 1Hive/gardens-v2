@@ -3,7 +3,7 @@ import { actions } from "@wagmi/cli/plugins";
 import { Abi } from "viem";
 import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
-import { abi as mockERC20ABI } from "#/contracts/out/ERC20.sol/ERC20.json";
+import { abi as mockERC20ABI } from "#/contracts/out/TERC20.sol/TERC20.json";
 import { abi as SafeABI } from "#/contracts/out/ISafe.sol/ISafe.json";
 import { abi as PassportScorerABI } from "#/contracts/out/PassportScorer.sol/PassportScorer.json";
 import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunity.sol/RegistryCommunity.json";
