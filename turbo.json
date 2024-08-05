@@ -1,13 +1,22 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDotEnv": [".env"],
+  "globalDotEnv": [
+    ".env"
+  ],
   "pipeline": {
     "generate": {
-      "dependsOn": ["^generate"],
-      "outputs": ["src/**"]
+      "dependsOn": [
+        "^generate"
+      ],
+      "outputs": [
+        "src/**"
+      ]
     },
     "build": {
-      "dependsOn": ["^build", "web#generate"],
+      "dependsOn": [
+        "^build",
+        "web#generate"
+      ],
       "outputs": [
         "dist/**",
         ".next/**",
@@ -43,8 +52,12 @@
       ]
     },
     "test": {
-      "dependsOn": ["build"],
-      "inputs": ["test/**/*.t.sol"],
+      "dependsOn": [
+        "build"
+      ],
+      "inputs": [
+        "test/**/*.t.sol"
+      ],
       "outputs": []
     },
     "test:watch": {
@@ -54,7 +67,10 @@
       "outputs": []
     },
     "dev": {
-      "dependsOn": ["web#generate", "^dev"],
+      "dependsOn": [
+        "web#generate",
+        "^dev"
+      ],
       "cache": false
     },
     "foundry#dev": {
@@ -67,7 +83,9 @@
       "cache": false
     },
     "subgraph#build": {
-      "dependsOn": ["foundry#build"]
+      "dependsOn": [
+        "foundry#build"
+      ]
     }
   }
 }

@@ -97,7 +97,6 @@ export const useTransactionNotification = ({
             : "Error processing transaction",
           showClickToExplorer: !!transactionData?.hash,
         };
-        console.log("transactionData?.hash", transactionData?.hash);
         toastOptions = {
           type: "error",
           onClick: clickToExplorer,
