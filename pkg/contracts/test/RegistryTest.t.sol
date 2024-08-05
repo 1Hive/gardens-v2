@@ -20,22 +20,36 @@ import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
 import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
+import {RegistryFactoryV0_1} from "../src/RegistryFactoryV0_1.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
-import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
+import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategyV0_0.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
+import {RegistryCommunity} from "../src/RegistryCommunity.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
-import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
+import {CVStrategyHelpersV0_0} from "./CVStrategyHelpersV0_0.sol";
 
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
 
-contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
-    CVStrategy public strategy;
+contract RegistryUpgradeableTest is
+    Test,
+    AlloSetup,
+    RegistrySetupFull,
+    CVStrategyHelpersV0_0,
+    Errors,
+    GasHelpers2,
+    SafeSetup
+{
+    CVStrategyV0_0 public strategy;
     GV2ERC20 public token;
     uint256 public mintAmount = 1_000_000 * DECIMALS;
 
@@ -49,9 +63,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
-    RegistryFactory internal registryFactory;
-    RegistryCommunity internal registryCommunity;
-    RegistryCommunity internal nonKickableCommunity;
+    RegistryFactoryV0_0 internal registryFactory;
+    RegistryCommunityV0_0 internal registryCommunity;
+    RegistryCommunityV0_0 internal nonKickableCommunity;
 
     address gardenOwner = makeAddr("communityGardenOwner");
     address gardenMember = makeAddr("communityGardenMember");
@@ -79,7 +93,12 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         token.approve(address(allo()), mintAmount);
 
         //        strategy = address(new CVMockStrategy(address(allo())));
-        strategy = new CVStrategy(address(allo()));
+
+        ERC1967Proxy strategyProxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()))
+        );
+
+        strategy = CVStrategyV0_0(payable(strategyProxy));
         //        strategy = address(new MockStrategy(address(allo())));
         // uint256 poolId = createPool(
         //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, StrategyStruct.ProposalType(0)
@@ -89,10 +108,20 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         allo().transferOwnership(local());
         vm.stopPrank();
         vm.startPrank(gardenOwner);
-        registryFactory = new RegistryFactory();
-        _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
+
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(new RegistryFactoryV0_0()),
+            abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(protocolFeeReceiver))
+        );
+
+        registryFactory = RegistryFactoryV0_0(address(proxy));
+
+        // registryFactory = new RegistryFactory();
+        // _registryFactory().setReceiverAddress(address(protocolFeeReceiver));
+
         vm.stopPrank();
-        RegistryCommunity.InitializeParams memory params;
+
+        RegistryCommunityV0_0.InitializeParams memory params;
         params._strategyTemplate = address(strategy);
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
@@ -103,23 +132,36 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         params._councilSafe = payable(address(_councilSafe()));
 
         params._isKickEnabled = true;
-        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+
+        registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+
+        assertEq(registryFactory.nonce(), 1, "nonce before upgrade");
+
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
+
+        Upgrades.upgradeProxy(
+            address(_registryFactory()),
+            "RegistryFactoryV0_1.sol",
+            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
+        );
+        assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
         vm.stopPrank();
+
         params._isKickEnabled = false;
-        nonKickableCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+
+        nonKickableCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
     }
 
-    function _registryCommunity() internal view returns (RegistryCommunity) {
+    function _registryCommunity() internal view returns (RegistryCommunityV0_0) {
         return registryCommunity;
     }
 
-    function _registryFactory() internal view returns (RegistryFactory) {
+    function _registryFactory() internal view returns (RegistryFactoryV0_0) {
         return registryFactory;
     }
 
-    function _nonKickableCommunity() internal view returns (RegistryCommunity) {
+    function _nonKickableCommunity() internal view returns (RegistryCommunityV0_0) {
         return nonKickableCommunity;
     }
 
@@ -199,7 +241,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), 2);
         _registryFactory().setCommunityValidity(address(registryCommunity), false);
-        vm.expectRevert(abi.encodeWithSelector(RegistryFactory.CommunityInvalid.selector, address(registryCommunity)));
+        vm.expectRevert(
+            abi.encodeWithSelector(RegistryFactoryV0_0.CommunityInvalid.selector, address(registryCommunity))
+        );
         _registryFactory().getProtocolFee(address(registryCommunity));
         vm.stopPrank();
         stopMeasuringGas();
@@ -867,7 +911,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_revert_initialize_zeroStake() public {
-        RegistryCommunity.InitializeParams memory params;
+        RegistryCommunityV0_0.InitializeParams memory params;
         params._strategyTemplate = address(strategy);
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
@@ -878,7 +922,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         params._councilSafe = payable(address(_councilSafe()));
         params._isKickEnabled = true;
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunity.ValueCannotBeZero.selector));
-        registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+        registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
     }
 
     function test_revert_deactivateMemberInStrategyCaller() public {

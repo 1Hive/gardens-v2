@@ -22,6 +22,8 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
 
 interface IPointStrategy {
@@ -255,11 +257,8 @@ contract CVStrategyV0_0 is
     }
 
     function initialize(uint256 _poolId, bytes memory _data) external virtual onlyAllo {
-        console.log("###~0", address(arbitrableConfig.arbitrator));
         __BaseStrategy_init(_poolId);
-        console.log("###~1");
         StrategyStruct.InitializeParams memory ip = abi.decode(_data, (StrategyStruct.InitializeParams));
-        console.log("###~2");
 
         if (ip.registryCommunity == address(0)) {
             revert RegistryCannotBeZero();
@@ -278,10 +277,7 @@ contract CVStrategyV0_0 is
         arbitrableConfig = ip.arbitrableConfig;
         console.log("###~4");
         if (address(arbitrableConfig.arbitrator) != address(0)) {
-            console.log("###~5: ");
             collateralVault = CollateralVault(Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++));
-
-            console.log("###~6", address(collateralVault));
             collateralVault.initialize();
             console.log("###~7");
             if (arbitrableConfig.tribunalSafe != address(0)) {
@@ -427,8 +423,7 @@ contract CVStrategyV0_0 is
         p.convictionLast = 0;
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
-        console.log("#####__2__15", msg.value);
-        console.log(address(collateralVault));
+        console.log("#####__2__15", gasleft());
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
         console.log("#####__2__16", gasleft());
 
@@ -559,6 +554,10 @@ contract CVStrategyV0_0 is
 
     function getPointSystem() public view returns (StrategyStruct.PointSystem) {
         return pointSystem;
+    }
+
+    function getCollateralAmount() public view returns (uint256) {
+        return arbitrableConfig.submitterCollateralAmount;
     }
 
     // [[[proposalId, delta],[proposalId, delta]]]
