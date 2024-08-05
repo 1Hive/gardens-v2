@@ -23,14 +23,14 @@ import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 import {RegistryFactoryV0_1} from "../src/RegistryFactoryV0_1.sol";
 import {RegistryFactory} from "../src/RegistryFactory.sol";
-import {CVStrategy, StrategyStruct} from "../src/CVStrategy.sol";
+import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategyV0_0.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 import {RegistryCommunity} from "../src/RegistryCommunity.sol";
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
-import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
+import {CVStrategyHelpersV0_0} from "./CVStrategyHelpersV0_0.sol";
 
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
@@ -44,12 +44,12 @@ contract RegistryUpgradeableTest is
     Test,
     AlloSetup,
     RegistrySetupFull,
-    CVStrategyHelpers,
+    CVStrategyHelpersV0_0,
     Errors,
     GasHelpers2,
     SafeSetup
 {
-    CVStrategy public strategy;
+    CVStrategyV0_0 public strategy;
     GV2ERC20 public token;
     uint256 public mintAmount = 1_000_000 * DECIMALS;
 
@@ -93,7 +93,13 @@ contract RegistryUpgradeableTest is
         token.approve(address(allo()), mintAmount);
 
         //        strategy = address(new CVMockStrategy(address(allo())));
-        strategy = new CVStrategy(address(allo()));
+        
+        ERC1967Proxy strategyProxy = new ERC1967Proxy(
+          address(new CVStrategyV0_0()),
+          abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()))
+        );
+
+        strategy = CVStrategyV0_0(payable(strategyProxy));
         //        strategy = address(new MockStrategy(address(allo())));
         // uint256 poolId = createPool(
         //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, StrategyStruct.ProposalType(0)

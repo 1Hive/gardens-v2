@@ -15,8 +15,7 @@ import {ISafe} from "./interfaces/ISafe.sol";
 import "forge-std/console.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-import {IPointStrategy, CVStrategy, StrategyStruct} from "./CVStrategy.sol";
-
+import {CVStrategy, StrategyStruct, IPointStrategy} from "./CVStrategy.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 // import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
