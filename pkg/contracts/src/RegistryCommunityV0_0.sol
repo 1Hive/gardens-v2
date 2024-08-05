@@ -552,9 +552,11 @@ contract RegistryCommunityV0_0 is
     }
 
     function _addStrategy(address _newStrategy) internal {
+      console.log("enabledStrategies[_newStrategy]", enabledStrategies[_newStrategy]);
         if (enabledStrategies[_newStrategy]) {
             revert StrategyExists();
         }
+        console.log("END");
         enabledStrategies[_newStrategy] = true;
         emit StrategyAdded(_newStrategy);
     }

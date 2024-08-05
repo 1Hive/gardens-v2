@@ -408,12 +408,14 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         );
 
         token.mint(address(pool_admin()), 10_000 ether);
-
+        console.log("#####-6");
         ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()),
             abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
         );
-        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(strategyProxy));
+        console.log("#####-5");
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(strategy1Proxy));
+        console.log("#####-4");
 
         safeHelper(
             address(registryCommunity),
@@ -423,11 +425,17 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
                 address(strategy1)
             )
         );
+
+        console.log("#####-3");
         ERC1967Proxy strategy2Proxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()),
             abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
         );
-        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(strategyProxy));
+
+        console.log("#####-2");
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(strategy2Proxy));
+
+        console.log("#####-1");
 
         safeHelper(
             address(registryCommunity),
@@ -437,6 +445,8 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
                 address(strategy2)
             )
         );
+
+        console.log("#####0");
         // FAST 1 MIN GROWTH
 
         uint256 poolId = createPool(
@@ -450,6 +460,8 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             _getPointConfig()
         );
 
+        console.log("#####1");
+
         uint256 poolIdFixed = createPool(
             Allo(address(allo)),
             address(strategy2),
@@ -460,6 +472,8 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             StrategyStruct.PointSystem.Fixed,
             _getPointConfig()
         );
+
+        console.log("#####2");
 
         // uint256 poolIdSignaling = createPool(
         //     Allo(address(allo)),
@@ -475,12 +489,14 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
 
+        console.log("#####3");
         // FAST 1 MIN GROWTH
         strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
         strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
         vm.stopBroadcast();
 
+        console.log("#####4");
         address[] memory membersStaked = new address[](5);
         membersStaked[0] = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
         membersStaked[1] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
@@ -488,6 +504,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         membersStaked[3] = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
         membersStaked[4] = address(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
 
+        console.log("#####5");
         for (uint256 i = 0; i < membersStaked.length; i++) {
             vm.startBroadcast(address(membersStaked[i]));
             token.mint(address(membersStaked[i]), MINIMUM_STAKE * 2);
@@ -505,11 +522,14 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         }
         vm.startBroadcast(pool_admin());
 
+
+        console.log("#####6");
+
         token.approve(address(allo), type(uint256).max);
         allo.fundPool(poolId, 3_000 ether); // ether
         allo.fundPool(poolIdFixed, 1_000 ether); // ether
 
-        console.log("#####-3");
+        console.log("#####7");
         StrategyStruct.CreateProposal memory proposal = StrategyStruct
             .CreateProposal(
                 poolId,
@@ -519,10 +539,10 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
                 metadata
             );
         bytes memory data = abi.encode(proposal);
-        console.log("#####-2", gasleft());
+        console.log("#####8");
         allo.registerRecipient{value: 3 ether}(poolId, data);
 
-        console.log("#####-1");
+        console.log("#####9");
         proposal = StrategyStruct.CreateProposal(
             poolId,
             membersStaked[1],
@@ -530,12 +550,12 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             address(token),
             metadata
         );
-        console.log("#####-");
+        console.log("#####10");
         data = abi.encode(proposal);
-        console.log("#####1");
+        // console.log("#####1");
 
         allo.registerRecipient{value: 3 ether}(poolId, data);
-        console.log("#####2");
+        console.log("#####11");
 
         proposal = StrategyStruct.CreateProposal(
             poolId,
@@ -544,10 +564,12 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             address(token),
             metadata
         );
-        console.log("#####3");
+        console.log("#####12");
 
         data = abi.encode(proposal);
         allo.registerRecipient{value: 3 ether}(poolId, data);
+
+        console.log("#####13");
 
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
@@ -559,8 +581,12 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
                 address(token),
                 metadata
             );
+
+        console.log("#####14");
         bytes memory data2 = abi.encode(proposal2);
         allo.registerRecipient{value: 3 ether}(poolIdFixed, data2);
+
+        console.log("#####15");
 
         vm.stopBroadcast();
 
