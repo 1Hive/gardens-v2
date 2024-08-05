@@ -22,12 +22,7 @@ export type Scalars = {
   BigInt: { input: any; output: any; }
   Bytes: { input: any; output: any; }
   Int8: { input: any; output: any; }
-  Timestamp: { input: any; output: any; }
 };
-
-export type Aggregation_interval =
-  | 'hour'
-  | 'day';
 
 export type Allo = {
   id: Scalars['ID']['output'];
@@ -2389,8 +2384,6 @@ export type _Block_ = {
   number: Scalars['Int']['output'];
   /** Integer representation of the timestamp stored in blocks for the chain */
   timestamp?: Maybe<Scalars['Int']['output']>;
-  /** The hash of the parent block */
-  parentHash?: Maybe<Scalars['Bytes']['output']>;
 };
 
 /** The type for the top-level _meta field */

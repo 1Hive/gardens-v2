@@ -67,12 +67,7 @@ export type Scalars = {
         input: any;
         output: any;
     };
-    Timestamp: {
-        input: any;
-        output: any;
-    };
 };
-export type Aggregation_interval = 'hour' | 'day';
 export type Allo = {
     id: Scalars['ID']['output'];
     chainId: Scalars['BigInt']['output'];
@@ -2045,8 +2040,6 @@ export type _Block_ = {
     number: Scalars['Int']['output'];
     /** Integer representation of the timestamp stored in blocks for the chain */
     timestamp?: Maybe<Scalars['Int']['output']>;
-    /** The hash of the parent block */
-    parentHash?: Maybe<Scalars['Bytes']['output']>;
 };
 /** The type for the top-level _meta field */
 export type _Meta_ = {
@@ -2107,7 +2100,6 @@ export type NextResolverFn<T> = () => Promise<T>;
 export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs = {}> = (next: NextResolverFn<TResult>, parent: TParent, args: TArgs, context: TContext, info: GraphQLResolveInfo) => TResult | Promise<TResult>;
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
-    Aggregation_interval: Aggregation_interval;
     Allo: ResolverTypeWrapper<Allo>;
     Allo_filter: Allo_filter;
     Allo_orderBy: Allo_orderBy;
@@ -2161,7 +2153,6 @@ export type ResolversTypes = ResolversObject<{
     Stake_orderBy: Stake_orderBy;
     String: ResolverTypeWrapper<Scalars['String']['output']>;
     Subscription: ResolverTypeWrapper<{}>;
-    Timestamp: ResolverTypeWrapper<Scalars['Timestamp']['output']>;
     TokenGarden: ResolverTypeWrapper<TokenGarden>;
     TokenGarden_filter: TokenGarden_filter;
     TokenGarden_orderBy: TokenGarden_orderBy;
@@ -2210,7 +2201,6 @@ export type ResolversParentTypes = ResolversObject<{
     Stake_filter: Stake_filter;
     String: Scalars['String']['output'];
     Subscription: {};
-    Timestamp: Scalars['Timestamp']['output'];
     TokenGarden: TokenGarden;
     TokenGarden_filter: TokenGarden_filter;
     _Block_: _Block_;
@@ -2435,9 +2425,6 @@ export type SubscriptionResolvers<ContextType = MeshContext, ParentType extends 
     passportUsers?: SubscriptionResolver<Array<ResolversTypes['PassportUser']>, "passportUsers", ParentType, ContextType, RequireFields<SubscriptionpassportUsersArgs, 'skip' | 'first' | 'subgraphError'>>;
     _meta?: SubscriptionResolver<Maybe<ResolversTypes['_Meta_']>, "_meta", ParentType, ContextType, Partial<Subscription_metaArgs>>;
 }>;
-export interface TimestampScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Timestamp'], any> {
-    name: 'Timestamp';
-}
 export type TokenGardenResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['TokenGarden'] = ResolversParentTypes['TokenGarden']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
     name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2455,7 +2442,6 @@ export type _Block_Resolvers<ContextType = MeshContext, ParentType extends Resol
     hash?: Resolver<Maybe<ResolversTypes['Bytes']>, ParentType, ContextType>;
     number?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
     timestamp?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-    parentHash?: Resolver<Maybe<ResolversTypes['Bytes']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type _Meta_Resolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['_Meta_'] = ResolversParentTypes['_Meta_']> = ResolversObject<{
@@ -2484,7 +2470,6 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     RegistryFactory?: RegistryFactoryResolvers<ContextType>;
     Stake?: StakeResolvers<ContextType>;
     Subscription?: SubscriptionResolvers<ContextType>;
-    Timestamp?: GraphQLScalarType;
     TokenGarden?: TokenGardenResolvers<ContextType>;
     _Block_?: _Block_Resolvers<ContextType>;
     _Meta_?: _Meta_Resolvers<ContextType>;
@@ -2687,7 +2672,7 @@ export type getPoolDataQuery = {
     tokenGarden?: Maybe<Pick<TokenGarden, 'address' | 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled'> & {
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
-        config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'maxRatio' | 'minThresholdPoints'>;
+        config: Pick<CVStrategyConfig, 'id' | 'decay' | 'weight' | 'proposalType' | 'pointSystem' | 'maxRatio' | 'minThresholdPoints'>;
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });

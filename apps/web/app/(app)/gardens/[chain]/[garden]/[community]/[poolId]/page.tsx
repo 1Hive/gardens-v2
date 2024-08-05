@@ -133,26 +133,25 @@ export default function Page({
     {
       label: "Min conviction",
       value: 0,
-      // TODO: add description and weight to query and perfom calculation
-      info: "description here",
+      // TODO: add weight to query and perfom calculation
+      info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
     },
     {
       // TODO: add decay to query and perfom calculation
       label: "Conviction growth",
       value: 0,
-      info: "Conviction growth determines how quickly voting power accumulates over time.",
+      info: "Determines how quickly voting weight accumulates on proposals over time.",
     },
     {
       label: "Min Threshold",
       value: `${strategyObj?.config.minThresholdPoints}`,
-      // TODO: add description
-      info: "description here",
+      info: "A fixed value that overrides Minimum Conviction when the Pool's activated governance is low.",
     },
     {
       label: "Spending limit",
       // TODO: check number for not approved pools, they have more zeros or another config ?
       value: `${((spendingLimitPct ?? 0) * MAX_RATIO_CONSTANT).toFixed(2)}%`,
-      info: "Max percentage of the pool that can be spent in a single proposal",
+      info: "Max percentage of the pool funds that can be spent in a single proposal",
     },
   ];
 
