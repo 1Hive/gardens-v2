@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Address, useContractRead } from "wagmi";
-import {
-  useContractWriteWithConfirmations,
-} from "./useContractWriteWithConfirmations";
+import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -33,15 +31,18 @@ export function useHandleAllowance(
     enabled: accountAddr !== undefined,
   });
 
-  const { write: writeAllowToken, transactionStatus } =
-    useContractWriteWithConfirmations({
-      address: tokenAddr,
-      abi: abiWithErrors(erc20ABI),
-      args: [spenderAddr, amount],
-      functionName: "approve",
-      contractName: "ERC20",
-      showNotification: false,
-    });
+  const {
+    write: writeAllowToken,
+    transactionStatus,
+    error: allowanceError,
+  } = useContractWriteWithConfirmations({
+    address: tokenAddr,
+    abi: abiWithErrors(erc20ABI),
+    args: [spenderAddr, amount],
+    functionName: "approve",
+    contractName: "ERC20",
+    showNotification: false,
+  });
 
   const handleAllowance = async () => {
     const newAllowance = await refetchAllowance();
@@ -63,7 +64,7 @@ export function useHandleAllowance(
   useEffect(() => {
     setAllowanceTxProps({
       contractName: `${tokenSymbol} expenditure approval`,
-      message: getTxMessage(transactionStatus),
+      message: getTxMessage(transactionStatus, allowanceError),
       status: transactionStatus ?? "idle",
     });
     if (transactionStatus === "success") {

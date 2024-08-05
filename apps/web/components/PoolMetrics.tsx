@@ -45,25 +45,28 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const requestedAmount = parseUnits(amount || "0", tokenGarden.decimals);
 
-  const { write: writeFundPool, transactionStatus: fundPoolStatus } =
-    useContractWriteWithConfirmations({
-      address: alloInfo.id as Address,
-      abi: abiWithErrors(alloABI),
-      args: [BigInt(poolId), BigInt(amount)],
-      functionName: "fundPool",
-      contractName: "Allo",
-      showNotification: false,
-      onConfirmations: () => {
-        publish({
-          topic: "pool",
-          type: "update",
-          function: "fundPool",
-          id: poolId,
-          containerId: communityAddress,
-          chainId,
-        });
-      },
-    });
+  const {
+    write: writeFundPool,
+    transactionStatus: fundPoolStatus,
+    error: fundPoolError,
+  } = useContractWriteWithConfirmations({
+    address: alloInfo.id as Address,
+    abi: abiWithErrors(alloABI),
+    args: [BigInt(poolId), BigInt(amount)],
+    functionName: "fundPool",
+    contractName: "Allo",
+    showNotification: false,
+    onConfirmations: () => {
+      publish({
+        topic: "pool",
+        type: "update",
+        function: "fundPool",
+        id: poolId,
+        containerId: communityAddress,
+        chainId,
+      });
+    },
+  });
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
     accountAddress,
@@ -85,7 +88,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   useEffect(() => {
     setAddFundsTx((prev) => ({
       ...prev,
-      message: getTxMessage(fundPoolStatus),
+      message: getTxMessage(fundPoolStatus, fundPoolError),
       status: fundPoolStatus ?? "idle",
     }));
   }, [fundPoolStatus]);

@@ -89,23 +89,26 @@ export const IncreasePower = ({
     status: "idle",
   });
 
-  const { write: writeIncreasePower, transactionStatus: increasePowerStatus } =
-    useContractWriteWithConfirmations({
-      ...registryContractCallConfig,
-      functionName: "increasePower",
-      args: [parseUnits(amount, tokenDecimals)],
-      showNotification: false,
-      onConfirmations: () => {
-        publish({
-          topic: "member",
-          type: "update",
-          function: "increasePower",
-          containerId: communityAddress,
-          id: accountAddress,
-          chainId: urlChainId,
-        });
-      },
-    });
+  const {
+    write: writeIncreasePower,
+    transactionStatus: increasePowerStatus,
+    error: increasePowerError,
+  } = useContractWriteWithConfirmations({
+    ...registryContractCallConfig,
+    functionName: "increasePower",
+    args: [parseUnits(amount, tokenDecimals)],
+    showNotification: false,
+    onConfirmations: () => {
+      publish({
+        topic: "member",
+        type: "update",
+        function: "increasePower",
+        containerId: communityAddress,
+        id: accountAddress,
+        chainId: urlChainId,
+      });
+    },
+  });
 
   const { write: writeDecreasePower } = useContractWriteWithConfirmations({
     ...registryContractCallConfig,
@@ -127,7 +130,7 @@ export const IncreasePower = ({
   useEffect(() => {
     setVotingPowerTx((prev) => ({
       ...prev,
-      message: getTxMessage(increasePowerStatus),
+      message: getTxMessage(increasePowerStatus, increasePowerError),
       status: increasePowerStatus ?? "idle",
     }));
   }, [increasePowerStatus]);

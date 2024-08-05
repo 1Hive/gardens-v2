@@ -1,4 +1,10 @@
-export const getTxMessage = (transactionStatus: string | undefined) => {
+import { UserRejectedRequestError } from "viem";
+
+export const getTxMessage = (
+  transactionStatus: string | undefined,
+  transactionError?: Error | null | undefined,
+  fallbackErrorMessage?: string,
+) => {
   let message = "";
   switch (transactionStatus) {
     case "idle":
@@ -14,8 +20,22 @@ export const getTxMessage = (transactionStatus: string | undefined) => {
       message = "Approved";
       break;
     case "error":
-      message = "User rejected the request";
+      message =
+        transactionError ?
+          parseErrorMessage(transactionError, fallbackErrorMessage)
+        : "Error processing transaction";
       break;
   }
   return message;
 };
+
+function parseErrorMessage(error: Error, fallbackErrorMessage?: string) {
+  console.debug(error);
+  if (error?.cause instanceof UserRejectedRequestError) {
+    return "User rejected the request";
+  } else if (fallbackErrorMessage) {
+    return fallbackErrorMessage;
+  } else {
+    return "Transaction failed. Please try again";
+  }
+}
