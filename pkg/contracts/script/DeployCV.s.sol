@@ -77,9 +77,15 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         // registryFactory = new RegistryFactoryV0_0();
         address protocolFeeReceiver = address(this);
 
+        RegistryCommunityV0_0 registryCommunityTemplate = new RegistryCommunityV0_0();
+
         ERC1967Proxy factoryProxy = new ERC1967Proxy(
             address(new RegistryFactoryV0_0()),
-            abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(protocolFeeReceiver))
+            abi.encodeWithSelector(
+                RegistryFactoryV0_0.initialize.selector,
+                address(protocolFeeReceiver),
+                address(registryCommunityTemplate)
+            )
         );
 
         registryFactory = RegistryFactoryV0_0(address(factoryProxy));

@@ -19,7 +19,7 @@ import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {FAllo} from "./interfaces/FAllo.sol";
 import {ISafe} from "./interfaces/ISafe.sol";
-import {RegistryFactory} from "./RegistryFactory.sol";
+import {IRegistryFactory} from "./IRegistryFactory.sol";
 import {CVStrategyV0_0, StrategyStruct, IPointStrategy} from "./CVStrategyV0_0.sol";
 
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
@@ -285,11 +285,11 @@ contract RegistryCommunityV0_0 is
         public
         returns (uint256 poolId, address strategy)
     {
-        // address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
+        address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
         // address strategyClone = address(new CVStrategyV0_0());
         address strategyProxy = address(
             new ERC1967Proxy(
-                address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+                address(strategyClone), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
             )
         );
 
@@ -517,7 +517,7 @@ contract RegistryCommunityV0_0 is
     function stakeAndRegisterMember() public nonReentrant {
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
-        RegistryFactory gardensFactory = RegistryFactory(registryFactory);
+        IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
         uint256 gardensFeeAmount =
             (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
@@ -551,7 +551,7 @@ contract RegistryCommunityV0_0 is
     }
 
     function getStakeAmountWithFees() public view returns (uint256) {
-        RegistryFactory gardensFactory = RegistryFactory(registryFactory);
+        IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
         uint256 gardensFeeAmount =
             (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
