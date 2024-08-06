@@ -3,8 +3,6 @@ pragma solidity ^0.8.19;
 
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 
-import {RegistryFactory} from "../src/RegistryFactory.sol";
-
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
