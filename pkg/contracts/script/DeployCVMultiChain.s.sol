@@ -241,7 +241,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             )
         );
 
-        StrategyStruct.PoolParams memory poolParams;
+        StrategyStruct.CVParams memory poolParams;
         poolParams.decay = _etherToFloat(0.9999903 ether); // alpha = decay
         poolParams.maxRatio = _etherToFloat(0.3219782 ether); // beta = maxRatio
         poolParams.weight = _etherToFloat(0.010367 ether); // RHO = p  = weight

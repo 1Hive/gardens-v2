@@ -112,11 +112,11 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
 
         StrategyStruct.InitializeParams memory paramsCV;
 
-        paramsCV.poolParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
+        paramsCV.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         // paramsCV.decay = _etherToFloat(0.9999 ether); // alpha = decay
-        paramsCV.poolParams.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
-        paramsCV.poolParams.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
-        paramsCV.poolParams.minThresholdPoints = 0.2 ether; // 20%
+        paramsCV.cvParams.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
+        paramsCV.cvParams.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
+        paramsCV.cvParams.minThresholdPoints = 0.2 ether; // 20%
         paramsCV.registryCommunity = address(registryCommunity);
         paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
@@ -127,13 +127,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         }
         paramsCV.pointConfig = pointConfig;
         paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
-            address(safeArbitrator),
-            payable(address(_councilSafe())),
-            3 ether,
-            2 ether,
-            1,
-            300,
-            address(new CollateralVault())
+            safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300, address(new CollateralVault())
         ); // Using council safe as tribinal just for testing
         // FAST 1 MIN GROWTH
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(
@@ -151,13 +145,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         paramsCV.pointSystem = StrategyStruct.PointSystem.Fixed;
 
         paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
-            address(safeArbitrator),
-            payable(address(_councilSafe())),
-            3 ether,
-            2 ether,
-            1,
-            600,
-            address(new CollateralVault())
+            safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600, address(new CollateralVault())
         );
 
         (uint256 poolIdFixed, address _strategy2) = registryCommunity.createPool(address(token), paramsCV, metadata);
@@ -183,7 +171,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         // strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
         // strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         // strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
-        StrategyStruct.PoolParams memory poolParams1;
+        StrategyStruct.CVParams memory poolParams1;
         poolParams1.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         poolParams1.maxRatio = _etherToFloat(0.1 ether); // beta = maxRatio
         poolParams1.weight = _etherToFloat(0.0005 ether); // RHO = p  = weight
@@ -332,7 +320,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         address collateralVaultTemplate = address(new CollateralVault());
 
         StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
-            address(safeArbitrator), payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600, collateralVaultTemplate
+            safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600, collateralVaultTemplate
         );
 
         uint256 poolId = createPool(
@@ -370,7 +358,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         // );
 
         // Goss: Commented because already set in getParams
-        // StrategyStruct.PoolParams memory poolParams1;
+        // StrategyStruct.CVParams memory poolParams1;
         // poolParams1.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         // poolParams1.maxRatio = _etherToFloat(0.1 ether); // beta = maxRatio
         // poolParams1.weight = _etherToFloat(0.0005 ether); // RHO = p  = weight
@@ -383,7 +371,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
 
         // Goss: Commented because already set in getParams
         // FAST 1 MIN GROWTH
-        // StrategyStruct.PoolParams memory poolParams2;
+        // StrategyStruct.CVParams memory poolParams2;
         // poolParams2.decay = _etherToFloat(0.9965402 ether); // alpha = decay
         // poolParams2.maxRatio = _etherToFloat(0.1 ether); // beta = maxRatio
         // poolParams2.weight = _etherToFloat(0.0005 ether); // RHO = p  = weight

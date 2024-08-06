@@ -100,7 +100,7 @@ library StrategyStruct {
     }
 
     struct ArbitrableConfig {
-        address arbitrator;
+        IArbitrator arbitrator;
         address tribunalSafe;
         uint256 submitterCollateralAmount;
         uint256 challengerCollateralAmount;
@@ -109,15 +109,15 @@ library StrategyStruct {
         address collateralVaultTemplate;
     }
 
-    struct PoolParams {
-        uint256 decay;
+    struct CVParams {
         uint256 maxRatio;
         uint256 weight;
-        uint256 minThresholdPoints; // starting with a default of zero
+        uint256 decay;
+        uint256 minThresholdPoints;
     }
 
     struct InitializeParams {
-        PoolParams poolParams;
+        CVParams cvParams;
         ProposalType proposalType;
         PointSystem pointSystem;
         PointSystemConfig pointConfig;
@@ -189,11 +189,16 @@ contract CVStrategyV0_0 is
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
-    event PoolParamsUpdated(StrategyStruct.PoolParams poolParams, StrategyStruct.ArbitrableConfig arbitrableConfig);
+    event PoolParamsUpdated(StrategyStruct.CVParams cvParams, StrategyStruct.ArbitrableConfig arbitrableConfig);
     event RegistryUpdated(address registryCommunity);
     event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
     event ProposalDisputed(
-        address arbitrator, uint256 proposalId, uint256 disputeId, address challenger, string context, uint256 timestamp
+        IArbitrator arbitrator,
+        uint256 proposalId,
+        uint256 disputeId,
+        address challenger,
+        string context,
+        uint256 timestamp
     );
     event TribunaSafeRegistered(address strategy, address arbitrator, address tribunalSafe);
 
@@ -223,7 +228,7 @@ contract CVStrategyV0_0 is
     uint256 public totalStaked;
     uint256 public totalPointsActivated;
 
-    StrategyStruct.PoolParams public poolParams;
+    StrategyStruct.CVParams public cvParams;
 
     // Enum for handling proposal types
     StrategyStruct.ProposalType public proposalType;
@@ -270,7 +275,7 @@ contract CVStrategyV0_0 is
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
 
-        setPoolParams(ip.arbitrableConfig, ip.poolParams);
+        setPoolParams(ip.arbitrableConfig, ip.cvParams);
 
         sybilScorer = ISybilScorer(ip.sybilScorer);
 
@@ -396,6 +401,11 @@ contract CVStrategyV0_0 is
         emit ProposalCreated(poolId, proposalId);
         console.log("Gaz left: ", gasleft());
         return address(uint160(proposalId));
+    }
+
+
+    function getCollateralAmounts() external view returns (uint256, uint256) {
+        return (arbitrableConfig.submitterCollateralAmount, arbitrableConfig.challengerCollateralAmount);
     }
 
     function activatePoints() external {
@@ -762,7 +772,7 @@ contract CVStrategyV0_0 is
     }
 
     function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool isOverMaxRatio) {
-        isOverMaxRatio = poolParams.maxRatio * poolAmount <= _requestedAmount * D;
+        isOverMaxRatio = cvParams.maxRatio * poolAmount <= _requestedAmount * D;
     }
 
     function _check_before_addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport)
@@ -901,16 +911,15 @@ contract CVStrategyV0_0 is
         //        @audit-ok they use 2^128 as the container for the result of the _pow function
 
         //        uint256 atTWO_128 = _pow((decay << 128).div(D), t);
-        uint256 atTWO_128 = _pow((poolParams.decay << 128) / D, t);
+        uint256 atTWO_128 = _pow((cvParams.decay << 128) / D, t);
         // solium-disable-previous-line
         // conviction = (atTWO_128 * _lastConv + _oldAmount * D * (2^128 - atTWO_128) / (D - aD) + 2^127) / 2^128
         //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
         //            >> 128;
         //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
         //            >> 128;
-        return (
-            ((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - poolParams.decay))) + TWO_127
-        ) >> 128;
+        return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - cvParams.decay))) + TWO_127)
+            >> 128;
     }
 
     /**
@@ -943,14 +952,14 @@ contract CVStrategyV0_0 is
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
         // denom = maxRatio / 1 - _requestedAmount / funds;
-        uint256 denom = (poolParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
+        uint256 denom = (cvParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
         _threshold = (
-            (((((poolParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - poolParams.decay))
+            (((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - cvParams.decay))
                 * totalEffectiveActivePoints()
         ) >> 64;
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
-        _threshold = _threshold > poolParams.minThresholdPoints ? _threshold : poolParams.minThresholdPoints;
+        _threshold = _threshold > cvParams.minThresholdPoints ? _threshold : cvParams.minThresholdPoints;
     }
 
     /**
@@ -1042,7 +1051,7 @@ contract CVStrategyV0_0 is
     }
 
     function getMaxConviction(uint256 amount) public view returns (uint256) {
-        return ((amount * D) / (D - poolParams.decay));
+        return ((amount * D) / (D - cvParams.decay));
     }
 
     function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
@@ -1058,7 +1067,7 @@ contract CVStrategyV0_0 is
 
     function setPoolParams(
         StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
-        StrategyStruct.PoolParams memory _poolParams
+        StrategyStruct.CVParams memory _cvParams
     ) public {
         onlyCouncilSafe();
 
@@ -1088,8 +1097,8 @@ contract CVStrategyV0_0 is
             }
         }
 
-        poolParams = _poolParams;
-        emit PoolParamsUpdated(_poolParams, _arbitrableConfig);
+        cvParams = _cvParams;
+        emit PoolParamsUpdated(_cvParams, _arbitrableConfig);
     }
 
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
@@ -1121,8 +1130,7 @@ contract CVStrategyV0_0 is
             proposalId, msg.sender
         );
 
-        uint256 disputeId =
-            IArbitrator(arbitrableConfig.arbitrator).createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
+        uint256 disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
         proposal.proposalStatus = StrategyStruct.ProposalStatus.Disputed;
         proposal.disputeId = disputeId;
@@ -1201,7 +1209,7 @@ contract CVStrategyV0_0 is
 
         disputeCount--;
         proposal.lastDisputeCompletion = block.timestamp;
-        emit Ruling(IArbitrator(arbitrableConfig.arbitrator), _disputeID, _ruling);
+        emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
