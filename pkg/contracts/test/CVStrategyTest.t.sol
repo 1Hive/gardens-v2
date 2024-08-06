@@ -122,12 +122,6 @@ contract CVStrategyTestUpgradeable is
 
         registryFactory = RegistryFactoryV0_0(address(proxy));
 
-        proxy = new ERC1967Proxy(
-            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()))
-        );
-
-        cvStrategyTemplate = CVStrategyV0_0(payable(address(proxy)));
-
         assertEq(address(cvStrategyTemplate.getAllo()), address(allo()), "CVStrategy initialized");
 
         // cvStrategyTemplate.initialize(123,bytes(""));
@@ -135,7 +129,7 @@ contract CVStrategyTestUpgradeable is
         vm.stopPrank();
 
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(cvStrategyTemplate);
+        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;

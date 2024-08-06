@@ -62,10 +62,9 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
     {
         params._nonce = nonce++;
         params._registryFactory = address(this);
-        address communityClone = Clone.createClone(registryCommunityTemplate, params._nonce++);
-
+        
         ERC1967Proxy proxy = new ERC1967Proxy(
-            address(communityClone), abi.encodeWithSelector(RegistryCommunityV0_0.initialize.selector, params)
+            address(registryCommunityTemplate), abi.encodeWithSelector(RegistryCommunityV0_0.initialize.selector, params)
         );
 
         RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(payable(address(proxy)));

@@ -68,11 +68,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
 
         RegistryCommunityV0_0.InitializeParams memory params;
 
-        ERC1967Proxy cvProxy = new ERC1967Proxy(
-            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
-        );
-
-        params._strategyTemplate = address(CVStrategyV0_0(payable(cvProxy)));
+        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;

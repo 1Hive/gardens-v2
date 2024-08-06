@@ -180,20 +180,7 @@ contract DeployCVMultiChain is
         params._communityName = "Alpha Centaurians";
         params._allo = address(allo);
 
-        params._strategyTemplate = address(
-            CVStrategyV0_0(
-                payable(
-                    new ERC1967Proxy(
-                        address(new CVStrategyV0_0()),
-                        abi.encodeWithSelector(
-                            CVStrategyV0_0.init.selector,
-                            address(allo)
-                        )
-                    )
-                )
-            )
-        );
-
+        params._strategyTemplate = address(new CVStrategyV0_0());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 0;

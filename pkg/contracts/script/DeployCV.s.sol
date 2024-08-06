@@ -76,22 +76,17 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
 
         sybilScorer = PassportScorer(payable(address(scorerProxy)));
 
-        // registryFactory = new RegistryFactoryV0_0();
         address protocolFeeReceiver = address(this);
-
-        RegistryCommunityV0_0 registryCommunityTemplate = new RegistryCommunityV0_0();
 
         ERC1967Proxy factoryProxy = new ERC1967Proxy(
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(
                 RegistryFactoryV0_0.initialize.selector,
                 address(protocolFeeReceiver),
-                address(registryCommunityTemplate)
+                address(new RegistryCommunityV0_0())
             )
         );
-
         registryFactory = RegistryFactoryV0_0(address(factoryProxy));
-
         console2.log("Registry Factory Addr: %s", address(registryFactory));
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
@@ -104,23 +99,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         console2.log("Safe Arbitrator Addr: %s", address(safeArbitrator));
 
         RegistryCommunityV0_0.InitializeParams memory params;
-
-        ERC1967Proxy cvProxy = new ERC1967Proxy(
-            address(new CVStrategyV0_0()),
-            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
-        );
-
-        CVStrategyV0_0 cvStrategyTemplate = CVStrategyV0_0(
-            payable(address(cvProxy))
-        );
-
-        assertEq(
-            address(cvStrategyTemplate.getAllo()),
-            address(allo),
-            "CVStrategyV0_0 initialized"
-        );
-
-        params._strategyTemplate = address(cvStrategyTemplate);
+        params._strategyTemplate = address(new CVStrategyV0_0());
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
@@ -133,7 +112,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(
             registryFactory.createRegistry(params)
         );
-
         token.mint(address(pool_admin()), 10_000 ether);
 
         StrategyStruct.PointSystemConfig memory pointConfig;
@@ -149,16 +127,12 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         paramsCV.registryCommunity = address(registryCommunity);
         paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
-
         if (pointConfig.maxAmount == 0) {
             // StrategyStruct.PointSystemConfig memory pointConfig;
             //Capped point system
             pointConfig.maxAmount = 200 * DECIMALS;
         }
         paramsCV.pointConfig = pointConfig;
-
-        address collateralVaultTemplate = address(new CollateralVault());
-
         paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
             IArbitrator(address(safeArbitrator)),
             payable(address(_councilSafe())),
@@ -166,9 +140,8 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             2 ether,
             1,
             300,
-            collateralVaultTemplate
+            address(new CollateralVault())
         ); // Using council safe as tribinal just for testing
-
         // FAST 1 MIN GROWTH
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(
             address(token),
@@ -204,7 +177,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             2 ether,
             1,
             600,
-            collateralVaultTemplate
+            address(new CollateralVault())
         );
 
         (uint256 poolIdFixed, address _strategy2) = registryCommunity
@@ -391,13 +364,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         RegistryCommunityV0_0.InitializeParams memory params;
 
         params._allo = address(allo);
-        ERC1967Proxy strategyProxy = new ERC1967Proxy(
-            address(new CVStrategyV0_0()),
-            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
-        );
-        params._strategyTemplate = address(
-            CVStrategyV0_0(payable(strategyProxy))
-        );
+        params._strategyTemplate = address(new CVStrategyV0_0());
 
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -411,6 +378,8 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             registryFactory.createRegistry(params)
         );
 
+        console.log("Registry Community Addr: %s", address(registryCommunity));
+
         token.mint(address(pool_admin()), 10_000 ether);
         ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()),
@@ -423,7 +392,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             0,
             abi.encodeWithSelector(
                 registryCommunity.addStrategy.selector,
-                address(strategy1)
+                address(strategy1Proxy)
             )
         );
 

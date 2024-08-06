@@ -285,11 +285,9 @@ contract RegistryCommunityV0_0 is
         public
         returns (uint256 poolId, address strategy)
     {
-        address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
-        // address strategyClone = address(new CVStrategyV0_0());
         address strategyProxy = address(
             new ERC1967Proxy(
-                address(strategyClone), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+                address(strategyTemplate), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
             )
         );
 
