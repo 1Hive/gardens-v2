@@ -539,10 +539,6 @@ contract CVStrategyV0_0 is
         return pointSystem;
     }
 
-    function getCollateralAmount() public view returns (uint256) {
-        return arbitrableConfig.submitterCollateralAmount;
-    }
-
     // [[[proposalId, delta],[proposalId, delta]]]
     // layout.txs -> console.log(data)
     // data = bytes
