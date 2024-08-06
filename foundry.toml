@@ -5,11 +5,18 @@ src = 'pkg/contracts'
 test = 'pkg/contracts/test'
 out = 'pkg/contracts/out'
 libs = ['lib']
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
+block_gas_limit = 30000000 
 
 optimizer = true
-optimizer-runs = 1_000
+optimizer-runs = 1
+
 # prompt_timeout = 120
 fs_permissions = [{ access = "read", path = "./"}]
+# fs_permissions = []
 # auto_detect_remappings = true # recursive auto-detection of remappings
 # remappings = ["ds-test/=lib/forge-std/lib/ds-test/src/",
 # "forge-std/=lib/forge-std/src/",

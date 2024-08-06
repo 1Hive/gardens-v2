@@ -53,7 +53,7 @@ export const WalletBalance: FC<Props> = ({
         className={`font-bold ${isEnoughBalanceRef.current ? "text-success" : "text-error"}`}
       >
         {tooltip ?
-          <InfoIcon content={tooltip}>{label}</InfoIcon>
+          <InfoIcon tooltip={tooltip}>{label}</InfoIcon>
         : label}
       </div>
       <div className="text-base">
@@ -61,7 +61,7 @@ export const WalletBalance: FC<Props> = ({
           count={<div className="w-14">{askedAmount.toFixed(4)}</div>}
           icon={
             <InfoIcon
-              content="Cost amount"
+              tooltip="Cost amount"
               customIcon={<CurrencyDollarIcon />}
               classNames="[&:before]:ml-2"
             />
@@ -75,7 +75,7 @@ export const WalletBalance: FC<Props> = ({
           count={<div className="w-14">{balance?.toFixed(4)}</div>}
           icon={
             <InfoIcon
-              content="Wallet balance"
+              tooltip="Wallet balance"
               customIcon={<WalletIcon />}
               classNames="[&:before]:ml-2"
             />

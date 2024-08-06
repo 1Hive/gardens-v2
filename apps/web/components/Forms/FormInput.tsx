@@ -2,6 +2,7 @@
 
 import { HTMLInputTypeAttribute } from "react";
 import { RegisterOptions } from "react-hook-form";
+import { InfoIcon } from "../InfoIcon";
 
 type Props = {
   label?: string;
@@ -20,6 +21,7 @@ type Props = {
   className?: string;
   value?: string | number;
   step?: number | string;
+  tooltip?: string;
   onChange?: (value: any) => void;
 };
 
@@ -40,6 +42,7 @@ export function FormInput({
   className,
   value = undefined,
   step,
+  tooltip,
   onChange,
 }: Props) {
   const fixedInputClassname =
@@ -47,8 +50,10 @@ export function FormInput({
   return (
     <div className="flex flex-col">
       {label && (
-        <label htmlFor={registerKey} className="my-2 text-lg text-black">
-          {label}
+        <label htmlFor={registerKey} className="label cursor-pointer">
+          {tooltip ?
+            <InfoIcon tooltip={tooltip}>{label}</InfoIcon>
+          : label}
         </label>
       )}
       {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
@@ -60,7 +65,7 @@ export function FormInput({
             value={value}
             type={type}
             placeholder={placeholder}
-            className={`${className} hide-input-arrows input input-bordered ${errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname}`}
+            className={`hide-input-arrows input input-bordered ${errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname} ${className}`}
             required={required}
             readOnly={readOnly}
             step={step}

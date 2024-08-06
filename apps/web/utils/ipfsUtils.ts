@@ -1,10 +1,6 @@
 import { toast } from "react-toastify";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
-type MetadataV1 = {
-  title: string;
-  description: string;
-};
 
 const ipfsGateway =
   process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "https://ipfs.io/ipfs/";
@@ -71,22 +67,14 @@ export const ipfsFileUpload = async (selectedFile: File) => {
   }
 };
 
-export const getIpfsMetadata = async (ipfsHash: string) => {
-  let title = "No title found";
-  let description = "No description found";
-  try {
-    const rawProposalMetadata = await fetch(`${ipfsGateway}${ipfsHash}`, {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-      },
-    });
+export const fetchIpfs = async <TResult>(ipfsHash: string) => {
+  const ipfsResult = await fetch(`${ipfsGateway}${ipfsHash}`, {
+    method: "GET",
+    headers: {
+      "content-type": "application/json",
+    },
+  });
 
-    const proposalMetadata: MetadataV1 = await rawProposalMetadata.json();
-    if (title) title = proposalMetadata?.title;
-    if (description) description = proposalMetadata?.description;
-  } catch (error) {
-    console.error(error);
-  }
-  return { title: title, description: description };
+  const proposalMetadata: TResult = await ipfsResult.json();
+  return proposalMetadata;
 };

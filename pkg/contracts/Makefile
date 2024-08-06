@@ -59,7 +59,8 @@ deploy:
 	--rpc-url $(RPC_URL_LOCALHOST) \
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
 	--unlocked \
-	--broadcast -vv
+	--broadcast -vvvv \
+	--force
 	
 
 deploy-pool-testnet: 
@@ -105,6 +106,15 @@ deploy-testnet-multi-sep:
 	--legacy \
 	-vvv
 
+deploy-testnet-multi-sep-v0: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_SEP_TESTNET) \
+	--account pk1 \
+	--sig "run(string)" 'sepolia' \
+	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
+	--legacy \
+	-vvv
 deploy-verify-multi-sep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \

@@ -12,10 +12,9 @@ import { privateKeyToAccount } from "viem/accounts";
 import { getConfigByChain } from "@/constants/contracts";
 import { passportScorerABI } from "@/src/generated";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
-import { getViemChain } from "@/utils/viem";
+import { getViemChain } from "@/utils/web3";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
-
 const CHAIN_ID = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
 const LOCAL_RPC = "http://127.0.0.1:8545";
 

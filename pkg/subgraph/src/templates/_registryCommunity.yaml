@@ -11,7 +11,7 @@
         - RegistryCommunity
       abis:
         - name: RegistryCommunity
-          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized

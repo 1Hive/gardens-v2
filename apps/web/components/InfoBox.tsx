@@ -1,15 +1,15 @@
 import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { capitalize } from "@/utils/text";
 
 type InfoBoxStyles = "success" | "warning" | "error" | "info";
 
 type InfoBoxProps = {
   infoBoxType: InfoBoxStyles;
   content: string;
+  contentStyle?: string;
   classNames?: string;
   icon?: React.ReactNode;
-  isCapitalize?: boolean;
+  hideIcon?: boolean;
 };
 
 const BASE_STYLES =
@@ -26,20 +26,27 @@ const infoBoxStyles = {
 export function InfoBox({
   infoBoxType,
   content,
+  contentStyle,
   classNames,
   icon,
-  isCapitalize = false,
+  hideIcon,
 }: InfoBoxProps): JSX.Element {
   return (
     <div
       className={`${BASE_STYLES} ${infoBoxStyles[infoBoxType]} ${classNames}`}
     >
-      <div className="h-9 w-9 text-inherit">
-        {" "}
-        {icon ?? <InformationCircleIcon className=" h-9 w-9" />}
-      </div>
-      <p className="leading-5 text-neutral-content">
-        {isCapitalize ? content : capitalize(content ?? "")}
+      {!hideIcon && (
+        <div className="h-9 w-9 text-inherit">
+          {" "}
+          {icon ?? (
+            <InformationCircleIcon className="h-9 w-9" />
+          )}
+        </div>
+      )}
+      <p
+        className={`leading-5 text-neutral-content first-letter:uppercase ${contentStyle}`}
+      >
+        {content}
       </p>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   BoltIcon,
   ChartBarIcon,
@@ -28,9 +28,9 @@ import {
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { pointSystems, poolTypes } from "@/types";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { PointSystems, PoolTypes } from "@/types";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
@@ -65,18 +65,9 @@ export default function Page({
     }
   }, [error]);
 
-  const [ipfsResult, setIpfsResult] =
-    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
-
-  const metadata = data?.cvstrategies?.[0]?.metadata;
-
-  useEffect(() => {
-    if (metadata && !ipfsResult) {
-      getIpfsMetadata(metadata).then((d) => {
-        setIpfsResult(d);
-      });
-    }
-  }, [metadata]);
+  const { metadata: ipfsResult } = useProposalMetadataIpfsFetch(
+    data?.cvstrategies?.[0]?.metadata,
+  );
 
   const strategyObj = data?.cvstrategies?.[0];
 
@@ -143,7 +134,7 @@ export default function Page({
             <Badge type={proposalType} />
           </Statistic>
 
-          {poolTypes[proposalType] === "funding" && (
+          {PoolTypes[proposalType] === "funding" && (
             <Statistic label="funding token" icon={<InformationCircleIcon />}>
               <Badge
                 isCapitalize
@@ -163,7 +154,7 @@ export default function Page({
                 classNames="text-secondary-content"
                 icon={<ChartBarIcon />}
               />
-              <Badge label={pointSystems[pointSystem]} icon={<BoltIcon />} />
+              <Badge label={PointSystems[pointSystem]} icon={<BoltIcon />} />
             </div>
           </Statistic>
         </div>
@@ -173,7 +164,7 @@ export default function Page({
             <h6>Waiting for council approval</h6>
           </div>
         : <Image
-            src={poolTypes[proposalType] === "funding" ? blueLand : grassLarge}
+            src={PoolTypes[proposalType] === "funding" ? blueLand : grassLarge}
             alt="pool image"
             className="h-12 w-full rounded-lg object-cover"
           />
@@ -182,7 +173,7 @@ export default function Page({
 
       {isEnabled && (
         <>
-          {poolTypes[proposalType] !== "signaling" && (
+          {PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
               alloInfo={alloInfo}
               poolId={poolId}

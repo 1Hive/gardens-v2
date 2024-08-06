@@ -2,7 +2,7 @@ import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 type InfoIconProps = {
-  content: string;
+  tooltip: string;
   children?: React.ReactNode;
   classNames?: string;
   customIcon?: React.ReactNode;
@@ -16,7 +16,7 @@ const sizeMap = {
 };
 
 export function InfoIcon({
-  content,
+  tooltip,
   children,
   classNames,
   customIcon,
@@ -26,8 +26,8 @@ export function InfoIcon({
 
   return (
     <div
-      className={`tooltip flex gap-2 cursor-pointer items-center max-w-sm [&>svg]:text-primary-content [&>svg]:stroke-2 ${classNames}`}
-      data-tip={content}
+      className={`tooltip flex gap-2 cursor-pointer items-center [&>svg]:text-primary-content max-w-sm [&>svg]:stroke-2 ${classNames}`}
+      data-tip={tooltip}
     >
       {children}
       {customIcon ?? <InformationCircleIcon width={width} height={height} />}

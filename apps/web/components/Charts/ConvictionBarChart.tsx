@@ -15,7 +15,7 @@ type ConvictionBarChartProps = {
   thresholdPct: number;
   proposalSupportPct: number;
   isSignalingType: boolean;
-  proposalId: string;
+  proposalId: number;
   compact?: boolean;
 };
 
@@ -189,7 +189,7 @@ export const ConvictionBarChart = ({
   };
 
   const markLineTh: MarkLineComponentOption =
-    isSignalingType || compact ?
+    isSignalingType ?
       {}
     : {
         ...markLine,
@@ -203,7 +203,7 @@ export const ConvictionBarChart = ({
           },
         ],
         lineStyle: {
-          width: 1,
+          width: compact ? 0.5 : 1,
           color: "#191919",
           dashOffset: 30,
         },
@@ -248,8 +248,9 @@ export const ConvictionBarChart = ({
       bottom: compact ? "0%" : "25%",
       containLabel: false,
     },
-
-    animationDurationUpdate: 1200,
+    // TODO: realted to re render in PoolId page (check)
+    animation: false,
+    //animationDurationUpdate: 1200,
     barGap: "-100%",
     series: [
       {
@@ -257,6 +258,11 @@ export const ConvictionBarChart = ({
         name: "Support",
         itemStyle: {
           color: "#A8E066",
+          borderRadius: [20, 20, 20, 20],
+        },
+        showBackground: true,
+        backgroundStyle:{
+          color: "#F0F0F0",
           borderRadius: [20, 20, 20, 20],
         },
         label: {

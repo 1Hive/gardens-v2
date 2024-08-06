@@ -2,14 +2,14 @@ import { getPoolDataQuery } from "#/subgraph/.graphclient";
 
 export * from "./styles";
 
-export const poolTypes: Record<string, "signaling" | "funding" | "streaming"> =
+export const PoolTypes: Record<string, "signaling" | "funding" | "streaming"> =
   {
     0: "signaling",
     1: "funding",
     2: "streaming",
   };
 
-export const pointSystems: Record<
+export const PointSystems: Record<
   string,
   "fixed" | "capped" | "capped" | "unlimited" | "quadratic"
 > = {
@@ -19,7 +19,7 @@ export const pointSystems: Record<
   3: "quadratic",
 };
 
-export const proposalStatus: Record<
+export const ProposalStatus: Record<
   string,
   "inactive" | "active" | "disputed" | "cancelled" | "executed"
 > = {
@@ -28,6 +28,20 @@ export const proposalStatus: Record<
   2: "disputed",
   3: "cancelled",
   4: "executed",
+};
+
+export const DisputeStatus: Record<string, "waiting" | "solved"> = {
+  0: "waiting",
+  1: "solved",
+};
+
+export const DisputeOutcome: Record<
+  string,
+  "abstained" | "approved" | "rejected"
+> = {
+  0: "abstained",
+  1: "approved",
+  2: "rejected",
 };
 
 export type ChainId = string | number;

@@ -23,6 +23,14 @@ type CVStrategyConfig @entity(immutable: false) {
   proposalType: BigInt!
   pointSystem: BigInt!
   maxAmount: BigInt
+
+  # Arbitration Config
+  arbitrator: String!
+  tribunalSafe: String!
+  challengerCollateralAmount: BigInt!
+  submitterCollateralAmount: BigInt!
+  defaultRuling: BigInt!
+  defaultRulingTimeout: BigInt!
 }
 
 type CVProposal @entity(immutable: false) {
@@ -159,4 +167,20 @@ type PassportUser @entity(immutable: false) {
   userAddress: String!
   score: BigInt!
   lastUpdated: BigInt!
+}
+
+type ProposalDispute @entity(immutable: false) {
+  id: ID!
+  disputeId: BigInt!
+  proposal: CVProposal!
+  status: BigInt!
+  challenger: String!
+  context: String!
+  metadata: ProposalDisputeMetadata!
+  timestamp: BigInt!
+}
+
+type ProposalDisputeMetadata @entity(immutable: false) {
+  id: ID!
+  reason: String!
 }

@@ -5,9 +5,11 @@ import {
   MemberStrategy,
   Stake,
   Member,
+  ProposalDispute,
+  ProposalDisputeMetadata,
   // ProposalMeta as ProposalMetadata,
 } from "../../generated/schema";
-// import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
+import { ProposalDisputeMetadata as ProposalDisputeMetadataTemplate } from "../../generated/templates";
 
 import {
   Distributed,
@@ -23,6 +25,9 @@ import {
   MaxRatioUpdated,
   MinThresholdPointsUpdated,
   WeightUpdated,
+  ArbitrationConfigUpdated,
+  Ruling,
+  ProposalDisputed,
 } from "../../generated/templates/CVStrategy/CVStrategy";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategy/Allo";
@@ -503,4 +508,74 @@ export function handleWeightUpdated(event: WeightUpdated): void {
     config.save();
   }
   return;
+}
+
+export function handleProposalDisputed(event: ProposalDisputed): void {
+  let dispute = new ProposalDispute(
+    event.params.arbitrator.toString() +
+      "_" +
+      event.params.disputeId.toString(),
+  );
+  dispute.disputeId = event.params.disputeId;
+  dispute.challenger = event.params.challenger.toHexString();
+  dispute.proposal = CVStrategy.load(event.address.toHexString())!.id;
+  dispute.timestamp = event.block.timestamp;
+  dispute.context = event.params.context;
+  dispute.metadata = event.params.context;
+  log.debug("Fetching proposal dispute metadata for {}: {}", [
+    dispute.id,
+    dispute.metadata,
+  ]);
+  ProposalDisputeMetadataTemplate.create(dispute.metadata);
+  dispute.save();
+}
+
+export function handleArbitrationConfigUpdated(
+  event: ArbitrationConfigUpdated,
+): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.debug("handleArbitrationConfigUpdated cvs not found: {}", [
+      event.address.toHexString(),
+    ]);
+    return;
+  }
+  if (cvs.config) {
+    let config = CVStrategyConfig.load(cvs.config);
+    if (config == null) {
+      log.debug("handleArbitrationConfigUpdated config not found: {}", [
+        event.address.toHexString(),
+      ]);
+      return;
+    }
+    config.arbitrator = event.params.arbitrableConfig.arbitrator.toHexString();
+    config.tribunalSafe =
+      event.params.arbitrableConfig.tribunalSafe.toHexString();
+    config.challengerCollateralAmount = event.params.arbitrableConfig.challengerCollateralAmount;
+    config.submitterCollateralAmount = event.params.arbitrableConfig.submitterCollateralAmount;
+    config.defaultRuling = event.params.arbitrableConfig.defaultRuling;
+    config.defaultRulingTimeout =
+      event.params.arbitrableConfig.defaultRulingTimeout;
+    config.save();
+  }
+  return;
+}
+
+export function handleDisputeRuled(event: Ruling): void {
+  let dispute = ProposalDispute.load(
+    event.params._arbitrator.toString() +
+      "_" +
+      event.params._disputeID.toString(),
+  );
+
+  if (dispute == null) {
+    log.error("Dispute not found with: {}_{}", [
+      event.params._arbitrator.toString(),
+      event.params._disputeID.toString(),
+    ]);
+    return;
+  }
+
+  dispute.status = event.params._ruling;
+  dispute.save();
 }

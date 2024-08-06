@@ -5,27 +5,27 @@ import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "../src/CVStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
-// import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
+import {CVStrategyHelpersV0_0, CVStrategyV0_0, StrategyStruct} from "../test/CVStrategyHelpersV0_0.sol";
+import {CollateralVault} from "../src/CollateralVault.sol";
+import {SafeArbitrator} from "../src/SafeArbitrator.sol";
+import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
-import {RegistryFactory} from "../src/RegistryFactory.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
-
 import {Safe} from "safe-contracts/contracts/Safe.sol";
-
 import {SafeProxyFactory} from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
+contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     using stdJson for string;
 
     uint256 public MINIMUM_STAKE = 1 ether;
@@ -47,7 +47,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     address allo_proxy;
     Allo allo;
     GV2ERC20 token;
-    RegistryFactory registryFactory;
+    RegistryFactoryV0_0 registryFactory;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -146,12 +146,12 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         //     REGISTRY_FACTORY = json.readAddress(getKeyNetwork(".ENVS.REGISTRY_FACTORY"));
         // }
         if (REGISTRY_FACTORY == address(0)) {
-            registryFactory = new RegistryFactory();
+            registryFactory = new RegistryFactoryV0_0();
         } else {
-            registryFactory = RegistryFactory(REGISTRY_FACTORY);
+            registryFactory = RegistryFactoryV0_0(REGISTRY_FACTORY);
         }
 
-        RegistryCommunity.InitializeParams memory params;
+        RegistryCommunityV0_0.InitializeParams memory params;
 
         metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"});
         params._metadata = metadata; // convenant ipfs
@@ -160,7 +160,12 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
         // params._communityName = "Alpha Seedling";
         params._communityName = "Alpha Centaurians";
         params._allo = address(allo);
-        params._strategyTemplate = address(new CVStrategy(address(allo)));
+
+        ERC1967Proxy strategyProxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+        params._strategyTemplate = address(CVStrategyV0_0(payable(strategyProxy)));
+
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 0;
@@ -168,16 +173,34 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
 
         assertTrue(params._councilSafe != address(0));
 
-        RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
 
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
+
+        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
+          address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+        );
+
+        IArbitrator safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
+
+        address collateralVaultTemplate = address(new CollateralVault());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            IArbitrator(address(safeArbitrator)),
+            payable(address(_councilSafe())),
+            3 ether,
+            2 ether,
+            1,
+            300,
+            collateralVaultTemplate
+        );
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Fixed,
-            pointConfig
+            pointConfig,
+            arbitrableConfig
         );
 
         // paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
@@ -192,7 +215,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             address(token), paramsCV, Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
         );
 
-        CVStrategy strategy1 = CVStrategy(payable(_strategy1));
+        ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(strategy1Proxy));
 
         // strategy1.setDecay(_etherToFloat(0.9965402 ether));
         // strategy1.setDecay(_etherToFloat(0.8705505 ether)); // alpha = decay
@@ -209,7 +235,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
             address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
         );
 
-        CVStrategy strategy2 = CVStrategy(payable(_strategy2));
+        ERC1967Proxy strategy2Proxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(strategy2Proxy));
 
         strategy2.setDecay(_etherToFloat(0.9999903 ether)); // alpha = decay
         strategy2.setMaxRatio(_etherToFloat(0.3219782 ether)); // beta = maxRatio

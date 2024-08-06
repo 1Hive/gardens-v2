@@ -1,5 +1,4 @@
 import React from "react";
-import { UserGroupIcon } from "@heroicons/react/24/outline";
 
 type IdentifierProps = {
   icon?: React.ReactNode;
@@ -16,23 +15,15 @@ export const Statistic = ({
   children,
   className,
 }: IdentifierProps) => {
-  const iconClassNames = "h-6 w-6";
-  const defaultIcon = <UserGroupIcon className={iconClassNames} />;
-
   return (
     <div
-      className={`flex items-center gap-2 text-neutral-soft-content ${className ?? ""}`}
+      className={`flex items-center gap-2 text-neutral-soft-content ${className}`}
     >
-      {icon ?
-        <div className={iconClassNames}>{icon}</div>
-      : <div className={iconClassNames}>{defaultIcon}</div>}
+      {icon && <div className="h-6 w-6">{icon}</div>}
       {(label ?? count) && (
-        <span>
-          {label ?
-            <span className="capitalize">{label}: </span>
-          : ""}
-          {count}
-        </span>
+        <p className="normal-case">
+          {label}: {count}
+        </p>
       )}
       {children}
     </div>

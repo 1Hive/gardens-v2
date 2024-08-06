@@ -4,26 +4,33 @@ pragma solidity ^0.8.13;
 import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../src/CVStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
-import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
+// import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
+import {SafeArbitrator, IArbitrator} from "../src/SafeArbitrator.sol";
+import {CollateralVault} from "../src/CollateralVault.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
-// import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
+import {CVStrategyHelpersV0_0, CVStrategyV0_0} from "../test/CVStrategyHelpersV0_0.sol";
 import {TERC20} from "../test/shared/TERC20.sol";
-import {RegistryFactory} from "../src/RegistryFactory.sol";
+import {CVStrategyV0_0} from "../src/CVStrategyV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
-import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
+// import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
+import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
+import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategyV0_0.sol";
+import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
+contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50 ether;
     uint256 public constant COMMUNITY_FEE = 1 * PERCENTAGE_SCALE;
-    address public constant FEE_RECEIVER = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+    address public constant FEE_RECEIVER =
+        0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     uint256 public constant MINIMUM_SCORER_THRESHOLD = 20 ether;
 
     TERC20 public token;
@@ -33,7 +40,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
     Allo allo;
     IRegistry registry;
     ISybilScorer sybilScorer;
-    RegistryFactory registryFactory;
+    RegistryFactoryV0_0 registryFactory;
+    IArbitrator safeArbitrator;
 
     function pool_admin() public virtual override returns (address) {
         return address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
@@ -58,16 +66,58 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         registry = allo.getRegistry();
 
-        sybilScorer = new PassportScorer();
-        sybilScorer.initialize(scorer_list_manager());
+        ERC1967Proxy scorerProxy = new ERC1967Proxy(
+            address(new PassportScorer()),
+            abi.encodeWithSelector(
+                PassportScorer.initialize.selector,
+                address(scorer_list_manager())
+            )
+        );
 
-        registryFactory = new RegistryFactory();
+        sybilScorer = PassportScorer(payable(address(scorerProxy)));
+
+        // registryFactory = new RegistryFactoryV0_0();
+        address protocolFeeReceiver = address(this);
+
+        ERC1967Proxy factoryProxy = new ERC1967Proxy(
+            address(new RegistryFactoryV0_0()),
+            abi.encodeWithSelector(
+                RegistryFactoryV0_0.initialize.selector,
+                address(protocolFeeReceiver)
+            )
+        );
+
+        registryFactory = RegistryFactoryV0_0(address(factoryProxy));
 
         console2.log("Registry Factory Addr: %s", address(registryFactory));
 
-        RegistryCommunity.InitializeParams memory params;
+        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
+            address(new SafeArbitrator()),
+            abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+        );
 
-        params._strategyTemplate = address(new CVStrategy(address(allo)));
+        safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
+
+        console2.log("Safe Arbitrator Addr: %s", address(safeArbitrator));
+
+        RegistryCommunityV0_0.InitializeParams memory params;
+
+        ERC1967Proxy cvProxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()),
+            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+
+        CVStrategyV0_0 cvStrategyTemplate = CVStrategyV0_0(
+            payable(address(cvProxy))
+        );
+
+        assertEq(
+            address(cvStrategyTemplate.getAllo()),
+            address(allo),
+            "CVStrategyV0_0 initialized"
+        );
+
+        params._strategyTemplate = address(cvStrategyTemplate);
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
@@ -77,42 +127,99 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "Pioneers of Sepolia";
 
-        RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(
+            registryFactory.createRegistry(params)
+        );
 
         token.mint(address(pool_admin()), 10_000 ether);
 
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
-        StrategyStruct.InitializeParams memory paramsCV = getParams(
-            address(registryCommunity),
-            StrategyStruct.ProposalType.Funding,
-            StrategyStruct.PointSystem.Unlimited,
-            pointConfig
-        );
+        StrategyStruct.InitializeParams memory paramsCV;
+
+        paramsCV.decay = _etherToFloat(0.9999799 ether); // alpha = decay
+        // paramsCV.decay = _etherToFloat(0.9999 ether); // alpha = decay
+        paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
+        paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
+        // paramsCV.minThresholdStakePercentage = 0.2 ether; // 20%
+        paramsCV.registryCommunity = address(registryCommunity);
+        paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
+        paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
+
+        if (pointConfig.maxAmount == 0) {
+            // StrategyStruct.PointSystemConfig memory pointConfig;
+            //Capped point system
+            pointConfig.maxAmount = 200 * DECIMALS;
+        }
+        paramsCV.pointConfig = pointConfig;
+
+        address collateralVaultTemplate = address(new CollateralVault());
+
+        paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            IArbitrator(address(safeArbitrator)),
+            payable(address(_councilSafe())),
+            3 ether,
+            2 ether,
+            1,
+            300,
+            collateralVaultTemplate
+        ); // Using council safe as tribinal just for testing
 
         // FAST 1 MIN GROWTH
-        (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
+        (uint256 poolId, address _strategy1) = registryCommunity.createPool(
+            address(token),
+            paramsCV,
+            Metadata({
+                protocol: 1,
+                pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"
+            })
+        );
+        console2.log(
+            "Collateral Vault 1 Addr: %s",
+            CVStrategyV0_0(payable(_strategy1)).getCollateralVault()
+        );
 
-        CVStrategy strategy1 = CVStrategy(payable(_strategy1));
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
 
         safeHelper(
             address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
+            abi.encodeWithSelector(
+                registryCommunity.addStrategy.selector,
+                address(strategy1)
+            )
         );
 
         paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Fixed;
 
-        (uint256 poolIdFixed, address _strategy2) = registryCommunity.createPool(address(token), paramsCV, metadata);
+        paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            IArbitrator(address(safeArbitrator)),
+            payable(address(_councilSafe())),
+            3 ether,
+            2 ether,
+            1,
+            600,
+            collateralVaultTemplate
+        );
 
-        CVStrategy strategy2 = CVStrategy(payable(_strategy2));
+        (uint256 poolIdFixed, address _strategy2) = registryCommunity
+            .createPool(address(token), paramsCV, metadata);
+        console2.log(
+            "Collateral Vault 1 Addr: %s",
+            CVStrategyV0_0(payable(_strategy2)).getCollateralVault()
+        );
+
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
 
         safeHelper(
             address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
+            abi.encodeWithSelector(
+                registryCommunity.addStrategy.selector,
+                address(strategy2)
+            )
         );
 
         // uint256 poolIdSignaling = createPool(
@@ -127,30 +234,60 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         // strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
         safeHelper(
-            address(strategy1), 0, abi.encodeWithSelector(strategy1.setDecay.selector, _etherToFloat(0.9965402 ether))
+            address(strategy1),
+            0,
+            abi.encodeWithSelector(
+                strategy1.setDecay.selector,
+                _etherToFloat(0.9965402 ether)
+            )
         );
 
         // strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         safeHelper(
-            address(strategy1), 0, abi.encodeWithSelector(strategy1.setMaxRatio.selector, _etherToFloat(0.1 ether))
+            address(strategy1),
+            0,
+            abi.encodeWithSelector(
+                strategy1.setMaxRatio.selector,
+                _etherToFloat(0.1 ether)
+            )
         );
         // strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
         safeHelper(
-            address(strategy1), 0, abi.encodeWithSelector(strategy1.setWeight.selector, _etherToFloat(0.0005 ether))
+            address(strategy1),
+            0,
+            abi.encodeWithSelector(
+                strategy1.setWeight.selector,
+                _etherToFloat(0.0005 ether)
+            )
         );
 
         // FAST 1 MIN GROWTH
         // strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
         safeHelper(
-            address(strategy2), 0, abi.encodeWithSelector(strategy2.setDecay.selector, _etherToFloat(0.9965402 ether))
+            address(strategy2),
+            0,
+            abi.encodeWithSelector(
+                strategy2.setDecay.selector,
+                _etherToFloat(0.9965402 ether)
+            )
         );
         // strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         safeHelper(
-            address(strategy2), 0, abi.encodeWithSelector(strategy2.setMaxRatio.selector, _etherToFloat(0.1 ether))
+            address(strategy2),
+            0,
+            abi.encodeWithSelector(
+                strategy2.setMaxRatio.selector,
+                _etherToFloat(0.1 ether)
+            )
         );
         // strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
         safeHelper(
-            address(strategy2), 0, abi.encodeWithSelector(strategy2.setWeight.selector, _etherToFloat(0.0005 ether))
+            address(strategy2),
+            0,
+            abi.encodeWithSelector(
+                strategy2.setWeight.selector,
+                _etherToFloat(0.0005 ether)
+            )
         );
         vm.stopBroadcast();
 
@@ -184,22 +321,28 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         // StrategyStruct.CreateProposal memory proposal =
         //     StrategyStruct.CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
         // bytes memory data = abi.encode(proposal);
-        // allo.registerRecipient(poolId, data);
+        // allo.registerRecipient{value:2 ether}(poolId, data);
 
         // proposal = StrategyStruct.CreateProposal(poolId, membersStaked[1], 25 ether, address(token), metadata);
         // data = abi.encode(proposal);
-        // allo.registerRecipient(poolId, data);
+        // allo.registerRecipient{value:2 ether}(poolId, data);
 
         // proposal = StrategyStruct.CreateProposal(poolId, membersStaked[2], 10 ether, address(token), metadata);
         // data = abi.encode(proposal);
-        // allo.registerRecipient(poolId, data);
+        // allo.registerRecipient{value:2 ether}(poolId, data);
 
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
-        StrategyStruct.CreateProposal memory proposal2 =
-            StrategyStruct.CreateProposal(poolIdFixed, membersStaked[0], 0, address(token), metadata);
+        StrategyStruct.CreateProposal memory proposal2 = StrategyStruct
+            .CreateProposal(
+                poolIdFixed,
+                membersStaked[0],
+                0,
+                address(token),
+                metadata
+            );
         bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdFixed, data2);
+        allo.registerRecipient{value: 3 ether}(poolIdFixed, data2);
         vm.stopBroadcast();
 
         console2.log("Scorer Address: %s", address(sybilScorer));
@@ -223,7 +366,11 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         console2.log("Council Safe Addr: %s", address(_councilSafe()));
     }
 
-    function _getPointConfig() internal pure returns (StrategyStruct.PointSystemConfig memory) {
+    function _getPointConfig()
+        internal
+        pure
+        returns (StrategyStruct.PointSystemConfig memory)
+    {
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
         return pointConfig;
@@ -234,14 +381,21 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         token = new TERC20("sepolia Matias", "sepMAT", 18);
 
-        // RegistryFactory registryFactory = new RegistryFactory();
+        // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
 
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
 
-        RegistryCommunity.InitializeParams memory params;
+        RegistryCommunityV0_0.InitializeParams memory params;
 
         params._allo = address(allo);
-        params._strategyTemplate = address(new CVStrategy(address(allo)));
+        ERC1967Proxy strategyProxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()),
+            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+        params._strategyTemplate = address(
+            CVStrategyV0_0(payable(strategyProxy))
+        );
+
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = COMMUNITY_FEE;
@@ -250,24 +404,56 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "Pioneers of Matias";
 
-        RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(
+            registryFactory.createRegistry(params)
+        );
 
         token.mint(address(pool_admin()), 10_000 ether);
-
-        CVStrategy strategy1 = new CVStrategy(address(allo));
+        ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()),
+            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(strategy1Proxy));
 
         safeHelper(
             address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
+            abi.encodeWithSelector(
+                registryCommunity.addStrategy.selector,
+                address(strategy1)
+            )
         );
-        CVStrategy strategy2 = new CVStrategy(address(allo));
+
+        ERC1967Proxy strategy2Proxy = new ERC1967Proxy(
+            address(new CVStrategyV0_0()),
+            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(strategy2Proxy));
+
         safeHelper(
             address(registryCommunity),
             0,
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
+            abi.encodeWithSelector(
+                registryCommunity.addStrategy.selector,
+                address(strategy2)
+            )
         );
+
         // FAST 1 MIN GROWTH
+
+        address collateralVaultTemplate = address(new CollateralVault());
+
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct
+            .ArbitrableConfig(
+                IArbitrator(address(safeArbitrator)),
+                payable(address(_councilSafe())),
+                3 ether,
+                2 ether,
+                1,
+                600,
+                collateralVaultTemplate
+            );
 
         uint256 poolId = createPool(
             Allo(address(allo)),
@@ -277,7 +463,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             address(token),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Unlimited,
-            _getPointConfig()
+            _getPointConfig(),
+            arbitrableConfig
         );
 
         uint256 poolIdFixed = createPool(
@@ -288,7 +475,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             address(token),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Fixed,
-            _getPointConfig()
+            _getPointConfig(),
+            arbitrableConfig
         );
 
         // uint256 poolIdSignaling = createPool(
@@ -322,7 +510,10 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
             vm.startBroadcast(address(membersStaked[i]));
             token.mint(address(membersStaked[i]), MINIMUM_STAKE * 2);
             if (i < 4) {
-                token.approve(address(registryCommunity), MINIMUM_STAKE + (MINIMUM_STAKE * COMMUNITY_FEE / 100e4));
+                token.approve(
+                    address(registryCommunity),
+                    MINIMUM_STAKE + ((MINIMUM_STAKE * COMMUNITY_FEE) / 100e4)
+                );
                 registryCommunity.stakeAndRegisterMember();
                 strategy1.activatePoints();
                 strategy2.activatePoints();
@@ -336,25 +527,53 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         allo.fundPool(poolId, 3_000 ether); // ether
         allo.fundPool(poolIdFixed, 1_000 ether); // ether
 
-        StrategyStruct.CreateProposal memory proposal =
-            StrategyStruct.CreateProposal(poolId, membersStaked[0], 50 ether, address(token), metadata);
+        StrategyStruct.CreateProposal memory proposal = StrategyStruct
+            .CreateProposal(
+                poolId,
+                membersStaked[0],
+                50 ether,
+                address(token),
+                metadata
+            );
         bytes memory data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        allo.registerRecipient{value: 3 ether}(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, membersStaked[1], 25 ether, address(token), metadata);
+        proposal = StrategyStruct.CreateProposal(
+            poolId,
+            membersStaked[1],
+            25 ether,
+            address(token),
+            metadata
+        );
         data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, membersStaked[2], 10 ether, address(token), metadata);
+        allo.registerRecipient{value: 3 ether}(poolId, data);
+
+        proposal = StrategyStruct.CreateProposal(
+            poolId,
+            membersStaked[2],
+            10 ether,
+            address(token),
+            metadata
+        );
+
         data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        allo.registerRecipient{value: 3 ether}(poolId, data);
 
         // allo.fundPool{value: 0.1 ether}(poolIdNative, 0.1 ether);
 
-        StrategyStruct.CreateProposal memory proposal2 =
-            StrategyStruct.CreateProposal(poolIdFixed, membersStaked[0], 0, address(token), metadata);
+        StrategyStruct.CreateProposal memory proposal2 = StrategyStruct
+            .CreateProposal(
+                poolIdFixed,
+                membersStaked[0],
+                0,
+                address(token),
+                metadata
+            );
+
         bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdFixed, data2);
+        allo.registerRecipient{value: 3 ether}(poolIdFixed, data2);
+
         vm.stopBroadcast();
 
         console2.log("PoolId: %s", poolId);

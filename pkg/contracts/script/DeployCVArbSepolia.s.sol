@@ -4,22 +4,27 @@ pragma solidity ^0.8.13;
 import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../src/CVStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
-import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
-import {RegistryFactory} from "../src/RegistryFactory.sol";
+import {CVStrategyHelpersV0_0, CVStrategyV0_0, StrategyStruct} from "../test/CVStrategyHelpersV0_0.sol";
+import {SafeArbitrator} from "../src/SafeArbitrator.sol";
+import {CollateralVault} from "../src/CollateralVault.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 
-contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
+import {TERC20} from "../test/shared/TERC20.sol";
+import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+
+contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;
 
     address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
@@ -27,7 +32,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 councilMemberPKEnv;
     address allo_proxy;
     Allo allo;
-    AMockERC20 token;
+    TERC20 token;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -47,7 +52,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         allo = Allo(allo_proxy);
 
         // console2.log("Allo Addr: %s", address(allo));
-        token = AMockERC20(0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D);
+        token = TERC20(0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D);
 
         // IRegistry registry = allo.getRegistry();
         // console2.log("Registry Addr: %s", address(registry));
@@ -56,15 +61,18 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         vm.startBroadcast(pool_admin());
 
-        // AMockERC20 token = new AMockERC20();
         // console2.log("Token Addr: %s", address(token));
         Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
 
-        // RegistryFactory registryFactory = new RegistryFactory();
-        RegistryFactory registryFactory = new RegistryFactory();
-        RegistryCommunity.InitializeParams memory params;
+        // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
+        RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
+        RegistryCommunityV0_0.InitializeParams memory params;
 
-        params._strategyTemplate = address(new CVStrategy(address(allo)));
+        ERC1967Proxy cvProxy = new ERC1967Proxy(
+          address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        );
+        
+        params._strategyTemplate = address(CVStrategyV0_0(payable(cvProxy)));
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -76,7 +84,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         assertTrue(params._councilSafe != address(0));
 
-        RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
 
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
@@ -84,11 +92,29 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
+        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
+          address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+      );
+
+        IArbitrator safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
+
+        address collateralVaultTemplate = address(new CollateralVault());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            IArbitrator(address(safeArbitrator)),
+            payable(address(_councilSafe())),
+            3 ether,
+            2 ether,
+            1,
+            300,
+            collateralVaultTemplate
+        );
+
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Fixed,
-            pointConfig
+            pointConfig,
+            arbitrableConfig
         );
 
         paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
@@ -113,8 +139,8 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpers, Script, SafeSetup {
 
         (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(address(0), paramsCV, metadata);
 
-        CVStrategy strategy1 = CVStrategy(payable(_strategy1));
-        CVStrategy strategy2 = CVStrategy(payable(_strategy2));
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
 
         safeHelper(
             councilSafeDeploy,

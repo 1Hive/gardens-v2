@@ -5,28 +5,28 @@ schema:
   file: ./src/schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: RegistryFactory
+    name: RegistryFactoryV0_0
     network: localhost
     context:
       chainId: 
         type: Int
         data: 1337
     source:
-      address: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
-      abi: RegistryFactory
+      address: "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+      abi: RegistryFactoryV0_0
       startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - RegistryFactory
+        - RegistryFactoryV0_0
         - RegistryCommunity
       abis:
-        - name: RegistryFactory
-          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+        - name: RegistryFactoryV0_0
+          file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
         - name: RegistryCommunity
-          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
@@ -44,7 +44,7 @@ dataSources:
         type: Int
         data: 1337
     source:
-      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      address: "0x0165878A594ca255338adfa4d48449f69242Eb8F"
       abi: PassportScorer
       startBlock: 0
     mapping:
@@ -69,10 +69,10 @@ dataSources:
 
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunity
+    name: RegistryCommunityV0_0
     network: localhost
     source:
-      abi: RegistryCommunity
+      abi: RegistryCommunityV0_0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -84,14 +84,14 @@ templates:
         - TokenGarden
         - Member
       abis:
-        - name: RegistryCommunity
-          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: RegistryCommunityV0_0
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
-        - name: RegistryFactory
-          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: RegistryFactoryV0_0
+          file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
      
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
@@ -131,10 +131,10 @@ templates:
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategy
+    name: CVStrategyV0_0
     network: localhost
     source:
-      abi: CVStrategy
+      abi: CVStrategyV0_0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -145,14 +145,14 @@ templates:
         - CVProposal
         - Allo
       abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
-        - name: RegistryCommunity
-          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: RegistryCommunityV0_0
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256),address))
+        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256,address),address))
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
@@ -174,6 +174,24 @@ templates:
           handler: handleMaxRatioUpdated
         - event: WeightUpdated(uint256)
           handler: handleWeightUpdated
+        - event: ProposalDisputed(address,uint256,uint256,address,string,uint256)
+          handler: handleProposalDisputed
+        - event: ArbitrationConfigUpdated(address,(address,address,uint256,uint256,uint256,uint256,address))
+          handler: handleArbitrationConfigUpdated
+        - event: Ruling(indexed address,indexed uint256,uint256)
+          handler: handleDisputeRuled
  
       file: ./src/mappings/cv-strategy.ts
   
+  - name: ProposalDisputeMetadata
+    kind: file/ipfs
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/proposal-metadata.ts
+      handler: handleProposalDisputeMetadata
+      entities:
+        - ProposalDisputeMetadata
+      abis:
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
