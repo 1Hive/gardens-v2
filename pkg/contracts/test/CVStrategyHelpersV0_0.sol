@@ -45,11 +45,10 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
         StrategyStruct.ArbitrableConfig memory arbitrableConfig
     ) public pure returns (StrategyStruct.InitializeParams memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        params.decay = _etherToFloat(0.9999799 ether); // alpha = decay
-        // params.decay = _etherToFloat(0.9999 ether); // alpha = decay
-        params.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
-        params.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
-        // params.minThresholdStakePercentage = 0.2 ether; // 20%
+        params.poolParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
+        params.poolParams.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
+        params.poolParams.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
+        params.poolParams.minThresholdPoints = 0.2 ether; // 20%
         params.registryCommunity = registryCommunity;
         params.proposalType = proposalType;
         params.pointSystem = pointSystem;

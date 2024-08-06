@@ -212,9 +212,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         // paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
         // paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
 
-        paramsCV.decay = _etherToFloat(0.9999903 ether); // alpha = decay
-        paramsCV.maxRatio = _etherToFloat(0.3219782 ether); // beta = maxRatio
-        paramsCV.weight = _etherToFloat(0.010367 ether); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // paramsCV.decay = _etherToFloat(0.9999903 ether); // alpha = decay
+        // paramsCV.maxRatio = _etherToFloat(0.3219782 ether); // beta = maxRatio
+        // paramsCV.weight = _etherToFloat(0.010367 ether); // RHO = p  = weight
 
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(
             address(token), paramsCV, Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
@@ -239,9 +240,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
         CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
 
-        strategy2.setDecay(_etherToFloat(0.9999903 ether)); // alpha = decay
-        strategy2.setMaxRatio(_etherToFloat(0.3219782 ether)); // beta = maxRatio
-        strategy2.setWeight(_etherToFloat(0.010367 ether)); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // strategy2.setDecay(_etherToFloat(0.9999903 ether)); // alpha = decay
+        // strategy2.setMaxRatio(_etherToFloat(0.3219782 ether)); // beta = maxRatio
+        // strategy2.setWeight(_etherToFloat(0.010367 ether)); // RHO = p  = weight
 
         safeHelper(
             Safe(payable(COUNCIL_SAFE)),

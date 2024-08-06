@@ -100,7 +100,7 @@ library StrategyStruct {
     }
 
     struct ArbitrableConfig {
-        IArbitrator arbitrator;
+        address arbitrator;
         address tribunalSafe;
         uint256 submitterCollateralAmount;
         uint256 challengerCollateralAmount;
@@ -109,16 +109,20 @@ library StrategyStruct {
         address collateralVaultTemplate;
     }
 
-    struct InitializeParams {
-        address registryCommunity;
+    struct PoolParams {
         uint256 decay;
         uint256 maxRatio;
         uint256 weight;
-        uint256 minThresholdPoints;
+        uint256 minThresholdPoints; // starting with a default of zero
+    }
+
+    struct InitializeParams {
+        PoolParams poolParams;
         ProposalType proposalType;
         PointSystem pointSystem;
         PointSystemConfig pointConfig;
         ArbitrableConfig arbitrableConfig;
+        address registryCommunity;
         address sybilScorer;
     }
 }
@@ -179,28 +183,24 @@ contract CVStrategyV0_0 is
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
     event ProposalCreated(uint256 poolId, uint256 proposalId);
     event PoolAmountIncreased(uint256 amount);
+    event PointsDeactivated(address member);
     event PowerIncreased(address member, uint256 tokensStaked, uint256 pointsToIncrease);
     event PowerDecreased(address member, uint256 tokensUnStaked, uint256 pointsToDecrease);
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
-    event PointsDeactivated(address member);
-    event DecayUpdated(uint256 decay);
-    event MaxRatioUpdated(uint256 maxRatio);
-    event WeightUpdated(uint256 weight);
+    event PoolParamsUpdated(StrategyStruct.PoolParams poolParams, StrategyStruct.ArbitrableConfig arbitrableConfig);
     event RegistryUpdated(address registryCommunity);
     event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
     event ProposalDisputed(
-        IArbitrator arbitrator,
+        address arbitrator,
         uint256 proposalId,
         uint256 disputeId,
         address challenger,
         string context,
         uint256 timestamp
     );
-    event CollateralVaultUpdated(address collateralVault);
     event TribunaSafeRegistered(address strategy, address arbitrator, address tribunalSafe);
-    event ArbitrationConfigUpdated(address strategy, StrategyStruct.ArbitrableConfig arbitrableConfig);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -220,16 +220,15 @@ contract CVStrategyV0_0 is
     uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
 
     // uint256 variables packed together
-    uint256 public decay;
-    uint256 public maxRatio;
-    uint256 public weight;
-    uint256 public proposalCounter = 0;
-    uint256 public totalStaked;
-    uint256 public totalPointsActivated;
-    uint256 public minThresholdPoints = 0; // starting with a default of zero
     uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
     uint256 public cloneNonce;
-    uint64 public disputeCount;
+    uint64 public disputeCount = 0;
+    uint256 public proposalCounter = 0;
+
+    uint256 public totalStaked;
+    uint256 public totalPointsActivated;
+
+    StrategyStruct.PoolParams public poolParams;
 
     // Enum for handling proposal types
     StrategyStruct.ProposalType public proposalType;
@@ -270,25 +269,14 @@ contract CVStrategyV0_0 is
         }
 
         registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
-        decay = ip.decay;
-        maxRatio = ip.maxRatio;
-        weight = ip.weight;
+        
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
-        minThresholdPoints = ip.minThresholdPoints;
         sybilScorer = ISybilScorer(ip.sybilScorer);
-        arbitrableConfig = ip.arbitrableConfig;
-        if (address(arbitrableConfig.arbitrator) != address(0)) {
-            collateralVault = CollateralVault(Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++));
-            collateralVault.initialize();
-            if (arbitrableConfig.tribunalSafe != address(0)) {
-                SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(arbitrableConfig.tribunalSafe);
-                emit TribunaSafeRegistered(
-                    address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
-                );
-            }
-        }
+
+        setPoolParams(ip.arbitrableConfig, ip.poolParams);
+
         sybilScorer = ISybilScorer(ip.sybilScorer);
 
         emit InitializedCV(_poolId, ip);
@@ -779,7 +767,7 @@ contract CVStrategyV0_0 is
     }
 
     function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool isOverMaxRatio) {
-        isOverMaxRatio = maxRatio * poolAmount <= _requestedAmount * D;
+        isOverMaxRatio = poolParams.maxRatio * poolAmount <= _requestedAmount * D;
     }
 
     function _check_before_addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport)
@@ -918,14 +906,14 @@ contract CVStrategyV0_0 is
         //        @audit-ok they use 2^128 as the container for the result of the _pow function
 
         //        uint256 atTWO_128 = _pow((decay << 128).div(D), t);
-        uint256 atTWO_128 = _pow((decay << 128) / D, t);
+        uint256 atTWO_128 = _pow((poolParams.decay << 128) / D, t);
         // solium-disable-previous-line
         // conviction = (atTWO_128 * _lastConv + _oldAmount * D * (2^128 - atTWO_128) / (D - aD) + 2^127) / 2^128
         //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
         //            >> 128;
         //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
         //            >> 128;
-        return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - decay))) + TWO_127) >> 128;
+        return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - poolParams.decay))) + TWO_127) >> 128;
     }
 
     /**
@@ -958,13 +946,13 @@ contract CVStrategyV0_0 is
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
         // denom = maxRatio / 1 - _requestedAmount / funds;
-        uint256 denom = (maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
+        uint256 denom = (poolParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
         _threshold = (
-            (((((weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - decay)) * totalEffectiveActivePoints()
+            (((((poolParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - poolParams.decay)) * totalEffectiveActivePoints()
         ) >> 64;
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
-        _threshold = _threshold > minThresholdPoints ? _threshold : minThresholdPoints;
+        _threshold = _threshold > poolParams.minThresholdPoints ? _threshold : poolParams.minThresholdPoints;
     }
 
     /**
@@ -1056,22 +1044,7 @@ contract CVStrategyV0_0 is
     }
 
     function getMaxConviction(uint256 amount) public view returns (uint256) {
-        return ((amount * D) / (D - decay));
-    }
-
-    function setDecay(uint256 _decay) external onlyPoolManager(msg.sender) {
-        decay = _decay;
-        emit DecayUpdated(_decay);
-    }
-
-    function setMaxRatio(uint256 _maxRatio) external onlyPoolManager(msg.sender) {
-        maxRatio = _maxRatio;
-        emit MaxRatioUpdated(_maxRatio);
-    }
-
-    function setWeight(uint256 _weight) external onlyPoolManager(msg.sender) {
-        weight = _weight;
-        emit WeightUpdated(_weight);
+        return ((amount * D) / (D - poolParams.decay));
     }
 
     function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
@@ -1079,62 +1052,41 @@ contract CVStrategyV0_0 is
         emit RegistryUpdated(_registryCommunity);
     }
 
-    function setMinThresholdPoints(uint256 minThresholdPoints_) external onlyPoolManager(msg.sender) {
-        emit MinThresholdPointsUpdated(minThresholdPoints, minThresholdPoints_);
-        minThresholdPoints = minThresholdPoints_;
-    }
-
-    function setPoolParams(bytes memory data) public {
-        onlyCouncilSafe();
-        (
-            StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
-            uint256 _newMinThreshold,
-            uint256 _newDecay,
-            uint256 _newMaxRatio,
-            uint256 _newWeight
-        ) = abi.decode(data, (StrategyStruct.ArbitrableConfig, uint256, uint256, uint256, uint256));
-
-        // Update only if the new value is different
-
-        if (
-            _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
-                || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
-                || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
-                || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
-                || _arbitrableConfig.collateralVaultTemplate != arbitrableConfig.collateralVaultTemplate
-        ) {
-            if (disputeCount != 0) {
-                revert ArbitrationConfigCannotBeChangedDuringDispute();
-            }
-            arbitrableConfig.tribunalSafe = _arbitrableConfig.tribunalSafe;
-            arbitrableConfig.submitterCollateralAmount = _arbitrableConfig.submitterCollateralAmount;
-            arbitrableConfig.challengerCollateralAmount = _arbitrableConfig.challengerCollateralAmount;
-            arbitrableConfig.defaultRuling = _arbitrableConfig.defaultRuling;
-            arbitrableConfig.defaultRulingTimeout = _arbitrableConfig.defaultRulingTimeout;
-            arbitrableConfig.collateralVaultTemplate = _arbitrableConfig.collateralVaultTemplate;
-        }
-
-        if (_newMinThreshold != minThresholdPoints) {
-            minThresholdPoints = _newMinThreshold;
-        }
-
-        if (_newDecay != decay) {
-            decay = _newDecay;
-        }
-
-        if (_newMaxRatio != maxRatio) {
-            maxRatio = _newMaxRatio;
-        }
-
-        if (_newWeight != weight) {
-            weight = _newWeight;
-        }
-    }
-
     function setSybilScorer(address _sybilScorer) external {
         onlyCouncilSafe();
         _revertZeroAddress(_sybilScorer);
         sybilScorer = ISybilScorer(_sybilScorer);
+    }
+
+    function setPoolParams(StrategyStruct.ArbitrableConfig memory _arbitrableConfig, StrategyStruct.PoolParams memory _poolParams) public {
+        onlyCouncilSafe();
+
+        if (_arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
+            || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
+            || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
+            || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
+            || _arbitrableConfig.collateralVaultTemplate != arbitrableConfig.collateralVaultTemplate
+        ) {
+            if (disputeCount != 0) {
+                revert ArbitrationConfigCannotBeChangedDuringDispute();
+            }
+            arbitrableConfig = _arbitrableConfig;
+
+          if (arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator) {
+              arbitrableConfig.arbitrator = _arbitrableConfig.arbitrator;
+              collateralVault = CollateralVault(Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++));
+              collateralVault.initialize();
+              if (arbitrableConfig.tribunalSafe != address(0)) {
+                  SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(arbitrableConfig.tribunalSafe);
+                  emit TribunaSafeRegistered(
+                      address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
+                  );
+              }
+          }
+        }
+
+        poolParams = _poolParams;
+        emit PoolParamsUpdated(_poolParams, _arbitrableConfig);
     }
 
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
@@ -1166,7 +1118,7 @@ contract CVStrategyV0_0 is
             proposalId, msg.sender
         );
 
-        uint256 disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
+        uint256 disputeId = IArbitrator(arbitrableConfig.arbitrator).createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
         proposal.proposalStatus = StrategyStruct.ProposalStatus.Disputed;
         proposal.disputeId = disputeId;
@@ -1245,29 +1197,7 @@ contract CVStrategyV0_0 is
 
         disputeCount--;
         proposal.lastDisputeCompletion = block.timestamp;
-        emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
-    }
-
-    function setCollateralVault(address _collateralVault) external {
-        onlyCouncilSafe();
-        collateralVault = CollateralVault(_collateralVault);
-        emit CollateralVaultUpdated(_collateralVault);
-    }
-
-    function getCollateralVault() external view returns (address) {
-        return address(collateralVault);
-    }
-
-    function setArbitrationConfig(StrategyStruct.ArbitrableConfig memory _arbitrableConfig) external {
-        onlyCouncilSafe();
-        arbitrableConfig = _arbitrableConfig;
-        emit ArbitrationConfigUpdated(address(this), _arbitrableConfig);
-    }
-
-    function registerTribunalSafe(address _tribunalSafe) external {
-        onlyCouncilSafe();
-        SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(_tribunalSafe);
-        emit TribunaSafeRegistered(address(this), address(arbitrableConfig.arbitrator), _tribunalSafe);
+        emit Ruling(IArbitrator(arbitrableConfig.arbitrator), _disputeID, _ruling);
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
