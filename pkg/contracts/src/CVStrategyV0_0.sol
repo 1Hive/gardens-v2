@@ -86,6 +86,7 @@ library StrategyStruct {
         uint256 disputeId;
         uint256 disputeTimestamp;
         address challenger;
+        uint256 lastDisputeCompletion;
     }
 
     struct ProposalSupport {
@@ -167,6 +168,7 @@ contract CVStrategyV0_0 is
     error ArbitratorCannotBeZero();
     error CollateralVaultCannotBeZero();
     error DefaultRulingNotSet();
+    error DisputeCooldownNotPassed();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -214,6 +216,7 @@ contract CVStrategyV0_0 is
     uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
     uint256 public constant MAX_STAKED_PROPOSALS = 10; // @todo not allow stake more than 10 proposals per user, don't count executed?
     uint256 public constant RULING_OPTIONS = 3;
+    uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
 
     // uint256 variables packed together
     uint256 public decay;
@@ -1153,6 +1156,11 @@ contract CVStrategyV0_0 is
             revert ProposalNotDisputed(proposalId);
         }
 
+        // if the lastDisputeCompletion is less than DISPUTE_COOLDOWN_SEC, we should revert
+        if (proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC > block.timestamp) {
+            revert DisputeCooldownNotPassed();
+        }
+
         bool isTimeOut = block.timestamp > proposal.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
 
         if (!isTimeOut && msg.sender != address(arbitrableConfig.arbitrator)) {
@@ -1199,6 +1207,7 @@ contract CVStrategyV0_0 is
             );
         }
 
+        proposal.lastDisputeCompletion = block.timestamp;
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
     }
 
