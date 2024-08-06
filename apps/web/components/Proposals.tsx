@@ -104,7 +104,7 @@ export function Proposals({
     },
     changeScope: {
       topic: "member",
-      id: communityAddress,
+      id: wallet,
       type: ["add", "delete"],
     },
     enabled: !!wallet,
@@ -116,11 +116,14 @@ export function Proposals({
       variables: {
         member_strategy: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
-      changeScope: {
-        topic: "proposal",
-        id: strategy.id,
-        type: "update",
-      },
+      changeScope: [
+        {
+          topic: "proposal",
+          id: strategy.id,
+          type: "update",
+        },
+        { topic: "member", id: wallet },
+      ],
       enabled: !!wallet,
     });
 
