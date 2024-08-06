@@ -229,6 +229,7 @@ contract CVStrategyV0_0 is
     uint256 public minThresholdPoints = 0; // starting with a default of zero
     uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
     uint256 public cloneNonce;
+    uint64 public disputeCount;
 
     // Enum for handling proposal types
     StrategyStruct.ProposalType public proposalType;
@@ -1106,30 +1107,14 @@ contract CVStrategyV0_0 is
                 || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
                 || _arbitrableConfig.collateralVaultTemplate != arbitrableConfig.collateralVaultTemplate
         ) {
-            revert ArbitrationConfigCannotBeChangedDuringDispute();
-        }
-
-        if (_arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe) {
+            if (disputeCount != 0) {
+                revert ArbitrationConfigCannotBeChangedDuringDispute();
+            }
             arbitrableConfig.tribunalSafe = _arbitrableConfig.tribunalSafe;
-        }
-
-        if (_arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount) {
             arbitrableConfig.submitterCollateralAmount = _arbitrableConfig.submitterCollateralAmount;
-        }
-
-        if (_arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount) {
             arbitrableConfig.challengerCollateralAmount = _arbitrableConfig.challengerCollateralAmount;
-        }
-
-        if (_arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling) {
             arbitrableConfig.defaultRuling = _arbitrableConfig.defaultRuling;
-        }
-
-        if (_arbitrableConfig.defaultRulingTimeout != arbitrableConfig.defaultRulingTimeout) {
             arbitrableConfig.defaultRulingTimeout = _arbitrableConfig.defaultRulingTimeout;
-        }
-
-        if (_arbitrableConfig.collateralVaultTemplate != arbitrableConfig.collateralVaultTemplate) {
             arbitrableConfig.collateralVaultTemplate = _arbitrableConfig.collateralVaultTemplate;
         }
 
@@ -1154,6 +1139,50 @@ contract CVStrategyV0_0 is
         onlyCouncilSafe();
         _revertZeroAddress(_sybilScorer);
         sybilScorer = ISybilScorer(_sybilScorer);
+    }
+
+    function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
+        external
+        payable
+        nonReentrant
+    {
+        StrategyStruct.Proposal storage proposal = proposals[proposalId];
+
+        if (address(arbitrableConfig.arbitrator) == address(0)) {
+            revert ArbitratorCannotBeZero();
+        }
+        if (address(collateralVault) == address(0)) {
+            revert CollateralVaultCannotBeZero();
+        }
+        if (proposal.proposalId != proposalId) {
+            revert ProposalNotInList(proposalId);
+        }
+        if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
+            revert ProposalNotActive(proposalId);
+        }
+        if (msg.value <= arbitrableConfig.challengerCollateralAmount) {
+            revert InsufficientCollateral(msg.value, arbitrableConfig.challengerCollateralAmount);
+        }
+
+        uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
+
+        CollateralVault(collateralVault).depositCollateral{value: arbitrableConfig.challengerCollateralAmount}(
+            proposalId, msg.sender
+        );
+
+        uint256 disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
+
+        proposal.proposalStatus = StrategyStruct.ProposalStatus.Disputed;
+        proposal.disputeId = disputeId;
+        proposal.disputeTimestamp = block.timestamp;
+        proposal.challenger = msg.sender;
+        disputeIdToProposalId[disputeId] = proposalId;
+
+        disputeCount++;
+
+        emit ProposalDisputed(
+            arbitrableConfig.arbitrator, proposalId, disputeId, msg.sender, context, proposal.disputeTimestamp
+        );
     }
 
     function rule(uint256 _disputeID, uint256 _ruling) external override {
@@ -1218,6 +1247,7 @@ contract CVStrategyV0_0 is
             );
         }
 
+        disputeCount--;
         proposal.lastDisputeCompletion = block.timestamp;
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
     }
