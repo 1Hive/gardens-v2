@@ -98,19 +98,20 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             StrategyStruct.PointSystem.Fixed,
             pointConfig,
             StrategyStruct.ArbitrableConfig(
-              SafeArbitrator(payable(address(arbitratorProxy))),
-              payable(address(_councilSafe())),
-              3 ether,
-              2 ether,
-              1,
-              300,
-              address(new CollateralVault())
-          )
+                SafeArbitrator(payable(address(arbitratorProxy))),
+                payable(address(_councilSafe())),
+                3 ether,
+                2 ether,
+                1,
+                300,
+                address(new CollateralVault())
+            )
         );
 
-        paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
-        paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
-        paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
+        // paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
+        // paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
         // params.minThresholdStakePercentage = 0.2 ether; // 20%
         // paramsCV.registryCommunity = address(registryCommunity);
         // paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
@@ -132,7 +133,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
         CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
         CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
-        
+
         safeHelper(
             councilSafeDeploy,
             councilMemberPKEnv,
@@ -147,15 +148,16 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
         );
 
-        strategy1.setDecay(_etherToFloat(0.9965402 ether));
-        // alpha = decay
-        strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
-        strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // strategy1.setDecay(_etherToFloat(0.9965402 ether));
+        // // alpha = decay
+        // strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        // strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
 
-        // FAST 1 MIN GROWTH
-        strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
-        strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
-        strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        // // FAST 1 MIN GROWTH
+        // strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
+        // strategy2.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        // strategy2.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
 
         // poolId =
         //     createPool(Allo(address(allo)), address(strategy1), address(registryCommunity), registry, address(token));

@@ -193,12 +193,7 @@ contract CVStrategyV0_0 is
     event RegistryUpdated(address registryCommunity);
     event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
     event ProposalDisputed(
-        address arbitrator,
-        uint256 proposalId,
-        uint256 disputeId,
-        address challenger,
-        string context,
-        uint256 timestamp
+        address arbitrator, uint256 proposalId, uint256 disputeId, address challenger, string context, uint256 timestamp
     );
     event TribunaSafeRegistered(address strategy, address arbitrator, address tribunalSafe);
 
@@ -269,7 +264,7 @@ contract CVStrategyV0_0 is
         }
 
         registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
-        
+
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
@@ -913,7 +908,9 @@ contract CVStrategyV0_0 is
         //            >> 128;
         //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
         //            >> 128;
-        return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - poolParams.decay))) + TWO_127) >> 128;
+        return (
+            ((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - poolParams.decay))) + TWO_127
+        ) >> 128;
     }
 
     /**
@@ -948,7 +945,8 @@ contract CVStrategyV0_0 is
         // denom = maxRatio / 1 - _requestedAmount / funds;
         uint256 denom = (poolParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
         _threshold = (
-            (((((poolParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - poolParams.decay)) * totalEffectiveActivePoints()
+            (((((poolParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - poolParams.decay))
+                * totalEffectiveActivePoints()
         ) >> 64;
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
@@ -1058,31 +1056,36 @@ contract CVStrategyV0_0 is
         sybilScorer = ISybilScorer(_sybilScorer);
     }
 
-    function setPoolParams(StrategyStruct.ArbitrableConfig memory _arbitrableConfig, StrategyStruct.PoolParams memory _poolParams) public {
+    function setPoolParams(
+        StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
+        StrategyStruct.PoolParams memory _poolParams
+    ) public {
         onlyCouncilSafe();
 
-        if (_arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
-            || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
-            || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
-            || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
-            || _arbitrableConfig.collateralVaultTemplate != arbitrableConfig.collateralVaultTemplate
+        if (
+            _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
+                || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
+                || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
+                || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
+                || _arbitrableConfig.collateralVaultTemplate != arbitrableConfig.collateralVaultTemplate
         ) {
             if (disputeCount != 0) {
                 revert ArbitrationConfigCannotBeChangedDuringDispute();
             }
             arbitrableConfig = _arbitrableConfig;
 
-          if (arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator) {
-              arbitrableConfig.arbitrator = _arbitrableConfig.arbitrator;
-              collateralVault = CollateralVault(Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++));
-              collateralVault.initialize();
-              if (arbitrableConfig.tribunalSafe != address(0)) {
-                  SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(arbitrableConfig.tribunalSafe);
-                  emit TribunaSafeRegistered(
-                      address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
-                  );
-              }
-          }
+            if (arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator) {
+                arbitrableConfig.arbitrator = _arbitrableConfig.arbitrator;
+                collateralVault =
+                    CollateralVault(Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++));
+                collateralVault.initialize();
+                if (arbitrableConfig.tribunalSafe != address(0)) {
+                    SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(arbitrableConfig.tribunalSafe);
+                    emit TribunaSafeRegistered(
+                        address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
+                    );
+                }
+            }
         }
 
         poolParams = _poolParams;
@@ -1118,7 +1121,8 @@ contract CVStrategyV0_0 is
             proposalId, msg.sender
         );
 
-        uint256 disputeId = IArbitrator(arbitrableConfig.arbitrator).createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
+        uint256 disputeId =
+            IArbitrator(arbitrableConfig.arbitrator).createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
         proposal.proposalStatus = StrategyStruct.ProposalStatus.Disputed;
         proposal.disputeId = disputeId;

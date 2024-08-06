@@ -173,13 +173,7 @@ contract RegistryUpgradeableTest is
     function _generateArbitrableConfig() internal returns (StrategyStruct.ArbitrableConfig memory) {
         address collateralVaultTemplate = address(new CollateralVault());
         return StrategyStruct.ArbitrableConfig(
-            address(safeArbitrator),
-            payable(address(_councilSafe())),
-            3 ether,
-            2 ether,
-            1,
-            600,
-            collateralVaultTemplate
+            address(safeArbitrator), payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600, collateralVaultTemplate
         );
     }
 

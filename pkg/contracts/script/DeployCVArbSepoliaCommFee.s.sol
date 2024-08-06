@@ -89,7 +89,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
-          address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
         );
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
@@ -98,14 +98,14 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
             StrategyStruct.PointSystem.Unlimited,
             pointConfig,
             StrategyStruct.ArbitrableConfig(
-              IArbitrator(payable(address(arbitratorProxy))),
-              payable(address(_councilSafe())),
-              3 ether,
-              2 ether,
-              1,
-              300,
-              address(new CollateralVault())
-          )
+                IArbitrator(payable(address(arbitratorProxy))),
+                payable(address(_councilSafe())),
+                3 ether,
+                2 ether,
+                1,
+                300,
+                address(new CollateralVault())
+            )
         );
 
         //Capped point system
@@ -116,9 +116,10 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
         // paramsCV.pointConfig.tokensPerPoint = 1 ether;
         // paramsCV.pointConfig.pointsPerTokenStaked = 5 ether ;
 
-        paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
-        paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
-        paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
+        // paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
+        // paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
         // params.minThresholdStakePercentage = 0.2 ether; // 20%
         // paramsCV.registryCommunity = address(registryCommunity);
         // paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
@@ -136,10 +137,11 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
         );
 
-        strategy1.setDecay(_etherToFloat(0.9965402 ether));
-        // alpha = decay
-        strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
-        strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // strategy1.setDecay(_etherToFloat(0.9965402 ether));
+        // // alpha = decay
+        // strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        // strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
 
         console2.log("balance of pool admin:        %s", token.balanceOf(pool_admin()));
         token.mint(address(pool_admin()), 10_000_000_000 ether);

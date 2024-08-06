@@ -194,13 +194,7 @@ contract CVStrategyTestUpgradeable is
         // allo().addToCloneableStrategies(address(strategy));
         address collateralVaultTemplate = address(new CollateralVault());
         StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
-            address(safeArbitrator),
-            payable(address(_councilSafe())),
-            3 ether,
-            2 ether,
-            1,
-            300,
-            collateralVaultTemplate
+            address(safeArbitrator), payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300, collateralVaultTemplate
         );
         StrategyStruct.InitializeParams memory params = getParams(
             address(registryCommunity),
@@ -249,7 +243,8 @@ contract CVStrategyTestUpgradeable is
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), requestAmount, address(useTokenPool), metadata);
         bytes memory data = abi.encode(proposal);
-        StrategyStruct.ArbitrableConfig memory arbitrationConfig = StrategyStruct.ArbitrableConfig(strategy.arbitrableConfig());
+        StrategyStruct.ArbitrableConfig memory arbitrationConfig =
+            StrategyStruct.ArbitrableConfig(strategy.arbitrableConfig());
 
         vm.deal(pool_admin(), arbitrationConfig.submitterCollateralAmount);
         vm.startPrank(pool_admin());
@@ -1527,7 +1522,8 @@ contract CVStrategyTestUpgradeable is
             metadata
         );
         data = abi.encode(proposal);
-        StrategyStruct.ArbitrableConfig memory arbitrationConfig = StrategyStruct.ArbitrableConfig(cv.arbitrableConfig());
+        StrategyStruct.ArbitrableConfig memory arbitrationConfig =
+            StrategyStruct.ArbitrableConfig(cv.arbitrableConfig());
         uint256 submitterCollateralAmount = arbitrationConfig.submitterCollateralAmount;
         vm.deal(pool_admin(), submitterCollateralAmount);
         uint256 proposalID2 = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
@@ -1663,7 +1659,8 @@ contract CVStrategyTestUpgradeable is
         allo().distribute(poolId, recipients, dataProposal);
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
-        StrategyStruct.ArbitrableConfig memory arbitrationConfig = StrategyStruct.ArbitrableConfig(cv.arbitrableConfig());
+        StrategyStruct.ArbitrableConfig memory arbitrationConfig =
+            StrategyStruct.ArbitrableConfig(cv.arbitrableConfig());
         uint256 submitterCollateralAmount = arbitrationConfig.submitterCollateralAmount;
         assertEq(amount - submitterCollateralAmount, requestedAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
@@ -1825,7 +1822,8 @@ contract CVStrategyTestUpgradeable is
 
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
-        StrategyStruct.ArbitrableConfig memory arbitrationConfig = StrategyStruct.ArbitrableConfig(cv.arbitrableConfig());
+        StrategyStruct.ArbitrableConfig memory arbitrationConfig =
+            StrategyStruct.ArbitrableConfig(cv.arbitrableConfig());
         uint256 submitterCollateralAmount = arbitrationConfig.submitterCollateralAmount;
         assertEq(amount - submitterCollateralAmount, requestedAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
@@ -1879,13 +1877,7 @@ contract CVStrategyTestUpgradeable is
     function testRevert_initialize_registryZero() public {
         address collateralVaultTemplate = address(new CollateralVault());
         StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
-            address(safeArbitrator),
-            payable(address(_councilSafe())),
-            3 ether,
-            2 ether,
-            1,
-            300,
-            collateralVaultTemplate
+            address(safeArbitrator), payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300, collateralVaultTemplate
         );
         StrategyStruct.InitializeParams memory params = getParams(
             address(0),
@@ -1994,7 +1986,8 @@ contract CVStrategyTestUpgradeable is
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, address(0), 0, address(0), metadata);
         bytes memory data = abi.encode(proposal);
-        StrategyStruct.ArbitrableConfig memory arbitrationConfig = StrategyStruct.ArbitrableConfig(cv.arbitrableConfig());
+        StrategyStruct.ArbitrableConfig memory arbitrationConfig =
+            StrategyStruct.ArbitrableConfig(cv.arbitrableConfig());
         uint256 submitterCollateralAmount = arbitrationConfig.submitterCollateralAmount;
         vm.deal(address(this), submitterCollateralAmount);
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
@@ -2303,7 +2296,8 @@ contract CVStrategyTestUpgradeable is
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), 110 ether, NATIVE, metadata);
         bytes memory data = abi.encode(proposal);
-        StrategyStruct.ArbitrableConfig memory arbitrationConfig = StrategyStruct.ArbitrableConfig(cv.arbitrableConfig());
+        StrategyStruct.ArbitrableConfig memory arbitrationConfig =
+            StrategyStruct.ArbitrableConfig(cv.arbitrableConfig());
         uint256 submitterCollateralAmount = arbitrationConfig.submitterCollateralAmount;
         vm.deal(address(6), submitterCollateralAmount * 2000);
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
