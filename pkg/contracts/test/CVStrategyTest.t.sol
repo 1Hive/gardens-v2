@@ -244,7 +244,7 @@ contract CVStrategyTestUpgradeable is
             StrategyStruct.CreateProposal(poolId, pool_admin(), requestAmount, address(useTokenPool), metadata);
         bytes memory data = abi.encode(proposal);
 
-        (uint256 submitterCollateralAmount,uint256 _challengerCollateralAmount) = strategy.getCollateralAmounts();
+        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = strategy.getCollateralAmounts();
         vm.deal(pool_admin(), submitterCollateralAmount);
         vm.startPrank(pool_admin());
         proposalId = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
@@ -1521,7 +1521,7 @@ contract CVStrategyTestUpgradeable is
             metadata
         );
         data = abi.encode(proposal);
-        (uint256 submitterCollateralAmount,uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
+        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
         vm.deal(pool_admin(), submitterCollateralAmount);
         uint256 proposalID2 = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
 
@@ -1656,7 +1656,7 @@ contract CVStrategyTestUpgradeable is
         allo().distribute(poolId, recipients, dataProposal);
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
-        (uint256 submitterCollateralAmount,uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
+        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
         assertEq(amount - submitterCollateralAmount, requestedAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
@@ -1817,7 +1817,7 @@ contract CVStrategyTestUpgradeable is
 
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
-        (uint256 submitterCollateralAmount,uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
+        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
         assertEq(amount - submitterCollateralAmount, requestedAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
@@ -1870,7 +1870,7 @@ contract CVStrategyTestUpgradeable is
     function testRevert_initialize_registryZero() public {
         address collateralVaultTemplate = address(new CollateralVault());
         StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
-          safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300, collateralVaultTemplate
+            safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300, collateralVaultTemplate
         );
         StrategyStruct.InitializeParams memory params = getParams(
             address(0),
@@ -1979,7 +1979,7 @@ contract CVStrategyTestUpgradeable is
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, address(0), 0, address(0), metadata);
         bytes memory data = abi.encode(proposal);
-        (uint256 submitterCollateralAmount,uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
+        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
         vm.deal(address(this), submitterCollateralAmount);
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
 
@@ -2287,7 +2287,7 @@ contract CVStrategyTestUpgradeable is
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), 110 ether, NATIVE, metadata);
         bytes memory data = abi.encode(proposal);
-        (uint256 submitterCollateralAmount,uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
+        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
         vm.deal(address(6), submitterCollateralAmount * 2000);
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
         vm.stopPrank();

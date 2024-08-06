@@ -403,7 +403,6 @@ contract CVStrategyV0_0 is
         return address(uint160(proposalId));
     }
 
-
     function getCollateralAmounts() external view returns (uint256, uint256) {
         return (arbitrableConfig.submitterCollateralAmount, arbitrableConfig.challengerCollateralAmount);
     }

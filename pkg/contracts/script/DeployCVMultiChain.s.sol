@@ -279,68 +279,84 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         token.approve(address(allo), type(uint256).max);
         allo.fundPool(poolId, 10_000 ether);
 
-        StrategyStruct.CreateProposal memory proposal = StrategyStruct.CreateProposal(
+        allo.registerRecipient(
             poolId,
-            BENEFICIARY,
-            500 ether,
-            address(token),
-            Metadata({protocol: 1, pointer: "QmVi1G1hQX4x8pb4W6KRroxsJjyP1gTkoqkGuyqoiGBPhS"})
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolId,
+                    BENEFICIARY,
+                    500 ether,
+                    address(token),
+                    Metadata({protocol: 1, pointer: "QmVi1G1hQX4x8pb4W6KRroxsJjyP1gTkoqkGuyqoiGBPhS"})
+                )
+            )
         );
-        bytes memory data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(
+        allo.registerRecipient(
             poolId,
-            BENEFICIARY,
-            1500 ether,
-            address(token),
-            Metadata({protocol: 1, pointer: "QmQfaGooGAWUHuHbYWzDp1ZHNJpreJP7oBiLjbKvxGwGuG"})
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolId,
+                    BENEFICIARY,
+                    1500 ether,
+                    address(token),
+                    Metadata({protocol: 1, pointer: "QmQfaGooGAWUHuHbYWzDp1ZHNJpreJP7oBiLjbKvxGwGuG"})
+                )
+            )
         );
-        data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(
+        allo.registerRecipient(
             poolId,
-            BENEFICIARY,
-            1500 ether,
-            address(token),
-            Metadata({protocol: 1, pointer: "QmdGXx4Ff2W1eMZ8HiUg1GPSA4VBEtfTMpkustPNU5YKxp"})
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolId,
+                    BENEFICIARY,
+                    1500 ether,
+                    address(token),
+                    Metadata({protocol: 1, pointer: "QmdGXx4Ff2W1eMZ8HiUg1GPSA4VBEtfTMpkustPNU5YKxp"})
+                )
+            )
         );
-        data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
 
         // Strategy with Signaling
-        StrategyStruct.CreateProposal memory proposal2 = StrategyStruct.CreateProposal(
+        allo.registerRecipient(
             poolIdSignaling,
-            address(0),
-            0,
-            address(0),
-            Metadata({protocol: 1, pointer: "QmSLYbgSsapjdp1VGj3LeQn1hp5jBs4JcWS1zQRRWLLkid"})
-        );
-        bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
-
-        proposal2 = StrategyStruct.CreateProposal(
-            poolIdSignaling,
-            address(0),
-            0,
-            address(0),
-            Metadata({protocol: 1, pointer: "QmXa5sb2uLiux8ewWt9pcCFdZERisSfY1FiUjEykYnySwz"})
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolIdSignaling,
+                    address(0),
+                    0,
+                    address(0),
+                    Metadata({protocol: 1, pointer: "QmSLYbgSsapjdp1VGj3LeQn1hp5jBs4JcWS1zQRRWLLkid"})
+                )
+            )
         );
 
-        data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
-
-        proposal2 = StrategyStruct.CreateProposal(
+        allo.registerRecipient(
             poolIdSignaling,
-            address(0),
-            0,
-            address(0),
-            Metadata({protocol: 1, pointer: "QmTafMKt491NJp5GdcPZpg5SQ1gTsYS7vidCutWcW3KFVg"})
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolIdSignaling,
+                    address(0),
+                    0,
+                    address(0),
+                    Metadata({protocol: 1, pointer: "QmXa5sb2uLiux8ewWt9pcCFdZERisSfY1FiUjEykYnySwz"})
+                )
+            )
         );
 
-        data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
+        allo.registerRecipient(
+            poolIdSignaling,
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolIdSignaling,
+                    address(0),
+                    0,
+                    address(0),
+                    Metadata({protocol: 1, pointer: "QmTafMKt491NJp5GdcPZpg5SQ1gTsYS7vidCutWcW3KFVg"})
+                )
+            )
+        );
 
         safeHelper(
             Safe(payable(COUNCIL_SAFE)),
