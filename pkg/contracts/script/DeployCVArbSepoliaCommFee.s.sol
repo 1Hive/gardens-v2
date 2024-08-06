@@ -96,25 +96,20 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
           address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
         );
 
-        IArbitrator safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
-
-        address collateralVaultTemplate = address(new CollateralVault());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
-            IArbitrator(address(safeArbitrator)),
-            payable(address(_councilSafe())),
-            3 ether,
-            2 ether,
-            1,
-            300,
-            collateralVaultTemplate
-        );
-
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Unlimited,
             pointConfig,
-            arbitrableConfig
+            StrategyStruct.ArbitrableConfig(
+              IArbitrator(payable(address(arbitratorProxy))),
+              payable(address(_councilSafe())),
+              3 ether,
+              2 ether,
+              1,
+              300,
+              address(new CollateralVault())
+          )
         );
 
         //Capped point system

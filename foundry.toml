@@ -9,11 +9,9 @@ ffi = true
 ast = true
 build_info = true
 extra_output = ["storageLayout"]
-block_gas_limit = 30000000 
 
 optimizer = true
-optimizer-runs = 1
-
+optimizer-runs = 1_000
 # prompt_timeout = 120
 fs_permissions = [{ access = "read", path = "./"}]
 # fs_permissions = []

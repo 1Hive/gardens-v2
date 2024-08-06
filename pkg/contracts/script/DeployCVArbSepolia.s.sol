@@ -93,20 +93,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
-          address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
-      );
-
-        IArbitrator safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
-
-        address collateralVaultTemplate = address(new CollateralVault());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
-            IArbitrator(address(safeArbitrator)),
-            payable(address(_councilSafe())),
-            3 ether,
-            2 ether,
-            1,
-            300,
-            collateralVaultTemplate
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
         );
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
@@ -114,7 +101,15 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Fixed,
             pointConfig,
-            arbitrableConfig
+            StrategyStruct.ArbitrableConfig(
+              SafeArbitrator(payable(address(arbitratorProxy))),
+              payable(address(_councilSafe())),
+              3 ether,
+              2 ether,
+              1,
+              300,
+              address(new CollateralVault())
+          )
         );
 
         paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
@@ -141,13 +136,14 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
         CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
         CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
-
+        
         safeHelper(
             councilSafeDeploy,
             councilMemberPKEnv,
             address(registryCommunity),
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
         );
+
         safeHelper(
             councilSafeDeploy,
             councilMemberPKEnv,
