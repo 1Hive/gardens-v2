@@ -168,7 +168,7 @@ contract CVStrategyV0_0 is
     error ArbitratorCannotBeZero();
     error CollateralVaultCannotBeZero();
     error DefaultRulingNotSet();
-    error DisputeCooldownNotPassed();
+    error DisputeCooldownNotPassed(uint256 _proposalId);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -1158,7 +1158,7 @@ contract CVStrategyV0_0 is
 
         // if the lastDisputeCompletion is less than DISPUTE_COOLDOWN_SEC, we should revert
         if (proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC > block.timestamp) {
-            revert DisputeCooldownNotPassed();
+            revert DisputeCooldownNotPassed(proposalId);
         }
 
         bool isTimeOut = block.timestamp > proposal.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
