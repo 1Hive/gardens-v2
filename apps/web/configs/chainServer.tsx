@@ -54,56 +54,56 @@ export const chainDataMap: {
   421614: {
     name: arbitrumSepolia.name,
     icon: Arbitrum,
-    explorer: "https://sepolia.arbiscan.io/address/",
+    explorer: "https://sepolia-explorer.arbitrum.io",
     blockTime: 0.23,
     confirmations: 1, // 7
   },
   42161: {
     name: arbitrum.name,
     icon: Arbitrum,
-    explorer: "https://arbiscan.io/address/",
+    explorer: "https://arbitrum.blockscout.com",
     blockTime: 0.23,
     confirmations: 1, // 7
   },
   1: {
     name: mainnet.name,
     icon: Ethereum,
-    explorer: "https://etherscan.io/address/",
+    explorer: "https://eth.blockscout.com",
     blockTime: 12,
     confirmations: 1, // 3
   },
   11155111: {
     name: sepolia.name,
     icon: Ethereum,
-    explorer: "https://sepolia.etherscan.io/address/",
+    explorer: "https://eth-sepolia.blockscout.com",
     blockTime: 12,
     confirmations: 1, // 3
   },
   10: {
     name: optimism.name,
     icon: Optimism,
-    explorer: "https://optimistic.etherscan.io/address/",
+    explorer: "https://optimism.blockscout.com",
     blockTime: 2,
     confirmations: 1, // 2
   },
   11155420: {
     name: optimismSepolia.name,
     icon: Optimism,
-    explorer: "https://sepolia-optimism.etherscan.io/address/",
+    explorer: "https://optimism-sepolia.blockscout.com",
     blockTime: 2,
     confirmations: 1, // 2
   },
   100: {
     name: gnosis.name,
     icon: GnosisGno,
-    explorer: "https://gnosisscan.io/address/",
+    explorer: "https://gnosis.blockscout.com",
     blockTime: 5.2,
     confirmations: 1, // 4
   },
   137: {
     name: polygon.name,
     icon: Polygon,
-    explorer: "https://polygonscan.com/address/",
+    explorer: "https://polygon.blockscout.com",
     blockTime: 2.1,
     confirmations: 1, // 4
   },

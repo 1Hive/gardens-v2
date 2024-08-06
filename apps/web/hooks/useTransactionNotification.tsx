@@ -6,7 +6,14 @@ import { UserRejectedRequestError } from "viem";
 import { WriteContractResult } from "wagmi/actions";
 import { useChainFromPath } from "./useChainFromPath";
 import { ComputedStatus } from "./useContractWriteWithConfirmations";
-import { TxWaitingForSig, TxError, TxSuccess, TxInProgress, TxIdle } from "@/assets";
+import {
+  TxWaitingForSig,
+  TxError,
+  TxSuccess,
+  TxInProgress,
+  TxIdle,
+} from "@/assets";
+import { chainDataMap } from "@/configs/chainServer";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
 type TransactionData = WriteContractResult | undefined;
@@ -49,7 +56,7 @@ export const useTransactionNotification = ({
 
     const clickToExplorer = () =>
       window.open(
-        `${chain?.blockExplorers?.default.url}/tx/${transactionData?.hash}`,
+        `${chainDataMap[chain?.id ?? 0].explorer}/tx/${transactionData?.hash}`,
         "_blank",
       );
 
@@ -177,20 +184,24 @@ export const TransactionStatusNotification = ({
             alt="icon"
           />
           {index !== undefined && status === "idle" && (
-            <label className="absolute font-medium text-xl">
-              {index}
-            </label>
+            <label className="absolute font-medium text-xl">{index}</label>
           )}
         </div>
       )}
       <div className="flex flex-col gap-1">
         {contractName && (
-          <div className="font-semibold text-gray-700 text-[22px]">{contractName}</div>
+          <div className="font-semibold text-gray-700 text-[22px]">
+            {contractName}
+          </div>
         )}
-        <div className={`${showClickToExplorer ? textColor : ""} font-medium text-[20px]`}>{message}</div>
+        <div
+          className={`${showClickToExplorer ? textColor : ""} font-medium text-[20px]`}
+        >
+          {message}
+        </div>
         {chain?.blockExplorers?.default.url && showClickToExplorer && (
           <div className="w-full text-sm italic">
-            Click to see in {chain.blockExplorers.default.name}
+            Click to see in Blockscout
           </div>
         )}
       </div>

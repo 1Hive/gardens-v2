@@ -5,6 +5,7 @@ import {
   CurrencyDollarIcon,
   PlusIcon,
   RectangleGroupIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
 import Image from "next/image";
@@ -216,7 +217,11 @@ export default function Page({
             <EthAddress address={communityAddr as Address} />
           </div>
           <div className="flex flex-col gap-2">
-            <Statistic label="members" count={members?.length ?? 0} />
+            <Statistic
+              label="members"
+              count={members?.length ?? 0}
+              icon={<UserGroupIcon />}
+            />
             <Statistic
               label="pools"
               icon={<RectangleGroupIcon />}
@@ -285,6 +290,7 @@ export default function Page({
                 key={pool.poolId}
                 tokenGarden={{
                   decimals: tokenGarden?.decimals ?? 18,
+                  symbol: tokenGarden?.symbol ?? "",
                 }}
                 pool={pool}
               />
@@ -300,6 +306,7 @@ export default function Page({
               <PoolCard
                 key={pool.poolId}
                 tokenGarden={{
+                  symbol: tokenGarden?.symbol ?? "",
                   decimals: tokenGarden?.decimals ?? 18,
                 }}
                 pool={pool}
@@ -317,6 +324,7 @@ export default function Page({
                 key={pool.poolId}
                 tokenGarden={{
                   decimals: tokenGarden?.decimals ?? 18,
+                  symbol: tokenGarden?.symbol ?? "",
                 }}
                 pool={pool}
               />
