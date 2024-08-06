@@ -5,7 +5,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 interface ModalProps {
   icon?: ReactNode;
   title?: string;
-  onClose: () => void;
+  onClose?: () => void;
   children: ReactNode;
   isOpen: boolean;
 }
@@ -22,7 +22,7 @@ export function Modal({ icon, title, onClose, children, isOpen }: ModalProps) {
   }, [isOpen]);
 
   const handleClose = () => {
-    onClose();
+    onClose?.();
     dialogRef.current?.close();
   };
 

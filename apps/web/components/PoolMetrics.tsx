@@ -43,7 +43,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   const { address: accountAddress } = useAccount();
   const { publish } = usePubSubContext();
 
-  const requestedAmount = parseUnits(amount || "0", tokenGarden.decimals);
+  const requestedAmount = parseUnits(amount, tokenGarden.decimals);
 
   const {
     write: writeFundPool,
@@ -52,7 +52,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
-    args: [BigInt(poolId), BigInt(amount)],
+    args: [BigInt(poolId), requestedAmount],
     functionName: "fundPool",
     contractName: "Allo",
     showNotification: false,
@@ -136,14 +136,21 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               </p>
             </div>
           </div>
-          <div className="flex flex-col gap-4">
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleFundPool();
+            }}
+          >
             <FormInput
               type="number"
               placeholder="0"
               required
-              className="pr-14"
+              className=""
               step={INPUT_TOKEN_MIN_VALUE}
               onChange={(e) => setAmount(e.target.value)}
+              value={amount}
               otherProps={{
                 step: INPUT_TOKEN_MIN_VALUE,
                 min: INPUT_TOKEN_MIN_VALUE,
@@ -154,13 +161,13 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               </span>
             </FormInput>
             <Button
+              type="submit"
               disabled={missmatchUrl || !accountAddress}
               tooltip={tooltipMessage}
-              onClick={handleFundPool}
             >
               Fund pool
             </Button>
-          </div>
+          </form>
         </div>
       </section>
     </>

@@ -142,7 +142,7 @@ export function Proposals({
       refetchIsMemberQuery();
       refetchgetMemberStrategyQuery();
     }
-  }, [wallet, refetchIsMemberQuery, refetchgetMemberStrategyQuery]);
+  }, [wallet]);
 
   useEffect(() => {
     const stakesFiltered =
