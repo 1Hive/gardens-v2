@@ -203,7 +203,7 @@ contract RegistryCommunityV0_0 is
     /// @param _registerStakeAmount The amount of tokens required to register a member
     /// @param _communityFee The fee charged to the community for each registration
     /// @param _nonce The nonce used to create new profiles in the Allo Registry
-    /// @param _registryFactory The address of the registry factory
+    /// @param _RegistryFactoryV0_0 The address of the registry factory
     /// @param _feeReceiver The address that receives the community fee
     /// @param _metadata The covenant IPFS hash of community
     /// @param _councilSafe The council safe contract address
