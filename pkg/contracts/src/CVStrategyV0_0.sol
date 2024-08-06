@@ -169,6 +169,7 @@ contract CVStrategyV0_0 is
     error CollateralVaultCannotBeZero();
     error DefaultRulingNotSet();
     error DisputeCooldownNotPassed(uint256 _proposalId);
+    error ArbitrationConfigCannotBeChangedDuringDispute();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -1097,6 +1098,16 @@ contract CVStrategyV0_0 is
         ) = abi.decode(data, (StrategyStruct.ArbitrableConfig, uint256, uint256, uint256, uint256));
 
         // Update only if the new value is different
+
+        if (
+            _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
+                || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
+                || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
+                || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
+                || _arbitrableConfig.collateralVaultTemplate != arbitrableConfig.collateralVaultTemplate
+        ) {
+            revert ArbitrationConfigCannotBeChangedDuringDispute();
+        }
 
         if (_arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe) {
             arbitrableConfig.tribunalSafe = _arbitrableConfig.tribunalSafe;
