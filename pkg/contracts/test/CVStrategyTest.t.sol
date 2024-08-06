@@ -109,7 +109,10 @@ contract CVStrategyTestUpgradeable is
         // registryCommunity = new RegistryCommunityV0_0();
         vm.startPrank(factoryOwner);
 
-        safeArbitrator = new SafeArbitrator(2 ether);
+        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+        );
+        safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
 
         // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
         ERC1967Proxy proxy = new ERC1967Proxy(

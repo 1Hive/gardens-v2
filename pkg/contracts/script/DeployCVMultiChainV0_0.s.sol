@@ -13,7 +13,7 @@ import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpersV0_0} from "../test/CVStrategyHelpersV0_0.sol";
+import {CVStrategyHelpersV0_0, CVStrategyV0_0} from "../test/CVStrategyHelpersV0_0.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -53,6 +53,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
     Allo allo;
     GV2ERC20 token;
     RegistryFactoryV0_0 registryFactory;
+    IArbitrator arbitrator;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -101,6 +102,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         uint256 chainId = json.readUint(getKeyNetwork(".chainId"));
         string memory name = json.readString(getKeyNetwork(".name"));
         SENDER = json.readAddress(getKeyNetwork(".ENVS.SENDER"));
+        ERC1967Proxy proxy;
 
         console2.log("name: %s", name);
         console2.log("sender: %s", SENDER);
@@ -152,7 +154,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         // }
         if (REGISTRY_FACTORY == address(0)) {
             registryFactory = new RegistryFactoryV0_0();
-            ERC1967Proxy proxy = new ERC1967Proxy(
+            proxy = new ERC1967Proxy(
                 address(new RegistryFactoryV0_0()),
                 abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(0x0))
             );
@@ -184,13 +186,19 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
+        proxy = new ERC1967Proxy(
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+        );
+        arbitrator = SafeArbitrator(payable(address(proxy)));
+
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Fixed,
             pointConfig,
             StrategyStruct.ArbitrableConfig(
-                IArbitrator(address(new SafeArbitrator(2 ether))),
+                IArbitrator(address(arbitrator)),
+                // IArbitrator(address(0)),
                 payable(address(_councilSafe())),
                 3 ether,
                 2 ether,

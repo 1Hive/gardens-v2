@@ -3,13 +3,15 @@
 pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 import {IArbitrable} from "./interfaces/IArbitrable.sol";
 import {IArbitrator} from "./interfaces/IArbitrator.sol";
 
 /// @title Safe Arbitrator
 /// @dev This is an arbitrator middleware that will allow a safe to decide on the result of disputes.
-contract SafeArbitrator is IArbitrator {
+contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable {
     enum DisputeStatus {
         Waiting, // The dispute is waiting for the ruling or not created.
         Solved // The dispute is resolved.
@@ -25,18 +27,12 @@ contract SafeArbitrator is IArbitrator {
         DisputeStatus status; // A current status of the dispute.
     }
 
-    address public owner = msg.sender; // Owner of the contract.
     uint256 private arbitrationFee; // The cost to create a dispute. Made private because of the arbitrationCost() getter.
 
     DisputeStruct[] public disputes; // Stores the dispute info. disputes[disputeID].
     mapping(address arbitrable => address safe) public arbitrableTribunalSafe; //Map arbitrable address to tribunal safe address
 
     error OnlySafe();
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Can only be called by the owner.");
-        _;
-    }
 
     modifier onlySafe(address _arbitrable) {
         if (msg.sender == arbitrableTribunalSafe[_arbitrable]) {
@@ -46,9 +42,8 @@ contract SafeArbitrator is IArbitrator {
         }
     }
 
-    /// @dev Constructor.
-    /// @param _arbitrationFee Amount to be paid for arbitration.
-    constructor(uint256 _arbitrationFee) {
+    function initialize(uint256 _arbitrationFee) public initializer {
+        __Ownable_init();
         arbitrationFee = _arbitrationFee;
     }
 
@@ -110,6 +105,7 @@ contract SafeArbitrator is IArbitrator {
         (bool success,) = payable(msg.sender).call{value: dispute.arbitrationFee}("");
         require(success, "Transfer failed");
         dispute.arbitrated.rule(_disputeID, dispute.ruling);
+        emit Ruling(IArbitrable(_arbitrable), _disputeID, _ruling);
     }
 
     /// @inheritdoc IArbitrator
@@ -133,4 +129,8 @@ contract SafeArbitrator is IArbitrator {
         tied = false;
         overridden = false;
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    uint256[50] private __gap;
 }
