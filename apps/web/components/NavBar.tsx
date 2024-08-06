@@ -21,7 +21,7 @@ export function NavBar() {
             <div className="flex h-16 justify-between">
               <div className="flex gap-8">
                 <div className="flex flex-shrink-0 items-center gap-4">
-                  <Link href="/" className="flex items-center gap-3">
+                  <Link href="/gardens" className="flex items-center gap-3">
                     <Image
                       src={newLogo}
                       alt="logo"
