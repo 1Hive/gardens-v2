@@ -4,22 +4,24 @@ pragma solidity ^0.8.13;
 import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../src/CVStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
-import {RegistryFactory} from "../src/RegistryFactory.sol";
+import {CVStrategyHelpersV0_0, CVStrategyV0_0, StrategyStruct} from "../test/CVStrategyHelpersV0_0.sol";
+import {CollateralVault} from "../src/CollateralVault.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
-
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {SafeArbitrator, IArbitrator} from "../src/SafeArbitrator.sol";
 import {Safe} from "safe-contracts/contracts/Safe.sol";
 import {TERC20} from "../test/shared/TERC20.sol";
 
-contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSetup {
+contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50 ether;
 
     address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
@@ -61,12 +63,12 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
         // console2.log("Token Addr: %s", address(token));
         Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
 
-        RegistryFactory registryFactory = RegistryFactory(FACTORY);
-        // RegistryFactory registryFactory = new RegistryFactory();
+        RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(FACTORY);
+        // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
 
-        RegistryCommunity.InitializeParams memory params;
+        RegistryCommunityV0_0.InitializeParams memory params;
 
-        params._strategyTemplate = address(new CVStrategy(address(allo)));
+        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -79,18 +81,31 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
 
         assertTrue(params._councilSafe != address(0));
 
-        RegistryCommunity registryCommunity = RegistryCommunity(registryFactory.createRegistry(params));
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
 
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
+        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
+          address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+        );
+
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Unlimited,
-            pointConfig
+            pointConfig,
+            StrategyStruct.ArbitrableConfig(
+              IArbitrator(payable(address(arbitratorProxy))),
+              payable(address(_councilSafe())),
+              3 ether,
+              2 ether,
+              1,
+              300,
+              address(new CollateralVault())
+          )
         );
 
         //Capped point system
@@ -112,7 +127,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSet
 
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata2);
 
-        CVStrategy strategy1 = CVStrategy(payable(_strategy1));
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
 
         safeHelper(
             councilSafeDeploy,

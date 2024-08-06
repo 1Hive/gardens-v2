@@ -53,7 +53,6 @@ add-owner: #make add-owner owner=0x1234 safe=0x1234
 	--broadcast \
 	-vvvv
 
-
 deploy: 
 	-forge script script/DeployCV.s.sol:DeployCV \
 	--rpc-url $(RPC_URL_LOCALHOST) \
