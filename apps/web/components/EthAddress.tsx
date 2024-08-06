@@ -54,8 +54,8 @@ export const EthAddress = ({
         address={address as Address}
         explorer={(addr) => ({
           name: chainDataMap[chain.id].name,
-          url: `${chainDataMap[chain.id].explorer}${addr}`,
-          accountUrl: `${chainDataMap[chain.id].explorer}${addr}`,
+          url: `${chainDataMap[chain.id].explorer}/address/${addr}`,
+          accountUrl: `${chainDataMap[chain.id].explorer}/address/${addr}`,
         })}
         ens={!chain?.testnet}
       />
