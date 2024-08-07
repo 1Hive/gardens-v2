@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../src/CVStrategyV0_0.sol";
+import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
@@ -22,9 +23,8 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
-import {Safe} from "safe-contracts/contracts/Safe.sol";
-
-import {SafeProxyFactory} from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
+// import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
@@ -173,7 +173,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         // params._communityName = "Alpha Seedling";
         params._communityName = "Alpha Centaurians";
         params._allo = address(allo);
-        // params._strategyTemplate = address(new CVStrategy(address(allo)));
+        params._strategyTemplate = address(new CVStrategyV0_0());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 0;
@@ -203,8 +203,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
                 3 ether,
                 2 ether,
                 1,
-                300,
-                address(new CollateralVault())
+                300
             )
         );
 
@@ -212,9 +211,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         // paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
         // paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
 
-        paramsCV.decay = _etherToFloat(0.9999903 ether); // alpha = decay
-        paramsCV.maxRatio = _etherToFloat(0.3219782 ether); // beta = maxRatio
-        paramsCV.weight = _etherToFloat(0.010367 ether); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // paramsCV.decay = _etherToFloat(0.9999903 ether); // alpha = decay
+        // paramsCV.maxRatio = _etherToFloat(0.3219782 ether); // beta = maxRatio
+        // paramsCV.weight = _etherToFloat(0.010367 ether); // RHO = p  = weight
 
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(
             address(token), paramsCV, Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
@@ -239,9 +239,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
         CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
 
-        strategy2.setDecay(_etherToFloat(0.9999903 ether)); // alpha = decay
-        strategy2.setMaxRatio(_etherToFloat(0.3219782 ether)); // beta = maxRatio
-        strategy2.setWeight(_etherToFloat(0.010367 ether)); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // strategy2.setDecay(_etherToFloat(0.9999903 ether)); // alpha = decay
+        // strategy2.setMaxRatio(_etherToFloat(0.3219782 ether)); // beta = maxRatio
+        // strategy2.setWeight(_etherToFloat(0.010367 ether)); // RHO = p  = weight
 
         safeHelper(
             Safe(payable(COUNCIL_SAFE)),
