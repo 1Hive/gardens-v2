@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 
-import "safe-contracts/contracts/Safe.sol";
-import "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+import "safe-smart-account/contracts/Safe.sol";
+import "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 
 contract SafeSetup is Test {
     Safe public councilSafe;

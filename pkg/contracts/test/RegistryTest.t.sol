@@ -26,7 +26,7 @@ import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 import {CVStrategyV0_0, StrategyStruct, IArbitrator, CollateralVault} from "../src/CVStrategyV0_0.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
-import {Safe} from "safe-contracts/contracts/Safe.sol";
+import {Safe} from "safe-smart-account/contracts/Safe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
 import {CVStrategyHelpersV0_0} from "./CVStrategyHelpersV0_0.sol";

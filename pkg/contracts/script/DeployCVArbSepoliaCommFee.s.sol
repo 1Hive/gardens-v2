@@ -18,7 +18,7 @@ import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {SafeArbitrator, IArbitrator} from "../src/SafeArbitrator.sol";
-import {Safe} from "safe-contracts/contracts/Safe.sol";
+import {Safe} from "safe-smart-account/contracts/Safe.sol";
 import {TERC20} from "../test/shared/TERC20.sol";
 
 contract DeployCVArbSepoliaCommFee is

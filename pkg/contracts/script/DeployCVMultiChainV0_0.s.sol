@@ -23,9 +23,9 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
-import {Safe} from "safe-contracts/contracts/Safe.sol";
+import {Safe} from "safe-smart-account/contracts/Safe.sol";
 
-import {SafeProxyFactory} from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
