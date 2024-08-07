@@ -311,10 +311,7 @@ library SafeTransferLib {
     ///
     /// Note: Does NOT revert upon failure.
     /// Returns whether the transfer of ETH is successful instead.
-    function trySafeTransferETH(address to, uint256 amount, uint256 gasStipend)
-        internal
-        returns (bool success)
-    {
+    function trySafeTransferETH(address to, uint256 amount, uint256 gasStipend) internal returns (bool success) {
         /// @solidity memory-safe-assembly
         assembly {
             // Transfer the ETH and check if it succeeded or not.
@@ -366,10 +363,7 @@ library SafeTransferLib {
     ///
     /// The `from` account must have their entire balance approved for
     /// the current contract to manage.
-    function safeTransferAllFrom(address token, address from, address to)
-        internal
-        returns (uint256 amount)
-    {
+    function safeTransferAllFrom(address token, address from, address to) internal returns (uint256 amount) {
         /// @solidity memory-safe-assembly
         assembly {
             let m := mload(0x40) // Cache the free memory pointer.
@@ -540,10 +534,7 @@ library SafeTransferLib {
                 mstore(0x34, amount) // Store back the original `amount`.
 
                 if iszero(
-                    and(
-                        or(eq(mload(0x00), 1), iszero(returndatasize())),
-                        call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20)
-                    )
+                    and(or(eq(mload(0x00), 1), iszero(returndatasize())), call(gas(), token, 0, 0x10, 0x44, 0x00, 0x20))
                 ) {
                     // Store the function selector of `ApproveFailed()`.
                     mstore(0x00, 0x3e3f8f73)
@@ -2237,11 +2228,11 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log()"));
     }
 
-    function logInt(int p0) internal view {
+    function logInt(int256 p0) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(int)", p0));
     }
 
-    function logUint(uint p0) internal view {
+    function logUint(uint256 p0) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint)", p0));
     }
 
@@ -2389,7 +2380,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bytes32)", p0));
     }
 
-    function log(uint p0) internal view {
+    function log(uint256 p0) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint)", p0));
     }
 
@@ -2405,23 +2396,23 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address)", p0));
     }
 
-    function log(uint p0, uint p1) internal view {
+    function log(uint256 p0, uint256 p1) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint)", p0, p1));
     }
 
-    function log(uint p0, string memory p1) internal view {
+    function log(uint256 p0, string memory p1) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string)", p0, p1));
     }
 
-    function log(uint p0, bool p1) internal view {
+    function log(uint256 p0, bool p1) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool)", p0, p1));
     }
 
-    function log(uint p0, address p1) internal view {
+    function log(uint256 p0, address p1) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address)", p0, p1));
     }
 
-    function log(string memory p0, uint p1) internal view {
+    function log(string memory p0, uint256 p1) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint)", p0, p1));
     }
 
@@ -2437,7 +2428,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,address)", p0, p1));
     }
 
-    function log(bool p0, uint p1) internal view {
+    function log(bool p0, uint256 p1) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint)", p0, p1));
     }
 
@@ -2453,7 +2444,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address)", p0, p1));
     }
 
-    function log(address p0, uint p1) internal view {
+    function log(address p0, uint256 p1) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint)", p0, p1));
     }
 
@@ -2469,87 +2460,87 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,address)", p0, p1));
     }
 
-    function log(uint p0, uint p1, uint p2) internal view {
+    function log(uint256 p0, uint256 p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,uint)", p0, p1, p2));
     }
 
-    function log(uint p0, uint p1, string memory p2) internal view {
+    function log(uint256 p0, uint256 p1, string memory p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,string)", p0, p1, p2));
     }
 
-    function log(uint p0, uint p1, bool p2) internal view {
+    function log(uint256 p0, uint256 p1, bool p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,bool)", p0, p1, p2));
     }
 
-    function log(uint p0, uint p1, address p2) internal view {
+    function log(uint256 p0, uint256 p1, address p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,address)", p0, p1, p2));
     }
 
-    function log(uint p0, string memory p1, uint p2) internal view {
+    function log(uint256 p0, string memory p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,uint)", p0, p1, p2));
     }
 
-    function log(uint p0, string memory p1, string memory p2) internal view {
+    function log(uint256 p0, string memory p1, string memory p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,string)", p0, p1, p2));
     }
 
-    function log(uint p0, string memory p1, bool p2) internal view {
+    function log(uint256 p0, string memory p1, bool p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,bool)", p0, p1, p2));
     }
 
-    function log(uint p0, string memory p1, address p2) internal view {
+    function log(uint256 p0, string memory p1, address p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,address)", p0, p1, p2));
     }
 
-    function log(uint p0, bool p1, uint p2) internal view {
+    function log(uint256 p0, bool p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,uint)", p0, p1, p2));
     }
 
-    function log(uint p0, bool p1, string memory p2) internal view {
+    function log(uint256 p0, bool p1, string memory p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,string)", p0, p1, p2));
     }
 
-    function log(uint p0, bool p1, bool p2) internal view {
+    function log(uint256 p0, bool p1, bool p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,bool)", p0, p1, p2));
     }
 
-    function log(uint p0, bool p1, address p2) internal view {
+    function log(uint256 p0, bool p1, address p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,address)", p0, p1, p2));
     }
 
-    function log(uint p0, address p1, uint p2) internal view {
+    function log(uint256 p0, address p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,uint)", p0, p1, p2));
     }
 
-    function log(uint p0, address p1, string memory p2) internal view {
+    function log(uint256 p0, address p1, string memory p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,string)", p0, p1, p2));
     }
 
-    function log(uint p0, address p1, bool p2) internal view {
+    function log(uint256 p0, address p1, bool p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,bool)", p0, p1, p2));
     }
 
-    function log(uint p0, address p1, address p2) internal view {
+    function log(uint256 p0, address p1, address p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,address)", p0, p1, p2));
     }
 
-    function log(string memory p0, uint p1, uint p2) internal view {
+    function log(string memory p0, uint256 p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,uint)", p0, p1, p2));
     }
 
-    function log(string memory p0, uint p1, string memory p2) internal view {
+    function log(string memory p0, uint256 p1, string memory p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,string)", p0, p1, p2));
     }
 
-    function log(string memory p0, uint p1, bool p2) internal view {
+    function log(string memory p0, uint256 p1, bool p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,bool)", p0, p1, p2));
     }
 
-    function log(string memory p0, uint p1, address p2) internal view {
+    function log(string memory p0, uint256 p1, address p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,address)", p0, p1, p2));
     }
 
-    function log(string memory p0, string memory p1, uint p2) internal view {
+    function log(string memory p0, string memory p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,uint)", p0, p1, p2));
     }
 
@@ -2565,7 +2556,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,address)", p0, p1, p2));
     }
 
-    function log(string memory p0, bool p1, uint p2) internal view {
+    function log(string memory p0, bool p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,uint)", p0, p1, p2));
     }
 
@@ -2581,7 +2572,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,address)", p0, p1, p2));
     }
 
-    function log(string memory p0, address p1, uint p2) internal view {
+    function log(string memory p0, address p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,uint)", p0, p1, p2));
     }
 
@@ -2597,23 +2588,23 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,address)", p0, p1, p2));
     }
 
-    function log(bool p0, uint p1, uint p2) internal view {
+    function log(bool p0, uint256 p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,uint)", p0, p1, p2));
     }
 
-    function log(bool p0, uint p1, string memory p2) internal view {
+    function log(bool p0, uint256 p1, string memory p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,string)", p0, p1, p2));
     }
 
-    function log(bool p0, uint p1, bool p2) internal view {
+    function log(bool p0, uint256 p1, bool p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,bool)", p0, p1, p2));
     }
 
-    function log(bool p0, uint p1, address p2) internal view {
+    function log(bool p0, uint256 p1, address p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,address)", p0, p1, p2));
     }
 
-    function log(bool p0, string memory p1, uint p2) internal view {
+    function log(bool p0, string memory p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,uint)", p0, p1, p2));
     }
 
@@ -2629,7 +2620,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,address)", p0, p1, p2));
     }
 
-    function log(bool p0, bool p1, uint p2) internal view {
+    function log(bool p0, bool p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,uint)", p0, p1, p2));
     }
 
@@ -2645,7 +2636,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,address)", p0, p1, p2));
     }
 
-    function log(bool p0, address p1, uint p2) internal view {
+    function log(bool p0, address p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,uint)", p0, p1, p2));
     }
 
@@ -2661,23 +2652,23 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,address)", p0, p1, p2));
     }
 
-    function log(address p0, uint p1, uint p2) internal view {
+    function log(address p0, uint256 p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,uint)", p0, p1, p2));
     }
 
-    function log(address p0, uint p1, string memory p2) internal view {
+    function log(address p0, uint256 p1, string memory p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,string)", p0, p1, p2));
     }
 
-    function log(address p0, uint p1, bool p2) internal view {
+    function log(address p0, uint256 p1, bool p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,bool)", p0, p1, p2));
     }
 
-    function log(address p0, uint p1, address p2) internal view {
+    function log(address p0, uint256 p1, address p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,address)", p0, p1, p2));
     }
 
-    function log(address p0, string memory p1, uint p2) internal view {
+    function log(address p0, string memory p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,uint)", p0, p1, p2));
     }
 
@@ -2693,7 +2684,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,address)", p0, p1, p2));
     }
 
-    function log(address p0, bool p1, uint p2) internal view {
+    function log(address p0, bool p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,uint)", p0, p1, p2));
     }
 
@@ -2709,7 +2700,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,address)", p0, p1, p2));
     }
 
-    function log(address p0, address p1, uint p2) internal view {
+    function log(address p0, address p1, uint256 p2) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,uint)", p0, p1, p2));
     }
 
@@ -2725,343 +2716,343 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,address)", p0, p1, p2));
     }
 
-    function log(uint p0, uint p1, uint p2, uint p3) internal view {
+    function log(uint256 p0, uint256 p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, uint p2, string memory p3) internal view {
+    function log(uint256 p0, uint256 p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, uint p2, bool p3) internal view {
+    function log(uint256 p0, uint256 p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, uint p2, address p3) internal view {
+    function log(uint256 p0, uint256 p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, string memory p2, uint p3) internal view {
+    function log(uint256 p0, uint256 p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,string,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, string memory p2, string memory p3) internal view {
+    function log(uint256 p0, uint256 p1, string memory p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,string,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, string memory p2, bool p3) internal view {
+    function log(uint256 p0, uint256 p1, string memory p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,string,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, string memory p2, address p3) internal view {
+    function log(uint256 p0, uint256 p1, string memory p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,string,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, bool p2, uint p3) internal view {
+    function log(uint256 p0, uint256 p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,bool,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, bool p2, string memory p3) internal view {
+    function log(uint256 p0, uint256 p1, bool p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,bool,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, bool p2, bool p3) internal view {
+    function log(uint256 p0, uint256 p1, bool p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,bool,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, bool p2, address p3) internal view {
+    function log(uint256 p0, uint256 p1, bool p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, address p2, uint p3) internal view {
+    function log(uint256 p0, uint256 p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,address,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, address p2, string memory p3) internal view {
+    function log(uint256 p0, uint256 p1, address p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,address,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, address p2, bool p3) internal view {
+    function log(uint256 p0, uint256 p1, address p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,address,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, uint p1, address p2, address p3) internal view {
+    function log(uint256 p0, uint256 p1, address p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,uint,address,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, uint p2, uint p3) internal view {
+    function log(uint256 p0, string memory p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, uint p2, string memory p3) internal view {
+    function log(uint256 p0, string memory p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, uint p2, bool p3) internal view {
+    function log(uint256 p0, string memory p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, uint p2, address p3) internal view {
+    function log(uint256 p0, string memory p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, string memory p2, uint p3) internal view {
+    function log(uint256 p0, string memory p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,string,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, string memory p2, string memory p3) internal view {
+    function log(uint256 p0, string memory p1, string memory p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,string,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, string memory p2, bool p3) internal view {
+    function log(uint256 p0, string memory p1, string memory p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,string,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, string memory p2, address p3) internal view {
+    function log(uint256 p0, string memory p1, string memory p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,string,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, bool p2, uint p3) internal view {
+    function log(uint256 p0, string memory p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,bool,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, bool p2, string memory p3) internal view {
+    function log(uint256 p0, string memory p1, bool p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,bool,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, bool p2, bool p3) internal view {
+    function log(uint256 p0, string memory p1, bool p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,bool,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, bool p2, address p3) internal view {
+    function log(uint256 p0, string memory p1, bool p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, address p2, uint p3) internal view {
+    function log(uint256 p0, string memory p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,address,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, address p2, string memory p3) internal view {
+    function log(uint256 p0, string memory p1, address p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,address,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, address p2, bool p3) internal view {
+    function log(uint256 p0, string memory p1, address p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,address,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, string memory p1, address p2, address p3) internal view {
+    function log(uint256 p0, string memory p1, address p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,string,address,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, uint p2, uint p3) internal view {
+    function log(uint256 p0, bool p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, uint p2, string memory p3) internal view {
+    function log(uint256 p0, bool p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, uint p2, bool p3) internal view {
+    function log(uint256 p0, bool p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, uint p2, address p3) internal view {
+    function log(uint256 p0, bool p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, string memory p2, uint p3) internal view {
+    function log(uint256 p0, bool p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,string,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, string memory p2, string memory p3) internal view {
+    function log(uint256 p0, bool p1, string memory p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,string,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, string memory p2, bool p3) internal view {
+    function log(uint256 p0, bool p1, string memory p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,string,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, string memory p2, address p3) internal view {
+    function log(uint256 p0, bool p1, string memory p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,string,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, bool p2, uint p3) internal view {
+    function log(uint256 p0, bool p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,bool,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, bool p2, string memory p3) internal view {
+    function log(uint256 p0, bool p1, bool p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,bool,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, bool p2, bool p3) internal view {
+    function log(uint256 p0, bool p1, bool p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,bool,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, bool p2, address p3) internal view {
+    function log(uint256 p0, bool p1, bool p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, address p2, uint p3) internal view {
+    function log(uint256 p0, bool p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,address,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, address p2, string memory p3) internal view {
+    function log(uint256 p0, bool p1, address p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,address,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, address p2, bool p3) internal view {
+    function log(uint256 p0, bool p1, address p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,address,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, bool p1, address p2, address p3) internal view {
+    function log(uint256 p0, bool p1, address p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,bool,address,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, uint p2, uint p3) internal view {
+    function log(uint256 p0, address p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, uint p2, string memory p3) internal view {
+    function log(uint256 p0, address p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, uint p2, bool p3) internal view {
+    function log(uint256 p0, address p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, uint p2, address p3) internal view {
+    function log(uint256 p0, address p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, string memory p2, uint p3) internal view {
+    function log(uint256 p0, address p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,string,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, string memory p2, string memory p3) internal view {
+    function log(uint256 p0, address p1, string memory p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,string,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, string memory p2, bool p3) internal view {
+    function log(uint256 p0, address p1, string memory p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,string,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, string memory p2, address p3) internal view {
+    function log(uint256 p0, address p1, string memory p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,string,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, bool p2, uint p3) internal view {
+    function log(uint256 p0, address p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,bool,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, bool p2, string memory p3) internal view {
+    function log(uint256 p0, address p1, bool p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,bool,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, bool p2, bool p3) internal view {
+    function log(uint256 p0, address p1, bool p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,bool,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, bool p2, address p3) internal view {
+    function log(uint256 p0, address p1, bool p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, address p2, uint p3) internal view {
+    function log(uint256 p0, address p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,address,uint)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, address p2, string memory p3) internal view {
+    function log(uint256 p0, address p1, address p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,address,string)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, address p2, bool p3) internal view {
+    function log(uint256 p0, address p1, address p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,address,bool)", p0, p1, p2, p3));
     }
 
-    function log(uint p0, address p1, address p2, address p3) internal view {
+    function log(uint256 p0, address p1, address p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(uint,address,address,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, uint p2, uint p3) internal view {
+    function log(string memory p0, uint256 p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, uint p2, string memory p3) internal view {
+    function log(string memory p0, uint256 p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, uint p2, bool p3) internal view {
+    function log(string memory p0, uint256 p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, uint p2, address p3) internal view {
+    function log(string memory p0, uint256 p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, string memory p2, uint p3) internal view {
+    function log(string memory p0, uint256 p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,string,uint)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, string memory p2, string memory p3) internal view {
+    function log(string memory p0, uint256 p1, string memory p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,string,string)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, string memory p2, bool p3) internal view {
+    function log(string memory p0, uint256 p1, string memory p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,string,bool)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, string memory p2, address p3) internal view {
+    function log(string memory p0, uint256 p1, string memory p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,string,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, bool p2, uint p3) internal view {
+    function log(string memory p0, uint256 p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,bool,uint)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, bool p2, string memory p3) internal view {
+    function log(string memory p0, uint256 p1, bool p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,bool,string)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, bool p2, bool p3) internal view {
+    function log(string memory p0, uint256 p1, bool p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,bool,bool)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, bool p2, address p3) internal view {
+    function log(string memory p0, uint256 p1, bool p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, address p2, uint p3) internal view {
+    function log(string memory p0, uint256 p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,address,uint)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, address p2, string memory p3) internal view {
+    function log(string memory p0, uint256 p1, address p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,address,string)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, address p2, bool p3) internal view {
+    function log(string memory p0, uint256 p1, address p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,address,bool)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, uint p1, address p2, address p3) internal view {
+    function log(string memory p0, uint256 p1, address p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,uint,address,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, string memory p1, uint p2, uint p3) internal view {
+    function log(string memory p0, string memory p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, string memory p1, uint p2, string memory p3) internal view {
+    function log(string memory p0, string memory p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, string memory p1, uint p2, bool p3) internal view {
+    function log(string memory p0, string memory p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, string memory p1, uint p2, address p3) internal view {
+    function log(string memory p0, string memory p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, string memory p1, string memory p2, uint p3) internal view {
+    function log(string memory p0, string memory p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,string,uint)", p0, p1, p2, p3));
     }
 
@@ -3077,7 +3068,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,string,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, string memory p1, bool p2, uint p3) internal view {
+    function log(string memory p0, string memory p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,bool,uint)", p0, p1, p2, p3));
     }
 
@@ -3093,7 +3084,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, string memory p1, address p2, uint p3) internal view {
+    function log(string memory p0, string memory p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,address,uint)", p0, p1, p2, p3));
     }
 
@@ -3109,23 +3100,23 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,string,address,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, bool p1, uint p2, uint p3) internal view {
+    function log(string memory p0, bool p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, bool p1, uint p2, string memory p3) internal view {
+    function log(string memory p0, bool p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, bool p1, uint p2, bool p3) internal view {
+    function log(string memory p0, bool p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, bool p1, uint p2, address p3) internal view {
+    function log(string memory p0, bool p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, bool p1, string memory p2, uint p3) internal view {
+    function log(string memory p0, bool p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,string,uint)", p0, p1, p2, p3));
     }
 
@@ -3141,7 +3132,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,string,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, bool p1, bool p2, uint p3) internal view {
+    function log(string memory p0, bool p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,bool,uint)", p0, p1, p2, p3));
     }
 
@@ -3157,7 +3148,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, bool p1, address p2, uint p3) internal view {
+    function log(string memory p0, bool p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,address,uint)", p0, p1, p2, p3));
     }
 
@@ -3173,23 +3164,23 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,bool,address,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, address p1, uint p2, uint p3) internal view {
+    function log(string memory p0, address p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, address p1, uint p2, string memory p3) internal view {
+    function log(string memory p0, address p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, address p1, uint p2, bool p3) internal view {
+    function log(string memory p0, address p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, address p1, uint p2, address p3) internal view {
+    function log(string memory p0, address p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, address p1, string memory p2, uint p3) internal view {
+    function log(string memory p0, address p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,string,uint)", p0, p1, p2, p3));
     }
 
@@ -3205,7 +3196,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,string,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, address p1, bool p2, uint p3) internal view {
+    function log(string memory p0, address p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,bool,uint)", p0, p1, p2, p3));
     }
 
@@ -3221,7 +3212,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(string memory p0, address p1, address p2, uint p3) internal view {
+    function log(string memory p0, address p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,address,uint)", p0, p1, p2, p3));
     }
 
@@ -3237,87 +3228,87 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(string,address,address,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, uint p2, uint p3) internal view {
+    function log(bool p0, uint256 p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, uint p2, string memory p3) internal view {
+    function log(bool p0, uint256 p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, uint p2, bool p3) internal view {
+    function log(bool p0, uint256 p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, uint p2, address p3) internal view {
+    function log(bool p0, uint256 p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, string memory p2, uint p3) internal view {
+    function log(bool p0, uint256 p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,string,uint)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, string memory p2, string memory p3) internal view {
+    function log(bool p0, uint256 p1, string memory p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,string,string)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, string memory p2, bool p3) internal view {
+    function log(bool p0, uint256 p1, string memory p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,string,bool)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, string memory p2, address p3) internal view {
+    function log(bool p0, uint256 p1, string memory p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,string,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, bool p2, uint p3) internal view {
+    function log(bool p0, uint256 p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,bool,uint)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, bool p2, string memory p3) internal view {
+    function log(bool p0, uint256 p1, bool p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,bool,string)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, bool p2, bool p3) internal view {
+    function log(bool p0, uint256 p1, bool p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,bool,bool)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, bool p2, address p3) internal view {
+    function log(bool p0, uint256 p1, bool p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, address p2, uint p3) internal view {
+    function log(bool p0, uint256 p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,address,uint)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, address p2, string memory p3) internal view {
+    function log(bool p0, uint256 p1, address p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,address,string)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, address p2, bool p3) internal view {
+    function log(bool p0, uint256 p1, address p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,address,bool)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, uint p1, address p2, address p3) internal view {
+    function log(bool p0, uint256 p1, address p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,uint,address,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, string memory p1, uint p2, uint p3) internal view {
+    function log(bool p0, string memory p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, string memory p1, uint p2, string memory p3) internal view {
+    function log(bool p0, string memory p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, string memory p1, uint p2, bool p3) internal view {
+    function log(bool p0, string memory p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, string memory p1, uint p2, address p3) internal view {
+    function log(bool p0, string memory p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, string memory p1, string memory p2, uint p3) internal view {
+    function log(bool p0, string memory p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,string,uint)", p0, p1, p2, p3));
     }
 
@@ -3333,7 +3324,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,string,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, string memory p1, bool p2, uint p3) internal view {
+    function log(bool p0, string memory p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,bool,uint)", p0, p1, p2, p3));
     }
 
@@ -3349,7 +3340,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, string memory p1, address p2, uint p3) internal view {
+    function log(bool p0, string memory p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,address,uint)", p0, p1, p2, p3));
     }
 
@@ -3365,23 +3356,23 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,string,address,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, bool p1, uint p2, uint p3) internal view {
+    function log(bool p0, bool p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, bool p1, uint p2, string memory p3) internal view {
+    function log(bool p0, bool p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, bool p1, uint p2, bool p3) internal view {
+    function log(bool p0, bool p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, bool p1, uint p2, address p3) internal view {
+    function log(bool p0, bool p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, bool p1, string memory p2, uint p3) internal view {
+    function log(bool p0, bool p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,string,uint)", p0, p1, p2, p3));
     }
 
@@ -3397,7 +3388,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,string,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, bool p1, bool p2, uint p3) internal view {
+    function log(bool p0, bool p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,bool,uint)", p0, p1, p2, p3));
     }
 
@@ -3413,7 +3404,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, bool p1, address p2, uint p3) internal view {
+    function log(bool p0, bool p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,address,uint)", p0, p1, p2, p3));
     }
 
@@ -3429,23 +3420,23 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,bool,address,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, address p1, uint p2, uint p3) internal view {
+    function log(bool p0, address p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, address p1, uint p2, string memory p3) internal view {
+    function log(bool p0, address p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, address p1, uint p2, bool p3) internal view {
+    function log(bool p0, address p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, address p1, uint p2, address p3) internal view {
+    function log(bool p0, address p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, address p1, string memory p2, uint p3) internal view {
+    function log(bool p0, address p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,string,uint)", p0, p1, p2, p3));
     }
 
@@ -3461,7 +3452,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,string,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, address p1, bool p2, uint p3) internal view {
+    function log(bool p0, address p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,bool,uint)", p0, p1, p2, p3));
     }
 
@@ -3477,7 +3468,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(bool p0, address p1, address p2, uint p3) internal view {
+    function log(bool p0, address p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,address,uint)", p0, p1, p2, p3));
     }
 
@@ -3493,87 +3484,87 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(bool,address,address,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, uint p2, uint p3) internal view {
+    function log(address p0, uint256 p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, uint p2, string memory p3) internal view {
+    function log(address p0, uint256 p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, uint p2, bool p3) internal view {
+    function log(address p0, uint256 p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, uint p2, address p3) internal view {
+    function log(address p0, uint256 p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, string memory p2, uint p3) internal view {
+    function log(address p0, uint256 p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,string,uint)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, string memory p2, string memory p3) internal view {
+    function log(address p0, uint256 p1, string memory p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,string,string)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, string memory p2, bool p3) internal view {
+    function log(address p0, uint256 p1, string memory p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,string,bool)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, string memory p2, address p3) internal view {
+    function log(address p0, uint256 p1, string memory p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,string,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, bool p2, uint p3) internal view {
+    function log(address p0, uint256 p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,bool,uint)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, bool p2, string memory p3) internal view {
+    function log(address p0, uint256 p1, bool p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,bool,string)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, bool p2, bool p3) internal view {
+    function log(address p0, uint256 p1, bool p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,bool,bool)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, bool p2, address p3) internal view {
+    function log(address p0, uint256 p1, bool p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, address p2, uint p3) internal view {
+    function log(address p0, uint256 p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,address,uint)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, address p2, string memory p3) internal view {
+    function log(address p0, uint256 p1, address p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,address,string)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, address p2, bool p3) internal view {
+    function log(address p0, uint256 p1, address p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,address,bool)", p0, p1, p2, p3));
     }
 
-    function log(address p0, uint p1, address p2, address p3) internal view {
+    function log(address p0, uint256 p1, address p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,uint,address,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, string memory p1, uint p2, uint p3) internal view {
+    function log(address p0, string memory p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(address p0, string memory p1, uint p2, string memory p3) internal view {
+    function log(address p0, string memory p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(address p0, string memory p1, uint p2, bool p3) internal view {
+    function log(address p0, string memory p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(address p0, string memory p1, uint p2, address p3) internal view {
+    function log(address p0, string memory p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, string memory p1, string memory p2, uint p3) internal view {
+    function log(address p0, string memory p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,string,uint)", p0, p1, p2, p3));
     }
 
@@ -3589,7 +3580,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,string,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, string memory p1, bool p2, uint p3) internal view {
+    function log(address p0, string memory p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,bool,uint)", p0, p1, p2, p3));
     }
 
@@ -3605,7 +3596,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, string memory p1, address p2, uint p3) internal view {
+    function log(address p0, string memory p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,address,uint)", p0, p1, p2, p3));
     }
 
@@ -3621,23 +3612,23 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,string,address,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, bool p1, uint p2, uint p3) internal view {
+    function log(address p0, bool p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(address p0, bool p1, uint p2, string memory p3) internal view {
+    function log(address p0, bool p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(address p0, bool p1, uint p2, bool p3) internal view {
+    function log(address p0, bool p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(address p0, bool p1, uint p2, address p3) internal view {
+    function log(address p0, bool p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, bool p1, string memory p2, uint p3) internal view {
+    function log(address p0, bool p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,string,uint)", p0, p1, p2, p3));
     }
 
@@ -3653,7 +3644,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,string,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, bool p1, bool p2, uint p3) internal view {
+    function log(address p0, bool p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,bool,uint)", p0, p1, p2, p3));
     }
 
@@ -3669,7 +3660,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, bool p1, address p2, uint p3) internal view {
+    function log(address p0, bool p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,address,uint)", p0, p1, p2, p3));
     }
 
@@ -3685,23 +3676,23 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,bool,address,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, address p1, uint p2, uint p3) internal view {
+    function log(address p0, address p1, uint256 p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,uint,uint)", p0, p1, p2, p3));
     }
 
-    function log(address p0, address p1, uint p2, string memory p3) internal view {
+    function log(address p0, address p1, uint256 p2, string memory p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,uint,string)", p0, p1, p2, p3));
     }
 
-    function log(address p0, address p1, uint p2, bool p3) internal view {
+    function log(address p0, address p1, uint256 p2, bool p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,uint,bool)", p0, p1, p2, p3));
     }
 
-    function log(address p0, address p1, uint p2, address p3) internal view {
+    function log(address p0, address p1, uint256 p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,uint,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, address p1, string memory p2, uint p3) internal view {
+    function log(address p0, address p1, string memory p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,string,uint)", p0, p1, p2, p3));
     }
 
@@ -3717,7 +3708,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,string,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, address p1, bool p2, uint p3) internal view {
+    function log(address p0, address p1, bool p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,bool,uint)", p0, p1, p2, p3));
     }
 
@@ -3733,7 +3724,7 @@ library console {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,bool,address)", p0, p1, p2, p3));
     }
 
-    function log(address p0, address p1, address p2, uint p3) internal view {
+    function log(address p0, address p1, address p2, uint256 p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,address,uint)", p0, p1, p2, p3));
     }
 
@@ -3748,7 +3739,6 @@ library console {
     function log(address p0, address p1, address p2, address p3) internal view {
         _sendLogPayload(abi.encodeWithSignature("log(address,address,address,address)", p0, p1, p2, p3));
     }
-
 }
 
 // lib/openzeppelin-contracts/contracts/interfaces/IERC1967.sol
@@ -3833,12 +3823,8 @@ abstract contract Proxy {
 
             switch result
             // delegatecall returns 0 on error.
-            case 0 {
-                revert(0, returndatasize())
-            }
-            default {
-                return(0, returndatasize())
-            }
+            case 0 { revert(0, returndatasize()) }
+            default { return(0, returndatasize()) }
         }
     }
 
@@ -4041,15 +4027,8 @@ interface IERC20Permit {
      *
      * CAUTION: See Security Considerations above.
      */
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        external;
 
     /**
      * @dev Returns the current nonce for `owner`. This value must be
@@ -4132,7 +4111,7 @@ library Address {
     function sendValue(address payable recipient, uint256 amount) internal {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
-        (bool success, ) = recipient.call{value: amount}("");
+        (bool success,) = recipient.call{value: amount}("");
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
@@ -4164,11 +4143,10 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
+    function functionCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         return functionCallWithValue(target, data, 0, errorMessage);
     }
 
@@ -4193,12 +4171,10 @@ library Address {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(
-        address target,
-        bytes memory data,
-        uint256 value,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
+    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         require(address(this).balance >= value, "Address: insufficient balance for call");
         (bool success, bytes memory returndata) = target.call{value: value}(data);
         return verifyCallResultFromTarget(target, success, returndata, errorMessage);
@@ -4220,11 +4196,11 @@ library Address {
      *
      * _Available since v3.3._
      */
-    function functionStaticCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal view returns (bytes memory) {
+    function functionStaticCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        view
+        returns (bytes memory)
+    {
         (bool success, bytes memory returndata) = target.staticcall(data);
         return verifyCallResultFromTarget(target, success, returndata, errorMessage);
     }
@@ -4245,11 +4221,10 @@ library Address {
      *
      * _Available since v3.4._
      */
-    function functionDelegateCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
+    function functionDelegateCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         (bool success, bytes memory returndata) = target.delegatecall(data);
         return verifyCallResultFromTarget(target, success, returndata, errorMessage);
     }
@@ -4284,11 +4259,11 @@ library Address {
      *
      * _Available since v4.3._
      */
-    function verifyCallResult(
-        bool success,
-        bytes memory returndata,
-        string memory errorMessage
-    ) internal pure returns (bytes memory) {
+    function verifyCallResult(bool success, bytes memory returndata, string memory errorMessage)
+        internal
+        pure
+        returns (bytes memory)
+    {
         if (success) {
             return returndata;
         } else {
@@ -4514,6 +4489,7 @@ library Math {
         Down, // Toward negative infinity
         Up, // Toward infinity
         Zero // Toward zero
+
     }
 
     /**
@@ -5031,11 +5007,11 @@ library ClonesUpgradeable {
     /**
      * @dev Computes the address of a clone deployed using {Clones-cloneDeterministic}.
      */
-    function predictDeterministicAddress(
-        address implementation,
-        bytes32 salt,
-        address deployer
-    ) internal pure returns (address predicted) {
+    function predictDeterministicAddress(address implementation, bytes32 salt, address deployer)
+        internal
+        pure
+        returns (address predicted)
+    {
         /// @solidity memory-safe-assembly
         assembly {
             let ptr := mload(0x40)
@@ -5052,10 +5028,11 @@ library ClonesUpgradeable {
     /**
      * @dev Computes the address of a clone deployed using {Clones-cloneDeterministic}.
      */
-    function predictDeterministicAddress(
-        address implementation,
-        bytes32 salt
-    ) internal view returns (address predicted) {
+    function predictDeterministicAddress(address implementation, bytes32 salt)
+        internal
+        view
+        returns (address predicted)
+    {
         return predictDeterministicAddress(implementation, salt, address(this));
     }
 }
@@ -5125,7 +5102,7 @@ library AddressUpgradeable {
     function sendValue(address payable recipient, uint256 amount) internal {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
-        (bool success, ) = recipient.call{value: amount}("");
+        (bool success,) = recipient.call{value: amount}("");
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
@@ -5157,11 +5134,10 @@ library AddressUpgradeable {
      *
      * _Available since v3.1._
      */
-    function functionCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
+    function functionCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         return functionCallWithValue(target, data, 0, errorMessage);
     }
 
@@ -5186,12 +5162,10 @@ library AddressUpgradeable {
      *
      * _Available since v3.1._
      */
-    function functionCallWithValue(
-        address target,
-        bytes memory data,
-        uint256 value,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
+    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         require(address(this).balance >= value, "Address: insufficient balance for call");
         (bool success, bytes memory returndata) = target.call{value: value}(data);
         return verifyCallResultFromTarget(target, success, returndata, errorMessage);
@@ -5213,11 +5187,11 @@ library AddressUpgradeable {
      *
      * _Available since v3.3._
      */
-    function functionStaticCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal view returns (bytes memory) {
+    function functionStaticCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        view
+        returns (bytes memory)
+    {
         (bool success, bytes memory returndata) = target.staticcall(data);
         return verifyCallResultFromTarget(target, success, returndata, errorMessage);
     }
@@ -5238,11 +5212,10 @@ library AddressUpgradeable {
      *
      * _Available since v3.4._
      */
-    function functionDelegateCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
+    function functionDelegateCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         (bool success, bytes memory returndata) = target.delegatecall(data);
         return verifyCallResultFromTarget(target, success, returndata, errorMessage);
     }
@@ -5277,11 +5250,11 @@ library AddressUpgradeable {
      *
      * _Available since v4.3._
      */
-    function verifyCallResult(
-        bool success,
-        bytes memory returndata,
-        string memory errorMessage
-    ) internal pure returns (bytes memory) {
+    function verifyCallResult(bool success, bytes memory returndata, string memory errorMessage)
+        internal
+        pure
+        returns (bytes memory)
+    {
         if (success) {
             return returndata;
         } else {
@@ -5341,6 +5314,7 @@ library MathUpgradeable {
         Down, // Toward negative infinity
         Up, // Toward infinity
         Zero // Toward zero
+
     }
 
     /**
@@ -5750,13 +5724,13 @@ library SignedMathUpgradeable {
 
 library strings {
     struct slice {
-        uint _len;
-        uint _ptr;
+        uint256 _len;
+        uint256 _ptr;
     }
 
-    function memcpy(uint dest, uint src, uint length) private pure {
+    function memcpy(uint256 dest, uint256 src, uint256 length) private pure {
         // Copy word-length chunks while possible
-        for(; length >= 32; length -= 32) {
+        for (; length >= 32; length -= 32) {
             assembly {
                 mstore(dest, mload(src))
             }
@@ -5765,7 +5739,7 @@ library strings {
         }
 
         // Copy remaining bytes
-        uint mask = type(uint).max;
+        uint256 mask = type(uint256).max;
         if (length > 0) {
             mask = 256 ** (32 - length) - 1;
         }
@@ -5782,7 +5756,7 @@ library strings {
      * @return A newly allocated slice containing the entire string.
      */
     function toSlice(string memory self) internal pure returns (slice memory) {
-        uint ptr;
+        uint256 ptr;
         assembly {
             ptr := add(self, 0x20)
         }
@@ -5794,27 +5768,28 @@ library strings {
      * @param self The value to find the length of.
      * @return The length of the string, from 0 to 32.
      */
-    function len(bytes32 self) internal pure returns (uint) {
-        uint ret;
-        if (self == 0)
+    function len(bytes32 self) internal pure returns (uint256) {
+        uint256 ret;
+        if (self == 0) {
             return 0;
-        if (uint(self) & type(uint128).max == 0) {
+        }
+        if (uint256(self) & type(uint128).max == 0) {
             ret += 16;
-            self = bytes32(uint(self) / 0x100000000000000000000000000000000);
+            self = bytes32(uint256(self) / 0x100000000000000000000000000000000);
         }
-        if (uint(self) & type(uint64).max == 0) {
+        if (uint256(self) & type(uint64).max == 0) {
             ret += 8;
-            self = bytes32(uint(self) / 0x10000000000000000);
+            self = bytes32(uint256(self) / 0x10000000000000000);
         }
-        if (uint(self) & type(uint32).max == 0) {
+        if (uint256(self) & type(uint32).max == 0) {
             ret += 4;
-            self = bytes32(uint(self) / 0x100000000);
+            self = bytes32(uint256(self) / 0x100000000);
         }
-        if (uint(self) & type(uint16).max == 0) {
+        if (uint256(self) & type(uint16).max == 0) {
             ret += 2;
-            self = bytes32(uint(self) / 0x10000);
+            self = bytes32(uint256(self) / 0x10000);
         }
-        if (uint(self) & type(uint8).max == 0) {
+        if (uint256(self) & type(uint8).max == 0) {
             ret += 1;
         }
         return 32 - ret;
@@ -5854,8 +5829,10 @@ library strings {
      */
     function toString(slice memory self) internal pure returns (string memory) {
         string memory ret = new string(self._len);
-        uint retptr;
-        assembly { retptr := add(ret, 32) }
+        uint256 retptr;
+        assembly {
+            retptr := add(ret, 32)
+        }
 
         memcpy(retptr, self._ptr, self._len);
         return ret;
@@ -5869,22 +5846,24 @@ library strings {
      * @param self The slice to operate on.
      * @return The length of the slice in runes.
      */
-    function len(slice memory self) internal pure returns (uint l) {
+    function len(slice memory self) internal pure returns (uint256 l) {
         // Starting at ptr-31 means the LSB will be the byte we care about
-        uint ptr = self._ptr - 31;
-        uint end = ptr + self._len;
+        uint256 ptr = self._ptr - 31;
+        uint256 end = ptr + self._len;
         for (l = 0; ptr < end; l++) {
             uint8 b;
-            assembly { b := and(mload(ptr), 0xFF) }
+            assembly {
+                b := and(mload(ptr), 0xFF)
+            }
             if (b < 0x80) {
                 ptr += 1;
-            } else if(b < 0xE0) {
+            } else if (b < 0xE0) {
                 ptr += 2;
-            } else if(b < 0xF0) {
+            } else if (b < 0xF0) {
                 ptr += 3;
-            } else if(b < 0xF8) {
+            } else if (b < 0xF8) {
                 ptr += 4;
-            } else if(b < 0xFC) {
+            } else if (b < 0xFC) {
                 ptr += 5;
             } else {
                 ptr += 6;
@@ -5910,36 +5889,38 @@ library strings {
      * @param other The second slice to compare.
      * @return The result of the comparison.
      */
-    function compare(slice memory self, slice memory other) internal pure returns (int) {
-        uint shortest = self._len;
-        if (other._len < self._len)
+    function compare(slice memory self, slice memory other) internal pure returns (int256) {
+        uint256 shortest = self._len;
+        if (other._len < self._len) {
             shortest = other._len;
+        }
 
-        uint selfptr = self._ptr;
-        uint otherptr = other._ptr;
-        for (uint idx = 0; idx < shortest; idx += 32) {
-            uint a;
-            uint b;
+        uint256 selfptr = self._ptr;
+        uint256 otherptr = other._ptr;
+        for (uint256 idx = 0; idx < shortest; idx += 32) {
+            uint256 a;
+            uint256 b;
             assembly {
                 a := mload(selfptr)
                 b := mload(otherptr)
             }
             if (a != b) {
                 // Mask out irrelevant bytes and check again
-                uint mask = type(uint).max; // 0xffff...
-                if(shortest < 32) {
-                  mask = ~(2 ** (8 * (32 - shortest + idx)) - 1);
+                uint256 mask = type(uint256).max; // 0xffff...
+                if (shortest < 32) {
+                    mask = ~(2 ** (8 * (32 - shortest + idx)) - 1);
                 }
                 unchecked {
-                    uint diff = (a & mask) - (b & mask);
-                    if (diff != 0)
-                        return int(diff);
+                    uint256 diff = (a & mask) - (b & mask);
+                    if (diff != 0) {
+                        return int256(diff);
+                    }
                 }
             }
             selfptr += 32;
             otherptr += 32;
         }
-        return int(self._len) - int(other._len);
+        return int256(self._len) - int256(other._len);
     }
 
     /*
@@ -5967,15 +5948,17 @@ library strings {
             return rune;
         }
 
-        uint l;
-        uint b;
+        uint256 l;
+        uint256 b;
         // Load the first byte of the rune into the LSBs of b
-        assembly { b := and(mload(sub(mload(add(self, 32)), 31)), 0xFF) }
+        assembly {
+            b := and(mload(sub(mload(add(self, 32)), 31)), 0xFF)
+        }
         if (b < 0x80) {
             l = 1;
-        } else if(b < 0xE0) {
+        } else if (b < 0xE0) {
             l = 2;
-        } else if(b < 0xF0) {
+        } else if (b < 0xF0) {
             l = 3;
         } else {
             l = 4;
@@ -6010,25 +5993,27 @@ library strings {
      * @param self The slice to operate on.
      * @return The number of the first codepoint in the slice.
      */
-    function ord(slice memory self) internal pure returns (uint ret) {
+    function ord(slice memory self) internal pure returns (uint256 ret) {
         if (self._len == 0) {
             return 0;
         }
 
-        uint word;
-        uint length;
-        uint divisor = 2 ** 248;
+        uint256 word;
+        uint256 length;
+        uint256 divisor = 2 ** 248;
 
         // Load the rune into the MSBs of b
-        assembly { word:= mload(mload(add(self, 32))) }
-        uint b = word / divisor;
+        assembly {
+            word := mload(mload(add(self, 32)))
+        }
+        uint256 b = word / divisor;
         if (b < 0x80) {
             ret = b;
             length = 1;
-        } else if(b < 0xE0) {
+        } else if (b < 0xE0) {
             ret = b & 0x1F;
             length = 2;
-        } else if(b < 0xF0) {
+        } else if (b < 0xF0) {
             ret = b & 0x0F;
             length = 3;
         } else {
@@ -6041,7 +6026,7 @@ library strings {
             return 0;
         }
 
-        for (uint i = 1; i < length; i++) {
+        for (uint256 i = 1; i < length; i++) {
             divisor = divisor / 256;
             b = (word / divisor) & 0xFF;
             if (b & 0xC0 != 0x80) {
@@ -6131,7 +6116,7 @@ library strings {
             return false;
         }
 
-        uint selfptr = self._ptr + self._len - needle._len;
+        uint256 selfptr = self._ptr + self._len - needle._len;
 
         if (selfptr == needle._ptr) {
             return true;
@@ -6159,7 +6144,7 @@ library strings {
             return self;
         }
 
-        uint selfptr = self._ptr + self._len - needle._len;
+        uint256 selfptr = self._ptr + self._len - needle._len;
         bool equal = true;
         if (selfptr != needle._ptr) {
             assembly {
@@ -6178,9 +6163,13 @@ library strings {
 
     // Returns the memory address of the first byte of the first occurrence of
     // `needle` in `self`, or the first byte after `self` if not found.
-    function findPtr(uint selflen, uint selfptr, uint needlelen, uint needleptr) private pure returns (uint) {
-        uint ptr = selfptr;
-        uint idx;
+    function findPtr(uint256 selflen, uint256 selfptr, uint256 needlelen, uint256 needleptr)
+        private
+        pure
+        returns (uint256)
+    {
+        uint256 ptr = selfptr;
+        uint256 idx;
 
         if (needlelen <= selflen) {
             if (needlelen <= 32) {
@@ -6190,29 +6179,41 @@ library strings {
                 }
 
                 bytes32 needledata;
-                assembly { needledata := and(mload(needleptr), mask) }
+                assembly {
+                    needledata := and(mload(needleptr), mask)
+                }
 
-                uint end = selfptr + selflen - needlelen;
+                uint256 end = selfptr + selflen - needlelen;
                 bytes32 ptrdata;
-                assembly { ptrdata := and(mload(ptr), mask) }
+                assembly {
+                    ptrdata := and(mload(ptr), mask)
+                }
 
                 while (ptrdata != needledata) {
-                    if (ptr >= end)
+                    if (ptr >= end) {
                         return selfptr + selflen;
+                    }
                     ptr++;
-                    assembly { ptrdata := and(mload(ptr), mask) }
+                    assembly {
+                        ptrdata := and(mload(ptr), mask)
+                    }
                 }
                 return ptr;
             } else {
                 // For long needles, use hashing
                 bytes32 hash;
-                assembly { hash := keccak256(needleptr, needlelen) }
+                assembly {
+                    hash := keccak256(needleptr, needlelen)
+                }
 
                 for (idx = 0; idx <= selflen - needlelen; idx++) {
                     bytes32 testHash;
-                    assembly { testHash := keccak256(ptr, needlelen) }
-                    if (hash == testHash)
+                    assembly {
+                        testHash := keccak256(ptr, needlelen)
+                    }
+                    if (hash == testHash) {
                         return ptr;
+                    }
                     ptr += 1;
                 }
             }
@@ -6222,8 +6223,12 @@ library strings {
 
     // Returns the memory address of the first byte after the last occurrence of
     // `needle` in `self`, or the address of `self` if not found.
-    function rfindPtr(uint selflen, uint selfptr, uint needlelen, uint needleptr) private pure returns (uint) {
-        uint ptr;
+    function rfindPtr(uint256 selflen, uint256 selfptr, uint256 needlelen, uint256 needleptr)
+        private
+        pure
+        returns (uint256)
+    {
+        uint256 ptr;
 
         if (needlelen <= selflen) {
             if (needlelen <= 32) {
@@ -6233,29 +6238,41 @@ library strings {
                 }
 
                 bytes32 needledata;
-                assembly { needledata := and(mload(needleptr), mask) }
+                assembly {
+                    needledata := and(mload(needleptr), mask)
+                }
 
                 ptr = selfptr + selflen - needlelen;
                 bytes32 ptrdata;
-                assembly { ptrdata := and(mload(ptr), mask) }
+                assembly {
+                    ptrdata := and(mload(ptr), mask)
+                }
 
                 while (ptrdata != needledata) {
-                    if (ptr <= selfptr)
+                    if (ptr <= selfptr) {
                         return selfptr;
+                    }
                     ptr--;
-                    assembly { ptrdata := and(mload(ptr), mask) }
+                    assembly {
+                        ptrdata := and(mload(ptr), mask)
+                    }
                 }
                 return ptr + needlelen;
             } else {
                 // For long needles, use hashing
                 bytes32 hash;
-                assembly { hash := keccak256(needleptr, needlelen) }
+                assembly {
+                    hash := keccak256(needleptr, needlelen)
+                }
                 ptr = selfptr + (selflen - needlelen);
                 while (ptr >= selfptr) {
                     bytes32 testHash;
-                    assembly { testHash := keccak256(ptr, needlelen) }
-                    if (hash == testHash)
+                    assembly {
+                        testHash := keccak256(ptr, needlelen)
+                    }
+                    if (hash == testHash) {
                         return ptr + needlelen;
+                    }
                     ptr -= 1;
                 }
             }
@@ -6272,7 +6289,7 @@ library strings {
      * @return `self`.
      */
     function find(slice memory self, slice memory needle) internal pure returns (slice memory) {
-        uint ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr);
+        uint256 ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr);
         self._len -= ptr - self._ptr;
         self._ptr = ptr;
         return self;
@@ -6287,7 +6304,7 @@ library strings {
      * @return `self`.
      */
     function rfind(slice memory self, slice memory needle) internal pure returns (slice memory) {
-        uint ptr = rfindPtr(self._len, self._ptr, needle._len, needle._ptr);
+        uint256 ptr = rfindPtr(self._len, self._ptr, needle._len, needle._ptr);
         self._len = ptr - self._ptr;
         return self;
     }
@@ -6303,7 +6320,7 @@ library strings {
      * @return `token`.
      */
     function split(slice memory self, slice memory needle, slice memory token) internal pure returns (slice memory) {
-        uint ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr);
+        uint256 ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr);
         token._ptr = self._ptr;
         token._len = ptr - self._ptr;
         if (ptr == self._ptr + self._len) {
@@ -6340,7 +6357,7 @@ library strings {
      * @return `token`.
      */
     function rsplit(slice memory self, slice memory needle, slice memory token) internal pure returns (slice memory) {
-        uint ptr = rfindPtr(self._len, self._ptr, needle._len, needle._ptr);
+        uint256 ptr = rfindPtr(self._len, self._ptr, needle._len, needle._ptr);
         token._ptr = ptr;
         token._len = self._len - (ptr - self._ptr);
         if (ptr == self._ptr) {
@@ -6371,8 +6388,8 @@ library strings {
      * @param needle The text to search for in `self`.
      * @return The number of occurrences of `needle` found in `self`.
      */
-    function count(slice memory self, slice memory needle) internal pure returns (uint cnt) {
-        uint ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr) + needle._len;
+    function count(slice memory self, slice memory needle) internal pure returns (uint256 cnt) {
+        uint256 ptr = findPtr(self._len, self._ptr, needle._len, needle._ptr) + needle._len;
         while (ptr <= self._ptr + self._len) {
             cnt++;
             ptr = findPtr(self._len - (ptr - self._ptr), ptr, needle._len, needle._ptr) + needle._len;
@@ -6398,8 +6415,10 @@ library strings {
      */
     function concat(slice memory self, slice memory other) internal pure returns (string memory) {
         string memory ret = new string(self._len + other._len);
-        uint retptr;
-        assembly { retptr := add(ret, 32) }
+        uint256 retptr;
+        assembly {
+            retptr := add(ret, 32)
+        }
         memcpy(retptr, self._ptr, self._len);
         memcpy(retptr + self._len, other._ptr, other._len);
         return ret;
@@ -6414,18 +6433,22 @@ library strings {
      *         joined with `self`.
      */
     function join(slice memory self, slice[] memory parts) internal pure returns (string memory) {
-        if (parts.length == 0)
+        if (parts.length == 0) {
             return "";
+        }
 
-        uint length = self._len * (parts.length - 1);
-        for(uint i = 0; i < parts.length; i++)
+        uint256 length = self._len * (parts.length - 1);
+        for (uint256 i = 0; i < parts.length; i++) {
             length += parts[i]._len;
+        }
 
         string memory ret = new string(length);
-        uint retptr;
-        assembly { retptr := add(ret, 32) }
+        uint256 retptr;
+        assembly {
+            retptr := add(ret, 32)
+        }
 
-        for(uint i = 0; i < parts.length; i++) {
+        for (uint256 i = 0; i < parts.length; i++) {
             memcpy(retptr, parts[i]._ptr, parts[i]._len);
             retptr += parts[i]._len;
             if (i < parts.length - 1) {
@@ -6638,23 +6661,11 @@ interface ISybilScorer {
 interface ICollateralVault {
     function initialize() external;
 
-    function depositCollateral(
-        uint256 proposalId,
-        address user
-    ) external payable;
+    function depositCollateral(uint256 proposalId, address user) external payable;
 
-    function withdrawCollateral(
-        uint256 _proposalId,
-        address _user,
-        uint256 _amount
-    ) external;
+    function withdrawCollateral(uint256 _proposalId, address _user, uint256 _amount) external;
 
-    function withdrawCollateralFor(
-        uint256 _proposalId,
-        address _fromUser,
-        address _toUser,
-        uint256 _amount
-    ) external;
+    function withdrawCollateralFor(uint256 _proposalId, address _fromUser, address _toUser, uint256 _amount) external;
 }
 
 // pkg/contracts/src/interfaces/ISafe.sol
@@ -7171,9 +7182,8 @@ library ERC165Checker {
     function supportsERC165(address account) internal view returns (bool) {
         // Any contract that implements ERC165 must explicitly indicate support of
         // InterfaceId_ERC165 and explicitly indicate non-support of InterfaceId_Invalid
-        return
-            supportsERC165InterfaceUnchecked(account, type(IERC165).interfaceId) &&
-            !supportsERC165InterfaceUnchecked(account, _INTERFACE_ID_INVALID);
+        return supportsERC165InterfaceUnchecked(account, type(IERC165).interfaceId)
+            && !supportsERC165InterfaceUnchecked(account, _INTERFACE_ID_INVALID);
     }
 
     /**
@@ -7197,10 +7207,11 @@ library ERC165Checker {
      *
      * _Available since v3.4._
      */
-    function getSupportedInterfaces(
-        address account,
-        bytes4[] memory interfaceIds
-    ) internal view returns (bool[] memory) {
+    function getSupportedInterfaces(address account, bytes4[] memory interfaceIds)
+        internal
+        view
+        returns (bool[] memory)
+    {
         // an array of booleans corresponding to interfaceIds and whether they're supported or not
         bool[] memory interfaceIdsSupported = new bool[](interfaceIds.length);
 
@@ -7728,11 +7739,10 @@ abstract contract ReentrancyGuardUpgradeable is Initializable_1 {
  * This contract is only required for intermediate, library-like contracts.
  */
 abstract contract ContextUpgradeable is Initializable_1 {
-    function __Context_init() internal onlyInitializing {
-    }
+    function __Context_init() internal onlyInitializing {}
 
-    function __Context_init_unchained() internal onlyInitializing {
-    }
+    function __Context_init_unchained() internal onlyInitializing {}
+
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
     }
@@ -8609,7 +8619,8 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         _afterTokenTransfer(from, to, amount);
     }
 
-    /** @dev Creates `amount` tokens and assigns them to `account`, increasing
+    /**
+     * @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.
      *
      * Emits a {Transfer} event with `from` set to the zero address.
@@ -8984,14 +8995,13 @@ abstract contract OwnableUpgradeable is Initializable_1, ContextUpgradeable {
  * Alternatively, {ERC165Storage} provides an easier to use but more expensive implementation.
  */
 abstract contract ERC165Upgradeable is Initializable_1, IERC165Upgradeable {
-    function __ERC165_init() internal onlyInitializing {
-    }
+    function __ERC165_init() internal onlyInitializing {}
 
-    function __ERC165_init_unchained() internal onlyInitializing {
-    }
+    function __ERC165_init_unchained() internal onlyInitializing {}
     /**
      * @dev See {IERC165-supportsInterface}.
      */
+
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IERC165Upgradeable).interfaceId;
     }
@@ -9042,10 +9052,11 @@ library Utils {
      * @param outDir Foundry output directory to search in if contractName is not an artifact path
      * @return Fully qualified name of the contract, e.g. "src/MyContract.sol:MyContract"
      */
-    function getFullyQualifiedName(
-        string memory contractName,
-        string memory outDir
-    ) internal view returns (string memory) {
+    function getFullyQualifiedName(string memory contractName, string memory outDir)
+        internal
+        view
+        returns (string memory)
+    {
         ContractInfo memory info = getContractInfo(contractName, outDir);
         return string(abi.encodePacked(info.contractPath, ":", info.shortName));
     }
@@ -9057,10 +9068,11 @@ library Utils {
      * @param outDir Foundry output directory to search in if contractName is not an artifact path
      * @return ContractInfo struct containing information about the contract
      */
-    function getContractInfo(
-        string memory contractName,
-        string memory outDir
-    ) internal view returns (ContractInfo memory) {
+    function getContractInfo(string memory contractName, string memory outDir)
+        internal
+        view
+        returns (ContractInfo memory)
+    {
         Vm vm = Vm(CHEATCODE_ADDRESS);
 
         ContractInfo memory info;
@@ -9069,18 +9081,15 @@ library Utils {
 
         string memory fileName = _toFileName(contractName);
 
-        string memory artifactPath = string(
-            abi.encodePacked(vm.projectRoot(), "/", outDir, "/", fileName, "/", info.shortName, ".json")
-        );
+        string memory artifactPath =
+            string(abi.encodePacked(vm.projectRoot(), "/", outDir, "/", fileName, "/", info.shortName, ".json"));
         string memory artifactJson = vm.readFile(artifactPath);
 
         if (!vm.keyExistsJson(artifactJson, ".ast")) {
             revert(
                 string(
                     abi.encodePacked(
-                        "Could not find AST in artifact ",
-                        artifactPath,
-                        ". Set `ast = true` in foundry.toml"
+                        "Could not find AST in artifact ", artifactPath, ". Set `ast = true` in foundry.toml"
                     )
                 )
             );
@@ -9090,8 +9099,7 @@ library Utils {
             info.license = vm.parseJsonString(artifactJson, ".ast.license");
         }
         info.sourceCodeHash = vm.parseJsonString(
-            artifactJson,
-            string(abi.encodePacked(".metadata.sources.['", info.contractPath, "'].keccak256"))
+            artifactJson, string(abi.encodePacked(".metadata.sources.['", info.contractPath, "'].keccak256"))
         );
         info.artifactPath = artifactPath;
 
@@ -9108,11 +9116,10 @@ library Utils {
      * @param outDir Foundry output directory that contains a build-info directory
      * @return The path to the build-info file that contains the given bytecode
      */
-    function getBuildInfoFile(
-        string memory sourceCodeHash,
-        string memory contractName,
-        string memory outDir
-    ) internal returns (string memory) {
+    function getBuildInfoFile(string memory sourceCodeHash, string memory contractName, string memory outDir)
+        internal
+        returns (string memory)
+    {
         string[] memory inputs = new string[](4);
         inputs[0] = "grep";
         inputs[1] = "-rl";
@@ -9126,8 +9133,7 @@ library Utils {
             revert(
                 string(
                     abi.encodePacked(
-                        "Could not find build-info file with matching source code hash for contract ",
-                        contractName
+                        "Could not find build-info file with matching source code hash for contract ", contractName
                     )
                 )
             );
@@ -9146,12 +9152,13 @@ library Utils {
         return vm.envOr("FOUNDRY_OUT", defaultOutDir);
     }
 
-    function _split(
-        strings.slice memory inputSlice,
-        strings.slice memory delimSlice
-    ) private pure returns (string[] memory) {
+    function _split(strings.slice memory inputSlice, strings.slice memory delimSlice)
+        private
+        pure
+        returns (string[] memory)
+    {
         string[] memory parts = new string[](inputSlice.count(delimSlice) + 1);
-        for (uint i = 0; i < parts.length; i++) {
+        for (uint256 i = 0; i < parts.length; i++) {
             parts[i] = inputSlice.split(delimSlice).toString();
         }
         return parts;
@@ -9215,7 +9222,7 @@ library Utils {
      */
     function toBashCommand(string[] memory inputs, string memory bashPath) internal pure returns (string[] memory) {
         string memory commandString;
-        for (uint i = 0; i < inputs.length; i++) {
+        for (uint256 i = 0; i < inputs.length; i++) {
             commandString = string(abi.encodePacked(commandString, inputs[i]));
             if (i != inputs.length - 1) {
                 commandString = string(abi.encodePacked(commandString, " "));
@@ -9405,8 +9412,7 @@ abstract contract ERC1967Upgrade is IERC1967 {
     function _setBeacon(address newBeacon) private {
         require(Address.isContract(newBeacon), "ERC1967: new beacon is not a contract");
         require(
-            Address.isContract(IBeacon(newBeacon).implementation()),
-            "ERC1967: beacon implementation is not a contract"
+            Address.isContract(IBeacon(newBeacon).implementation()), "ERC1967: beacon implementation is not a contract"
         );
         StorageSlot.getAddressSlot(_BEACON_SLOT).value = newBeacon;
     }
@@ -9967,7 +9973,12 @@ abstract contract BaseStrategy is IStrategy, Transfer, Errors {
  * accounts that have been granted it. We recommend using {AccessControlDefaultAdminRules}
  * to enforce additional security measures for this role.
  */
-abstract contract AccessControlUpgradeable is Initializable_1, ContextUpgradeable, IAccessControlUpgradeable, ERC165Upgradeable {
+abstract contract AccessControlUpgradeable is
+    Initializable_1,
+    ContextUpgradeable,
+    IAccessControlUpgradeable,
+    ERC165Upgradeable
+{
     struct RoleData {
         mapping(address => bool) members;
         bytes32 adminRole;
@@ -9992,14 +10003,13 @@ abstract contract AccessControlUpgradeable is Initializable_1, ContextUpgradeabl
         _;
     }
 
-    function __AccessControl_init() internal onlyInitializing {
-    }
+    function __AccessControl_init() internal onlyInitializing {}
 
-    function __AccessControl_init_unchained() internal onlyInitializing {
-    }
+    function __AccessControl_init_unchained() internal onlyInitializing {}
     /**
      * @dev See {IERC165-supportsInterface}.
      */
+
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IAccessControlUpgradeable).interfaceId || super.supportsInterface(interfaceId);
     }
@@ -10212,10 +10222,10 @@ library Defender {
      * @param defenderOpts Defender deployment options. Note that the `useDefenderDeploy` option is always treated as `true` when called from this function.
      * @return Address of the deployed contract
      */
-    function deployContract(
-        string memory contractName,
-        DefenderOptions memory defenderOpts
-    ) internal returns (address) {
+    function deployContract(string memory contractName, DefenderOptions memory defenderOpts)
+        internal
+        returns (address)
+    {
         return deployContract(contractName, "", defenderOpts);
     }
 
@@ -10279,22 +10289,16 @@ library Defender {
      * @param opts Common options. Note that the `defender.useDefenderDeploy` option is always treated as `true` when called from this function.
      * @return Struct containing the proposal ID and URL for the upgrade proposal
      */
-    function proposeUpgrade(
-        address proxyAddress,
-        string memory newImplementationContractName,
-        Options memory opts
-    ) internal returns (ProposeUpgradeResponse memory) {
+    function proposeUpgrade(address proxyAddress, string memory newImplementationContractName, Options memory opts)
+        internal
+        returns (ProposeUpgradeResponse memory)
+    {
         opts.defender.useDefenderDeploy = true;
         address proxyAdminAddress = Core.getAdminAddress(proxyAddress);
         address newImplementationAddress = Core.prepareUpgrade(newImplementationContractName, opts);
-        return
-            DefenderDeploy.proposeUpgrade(
-                proxyAddress,
-                proxyAdminAddress,
-                newImplementationAddress,
-                newImplementationContractName,
-                opts
-            );
+        return DefenderDeploy.proposeUpgrade(
+            proxyAddress, proxyAdminAddress, newImplementationAddress, newImplementationContractName, opts
+        );
     }
 
     /**
@@ -10419,12 +10423,10 @@ library Core {
      * @param data Encoded call data of an arbitrary function to call during the upgrade process, or empty if no function needs to be called during the upgrade
      * @param tryCaller Address to use as the caller of the upgrade function. This should be the address that owns the proxy or its ProxyAdmin.
      */
-    function upgradeProxyTo(
-        address proxy,
-        address newImpl,
-        bytes memory data,
-        address tryCaller
-    ) internal tryPrank(tryCaller) {
+    function upgradeProxyTo(address proxy, address newImpl, bytes memory data, address tryCaller)
+        internal
+        tryPrank(tryCaller)
+    {
         upgradeProxyTo(proxy, newImpl, data);
     }
 
@@ -10457,12 +10459,10 @@ library Core {
      * @param opts Common options
      * @param tryCaller Address to use as the caller of the upgrade function. This should be the address that owns the beacon.
      */
-    function upgradeBeacon(
-        address beacon,
-        string memory contractName,
-        Options memory opts,
-        address tryCaller
-    ) internal tryPrank(tryCaller) {
+    function upgradeBeacon(address beacon, string memory contractName, Options memory opts, address tryCaller)
+        internal
+        tryPrank(tryCaller)
+    {
         upgradeBeacon(beacon, contractName, opts);
     }
 
@@ -10649,11 +10649,11 @@ library Core {
         }
     }
 
-    function _buildValidateCommand(
-        string memory contractName,
-        Options memory opts,
-        bool requireReference
-    ) private view returns (string[] memory) {
+    function _buildValidateCommand(string memory contractName, Options memory opts, bool requireReference)
+        private
+        view
+        returns (string[] memory)
+    {
         string memory outDir = Utils.getOutDir();
 
         string[] memory inputBuilder = new string[](255);
@@ -10696,11 +10696,10 @@ library Core {
         return inputs;
     }
 
-    function deploy(
-        string memory contractName,
-        bytes memory constructorData,
-        Options memory opts
-    ) internal returns (address) {
+    function deploy(string memory contractName, bytes memory constructorData, Options memory opts)
+        internal
+        returns (address)
+    {
         if (opts.defender.useDefenderDeploy) {
             return DefenderDeploy.deploy(contractName, constructorData, opts.defender);
         } else {
@@ -10746,18 +10745,14 @@ library Core {
 library DefenderDeploy {
     using strings for *;
 
-    function deploy(
-        string memory contractName,
-        bytes memory constructorData,
-        DefenderOptions memory defenderOpts
-    ) internal returns (address) {
+    function deploy(string memory contractName, bytes memory constructorData, DefenderOptions memory defenderOpts)
+        internal
+        returns (address)
+    {
         string memory outDir = Utils.getOutDir();
         ContractInfo memory contractInfo = Utils.getContractInfo(contractName, outDir);
-        string memory buildInfoFile = Utils.getBuildInfoFile(
-            contractInfo.sourceCodeHash,
-            contractInfo.shortName,
-            outDir
-        );
+        string memory buildInfoFile =
+            Utils.getBuildInfoFile(contractInfo.sourceCodeHash, contractInfo.shortName, outDir);
 
         string[] memory inputs = buildDeployCommand(contractInfo, buildInfoFile, constructorData, defenderOpts);
 
@@ -10793,9 +10788,8 @@ library DefenderDeploy {
         uint8 i = 0;
 
         inputBuilder[i++] = "npx";
-        inputBuilder[i++] = string(
-            abi.encodePacked("@openzeppelin/defender-deploy-client-cli@", Versions.DEFENDER_DEPLOY_CLIENT_CLI)
-        );
+        inputBuilder[i++] =
+            string(abi.encodePacked("@openzeppelin/defender-deploy-client-cli@", Versions.DEFENDER_DEPLOY_CLIENT_CLI));
         inputBuilder[i++] = "deploy";
         inputBuilder[i++] = "--contractName";
         inputBuilder[i++] = contractInfo.shortName;
@@ -10910,13 +10904,8 @@ library DefenderDeploy {
         string memory outDir = Utils.getOutDir();
         ContractInfo memory contractInfo = Utils.getContractInfo(newImplementationContractName, outDir);
 
-        string[] memory inputs = buildProposeUpgradeCommand(
-            proxyAddress,
-            proxyAdminAddress,
-            newImplementationAddress,
-            contractInfo,
-            opts
-        );
+        string[] memory inputs =
+            buildProposeUpgradeCommand(proxyAddress, proxyAdminAddress, newImplementationAddress, contractInfo, opts);
 
         VmSafe.FfiResult memory result = Utils.runAsBashCommand(inputs);
         string memory stdout = string(result.stdout);
@@ -10925,10 +10914,7 @@ library DefenderDeploy {
             revert(
                 string(
                     abi.encodePacked(
-                        "Failed to propose upgrade for proxy ",
-                        vm.toString(proxyAddress),
-                        ": ",
-                        string(result.stderr)
+                        "Failed to propose upgrade for proxy ", vm.toString(proxyAddress), ": ", string(result.stderr)
                     )
                 )
             );
@@ -10944,11 +10930,11 @@ library DefenderDeploy {
         return response;
     }
 
-    function _parseLine(
-        string memory expectedPrefix,
-        string memory stdout,
-        bool required
-    ) private pure returns (string memory) {
+    function _parseLine(string memory expectedPrefix, string memory stdout, bool required)
+        private
+        pure
+        returns (string memory)
+    {
         strings.slice memory delim = expectedPrefix.toSlice();
         if (stdout.toSlice().contains(delim)) {
             strings.slice memory slice = stdout.toSlice().copy().find(delim).beyond(delim);
@@ -10980,9 +10966,8 @@ library DefenderDeploy {
         uint8 i = 0;
 
         inputBuilder[i++] = "npx";
-        inputBuilder[i++] = string(
-            abi.encodePacked("@openzeppelin/defender-deploy-client-cli@", Versions.DEFENDER_DEPLOY_CLIENT_CLI)
-        );
+        inputBuilder[i++] =
+            string(abi.encodePacked("@openzeppelin/defender-deploy-client-cli@", Versions.DEFENDER_DEPLOY_CLIENT_CLI));
         inputBuilder[i++] = "proposeUpgrade";
         inputBuilder[i++] = "--proxyAddress";
         inputBuilder[i++] = vm.toString(proxyAddress);
@@ -11023,7 +11008,11 @@ library DefenderDeploy {
         return parseApprovalProcessResponse(stdout);
     }
 
-    function parseApprovalProcessResponse(string memory stdout) internal pure returns (ApprovalProcessResponse memory) {
+    function parseApprovalProcessResponse(string memory stdout)
+        internal
+        pure
+        returns (ApprovalProcessResponse memory)
+    {
         Vm vm = Vm(Utils.CHEATCODE_ADDRESS);
 
         ApprovalProcessResponse memory response;
@@ -11046,9 +11035,8 @@ library DefenderDeploy {
         uint8 i = 0;
 
         inputBuilder[i++] = "npx";
-        inputBuilder[i++] = string(
-            abi.encodePacked("@openzeppelin/defender-deploy-client-cli@", Versions.DEFENDER_DEPLOY_CLIENT_CLI)
-        );
+        inputBuilder[i++] =
+            string(abi.encodePacked("@openzeppelin/defender-deploy-client-cli@", Versions.DEFENDER_DEPLOY_CLIENT_CLI));
         inputBuilder[i++] = command;
         inputBuilder[i++] = "--chainId";
         inputBuilder[i++] = Strings.toString(block.chainid);
@@ -11187,12 +11175,9 @@ library Upgrades {
      * @param opts Common options
      * @param tryCaller Address to use as the caller of the upgrade function. This should be the address that owns the beacon.
      */
-    function upgradeBeacon(
-        address beacon,
-        string memory contractName,
-        Options memory opts,
-        address tryCaller
-    ) internal {
+    function upgradeBeacon(address beacon, string memory contractName, Options memory opts, address tryCaller)
+        internal
+    {
         Core.upgradeBeacon(beacon, contractName, opts, tryCaller);
     }
 
@@ -12342,15 +12327,9 @@ contract RegistryCommunityV0_0 is
 interface IPointStrategy {
     function deactivatePoints(address _member) external;
 
-    function increasePower(
-        address _member,
-        uint256 _amountToStake
-    ) external returns (uint256);
+    function increasePower(address _member, uint256 _amountToStake) external returns (uint256);
 
-    function decreasePower(
-        address _member,
-        uint256 _amountToUntake
-    ) external returns (uint256);
+    function decreasePower(address _member, uint256 _amountToUntake) external returns (uint256);
 
     function getPointSystem() external returns (StrategyStruct.PointSystem);
 }
@@ -12387,6 +12366,7 @@ library StrategyStruct {
         Executed, // A vote that has been executed
         Disputed, // A vote that has been disputed
         Rejected // A vote that has been rejected
+
     }
 
     struct Proposal {
@@ -12444,13 +12424,7 @@ library StrategyStruct {
     }
 }
 
-contract CVStrategyV0_0 is
-    OwnableUpgradeable,
-    BaseStrategyUpgradeable,
-    IArbitrable,
-    IPointStrategy,
-    ERC165
-{
+contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
     using Math for uint256;
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
@@ -12470,10 +12444,7 @@ contract CVStrategyV0_0 is
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
     error MaxPointsReached(); // 0x8402b474
     error CantIncreaseFixedSystem(); // 0x573c3e93
-    error NotEnoughPointsToSupport(
-        uint256 pointsSupport,
-        uint256 pointsBalance
-    ); // 0xd64182fe
+    error NotEnoughPointsToSupport(uint256 pointsSupport, uint256 pointsBalance); // 0xd64182fe
 
     error ProposalDataIsEmpty(); //0xc5f7c4c0
     error ProposalIdCannotBeZero(); //0xf881a10d
@@ -12482,11 +12453,7 @@ contract CVStrategyV0_0 is
     error ProposalSupportDuplicated(uint256 _proposalId, uint256 index); //0xadebb154
     error ConvictionUnderMinimumThreshold(); // 0xcce79308
     error OnlyCommunityAllowed(); // 0xaf0916a2
-    error PoolAmountNotEnough(
-        uint256 _proposalId,
-        uint256 _requestedAmount,
-        uint256 _poolAmount
-    ); //0x5863b0b6
+    error PoolAmountNotEnough(uint256 _proposalId, uint256 _requestedAmount, uint256 _poolAmount); //0x5863b0b6
     error OnlyCouncilSafe();
     error UserCannotExecuteAction();
     error InsufficientCollateral(uint256 sentAmount, uint256 requiredAmount);
@@ -12507,27 +12474,12 @@ contract CVStrategyV0_0 is
     event ProposalCreated(uint256 poolId, uint256 proposalId);
     event PoolAmountIncreased(uint256 amount);
     event PointsDeactivated(address member);
-    event PowerIncreased(
-        address member,
-        uint256 tokensStaked,
-        uint256 pointsToIncrease
-    );
-    event PowerDecreased(
-        address member,
-        uint256 tokensUnStaked,
-        uint256 pointsToDecrease
-    );
+    event PowerIncreased(address member, uint256 tokensStaked, uint256 pointsToIncrease);
+    event PowerDecreased(address member, uint256 tokensUnStaked, uint256 pointsToDecrease);
     event SupportAdded(
-        address from,
-        uint256 proposalId,
-        uint256 amount,
-        uint256 totalStakedAmount,
-        uint256 convictionLast
+        address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
-    event PoolParamsUpdated(
-        StrategyStruct.CVParams cvParams,
-        StrategyStruct.ArbitrableConfig arbitrableConfig
-    );
+    event PoolParamsUpdated(StrategyStruct.CVParams cvParams, StrategyStruct.ArbitrableConfig arbitrableConfig);
     event RegistryUpdated(address registryCommunity);
     event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
     event ProposalDisputed(
@@ -12538,11 +12490,7 @@ contract CVStrategyV0_0 is
         string context,
         uint256 timestamp
     );
-    event TribunaSafeRegistered(
-        address strategy,
-        address arbitrator,
-        address tribunalSafe
-    );
+    event TribunaSafeRegistered(address strategy, address arbitrator, address tribunalSafe);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -12561,8 +12509,7 @@ contract CVStrategyV0_0 is
     uint256 public constant RULING_OPTIONS = 3;
     uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
 
-    address private collateralVaultTemplate =
-        address(0x3b1fbFB04DB3585920b2eAdBb8839FC9680FE8cd); // Always deploye template to this address with Create3
+    address private collateralVaultTemplate = address(0x3b1fbFB04DB3585920b2eAdBb8839FC9680FE8cd); // Always deploye template to this address with Create3
 
     // uint256 variables packed together
     uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
@@ -12605,22 +12552,14 @@ contract CVStrategyV0_0 is
         __Ownable_init();
     }
 
-    function initialize(
-        uint256 _poolId,
-        bytes memory _data
-    ) external virtual onlyAllo {
+    function initialize(uint256 _poolId, bytes memory _data) external virtual onlyAllo {
         __BaseStrategy_init(_poolId);
 
-        collateralVault = ICollateralVault(
-            Clone.createClone(collateralVaultTemplate, cloneNonce++)
-        );
+        collateralVault = ICollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));
 
         collateralVault.initialize();
 
-        StrategyStruct.InitializeParams memory ip = abi.decode(
-            _data,
-            (StrategyStruct.InitializeParams)
-        );
+        StrategyStruct.InitializeParams memory ip = abi.decode(_data, (StrategyStruct.InitializeParams));
 
         if (ip.registryCommunity == address(0)) {
             revert RegistryCannotBeZero();
@@ -12653,12 +12592,8 @@ contract CVStrategyV0_0 is
         // // surpressStateMutabilityWarning++;
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override returns (bool) {
-        return
-            interfaceId == type(IPointStrategy).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(IPointStrategy).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /*|--------------------------------------------|*/
@@ -12705,19 +12640,13 @@ contract CVStrategyV0_0 is
     // if there are more steps, additional functions should be added to allow the owner to check
     // this could also check attestations directly and then Accept
 
-    function _registerRecipient(
-        bytes memory _data,
-        address _sender
-    ) internal override returns (address) {
+    function _registerRecipient(bytes memory _data, address _sender) internal override returns (address) {
         if (!_canExecuteAction(_sender)) {
             revert UserCannotExecuteAction();
         }
         // surpressStateMutabilityWarning++;
         _data;
-        StrategyStruct.CreateProposal memory proposal = abi.decode(
-            _data,
-            (StrategyStruct.CreateProposal)
-        );
+        StrategyStruct.CreateProposal memory proposal = abi.decode(_data, (StrategyStruct.CreateProposal));
 
         // if (proposal.proposalId == 0) {
         // revert ProposalIdCannotBeZero();
@@ -12745,13 +12674,9 @@ contract CVStrategyV0_0 is
         }
 
         if (
-            address(arbitrableConfig.arbitrator) != address(0) &&
-            msg.value < arbitrableConfig.submitterCollateralAmount
+            address(arbitrableConfig.arbitrator) != address(0) && msg.value < arbitrableConfig.submitterCollateralAmount
         ) {
-            revert InsufficientCollateral(
-                msg.value,
-                arbitrableConfig.submitterCollateralAmount
-            );
+            revert InsufficientCollateral(msg.value, arbitrableConfig.submitterCollateralAmount);
         }
 
         uint256 proposalId = ++proposalCounter;
@@ -12768,10 +12693,7 @@ contract CVStrategyV0_0 is
         p.convictionLast = 0;
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
-        collateralVault.depositCollateral{value: msg.value}(
-            proposalId,
-            p.submitter
-        );
+        collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
         emit ProposalCreated(poolId, proposalId);
         console.log("Gaz left: ", gasleft());
@@ -12779,10 +12701,7 @@ contract CVStrategyV0_0 is
     }
 
     function getCollateralAmounts() external view returns (uint256, uint256) {
-        return (
-            arbitrableConfig.submitterCollateralAmount,
-            arbitrableConfig.challengerCollateralAmount
-        );
+        return (arbitrableConfig.submitterCollateralAmount, arbitrableConfig.challengerCollateralAmount);
     }
 
     function activatePoints() external {
@@ -12791,10 +12710,7 @@ contract CVStrategyV0_0 is
             revert UserCannotExecuteAction();
         }
         registryCommunity.activateMemberInStrategy(member, address(this));
-        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(
-            member,
-            address(this)
-        );
+        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(member, address(this));
     }
 
     function deactivatePoints() public {
@@ -12807,20 +12723,14 @@ contract CVStrategyV0_0 is
     }
 
     function _deactivatePoints(address _member) internal {
-        totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(
-            _member,
-            address(this)
-        );
+        totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         withdraw(_member);
         emit PointsDeactivated(_member);
     }
 
-    function increasePower(
-        address _member,
-        uint256 _amountToStake
-    ) external returns (uint256) {
+    function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
         //requireMemberActivatedInStrategies
         onlyRegistryCommunity();
         if (!_canExecuteAction(_member)) {
@@ -12834,10 +12744,7 @@ contract CVStrategyV0_0 is
         } else if (pointSystem == StrategyStruct.PointSystem.Quadratic) {
             pointsToIncrease = increasePowerQuadratic(_member, _amountToStake);
         }
-        bool isActivated = registryCommunity.memberActivatedInStrategies(
-            _member,
-            address(this)
-        );
+        bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
         if (isActivated) {
             totalPointsActivated += pointsToIncrease;
         }
@@ -12845,46 +12752,29 @@ contract CVStrategyV0_0 is
         return pointsToIncrease;
     }
 
-    function decreasePower(
-        address _member,
-        uint256 _amountToUnstake
-    ) external returns (uint256) {
+    function decreasePower(address _member, uint256 _amountToUnstake) external returns (uint256) {
         onlyRegistryCommunity();
         //requireMemberActivatedInStrategies
 
         uint256 pointsToDecrease = 0;
-        if (
-            pointSystem == StrategyStruct.PointSystem.Unlimited ||
-            pointSystem == StrategyStruct.PointSystem.Capped
-        ) {
+        if (pointSystem == StrategyStruct.PointSystem.Unlimited || pointSystem == StrategyStruct.PointSystem.Capped) {
             pointsToDecrease = decreasePowerCappedUnlimited(_amountToUnstake);
         } else {
-            pointsToDecrease = decreasePowerQuadratic(
-                _member,
-                _amountToUnstake
-            );
+            pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
         }
         totalPointsActivated -= pointsToDecrease;
         emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
         return pointsToDecrease;
     }
 
-    function increasePowerUnlimited(
-        uint256 _amountToStake
-    ) internal pure returns (uint256) {
+    function increasePowerUnlimited(uint256 _amountToStake) internal pure returns (uint256) {
         return _amountToStake;
     }
 
-    function increasePowerCapped(
-        address _member,
-        uint256 _amountToStake
-    ) internal view returns (uint256) {
+    function increasePowerCapped(address _member, uint256 _amountToStake) internal view returns (uint256) {
         uint256 pointsToIncrease = _amountToStake;
         console.log("POINTS TO INCREASE", pointsToIncrease);
-        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(
-            _member,
-            address(this)
-        );
+        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
         console.log("MEMBERPOWER", memberPower);
         if (memberPower + pointsToIncrease > pointConfig.maxAmount) {
             pointsToIncrease = pointConfig.maxAmount - memberPower;
@@ -12894,60 +12784,39 @@ contract CVStrategyV0_0 is
         return pointsToIncrease;
     }
 
-    function increasePowerQuadratic(
-        address _member,
-        uint256 _amountToStake
-    ) internal view returns (uint256) {
-        uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) +
-            _amountToStake;
+    function increasePowerQuadratic(address _member, uint256 _amountToStake) internal view returns (uint256) {
+        uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
 
         uint256 decimal = 18;
-        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (
-            uint8 _decimal
-        ) {
+        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
             console.log("Error getting decimal");
         }
         uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
-        uint256 currentPoints = registryCommunity.getMemberPowerInStrategy(
-            _member,
-            address(this)
-        );
+        uint256 currentPoints = registryCommunity.getMemberPowerInStrategy(_member, address(this));
 
         uint256 pointsToIncrease = newTotalPoints - currentPoints;
 
         return pointsToIncrease;
     }
 
-    function decreasePowerCappedUnlimited(
-        uint256 _amountToUnstake
-    ) internal pure returns (uint256) {
+    function decreasePowerCappedUnlimited(uint256 _amountToUnstake) internal pure returns (uint256) {
         return _amountToUnstake;
     }
 
-    function decreasePowerQuadratic(
-        address _member,
-        uint256 _amountToUnstake
-    ) internal view returns (uint256) {
+    function decreasePowerQuadratic(address _member, uint256 _amountToUnstake) internal view returns (uint256) {
         uint256 decimal = 18;
-        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (
-            uint8 _decimal
-        ) {
+        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
             console.log("Error getting decimal");
         }
         console.log("_amountToUnstake", _amountToUnstake);
-        uint256 newTotalStake = registryCommunity.getMemberStakedAmount(
-            _member
-        ) - _amountToUnstake;
+        uint256 newTotalStake = registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake;
         console.log("newTotalStake", newTotalStake);
         uint256 newTotalPoints = Math.sqrt(newTotalStake * 10 ** decimal);
-        uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(
-            _member,
-            address(this)
-        ) - newTotalPoints;
+        uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
         return pointsToDecrease;
     }
 
@@ -12962,9 +12831,7 @@ contract CVStrategyV0_0 is
     // [[[proposalId, delta],[proposalId, delta]]]
     // layout.txs -> console.log(data)
     // data = bytes
-    function supportProposal(
-        StrategyStruct.ProposalSupport[] memory
-    ) public pure {
+    function supportProposal(StrategyStruct.ProposalSupport[] memory) public pure {
         // // surpressStateMutabilityWarning++;
         revert NotImplemented();
         // allo().allocate(poolId, abi.encode(proposalId));
@@ -12979,15 +12846,11 @@ contract CVStrategyV0_0 is
         }
         // surpressStateMutabilityWarning++;
 
-        bool isMemberActivatedPoints = registryCommunity
-            .memberActivatedInStrategies(_sender, address(this));
+        bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
         if (!isMemberActivatedPoints) {
             revert UserIsInactive();
         }
-        StrategyStruct.ProposalSupport[] memory pv = abi.decode(
-            _data,
-            (StrategyStruct.ProposalSupport[])
-        );
+        StrategyStruct.ProposalSupport[] memory pv = abi.decode(_data, (StrategyStruct.ProposalSupport[]));
         _check_before_addSupport(_sender, pv);
         _addSupport(_sender, pv);
     }
@@ -12995,11 +12858,7 @@ contract CVStrategyV0_0 is
     // this will distribute tokens to recipients
     // most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
     // this contract will need to track the amount paid already, so that it doesn't double pay
-    function _distribute(
-        address[] memory,
-        bytes memory _data,
-        address
-    ) internal override {
+    function _distribute(address[] memory, bytes memory _data, address) internal override {
         //@todo could reentrancy?
         // surpressStateMutabilityWarning++;
         if (_data.length <= 0) {
@@ -13019,16 +12878,10 @@ contract CVStrategyV0_0 is
             }
 
             if (proposal.requestedAmount > poolAmount) {
-                revert PoolAmountNotEnough(
-                    proposalId,
-                    proposal.requestedAmount,
-                    poolAmount
-                );
+                revert PoolAmountNotEnough(proposalId, proposal.requestedAmount, poolAmount);
             }
 
-            if (
-                proposal.proposalStatus != StrategyStruct.ProposalStatus.Active
-            ) {
+            if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
                 revert ProposalNotActive(proposalId);
             }
 
@@ -13043,37 +12896,23 @@ contract CVStrategyV0_0 is
 
             poolAmount -= proposal.requestedAmount; // CEI
 
-            _transferAmount(
-                pool.token,
-                proposal.beneficiary,
-                proposal.requestedAmount
-            ); //should revert
+            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
-                proposalId,
-                proposal.submitter,
-                arbitrableConfig.submitterCollateralAmount
+                proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
             );
 
-            emit Distributed(
-                proposalId,
-                proposal.beneficiary,
-                proposal.requestedAmount
-            );
+            emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
         } //signaling do nothing @todo write tests @todo add end date
     }
 
-    function canExecuteProposal(
-        uint256 proposalId
-    ) public view returns (bool canBeExecuted) {
+    function canExecuteProposal(uint256 proposalId) public view returns (bool canBeExecuted) {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
         // uint256 convictionLast = updateProposalConviction(proposalId);
-        (
-            uint256 convictionLast,
-            uint256 blockNumber
-        ) = _checkBlockAndCalculateConviction(proposal, proposal.stakedAmount);
+        (uint256 convictionLast, uint256 blockNumber) =
+            _checkBlockAndCalculateConviction(proposal, proposal.stakedAmount);
 
         if (convictionLast == 0 && blockNumber == 0) {
             convictionLast = proposal.convictionLast;
@@ -13089,44 +12928,37 @@ contract CVStrategyV0_0 is
     // probably tracked in a mapping, but will depend on the implementation
     // for example, the OpenSelfRegistration only maps users to bool, and then assumes Accepted for those
     // since there is no need for Pending or Rejected
-    function _getRecipientStatus(
-        address _recipientId
-    ) internal pure override returns (Status) {
+    function _getRecipientStatus(address _recipientId) internal pure override returns (Status) {
         // surpressStateMutabilityWarning;
         return _recipientId == address(0) ? Status.Rejected : Status.Accepted;
     }
 
     /// @return Input the values you would send to distribute(), get the amounts each recipient in the array would receive
-    function getPayouts(
-        address[] memory,
-        bytes[] memory
-    ) external pure override returns (PayoutSummary[] memory) {
+    function getPayouts(address[] memory, bytes[] memory) external pure override returns (PayoutSummary[] memory) {
         // surpressStateMutabilityWarning;
         revert NotImplemented();
         // PayoutSummary[] memory payouts = new PayoutSummary[](0);
         // return payouts;
     }
 
-    function _getPayout(
-        address _recipientId,
-        bytes memory _data
-    ) internal pure override returns (PayoutSummary memory) {
+    function _getPayout(address _recipientId, bytes memory _data)
+        internal
+        pure
+        override
+        returns (PayoutSummary memory)
+    {
         // surpressStateMutabilityWarning;
         _data;
         return PayoutSummary(_recipientId, 0);
     }
 
-    function _afterIncreasePoolAmount(
-        uint256 _amount
-    ) internal virtual override {
+    function _afterIncreasePoolAmount(uint256 _amount) internal virtual override {
         emit PoolAmountIncreased(_amount);
     }
 
     // simply returns whether a allocator is valid or not, will usually be true for all
 
-    function _isValidAllocator(
-        address _allocator
-    ) internal pure override returns (bool) {
+    function _isValidAllocator(address _allocator) internal pure override returns (bool) {
         // surpressStateMutabilityWarning;
         return _allocator == address(0) ? false : true;
     }
@@ -13147,13 +12979,7 @@ contract CVStrategyV0_0 is
                 proposal.stakedAmount -= stakedPoints;
                 totalStaked -= stakedPoints;
                 _calculateAndSetConviction(proposal, stakedPoints);
-                emit SupportAdded(
-                    _member,
-                    proposalId,
-                    0,
-                    proposal.stakedAmount,
-                    proposal.convictionLast
-                );
+                emit SupportAdded(_member, proposalId, 0, proposal.stakedAmount, proposal.convictionLast);
             }
         }
     }
@@ -13171,9 +12997,7 @@ contract CVStrategyV0_0 is
      * @return convictionLast Last conviction calculated
      * @return threshold Proposal threshold
      */
-    function getProposal(
-        uint256 _proposalId
-    )
+    function getProposal(uint256 _proposalId)
         external
         view
         returns (
@@ -13191,9 +13015,7 @@ contract CVStrategyV0_0 is
     {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
 
-        threshold = proposal.requestedAmount == 0
-            ? 0
-            : calculateThreshold(proposal.requestedAmount);
+        threshold = proposal.requestedAmount == 0 ? 0 : calculateThreshold(proposal.requestedAmount);
         return (
             proposal.submitter,
             proposal.beneficiary,
@@ -13208,9 +13030,7 @@ contract CVStrategyV0_0 is
         );
     }
 
-    function getMetadata(
-        uint256 _proposalId
-    ) external view returns (Metadata memory) {
+    function getMetadata(uint256 _proposalId) external view returns (Metadata memory) {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
         return proposal.metadata;
     }
@@ -13221,31 +13041,21 @@ contract CVStrategyV0_0 is
      * @param _voter Voter address
      * @return Proposal voter stake
      */
-    function getProposalVoterStake(
-        uint256 _proposalId,
-        address _voter
-    ) external view returns (uint256) {
+    function getProposalVoterStake(uint256 _proposalId, address _voter) external view returns (uint256) {
         return _internal_getProposalVoterStake(_proposalId, _voter);
     }
 
-    function getProposalStakedAmount(
-        uint256 _proposalId
-    ) external view returns (uint256) {
+    function getProposalStakedAmount(uint256 _proposalId) external view returns (uint256) {
         return proposals[_proposalId].stakedAmount;
     }
 
     //    do a internal function to get the total voter stake
 
-    function getTotalVoterStakePct(
-        address _voter
-    ) public view returns (uint256) {
+    function getTotalVoterStakePct(address _voter) public view returns (uint256) {
         return totalVoterStakePct[_voter];
     }
 
-    function _internal_getProposalVoterStake(
-        uint256 _proposalId,
-        address _voter
-    ) internal view returns (uint256) {
+    function _internal_getProposalVoterStake(uint256 _proposalId, address _voter) internal view returns (uint256) {
         return proposals[_proposalId].voterStakedPoints[_voter];
     }
 
@@ -13254,21 +13064,16 @@ contract CVStrategyV0_0 is
     }
 
     function proposalExists(uint256 _proposalID) internal view returns (bool) {
-        return
-            proposals[_proposalID].proposalId > 0 &&
-            proposals[_proposalID].submitter != address(0);
+        return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
     }
 
-    function _isOverMaxRatio(
-        uint256 _requestedAmount
-    ) internal view returns (bool isOverMaxRatio) {
+    function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool isOverMaxRatio) {
         isOverMaxRatio = cvParams.maxRatio * poolAmount <= _requestedAmount * D;
     }
 
-    function _check_before_addSupport(
-        address _sender,
-        StrategyStruct.ProposalSupport[] memory _proposalSupport
-    ) internal {
+    function _check_before_addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport)
+        internal
+    {
         int256 deltaSupportSum = 0;
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             // check if _proposalSupport index i exist
@@ -13285,32 +13090,20 @@ contract CVStrategyV0_0 is
         }
         // console.log("deltaSupportSum");
         // console.logInt(deltaSupportSum);
-        uint256 newTotalVotingSupport = _applyDelta(
-            getTotalVoterStakePct(_sender),
-            deltaSupportSum
-        );
+        uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
         // console.log("newTotalVotingSupport", newTotalVotingSupport);
-        uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(
-            _sender,
-            address(this)
-        );
+        uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
 
         // console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
         if (newTotalVotingSupport > participantBalance) {
-            revert NotEnoughPointsToSupport(
-                newTotalVotingSupport,
-                participantBalance
-            );
+            revert NotEnoughPointsToSupport(newTotalVotingSupport, participantBalance);
         }
 
         totalVoterStakePct[_sender] = newTotalVotingSupport;
     }
 
-    function _addSupport(
-        address _sender,
-        StrategyStruct.ProposalSupport[] memory _proposalSupport
-    ) internal {
+    function _addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport) internal {
         uint256[] memory proposalsIds;
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             uint256 proposalId = _proposalSupport[i].proposalId;
@@ -13329,9 +13122,7 @@ contract CVStrategyV0_0 is
                     }
                 }
                 if (!exist) {
-                    uint256[] memory temp = new uint256[](
-                        proposalsIds.length + 1
-                    );
+                    uint256[] memory temp = new uint256[](proposalsIds.length + 1);
                     for (uint256 j = 0; j < proposalsIds.length; j++) {
                         temp[j] = proposalsIds[j];
                     }
@@ -13383,21 +13174,12 @@ contract CVStrategyV0_0 is
                 proposal.blockLast = block.number;
             } else {
                 _calculateAndSetConviction(proposal, previousStakedPoints);
-                emit SupportAdded(
-                    _sender,
-                    proposalId,
-                    stakedPoints,
-                    proposal.stakedAmount,
-                    proposal.convictionLast
-                );
+                emit SupportAdded(_sender, proposalId, stakedPoints, proposal.stakedAmount, proposal.convictionLast);
             }
         }
     }
 
-    function _applyDelta(
-        uint256 _support,
-        int256 _delta
-    ) internal pure returns (uint256) {
+    function _applyDelta(uint256 _support, int256 _delta) internal pure returns (uint256) {
         int256 result = int256(_support) + _delta;
 
         if (result < 0) {
@@ -13414,11 +13196,11 @@ contract CVStrategyV0_0 is
      * @param _oldAmount Amount of tokens staked until now
      * @return Current conviction
      */
-    function calculateConviction(
-        uint256 _timePassed,
-        uint256 _lastConv,
-        uint256 _oldAmount
-    ) public view returns (uint256) {
+    function calculateConviction(uint256 _timePassed, uint256 _lastConv, uint256 _oldAmount)
+        public
+        view
+        returns (uint256)
+    {
         uint256 t = _timePassed;
         // atTWO_128 = 2^128 * a^t
         //        @audit-issue why that _pow require that need be less than TWO_128? why dont use 256?
@@ -13432,10 +13214,8 @@ contract CVStrategyV0_0 is
         //            >> 128;
         //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
         //            >> 128;
-        return
-            (((atTWO_128 * _lastConv) +
-                ((_oldAmount * D * (TWO_128 - atTWO_128)) /
-                    (D - cvParams.decay))) + TWO_127) >> 128;
+        return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - cvParams.decay))) + TWO_127)
+            >> 128;
     }
 
     /**
@@ -13449,9 +13229,7 @@ contract CVStrategyV0_0 is
      * @return _threshold Threshold a proposal's conviction should surpass in order to be able to
      * executed it.
      */
-    function calculateThreshold(
-        uint256 _requestedAmount
-    ) public view returns (uint256 _threshold) {
+    function calculateThreshold(uint256 _requestedAmount) public view returns (uint256 _threshold) {
         //       @todo: we should replace it with
         //        uint256 funds = fundsManager.balance(requestToken);
         if (poolAmount <= 0) {
@@ -13470,19 +13248,14 @@ contract CVStrategyV0_0 is
         }
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
         // denom = maxRatio / 1 - _requestedAmount / funds;
-        uint256 denom = (cvParams.maxRatio * 2 ** 64) /
-            D -
-            (_requestedAmount * 2 ** 64) /
-            poolAmount;
-        _threshold =
-            ((((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) /
-                (D - cvParams.decay)) * totalEffectiveActivePoints()) >>
-            64;
+        uint256 denom = (cvParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
+        _threshold = (
+            (((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - cvParams.decay))
+                * totalEffectiveActivePoints()
+        ) >> 64;
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
-        _threshold = _threshold > cvParams.minThresholdPoints
-            ? _threshold
-            : cvParams.minThresholdPoints;
+        _threshold = _threshold > cvParams.minThresholdPoints ? _threshold : cvParams.minThresholdPoints;
     }
 
     /**
@@ -13492,10 +13265,7 @@ contract CVStrategyV0_0 is
      * @param _b right argument
      * @return _result _a * _b / 2^128
      */
-    function _mul(
-        uint256 _a,
-        uint256 _b
-    ) internal pure returns (uint256 _result) {
+    function _mul(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {
         require(_a <= TWO_128, "_a should be less than or equal to 2^128");
         require(_b < TWO_128, "_b should be less than 2^128");
         return ((_a * _b) + TWO_127) >> 128;
@@ -13508,10 +13278,7 @@ contract CVStrategyV0_0 is
      * @param _b right argument
      * @return _result (_a / 2^128)^_b * 2^128
      */
-    function _pow(
-        uint256 _a,
-        uint256 _b
-    ) internal pure returns (uint256 _result) {
+    function _pow(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {
         require(_a < TWO_128, "_a should be less than 2^128");
         uint256 a = _a;
         uint256 b = _b;
@@ -13536,14 +13303,8 @@ contract CVStrategyV0_0 is
      * @param _proposal Proposal
      * @param _oldStaked Amount of tokens staked on a proposal until now
      */
-    function _calculateAndSetConviction(
-        StrategyStruct.Proposal storage _proposal,
-        uint256 _oldStaked
-    ) internal {
-        (
-            uint256 conviction,
-            uint256 blockNumber
-        ) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
+    function _calculateAndSetConviction(StrategyStruct.Proposal storage _proposal, uint256 _oldStaked) internal {
+        (uint256 conviction, uint256 blockNumber) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
         if (conviction == 0 && blockNumber == 0) {
             return;
         }
@@ -13551,10 +13312,11 @@ contract CVStrategyV0_0 is
         _proposal.convictionLast = conviction;
     }
 
-    function _checkBlockAndCalculateConviction(
-        StrategyStruct.Proposal storage _proposal,
-        uint256 _oldStaked
-    ) internal view returns (uint256 conviction, uint256 blockNumber) {
+    function _checkBlockAndCalculateConviction(StrategyStruct.Proposal storage _proposal, uint256 _oldStaked)
+        internal
+        view
+        returns (uint256 conviction, uint256 blockNumber)
+    {
         blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
         if (_proposal.blockLast == blockNumber) {
@@ -13574,12 +13336,10 @@ contract CVStrategyV0_0 is
         StrategyStruct.CVParams memory _cvParams
     ) internal {
         if (
-            _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe ||
-            _arbitrableConfig.submitterCollateralAmount !=
-            arbitrableConfig.submitterCollateralAmount ||
-            _arbitrableConfig.challengerCollateralAmount !=
-            arbitrableConfig.challengerCollateralAmount ||
-            _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
+            _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
+                || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
+                || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
+                || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
         ) {
             if (disputeCount != 0) {
                 revert ArbitrationConfigCannotBeChangedDuringDispute();
@@ -13589,13 +13349,9 @@ contract CVStrategyV0_0 is
             if (arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator) {
                 arbitrableConfig.arbitrator = _arbitrableConfig.arbitrator;
                 if (arbitrableConfig.tribunalSafe != address(0)) {
-                    arbitrableConfig.arbitrator.registerSafe(
-                        arbitrableConfig.tribunalSafe
-                    );
+                    arbitrableConfig.arbitrator.registerSafe(arbitrableConfig.tribunalSafe);
                     emit TribunaSafeRegistered(
-                        address(this),
-                        address(arbitrableConfig.arbitrator),
-                        arbitrableConfig.tribunalSafe
+                        address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
                     );
                 }
             }
@@ -13605,9 +13361,7 @@ contract CVStrategyV0_0 is
         emit PoolParamsUpdated(_cvParams, _arbitrableConfig);
     }
 
-    function updateProposalConviction(
-        uint256 proposalId
-    ) public returns (uint256) {
+    function updateProposalConviction(uint256 proposalId) public returns (uint256) {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
         if (proposal.proposalId != proposalId) {
@@ -13626,9 +13380,7 @@ contract CVStrategyV0_0 is
         return ((amount * D) / (D - cvParams.decay));
     }
 
-    function setRegistryCommunity(
-        address _registryCommunity
-    ) external onlyPoolManager(msg.sender) {
+    function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
         registryCommunity = RegistryCommunityV0_0(_registryCommunity);
         emit RegistryUpdated(_registryCommunity);
     }
@@ -13647,11 +13399,7 @@ contract CVStrategyV0_0 is
         _setPoolParams(_arbitrableConfig, _cvParams);
     }
 
-    function disputeProposal(
-        uint256 proposalId,
-        string calldata context,
-        bytes calldata _extraData
-    ) external payable {
+    function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData) external payable {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
         if (address(arbitrableConfig.arbitrator) == address(0)) {
@@ -13667,22 +13415,14 @@ contract CVStrategyV0_0 is
             revert ProposalNotActive(proposalId);
         }
         if (msg.value <= arbitrableConfig.challengerCollateralAmount) {
-            revert InsufficientCollateral(
-                msg.value,
-                arbitrableConfig.challengerCollateralAmount
-            );
+            revert InsufficientCollateral(msg.value, arbitrableConfig.challengerCollateralAmount);
         }
 
-        uint256 arbitrationFee = msg.value -
-            arbitrableConfig.challengerCollateralAmount;
+        uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
 
-            collateralVault.depositCollateral{
-            value: arbitrableConfig.challengerCollateralAmount
-        }(proposalId, msg.sender);
+        collateralVault.depositCollateral{value: arbitrableConfig.challengerCollateralAmount}(proposalId, msg.sender);
 
-        uint256 disputeId = arbitrableConfig.arbitrator.createDispute{
-            value: arbitrationFee
-        }(RULING_OPTIONS, _extraData);
+        uint256 disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
         proposal.proposalStatus = StrategyStruct.ProposalStatus.Disputed;
         proposal.disputeId = disputeId;
@@ -13693,12 +13433,7 @@ contract CVStrategyV0_0 is
         disputeCount++;
 
         emit ProposalDisputed(
-            arbitrableConfig.arbitrator,
-            proposalId,
-            disputeId,
-            msg.sender,
-            context,
-            proposal.disputeTimestamp
+            arbitrableConfig.arbitrator, proposalId, disputeId, msg.sender, context, proposal.disputeTimestamp
         );
     }
 
@@ -13714,15 +13449,11 @@ contract CVStrategyV0_0 is
         }
 
         // if the lastDisputeCompletion is less than DISPUTE_COOLDOWN_SEC, we should revert
-        if (
-            proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC >
-            block.timestamp
-        ) {
+        if (proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC > block.timestamp) {
             revert DisputeCooldownNotPassed(proposalId);
         }
 
-        bool isTimeOut = block.timestamp >
-            proposal.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
+        bool isTimeOut = block.timestamp > proposal.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
 
         if (!isTimeOut && msg.sender != address(arbitrableConfig.arbitrator)) {
             revert OnlyArbitrator();
@@ -13736,19 +13467,13 @@ contract CVStrategyV0_0 is
                 proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
             }
             if (arbitrableConfig.defaultRuling == 2) {
-                proposal.proposalStatus = StrategyStruct
-                    .ProposalStatus
-                    .Rejected;
+                proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
             }
             collateralVault.withdrawCollateral(
-                proposalId,
-                proposal.challenger,
-                arbitrableConfig.challengerCollateralAmount
+                proposalId, proposal.challenger, arbitrableConfig.challengerCollateralAmount
             );
             collateralVault.withdrawCollateral(
-                proposalId,
-                proposal.submitter,
-                arbitrableConfig.submitterCollateralAmount
+                proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
             );
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
@@ -13761,9 +13486,7 @@ contract CVStrategyV0_0 is
         } else if (_ruling == 2) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
             collateralVault.withdrawCollateral(
-                proposalId,
-                proposal.challenger,
-                arbitrableConfig.challengerCollateralAmount
+                proposalId, proposal.challenger, arbitrableConfig.challengerCollateralAmount
             );
             collateralVault.withdrawCollateralFor(
                 proposalId,
@@ -13772,10 +13495,7 @@ contract CVStrategyV0_0 is
                 arbitrableConfig.submitterCollateralAmount / 2
             );
             collateralVault.withdrawCollateralFor(
-                proposalId,
-                proposal.submitter,
-                proposal.challenger,
-                arbitrableConfig.submitterCollateralAmount / 2
+                proposalId, proposal.submitter, proposal.challenger, arbitrableConfig.submitterCollateralAmount / 2
             );
         }
 
@@ -13788,4 +13508,3 @@ contract CVStrategyV0_0 is
 
     uint256[50] private __gap;
 }
-
