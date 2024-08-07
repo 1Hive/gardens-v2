@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import "forge-std/console.sol";
-
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
@@ -42,16 +40,16 @@ contract RegistryCommunityV0_0 is
     uint256 public constant PRECISION_SCALE = 10 ** 4;
     /// @notice The maximum fee that can be charged to the community
     uint256 public constant MAX_FEE = 10 * PRECISION_SCALE;
-
-    /// @notice Enable or disable the kick feature
-    bool public isKickEnabled;
-
     /// @notice The amount of tokens required to register a member
     uint256 public registerStakeAmount;
     /// @notice The fee charged to the community for each registration
     uint256 public communityFee;
+    /// @notice The nonce used to create new strategy clones
+    uint256 public cloneNonce;
     /// @notice The profileId of the community in the Allo Registry
     bytes32 public profileId;
+    /// @notice Enable or disable the kick feature
+    bool public isKickEnabled;
 
     /// @notice The address that receives the community fee
     address public feeReceiver;
@@ -59,8 +57,6 @@ contract RegistryCommunityV0_0 is
     address public registryFactory;
     /// @notice The address of the strategy template
     address public strategyTemplate;
-    /// @notice The nonce used to create new strategy clones
-    uint256 public cloneNonce;
     /// @notice The address of the pending council safe owner
     address payable public pendingCouncilSafe;
 
@@ -159,6 +155,10 @@ contract RegistryCommunityV0_0 is
         if (!memberActivatedInStrategies[msg.sender][_strategy]) {
             revert PointsDeactivated();
         }
+    }
+    
+    function _revertZeroAddress(address _address) internal pure {
+        if (_address == address(0)) revert AddressCannotBeZero();
     }
 
     /*|--------------------------------------------|*/
@@ -383,7 +383,7 @@ contract RegistryCommunityV0_0 is
             pointsToIncrease = IPointStrategy(memberStrategies[i]).increasePower(member, _amountStaked);
             if (pointsToIncrease != 0) {
                 memberPowerInStrategy[member][memberStrategies[i]] += pointsToIncrease;
-                console.log("Strategy power", memberPowerInStrategy[member][memberStrategies[i]]);
+                // console.log("Strategy power", memberPowerInStrategy[member][memberStrategies[i]]);
             }
             //}
         }
@@ -438,9 +438,6 @@ contract RegistryCommunityV0_0 is
         return addressToMemberInfo[_member].stakedAmount;
     }
 
-    // function getGardenTokenDecimals() public view returns (uint256){
-    //     return gardenToken.decimals();
-    // }
     function addStrategyByPoolId(uint256 poolId) public {
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
@@ -456,18 +453,13 @@ contract RegistryCommunityV0_0 is
     }
 
     function _addStrategy(address _newStrategy) internal {
-        console.log("enabledStrategies[_newStrategy]", enabledStrategies[_newStrategy]);
         if (enabledStrategies[_newStrategy]) {
             revert StrategyExists();
         }
-        console.log("END");
         enabledStrategies[_newStrategy] = true;
         emit StrategyAdded(_newStrategy);
     }
 
-    function _revertZeroAddress(address _address) internal pure {
-        if (_address == address(0)) revert AddressCannotBeZero();
-    }
 
     function removeStrategyByPoolId(uint256 poolId) public {
         onlyCouncilSafe();
@@ -524,7 +516,7 @@ contract RegistryCommunityV0_0 is
 
             newMember.stakedAmount = registerStakeAmount;
             // console.log("registerStakeAmount", registerStakeAmount);
-            console.log("gardenToken", address(gardenToken));
+            // console.log("gardenToken", address(gardenToken));
 
             gardenToken.safeTransferFrom(
                 _member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
@@ -533,14 +525,14 @@ contract RegistryCommunityV0_0 is
             //individually. Check vulnerabilites for that with Felipe
             // gardenToken.approve(feeReceiver,communityFeeAmount);
             //Error: ProtocolFee is equal to zero
-            console.log("communityFeeAmount", communityFeeAmount);
+            // console.log("communityFeeAmount", communityFeeAmount);
             if (communityFeeAmount > 0) {
-                console.log("feeReceiver", feeReceiver);
+                // console.log("feeReceiver", feeReceiver);
                 gardenToken.safeTransfer(feeReceiver, communityFeeAmount);
             }
-            console.log("gardensFeeAmount", gardensFeeAmount);
+            // console.log("gardensFeeAmount", gardensFeeAmount);
             if (gardensFeeAmount > 0) {
-                console.log("gardensFactory.getGardensFeeReceiver()", gardensFactory.getGardensFeeReceiver());
+                // console.log("gardensFactory.getGardensFeeReceiver()", gardensFactory.getGardensFeeReceiver());
                 gardenToken.safeTransfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
             }
 

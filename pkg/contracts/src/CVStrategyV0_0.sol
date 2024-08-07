@@ -3,18 +3,14 @@ pragma solidity ^0.8.19;
 
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
-
 import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "./interfaces/IArbitrator.sol";
 import {IArbitrable} from "./interfaces/IArbitrable.sol";
 import {CollateralVault} from "./CollateralVault.sol";
-import {SafeArbitrator} from "./SafeArbitrator.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
-
 import {console} from "forge-std/console.sol";
-
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
@@ -1088,7 +1084,7 @@ contract CVStrategyV0_0 is
                     CollateralVault(Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++));
                 collateralVault.initialize();
                 if (arbitrableConfig.tribunalSafe != address(0)) {
-                    SafeArbitrator(address(arbitrableConfig.arbitrator)).registerSafe(arbitrableConfig.tribunalSafe);
+                    arbitrableConfig.arbitrator.registerSafe(arbitrableConfig.tribunalSafe);
                     emit TribunaSafeRegistered(
                         address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
                     );

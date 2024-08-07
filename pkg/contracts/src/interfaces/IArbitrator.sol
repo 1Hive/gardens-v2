@@ -77,4 +77,9 @@ interface IArbitrator {
     /// @return tied Whether it's a tie or not.
     /// @return overridden Whether the ruling was overridden by appeal funding or not.
     function currentRuling(uint256 _disputeID) external view returns (uint256 ruling, bool tied, bool overridden);
+
+    // Interface override
+    /// @dev Authorize the safe to execute a ruling on the source contract.<
+    /// @param _safe that acts as the Tribunal safe that can rule disputes from the source Strategy.
+    function registerSafe(address _safe) external;
 }
