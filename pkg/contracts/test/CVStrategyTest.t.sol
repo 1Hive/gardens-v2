@@ -1867,20 +1867,20 @@ contract CVStrategyTestUpgradeable is
         cv.distribute(recipientIds, data, sender);
     }
 
-    // function testRevert_initialize_registryZero() public {
-    //     address collateralVaultTemplate = address(new CollateralVault());
-    //     StrategyStruct.ArbitrableConfig memory arbitrableConfig =
-    //         StrategyStruct.ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300);
-    //     StrategyStruct.InitializeParams memory params = getParams(
-    //         address(0),
-    //         StrategyStruct.ProposalType.Funding,
-    //         StrategyStruct.PointSystem.Unlimited,
-    //         StrategyStruct.PointSystemConfig(200 * DECIMALS),
-    //         arbitrableConfig
-    //     );
-    //     vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.RegistryCannotBeZero.selector));
-    //     _registryCommunity().createPool(NATIVE, params, metadata);
-    // }
+    function testRevert_initialize_registryZero() public {
+        address collateralVaultTemplate = address(new CollateralVault());
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig =
+            StrategyStruct.ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300);
+        StrategyStruct.InitializeParams memory params = getParams(
+            address(0),
+            StrategyStruct.ProposalType.Funding,
+            StrategyStruct.PointSystem.Unlimited,
+            StrategyStruct.PointSystemConfig(200 * DECIMALS),
+            arbitrableConfig
+        );
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.RegistryCannotBeZero.selector));
+        _registryCommunity().createPool(NATIVE, params, metadata);
+    }
 
     function test_canExecuteProposal_should_false() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);

@@ -53,6 +53,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
     Allo allo;
     GV2ERC20 token;
     RegistryFactoryV0_0 registryFactory;
+    IArbitrator arbitrator;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -143,7 +144,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         assertTrue(COUNCIL_SAFE != address(0), "Council Safe not set");
 
         if (COUNCIL_SAFE == address(0)) {
-            COUNCIL_SAFE = address(_councilSafeWithOwner(pool_admin(), SafeProxyFactory(SAFE_PROXY_FACTORY)));
+            Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin(), SafeProxyFactory(SAFE_PROXY_FACTORY));
+            COUNCIL_SAFE = address(councilSafeDeploy);
         }
         // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
 
@@ -184,22 +186,18 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
+        proxy = new ERC1967Proxy(
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+        );
+        arbitrator = SafeArbitrator(payable(address(proxy)));
+
         StrategyStruct.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Fixed,
             pointConfig,
             StrategyStruct.ArbitrableConfig(
-                SafeArbitrator(
-                    payable(
-                        address(
-                            new ERC1967Proxy(
-                                address(new SafeArbitrator()),
-                                abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
-                            )
-                        )
-                    )
-                ),
+                IArbitrator(address(arbitrator)),
                 // IArbitrator(address(0)),
                 payable(address(_councilSafe())),
                 3 ether,
@@ -340,26 +338,19 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         data2 = abi.encode(proposal2);
         allo.registerRecipient(poolIdSignaling, data2);
 
-        // TODO: Goss Commented to fix stack too deep error
-        // safeHelper(
-        //     Safe(payable(COUNCIL_SAFE)),
-        //     councilMemberPKEnv,
-        //     address(registryCommunity),
-        //     abi.encodeWithSelector(
-        //         registryCommunity.removeStrategy.selector,
-        //         _strategy1
-        //     )
-        // );
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy1)
+        );
 
-        // safeHelper(
-        //     Safe(payable(COUNCIL_SAFE)),
-        //     councilMemberPKEnv,
-        //     address(registryCommunity),
-        //     abi.encodeWithSelector(
-        //         registryCommunity.removeStrategy.selector,
-        //         _strategy2
-        //     )
-        // );
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy2)
+        );
 
         vm.stopBroadcast();
     }
