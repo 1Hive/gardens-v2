@@ -60,7 +60,7 @@ deploy:
 	--unlocked \
 	--broadcast -vvvv \
 	--force \
-	--via-ir
+	--via-ir 
 
 deploy-pool-testnet: 
 	-forge script script/DeployCVArbSepoliaPool.s.sol:DeployCVArbSepoliaPool \

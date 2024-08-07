@@ -114,24 +114,9 @@ contract SafeSetup is Test {
         return councilSafe;
     }
 
-    function getHash(
-        address to_,
-        bytes memory data_,
-        Safe councilSafe_
-    ) private view returns (bytes32 txData) {
-        txData = keccak256(
-            councilSafe_.encodeTransactionData(
-                address(to_),
-                0,
-                data_,
-                Enum.Operation.Call,
-                0,
-                0,
-                0,
-                address(0),
-                payable(address(0)),
-                councilSafe_.nonce()
-            )
+    function getHash(address to_, bytes memory data_, Safe councilSafe_) private view returns (bytes32 txData) {
+        txData = councilSafe_.getTransactionHash(
+            address(to_), 0, data_, Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), councilSafe_.nonce()
         );
     }
 
