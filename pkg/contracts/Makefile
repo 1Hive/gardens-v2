@@ -58,6 +58,7 @@ deploy:
 	--rpc-url $(RPC_URL_LOCALHOST) \
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
 	--unlocked \
+	--via-ir \
 	--broadcast -vvvvv \
 	--force 
 	
