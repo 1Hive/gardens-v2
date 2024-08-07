@@ -59,6 +59,7 @@ deploy:
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
 	--unlocked \
 	--broadcast -vvvvv \
+	--via-ir \
 	--force 
 	
 
@@ -151,7 +152,7 @@ deploy-verify:
 	-vv
 
 fork:
-	anvil --host=0.0.0.0 --fork-block-number 17440000 --chain-id 1 --fork-url $(RPC_URL_MAINET)
+	anvil --chain-id 1337
 fork0:																									 
 	anvil --host=0.0.0.0 --chain-id 1337
 fork0b5:
