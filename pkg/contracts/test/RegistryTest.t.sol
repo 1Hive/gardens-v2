@@ -38,6 +38,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {IRegistryCommunityV0_0} from "../src/interfaces/IRegistryCommunity.sol";
 
 // @dev Run forge test --mc RegistryTest -vvvvv
 
@@ -735,7 +736,7 @@ contract RegistryUpgradeableTest is
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.registerStakeAmount()
         );
-        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+        // vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.DecreaseUnderMinimum.selector));
         vm.stopPrank();
     }
 
@@ -782,7 +783,7 @@ contract RegistryUpgradeableTest is
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.registerStakeAmount()
         );
-        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+        // vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.DecreaseUnderMinimum.selector));
         vm.stopPrank();
     }
 
@@ -831,7 +832,7 @@ contract RegistryUpgradeableTest is
         sqrtValue = 8 * DECIMALS;
         assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue);
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(50 * DECIMALS);
         vm.stopPrank();
     }
@@ -891,7 +892,7 @@ contract RegistryUpgradeableTest is
         _nonKickableCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.KickNotEnabled.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.KickNotEnabled.selector));
         _nonKickableCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -922,7 +923,7 @@ contract RegistryUpgradeableTest is
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.StrategyDisabled.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.StrategyDisabled.selector));
         strategy.activatePoints();
         vm.stopPrank();
     }
@@ -947,7 +948,7 @@ contract RegistryUpgradeableTest is
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.StrategyExists.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.StrategyExists.selector));
         _registryCommunity().addStrategy(address(strategy));
         vm.stopPrank();
     }
@@ -963,7 +964,7 @@ contract RegistryUpgradeableTest is
         params._feeReceiver = address(daoFeeReceiver);
         params._councilSafe = payable(address(_councilSafe()));
         params._isKickEnabled = true;
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.ValueCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.ValueCannotBeZero.selector));
         registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
     }
 
@@ -976,7 +977,7 @@ contract RegistryUpgradeableTest is
 
         _registryCommunity().stakeAndRegisterMember();
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.SenderNotStrategy.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.SenderNotStrategy.selector));
         _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
 
         vm.stopPrank();
@@ -991,7 +992,7 @@ contract RegistryUpgradeableTest is
         _registryCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(address(strategy));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserAlreadyDeactivated.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserAlreadyDeactivated.selector));
         _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
         vm.stopPrank();
         stopMeasuringGas();
@@ -999,7 +1000,7 @@ contract RegistryUpgradeableTest is
 
     function test_revertIncreasePower() public {
         vm.startPrank(gardenMember);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInRegistry.selector));
         _registryCommunity().increasePower(20 * DECIMALS);
     }
 
@@ -1033,7 +1034,7 @@ contract RegistryUpgradeableTest is
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.getMemberStakedAmount(gardenMember)
         );
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(101 * DECIMALS);
 
         //Test if decreasing by 100 doesn't revert as it shouldn't
@@ -1045,7 +1046,7 @@ contract RegistryUpgradeableTest is
     function test_revertKickUnregisteredMember() public {
         startMeasuringGas("Registering and kicking member");
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInRegistry.selector));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -1058,7 +1059,7 @@ contract RegistryUpgradeableTest is
         _registryCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInCouncil.selector));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -1096,17 +1097,17 @@ contract RegistryUpgradeableTest is
 
     function test_revertSetCouncilSafe() public {
         vm.startPrank(gardenMember);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInCouncil.selector));
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.AddressCannotBeZero.selector));
         _registryCommunity().setCouncilSafe(payable(address(0)));
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
         assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(gardenMember);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.SenderNotNewOwner.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.SenderNotNewOwner.selector));
         _registryCommunity().acceptCouncilSafe();
         vm.stopPrank();
     }
@@ -1134,7 +1135,7 @@ contract RegistryUpgradeableTest is
     function test_revertUnregisterMember() public {
         startMeasuringGas("Testing kick member revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInRegistry.selector));
         _registryCommunity().unregisterMember();
         vm.stopPrank();
         stopMeasuringGas();
@@ -1143,12 +1144,12 @@ contract RegistryUpgradeableTest is
     function test_revertSetCommunityFee() public {
         startMeasuringGas("Testing update protocol revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInCouncil.selector));
         _registryCommunity().setCommunityFee(5);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.NewFeeGreaterThanMax.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.NewFeeGreaterThanMax.selector));
         _registryCommunity().setCommunityFee(11 * PERCENTAGE_SCALE);
         _registryCommunity().setCommunityFee(10 * PERCENTAGE_SCALE);
         assertEq(_registryCommunity().communityFee(), 10 * PERCENTAGE_SCALE);
@@ -1158,7 +1159,7 @@ contract RegistryUpgradeableTest is
     function test_revertSetBasisStakeAmount() public {
         startMeasuringGas("Testing setBasisStake revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInCouncil.selector));
         _registryCommunity().setBasisStakedAmount(500);
         vm.stopPrank();
         stopMeasuringGas();
@@ -1248,12 +1249,12 @@ contract RegistryUpgradeableTest is
         _registryCommunity().addStrategyByPoolId(poolId);
         vm.stopPrank();
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInCouncil.selector));
         _registryCommunity().removeStrategyByPoolId(poolId);
 
         vm.startPrank(address(councilSafe));
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.AddressCannotBeZero.selector));
         _registryCommunity().removeStrategyByPoolId(poolId + 1);
 
         vm.stopPrank();
@@ -1279,11 +1280,11 @@ contract RegistryUpgradeableTest is
 
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInCouncil.selector));
         _registryCommunity().addStrategyByPoolId(poolId);
 
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.AddressCannotBeZero.selector));
         _registryCommunity().addStrategyByPoolId(poolId + 1);
         vm.stopPrank();
 

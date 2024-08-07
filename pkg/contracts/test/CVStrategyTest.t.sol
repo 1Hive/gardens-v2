@@ -41,6 +41,7 @@ import {ABDKMath64x64} from "./ABDKMath64x64.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {IRegistryCommunityV0_0} from "../src/interfaces/IRegistryCommunity.sol";
 
 /* @dev Run
  * forge test --mc CVStrategyTest -vvvvv
@@ -2043,7 +2044,7 @@ contract CVStrategyTestUpgradeable is
     function test_registry_community_name_default_empty() public {
         // RegistryFactoryV0_0 _registryFactory = new RegistryFactoryV0_0();
 
-        RegistryCommunityV0_0.InitializeParams memory params;
+        IRegistryCommunityV0_0.InitializeParams memory params;
         params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
@@ -2087,7 +2088,7 @@ contract CVStrategyTestUpgradeable is
         registryCommunity.stakeAndRegisterMember();
         assertEq(registryCommunity.isMember(local()), true, "isMember");
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserAlreadyActivated.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserAlreadyActivated.selector));
         cv.activatePoints();
 
         vm.startPrank(pool_admin());
@@ -2111,7 +2112,7 @@ contract CVStrategyTestUpgradeable is
 
         assertEq(cv.totalPointsActivated(), MINIMUM_STAKE, "totalPointsAct1");
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserAlreadyActivated.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserAlreadyActivated.selector));
         cv.activatePoints();
 
         vm.startPrank(local());
