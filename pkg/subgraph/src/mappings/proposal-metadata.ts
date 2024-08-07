@@ -33,7 +33,7 @@ import { ProposalDisputeMetadata } from "../../generated/schema";
 
 export function handleProposalDisputeMetadata(content: Bytes): void {
   const cid = dataSource.stringParam();
-  log.debug("Received dispute metadata with CID {}", [cid.toString()]);
+  log.debug("ProposalMetadata: Received dispute metadata with CID {}", [cid.toString()]);
 
   let metadata = new ProposalDisputeMetadata(cid);
   const value = json.fromBytes(content).toObject();

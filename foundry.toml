@@ -9,7 +9,6 @@ ffi = true
 ast = true
 build_info = true
 extra_output = ["storageLayout"]
-block_gas_limit = 30000000 
 
 optimizer = true
 optimizer-runs = 0

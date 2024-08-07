@@ -41,7 +41,7 @@ export function handleProtocolFeeSet(event: ProtocolFeeSet): void {
   const addr_id = event.address.toHexString();
   let community = RegistryCommunity.load(event.params._community.toHexString());
   if (community == null) {
-    log.error("Community not found", []);
+    log.error("RegistryFactory: Community not found", []);
     return;
   }
   community.protocolFee = event.params._newProtocolFee;
@@ -52,7 +52,7 @@ export function handleProtocolFeeSet(event: ProtocolFeeSet): void {
 export function handleCommunityValiditySet(event: CommunityValiditySet): void {
   let community = RegistryCommunity.load(event.params._community.toHexString());
   if (community == null) {
-    log.error("Community not found", []);
+    log.error("RegistryFactory: Community not found", []);
     return;
   }
   community.isValid = event.params._isValid;
