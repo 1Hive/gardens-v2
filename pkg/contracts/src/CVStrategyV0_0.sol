@@ -8,17 +8,15 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "./interfaces/IArbitrator.sol";
 import {IArbitrable} from "./interfaces/IArbitrable.sol";
-import {CollateralVault} from "./CollateralVault.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
 
 interface IPointStrategy {
     function deactivatePoints(address _member) external;
@@ -129,7 +127,6 @@ contract CVStrategyV0_0 is
     OwnableUpgradeable,
     BaseStrategyUpgradeable,
     IArbitrable,
-    ReentrancyGuardUpgradeable,
     IPointStrategy,
     ERC165
 {
@@ -268,7 +265,7 @@ contract CVStrategyV0_0 is
     // Contract reference
     RegistryCommunityV0_0 public registryCommunity;
 
-    CollateralVault public collateralVault;
+    ICollateralVault public collateralVault;
     ISybilScorer public sybilScorer;
 
     // Mappings to handle relationships and staking details
@@ -285,7 +282,6 @@ contract CVStrategyV0_0 is
     function init(address _allo) external virtual initializer {
         super.init(_allo, "CVStrategy");
         __Ownable_init();
-        __ReentrancyGuard_init();
     }
 
     function initialize(
@@ -294,7 +290,7 @@ contract CVStrategyV0_0 is
     ) external virtual onlyAllo {
         __BaseStrategy_init(_poolId);
 
-        collateralVault = CollateralVault(
+        collateralVault = ICollateralVault(
             Clone.createClone(collateralVaultTemplate, cloneNonce++)
         );
 
@@ -733,7 +729,7 @@ contract CVStrategyV0_0 is
             ); //should revert
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
-            CollateralVault(collateralVault).withdrawCollateral(
+            collateralVault.withdrawCollateral(
                 proposalId,
                 proposal.submitter,
                 arbitrableConfig.submitterCollateralAmount
@@ -1334,7 +1330,7 @@ contract CVStrategyV0_0 is
         uint256 proposalId,
         string calldata context,
         bytes calldata _extraData
-    ) external payable nonReentrant {
+    ) external payable {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
         if (address(arbitrableConfig.arbitrator) == address(0)) {
@@ -1359,7 +1355,7 @@ contract CVStrategyV0_0 is
         uint256 arbitrationFee = msg.value -
             arbitrableConfig.challengerCollateralAmount;
 
-        CollateralVault(collateralVault).depositCollateral{
+            collateralVault.depositCollateral{
             value: arbitrableConfig.challengerCollateralAmount
         }(proposalId, msg.sender);
 
@@ -1423,19 +1419,19 @@ contract CVStrategyV0_0 is
                     .ProposalStatus
                     .Rejected;
             }
-            CollateralVault(collateralVault).withdrawCollateral(
+            collateralVault.withdrawCollateral(
                 proposalId,
                 proposal.challenger,
                 arbitrableConfig.challengerCollateralAmount
             );
-            CollateralVault(collateralVault).withdrawCollateral(
+            collateralVault.withdrawCollateral(
                 proposalId,
                 proposal.submitter,
                 arbitrableConfig.submitterCollateralAmount
             );
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
-            CollateralVault(collateralVault).withdrawCollateralFor(
+            collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.challenger,
                 address(registryCommunity.councilSafe()),
@@ -1443,18 +1439,18 @@ contract CVStrategyV0_0 is
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
-            CollateralVault(collateralVault).withdrawCollateral(
+            collateralVault.withdrawCollateral(
                 proposalId,
                 proposal.challenger,
                 arbitrableConfig.challengerCollateralAmount
             );
-            CollateralVault(collateralVault).withdrawCollateralFor(
+            collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 address(registryCommunity.councilSafe()),
                 arbitrableConfig.submitterCollateralAmount / 2
             );
-            CollateralVault(collateralVault).withdrawCollateralFor(
+            collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 proposal.challenger,
