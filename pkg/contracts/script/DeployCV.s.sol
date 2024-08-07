@@ -58,7 +58,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     function run() public {
         vm.startBroadcast(pool_admin());
 
-        // DeployCollateralVaultTemplate.deployCollateralVaultTemplate();
+        DeployCollateralVaultTemplate.deployCollateralVaultTemplate();
 
         allo = Allo(deployAllo());
 

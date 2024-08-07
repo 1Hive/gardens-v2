@@ -79,8 +79,8 @@ library StrategyStruct {
         uint256 disputeId;
         uint256 disputeTimestamp;
         address challenger;
-        uint256 lastDisputeCompletion;
     }
+    // uint256 lastDisputeCompletion;
 
     struct ProposalSupport {
         uint256 proposalId;
@@ -124,17 +124,17 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
 
-    error UserCannotBeZero(); // 0xd1f28288
+    // error UserCannotBeZero(); // 0xd1f28288
     error UserNotInRegistry(); //0x6a5cfb6d
     error UserIsInactive(); // 0x5fccb67f
     error PoolIsEmpty(); // 0xed4421ad
     error NotImplemented(); //0xd6234725
-    error TokenCannotBeZero(); //0x596a094c
+    // error TokenCannotBeZero(); //0x596a094c
     error TokenNotAllowed(); // 0xa29c4986
     error AmountOverMaxRatio(); // 0x3bf5ca14
-    error PoolIdCannotBeZero(); //0x4e791786
-    error AddressCannotBeZero(); //0xe622e040
-    error RegistryCannotBeZero(); // 0x5df4b1ef
+    // error PoolIdCannotBeZero(); //0x4e791786
+    // error AddressCannotBeZero(); //0xe622e040
+    // error RegistryCannotBeZero(); // 0x5df4b1ef
     error SupportUnderflow(uint256 _support, int256 _delta, int256 _result); // 0x3bbc7142
     error MaxPointsReached(); // 0x8402b474
     error CantIncreaseFixedSystem(); // 0x573c3e93
@@ -153,10 +153,10 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     error InsufficientCollateral(uint256 sentAmount, uint256 requiredAmount);
     error OnlyArbitrator();
     error ProposalNotDisputed(uint256 _proposalId);
-    error ArbitratorCannotBeZero();
-    error CollateralVaultCannotBeZero();
+    // error ArbitratorCannotBeZero();
+    // error CollateralVaultCannotBeZero();
     error DefaultRulingNotSet();
-    error DisputeCooldownNotPassed(uint256 _proposalId);
+    // error DisputeCooldownNotPassed(uint256 _proposalId);
     error ArbitrationConfigCannotBeChangedDuringDispute();
 
     /*|--------------------------------------------|*/
@@ -195,18 +195,17 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     /*|--------------------------------------------|*/
 
     // Constants for fixed numbers
-    uint256 public constant D = 10000000; //10**7
+    // @todo not allow stake more than 10 proposals per user, don't count executed?
+    uint64 public constant D = 10_000_000; // 10**7
     uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
-    uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
-    uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
-    uint256 public constant MAX_STAKED_PROPOSALS = 10; // @todo not allow stake more than 10 proposals per user, don't count executed?
-    uint256 public constant RULING_OPTIONS = 3;
-    uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
+    uint128 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
+    uint128 private constant TWO_64 = 0x10000000000000000; // 2**64
+    uint8 public constant RULING_OPTIONS = 3;
+    uint32 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
 
     address private collateralVaultTemplate = address(0x3b1fbFB04DB3585920b2eAdBb8839FC9680FE8cd); // Always deploye template to this address with Create3
 
     // uint256 variables packed together
-    uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
     uint256 public cloneNonce;
     uint64 public disputeCount = 0;
     uint256 public proposalCounter = 0;
@@ -255,9 +254,9 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
         StrategyStruct.InitializeParams memory ip = abi.decode(_data, (StrategyStruct.InitializeParams));
 
-        if (ip.registryCommunity == address(0)) {
-            revert RegistryCannotBeZero();
-        }
+        // if (ip.registryCommunity == address(0)) {
+        //     revert RegistryCannotBeZero();
+        // }
 
         registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
 
@@ -277,13 +276,10 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     /*|                 FALLBACK                  |*/
     /*|--------------------------------------------|*/
 
-    fallback() external payable {
-        // // surpressStateMutabilityWarning++;
-    }
+    fallback() external payable {}
 
     receive() external payable {
         //@todo allow only allo protocol to fund it.
-        // // surpressStateMutabilityWarning++;
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
@@ -294,12 +290,12 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
     function checkSenderIsMember(address _sender) private view {
-        if (_sender == address(0)) {
-            revert UserCannotBeZero();
-        }
-        if (address(registryCommunity) == address(0)) {
-            revert RegistryCannotBeZero();
-        }
+        // if (_sender == address(0)) {
+        //     revert UserCannotBeZero();
+        // }
+        // if (address(registryCommunity) == address(0)) {
+        //     revert RegistryCannotBeZero();
+        // }
         if (!registryCommunity.isMember(_sender)) {
             revert UserNotInRegistry();
         }
@@ -312,9 +308,9 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         }
     }
 
-    function _revertZeroAddress(address _address) internal pure {
-        if (_address == address(0)) revert AddressCannotBeZero();
-    }
+    // function _revertZeroAddress(address _address) internal pure {
+    //     if (_address == address(0)) revert AddressCannotBeZero();
+    // }
 
     function onlyCouncilSafe() internal view {
         if (msg.sender != address(registryCommunity.councilSafe())) {
@@ -338,23 +334,23 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         if (!_canExecuteAction(_sender)) {
             revert UserCannotExecuteAction();
         }
-        // surpressStateMutabilityWarning++;
+
         _data;
         StrategyStruct.CreateProposal memory proposal = abi.decode(_data, (StrategyStruct.CreateProposal));
 
         // if (proposal.proposalId == 0) {
         // revert ProposalIdCannotBeZero();
         // }
-        if (proposal.poolId == 0) {
-            revert PoolIdCannotBeZero();
-        }
+        // if (proposal.poolId == 0) {
+        //     revert PoolIdCannotBeZero();
+        // }
         // console.log("proposalType", uint256(proposalType));
         if (proposalType == StrategyStruct.ProposalType.Funding) {
-            _revertZeroAddress(proposal.beneficiary);
+            // _revertZeroAddress(proposal.beneficiary);
             // getAllo().getPool(poolId).token;
-            if (proposal.requestedToken == address(0)) {
-                revert TokenCannotBeZero();
-            }
+            // if (proposal.requestedToken == address(0)) {
+            //     revert TokenCannotBeZero();
+            // }
             IAllo _allo = this.getAllo();
             IAllo.Pool memory pool = _allo.getPool(proposal.poolId);
             if (proposal.requestedToken != pool.token) {
@@ -538,7 +534,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         if (!_canExecuteAction(_sender)) {
             revert UserCannotExecuteAction();
         }
-        // surpressStateMutabilityWarning++;
 
         bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
         if (!isMemberActivatedPoints) {
@@ -554,7 +549,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     // this contract will need to track the amount paid already, so that it doesn't double pay
     function _distribute(address[] memory, bytes memory _data, address) internal override {
         //@todo could reentrancy?
-        // surpressStateMutabilityWarning++;
+
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty();
         }
@@ -929,7 +924,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         //       @todo: we should replace it with
         //        uint256 funds = fundsManager.balance(requestToken);
         if (poolAmount <= 0) {
-            revert PoolIsEmpty();
+            return 0;
         }
         //        require(maxRatio.mul(funds) > _requestedAmount.mul(D), ERROR_AMOUNT_OVER_MAX_RATIO);
         // console.log("maxRatio", maxRatio);
@@ -1037,9 +1032,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
                 || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
                 || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
         ) {
-            if (disputeCount != 0) {
-                revert ArbitrationConfigCannotBeChangedDuringDispute();
-            }
+            require(disputeCount != 0); // Arbitration config cannot be changed during dispute
             arbitrableConfig = _arbitrableConfig;
 
             if (arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator) {
@@ -1083,7 +1076,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
     function setSybilScorer(address _sybilScorer) external {
         onlyCouncilSafe();
-        _revertZeroAddress(_sybilScorer);
+        // _revertZeroAddress(_sybilScorer);
         sybilScorer = ISybilScorer(_sybilScorer);
     }
 
@@ -1098,12 +1091,12 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData) external payable {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
-        if (address(arbitrableConfig.arbitrator) == address(0)) {
-            revert ArbitratorCannotBeZero();
-        }
-        if (address(collateralVault) == address(0)) {
-            revert CollateralVaultCannotBeZero();
-        }
+        //  if (address(arbitrableConfig.arbitrator) == address(0)) {
+        //      revert ArbitratorCannotBeZero();
+        //  }
+        //  if (address(collateralVault) == address(0)) {
+        //      revert CollateralVaultCannotBeZero();
+        //  }
         if (proposal.proposalId != proposalId) {
             revert ProposalNotInList(proposalId);
         }
@@ -1137,17 +1130,20 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         uint256 proposalId = disputeIdToProposalId[_disputeID];
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
-        if (proposalId == 0) {
-            revert ProposalNotInList(proposalId);
-        }
+        // if (proposalId == 0) {
+        //     revert ProposalNotInList(proposalId);
+        // }
         if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Disputed) {
             revert ProposalNotDisputed(proposalId);
         }
 
         // if the lastDisputeCompletion is less than DISPUTE_COOLDOWN_SEC, we should revert
-        if (proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC > block.timestamp) {
-            revert DisputeCooldownNotPassed(proposalId);
-        }
+        // if (
+        //     proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC >
+        //     block.timestamp
+        // ) {
+        //     revert DisputeCooldownNotPassed(proposalId);
+        // }
 
         bool isTimeOut = block.timestamp > proposal.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
 
@@ -1161,8 +1157,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             }
             if (arbitrableConfig.defaultRuling == 1) {
                 proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
-            }
-            if (arbitrableConfig.defaultRuling == 2) {
+            } else if (arbitrableConfig.defaultRuling == 2) {
                 proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
             }
             collateralVault.withdrawCollateral(
@@ -1196,7 +1191,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         }
 
         disputeCount--;
-        proposal.lastDisputeCompletion = block.timestamp;
+        // proposal.lastDisputeCompletion = block.timestamp;
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
     }
 
