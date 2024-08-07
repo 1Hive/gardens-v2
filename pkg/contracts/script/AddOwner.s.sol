@@ -15,7 +15,7 @@ import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
-import {Safe} from "safe-contracts/contracts/Safe.sol";
+import {Safe} from "safe-smart-account/contracts/Safe.sol";
 
 contract AddOwner is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;

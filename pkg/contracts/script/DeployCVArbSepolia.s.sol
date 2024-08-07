@@ -18,7 +18,7 @@ import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
-import {Safe} from "safe-contracts/contracts/Safe.sol";
+import {Safe} from "safe-smart-account/contracts/Safe.sol";
 
 import {TERC20} from "../test/shared/TERC20.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";

@@ -20,8 +20,8 @@ import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
-import {Safe} from "safe-contracts/contracts/Safe.sol";
-import {SafeProxyFactory} from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+import {Safe} from "safe-smart-account/contracts/Safe.sol";
+import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
