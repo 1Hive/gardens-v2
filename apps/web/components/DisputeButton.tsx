@@ -6,8 +6,8 @@ import {
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
-  getProposalDisputeDocument,
-  getProposalDisputeQuery,
+  getProposalDisputesDocument,
+  getProposalDisputesQuery,
   getStrategyArbitrationConfigDocument,
   getStrategyArbitrationConfigQuery,
   Maybe,
@@ -17,7 +17,8 @@ import { Countdown } from "./Countdown";
 import { DateComponent } from "./DateComponent";
 import { InfoBox } from "./InfoBox";
 import { InfoIcon } from "./InfoIcon";
-import { ProposalTimeline } from "./ProposalTimeline";
+import { LoadingSpinner } from "./LoadingSpinner";
+// import { ProposalTimeline } from "./ProposalTimeline";
 import { WalletBalance } from "./WalletBalance";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -86,13 +87,13 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   //   timestamp: disputeTimestamp,
   //   ruledAt: disputeTimestamp + 259200,
   // };
-  proposalData.proposalStatus = 2;
+  // proposalData.proposalStatus = 2;
   // End of TODO
 
-  const { data: disputes } = useSubgraphQuery<getProposalDisputeQuery>({
-    query: getProposalDisputeDocument,
+  const { data: disputes } = useSubgraphQuery<getProposalDisputesQuery>({
+    query: getProposalDisputesDocument,
     variables: {
-      proposalId: proposalData!.id,
+      proposalId: proposalData?.id,
     },
     changeScope: {
       topic: "proposal",
@@ -110,9 +111,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         strategyId: proposalData!.strategy.id,
       },
       changeScope: {
-        topic: "proposal",
-        id: proposalData?.proposalNumber,
-        containerId: proposalData?.strategy.id,
+        topic: "pool",
+        id: proposalData?.strategy.id,
         type: "update",
       },
       enabled: !!proposalData,
@@ -121,9 +121,9 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const lastDispute = disputes?.proposalDisputes[0];
 
   const { data: ensName } = useEnsName({
-    address: lastDispute!.challenger as Address,
+    address: lastDispute?.challenger as Address,
     chainId: mainnet.id,
-    enabled: !!lastDispute!.challenger,
+    enabled: !!lastDispute?.challenger,
   });
 
   const { data: avatarUrl } = useEnsAvatar({
@@ -137,31 +137,14 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     enabled: !lastDispute?.metadata,
   });
 
-  const { data: dispute } = useSubgraphQuery<getStrategyArbitrationConfigQuery>(
-    {
-      query: getStrategyArbitrationConfigDocument,
-      variables: {
-        proposalId: proposalData?.proposalNumber,
-        poolId: proposalData?.strategy.id,
-      },
-      changeScope: {
-        topic: "proposal",
-        id: proposalData?.proposalNumber,
-        containerId: proposalData?.strategy.id,
-        type: "update",
-      },
-      enabled: !!proposalData,
-    },
-  );
-
-  const collateral = 0.002;
-  const disputeFee = 0.001;
+  const config = arbitrationConfig?.cvstrategy?.config;
 
   const isDisputed =
-    proposalData && ProposalStatus[proposalData.proposalStatus] === "disputed";
+    proposalData &&
+    ProposalStatus[proposalData.proposalStatus] === "disputed" &&
+    lastDispute;
   const isTimeout =
-    lastDispute &&
-    lastDispute.timestamp + arbitrationConfig?.cvstrategy?.maxDelaySec < Date.now() / 1000;
+    lastDispute && config && lastDispute.createdAt + config < Date.now() / 1000;
 
   const { write } = useContractWriteWithConfirmations({
     contractName: "CVStrategy",
@@ -191,7 +174,10 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   }
 
   async function onCopyChallenger() {
-    navigator.clipboard.writeText(dispute.challenger);
+    if (!lastDispute) {
+      return;
+    }
+    navigator.clipboard.writeText(lastDispute.challenger);
     setCopied(true);
     await delayAsync(1000);
     setCopied(false);
@@ -203,10 +189,12 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         <div className="p-4 border rounded-lg">
           <div className="chat chat-start">
             <div className="chat-image">
-              {dispute?.challenger && (
+              {lastDispute?.challenger && (
                 <div
                   className={`tooltip ${copied ? "" : "[&:before]:max-w-none [&:before]:ml-36"}`}
-                  data-tip={copied ? "Copied" : `Copy: ${dispute.challenger}`}
+                  data-tip={
+                    copied ? "Copied" : `Copy: ${lastDispute.challenger}`
+                  }
                 >
                   <button
                     onClick={() => onCopyChallenger()}
@@ -218,7 +206,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                       className={"!rounded-full"}
                       src={
                         avatarUrl ? avatarUrl : (
-                          blo(dispute.challenger as Address)
+                          blo(lastDispute.challenger as Address)
                         )
                       }
                     />
@@ -231,7 +219,9 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             </div>
           </div>
         </div>
-        <ProposalTimeline proposalData={proposalData} dispute={dispute} />
+        {/* {lastDispute && (
+          <ProposalTimeline proposalData={proposalData} dispute={lastDispute} />
+        )} */}
       </div>
     : <>
         <textarea
@@ -254,7 +244,7 @@ any dispute before it can be closed and collateral restored."
     <div className="modal-action w-full">
       {isDisputed ?
         <div className="w-full flex justify-end gap-2">
-          {DisputeStatus[dispute.status] === "waiting" && (
+          {DisputeStatus[lastDispute.status] === "waiting" && (
             <>
               <Button color="secondary" btnStyle="outline">
                 <InfoIcon

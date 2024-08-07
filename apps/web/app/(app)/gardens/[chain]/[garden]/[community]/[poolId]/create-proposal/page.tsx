@@ -20,7 +20,9 @@ export default function Page({
   });
   const strategyObj = data?.cvstrategies?.[0];
 
-  const { metadata } = useProposalMetadataIpfsFetch(strategyObj?.metadata);
+  const { metadata } = useProposalMetadataIpfsFetch({
+    hash: strategyObj?.metadata,
+  });
 
   if (!strategyObj) {
     return <div>{`Pool ${poolId} not found`}</div>;

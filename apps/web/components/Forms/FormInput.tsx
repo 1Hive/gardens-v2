@@ -50,7 +50,7 @@ export function FormInput({
   return (
     <div className="flex flex-col">
       {label && (
-        <label htmlFor={registerKey} className="label cursor-pointer">
+        <label htmlFor={registerKey} className="label cursor-pointer ">
           {tooltip ?
             <InfoIcon tooltip={tooltip}>{label}</InfoIcon>
           : label}
