@@ -392,7 +392,8 @@ export type CVStrategyConfig = {
     maxAmount?: Maybe<Scalars['BigInt']['output']>;
     arbitrator: Scalars['String']['output'];
     tribunalSafe: Scalars['String']['output'];
-    collateralAmount: Scalars['BigInt']['output'];
+    challengerCollateralAmount: Scalars['BigInt']['output'];
+    submitterCollateralAmount: Scalars['BigInt']['output'];
     defaultRuling: Scalars['BigInt']['output'];
     defaultRulingTimeout: Scalars['BigInt']['output'];
 };
@@ -510,14 +511,22 @@ export type CVStrategyConfig_filter = {
     tribunalSafe_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     tribunalSafe_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     tribunalSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-    collateralAmount?: InputMaybe<Scalars['BigInt']['input']>;
-    collateralAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
-    collateralAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
-    collateralAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
-    collateralAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
-    collateralAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
-    collateralAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-    collateralAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    challengerCollateralAmount?: InputMaybe<Scalars['BigInt']['input']>;
+    challengerCollateralAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
+    challengerCollateralAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    challengerCollateralAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    challengerCollateralAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    challengerCollateralAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    challengerCollateralAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    challengerCollateralAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    submitterCollateralAmount?: InputMaybe<Scalars['BigInt']['input']>;
+    submitterCollateralAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
+    submitterCollateralAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    submitterCollateralAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    submitterCollateralAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    submitterCollateralAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    submitterCollateralAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    submitterCollateralAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     defaultRuling?: InputMaybe<Scalars['BigInt']['input']>;
     defaultRuling_not?: InputMaybe<Scalars['BigInt']['input']>;
     defaultRuling_gt?: InputMaybe<Scalars['BigInt']['input']>;
@@ -539,7 +548,7 @@ export type CVStrategyConfig_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
 };
-export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'arbitrator' | 'tribunalSafe' | 'collateralAmount' | 'defaultRuling' | 'defaultRulingTimeout';
+export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout';
 export type CVStrategy_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
     id_not?: InputMaybe<Scalars['ID']['input']>;
@@ -660,7 +669,7 @@ export type CVStrategy_filter = {
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'config__arbitrator' | 'config__tribunalSafe' | 'config__collateralAmount' | 'config__defaultRuling' | 'config__defaultRulingTimeout' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'config__arbitrator' | 'config__tribunalSafe' | 'config__challengerCollateralAmount' | 'config__submitterCollateralAmount' | 'config__defaultRuling' | 'config__defaultRulingTimeout' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled';
 export type Member = {
     id: Scalars['ID']['output'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -1090,13 +1099,15 @@ export type PassportUser_filter = {
 export type PassportUser_orderBy = 'id' | 'passportScorer' | 'passportScorer__id' | 'userAddress' | 'score' | 'lastUpdated';
 export type ProposalDispute = {
     id: Scalars['ID']['output'];
+    createdAt: Scalars['BigInt']['output'];
     disputeId: Scalars['BigInt']['output'];
     proposal: CVProposal;
     status: Scalars['BigInt']['output'];
     challenger: Scalars['String']['output'];
     context: Scalars['String']['output'];
     metadata: ProposalDisputeMetadata;
-    timestamp: Scalars['BigInt']['output'];
+    ruledAt?: Maybe<Scalars['BigInt']['output']>;
+    rulingOutcome?: Maybe<Scalars['BigInt']['output']>;
 };
 export type ProposalDisputeMetadata = {
     id: Scalars['ID']['output'];
@@ -1146,6 +1157,14 @@ export type ProposalDispute_filter = {
     id_lte?: InputMaybe<Scalars['ID']['input']>;
     id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
     id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    createdAt?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    createdAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     disputeId?: InputMaybe<Scalars['BigInt']['input']>;
     disputeId_not?: InputMaybe<Scalars['BigInt']['input']>;
     disputeId_gt?: InputMaybe<Scalars['BigInt']['input']>;
@@ -1244,20 +1263,28 @@ export type ProposalDispute_filter = {
     metadata_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     metadata_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     metadata_?: InputMaybe<ProposalDisputeMetadata_filter>;
-    timestamp?: InputMaybe<Scalars['BigInt']['input']>;
-    timestamp_not?: InputMaybe<Scalars['BigInt']['input']>;
-    timestamp_gt?: InputMaybe<Scalars['BigInt']['input']>;
-    timestamp_lt?: InputMaybe<Scalars['BigInt']['input']>;
-    timestamp_gte?: InputMaybe<Scalars['BigInt']['input']>;
-    timestamp_lte?: InputMaybe<Scalars['BigInt']['input']>;
-    timestamp_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-    timestamp_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    ruledAt?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    ruledAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    rulingOutcome?: InputMaybe<Scalars['BigInt']['input']>;
+    rulingOutcome_not?: InputMaybe<Scalars['BigInt']['input']>;
+    rulingOutcome_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    rulingOutcome_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    rulingOutcome_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    rulingOutcome_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    rulingOutcome_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    rulingOutcome_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<ProposalDispute_filter>>>;
     or?: InputMaybe<Array<InputMaybe<ProposalDispute_filter>>>;
 };
-export type ProposalDispute_orderBy = 'id' | 'disputeId' | 'proposal' | 'proposal__id' | 'proposal__proposalNumber' | 'proposal__metadata' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__threshold' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'status' | 'challenger' | 'context' | 'metadata' | 'metadata__id' | 'metadata__reason' | 'timestamp';
+export type ProposalDispute_orderBy = 'id' | 'createdAt' | 'disputeId' | 'proposal' | 'proposal__id' | 'proposal__proposalNumber' | 'proposal__metadata' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__threshold' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'status' | 'challenger' | 'context' | 'metadata' | 'metadata__id' | 'metadata__reason' | 'ruledAt' | 'rulingOutcome';
 export type Query = {
     cvstrategy?: Maybe<CVStrategy>;
     cvstrategies: Array<CVStrategy>;
@@ -2601,7 +2628,8 @@ export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType exte
     maxAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     arbitrator?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     tribunalSafe?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-    collateralAmount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    challengerCollateralAmount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    submitterCollateralAmount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     defaultRuling?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     defaultRulingTimeout?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -2657,13 +2685,15 @@ export type PassportUserResolvers<ContextType = MeshContext, ParentType extends 
 }>;
 export type ProposalDisputeResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['ProposalDispute'] = ResolversParentTypes['ProposalDispute']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    createdAt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     disputeId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     proposal?: Resolver<ResolversTypes['CVProposal'], ParentType, ContextType>;
     status?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     challenger?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     context?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     metadata?: Resolver<ResolversTypes['ProposalDisputeMetadata'], ParentType, ContextType>;
-    timestamp?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    ruledAt?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    rulingOutcome?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type ProposalDisputeMetadataResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['ProposalDisputeMetadata'] = ResolversParentTypes['ProposalDisputeMetadata']> = ResolversObject<{
@@ -2912,9 +2942,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getPassportUser(variables: Exact<{
         userId: string;
     }>, options?: TOperationContext): Promise<getPassportUserQuery>;
-    getProposalDispute(variables: Exact<{
+    getProposalDisputes(variables: Exact<{
         proposalId: string;
-    }>, options?: TOperationContext): Promise<getProposalDisputeQuery>;
+    }>, options?: TOperationContext): Promise<getProposalDisputesQuery>;
     getStrategyArbitrationConfig(variables: Exact<{
         strategyId: string;
     }>, options?: TOperationContext): Promise<getStrategyArbitrationConfigQuery>;
@@ -3139,11 +3169,11 @@ export type getPassportUserQueryVariables = Exact<{
 export type getPassportUserQuery = {
     passportUser?: Maybe<Pick<PassportUser, 'id' | 'userAddress' | 'score' | 'lastUpdated'>>;
 };
-export type getProposalDisputeQueryVariables = Exact<{
+export type getProposalDisputesQueryVariables = Exact<{
     proposalId: Scalars['ID']['input'];
 }>;
-export type getProposalDisputeQuery = {
-    proposalDisputes: Array<(Pick<ProposalDispute, 'id' | 'disputeId' | 'status' | 'challenger' | 'context' | 'timestamp'> & {
+export type getProposalDisputesQuery = {
+    proposalDisputes: Array<(Pick<ProposalDispute, 'id' | 'disputeId' | 'status' | 'challenger' | 'context' | 'createdAt' | 'ruledAt' | 'rulingOutcome'> & {
         metadata: Pick<ProposalDisputeMetadata, 'reason'>;
     })>;
 };
@@ -3152,7 +3182,7 @@ export type getStrategyArbitrationConfigQueryVariables = Exact<{
 }>;
 export type getStrategyArbitrationConfigQuery = {
     cvstrategy?: Maybe<(Pick<CVStrategy, 'id'> & {
-        config: Pick<CVStrategyConfig, 'id' | 'arbitrator' | 'tribunalSafe' | 'collateralAmount'>;
+        config: Pick<CVStrategyConfig, 'id' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout'>;
     })>;
 };
 export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact<{
@@ -3220,7 +3250,7 @@ export declare const getPassportStrategyDocument: DocumentNode<getPassportStrate
 export declare const getPassportUserDocument: DocumentNode<getPassportUserQuery, Exact<{
     userId: Scalars['ID']['input'];
 }>>;
-export declare const getProposalDisputeDocument: DocumentNode<getProposalDisputeQuery, Exact<{
+export declare const getProposalDisputesDocument: DocumentNode<getProposalDisputesQuery, Exact<{
     proposalId: Scalars['ID']['input'];
 }>>;
 export declare const getStrategyArbitrationConfigDocument: DocumentNode<getStrategyArbitrationConfigQuery, Exact<{
@@ -3248,7 +3278,7 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getPassportScorer(variables: getPassportScorerQueryVariables, options?: C): Promise<getPassportScorerQuery>;
     getPassportStrategy(variables: getPassportStrategyQueryVariables, options?: C): Promise<getPassportStrategyQuery>;
     getPassportUser(variables: getPassportUserQueryVariables, options?: C): Promise<getPassportUserQuery>;
-    getProposalDispute(variables: getProposalDisputeQueryVariables, options?: C): Promise<getProposalDisputeQuery>;
+    getProposalDisputes(variables: getProposalDisputesQueryVariables, options?: C): Promise<getProposalDisputesQuery>;
     getStrategyArbitrationConfig(variables: getStrategyArbitrationConfigQueryVariables, options?: C): Promise<getStrategyArbitrationConfigQuery>;
 };
 export type Sdk = ReturnType<typeof getSdk>;

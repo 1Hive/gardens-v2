@@ -18,7 +18,8 @@ import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {SafeArbitrator, IArbitrator} from "../src/SafeArbitrator.sol";
-import {Safe} from "safe-contracts/contracts/Safe.sol";
+import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
+// import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 import {TERC20} from "../test/shared/TERC20.sol";
 
 contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
@@ -68,11 +69,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
 
         RegistryCommunityV0_0.InitializeParams memory params;
 
-        ERC1967Proxy cvProxy = new ERC1967Proxy(
-            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
-        );
-
-        params._strategyTemplate = address(CVStrategyV0_0(payable(cvProxy)));
+        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -93,20 +90,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
-          address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
-        );
-
-        IArbitrator safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
-
-        address collateralVaultTemplate = address(new CollateralVault());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
-            IArbitrator(address(safeArbitrator)),
-            payable(address(_councilSafe())),
-            3 ether,
-            2 ether,
-            1,
-            300,
-            collateralVaultTemplate
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
         );
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
@@ -114,7 +98,14 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Unlimited,
             pointConfig,
-            arbitrableConfig
+            StrategyStruct.ArbitrableConfig(
+                IArbitrator(payable(address(arbitratorProxy))),
+                payable(address(_councilSafe())),
+                3 ether,
+                2 ether,
+                1,
+                300
+            )
         );
 
         //Capped point system
@@ -125,9 +116,10 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
         // paramsCV.pointConfig.tokensPerPoint = 1 ether;
         // paramsCV.pointConfig.pointsPerTokenStaked = 5 ether ;
 
-        paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
-        paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
-        paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
+        // paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
+        // paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
         // params.minThresholdStakePercentage = 0.2 ether; // 20%
         // paramsCV.registryCommunity = address(registryCommunity);
         // paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
@@ -145,10 +137,11 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
         );
 
-        strategy1.setDecay(_etherToFloat(0.9965402 ether));
-        // alpha = decay
-        strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
-        strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // strategy1.setDecay(_etherToFloat(0.9965402 ether));
+        // // alpha = decay
+        // strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
+        // strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
 
         console2.log("balance of pool admin:        %s", token.balanceOf(pool_admin()));
         token.mint(address(pool_admin()), 10_000_000_000 ether);

@@ -61,8 +61,7 @@ contract TERC20 is ERC20 {
     }
 
     function _brutalized(address a) internal view returns (address result) {
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             result := or(a, shl(160, gas()))
         }
     }

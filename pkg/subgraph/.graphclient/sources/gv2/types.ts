@@ -388,7 +388,8 @@ export type CVStrategyConfig = {
   maxAmount?: Maybe<Scalars['BigInt']['output']>;
   arbitrator: Scalars['String']['output'];
   tribunalSafe: Scalars['String']['output'];
-  collateralAmount: Scalars['BigInt']['output'];
+  challengerCollateralAmount: Scalars['BigInt']['output'];
+  submitterCollateralAmount: Scalars['BigInt']['output'];
   defaultRuling: Scalars['BigInt']['output'];
   defaultRulingTimeout: Scalars['BigInt']['output'];
 };
@@ -507,14 +508,22 @@ export type CVStrategyConfig_filter = {
   tribunalSafe_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   tribunalSafe_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   tribunalSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  collateralAmount?: InputMaybe<Scalars['BigInt']['input']>;
-  collateralAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
-  collateralAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
-  collateralAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
-  collateralAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
-  collateralAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
-  collateralAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  collateralAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  challengerCollateralAmount?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  challengerCollateralAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  submitterCollateralAmount?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  submitterCollateralAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   defaultRuling?: InputMaybe<Scalars['BigInt']['input']>;
   defaultRuling_not?: InputMaybe<Scalars['BigInt']['input']>;
   defaultRuling_gt?: InputMaybe<Scalars['BigInt']['input']>;
@@ -557,7 +566,8 @@ export type CVStrategyConfig_orderBy =
   | 'maxAmount'
   | 'arbitrator'
   | 'tribunalSafe'
-  | 'collateralAmount'
+  | 'challengerCollateralAmount'
+  | 'submitterCollateralAmount'
   | 'defaultRuling'
   | 'defaultRulingTimeout';
 
@@ -714,7 +724,8 @@ export type CVStrategy_orderBy =
   | 'config__maxAmount'
   | 'config__arbitrator'
   | 'config__tribunalSafe'
-  | 'config__collateralAmount'
+  | 'config__challengerCollateralAmount'
+  | 'config__submitterCollateralAmount'
   | 'config__defaultRuling'
   | 'config__defaultRulingTimeout'
   | 'proposals'
@@ -1241,13 +1252,15 @@ export type PassportUser_orderBy =
 
 export type ProposalDispute = {
   id: Scalars['ID']['output'];
+  createdAt: Scalars['BigInt']['output'];
   disputeId: Scalars['BigInt']['output'];
   proposal: CVProposal;
   status: Scalars['BigInt']['output'];
   challenger: Scalars['String']['output'];
   context: Scalars['String']['output'];
   metadata: ProposalDisputeMetadata;
-  timestamp: Scalars['BigInt']['output'];
+  ruledAt?: Maybe<Scalars['BigInt']['output']>;
+  rulingOutcome?: Maybe<Scalars['BigInt']['output']>;
 };
 
 export type ProposalDisputeMetadata = {
@@ -1303,6 +1316,14 @@ export type ProposalDispute_filter = {
   id_lte?: InputMaybe<Scalars['ID']['input']>;
   id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
   id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  createdAt?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  createdAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  createdAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   disputeId?: InputMaybe<Scalars['BigInt']['input']>;
   disputeId_not?: InputMaybe<Scalars['BigInt']['input']>;
   disputeId_gt?: InputMaybe<Scalars['BigInt']['input']>;
@@ -1401,14 +1422,22 @@ export type ProposalDispute_filter = {
   metadata_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   metadata_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   metadata_?: InputMaybe<ProposalDisputeMetadata_filter>;
-  timestamp?: InputMaybe<Scalars['BigInt']['input']>;
-  timestamp_not?: InputMaybe<Scalars['BigInt']['input']>;
-  timestamp_gt?: InputMaybe<Scalars['BigInt']['input']>;
-  timestamp_lt?: InputMaybe<Scalars['BigInt']['input']>;
-  timestamp_gte?: InputMaybe<Scalars['BigInt']['input']>;
-  timestamp_lte?: InputMaybe<Scalars['BigInt']['input']>;
-  timestamp_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  timestamp_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  ruledAt?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  ruledAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  rulingOutcome?: InputMaybe<Scalars['BigInt']['input']>;
+  rulingOutcome_not?: InputMaybe<Scalars['BigInt']['input']>;
+  rulingOutcome_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  rulingOutcome_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  rulingOutcome_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  rulingOutcome_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  rulingOutcome_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  rulingOutcome_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<ProposalDispute_filter>>>;
@@ -1417,6 +1446,7 @@ export type ProposalDispute_filter = {
 
 export type ProposalDispute_orderBy =
   | 'id'
+  | 'createdAt'
   | 'disputeId'
   | 'proposal'
   | 'proposal__id'
@@ -1441,7 +1471,8 @@ export type ProposalDispute_orderBy =
   | 'metadata'
   | 'metadata__id'
   | 'metadata__reason'
-  | 'timestamp';
+  | 'ruledAt'
+  | 'rulingOutcome';
 
 export type Query = {
   cvstrategy?: Maybe<CVStrategy>;

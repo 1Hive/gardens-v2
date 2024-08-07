@@ -13,16 +13,15 @@ import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {CVStrategyHelpersV0_0, CVStrategyV0_0, StrategyStruct} from "../test/CVStrategyHelpersV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
-import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
+import {SafeArbitrator, IArbitrator} from "../src/SafeArbitrator.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
-import {Safe} from "safe-contracts/contracts/Safe.sol";
-import {SafeProxyFactory} from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
+// import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
@@ -153,19 +152,14 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
         RegistryCommunityV0_0.InitializeParams memory params;
 
-        metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"});
-        params._metadata = metadata; // convenant ipfs
+        params._metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"}); // convenant ipfs
         params.covenantIpfsHash = "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN";
 
         // params._communityName = "Alpha Seedling";
         params._communityName = "Alpha Centaurians";
         params._allo = address(allo);
 
-        ERC1967Proxy strategyProxy = new ERC1967Proxy(
-            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
-        );
-        params._strategyTemplate = address(CVStrategyV0_0(payable(strategyProxy)));
-
+        params._strategyTemplate = address(new CVStrategyV0_0());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
         params._communityFee = 0;
@@ -178,21 +172,20 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         StrategyStruct.PointSystemConfig memory pointConfig;
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
-        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
-          address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
-        );
-
-        IArbitrator safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
-
-        address collateralVaultTemplate = address(new CollateralVault());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
-            IArbitrator(address(safeArbitrator)),
+        StrategyStruct.ArbitrableConfig memory arbitrationConfig = StrategyStruct.ArbitrableConfig(
+            IArbitrator(
+                address(
+                    new ERC1967Proxy(
+                        address(new SafeArbitrator()),
+                        abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+                    )
+                )
+            ),
             payable(address(_councilSafe())),
             3 ether,
             2 ether,
             1,
-            300,
-            collateralVaultTemplate
+            300
         );
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
@@ -200,25 +193,29 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Fixed,
             pointConfig,
-            arbitrableConfig
+            arbitrationConfig
         );
 
         // paramsCV.decay = _etherToFloat(0.9965402 ether); // alpha = decay
         // paramsCV.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
         // paramsCV.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
 
-        paramsCV.decay = _etherToFloat(0.9999903 ether); // alpha = decay
-        paramsCV.maxRatio = _etherToFloat(0.3219782 ether); // beta = maxRatio
-        paramsCV.weight = _etherToFloat(0.010367 ether); // RHO = p  = weight
+        // Goss: Commented because already set in getParams
+        // paramsCV.decay = _etherToFloat(0.9999903 ether); // alpha = decay
+        // paramsCV.maxRatio = _etherToFloat(0.3219782 ether); // beta = maxRatio
+        // paramsCV.weight = _etherToFloat(0.010367 ether); // RHO = p  = weight
 
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(
             address(token), paramsCV, Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
         );
 
-        ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
-            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(
+            payable(
+                new ERC1967Proxy(
+                    address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+                )
+            )
         );
-        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(strategy1Proxy));
 
         // strategy1.setDecay(_etherToFloat(0.9965402 ether));
         // strategy1.setDecay(_etherToFloat(0.8705505 ether)); // alpha = decay
@@ -235,14 +232,20 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
         );
 
-        ERC1967Proxy strategy2Proxy = new ERC1967Proxy(
-            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(
+            payable(
+                new ERC1967Proxy(
+                    address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+                )
+            )
         );
-        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(strategy2Proxy));
 
-        strategy2.setDecay(_etherToFloat(0.9999903 ether)); // alpha = decay
-        strategy2.setMaxRatio(_etherToFloat(0.3219782 ether)); // beta = maxRatio
-        strategy2.setWeight(_etherToFloat(0.010367 ether)); // RHO = p  = weight
+        StrategyStruct.CVParams memory poolParams;
+        poolParams.decay = _etherToFloat(0.9999903 ether); // alpha = decay
+        poolParams.maxRatio = _etherToFloat(0.3219782 ether); // beta = maxRatio
+        poolParams.weight = _etherToFloat(0.010367 ether); // RHO = p  = weight
+
+        strategy2.setPoolParams(arbitrationConfig, poolParams);
 
         safeHelper(
             Safe(payable(COUNCIL_SAFE)),
@@ -275,68 +278,84 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         token.approve(address(allo), type(uint256).max);
         allo.fundPool(poolId, 10_000 ether);
 
-        StrategyStruct.CreateProposal memory proposal = StrategyStruct.CreateProposal(
+        allo.registerRecipient(
             poolId,
-            BENEFICIARY,
-            500 ether,
-            address(token),
-            Metadata({protocol: 1, pointer: "QmVi1G1hQX4x8pb4W6KRroxsJjyP1gTkoqkGuyqoiGBPhS"})
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolId,
+                    BENEFICIARY,
+                    500 ether,
+                    address(token),
+                    Metadata({protocol: 1, pointer: "QmVi1G1hQX4x8pb4W6KRroxsJjyP1gTkoqkGuyqoiGBPhS"})
+                )
+            )
         );
-        bytes memory data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(
+        allo.registerRecipient(
             poolId,
-            BENEFICIARY,
-            1500 ether,
-            address(token),
-            Metadata({protocol: 1, pointer: "QmQfaGooGAWUHuHbYWzDp1ZHNJpreJP7oBiLjbKvxGwGuG"})
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolId,
+                    BENEFICIARY,
+                    1500 ether,
+                    address(token),
+                    Metadata({protocol: 1, pointer: "QmQfaGooGAWUHuHbYWzDp1ZHNJpreJP7oBiLjbKvxGwGuG"})
+                )
+            )
         );
-        data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(
+        allo.registerRecipient(
             poolId,
-            BENEFICIARY,
-            1500 ether,
-            address(token),
-            Metadata({protocol: 1, pointer: "QmdGXx4Ff2W1eMZ8HiUg1GPSA4VBEtfTMpkustPNU5YKxp"})
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolId,
+                    BENEFICIARY,
+                    1500 ether,
+                    address(token),
+                    Metadata({protocol: 1, pointer: "QmdGXx4Ff2W1eMZ8HiUg1GPSA4VBEtfTMpkustPNU5YKxp"})
+                )
+            )
         );
-        data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
 
         // Strategy with Signaling
-        StrategyStruct.CreateProposal memory proposal2 = StrategyStruct.CreateProposal(
+        allo.registerRecipient(
             poolIdSignaling,
-            address(0),
-            0,
-            address(0),
-            Metadata({protocol: 1, pointer: "QmSLYbgSsapjdp1VGj3LeQn1hp5jBs4JcWS1zQRRWLLkid"})
-        );
-        bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
-
-        proposal2 = StrategyStruct.CreateProposal(
-            poolIdSignaling,
-            address(0),
-            0,
-            address(0),
-            Metadata({protocol: 1, pointer: "QmXa5sb2uLiux8ewWt9pcCFdZERisSfY1FiUjEykYnySwz"})
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolIdSignaling,
+                    address(0),
+                    0,
+                    address(0),
+                    Metadata({protocol: 1, pointer: "QmSLYbgSsapjdp1VGj3LeQn1hp5jBs4JcWS1zQRRWLLkid"})
+                )
+            )
         );
 
-        data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
-
-        proposal2 = StrategyStruct.CreateProposal(
+        allo.registerRecipient(
             poolIdSignaling,
-            address(0),
-            0,
-            address(0),
-            Metadata({protocol: 1, pointer: "QmTafMKt491NJp5GdcPZpg5SQ1gTsYS7vidCutWcW3KFVg"})
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolIdSignaling,
+                    address(0),
+                    0,
+                    address(0),
+                    Metadata({protocol: 1, pointer: "QmXa5sb2uLiux8ewWt9pcCFdZERisSfY1FiUjEykYnySwz"})
+                )
+            )
         );
 
-        data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
+        allo.registerRecipient(
+            poolIdSignaling,
+            abi.encode(
+                StrategyStruct.CreateProposal(
+                    poolIdSignaling,
+                    address(0),
+                    0,
+                    address(0),
+                    Metadata({protocol: 1, pointer: "QmTafMKt491NJp5GdcPZpg5SQ1gTsYS7vidCutWcW3KFVg"})
+                )
+            )
+        );
 
         safeHelper(
             Safe(payable(COUNCIL_SAFE)),

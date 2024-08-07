@@ -15,7 +15,7 @@ import { fetchIpfs } from "@/utils/ipfsUtils";
 export const useIpfsFetch = <TResult>({
   hash,
   modifier,
-  enabled,
+  enabled = true,
 }: {
   hash: Maybe<string>;
   modifier?: (rawResult: TResult) => TResult | Promise<TResult>;
@@ -26,11 +26,11 @@ export const useIpfsFetch = <TResult>({
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!hash || !enabled) {
+      return;
+    }
+    setFetching(true);
     (async () => {
-      if (!hash || !enabled) {
-        return;
-      }
-      setFetching(true);
       try {
         let resp = await fetchIpfs<TResult>(hash);
         if (modifier) {

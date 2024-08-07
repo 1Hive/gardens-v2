@@ -10,7 +10,7 @@
       entities:
         - RegistryCommunity
       abis:
-        - name: RegistryCommunity
+        - name: RegistryCommunityV0_0
           file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))

@@ -65,9 +65,9 @@ export default function Page({
     }
   }, [error]);
 
-  const { metadata: ipfsResult } = useProposalMetadataIpfsFetch(
-    data?.cvstrategies?.[0]?.metadata,
-  );
+  const { metadata: ipfsResult } = useProposalMetadataIpfsFetch({
+    hash: data?.cvstrategies?.[0]?.metadata,
+  });
 
   const strategyObj = data?.cvstrategies?.[0];
 

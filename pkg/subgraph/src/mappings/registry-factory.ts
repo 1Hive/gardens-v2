@@ -11,7 +11,7 @@ import {
   CommunityCreated,
   CommunityValiditySet,
   ProtocolFeeSet,
-} from "../../generated/RegistryFactory/RegistryFactory";
+} from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
 // import {RegistryCommunity}from "../../generated/RegistryCommunity/RegistryCommunity";
 
 export const CTX_FACTORY_ADDRESS = "factoryAddress";

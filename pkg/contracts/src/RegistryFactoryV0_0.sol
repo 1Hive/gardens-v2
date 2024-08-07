@@ -7,6 +7,7 @@ import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/a
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 
 struct CommunityInfo {
     uint256 fee;
@@ -19,6 +20,7 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
 
     mapping(address => CommunityInfo) communityToInfo;
     address public gardensFeeReceiver;
+    address public registryCommunityTemplate;
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -43,11 +45,12 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
-    function initialize(address _gardensFeeReceiver) public virtual initializer {
+    function initialize(address _gardensFeeReceiver, address _registryCommunityTemplate) public virtual initializer {
         __Ownable_init();
         nonce = 0;
         _revertZeroAddress(_gardensFeeReceiver);
         gardensFeeReceiver = _gardensFeeReceiver;
+        registryCommunityTemplate = _registryCommunityTemplate;
         emit FeeReceiverSet(_gardensFeeReceiver);
         // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
     }
@@ -61,7 +64,7 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
         params._registryFactory = address(this);
 
         ERC1967Proxy proxy = new ERC1967Proxy(
-            address(new RegistryCommunityV0_0()),
+            address(registryCommunityTemplate),
             abi.encodeWithSelector(RegistryCommunityV0_0.initialize.selector, params)
         );
 

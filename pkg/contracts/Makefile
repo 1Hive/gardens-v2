@@ -53,14 +53,13 @@ add-owner: #make add-owner owner=0x1234 safe=0x1234
 	--broadcast \
 	-vvvv
 
-
 deploy: 
 	-forge script script/DeployCV.s.sol:DeployCV \
 	--rpc-url $(RPC_URL_LOCALHOST) \
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
 	--unlocked \
-	--broadcast -vvvv \
-	--force
+	--broadcast -vvvvv \
+	--force 
 	
 
 deploy-pool-testnet: 
@@ -150,9 +149,10 @@ deploy-verify:
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	-vv
+
 fork:
-	anvil --chain-id 1337
-fork0:
+	anvil --host=0.0.0.0 --fork-block-number 17440000 --chain-id 1 --fork-url $(RPC_URL_MAINET)
+fork0:																									 
 	anvil --host=0.0.0.0 --chain-id 1337
 fork0b5:
 	anvil --host=0.0.0.0 --chain-id 1337 -b 5

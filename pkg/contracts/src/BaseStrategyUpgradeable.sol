@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 // Interfaces
-import "allo-v2-contracts/core/interfaces/IStrategy.sol";
+import {IStrategy, IAllo} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 
 // Libraries
 // import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
@@ -11,7 +11,7 @@ import {Errors} from "allo-v2-contracts/core/libraries/Errors.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
-import "forge-std/console.sol";
+// import "forge-std/console.sol";
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 /// @title BaseStrategy Contract

@@ -110,12 +110,18 @@ export function useSubgraphQuery<
     };
   }, [connected]);
 
-  const fetch = () =>
-    urqlClient.query<Data>(query, variables, {
+  const fetch = () => {
+    console.log("fetching data from subgraph", {
+      query,
+      variables,
+      context,
+    });
+    return urqlClient.query<Data>(query, variables, {
       ...context,
       url: config?.subgraphUrl,
       requestPolicy: "network-only",
     });
+  };
 
   const refetchFromOutside = async () => {
     if (!enabled) {

@@ -72,7 +72,7 @@ export default function Page({
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
 
-  const { data: ipfsResult } = useProposalMetadataIpfsFetch(metadata);
+  const { data: ipfsResult } = useProposalMetadataIpfsFetch({ hash: metadata });
 
   const isProposalEnded =
     !!proposalData &&

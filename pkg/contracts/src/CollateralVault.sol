@@ -5,8 +5,9 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ReentrancyGuardUpgradeable} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {console} from "forge-std/console.sol";
+import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
 
-contract CollateralVault is ReentrancyGuard {
+contract CollateralVault is ReentrancyGuard, ICollateralVault {
     mapping(uint256 proposalId => mapping(address user => uint256 amount)) public proposalCollateral;
     address public owner;
 

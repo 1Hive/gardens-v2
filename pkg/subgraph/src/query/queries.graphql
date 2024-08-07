@@ -463,7 +463,7 @@ query getPassportUser($userId: ID!) {
 query getProposalDisputes($proposalId: ID!) {
   proposalDisputes(
     where: { proposal_: { id: $proposalId } }
-    orderBy: timestamp
+    orderBy: createdAt
     orderDirection: desc
   ) {
     id
@@ -474,7 +474,9 @@ query getProposalDisputes($proposalId: ID!) {
     metadata {
       reason
     }
-    timestamp
+    createdAt
+    ruledAt
+    rulingOutcome
   }
 }
 
@@ -485,7 +487,10 @@ query getStrategyArbitrationConfig($strategyId: ID!) {
       id
       arbitrator
       tribunalSafe
-      collateralAmount
+      challengerCollateralAmount
+      submitterCollateralAmount
+      defaultRuling
+      defaultRulingTimeout
     }
   }
 }
