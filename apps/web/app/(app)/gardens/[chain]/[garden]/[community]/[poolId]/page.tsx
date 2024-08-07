@@ -10,6 +10,7 @@ import {
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { parseUnits } from "viem";
 import {
   Allo,
   getAlloQuery,
@@ -29,13 +30,18 @@ import {
   Statistic,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { chainDataMap } from "@/configs/chainServer";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { pointSystems, poolTypes } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
+import {
+  CV_SCALE_PRECISION,
+  formatTokenAmount,
+  MAX_RATIO_CONSTANT,
+} from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -129,28 +135,65 @@ export default function Page({
   const spendingLimitPct =
     (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
+  function calculateDaysFromDecayAndBlockTime(
+    decay: number,
+    blockTime: number,
+  ) {
+    const ln2 = Math.log(1 / 2);
+    const halfLifeInSeconds =
+      (blockTime * ln2) / Math.log(decay / Math.pow(10, 7));
+    const days = halfLifeInSeconds / (24 * 60 * 60);
+
+    if (days <= 1) {
+      const hours = Math.floor(days * 24);
+      const minutes = Math.round((days * 24 * 60) % 60);
+
+      if (hours < 1) {
+        return `${minutes} min.`;
+      } else {
+        return `${hours} hs and ${minutes} min.`;
+      }
+    } else {
+      return `${Math.round(days)} days`;
+    }
+  }
+
+  function calculateMinimumConviction(weight: number, spendingLimit: number) {
+    const weightNum = Number(weight) / CV_SCALE_PRECISION;
+
+    const spendingLimitFraction = spendingLimit / 100;
+    const maxRatioNum = spendingLimitFraction / MAX_RATIO_CONSTANT;
+
+    let minimumConviction = weightNum / maxRatioNum ** 2;
+
+    minimumConviction = minimumConviction * 100;
+
+    return minimumConviction;
+  }
+
+  const blockTime =
+    chainDataMap[chain as unknown as keyof typeof chainDataMap].blockTime;
+
   const poolConfig = [
     {
       label: "Min conviction",
-      value: 0,
-      // TODO: add weight to query and perfom calculation
+      value: `${calculateMinimumConviction(strategyObj?.config.weight, spendingLimitPct * MAX_RATIO_CONSTANT).toFixed(2)}%`,
       info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
     },
     {
-      // TODO: add decay to query and perfom calculation
       label: "Conviction growth",
-      value: 0,
-      info: "Determines how quickly voting weight accumulates on proposals over time.",
+      value: `${calculateDaysFromDecayAndBlockTime(strategyObj?.config.decay, blockTime)}`,
+      info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life",
     },
     {
       label: "Min Threshold",
-      value: `${strategyObj?.config.minThresholdPoints}`,
-      info: "A fixed value that overrides Minimum Conviction when the Pool's activated governance is low.",
+      value: `${formatTokenAmount(strategyObj?.config?.minThresholdPoints, tokenGarden?.decimals)} `,
+      info: `A fixed amount of ${tokenGarden?.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
     },
     {
       label: "Spending limit",
-      // TODO: check number for not approved pools, they have more zeros or another config ?
-      value: `${((spendingLimitPct ?? 0) * MAX_RATIO_CONSTANT).toFixed(2)}%`,
+      // TODO: check number for some pools, they have more zeros or another config ?
+      value: `${(spendingLimitPct * MAX_RATIO_CONSTANT).toFixed(2)}%`,
       info: "Max percentage of the pool funds that can be spent in a single proposal",
     },
   ];
