@@ -594,7 +594,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
-            CollateralVault(collateralVault).withdrawCollateral(
+            collateralVault.withdrawCollateral(
                 proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
             );
 
@@ -1116,9 +1116,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
         uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
 
-        CollateralVault(collateralVault).depositCollateral{value: arbitrableConfig.challengerCollateralAmount}(
-            proposalId, msg.sender
-        );
+        collateralVault.depositCollateral{value: arbitrableConfig.challengerCollateralAmount}(proposalId, msg.sender);
 
         uint256 disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
@@ -1167,10 +1165,10 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             if (arbitrableConfig.defaultRuling == 2) {
                 proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
             }
-            CollateralVault(collateralVault).withdrawCollateral(
+            collateralVault.withdrawCollateral(
                 proposalId, proposal.challenger, arbitrableConfig.challengerCollateralAmount
             );
-            CollateralVault(collateralVault).withdrawCollateral(
+            collateralVault.withdrawCollateral(
                 proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
             );
         } else if (_ruling == 1) {
@@ -1183,7 +1181,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
-            CollateralVault(collateralVault).withdrawCollateral(
+            collateralVault.withdrawCollateral(
                 proposalId, proposal.challenger, arbitrableConfig.challengerCollateralAmount
             );
             collateralVault.withdrawCollateralFor(
@@ -1192,7 +1190,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
                 address(registryCommunity.councilSafe()),
                 arbitrableConfig.submitterCollateralAmount / 2
             );
-            CollateralVault(collateralVault).withdrawCollateralFor(
+            collateralVault.withdrawCollateralFor(
                 proposalId, proposal.submitter, proposal.challenger, arbitrableConfig.submitterCollateralAmount / 2
             );
         }
