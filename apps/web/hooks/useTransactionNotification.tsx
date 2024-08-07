@@ -7,6 +7,7 @@ import { WriteContractResult } from "wagmi/actions";
 import { useChainFromPath } from "./useChainFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TxWaitingForSig, TxError, TxSuccess, TxInProgress } from "@/assets";
+import { chainDataMap } from "@/configs/chainServer";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
 type TransactionData = WriteContractResult | undefined;
@@ -56,7 +57,7 @@ export const useTransactionNotification = ({
 
     const clickToExplorer = () =>
       window.open(
-        `${chain?.blockExplorers?.default.url}/tx/${transactionData?.hash}`,
+        `${chainDataMap[chain?.id ?? 0].explorer}/tx/${transactionData?.hash}`,
         "_blank",
       );
 
@@ -97,7 +98,6 @@ export const useTransactionNotification = ({
             : "Error processing transaction",
           showClickToExplorer: !!transactionData?.hash,
         };
-        console.log("transactionData?.hash", transactionData?.hash);
         toastOptions = {
           type: "error",
           onClick: clickToExplorer,
@@ -185,7 +185,7 @@ export const TransactionStatusNotification = ({
         <div className={showClickToExplorer ? textColor : ""}>{message}</div>
         {chain?.blockExplorers?.default.url && showClickToExplorer && (
           <div className="w-full text-sm italic">
-            Click to see in {chain.blockExplorers.default.name}
+            Click to see in Blockscout
           </div>
         )}
       </div>

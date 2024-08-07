@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
+import {
+  CubeTransparentIcon,
+  PlusIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
@@ -110,7 +114,8 @@ export default function Page({
           <div>
             <div className="mb-2 flex flex-col">
               <div className="flex items-center gap-4">
-                <h2>{tokenGarden?.name}</h2> <TokenLabel chainId={chain} />
+                <h2>{tokenGarden?.name}</h2>{" "}
+                <TokenLabel chainId={chain} classNames="bg-neutral-soft" />
               </div>
               <EthAddress address={tokenGarden?.id as Address} />
             </div>
@@ -128,7 +133,11 @@ export default function Page({
               icon={<CubeTransparentIcon />}
               count={communities?.length ?? 0}
             />
-            <Statistic label="members" count={gardenTotalMembers()} />
+            <Statistic
+              label="members"
+              count={gardenTotalMembers()}
+              icon={<UserGroupIcon />}
+            />
           </div>
         </div>
       </header>

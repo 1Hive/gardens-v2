@@ -56,7 +56,7 @@ const btnStyles: BtnStyles = {
 };
 
 export function Button({
-  onClick,
+  onClick = () => {},
   className: styles,
   disabled = false,
   tooltip = "Connect wallet",
@@ -67,18 +67,24 @@ export function Button({
   icon,
   type = "button",
 }: ButtonProps) {
-  const buttonContent =
-    isLoading ? <span className="loading loading-spinner" /> : children;
-
   const buttonElement = (
     <button
       type={type}
       className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
-      flex cursor-pointer items-center justify-center gap-2 rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
+      relative cursor-pointer items-center justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
-      {icon && icon} {buttonContent}
+      <div
+        className={`flex gap-2 items-center justify-center transition-opacity ${isLoading ? "opacity-0" : "opacity-100"}`}
+      >
+        {icon && icon} {children}
+      </div>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="loading loading-spinner" />
+        </div>
+      )}
     </button>
   );
 
