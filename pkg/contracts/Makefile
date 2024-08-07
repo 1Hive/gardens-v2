@@ -58,7 +58,7 @@ deploy:
 	--rpc-url $(RPC_URL_LOCALHOST) \
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
 	--unlocked \
-	--broadcast -vvvv \
+	--broadcast -vvvvv \
 	--force 
 	
 
@@ -151,7 +151,7 @@ deploy-verify:
 	-vv
 
 fork:
-	anvil --fork-block-number 17440000 --chain-id 1 --fork-url $(RPC_URL_MAINET)
+	anvil --host=0.0.0.0 --fork-block-number 17440000 --chain-id 1 --fork-url $(RPC_URL_MAINET)
 fork0:																									 
 	anvil --host=0.0.0.0 --chain-id 1337
 fork0b5:

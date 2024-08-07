@@ -11,7 +11,7 @@ build_info = true
 extra_output = ["storageLayout"]
 
 optimizer = true
-optimizer-runs = 1
+optimizer-runs = 0
 # prompt_timeout = 120
 fs_permissions = [{ access = "read", path = "./"}]
 # fs_permissions = []
