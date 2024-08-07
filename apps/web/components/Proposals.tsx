@@ -42,6 +42,8 @@ export type ProposalInputItem = {
   value: number;
 };
 
+// export type Strategy = getStrategyByPoolQuery["cvstrategies"][number];
+// export type Proposal = CVStrategy["proposals"][number];
 export type StakesMemberType = NonNullable<isMemberQuery["member"]>["stakes"];
 
 export type ProposalTypeVoter = CVProposal & {
@@ -102,7 +104,7 @@ export function Proposals({
     },
     changeScope: {
       topic: "member",
-      id: communityAddress,
+      id: wallet,
       type: ["add", "delete"],
     },
     enabled: !!wallet,
@@ -114,11 +116,14 @@ export function Proposals({
       variables: {
         member_strategy: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
       },
-      changeScope: {
-        topic: "proposal",
-        id: strategy.id,
-        type: "update",
-      },
+      changeScope: [
+        {
+          topic: "proposal",
+          id: strategy.id,
+          type: "update",
+        },
+        { topic: "member", id: wallet },
+      ],
       enabled: !!wallet,
     });
 
@@ -140,7 +145,7 @@ export function Proposals({
       refetchIsMemberQuery();
       refetchgetMemberStrategyQuery();
     }
-  }, [wallet, refetchIsMemberQuery, refetchgetMemberStrategyQuery]);
+  }, [wallet]);
 
   useEffect(() => {
     const stakesFiltered =

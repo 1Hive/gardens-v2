@@ -11,9 +11,12 @@ import { Dnum } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
+import { useAccount } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
+  isMemberDocument,
+  isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { commImg, groupFlowers } from "@/assets";
 import {
@@ -47,7 +50,9 @@ export default function Page({
   params: { chain: number; garden: string; community: string };
 }) {
   const searchParams = useCollectQueryParams();
+  const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
+
   const {
     data: result,
     error,
@@ -61,22 +66,44 @@ export default function Page({
     ],
   });
 
+  const registryCommunity = result?.registryCommunity;
+  const tokenGarden = result?.tokenGarden;
+
+  let {
+    communityName,
+    members,
+    strategies,
+    communityFee,
+    registerStakeAmount,
+  } = registryCommunity ?? {};
+
+  const { data: isMemberResult } = useSubgraphQuery<isMemberQuery>({
+    query: isMemberDocument,
+    variables: {
+      me: accountAddress?.toLowerCase(),
+      comm: communityAddr.toLowerCase(),
+    },
+    changeScope: [
+      { topic: "community", id: communityAddr },
+      { topic: "member", containerId: communityAddr },
+    ],
+    enabled: accountAddress !== undefined,
+  });
+
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
+
   useEffect(() => {
     if (error) {
       console.error("Error while fetching community data: ", error);
     }
   }, [error]);
 
-  const covenantIpfsHash = result?.registryCommunity?.covenantIpfsHash;
-  let tokenGarden = result?.tokenGarden;
-
   useEffect(() => {
     const fetchCovenant = async () => {
-      if (covenantIpfsHash) {
+      if (registryCommunity?.covenantIpfsHash) {
         try {
           const response = await fetch(
-            "https://ipfs.io/ipfs/" + covenantIpfsHash,
+            "https://ipfs.io/ipfs/" + registryCommunity.covenantIpfsHash,
           );
           const json = await response.json();
           if (typeof json.covenant === "string") {
@@ -88,17 +115,7 @@ export default function Page({
       }
     };
     fetchCovenant();
-  }, [covenantIpfsHash]);
-
-  let {
-    communityName,
-    members,
-    strategies,
-    communityFee,
-    registerStakeAmount,
-    registerToken,
-    protocolFee,
-  } = result?.registryCommunity ?? {};
+  }, [registryCommunity?.covenantIpfsHash]);
 
   const communityStakedTokens =
     members?.reduce(
@@ -134,7 +151,7 @@ export default function Page({
     }
   }, [searchParams, poolsInReview]);
 
-  if (!tokenGarden || !result?.registryCommunity) {
+  if (!tokenGarden || !registryCommunity) {
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -235,22 +252,17 @@ export default function Page({
         </div>
         <div className="flex flex-col gap-4">
           <RegisterMember
-            tokenSymbol={tokenGarden.symbol ?? ""}
-            communityAddress={communityAddr as Address}
-            registerToken={tokenAddr as Address}
-            registerTokenDecimals={tokenGarden.decimals}
-            membershipAmount={registerStakeAmount}
-            protocolFee={protocolFee}
-            communityFee={communityFee}
+            memberData={isMemberResult}
+            registrationCost={getTotalRegistrationCost()}
+            token={tokenGarden}
+            registryCommunity={registryCommunity}
           />
         </div>
       </header>
       <IncreasePower
-        communityAddress={communityAddr as Address}
-        registerToken={registerToken as Address}
-        tokenSymbol={tokenGarden.symbol ?? ""}
-        registerTokenDecimals={tokenGarden.decimals as number}
-        registerStakeAmount={BigInt(registerStakeAmount)}
+        memberData={isMemberResult}
+        registryCommunity={registryCommunity}
+        tokenGarden={tokenGarden}
       />
       <section className="section-layout flex flex-col gap-10">
         <header className="flex justify-between">
@@ -322,7 +334,7 @@ export default function Page({
       </section>
       <section className="section-layout">
         <h2 className="mb-4">Covenant</h2>
-        {covenantIpfsHash ?
+        {registryCommunity?.covenantIpfsHash ?
           covenant ?
             <p>{covenant}</p>
           : <LoadingSpinner />
