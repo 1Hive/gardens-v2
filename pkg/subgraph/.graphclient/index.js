@@ -354,8 +354,8 @@ export const getTokenGardensDocument = gql `
 }
     `;
 export const getMemberStrategyDocument = gql `
-    query getMemberStrategy($wallet: ID!) {
-  memberStrategy(id: $wallet) {
+    query getMemberStrategy($member_strategy: ID!) {
+  memberStrategy(id: $member_strategy) {
     id
     totalStakedPoints
     activatedPoints
@@ -370,7 +370,7 @@ export const getMemberStrategyDocument = gql `
     `;
 export const isMemberDocument = gql `
     query isMember($me: ID!, $comm: String!) {
-  members(where: {id: $me}) {
+  member(id: $me) {
     id
     stakes {
       id
@@ -396,6 +396,7 @@ export const isMemberDocument = gql `
     }
     memberCommunity(where: {registryCommunity_contains: $comm}) {
       stakedTokens
+      isRegistered
       registryCommunity {
         id
       }

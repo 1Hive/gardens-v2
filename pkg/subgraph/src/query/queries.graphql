@@ -54,8 +54,8 @@ query getTokenGardens {
   }
 }
 
-query getMemberStrategy($wallet: ID!) {
-  memberStrategy(id: $wallet) {
+query getMemberStrategy($member_strategy: ID!) {
+  memberStrategy(id: $member_strategy) {
     id
     totalStakedPoints
     activatedPoints
@@ -69,7 +69,7 @@ query getMemberStrategy($wallet: ID!) {
 }
 
 query isMember($me: ID!, $comm: String!) {
-  members(where: { id: $me }) {
+  member(id: $me) {
     id
     stakes {
       id
@@ -95,6 +95,7 @@ query isMember($me: ID!, $comm: String!) {
     }
     memberCommunity(where: { registryCommunity_contains: $comm }) {
       stakedTokens
+      isRegistered
       registryCommunity {
         id
       }
@@ -451,6 +452,7 @@ query getPassportStrategy($strategyId: ID!) {
     active
   }
 }
+
 query getPassportUser($userId: ID!) {
   passportUser(id: $userId) {
     id

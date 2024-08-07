@@ -4,14 +4,17 @@ import "viem/window";
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 import { Address, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
+import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { Button } from "@/components/Button";
 import { chainDataMap } from "@/configs/chainServer";
+import { getConfigByChain } from "@/constants/contracts";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -20,7 +23,7 @@ import { pointSystems, poolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
+import { CV_PERCENTAGE_SCALE, CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -36,6 +39,8 @@ type FormInputs = {
   optionType?: number;
   maxAmount?: number;
   minThresholdPoints: string;
+  passportThreshold?: number;
+  isSybilResistanceRequired: boolean;
 } & PoolSettings;
 
 type InitializeParams = [
@@ -47,6 +52,7 @@ type InitializeParams = [
   number,
   number,
   [bigint],
+  Address,
 ];
 type Metadata = [bigint, string];
 type CreatePoolParams = [Address, InitializeParams, Metadata];
@@ -88,6 +94,8 @@ const poolSettingValues: Record<
   },
 };
 
+// conditionally renders inputs for different pool types
+// 0: signaling, 1: funding, 2: streaming
 const proposalInputMap: Record<string, number[]> = {
   title: [0, 1, 2],
   description: [0, 1, 2],
@@ -99,9 +107,11 @@ const proposalInputMap: Record<string, number[]> = {
   spendingLimit: [1],
   minimumConviction: [1],
   convictionGrowth: [0, 1],
+  isSybilResistanceRequired: [0, 1],
+  passportThreshold: [0, 1],
 };
 
-const isInInputMap = (key: string, value: number): boolean => {
+const renderInputMap = (key: string, value: number): boolean => {
   return proposalInputMap[key]?.includes(Number(value)) ?? false;
 };
 
@@ -136,10 +146,11 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [optionType, setOptionType] = useState(1);
   const [loading, setLoading] = useState(false);
+  const { publish } = usePubSubContext();
   const router = useRouter();
   const pathname = usePathname();
-  const { publish } = usePubSubContext();
 
+  const isSybilResistanceRequired = watch("isSybilResistanceRequired");
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
@@ -174,8 +185,17 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     minThresholdPoints: {
       label: "Minimum threshold points:",
       parse: (value: string) => {
-        return value ?? "0";
+        // check if string is empty or undefined with ||
+        return value || "0";
       },
+    },
+    isSybilResistanceRequired: {
+      label: "Sybil resistance enabled:",
+      parse: (value: boolean) => (value ? "Yes" : "No"),
+    },
+    passportThreshold: {
+      label: "Passport score required:",
+      parse: (value: number) => value,
     },
   };
 
@@ -232,6 +252,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     const metadata: Metadata = [BigInt(1), ipfsHash];
 
     const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
+    const passportScorerAddr = getConfigByChain(chainId)?.passportScorer ?? "0x";
 
     const params: InitializeParams = [
       communityAddr as Address,
@@ -242,6 +263,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
       previewData?.strategyType as number, // proposalType
       previewData?.pointSystemType as number, // pointSystem
       [parseUnits(maxAmountStr, token?.decimals)], // pointConfig
+      passportScorerAddr,
     ];
 
     const args: CreatePoolParams = [token?.id as Address, params, metadata];
@@ -256,28 +278,45 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool. Please ty again.",
     onConfirmations: (receipt) => {
-      const newPoolId = getEventFromReceipt(
-        receipt,
-        "RegistryCommunity",
-        "PoolCreated",
-      ).args._poolId;
+      const newPoolData = getEventFromReceipt(receipt, "RegistryCommunity", "PoolCreated").args;
       publish({
         topic: "pool",
         function: "createPool",
         type: "add",
-        id: newPoolId.toString(), // Never propagate direct bigint outside of javascript environment
+        id: newPoolData._poolId.toString(), // Never propagate direct bigint outside of javascript environment
         containerId: communityAddr,
         chainId: chainId,
       });
-      router.push(
-        pathname?.replace(
-          "/create-pool",
-          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolId}`,
-        ),
-      );
+      if (isSybilResistanceRequired) {
+        addStrategy(newPoolData);
+      } else {
+        setLoading(false);
+      }
     },
-    onSettled: () => setLoading(false),
+    onError: () =>
+      toast.error("Something went wrong creating a pool, check logs"),
   });
+
+  const addStrategy = async (newPoolData: ReturnType<typeof getEventFromReceipt<"RegistryCommunity", "PoolCreated">>["args"]) => {
+    try {
+      const res = await fetch("/api/passport-oracle/addStrategy", {
+        method: "POST",
+        body: JSON.stringify({
+          strategy: newPoolData._strategy,
+          threshold: (previewData?.passportThreshold ?? 0) * CV_PERCENTAGE_SCALE,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.debug(res);
+      setLoading(false);
+      router.push(pathname?.replace("/create-pool", `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId.toString()}`));
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
+  };
 
   const handleOptionTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedOptionType = parseInt(e.target.value);
@@ -325,24 +364,41 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
       spendingLimit: previewData.spendingLimit,
       minimumConviction: previewData.minimumConviction,
       convictionGrowth: previewData.convictionGrowth,
+      isSybilResistanceRequired: previewData.isSybilResistanceRequired,
+      passportThreshold: previewData.passportThreshold,
     };
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (key == "maxAmount" && previewData.pointSystemType != 1) {
-        return;
-      }
-      if (formRow && isInInputMap(key, strategyType)) {
+
+      if (formRow && shouldRenderInPreview(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
           data: parsedValue,
         });
+      } else {
+        return;
       }
     });
 
     return formattedRows;
   };
+
+  const shouldRenderInPreview = (key: string) => {
+    if (key === "passportThreshold") {
+      return previewData?.isSybilResistanceRequired;
+    } else if (key === "maxAmount" ) {
+      if ( previewData?.pointSystemType) {
+        return pointSystems[previewData?.pointSystemType] === "capped";
+      } else {
+        return false;
+      }
+    } else {
+      return renderInputMap(key, strategyType);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -408,7 +464,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               )}
             </div>
             <div className="mb-6 mt-2 flex flex-col">
-              {isInInputMap("spendingLimit", strategyType) && (
+              {renderInputMap("spendingLimit", strategyType) && (
                 <div className="flex max-w-64 flex-col">
                   <FormInput
                     label="Spending limit"
@@ -439,7 +495,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
                   </FormInput>
                 </div>
               )}
-              {isInInputMap("minimumConviction", strategyType) && (
+              {renderInputMap("minimumConviction", strategyType) && (
                 <div className="flex max-w-64 flex-col">
                   <FormInput
                     label="Minimum conviction"
@@ -503,7 +559,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               </div>
             </div>
           </div>
-          {isInInputMap("minThresholdPoints", strategyType) && (
+          {renderInputMap("minThresholdPoints", strategyType) && (
             <div className="flex flex-col">
               <FormInput
                 label="Minimum threshold points"
@@ -538,7 +594,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               }))}
             />
           </div>
-          {pointSystemType == 1 && (
+          {pointSystems[pointSystemType] === "capped" && (
             <div className="flex flex-col">
               <FormInput
                 label="Token max amount"
@@ -566,6 +622,37 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               </FormInput>
             </div>
           )}
+          {renderInputMap("isSybilResistanceRequired", strategyType) && <div className="flex flex-col">
+            <FormCheckBox
+              label="Add sybil resistance with Gitcoin Passport"
+              register={register}
+              errors={errors}
+              registerKey="isSybilResistanceRequired"
+              type="checkbox"
+            />
+            {isSybilResistanceRequired &&
+            <FormInput
+              label="Gitcoin Passport score required"
+              register={register}
+              required
+              registerOptions={{
+                min: {
+                  value: 1 / CV_PERCENTAGE_SCALE,
+                  message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                },
+              }}
+              otherProps={{
+                step: 1 / CV_PERCENTAGE_SCALE,
+                min: 1 / CV_PERCENTAGE_SCALE,
+              }}
+              errors={errors}
+              registerKey="passportThreshold"
+              type="number"
+              placeholder="0"
+            />
+            }
+          </div>
+          }
         </div>
       }
       <div className="flex w-full items-center justify-center py-6">

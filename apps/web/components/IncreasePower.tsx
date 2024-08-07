@@ -87,9 +87,9 @@ export const IncreasePower = ({
   useEffect(() => {
     if (accountAddress && isMemberResult && !fetching) {
       refetchIsMember().then((result) => {
-        if (result?.data && result?.data.members.length > 0) {
+        if (result?.data?.member) {
           const stakedTokens =
-            result?.data.members?.[0]?.memberCommunity?.[0]?.stakedTokens;
+            result?.data.member?.memberCommunity?.[0]?.stakedTokens;
           setMemberStakedTokens(
             BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"),
           );
@@ -330,17 +330,17 @@ export const IncreasePower = ({
             {isMember && (
               <div className="flex justify-between">
                 <div className="flex-start flex gap-2">
-                  <p>Balance:</p>
+                  <p>Total Stake:</p>
                   <DisplayNumber
-                    number={accountTokenBalance?.formatted ?? "0"}
+                    number={[BigInt(memberStakedTokens), registerTokenDecimals]}
                     tokenSymbol={tokenSymbol}
                     compact={true}
                   />
                 </div>
                 <div className="flex-start flex gap-2">
-                  <p>Current Stake:</p>
+                  <p>Added Stake:</p>
                   <DisplayNumber
-                    number={[BigInt(memberStakedTokens), registerTokenDecimals]}
+                    number={[BigInt(memberStakedTokens - registerStakeAmount), registerTokenDecimals]}
                     tokenSymbol={tokenSymbol}
                     compact={true}
                   />
@@ -348,7 +348,6 @@ export const IncreasePower = ({
               </div>
             )}
           </div>
-
           <div className="flex flex-col gap-4">
             <div className="relative">
               <input
