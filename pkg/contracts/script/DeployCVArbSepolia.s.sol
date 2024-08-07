@@ -24,7 +24,12 @@ import {TERC20} from "../test/shared/TERC20.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
+contract DeployCVArbSepolia is
+    Native,
+    CVStrategyHelpersV0_0,
+    Script,
+    SafeSetup
+{
     uint256 public constant MINIMUM_STAKE = 50;
 
     address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
@@ -80,7 +85,9 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
         assertTrue(params._councilSafe != address(0));
 
-        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(
+            registryFactory.createRegistry(params)
+        );
 
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
@@ -89,7 +96,8 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
-            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+            address(new SafeArbitrator()),
+            abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
         );
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
@@ -103,8 +111,7 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
                 3 ether,
                 2 ether,
                 1,
-                300,
-                address(new CollateralVault())
+                300
             )
         );
 
@@ -124,12 +131,17 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         //     0, "Pool Profile 1", Metadata({protocol: 1, pointer: "PoolProfile1"}), pool_admin(), pool_managers()
         // );
 
-        (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata);
+        (uint256 poolId, address _strategy1) = registryCommunity.createPool(
+            address(token),
+            paramsCV,
+            metadata
+        );
 
         paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
 
-        (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(address(0), paramsCV, metadata);
+        (uint256 poolIdSignaling, address _strategy2) = registryCommunity
+            .createPool(address(0), paramsCV, metadata);
 
         CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
         CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
@@ -138,14 +150,20 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             councilSafeDeploy,
             councilMemberPKEnv,
             address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy1))
+            abi.encodeWithSelector(
+                registryCommunity.addStrategy.selector,
+                address(strategy1)
+            )
         );
 
         safeHelper(
             councilSafeDeploy,
             councilMemberPKEnv,
             address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, address(strategy2))
+            abi.encodeWithSelector(
+                registryCommunity.addStrategy.selector,
+                address(strategy2)
+            )
         );
 
         // Goss: Commented because already set in getParams
@@ -178,22 +196,46 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         token.approve(address(allo), type(uint256).max);
         allo.fundPool(poolId, 1_000);
 
-        StrategyStruct.CreateProposal memory proposal =
-            StrategyStruct.CreateProposal(poolId, pool_admin(), 50 wei, address(token), metadata);
+        StrategyStruct.CreateProposal memory proposal = StrategyStruct
+            .CreateProposal(
+                poolId,
+                pool_admin(),
+                50 wei,
+                address(token),
+                metadata
+            );
         bytes memory data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
         // StrategyStruct.ProposalType.Funding
-        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 25 wei, address(token), metadata);
+        proposal = StrategyStruct.CreateProposal(
+            poolId,
+            pool_admin(),
+            25 wei,
+            address(token),
+            metadata
+        );
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
-        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), 10 wei, address(token), metadata);
+        proposal = StrategyStruct.CreateProposal(
+            poolId,
+            pool_admin(),
+            10 wei,
+            address(token),
+            metadata
+        );
         data = abi.encode(proposal);
         allo.registerRecipient(poolId, data);
 
         // Strategy 2 Signaling
-        StrategyStruct.CreateProposal memory proposal2 =
-            StrategyStruct.CreateProposal(poolIdSignaling, pool_admin(), 0, address(0), metadata);
+        StrategyStruct.CreateProposal memory proposal2 = StrategyStruct
+            .CreateProposal(
+                poolIdSignaling,
+                pool_admin(),
+                0,
+                address(0),
+                metadata
+            );
         bytes memory data2 = abi.encode(proposal2);
         allo.registerRecipient(poolIdSignaling, data2);
 

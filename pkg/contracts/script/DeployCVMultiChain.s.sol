@@ -185,8 +185,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             3 ether,
             2 ether,
             1,
-            300,
-            address(new CollateralVault())
+            300
         );
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(
