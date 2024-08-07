@@ -149,9 +149,10 @@ deploy-verify:
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	-vv
+
 fork:
-	anvil --chain-id 1337
-fork0:
+	anvil --fork-block-number 17440000 --chain-id 1 --fork-url $(RPC_URL_MAINET)
+fork0:																									 
 	anvil --host=0.0.0.0 --chain-id 1337
 fork0b5:
 	anvil --host=0.0.0.0 --chain-id 1337 -b 5
