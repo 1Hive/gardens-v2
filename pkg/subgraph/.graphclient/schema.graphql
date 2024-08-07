@@ -16,6 +16,11 @@ creates a virtual field on the entity that may be queried but cannot be set manu
 """
 directive @derivedFrom(field: String!) on FIELD_DEFINITION
 
+enum Aggregation_interval {
+  hour
+  day
+}
+
 type Allo {
   id: ID!
   chainId: BigInt!
@@ -2298,6 +2303,12 @@ type Subscription {
   _meta(block: Block_height): _Meta_
 }
 
+"""
+A string representation of microseconds UNIX timestamp (16 digits)
+
+"""
+scalar Timestamp
+
 type TokenGarden {
   id: ID!
   name: String!
@@ -2471,6 +2482,8 @@ type _Block_ {
   number: Int!
   """Integer representation of the timestamp stored in blocks for the chain"""
   timestamp: Int
+  """The hash of the parent block"""
+  parentHash: Bytes
 }
 
 """The type for the top-level _meta field"""
