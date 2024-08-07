@@ -370,7 +370,8 @@ type CVStrategyConfig {
   maxAmount: BigInt
   arbitrator: String!
   tribunalSafe: String!
-  collateralAmount: BigInt!
+  challengerCollateralAmount: BigInt!
+  submitterCollateralAmount: BigInt!
   defaultRuling: BigInt!
   defaultRulingTimeout: BigInt!
 }
@@ -489,14 +490,22 @@ input CVStrategyConfig_filter {
   tribunalSafe_ends_with_nocase: String
   tribunalSafe_not_ends_with: String
   tribunalSafe_not_ends_with_nocase: String
-  collateralAmount: BigInt
-  collateralAmount_not: BigInt
-  collateralAmount_gt: BigInt
-  collateralAmount_lt: BigInt
-  collateralAmount_gte: BigInt
-  collateralAmount_lte: BigInt
-  collateralAmount_in: [BigInt!]
-  collateralAmount_not_in: [BigInt!]
+  challengerCollateralAmount: BigInt
+  challengerCollateralAmount_not: BigInt
+  challengerCollateralAmount_gt: BigInt
+  challengerCollateralAmount_lt: BigInt
+  challengerCollateralAmount_gte: BigInt
+  challengerCollateralAmount_lte: BigInt
+  challengerCollateralAmount_in: [BigInt!]
+  challengerCollateralAmount_not_in: [BigInt!]
+  submitterCollateralAmount: BigInt
+  submitterCollateralAmount_not: BigInt
+  submitterCollateralAmount_gt: BigInt
+  submitterCollateralAmount_lt: BigInt
+  submitterCollateralAmount_gte: BigInt
+  submitterCollateralAmount_lte: BigInt
+  submitterCollateralAmount_in: [BigInt!]
+  submitterCollateralAmount_not_in: [BigInt!]
   defaultRuling: BigInt
   defaultRuling_not: BigInt
   defaultRuling_gt: BigInt
@@ -539,7 +548,8 @@ enum CVStrategyConfig_orderBy {
   maxAmount
   arbitrator
   tribunalSafe
-  collateralAmount
+  challengerCollateralAmount
+  submitterCollateralAmount
   defaultRuling
   defaultRulingTimeout
 }
@@ -697,7 +707,8 @@ enum CVStrategy_orderBy {
   config__maxAmount
   config__arbitrator
   config__tribunalSafe
-  config__collateralAmount
+  config__challengerCollateralAmount
+  config__submitterCollateralAmount
   config__defaultRuling
   config__defaultRulingTimeout
   proposals
@@ -1202,13 +1213,15 @@ enum PassportUser_orderBy {
 
 type ProposalDispute {
   id: ID!
+  createdAt: BigInt!
   disputeId: BigInt!
   proposal: CVProposal!
   status: BigInt!
   challenger: String!
   context: String!
   metadata: ProposalDisputeMetadata!
-  timestamp: BigInt!
+  ruledAt: BigInt
+  rulingOutcome: BigInt
 }
 
 type ProposalDisputeMetadata {
@@ -1265,6 +1278,14 @@ input ProposalDispute_filter {
   id_lte: ID
   id_in: [ID!]
   id_not_in: [ID!]
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+  createdAt_in: [BigInt!]
+  createdAt_not_in: [BigInt!]
   disputeId: BigInt
   disputeId_not: BigInt
   disputeId_gt: BigInt
@@ -1363,14 +1384,22 @@ input ProposalDispute_filter {
   metadata_not_ends_with: String
   metadata_not_ends_with_nocase: String
   metadata_: ProposalDisputeMetadata_filter
-  timestamp: BigInt
-  timestamp_not: BigInt
-  timestamp_gt: BigInt
-  timestamp_lt: BigInt
-  timestamp_gte: BigInt
-  timestamp_lte: BigInt
-  timestamp_in: [BigInt!]
-  timestamp_not_in: [BigInt!]
+  ruledAt: BigInt
+  ruledAt_not: BigInt
+  ruledAt_gt: BigInt
+  ruledAt_lt: BigInt
+  ruledAt_gte: BigInt
+  ruledAt_lte: BigInt
+  ruledAt_in: [BigInt!]
+  ruledAt_not_in: [BigInt!]
+  rulingOutcome: BigInt
+  rulingOutcome_not: BigInt
+  rulingOutcome_gt: BigInt
+  rulingOutcome_lt: BigInt
+  rulingOutcome_gte: BigInt
+  rulingOutcome_lte: BigInt
+  rulingOutcome_in: [BigInt!]
+  rulingOutcome_not_in: [BigInt!]
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [ProposalDispute_filter]
@@ -1379,6 +1408,7 @@ input ProposalDispute_filter {
 
 enum ProposalDispute_orderBy {
   id
+  createdAt
   disputeId
   proposal
   proposal__id
@@ -1403,7 +1433,8 @@ enum ProposalDispute_orderBy {
   metadata
   metadata__id
   metadata__reason
-  timestamp
+  ruledAt
+  rulingOutcome
 }
 
 type Query {

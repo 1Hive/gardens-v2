@@ -171,13 +171,17 @@ type PassportUser @entity(immutable: false) {
 
 type ProposalDispute @entity(immutable: false) {
   id: ID!
+  createdAt: BigInt!
   disputeId: BigInt!
   proposal: CVProposal!
   status: BigInt!
   challenger: String!
   context: String!
   metadata: ProposalDisputeMetadata!
-  timestamp: BigInt!
+
+  # When ruled
+  rulingOutcome: BigInt
+  ruledAt: BigInt
 }
 
 type ProposalDisputeMetadata @entity(immutable: false) {

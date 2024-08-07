@@ -25,7 +25,7 @@ dataSources:
       abis:
         - name: RegistryFactoryV0_0
           file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
-        - name: RegistryCommunity
+        - name: RegistryCommunityV0_0
           file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
       eventHandlers:
         - event: CommunityCreated(address)
@@ -152,7 +152,7 @@ templates:
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256,address),address))
+        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
@@ -168,16 +168,10 @@ templates:
           handler: handlePowerDecreased
         - event: PointsDeactivated(address)
           handler: handlePointsDeactivated
-        - event: DecayUpdated(uint256)
-          handler: handleDecayUpdated
-        - event: MaxRatioUpdated(uint256)
-          handler: handleMaxRatioUpdated
-        - event: WeightUpdated(uint256)
-          handler: handleWeightUpdated
+        - event: PoolParamsUpdated((uint256,uint256,uint256,uint256),(address,address,uint256,uint256,uint256,uint256))
+          handler: handlePoolParamsUpdated
         - event: ProposalDisputed(address,uint256,uint256,address,string,uint256)
           handler: handleProposalDisputed
-        - event: ArbitrationConfigUpdated(address,(address,address,uint256,uint256,uint256,uint256,address))
-          handler: handleArbitrationConfigUpdated
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleDisputeRuled
  
