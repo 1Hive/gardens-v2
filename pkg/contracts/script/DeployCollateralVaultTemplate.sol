@@ -21,10 +21,7 @@ library DeployCollateralVaultTemplate {
         // --- Predicted Address Verification ---
         address predictedAddress = CREATE3.getDeployed(salt);
 
-        require(
-            deployedAddress == predictedAddress,
-            "Deployment address mismatch!"
-        );
+        require(deployedAddress == predictedAddress, "Deployment address mismatch!");
 
         console.log("Deployed CollateralVault template at:", deployedAddress);
     }

@@ -8,17 +8,15 @@ import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC16
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "./interfaces/IArbitrator.sol";
 import {IArbitrable} from "./interfaces/IArbitrable.sol";
-import {CollateralVault} from "./CollateralVault.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 // import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
 
 interface IPointStrategy {
     function deactivatePoints(address _member) external;
@@ -120,14 +118,7 @@ library StrategyStruct {
     }
 }
 
-contract CVStrategyV0_0 is
-    OwnableUpgradeable,
-    BaseStrategyUpgradeable,
-    IArbitrable,
-    ReentrancyGuardUpgradeable,
-    IPointStrategy,
-    ERC165
-{
+contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
     using Math for uint256;
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
@@ -236,7 +227,7 @@ contract CVStrategyV0_0 is
     // Contract reference
     RegistryCommunityV0_0 public registryCommunity;
 
-    CollateralVault public collateralVault;
+    ICollateralVault public collateralVault;
     ISybilScorer public sybilScorer;
 
     // Mappings to handle relationships and staking details
@@ -253,13 +244,12 @@ contract CVStrategyV0_0 is
     function init(address _allo) external virtual initializer {
         super.init(_allo, "CVStrategy");
         __Ownable_init();
-        __ReentrancyGuard_init();
     }
 
     function initialize(uint256 _poolId, bytes memory _data) external virtual onlyAllo {
         __BaseStrategy_init(_poolId);
 
-        collateralVault = CollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));
+        collateralVault = ICollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));
 
         collateralVault.initialize();
 
@@ -601,12 +591,14 @@ contract CVStrategyV0_0 is
             poolAmount -= proposal.requestedAmount; // CEI
 
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
+            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             CollateralVault(collateralVault).withdrawCollateral(
                 proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
             );
 
+            emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
         } //signaling do nothing @todo write tests @todo add end date
     }
@@ -1183,7 +1175,7 @@ contract CVStrategyV0_0 is
             );
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
-            CollateralVault(collateralVault).withdrawCollateralFor(
+            collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.challenger,
                 address(registryCommunity.councilSafe()),
@@ -1194,7 +1186,7 @@ contract CVStrategyV0_0 is
             CollateralVault(collateralVault).withdrawCollateral(
                 proposalId, proposal.challenger, arbitrableConfig.challengerCollateralAmount
             );
-            CollateralVault(collateralVault).withdrawCollateralFor(
+            collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 address(registryCommunity.councilSafe()),
