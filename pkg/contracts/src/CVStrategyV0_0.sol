@@ -271,7 +271,7 @@ contract CVStrategyV0_0 is
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
 
-        setPoolParams(ip.arbitrableConfig, ip.cvParams);
+        _setPoolParams(ip.arbitrableConfig, ip.cvParams);
 
         sybilScorer = ISybilScorer(ip.sybilScorer);
 
@@ -1030,6 +1030,40 @@ contract CVStrategyV0_0 is
         );
     }
 
+    function _setPoolParams(
+        StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
+        StrategyStruct.CVParams memory _cvParams
+    ) internal {
+        if (
+            _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
+                || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
+                || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
+                || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
+                || _arbitrableConfig.collateralVaultTemplate != arbitrableConfig.collateralVaultTemplate
+        ) {
+            if (disputeCount != 0) {
+                revert ArbitrationConfigCannotBeChangedDuringDispute();
+            }
+            arbitrableConfig = _arbitrableConfig;
+
+            if (arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator) {
+                arbitrableConfig.arbitrator = _arbitrableConfig.arbitrator;
+                collateralVault =
+                    CollateralVault(Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++));
+                collateralVault.initialize();
+                if (arbitrableConfig.tribunalSafe != address(0)) {
+                    arbitrableConfig.arbitrator.registerSafe(arbitrableConfig.tribunalSafe);
+                    emit TribunaSafeRegistered(
+                        address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
+                    );
+                }
+            }
+        }
+
+        cvParams = _cvParams;
+        emit PoolParamsUpdated(_cvParams, _arbitrableConfig);
+    }
+
     function updateProposalConviction(uint256 proposalId) public returns (uint256) {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
@@ -1063,37 +1097,9 @@ contract CVStrategyV0_0 is
     function setPoolParams(
         StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
         StrategyStruct.CVParams memory _cvParams
-    ) public {
+    ) external {
         onlyCouncilSafe();
-
-        if (
-            _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
-                || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
-                || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
-                || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
-                || _arbitrableConfig.collateralVaultTemplate != arbitrableConfig.collateralVaultTemplate
-        ) {
-            if (disputeCount != 0) {
-                revert ArbitrationConfigCannotBeChangedDuringDispute();
-            }
-            arbitrableConfig = _arbitrableConfig;
-
-            if (arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator) {
-                arbitrableConfig.arbitrator = _arbitrableConfig.arbitrator;
-                collateralVault =
-                    CollateralVault(Clone.createClone(arbitrableConfig.collateralVaultTemplate, cloneNonce++));
-                collateralVault.initialize();
-                if (arbitrableConfig.tribunalSafe != address(0)) {
-                    arbitrableConfig.arbitrator.registerSafe(arbitrableConfig.tribunalSafe);
-                    emit TribunaSafeRegistered(
-                        address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
-                    );
-                }
-            }
-        }
-
-        cvParams = _cvParams;
-        emit PoolParamsUpdated(_cvParams, _arbitrableConfig);
+        _setPoolParams(_arbitrableConfig, _cvParams);
     }
 
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)

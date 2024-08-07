@@ -156,7 +156,7 @@ contract RegistryCommunityV0_0 is
             revert PointsDeactivated();
         }
     }
-    
+
     function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
@@ -459,7 +459,6 @@ contract RegistryCommunityV0_0 is
         enabledStrategies[_newStrategy] = true;
         emit StrategyAdded(_newStrategy);
     }
-
 
     function removeStrategyByPoolId(uint256 poolId) public {
         onlyCouncilSafe();
