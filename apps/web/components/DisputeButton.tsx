@@ -185,8 +185,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const content =
     isDisputed ?
-      <div className="flex flex-col gap-10">
-        <div className="p-4 border rounded-lg">
+      <div className="flex flex-col gap-20">
+        <div className="p-16 rounded-lg">
           <div className="chat chat-start">
             <div className="chat-image">
               {lastDispute?.challenger && (
@@ -234,9 +234,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         />
         <InfoBox
           infoBoxType="info"
-          content="disputing this proposal will prevent its execution but not its
-growth and support, and the Tribunal will have one week to resolve
-any dispute before it can be closed and collateral restored."
+          content="Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has one week to settle any disputes before it can be closed and collateral is returned."
         />
       </>;
 
@@ -283,15 +281,15 @@ any dispute before it can be closed and collateral restored."
             </>
           )}
         </div>
-      : <div className="flex w-full justify-between items-center">
-          {/* <WalletBalance
+      : <div className="flex w-full justify-between items-end">
+          <WalletBalance
             label="Fees + Collateral"
             token="native"
-            askedAmount={collateral + disputeFee}
-            tooltip={`Collateral: ${collateral} ETH \n Dispute Fee: ${disputeFee} ETH`}
+            askedAmount={0.1 + 0.01}
+            tooltip={`Collateral: ${0.05} ETH \n Fee: ${0.05} ETH`}
             setIsEnoughBalance={setIsEnoughBalance}
-          /> */}
-          <div>Arbitration cost</div>
+          />
+
           <div className="flex gap-2">
             <Button
               onClick={() => modalRef.current?.close()}
@@ -325,17 +323,17 @@ any dispute before it can be closed and collateral restored."
       </Button>
       <dialog ref={modalRef} className="modal">
         <div className="modal-backdrop">Close</div>
-        <div className="modal-box w-full md:w-6/12 md:max-w-3xl overflow-x-clip flex flex-col">
+        <div className="modal-box w-full md:w-6/12 md:max-w-3xl overflow-x-clip flex flex-col gap-4">
           <form
             className="flex flex-row justify-between items-start mb-4"
             method="dialog"
           >
-            <h3 className="font-bold text-lg">
+            <h3>
               Disputed Proposal: {proposalData.title} #
               {proposalData.proposalNumber}
             </h3>
             <button>
-              <XMarkIcon className="w-4" />
+              <XMarkIcon className="w-6" />
             </button>
           </form>
           {content}
