@@ -15,35 +15,17 @@ interface IRegistryCommunityV0_0 {
     event CouncilSafeChangeStarted(address _safeOwner, address _newSafeOwner);
     event MemberRegistered(address _member, uint256 _amountStaked);
     event MemberUnregistered(address _member, uint256 _amountReturned);
-    event MemberKicked(
-        address _member,
-        address _transferAddress,
-        uint256 _amountReturned
-    );
+    event MemberKicked(address _member, address _transferAddress, uint256 _amountReturned);
     event CommunityFeeUpdated(uint256 _newFee);
-    event RegistryInitialized(
-        bytes32 _profileId,
-        string _communityName,
-        Metadata _metadata
-    );
+    event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
     event StrategyAdded(address _strategy);
     event StrategyRemoved(address _strategy);
-    event MemberActivatedStrategy(
-        address _member,
-        address _strategy,
-        uint256 _pointsToIncrease
-    );
+    event MemberActivatedStrategy(address _member, address _strategy, uint256 _pointsToIncrease);
     event MemberDeactivatedStrategy(address _member, address _strategy);
     event BasisStakedAmountSet(uint256 _newAmount);
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
     event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
-    event PoolCreated(
-        uint256 _poolId,
-        address _strategy,
-        address _community,
-        address _token,
-        Metadata _metadata
-    );
+    event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
@@ -66,10 +48,7 @@ interface IRegistryCommunityV0_0 {
     error KickNotEnabled();
     error PointsDeactivated();
     error DecreaseUnderMinimum();
-    error CantDecreaseMoreThanPower(
-        uint256 _decreaseAmount,
-        uint256 _currentPower
-    );
+    error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower);
 
     /*|--------------------------------------------|*/
     /*|              STRUCTS/ENUMS                 |*/
@@ -91,11 +70,9 @@ interface IRegistryCommunityV0_0 {
         address _strategyTemplate;
     }
 
-    function createPool(
-        address _token,
-        StrategyStruct.InitializeParams memory _params,
-        Metadata memory _metadata
-    ) external returns (uint256 poolId, address strategy);
+    function createPool(address _token, StrategyStruct.InitializeParams memory _params, Metadata memory _metadata)
+        external
+        returns (uint256 poolId, address strategy);
 
     function createPool(
         address _strategy,
@@ -104,28 +81,17 @@ interface IRegistryCommunityV0_0 {
         Metadata memory _metadata
     ) external returns (uint256 poolId, address strategy);
 
-    function activateMemberInStrategy(
-        address _member,
-        address _strategy
-    ) external;
+    function activateMemberInStrategy(address _member, address _strategy) external;
 
-    function deactivateMemberInStrategy(
-        address _member,
-        address _strategy
-    ) external;
+    function deactivateMemberInStrategy(address _member, address _strategy) external;
 
     function increasePower(uint256 _amountStaked) external;
 
     function decreasePower(uint256 _amountUnstaked) external;
 
-    function getMemberPowerInStrategy(
-        address _member,
-        address _strategy
-    ) external view returns (uint256);
+    function getMemberPowerInStrategy(address _member, address _strategy) external view returns (uint256);
 
-    function getMemberStakedAmount(
-        address _member
-    ) external view returns (uint256);
+    function getMemberStakedAmount(address _member) external view returns (uint256);
 
     function addStrategyByPoolId(uint256 poolId) external;
 
