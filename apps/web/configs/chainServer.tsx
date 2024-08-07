@@ -36,7 +36,7 @@ export const chains: Chain[] = [
 ];
 
 export const chainDataMap: {
-  [key: number]: {
+  [key: number | string]: {
     name: string;
     icon: FC;
     explorer: string;
