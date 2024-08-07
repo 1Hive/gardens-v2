@@ -24,3 +24,4 @@ export { default as TxSuccess } from "./TxSuccess.svg";
 export { default as TxError } from "./TxError.svg";
 export { default as TxPreparing } from "./TxPreparing.svg";
 export { default as TxInProgress } from "./TxInProgress.svg";
+export { default as TxIdle } from "./TxIdle.svg";

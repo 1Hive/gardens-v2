@@ -1,25 +1,35 @@
 "use client";
-import { MouseEventHandler, ReactNode, forwardRef } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface ModalProps {
   icon?: ReactNode;
   title?: string;
-  onClose: MouseEventHandler<HTMLButtonElement>;
+  onClose?: () => void;
   children: ReactNode;
+  isOpen: boolean;
 }
 
-export type Ref = HTMLDialogElement;
+export function Modal({ icon, title, onClose, children, isOpen }: ModalProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
-export const Modal = forwardRef<Ref, ModalProps>(function Modal(
-  { icon, title, onClose, children },
-  ref,
-) {
+  useEffect(() => {
+    if (isOpen) {
+      dialogRef.current?.showModal();
+    } else {
+      dialogRef.current?.close();
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    onClose?.();
+    dialogRef.current?.close();
+  };
+
   return (
-    <dialog className="modal " ref={ref}>
-      {/* Modal box */}
-      <div className="flex max-w-xl flex-col gap-8 rounded-md bg-white p-8 transition-all duration-500 ease-in-out">
-        <div className="flex flex-1 items-center justify-between gap-6">
+    <dialog className="modal max-sm:modal-bottom" ref={dialogRef}>
+      <div className="modal-box max-w-5xl w-fit flex flex-col gap-8 rounded-3xl bg-primary p-8">
+        <div className="flex items-center justify-between gap-6">
           <div className="flex gap-4">
             {icon && (
               <div className="flex h-12 w-12 items-center justify-center">
@@ -28,8 +38,8 @@ export const Modal = forwardRef<Ref, ModalProps>(function Modal(
             )}
             <h3>{title}</h3>
           </div>
-          <div className="">
-            <button onClick={onClose} className="h-8 w-8 cursor-pointer ">
+          <div className="flex items-center">
+            <button onClick={handleClose} className="h-7 w-7 cursor-pointer">
               <XMarkIcon />
             </button>
           </div>
@@ -38,4 +48,4 @@ export const Modal = forwardRef<Ref, ModalProps>(function Modal(
       </div>
     </dialog>
   );
-});
+}
