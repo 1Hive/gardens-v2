@@ -482,7 +482,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
 
         uint256 decimal = 18;
-        try IERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
+        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
             // console.log("Error getting decimal");
@@ -501,7 +501,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
     function decreasePowerQuadratic(address _member, uint256 _amountToUnstake) internal view returns (uint256) {
         uint256 decimal = 18;
-        try IERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
+        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
             // console.log("Error getting decimal");
