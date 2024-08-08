@@ -109,9 +109,9 @@ export const ProposalForm = ({
 
   const spendingLimitNumber = spendingLimit / 10 ** tokenGarden.decimals;
 
-  // console.log("spendingLimit:               %s", spendingLimit);
-  // console.log("spendingLimitNumber:         %s", spendingLimitNumber);
-  // console.log("spendingLimitPct:            %s", spendingLimitPct);
+  console.debug("spendingLimit:               %s", spendingLimit);
+  console.debug("spendingLimitNumber:         %s", spendingLimitNumber);
+  console.debug("spendingLimitPct:            %s", spendingLimitPct);
 
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
@@ -255,7 +255,7 @@ export const ProposalForm = ({
           formRows={formatFormRows()}
           previewTitle="Check proposals details"
         />
-      : <div className="flex flex-col gap-2 overflow-hidden p-1">
+      : <div className="flex flex-col gap-2 overflow-hidden">
           {proposalTypeName === "funding" && (
             <div className="relative flex flex-col">
               <FormInput

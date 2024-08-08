@@ -101,28 +101,6 @@ export const CommunityForm = ({
     councilSafe: { label: "Council Safe:" },
   };
 
-  // const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-  //   if (!e.target.files) return;
-  //   const selectedFile = e.target.files[0];
-
-  //   const ipfsUpload = ipfsFileUpload(selectedFile);
-
-  //   toast
-  //     .promise(ipfsUpload, {
-  //       pending: "Uploading image...",
-  //       success: "Successfully uploaded!",
-  //       error: "Try uploading banner image again",
-  //     })
-  //     .then((data) => {
-  //       console.log("https://ipfs.io/ipfs/" + data);
-  //       setFile(selectedFile);
-  //       setIpfsFileHash(data);
-  //     })
-  //     .catch((error: any) => {
-  //       console.error(error);
-  //     });
-  // };
-
   const createCommunity = async () => {
     setLoading(true);
     const json = {
@@ -370,53 +348,6 @@ export const CommunityForm = ({
               placeholder="Covenant description..."
             />
           </div>
-
-          {/* Upload image */}
-          {/* <label htmlFor="cover-photo" className={labelClassname}>
-            Banner Image
-          </label>
-          <div className="mt-2  flex justify-center rounded-lg border border-dashed border-secondary px-6 py-10">
-            <div className="text-center">
-              {file ? (
-                <Image
-                  src={URL.createObjectURL(file)}
-                  alt="Project cover photo"
-                  width={100}
-                  height={100}
-                />
-              ) : (
-                <>
-                  <div className="mt-4 flex flex-col text-sm leading-6 text-gray-400 ">
-                    <PhotoIcon
-                      className="mx-auto h-12 w-12 text-secondary"
-                      aria-hidden="true"
-                    />
-                    <label
-                      htmlFor={"image"}
-                      className="relative cursor-pointer rounded-lg bg-surface font-semibold transition-colors duration-200 ease-in-out focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-200 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 hover:text-primary"
-                    >
-                      <span className="text-secondary">Upload a file</span>
-                      <input
-                        id={"image"}
-                        name={"image"}
-                        type="file"
-                        className="sr-only"
-                        accept="image/*"
-                        onChange={(e) => setFile(e.target.files?[0])}
-                      />
-                    </label>
-
-                    <div className="mt-1 space-y-1">
-                      <p className="pl-1 text-black">or drag and drop</p>
-                      <p className="text-xs leading-5 text-black">
-                        PNG, JPG, GIF up to 10MB
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div> */}
         </div>
       }
       <div className="flex w-full items-center justify-center py-6">
