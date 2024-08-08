@@ -113,7 +113,8 @@ export default function Page({
 
   const tokenGarden = data?.tokenGarden;
 
-  if (!ipfsResult || !tokenGarden) {
+  console.log(ipfsResult, tokenGarden);
+  if (!tokenGarden) {
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -134,27 +135,16 @@ export default function Page({
   const spendingLimitPct =
     (Number(strategyObj?.config?.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
-  function calculateDaysFromDecayAndBlockTime(
+  function calculateConvictionGrowthInDays(
     decay: number,
     blockTime: number,
-  ) {
-    const ln2 = Math.log(1 / 2);
+  ): number {
     const halfLifeInSeconds =
-      (blockTime * ln2) / Math.log(decay / Math.pow(10, 7));
-    const days = halfLifeInSeconds / (24 * 60 * 60);
+      blockTime / (Math.log(decay / Math.pow(10, 7)) / Math.log(1 / 2));
 
-    if (days <= 1) {
-      const hours = Math.floor(days * 24);
-      const minutes = Math.round((days * 24 * 60) % 60);
+    const convictionGrowth = halfLifeInSeconds / (24 * 60 * 60);
 
-      if (hours < 1) {
-        return `${minutes} min.`;
-      } else {
-        return `${hours} hs and ${minutes} min.`;
-      }
-    } else {
-      return `${Math.round(days)} days`;
-    }
+    return convictionGrowth;
   }
 
   function calculateMinimumConviction(weight: number, spendingLimit: number) {
@@ -170,18 +160,16 @@ export default function Page({
     return minimumConviction;
   }
 
-  const blockTime =
-    chainDataMap[chain as unknown as keyof typeof chainDataMap].blockTime;
-
+  const blockTime = chainDataMap[chain].blockTime;
   const poolConfig = [
     {
       label: "Min conviction",
-      value: `${calculateMinimumConviction(strategyObj?.config.weight, spendingLimitPct * MAX_RATIO_CONSTANT).toFixed(2)}%`,
+      value: `${calculateMinimumConviction(strategyObj?.config.weight, spendingLimitPct * MAX_RATIO_CONSTANT)}%`,
       info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
     },
     {
       label: "Conviction growth",
-      value: `${calculateDaysFromDecayAndBlockTime(strategyObj?.config.decay, blockTime)}`,
+      value: `${calculateConvictionGrowthInDays(strategyObj?.config.decay, blockTime)}`,
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life",
     },
     {
@@ -192,7 +180,7 @@ export default function Page({
     {
       label: "Spending limit",
       // TODO: check number for some pools, they have more zeros or another config ?
-      value: `${(spendingLimitPct * MAX_RATIO_CONSTANT).toFixed(2)}%`,
+      value: `${spendingLimitPct * MAX_RATIO_CONSTANT}%`,
       info: "Max percentage of the pool funds that can be spent in a single proposal",
     },
   ];
@@ -212,9 +200,9 @@ export default function Page({
       <section className="section-layout flex flex-col gap-0 overflow-hidden">
         <header className="mb-2 flex flex-col">
           <div className="flex justify-between">
-            <h2>
+            {/* <h2>
               {ipfsResult.title} #{poolId}
-            </h2>
+            </h2> */}
             <div className="flex gap-2">
               <Button
                 btnStyle="outline"
@@ -239,7 +227,7 @@ export default function Page({
             <EthAddress address={strategyAddr} />
           </div>
         </header>
-        <p>{ipfsResult.description}</p>
+        {/* <p>{ipfsResult.description}</p> */}
         <div className="mb-10 mt-8 flex items-start gap-24">
           <div className="flex flex-col gap-2 max-w-fit">
             <Statistic label="pool type">

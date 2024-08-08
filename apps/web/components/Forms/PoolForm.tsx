@@ -241,6 +241,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
 
     const blockTime = chainDataMap[chainId].blockTime;
     // pool settings
+
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));
     const weight = BigInt(Math.round(weightNum * CV_SCALE_PRECISION));
     const decay = BigInt(
