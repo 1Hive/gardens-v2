@@ -43,23 +43,15 @@ export default function Page() {
   );
 
   const GardenList = useMemo(() => {
-    if (fetching) {
-      return <LoadingSpinner />;
-    }
-    if (tokenGardens?.length) {
-      return (
-        <>
-          {tokenGardens.map((garden) => (
+    return fetching ?
+        <LoadingSpinner />
+      : <>
+          {tokenGardens?.map((garden) => (
             <div key={garden.id}>
               <GardenCard garden={garden} />
             </div>
           ))}
-        </>
-      );
-    }
-    return (
-      <p className="badge-info mb-8 rounded p-1 text-center">No Gardens</p>
-    );
+        </>;
   }, [fetching, tokenGardens?.length]);
 
   return (
@@ -71,10 +63,10 @@ export default function Page() {
           </div>
           <div className="mx-10 flex flex-col items-center gap-5">
             <div className="flex flex-col items-center">
-              <h1 className="max-w-xl text-center text-[#084D21]">
+              <h1 className="max-w-xl text-center text-neutral-content">
                 Explore and Join Gardens Ecosystems
               </h1>
-              <p className="text-xl">
+              <p className="text-xl text-primary-content">
                 A place where you help shape digital economies
               </p>
             </div>
@@ -89,8 +81,8 @@ export default function Page() {
         <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]">
           {GardenList}
         </div>
-        <Image src={gardenHeader} alt="gardens" />
       </section>
+      {/* <Image src={gardenHeader} alt="gardens" /> */}
     </div>
   );
 }

@@ -13,7 +13,7 @@ export function NavBar() {
   return (
     <Disclosure
       as="nav"
-      className="sticky left-0 top-0 z-10 bg-primary-soft shadow"
+      className="sticky left-0 top-0 z-10 bg-primary-soft shadow-sm"
     >
       {({ open }) => (
         <>
