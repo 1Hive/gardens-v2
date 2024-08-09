@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Dnum } from "dnum";
 import { parseUnits } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import {
@@ -11,6 +12,7 @@ import {
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { InfoBox } from "./InfoBox";
+import { InfoIcon } from "./InfoIcon";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
@@ -19,6 +21,7 @@ import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
+import { parseToken } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 type IncreasePowerProps = {
@@ -34,12 +37,14 @@ type IncreasePowerProps = {
     | "registerToken"
   >;
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals" | "id">;
+  registrationAmount: Dnum;
 };
 
 export const IncreasePower = ({
   memberData,
   registryCommunity,
   tokenGarden,
+  registrationAmount,
 }: IncreasePowerProps) => {
   const {
     symbol: tokenSymbol,
@@ -207,8 +212,14 @@ export const IncreasePower = ({
 
   if (!isMember) return null;
 
+  const AddedStake = [
+    BigInt(memberStakedTokens - registerStakeAmountBigInt),
+    tokenDecimals,
+  ] as Dnum;
+
   return (
-    <section className="section-layout">
+    <section className="section-layout space-y-5">
+      <h2>Your stake</h2>
       <TransactionModal
         label={`Stake ${tokenSymbol} in ${communityName}`}
         transactions={[allowanceTx, votingPowerTx]}
@@ -222,35 +233,27 @@ export const IncreasePower = ({
       </TransactionModal>
 
       <div className="flex justify-between gap-4">
-        <div className="flex flex-col justify-between gap-4">
-          <div className="flex gap-4">
-            <InfoBox
-              content="staking more tokens in the community will increase your voting power to support proposals"
-              infoBoxType="info"
-              classNames="max-w-lg"
-            />
-          </div>
+        <div className="flex flex-col justify-between gap-2">
           <div className="flex justify-between">
             <div className="flex-start flex gap-2">
-              <p>Current Stake:</p>
-              <DisplayNumber
-                number={[memberStakedTokens, tokenDecimals]}
-                tokenSymbol={tokenSymbol}
-                compact={true}
-              />
-            </div>
-            <div className="flex-start flex gap-2">
-              <p>Added Stake:</p>
-              <DisplayNumber
-                number={[
-                  memberStakedTokens - BigInt(registerStakeAmount),
-                  tokenDecimals,
-                ]}
-                tokenSymbol={tokenSymbol}
-                compact={true}
-              />
+              <p className="font-medium">Total Staked in the community:</p>
+              <InfoIcon
+                content={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}`}
+              >
+                <DisplayNumber
+                  number={[memberStakedTokens, tokenDecimals]}
+                  tokenSymbol={tokenSymbol}
+                  compact={true}
+                  className="font-semibold text-primary-content"
+                />
+              </InfoIcon>
             </div>
           </div>
+          <InfoBox
+            content="staking more tokens in the community increases your pool governance weight to support proposals."
+            infoBoxType="info"
+            classNames="max-w-xl"
+          />
         </div>
         <div className="flex flex-col gap-4">
           <div className="relative">

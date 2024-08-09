@@ -235,7 +235,7 @@ export default function Page({
               />
             </Statistic>
             <div className="flex">
-              <p className="font-medium">Registration cost:</p>
+              <p className="font-medium">Registration stake:</p>
               <InfoIcon
                 content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
@@ -263,6 +263,7 @@ export default function Page({
         memberData={isMemberResult}
         registryCommunity={registryCommunity}
         tokenGarden={tokenGarden}
+        registrationAmount={registrationAmount}
       />
       <section className="section-layout flex flex-col gap-10">
         <header className="flex justify-between">
