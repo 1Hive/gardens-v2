@@ -5,12 +5,9 @@ import {
   BoltIcon,
   ChartBarIcon,
   ClockIcon,
-  Cog6ToothIcon,
-  CheckIcon,
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { parseUnits } from "viem";
 import {
   getAlloQuery,
   getPoolDataDocument,
@@ -20,14 +17,13 @@ import { Address } from "#/subgraph/src/scripts/last-addr";
 import { blueLand, grassLarge } from "@/assets";
 import {
   Badge,
-  Button,
-  EthAddress,
   InfoIcon,
   PoolMetrics,
   Proposals,
   Statistic,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import PoolHeader from "@/components/PoolHeader";
 import { chainDataMap } from "@/configs/chainServer";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
@@ -67,7 +63,6 @@ export default function Page({
     ],
   });
 
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   useEffect(() => {
     if (error) {
       console.error("Error while fetching community data: ", error);
@@ -113,7 +108,6 @@ export default function Page({
 
   const tokenGarden = data?.tokenGarden;
 
-  console.log(ipfsResult, tokenGarden);
   if (!tokenGarden) {
     return (
       <div className="mt-96">
@@ -127,7 +121,6 @@ export default function Page({
   }
 
   const pointSystem = data.cvstrategies?.[0].config?.pointSystem;
-  const strategyAddr = strategyObj.id as Address;
   const communityAddress = strategyObj.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
   const proposalType = strategyObj?.config?.proposalType as number;
@@ -198,36 +191,13 @@ export default function Page({
     <div className="page-layout">
       {/* Header */}
       <section className="section-layout flex flex-col gap-0 overflow-hidden">
-        <header className="mb-2 flex flex-col">
-          <div className="flex justify-between">
-            {/* <h2>
-              {ipfsResult.title} #{poolId}
-            </h2> */}
-            <div className="flex gap-2">
-              <Button
-                btnStyle="outline"
-                icon={<Cog6ToothIcon height={24} width={24} />}
-                disabled={!isConnected || missmatchUrl}
-                tooltip={tooltipMessage}
-              >
-                Edit
-              </Button>
-              {!isEnabled && (
-                <Button
-                  icon={<CheckIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl}
-                  tooltip={tooltipMessage}
-                >
-                  Approve
-                </Button>
-              )}
-            </div>
-          </div>
-          <div>
-            <EthAddress address={strategyAddr} />
-          </div>
-        </header>
-        {/* <p>{ipfsResult.description}</p> */}
+        <PoolHeader
+          strategy={strategyObj}
+          poolId={poolId}
+          ipfsResult={ipfsResult}
+          isEnabled={isEnabled}
+        />
+        <p>{ipfsResult?.description}</p>
         <div className="mb-10 mt-8 flex items-start gap-24">
           <div className="flex flex-col gap-2 max-w-fit">
             <Statistic label="pool type">
