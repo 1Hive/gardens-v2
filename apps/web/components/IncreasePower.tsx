@@ -236,7 +236,7 @@ export const IncreasePower = ({
         <div className="flex flex-col justify-between gap-2">
           <div className="flex justify-between">
             <div className="flex-start flex gap-2">
-              <p className="font-medium">Total Staked in the community:</p>
+              <p className="subtitle2">Total Staked in the community:</p>
               <InfoIcon
                 content={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}`}
               >
@@ -244,13 +244,13 @@ export const IncreasePower = ({
                   number={[memberStakedTokens, tokenDecimals]}
                   tokenSymbol={tokenSymbol}
                   compact={true}
-                  className="font-semibold text-primary-content"
+                  className="subtitle2 text-primary-content"
                 />
               </InfoIcon>
             </div>
           </div>
           <InfoBox
-            content="staking more tokens in the community increases your pool governance weight to support proposals."
+            content="staking more tokens in the community increases your governance weight in a pool to support proposals."
             infoBoxType="info"
             classNames="max-w-xl"
           />

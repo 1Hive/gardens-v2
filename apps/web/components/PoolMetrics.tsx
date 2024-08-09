@@ -14,14 +14,13 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { formatTokenAmount, MAX_RATIO_CONSTANT } from "@/utils/numbers";
+import { formatTokenAmount } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
   poolAmount: number;
   communityAddress: Address;
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals" | "address">;
-  spendingLimitPct: number;
   alloInfo: Allo;
   poolId: number;
   chainId: string;
@@ -32,7 +31,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolAmount,
   communityAddress,
   tokenGarden,
-  spendingLimitPct,
   poolId,
   chainId,
 }) => {
@@ -120,12 +118,12 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
         <h2>Pool Funds</h2>
         <div className="flex justify-between items-center">
           <div className="flex gap-3 items-baseline">
-            <h4>Balance:</h4>
+            <p className="subtitle2">Funds available:</p>
             <DisplayNumber
               number={formatTokenAmount(poolAmount, tokenGarden.decimals)}
               tokenSymbol={tokenGarden.symbol}
               compact={true}
-              className="font-semibold text-primary-content text-2xl"
+              className="subtitle2 text-primary-content"
             />
           </div>
           <form
