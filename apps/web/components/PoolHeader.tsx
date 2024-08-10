@@ -1,69 +1,236 @@
 import React, { useState } from "react";
-import { CheckIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
+import {
+  BoltIcon,
+  ChartBarIcon,
+  CheckIcon,
+  ClockIcon,
+  Cog6ToothIcon,
+  Square3Stack3DIcon,
+} from "@heroicons/react/24/outline";
+import Image from "next/image";
 import { Address } from "viem";
-import { getPoolDataQuery } from "#/subgraph/.graphclient";
+import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
+import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
+import PoolEditForm from "./Forms/PoolEditForm";
+import { InfoIcon } from "./InfoIcon";
 import { Modal } from "./Modal";
+import { Statistic } from "./Statistic";
+import { blueLand, grassLarge } from "@/assets";
+import { chainDataMap } from "@/configs/chainServer";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { pointSystems, poolTypes } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import {
+  CV_SCALE_PRECISION,
+  formatTokenAmount,
+  MAX_RATIO_CONSTANT,
+} from "@/utils/numbers";
 
 type Props = {
   ipfsResult: Awaited<ReturnType<typeof getIpfsMetadata>> | undefined;
   poolId: number;
   isEnabled: boolean;
   strategy: getPoolDataQuery["cvstrategies"][0];
+  token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
+  pointSystem: number;
+  chainId: string;
+  proposalType: string;
+  spendingLimitPct: number;
 };
+
+function calculateConvictionGrowthInDays(
+  decay: number,
+  blockTime: number,
+): number {
+  const halfLifeInSeconds =
+    blockTime / (Math.log(decay / Math.pow(10, 7)) / Math.log(1 / 2));
+
+  const convictionGrowth = halfLifeInSeconds / (24 * 60 * 60);
+
+  return convictionGrowth;
+}
+
+function calculateMinimumConviction(weight: number, spendingLimit: number) {
+  const weightNum = Number(weight) / CV_SCALE_PRECISION;
+
+  const spendingLimitFraction = spendingLimit / 100;
+  const maxRatioNum = spendingLimitFraction / MAX_RATIO_CONSTANT;
+
+  let minimumConviction = weightNum / maxRatioNum ** 2;
+
+  minimumConviction = minimumConviction * 100;
+
+  return minimumConviction;
+}
 
 export default function PoolHeader({
   ipfsResult,
   poolId,
   isEnabled,
   strategy,
+  token,
+  pointSystem,
+  chainId,
+  proposalType,
+  spendingLimitPct,
 }: Props) {
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   const [isOpenModal, setIsOpenModal] = useState(false);
 
+  const blockTime = chainDataMap[chainId].blockTime;
+
+  const minimumConviction = calculateMinimumConviction(
+    strategy.config.weight,
+    spendingLimitPct * MAX_RATIO_CONSTANT,
+  );
+  const convictionGrowth = calculateConvictionGrowthInDays(
+    strategy.config.decay,
+    blockTime,
+  );
+  const minThresholdPoints = formatTokenAmount(
+    strategy.config.minThresholdPoints,
+    token.decimals,
+  );
+  const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
+
+  const poolConfig = [
+    {
+      label: "Min conviction",
+      value: `${minimumConviction}%`,
+      info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
+    },
+    {
+      label: "Conviction growth",
+      value: `${convictionGrowth}`,
+      info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life",
+    },
+    {
+      label: "Min Threshold",
+      value: `${minThresholdPoints} `,
+      info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
+    },
+    {
+      label: "Spending limit",
+      // TODO: check number for some pools, they have more zeros or another config ?
+      value: `${spendingLimit}%`,
+      info: "Max percentage of the pool funds that can be spent in a single proposal",
+    },
+  ];
+
+  const filteredPoolConfig =
+    poolTypes[proposalType] === "signaling" ?
+      poolConfig.filter(
+        (config) => !["Spending limit", "Min Threshold"].includes(config.label),
+      )
+    : poolConfig;
+
   return (
-    <header className="mb-2 flex flex-col">
-      <div className="flex justify-between">
-        <h2>
-          {ipfsResult?.title} #{poolId}
-        </h2>
-        {/* TODO: council safe wallet connected && */}
-        {/* change isConnected to also check if council safe wallet */}
-        <div className="flex gap-2">
-          <Button
-            btnStyle="outline"
-            icon={<Cog6ToothIcon height={24} width={24} />}
-            disabled={!isConnected || missmatchUrl}
-            tooltip={tooltipMessage}
-            onClick={() => setIsOpenModal(true)}
-          >
-            Edit
-          </Button>
-          {!isEnabled && (
+    <section className="section-layout flex flex-col gap-0 overflow-hidden">
+      <header className="mb-2 flex flex-col">
+        <div className="flex justify-between">
+          <h2>
+            {ipfsResult?.title} #{poolId}
+          </h2>
+          {/* TODO: council safe wallet connected && */}
+          {/* change isConnected to also check if council safe wallet */}
+          <div className="flex gap-2">
             <Button
-              icon={<CheckIcon height={24} width={24} />}
+              btnStyle="outline"
+              icon={<Cog6ToothIcon height={24} width={24} />}
               disabled={!isConnected || missmatchUrl}
               tooltip={tooltipMessage}
-              onClick={() => console.log("write approve...")}
+              onClick={() => setIsOpenModal(true)}
             >
-              Approve
+              Edit
             </Button>
+            {!isEnabled && (
+              <Button
+                icon={<CheckIcon height={24} width={24} />}
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+                onClick={() => console.log("write approve...")}
+              >
+                Approve
+              </Button>
+            )}
+          </div>
+        </div>
+        <div>
+          <EthAddress address={strategy.id as Address} />
+        </div>
+        <Modal
+          title={`Edit ${ipfsResult?.title} #${poolId}`}
+          isOpen={isOpenModal}
+          onClose={() => setIsOpenModal(false)}
+        >
+          <PoolEditForm
+            strategyAddr={strategy.id as Address}
+            token={token}
+            chainId={0}
+            initValues={{
+              spendingLimit: spendingLimit,
+              minimumConviction: minimumConviction,
+              convictionGrowth: convictionGrowth,
+              minThresholdPoints: minThresholdPoints,
+            }}
+          />
+        </Modal>
+      </header>
+      <p>{ipfsResult?.description}</p>
+      <div className="mb-10 mt-8 flex items-start gap-24">
+        <div className="flex flex-col gap-2 max-w-fit">
+          <Statistic label="pool type">
+            <Badge type={parseInt(proposalType)} />
+          </Statistic>
+
+          {poolTypes[proposalType] === "funding" && (
+            <Statistic label="funding token">
+              <Badge
+                isCapitalize
+                label={token.symbol}
+                icon={<Square3Stack3DIcon />}
+              />
+            </Statistic>
           )}
+
+          <Statistic label="voting weight system">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Badge
+                label="conviction voting"
+                classNames="text-secondary-content"
+                icon={<ChartBarIcon />}
+              />
+              <Badge label={pointSystems[pointSystem]} icon={<BoltIcon />} />
+            </div>
+          </Statistic>
+        </div>
+        <div className="flex flex-col gap-4">
+          {filteredPoolConfig.map((config) => (
+            <div key={config.label} className="flex items-center gap-4">
+              <Statistic label={config.label}>
+                <InfoIcon content={config.info}>
+                  <p className="text-neutral-content subtitle">
+                    {config.value}{" "}
+                  </p>
+                </InfoIcon>
+              </Statistic>
+            </div>
+          ))}
         </div>
       </div>
-      <div>
-        <EthAddress address={strategy.id as Address} />
-      </div>
-      <Modal
-        title={`Edit ${ipfsResult?.title} #${poolId}`}
-        isOpen={isOpenModal}
-        onClose={() => setIsOpenModal(false)}
-      >
-        form
-      </Modal>
-    </header>
+      {!isEnabled ?
+        <div className="banner">
+          <ClockIcon className="h-8 w-8 text-secondary-content" />
+          <h6>Waiting for council approval</h6>
+        </div>
+      : <Image
+          src={poolTypes[proposalType] === "funding" ? blueLand : grassLarge}
+          alt="pool image"
+          className="h-12 w-full rounded-lg object-cover"
+        />
+      }
+    </section>
   );
 }
