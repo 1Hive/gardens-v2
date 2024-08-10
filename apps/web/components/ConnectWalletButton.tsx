@@ -64,7 +64,7 @@ export function ConnectWallet() {
                       height={20}
                       width={20}
                     />
-                    Connect
+                    Connect wallet
                   </Button>
                 );
               }
