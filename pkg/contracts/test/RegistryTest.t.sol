@@ -98,7 +98,8 @@ contract RegistryUpgradeableTest is
         //        strategy = address(new CVMockStrategy(address(allo())));
 
         ERC1967Proxy strategyProxy = new ERC1967Proxy(
-            address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()))
+            address(new CVStrategyV0_0()),
+            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()))
         );
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
@@ -119,7 +120,12 @@ contract RegistryUpgradeableTest is
 
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(new RegistryFactoryV0_0()),
-            abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(protocolFeeReceiver))
+            abi.encodeWithSelector(
+                RegistryFactoryV0_0.initialize.selector,
+                address(protocolFeeReceiver),
+                address(new RegistryCommunityV0_0()),
+                address(new CollateralVault())
+            )
         );
 
         registryFactory = RegistryFactoryV0_0(address(proxy));

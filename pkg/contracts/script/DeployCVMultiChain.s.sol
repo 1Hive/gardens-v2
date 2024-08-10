@@ -212,7 +212,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         CVStrategyV0_0 strategy1 = CVStrategyV0_0(
             payable(
                 new ERC1967Proxy(
-                    address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+                    address(new CVStrategyV0_0()),
+                    abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()))
                 )
             )
         );
@@ -235,7 +236,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         CVStrategyV0_0 strategy2 = CVStrategyV0_0(
             payable(
                 new ERC1967Proxy(
-                    address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+                    address(new CVStrategyV0_0()),
+                    abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()))
                 )
             )
         );

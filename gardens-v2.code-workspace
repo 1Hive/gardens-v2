@@ -42,6 +42,7 @@
     "[typescriptreact]": {
       "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     },
+    "solidity.formatter": "forge"
   },
   "extensions": {
     "recommendations": [
