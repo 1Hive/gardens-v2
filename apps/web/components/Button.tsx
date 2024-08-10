@@ -15,6 +15,11 @@ type ButtonProps = {
   className?: string;
   disabled?: boolean;
   tooltip?: string;
+  tooltipSide?:
+    | "tooltip-top"
+    | "tooltip-bottom"
+    | "tooltip-left"
+    | "tooltip-right";
   children: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
@@ -29,66 +34,63 @@ type BtnStyles = Record<BtnStyle, Record<Color, string>>;
 
 const btnStyles: BtnStyles = {
   filled: {
-    primary: "btn !bg-primary-button !text-neutral-inverted-content",
-    secondary: "btn !bg-secondary-button !text-neutral-inverted-content",
-    tertiary: "btn !bg-tertiary-button !text-neutral-inverted-content",
-    danger: "btn !bg-danger-button !text-neutral-inverted-content",
-    disabled: "btn !bg-neutral-button !text-neutral-inverted-content",
+    primary:
+      "bg-primary-button text-neutral-inverted-content hover:bg-primary-hover-content",
+    secondary: "",
+    tertiary: "",
+    danger:
+      "bg-danger-button text-neutral-inverted-content hover:bg-danger-hover-content",
+    disabled: "bg-neutral-button text-neutral-inverted-content",
   },
   outline: {
-    primary: "btn btn-outline !text-primary-content !border-primary-content",
+    primary:
+      "text-primary-content outline outline-2 outline-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
     secondary:
-      "btn btn-outline !text-secondary-content !border-secondary-content",
-    tertiary:
-      "btn btn-outline !text-secondary-content !border-tertiary-content",
-    danger: "btn btn-outline !text-danger-button !border-danger-button",
-    disabled: "btn btn-outline !text-neutral-soft !border-neutral-soft",
+      "text-secondary-content outline outline-2 outline-secondary-content hover:text-secondary-hover-content hover:outline-secondary-hover-content",
+    tertiary: "",
+    danger:
+      "text-danger-button outline outline-2 outline-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
+    disabled: "text-neutral-soft outline outline-2 outline-neutral-soft",
   },
   link: {
     primary: "text-primary-content",
-    secondary: "text-secondary-content",
-    tertiary: "text-tertiary-content",
+    secondary: "",
+    tertiary: "",
     danger: "text-danger-button",
     disabled: "text-neutral-soft",
   },
 };
 
 export function Button({
-  onClick = () => {},
+  onClick,
   className: styles,
   disabled = false,
   tooltip = "Connect wallet",
+  tooltipSide = "tooltip-top",
   children,
   btnStyle = "filled",
   color = "primary",
   isLoading = false,
   icon,
   type = "button",
-  size = "md",
 }: ButtonProps) {
+  const buttonContent =
+    isLoading ? <span className="loading loading-spinner" /> : children;
+
   const buttonElement = (
     <button
       type={type}
-      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]} btn-${size}
-      relative cursor-pointer items-center justify-center rounded-lg px-6 transition-all ease-out disabled:cursor-not-allowed ${styles} hover:shadow-md disabled:shadow-none`}
+      className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
+      flex cursor-pointer items-center justify-center gap-2 rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
-      <div
-        className={`flex gap-2 items-center justify-center transition-opacity ${isLoading ? "opacity-0" : "opacity-100"}`}
-      >
-        {icon && icon} {children}
-      </div>
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="loading loading-spinner" />
-        </div>
-      )}
+      {icon && icon} {buttonContent}
     </button>
   );
 
   return disabled ?
-      <div className={`tooltip ${styles}`} data-tip={tooltip}>
+      <div className={`tooltip ${tooltipSide} ${styles}`} data-tip={tooltip}>
         {buttonElement}
       </div>
     : buttonElement;

@@ -67,7 +67,6 @@ export function FormInput({
             placeholder={placeholder}
             className={`hide-input-arrows input input-bordered ${errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname} ${className}`}
             required={required}
-            readOnly={readOnly}
             step={step}
             {...register(registerKey, {
               required,

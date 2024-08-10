@@ -394,6 +394,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               registerKey="title"
               type="text"
               placeholder="Your pool name..."
+              readOnly={true}
             />
           </div>
           <div className="flex flex-col">

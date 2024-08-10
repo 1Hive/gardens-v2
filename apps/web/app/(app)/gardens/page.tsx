@@ -43,10 +43,10 @@ export default function Page() {
   );
 
   const GardenList = useMemo(() => {
-    if (fetching) {
+    if (!tokenGardens) {
       return <LoadingSpinner />;
     }
-    if (tokenGardens?.length) {
+    if (tokenGardens.length) {
       return (
         <>
           {tokenGardens.map((garden) => (

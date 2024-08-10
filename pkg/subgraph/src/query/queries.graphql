@@ -258,6 +258,12 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       pointSystem
       maxRatio
       minThresholdPoints
+      challengerCollateralAmount
+      submitterCollateralAmount
+      arbitrator
+      tribunalSafe
+      defaultRuling
+      defaultRulingTimeout
     }
     registryCommunity {
       id
@@ -300,6 +306,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     decimals
   }
   cvproposal(id: $proposalId) {
+    id
     proposalNumber
     beneficiary
     blockLast
@@ -322,6 +329,10 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
         proposalType
         pointSystem
         minThresholdPoints
+        challengerCollateralAmount
+        arbitrator
+        defaultRuling
+        defaultRulingTimeout
       }
     }
   }
@@ -461,11 +472,7 @@ query getPassportUser($userId: ID!) {
 }
 
 query getProposalDisputes($proposalId: ID!) {
-  proposalDisputes(
-    where: { proposal_: { id: $proposalId } }
-    orderBy: createdAt
-    orderDirection: desc
-  ) {
+  proposalDisputes(where: { proposal_: { id: $proposalId } }) {
     id
     disputeId
     status
@@ -480,17 +487,13 @@ query getProposalDisputes($proposalId: ID!) {
   }
 }
 
-query getStrategyArbitrationConfig($strategyId: ID!) {
-  cvstrategy(id: $strategyId) {
-    id
-    config {
-      id
-      arbitrator
-      tribunalSafe
-      challengerCollateralAmount
-      submitterCollateralAmount
-      defaultRuling
-      defaultRulingTimeout
-    }
+query getStrategyArbitrationConfig($strategyConfigId: ID!) {
+  cvstrategyConfig(id: $strategyConfigId) {
+    challengerCollateralAmount
+    submitterCollateralAmount
+    arbitrator
+    tribunalSafe
+    defaultRuling
+    defaultRulingTimeout
   }
 }

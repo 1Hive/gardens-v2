@@ -129,12 +129,14 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             pointConfig.maxAmount = 200 * DECIMALS;
         }
         paramsCV.pointConfig = pointConfig;
-        paramsCV.arbitrableConfig =
-            StrategyStruct.ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300); // Using council safe as tribinal just for testing
+        paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            safeArbitrator, payable(address(_councilSafe())), 0.003 ether, 0.002 ether, 1, 300
+        ); // Using council safe as tribinal just for testing
         // FAST 1 MIN GROWTH
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(
             address(token), paramsCV, Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
         );
+
         CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
 
         safeHelper(
@@ -146,8 +148,9 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Fixed;
 
-        paramsCV.arbitrableConfig =
-            StrategyStruct.ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600);
+        paramsCV.arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            safeArbitrator, payable(address(_councilSafe())), 0.003 ether, 0.002 ether, 1, 600
+        );
 
         (uint256 poolIdFixed, address _strategy2) = registryCommunity.createPool(address(token), paramsCV, metadata);
 
@@ -176,19 +179,21 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         poolParams1.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         poolParams1.maxRatio = _etherToFloat(0.1 ether); // beta = maxRatio
         poolParams1.weight = _etherToFloat(0.0005 ether); // RHO = p  = weight
-        safeHelper(
-            address(strategy1),
-            0,
-            abi.encodeWithSelector(strategy1.setPoolParams.selector, poolParams1, paramsCV.arbitrableConfig)
-        );
+        // TODO: Uncomment when setPoolParams finding a way to call it correctly
+        // safeHelper(
+        //     address(strategy1),
+        //     0,
+        //     abi.encodeWithSelector(strategy1.setPoolParams.selector, poolParams1, paramsCV.arbitrableConfig)
+        // );
 
         // FAST 1 MIN GROWTH
         // strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
-        safeHelper(
-            address(strategy2),
-            0,
-            abi.encodeWithSelector(strategy1.setPoolParams.selector, poolParams1, paramsCV.arbitrableConfig)
-        );
+        // TODO: Uncomment when setPoolParams finding a way to call it correctly
+        // safeHelper(
+        //     address(strategy2),
+        //     0,
+        //     abi.encodeWithSelector(strategy1.setPoolParams.selector, poolParams1, paramsCV.arbitrableConfig)
+        // );
         vm.stopBroadcast();
 
         address[] memory membersStaked = new address[](7);
@@ -317,8 +322,9 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         );
 
         // FAST 1 MIN GROWTH
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig =
-            StrategyStruct.ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600);
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            safeArbitrator, payable(address(_councilSafe())), 0.003 ether, 0.002 ether, 1, 600
+        );
 
         uint256 poolId = createPool(
             Allo(address(allo)),

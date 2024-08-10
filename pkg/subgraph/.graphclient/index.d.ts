@@ -1106,8 +1106,8 @@ export type ProposalDispute = {
     challenger: Scalars['String']['output'];
     context: Scalars['String']['output'];
     metadata: ProposalDisputeMetadata;
-    ruledAt?: Maybe<Scalars['BigInt']['output']>;
     rulingOutcome?: Maybe<Scalars['BigInt']['output']>;
+    ruledAt?: Maybe<Scalars['BigInt']['output']>;
 };
 export type ProposalDisputeMetadata = {
     id: Scalars['ID']['output'];
@@ -1263,14 +1263,6 @@ export type ProposalDispute_filter = {
     metadata_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     metadata_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     metadata_?: InputMaybe<ProposalDisputeMetadata_filter>;
-    ruledAt?: InputMaybe<Scalars['BigInt']['input']>;
-    ruledAt_not?: InputMaybe<Scalars['BigInt']['input']>;
-    ruledAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
-    ruledAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
-    ruledAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
-    ruledAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
-    ruledAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-    ruledAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     rulingOutcome?: InputMaybe<Scalars['BigInt']['input']>;
     rulingOutcome_not?: InputMaybe<Scalars['BigInt']['input']>;
     rulingOutcome_gt?: InputMaybe<Scalars['BigInt']['input']>;
@@ -1279,12 +1271,20 @@ export type ProposalDispute_filter = {
     rulingOutcome_lte?: InputMaybe<Scalars['BigInt']['input']>;
     rulingOutcome_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     rulingOutcome_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    ruledAt?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    ruledAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    ruledAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<ProposalDispute_filter>>>;
     or?: InputMaybe<Array<InputMaybe<ProposalDispute_filter>>>;
 };
-export type ProposalDispute_orderBy = 'id' | 'createdAt' | 'disputeId' | 'proposal' | 'proposal__id' | 'proposal__proposalNumber' | 'proposal__metadata' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__threshold' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'status' | 'challenger' | 'context' | 'metadata' | 'metadata__id' | 'metadata__reason' | 'ruledAt' | 'rulingOutcome';
+export type ProposalDispute_orderBy = 'id' | 'createdAt' | 'disputeId' | 'proposal' | 'proposal__id' | 'proposal__proposalNumber' | 'proposal__metadata' | 'proposal__version' | 'proposal__beneficiary' | 'proposal__requestedAmount' | 'proposal__requestedToken' | 'proposal__proposalStatus' | 'proposal__blockLast' | 'proposal__convictionLast' | 'proposal__threshold' | 'proposal__maxCVStaked' | 'proposal__stakedAmount' | 'proposal__submitter' | 'proposal__createdAt' | 'proposal__updatedAt' | 'status' | 'challenger' | 'context' | 'metadata' | 'metadata__id' | 'metadata__reason' | 'rulingOutcome' | 'ruledAt';
 export type Query = {
     cvstrategy?: Maybe<CVStrategy>;
     cvstrategies: Array<CVStrategy>;
@@ -2692,8 +2692,8 @@ export type ProposalDisputeResolvers<ContextType = MeshContext, ParentType exten
     challenger?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     context?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     metadata?: Resolver<ResolversTypes['ProposalDisputeMetadata'], ParentType, ContextType>;
-    ruledAt?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     rulingOutcome?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    ruledAt?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type ProposalDisputeMetadataResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['ProposalDisputeMetadata'] = ResolversParentTypes['ProposalDisputeMetadata']> = ResolversObject<{
@@ -2946,7 +2946,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
         proposalId: string;
     }>, options?: TOperationContext): Promise<getProposalDisputesQuery>;
     getStrategyArbitrationConfig(variables: Exact<{
-        strategyId: string;
+        strategyConfigId: string;
     }>, options?: TOperationContext): Promise<getStrategyArbitrationConfigQuery>;
 };
 export type getFactoriesQueryVariables = Exact<{
@@ -3067,7 +3067,7 @@ export type getPoolDataQuery = {
     tokenGarden?: Maybe<Pick<TokenGarden, 'address' | 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled'> & {
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
-        config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'maxRatio' | 'minThresholdPoints'>;
+        config: Pick<CVStrategyConfig, 'id' | 'proposalType' | 'pointSystem' | 'maxRatio' | 'minThresholdPoints' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'arbitrator' | 'tribunalSafe' | 'defaultRuling' | 'defaultRulingTimeout'>;
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });
@@ -3083,9 +3083,9 @@ export type getProposalDataQueryVariables = Exact<{
 export type getProposalDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'name' | 'symbol' | 'decimals'>>;
-    cvproposal?: Maybe<(Pick<CVProposal, 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadata' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
+    cvproposal?: Maybe<(Pick<CVProposal, 'id' | 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadata' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
         strategy: (Pick<CVStrategy, 'id' | 'maxCVSupply' | 'totalEffectiveActivePoints'> & {
-            config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;
+            config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem' | 'minThresholdPoints' | 'challengerCollateralAmount' | 'arbitrator' | 'defaultRuling' | 'defaultRulingTimeout'>;
         });
     })>;
 };
@@ -3178,12 +3178,10 @@ export type getProposalDisputesQuery = {
     })>;
 };
 export type getStrategyArbitrationConfigQueryVariables = Exact<{
-    strategyId: Scalars['ID']['input'];
+    strategyConfigId: Scalars['ID']['input'];
 }>;
 export type getStrategyArbitrationConfigQuery = {
-    cvstrategy?: Maybe<(Pick<CVStrategy, 'id'> & {
-        config: Pick<CVStrategyConfig, 'id' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout'>;
-    })>;
+    cvstrategyConfig?: Maybe<Pick<CVStrategyConfig, 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'arbitrator' | 'tribunalSafe' | 'defaultRuling' | 'defaultRulingTimeout'>>;
 };
 export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, Exact<{
     [key: string]: never;
@@ -3254,7 +3252,7 @@ export declare const getProposalDisputesDocument: DocumentNode<getProposalDisput
     proposalId: Scalars['ID']['input'];
 }>>;
 export declare const getStrategyArbitrationConfigDocument: DocumentNode<getStrategyArbitrationConfigQuery, Exact<{
-    strategyId: Scalars['ID']['input'];
+    strategyConfigId: Scalars['ID']['input'];
 }>>;
 export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V, options?: C) => Promise<R> | AsyncIterable<R>;
 export declare function getSdk<C, E>(requester: Requester<C, E>): {

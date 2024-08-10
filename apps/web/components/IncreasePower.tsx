@@ -71,32 +71,23 @@ export const IncreasePower = ({
 
   const urlChainId = useChainIdFromPath();
 
-  const {
-    data: isMemberResult,
-    refetch: refetchIsMember,
-    fetching,
-  } = useSubgraphQuery<isMemberQuery>({
+  useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
     variables: {
       me: accountAddress?.toLowerCase(),
       comm: communityAddress.toLowerCase(),
     },
     enabled: accountAddress !== undefined,
+    modifier: (data) => {
+      if (data.member) {
+        const stakedTokens = data.member.memberCommunity?.[0]?.stakedTokens;
+        setMemberStakedTokens(
+          BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"),
+        );
+      }
+      return data;
+    },
   });
-
-  useEffect(() => {
-    if (accountAddress && isMemberResult && !fetching) {
-      refetchIsMember().then((result) => {
-        if (result?.data?.member) {
-          const stakedTokens =
-            result?.data.member?.memberCommunity?.[0]?.stakedTokens;
-          setMemberStakedTokens(
-            BigInt(typeof stakedTokens === "string" ? stakedTokens : "0"),
-          );
-        }
-      });
-    }
-  }, [accountAddress]);
 
   const requestedAmount = parseUnits(
     (increaseInput ?? 0).toString(),

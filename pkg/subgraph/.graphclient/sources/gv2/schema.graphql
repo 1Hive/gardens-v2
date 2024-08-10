@@ -1220,8 +1220,8 @@ type ProposalDispute {
   challenger: String!
   context: String!
   metadata: ProposalDisputeMetadata!
-  ruledAt: BigInt
   rulingOutcome: BigInt
+  ruledAt: BigInt
 }
 
 type ProposalDisputeMetadata {
@@ -1384,14 +1384,6 @@ input ProposalDispute_filter {
   metadata_not_ends_with: String
   metadata_not_ends_with_nocase: String
   metadata_: ProposalDisputeMetadata_filter
-  ruledAt: BigInt
-  ruledAt_not: BigInt
-  ruledAt_gt: BigInt
-  ruledAt_lt: BigInt
-  ruledAt_gte: BigInt
-  ruledAt_lte: BigInt
-  ruledAt_in: [BigInt!]
-  ruledAt_not_in: [BigInt!]
   rulingOutcome: BigInt
   rulingOutcome_not: BigInt
   rulingOutcome_gt: BigInt
@@ -1400,6 +1392,14 @@ input ProposalDispute_filter {
   rulingOutcome_lte: BigInt
   rulingOutcome_in: [BigInt!]
   rulingOutcome_not_in: [BigInt!]
+  ruledAt: BigInt
+  ruledAt_not: BigInt
+  ruledAt_gt: BigInt
+  ruledAt_lt: BigInt
+  ruledAt_gte: BigInt
+  ruledAt_lte: BigInt
+  ruledAt_in: [BigInt!]
+  ruledAt_not_in: [BigInt!]
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [ProposalDispute_filter]
@@ -1433,8 +1433,8 @@ enum ProposalDispute_orderBy {
   metadata
   metadata__id
   metadata__reason
-  ruledAt
   rulingOutcome
+  ruledAt
 }
 
 type Query {

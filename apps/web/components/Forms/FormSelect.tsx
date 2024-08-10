@@ -38,6 +38,7 @@ export function FormSelect({
           required,
           ...registerOptions,
         })}
+
       >
         {options.map(({ value, label: lab }) => (
           <option value={value} key={value}>

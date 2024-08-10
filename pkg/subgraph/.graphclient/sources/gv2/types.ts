@@ -1259,8 +1259,8 @@ export type ProposalDispute = {
   challenger: Scalars['String']['output'];
   context: Scalars['String']['output'];
   metadata: ProposalDisputeMetadata;
-  ruledAt?: Maybe<Scalars['BigInt']['output']>;
   rulingOutcome?: Maybe<Scalars['BigInt']['output']>;
+  ruledAt?: Maybe<Scalars['BigInt']['output']>;
 };
 
 export type ProposalDisputeMetadata = {
@@ -1422,14 +1422,6 @@ export type ProposalDispute_filter = {
   metadata_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   metadata_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   metadata_?: InputMaybe<ProposalDisputeMetadata_filter>;
-  ruledAt?: InputMaybe<Scalars['BigInt']['input']>;
-  ruledAt_not?: InputMaybe<Scalars['BigInt']['input']>;
-  ruledAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
-  ruledAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
-  ruledAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
-  ruledAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
-  ruledAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  ruledAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   rulingOutcome?: InputMaybe<Scalars['BigInt']['input']>;
   rulingOutcome_not?: InputMaybe<Scalars['BigInt']['input']>;
   rulingOutcome_gt?: InputMaybe<Scalars['BigInt']['input']>;
@@ -1438,6 +1430,14 @@ export type ProposalDispute_filter = {
   rulingOutcome_lte?: InputMaybe<Scalars['BigInt']['input']>;
   rulingOutcome_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   rulingOutcome_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  ruledAt?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  ruledAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  ruledAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<ProposalDispute_filter>>>;
@@ -1471,8 +1471,8 @@ export type ProposalDispute_orderBy =
   | 'metadata'
   | 'metadata__id'
   | 'metadata__reason'
-  | 'ruledAt'
-  | 'rulingOutcome';
+  | 'rulingOutcome'
+  | 'ruledAt';
 
 export type Query = {
   cvstrategy?: Maybe<CVStrategy>;

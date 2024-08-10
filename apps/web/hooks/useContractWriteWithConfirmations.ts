@@ -50,7 +50,9 @@ export function useContractWriteWithConfirmations<
     props.onError?.(...params);
   };
 
-  const txResult = useContractWrite(propsWithChainId as any);
+  const txResult = useContractWrite(
+    props as UseContractWriteConfig<TAbi, TFunctionName, TMode>,
+  );
 
   // Hook does not run unless hash is defined.
   const txWaitResult = useWaitForTransaction({

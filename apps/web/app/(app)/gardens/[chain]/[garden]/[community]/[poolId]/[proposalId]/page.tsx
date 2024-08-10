@@ -41,7 +41,7 @@ const prettyTimestamp = (timestamp: number) => {
 };
 
 export default function Page({
-  params: { proposalId, garden, poolId },
+  params: { proposalId, garden },
 }: {
   params: {
     proposalId: string;
@@ -64,10 +64,8 @@ export default function Page({
   });
 
   const proposalData = data?.cvproposal;
-
   const metadata = proposalData?.metadata;
-
-  const proposalIdNumber = proposalData?.proposalNumber as number;
+  const proposalIdNumber = !!proposalData ? BigInt(proposalData.proposalNumber) : undefined;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
@@ -103,13 +101,10 @@ export default function Page({
   const isSignalingType = PoolTypes[proposalType] === "signaling";
 
   //encode proposal id to pass as argument to distribute function
-  const encodedDataProposalId = (proposalId_: number) => {
-    if (!proposalId_) {
-      return;
-    }
+  const encodedDataProposalId = (proposalId_: bigint) => {
     const encodedProposalId = encodeAbiParameters(
       [{ name: "proposalId", type: "uint" }],
-      [BigInt(proposalId_)],
+      [proposalId_],
     );
     return encodedProposalId;
   };
@@ -210,7 +205,7 @@ export default function Page({
           </div>
         </div>
         <div className="w-full justify-end flex">
-          {(ProposalStatus[proposalData.proposalStatus] === "active" ||
+          {(ProposalStatus[proposalData.proposalStatus] === "active" || 
             ProposalStatus[proposalData.proposalStatus] === "disputed") && (
             <div className="flex w-full justify-end">
               <DisputeButton
@@ -220,15 +215,16 @@ export default function Page({
           )}
           {ProposalStatus[status] !== "executed" && !isSignalingType && (
             <Button
-              onClick={() =>
+              onClick={() => {
+                if (!proposalIdNumber) {
+                  toast.error("Error executing proposal. Please try again.");
+                  console.error("ProposalIdNumber undefined");
+                  return;
+                }
                 writeDistribute?.({
-                  args: [
-                    poolId,
-                    [data.cvproposal?.strategy.id],
-                    encodedDataProposalId(Number(proposalIdNumber)),
-                  ],
-                })
-              }
+                  args: [[], encodedDataProposalId(proposalIdNumber), "0x0"],
+                });
+              }}
               disabled={currentConvictionPct < thresholdPct}
               tooltip="Proposal not executable"
             >
@@ -252,7 +248,7 @@ export default function Page({
             thresholdPct={thresholdPct}
             proposalSupportPct={totalSupportPct}
             isSignalingType={isSignalingType}
-            proposalId={proposalIdNumber}
+            proposalId={Number(proposalIdNumber)}
           />
         }
       </section>

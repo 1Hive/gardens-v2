@@ -15,7 +15,7 @@ library DeployCollateralVaultTemplate {
     }
 
     function deployCollateralVaultTemplate() external {
-        if (isContract(0x3b1fbFB04DB3585920b2eAdBb8839FC9680FE8cd)) {
+        if (isContract(0xfb05EB7dA4e0266a9b671c04927272a9A6cf6C9c)) {
             console.log("CollateralVault template already deployed!");
         } else {
             // --- Deterministic Deployment Parameters ---

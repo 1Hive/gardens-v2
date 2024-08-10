@@ -22,12 +22,10 @@ const errorsABI = [
 
 // console.log("errorsABI", errorsABI);
 
-export function abiWithErrors(abi: Abi): Abi {
+export function abiWithErrors(abi: Abi) {
   return [...abi, ...errorsABI];
 }
 
-export function abiWithErrors2<Tabi extends Abi>(
-  abi: Tabi,
-): Tabi & typeof errorsABI {
-  return [...abi, ...errorsABI] as Tabi & typeof errorsABI;
+export function abiWithErrors2<Tabi extends Abi>(abi: Tabi) {
+  return [...abi, ...errorsABI];
 }

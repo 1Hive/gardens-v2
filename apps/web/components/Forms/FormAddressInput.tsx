@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { blo } from "blo";
 import { RegisterOptions } from "react-hook-form";
 import { useIsMounted } from "usehooks-ts";
@@ -21,10 +21,10 @@ type Props = {
   required?: boolean;
   readOnly?: boolean;
   className?: string;
-  value: string | undefined;
+  value?: string;
   disabled?: boolean;
   tooltip?: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
 };
 
 export const FormAddressInput = ({
@@ -45,6 +45,7 @@ export const FormAddressInput = ({
   const [input, setInput] = useState<string | undefined>(value);
   const [isValid, setIsValid] = useState<boolean | null>(true);
   const isMounted = useIsMounted();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: resolvedAddress } = useEnsAddress({
     name: !!input && isENS(input) ? normalize(input) : undefined,
@@ -65,21 +66,23 @@ export const FormAddressInput = ({
     enabled: !!ensName,
   });
 
+  console.log("inputRef.current?.value", inputRef.current?.value);
+
   useEffect(() => {
-    setInput(value);
-  }, [value]);
+    setInput(value ?? inputRef.current?.value);
+  }, [value ?? inputRef.current?.value]);
 
   useEffect(() => {
     if (!isMounted()) {
       return;
     }
     if (resolvedAddress) {
-      onChange(resolvedAddress);
+      onChange?.(resolvedAddress);
       setIsValid(true);
     } else if (input != null && !isENS(input)) {
       // Direct address validation
       if (input !== value) {
-        onChange(input);
+        onChange?.(input);
       }
       try {
         setIsValid(isAddress(input));
@@ -111,6 +114,7 @@ export const FormAddressInput = ({
         className={`form-control input input-info flex flex-row bg-base-200 font-normal items-center w-[450px] ${modifier}`}
       >
         <input
+          ref={inputRef}
           className={
             "input px-0 bg-transparent w-full border-none focus:border-none outline-none focus:outline-none"
           }
@@ -127,19 +131,21 @@ export const FormAddressInput = ({
             ...registerOptions,
           })}
         />
-        {
+        {inputRef.current?.value && (
           // Don't want to use nextJS Image here (and adding remote patterns for the URL)
-          value && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              alt=""
-              className={"!rounded-full ml-2"}
-              src={avatarUrl ? avatarUrl : blo(value as Address)}
-              width="30"
-              height="30"
-            />
-          )
-        }
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            alt=""
+            className={"!rounded-full ml-2"}
+            src={
+              avatarUrl ? avatarUrl : (
+                blo((inputRef.current?.value ?? "0x") as Address)
+              )
+            }
+            width="30"
+            height="30"
+          />
+        )}
       </div>
     </div>
   );

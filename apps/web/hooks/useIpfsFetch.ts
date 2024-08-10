@@ -20,7 +20,7 @@ export const useIpfsFetch = <TResult>({
   hash: Maybe<string>;
   modifier?: (rawResult: TResult) => TResult | Promise<TResult>;
   enabled?: boolean;
-}): any => {
+}) => {
   const [data, setData] = useState<TResult | null>(null);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -71,5 +71,6 @@ export const useProposalMetadataIpfsFetch = ({
       };
     },
   });
+
   return { ...ipfs, metadata: ipfs.data };
 };

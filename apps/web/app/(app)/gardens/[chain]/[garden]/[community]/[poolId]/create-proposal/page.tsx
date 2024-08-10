@@ -56,6 +56,7 @@ export default function Page({
           </div>
         </div>
         <ProposalForm
+          strategy={strategyObj}
           poolId={poolId}
           proposalType={proposalType}
           alloInfo={alloInfo}

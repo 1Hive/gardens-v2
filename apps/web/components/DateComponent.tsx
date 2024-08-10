@@ -1,9 +1,9 @@
 import React from "react";
-import { format } from "date-fns"; // Library for date formatting
+import { format } from "date-fns";
 
 interface DateComponentProps {
-  timestamp: number; // Unix timestamp in milliseconds
-  className?: string; // Optional Tailwind classes for styling
+  timestamp: number; // Unix timestamp in seconds
+  className?: string;
 }
 
 export const DateComponent: React.FC<DateComponentProps> = ({

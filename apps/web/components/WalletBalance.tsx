@@ -1,12 +1,13 @@
 import { FC, useEffect, useRef } from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { formatEther } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import { DisplayNumber } from "./DisplayNumber";
 
 type Props = {
   label: string;
   token: "native" | Address;
-  askedAmount: number;
+  askedAmount: bigint;
   tooltip?: string;
   setIsEnoughBalance: (isEnoughBalance: boolean) => void;
 };
@@ -22,11 +23,13 @@ type Props = {
 export const WalletBalance: FC<Props> = ({
   token,
   askedAmount,
+  label,
   tooltip,
   setIsEnoughBalance,
 }) => {
   const { address } = useAccount();
   const isEnoughBalanceRef = useRef(false);
+
   const { data, isFetching } = useBalance({
     address,
     formatUnits: "ether",
@@ -34,28 +37,29 @@ export const WalletBalance: FC<Props> = ({
     watch: true,
   });
 
-  const balance = data && +data.formatted;
+  const balance = data && data.value;
+  const askedFormated = (+formatEther(askedAmount)).toFixed(2);
 
   useEffect(() => {
-    if (data?.value) {
+    if (balance != null) {
       isEnoughBalanceRef.current = !!balance && balance >= askedAmount;
       setIsEnoughBalance(isEnoughBalanceRef.current);
     }
-  }, [data?.value, askedAmount, setIsEnoughBalance]);
+  }, [balance, askedAmount, setIsEnoughBalance]);
 
   return (
     <>
-      {!isFetching ?
+      {isFetching ?
         <div className="skeleton h-14 w-56 bg-neutral-soft" />
       : <div className="flex flex-col gap-1">
           <div className="flex">
-            <p className="font-medium">Dispute stake:</p>
+            <p className="font-medium">{label}:</p>
             <div
               className="tooltip ml-2 flex cursor-pointer items-center text-primary-content"
               data-tip={tooltip}
             >
               <DisplayNumber
-                number={askedAmount.toString()}
+                number={askedFormated}
                 className="font-semibold text-primary-content"
                 disableTooltip={true}
                 compact={true}
@@ -75,7 +79,7 @@ export const WalletBalance: FC<Props> = ({
               data-tip={`${isEnoughBalanceRef.current ? balance : "Insufficient balance"}`}
             >
               <DisplayNumber
-                number={balance?.toFixed(2).toString() ?? "0"}
+                number={(+(data?.formatted ?? 0)).toFixed(2).toString()}
                 className={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}
                 disableTooltip={true}
                 compact={true}

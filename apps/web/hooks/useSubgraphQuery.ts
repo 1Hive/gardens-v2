@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
+import {
+  AnyVariables,
+  DocumentInput,
+  OperationContext,
+  OperationResult,
+} from "@urql/next";
 import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
@@ -19,6 +24,7 @@ import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 
 const pendingRefreshToastId = "pending-refresh";
+
 /**
  *  Fetches data from a subgraph by chain id
  * @param chainId
@@ -38,6 +44,7 @@ export function useSubgraphQuery<
   context,
   changeScope: changeScope,
   enabled = true,
+  modifier,
 }: {
   chainId?: ChainId;
   query: DocumentInput<any, Variables>;
@@ -45,6 +52,7 @@ export function useSubgraphQuery<
   context?: Omit<OperationContext, "topic">;
   changeScope?: ChangeEventScope[] | ChangeEventScope;
   enabled?: boolean;
+  modifier?: (data: Data) => Data;
 }) {
   const mounted = useIsMounted();
   const pathChainId = useChainIdFromPath();
@@ -110,17 +118,13 @@ export function useSubgraphQuery<
     };
   }, [connected]);
 
-  const fetch = () => {
-    console.log("fetching data from subgraph", {
-      query,
-      variables,
-      context,
-    });
-    return urqlClient.query<Data>(query, variables, {
+  const fetch = async () => {
+    const res = await urqlClient.query<Data>(query, variables, {
       ...context,
       url: config?.subgraphUrl,
       requestPolicy: "network-only",
     });
+    return modifier && res.data ? { ...res, data: modifier(res.data) } : res;
   };
 
   const refetchFromOutside = async () => {

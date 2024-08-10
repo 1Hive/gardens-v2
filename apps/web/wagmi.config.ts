@@ -3,6 +3,7 @@ import { actions } from "@wagmi/cli/plugins";
 import { Abi } from "viem";
 import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
 import { abi as CVStrategyABI } from "#/contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json";
+import { abi as ArbitratorAbi } from "#/contracts/out/IArbitrator.sol/IArbitrator.json";
 import { abi as SafeABI } from "#/contracts/out/ISafe.sol/ISafe.json";
 import { abi as mockERC20ABI } from "#/contracts/out/MockERC20.sol/MockERC20.json";
 import { abi as PassportScorerABI } from "#/contracts/out/PassportScorer.sol/PassportScorer.json";
@@ -39,6 +40,10 @@ export default defineConfig({
     {
       name: "PassportScorer",
       abi: PassportScorerABI as Abi,
+    },
+    {
+      name: "IArbitrator",
+      abi: ArbitratorAbi as Abi,
     },
   ],
   plugins: [

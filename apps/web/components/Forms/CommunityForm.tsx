@@ -136,7 +136,9 @@ export const CommunityForm = ({
         throw new Error("No preview data");
       }
       const argsArray = contractWriteParsedData(ipfsHash);
-      write?.({ args: [argsArray] });
+      write?.({
+        args: argsArray,
+      });
     }
     setLoading(false);
   };
@@ -200,7 +202,6 @@ export const CommunityForm = ({
       gardenTokenAddress,
       stakeAmount,
       communityFeeAmount,
-      0n,
       registryFactoryAddr,
       communityFeeReceiver,
       metadata,
