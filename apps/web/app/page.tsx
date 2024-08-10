@@ -75,16 +75,6 @@ const Hero = () => {
               </a>
             ))} */}
           </div>
-          <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-            <a
-              href="/gardens"
-              className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Button>Launch App</Button>
-            </a>
-          </div>
         </nav>
         <Dialog
           open={mobileMenuOpen}
@@ -162,21 +152,27 @@ const Hero = () => {
                   healthy, fun, intuitive, secure, and open.
                 </span>
               </p>
-              {/* <div className="mt-10 flex items-center gap-x-6">
+              <div className="mt-10 flex items-center gap-x-6">
                 <a
-                  href="#"
-                  className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  href="/gardens"
+                  className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
+                  target="_blank"
+                  rel="noreferrer"
                 >
-                  Get started
+                  <Button>Launch App</Button>
                 </a>
                 <a
-                  href="#"
-                  className="text-sm font-semibold leading-6 text-gray-900"
+                  href="https://hackmd.io/@thiagorossi/SkLI_dUY0"
+                  className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
+                  target="_blank"
+                  rel="noreferrer"
                 >
-                  Learn more <span aria-hidden="true">→</span>
+                  {/* TODO: point to our url docs */}
+                  <Button btnStyle="outline">Documentation</Button>
                 </a>
-              </div> */}
+              </div>
             </div>
+
             <Image
               src={commF}
               alt={"ecosystem img"}
