@@ -5,8 +5,8 @@ export type FormRow = { label: string; data: string | number | boolean };
 type Props = {
   previewTitle: string;
   formRows?: FormRow[];
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
 };
 
 export function FormPreview({
@@ -37,12 +37,17 @@ Covenant
           {previewTitle}
         </p>
       </div>
-      <div className="my-6 flex flex-col items-center">
-        <h4 className="text-xl font-medium leading-6 text-gray-900">{title}</h4>
-        <p className="text-md max-h-56 overflow-y-auto rounded-xl text-center leading-7">
-          {description}
-        </p>
-      </div>
+      {title && description && (
+        <div className="my-6 flex flex-col items-center">
+          <h4 className="text-xl font-medium leading-6 text-gray-900">
+            {title}
+          </h4>
+          <p className="text-md max-h-56 overflow-y-auto rounded-xl text-center leading-7">
+            {description}
+          </p>
+        </div>
+      )}
+
       <div className="relative">
         {formRows.map(({ label, data }) => (
           <React.Fragment key={label}>
