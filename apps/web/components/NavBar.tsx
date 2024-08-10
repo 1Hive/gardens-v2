@@ -17,11 +17,14 @@ export function NavBar() {
     >
       {({ open }) => (
         <>
-          <div className="px-2 sm:px-6 md:py-1 bg-neutral rounded-3xl border1">
+          <div className="px-2 sm:px-4 md:py-0 bg-neutral rounded-3xl border1">
             <div className="flex h-16 justify-between">
               <div className="flex gap-8">
-                <div className="flex flex-shrink-0 items-center gap-4">
-                  <Link href="/gardens" className="flex items-center gap-3">
+                <div className="flex flex-shrink-0 items-center gap-3 text-sm">
+                  <Link
+                    href="/gardens"
+                    className="flex items-center gap-3 text-sm"
+                  >
                     <Image
                       src={newLogo}
                       alt="logo"
@@ -30,14 +33,10 @@ export function NavBar() {
                       loading="lazy"
                     />
                     <h4 className="">Gardens</h4>
-                    <p className="text-xs italic text-primary-content">
-                      {" "}
-                      alpha version{" "}
-                      <span className="subtile2 font-chakra font-semibold">
-                        2.0
-                      </span>
-                    </p>
                   </Link>
+                  <p className="italic text-primary-content text-sm">
+                    Beta version{" "}
+                  </p>
                 </div>
                 <div className="hidden sm:ml-4 sm:flex sm:space-x-8">
                   {/* {navItems.map(({ name, href }) => (

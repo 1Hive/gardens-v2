@@ -15,7 +15,7 @@ import {
   useSwitchNetwork,
 } from "wagmi";
 import { walletIcon } from "@/assets";
-import { Button } from "@/components";
+import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chainServer";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { formatAddress } from "@/utils/formatAddress";
@@ -63,6 +63,7 @@ export function ConnectWallet() {
                       alt="wallet"
                       height={20}
                       width={20}
+                      loading="lazy"
                     />
                     Connect wallet
                   </Button>
@@ -80,49 +81,50 @@ export function ConnectWallet() {
                   </Button>
                 );
               }
+
               //Is CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
               //Dropdown menu with wallet, balance, switch network and disconnect buttons
               return (
-                <Menu as="div" className="relative inline-block text-left">
+                <Menu as="div" className="relative  flex gap-2">
                   {({ open }) => (
                     <>
                       <Menu.Button>
                         <div
-                          className={`flex w-fit cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:opacity-85            
-                          ${cn({ "border-2 border-danger-content": urlChainId && urlChainId !== chain.id })} `}
+                          className={`flex w-fit  cursor-pointer items-center gap-4 rounded-2xl px-4 py-2 hover:opacity-85  
+                             ${cn({ "bg-danger-soft": urlChainId && urlChainId !== chain.id }, { "bg-primary": !urlChainId || urlChainId === chain.id })}      
+                          `}
                         >
                           <Image
                             alt={"Chain icon"}
                             src={`https://effigy.im/a/${accountAddress.address}.png`}
-                            className="h-8 w-8 rounded-full"
-                            width={32}
-                            height={32}
+                            className="rounded-full "
+                            width={34}
+                            height={34}
+                            loading="lazy"
                           />
-                          <div className="flex flex-col">
-                            <h4 className="text-left">
+                          <div className="flex flex-col ">
+                            <h5 className="text-left">
                               {formatAddress(accountAddress.address)}
-                            </h4>
-                            <div className="ml-[2px] flex items-center text-xs font-semibold text-success">
+                            </h5>
+                            <div className="flex items-center">
                               {(
                                 !urlChainId ||
                                 isNaN(urlChainId!) ||
                                 chain.id === urlChainId
                               ) ?
                                 <>
-                                  <span>Connected to</span>
-                                  <div className="mx-1">
-                                    <ChainIcon chain={chain.id} height={16} />
-                                  </div>
-                                  <span>{chain.name}</span>
+                                  <ChainIcon chain={chain.id} height={14} />
+                                  <p className="text-xs ml-1">{chain.name}</p>
                                 </>
-                              : <span className="text-danger-content">
-                                  Network mismatch
-                                </span>
+                              : <p className="text-danger-content text-xs">
+                                  Switch to {chainFromPath?.name ?? ""}
+                                </p>
                               }
                             </div>
                           </div>
+
                           <ChevronUpIcon
-                            className={`h-4 w-4 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
+                            className={`h-3 w-3 font-bold text-black transition-transform duration-200 ease-in-out ${cn(
                               {
                                 "rotate-180": !open,
                               },
@@ -131,6 +133,23 @@ export function ConnectWallet() {
                           />
                         </div>
                       </Menu.Button>
+                      {urlChainId === chain.id &&
+                        tokenUrlAddress !== undefined && (
+                          <div className="py-2  flex flex-col gap-1">
+                            <p className="text-xs font-medium">Balance</p>
+                            <DisplayNumber
+                              number={(token?.formatted ?? 0).toString()}
+                              tokenSymbol={token?.symbol}
+                              className="text-primary-content"
+                              compact={true}
+                            />
+                            {/* <p className="subtitle2 text-primary-content">
+                              {Number(token?.formatted).toFixed(0)}{" "}
+                              {token?.symbol === "ETH" ? "" : token?.symbol}
+                            </p> */}
+                          </div>
+                        )}
+
                       <Transition
                         as={Fragment}
                         enter="transition ease-out duration-100"
@@ -141,7 +160,7 @@ export function ConnectWallet() {
                         leaveTo="transform opacity-0 scale-95"
                       >
                         <Menu.Items className="absolute right-0 top-0 z-10  mt-14 rounded-md bg-white focus:outline-none">
-                          <div className="border2 flex flex-col gap-4 rounded-lg p-4">
+                          <div className=" flex flex-col gap-4 rounded-lg p-4">
                             {/* wallet and token balance info */}
                             <Menu.Item as="div" className="flex flex-col gap-2">
                               <div className="flex justify-between py-1">
