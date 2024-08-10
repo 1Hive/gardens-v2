@@ -117,7 +117,7 @@ export function ConnectWallet() {
                                   <p className="text-xs ml-1">{chain.name}</p>
                                 </>
                               : <p className="text-danger-content text-xs">
-                                  Switch to {chainFromPath?.name ?? ""}
+                                  Switch to network {chainFromPath?.name ?? ""}
                                 </p>
                               }
                             </div>
