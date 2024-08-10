@@ -24,6 +24,7 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
+  calculateDecay,
   CV_PERCENTAGE_SCALE,
   CV_SCALE_PRECISION,
   MAX_RATIO_CONSTANT,
@@ -119,15 +120,6 @@ const renderInputMap = (key: string, value: number): boolean => {
   return proposalInputMap[key]?.includes(Number(value)) ?? false;
 };
 
-function calculateDecay(blockTime: number, convictionGrowth: number) {
-  const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
-
-  const result =
-    Math.pow(10, 7) * Math.pow(1 / 2, blockTime / halfLifeInSeconds);
-
-  return result;
-}
-
 export function PoolForm({ token, communityAddr, chainId }: Props) {
   const {
     register,
@@ -143,7 +135,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     },
   });
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token?.decimals;
-  const INPUT_MIN_THRESHOLD_MIN_VALUE = 0;
+  const INPUT_MIN_THRESHOLD_VALUE = 0;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -586,13 +578,13 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
                 register={register}
                 registerOptions={{
                   min: {
-                    value: INPUT_MIN_THRESHOLD_MIN_VALUE,
-                    message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_MIN_VALUE}`,
+                    value: INPUT_MIN_THRESHOLD_VALUE,
+                    message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_VALUE}`,
                   },
                 }}
                 otherProps={{
                   step: INPUT_TOKEN_MIN_VALUE,
-                  min: INPUT_MIN_THRESHOLD_MIN_VALUE,
+                  min: INPUT_MIN_THRESHOLD_VALUE,
                 }}
                 errors={errors}
                 registerKey="minThresholdPoints"
