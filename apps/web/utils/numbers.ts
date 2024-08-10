@@ -162,6 +162,15 @@ function calculatePercentageDecimals(
   return Number(formattedPercentage);
 }
 
+function calculateDecay(blockTime: number, convictionGrowth: number) {
+  const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
+
+  const result =
+    Math.pow(10, 7) * Math.pow(1 / 2, blockTime / halfLifeInSeconds);
+
+  return result;
+}
+
 export {
   calculateFees,
   formatTokenAmount,
@@ -170,4 +179,5 @@ export {
   calculatePercentageDecimals,
   calculatePercentageBigInt,
   calculatePercentage,
+  calculateDecay,
 };
