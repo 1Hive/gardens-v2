@@ -24,6 +24,7 @@ import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
+import {CollateralVault} from "../src/CollateralVault.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
@@ -156,7 +157,11 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             registryFactory = new RegistryFactoryV0_0();
             proxy = new ERC1967Proxy(
                 address(new RegistryFactoryV0_0()),
-                abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(0x0))
+                abi.encodeWithSelector(
+                    RegistryFactoryV0_0.initialize.selector,
+                    address(new RegistryCommunityV0_0()),
+                    address(new CollateralVault())
+                )
             );
 
             registryFactory = RegistryFactoryV0_0(address(proxy));

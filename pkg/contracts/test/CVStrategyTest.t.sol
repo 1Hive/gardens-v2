@@ -118,7 +118,12 @@ contract CVStrategyTestUpgradeable is
         // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(new RegistryFactoryV0_0()),
-            abi.encodeWithSelector(RegistryFactoryV0_0.initialize.selector, address(protocolFeeReceiver))
+            abi.encodeWithSelector(
+                RegistryFactoryV0_0.initialize.selector,
+                address(protocolFeeReceiver),
+                address(new RegistryCommunityV0_0()),
+                address(new CollateralVault())
+            )
         );
 
         registryFactory = RegistryFactoryV0_0(address(proxy));

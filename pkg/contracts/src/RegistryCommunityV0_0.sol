@@ -36,6 +36,8 @@ contract RegistryCommunityV0_0 is
     using SafeERC20 for IERC20;
     using Clone for address;
 
+    address private collateralVaultTemplate;
+
     /// @notice The native address to represent native token eg: ETH in mainnet
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     /// @notice The precision scale used in the contract to avoid loss of precision
@@ -97,6 +99,7 @@ contract RegistryCommunityV0_0 is
     /*|--------------------------------------------|*/
     /// @notice Role to council safe members
     bytes32 public constant COUNCIL_MEMBER = keccak256("COUNCIL_MEMBER");
+
     /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
@@ -154,7 +157,10 @@ contract RegistryCommunityV0_0 is
         address[] strategies;
     }
 
-    function initialize(RegistryCommunityV0_0.InitializeParams memory params) public initializer {
+    function initialize(RegistryCommunityV0_0.InitializeParams memory params, address _collateralVaultTemplate)
+        public
+        initializer
+    {
         __Ownable_init();
         __ReentrancyGuard_init();
         __AccessControl_init();
@@ -205,6 +211,8 @@ contract RegistryCommunityV0_0 is
 
         initialMembers = pool_initialMembers;
 
+        collateralVaultTemplate = _collateralVaultTemplate;
+
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
@@ -214,7 +222,8 @@ contract RegistryCommunityV0_0 is
     {
         address strategyProxy = address(
             new ERC1967Proxy(
-                address(strategyTemplate), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+                address(strategyTemplate),
+                abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate)
             )
         );
 

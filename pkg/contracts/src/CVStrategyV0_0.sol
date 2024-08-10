@@ -240,16 +240,16 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
-    function init(address _allo) external virtual initializer {
+    function init(address _allo, address _collateralVaultTemplate) external virtual initializer {
         super.init(_allo, "CVStrategy");
         __Ownable_init();
+        collateralVaultTemplate = _collateralVaultTemplate;
     }
 
     function initialize(uint256 _poolId, bytes memory _data) external virtual onlyAllo {
         __BaseStrategy_init(_poolId);
 
         collateralVault = ICollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));
-
         collateralVault.initialize();
 
         StrategyStruct.InitializeParams memory ip = abi.decode(_data, (StrategyStruct.InitializeParams));
