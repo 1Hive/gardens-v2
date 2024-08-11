@@ -13,7 +13,7 @@ export function NavBar() {
   return (
     <Disclosure
       as="nav"
-      className="sticky top-0 z-10 max-w-7xl mx-auto lg:px-8 bg-primary pt-3"
+      className="sticky top-0 z-20 max-w-7xl mx-auto lg:px-8 bg-primary pt-3"
     >
       {({ open }) => (
         <>
@@ -35,7 +35,7 @@ export function NavBar() {
                     <h4 className="">Gardens</h4>
                   </Link>
                   <p className="italic text-primary-content text-sm">
-                    Beta version{" "}
+                    pre-beta release{" "}
                   </p>
                 </div>
                 <div className="hidden sm:ml-4 sm:flex sm:space-x-8">
