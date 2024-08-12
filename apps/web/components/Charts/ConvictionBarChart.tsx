@@ -250,7 +250,6 @@ export const ConvictionBarChart = ({
       containLabel: false,
     },
     animation: true,
-    animationDurationUpdate: 1200,
     barGap: "-100%",
     series: [
       {

@@ -57,7 +57,7 @@ export default function Page() {
   return (
     <>
       <div className="flex flex-col items-center justify-center gap-8 relative z-10">
-        <header className="flex flex-col items-center gap-8">
+        <header className="flex flex-col items-center gap-8 2xl:mt-20">
           <div className="flex items-center text-center">
             <div className="relative flex-1">
               <Image src={clouds1} alt="clouds" />
@@ -78,7 +78,7 @@ export default function Page() {
           </div>
           <div className="relative" />
         </header>
-        <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8 ">
+        <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8 2xl:mt-10">
           <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))] z-10">
             {GardenList}
           </div>
