@@ -8,11 +8,10 @@ import {
   ArrowPathIcon,
   FingerPrintIcon,
   LockClosedIcon,
-  ArrowLongRightIcon,
   Battery50Icon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { newLogo, commF } from "@/assets";
+import { newLogo, commF, HomeBanner } from "@/assets";
 import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chainServer";
 
@@ -351,12 +350,12 @@ const SignUp = () => {
   return (
     <div className="bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="relative isolate overflow-hidden bg-neutral-content px-6 py-24 shadow-2xl sm:rounded-3xl sm:px-24 xl:py-32">
-          <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight text-neutral sm:text-4xl">
+        <div className="isolate overflow-hidden bg-neutral-content px-6 py-24 shadow-md sm:rounded-3xl sm:px-24 xl:py-32 relative">
+          <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight sm:text-4xl">
             Cultivate change with Gardens
           </h2>
-          <p className="mx-auto mt-2 max-w-xl text-center text-lg leading-8 text-neutral-soft">
-            Join our Beta and start growing your community.
+          <p className="mx-auto mt-2 max-w-xl text-center text-lg leading-8">
+            Join our pre-beta release and start growing your community.
           </p>
           <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-4 rounded-xl">
             {/* TODO: link to gardnes form */}
@@ -368,33 +367,15 @@ const SignUp = () => {
             >
               <Button>Launch App</Button>
             </a>
-          </div>
-          <svg
-            viewBox="0 0 1024 1024"
-            aria-hidden="true"
-            className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-x-1/2"
-          >
-            <circle
-              r={512}
-              cx={512}
-              cy={512}
-              fill="url(#759c1415-0410-454c-8f7c-9a820de03641)"
-              fillOpacity="0.7"
+            <Image
+              src={HomeBanner}
+              alt="gardens"
+              className="absolute inset-0 w-full h-full object-cover -z-10"
+              loading="lazy"
+              // width={1200}
+              // height={100}
             />
-            <defs>
-              <radialGradient
-                r={1}
-                cx={0}
-                cy={0}
-                id="759c1415-0410-454c-8f7c-9a820de03641"
-                gradientUnits="userSpaceOnUse"
-                gradientTransform="translate(512 512) rotate(90) scale(512)"
-              >
-                <stop stopColor="#65AD18" />
-                <stop offset={1} stopColor="#2AAAE5" stopOpacity={0} />
-              </radialGradient>
-            </defs>
-          </svg>
+          </div>
         </div>
       </div>
     </div>

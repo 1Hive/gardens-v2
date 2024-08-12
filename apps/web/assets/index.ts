@@ -26,3 +26,4 @@ export { default as TxPreparing } from "./TxPreparing.svg";
 export { default as TxInProgress } from "./TxInProgress.svg";
 export { default as TxIdle } from "./TxIdle.svg";
 export { default as Banner } from "./Banner.png";
+export { default as HomeBanner } from "./HomeBanner.png";

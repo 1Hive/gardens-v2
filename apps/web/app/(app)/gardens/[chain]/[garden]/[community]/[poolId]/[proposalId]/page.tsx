@@ -8,7 +8,13 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { Badge, Button, DisplayNumber, EthAddress, Statistic } from "@/components";
+import {
+  Badge,
+  Button,
+  DisplayNumber,
+  EthAddress,
+  Statistic,
+} from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -80,9 +86,17 @@ export default function Page({
     !!proposalData &&
     (proposalStatus[proposalData.proposalStatus] === "executed" ||
       proposalStatus[proposalData.proposalStatus] === "cancelled");
-  logOnce("debug", { isProposalEnded, proposalStatus: proposalStatus[proposalData?.proposalStatus] });
+  logOnce("debug", {
+    isProposalEnded,
+    proposalStatus: proposalStatus[proposalData?.proposalStatus],
+  });
 
-  const { currentConvictionPct, thresholdPct, totalSupportPct, updateConvictionLast } = useConvictionRead({
+  const {
+    currentConvictionPct,
+    thresholdPct,
+    totalSupportPct,
+    updateConvictionLast,
+  } = useConvictionRead({
     proposalData,
     tokenData: data?.tokenGarden,
   });
@@ -125,7 +139,7 @@ export default function Page({
         topic: "proposal",
         type: "update",
         function: "distribute",
-        id:proposalId,
+        id: proposalId,
         containerId: data?.cvproposal?.strategy?.id,
         chainId,
       });
@@ -171,8 +185,8 @@ export default function Page({
             </div>
             <div className="flex items-center justify-between gap-4 sm:justify-start">
               <Badge status={status} />
-              <p className="font-semibold">
-                {prettyTimestamp(proposalData?.createdAt ?? 0)}
+              <p className="subtitle2">
+                Submitted: {prettyTimestamp(proposalData?.createdAt ?? 0)}
               </p>
             </div>
           </div>
@@ -192,12 +206,16 @@ export default function Page({
                   />
                 </Statistic>
                 <Statistic label={"beneficiary"} icon={<UserIcon />}>
-                  <EthAddress address={beneficiary} actions="copy" />
+                  <EthAddress
+                    address={beneficiary}
+                    actions="copy"
+                    icon={"identicon"}
+                  />
                 </Statistic>
               </>
             )}
             <Statistic label={"created by"} icon={<UserIcon />}>
-              <EthAddress address={submitter} actions="copy" />
+              <EthAddress address={submitter} actions="copy" icon="identicon" />
             </Statistic>
           </div>
         </div>
@@ -211,21 +229,34 @@ export default function Page({
               Proposal passed and executed successfully
             </div>
           </div>
-          : (
-            <ConvictionBarChart
-              currentConvictionPct={currentConvictionPct}
-              thresholdPct={thresholdPct}
-              proposalSupportPct={totalSupportPct}
-              isSignalingType={isSignalingType}
-              proposalId={proposalIdNumber}
-            />
-          )}
+        : <ConvictionBarChart
+            currentConvictionPct={currentConvictionPct}
+            thresholdPct={thresholdPct}
+            proposalSupportPct={totalSupportPct}
+            isSignalingType={isSignalingType}
+            proposalId={proposalIdNumber}
+          />
+        }
         <div className="absolute top-8 right-10">
-          {proposalStatus[status] !== "executed" && !isSignalingType && ( <Button onClick={() => writeDistribute?.({ args:[poolId, [data.cvproposal?.strategy.id], encodedDataProposalId(Number(proposalIdNumber))] })} disabled={currentConvictionPct < thresholdPct} tooltip="Proposal not executable">Execute</Button>)}
-
+          {proposalStatus[status] !== "executed" && !isSignalingType && (
+            <Button
+              onClick={() =>
+                writeDistribute?.({
+                  args: [
+                    poolId,
+                    [data.cvproposal?.strategy.id],
+                    encodedDataProposalId(Number(proposalIdNumber)),
+                  ],
+                })
+              }
+              disabled={currentConvictionPct < thresholdPct}
+              tooltip="Proposal not executable"
+            >
+              Execute
+            </Button>
+          )}
         </div>
       </section>
     </div>
   );
 }
-

@@ -250,7 +250,7 @@ export const IncreasePower = ({
             </div>
           </div>
           <InfoBox
-            content="staking more tokens in the community increases your governance weight in a pool to support proposals."
+            content="staking more tokens in the community can increase your voting power in pools to support proposals."
             infoBoxType="info"
             classNames="max-w-xl"
           />
