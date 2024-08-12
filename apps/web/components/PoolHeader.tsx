@@ -1,3 +1,4 @@
+import { count } from "console";
 import React, { useState } from "react";
 import {
   BoltIcon,
@@ -5,6 +6,7 @@ import {
   CheckIcon,
   ClockIcon,
   Cog6ToothIcon,
+  InformationCircleIcon,
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
@@ -98,23 +100,23 @@ export default function PoolHeader({
   const poolConfig = [
     {
       label: "Min conviction",
-      value: `${minimumConviction}%`,
+      value: `${minimumConviction.toFixed(2)} %`,
       info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
     },
     {
       label: "Conviction growth",
-      value: `${convictionGrowth}`,
+      value: `${convictionGrowth.toFixed(2)} in days`,
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life",
     },
     {
       label: "Min Threshold",
-      value: `${minThresholdPoints} `,
+      value: `${minThresholdPoints}`,
       info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
     },
     {
       label: "Spending limit",
       // TODO: check number for some pools, they have more zeros or another config ?
-      value: `${spendingLimit}%`,
+      value: `${spendingLimit.toFixed(2)} %`,
       info: "Max percentage of the pool funds that can be spent in a single proposal",
     },
   ];
@@ -184,7 +186,6 @@ export default function PoolHeader({
           <Statistic label="pool type">
             <Badge type={parseInt(proposalType)} />
           </Statistic>
-
           {poolTypes[proposalType] === "funding" && (
             <Statistic label="funding token">
               <Badge
@@ -194,7 +195,6 @@ export default function PoolHeader({
               />
             </Statistic>
           )}
-
           <Statistic label="voting weight system">
             <div className="flex flex-col gap-3 sm:flex-row">
               <Badge
@@ -209,12 +209,18 @@ export default function PoolHeader({
         <div className="flex flex-col gap-4">
           {filteredPoolConfig.map((config) => (
             <div key={config.label} className="flex items-center gap-4">
-              <Statistic label={config.label}>
-                <InfoIcon content={config.info}>
-                  <p className="text-neutral-content subtitle">
-                    {config.value}{" "}
-                  </p>
-                </InfoIcon>
+              <Statistic
+                label={config.label}
+                icon={
+                  <InformationCircleIcon
+                    className="stroke-2 text-primary-content"
+                    width={22}
+                    height={22}
+                  />
+                }
+                tooltip={config.info}
+              >
+                <p className="text-neutral-content subtitle">{config.value}</p>
               </Statistic>
             </div>
           ))}
