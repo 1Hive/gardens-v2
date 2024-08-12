@@ -42,7 +42,7 @@ import {IRegistryCommunityV0_0} from "../src/interfaces/IRegistryCommunity.sol";
 
 // @dev Run forge test --mc RegistryTest -vvvvv
 
-contract RegistryUpgradeableTest is
+contract RegistryTest is
     Test,
     AlloSetup,
     RegistrySetupFull,
