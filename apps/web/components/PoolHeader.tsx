@@ -172,10 +172,10 @@ export default function PoolHeader({
             token={token}
             chainId={0}
             initValues={{
-              spendingLimit: spendingLimit,
-              minimumConviction: minimumConviction,
-              convictionGrowth: convictionGrowth,
+              minimumConviction: minimumConviction.toFixed(2),
+              convictionGrowth: convictionGrowth.toFixed(2),
               minThresholdPoints: minThresholdPoints,
+              spendingLimit: spendingLimit.toFixed(2),
             }}
           />
         </Modal>

@@ -20,9 +20,9 @@ import {
 type ContractParams = [bigint, bigint, bigint, bigint];
 
 type FormInputs = {
-  spendingLimit: number;
-  minimumConviction: number;
-  convictionGrowth: number;
+  spendingLimit: number | string;
+  minimumConviction: number | string;
+  convictionGrowth: number | string;
   minThresholdPoints: string;
 };
 
@@ -187,11 +187,14 @@ export default function PoolEditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(handlePreview)} className="w-[520px]">
+    <form
+      onSubmit={handleSubmit(handlePreview)}
+      className="w-[448px] max-w-2xl"
+    >
       {showPreview ?
         <FormPreview
           formRows={formatFormRows()}
-          previewTitle="Check pool creation details"
+          previewTitle="Check pool details"
         />
       : <div className="flex flex-col gap-6">
           <div className="flex max-w-64 flex-col">
@@ -300,7 +303,7 @@ export default function PoolEditForm({
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-center py-6">
+      <div className="flex w-full items-center justify-center pt-6">
         {showPreview ?
           <div className="flex items-center gap-10">
             <Button

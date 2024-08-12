@@ -31,11 +31,11 @@ Covenant
 
   return (
     <>
-      <div className="divider-default divider" />
-      <div className="px-4 sm:px-0">
-        <p className="mt-0 max-w-2xl text-sm leading-6 text-gray-500">
+      {/* <div className="divider-default divider" /> */}
+      <div className="px-4 sm:px-0 py-4">
+        <h4 className="mt-0 max-w-2xl leading-6 text-gray-600">
           {previewTitle}
-        </p>
+        </h4>
       </div>
       {title && description && (
         <div className="my-6 flex flex-col items-center">
