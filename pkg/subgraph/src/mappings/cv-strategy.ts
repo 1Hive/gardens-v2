@@ -19,7 +19,6 @@ import {
   PowerIncreased,
   PowerDecreased,
   PointsDeactivated,
-  MinThresholdPointsUpdated,
   Ruling,
   ProposalDisputed,
   PoolParamsUpdated
@@ -27,78 +26,86 @@ import {
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
 
-import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
+
+import { json, JSONValueKind } from "@graphprotocol/graph-ts";
 
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
 
 export function handleInitialized(event: InitializedCV): void {
-  log.debug("CVStrategy: handleInitialized", []);
-  const poolId = event.params.poolId;
-  const registryCommunity = event.params.data.registryCommunity.toHexString();
-  const pType = event.params.data.proposalType;
-  const maxAmount = event.params.data.pointConfig.maxAmount;
-  const pointSystem = event.params.data.pointSystem;
-
-  // log.debug(
-  //   "handleInitialized registryCommunity:{} decay:{} maxRatio:{} minThresholdPoints:{} weight:{} pType:{} maxAmount:{}",
-  //   [registryCommunity, pType.toString(), maxAmount.toString()]
+  log.debug("CVStrategy: handleInitialized {}", [
+    event.params.poolId.toString()
+  ]);
+  // const poolId = event.params.poolId;
+  // const registryCommunity = event.params.data.registryCommunity.toHexString();
+  // const pType = event.params.data.proposalType;
+  // const maxAmount = event.params.data.pointConfig.maxAmount;
+  // const pointSystem = event.params.data.pointSystem;
+  // // log.debug(
+  // //   "handleInitialized registryCommunity:{} decay:{} maxRatio:{} minThresholdPoints:{} weight:{} pType:{} maxAmount:{}",
+  // //   [registryCommunity, pType.toString(), maxAmount.toString()]
+  // // );
+  // const cvc = CVStrategyContract.bind(event.address);
+  // let cvs = new CVStrategy(event.address.toHex());
+  // let alloAddr = cvc.getAllo();
+  // log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
+  // const allo = AlloContract.bind(alloAddr);
+  // let metadata = allo.getPool(poolId).metadata.pointer;
+  // if (metadata) {
+  //   log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
+  //   cvs.metadata = metadata ? metadata.toString() : null;
+  // }
+  // cvs.poolId = poolId;
+  // cvs.registryCommunity = registryCommunity;
+  // let config = new CVStrategyConfig(
+  //   `${event.address.toHex()}-${poolId.toString()}-config`
   // );
-
-  const cvc = CVStrategyContract.bind(event.address);
-
-  let cvs = new CVStrategy(event.address.toHex());
-  let alloAddr = cvc.getAllo();
-  log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
-
-  const allo = AlloContract.bind(alloAddr);
-
-  let metadata = allo.getPool(poolId).metadata.pointer;
-  if (metadata) {
-    log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
-    cvs.metadata = metadata ? metadata.toString() : null;
-  }
-
-  cvs.poolId = poolId;
-  cvs.registryCommunity = registryCommunity;
-  let config = new CVStrategyConfig(
-    `${event.address.toHex()}-${poolId.toString()}-config`
-  );
-
-  cvs.poolAmount = cvc.getPoolAmount();
-  cvs.maxCVSupply = BigInt.fromI32(0);
-  cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
-  cvs.isEnabled = false;
-
-  config.proposalType = BigInt.fromI32(pType);
-  config.pointSystem = BigInt.fromI32(pointSystem);
-  config.maxAmount = maxAmount;
-
-  // CV Params
-  config.weight = event.params.data.cvParams.weight;
-  config.decay = event.params.data.cvParams.decay;
-  config.minThresholdPoints = event.params.data.cvParams.minThresholdPoints;
-  config.maxRatio = event.params.data.cvParams.maxRatio;
-
-  // ArbitrationConfgig
-  config.arbitrator =
-    event.params.data.arbitrableConfig.arbitrator.toHexString();
-  config.tribunalSafe =
-    event.params.data.arbitrableConfig.tribunalSafe.toHexString();
-  config.challengerCollateralAmount =
-    event.params.data.arbitrableConfig.challengerCollateralAmount;
-  config.submitterCollateralAmount =
-    event.params.data.arbitrableConfig.submitterCollateralAmount;
-  config.defaultRuling = event.params.data.arbitrableConfig.defaultRuling;
-  config.defaultRulingTimeout =
-    event.params.data.arbitrableConfig.defaultRulingTimeout;
-
-  config.D = cvc.D();
-  config.save();
-
-  cvs.config = config.id;
-
-  cvs.save();
+  // cvs.poolAmount = cvc.getPoolAmount();
+  // cvs.maxCVSupply = BigInt.fromI32(0);
+  // cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  // cvs.isEnabled = false;
+  // config.proposalType = BigInt.fromI32(pType);
+  // config.pointSystem = BigInt.fromI32(pointSystem);
+  // config.maxAmount = maxAmount;
+  // // CV Params
+  // log.debug("handleInitialized: event.params.data.cvParams:{},{},{},{}", [
+  //   event.params.data.cvParams.weight.toString(),
+  //   event.params.data.cvParams.decay.toString(),
+  //   event.params.data.cvParams.minThresholdPoints.toString(),
+  //   event.params.data.cvParams.maxRatio.toString()
+  // ]);
+  // config.weight = event.params.data.cvParams.weight;
+  // config.decay = event.params.data.cvParams.decay;
+  // config.minThresholdPoints = event.params.data.cvParams.minThresholdPoints;
+  // config.maxRatio = event.params.data.cvParams.maxRatio;
+  // // ArbitrationConfig
+  // log.debug(
+  //   "handleInitialized: event.params.data.arbitrableConfig:{},{},{},{},{},{}",
+  //   [
+  //     event.params.data.arbitrableConfig.arbitrator.toHexString(),
+  //     event.params.data.arbitrableConfig.tribunalSafe.toHexString(),
+  //     event.params.data.arbitrableConfig.challengerCollateralAmount.toString(),
+  //     event.params.data.arbitrableConfig.submitterCollateralAmount.toString(),
+  //     event.params.data.arbitrableConfig.defaultRuling.toString(),
+  //     event.params.data.arbitrableConfig.defaultRulingTimeout.toString()
+  //   ]
+  // );
+  // config.arbitrator =
+  //   event.params.data.arbitrableConfig.arbitrator.toHexString();
+  // config.tribunalSafe =
+  //   event.params.data.arbitrableConfig.tribunalSafe.toHexString();
+  // config.challengerCollateralAmount =
+  //   event.params.data.arbitrableConfig.challengerCollateralAmount;
+  // config.submitterCollateralAmount =
+  //   event.params.data.arbitrableConfig.submitterCollateralAmount;
+  // config.defaultRuling = event.params.data.arbitrableConfig.defaultRuling;
+  // config.defaultRulingTimeout =
+  //   event.params.data.arbitrableConfig.defaultRulingTimeout;
+  // config.D = cvc.D();
+  // config.save();
+  // cvs.config = config.id;
+  // cvs.save();
 }
 
 export function handleProposalCreated(event: ProposalCreated): void {
@@ -450,12 +457,29 @@ export function handlePoolParamsUpdated(event: PoolParamsUpdated): void {
   }
 
   // CV Params
+  log.debug("handlePoolParamsUpdated: event.params.data.cvParams:{},{},{},{}", [
+    event.params.cvParams.weight.toString(),
+    event.params.cvParams.decay.toString(),
+    event.params.cvParams.minThresholdPoints.toString(),
+    event.params.cvParams.maxRatio.toString()
+  ]);
   config.weight = event.params.cvParams.weight;
   config.decay = event.params.cvParams.decay;
   config.minThresholdPoints = event.params.cvParams.minThresholdPoints;
   config.maxRatio = event.params.cvParams.maxRatio;
 
   // ArbitrationConfgig
+  log.debug(
+    "handlePoolParamsUpdated: event.params.data.arbitrableConfig:{},{},{},{},{},{}",
+    [
+      event.params.arbitrableConfig.arbitrator.toHexString(),
+      event.params.arbitrableConfig.tribunalSafe.toHexString(),
+      event.params.arbitrableConfig.challengerCollateralAmount.toString(),
+      event.params.arbitrableConfig.submitterCollateralAmount.toString(),
+      event.params.arbitrableConfig.defaultRuling.toString(),
+      event.params.arbitrableConfig.defaultRulingTimeout.toString()
+    ]
+  );
   config.arbitrator = event.params.arbitrableConfig.arbitrator.toHexString();
   config.tribunalSafe =
     event.params.arbitrableConfig.tribunalSafe.toHexString();
