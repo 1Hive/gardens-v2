@@ -154,7 +154,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         //     REGISTRY_FACTORY = json.readAddress(getKeyNetwork(".ENVS.REGISTRY_FACTORY"));
         // }
         if (REGISTRY_FACTORY == address(0)) {
-            registryFactory = new RegistryFactoryV0_0();
+            // registryFactory = new RegistryFactoryV0_0();
             proxy = new ERC1967Proxy(
                 address(new RegistryFactoryV0_0()),
                 abi.encodeWithSelector(
@@ -168,6 +168,9 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         } else {
             registryFactory = RegistryFactoryV0_0(REGISTRY_FACTORY);
         }
+
+        assertTrue(registryFactory.registryCommunityTemplate() != address(0x0), "Registry Community Template not set");
+        assertTrue(registryFactory.collateralVaultTemplate() != address(0x0), "Collateral Vault Template not set");
 
         RegistryCommunityV0_0.InitializeParams memory params;
 

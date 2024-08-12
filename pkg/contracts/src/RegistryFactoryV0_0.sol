@@ -21,7 +21,7 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
     mapping(address => CommunityInfo) communityToInfo;
     address public gardensFeeReceiver;
     address public registryCommunityTemplate;
-    address private collateralVaultTemplate;
+    address public collateralVaultTemplate; //@todo go private to produce less bytecode
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
