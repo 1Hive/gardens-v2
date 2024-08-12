@@ -14,7 +14,7 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
 import PoolEditForm from "./Forms/PoolEditForm";
-import { InfoIcon } from "./InfoIcon";
+import { InfoWrapper } from "./InfoWrapper";
 import { Modal } from "./Modal";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";

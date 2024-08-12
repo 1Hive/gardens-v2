@@ -27,7 +27,7 @@ import {
   PoolCard,
   RegisterMember,
   Statistic,
-  InfoIcon,
+  InfoWrapper,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
@@ -236,7 +236,7 @@ export default function Page({
             </Statistic>
             <div className="flex">
               <p className="font-medium">Registration cost:</p>
-              <InfoIcon
+              <InfoWrapper
                 content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
@@ -246,7 +246,7 @@ export default function Page({
                   compact={true}
                   tokenSymbol={tokenGarden.symbol}
                 />
-              </InfoIcon>
+              </InfoWrapper>
             </div>
           </div>
         </div>
