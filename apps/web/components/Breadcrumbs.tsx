@@ -22,9 +22,15 @@ const truncateString = (str: string) => {
 export function Breadcrumbs() {
   const path = usePathname();
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
-  const notAuditedDisclaimerAckStorageKey = "NotAuditedDisclaimerAck"
-  // Checking in the storage if user already acknowledge then no need to reprompt
-  const [openDisclaimer, setOpenDisclaimer] = useState(localStorage.getItem(notAuditedDisclaimerAckStorageKey, false) == "false");
+  const notAuditedDisclaimerAckStorageKey = "NotAuditedDisclaimerAck";
+  const [openDisclaimer, setOpenDisclaimer] = useState(false);
+
+  useEffect(() => {
+    const disclaimerAcknowledged = localStorage.getItem(
+      notAuditedDisclaimerAckStorageKey,
+    );
+    setOpenDisclaimer(disclaimerAcknowledged !== "true");
+  }, []);
 
   const fetchBreadcrumbs = async (): Promise<Breadcrumb[]> => {
     const segments = path.split("/").filter((segment) => segment !== "");
@@ -60,6 +66,11 @@ export function Breadcrumbs() {
     })();
   }, [path]);
 
+  const handleDisclaimerAcknowledgment = () => {
+    setOpenDisclaimer(false);
+    localStorage.setItem(notAuditedDisclaimerAckStorageKey, "true");
+  };
+
   if (!breadcrumbs.length) {
     return <></>;
   }
@@ -94,7 +105,7 @@ export function Breadcrumbs() {
       </div>
       {openDisclaimer && (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 px-6 pb-6 z-10">
-          <div className="pointer-events-auto max-w-xl rounded-xl bg-neutral p-6 shadow-lg flex flex-col gap-4 items-start justify-start">
+          <div className="border1 pointer-events-auto max-w-xl rounded-xl bg-neutral p-6 shadow-lg flex flex-col gap-4 items-start justify-start">
             <div className="flex gap-2 items-center">
               <ExclamationTriangleIcon className="w-8 h-8 text-danger-button" />
               <h5>Disclaimer</h5>
@@ -109,7 +120,7 @@ export function Breadcrumbs() {
             <div>
               <Button
                 btnStyle="filled"
-                onClick={() => {setOpenDisclaimer(false); localStorage.setItem(notAuditedDisclaimerAckStorageKey, true)}}
+                onClick={handleDisclaimerAcknowledgment}
                 color="danger"
               >
                 I understand
