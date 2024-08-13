@@ -155,11 +155,14 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         // }
         if (REGISTRY_FACTORY == address(0)) {
             // registryFactory = new RegistryFactoryV0_0();
+            RegistryCommunityV0_0 comm = new RegistryCommunityV0_0();
+            console2.log("Registry Community Addr: %s", address(comm));
             proxy = new ERC1967Proxy(
                 address(new RegistryFactoryV0_0()),
                 abi.encodeWithSelector(
                     RegistryFactoryV0_0.initialize.selector,
-                    address(new RegistryCommunityV0_0()),
+                    address(SENDER),
+                    address(comm),
                     address(new CollateralVault())
                 )
             );
@@ -208,8 +211,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
                 IArbitrator(address(arbitrator)),
                 // IArbitrator(address(0)),
                 payable(address(_councilSafe())),
-                3 ether,
-                2 ether,
+                0 ether,
+                0 ether,
                 1,
                 300
             )
