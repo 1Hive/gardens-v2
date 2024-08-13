@@ -25,7 +25,7 @@ interface IRegistryCommunityV0_0 {
     event BasisStakedAmountSet(uint256 _newAmount);
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
     event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
-    event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata);
+    event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/

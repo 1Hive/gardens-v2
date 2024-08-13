@@ -42,15 +42,7 @@ import {IRegistryCommunityV0_0} from "../src/interfaces/IRegistryCommunity.sol";
 
 // @dev Run forge test --mc RegistryTest -vvvvv
 
-contract RegistryUpgradeableTest is
-    Test,
-    AlloSetup,
-    RegistrySetupFull,
-    CVStrategyHelpersV0_0,
-    Errors,
-    GasHelpers2,
-    SafeSetup
-{
+contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0_0, Errors, GasHelpers2, SafeSetup {
     CVStrategyV0_0 public strategy;
     IArbitrator safeArbitrator;
     GV2ERC20 public token;

@@ -31,6 +31,7 @@
     "[solidity]": {
       "editor.defaultFormatter": "NomicFoundation.hardhat-solidity",
     },
+    "solidity.formatter": "forge",
     "[json]": {
       "editor.defaultFormatter": "vscode.json-language-features",
     },
@@ -40,7 +41,10 @@
       "allo-v2/=lib/allo-v2/contracts/",
     ],
     "[typescriptreact]": {
-      "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+      "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
     },
     "solidity.formatter": "forge"
   },

@@ -21,7 +21,7 @@ import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol
 contract AddOwner is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;
 
-    address public SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
+    address public SENDER = 0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6;
 
     address public TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
 
