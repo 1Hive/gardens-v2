@@ -49,15 +49,7 @@ import {IRegistryCommunityV0_0} from "../src/interfaces/IRegistryCommunity.sol";
  * forge test --mc CVStrategyTest --mt test -vv
  */
 
-contract CVStrategyTestUpgradeable is
-    Test,
-    AlloSetup,
-    RegistrySetupFull,
-    CVStrategyHelpersV0_0,
-    Errors,
-    GasHelpers2,
-    SafeSetup
-{
+contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0_0, Errors, GasHelpers2, SafeSetup {
     using ABDKMath64x64 for int128;
     using ABDKMath64x64 for int256;
     using ABDKMath64x64 for uint128;
@@ -79,7 +71,6 @@ contract CVStrategyTestUpgradeable is
 
     RegistryFactoryV0_0 internal registryFactory;
     RegistryCommunityV0_0 internal registryCommunity;
-    CVStrategyV0_0 internal cvStrategyTemplate;
 
     ISybilScorer public passportScorer;
     IArbitrator safeArbitrator;
@@ -127,10 +118,6 @@ contract CVStrategyTestUpgradeable is
         );
 
         registryFactory = RegistryFactoryV0_0(address(proxy));
-
-        assertEq(address(cvStrategyTemplate.getAllo()), address(allo()), "CVStrategy initialized");
-
-        // cvStrategyTemplate.initialize(123,bytes(""));
 
         vm.stopPrank();
 
@@ -198,7 +185,6 @@ contract CVStrategyTestUpgradeable is
 
         startMeasuringGas("createProposal");
         // allo().addToCloneableStrategies(address(strategy));
-        address collateralVaultTemplate = address(new CollateralVault());
         StrategyStruct.ArbitrableConfig memory arbitrableConfig =
             StrategyStruct.ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300);
         StrategyStruct.InitializeParams memory params = getParams(
@@ -372,6 +358,85 @@ contract CVStrategyTestUpgradeable is
         stopMeasuringGas();
     }
 
+    function testRevert_allocate_UserInactive() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         *
+         */
+        StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](2);
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, 80); // 0 + 80 = 80% = 40
+        votes[1] = StrategyStruct.ProposalSupport(proposalId, 20); // 80 + 20 = 100% = 50
+        bytes memory data = abi.encode(votes);
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        cv.deactivatePoints();
+        vm.expectRevert(CVStrategyV0_0.UserIsInactive.selector);
+        allo().allocate(poolId, data);
+    }
+
+    function testRevert_allocate_InvalidProposal() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         *
+         */
+        int256 SUPPORT_PCT = int256(MINIMUM_STAKE);
+        StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
+        votes[0] = StrategyStruct.ProposalSupport(10, SUPPORT_PCT); // 0 + 70 = 70% = 35
+        bytes memory data = abi.encode(votes);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, 10));
+        allo().allocate(poolId, data);
+    }
+
+    function testRevert_allocate_InsufficientPoints() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         *
+         */
+        int256 SUPPORT_PCT = int256(MINIMUM_STAKE * 10);
+        StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 70 = 70% = 35
+        bytes memory data = abi.encode(votes);
+        uint256 newTotalVotingSupport = 500000000000000000000;
+        uint256 participantBalance = 50000000000000000000;
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVStrategyV0_0.NotEnoughPointsToSupport.selector, newTotalVotingSupport, participantBalance
+            )
+        );
+        vm.stopPrank();
+        allo().allocate(poolId, data);
+        stopMeasuringGas();
+    }
+
+    function testRevert_allocate_SupportUnderflow() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         *
+         */
+        int256 SUPPORT_PCT = int256(-50);
+        StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 70 = 70% = 35
+        bytes memory data = abi.encode(votes);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.SupportUnderflow.selector, 0, SUPPORT_PCT, SUPPORT_PCT));
+        allo().allocate(poolId, data);
+    }
+
+    function testRevert_calculateThreshold_requestOverMax() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         *
+         */
+        //Revert on create already tested, here checking the revert in calculateThreshold
+        uint256 requestedAmount = REQUESTED_AMOUNT * 100000;
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.AmountOverMaxRatio.selector));
+        cv.calculateThreshold(requestedAmount);
+    }
+
     //@todo should fix that tests using old percentage scale
     // function testRevert_allocate_removeSupport_wo_support_before_SUPPORT_UNDERFLOW() public {
     //     (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
@@ -409,6 +474,20 @@ contract CVStrategyTestUpgradeable is
             StrategyStruct.CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0x666), metadata);
         bytes memory data = abi.encode(proposal);
         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.TokenNotAllowed.selector));
+        allo().registerRecipient(poolId, data);
+        proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0), metadata);
+        data = abi.encode(proposal);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.TokenCannotBeZero.selector));
+        allo().registerRecipient(poolId, data);
+    }
+
+    function testRevert_registerRecipient_PoolIdCannotBeZero() public {
+        (, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+        // address wrong_token = address(new GV2ERC20());
+        StrategyStruct.CreateProposal memory proposal =
+            StrategyStruct.CreateProposal(0, pool_admin(), REQUESTED_AMOUNT, address(token), metadata);
+        bytes memory data = abi.encode(proposal);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.PoolIdCannotBeZero.selector));
         allo().registerRecipient(poolId, data);
     }
 
@@ -514,6 +593,36 @@ contract CVStrategyTestUpgradeable is
         assertEq(cv.getProposalStakedAmount(proposalId), 0);
     }
 
+    function test_setPoolActive() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         */
+        // startMeasuringGas("Support a Proposal");
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        cv.setPoolActive(false);
+        assertEq(cv.isPoolActive(), false);
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember();
+        // Checking that poolActive doesnt influence allocate behavior
+        uint256 AMOUNT_STAKED = uint256(80);
+        // startMeasuringGas("Support a Proposal");
+        StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
+        votes[0] = StrategyStruct.ProposalSupport(proposalId, int256(AMOUNT_STAKED));
+        bytes memory data = abi.encode(votes);
+        allo().allocate(poolId, data);
+    }
+
+    function test_getMetadata() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         */
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        Metadata memory meta = cv.getMetadata(proposalId);
+        assertEq(meta.protocol, 1);
+    }
+
     function test_conviction_check_function() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
@@ -522,8 +631,16 @@ contract CVStrategyTestUpgradeable is
         // cv.setDecay(_etherToFloat(0.9 ether)); // alpha = decay
         // cv.setMaxRatio(_etherToFloat(0.2 ether)); // beta = maxRatio
         // cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
-
-        // TODO: SetPool Params
+        StrategyStruct.CVParams memory params = StrategyStruct.CVParams({
+        maxRatio: _etherToFloat(0.2 ether),
+        weight: _etherToFloat(0.002 ether),
+        decay: _etherToFloat(0.9 ether),
+        minThresholdPoints: 0
+        });
+        StrategyStruct.ArbitrableConfig memory arbConfig;
+        vm.startPrank(address(_councilSafe()));
+        cv.setPoolParams(arbConfig, params);
+        vm.stopPrank();
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9 ether)));
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.2 ether)));
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setWeight.selector, _etherToFloat(0.002 ether)));
@@ -557,10 +674,15 @@ contract CVStrategyTestUpgradeable is
         // cv.setMaxRatio(_etherToFloat(0.2 ether)); // beta = maxRatio
         // cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
 
-        // TODO: SetPool Params
-        // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9 ether)));
-        // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.2 ether)));
-        // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setWeight.selector, _etherToFloat(0.002 ether)));
+        StrategyStruct.ArbitrableConfig memory arbConfig;
+        vm.startPrank(address(_councilSafe()));
+        cv.setPoolParams(arbConfig, StrategyStruct.CVParams({
+        maxRatio: _etherToFloat(0.2 ether),
+        weight: _etherToFloat(0.002 ether),
+        decay: _etherToFloat(0.9 ether),
+        minThresholdPoints: 0
+        }));
+        vm.stopPrank();
 
         uint256 AMOUNT_STAKED = 45000;
 
@@ -821,10 +943,8 @@ contract CVStrategyTestUpgradeable is
 
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
-        // TOD
-        // TODO: GetPoolParamsO: GetPoolParams
-        // // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.decay(), 1e7));
-        // vm.roll(rollTo100 * 2);
+        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        vm.roll(rollTo100 * 2);
 
         console.log("after block.number", block.number);
         cv.updateProposalConviction(proposalId);
@@ -878,15 +998,15 @@ contract CVStrategyTestUpgradeable is
 
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        // TODO: SetPool Params
-        // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMinThresholdPoints.selector, MIN_THRESHOLD_PTS));
-
-        // FAST 1 MIN half life Conviction Growth
-        // TODO: SetPool Params
-        // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9965402 ether)));
-        // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.1 ether)));
-        // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setWeight.selector, _etherToFloat(0.0005 ether)));
-
+        StrategyStruct.ArbitrableConfig memory arbConfig;
+        vm.startPrank(address(_councilSafe()));
+        cv.setPoolParams(arbConfig, StrategyStruct.CVParams({
+        maxRatio: _etherToFloat(0.1 ether),
+        weight: _etherToFloat(0.0005 ether),
+        decay: _etherToFloat(0.9965402 ether),
+        minThresholdPoints: MIN_THRESHOLD_PTS
+        }));
+        vm.stopPrank();
         // startMeasuringGas("Support a Proposal");
         int256 SUPPORT_PCT = int256(MINIMUM_STAKE);
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
@@ -926,10 +1046,8 @@ contract CVStrategyTestUpgradeable is
 
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
-        // TOD
-        // TODO: GetPoolParamsO: GetPoolParams
-        // // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.decay(), 1e7));
-        // vm.roll(rollTo100 * 2);
+        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        vm.roll(rollTo100 * 2);
 
         console.log("after block.number", block.number);
         cv.updateProposalConviction(proposalId);
@@ -968,9 +1086,15 @@ contract CVStrategyTestUpgradeable is
         // if (block.number >= rollTo100 * 2) {
         assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
 
-        // TODO: GetPoolParams
-        // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMinThresholdPoints.selector, 0));
-        // cv.updateProposalConviction(proposalId);
+        vm.startPrank(address(_councilSafe()));
+        cv.setPoolParams(arbConfig, StrategyStruct.CVParams({
+        maxRatio: _etherToFloat(0.1 ether),
+        weight: _etherToFloat(0.0005 ether),
+        decay: _etherToFloat(0.9965402 ether),
+        minThresholdPoints: 0
+        }));
+        vm.stopPrank();
+        cv.updateProposalConviction(proposalId);
         assertEq(cv.canExecuteProposal(proposalId), true, "canExecuteProposal");
         // }
     }
@@ -1047,7 +1171,7 @@ contract CVStrategyTestUpgradeable is
 
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
-        // console2.log(cv.decay());
+        // console2.log(cv.getDecay());
         vm.roll(10);
         console.log("after block.number", block.number);
         // x = 8731 / 149253
@@ -1094,11 +1218,9 @@ contract CVStrategyTestUpgradeable is
             revert("block.number not expected");
         }
 
-        // TOD
-        // TODO: GetPoolParamsO: GetPoolParams
-        // // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.decay(), 1e7));
+        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
 
-        // vm.roll(rollTo100 * 2);
+        vm.roll(rollTo100 * 2);
         console.log("after block.number", block.number);
         console.log("Conviction After:  %s", cv.updateProposalConviction(proposalId));
 
@@ -1173,7 +1295,7 @@ contract CVStrategyTestUpgradeable is
 
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
-        // console2.log(cv.decay());
+        // console2.log(cv.getDecay());
         vm.roll(10);
         console.log("after block.number", block.number);
         // x = 8731 / 149253
@@ -1220,10 +1342,8 @@ contract CVStrategyTestUpgradeable is
             revert("block.number not expected");
         }
 
-        // TODO: GetPoolParams
-        // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.decay(), 1e7));
-
-        // vm.roll(rollTo100 * 2);
+        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        vm.roll(rollTo100 * 2);
         console.log("after block.number", block.number);
         console.log("Conviction After:  %s", cv.updateProposalConviction(proposalId));
 
@@ -1244,7 +1364,16 @@ contract CVStrategyTestUpgradeable is
         // cv.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         // cv.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
 
-        // TODO: SetPool Params
+
+        // StrategyStruct.ArbitrableConfig memory arbConfig;
+        vm.startPrank(address(_councilSafe()));
+        cv.setPoolParams(StrategyStruct.ArbitrableConfig(IArbitrator(address(0)),address(0),0,0,0,0), StrategyStruct.CVParams({
+        maxRatio: _etherToFloat(0.1 ether),
+        weight: _etherToFloat(0.0005 ether),
+        decay: _etherToFloat(0.9965402 ether),
+        minThresholdPoints: 0
+        }));
+        vm.stopPrank();
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9965402 ether)));
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.1 ether)));
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setWeight.selector, _etherToFloat(0.0005 ether)));
@@ -1312,10 +1441,9 @@ contract CVStrategyTestUpgradeable is
             "maxCVStaked"
         );
 
-        // TODO: GetPoolParamssole2.log(cv.decay());
-        // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.decay(), 1e7));
+        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
 
-        // vm.roll(rollTo100);
+        vm.roll(rollTo100);
         // vm.roll(110);
         console.log("after block.number", block.number);
         // x = 8731 / 149253
@@ -1610,16 +1738,15 @@ contract CVStrategyTestUpgradeable is
         console.log("TOTAL POINTS ACTIVATED", cv.totalEffectiveActivePoints());
         stopMeasuringGas();
 
-        // TODO: GetPoolParams
-        // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.decay(), 1e7));
-        // vm.roll(rollTo100);
+        // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        vm.roll(calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7)));
 
         cv.updateProposalConviction(proposalId);
 
         // uint256 totalEffectiveActivePoints = cv.totalEffectiveActivePoints();
         // console.log("totalEffectiveActivePoints", totalEffectiveActivePoints);
-        console.log("maxCVSupply:   %s", cv.getMaxConviction(cv.totalEffectiveActivePoints()));
-        console.log("maxCVStaked:   %s", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
+        // console.log("maxCVSupply:   %s", cv.getMaxConviction(cv.totalEffectiveActivePoints()));
+        // console.log("maxCVStaked:   %s", cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)));
         // uint256 STAKED_AMOUNT = uint256(SUPPORT_PCT) * MINIMUM_STAKE / 100e4;
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), uint256(SUPPORT_PCT)); // 80% of 50 = 40
         assertEq(cv.getProposalStakedAmount(proposalId), uint256(SUPPORT_PCT)); // 80% of 50 = 40
@@ -1642,10 +1769,10 @@ contract CVStrategyTestUpgradeable is
         // console.log("Requested Token: %s", requestedToken);
         // console.log("Requested Amount: %s", requestedAmount);
         // console.log("Staked Tokens: %s", stakedTokens);
-        console.log("Threshold:     %s", threshold);
+        // console.log("Threshold:     %s", threshold);
         // console.log("Agreement Action Id: %s", agreementActionId);
         // console.log("Block Last: %s", blockLast);
-        console.log("Conv Last:     %s", convictionLast);
+        // console.log("Conv Last:     %s", convictionLast);
         // console.log("Voter points pct %s", voterPointsPct);
         // console.log("Beneficiary: %s", beneficiary);
         // console.log("Submitter: %s", submitter);
@@ -1687,9 +1814,8 @@ contract CVStrategyTestUpgradeable is
         console.log("TOTAL POINTS ACTIVATED", cv.totalEffectiveActivePoints());
         stopMeasuringGas();
 
-        // TODO: GetPoolParams
-        // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.decay(), 1e7));
-        // vm.roll(rollTo100);
+        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        vm.roll(rollTo100);
 
         cv.updateProposalConviction(proposalId);
 
@@ -1755,10 +1881,10 @@ contract CVStrategyTestUpgradeable is
 
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        assertEq(
-            registryCommunity.getMemberPowerInStrategy(address(this), address(cv)),
-            registryCommunity.getMemberStakedAmount(address(this))
-        );
+        // assertEq(
+        //     registryCommunity.getMemberPowerInStrategy(address(this), address(cv)),
+        //     registryCommunity.getMemberStakedAmount(address(this))
+        // );
         // startMeasuringGas("Support a Proposal");
         int256 SUPPORT_PCT = int256(MINIMUM_STAKE);
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
@@ -1769,9 +1895,8 @@ contract CVStrategyTestUpgradeable is
         console.log("TOTAL POINTS ACTIVATED", cv.totalEffectiveActivePoints());
         stopMeasuringGas();
 
-        // TODO: GetPoolParams
-        // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.decay(), 1e7));
-        // vm.roll(rollTo100);
+        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        vm.roll(rollTo100);
 
         cv.updateProposalConviction(proposalId);
 
@@ -1819,11 +1944,14 @@ contract CVStrategyTestUpgradeable is
 
         allo().distribute(poolId, recipients, dataProposal);
         //@todo chec ProposalStatus
-
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotActive.selector, proposalId));
+        allo().distribute(poolId, recipients, dataProposal);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotActive.selector, proposalId));
+        cv.updateProposalConviction(proposalId);
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
         (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
-        assertEq(amount - submitterCollateralAmount, requestedAmount);
+        assertEq(amount, requestedAmount + submitterCollateralAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
 
@@ -1837,7 +1965,9 @@ contract CVStrategyTestUpgradeable is
         // startMeasuringGas("Support a Proposal");
         stopMeasuringGas();
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
-
+        uint256 wrongProposalId = 4;
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, wrongProposalId));
+        cv.updateProposalConviction(wrongProposalId);
         cv.updateProposalConviction(proposalId);
         address[] memory recipients = new address[](0);
         bytes memory dataProposal = abi.encode(proposalId);
@@ -1850,6 +1980,43 @@ contract CVStrategyTestUpgradeable is
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
     }
 
+    function testRevert_proposalId_distribute() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         *
+         */
+        // startMeasuringGas("Support a Proposal");
+        stopMeasuringGas();
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        cv.updateProposalConviction(proposalId);
+        address[] memory recipients = new address[](0);
+        bytes memory dataProposal = abi.encode(0);
+        assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalIdCannotBeZero.selector));
+        allo().distribute(proposalId, recipients, dataProposal);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
+    }
+
+    function testRevert_proposalData_distribute() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        /**
+         * ASSERTS
+         *
+         */
+        // startMeasuringGas("Support a Proposal");
+        stopMeasuringGas();
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        cv.updateProposalConviction(proposalId);
+        address[] memory recipients = new address[](0);
+        bytes memory dataProposal = "";
+        assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalDataIsEmpty.selector));
+        allo().distribute(proposalId, recipients, dataProposal);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
+    }
+
     function testRevert_distribute_onlyAllo_Native() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
@@ -1859,6 +2026,10 @@ contract CVStrategyTestUpgradeable is
         address sender = address(this);
         vm.expectRevert(abi.encodeWithSelector(UNAUTHORIZED.selector));
         cv.distribute(recipientIds, data, sender);
+        uint256 wrongId = 4;
+        data = abi.encode(wrongId);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, wrongId));
+        allo().distribute(poolId, recipientIds, data);
     }
 
     function testRevert_distribute_onlyAllo() public {

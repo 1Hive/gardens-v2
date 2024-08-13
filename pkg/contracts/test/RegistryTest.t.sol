@@ -22,7 +22,6 @@ import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 import {RegistryFactoryV0_1} from "../src/RegistryFactoryV0_1.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 import {CVStrategyV0_0, StrategyStruct, IArbitrator} from "../src/CVStrategyV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
