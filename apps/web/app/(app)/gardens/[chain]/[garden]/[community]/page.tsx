@@ -25,6 +25,7 @@ import {
   DisplayNumber,
   EthAddress,
   IncreasePower,
+  InfoIcon,
   PoolCard,
   RegisterMember,
   Statistic,
@@ -237,7 +238,7 @@ export default function Page({
             <div className="flex">
               <p className="font-medium">Registration cost:</p>
               <InfoIcon
-                content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
+                tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
                   number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
