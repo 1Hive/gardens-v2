@@ -263,6 +263,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     registryCommunity {
       id
+      councilSafe
       isValid
       garden {
         id

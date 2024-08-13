@@ -2688,7 +2688,7 @@ export type getPoolDataQuery = {
     cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled'> & {
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         config: Pick<CVStrategyConfig, 'id' | 'decay' | 'weight' | 'proposalType' | 'pointSystem' | 'maxRatio' | 'minThresholdPoints'>;
-        registryCommunity: (Pick<RegistryCommunity, 'id' | 'isValid'> & {
+        registryCommunity: (Pick<RegistryCommunity, 'id' | 'councilSafe' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });
         proposals: Array<(Pick<CVProposal, 'id' | 'proposalNumber' | 'metadata' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'stakedAmount' | 'convictionLast' | 'threshold'> & {
