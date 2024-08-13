@@ -109,7 +109,7 @@ export function Breadcrumbs() {
             <div>
               <Button
                 btnStyle="filled"
-                onClick={() => setOpenDisclaimer(false)}
+                onClick={() => {setOpenDisclaimer(false); localStorage.setItem(notAuditedDisclaimerAckStorageKey, true)}}
                 color="danger"
               >
                 I understand
