@@ -1,20 +1,20 @@
 import { defineConfig } from "@wagmi/cli";
 import { actions } from "@wagmi/cli/plugins";
 import { Abi } from "viem";
+import { erc20ABI } from "wagmi";
 import { abi as alloABI } from "#/contracts/out/Allo.sol/Allo.json";
-import { abi as CVStrategyABI } from "#/contracts/out/CVStrategy.sol/CVStrategy.json";
-import { abi as mockERC20ABI } from "#/contracts/out/TERC20.sol/TERC20.json";
+import { abi as CVStrategyABI } from "#/contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json";
 import { abi as SafeABI } from "#/contracts/out/ISafe.sol/ISafe.json";
 import { abi as PassportScorerABI } from "#/contracts/out/PassportScorer.sol/PassportScorer.json";
-import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunity.sol/RegistryCommunity.json";
-import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactory.sol/RegistryFactory.json";
+import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json";
+import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactoryV0_1.sol/RegistryFactoryV0_1.json";
 
 export default defineConfig({
   out: "src/generated.ts",
   contracts: [
     {
       name: "ERC20",
-      abi: mockERC20ABI as Abi,
+      abi: erc20ABI as Abi,
     },
     {
       name: "CVStrategy",
