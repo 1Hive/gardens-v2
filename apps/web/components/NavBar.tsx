@@ -17,8 +17,8 @@ export function NavBar() {
     >
       {({ open }) => (
         <>
-          <div className="px-2 sm:px-4 md:py-0 bg-neutral rounded-3xl border1">
-            <div className="flex h-16 justify-between">
+          <div className="p-2 sm:py-3 sm:px-4 bg-neutral rounded-2xl border1">
+            <div className="flex justify-between">
               <div className="flex gap-8">
                 <div className="flex flex-shrink-0 items-center gap-3 text-sm">
                   <Link

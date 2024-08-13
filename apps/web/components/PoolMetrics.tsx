@@ -120,7 +120,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           <div className="flex gap-3 items-baseline">
             <p className="subtitle2">Funds available:</p>
             <DisplayNumber
-              number={formatTokenAmount(poolAmount, tokenGarden.decimals)}
+              number={[BigInt(poolAmount), tokenGarden.decimals]}
               tokenSymbol={tokenGarden.symbol}
               compact={true}
               className="subtitle2 text-primary-content"
