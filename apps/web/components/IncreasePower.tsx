@@ -245,6 +245,7 @@ export const IncreasePower = ({
                   tokenSymbol={tokenSymbol}
                   compact={true}
                   className="subtitle2 text-primary-content"
+                  disableTooltip
                 />
               </InfoIcon>
             </div>

@@ -161,7 +161,7 @@ const Hero = () => {
                   <Button>Launch App</Button>
                 </a>
                 <a
-                  href="https://hackmd.io/@thiagorossi/SkLI_dUY0"
+                  href="https://docs.gardens.fund/"
                   className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
                   target="_blank"
                   rel="noreferrer"
