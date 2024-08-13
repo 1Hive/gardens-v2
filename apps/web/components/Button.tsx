@@ -27,8 +27,13 @@ type ButtonProps = {
   walletConnected?: boolean;
 };
 
-type Color = "primary" | "secondary" | "tertiary" | "danger" | "disabled";
-type BtnStyle = "filled" | "outline" | "link";
+export type Color =
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "danger"
+  | "disabled";
+export type BtnStyle = "filled" | "outline" | "link";
 
 type BtnStyles = Record<BtnStyle, Record<Color, string>>;
 

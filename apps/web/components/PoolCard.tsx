@@ -14,14 +14,13 @@ import {
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { blueLand, grass } from "@/assets";
-import { Badge, Card, Statistic } from "@/components";
+import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { PoolTypes } from "@/types";
-import { formatTokenAmount } from "@/utils/numbers";
 
 type Props = {
-  tokenGarden: Pick<TokenGarden, "decimals">;
+  tokenGarden: Pick<TokenGarden, "decimals" | "symbol">;
   pool: Pick<
     CVStrategy,
     "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
@@ -59,11 +58,20 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           label="proposals"
         />
         {poolType && PoolTypes[poolType] === "funding" && (
-          <Statistic
-            icon={<CurrencyDollarIcon />}
-            count={formatTokenAmount(poolAmount, tokenGarden?.decimals)}
-            label="funds available"
-          />
+          <Statistic icon={<CurrencyDollarIcon />}
+
+            label="funds available" >
+            <DisplayNumber
+              number={[
+                BigInt(poolAmount),
+                tokenGarden.decimals,
+              ]}
+              compact={true}
+              tokenSymbol={tokenGarden.symbol}
+            />
+
+          </Statistic>
+
         )}
       </div>
       {!isEnabled ?
@@ -74,7 +82,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
       : <Image
           src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
-          className="h-10 w-full rounded-lg object-cover"
+          className="h-12 w-full rounded-lg object-cover"
         />
       }
     </Card>

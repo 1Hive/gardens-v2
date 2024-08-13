@@ -11,7 +11,7 @@ import {
 } from "@/components/";
 import { LightCVStrategy } from "@/types";
 
-type PoolGovernanceProps = {
+interface PoolGovernanceProps {
   memberPoolWeight: number;
   tokenDecimals: number;
   strategy: LightCVStrategy;
@@ -19,9 +19,9 @@ type PoolGovernanceProps = {
   memberTokensInCommunity: number;
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
-};
+}
 
-export const PoolGovernance = ({
+export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   memberPoolWeight,
   tokenDecimals,
   strategy,
@@ -29,11 +29,8 @@ export const PoolGovernance = ({
   memberTokensInCommunity,
   isMemberCommunity,
   memberActivatedStrategy,
-}: PoolGovernanceProps) => {
-  const showPoolGovernanceData =
-    isMemberCommunity &&
-    memberActivatedStrategy !== undefined &&
-    memberActivatedStrategy;
+}) => {
+  const showPoolGovernanceData = isMemberCommunity && memberActivatedStrategy;
 
   return (
     <section className="section-layout">
@@ -47,7 +44,7 @@ export const PoolGovernance = ({
               {showPoolGovernanceData ?
                 <>
                   <div className="flex w-full items-center gap-6">
-                    <h5 className="">Total staked in community:</h5>
+                    <h5>Total staked in community:</h5>
                     <DisplayNumber
                       tokenSymbol={strategy.registryCommunity.garden.symbol}
                       className="text-2xl"
@@ -57,13 +54,13 @@ export const PoolGovernance = ({
                     />
                   </div>
                   <div className="flex w-full items-center gap-6">
-                    <h5 className="">Status:</h5>
+                    <h5>Status:</h5>
                     <div>
                       <Badge status={memberActivatedStrategy ? 1 : 0} />
                     </div>
                   </div>
                   <div className="flex w-full items-baseline gap-6">
-                    <h5 className="">Your governance weight:</h5>
+                    <h5>Your governance weight:</h5>
                     <p className="text-3xl text-info">
                       {memberPoolWeight.toFixed(2)} %
                       <span className="text-lg text-black"> of the pool</span>
@@ -71,7 +68,7 @@ export const PoolGovernance = ({
                   </div>
                 </>
               : <div className="flex w-full items-center gap-6">
-                  <h5 className="">Status:</h5>
+                  <h5>Status:</h5>
                   <div>
                     <Badge status={memberActivatedStrategy ? 1 : 0} />
                   </div>

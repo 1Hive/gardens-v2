@@ -13,6 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { newLogo, commF } from "@/assets";
+import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chainServer";
 
 export default function Page() {
@@ -27,6 +28,8 @@ export default function Page() {
     </>
   );
 }
+
+//TODO: route app buttons to app.gardens ..
 
 const Hero = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -74,13 +77,12 @@ const Hero = () => {
           </div>
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
             <a
-              href="https://la74xhyqvjj.typeform.com/to/ocrTRQFb"
+              href="/gardens"
               className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
               target="_blank"
               rel="noreferrer"
             >
-              <span>Sign up </span>
-              <ArrowLongRightIcon className="ml-2 h-5 w-5" />
+              <Button>Launch App</Button>
             </a>
           </div>
         </nav>
@@ -126,13 +128,12 @@ const Hero = () => {
                 </div>
                 <div className="py-6">
                   <a
-                    href="https://la74xhyqvjj.typeform.com/to/ocrTRQFb"
-                    className="flex w-full items-center justify-center bg-neutral-inverted-content py-1 text-center text-sm font-semibold leading-6 hover:opacity-95"
+                    href="/gardens"
+                    className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <span>Sign up </span>
-                    <ArrowLongRightIcon className="ml-2 h-5 w-5" />
+                    <Button>Launch App</Button>
                   </a>
                 </div>
               </div>
@@ -356,21 +357,20 @@ const SignUp = () => {
       <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="relative isolate overflow-hidden bg-neutral-content px-6 py-24 shadow-2xl sm:rounded-3xl sm:px-24 xl:py-32">
           <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight text-neutral sm:text-4xl">
-            Get ready for our beta release
+            Cultivate change with Gardens
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-center text-lg leading-8 text-neutral-soft">
-            Coming August 2024!
+            Join our Beta and start growing your community.
           </p>
           <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-4 rounded-xl">
             {/* TODO: link to gardnes form */}
             <a
-              href="https://la74xhyqvjj.typeform.com/to/ocrTRQFb"
-              className="flex w-full items-center justify-center rounded-md bg-neutral-inverted-content py-1 text-center text-sm font-semibold leading-6 hover:opacity-95"
+              href="/gardens"
+              className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
               target="_blank"
               rel="noreferrer"
             >
-              <span>Sign up </span>
-              <ArrowLongRightIcon className="ml-2 h-5 w-5" />
+              <Button>Launch App</Button>
             </a>
           </div>
           <svg
@@ -459,8 +459,8 @@ const navigation = [
 const Footer = () => {
   return (
     <footer className="bg-neutral">
-      <div className="mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8">
-        <div className="flex justify-center space-x-6 md:order-2">
+      <div className="mx-auto max-w-7xl px-6 py-12 md:flex md:flex-col md:items-center md:justify-between lg:px-8 gap-8">
+        <div className="flex justify-center space-x-6">
           {navigation.map((item) => (
             <a
               key={item.name}
@@ -474,7 +474,7 @@ const Footer = () => {
             </a>
           ))}
         </div>
-        <div className="mt-8 md:order-1 md:mt-0">
+        <div className="mt-8 md:mt-0">
           <p className="text-center text-xs leading-5 text-gray-500">
             &copy; 2024 Gardens. All rights reserved.
           </p>

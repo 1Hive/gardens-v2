@@ -11,7 +11,6 @@ import {
 import { Button } from "./Button";
 import { Modal } from "@/components";
 import { isProd } from "@/constants/contracts";
-import useModal from "@/hooks/useModal";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
 
@@ -28,7 +27,7 @@ type CheckPassportProps = {
   enableCheck?: boolean;
 };
 
-// component should only wrap button component
+// CheckPassport component should only wrap a Button or similar component
 
 export function CheckPassport({
   strategyAddr,
@@ -36,18 +35,19 @@ export function CheckPassport({
   enableCheck = true,
 }: CheckPassportProps) {
   const { address: walletAddr } = useAccount();
-  const { ref, openModal, closeModal } = useModal();
+  const [isOpenModal, setIsOpenModal] = useState(false);
   const [score, setScore] = useState<number>(0);
-  const [threshold, setThreshold] = useState<number>(0);
   const [shouldOpenModal, setShouldOpenModal] = useState(false);
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
+
+  //pool threshold should be ready on!
 
   useEffect(() => {
     if (!enableCheck) {
       return;
     }
     if (shouldOpenModal) {
-      openModal();
+      setIsOpenModal(true);
       setShouldOpenModal(false);
     }
   }, [shouldOpenModal]);
@@ -69,6 +69,10 @@ export function CheckPassport({
     });
 
   const passportStrategy = passportStrategyData?.passportStrategy;
+  const threshold =
+    passportStrategy?.threshold ?
+      Number(passportStrategy?.threshold) / CV_PERCENTAGE_SCALE
+    : 10000;
 
   if (!enableCheck) {
     return <>{children}</>;
@@ -95,7 +99,7 @@ export function CheckPassport({
       }
     } else {
       console.debug("No passport required, moving forward...");
-      closeModal();
+      setIsOpenModal(false);
     }
   };
 
@@ -106,7 +110,6 @@ export function CheckPassport({
     if (passportUser) {
       checkScoreRequirement(
         Number(passportUser?.score) / CV_PERCENTAGE_SCALE,
-        passportStrategy?.threshold,
         e,
       );
     } else {
@@ -119,40 +122,30 @@ export function CheckPassport({
 
   const checkScoreRequirement = (
     _score: number | string,
-    _threshold: number | string,
     e?: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     _score = Number(_score);
-    _threshold = Number(_threshold) / CV_PERCENTAGE_SCALE;
+    setScore(_score);
     if (score > threshold) {
       console.debug("Score meets threshold, moving forward...");
-      setScore(score);
-      setThreshold(threshold);
     } else {
       console.debug("Score is too low, opening modal...");
       e?.preventDefault();
       e?.stopPropagation();
-      setScore(score);
-      setThreshold(threshold);
       setShouldOpenModal(true);
     }
   };
 
   const submitAndWriteScorer = async (_walletAddr: Address) => {
-    openModal();
+    setIsOpenModal(true);
     setIsSubmiting(true);
     try {
       const passportResponse = await submitPassport(_walletAddr);
       console.debug(passportResponse);
+      // gitcoin passport score does not need formating
       if (passportResponse?.data?.score) {
         await writeScorer(_walletAddr);
-      }
-      // gitcoin passport score no need for formating
-      if (passportResponse?.data?.score) {
-        checkScoreRequirement(
-          passportResponse?.data?.score,
-          passportStrategy?.threshold,
-        );
+        checkScoreRequirement(passportResponse?.data?.score);
       }
     } catch (error) {
       console.error("Error submitting passport:", error);
@@ -222,14 +215,13 @@ export function CheckPassport({
       };
     }
   };
-
   return (
     <>
       <div onClickCapture={(e) => handleCheckPassport(e)} className="w-fit">
         {children}
       </div>
 
-      <Modal title="Gitcoin passport" onClose={closeModal} ref={ref}>
+      <Modal title="Gitcoin passport" isOpen={isOpenModal}>
         <div className="flex flex-col gap-8">
           <div>
             <p>
@@ -246,14 +238,14 @@ export function CheckPassport({
                 <p>Your score meets the pool requirement. You can proceed.</p>
               </div>
             : <p className="mt-6">
-                Your score is too low, please go to{" "}
+                Your score is too low, please go to Gitcoin passport{" "}
                 <a
                   href="https://passport.gitcoin.co/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-content underline hover:text-primary-hover-content"
                 >
-                  Gitcoin passport website
+                  website
                 </a>{" "}
                 to increment it before continuing.
               </p>
