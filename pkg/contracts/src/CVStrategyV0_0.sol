@@ -398,6 +398,10 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         return (arbitrableConfig.submitterCollateralAmount, arbitrableConfig.challengerCollateralAmount);
     }
 
+    function getDecay() external view returns (uint256) {
+        return cvParams.decay;
+    }
+
     function activatePoints() external {
         address member = msg.sender;
         if (!_canExecuteAction(member)) {
@@ -553,7 +557,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     // most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
     // this contract will need to track the amount paid already, so that it doesn't double pay
     function _distribute(address[] memory, bytes memory _data, address) internal override {
-        //@todo could reentrancy?
         // surpressStateMutabilityWarning++;
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty();
@@ -591,7 +594,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             poolAmount -= proposal.requestedAmount; // CEI
 
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
-            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
+            // _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
@@ -599,7 +602,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             );
 
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
-            emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
+            // emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
         } //signaling do nothing @todo write tests @todo add end date
     }
 
