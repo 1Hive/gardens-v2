@@ -18,7 +18,6 @@ import {
   Maybe,
   ProposalDispute,
   ProposalDisputeMetadata,
-  RegistryCommunity,
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DateComponent } from "./DateComponent";
@@ -36,7 +35,7 @@ import {
   iArbitratorABI,
   safeArbitratorABI,
 } from "@/src/generated";
-import { DisputeStatus, ProposalStatus, DisputeOutcome } from "@/types";
+import { DisputeStatus, ProposalStatus } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 
@@ -50,11 +49,11 @@ type Props = {
         config: Pick<
           CVStrategyConfig,
           | "arbitrator"
+          | "tribunalSafe"
           | "challengerCollateralAmount"
           | "defaultRuling"
           | "defaultRulingTimeout"
         >;
-        registryCommunity: Pick<RegistryCommunity, "councilSafe">;
       };
     }
   > &
@@ -172,9 +171,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     +lastDispute.createdAt + +config.defaultRulingTimeout < Date.now() / 1000;
   const disputes = disputesResult?.proposalDisputes ?? [];
 
-  const isCouncilSafe =
-    proposalData?.strategy.registryCommunity.councilSafe ===
-    address?.toLowerCase();
+  const isCouncilSafe = config.tribunalSafe === address?.toLowerCase();
 
   const { write: writeDisputeProposal } = useContractWriteWithConfirmations({
     contractName: "CVStrategy",

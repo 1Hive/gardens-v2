@@ -333,9 +333,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
         arbitrator
         defaultRuling
         defaultRulingTimeout
-      }
-      registryCommunity {
-        councilSafe
+        tribunalSafe
       }
     }
   }
