@@ -146,9 +146,7 @@ export default function PoolHeader({
           <h2>
             {ipfsResult?.title} #{poolId}
           </h2>
-
-          {/* {isCouncilSafe */}
-          {true && (
+          {isCouncilSafe && (
             <div className="flex gap-2">
               <Button
                 btnStyle="outline"
