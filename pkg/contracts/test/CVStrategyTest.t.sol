@@ -49,15 +49,7 @@ import {IRegistryCommunityV0_0} from "../src/interfaces/IRegistryCommunity.sol";
  * forge test --mc CVStrategyTest --mt test -vv
  */
 
-contract CVStrategyTest is
-    Test,
-    AlloSetup,
-    RegistrySetupFull,
-    CVStrategyHelpersV0_0,
-    Errors,
-    GasHelpers2,
-    SafeSetup
-{
+contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0_0, Errors, GasHelpers2, SafeSetup {
     using ABDKMath64x64 for int128;
     using ABDKMath64x64 for int256;
     using ABDKMath64x64 for uint128;
@@ -79,7 +71,6 @@ contract CVStrategyTest is
 
     RegistryFactoryV0_0 internal registryFactory;
     RegistryCommunityV0_0 internal registryCommunity;
-    CVStrategyV0_0 internal cvStrategyTemplate;
 
     ISybilScorer public passportScorer;
     IArbitrator safeArbitrator;
@@ -127,10 +118,6 @@ contract CVStrategyTest is
         );
 
         registryFactory = RegistryFactoryV0_0(address(proxy));
-
-        assertEq(address(cvStrategyTemplate.getAllo()), address(allo()), "CVStrategy initialized");
-
-        // cvStrategyTemplate.initialize(123,bytes(""));
 
         vm.stopPrank();
 
@@ -198,7 +185,6 @@ contract CVStrategyTest is
 
         startMeasuringGas("createProposal");
         // allo().addToCloneableStrategies(address(strategy));
-        address collateralVaultTemplate = address(new CollateralVault());
         StrategyStruct.ArbitrableConfig memory arbitrableConfig =
             StrategyStruct.ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300);
         StrategyStruct.InitializeParams memory params = getParams(
@@ -371,7 +357,8 @@ contract CVStrategyTest is
         vm.stopPrank();
         stopMeasuringGas();
     }
-        function testRevert_allocate_UserInactive() public {
+
+    function testRevert_allocate_UserInactive() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
          * ASSERTS
@@ -386,6 +373,7 @@ contract CVStrategyTest is
         vm.expectRevert(CVStrategyV0_0.UserIsInactive.selector);
         allo().allocate(poolId, data);
     }
+
     function testRevert_allocate_InvalidProposal() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
@@ -399,6 +387,7 @@ contract CVStrategyTest is
         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, 10));
         allo().allocate(poolId, data);
     }
+
     function testRevert_allocate_InsufficientPoints() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
@@ -420,6 +409,7 @@ contract CVStrategyTest is
         allo().allocate(poolId, data);
         stopMeasuringGas();
     }
+
     function testRevert_allocate_SupportUnderflow() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
@@ -433,6 +423,7 @@ contract CVStrategyTest is
         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.SupportUnderflow.selector, 0, SUPPORT_PCT, SUPPORT_PCT));
         allo().allocate(poolId, data);
     }
+
     function testRevert_calculateThreshold_requestOverMax() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
@@ -622,6 +613,7 @@ contract CVStrategyTest is
         bytes memory data = abi.encode(votes);
         allo().allocate(poolId, data);
     }
+
     function test_getMetadata() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
@@ -1782,7 +1774,6 @@ contract CVStrategyTest is
         (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
         assertEq(amount - submitterCollateralAmount, requestedAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
-        
     }
 
     function test_distribute_with_token() public {
@@ -1991,6 +1982,7 @@ contract CVStrategyTest is
         allo().distribute(proposalId, recipients, dataProposal);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
     }
+
     function testRevert_proposalData_distribute() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         /**
