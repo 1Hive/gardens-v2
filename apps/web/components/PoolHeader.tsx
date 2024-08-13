@@ -22,6 +22,7 @@ import { blueLand, grassLarge } from "@/assets";
 import { chainDataMap } from "@/configs/chainServer";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { pointSystems, poolTypes } from "@/types";
+import { proposalStatus } from "@/types";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import {
   CV_SCALE_PRECISION,
@@ -91,6 +92,7 @@ export default function PoolHeader({
     strategy.config.weight,
     spendingLimitPct * MAX_RATIO_CONSTANT,
   );
+
   const convictionGrowth = calculateConvictionGrowthInDays(
     strategy.config.decay,
     blockTime,
@@ -101,6 +103,10 @@ export default function PoolHeader({
     token.decimals,
   );
   const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
+
+  const proposalOnDispute = strategy.proposals?.some(
+    (proposal) => proposalStatus[proposal.proposalStatus] === "disputed",
+  );
 
   const poolConfig = [
     {
@@ -140,14 +146,14 @@ export default function PoolHeader({
           <h2>
             {ipfsResult?.title} #{poolId}
           </h2>
-          {/* TODO: council safe wallet connected && */}
-          {/* change isConnected to also check if council safe wallet */}
-          {isCouncilSafe && (
+
+          {/* {isCouncilSafe */}
+          {true && (
             <div className="flex gap-2">
               <Button
                 btnStyle="outline"
                 icon={<Cog6ToothIcon height={24} width={24} />}
-                disabled={!isConnected || missmatchUrl}
+                disabled={!isConnected || missmatchUrl || proposalOnDispute}
                 tooltip={tooltipMessage}
                 onClick={() => setIsOpenModal(true)}
               >
