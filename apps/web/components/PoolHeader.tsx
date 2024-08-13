@@ -9,6 +9,7 @@ import {
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { toast } from "react-toastify";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
 import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
@@ -20,9 +21,13 @@ import { Modal } from "./Modal";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
 import { chainDataMap } from "@/configs/chainServer";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { registryCommunityABI } from "@/src/generated";
 import { pointSystems, poolTypes } from "@/types";
 import { proposalStatus } from "@/types";
+import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import {
   CV_SCALE_PRECISION,
@@ -82,6 +87,7 @@ export default function PoolHeader({
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
+  const { publish } = usePubSubContext();
 
   const blockTime = chainDataMap[chainId].blockTime;
   const isCouncilSafe =
@@ -103,6 +109,7 @@ export default function PoolHeader({
     token.decimals,
   );
   const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
+  const communityAddr = strategy.registryCommunity.id as Address;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => proposalStatus[proposal.proposalStatus] === "disputed",
@@ -139,6 +146,24 @@ export default function PoolHeader({
       )
     : poolConfig;
 
+  const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
+    address: communityAddr,
+    abi: abiWithErrors(registryCommunityABI),
+    contractName: "Registry Community",
+    functionName: "addStrategyByPoolId",
+    fallbackErrorMessage: "Error creating a pool. Please ty again.",
+    args: [BigInt(poolId)],
+    onConfirmations: () => {
+      publish({
+        topic: "pool",
+        function: "addStrategyByPoolId",
+        type: "update",
+        containerId: communityAddr,
+        chainId: chainId,
+      });
+    },
+  });
+
   return (
     <section className="section-layout flex flex-col gap-0 overflow-hidden">
       <header className="mb-2 flex flex-col">
@@ -162,7 +187,7 @@ export default function PoolHeader({
                   icon={<CheckIcon height={24} width={24} />}
                   disabled={!isConnected || missmatchUrl}
                   tooltip={tooltipMessage}
-                  onClick={() => console.log("write approve...")}
+                  onClick={() => addStrategyByPoolId()}
                 >
                   Approve
                 </Button>

@@ -293,8 +293,6 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
         setLoading(false);
       }
     },
-    onError: () =>
-      toast.error("Something went wrong creating a pool, check logs"),
   });
 
   const addStrategy = async (
