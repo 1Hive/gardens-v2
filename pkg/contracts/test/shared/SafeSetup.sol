@@ -15,6 +15,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 contract SafeSetup is Test {
     address public constant SAFE_FACTORY = 0xBba817F97F133b87b9b7F1FC0f2c56E9F68D2EdF;
     address public constant SAFE_SINGLETON = 0xDd4BDA7BcdA544d6da2aEa8AB8B0e63D2f6Dc737;
+    uint256 public constant SAFE_NONCE = 2;
 
     Safe public councilSafe;
     Safe public councilSafeOwner;
@@ -76,14 +77,15 @@ contract SafeSetup is Test {
         return size > 0;
     }
 
-    function _councilSafeWithOwner(address _owner, SafeProxyFactory _safeProxyFactory)  public returns (Safe) {
+    function _councilSafeWithOwner(address _owner, SafeProxyFactory _safeProxyFactory) public returns (Safe) {
         // console.log("isContract 1", isContract(address(0x41675C099F32341bf84BFc5382aF534df5C7461a)));
         if (address(councilSafeOwner) == address(0)) {
             if (_safeProxyFactory == SafeProxyFactory(address(0))) {
                 address __safeSingletonInternal = address(_createSafe());
                 // _safeProxyFactory = new SafeProxyFactory();
                 _safeProxyFactory = _createSafeProxyFactory();
-                address sp = address(_safeProxyFactory.createProxyWithNonce(address(__safeSingletonInternal), "", 0));
+                address sp =
+                    address(_safeProxyFactory.createProxyWithNonce(address(__safeSingletonInternal), "", SAFE_NONCE));
                 councilSafeOwner = Safe(payable(address(sp)));
             }
 
@@ -109,7 +111,7 @@ contract SafeSetup is Test {
             // console.log("SafeProxyFactory: %s", address(spf));
             // console.log("SafeSingleton: %s", address(_safeSingleton));
 
-            address sp = address(spf.createProxyWithNonce(address(_safeSingleton), bytes(hex"00"), 0));
+            address sp = address(spf.createProxyWithNonce(address(_safeSingleton), bytes(hex"00"), SAFE_NONCE));
             councilSafe = Safe(payable(address(sp)));
             // console.log("###2");
             // console.log("councilSafe address: %s", address(councilSafe));

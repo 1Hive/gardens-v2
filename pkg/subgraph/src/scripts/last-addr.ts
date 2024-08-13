@@ -2,12 +2,12 @@ import {
   arbitrumSepolia,
   localhost,
   optimismSepolia,
-  sepolia,
+  sepolia
 } from "viem/chains";
 import runLatestArbSep from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
 import runLatestEthSep from "../../../../broadcast/DeployCVMultiChainV0_0.s.sol/11155111/run-latest.json" assert { type: "json" };
 import { fromHex } from "viem";
-import { argv } from 'process';
+import { argv } from "process";
 
 const chainArg = argv[argv.length - 1];
 let runLatestLocal: any | undefined = undefined;
@@ -27,6 +27,7 @@ export type AddressChain = {
   proxyRegistryCommunity: Address;
   strategyTemplate: Address;
   passportScorer: Address;
+  proxyPassportScorer: Address;
 };
 export function extractAddr(runLatest: RunLatest): AddressChain {
   let registryCommunity: Address = "0x";
@@ -38,35 +39,21 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
   let strategyTemplate: Address = "0x";
   let blockNumber: number = 0;
   let passportScorer: Address = "0x";
-  
-  
+  let proxyPassportScorer: Address = "0x";
+
   if (runLatest) {
-    
-      type Tx = typeof txs[0];
-      
-      let proxies: Tx[] = [];
-  const txs = runLatest.transactions;
+    type Tx = (typeof txs)[0];
+
+    const txs = runLatest.transactions;
     blockNumber = fromHex(
       runLatest.receipts[0].blockNumber as Address,
-      "number",
+      "number"
     );
 
     for (const tx of txs) {
       if (!tx.contractName) {
         continue;
       }
-
-
-      if (tx.contractName == "ERC1967Proxy") {
-        proxies.push(tx);
-      }
-    }
-    for (const tx of txs) {
-      if (!tx.contractName) {
-        continue;
-      }
-      console.log(tx.contractName);
-
       if (tx.contractName == "RegistryCommunityV0_0") {
         registryCommunity = tx.contractAddress as Address;
       } else if (
@@ -90,19 +77,21 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
         passportScorer = tx.contractAddress as Address;
       } else if (tx.contractName == "GV2ERC20") {
         token = tx.contractAddress as Address;
+      } else if (tx.contractName == "ERC1967Proxy") {
+        let implementation = tx.arguments?.[0].toLowerCase();
+        console.log({ implementation, registryCommunity });
+        if (implementation === factory) {
+          proxyFactory = tx.contractAddress as Address;
+        } else if (
+          tx.transaction.input.indexOf(registryCommunity.slice(2)) !== 0
+        ) {
+          proxyRegistryCommunity = tx.contractAddress as Address;
+        } else if (implementation === passportScorer) {
+          proxyPassportScorer = tx.contractAddress as Address;
+        }
       }
     }
-    
-    for (const proxy of proxies) {
-      if (proxy.transaction.input.indexOf(factory.slice(2)) !== 0) {
-        proxyFactory = proxy.contractAddress as Address;
-      }
-      if (proxy.transaction.input.indexOf(registryCommunity.slice(2)) !== 0) {
-        proxyRegistryCommunity = proxy.contractAddress as Address;
-
-      }
-    }
-}
+  }
 
   return {
     blockNumber,
@@ -114,6 +103,7 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
     proxyRegistryCommunity,
     strategyTemplate,
     passportScorer,
+    proxyPassportScorer
   };
 }
 

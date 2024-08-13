@@ -28,7 +28,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;
 
-    address public constant SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
+    address public constant SENDER = 0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6;
 
     uint256 councilMemberPKEnv;
     address allo_proxy;

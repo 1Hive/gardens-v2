@@ -108,8 +108,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
         token.mint(address(pool_admin()), 10_000 ether);
 
-
-
         StrategyStruct.InitializeParams memory paramsCV;
 
         // CVParams
@@ -117,10 +115,11 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         paramsCV.cvParams.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
         paramsCV.cvParams.weight = _etherToFloat(0.001 ether); // RHO = p  = weight
         paramsCV.cvParams.minThresholdPoints = 0.2 ether; // 20%
-        
+
         paramsCV.registryCommunity = address(registryCommunity);
         paramsCV.proposalType = StrategyStruct.ProposalType.Funding;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
+        paramsCV.sybilScorer = address(sybilScorer);
 
         // Point config
         StrategyStruct.PointSystemConfig memory pointConfig;
@@ -141,6 +140,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         arbitrableConfig.defaultRuling = 1;
         arbitrableConfig.defaultRulingTimeout = 900; // 15 minutes
         paramsCV.arbitrableConfig = arbitrableConfig;
+        
 
         // FAST 1 MIN GROWTH
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(

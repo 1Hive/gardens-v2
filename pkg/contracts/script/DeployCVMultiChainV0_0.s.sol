@@ -30,13 +30,15 @@ import {CollateralVault} from "../src/CollateralVault.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {PassportScorer} from "../src/PassportScorer.sol";
+import {ISybilScorer} from "../src/ISybilScorer.sol";
 
 contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     using stdJson for string;
 
     uint256 public MINIMUM_STAKE = 1 ether;
 
-    address public SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
+    address public SENDER = 0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6;
     address public TOKEN; // check networks.json file
     address public COUNCIL_SAFE; // check networks.json file
     address public SAFE_PROXY_FACTORY; // check networks.json file
@@ -55,6 +57,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
     GV2ERC20 token;
     RegistryFactoryV0_0 registryFactory;
     IArbitrator arbitrator;
+    ISybilScorer sybilScorer;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -143,6 +146,12 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         COUNCIL_SAFE = json.readAddress(getKeyNetwork(".ENVS.COUNCIL_SAFE"));
 
         assertTrue(COUNCIL_SAFE != address(0), "Council Safe not set");
+
+        ERC1967Proxy scorerProxy = new ERC1967Proxy(
+            address(new PassportScorer()), abi.encodeWithSelector(PassportScorer.initialize.selector, COUNCIL_SAFE)
+        );
+
+        sybilScorer = PassportScorer(payable(address(scorerProxy)));
 
         if (COUNCIL_SAFE == address(0)) {
             Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin(), SafeProxyFactory(SAFE_PROXY_FACTORY));
@@ -243,6 +252,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
         paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
         paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
+        paramsCV.sybilScorer = address(sybilScorer);
 
         (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(
             address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})

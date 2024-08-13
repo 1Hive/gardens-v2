@@ -14,6 +14,7 @@
     "remove-local": "graph remove --node http://localhost:8020/ kamikazebr/gv2",
     "deploy:local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 kamikazebr/gv2 -l v0.0.3",
     "deploy:arbsep": "pnpm manifest:arbsep && graph deploy --studio gv2-arbsepolia",
+    "deploy:ethsep": "pnpm manifest:ethsep && graph deploy --studio gv2-ethsepolia",
     "build-deploy:arbsep": "pnpm build:arbsep && pnpm deploy:arbsep:last",
     "build-deploy:ethsep": "pnpm build:ethsep && pnpm deploy:ethsep:last",
     "local": "pnpm create-local && pnpm build && pnpm deploy:local",

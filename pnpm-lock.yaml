@@ -2360,7 +2360,7 @@ packages:
       yargs: 17.7.2
     optionalDependencies:
       node-libcurl: 4.0.0
-      uWebSockets.js: github.com/uNetworking/uWebSockets.js/8fa05571bf6ea95be8966ad313d9d39453e381ae
+      uWebSockets.js: github.com/uNetworking/uWebSockets.js/6f4b450fc642abba540535f0755c990b42a16026
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -17368,10 +17368,10 @@ packages:
       use-sync-external-store: 1.2.0(react@18.2.0)
     dev: false
 
-  github.com/uNetworking/uWebSockets.js/8fa05571bf6ea95be8966ad313d9d39453e381ae:
-    resolution: {tarball: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/8fa05571bf6ea95be8966ad313d9d39453e381ae}
+  github.com/uNetworking/uWebSockets.js/6f4b450fc642abba540535f0755c990b42a16026:
+    resolution: {tarball: https://codeload.github.com/uNetworking/uWebSockets.js/tar.gz/6f4b450fc642abba540535f0755c990b42a16026}
     name: uWebSockets.js
-    version: 20.44.0
+    version: 20.47.0
     requiresBuild: true
     dev: true
     optional: true

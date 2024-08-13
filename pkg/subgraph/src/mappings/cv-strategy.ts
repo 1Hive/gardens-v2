@@ -73,9 +73,35 @@ export function handleInitialized(event: InitializedCV): void {
   config.pointSystem = BigInt.fromI32(pointSystem);
   config.maxAmount = maxAmount;
 
-  let cvParams = event.params.data.cvParams as PoolParamsUpdatedCvParamsStruct;
-  let arbitrableConfig = event.params.data
-    .arbitrableConfig as PoolParamsUpdatedArbitrableConfigStruct;
+  log.debug("handleInitialized changetypes", []);
+  let cvParams = changetype<PoolParamsUpdatedCvParamsStruct>(
+    event.params.data.cvParams
+  );
+  let arbitrableConfig = changetype<PoolParamsUpdatedArbitrableConfigStruct>(
+    event.params.data.arbitrableConfig
+  );
+
+  log.debug(
+    "handleInitialized: CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]",
+    [
+      cvParams.weight.toString(),
+      cvParams.decay.toString(),
+      cvParams.minThresholdPoints.toString(),
+      cvParams.maxRatio.toString()
+    ]
+  );
+
+  log.debug(
+    "handleInitialized: ArbitrationConfig:[arbitrator:{},tribunalSafe:{},challengerCollateralAmount:{},submitterCollateralAmount:{},defaultRuling:{},defaultRulingTimeout:{}]",
+    [
+      arbitrableConfig.arbitrator.toHexString(),
+      arbitrableConfig.tribunalSafe.toHexString(),
+      arbitrableConfig.challengerCollateralAmount.toString(),
+      arbitrableConfig.submitterCollateralAmount.toString(),
+      arbitrableConfig.defaultRuling.toString(),
+      arbitrableConfig.defaultRulingTimeout.toString()
+    ]
+  );
 
   computeConfig(config, cvParams, arbitrableConfig);
 
@@ -433,47 +459,40 @@ export function handlePoolParamsUpdated(event: PoolParamsUpdated): void {
     return;
   }
 
+  log.debug(
+    "handlePoolParamsUpdated: CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]",
+    [
+      event.params.cvParams.weight.toString(),
+      event.params.cvParams.decay.toString(),
+      event.params.cvParams.minThresholdPoints.toString(),
+      event.params.cvParams.maxRatio.toString()
+    ]
+  );
+
+  log.debug(
+    "handlePoolParamsUpdated: ArbitrationConfig:[arbitrator:{},tribunalSafe:{},challengerCollateralAmount:{},submitterCollateralAmount:{},defaultRuling:{},defaultRulingTimeout:{}]",
+    [
+      event.params.arbitrableConfig.arbitrator.toHexString(),
+      event.params.arbitrableConfig.tribunalSafe.toHexString(),
+      event.params.arbitrableConfig.challengerCollateralAmount.toString(),
+      event.params.arbitrableConfig.submitterCollateralAmount.toString(),
+      event.params.arbitrableConfig.defaultRuling.toString(),
+      event.params.arbitrableConfig.defaultRulingTimeout.toString()
+    ]
+  );
+
   computeConfig(config, event.params.cvParams, event.params.arbitrableConfig);
 
   config.save();
 }
 
-interface CVParams {
-  weight: BigInt;
-  decay: BigInt;
-  minThresholdPoints: BigInt;
-  maxRatio: BigInt;
-}
-
-interface ArbitrationConfig {
-  arbitrator: Address;
-  tribunalSafe: Address;
-  challengerCollateralAmount: BigInt;
-  submitterCollateralAmount: BigInt;
-  defaultRuling: BigInt;
-  defaultRulingTimeout: BigInt;
-}
-
 function computeConfig(
   config: CVStrategyConfig,
-  cvParams:
-    | PoolParamsUpdatedCvParamsStruct
-    | InitializedCVDataCvParamsStruct
-    | null,
-  arbitrationConfig:
-    | PoolParamsUpdatedArbitrableConfigStruct
-    | InitializedCVDataArbitrableConfigStruct
-    | null
+  cvParams: PoolParamsUpdatedCvParamsStruct,
+  arbitrationConfig: PoolParamsUpdatedArbitrableConfigStruct
 ): void {
-  if (!cvParams || !arbitrationConfig) {
-    log.error(
-      "CVStrategy: computeConfig: cvParams or arbitrationConfig is null",
-      []
-    );
-    return;
-  }
   // CV Params
-  log.debug("handlePoolParamsUpdated: event.params.data.cvParams:{},{},{},{}", [
+  log.debug("CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]", [
     cvParams.weight.toString(),
     cvParams.decay.toString(),
     cvParams.minThresholdPoints.toString(),
@@ -484,9 +503,9 @@ function computeConfig(
   config.minThresholdPoints = cvParams.minThresholdPoints;
   config.maxRatio = cvParams.maxRatio;
 
-  // ArbitrationConfgig
+  // ArbitrationConfig
   log.debug(
-    "handlePoolParamsUpdated: cvParams.rbitrableConfig:{},{},{},{},{},{}",
+    "ArbitrationConfig:[arbitrator:{},tribunalSafe:{},challengerCollateralAmount:{},submitterCollateralAmount:{},defaultRuling:{},defaultRulingTimeout:{}]",
     [
       arbitrationConfig.arbitrator.toHexString(),
       arbitrationConfig.tribunalSafe.toHexString(),
