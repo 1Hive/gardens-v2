@@ -118,6 +118,14 @@ deploy-testnet-multi-sep-v0:
 	--via-ir \
 	--legacy \
 	-vvv
+	
+deploy-verify-multi-sep-v0: 
+	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_SEP_TESTNET) \
+	--account pk1 \
+	--verify \
+	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
+	-vv
 deploy-verify-multi-sep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
