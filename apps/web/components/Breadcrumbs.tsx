@@ -22,7 +22,9 @@ const truncateString = (str: string) => {
 export function Breadcrumbs() {
   const path = usePathname();
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
-  const [openDisclaimer, setOpenDisclaimer] = useState(true);
+  const notAuditedDisclaimerAckStorageKey = "NotAuditedDisclaimerAck"
+  // Checking in the storage if user already acknowledge then no need to reprompt
+  const [openDisclaimer, setOpenDisclaimer] = useState(localStorage.getItem(notAuditedDisclaimerAckStorageKey, false) == "false");
 
   const fetchBreadcrumbs = async (): Promise<Breadcrumb[]> => {
     const segments = path.split("/").filter((segment) => segment !== "");
@@ -107,7 +109,7 @@ export function Breadcrumbs() {
             <div>
               <Button
                 btnStyle="filled"
-                onClick={() => setOpenDisclaimer(false)}
+                onClick={() => {setOpenDisclaimer(false); localStorage.setItem(notAuditedDisclaimerAckStorageKey, true)}}
                 color="danger"
               >
                 I understand
