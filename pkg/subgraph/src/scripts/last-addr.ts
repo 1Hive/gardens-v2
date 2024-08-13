@@ -5,7 +5,7 @@ import {
   sepolia,
 } from "viem/chains";
 import runLatestArbSep from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
-import runLatestEthSep from "../../../../broadcast/DeployCVMultiChain.s.sol/11155111/run-latest.json" assert { type: "json" };
+import runLatestEthSep from "../../../../broadcast/DeployCVMultiChainV0_0.s.sol/11155111/run-latest.json" assert { type: "json" };
 import { fromHex } from "viem";
 import { argv } from 'process';
 
@@ -22,21 +22,30 @@ export type AddressChain = {
   token: Address;
   safe: Address;
   factory: Address;
+  proxyFactory: Address;
   registryCommunity: Address;
+  proxyRegistryCommunity: Address;
   strategyTemplate: Address;
   passportScorer: Address;
 };
 export function extractAddr(runLatest: RunLatest): AddressChain {
   let registryCommunity: Address = "0x";
+  let proxyRegistryCommunity: Address = "0x";
   let factory: Address = "0x";
+  let proxyFactory: Address = "0x";
   let token: Address = "0x";
   let safe: Address = "0x";
   let strategyTemplate: Address = "0x";
   let blockNumber: number = 0;
   let passportScorer: Address = "0x";
-
+  
+  
   if (runLatest) {
-    const txs = runLatest.transactions;
+    
+      type Tx = typeof txs[0];
+      
+      let proxies: Tx[] = [];
+  const txs = runLatest.transactions;
     blockNumber = fromHex(
       runLatest.receipts[0].blockNumber as Address,
       "number",
@@ -46,6 +55,17 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
       if (!tx.contractName) {
         continue;
       }
+
+
+      if (tx.contractName == "ERC1967Proxy") {
+        proxies.push(tx);
+      }
+    }
+    for (const tx of txs) {
+      if (!tx.contractName) {
+        continue;
+      }
+      console.log(tx.contractName);
 
       if (tx.contractName == "RegistryCommunityV0_0") {
         registryCommunity = tx.contractAddress as Address;
@@ -72,13 +92,26 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
         token = tx.contractAddress as Address;
       }
     }
-  }
+    
+    for (const proxy of proxies) {
+      if (proxy.transaction.input.indexOf(factory.slice(2)) !== 0) {
+        proxyFactory = proxy.contractAddress as Address;
+      }
+      if (proxy.transaction.input.indexOf(registryCommunity.slice(2)) !== 0) {
+        proxyRegistryCommunity = proxy.contractAddress as Address;
+
+      }
+    }
+}
+
   return {
     blockNumber,
     token,
     safe,
     factory,
+    proxyFactory,
     registryCommunity,
+    proxyRegistryCommunity,
     strategyTemplate,
     passportScorer,
   };
@@ -123,3 +156,5 @@ switch (chainArg) {
 }
 
 const latestAddress = getRunLatestAddrs(defaultChain);
+
+console.log(latestAddress);
