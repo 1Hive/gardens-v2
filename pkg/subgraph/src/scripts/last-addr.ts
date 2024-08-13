@@ -79,7 +79,6 @@ export function extractAddr(runLatest: RunLatest): AddressChain {
         token = tx.contractAddress as Address;
       } else if (tx.contractName == "ERC1967Proxy") {
         let implementation = tx.arguments?.[0].toLowerCase();
-        console.log({ implementation, registryCommunity });
         if (implementation === factory) {
           proxyFactory = tx.contractAddress as Address;
         } else if (
@@ -147,4 +146,4 @@ switch (chainArg) {
 
 const latestAddress = getRunLatestAddrs(defaultChain);
 
-console.log(latestAddress);
+console.debug(latestAddress);

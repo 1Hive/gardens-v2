@@ -117,6 +117,7 @@ deploy-testnet-multi-sep-v0:
 	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
 	--broadcast \
 	--legacy \
+	--verify \
 	--via-ir \
 	-vvv
 	
@@ -157,6 +158,20 @@ deploy-testnet-multi-arb:
 	--ffi \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast \
+	-vvv
+
+deploy-testnet-multi-arb-v0: 
+	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
+	--account pk1 \
+	--ffi \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verifier-url https://api-goerli.arbiscan.io/api \
+	--broadcast \
+	--verify \
+	--legacy \
+	--via-ir \
 	-vvv
 
 deploy-verify: 

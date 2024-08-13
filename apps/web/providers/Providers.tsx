@@ -12,6 +12,7 @@ import {
   frameWallet,
   injectedWallet,
   rabbyWallet,
+  walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { AddrethConfig } from "addreth";
 import { configureChains, createConfig, mainnet, WagmiConfig } from "wagmi";
@@ -49,6 +50,10 @@ const Providers = ({ children }: Props) => {
           rabbyWallet({ chains }),
           frameWallet({ chains }),
           coinbaseWallet({ appName: "Gardens V2", chains }),
+          walletConnectWallet({
+            chains,
+            projectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_ID ?? "",
+          }),
         ],
       },
     ]);

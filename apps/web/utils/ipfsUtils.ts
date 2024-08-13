@@ -8,7 +8,7 @@ export const ipfsJsonUpload = async (
   payload: string | object,
   toastId?: string,
 ) => {
-  const fetchPromise = fetch("/api/ipfs", {
+  const fetchPromise: Promise<string> = fetch("/api/ipfs", {
     method: "POST",
     body: typeof payload === "string" ? payload : JSON.stringify(payload),
     headers: {

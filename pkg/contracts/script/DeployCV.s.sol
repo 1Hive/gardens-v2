@@ -140,7 +140,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         arbitrableConfig.defaultRuling = 1;
         arbitrableConfig.defaultRulingTimeout = 900; // 15 minutes
         paramsCV.arbitrableConfig = arbitrableConfig;
-        
 
         // FAST 1 MIN GROWTH
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(

@@ -61,6 +61,7 @@ library StrategyStruct {
         Executed, // A vote that has been executed
         Disputed, // A vote that has been disputed
         Rejected // A vote that has been rejected
+
     }
 
     struct Proposal {
@@ -79,6 +80,7 @@ library StrategyStruct {
         uint256 disputeTimestamp;
         address challenger;
         uint256 lastDisputeCompletion;
+        uint256 creationCollateralAmount;
     }
 
     struct ProposalSupport {
@@ -386,6 +388,8 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         p.convictionLast = 0;
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
+        // Remember the initial colateral amount because can be changed after creation
+        p.creationCollateralAmount = arbitrableConfig.submitterCollateralAmount;
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
         emit ProposalCreated(poolId, proposalId);
@@ -1063,9 +1067,10 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             revert ProposalNotInList(proposalId);
         }
 
-        if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
-            revert ProposalNotActive(proposalId);
-        }
+        // Goss: Remove it to have access to this wen disputed or proposal closed (to see the chart)
+        // if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
+        //     revert ProposalNotActive(proposalId);
+        // }
 
         _calculateAndSetConviction(proposal, proposal.stakedAmount);
         return proposal.convictionLast;
@@ -1167,9 +1172,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             collateralVault.withdrawCollateral(
                 proposalId, proposal.challenger, arbitrableConfig.challengerCollateralAmount
             );
-            collateralVault.withdrawCollateral(
-                proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
-            );
+            collateralVault.withdrawCollateral(proposalId, proposal.submitter, proposal.creationCollateralAmount);
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
             collateralVault.withdrawCollateralFor(
@@ -1187,10 +1190,10 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
                 proposalId,
                 proposal.submitter,
                 address(registryCommunity.councilSafe()),
-                arbitrableConfig.submitterCollateralAmount / 2
+                proposal.creationCollateralAmount / 2
             );
             collateralVault.withdrawCollateralFor(
-                proposalId, proposal.submitter, proposal.challenger, arbitrableConfig.submitterCollateralAmount / 2
+                proposalId, proposal.submitter, proposal.challenger, proposal.creationCollateralAmount / 2
             );
         }
 

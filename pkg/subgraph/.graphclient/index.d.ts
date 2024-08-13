@@ -3086,6 +3086,7 @@ export type getProposalDataQuery = {
     cvproposal?: Maybe<(Pick<CVProposal, 'id' | 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadata' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
         strategy: (Pick<CVStrategy, 'id' | 'maxCVSupply' | 'totalEffectiveActivePoints'> & {
             config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem' | 'minThresholdPoints' | 'challengerCollateralAmount' | 'arbitrator' | 'defaultRuling' | 'defaultRulingTimeout'>;
+            registryCommunity: Pick<RegistryCommunity, 'councilSafe'>;
         });
     })>;
 };

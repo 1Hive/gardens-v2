@@ -101,10 +101,10 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             StrategyStruct.ArbitrableConfig(
                 SafeArbitrator(payable(address(arbitratorProxy))),
                 payable(address(_councilSafe())),
-                3 ether,
-                2 ether,
+                0.01 ether,
+                0.02 ether,
                 1,
-                300
+                900
             )
         );
 

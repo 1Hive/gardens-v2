@@ -49,13 +49,13 @@ const btnStyles: BtnStyles = {
   },
   outline: {
     primary:
-      "text-primary-content outline outline-2 outline-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
+      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
     secondary:
-      "text-secondary-content outline outline-2 outline-secondary-content hover:text-secondary-hover-content hover:outline-secondary-hover-content",
+      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:outline-secondary-hover-content",
     tertiary: "",
     danger:
-      "text-danger-button outline outline-2 outline-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
-    disabled: "text-neutral-soft outline outline-2 outline-neutral-soft",
+      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
+    disabled: "text-neutral-soft border border-neutral-soft",
   },
   link: {
     primary: "text-primary-content",

@@ -9,6 +9,7 @@ import { abi as mockERC20ABI } from "#/contracts/out/MockERC20.sol/MockERC20.jso
 import { abi as PassportScorerABI } from "#/contracts/out/PassportScorer.sol/PassportScorer.json";
 import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json";
 import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json";
+import { abi as SafeArbitrator } from "#/contracts/out/SafeArbitrator.sol/SafeArbitrator.json";
 
 export default defineConfig({
   out: "src/generated.ts",
@@ -44,6 +45,10 @@ export default defineConfig({
     {
       name: "IArbitrator",
       abi: ArbitratorAbi as Abi,
+    },
+    {
+      name: "SafeArbitrator",
+      abi: SafeArbitrator as Abi,
     },
   ],
   plugins: [

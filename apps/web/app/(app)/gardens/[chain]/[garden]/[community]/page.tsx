@@ -235,7 +235,7 @@ export default function Page({
                 tokenSymbol={tokenGarden.symbol}
               />
             </Statistic>
-            <div className="flex">
+            <div className="flex gap-2">
               <p className="font-medium">Registration cost:</p>
               <InfoIcon
                 tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
@@ -246,11 +246,6 @@ export default function Page({
                   disableTooltip={true}
                   compact={true}
                   tokenSymbol={tokenGarden.symbol}
-                />
-                <ExclamationCircleIcon
-                  className="ml-2 stroke-2"
-                  width={22}
-                  height={22}
                 />
               </InfoIcon>
             </div>

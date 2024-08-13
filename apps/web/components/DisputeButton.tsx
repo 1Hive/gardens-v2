@@ -1,7 +1,14 @@
-import { FC, Fragment, useMemo, useRef, useState } from "react";
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import { FC, Fragment, useState } from "react";
 import { blo } from "blo";
-import { Address, mainnet, useEnsAvatar, useEnsName } from "wagmi";
+import { formatEther } from "viem";
+import {
+  Address,
+  mainnet,
+  useAccount,
+  useContractRead,
+  useEnsAvatar,
+  useEnsName,
+} from "wagmi";
 import {
   CVProposal,
   CVStrategy,
@@ -11,6 +18,7 @@ import {
   Maybe,
   ProposalDispute,
   ProposalDisputeMetadata,
+  RegistryCommunity,
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DateComponent } from "./DateComponent";
@@ -23,8 +31,12 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { MetadataV1, useIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { cvStrategyABI } from "@/src/generated";
-import { DisputeStatus, ProposalStatus } from "@/types";
+import {
+  cvStrategyABI,
+  iArbitratorABI,
+  safeArbitratorABI,
+} from "@/src/generated";
+import { DisputeStatus, ProposalStatus, DisputeOutcome } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 
@@ -42,23 +54,29 @@ type Props = {
           | "defaultRuling"
           | "defaultRulingTimeout"
         >;
+        registryCommunity: Pick<RegistryCommunity, "councilSafe">;
       };
     }
   > &
     MetadataV1;
 };
 
+const ABSTAINED_RULING = 0;
+const APPROVED_RULING = 1;
+const REJECTED_RULING = 2;
+
 export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const [isModalOpened, setIsModalOpened] = useState(false);
   const [reason, setReason] = useState("");
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const { publish } = usePubSubContext();
+  const { address } = useAccount();
 
   // TODO: Remove fake
-  const disputeTimestamp = useMemo(() => {
-    // timestamp of now -  2days
-    return Date.now() / 1000;
-  }, []);
+  // const disputeTimestamp = useMemo(() => {
+  //   // timestamp of now -  2days
+  //   return Date.now() / 1000;
+  // }, []);
   // let dispute = {
   //   id: 1,
   //   reasonHash: "QmSoxngvbp1k1Dy5SV5YchrQFDaNwf94dRHuHXpxFQMNcc",
@@ -125,13 +143,14 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     // },
   });
 
-  const arbitrationCost = 500000000000000000n; // TODO: Remove fake
-  // const { data: arbitrationCost } = useContractRead({
-  //   abi: iArbitratorABI,
-  //   functionName: "arbitrationCost",
-  //   address: config?.arbitrator as Address,
-  //   enabled: !!config?.arbitrator,
-  // });
+  // const arbitrationCost = 500000000000000000n; // TODO: Remove fake
+  const { data: arbitrationCost } = useContractRead({
+    abi: iArbitratorABI,
+    functionName: "arbitrationCost",
+    address: config?.arbitrator as Address,
+    enabled: !!config?.arbitrator,
+    args: ["0x0"],
+  });
 
   const totalStake =
     arbitrationCost && config ?
@@ -145,17 +164,24 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const isDisputed =
     proposalData &&
-    ProposalStatus[proposalData.proposalStatus] === "disputed" &&
-    lastDispute;
+    lastDispute &&
+    ProposalStatus[proposalData.proposalStatus] === "disputed";
   const isTimeout =
-    lastDispute && config && lastDispute.createdAt + config < Date.now() / 1000;
+    lastDispute &&
+    config &&
+    +lastDispute.createdAt + +config.defaultRulingTimeout < Date.now() / 1000;
   const disputes = disputesResult?.proposalDisputes ?? [];
 
-  const { write } = useContractWriteWithConfirmations({
+  const isCouncilSafe =
+    proposalData?.strategy.registryCommunity.councilSafe ===
+    address?.toLowerCase();
+
+  const { write: writeDisputeProposal } = useContractWriteWithConfirmations({
     contractName: "CVStrategy",
     functionName: "disputeProposal",
-    value: config?.challengerCollateralAmount,
+    value: totalStake,
     abi: cvStrategyABI,
+    address: proposalData?.strategy.id as Address,
     onSuccess: () => {
       setIsModalOpened(false);
     },
@@ -164,8 +190,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         topic: "proposal",
         type: "update",
         function: "disputeProposal",
-        id: proposalData!.proposalNumber,
-        containerId: proposalData!.strategy.id,
+        id: proposalData.proposalNumber,
+        containerId: proposalData.strategy.id,
       });
     },
   });
@@ -173,10 +199,60 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   async function handleSubmit() {
     setIsModalOpened(false);
     const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
-    write({
-      args: [proposalData.proposalNumber, reasonHash, "0x"],
+    if (!reasonHash) {
+      return;
+    }
+    writeDisputeProposal({
+      args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
     });
   }
+
+  const { write: writeSubmitRuling } = useContractWriteWithConfirmations({
+    contractName: "SafeArbitrator",
+    functionName: "executeRuling",
+    abi: safeArbitratorABI,
+    address: config?.arbitrator as Address,
+    onConfirmations: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "executeRuling",
+        id: proposalData.proposalNumber,
+        containerId: proposalData.strategy.id,
+      });
+    },
+  });
+
+  const { write: writeRuleAbstain } = useContractWriteWithConfirmations({
+    contractName: "CVStrategy",
+    functionName: "rule",
+    abi: cvStrategyABI,
+    address: proposalData.strategy.id as Address,
+    args: [BigInt(lastDispute?.disputeId ?? 0), BigInt(ABSTAINED_RULING)],
+    onConfirmations: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "rule",
+        id: proposalData.proposalNumber,
+        containerId: proposalData.strategy.id,
+      });
+    },
+  });
+
+  const handleSubmitRuling = (ruling: number) => {
+    if (isTimeout) {
+      writeRuleAbstain();
+    } else {
+      writeSubmitRuling({
+        args: [
+          BigInt(lastDispute?.disputeId),
+          BigInt(ruling),
+          proposalData.strategy.id as Address,
+        ],
+      });
+    }
+  };
 
   const content =
     isDisputed ?
@@ -209,44 +285,57 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     <div className="modal-action w-full">
       {isDisputed ?
         <div className="w-full flex justify-end gap-4">
-          {DisputeStatus[lastDispute.status] === "waiting" && (
-            <>
-              <Button color="secondary" btnStyle="outline">
-                <InfoIcon
-                  classNames="[&>svg]:text-secondary-content"
-                  tooltip={
-                    "Abstain to let other tribunal-safe members decide the outcome."
-                  }
+          {DisputeStatus[lastDispute.status] === "waiting" &&
+            (isCouncilSafe || isTimeout) && (
+              <>
+                <Button
+                  color="secondary"
+                  btnStyle="outline"
+                  onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                 >
-                  Abstain
-                </InfoIcon>
-              </Button>
-              {!isTimeout && (
-                <>
-                  <Button color="primary" btnStyle="outline">
-                    <InfoIcon
-                      classNames="[&>svg]:text-primary-content"
-                      tooltip={
-                        "Approve if the dispute is invalid and the proposal should be kept active."
-                      }
+                  <InfoIcon
+                    classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
+                    tooltip={
+                      "Abstain to let other tribunal-safe members decide the outcome."
+                    }
+                  >
+                    Abstain
+                  </InfoIcon>
+                </Button>
+                {!isTimeout && (
+                  <>
+                    <Button
+                      color="primary"
+                      btnStyle="outline"
+                      onClick={() => handleSubmitRuling(APPROVED_RULING)}
                     >
-                      Approve
-                    </InfoIcon>
-                  </Button>
-                  <Button color="danger" btnStyle="outline">
-                    <InfoIcon
-                      classNames="[&>svg]:text-danger-content [&:before]:mr-10 tooltip-left"
-                      tooltip={
-                        "Reject if, regarding the community covenant, the proposal is violating the rules."
-                      }
+                      <InfoIcon
+                        classNames="[&>svg]:text-primary-content"
+                        tooltip={
+                          "Approve if the dispute is invalid and the proposal should be kept active."
+                        }
+                      >
+                        Approve
+                      </InfoIcon>
+                    </Button>
+                    <Button
+                      color="danger"
+                      btnStyle="outline"
+                      onClick={() => handleSubmitRuling(REJECTED_RULING)}
                     >
-                      Reject
-                    </InfoIcon>
-                  </Button>
-                </>
-              )}
-            </>
-          )}
+                      <InfoIcon
+                        classNames="[&>svg]:text-error-content [&:before]:mr-10 tooltip-left"
+                        tooltip={
+                          "Reject if, regarding the community covenant, the proposal is violating the rules."
+                        }
+                      >
+                        Reject
+                      </InfoIcon>
+                    </Button>
+                  </>
+                )}
+              </>
+            )}
         </div>
       : <div className="flex w-full justify-between items-end">
           <div>
@@ -255,7 +344,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                 label="Dispute Stake"
                 token="native"
                 askedAmount={totalStake}
-                tooltip={`Collateral: ${0.05} ETH \n Fee: ${0.05} ETH`}
+                tooltip={`Collateral: ${formatEther(config.challengerCollateralAmount)} ETH \n Fee: ${formatEther(arbitrationCost ?? 0n)} ETH`}
                 setIsEnoughBalance={setIsEnoughBalance}
               />
             )}

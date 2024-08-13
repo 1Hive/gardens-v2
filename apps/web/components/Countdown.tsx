@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 
 export const Countdown = ({
-  timestamp,
+  endTimestamp,
   format = "auto",
 }: {
-  timestamp: number;
+  endTimestamp: number;
   format?: "time" | "date" | "datetime" | "minutes" | "seconds" | "auto";
 }) => {
   const [remainingTimeMs, setRemainingTime] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setRemainingTime(Math.max(timestamp * 1000 - Date.now(), 0));
+      setRemainingTime(Math.max(endTimestamp * 1000 - Date.now(), 0));
+      // console.log("Countdown", endTimestamp * 1000 - Date.now());
     }, 1000); // Update every second
     return () => {
       clearInterval(timer);

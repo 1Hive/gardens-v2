@@ -186,15 +186,15 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
                 address(
                     new ERC1967Proxy(
                         address(new SafeArbitrator()),
-                        abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+                        abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.01 ether)
                     )
                 )
             ),
-            payable(address(_councilSafe())),
-            3 ether,
-            2 ether,
+            payable(address(COUNCIL_SAFE)),
+            0.01 ether,
+            0.02 ether,
             1,
-            300
+            900
         );
 
         StrategyStruct.InitializeParams memory paramsCV = getParams(

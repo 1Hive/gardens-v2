@@ -28,7 +28,6 @@ import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
-import { logOnce } from "@/utils/log";
 
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -65,21 +64,21 @@ export default function Page({
 
   const proposalData = data?.cvproposal;
   const metadata = proposalData?.metadata;
-  const proposalIdNumber = !!proposalData ? BigInt(proposalData.proposalNumber) : undefined;
+  const proposalIdNumber =
+    !!proposalData ? BigInt(proposalData.proposalNumber) : undefined;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
 
   const { data: ipfsResult } = useProposalMetadataIpfsFetch({ hash: metadata });
 
+  const status = proposalData?.proposalStatus;
+
   const isProposalEnded =
     !!proposalData &&
-    (ProposalStatus[proposalData.proposalStatus] === "executed" ||
-      ProposalStatus[proposalData.proposalStatus] === "cancelled");
-  logOnce("debug", {
-    isProposalEnded,
-    proposalStatus: ProposalStatus[proposalData?.proposalStatus],
-  });
+    (ProposalStatus[status] === "executed" ||
+      ProposalStatus[status] === "cancelled");
+  const isDisputed = ProposalStatus[status] === "disputed";
 
   const {
     currentConvictionPct,
@@ -96,8 +95,6 @@ export default function Page({
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
-  const status = proposalData?.proposalStatus;
-
   const isSignalingType = PoolTypes[proposalType] === "signaling";
 
   //encode proposal id to pass as argument to distribute function
@@ -143,11 +140,8 @@ export default function Page({
   if (
     !proposalData ||
     !ipfsResult ||
-    currentConvictionPct == null ||
-    thresholdPct == null ||
-    totalSupportPct == null ||
     !proposalIdNumber ||
-    (updateConvictionLast == null && !isProposalEnded)
+    updateConvictionLast == null
   ) {
     return (
       <div className="mt-96">
@@ -204,8 +198,8 @@ export default function Page({
             </div>
           </div>
         </div>
-        <div className="w-full justify-end flex">
-          {(ProposalStatus[proposalData.proposalStatus] === "active" || 
+        <div className="w-full justify-end flex gap-4">
+          {(ProposalStatus[proposalData.proposalStatus] === "active" ||
             ProposalStatus[proposalData.proposalStatus] === "disputed") && (
             <div className="flex w-full justify-end">
               <DisputeButton
@@ -225,7 +219,11 @@ export default function Page({
                   args: [[], encodedDataProposalId(proposalIdNumber), "0x0"],
                 });
               }}
-              disabled={currentConvictionPct < thresholdPct}
+              disabled={
+                !currentConvictionPct ||
+                !thresholdPct ||
+                currentConvictionPct < thresholdPct
+              }
               tooltip="Proposal not executable"
             >
               Execute
@@ -234,24 +232,26 @@ export default function Page({
         </div>
       </header>
 
-      <section className="section-layout">
-        <h2>Metrics</h2>
-        {/* TODO: need designs for this entire section */}
-        {status && ProposalStatus[status] === "executed" ?
-          <div className="my-8 flex w-full justify-center">
-            <div className="badge badge-success p-4 text-primary">
-              Proposal passed and executed successfully
+      {!isDisputed && (
+        <section className="section-layout">
+          <h2>Metrics</h2>
+          {/* TODO: need designs for this entire section */}
+          {status && ProposalStatus[status] === "executed" ?
+            <div className="my-8 flex w-full justify-center">
+              <div className="badge badge-success p-4 text-primary">
+                Proposal passed and executed successfully
+              </div>
             </div>
-          </div>
-        : <ConvictionBarChart
-            currentConvictionPct={currentConvictionPct}
-            thresholdPct={thresholdPct}
-            proposalSupportPct={totalSupportPct}
-            isSignalingType={isSignalingType}
-            proposalId={Number(proposalIdNumber)}
-          />
-        }
-      </section>
+          : <ConvictionBarChart
+              currentConvictionPct={currentConvictionPct!}
+              thresholdPct={thresholdPct!}
+              proposalSupportPct={totalSupportPct!}
+              isSignalingType={isSignalingType}
+              proposalId={Number(proposalIdNumber)}
+            />
+          }
+        </section>
+      )}
     </div>
   );
 }

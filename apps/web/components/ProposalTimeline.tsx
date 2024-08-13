@@ -2,6 +2,7 @@ import { FC, Fragment } from "react";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import {
   CVProposal,
+  CVStrategyConfig,
   ProposalDispute,
   ProposalDisputeMetadata,
 } from "#/subgraph/.graphclient";
@@ -13,10 +14,7 @@ import { DisputeOutcome, DisputeStatus, ProposalStatus } from "@/types";
 type Props = {
   proposalData: Pick<CVProposal, "createdAt" | "proposalStatus"> & {
     strategy: {
-      config: {
-        defaultRuling: number;
-        defaultRulingTimeout: number;
-      };
+      config: Pick<CVStrategyConfig, "defaultRulingTimeout" | "defaultRuling">;
     };
   };
   disputes: Array<
@@ -45,6 +43,7 @@ export const ProposalTimeline: FC<Props> = ({
   const arbitrationConfig = proposalData.strategy.config;
   const defaultRuling = DisputeOutcome[arbitrationConfig.defaultRuling];
   const proposalStatus = ProposalStatus[proposalData.proposalStatus];
+
   const pastHR = <hr className="bg-tertiary-content w-8" />;
   const pastNode = (
     <div className="timeline-middle rounded-full text-tertiary-soft bg-tertiary-content m-0.5">
@@ -88,9 +87,11 @@ export const ProposalTimeline: FC<Props> = ({
           (DisputeOutcome[dispute.rulingOutcome] === "abstained" &&
             defaultRuling === "rejected");
         const isTimeout =
-          dispute.createdAt + arbitrationConfig.defaultRulingTimeout <
+          +dispute.createdAt + +arbitrationConfig.defaultRulingTimeout <
           Date.now() / 1000;
         const isLastDispute = index === disputes.length - 1;
+        const timeoutTimestamp =
+          +dispute.createdAt + +arbitrationConfig.defaultRulingTimeout;
         return (
           <Fragment key={dispute.id}>
             <li className="flex-grow">
@@ -113,12 +114,7 @@ export const ProposalTimeline: FC<Props> = ({
                     classNames="[&>svg]:text-tertiary-content m-0.5"
                     tooltip={`The tribunal safe has 3 days to rule the dispute. Past this delay and considering the abstain behavior on this pool, this proposal will be ${defaultRuling === "rejected" ? "closed as rejected" : "back to active"} and both collateral will be restored.`}
                   >
-                    <Countdown
-                      timestamp={
-                        dispute.createdAt +
-                        arbitrationConfig.defaultRulingTimeout
-                      }
-                    />
+                    <Countdown endTimestamp={timeoutTimestamp} />
                   </InfoIcon>
                 </div>
                 <div className="timeline-end">Ruling...</div>
@@ -144,7 +140,7 @@ export const ProposalTimeline: FC<Props> = ({
                           "Pool default ruling on timeout is to Approve"
                         : "The proposal will be closed as rejected."
                       }
-                      classNames={`[&>svg]:text-danger-content [&:before]:ml-[-26px] ${isTimeout && defaultRuling === "approved" && "[&>svg]:opacity-50"}`}
+                      classNames={`[&>svg]:text-error-content [&:before]:ml-[-26px] ${isTimeout && defaultRuling === "approved" && "[&>svg]:opacity-50"}`}
                     >
                       <span
                         className={`${isTimeout && defaultRuling === "approved" && "opacity-50"}`}
@@ -155,7 +151,7 @@ export const ProposalTimeline: FC<Props> = ({
                   }
                 </div>
               )}
-              {(!isRuled || !isRejected) && (!isTimeout || defaultRuling) && (
+              {(!isRuled || !isRejected) && (
                 <div className={"timeline-end text-primary-content"}>
                   {isRuled ?
                     "Approved"

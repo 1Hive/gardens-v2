@@ -334,6 +334,9 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
         defaultRuling
         defaultRulingTimeout
       }
+      registryCommunity {
+        councilSafe
+      }
     }
   }
 }

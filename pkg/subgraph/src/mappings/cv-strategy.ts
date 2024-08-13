@@ -527,32 +527,46 @@ function computeConfig(
 
 export function handleProposalDisputed(event: ProposalDisputed): void {
   let dispute = new ProposalDispute(
-    event.params.arbitrator.toString() + "_" + event.params.disputeId.toString()
+    event.params.arbitrator.toHexString() +
+      "_" +
+      event.params.disputeId.toString()
   );
+  let proposalId =
+    event.address.toHexString() + "-" + event.params.proposalId.toString();
   dispute.disputeId = event.params.disputeId;
   dispute.challenger = event.params.challenger.toHexString();
-  dispute.proposal = CVStrategy.load(event.address.toHexString())!.id;
+  dispute.proposal = proposalId;
   dispute.createdAt = event.block.timestamp;
   dispute.context = event.params.context;
   dispute.metadata = event.params.context;
+  dispute.status = BigInt.fromI32(0);
   log.debug("CVStrategy: Fetching proposal dispute metadata for {}: {}", [
     dispute.id,
     dispute.metadata
   ]);
   ProposalDisputeMetadataTemplate.create(dispute.metadata);
   dispute.save();
+
+  // Change proposal status to disputed
+  let proposal = CVProposal.load(proposalId);
+  if (proposal == null) {
+    log.error("CvStrategy: Proposal not found with: {}", [proposalId]);
+    return;
+  }
+  proposal.proposalStatus = BigInt.fromI32(5);
+  proposal.save();
 }
 
 export function handleDisputeRuled(event: Ruling): void {
   let dispute = ProposalDispute.load(
-    event.params._arbitrator.toString() +
+    event.params._arbitrator.toHexString() +
       "_" +
       event.params._disputeID.toString()
   );
 
   if (dispute == null) {
     log.error("CvStrategy: Dispute not found with: {}_{}", [
-      event.params._arbitrator.toString(),
+      event.params._arbitrator.toHexString(),
       event.params._disputeID.toString()
     ]);
     return;

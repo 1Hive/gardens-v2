@@ -47,19 +47,22 @@ export function useContractWriteWithConfirmations<
     chainId: props.chainId ?? chainId,
   };
 
-  propsWithChainId.onError = (
-    ...params: Parameters<NonNullable<typeof props.onError>>
-  ) => {
+  function logError(error: any, variables: any, context: string) {
     console.error(
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
-      { error: params[0], variables: params[1], context: params[2] },
+      { error, variables, context },
     );
-    props.onError?.(...params);
-  };
+  }
 
   const txResult = useContractWrite(
     props as UseContractWriteConfig<TAbi, TFunctionName, TMode>,
   );
+
+  propsWithChainId.onError = (
+    ...params: Parameters<NonNullable<typeof props.onError>>
+  ) => {
+    props.onError?.(...params);
+  };
 
   // Hook does not run unless hash is defined.
   const txWaitResult = useWaitForTransaction({
@@ -76,6 +79,9 @@ export function useContractWriteWithConfirmations<
     } else if (txWaitResult.status === "loading") {
       return "loading";
     } else if (txResult.status === "success" || txResult.status === "error") {
+      if (txResult.error) {
+        logError(txResult.error, txResult.variables, "wait for tx");
+      }
       return txResult.status;
     } else if (txWaitResult.status === "idle") {
       return "waiting";

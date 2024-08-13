@@ -15,7 +15,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 contract SafeSetup is Test {
     address public constant SAFE_FACTORY = 0xBba817F97F133b87b9b7F1FC0f2c56E9F68D2EdF;
     address public constant SAFE_SINGLETON = 0xDd4BDA7BcdA544d6da2aEa8AB8B0e63D2f6Dc737;
-    uint256 public constant SAFE_NONCE = 2;
+    uint256 public constant SAFE_NONCE = 3;
 
     Safe public councilSafe;
     Safe public councilSafeOwner;
@@ -98,7 +98,7 @@ contract SafeSetup is Test {
         return councilSafeOwner;
     }
 
-    function _councilSafe() internal returns (Safe) {
+    function _councilSafe() public returns (Safe) {
         // console.log("isContract 2", isContract(address(0x41675C099F32341bf84BFc5382aF534df5C7461a)));
         councilMember1 = vm.addr(councilMemberPK);
         vm.label(councilMember1, "councilMember1");

@@ -26,7 +26,6 @@ import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
-
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -219,7 +218,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             StrategyStruct.ArbitrableConfig(
                 IArbitrator(address(arbitrator)),
                 // IArbitrator(address(0)),
-                payable(address(_councilSafe())),
+                payable(COUNCIL_SAFE),
                 0 ether,
                 0 ether,
                 1,
