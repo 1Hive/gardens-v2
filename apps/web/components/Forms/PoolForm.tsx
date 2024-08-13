@@ -236,9 +236,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
 
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));
     const weight = BigInt(Math.round(weightNum * CV_SCALE_PRECISION));
-    const decay = BigInt(
-      Math.round(calculateDecay(blockTime, convictionGrowth)),
-    );
+    const decay = BigInt(calculateDecay(blockTime, convictionGrowth));
 
     const minThresholdPoints = parseUnits(
       (previewData?.minThresholdPoints ?? 0).toString(),

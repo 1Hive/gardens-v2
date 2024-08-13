@@ -29,7 +29,7 @@ type FormInputs = {
 type Props = {
   strategyAddr: Address;
   token: TokenGarden["decimals"];
-  chainId: number;
+  chainId: string;
   initValues: FormInputs;
 };
 
@@ -104,9 +104,7 @@ export default function PoolEditForm({
     // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));
     const weight = BigInt(Math.round(weightNum * CV_SCALE_PRECISION));
-    const decay = BigInt(
-      Math.round(calculateDecay(blockTime, convictionGrowth)),
-    );
+    const decay = BigInt(calculateDecay(blockTime, convictionGrowth));
 
     const minThresholdPoints = parseUnits(
       (previewData?.minThresholdPoints ?? 0).toString(),
@@ -160,9 +158,9 @@ export default function PoolEditForm({
   const { write } = useContractWriteWithConfirmations({
     address: strategyAddr,
     abi: abiWithErrors(cvStrategyABI),
-    contractName: "Registry Community",
-    functionName: "createPool",
-    fallbackErrorMessage: "Error creating a pool. Please ty again.",
+    contractName: "CV Strategy",
+    // functionName: "setPoolParams",
+    fallbackErrorMessage: "Error editing a pool. Please ty again.",
     onConfirmations: (receipt) => {
       // const newPoolData = getEventFromReceipt(
       //   receipt,

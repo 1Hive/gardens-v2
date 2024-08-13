@@ -1,4 +1,3 @@
-import { count } from "console";
 import React, { useState } from "react";
 import {
   BoltIcon,
@@ -11,12 +10,12 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { Address } from "viem";
+import { useAccount } from "wagmi";
 import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
 import PoolEditForm from "./Forms/PoolEditForm";
-import { InfoWrapper } from "./InfoWrapper";
 import { Modal } from "./Modal";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
@@ -46,8 +45,9 @@ function calculateConvictionGrowthInDays(
   decay: number,
   blockTime: number,
 ): number {
-  const halfLifeInSeconds =
-    blockTime / (Math.log(decay / Math.pow(10, 7)) / Math.log(1 / 2));
+  const scaledDecay = decay / Math.pow(10, 7);
+
+  const halfLifeInSeconds = blockTime / Math.log2(1 / scaledDecay);
 
   const convictionGrowth = halfLifeInSeconds / (24 * 60 * 60);
 
@@ -80,8 +80,12 @@ export default function PoolHeader({
 }: Props) {
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   const [isOpenModal, setIsOpenModal] = useState(false);
+  const { address } = useAccount();
 
   const blockTime = chainDataMap[chainId].blockTime;
+  const isCouncilSafe =
+    address?.toLowerCase() ===
+    strategy.registryCommunity.councilSafe?.toLowerCase();
 
   const minimumConviction = calculateMinimumConviction(
     strategy.config.weight,
@@ -91,6 +95,7 @@ export default function PoolHeader({
     strategy.config.decay,
     blockTime,
   );
+
   const minThresholdPoints = formatTokenAmount(
     strategy.config.minThresholdPoints,
     token.decimals,
@@ -137,27 +142,29 @@ export default function PoolHeader({
           </h2>
           {/* TODO: council safe wallet connected && */}
           {/* change isConnected to also check if council safe wallet */}
-          <div className="flex gap-2">
-            <Button
-              btnStyle="outline"
-              icon={<Cog6ToothIcon height={24} width={24} />}
-              disabled={!isConnected || missmatchUrl}
-              tooltip={tooltipMessage}
-              onClick={() => setIsOpenModal(true)}
-            >
-              Edit
-            </Button>
-            {!isEnabled && (
+          {isCouncilSafe && (
+            <div className="flex gap-2">
               <Button
-                icon={<CheckIcon height={24} width={24} />}
+                btnStyle="outline"
+                icon={<Cog6ToothIcon height={24} width={24} />}
                 disabled={!isConnected || missmatchUrl}
                 tooltip={tooltipMessage}
-                onClick={() => console.log("write approve...")}
+                onClick={() => setIsOpenModal(true)}
               >
-                Approve
+                Edit
               </Button>
-            )}
-          </div>
+              {!isEnabled && (
+                <Button
+                  icon={<CheckIcon height={24} width={24} />}
+                  disabled={!isConnected || missmatchUrl}
+                  tooltip={tooltipMessage}
+                  onClick={() => console.log("write approve...")}
+                >
+                  Approve
+                </Button>
+              )}
+            </div>
+          )}
         </div>
         <div>
           <EthAddress address={strategy.id as Address} />
@@ -170,7 +177,7 @@ export default function PoolHeader({
           <PoolEditForm
             strategyAddr={strategy.id as Address}
             token={token}
-            chainId={0}
+            chainId={chainId}
             initValues={{
               minimumConviction: minimumConviction.toFixed(2),
               convictionGrowth: convictionGrowth.toFixed(2),

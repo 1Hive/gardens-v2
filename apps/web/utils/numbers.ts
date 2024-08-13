@@ -168,7 +168,7 @@ function calculateDecay(blockTime: number, convictionGrowth: number) {
   const result =
     Math.pow(10, 7) * Math.pow(1 / 2, blockTime / halfLifeInSeconds);
 
-  return result;
+  return Math.floor(result);
 }
 
 export {
