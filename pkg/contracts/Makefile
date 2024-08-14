@@ -174,6 +174,22 @@ deploy-testnet-multi-arb-v0:
 	--via-ir \
 	-vvv
 
+verify-testnet-multi-arb-v0: 
+	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
+	--account pkGarden \
+	--ffi \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--chain-id 421614 \
+	--verify \
+	--legacy \
+	--via-ir \
+	-vvv \
+	--resume \
+  --verifier blockscout \
+	--verifier-url https://arb-sepolia.blockscout.com/api/
+
 deploy-verify: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
@@ -181,6 +197,14 @@ deploy-verify:
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	-vv
+
+deploy-verify-arb: 
+	-forge verify-contract \
+  --rpc-url $(RPC_URL_ARB_TESTNET) \
+  0xd7b72fcb6a4e2857685175f609d1498ff5392e46 \
+  /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactoryV0_0.sol:RegistryFactoryV0_0 \
+  --verifier blockscout \
+	--verifier-url https://arb-sepolia.blockscout.com/api/
 
 fork:
 	anvil --chain-id 1337
