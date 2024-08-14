@@ -39,7 +39,7 @@ export const EthAddress = ({
   //   popupShadow: "black",
   // };
 
-  return address && chain ?
+  return address && chain?.id ?
       <Addreth
         // theme={theme}
         theme={{
@@ -53,9 +53,9 @@ export const EthAddress = ({
         icon={icon}
         address={address as Address}
         explorer={(addr) => ({
-          name: chainDataMap[chain.id].name,
-          url: `${chainDataMap[chain.id].explorer}/address/${addr}`,
-          accountUrl: `${chainDataMap[chain.id].explorer}/address/${addr}`,
+          name: chainDataMap[chain.id!].name,
+          url: `${chainDataMap[chain.id!].explorer}/address/${addr}`,
+          accountUrl: `${chainDataMap[chain.id!].explorer}/address/${addr}`,
         })}
       />
     : <LoadingSpinner />;
