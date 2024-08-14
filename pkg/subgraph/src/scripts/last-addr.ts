@@ -4,7 +4,7 @@ import {
   optimismSepolia,
   sepolia
 } from "viem/chains";
-import runLatestArbSep from "../../../../broadcast/DeployCVArbSepolia.s.sol/421614/run-latest.json" assert { type: "json" };
+import runLatestArbSep from "../../../../broadcast/DeployCVMultiChainV0_0.s.sol/421614/run-latest.json" assert { type: "json" };
 import runLatestEthSep from "../../../../broadcast/DeployCVMultiChainV0_0.s.sol/11155111/run-latest.json" assert { type: "json" };
 import { fromHex } from "viem";
 import { argv } from "process";
