@@ -54,6 +54,8 @@ type FormInputs = {
   optionType?: number;
   maxAmount?: number;
   minThresholdPoints: string;
+  passportThreshold?: number;
+  isSybilResistanceRequired: boolean;
 } & PoolSettings &
   ArbitrationSettings;
 
@@ -66,6 +68,7 @@ type InitializeParams = [
   number,
   number,
   [bigint],
+  Address,
 ];
 type Metadata = [bigint, string];
 type CreatePoolParams = [Address, InitializeParams, Metadata];
@@ -117,9 +120,11 @@ const proposalInputMap: Record<string, number[]> = {
   spendingLimit: [1],
   minimumConviction: [1],
   convictionGrowth: [0, 1],
+  isSybilResistanceRequired: [0, 1],
+  passportThreshold: [0, 1],
 };
 
-const isInInputMap = (key: string, value: number): boolean => {
+const renderInputMap = (key: string, value: number): boolean => {
   return proposalInputMap[key]?.includes(Number(value)) ?? false;
 };
 
@@ -161,6 +166,7 @@ export function PoolForm({ token, communityAddr }: Props) {
   const pathname = usePathname();
   const { publish } = usePubSubContext();
 
+  const isSybilResistanceRequired = watch("isSybilResistanceRequired");
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
@@ -207,6 +213,14 @@ export function PoolForm({ token, communityAddr }: Props) {
       parse: (value: string) => {
         return value ?? "0";
       },
+    },
+    isSybilResistanceRequired: {
+      label: "Sybil resistance enabled:",
+      parse: (value: boolean) => (value ? "Yes" : "No"),
+    },
+    passportThreshold: {
+      label: "Passport score required:",
+      parse: (value: number) => value,
     },
   };
 
@@ -275,6 +289,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       previewData?.strategyType as number, // proposalType
       previewData?.pointSystemType as number, // pointSystem
       [parseUnits(maxAmountStr, token?.decimals)], // pointConfig
+      passportScorerAddr,
     ];
 
     const args: CreatePoolParams = [token?.id as Address, params, metadata];
@@ -289,23 +304,28 @@ export function PoolForm({ token, communityAddr }: Props) {
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool. Please ty again.",
     onConfirmations: (receipt) => {
-      const newPoolId = getEventFromReceipt(
+      const newPoolData = getEventFromReceipt(
         receipt,
         "RegistryCommunity",
         "PoolCreated",
-      ).args._poolId;
+      ).args;
       publish({
         topic: "pool",
         function: "createPool",
         type: "add",
-        id: newPoolId.toString(), // Never propagate direct bigint outside of javascript environment
+        id: newPoolData._poolId.toString(), // Never propagate direct bigint outside of javascript environment
         containerId: communityAddr,
-        chainId: chain.id,
+        chainId: chainId,
       });
+      if (isSybilResistanceRequired) {
+        addStrategy(newPoolData);
+      } else {
+        setLoading(false);
+      }
       router.push(
         pathname?.replace(
           "/create-pool",
-          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolId}`,
+          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId}`,
         ),
       );
     },
@@ -388,19 +408,20 @@ export function PoolForm({ token, communityAddr }: Props) {
       spendingLimit: previewData.spendingLimit,
       minimumConviction: previewData.minimumConviction,
       convictionGrowth: previewData.convictionGrowth,
+      isSybilResistanceRequired: previewData.isSybilResistanceRequired,
+      passportThreshold: previewData.passportThreshold,
     };
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-      if (key == "maxAmount" && previewData.pointSystemType != 1) {
-        return;
-      }
-      if (formRow && isInInputMap(key, strategyType)) {
+      if (formRow && shouldRenderInPreview(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
           data: parsedValue,
         });
+      } else {
+        return;
       }
     });
 
@@ -561,7 +582,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               )}
             </div>
             <div className="mb-6 mt-2 flex flex-col">
-              {isInInputMap("spendingLimit", strategyType) && (
+              {renderInputMap("spendingLimit", strategyType) && (
                 <div className="flex max-w-64 flex-col">
                   <FormInput
                     label="Spending limit"
@@ -592,7 +613,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                   </FormInput>
                 </div>
               )}
-              {isInInputMap("minimumConviction", strategyType) && (
+              {renderInputMap("minimumConviction", strategyType) && (
                 <div className="flex max-w-64 flex-col">
                   <FormInput
                     label="Minimum conviction"
@@ -656,7 +677,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               </div>
             </div>
           </div>
-          {isInInputMap("minThresholdPoints", strategyType) && (
+          {renderInputMap("minThresholdPoints", strategyType) && (
             <div className="flex flex-col">
               <FormInput
                 label="Minimum threshold points"
