@@ -70,6 +70,37 @@ const abiParameters = [
 
 const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
+function formatNumber(num: string | number): string {
+  // Convert to number if it's a string
+  const number = typeof num === "string" ? parseFloat(num) : num;
+
+  // Check if the number is NaN
+  if (isNaN(number)) {
+    return "Invalid Number";
+  }
+
+  // If the absolute value is greater than or equal to 1, use toFixed(2)
+  if (Math.abs(number) >= 1) {
+    return number.toFixed(2);
+  }
+
+  // For numbers between 0 and 1 (exclusive)
+  const parts = number.toString().split("e");
+  const exponent = parts[1] ? parseInt(parts[1]) : 0;
+
+  if (exponent < -3) {
+    // For very small numbers, use exponential notation with 4 significant digits
+    return number.toPrecision(4);
+  } else {
+    // For numbers between 0.001 and 1, show at least 4 decimal places
+    const decimalPlaces = Math.max(
+      4,
+      -Math.floor(Math.log10(Math.abs(number))) + 3,
+    );
+    return number.toFixed(decimalPlaces);
+  }
+}
+
 export const ProposalForm = ({
   strategy,
   poolId,
@@ -124,6 +155,7 @@ export const ProposalForm = ({
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
     tokenGarden?.decimals as number,
+    6,
   );
 
   const proposalTypeName = PoolTypes[proposalType];
@@ -273,13 +305,13 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${spendingLimitString} ${tokenSymbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
+                subLabel={`Max ${formatNumber(spendingLimitString)} ${tokenSymbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
                 register={register}
                 required
                 registerOptions={{
                   max: {
                     value: spendingLimitNumber,
-                    message: `Max amount cannot exceed ${spendingLimitString} ${tokenSymbol}`,
+                    message: `Max amount cannot exceed ${formatNumber(spendingLimitString)} ${tokenSymbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
