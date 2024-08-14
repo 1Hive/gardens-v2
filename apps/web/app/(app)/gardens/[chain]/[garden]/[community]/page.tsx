@@ -214,7 +214,7 @@ export default function Page({
         <div className="flex flex-1 flex-col gap-2">
           <div>
             <h2>{communityName}</h2>
-            <EthAddress address={communityAddr as Address} />
+            <EthAddress icon={false} address={communityAddr as Address} />
           </div>
           <div className="flex flex-col gap-2">
             <Statistic
