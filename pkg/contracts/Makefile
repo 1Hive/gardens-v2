@@ -13,7 +13,7 @@ print :
 add-strategy: #make add-strategy S=0x1234 
 	-forge script script/AddStrategy.s.sol:AddStrategy \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--sig "run(address,address)" $(S) $(C) \
 	--broadcast \
 	-vvvv
@@ -21,7 +21,7 @@ add-strategy: #make add-strategy S=0x1234
 add-strategy-ethsep: #make add-strategy S=0x1234 
 	-forge script script/AddStrategy.s.sol:AddStrategy \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--sig "run(address,address)" $(S) $(C) \
 	--broadcast \
 	--legacy \
@@ -30,7 +30,7 @@ add-strategy-ethsep: #make add-strategy S=0x1234
 add-strategy-ethsep-pool: #make add-strategy S=0x1234 
 	-forge script script/AddStrategy.s.sol:AddStrategy \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--sig "run(uint256,address)" $(P) $(C) \
 	--broadcast \
 	--legacy \
@@ -48,7 +48,7 @@ add-strategy-local: #make add-strategy S=0x1234
 add-owner: #make add-owner owner=0x1234 safe=0x1234
 	-forge script script/AddOwner.s.sol:AddOwner \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--sig "run(address,address)" $(owner) $(safe) \
 	--broadcast \
 	-vvvv
@@ -67,7 +67,7 @@ deploy:
 deploy-pool-testnet: 
 	-forge script script/DeployCVArbSepoliaPool.s.sol:DeployCVArbSepoliaPool \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast -vv
@@ -75,7 +75,7 @@ deploy-pool-testnet:
 deploy-commfee-testnet: 
 	-forge script script/DeployCVArbSepoliaCommFee.s.sol:DeployCVArbSepoliaCommFee \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast -vv
@@ -83,7 +83,7 @@ deploy-commfee-testnet:
 deploy-testnet: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast \
@@ -92,14 +92,14 @@ deploy-testnet:
 deploy-testnet-dry: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	-vvvv
 
 
 deploy-testnet-multi-sep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--sig "run(string)" 'sepolia' \
 	--ffi \
 	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
@@ -111,7 +111,7 @@ deploy-testnet-multi-sep:
 deploy-testnet-multi-sep-v0: 
 	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--sig "run(string)" 'sepolia' \
 	--ffi \
 	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
@@ -123,7 +123,7 @@ deploy-testnet-multi-sep-v0:
 deploy-verify-multi-sep-v0: 
 	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--sig "run(string)" 'sepolia' \
 	--ffi \
 	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
@@ -134,7 +134,7 @@ deploy-verify-multi-sep-v0:
 deploy-verify-multi-sep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
 	-vv
@@ -142,7 +142,7 @@ deploy-verify-multi-sep:
 deploy-testnet-multi-op: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_OP_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--sig "run(string)" 'opsepolia' \
 	--ffi \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
@@ -152,7 +152,7 @@ deploy-testnet-multi-op:
 deploy-testnet-multi-arb: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--sig "run(string)" 'arbsepolia' \
 	--ffi \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
@@ -163,10 +163,11 @@ deploy-testnet-multi-arb-v0:
 	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
-	--account pk1 \
+	--account pkGarden \
 	--ffi \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--verifier-url https://api-goerli.arbiscan.io/api \
+	--chain-id 421614 \
 	--broadcast \
 	--verify \
 	--legacy \
@@ -176,7 +177,7 @@ deploy-testnet-multi-arb-v0:
 deploy-verify: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--account pk1 \
+	--account pkGarden \
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	-vv
@@ -204,3 +205,14 @@ fund_arb:
 	--unlocked 0xefeab1ea32a5d7c6b1de6192ee531a2ef51198d9 \
 	--value 100ether \
 	--rpc-url=$(RPC_URL_LOCALHOST)
+
+create_safe_arbsep:
+	-forge script script/CreateSafe.s.sol \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--account pkGarden \
+	--sig "run()" \
+	--broadcast \
+	--verify \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--chain-id 421614 \
+	-vvvv
