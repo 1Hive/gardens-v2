@@ -8,6 +8,7 @@ import {
   Badge,
   DisplayNumber,
   CheckPassport,
+  InfoBox,
 } from "@/components/";
 import { LightCVStrategy } from "@/types";
 
@@ -32,62 +33,63 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 }) => {
   const showPoolGovernanceData = isMemberCommunity && memberActivatedStrategy;
 
+  const poolSystem = strategy.config.pointSystem;
+
+  const poolSystemDefinition: { [key: number]: string } = {
+    0: "This pool has a fixed points system, meaning every member has the same governance weight, limited to their registration stake.",
+    1: "This pool has a capped points system, meaning your governance weight will increase but capped based to maximum of tokens you have staked.",
+    2: "This pool has an unlimited points system, allowing you to increase your governance weight without restrictions as you stake more tokens.",
+    3: "This pool has a quadratic points system, meaning your governance weight grows at a squared rate relative to the tokens you have staked.",
+  };
+
   return (
     <section className="section-layout">
-      <header>
+      <header className="flex justify-between">
         <h2>Pool Governance</h2>
+        <div className="flex flex-col gap-2">
+          <CheckPassport
+            strategyAddr={strategy.id as Address}
+            enableCheck={!memberActivatedStrategy}
+          >
+            <ActivatePoints
+              strategyAddress={strategy.id as Address}
+              communityAddress={communityAddress}
+              isMemberActivated={memberActivatedStrategy}
+              isMember={isMemberCommunity}
+            />
+          </CheckPassport>
+        </div>
       </header>
-      <div className="mt-4 flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-1 items-center space-x-10">
-            <div className="flex w-full max-w-xl flex-col items-center gap-2 font-semibold">
-              {showPoolGovernanceData ?
-                <>
-                  <div className="flex w-full items-center gap-6">
-                    <h5>Total staked in community:</h5>
-                    <DisplayNumber
-                      tokenSymbol={strategy.registryCommunity.garden.symbol}
-                      className="text-2xl"
-                      number={
-                        [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
-                      }
-                    />
-                  </div>
-                  <div className="flex w-full items-center gap-6">
-                    <h5>Status:</h5>
-                    <div>
-                      <Badge status={memberActivatedStrategy ? 1 : 0} />
-                    </div>
-                  </div>
-                  <div className="flex w-full items-baseline gap-6">
-                    <h5>Your governance weight:</h5>
-                    <p className="text-3xl text-info">
-                      {memberPoolWeight.toFixed(2)} %
-                      <span className="text-lg text-black"> of the pool</span>
-                    </p>
-                  </div>
-                </>
-              : <div className="flex w-full items-center gap-6">
-                  <h5>Status:</h5>
-                  <div>
-                    <Badge status={memberActivatedStrategy ? 1 : 0} />
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <CheckPassport
-              strategyAddr={strategy.id as Address}
-              enableCheck={!memberActivatedStrategy}
-            >
-              <ActivatePoints
-                strategyAddress={strategy.id as Address}
-                communityAddress={communityAddress}
-                isMemberActivated={memberActivatedStrategy}
-                isMember={isMemberCommunity}
+      <div className="mt-4 flex flex-col justify-between items-start">
+        <div className="flex flex-1 gap-10">
+          <div className="flex flex-col items-start gap-4">
+            <div className="flex items-center gap-6">
+              <p className="subtitle2">Your stake in the community:</p>
+              <DisplayNumber
+                tokenSymbol={strategy.registryCommunity.garden.symbol}
+                className="subtitle2 text-primary-content"
+                number={
+                  [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
+                }
               />
-            </CheckPassport>
+              <Badge status={memberActivatedStrategy ? 1 : 0} />
+            </div>
+            {showPoolGovernanceData && (
+              <div className="flex gap-6">
+                <div className="flex flex-col items-start gap-1">
+                  <p className="subtitle2">Your governance weight:</p>
+                  <h2 className="text-primary-content">
+                    {memberPoolWeight.toFixed(2)} %
+                  </h2>
+                </div>
+
+                <InfoBox
+                  content={poolSystemDefinition[poolSystem]}
+                  infoBoxType="info"
+                  classNames="flex-1 w-full"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -196,7 +196,6 @@ export default function Page({
               communityAddress={communityAddress}
               tokenGarden={tokenGarden}
               chainId={chain}
-              spendingLimitPct={spendingLimitPct}
             />
           )}
           <Proposals

@@ -58,24 +58,17 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           label="proposals"
         />
         {poolType && poolTypes[poolType] === "funding" && (
-          <Statistic icon={<CurrencyDollarIcon />}
-
-            label="funds available" >
+          <Statistic icon={<CurrencyDollarIcon />} label="funds available">
             <DisplayNumber
-              number={[
-                BigInt(poolAmount),
-                tokenGarden.decimals,
-              ]}
+              number={[BigInt(poolAmount), tokenGarden.decimals]}
               compact={true}
               tokenSymbol={tokenGarden.symbol}
             />
-
           </Statistic>
-
         )}
       </div>
       {!isEnabled ?
-        <div className="banner">
+        <div className="banner  min-w-[262px]">
           <ClockIcon className="h-8 w-8 text-secondary-content" />
           <h6>Waiting for approval</h6>
         </div>
