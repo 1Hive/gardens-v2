@@ -49,19 +49,6 @@ type FormInputs = {
 } & PoolSettings &
   ArbitrationSettings;
 
-type InitializeParams = [
-  Address,
-  bigint,
-  bigint,
-  bigint,
-  bigint,
-  number,
-  number,
-  [bigint],
-];
-type Metadata = [bigint, string];
-type CreatePoolParams = [Address, InitializeParams, Metadata];
-
 type Props = {
   communityAddr: Address;
   alloAddr: Address;
@@ -261,24 +248,56 @@ export function PoolForm({ token, communityAddr }: Props) {
       token?.decimals,
     );
 
-    const metadata: Metadata = [BigInt(1), ipfsHash];
-
     const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
-
-    const params: InitializeParams = [
-      communityAddr as Address,
-      decay,
-      maxRatio,
-      weight,
-      minThresholdPoints,
-      previewData?.strategyType as number, // proposalType
-      previewData?.pointSystemType as number, // pointSystem
-      [parseUnits(maxAmountStr, token?.decimals)], // pointConfig
-    ];
-
-    const args: CreatePoolParams = [token?.id as Address, params, metadata];
-    console.debug(args);
-    write({ args: args });
+    // communityAddr as Address,
+    //   decay,
+    //   maxRatio,
+    //   weight,
+    //   minThresholdPoints,
+    //   previewData?.strategyType as number, // proposalType
+    //   previewData?.pointSystemType as number, // pointSystem
+    //   [parseUnits(maxAmountStr, token?.decimals)], // pointConfig
+    if (!previewData) {
+      throw new Error("No preview data");
+    }
+    write({
+      args: [
+        token?.id as Address,
+        {
+          cvParams: {
+            decay: decay,
+            maxRatio: maxRatio,
+            weight: weight,
+            minThresholdPoints: minThresholdPoints,
+          },
+          arbitrableConfig: {
+            defaultRuling: BigInt(previewData.defaultResolution),
+            defaultRulingTimeout: BigInt(
+              process.env.NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT ?? 300,
+            ),
+            submitterCollateralAmount: parseUnits(
+              previewData.proposalCollateral.toString(),
+              token?.decimals,
+            ),
+            challengerCollateralAmount: parseUnits(
+              previewData.disputeCollateral.toString(),
+              token?.decimals,
+            ),
+            tribunalSafe: tribunalAddress as Address,
+            arbitrator: chain.arbitrator as Address,
+          },
+          pointConfig: { maxAmount: parseUnits(maxAmountStr, token?.decimals) },
+          pointSystem: previewData.pointSystemType,
+          proposalType: previewData.strategyType,
+          registryCommunity: communityAddr,
+          sybilScorer: chain.sybilScorer as Address,
+        },
+        {
+          protocol: 1n,
+          pointer: ipfsHash,
+        },
+      ],
+    });
   };
 
   const { write } = useContractWriteWithConfirmations({

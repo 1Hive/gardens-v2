@@ -1,4 +1,5 @@
 import { FC, Fragment, useState } from "react";
+// @ts-ignore - no types available
 import { blo } from "blo";
 import { formatEther } from "viem";
 import {

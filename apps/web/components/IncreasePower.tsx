@@ -238,7 +238,7 @@ export const IncreasePower = ({
             <div className="flex-start flex gap-2">
               <p className="subtitle2">Total Staked in the community:</p>
               <InfoIcon
-                content={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}`}
+                tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
                   number={[memberStakedTokens, tokenDecimals]}

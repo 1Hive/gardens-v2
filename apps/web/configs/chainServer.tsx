@@ -42,6 +42,8 @@ export const chainDataMap: {
     explorer: string;
     blockTime: number;
     confirmations: number;
+    arbitrator?: string;
+    sybilScorer?: string;
   };
 } = {
   1337: {
@@ -78,6 +80,8 @@ export const chainDataMap: {
     explorer: "https://eth-sepolia.blockscout.com",
     blockTime: 12,
     confirmations: 1, // 3
+    arbitrator: "0xbff8a6c13d6536d48dce27186fc3fb503539e5f0",
+    sybilScorer: "0x0e3992731e4ba388ccbb6fc92a030f809ebffc23",
   },
   10: {
     name: optimism.name,

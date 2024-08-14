@@ -14,7 +14,6 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { formatTokenAmount } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
