@@ -1042,21 +1042,20 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
                 || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
                 || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
                 || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
+                || _arbitrableConfig.defaultRulingTimeout != arbitrableConfig.defaultRulingTimeout
         ) {
             if (disputeCount != 0) {
                 revert ArbitrationConfigCannotBeChangedDuringDispute();
             }
-            arbitrableConfig = _arbitrableConfig;
 
-            if (arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator) {
-                arbitrableConfig.arbitrator = _arbitrableConfig.arbitrator;
-                if (arbitrableConfig.tribunalSafe != address(0)) {
-                    arbitrableConfig.arbitrator.registerSafe(arbitrableConfig.tribunalSafe);
-                    emit TribunaSafeRegistered(
-                        address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
-                    );
-                }
+            if (arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator && arbitrableConfig.tribunalSafe != address(0)) {
+                arbitrableConfig.arbitrator.registerSafe(arbitrableConfig.tribunalSafe);
+                emit TribunaSafeRegistered(
+                    address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
+                );
             }
+
+            arbitrableConfig = _arbitrableConfig;
         }
 
         cvParams = _cvParams;

@@ -117,21 +117,20 @@ deploy-testnet-multi-sep-v0:
 	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
 	--broadcast \
 	--legacy \
-	--verify \
 	--via-ir \
 	-vvv
 	
 deploy-verify-multi-sep-v0: 
 	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
-	--sig "run(string)" 'sepolia' \
 	--account pk1 \
+	--sig "run(string)" 'sepolia' \
 	--ffi \
-	--verify \
+	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
 	--legacy \
 	--via-ir \
-	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
 	-vvv
+	
 deploy-verify-multi-sep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
