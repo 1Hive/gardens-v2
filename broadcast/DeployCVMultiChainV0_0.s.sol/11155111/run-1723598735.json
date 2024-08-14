@@ -1,7 +1,7 @@
 {
   "transactions": [
     {
-      "hash": "0xafba23feda8c9ea69fcde3160d38bc5c9b6ae5781c936a19b212b9f409955e87",
+      "hash": null,
       "transactionType": "CREATE",
       "contractName": null,
       "contractAddress": "0xd20707acd819f557af99523c188ad415143e2e26",
@@ -19,7 +19,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xeabca02d1c8c20be269763ece89df1735b61eec1a2372664fc49784de403c2c5",
+      "hash": null,
       "transactionType": "CREATE",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0xea14a9f4ba691fa92ac38394ac509bc6fc32bbe9",
@@ -40,7 +40,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x5dab2ce7ad64488f08f4dd765fe24c9227da59633a5412ebe66bff3732e065ed",
+      "hash": null,
       "transactionType": "CREATE",
       "contractName": "RegistryCommunityV0_0",
       "contractAddress": "0x86f51dfb36f0e386ed4c802e39ba41144f81c7fa",
@@ -58,7 +58,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xf00e769163c40b7cd3aad73750001ee534ab36378da79ffe9fe77737863b45ae",
+      "hash": null,
       "transactionType": "CREATE",
       "contractName": "RegistryFactoryV0_0",
       "contractAddress": "0x89b4dccda22feb22c0d53d25e68b61efc1dfd1fb",
@@ -76,7 +76,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x0ef9ce600e01c9a7b3e51ec88bd4844f4d4a2537b3cf7fad63a364fb4b2f1bd1",
+      "hash": null,
       "transactionType": "CREATE",
       "contractName": "CollateralVault",
       "contractAddress": "0xb3ca6e1853ef0c40f9fbd691e87f29f58849196f",
@@ -94,7 +94,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x847f9021d0838f4c6c4bdd0fdc13dc1467344f0870553f1be49f8428d4bee6ca",
+      "hash": null,
       "transactionType": "CREATE",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0x83ff17f03c99028e8b26a70cefc5dea6cfc0fbdf",
@@ -115,7 +115,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x57a12814e7e36f6750e719e81c66213815050101865c438ba81274ddd1637156",
+      "hash": null,
       "transactionType": "CREATE",
       "contractName": "CVStrategyV0_0",
       "contractAddress": "0x223caa0f026ca9beb20ad0e17ad55e97e16c8b69",
@@ -133,7 +133,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x97d571ae1690f00dfb287795c88bc0823616fb805514d8332719ea5ec3384332",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0x83ff17f03c99028e8b26a70cefc5dea6cfc0fbdf",
@@ -163,7 +163,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xb8b435711c6b6b1902e8b6b51f27777ffc62565e0cf9da8a299b7d03451a9fa4",
+      "hash": null,
       "transactionType": "CREATE",
       "contractName": "SafeArbitrator",
       "contractAddress": "0xee11c0a46849bd3747f98803430a499cdc7de684",
@@ -181,7 +181,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xfdd05812479f91cd535a293b5fad8b23ae20ea35bc438376b631b5838b388f8c",
+      "hash": null,
       "transactionType": "CREATE",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0x2245b1305c66a6789d2dd9bd18e09fe178f458ce",
@@ -202,7 +202,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xf59e94fdf611d6d79623494d5de3b818affac26a9da0a3b5f27cb115afd79acc",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0x15e5e15c3e0dc0097c89b8186e76fbaec8c04519",
@@ -232,7 +232,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xac58545a95f124302b5ec1c5794ed3dff275d16e0430221de94eda9cb945c805",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0x15e5e15c3e0dc0097c89b8186e76fbaec8c04519",
@@ -262,7 +262,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x553e723007988a877733a6a71cdcd8a47b98af0e42f95bba16faa33bdd18d1bf",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0xc6eaf449f79b081300f5317122b2dff3f039ad0b",
@@ -292,7 +292,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x651e76705a3e9a6c4dacae4488b6ec18ed641cacd6526f636a9718e2bea55840",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0xc6eaf449f79b081300f5317122b2dff3f039ad0b",
@@ -322,7 +322,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x19be4693d0eda1b9274f0b36301c49ff662f01781b1149f4180d56923108bed6",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": "GV2ERC20",
       "contractAddress": "0xb34d5a6186fe1aee35005886271f3b2ca2d17c20",
@@ -344,7 +344,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x8dda7cc707417e5635e610e3920dd22f904d8b1c6cc4d8586ac5d1c7dbee5b38",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": "GV2ERC20",
       "contractAddress": "0xb34d5a6186fe1aee35005886271f3b2ca2d17c20",
@@ -366,7 +366,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xa40c9e3488c57c94da529b1c38a8a829f961331dfc1c1279c1fa96c3516b8208",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0x15e5e15c3e0dc0097c89b8186e76fbaec8c04519",
@@ -385,7 +385,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x203b4079fab1f1d5e005c9c41ee5e4d9e14cff4ea4014d1cb98f4965468befb6",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0xa42c42d0a848909e5cde06051cd4c0ee983a8abb",
@@ -404,7 +404,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xd66dd52288edca3c9359c6780386493901372263f8f471ccbd0dfb9255815b0d",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": "ERC1967Proxy",
       "contractAddress": "0xe3740f2d82abe3fff57f498853dc06610165f180",
@@ -423,7 +423,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xbeed0c4f3b4485a7642a5ea3076c4276c891c4ee3e8eacc8eb8adfff61df9dd5",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": "GV2ERC20",
       "contractAddress": "0xb34d5a6186fe1aee35005886271f3b2ca2d17c20",
@@ -445,7 +445,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xa1198a4f9bce18fb96a00f9dff77d85fac31e3939330046bb2d2b91a318e1bfd",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0x1133ea7af70876e64665ecd07c0a0476d09465a1",
@@ -467,7 +467,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x2fa7eafdae11f8a9bf6dec0359b59a8c76b0b401281532dadce8978429e011fb",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0x1133ea7af70876e64665ecd07c0a0476d09465a1",
@@ -489,7 +489,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x8d8fa5200df05cd1563ca15a4c7ab4b1728bcbd92d26c05b4bd2f65b13e4dea5",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0x1133ea7af70876e64665ecd07c0a0476d09465a1",
@@ -511,7 +511,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xd7c9fde9f16a66e0b329a5cc50c0bea9ca2c3300052fd68b0b79bfcd1b4d0e01",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0x1133ea7af70876e64665ecd07c0a0476d09465a1",
@@ -533,7 +533,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xa742e43143b9022cb7ed081094885cd6761ec4d74c48bddfd4dbe34394bb35b1",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0x1133ea7af70876e64665ecd07c0a0476d09465a1",
@@ -555,7 +555,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xe296b61747e432911ce8c25a2290774fd1c6f932e0a8647c01878d7ac7b825c9",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0x1133ea7af70876e64665ecd07c0a0476d09465a1",
@@ -577,7 +577,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xb37757df7c7ed8fce3fcdb119ae10508ed674357a22b8c921121b0f61185ef80",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0x1133ea7af70876e64665ecd07c0a0476d09465a1",
@@ -599,7 +599,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0xb42b4d0ed5e67bcec45c4b3d1cd05fb7123d0d54bc11306fcfdf2883dcb122b5",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0xc6eaf449f79b081300f5317122b2dff3f039ad0b",
@@ -629,7 +629,7 @@
       "isFixedGasLimit": false
     },
     {
-      "hash": "0x932abf40587bc41f220f35e357aa59bd22852b1446f4da2c3f254b3c1627e2af",
+      "hash": null,
       "transactionType": "CALL",
       "contractName": null,
       "contractAddress": "0xc6eaf449f79b081300f5317122b2dff3f039ad0b",
@@ -661,39 +661,9 @@
   ],
   "receipts": [],
   "libraries": [],
-  "pending": [
-    "0xafba23feda8c9ea69fcde3160d38bc5c9b6ae5781c936a19b212b9f409955e87",
-    "0xeabca02d1c8c20be269763ece89df1735b61eec1a2372664fc49784de403c2c5",
-    "0x5dab2ce7ad64488f08f4dd765fe24c9227da59633a5412ebe66bff3732e065ed",
-    "0xf00e769163c40b7cd3aad73750001ee534ab36378da79ffe9fe77737863b45ae",
-    "0x0ef9ce600e01c9a7b3e51ec88bd4844f4d4a2537b3cf7fad63a364fb4b2f1bd1",
-    "0x847f9021d0838f4c6c4bdd0fdc13dc1467344f0870553f1be49f8428d4bee6ca",
-    "0x57a12814e7e36f6750e719e81c66213815050101865c438ba81274ddd1637156",
-    "0x97d571ae1690f00dfb287795c88bc0823616fb805514d8332719ea5ec3384332",
-    "0xb8b435711c6b6b1902e8b6b51f27777ffc62565e0cf9da8a299b7d03451a9fa4",
-    "0xfdd05812479f91cd535a293b5fad8b23ae20ea35bc438376b631b5838b388f8c",
-    "0xf59e94fdf611d6d79623494d5de3b818affac26a9da0a3b5f27cb115afd79acc",
-    "0xac58545a95f124302b5ec1c5794ed3dff275d16e0430221de94eda9cb945c805",
-    "0x553e723007988a877733a6a71cdcd8a47b98af0e42f95bba16faa33bdd18d1bf",
-    "0x651e76705a3e9a6c4dacae4488b6ec18ed641cacd6526f636a9718e2bea55840",
-    "0x19be4693d0eda1b9274f0b36301c49ff662f01781b1149f4180d56923108bed6",
-    "0x8dda7cc707417e5635e610e3920dd22f904d8b1c6cc4d8586ac5d1c7dbee5b38",
-    "0xa40c9e3488c57c94da529b1c38a8a829f961331dfc1c1279c1fa96c3516b8208",
-    "0x203b4079fab1f1d5e005c9c41ee5e4d9e14cff4ea4014d1cb98f4965468befb6",
-    "0xd66dd52288edca3c9359c6780386493901372263f8f471ccbd0dfb9255815b0d",
-    "0xbeed0c4f3b4485a7642a5ea3076c4276c891c4ee3e8eacc8eb8adfff61df9dd5",
-    "0xa1198a4f9bce18fb96a00f9dff77d85fac31e3939330046bb2d2b91a318e1bfd",
-    "0x2fa7eafdae11f8a9bf6dec0359b59a8c76b0b401281532dadce8978429e011fb",
-    "0x8d8fa5200df05cd1563ca15a4c7ab4b1728bcbd92d26c05b4bd2f65b13e4dea5",
-    "0xd7c9fde9f16a66e0b329a5cc50c0bea9ca2c3300052fd68b0b79bfcd1b4d0e01",
-    "0xa742e43143b9022cb7ed081094885cd6761ec4d74c48bddfd4dbe34394bb35b1",
-    "0xe296b61747e432911ce8c25a2290774fd1c6f932e0a8647c01878d7ac7b825c9",
-    "0xb37757df7c7ed8fce3fcdb119ae10508ed674357a22b8c921121b0f61185ef80",
-    "0xb42b4d0ed5e67bcec45c4b3d1cd05fb7123d0d54bc11306fcfdf2883dcb122b5",
-    "0x932abf40587bc41f220f35e357aa59bd22852b1446f4da2c3f254b3c1627e2af"
-  ],
+  "pending": [],
   "returns": {},
-  "timestamp": 1723598788,
+  "timestamp": 1723598735,
   "chain": 11155111,
   "commit": "1fb273df"
 }
