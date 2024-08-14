@@ -51,13 +51,17 @@ export function parseToken(value: dn.Dnum | string, compact?: boolean) {
 function formatTokenAmount(
   value: string | number | bigint | undefined,
   decimals: number,
+  digits?: number,
 ) {
+  if (digits === undefined) {
+    digits = 2;
+  }
   if (!value) {
     return "0";
   }
   const num = [BigInt(value), decimals] as const;
 
-  return dn.format(num, { digits: 2 });
+  return dn.format(num, { digits: digits });
 }
 
 function calculateFees(
