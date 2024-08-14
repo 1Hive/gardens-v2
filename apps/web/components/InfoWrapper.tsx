@@ -15,7 +15,7 @@ const sizeMap = {
   lg: { width: 2, height: 2 },
 };
 
-export function InfoIcon({
+export function InfoWrapper({
   tooltip,
   children,
   classNames,
@@ -26,7 +26,7 @@ export function InfoIcon({
 
   return (
     <div
-      className={`tooltip flex gap-2 cursor-pointer items-center [&>svg]:text-primary-content max-w-sm [&>svg]:stroke-2 ${classNames}`}
+      className={`tooltip ml-2 flex cursor-default items-center max-w-sm ${classNames}`}
       data-tip={tooltip}
     >
       {children}

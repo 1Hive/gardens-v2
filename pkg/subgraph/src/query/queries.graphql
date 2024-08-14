@@ -254,6 +254,8 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     config {
       id
+      decay
+      weight
       proposalType
       pointSystem
       maxRatio
@@ -267,6 +269,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     registryCommunity {
       id
+      councilSafe
       isValid
       garden {
         id

@@ -5,7 +5,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 interface ModalProps {
   icon?: ReactNode;
   title?: string;
-  onClose?: () => void;
+  onClose: () => void;
   children: ReactNode;
   isOpen: boolean;
   className?: string;

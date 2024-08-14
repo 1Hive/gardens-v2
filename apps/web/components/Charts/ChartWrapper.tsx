@@ -4,7 +4,7 @@ import {
   ArrowUpRightIcon,
   FlagIcon,
 } from "@heroicons/react/24/solid";
-import { InfoIcon } from "../InfoIcon";
+import { InfoWrapper } from "../InfoWrapper";
 
 type ChartWrapperProps = {
   children?: ReactNode;
@@ -52,7 +52,7 @@ export const ChartWrapper = ({
             .filter((item) => !(isSignalingType && item.name === "Threshold"))
             .map((item) => (
               <Fragment key={item.name}>
-                <InfoIcon tooltip={item.info} size="sm" classNames="ml-2">
+                <InfoWrapper tooltip={item.info} size="sm">
                   <div className="flex items-center gap-1">
                     {item.name === "Threshold" ?
                       <div className="relative">
@@ -62,7 +62,7 @@ export const ChartWrapper = ({
                     : <div className={`${item.className}`} />}
                     <p className="subtitle2">{item.name}</p>
                   </div>
-                </InfoIcon>
+                </InfoWrapper>
               </Fragment>
             ))}
         </div>

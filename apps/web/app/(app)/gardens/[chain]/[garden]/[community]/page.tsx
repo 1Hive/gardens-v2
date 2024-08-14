@@ -24,10 +24,10 @@ import {
   DisplayNumber,
   EthAddress,
   IncreasePower,
-  InfoIcon,
   PoolCard,
   RegisterMember,
   Statistic,
+  InfoWrapper,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
@@ -235,9 +235,9 @@ export default function Page({
               />
             </Statistic>
             <div className="flex gap-2">
-              <p className="subtitle2">Registration stake:</p>
-              <InfoIcon
-                tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
+              <p className="font-medium">Registration stake:</p>
+              <InfoWrapper
+                content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
                   number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
@@ -246,7 +246,7 @@ export default function Page({
                   compact={true}
                   tokenSymbol={tokenGarden.symbol}
                 />
-              </InfoIcon>
+              </InfoWrapper>
             </div>
           </div>
         </div>
