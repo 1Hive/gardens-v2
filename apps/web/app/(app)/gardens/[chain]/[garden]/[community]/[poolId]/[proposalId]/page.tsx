@@ -74,12 +74,6 @@ export default function Page({
 
   const status = proposalData?.proposalStatus;
 
-  const isProposalEnded =
-    !!proposalData &&
-    (ProposalStatus[status] === "executed" ||
-      ProposalStatus[status] === "cancelled");
-  const isDisputed = ProposalStatus[status] === "disputed";
-
   const {
     currentConvictionPct,
     thresholdPct,
@@ -199,59 +193,77 @@ export default function Page({
           </div>
         </div>
         <div className="w-full justify-end flex gap-4">
-          {(ProposalStatus[proposalData.proposalStatus] === "active" ||
-            ProposalStatus[proposalData.proposalStatus] === "disputed") && (
-            <div className="flex w-full justify-end">
-              <DisputeButton
-                proposalData={{ ...proposalData, ...ipfsResult }}
-              />
-            </div>
+          <div className="flex w-full justify-end">
+            <DisputeButton proposalData={{ ...proposalData, ...ipfsResult }} />
+          </div>
+          <div className="flex items-center justify-between gap-4 sm:justify-start">
+            <Badge status={status} />
+            <p className="subtitle2">
+              Submitted: {prettyTimestamp(proposalData?.createdAt ?? 0)}
+            </p>
+          </div>
+        </div>
+        <p>{ipfsResult?.description}</p>
+        <div className="flex flex-col gap-2">
+          {!isSignalingType && (
+            <>
+              <Statistic
+                label={"requested amount"}
+                icon={<InformationCircleIcon />}
+              >
+                <DisplayNumber
+                  number={formatUnits(requestedAmount, 18)}
+                  tokenSymbol={tokenSymbol}
+                  compact={true}
+                  className="font-bold text-black"
+                />
+              </Statistic>
+              <Statistic label={"beneficiary"} icon={<UserIcon />}>
+                <EthAddress
+                  address={beneficiary}
+                  actions="copy"
+                  icon={"identicon"}
+                />
+              </Statistic>
+            </>
           )}
+          <Statistic label={"created by"} icon={<UserIcon />}>
+            <EthAddress address={submitter} actions="copy" icon="ens" />
+          </Statistic>
+        </div>
+      </header>
+      <section className="section-layout">
+        {status && ProposalStatus[status] === "executed" ?
+          <h4 className="text-primary-content text-center">
+            Proposal passed and executed successfully!
+          </h4>
+        : <>
+            <h2>Metrics</h2>
+            <ConvictionBarChart
+              currentConvictionPct={currentConvictionPct}
+              thresholdPct={thresholdPct}
+              proposalSupportPct={totalSupportPct}
+              isSignalingType={isSignalingType}
+              proposalId={Number(proposalIdNumber)}
+            />
+          </>
+        }
+        <div className="absolute top-8 right-10">
           {ProposalStatus[status] !== "executed" && !isSignalingType && (
             <Button
-              onClick={() => {
-                if (!proposalIdNumber) {
-                  toast.error("Error executing proposal. Please try again.");
-                  console.error("ProposalIdNumber undefined");
-                  return;
-                }
+              onClick={() =>
                 writeDistribute?.({
                   args: [[], encodedDataProposalId(proposalIdNumber), "0x0"],
-                });
-              }}
-              disabled={
-                !currentConvictionPct ||
-                !thresholdPct ||
-                currentConvictionPct < thresholdPct
+                })
               }
+              disabled={currentConvictionPct < thresholdPct}
               tooltip="Proposal not executable"
             >
               Execute
             </Button>
           )}
         </div>
-      </header>
-
-      {!isDisputed && (
-        <section className="section-layout">
-          <h2>Metrics</h2>
-          {/* TODO: need designs for this entire section */}
-          {status && ProposalStatus[status] === "executed" ?
-            <div className="my-8 flex w-full justify-center">
-              <div className="badge badge-success p-4 text-primary">
-                Proposal passed and executed successfully
-              </div>
-            </div>
-          : <ConvictionBarChart
-              currentConvictionPct={currentConvictionPct!}
-              thresholdPct={thresholdPct!}
-              proposalSupportPct={totalSupportPct!}
-              isSignalingType={isSignalingType}
-              proposalId={Number(proposalIdNumber)}
-            />
-          }
-        </section>
-      )}
+      </section>
     </div>
   );
 }

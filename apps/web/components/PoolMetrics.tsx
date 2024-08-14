@@ -14,14 +14,13 @@ import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { formatTokenAmount, MAX_RATIO_CONSTANT } from "@/utils/numbers";
+import { formatTokenAmount } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {
   poolAmount: number;
   communityAddress: Address;
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals" | "address">;
-  spendingLimitPct: number;
   alloInfo: Allo;
   poolId: number;
   chainId: string;
@@ -32,7 +31,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   poolAmount,
   communityAddress,
   tokenGarden,
-  spendingLimitPct,
   poolId,
   chainId,
 }) => {
@@ -116,28 +114,20 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           <DisplayNumber number={amount} tokenSymbol={tokenGarden.symbol} />
         </div>
       </TransactionModal>
-      <section className="section-layout gap-8 flex flex-col">
-        <header>
-          <h2>Pool Metrics</h2>
-        </header>
-        <div className="flex justify-between">
-          <div className="flex flex-col gap-6">
-            <div className="flex gap-3 items-baseline">
-              <h5>Funds Available:</h5>
-              <p className="">
-                {formatTokenAmount(poolAmount, tokenGarden.decimals)}{" "}
-                {tokenGarden.symbol}
-              </p>
-            </div>
-            <div className="flex gap-3 items-baseline">
-              <h5>Spending Limit:</h5>
-              <p className="">
-                {`${(spendingLimitPct * MAX_RATIO_CONSTANT).toFixed(2)} %`}
-              </p>
-            </div>
+      <section className="section-layout gap-4 flex flex-col">
+        <h2>Pool Funds</h2>
+        <div className="flex justify-between items-center">
+          <div className="flex gap-3 items-baseline">
+            <p className="subtitle2">Funds available:</p>
+            <DisplayNumber
+              number={[BigInt(poolAmount), tokenGarden.decimals]}
+              tokenSymbol={tokenGarden.symbol}
+              compact={true}
+              className="subtitle2 text-primary-content"
+            />
           </div>
           <form
-            className="flex flex-col gap-4"
+            className="flex gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               handleFundPool();
@@ -147,7 +137,6 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               type="number"
               placeholder="0"
               required
-              className=""
               step={INPUT_TOKEN_MIN_VALUE}
               onChange={(e) => setAmount(e.target.value)}
               value={amount}
@@ -164,8 +153,9 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               type="submit"
               disabled={missmatchUrl || !accountAddress}
               tooltip={tooltipMessage}
+              className="min-w-[200px]"
             >
-              Fund pool
+              Add Funds
             </Button>
           </form>
         </div>
