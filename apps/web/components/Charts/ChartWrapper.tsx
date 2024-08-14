@@ -28,12 +28,12 @@ export const ChartWrapper = ({
       name: "Support",
       // TODO: missing color in Design system: ask designer
       className: "bg-[#A8E066] h-4 w-4 rounded-full",
-      info: "Represents the pool weight allocated in favor of a proposal.",
+      info: "Represents the total pool voting weight currently allocated to a proposal.",
     },
     {
       name: "Conviction",
       className: "bg-primary-content  h-4 w-4 rounded-full",
-      info: "Accumulated allocation power for a proposal, increasing over time.",
+      info: "Accumulated pool voting weight for a proposal, increasing over time, based on the conviction growth rate.",
     },
     {
       name: "Threshold",
@@ -52,7 +52,7 @@ export const ChartWrapper = ({
             .filter((item) => !(isSignalingType && item.name === "Threshold"))
             .map((item) => (
               <Fragment key={item.name}>
-                <InfoWrapper content={item.info} size="sm">
+                <InfoWrapper tooltip={item.info} size="sm" classNames="ml-2">
                   <div className="flex items-center gap-1">
                     {item.name === "Threshold" ?
                       <div className="relative">
@@ -60,7 +60,7 @@ export const ChartWrapper = ({
                         <FlagIcon className="absolute -left-[3.5px] -top-5 h-3 w-3 text-black" />
                       </div>
                     : <div className={`${item.className}`} />}
-                    <p className="text-xs font-medium">{item.name}</p>
+                    <p className="subtitle2">{item.name}</p>
                   </div>
                 </InfoWrapper>
               </Fragment>

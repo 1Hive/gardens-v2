@@ -12,9 +12,8 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
-import { LightCVStrategy, poolTypes } from "@/types";
+import { LightCVStrategy, PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
-import { capitalize } from "@/utils/text";
 
 type ProposalCardProps = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
@@ -51,12 +50,15 @@ export function ProposalCard({
 
   const searchParams = useCollectQueryParams();
   // TODO: ADD border color when new proposal is added
-  const isNewProposal = searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalData.proposalNumber;
+  const isNewProposal =
+    searchParams[QUERY_PARAMS.poolPage.newPropsoal] ==
+    proposalData.proposalNumber;
 
-  const { currentConvictionPct, thresholdPct, totalSupportPct } = useConvictionRead({
-    proposalData,
-    tokenData,
-  });
+  const { currentConvictionPct, thresholdPct, totalSupportPct } =
+    useConvictionRead({
+      proposalData,
+      tokenData,
+    });
 
   //TODO: move execute func to proposalId page
 
@@ -65,9 +67,12 @@ export function ProposalCard({
     memberActivatedPoints,
   );
 
-  const allocatedInProposal = calculatePercentage(stakedFilter?.value, memberActivatedPoints);
+  const allocatedInProposal = calculatePercentage(
+    stakedFilter?.value,
+    memberActivatedPoints,
+  );
 
-  const isSignalingType = poolTypes[type] === "signaling";
+  const isSignalingType = PoolTypes[type] === "signaling";
 
   const ProposalCardContent = ({
     isAllocationMode,
@@ -84,7 +89,7 @@ export function ProposalCard({
           >
             <Hashicon value={id} size={45} />
             <div className="overflow-hidden">
-              <h4 className="truncate">{capitalize(title)}</h4>
+              <h4 className="truncate first-letter:uppercase">{title}</h4>
               <h6 className="text-sm">ID {proposalNumber}</h6>
             </div>
           </div>
@@ -95,21 +100,43 @@ export function ProposalCard({
           {!isAllocationMode && (
             <>
               <div className="col-span-3 ml-10 self-center justify-self-start">
-                {stakedFilter?.value > 0 ? (<p className="text-primary-content text-xs flex items-center justify-center
+                {stakedFilter?.value > 0 ?
+                  <p
+                    className="text-primary-content text-xs flex items-center justify-center
                   // TODO: calculate data when fetching ok from subgrpah
-                gap-1">You allocate <span className="font-medium text-2xl">
-                    {`${allocatedInProposal.toString()}%`}</span> pool weight</p>) : ( <p className="text-xs text-neutral-soft-content text-center">You have not allocate yet</p>)}
+                gap-1"
+                  >
+                    You allocate{" "}
+                    <span className="font-medium text-2xl">
+                      {`${allocatedInProposal.toString()}%`}
+                    </span>{" "}
+                    pool weight
+                  </p>
+                : <p className="text-xs text-neutral-soft-content text-center">
+                    You have not allocate yet
+                  </p>
+                }
               </div>
               <div className="col-span-3 self-center flex flex-col gap-2">
-                {currentConvictionPct != null && thresholdPct != null && totalSupportPct != null &&
-                  <div className="h-4">
-                    <ConvictionBarChart compact currentConvictionPct={currentConvictionPct} thresholdPct={isSignalingType ? 0 : thresholdPct} proposalSupportPct={totalSupportPct} isSignalingType={isSignalingType} proposalId={proposalNumber} />
-                  </div>
-                }
+                {currentConvictionPct != null &&
+                  thresholdPct != null &&
+                  totalSupportPct != null && (
+                    <div className="h-4">
+                      <ConvictionBarChart
+                        compact
+                        currentConvictionPct={currentConvictionPct}
+                        thresholdPct={isSignalingType ? 0 : thresholdPct}
+                        proposalSupportPct={totalSupportPct}
+                        isSignalingType={isSignalingType}
+                        proposalId={proposalNumber}
+                      />
+                    </div>
+                  )}
                 {!isSignalingType && (
                   <div className="flex items-baseline gap-1">
-
-                    <p className="text-xs text-neutral-soft-content">Requested amount: </p>
+                    <p className="text-xs text-neutral-soft-content">
+                      Requested amount:{" "}
+                    </p>
                     <DisplayNumber
                       number={formatUnits(requestedAmount, 18)}
                       tokenSymbol={strategy.registryCommunity.garden.symbol}
@@ -118,7 +145,6 @@ export function ProposalCard({
                     />
                   </div>
                 )}
-
               </div>
             </>
           )}
@@ -132,9 +158,13 @@ export function ProposalCard({
                       min={0}
                       max={memberActivatedPoints}
                       value={inputData.value}
-                      className={"range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]"}
+                      className={
+                        "range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]"
+                      }
                       step={memberActivatedPoints / 100}
-                      onChange={(e) => inputHandler(index, Number(e.target.value))}
+                      onChange={(e) =>
+                        inputHandler(index, Number(e.target.value))
+                      }
                     />
                     <div className="flex w-full justify-between px-2.5">
                       {[...Array(21)].map((_) => (
@@ -145,7 +175,7 @@ export function ProposalCard({
                     </div>
                   </div>
                   <div className="mb-2">
-                    {Number(inputValue) > 0 ? (
+                    {Number(inputValue) > 0 ?
                       <>
                         <p className="flex items-center gap-2 text-primary-content">
                           Total allocated{" "}
@@ -155,9 +185,8 @@ export function ProposalCard({
                           %
                         </p>
                       </>
-                    ) : (
-                      <p className="text-neutral-soft-content">No allocation</p>
-                    )}
+                    : <p className="text-neutral-soft-content">No allocation</p>
+                    }
                   </div>
                 </div>
               </div>
@@ -170,13 +199,15 @@ export function ProposalCard({
 
   return (
     <>
-      {isAllocationView ? (
+      {isAllocationView ?
         <ProposalCardContent isAllocationMode />
-      ) : (
-        <Card href={`${pathname}/${id}`} className={`py-4 ${isNewProposal ? "!border-accent !border-2" : ""}`}>
+      : <Card
+          href={`${pathname}/${id}`}
+          className={`py-4 ${isNewProposal ? "!border-accent !border-2" : ""}`}
+        >
           <ProposalCardContent />
         </Card>
-      )}
+      }
     </>
   );
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {RegistryCommunity} from "../src/RegistryCommunity.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 

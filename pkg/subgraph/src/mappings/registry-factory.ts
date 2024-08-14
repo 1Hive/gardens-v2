@@ -1,4 +1,4 @@
-import { RegistryCommunity as CommunityTemplate } from "../../generated/templates";
+import { RegistryCommunityV0_0 as CommunityTemplate } from "../../generated/templates";
 import { RegistryFactory, RegistryCommunity } from "../../generated/schema";
 
 import {
@@ -11,7 +11,7 @@ import {
   CommunityCreated,
   CommunityValiditySet,
   ProtocolFeeSet,
-} from "../../generated/RegistryFactory/RegistryFactory";
+} from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
 // import {RegistryCommunity}from "../../generated/RegistryCommunity/RegistryCommunity";
 
 export const CTX_FACTORY_ADDRESS = "factoryAddress";
@@ -41,7 +41,7 @@ export function handleProtocolFeeSet(event: ProtocolFeeSet): void {
   const addr_id = event.address.toHexString();
   let community = RegistryCommunity.load(event.params._community.toHexString());
   if (community == null) {
-    log.error("Community not found", []);
+    log.error("RegistryFactory: Community not found", []);
     return;
   }
   community.protocolFee = event.params._newProtocolFee;
@@ -52,7 +52,7 @@ export function handleProtocolFeeSet(event: ProtocolFeeSet): void {
 export function handleCommunityValiditySet(event: CommunityValiditySet): void {
   let community = RegistryCommunity.load(event.params._community.toHexString());
   if (community == null) {
-    log.error("Community not found", []);
+    log.error("RegistryFactory: Community not found", []);
     return;
   }
   community.isValid = event.params._isValid;

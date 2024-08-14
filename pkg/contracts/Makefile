@@ -53,13 +53,15 @@ add-owner: #make add-owner owner=0x1234 safe=0x1234
 	--broadcast \
 	-vvvv
 
-
 deploy: 
 	-forge script script/DeployCV.s.sol:DeployCV \
 	--rpc-url $(RPC_URL_LOCALHOST) \
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
 	--unlocked \
-	--broadcast -vv
+	--via-ir \
+	--broadcast -vvvvv \
+	--via-ir \
+	--force 
 	
 
 deploy-pool-testnet: 
@@ -103,17 +105,32 @@ deploy-testnet-multi-sep:
 	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
 	--broadcast \
 	--legacy \
+	--force \
 	-vvv
 
 deploy-testnet-multi-sep-v0: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_SEP_TESTNET) \
+	--account pk1 \
+	--sig "run(string)" 'sepolia' \
+	--ffi \
+	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	-vvv
+	
+deploy-verify-multi-sep-v0: 
+	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
 	--account pk1 \
 	--sig "run(string)" 'sepolia' \
 	--ffi \
 	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
 	--legacy \
+	--via-ir \
 	-vvv
+	
 deploy-verify-multi-sep: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
@@ -142,6 +159,20 @@ deploy-testnet-multi-arb:
 	--broadcast \
 	-vvv
 
+deploy-testnet-multi-arb-v0: 
+	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
+	--account pk1 \
+	--ffi \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verifier-url https://api-goerli.arbiscan.io/api \
+	--broadcast \
+	--verify \
+	--legacy \
+	--via-ir \
+	-vvv
+
 deploy-verify: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
@@ -149,9 +180,10 @@ deploy-verify:
 	--verify \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	-vv
+
 fork:
 	anvil --chain-id 1337
-fork0:
+fork0:																									 
 	anvil --host=0.0.0.0 --chain-id 1337
 fork0b5:
 	anvil --host=0.0.0.0 --chain-id 1337 -b 5

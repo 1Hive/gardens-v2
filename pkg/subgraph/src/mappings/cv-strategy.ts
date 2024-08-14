@@ -5,95 +5,109 @@ import {
   MemberStrategy,
   Stake,
   Member,
-  // ProposalMeta as ProposalMetadata,
+  ProposalDispute
 } from "../../generated/schema";
-// import { ProposalMetadata as ProposalMetadataTemplate } from "../../generated/templates";
+import { ProposalDisputeMetadata as ProposalDisputeMetadataTemplate } from "../../generated/templates";
 
 import {
   Distributed,
   InitializedCV,
   ProposalCreated,
-  CVStrategy as CVStrategyContract,
+  CVStrategyV0_0 as CVStrategyContract,
   PoolAmountIncreased,
   SupportAdded,
   PowerIncreased,
   PowerDecreased,
   PointsDeactivated,
-  DecayUpdated,
-  MaxRatioUpdated,
-  MinThresholdPointsUpdated,
-  WeightUpdated,
-} from "../../generated/templates/CVStrategy/CVStrategy";
+  Ruling,
+  ProposalDisputed,
+  PoolParamsUpdated,
+  InitializedCVDataCvParamsStruct,
+  InitializedCVDataArbitrableConfigStruct,
+  PoolParamsUpdatedCvParamsStruct,
+  PoolParamsUpdatedArbitrableConfigStruct
+} from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
-import { Allo as AlloContract } from "../../generated/templates/CVStrategy/Allo";
+import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
 
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+
+import { json, JSONValueKind } from "@graphprotocol/graph-ts";
 
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
 
 export function handleInitialized(event: InitializedCV): void {
-  log.debug("handleInitialized", []);
+  log.debug("CVStrategy: handleInitialized {}", [
+    event.params.poolId.toString()
+  ]);
   const poolId = event.params.poolId;
   const registryCommunity = event.params.data.registryCommunity.toHexString();
-  const decay = event.params.data.decay;
-  const maxRatio = event.params.data.maxRatio;
-  const minThresholdPoints = event.params.data.minThresholdPoints;
-  const weight = event.params.data.weight;
   const pType = event.params.data.proposalType;
   const maxAmount = event.params.data.pointConfig.maxAmount;
   const pointSystem = event.params.data.pointSystem;
-
-  log.debug(
-    "handleInitialized registryCommunity:{} decay:{} maxRatio:{} minThresholdPoints:{} weight:{} pType:{} maxAmount:{}",
-    [
-      registryCommunity,
-      decay.toString(),
-      maxRatio.toString(),
-      minThresholdPoints.toString(),
-      weight.toString(),
-      pType.toString(),
-      maxAmount.toString(),
-    ],
-  );
-
+  // log.debug(
+  //   "handleInitialized registryCommunity:{} decay:{} maxRatio:{} minThresholdPoints:{} weight:{} pType:{} maxAmount:{}",
+  //   [registryCommunity, pType.toString(), maxAmount.toString()]
+  // );
   const cvc = CVStrategyContract.bind(event.address);
-
   let cvs = new CVStrategy(event.address.toHex());
   let alloAddr = cvc.getAllo();
-
+  log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
   const allo = AlloContract.bind(alloAddr);
-
   let metadata = allo.getPool(poolId).metadata.pointer;
   if (metadata) {
-    log.debug("metadata:{}", [metadata.toString()]);
+    log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
     cvs.metadata = metadata ? metadata.toString() : null;
   }
-
   cvs.poolId = poolId;
   cvs.registryCommunity = registryCommunity;
   let config = new CVStrategyConfig(
-    `${event.address.toHex()}-${poolId.toString()}-config`,
+    `${event.address.toHex()}-${poolId.toString()}-config`
   );
-
   cvs.poolAmount = cvc.getPoolAmount();
   cvs.maxCVSupply = BigInt.fromI32(0);
   cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.isEnabled = false;
-
-  config.decay = decay;
-  config.maxRatio = maxRatio;
-  config.minThresholdPoints = minThresholdPoints;
-  config.weight = weight;
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);
   config.maxAmount = maxAmount;
 
+  log.debug("handleInitialized changetypes", []);
+  let cvParams = changetype<PoolParamsUpdatedCvParamsStruct>(
+    event.params.data.cvParams
+  );
+  let arbitrableConfig = changetype<PoolParamsUpdatedArbitrableConfigStruct>(
+    event.params.data.arbitrableConfig
+  );
+
+  log.debug(
+    "handleInitialized: CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]",
+    [
+      cvParams.weight.toString(),
+      cvParams.decay.toString(),
+      cvParams.minThresholdPoints.toString(),
+      cvParams.maxRatio.toString()
+    ]
+  );
+
+  log.debug(
+    "handleInitialized: ArbitrationConfig:[arbitrator:{},tribunalSafe:{},challengerCollateralAmount:{},submitterCollateralAmount:{},defaultRuling:{},defaultRulingTimeout:{}]",
+    [
+      arbitrableConfig.arbitrator.toHexString(),
+      arbitrableConfig.tribunalSafe.toHexString(),
+      arbitrableConfig.challengerCollateralAmount.toString(),
+      arbitrableConfig.submitterCollateralAmount.toString(),
+      arbitrableConfig.defaultRuling.toString(),
+      arbitrableConfig.defaultRulingTimeout.toString()
+    ]
+  );
+
+  computeConfig(config, cvParams, arbitrableConfig);
+
   config.D = cvc.D();
   config.save();
-
   cvs.config = config.id;
-
   cvs.save();
 }
 
@@ -103,20 +117,22 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   const cvc = CVStrategyContract.bind(event.address);
 
-  log.debug("handleProposalCreated proposalIdString:{} cvsId:{} ", [
+  log.debug("CVStrategy: handleProposalCreated proposalIdString:{} cvsId:{} ", [
     proposalIdString,
-    cvsId,
+    cvsId
   ]);
 
   let p = cvc.try_getProposal(event.params.proposalId);
   if (p.reverted) {
-    log.error("handleProposalCreated proposal reverted:{}", [proposalIdString]);
+    log.error("CvStrategy: handleProposalCreated proposal reverted:{}", [
+      proposalIdString
+    ]);
     return;
   }
   let proposal = p.value;
 
   const proposalStakedAmount = cvc.getProposalStakedAmount(
-    event.params.proposalId,
+    event.params.proposalId
   );
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
@@ -148,7 +164,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
   // const metadataID = `${pointer}-${proposalIdString}`;
   const metadataID = `${pointer}`;
   // newProposal.proposalMeta = metadataID;
-  log.debug("handleProposalCreated pointer:{}", [metadataID]);
+  log.debug("CVStrategy: handleProposalCreated pointer:{}", [metadataID]);
   newProposal.createdAt = event.block.timestamp;
   newProposal.updatedAt = event.block.timestamp;
 
@@ -164,13 +180,13 @@ export function handleProposalCreated(event: ProposalCreated): void {
 }
 // handlePoolAmountIncreased
 export function handlePoolAmountIncreased(event: PoolAmountIncreased): void {
-  log.debug("handlePoolAmountIncreased: amount: {}", [
-    event.params.amount.toString(),
+  log.debug("CVStrategy: handlePoolAmountIncreased: amount: {}", [
+    event.params.amount.toString()
   ]);
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
-    log.debug("handlePoolAmountIncreased cvs not found: {}", [
-      event.address.toHexString(),
+    log.debug("CVStrategy: handlePoolAmountIncreased cvs not found: {}", [
+      event.address.toHexString()
     ]);
     return;
   }
@@ -182,20 +198,24 @@ export function handlePoolAmountIncreased(event: PoolAmountIncreased): void {
 }
 
 export function handleSupportAdded(event: SupportAdded): void {
-  log.debug("handleSupportAdded: amount: {}", [event.params.amount.toString()]);
+  log.debug("CVStrategy: handleSupportAdded: amount: {}", [
+    event.params.amount.toString()
+  ]);
 
   const proposalId = `${event.address.toHexString()}-${event.params.proposalId}`;
 
   let cvp = CVProposal.load(proposalId);
   if (cvp == null) {
-    log.debug("handleSupportAdded cvp not found: {}", [proposalId.toString()]);
+    log.debug("CVStrategy: handleSupportAdded cvp not found: {}", [
+      proposalId.toString()
+    ]);
     return;
   }
 
   let cvs = CVStrategy.load(cvp.strategy);
   if (cvs == null) {
-    log.debug("handleSupportAdded cvs not found: {}", [
-      cvp.strategy.toString(),
+    log.debug("CVStrategy: handleSupportAdded cvs not found: {}", [
+      cvp.strategy.toString()
     ]);
     return;
   }
@@ -208,8 +228,8 @@ export function handleSupportAdded(event: SupportAdded): void {
   let memberStrategy = MemberStrategy.load(memberStrategyId);
 
   if (memberStrategy == null) {
-    log.debug("handleSupportAdded memberStrategy not found: {}", [
-      memberStrategyId.toString(),
+    log.debug("CVStrategy: handleSupportAdded memberStrategy not found: {}", [
+      memberStrategyId.toString()
     ]);
     return;
   }
@@ -236,7 +256,7 @@ export function handleSupportAdded(event: SupportAdded): void {
 
   const cvc = CVStrategyContract.bind(event.address);
   const proposalStakedAmount = cvc.getProposalStakedAmount(
-    event.params.proposalId,
+    event.params.proposalId
   );
   const maxConviction = cvc.getMaxConviction(proposalStakedAmount);
 
@@ -268,18 +288,18 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
               const cvc = CVStrategyContract.bind(event.address);
 
               let contractProposal = cvc.try_getProposal(
-                proposal.proposalNumber,
+                proposal.proposalNumber
               );
               if (contractProposal.reverted) {
                 log.error(
                   "handlePointsDeactivated contractProposal reverted:{}",
-                  [proposal.proposalNumber.toString()],
+                  [proposal.proposalNumber.toString()]
                 );
                 return;
               }
               let prop = contractProposal.value;
               const maxConviction = cvc.getMaxConviction(
-                prop.value4, // proposalStakedAmount
+                prop.value4 // proposalStakedAmount
               );
               proposal.maxCVStaked = maxConviction;
               proposal.convictionLast = prop.value7; // convictionLast
@@ -294,48 +314,55 @@ export function handlePointsDeactivated(event: PointsDeactivated): void {
               } else {
                 log.debug(
                   "handlePointsDeactivated memberStrategy not found: {}",
-                  [memberStrategyId.toString()],
+                  [memberStrategyId.toString()]
                 );
               }
-              log.debug("handlePointsDeactivated stake not found: {}", [
-                stakes[i].id.toString(),
-              ]);
+              log.debug(
+                "CVStrategy: handlePointsDeactivated stake not found: {}",
+                [stakes[i].id.toString()]
+              );
             }
           } else {
-            log.debug("handlePointsDeactivated strategy not found: {}", [
-              proposal.strategy.toString(),
-            ]);
+            log.debug(
+              "CVStrategy: handlePointsDeactivated strategy not found: {}",
+              [proposal.strategy.toString()]
+            );
           }
         } else {
-          log.debug("handlePointsDeactivated proposal not found: {}", [
-            stakes[i].proposal.toString(),
-          ]);
+          log.debug(
+            "CVStrategy: handlePointsDeactivated proposal not found: {}",
+            [stakes[i].proposal.toString()]
+          );
         }
       }
     }
   } else {
-    log.debug("handlePointsDeactivated member not found: {}", [
-      event.params.member.toHexString(),
+    log.debug("CVStrategy: handlePointsDeactivated member not found: {}", [
+      event.params.member.toHexString()
     ]);
   }
 }
 
 export function handleDistributed(event: Distributed): void {
-  log.debug("handleDistributed: amount: {}", [event.params.amount.toString()]);
+  log.debug("CVStrategy: handleDistributed: amount: {}", [
+    event.params.amount.toString()
+  ]);
 
   const proposalId = `${event.address.toHexString()}-${event.params.proposalId}`;
 
   let cvp = CVProposal.load(proposalId);
   if (cvp == null) {
-    log.debug("handleDistributed cvp not found: {}", [
-      event.params.proposalId.toString(),
+    log.debug("CVStrategy: handleDistributed cvp not found: {}", [
+      event.params.proposalId.toString()
     ]);
     return;
   }
 
   let cvs = CVStrategy.load(cvp.strategy);
   if (cvs == null) {
-    log.debug("handleDistributed cvs not found: {}", [cvp.strategy.toString()]);
+    log.debug("CVStrategy: handleDistributed cvs not found: {}", [
+      cvp.strategy.toString()
+    ]);
     return;
   }
 
@@ -354,8 +381,8 @@ export function handleDistributed(event: Distributed): void {
 export function handlePowerIncreased(event: PowerIncreased): void {
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
-    log.debug("handlePowerIncreased cvs not found: {}", [
-      event.address.toHexString(),
+    log.debug("CVStrategy: handlePowerIncreased cvs not found: {}", [
+      event.address.toHexString()
     ]);
     return;
   }
@@ -386,8 +413,8 @@ export function handlePowerIncreased(event: PowerIncreased): void {
 export function handlePowerDecreased(event: PowerDecreased): void {
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
-    log.debug("handlePowerDecreased cvs not found: {}", [
-      event.address.toHexString(),
+    log.debug("CVStrategy: handlePowerDecreased cvs not found: {}", [
+      event.address.toHexString()
     ]);
     return;
   }
@@ -402,8 +429,8 @@ export function handlePowerDecreased(event: PowerDecreased): void {
 
   let memberStrategy = MemberStrategy.load(memberStrategyId);
   if (memberStrategy == null) {
-    log.debug("handlePowerDecreased memberStrategy not found: {}", [
-      memberStrategyId.toString(),
+    log.debug("CVStrategy: handlePowerDecreased memberStrategy not found: {}", [
+      memberStrategyId.toString()
     ]);
     return;
   }
@@ -415,92 +442,171 @@ export function handlePowerDecreased(event: PowerDecreased): void {
   memberStrategy.save();
 }
 
-export function handleDecayUpdated(event: DecayUpdated): void {
+export function handlePoolParamsUpdated(event: PoolParamsUpdated): void {
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
-    log.debug("handleDecayUpdated cvs not found: {}", [
-      event.address.toHexString(),
+    log.error("CVStrategy: handlePoolParamsUpdated cvs not found: {}", [
+      event.address.toHexString()
     ]);
     return;
   }
-  if (cvs.config) {
-    let config = CVStrategyConfig.load(cvs.config);
-    if (config == null) {
-      log.debug("handleDecayUpdated config not found: {}", [
-        event.address.toHexString(),
-      ]);
-      return;
-    }
-    config.decay = event.params.decay;
-    config.save();
-  }
-  return;
-}
 
-export function handleMaxRatioUpdated(event: MaxRatioUpdated): void {
-  let cvs = CVStrategy.load(event.address.toHexString());
-  if (cvs == null) {
-    log.debug("handleMaxRatioUpdated cvs not found: {}", [
-      event.address.toHexString(),
+  let config = CVStrategyConfig.load(cvs.config);
+  if (config == null) {
+    log.error("CVStrategy: handlePoolParamsUpdated config not found: {}", [
+      event.address.toHexString()
     ]);
     return;
   }
-  if (cvs.config) {
-    let config = CVStrategyConfig.load(cvs.config);
-    if (config == null) {
-      log.debug("handleMaxRatioUpdated config not found: {}", [
-        event.address.toHexString(),
-      ]);
-      return;
-    }
-    config.maxRatio = event.params.maxRatio;
-    config.save();
-  }
-  return;
+
+  log.debug(
+    "handlePoolParamsUpdated: CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]",
+    [
+      event.params.cvParams.weight.toString(),
+      event.params.cvParams.decay.toString(),
+      event.params.cvParams.minThresholdPoints.toString(),
+      event.params.cvParams.maxRatio.toString()
+    ]
+  );
+
+  log.debug(
+    "handlePoolParamsUpdated: ArbitrationConfig:[arbitrator:{},tribunalSafe:{},challengerCollateralAmount:{},submitterCollateralAmount:{},defaultRuling:{},defaultRulingTimeout:{}]",
+    [
+      event.params.arbitrableConfig.arbitrator.toHexString(),
+      event.params.arbitrableConfig.tribunalSafe.toHexString(),
+      event.params.arbitrableConfig.challengerCollateralAmount.toString(),
+      event.params.arbitrableConfig.submitterCollateralAmount.toString(),
+      event.params.arbitrableConfig.defaultRuling.toString(),
+      event.params.arbitrableConfig.defaultRulingTimeout.toString()
+    ]
+  );
+
+  computeConfig(config, event.params.cvParams, event.params.arbitrableConfig);
+
+  config.save();
 }
 
-export function handleMinThresholdPointsUpdated(
-  event: MinThresholdPointsUpdated,
+function computeConfig(
+  config: CVStrategyConfig,
+  cvParams: PoolParamsUpdatedCvParamsStruct,
+  arbitrationConfig: PoolParamsUpdatedArbitrableConfigStruct
 ): void {
-  let cvs = CVStrategy.load(event.address.toHexString());
-  if (cvs == null) {
-    log.debug("handleMaxRatioUpdated cvs not found: {}", [
-      event.address.toHexString(),
-    ]);
-    return;
-  }
-  if (cvs.config) {
-    let config = CVStrategyConfig.load(cvs.config);
-    if (config == null) {
-      log.debug("handleMaxRatioUpdated config not found: {}", [
-        event.address.toHexString(),
-      ]);
-      return;
-    }
-    config.minThresholdPoints = event.params.minThresholdPoints;
-    config.save();
-  }
-  return;
+  // CV Params
+  log.debug("CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]", [
+    cvParams.weight.toString(),
+    cvParams.decay.toString(),
+    cvParams.minThresholdPoints.toString(),
+    cvParams.maxRatio.toString()
+  ]);
+  config.weight = cvParams.weight;
+  config.decay = cvParams.decay;
+  config.minThresholdPoints = cvParams.minThresholdPoints;
+  config.maxRatio = cvParams.maxRatio;
+
+  // ArbitrationConfig
+  log.debug(
+    "ArbitrationConfig:[arbitrator:{},tribunalSafe:{},challengerCollateralAmount:{},submitterCollateralAmount:{},defaultRuling:{},defaultRulingTimeout:{}]",
+    [
+      arbitrationConfig.arbitrator.toHexString(),
+      arbitrationConfig.tribunalSafe.toHexString(),
+      arbitrationConfig.challengerCollateralAmount.toString(),
+      arbitrationConfig.submitterCollateralAmount.toString(),
+      arbitrationConfig.defaultRuling.toString(),
+      arbitrationConfig.defaultRulingTimeout.toString()
+    ]
+  );
+  config.arbitrator = arbitrationConfig.arbitrator.toHexString();
+  config.tribunalSafe = arbitrationConfig.tribunalSafe.toHexString();
+  config.challengerCollateralAmount =
+    arbitrationConfig.challengerCollateralAmount;
+  config.submitterCollateralAmount =
+    arbitrationConfig.submitterCollateralAmount;
+  config.defaultRuling = arbitrationConfig.defaultRuling;
+  config.defaultRulingTimeout = arbitrationConfig.defaultRulingTimeout;
 }
 
-export function handleWeightUpdated(event: WeightUpdated): void {
-  let cvs = CVStrategy.load(event.address.toHexString());
-  if (cvs == null) {
-    log.debug("handleWeightUpdated cvs not found: {}", [
-      event.address.toHexString(),
+export function handleProposalDisputed(event: ProposalDisputed): void {
+  let dispute = new ProposalDispute(
+    event.params.arbitrator.toHexString() +
+      "_" +
+      event.params.disputeId.toString()
+  );
+  let proposalId =
+    event.address.toHexString() + "-" + event.params.proposalId.toString();
+  dispute.disputeId = event.params.disputeId;
+  dispute.challenger = event.params.challenger.toHexString();
+  dispute.proposal = proposalId;
+  dispute.createdAt = event.block.timestamp;
+  dispute.context = event.params.context;
+  dispute.metadata = event.params.context;
+  dispute.status = BigInt.fromI32(0);
+  log.debug("CVStrategy: Fetching proposal dispute metadata for {}: {}", [
+    dispute.id,
+    dispute.metadata
+  ]);
+  ProposalDisputeMetadataTemplate.create(dispute.metadata);
+  dispute.save();
+
+  // Change proposal status to disputed
+  let proposal = CVProposal.load(proposalId);
+  if (proposal == null) {
+    log.error("CvStrategy: Proposal not found with: {}", [proposalId]);
+    return;
+  }
+  proposal.proposalStatus = BigInt.fromI32(5);
+  proposal.save();
+}
+
+export function handleDisputeRuled(event: Ruling): void {
+  let dispute = ProposalDispute.load(
+    event.params._arbitrator.toHexString() +
+      "_" +
+      event.params._disputeID.toString()
+  );
+
+  if (dispute == null) {
+    log.error("CvStrategy: Dispute not found with: {}_{}", [
+      event.params._arbitrator.toHexString(),
+      event.params._disputeID.toString()
     ]);
     return;
   }
-  if (cvs.config) {
-    let config = CVStrategyConfig.load(cvs.config);
-    if (config == null) {
-      log.debug("handleWeightUpdated config not found: {}", [
-        event.address.toHexString(),
-      ]);
-      return;
-    }
-    config.weight = event.params.weight;
-    config.save();
-  }
-  return;
+
+  dispute.status = event.params._ruling;
+  dispute.ruledAt = event.block.timestamp;
+  dispute.rulingOutcome = event.params._ruling;
+  dispute.save();
 }
+
+// function _updatePoolParam(
+//   config: CVStrategyConfig,
+//   cvParams: {
+//     weight: BigInt;
+//     decay: BigInt;
+//     minThresholdPoints: BigInt;
+//     maxRatio: BigInt;
+//   },
+//   arbitrableConfig: {
+//     arbitrator: Address;
+//     tribunalSafe: Address;
+//     challengerCollateralAmount: number;
+//     submitterCollateralAmount: number;
+//     defaultRuling: number;
+//     defaultRulingTimeout: number;
+//   }
+// ) {
+//   // CV Params
+//   config.weight = cvParams.weight;
+//   config.decay = cvParams.decay;
+//   config.minThresholdPoints = cvParams.minThresholdPoints;
+//   config.maxRatio = cvParams.maxRatio;
+
+//   // ArbitrationConfgig
+//   config.arbitrator = arbitrableConfig.arbitrator.toHexString();
+//   config.tribunalSafe = arbitrableConfig.tribunalSafe.toHexString();
+//   config.challengerCollateralAmount =
+//     arbitrableConfig.challengerCollateralAmount;
+//   config.submitterCollateralAmount = arbitrableConfig.submitterCollateralAmount;
+//   config.defaultRuling = arbitrableConfig.defaultRuling;
+//   config.defaultRulingTimeout = arbitrableConfig.defaultRulingTimeout;
+// }

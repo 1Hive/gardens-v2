@@ -36,7 +36,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { poolTypes } from "@/types";
+import { PoolTypes } from "@/types";
 import {
   dn,
   parseToken,
@@ -127,13 +127,13 @@ export default function Page({
 
   const signalingPools = strategies.filter(
     (strategy) =>
-      poolTypes[strategy.config?.proposalType] === "signaling" &&
+      PoolTypes[strategy.config?.proposalType] === "signaling" &&
       strategy.isEnabled,
   );
 
   const fundingPools = strategies.filter(
     (strategy) =>
-      poolTypes[strategy.config?.proposalType] === "funding" &&
+      PoolTypes[strategy.config?.proposalType] === "funding" &&
       strategy.isEnabled,
   );
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
@@ -234,14 +234,14 @@ export default function Page({
                 tokenSymbol={tokenGarden.symbol}
               />
             </Statistic>
-            <div className="flex">
-              <p className="font-medium">Registration cost:</p>
+            <div className="flex gap-2">
+              <p className="subtitle2">Registration stake:</p>
               <InfoWrapper
-                content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
+                tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
                   number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
-                  className="font-semibold text-primary-content"
+                  className="subtitle2 text-primary-content"
                   disableTooltip={true}
                   compact={true}
                   tokenSymbol={tokenGarden.symbol}
@@ -263,6 +263,7 @@ export default function Page({
         memberData={isMemberResult}
         registryCommunity={registryCommunity}
         tokenGarden={tokenGarden}
+        registrationAmount={registrationAmount}
       />
       <section className="section-layout flex flex-col gap-10">
         <header className="flex justify-between">

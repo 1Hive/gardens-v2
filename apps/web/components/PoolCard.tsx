@@ -17,7 +17,7 @@ import { blueLand, grass } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
-import { poolTypes } from "@/types";
+import { PoolTypes } from "@/types";
 
 type Props = {
   tokenGarden: Pick<TokenGarden, "decimals" | "symbol">;
@@ -57,30 +57,23 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           count={proposals.length}
           label="proposals"
         />
-        {poolType && poolTypes[poolType] === "funding" && (
-          <Statistic icon={<CurrencyDollarIcon />}
-
-            label="funds available" >
+        {poolType && PoolTypes[poolType] === "funding" && (
+          <Statistic icon={<CurrencyDollarIcon />} label="funds available">
             <DisplayNumber
-              number={[
-                BigInt(poolAmount),
-                tokenGarden.decimals,
-              ]}
+              number={[BigInt(poolAmount), tokenGarden.decimals]}
               compact={true}
               tokenSymbol={tokenGarden.symbol}
             />
-
           </Statistic>
-
         )}
       </div>
       {!isEnabled ?
-        <div className="banner">
+        <div className="banner  min-w-[262px]">
           <ClockIcon className="h-8 w-8 text-secondary-content" />
           <h6>Waiting for approval</h6>
         </div>
       : <Image
-          src={poolType && poolTypes[poolType] === "funding" ? blueLand : grass}
+          src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
           className="h-12 w-full rounded-lg object-cover"
         />

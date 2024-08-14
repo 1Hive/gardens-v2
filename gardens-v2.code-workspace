@@ -31,6 +31,7 @@
     "[solidity]": {
       "editor.defaultFormatter": "NomicFoundation.hardhat-solidity",
     },
+    "solidity.formatter": "forge",
     "[json]": {
       "editor.defaultFormatter": "vscode.json-language-features",
     },
@@ -45,6 +46,8 @@
     "[typescript]": {
       "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
     },
+    "solidity.formatter": "forge",
+    "openctx.enable": false
   },
   "extensions": {
     "recommendations": [

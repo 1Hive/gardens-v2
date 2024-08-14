@@ -29,7 +29,7 @@ export function FormRadioButton({
           className="radio radio-info"
           name={registerKey}
         />
-        <label htmlFor={label} className="text-base font-bold cursor-pointer">{label}</label>
+        <label htmlFor={label} className="label cursor-pointer">{label}</label>
       </div>
       <p className="text-sm">{description}</p>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   getAlloQuery,
   getPoolDataDocument,
@@ -12,9 +12,9 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { poolTypes } from "@/types";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
+import { PoolTypes } from "@/types";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
@@ -49,18 +49,9 @@ export default function Page({
     }
   }, [error]);
 
-  const [ipfsResult, setIpfsResult] =
-    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
-
-  const metadata = data?.cvstrategies?.[0]?.metadata;
-
-  useEffect(() => {
-    if (metadata && !ipfsResult) {
-      getIpfsMetadata(metadata).then((d) => {
-        setIpfsResult(d);
-      });
-    }
-  }, [metadata]);
+  const { metadata: ipfsResult } = useProposalMetadataIpfsFetch({
+    hash: data?.cvstrategies?.[0]?.metadata,
+  });
 
   const strategyObj = data?.cvstrategies?.[0];
 
@@ -125,7 +116,7 @@ export default function Page({
       />
       {isEnabled && (
         <>
-          {poolTypes[proposalType] !== "signaling" && (
+          {PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
               alloInfo={alloInfo}
               poolId={poolId}
@@ -133,7 +124,6 @@ export default function Page({
               communityAddress={communityAddress}
               tokenGarden={tokenGarden}
               chainId={chain}
-              spendingLimitPct={spendingLimitPct}
             />
           )}
           <Proposals

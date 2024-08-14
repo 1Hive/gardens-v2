@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
@@ -8,20 +8,26 @@ import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { Badge, Button, DisplayNumber, EthAddress, Statistic } from "@/components";
+import {
+  Badge,
+  Button,
+  DisplayNumber,
+  EthAddress,
+  Statistic,
+} from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
+import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
-import { poolTypes, proposalStatus } from "@/types";
+import { PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { logOnce } from "@/utils/log";
 
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -34,7 +40,7 @@ const prettyTimestamp = (timestamp: number) => {
 };
 
 export default function Page({
-  params: { proposalId, garden, poolId },
+  params: { proposalId, garden },
 }: {
   params: {
     proposalId: string;
@@ -57,32 +63,23 @@ export default function Page({
   });
 
   const proposalData = data?.cvproposal;
-
   const metadata = proposalData?.metadata;
-
-  const proposalIdNumber = proposalData?.proposalNumber as number;
+  const proposalIdNumber =
+    !!proposalData ? BigInt(proposalData.proposalNumber) : undefined;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
 
-  const [ipfsResult, setIpfsResult] =
-    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
+  const { data: ipfsResult } = useProposalMetadataIpfsFetch({ hash: metadata });
 
-  useEffect(() => {
-    if (metadata) {
-      getIpfsMetadata(metadata).then((d) => {
-        setIpfsResult(d);
-      });
-    }
-  }, [metadata]);
+  const status = proposalData?.proposalStatus;
 
-  const isProposalEnded =
-    !!proposalData &&
-    (proposalStatus[proposalData.proposalStatus] === "executed" ||
-      proposalStatus[proposalData.proposalStatus] === "cancelled");
-  logOnce("debug", { isProposalEnded, proposalStatus: proposalStatus[proposalData?.proposalStatus] });
-
-  const { currentConvictionPct, thresholdPct, totalSupportPct, updateConvictionLast } = useConvictionRead({
+  const {
+    currentConvictionPct,
+    thresholdPct,
+    totalSupportPct,
+    updateConvictionLast,
+  } = useConvictionRead({
     proposalData,
     tokenData: data?.tokenGarden,
   });
@@ -92,18 +89,13 @@ export default function Page({
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
-  const status = proposalData?.proposalStatus;
-
-  const isSignalingType = poolTypes[proposalType] === "signaling";
+  const isSignalingType = PoolTypes[proposalType] === "signaling";
 
   //encode proposal id to pass as argument to distribute function
-  const encodedDataProposalId = (proposalId_: number) => {
-    if (!proposalId_) {
-      return;
-    }
+  const encodedDataProposalId = (proposalId_: bigint) => {
     const encodedProposalId = encodeAbiParameters(
       [{ name: "proposalId", type: "uint" }],
-      [BigInt(proposalId_)],
+      [proposalId_],
     );
     return encodedProposalId;
   };
@@ -125,7 +117,7 @@ export default function Page({
         topic: "proposal",
         type: "update",
         function: "distribute",
-        id:proposalId,
+        id: proposalId,
         containerId: data?.cvproposal?.strategy?.id,
         chainId,
       });
@@ -142,11 +134,8 @@ export default function Page({
   if (
     !proposalData ||
     !ipfsResult ||
-    currentConvictionPct == null ||
-    thresholdPct == null ||
-    totalSupportPct == null ||
     !proposalIdNumber ||
-    (updateConvictionLast == null && !isProposalEnded)
+    updateConvictionLast == null
   ) {
     return (
       <div className="mt-96">
@@ -157,75 +146,124 @@ export default function Page({
 
   return (
     <div className="page-layout">
-      <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
-        <div className="flex w-full items-center justify-center sm:w-auto">
-          <Hashicon value={proposalId} size={90} />
+      <header className="section-layout flex flex-col gap-8">
+        <div className="flex flex-col items-start gap-10 sm:flex-row">
+          <div className="flex w-full items-center justify-center sm:w-auto">
+            <Hashicon value={proposalId} size={90} />
+          </div>
+          <div className="flex w-full flex-col gap-8">
+            <div>
+              <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                <h2>
+                  {ipfsResult?.title} #{proposalIdNumber}
+                </h2>
+                <Badge type={proposalType} />
+              </div>
+              <div className="flex items-center justify-between gap-4 sm:justify-start">
+                <Badge status={status} />
+                <p className="font-semibold">
+                  {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                </p>
+              </div>
+            </div>
+            <p>{ipfsResult?.description}</p>
+            <div className="flex flex-col gap-2">
+              {!isSignalingType && (
+                <>
+                  <Statistic
+                    label={"requested amount"}
+                    icon={<InformationCircleIcon />}
+                  >
+                    <DisplayNumber
+                      number={formatUnits(requestedAmount, 18)}
+                      tokenSymbol={tokenSymbol}
+                      compact={true}
+                      className="font-bold text-black"
+                    />
+                  </Statistic>
+                  <Statistic label={"beneficiary"} icon={<UserIcon />}>
+                    <EthAddress address={beneficiary} actions="copy" />
+                  </Statistic>
+                </>
+              )}
+              <Statistic label={"created by"} icon={<UserIcon />}>
+                <EthAddress address={submitter} actions="copy" />
+              </Statistic>
+            </div>
+          </div>
         </div>
-        <div className="flex w-full flex-col gap-8">
-          <div>
-            <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-              <h2>
-                {ipfsResult?.title} #{proposalIdNumber}
-              </h2>
-              <Badge type={proposalType} />
-            </div>
-            <div className="flex items-center justify-between gap-4 sm:justify-start">
-              <Badge status={status} />
-              <p className="font-semibold">
-                {prettyTimestamp(proposalData?.createdAt ?? 0)}
-              </p>
-            </div>
+        <div className="w-full justify-end flex gap-4">
+          <div className="flex w-full justify-end">
+            <DisputeButton proposalData={{ ...proposalData, ...ipfsResult }} />
           </div>
-          <p>{ipfsResult?.description}</p>
-          <div className="flex flex-col gap-2">
-            {!isSignalingType && (
-              <>
-                <Statistic
-                  label={"requested amount"}
-                  icon={<InformationCircleIcon />}
-                >
-                  <DisplayNumber
-                    number={formatUnits(requestedAmount, 18)}
-                    tokenSymbol={tokenSymbol}
-                    compact={true}
-                    className="font-bold text-black"
-                  />
-                </Statistic>
-                <Statistic label={"beneficiary"} icon={<UserIcon />}>
-                  <EthAddress address={beneficiary} actions="copy" />
-                </Statistic>
-              </>
-            )}
-            <Statistic label={"created by"} icon={<UserIcon />}>
-              <EthAddress address={submitter} actions="copy" />
-            </Statistic>
+          <div className="flex items-center justify-between gap-4 sm:justify-start">
+            <Badge status={status} />
+            <p className="subtitle2">
+              Submitted: {prettyTimestamp(proposalData?.createdAt ?? 0)}
+            </p>
           </div>
+        </div>
+        <p>{ipfsResult?.description}</p>
+        <div className="flex flex-col gap-2">
+          {!isSignalingType && (
+            <>
+              <Statistic
+                label={"requested amount"}
+                icon={<InformationCircleIcon />}
+              >
+                <DisplayNumber
+                  number={formatUnits(requestedAmount, 18)}
+                  tokenSymbol={tokenSymbol}
+                  compact={true}
+                  className="font-bold text-black"
+                />
+              </Statistic>
+              <Statistic label={"beneficiary"} icon={<UserIcon />}>
+                <EthAddress
+                  address={beneficiary}
+                  actions="copy"
+                  icon={"identicon"}
+                />
+              </Statistic>
+            </>
+          )}
+          <Statistic label={"created by"} icon={<UserIcon />}>
+            <EthAddress address={submitter} actions="copy" icon="ens" />
+          </Statistic>
         </div>
       </header>
       <section className="section-layout">
-        <h2>Metrics</h2>
-        {/* TODO: need designs for this entire section */}
-        {status && proposalStatus[status] === "executed" ?
-          <div className="my-8 flex w-full justify-center">
-            <div className="badge badge-success p-4 text-primary">
-              Proposal passed and executed successfully
-            </div>
-          </div>
-          : (
+        {status && ProposalStatus[status] === "executed" ?
+          <h4 className="text-primary-content text-center">
+            Proposal passed and executed successfully!
+          </h4>
+        : <>
+            <h2>Metrics</h2>
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
               thresholdPct={thresholdPct}
               proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
-              proposalId={proposalIdNumber}
+              proposalId={Number(proposalIdNumber)}
             />
-          )}
+          </>
+        }
         <div className="absolute top-8 right-10">
-          {proposalStatus[status] !== "executed" && !isSignalingType && ( <Button onClick={() => writeDistribute?.({ args:[poolId, [data.cvproposal?.strategy.id], encodedDataProposalId(Number(proposalIdNumber))] })} disabled={currentConvictionPct < thresholdPct} tooltip="Proposal not executable">Execute</Button>)}
-
+          {ProposalStatus[status] !== "executed" && !isSignalingType && (
+            <Button
+              onClick={() =>
+                writeDistribute?.({
+                  args: [[], encodedDataProposalId(proposalIdNumber), "0x0"],
+                })
+              }
+              disabled={currentConvictionPct < thresholdPct}
+              tooltip="Proposal not executable"
+            >
+              Execute
+            </Button>
+          )}
         </div>
       </section>
     </div>
   );
 }
-

@@ -13,15 +13,18 @@ export function NavBar() {
   return (
     <Disclosure
       as="nav"
-      className="sticky left-0 top-0 z-10 bg-primary-soft shadow"
+      className="sticky top-0 z-20 max-w-7xl mx-auto lg:px-8 bg-primary pt-3"
     >
       {({ open }) => (
         <>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 md:py-0.5 lg:px-8">
-            <div className="flex h-16 justify-between">
+          <div className="p-2 sm:py-3 sm:px-4 bg-neutral rounded-2xl border1">
+            <div className="flex justify-between">
               <div className="flex gap-8">
-                <div className="flex flex-shrink-0 items-center gap-4">
-                  <Link href="/gardens" className="flex items-center gap-3">
+                <div className="flex flex-shrink-0 items-center gap-3 text-sm">
+                  <Link
+                    href="/gardens"
+                    className="flex items-center gap-3 text-sm"
+                  >
                     <Image
                       src={newLogo}
                       alt="logo"
@@ -29,13 +32,11 @@ export function NavBar() {
                       width={40}
                       loading="lazy"
                     />
-                    {/* <GardensLogo className="h-10 text-primary" /> */}
-                    <span className="text-2xl font-medium">Gardens</span>
+                    <h4 className="">Gardens</h4>
                   </Link>
-                  {/* TODO: change or remove after alpha */}
-                  <div className="badge badge-success badge-md text-white">
-                    alpha version
-                  </div>
+                  <p className="italic text-primary-content text-sm">
+                    pre-beta release{" "}
+                  </p>
                 </div>
                 <div className="hidden sm:ml-4 sm:flex sm:space-x-8">
                   {/* {navItems.map(({ name, href }) => (

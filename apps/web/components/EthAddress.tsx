@@ -20,7 +20,7 @@ type EthAddressProps = {
 export const EthAddress = ({
   address,
   actions = "all",
-  icon = false,
+  icon = "ens",
 }: EthAddressProps) => {
   const chain = useChainFromPath();
   // const theme: ThemeDeclaration = {
@@ -57,7 +57,6 @@ export const EthAddress = ({
           url: `${chainDataMap[chain.id].explorer}/address/${addr}`,
           accountUrl: `${chainDataMap[chain.id].explorer}/address/${addr}`,
         })}
-        ens={!chain?.testnet}
       />
     : <LoadingSpinner />;
 };

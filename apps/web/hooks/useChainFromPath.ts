@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useChainIdFromPath } from "./useChainIdFromPath";
-import { getChain } from "@/configs/chainServer";
+import { chainDataMap, getChain } from "@/configs/chainServer";
 
 export function useChainFromPath() {
   const chainId = useChainIdFromPath();
@@ -8,7 +8,7 @@ export function useChainFromPath() {
     if (!chainId) {
       return undefined;
     }
-    return getChain(chainId);
+    return { ...getChain(chainId), ...chainDataMap[chainId] };
   }, [chainId]);
 
   return chain;

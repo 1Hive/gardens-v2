@@ -8,9 +8,17 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   isOpen: boolean;
+  className?: string;
 }
 
-export function Modal({ icon, title, onClose, children, isOpen }: ModalProps) {
+export function Modal({
+  icon,
+  title,
+  onClose,
+  children,
+  isOpen,
+  className = "",
+}: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -27,7 +35,10 @@ export function Modal({ icon, title, onClose, children, isOpen }: ModalProps) {
   };
 
   return (
-    <dialog className="modal max-sm:modal-bottom" ref={dialogRef}>
+    <dialog
+      className={`modal max-sm:modal-bottom ${className}`}
+      ref={dialogRef}
+    >
       <div className="modal-box max-w-5xl w-fit flex flex-col gap-8 rounded-3xl bg-primary p-8">
         <div className="flex items-center justify-between gap-6">
           <div className="flex gap-4">

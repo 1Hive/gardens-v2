@@ -166,12 +166,12 @@ export default function Page({
             <Image
               src={tree2}
               alt="tree"
-              className="absolute bottom-0 left-5"
+              className="absolute bottom-0 -left-10 h-52"
             />
             <Image
               src={tree3}
               alt="tree"
-              className="absolute bottom-0 right-5"
+              className="absolute bottom-0 -right-10 h-60 "
             />
             <Image
               src={grassLarge}

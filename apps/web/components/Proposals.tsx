@@ -455,7 +455,7 @@ export function Proposals({
               <p>Share it with the community and get support!</p>
               <CheckPassport strategyAddr={strategy.id as Address}>
                 <Link href={createProposalUrl}>
-                  <Button icon={<PlusIcon height={24} width={24} />}>
+                  <Button icon={<PlusIcon height={24} width={24} />} disabled={!isConnected || missmatchUrl}>
                     Create a proposal
                   </Button>
                 </Link>

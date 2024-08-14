@@ -9,12 +9,14 @@ export const DisplayNumber = ({
   className,
   disableTooltip = false,
   compact,
+  copiable,
 }: {
   number: dn.Dnum | string;
   tokenSymbol?: string;
   className?: string;
   disableTooltip?: boolean;
   compact?: boolean;
+  copiable?: boolean;
 }) => {
   const fullNumberStr =
     typeof number === "string" ? number : (
@@ -61,6 +63,9 @@ export const DisplayNumber = ({
   };
 
   const handleCopy = async () => {
+    if (!copiable) {
+      return;
+    }
     if (showTooltip === false) {
       setShowTooltip(true);
     }

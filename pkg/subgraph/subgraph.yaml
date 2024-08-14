@@ -5,28 +5,28 @@ schema:
   file: ./src/schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: RegistryFactory
-    network: localhost
+    name: RegistryFactoryV0_0
+    network: sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 11155111
     source:
-      address: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
-      abi: RegistryFactory
-      startBlock: 0
+      address: "0x3e3121d5d66d2953e5dfa10d0c9580a933920318"
+      abi: RegistryFactoryV0_0
+      startBlock: 6492427
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - RegistryFactory
+        - RegistryFactoryV0_0
         - RegistryCommunity
       abis:
-        - name: RegistryFactory
-          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
-        - name: RegistryCommunity
-          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: RegistryFactoryV0_0
+          file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
+        - name: RegistryCommunityV0_0
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
       eventHandlers:
         - event: CommunityCreated(address)
           handler: handleCommunityCreated
@@ -38,15 +38,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: localhost
+    network: sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 11155111
     source:
-      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+      address: "0x0e3992731e4ba388ccbb6fc92a030f809ebffc23"
       abi: PassportScorer
-      startBlock: 0
+      startBlock: 6490350
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -69,10 +69,10 @@ dataSources:
 
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunity
-    network: localhost
+    name: RegistryCommunityV0_0
+    network: sepolia
     source:
-      abi: RegistryCommunity
+      abi: RegistryCommunityV0_0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -84,14 +84,14 @@ templates:
         - TokenGarden
         - Member
       abis:
-        - name: RegistryCommunity
-          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: RegistryCommunityV0_0
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
-        - name: RegistryFactory
-          file: ../contracts/out/RegistryFactory.sol/RegistryFactory.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: RegistryFactoryV0_0
+          file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
      
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
@@ -131,10 +131,10 @@ templates:
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategy
-    network: localhost
+    name: CVStrategyV0_0
+    network: sepolia
     source:
-      abi: CVStrategy
+      abi: CVStrategyV0_0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -145,14 +145,14 @@ templates:
         - CVProposal
         - Allo
       abis:
-        - name: CVStrategy
-          file: ../contracts/out/CVStrategy.sol/CVStrategy.json
-        - name: RegistryCommunity
-          file: ../contracts/out/RegistryCommunity.sol/RegistryCommunity.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: RegistryCommunityV0_0
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,(address,uint256,uint256,uint256,uint256,uint8,uint8,(uint256),address))
+        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
@@ -168,12 +168,24 @@ templates:
           handler: handlePowerDecreased
         - event: PointsDeactivated(address)
           handler: handlePointsDeactivated
-        - event: DecayUpdated(uint256)
-          handler: handleDecayUpdated
-        - event: MaxRatioUpdated(uint256)
-          handler: handleMaxRatioUpdated
-        - event: WeightUpdated(uint256)
-          handler: handleWeightUpdated
+        - event: PoolParamsUpdated((uint256,uint256,uint256,uint256),(address,address,uint256,uint256,uint256,uint256))
+          handler: handlePoolParamsUpdated
+        - event: ProposalDisputed(address,uint256,uint256,address,string,uint256)
+          handler: handleProposalDisputed
+        - event: Ruling(indexed address,indexed uint256,uint256)
+          handler: handleDisputeRuled
  
       file: ./src/mappings/cv-strategy.ts
   
+  - name: ProposalDisputeMetadata
+    kind: file/ipfs
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/proposal-metadata.ts
+      handler: handleProposalDisputeMetadata
+      entities:
+        - ProposalDisputeMetadata
+      abis:
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
