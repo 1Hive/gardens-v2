@@ -12,7 +12,7 @@ import {
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { InfoBox } from "./InfoBox";
-import { InfoIcon } from "./InfoIcon";
+import { InfoWrapper } from "./InfoWrapper";
 import { TransactionModal, TransactionProps } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
@@ -237,7 +237,7 @@ export const IncreasePower = ({
           <div className="flex justify-between">
             <div className="flex-start flex gap-2">
               <p className="subtitle2">Total Staked in the community:</p>
-              <InfoIcon
+              <InfoWrapper
                 tooltip={`Registration stake: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\n Added stake: ${parseToken(AddedStake)} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
@@ -247,7 +247,7 @@ export const IncreasePower = ({
                   className="subtitle2 text-primary-content"
                   disableTooltip
                 />
-              </InfoIcon>
+              </InfoWrapper>
             </div>
           </div>
           <InfoBox

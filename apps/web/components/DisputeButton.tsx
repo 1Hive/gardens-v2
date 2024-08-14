@@ -23,7 +23,7 @@ import {
 import { Button } from "./Button";
 import { DateComponent } from "./DateComponent";
 import { InfoBox } from "./InfoBox";
-import { InfoIcon } from "./InfoIcon";
+import { InfoWrapper } from "./InfoWrapper";
 import { Modal } from "./Modal";
 import { ProposalTimeline } from "./ProposalTimeline";
 import { WalletBalance } from "./WalletBalance";
@@ -291,14 +291,14 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                   btnStyle="outline"
                   onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                 >
-                  <InfoIcon
+                  <InfoWrapper
                     classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
                     tooltip={
                       "Abstain to let other tribunal-safe members decide the outcome."
                     }
                   >
                     Abstain
-                  </InfoIcon>
+                  </InfoWrapper>
                 </Button>
                 {!isTimeout && (
                   <>
@@ -307,28 +307,28 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                       btnStyle="outline"
                       onClick={() => handleSubmitRuling(APPROVED_RULING)}
                     >
-                      <InfoIcon
+                      <InfoWrapper
                         classNames="[&>svg]:text-primary-content"
                         tooltip={
                           "Approve if the dispute is invalid and the proposal should be kept active."
                         }
                       >
                         Approve
-                      </InfoIcon>
+                      </InfoWrapper>
                     </Button>
                     <Button
                       color="danger"
                       btnStyle="outline"
                       onClick={() => handleSubmitRuling(REJECTED_RULING)}
                     >
-                      <InfoIcon
+                      <InfoWrapper
                         classNames="[&>svg]:text-error-content [&:before]:mr-10 tooltip-left"
                         tooltip={
                           "Reject if, regarding the community covenant, the proposal is violating the rules."
                         }
                       >
                         Reject
-                      </InfoIcon>
+                      </InfoWrapper>
                     </Button>
                   </>
                 )}

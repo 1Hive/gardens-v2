@@ -8,7 +8,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Countdown } from "./Countdown";
 import { DateComponent } from "./DateComponent";
-import { InfoIcon } from "./InfoIcon";
+import { InfoWrapper } from "./InfoWrapper";
 import { DisputeOutcome, DisputeStatus, ProposalStatus } from "@/types";
 
 type Props = {
@@ -110,12 +110,12 @@ export const ProposalTimeline: FC<Props> = ({
                   <CheckIcon className="w-4 m-0.5" />
                 </div>
                 <div className="timeline-start shadow-lg p-2 border border-tertiary-content rounded-lg flex items-center">
-                  <InfoIcon
+                  <InfoWrapper
                     classNames="[&>svg]:text-tertiary-content m-0.5"
                     tooltip={`The tribunal safe has 3 days to rule the dispute. Past this delay and considering the abstain behavior on this pool, this proposal will be ${defaultRuling === "rejected" ? "closed as rejected" : "back to active"} and both collateral will be restored.`}
                   >
                     <Countdown endTimestamp={timeoutTimestamp} />
-                  </InfoIcon>
+                  </InfoWrapper>
                 </div>
                 <div className="timeline-end">Ruling...</div>
                 <hr className="bg-neutral-soft-content rounded-tl-none rounded-bl-none" />
@@ -134,7 +134,7 @@ export const ProposalTimeline: FC<Props> = ({
                 >
                   {isRuled ?
                     "Rejected"
-                  : <InfoIcon
+                  : <InfoWrapper
                       tooltip={
                         isTimeout && defaultRuling === "approved" ?
                           "Pool default ruling on timeout is to Approve"
@@ -147,7 +147,7 @@ export const ProposalTimeline: FC<Props> = ({
                       >
                         Rejected
                       </span>
-                    </InfoIcon>
+                    </InfoWrapper>
                   }
                 </div>
               )}
@@ -155,7 +155,7 @@ export const ProposalTimeline: FC<Props> = ({
                 <div className={"timeline-end text-primary-content"}>
                   {isRuled ?
                     "Approved"
-                  : <InfoIcon
+                  : <InfoWrapper
                       tooltip={
                         isTimeout && defaultRuling === "rejected" ?
                           "Pool default ruling on timeout is to Reject"
@@ -168,7 +168,7 @@ export const ProposalTimeline: FC<Props> = ({
                       >
                         Approved
                       </span>
-                    </InfoIcon>
+                    </InfoWrapper>
                   }
                 </div>
               )}

@@ -43,7 +43,7 @@ export const chainDataMap: {
     blockTime: number;
     confirmations: number;
     arbitrator?: string;
-    sybilScorer?: string;
+    passportScorer: string;
   };
 } = {
   1337: {
@@ -52,6 +52,7 @@ export const chainDataMap: {
     explorer: "",
     blockTime: 0.23,
     confirmations: 1,
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   421614: {
     name: arbitrumSepolia.name,
@@ -59,6 +60,7 @@ export const chainDataMap: {
     explorer: "https://sepolia-explorer.arbitrum.io",
     blockTime: 0.23,
     confirmations: 1, // 7
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   42161: {
     name: arbitrum.name,
@@ -66,6 +68,7 @@ export const chainDataMap: {
     explorer: "https://arbitrum.blockscout.com",
     blockTime: 0.23,
     confirmations: 1, // 7
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   1: {
     name: mainnet.name,
@@ -73,6 +76,7 @@ export const chainDataMap: {
     explorer: "https://eth.blockscout.com",
     blockTime: 12,
     confirmations: 1, // 3
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   11155111: {
     name: sepolia.name,
@@ -81,7 +85,7 @@ export const chainDataMap: {
     blockTime: 12,
     confirmations: 1, // 3
     arbitrator: "0xbff8a6c13d6536d48dce27186fc3fb503539e5f0",
-    sybilScorer: "0x0e3992731e4ba388ccbb6fc92a030f809ebffc23",
+    passportScorer: "0x0e3992731e4ba388ccbb6fc92a030f809ebffc23",
   },
   10: {
     name: optimism.name,
@@ -89,6 +93,7 @@ export const chainDataMap: {
     explorer: "https://optimism.blockscout.com",
     blockTime: 2,
     confirmations: 1, // 2
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   11155420: {
     name: optimismSepolia.name,
@@ -96,6 +101,7 @@ export const chainDataMap: {
     explorer: "https://optimism-sepolia.blockscout.com",
     blockTime: 2,
     confirmations: 1, // 2
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   100: {
     name: gnosis.name,
@@ -103,6 +109,7 @@ export const chainDataMap: {
     explorer: "https://gnosis.blockscout.com",
     blockTime: 5.2,
     confirmations: 1, // 4
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   137: {
     name: polygon.name,
@@ -110,6 +117,7 @@ export const chainDataMap: {
     explorer: "https://polygon.blockscout.com",
     blockTime: 2.1,
     confirmations: 1, // 4
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
 };
 

@@ -5,7 +5,7 @@ import { useIsMounted } from "usehooks-ts";
 import { Address, isAddress } from "viem";
 import { normalize } from "viem/ens";
 import { mainnet, useEnsAddress, useEnsAvatar, useEnsName } from "wagmi";
-import { InfoIcon } from "../InfoIcon";
+import { InfoWrapper } from "../InfoWrapper";
 import { isENS } from "@/utils/web3";
 
 /**
@@ -66,8 +66,6 @@ export const FormAddressInput = ({
     enabled: !!ensName,
   });
 
-  console.log("inputRef.current?.value", inputRef.current?.value);
-
   useEffect(() => {
     setInput(value ?? inputRef.current?.value);
   }, [value ?? inputRef.current?.value]);
@@ -105,7 +103,7 @@ export const FormAddressInput = ({
         <label htmlFor={registerKey} className="label cursor-pointer">
           <span className="label-text">
             {tooltip ?
-              <InfoIcon tooltip={tooltip}>{label}</InfoIcon>
+              <InfoWrapper tooltip={tooltip}>{label}</InfoWrapper>
             : label}
           </span>
         </label>

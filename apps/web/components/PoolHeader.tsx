@@ -9,7 +9,6 @@ import {
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { toast } from "react-toastify";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
 import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
@@ -24,11 +23,10 @@ import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { registryCommunityABI } from "@/src/generated";
-import { pointSystems, poolTypes } from "@/types";
-import { proposalStatus } from "@/types";
+import { PointSystems, PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
 import {
   CV_SCALE_PRECISION,
   formatTokenAmount,
@@ -36,7 +34,7 @@ import {
 } from "@/utils/numbers";
 
 type Props = {
-  ipfsResult: Awaited<ReturnType<typeof getIpfsMetadata>> | undefined;
+  ipfsResult: MetadataV1 | null;
   poolId: number;
   isEnabled: boolean;
   strategy: getPoolDataQuery["cvstrategies"][0];
@@ -112,7 +110,7 @@ export default function PoolHeader({
   const communityAddr = strategy.registryCommunity.id as Address;
 
   const proposalOnDispute = strategy.proposals?.some(
-    (proposal) => proposalStatus[proposal.proposalStatus] === "disputed",
+    (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
   );
 
   const poolConfig = [
@@ -140,7 +138,7 @@ export default function PoolHeader({
   ];
 
   const filteredPoolConfig =
-    poolTypes[proposalType] === "signaling" ?
+    PoolTypes[proposalType] === "signaling" ?
       poolConfig.filter(
         (config) => !["Spending limit", "Min Threshold"].includes(config.label),
       )
@@ -222,7 +220,7 @@ export default function PoolHeader({
           <Statistic label="pool type">
             <Badge type={parseInt(proposalType)} />
           </Statistic>
-          {poolTypes[proposalType] === "funding" && (
+          {PoolTypes[proposalType] === "funding" && (
             <Statistic label="funding token">
               <Badge
                 isCapitalize
@@ -238,7 +236,7 @@ export default function PoolHeader({
                 classNames="text-secondary-content"
                 icon={<ChartBarIcon />}
               />
-              <Badge label={pointSystems[pointSystem]} icon={<BoltIcon />} />
+              <Badge label={PointSystems[pointSystem]} icon={<BoltIcon />} />
             </div>
           </Statistic>
         </div>
@@ -268,7 +266,7 @@ export default function PoolHeader({
           <h6>Waiting for council approval</h6>
         </div>
       : <Image
-          src={poolTypes[proposalType] === "funding" ? blueLand : grassLarge}
+          src={PoolTypes[proposalType] === "funding" ? blueLand : grassLarge}
           alt="pool image"
           className="h-12 w-full rounded-lg object-cover"
         />

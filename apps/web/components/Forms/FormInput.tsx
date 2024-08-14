@@ -2,7 +2,7 @@
 
 import { HTMLInputTypeAttribute } from "react";
 import { RegisterOptions } from "react-hook-form";
-import { InfoIcon } from "../InfoIcon";
+import { InfoWrapper } from "../InfoWrapper";
 
 type Props = {
   label?: string;
@@ -52,7 +52,7 @@ export function FormInput({
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer ">
           {tooltip ?
-            <InfoIcon tooltip={tooltip}>{label}</InfoIcon>
+            <InfoWrapper tooltip={tooltip}>{label}</InfoWrapper>
           : label}
         </label>
       )}

@@ -237,7 +237,7 @@ export default function Page({
             <div className="flex gap-2">
               <p className="font-medium">Registration stake:</p>
               <InfoWrapper
-                content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
+                tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
                   number={[getTotalRegistrationCost(), tokenGarden?.decimals]}

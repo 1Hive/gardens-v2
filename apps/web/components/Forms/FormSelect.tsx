@@ -1,6 +1,6 @@
 import React from "react";
 import { RegisterOptions } from "react-hook-form";
-import { InfoIcon } from "../InfoIcon";
+import { InfoWrapper } from "../InfoWrapper";
 
 export type Option = { label: string; value: string | number };
 
@@ -28,7 +28,7 @@ export function FormSelect({
     <>
       <label htmlFor={registerKey} className="label w-fit">
         {tooltip ?
-          <InfoIcon tooltip={tooltip}>{label}</InfoIcon>
+          <InfoWrapper tooltip={tooltip}>{label}</InfoWrapper>
         : label}
       </label>
       <select
@@ -38,7 +38,6 @@ export function FormSelect({
           required,
           ...registerOptions,
         })}
-
       >
         {options.map(({ value, label: lab }) => (
           <option value={value} key={value}>

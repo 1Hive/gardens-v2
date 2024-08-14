@@ -1,7 +1,7 @@
 import React from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
-type InfoIconProps = {
+type InfoWrapperProps = {
   tooltip: string;
   children?: React.ReactNode;
   classNames?: string;
@@ -21,7 +21,7 @@ export function InfoWrapper({
   classNames,
   customIcon,
   size = "md",
-}: InfoIconProps): JSX.Element {
+}: InfoWrapperProps): JSX.Element {
   const { width, height } = sizeMap[size];
 
   return (
