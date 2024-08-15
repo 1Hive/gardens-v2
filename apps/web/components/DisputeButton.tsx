@@ -71,6 +71,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const { publish } = usePubSubContext();
   const { address } = useAccount();
+  const [isLoading, setIsLoading] = useState(false);
 
   // TODO: Remove fake
   // const disputeTimestamp = useMemo(() => {
@@ -185,34 +186,37 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const isCouncilSafe = config.tribunalSafe === address?.toLowerCase();
 
-  const { write: writeDisputeProposal } = useContractWriteWithConfirmations({
-    contractName: "CVStrategy",
-    functionName: "disputeProposal",
-    value: totalStake,
-    abi: cvStrategyABI,
-    address: proposalData?.strategy.id as Address,
-    onSuccess: () => {
-      setIsModalOpened(false);
-    },
-    onConfirmations: () => {
-      publish({
-        topic: "proposal",
-        type: "update",
-        function: "disputeProposal",
-        id: proposalData.id,
-        containerId: proposalData.strategy.id,
-      });
-    },
-  });
+  const { writeAsync: writeDisputeProposalAsync } =
+    useContractWriteWithConfirmations({
+      contractName: "CVStrategy",
+      functionName: "disputeProposal",
+      value: totalStake,
+      abi: cvStrategyABI,
+      address: proposalData?.strategy.id as Address,
+      onSuccess: () => {
+        setIsModalOpened(false);
+      },
+      onConfirmations: () => {
+        publish({
+          topic: "proposal",
+          type: "update",
+          function: "disputeProposal",
+          id: proposalData.id,
+          containerId: proposalData.strategy.id,
+        });
+      },
+    });
 
   async function handleSubmit() {
+    setIsLoading(true);
     const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
     if (!reasonHash) {
       return;
     }
-    writeDisputeProposal({
+    await writeDisputeProposalAsync({
       args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
     });
+    setIsLoading(false);
   }
 
   const { write: writeSubmitRuling } = useContractWriteWithConfirmations({
@@ -387,6 +391,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
               }
               tooltipSide="tooltip-left"
               disabled={!isEnoughBalance || isCooldown}
+              isLoading={isLoading}
             >
               Dispute
             </Button>

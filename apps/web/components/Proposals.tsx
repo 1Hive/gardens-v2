@@ -172,7 +172,7 @@ export function Proposals({
   }, [memberActivatedStrategy]);
 
   useEffect(() => {
-    if (wallet && !fetchingProposals) {
+    if (!fetchingProposals) {
       triggerRenderProposals();
     }
   }, [wallet, strategy, fetchingProposals]);

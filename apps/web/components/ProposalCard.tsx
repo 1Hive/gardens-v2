@@ -136,22 +136,22 @@ export function ProposalCard({
           </div>
         : <>
             <div className="col-span-3 ml-10 self-center justify-self-start">
-              {stakedFilter?.value > 0 ?
-                <p
-                  className="text-primary-content text-xs flex items-center justify-center
+              {stakedFilter &&
+                (stakedFilter?.value > 0 ?
+                  <p
+                    className="text-primary-content text-xs flex items-center justify-center
                   // TODO: calculate data when fetching ok from subgrpah
                 gap-1"
-                >
-                  You allocate{" "}
-                  <span className="font-medium text-2xl">
-                    {`${allocatedInProposal.toString()}%`}
-                  </span>{" "}
-                  pool weight
-                </p>
-              : <p className="text-xs text-neutral-soft-content text-center">
-                  You have not allocate yet
-                </p>
-              }
+                  >
+                    You allocate{" "}
+                    <span className="font-medium text-2xl">
+                      {`${allocatedInProposal.toString()}%`}
+                    </span>{" "}
+                    pool weight
+                  </p>
+                : <p className="text-xs text-neutral-soft-content text-center">
+                    No allocation mad
+                  </p>)}
             </div>
             <div className="col-span-3 self-center flex flex-col gap-2">
               {currentConvictionPct != null &&
