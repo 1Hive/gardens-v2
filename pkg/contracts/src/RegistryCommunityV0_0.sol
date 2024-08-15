@@ -195,11 +195,16 @@ contract RegistryCommunityV0_0 is
 
         registry = IRegistry(allo.getRegistry());
 
-        address[] memory owners = councilSafe.getOwners();
-        address[] memory pool_initialMembers = new address[](3);
-
-        for (uint256 i = 0; i < owners.length; i++) {
-            pool_initialMembers[i] = owners[i];
+        address[] memory pool_initialMembers;
+        // Support EOA as coucil safe
+        try councilSafe.getOwners() returns (address[] memory owners) {
+            pool_initialMembers = new address[](owners.length + 2);
+            for (uint256 i = 0; i < owners.length; i++) {
+                pool_initialMembers[i] = owners[i];
+            }
+        } catch {
+            pool_initialMembers = new address[](3);
+            pool_initialMembers[0] = msg.sender;
         }
 
         pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);

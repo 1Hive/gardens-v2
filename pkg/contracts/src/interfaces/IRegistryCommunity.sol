@@ -67,7 +67,7 @@ interface IRegistryCommunityV0_0 {
         string _communityName;
         bool _isKickEnabled;
         string covenantIpfsHash;
-        address _strategyTemplate;
+        address _strategyTemplate; // Can be altered to be scam strategy, out of scope for now
     }
 
     function createPool(address _token, StrategyStruct.InitializeParams memory _params, Metadata memory _metadata)
