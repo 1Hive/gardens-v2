@@ -1976,7 +1976,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         //@todo chec ProposalStatus
         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotActive.selector, proposalId));
         allo().distribute(poolId, recipients, dataProposal);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotActive.selector, proposalId));
+        // Removed this revert for now, waiting for further talks with team to check if we put back the revert in update
+        // proposal conviction
+        // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotActive.selector, proposalId));
         cv.updateProposalConviction(proposalId);
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
