@@ -206,7 +206,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
         proxy = new ERC1967Proxy(
-            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether)
         );
         arbitrator = SafeArbitrator(payable(address(proxy)));
 

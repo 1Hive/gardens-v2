@@ -1123,7 +1123,10 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         }
 
         // if the lastDisputeCompletion is less than DISPUTE_COOLDOWN_SEC, we should revert
-        if (proposal.lastDisputeCompletion != 0 && proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC > block.timestamp) {
+        if (
+            proposal.lastDisputeCompletion != 0
+                && proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC > block.timestamp
+        ) {
             revert DisputeCooldownNotPassed(
                 proposalId, proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC - block.timestamp
             );
