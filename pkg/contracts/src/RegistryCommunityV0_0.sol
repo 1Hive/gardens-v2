@@ -106,7 +106,7 @@ contract RegistryCommunityV0_0 is
 
     function onlyCouncilSafe() private view {
         if (!hasRole(COUNCIL_MEMBER, msg.sender)) {
-            revert UserNotInCouncil();
+            revert UserNotInCouncil(msg.sender);
         }
     }
 
@@ -195,12 +195,13 @@ contract RegistryCommunityV0_0 is
 
         registry = IRegistry(allo.getRegistry());
 
-        address[] memory owners = councilSafe.getOwners();
-        address[] memory pool_initialMembers = new address[](owners.length + 2);
+        // address[] memory owners = councilSafe.getOwners();
+        address[] memory pool_initialMembers = new address[](3);
 
-        for (uint256 i = 0; i < owners.length; i++) {
-            pool_initialMembers[i] = owners[i];
-        }
+        pool_initialMembers[0] = msg.sender;
+        // for (uint256 i = 0; i < owners.length; i++) {
+        //     pool_initialMembers[i] = owners[i];
+        // }
 
         pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);
         pool_initialMembers[pool_initialMembers.length - 2] = address(this);

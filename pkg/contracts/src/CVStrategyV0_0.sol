@@ -68,6 +68,7 @@ library StrategyStruct {
         uint256 disputeId;
         uint256 disputeTimestamp;
         address challenger;
+        uint256 submitterCollateralVault;
     }
 
     struct Proposal {
@@ -84,7 +85,6 @@ library StrategyStruct {
         Metadata metadata;
         ProposalDisputeInfo disputeInfo;
         uint256 lastDisputeCompletion;
-        uint256 creationCollateralAmount;
     }
 
     struct ProposalSupport {
@@ -159,9 +159,10 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     error OnlyArbitrator();
     error ProposalNotDisputed(uint256 _proposalId);
     error ArbitratorCannotBeZero();
-    error CollateralVaultCannotBeZero();
+    // Goss: Support Collateral Zero
+    // error CollateralVaultCannotBeZero();
     error DefaultRulingNotSet();
-    error DisputeCooldownNotPassed(uint256 _proposalId);
+    error DisputeCooldownNotPassed(uint256 _proposalId, uint256 _remainingSec);
     error ArbitrationConfigCannotBeChangedDuringDispute();
 
     /*|--------------------------------------------|*/
@@ -272,8 +273,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         sybilScorer = ISybilScorer(ip.sybilScorer);
 
         _setPoolParams(ip.arbitrableConfig, ip.cvParams);
-
-        sybilScorer = ISybilScorer(ip.sybilScorer);
 
         emit InitializedCV(_poolId, ip);
     }
@@ -393,16 +392,12 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
         // Remember the initial colateral amount because can be changed after creation
-        p.creationCollateralAmount = arbitrableConfig.submitterCollateralAmount;
+        p.disputeInfo.submitterCollateralVault = arbitrableConfig.submitterCollateralAmount;
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
         emit ProposalCreated(poolId, proposalId);
         // console.log("Gaz left: ", gasleft());
         return address(uint160(proposalId));
-    }
-
-    function getCollateralAmounts() external view returns (uint256, uint256) {
-        return (arbitrableConfig.submitterCollateralAmount, arbitrableConfig.challengerCollateralAmount);
     }
 
     function getDecay() external view returns (uint256) {
@@ -605,7 +600,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
-                proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
+                proposalId, proposal.submitter, proposal.disputeInfo.submitterCollateralVault
             );
 
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
@@ -1042,6 +1037,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     ) internal {
         if (
             _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
+                || _arbitrableConfig.arbitrator != arbitrableConfig.arbitrator
                 || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
                 || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
                 || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
@@ -1051,15 +1047,10 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
                 revert ArbitrationConfigCannotBeChangedDuringDispute();
             }
 
-            if (
-                arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator
-                    && arbitrableConfig.tribunalSafe != address(0)
-            ) {
-                arbitrableConfig.arbitrator.registerSafe(arbitrableConfig.tribunalSafe);
-                emit TribunaSafeRegistered(
-                    address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
-                );
-            }
+            _arbitrableConfig.arbitrator.registerSafe(_arbitrableConfig.tribunalSafe);
+            emit TribunaSafeRegistered(
+                address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
+            );
 
             arbitrableConfig = _arbitrableConfig;
         }
@@ -1117,17 +1108,25 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         if (address(arbitrableConfig.arbitrator) == address(0)) {
             revert ArbitratorCannotBeZero();
         }
-        if (address(collateralVault) == address(0)) {
-            revert CollateralVaultCannotBeZero();
-        }
+        // Goss: Support Collateral Zero
+        // if (address(collateralVault) == address(0)) {
+        //     revert CollateralVaultCannotBeZero();
+        // }
         if (proposal.proposalId != proposalId) {
             revert ProposalNotInList(proposalId);
         }
         if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
             revert ProposalNotActive(proposalId);
         }
-        if (msg.value <= arbitrableConfig.challengerCollateralAmount) {
+        if (msg.value < arbitrableConfig.challengerCollateralAmount) {
             revert InsufficientCollateral(msg.value, arbitrableConfig.challengerCollateralAmount);
+        }
+
+        // if the lastDisputeCompletion is less than DISPUTE_COOLDOWN_SEC, we should revert
+        if (proposal.lastDisputeCompletion != 0 && proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC > block.timestamp) {
+            revert DisputeCooldownNotPassed(
+                proposalId, proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC - block.timestamp
+            );
         }
 
         uint256 arbitrationFee = msg.value - arbitrableConfig.challengerCollateralAmount;
@@ -1165,11 +1164,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             revert ProposalNotDisputed(proposalId);
         }
 
-        // if the lastDisputeCompletion is less than DISPUTE_COOLDOWN_SEC, we should revert
-        if (proposal.lastDisputeCompletion + DISPUTE_COOLDOWN_SEC > block.timestamp) {
-            revert DisputeCooldownNotPassed(proposalId);
-        }
-
         bool isTimeOut = block.timestamp > proposal.disputeInfo.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
 
         if (!isTimeOut && msg.sender != address(arbitrableConfig.arbitrator)) {
@@ -1189,7 +1183,9 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             collateralVault.withdrawCollateral(
                 proposalId, proposal.disputeInfo.challenger, arbitrableConfig.challengerCollateralAmount
             );
-            collateralVault.withdrawCollateral(proposalId, proposal.submitter, proposal.creationCollateralAmount);
+            collateralVault.withdrawCollateral(
+                proposalId, proposal.submitter, proposal.disputeInfo.submitterCollateralVault
+            );
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
             collateralVault.withdrawCollateralFor(
@@ -1207,10 +1203,13 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
                 proposalId,
                 proposal.submitter,
                 address(registryCommunity.councilSafe()),
-                proposal.creationCollateralAmount / 2
+                proposal.disputeInfo.submitterCollateralVault / 2
             );
             collateralVault.withdrawCollateralFor(
-                proposalId, proposal.submitter, proposal.disputeInfo.challenger, proposal.creationCollateralAmount / 2
+                proposalId,
+                proposal.submitter,
+                proposal.disputeInfo.challenger,
+                proposal.disputeInfo.submitterCollateralVault / 2
             );
         }
 

@@ -102,7 +102,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.startPrank(factoryOwner);
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
-            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.01 ether)
         );
         safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
 
@@ -236,7 +236,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             StrategyStruct.CreateProposal(poolId, pool_admin(), requestAmount, address(useTokenPool), metadata);
         bytes memory data = abi.encode(proposal);
 
-        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = strategy.getCollateralAmounts();
+        (,, uint256 submitterCollateralAmount,,,) = strategy.arbitrableConfig();
         vm.deal(pool_admin(), submitterCollateralAmount);
         vm.startPrank(pool_admin());
         proposalId = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
@@ -595,10 +595,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     }
 
     function test_disputeAbstain() public {
-        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        (IAllo.Pool memory pool,, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
-        vm.startPrank(address(_councilSafe())); // Same guy disputr and rule
-        uint256 disputeId = cv.disputeProposal{value: 0.02}(proposalId, "I dont agree", "0x");
+        vm.deal(address(_councilSafe()), 1 ether);
+        vm.startPrank(address(_councilSafe()));
+        uint256 disputeId = cv.disputeProposal{value: 0.02 ether}(proposalId, "I dont agree", "0x");
         uint256 abstainRulingOutcome = 0;
         safeArbitrator.executeRuling(disputeId, abstainRulingOutcome, address(cv));
         vm.stopPrank();
@@ -1681,7 +1682,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             metadata
         );
         data = abi.encode(proposal);
-        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
+        (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
         vm.deal(pool_admin(), submitterCollateralAmount);
         uint256 proposalID2 = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
 
@@ -1815,7 +1816,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().distribute(poolId, recipients, dataProposal);
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
-        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
+        (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
         assertEq(amount - submitterCollateralAmount, requestedAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
@@ -1979,7 +1980,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         cv.updateProposalConviction(proposalId);
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
-        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
+        (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
         assertEq(amount, requestedAmount + submitterCollateralAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
@@ -2183,7 +2184,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, address(0), 0, address(0), metadata);
         bytes memory data = abi.encode(proposal);
-        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
+        (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
         vm.deal(address(this), submitterCollateralAmount);
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
 
@@ -2491,7 +2492,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), 110 ether, NATIVE, metadata);
         bytes memory data = abi.encode(proposal);
-        (uint256 submitterCollateralAmount, uint256 _challengerCollateralAmount) = cv.getCollateralAmounts();
+        (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
         vm.deal(address(6), submitterCollateralAmount * 2000);
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
         vm.stopPrank();

@@ -25,7 +25,7 @@ import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 contract AddStrategy is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;
 
-    address public SENDER = 0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6;
+    address public SENDER = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
 
     address public TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
     // address public SAFE = 0x70471a50d4655C1677B7f0C5cAdD7a0410Aa2607;

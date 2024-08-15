@@ -32,13 +32,13 @@ contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable {
     DisputeStruct[] public disputes; // Stores the dispute info. disputes[disputeID].
     mapping(address arbitrable => address safe) public arbitrableTribunalSafe; //Map arbitrable address to tribunal safe address
 
-    error OnlySafe();
+    error OnlySafe(address sender, address safe);
 
     modifier onlySafe(address _arbitrable) {
         if (msg.sender == arbitrableTribunalSafe[_arbitrable]) {
             _;
         } else {
-            revert OnlySafe();
+            revert OnlySafe(msg.sender, arbitrableTribunalSafe[_arbitrable]);
         }
     }
 
