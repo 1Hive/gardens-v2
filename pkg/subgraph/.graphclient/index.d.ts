@@ -3067,7 +3067,7 @@ export type getPoolDataQuery = {
     tokenGarden?: Maybe<Pick<TokenGarden, 'address' | 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled'> & {
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
-        config: Pick<CVStrategyConfig, 'id' | 'decay' | 'weight' | 'proposalType' | 'pointSystem' | 'maxRatio' | 'minThresholdPoints' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'arbitrator' | 'tribunalSafe' | 'defaultRuling' | 'defaultRulingTimeout'>;
+        config: Pick<CVStrategyConfig, 'id' | 'arbitrator' | 'defaultRuling' | 'defaultRulingTimeout' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'tribunalSafe' | 'weight' | 'decay' | 'maxAmount' | 'maxRatio' | 'minThresholdPoints' | 'pointSystem' | 'proposalType'>;
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'councilSafe' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });

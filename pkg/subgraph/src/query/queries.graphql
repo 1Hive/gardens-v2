@@ -254,18 +254,19 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     config {
       id
-      decay
-      weight
-      proposalType
-      pointSystem
-      maxRatio
-      minThresholdPoints
-      challengerCollateralAmount
-      submitterCollateralAmount
       arbitrator
-      tribunalSafe
       defaultRuling
       defaultRulingTimeout
+      challengerCollateralAmount
+      submitterCollateralAmount
+      tribunalSafe
+      weight
+      decay
+      maxAmount
+      maxRatio
+      minThresholdPoints
+      pointSystem
+      proposalType
     }
     registryCommunity {
       id

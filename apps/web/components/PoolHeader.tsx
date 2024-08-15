@@ -108,6 +108,10 @@ export default function PoolHeader({
   );
   const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
   const communityAddr = strategy.registryCommunity.id as Address;
+  const defaultResolution = strategy.config.defaultRuling;
+  const proposalCollateral = strategy.config.submitterCollateralAmount;
+  const disputeCollateral = strategy.config.challengerCollateralAmount;
+  const tribunalAddress = strategy.config.tribunalSafe;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
@@ -169,29 +173,32 @@ export default function PoolHeader({
           <h2>
             {ipfsResult?.title} #{poolId}
           </h2>
-          {isCouncilSafe && (
-            <div className="flex gap-2">
-              <Button
-                btnStyle="outline"
-                icon={<Cog6ToothIcon height={24} width={24} />}
-                disabled={!isConnected || missmatchUrl || proposalOnDispute}
-                tooltip={tooltipMessage}
-                onClick={() => setIsOpenModal(true)}
-              >
-                Edit
-              </Button>
-              {!isEnabled && (
+          {
+            // isCouncilSafe
+            true && (
+              <div className="flex gap-2">
                 <Button
-                  icon={<CheckIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl}
+                  btnStyle="outline"
+                  icon={<Cog6ToothIcon height={24} width={24} />}
+                  disabled={!isConnected || missmatchUrl || proposalOnDispute}
                   tooltip={tooltipMessage}
-                  onClick={() => addStrategyByPoolId()}
+                  onClick={() => setIsOpenModal(true)}
                 >
-                  Approve
+                  Edit
                 </Button>
-              )}
-            </div>
-          )}
+                {!isEnabled && (
+                  <Button
+                    icon={<CheckIcon height={24} width={24} />}
+                    disabled={!isConnected || missmatchUrl}
+                    tooltip={tooltipMessage}
+                    onClick={() => addStrategyByPoolId()}
+                  >
+                    Approve
+                  </Button>
+                )}
+              </div>
+            )
+          }
         </div>
         <div>
           <EthAddress icon={false} address={strategy.id as Address} />
@@ -210,6 +217,10 @@ export default function PoolHeader({
               convictionGrowth: convictionGrowth.toFixed(2),
               minThresholdPoints: minThresholdPoints,
               spendingLimit: spendingLimit.toFixed(2),
+              defaultResolution: defaultResolution,
+              proposalCollateral: proposalCollateral,
+              disputeCollateral: disputeCollateral,
+              tribunalAddress: tribunalAddress,
             }}
           />
         </Modal>

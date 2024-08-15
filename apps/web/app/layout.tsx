@@ -1,4 +1,4 @@
-import "@/styles/globals.scss";
+import "@/styles/globals.css";
 import React from "react";
 import { Chakra_Petch, Inter } from "next/font/google";
 import { Bounce, ToastContainer } from "react-toastify";
