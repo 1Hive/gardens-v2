@@ -173,32 +173,30 @@ export default function PoolHeader({
           <h2>
             {ipfsResult?.title} #{poolId}
           </h2>
-          {
-            // isCouncilSafe
-            true && (
-              <div className="flex gap-2">
+          {isCouncilSafe && (
+            // true
+            <div className="flex gap-2">
+              <Button
+                btnStyle="outline"
+                icon={<Cog6ToothIcon height={24} width={24} />}
+                disabled={!isConnected || missmatchUrl}
+                tooltip={tooltipMessage}
+                onClick={() => setIsOpenModal(true)}
+              >
+                Edit
+              </Button>
+              {!isEnabled && (
                 <Button
-                  btnStyle="outline"
-                  icon={<Cog6ToothIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl || proposalOnDispute}
+                  icon={<CheckIcon height={24} width={24} />}
+                  disabled={!isConnected || missmatchUrl}
                   tooltip={tooltipMessage}
-                  onClick={() => setIsOpenModal(true)}
+                  onClick={() => addStrategyByPoolId()}
                 >
-                  Edit
+                  Approve
                 </Button>
-                {!isEnabled && (
-                  <Button
-                    icon={<CheckIcon height={24} width={24} />}
-                    disabled={!isConnected || missmatchUrl}
-                    tooltip={tooltipMessage}
-                    onClick={() => addStrategyByPoolId()}
-                  >
-                    Approve
-                  </Button>
-                )}
-              </div>
-            )
-          }
+              )}
+            </div>
+          )}
         </div>
         <div>
           <EthAddress icon={false} address={strategy.id as Address} />
@@ -211,7 +209,9 @@ export default function PoolHeader({
           <PoolEditForm
             strategyAddr={strategy.id as Address}
             token={token}
+            proposalType={proposalType}
             chainId={chainId}
+            proposalOnDispute={proposalOnDispute}
             initValues={{
               minimumConviction: minimumConviction.toFixed(2),
               convictionGrowth: convictionGrowth.toFixed(2),

@@ -109,12 +109,12 @@ export const FormAddressInput = ({
         </label>
       )}
       <div
-        className={`form-control input input-info flex flex-row bg-base-200 font-normal items-center w-[460px] ${modifier}`}
+        className={`form-control input input-info flex flex-row font-normal items-center w-[460px] ${modifier}`}
       >
         <input
           ref={inputRef}
           className={
-            "input px-0 bg-transparent w-full border-none focus:border-none outline-none focus:outline-none"
+            "input px-0 w-full border-none focus:border-none outline-none focus:outline-none"
           }
           placeholder={placeholder || "Enter address or ENS name"}
           id={registerKey}
