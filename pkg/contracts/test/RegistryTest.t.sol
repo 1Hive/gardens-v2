@@ -1246,7 +1246,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         _registryCommunity().addStrategyByPoolId(poolId);
         vm.stopPrank();
 
-        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInCouncil.selector, address(this)));
         _registryCommunity().removeStrategyByPoolId(poolId);
 
         vm.startPrank(address(councilSafe));
@@ -1277,8 +1277,10 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
+        vm.startPrank(gardenOwner);
         vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
         _registryCommunity().addStrategyByPoolId(poolId);
+        vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
         vm.expectRevert(abi.encodeWithSelector(IRegistryCommunityV0_0.AddressCannotBeZero.selector));
