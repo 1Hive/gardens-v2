@@ -754,7 +754,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     function getProposalStakedAmount(uint256 _proposalId) external view returns (uint256) {
         return proposals[_proposalId].stakedAmount;
     }
-
     //    do a internal function to get the total voter stake
 
     function getTotalVoterStakePct(address _voter) public view returns (uint256) {
@@ -1108,7 +1107,11 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         _setPoolParams(_arbitrableConfig, _cvParams);
     }
 
-    function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData) external payable {
+    function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
+        external
+        payable
+        returns (uint256 disputeId)
+    {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
         if (address(arbitrableConfig.arbitrator) == address(0)) {
@@ -1131,7 +1134,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
         collateralVault.depositCollateral{value: arbitrableConfig.challengerCollateralAmount}(proposalId, msg.sender);
 
-        uint256 disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
+        disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
         proposal.proposalStatus = StrategyStruct.ProposalStatus.Disputed;
         proposal.disputeInfo.disputeId = disputeId;

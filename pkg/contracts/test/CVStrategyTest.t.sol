@@ -73,7 +73,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     RegistryCommunityV0_0 internal registryCommunity;
 
     ISybilScorer public passportScorer;
-    IArbitrator safeArbitrator;
+    SafeArbitrator safeArbitrator;
 
     address factoryOwner = makeAddr("registryFactoryDeployer");
     address protocolFeeReceiver = makeAddr("multisigReceiver");
@@ -185,8 +185,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         startMeasuringGas("createProposal");
         // allo().addToCloneableStrategies(address(strategy));
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig =
-            StrategyStruct.ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300);
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
+            safeArbitrator, payable(address(_councilSafe())), 0.02 ether, 0.01 ether, 1, 300
+        );
         StrategyStruct.InitializeParams memory params = getParams(
             address(registryCommunity),
             proposalType,
@@ -591,6 +592,16 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         registryCommunity.unregisterMember();
         assertEq(cv.getProposalVoterStake(proposalId, address(this)), 0);
         assertEq(cv.getProposalStakedAmount(proposalId), 0);
+    }
+
+    function test_disputeAbstain() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+        vm.startPrank(address(_councilSafe())); // Same guy disputr and rule
+        uint256 disputeId = cv.disputeProposal{value: 0.02}(proposalId, "I dont agree", "0x");
+        uint256 abstainRulingOutcome = 0;
+        safeArbitrator.executeRuling(disputeId, abstainRulingOutcome, address(cv));
+        vm.stopPrank();
     }
 
     function test_setPoolActive() public {
