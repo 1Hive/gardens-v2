@@ -212,6 +212,7 @@ export const CommunityForm = ({
   };
 
   const addressIsSAFE = async (walletAddress: Address) => {
+    return true;
     let isSafe = false;
     try {
       const data = await publicClient.readContract({
@@ -330,7 +331,7 @@ export const CommunityForm = ({
                   message: "Invalid Eth Address",
                 },
                 validate: async (value) =>
-                  (await addressIsSAFE(value)) ??
+                  (await addressIsSAFE(value)) ||
                   `Not a valid Safe address in ${getChain(chainId)?.name} network`,
               }}
               errors={errors}
