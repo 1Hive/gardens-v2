@@ -109,7 +109,7 @@ export const FormAddressInput = ({
         </label>
       )}
       <div
-        className={`form-control input input-info flex flex-row bg-base-200 font-normal items-center w-[450px] ${modifier}`}
+        className={`form-control input input-info flex flex-row bg-base-200 font-normal items-center w-[460px] ${modifier}`}
       >
         <input
           ref={inputRef}

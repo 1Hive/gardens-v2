@@ -136,13 +136,12 @@ export function PoolForm({ token, communityAddr }: Props) {
   const isSybilResistanceRequired = watch("isSybilResistanceRequired");
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token?.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
-  const globalTribunalAddress = process.env.NEXT_PUBLIC_GLOBAL_TRIBUNAL_ADDRESS;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [optionType, setOptionType] = useState(1);
   const [tribunalAddress, setTribunalAddress] = useState(
-    globalTribunalAddress ?? "",
+    chain.globalTribunal ?? "",
   );
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -465,7 +464,6 @@ export function PoolForm({ token, communityAddr }: Props) {
               registerKey="title"
               type="text"
               placeholder="Your pool name..."
-              readOnly={true}
             />
           </div>
           <div className="flex flex-col">
@@ -510,17 +508,17 @@ export function PoolForm({ token, communityAddr }: Props) {
             <div className="flex gap-4 mt-2">
               <FormRadioButton
                 label="Global gardens tribunal"
-                checked={tribunalAddress === globalTribunalAddress}
-                onChange={() => setTribunalAddress(globalTribunalAddress ?? "")}
+                checked={tribunalAddress === chain.globalTribunal}
+                onChange={() => setTribunalAddress(chain.globalTribunal ?? "")}
                 registerKey="tribunalOption"
                 value="global"
               />
               <FormRadioButton
                 label="Custom tribunal"
-                checked={tribunalAddress !== globalTribunalAddress}
+                checked={tribunalAddress !== chain.globalTribunal}
                 onChange={() => {
                   setTribunalAddress((oldAddress) =>
-                    globalTribunalAddress ? "" : oldAddress,
+                    chain.globalTribunal ? "" : oldAddress,
                   );
                   document.getElementById("tribunalAddress")?.focus();
                 }}

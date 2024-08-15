@@ -26,7 +26,7 @@ export function InfoWrapper({
 
   return (
     <div
-      className={`tooltip ml-2 flex cursor-default items-center max-w-sm ${classNames}`}
+      className={`tooltip flex gap-2 cursor-pointer items-center [&>svg]:text-primary-content max-w-sm [&>svg]:stroke-2 ${classNames}`}
       data-tip={tooltip}
     >
       {children}

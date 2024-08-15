@@ -37,7 +37,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
     uint256 public MINIMUM_STAKE = 1 ether;
 
-    address public SENDER = 0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6;
+    address public SENDER = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
     address public TOKEN; // check networks.json file
     address public COUNCIL_SAFE; // check networks.json file
     address public SAFE_PROXY_FACTORY; // check networks.json file
@@ -152,10 +152,10 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
         sybilScorer = PassportScorer(payable(address(scorerProxy)));
 
-        if (COUNCIL_SAFE == address(0)) {
-            Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin(), SafeProxyFactory(SAFE_PROXY_FACTORY));
-            COUNCIL_SAFE = address(councilSafeDeploy);
-        }
+        // if (COUNCIL_SAFE == address(0)) {
+        //     Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin(), SafeProxyFactory(SAFE_PROXY_FACTORY));
+        //     COUNCIL_SAFE = address(councilSafeDeploy);
+        // }
         // Safe councilSafeDeploy = _councilSafeWithOwner(pool_admin());
 
         // if (REGISTRY_FACTORY == address(0)) {
@@ -206,7 +206,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
         proxy = new ERC1967Proxy(
-            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0.001 ether)
         );
         arbitrator = SafeArbitrator(payable(address(proxy)));
 
@@ -216,13 +216,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             StrategyStruct.PointSystem.Fixed,
             pointConfig,
             StrategyStruct.ArbitrableConfig(
-                IArbitrator(address(arbitrator)),
-                // IArbitrator(address(0)),
-                payable(COUNCIL_SAFE),
-                0 ether,
-                0 ether,
-                1,
-                300
+                IArbitrator(address(arbitrator)), payable(COUNCIL_SAFE), 0.002 ether, 0.001 ether, 1, 300
             )
         );
 
@@ -264,19 +258,23 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         // strategy2.setMaxRatio(_etherToFloat(0.3219782 ether)); // beta = maxRatio
         // strategy2.setWeight(_etherToFloat(0.010367 ether)); // RHO = p  = weight
 
-        safeHelper(
-            Safe(payable(COUNCIL_SAFE)),
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
-        );
+        // Goss: Commented to support EOA as coucilsafe
+        // safeHelper(
+        //     Safe(payable(COUNCIL_SAFE)),
+        //     councilMemberPKEnv,
+        //     address(registryCommunity),
+        //     abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
+        // );
+        registryCommunity.addStrategy(_strategy1);
 
-        safeHelper(
-            Safe(payable(COUNCIL_SAFE)),
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
-        );
+        // Goss: Commented to support EOA as coucilsafe
+        // safeHelper(
+        //     Safe(payable(COUNCIL_SAFE)),
+        //     councilMemberPKEnv,
+        //     address(registryCommunity),
+        //     abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
+        // );
+        registryCommunity.addStrategy(_strategy2);
 
         token.mint(address(pool_admin()), 10_000 ether);
         token.approve(address(registryCommunity), type(uint256).max);
@@ -303,7 +301,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             Metadata({protocol: 1, pointer: "QmVi1G1hQX4x8pb4W6KRroxsJjyP1gTkoqkGuyqoiGBPhS"})
         );
         bytes memory data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
         proposal = StrategyStruct.CreateProposal(
             poolId,
@@ -313,7 +311,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             Metadata({protocol: 1, pointer: "QmQfaGooGAWUHuHbYWzDp1ZHNJpreJP7oBiLjbKvxGwGuG"})
         );
         data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
         proposal = StrategyStruct.CreateProposal(
             poolId,
@@ -323,7 +321,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             Metadata({protocol: 1, pointer: "QmdGXx4Ff2W1eMZ8HiUg1GPSA4VBEtfTMpkustPNU5YKxp"})
         );
         data = abi.encode(proposal);
-        allo.registerRecipient(poolId, data);
+        allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
         // Strategy with Signaling
         StrategyStruct.CreateProposal memory proposal2 = StrategyStruct.CreateProposal(
@@ -334,7 +332,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             Metadata({protocol: 1, pointer: "QmSLYbgSsapjdp1VGj3LeQn1hp5jBs4JcWS1zQRRWLLkid"})
         );
         bytes memory data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
+        allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
         proposal2 = StrategyStruct.CreateProposal(
             poolIdSignaling,
@@ -345,7 +343,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         );
 
         data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
+        allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
         proposal2 = StrategyStruct.CreateProposal(
             poolIdSignaling,
@@ -356,21 +354,23 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         );
 
         data2 = abi.encode(proposal2);
-        allo.registerRecipient(poolIdSignaling, data2);
+        allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
-        safeHelper(
-            Safe(payable(COUNCIL_SAFE)),
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy1)
-        );
+        // safeHelper(
+        //     Safe(payable(COUNCIL_SAFE)),
+        //     councilMemberPKEnv,
+        //     address(registryCommunity),
+        //     abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy1)
+        // );
+        registryCommunity.removeStrategy(_strategy1);
 
-        safeHelper(
-            Safe(payable(COUNCIL_SAFE)),
-            councilMemberPKEnv,
-            address(registryCommunity),
-            abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy2)
-        );
+        // safeHelper(
+        //     Safe(payable(COUNCIL_SAFE)),
+        //     councilMemberPKEnv,
+        //     address(registryCommunity),
+        //     abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy2)
+        // );
+        registryCommunity.removeStrategy(_strategy2);
 
         vm.stopBroadcast();
     }

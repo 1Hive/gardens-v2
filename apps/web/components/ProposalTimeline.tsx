@@ -67,8 +67,9 @@ export const ProposalTimeline: FC<Props> = ({
   //     (DisputeOutcome[lastDispute.rulingOutcome] === "abstained" &&
   //       defaultRuling === "rejected"));
   const isLastDisputeTimeout =
+    lastDispute &&
     lastDispute.createdAt + arbitrationConfig.defaultRulingTimeout <
-    Date.now() / 1000;
+      Date.now() / 1000;
 
   return (
     <ul className={`timeline mt-5 ${className}`}>

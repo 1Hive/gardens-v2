@@ -30,7 +30,7 @@ export const WalletBalance: FC<Props> = ({
   const { address } = useAccount();
   const isEnoughBalanceRef = useRef(false);
 
-  const { data, isFetching } = useBalance({
+  const { data } = useBalance({
     address,
     formatUnits: "ether",
     token: token === "native" ? undefined : (token as Address),
@@ -38,7 +38,7 @@ export const WalletBalance: FC<Props> = ({
   });
 
   const balance = data && data.value;
-  const askedFormated = (+formatEther(askedAmount)).toFixed(2);
+  const askedFormated = (+formatEther(askedAmount)).toPrecision(2);
 
   useEffect(() => {
     if (balance != null) {
@@ -49,7 +49,7 @@ export const WalletBalance: FC<Props> = ({
 
   return (
     <>
-      {isFetching ?
+      {!data ?
         <div className="skeleton h-14 w-56 bg-neutral-soft" />
       : <div className="flex flex-col gap-1">
           <div className="flex">
@@ -79,7 +79,7 @@ export const WalletBalance: FC<Props> = ({
               data-tip={`${isEnoughBalanceRef.current ? balance : "Insufficient balance"}`}
             >
               <DisplayNumber
-                number={(+(data?.formatted ?? 0)).toFixed(2).toString()}
+                number={(+(data?.formatted ?? 0)).toPrecision(2).toString()}
                 className={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}
                 disableTooltip={true}
                 compact={true}

@@ -44,6 +44,7 @@ export const chainDataMap: {
     confirmations: number;
     arbitrator?: string;
     passportScorer: string;
+    globalTribunal?: string;
   };
 } = {
   1337: {
@@ -61,6 +62,8 @@ export const chainDataMap: {
     blockTime: 0.23,
     confirmations: 1, // 7
     passportScorer: "0x0000000000000000000000000000000000000000",
+    arbitrator: "0xbff8a6c13d6536d48dce27186fc3fb503539e5f0",
+    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
   },
   42161: {
     name: arbitrum.name,
@@ -86,6 +89,7 @@ export const chainDataMap: {
     confirmations: 1, // 3
     arbitrator: "0xbff8a6c13d6536d48dce27186fc3fb503539e5f0",
     passportScorer: "0x0e3992731e4ba388ccbb6fc92a030f809ebffc23",
+    globalTribunal: "0xc6Eaf449f79B081300F5317122B2Dff3f039ad0b",
   },
   10: {
     name: optimism.name,

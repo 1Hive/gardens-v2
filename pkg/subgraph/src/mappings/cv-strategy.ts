@@ -37,6 +37,15 @@ import { json, JSONValueKind } from "@graphprotocol/graph-ts";
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
 
+const PROPOSAL_STATUS_ACTIVE = BigInt.fromI32(1);
+const PROPOSAL_STATUS_DISPUTED = BigInt.fromI32(5);
+const PROPOSAL_STATUS_REJECTED = BigInt.fromI32(6);
+
+const DISPUTE_STATUS_WAITING = BigInt.fromI32(0);
+const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
+
+const DISPUTE_RULED_IN_FAVOR_OF_CHALLENGER = BigInt.fromI32(2);
+
 export function handleInitialized(event: InitializedCV): void {
   log.debug("CVStrategy: handleInitialized {}", [
     event.params.poolId.toString()
@@ -79,28 +88,6 @@ export function handleInitialized(event: InitializedCV): void {
   );
   let arbitrableConfig = changetype<PoolParamsUpdatedArbitrableConfigStruct>(
     event.params.data.arbitrableConfig
-  );
-
-  log.debug(
-    "handleInitialized: CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]",
-    [
-      cvParams.weight.toString(),
-      cvParams.decay.toString(),
-      cvParams.minThresholdPoints.toString(),
-      cvParams.maxRatio.toString()
-    ]
-  );
-
-  log.debug(
-    "handleInitialized: ArbitrationConfig:[arbitrator:{},tribunalSafe:{},challengerCollateralAmount:{},submitterCollateralAmount:{},defaultRuling:{},defaultRulingTimeout:{}]",
-    [
-      arbitrableConfig.arbitrator.toHexString(),
-      arbitrableConfig.tribunalSafe.toHexString(),
-      arbitrableConfig.challengerCollateralAmount.toString(),
-      arbitrableConfig.submitterCollateralAmount.toString(),
-      arbitrableConfig.defaultRuling.toString(),
-      arbitrableConfig.defaultRulingTimeout.toString()
-    ]
   );
 
   computeConfig(config, cvParams, arbitrableConfig);
@@ -152,7 +139,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.requestedAmount = proposal.getRequestedAmount();
   newProposal.maxCVStaked = maxConviction;
 
-  newProposal.proposalStatus = BigInt.fromI32(proposal.getProposalStatus());
+  newProposal.proposalStatus = PROPOSAL_STATUS_ACTIVE;
   // newProposal.proposalType = BigInt.fromI32(proposal.proposalType());
   newProposal.submitter = proposal.getSubmitter().toHex();
   // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
@@ -504,17 +491,6 @@ function computeConfig(
   config.maxRatio = cvParams.maxRatio;
 
   // ArbitrationConfig
-  log.debug(
-    "ArbitrationConfig:[arbitrator:{},tribunalSafe:{},challengerCollateralAmount:{},submitterCollateralAmount:{},defaultRuling:{},defaultRulingTimeout:{}]",
-    [
-      arbitrationConfig.arbitrator.toHexString(),
-      arbitrationConfig.tribunalSafe.toHexString(),
-      arbitrationConfig.challengerCollateralAmount.toString(),
-      arbitrationConfig.submitterCollateralAmount.toString(),
-      arbitrationConfig.defaultRuling.toString(),
-      arbitrationConfig.defaultRulingTimeout.toString()
-    ]
-  );
   config.arbitrator = arbitrationConfig.arbitrator.toHexString();
   config.tribunalSafe = arbitrationConfig.tribunalSafe.toHexString();
   config.challengerCollateralAmount =
@@ -526,6 +502,9 @@ function computeConfig(
 }
 
 export function handleProposalDisputed(event: ProposalDisputed): void {
+  log.debug("CVStrategy: handleProposalDisputed: proposalId: {}", [
+    event.params.proposalId.toString()
+  ]);
   let dispute = new ProposalDispute(
     event.params.arbitrator.toHexString() +
       "_" +
@@ -539,11 +518,8 @@ export function handleProposalDisputed(event: ProposalDisputed): void {
   dispute.createdAt = event.block.timestamp;
   dispute.context = event.params.context;
   dispute.metadata = event.params.context;
-  dispute.status = BigInt.fromI32(0);
-  log.debug("CVStrategy: Fetching proposal dispute metadata for {}: {}", [
-    dispute.id,
-    dispute.metadata
-  ]);
+  dispute.status = DISPUTE_STATUS_WAITING;
+
   ProposalDisputeMetadataTemplate.create(dispute.metadata);
   dispute.save();
 
@@ -553,7 +529,7 @@ export function handleProposalDisputed(event: ProposalDisputed): void {
     log.error("CvStrategy: Proposal not found with: {}", [proposalId]);
     return;
   }
-  proposal.proposalStatus = BigInt.fromI32(5);
+  proposal.proposalStatus = PROPOSAL_STATUS_DISPUTED;
   proposal.save();
 }
 
@@ -571,42 +547,26 @@ export function handleDisputeRuled(event: Ruling): void {
     ]);
     return;
   }
+  log.debug("CVStrategy: handleDisputeRuled: disputeId", [
+    dispute.id.toString()
+  ]);
 
-  dispute.status = event.params._ruling;
+  dispute.status = DISPUTE_STATUS_SOLVED;
   dispute.ruledAt = event.block.timestamp;
   dispute.rulingOutcome = event.params._ruling;
+
+  let proposal = CVProposal.load(dispute.proposal);
+  if (proposal == null) {
+    log.error("CvStrategy: Proposal not found with: {}", [dispute.proposal]);
+    return;
+  }
+
   dispute.save();
+
+  proposal.proposalStatus =
+    dispute.rulingOutcome === DISPUTE_RULED_IN_FAVOR_OF_CHALLENGER
+      ? PROPOSAL_STATUS_REJECTED
+      : PROPOSAL_STATUS_ACTIVE;
+
+  proposal.save();
 }
-
-// function _updatePoolParam(
-//   config: CVStrategyConfig,
-//   cvParams: {
-//     weight: BigInt;
-//     decay: BigInt;
-//     minThresholdPoints: BigInt;
-//     maxRatio: BigInt;
-//   },
-//   arbitrableConfig: {
-//     arbitrator: Address;
-//     tribunalSafe: Address;
-//     challengerCollateralAmount: number;
-//     submitterCollateralAmount: number;
-//     defaultRuling: number;
-//     defaultRulingTimeout: number;
-//   }
-// ) {
-//   // CV Params
-//   config.weight = cvParams.weight;
-//   config.decay = cvParams.decay;
-//   config.minThresholdPoints = cvParams.minThresholdPoints;
-//   config.maxRatio = cvParams.maxRatio;
-
-//   // ArbitrationConfgig
-//   config.arbitrator = arbitrableConfig.arbitrator.toHexString();
-//   config.tribunalSafe = arbitrableConfig.tribunalSafe.toHexString();
-//   config.challengerCollateralAmount =
-//     arbitrableConfig.challengerCollateralAmount;
-//   config.submitterCollateralAmount = arbitrableConfig.submitterCollateralAmount;
-//   config.defaultRuling = arbitrableConfig.defaultRuling;
-//   config.defaultRulingTimeout = arbitrableConfig.defaultRulingTimeout;
-// }

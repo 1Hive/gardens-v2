@@ -49,11 +49,16 @@ export default function Page() {
     if (tokenGardens.length) {
       return (
         <>
-          {tokenGardens.map((garden) => (
-            <div key={garden.id}>
-              <GardenCard garden={garden} />
-            </div>
-          ))}
+          {tokenGardens
+            .sort(
+              (a, b) =>
+                (a.communities?.length ?? 0) - (b.communities?.length ?? 0),
+            )
+            .map((garden) => (
+              <div key={garden.id}>
+                <GardenCard garden={garden} />
+              </div>
+            ))}
         </>
       );
     }
