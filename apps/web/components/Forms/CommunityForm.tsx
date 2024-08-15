@@ -212,7 +212,6 @@ export const CommunityForm = ({
   };
 
   const addressIsSAFE = async (walletAddress: Address) => {
-    return true;
     let isSafe = false;
     try {
       const data = await publicClient.readContract({
