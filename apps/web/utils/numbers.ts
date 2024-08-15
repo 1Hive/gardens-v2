@@ -15,6 +15,7 @@ export const SCALE_PRECISION_DECIMALS =
 
 export const CV_SCALE_PRECISION = 10 ** 7;
 export const CV_SCALE_PRECISION_DECIMALS = 7;
+export const ETH_DECIMALS = 18;
 
 export function parseToken(value: dn.Dnum | string, compact?: boolean) {
   const str =

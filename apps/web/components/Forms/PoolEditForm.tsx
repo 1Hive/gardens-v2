@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { Address, parseUnits } from "viem";
+import { Address, formatUnits, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
@@ -15,19 +15,20 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { cvStrategyABI } from "@/src/generated";
-import { DisputeOutcome } from "@/types";
+import { DisputeOutcome, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import {
   calculateDecay,
   CV_SCALE_PRECISION,
+  ETH_DECIMALS,
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { capitalize } from "@/utils/text";
 
 type ArbitrationSettings = {
   defaultResolution: number;
-  proposalCollateral: number;
-  disputeCollateral: number;
+  proposalCollateral: number | string;
+  disputeCollateral: number | string;
   tribunalAddress: string;
 };
 
@@ -43,6 +44,8 @@ type Props = {
   token: TokenGarden["decimals"];
   chainId: string;
   initValues: FormInputs;
+  proposalType: string;
+  proposalOnDispute: boolean;
 };
 
 export default function PoolEditForm({
@@ -50,10 +53,13 @@ export default function PoolEditForm({
   strategyAddr,
   chainId,
   initValues,
+  proposalType,
+  proposalOnDispute,
 }: Props) {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormInputs>({
     defaultValues: {
@@ -63,15 +69,29 @@ export default function PoolEditForm({
       minThresholdPoints: initValues.minThresholdPoints,
       // arb settings
       defaultResolution: initValues.defaultResolution,
-      proposalCollateral: initValues.proposalCollateral,
-      disputeCollateral: initValues.disputeCollateral,
+      proposalCollateral: formatUnits(
+        BigInt(initValues.proposalCollateral),
+        ETH_DECIMALS,
+      ),
+      disputeCollateral: formatUnits(
+        BigInt(initValues.disputeCollateral),
+        ETH_DECIMALS,
+      ),
       tribunalAddress: initValues.tribunalAddress,
     },
   });
-  console.log(initValues);
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
-  const globalTribunalAddress = process.env.NEXT_PUBLIC_GLOBAL_TRIBUNAL_ADDRESS;
+
+  const shouldRenderInput = (key: string): boolean => {
+    if (
+      PoolTypes[proposalType] === "signaling" &&
+      (key === "spendingLimit" || key === "minThresholdPoints")
+    ) {
+      return false;
+    }
+    return true;
+  };
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
@@ -190,8 +210,10 @@ export default function PoolEditForm({
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-
-      if (formRow) {
+      if (
+        formRow
+        // && shouldRenderInPreview(key)
+      ) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
           label: formRow.label,
@@ -220,15 +242,13 @@ export default function PoolEditForm({
         chainId: chainId,
       });
     },
-    onError: () =>
-      toast.error("Something went wrong creating a pool, check logs"),
+    onError: () => toast.error("Something went wrong editing pool, check logs"),
   });
 
   const handlePreview = (data: FormInputs) => {
     setPreviewData(data);
     setShowPreview(true);
   };
-
   return (
     <form onSubmit={handleSubmit(handlePreview)} className=" max-w-2xl">
       {showPreview ?
@@ -238,181 +258,230 @@ export default function PoolEditForm({
         />
       : <div className="flex flex-col">
           <div className="flex flex-col gap-6">
-            <div className="flex max-w-64 flex-col">
-              <FormInput
-                label="Minimum conviction"
-                register={register}
-                required
-                errors={errors}
-                registerKey="minimumConviction"
-                type="number"
-                placeholder="10"
-                className="pr-14"
-                otherProps={{
-                  step: 1 / CV_SCALE_PRECISION,
-                  min: 1 / CV_SCALE_PRECISION,
-                }}
-                registerOptions={{
-                  max: {
-                    value: 100,
-                    message: "Max amount cannot exceed 100%",
-                  },
-                  min: {
-                    value: 1 / CV_SCALE_PRECISION,
-                    message: "Amount must be greater than 0",
-                  },
-                }}
-              >
-                <span className="absolute right-4 top-4 text-black">%</span>
-              </FormInput>
-            </div>
-            <div className="flex max-w-64 flex-col">
-              <FormInput
-                label="Conviction growth"
-                register={register}
-                required
-                errors={errors}
-                registerKey="convictionGrowth"
-                type="number"
-                placeholder="10"
-                className="pr-14"
-                otherProps={{
-                  step: INPUT_TOKEN_MIN_VALUE,
-                  min: INPUT_TOKEN_MIN_VALUE,
-                }}
-                registerOptions={{
-                  max: {
-                    value: 100,
-                    message: "Max amount cannot exceed 100 DAYS",
-                  },
-                  min: {
-                    value: INPUT_TOKEN_MIN_VALUE,
-                    message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
-                  },
-                }}
-              >
-                <span className="absolute right-4 top-4 text-black">days</span>
-              </FormInput>
-            </div>
-            <div className="flex flex-col">
-              <FormInput
-                label="Minimum threshold points"
-                register={register}
-                registerOptions={{
-                  min: {
-                    value: INPUT_MIN_THRESHOLD_VALUE,
-                    message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_VALUE}`,
-                  },
-                }}
-                otherProps={{
-                  step: INPUT_TOKEN_MIN_VALUE,
-                  min: INPUT_MIN_THRESHOLD_VALUE,
-                }}
-                errors={errors}
-                registerKey="minThresholdPoints"
-                type="number"
-                placeholder="0"
-              />
-            </div>
-            <div className="flex max-w-64 flex-col">
-              <FormInput
-                label="Spending limit"
-                register={register}
-                required
-                errors={errors}
-                registerKey="spendingLimit"
-                type="number"
-                placeholder="20"
-                className="pr-14"
-                otherProps={{
-                  step: 1 / CV_SCALE_PRECISION,
-                  min: 1 / CV_SCALE_PRECISION,
-                }}
-                registerOptions={{
-                  max: {
-                    value: 100,
-                    message: "Max amount cannot exceed 100%",
-                  },
-                  min: {
-                    value: 1 / CV_SCALE_PRECISION,
-                    message: "Amount must be greater than 0",
-                  },
-                }}
-              >
-                <span className="absolute right-4 top-4 text-black">%</span>
-              </FormInput>
-            </div>
+            {shouldRenderInput("minimumConviction") && (
+              <div className="flex max-w-64 flex-col">
+                <FormInput
+                  label="Minimum conviction"
+                  register={register}
+                  required
+                  errors={errors}
+                  registerKey="minimumConviction"
+                  type="number"
+                  placeholder="10"
+                  className="pr-14"
+                  otherProps={{
+                    step: 1 / CV_SCALE_PRECISION,
+                    min: 1 / CV_SCALE_PRECISION,
+                  }}
+                  registerOptions={{
+                    max: {
+                      value: 100,
+                      message: "Max amount cannot exceed 100%",
+                    },
+                    min: {
+                      value: 1 / CV_SCALE_PRECISION,
+                      message: "Amount must be greater than 0",
+                    },
+                  }}
+                >
+                  <span className="absolute right-4 top-4 text-black">%</span>
+                </FormInput>
+              </div>
+            )}
+            {shouldRenderInput("convictionGrowth") && (
+              <div className="flex max-w-64 flex-col">
+                <FormInput
+                  label="Conviction growth"
+                  register={register}
+                  required
+                  errors={errors}
+                  registerKey="convictionGrowth"
+                  type="number"
+                  placeholder="10"
+                  className="pr-14"
+                  otherProps={{
+                    step: INPUT_TOKEN_MIN_VALUE,
+                    min: INPUT_TOKEN_MIN_VALUE,
+                  }}
+                  registerOptions={{
+                    max: {
+                      value: 100,
+                      message: "Max amount cannot exceed 100 DAYS",
+                    },
+                    min: {
+                      value: INPUT_TOKEN_MIN_VALUE,
+                      message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                    },
+                  }}
+                >
+                  <span className="absolute right-4 top-4 text-black">
+                    days
+                  </span>
+                </FormInput>
+              </div>
+            )}
+            {shouldRenderInput("minThresholdPoints") && (
+              <div className="flex flex-col">
+                <FormInput
+                  label="Minimum threshold points"
+                  register={register}
+                  registerOptions={{
+                    min: {
+                      value: INPUT_MIN_THRESHOLD_VALUE,
+                      message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_VALUE}`,
+                    },
+                  }}
+                  otherProps={{
+                    step: INPUT_TOKEN_MIN_VALUE,
+                    min: INPUT_MIN_THRESHOLD_VALUE,
+                  }}
+                  required
+                  errors={errors}
+                  registerKey="minThresholdPoints"
+                  type="number"
+                  placeholder="0"
+                />
+              </div>
+            )}
+            {shouldRenderInput("spendingLimit") && (
+              <div className="flex max-w-64 flex-col">
+                <FormInput
+                  label="Spending limit"
+                  register={register}
+                  required
+                  errors={errors}
+                  registerKey="spendingLimit"
+                  type="number"
+                  placeholder="20"
+                  className="pr-14"
+                  otherProps={{
+                    step: 1 / CV_SCALE_PRECISION,
+                    min: 1 / CV_SCALE_PRECISION,
+                  }}
+                  registerOptions={{
+                    max: {
+                      value: 100,
+                      message: "Max amount cannot exceed 100%",
+                    },
+                    min: {
+                      value: 1 / CV_SCALE_PRECISION,
+                      message: "Amount must be greater than 0",
+                    },
+                  }}
+                >
+                  <span className="absolute right-4 top-4 text-black">%</span>
+                </FormInput>
+              </div>
+            )}
           </div>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
-              <h3 className="my-4 text-xl">Proposal dispute resolution</h3>
-              <InfoBox
-                infoBoxType="info"
-                content={`The tribunal Safe, represented by trusted members, is
+              {proposalOnDispute ?
+                <>
+                  <h3 className="my-4 text-xl">
+                    Proposal in pool under dispute!
+                  </h3>
+                  <InfoBox
+                    infoBoxType="warning"
+                    content={`This pool currently has at least one disputed proposal, please 
+                      wait for it to be resolved before editing proposal dispute resolution settings.`}
+                  />
+                </>
+              : <>
+                  <h3 className="my-4 text-xl">Proposal dispute resolution</h3>
+                  <InfoBox
+                    infoBoxType="info"
+                    content={`The tribunal Safe, represented by trusted members, is
                       responsible for resolving proposal disputes. The global tribunal
                       Safe is a shared option featuring trusted members of the Gardens
                       community. Its use is recommended for objective dispute
                       resolution.`}
-              />
+                  />
+                </>
+              }
             </div>
-            <div className="flex gap-4 mt-2">
-              <FormRadioButton
-                label="Global gardens tribunal"
-                checked={tribunalAddress === globalTribunalAddress}
-                onChange={() => setTribunalAddress(globalTribunalAddress ?? "")}
-                registerKey="tribunalOption"
-                value="global"
-              />
-              <FormRadioButton
-                label="Custom tribunal"
-                checked={tribunalAddress !== globalTribunalAddress}
-                onChange={() => {
-                  setTribunalAddress((oldAddress) =>
-                    globalTribunalAddress ? "" : oldAddress,
-                  );
-                  document.getElementById("tribunalAddress")?.focus();
-                }}
-                registerKey="tribunalOption"
-                value="custom"
-              />
-            </div>
-            <FormAddressInput
-              label="Tribunal address"
-              registerKey="tribunalAddress"
-              onChange={(newValue) => setTribunalAddress(newValue)}
-              value={tribunalAddress}
-            />
-            <div className="flex flex-col">
-              <FormSelect
-                tooltip="The default resolution will be applied in the case of abstained or dispute ruling timeout."
-                label="Default resolution"
-                options={Object.entries(DisputeOutcome)
-                  .slice(1)
-                  .map(([value, text]) => ({
-                    label: capitalize(text),
-                    value: value + 1,
-                  }))}
-                registerKey="defaultResolution"
-                register={register}
-                errors={undefined}
-              />
-            </div>
-            <div className="flex gap-4 max-w-md">
-              <FormInput
-                tooltip="Proposal submission stake. Locked until proposal is resolved, can be forfeited if disputed."
-                type="number"
-                label={`Proposal collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
-                register={register}
-                registerKey="proposalCollateral"
-              />
-              <FormInput
-                tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
-                type="number"
-                label={`Dispute collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
-                register={register}
-                registerKey="disputeCollateral"
-              />
-            </div>
+            {!proposalOnDispute && (
+              <div className="flex flex-col gap-4">
+                <div className="flex gap-4 mt-2">
+                  <FormRadioButton
+                    label="Global gardens tribunal"
+                    checked={
+                      tribunalAddress.toLowerCase() ===
+                      chain.globalTribunal?.toLowerCase()
+                    }
+                    onChange={() =>
+                      setTribunalAddress(chain.globalTribunal ?? "")
+                    }
+                    registerKey="tribunalOption"
+                    value="global"
+                  />
+                  <FormRadioButton
+                    label="Custom tribunal"
+                    checked={
+                      tribunalAddress.toLowerCase() !==
+                      chain.globalTribunal?.toLowerCase()
+                    }
+                    onChange={() => {
+                      setTribunalAddress((oldAddress) =>
+                        chain.globalTribunal ? "" : oldAddress,
+                      );
+                      document.getElementById("tribunalAddress")?.focus();
+                    }}
+                    registerKey="tribunalOption"
+                    value="custom"
+                  />
+                </div>
+                <FormAddressInput
+                  label="Tribunal address"
+                  registerKey="tribunalAddress"
+                  required
+                  onChange={(newValue) => setTribunalAddress(newValue)}
+                  value={tribunalAddress}
+                />
+                <div className="flex flex-col">
+                  <FormSelect
+                    tooltip="The default resolution will be applied in the case of abstained or dispute ruling timeout."
+                    label="Default resolution"
+                    required
+                    register={register}
+                    errors={errors}
+                    options={Object.entries(DisputeOutcome)
+                      .slice(1)
+                      .map(([value, text]) => ({
+                        label: capitalize(text),
+                        value: +value,
+                      }))}
+                    registerKey="defaultResolution"
+                  />
+                </div>
+                <div className="flex gap-4 max-w-md">
+                  <FormInput
+                    tooltip="Proposal submission stake. Locked until proposal is resolved, can be forfeited if disputed."
+                    type="number"
+                    label={`Proposal collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
+                    register={register}
+                    registerKey="proposalCollateral"
+                    required
+                    otherProps={{
+                      step: 1 / 10 ** ETH_DECIMALS,
+                      min: 1 / 10 ** ETH_DECIMALS,
+                    }}
+                  />
+                  <FormInput
+                    tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
+                    type="number"
+                    label={`Dispute collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
+                    register={register}
+                    registerKey="disputeCollateral"
+                    required
+                    otherProps={{
+                      step: 1 / 10 ** ETH_DECIMALS,
+                      min: 1 / 10 ** ETH_DECIMALS,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       }

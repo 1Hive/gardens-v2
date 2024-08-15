@@ -27,6 +27,7 @@ import {
   calculateDecay,
   CV_PERCENTAGE_SCALE,
   CV_SCALE_PRECISION,
+  ETH_DECIMALS,
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { capitalize } from "@/utils/text";
@@ -51,7 +52,7 @@ type FormInputs = {
   pointSystemType: number;
   optionType?: number;
   maxAmount?: number;
-  minThresholdPoints: string;
+  minThresholdPoints: string | number;
   passportThreshold?: number;
   isSybilResistanceRequired: boolean;
 } & PoolSettings &
@@ -125,8 +126,10 @@ export function PoolForm({ token, communityAddr }: Props) {
     defaultValues: {
       strategyType: 1,
       pointSystemType: 0,
+      defaultResolution: 1,
+      minThresholdPoints: 0,
       proposalCollateral: +(
-        process.env.NEXT_PUBLIC_DEFAULT_PROPOSAL_COLLATERAL! || 0.001
+        process.env.NEXT_PUBLIC_DEFAULT_PROPOSAL_COLLATERAL! || 0.002
       ),
       disputeCollateral: +(
         process.env.NEXT_PUBLIC_DEFAULT_DISPUTE_COLLATERAL! || 0.001
@@ -277,11 +280,11 @@ export function PoolForm({ token, communityAddr }: Props) {
             ),
             submitterCollateralAmount: parseUnits(
               previewData.proposalCollateral.toString(),
-              token?.decimals,
+              ETH_DECIMALS,
             ),
             challengerCollateralAmount: parseUnits(
               previewData.disputeCollateral.toString(),
-              token?.decimals,
+              ETH_DECIMALS,
             ),
             tribunalSafe: tribunalAddress as Address,
             arbitrator: chain.arbitrator as Address,
@@ -508,14 +511,20 @@ export function PoolForm({ token, communityAddr }: Props) {
             <div className="flex gap-4 mt-2">
               <FormRadioButton
                 label="Global gardens tribunal"
-                checked={tribunalAddress === chain.globalTribunal}
+                checked={
+                  tribunalAddress.toLowerCase() ===
+                  chain.globalTribunal?.toLowerCase()
+                }
                 onChange={() => setTribunalAddress(chain.globalTribunal ?? "")}
                 registerKey="tribunalOption"
                 value="global"
               />
               <FormRadioButton
                 label="Custom tribunal"
-                checked={tribunalAddress !== chain.globalTribunal}
+                checked={
+                  tribunalAddress.toLowerCase() !==
+                  chain.globalTribunal?.toLowerCase()
+                }
                 onChange={() => {
                   setTribunalAddress((oldAddress) =>
                     chain.globalTribunal ? "" : oldAddress,
@@ -540,7 +549,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                   .slice(1)
                   .map(([value, text]) => ({
                     label: capitalize(text),
-                    value: value + 1,
+                    value: value,
                   }))}
                 registerKey="defaultResolution"
                 register={register}
@@ -554,6 +563,11 @@ export function PoolForm({ token, communityAddr }: Props) {
                 label={`Proposal collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
                 register={register}
                 registerKey="proposalCollateral"
+                required
+                otherProps={{
+                  step: 1 / 10 ** ETH_DECIMALS,
+                  min: 1 / 10 ** ETH_DECIMALS,
+                }}
               />
               <FormInput
                 tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
@@ -561,6 +575,11 @@ export function PoolForm({ token, communityAddr }: Props) {
                 label={`Dispute collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
                 register={register}
                 registerKey="disputeCollateral"
+                required
+                otherProps={{
+                  step: 1 / 10 ** ETH_DECIMALS,
+                  min: 1 / 10 ** ETH_DECIMALS,
+                }}
               />
             </div>
           </div>
@@ -691,6 +710,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                     message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_VALUE}`,
                   },
                 }}
+                required
                 otherProps={{
                   step: INPUT_TOKEN_MIN_VALUE,
                   min: INPUT_MIN_THRESHOLD_VALUE,
