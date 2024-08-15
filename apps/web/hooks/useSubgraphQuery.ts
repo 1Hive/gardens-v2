@@ -62,12 +62,12 @@ export function useSubgraphQuery<
     error: undefined,
   });
 
-  const latestResponse = useRef(response);
+  const latestResponse = useRef({ variables, response });
   const subscritionId = useRef<SubscriptionId>();
   const fetchingRef = useRef(false);
 
   useEffect(() => {
-    latestResponse.current = response; // Update ref on every response change
+    latestResponse.current.response = response; // Update ref on every response change
   }, [response]);
 
   if (!config) {
@@ -101,7 +101,9 @@ export function useSubgraphQuery<
         unsubscribe(subscritionId.current);
       }
       try {
-        toast.dismiss(pendingRefreshToastId);
+        if (toast.isActive(pendingRefreshToastId)) {
+          toast.dismiss(pendingRefreshToastId);
+        }
       } catch (error) {
         // ignore when toast is already dismissed
       }
@@ -157,7 +159,7 @@ export function useSubgraphQuery<
     }
     if (
       result.data &&
-      (!isEqual(result.data, latestResponse.current.data) ||
+      (!isEqual(result.data, latestResponse.current.response.data) ||
         retryCount >= CHANGE_EVENT_MAX_RETRIES ||
         !mounted.current)
     ) {
@@ -185,7 +187,10 @@ export function useSubgraphQuery<
     } else {
       console.debug(
         `⚡ Subgraph result not yet updated, retrying with incremental delays... (retry count: ${retryCount + 1}/${CHANGE_EVENT_MAX_RETRIES})`,
-        { latestResult: latestResponse.current.data, result: result.data },
+        {
+          latestResult: latestResponse.current.response.data,
+          result: result.data,
+        },
       );
       const delay = CHANGE_EVENT_INITIAL_DELAY * 2 ** retryCount;
       await delayAsync(delay);
@@ -194,19 +199,36 @@ export function useSubgraphQuery<
   };
 
   useEffect(() => {
-    if (!enabled || fetching) {
+    if (
+      !enabled ||
+      fetching ||
+      (!!latestResponse.current.response.data &&
+        isEqual(variables, latestResponse.current.variables)) || // Skip if variables are the same
+      !!latestResponse.current.response.error
+    ) {
       return;
     }
-    const init = async () => {
+
+    latestResponse.current.variables = variables; // Update ref on every variable change
+
+    (async () => {
       setFetching(true);
       fetchingRef.current = true;
-      const resp = await fetch();
+      let resp;
+      // If we are already fetching, we should refetch with the toast
+      if (
+        !!latestResponse.current.response.data ||
+        !!latestResponse.current.response.error
+      ) {
+        resp = await refetch();
+      } else {
+        resp = await fetch();
+      }
       setResponse(resp);
       setFetching(false);
       fetchingRef.current = false;
-    };
-    init();
-  }, [enabled]);
+    })();
+  }, [enabled, variables]);
 
   return {
     ...response,

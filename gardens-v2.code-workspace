@@ -31,7 +31,6 @@
     "[solidity]": {
       "editor.defaultFormatter": "NomicFoundation.hardhat-solidity",
     },
-    "solidity.formatter": "forge",
     "[json]": {
       "editor.defaultFormatter": "vscode.json-language-features",
     },

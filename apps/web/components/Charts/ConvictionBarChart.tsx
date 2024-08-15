@@ -235,7 +235,8 @@ export const ConvictionBarChart = ({
       trigger: "axis",
       valueFormatter: (value) => value + "%",
       borderWidth: 1,
-      borderColor: "#191919",
+      borderColor: "#65AD18",
+      backgroundColor: "#FCFFF7",
       axisPointer: {
         type: "none",
       },
@@ -248,9 +249,7 @@ export const ConvictionBarChart = ({
       bottom: compact ? "0%" : "25%",
       containLabel: false,
     },
-    // TODO: realted to re render in PoolId page (check)
-    animation: false,
-    //animationDurationUpdate: 1200,
+    animation: true,
     barGap: "-100%",
     series: [
       {
@@ -261,7 +260,7 @@ export const ConvictionBarChart = ({
           borderRadius: [20, 20, 20, 20],
         },
         showBackground: true,
-        backgroundStyle:{
+        backgroundStyle: {
           color: "#F0F0F0",
           borderRadius: [20, 20, 20, 20],
         },

@@ -60,10 +60,10 @@ export default function Page({
       <section className="section-layout">
         <div className="text-center sm:mt-5">
           <h2 className="text-xl font-semibold leading-6 text-gray-900">
-            Create a Proposal in Pool
+            Create a Proposal in Pool #{poolId}
           </h2>
           <div className="mt-1">
-            <p className="text-sm">{metadata.title}</p>
+            <h4 className="text-sm">{metadata.title}</h4>
           </div>
         </div>
         <ProposalForm
