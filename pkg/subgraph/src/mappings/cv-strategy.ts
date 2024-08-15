@@ -37,24 +37,14 @@ import { json, JSONValueKind } from "@graphprotocol/graph-ts";
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
 
-enum ProposalStatus {
-  Inactive, // Inactive
-  Active, // A vote that has been reported to Agreements
-  Paused, // A vote that is being challenged by Agreements
-  Cancelled, // A vote that has been cancelled
-  Executed, // A vote that has been executed
-  Disputed, // A vote that has been disputed
-  Rejected // A vote that has been rejected
-}
+const PROPOSAL_STATUS_ACTIVE = BigInt.fromI32(1);
+const PROPOSAL_STATUS_DISPUTED = BigInt.fromI32(5);
+const PROPOSAL_STATUS_REJECTED = BigInt.fromI32(6);
 
-const PROPOSAL_STATUS_ACTIVE = new BigInt(1);
-const PROPOSAL_STATUS_DISPUTED = new BigInt(5);
-const PROPOSAL_STATUS_REJECTED = new BigInt(6);
+const DISPUTE_STATUS_WAITING = BigInt.fromI32(0);
+const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
 
-const DISPUTE_STATUS_WAITING = new BigInt(0);
-const DISPUTE_STATUS_SOLVED = new BigInt(1);
-
-const DISPUTE_RULED_IN_FAVOR_OF_CHALLENGER = new BigInt(2);
+const DISPUTE_RULED_IN_FAVOR_OF_CHALLENGER = BigInt.fromI32(2);
 
 export function handleInitialized(event: InitializedCV): void {
   log.debug("CVStrategy: handleInitialized {}", [
@@ -149,7 +139,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.requestedAmount = proposal.getRequestedAmount();
   newProposal.maxCVStaked = maxConviction;
 
-  newProposal.proposalStatus = BigInt.fromI32(proposal.getProposalStatus());
+  newProposal.proposalStatus = PROPOSAL_STATUS_ACTIVE;
   // newProposal.proposalType = BigInt.fromI32(proposal.proposalType());
   newProposal.submitter = proposal.getSubmitter().toHex();
   // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
@@ -512,6 +502,9 @@ function computeConfig(
 }
 
 export function handleProposalDisputed(event: ProposalDisputed): void {
+  log.debug("CVStrategy: handleProposalDisputed: proposalId: {}", [
+    event.params.proposalId.toString()
+  ]);
   let dispute = new ProposalDispute(
     event.params.arbitrator.toHexString() +
       "_" +
@@ -525,11 +518,8 @@ export function handleProposalDisputed(event: ProposalDisputed): void {
   dispute.createdAt = event.block.timestamp;
   dispute.context = event.params.context;
   dispute.metadata = event.params.context;
-  dispute.status = BigInt.fromI32(0);
-  log.debug("CVStrategy: Fetching proposal dispute metadata for {}: {}", [
-    dispute.id,
-    dispute.metadata
-  ]);
+  dispute.status = DISPUTE_STATUS_WAITING;
+
   ProposalDisputeMetadataTemplate.create(dispute.metadata);
   dispute.save();
 
@@ -557,6 +547,9 @@ export function handleDisputeRuled(event: Ruling): void {
     ]);
     return;
   }
+  log.debug("CVStrategy: handleDisputeRuled: disputeId", [
+    dispute.id.toString()
+  ]);
 
   dispute.status = DISPUTE_STATUS_SOLVED;
   dispute.ruledAt = event.block.timestamp;

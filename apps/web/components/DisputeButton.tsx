@@ -252,9 +252,9 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     }
   };
 
-  const content =
-    isDisputed ?
-      <div className="flex md:flex-col gap-20">
+  const content = (
+    <div className="flex md:flex-col gap-20">
+      {isDisputed ?
         <div className="p-16 rounded-lg">
           {disputes.map((dispute) => (
             <Fragment key={dispute.id}>
@@ -262,22 +262,24 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             </Fragment>
           ))}
         </div>
-        <ProposalTimeline proposalData={proposalData} disputes={disputes} />
-      </div>
-    : <>
-        <textarea
-          id="reason"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Enter your dispute reason here"
-          className="textarea textarea-accent w-full  mb-4"
-          rows={5}
-        />
-        <InfoBox
-          infoBoxType="info"
-          content="Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has one week to settle any disputes before it can be closed and collateral is returned."
-        />
-      </>;
+      : <>
+          <textarea
+            id="reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Enter your dispute reason here"
+            className="textarea textarea-accent w-full  mb-4"
+            rows={5}
+          />
+          <InfoBox
+            infoBoxType="info"
+            content="Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has one week to settle any disputes before it can be closed and collateral is returned."
+          />
+        </>
+      }
+      <ProposalTimeline proposalData={proposalData} disputes={disputes} />
+    </div>
+  );
 
   const buttons = (
     <div className="modal-action w-full">

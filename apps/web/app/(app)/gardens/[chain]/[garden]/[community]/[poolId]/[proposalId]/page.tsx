@@ -72,8 +72,6 @@ export default function Page({
 
   const { data: ipfsResult } = useProposalMetadataIpfsFetch({ hash: metadata });
 
-  const status = proposalData?.proposalStatus;
-
   const {
     currentConvictionPct,
     thresholdPct,
@@ -144,9 +142,13 @@ export default function Page({
     );
   }
 
+  const status = ProposalStatus[proposalData.proposalStatus];
+
   return (
     <div className="page-layout">
-      <header className="section-layout flex flex-col gap-8 border !border-warning-content bg-warning">
+      <header
+        className={`section-layout flex flex-col gap-8 border ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
+      >
         <div className="flex flex-col items-start gap-10 sm:flex-row">
           <div className="flex w-full items-center justify-center sm:w-auto">
             <Hashicon value={proposalId} size={90} />
@@ -160,7 +162,7 @@ export default function Page({
                 <Badge type={proposalType} />
               </div>
               <div className="flex items-center justify-between gap-4 sm:justify-start">
-                <Badge status={status} />
+                <Badge status={proposalData.proposalStatus} />
                 <p className="font-semibold">
                   {prettyTimestamp(proposalData?.createdAt ?? 0)}
                 </p>
