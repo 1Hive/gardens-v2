@@ -188,7 +188,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         topic: "proposal",
         type: "update",
         function: "disputeProposal",
-        id: proposalData.proposalNumber,
+        id: proposalData.id,
         containerId: proposalData.strategy.id,
       });
     },
@@ -215,7 +215,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         topic: "proposal",
         type: "update",
         function: "executeRuling",
-        id: proposalData.proposalNumber,
+        id: proposalData.id,
         containerId: proposalData.strategy.id,
       });
     },

@@ -146,7 +146,7 @@ export default function Page({
 
   return (
     <div className="page-layout">
-      <header className="section-layout flex flex-col gap-8">
+      <header className="section-layout flex flex-col gap-8 border !border-warning-content bg-warning">
         <div className="flex flex-col items-start gap-10 sm:flex-row">
           <div className="flex w-full items-center justify-center sm:w-auto">
             <Hashicon value={proposalId} size={90} />
@@ -196,40 +196,6 @@ export default function Page({
           <div className="flex w-full justify-end">
             <DisputeButton proposalData={{ ...proposalData, ...ipfsResult }} />
           </div>
-          <div className="flex items-center justify-between gap-4 sm:justify-start">
-            <Badge status={status} />
-            <p className="subtitle2">
-              Submitted: {prettyTimestamp(proposalData?.createdAt ?? 0)}
-            </p>
-          </div>
-        </div>
-        <p>{ipfsResult?.description}</p>
-        <div className="flex flex-col gap-2">
-          {!isSignalingType && (
-            <>
-              <Statistic
-                label={"requested amount"}
-                icon={<InformationCircleIcon />}
-              >
-                <DisplayNumber
-                  number={formatUnits(requestedAmount, 18)}
-                  tokenSymbol={tokenSymbol}
-                  compact={true}
-                  className="font-bold text-black"
-                />
-              </Statistic>
-              <Statistic label={"beneficiary"} icon={<UserIcon />}>
-                <EthAddress
-                  address={beneficiary}
-                  actions="copy"
-                  icon={"identicon"}
-                />
-              </Statistic>
-            </>
-          )}
-          <Statistic label={"created by"} icon={<UserIcon />}>
-            <EthAddress address={submitter} actions="copy" icon="ens" />
-          </Statistic>
         </div>
       </header>
       <section className="section-layout">
