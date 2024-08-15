@@ -19,7 +19,8 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
     error NotAuthorized();
     error InsufficientCollateral(uint256 requested, uint256 available);
     error InvalidAddress();
-    error AmountCanNotBeZero();
+    // Goss: Support zero colateral
+    // error AmountCanNotBeZero();
 
     modifier onlyOwner() {
         if (msg.sender != owner) {
@@ -44,9 +45,9 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
 
     function withdrawCollateral(uint256 _proposalId, address _user, uint256 _amount) external onlyOwner nonReentrant {
         uint256 availableAmount = proposalCollateral[_proposalId][_user];
-        if (_amount == 0) {
-            revert AmountCanNotBeZero();
-        }
+        // if (_amount == 0) {
+        //     revert AmountCanNotBeZero();
+        // }
         if (_amount > availableAmount) {
             revert InsufficientCollateral(_amount, availableAmount);
         }
@@ -62,9 +63,9 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
         nonReentrant
     {
         uint256 availableAmount = proposalCollateral[_proposalId][_fromUser];
-        if (_amount == 0) {
-            revert AmountCanNotBeZero();
-        }
+        // if (_amount == 0) {
+        //     revert AmountCanNotBeZero();
+        // }
         if (_amount > availableAmount) {
             revert InsufficientCollateral(_amount, availableAmount);
         }

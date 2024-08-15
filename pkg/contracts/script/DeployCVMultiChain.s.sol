@@ -31,7 +31,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
     uint256 public MINIMUM_STAKE = 1 ether;
 
-    address public SENDER = 0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6;
+    address public SENDER = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
     address public TOKEN; // check networks.json file
     address public COUNCIL_SAFE; // check networks.json file
     address public SAFE_PROXY_FACTORY; // check networks.json file

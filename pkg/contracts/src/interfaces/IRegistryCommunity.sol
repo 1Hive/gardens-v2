@@ -33,7 +33,7 @@ interface IRegistryCommunityV0_0 {
 
     error AddressCannotBeZero();
     error RegistryCannotBeZero();
-    error UserNotInCouncil();
+    error UserNotInCouncil(address _user);
     error UserNotInRegistry();
     error UserAlreadyRegistered();
     error UserNotGardenOwner();
