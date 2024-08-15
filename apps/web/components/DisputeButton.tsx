@@ -152,6 +152,12 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     args: ["0x0"],
   });
 
+  const { data: disputeCooldown } = useContractRead({
+    abi: cvStrategyABI,
+    functionName: "DISPUTE_COOLDOWN_SEC",
+    address: proposalData.strategy.id as Address,
+  });
+
   const totalStake =
     arbitrationCost && config ?
       arbitrationCost + BigInt(config.challengerCollateralAmount)
@@ -161,6 +167,11 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     disputesResult?.proposalDisputes[
       disputesResult?.proposalDisputes.length - 1
     ];
+
+  const isCooldown =
+    !!lastDispute &&
+    !!disputeCooldown &&
+    +lastDispute.ruledAt + Number(disputeCooldown) > Date.now() / 1000;
 
   const isDisputed =
     proposalData &&
@@ -195,7 +206,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   });
 
   async function handleSubmit() {
-    setIsModalOpened(false);
     const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
     if (!reasonHash) {
       return;
@@ -210,6 +220,9 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     functionName: "executeRuling",
     abi: safeArbitratorABI,
     address: config?.arbitrator as Address,
+    onSuccess: () => {
+      setIsModalOpened(false);
+    },
     onConfirmations: () => {
       publish({
         topic: "proposal",
@@ -227,12 +240,15 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     abi: cvStrategyABI,
     address: proposalData.strategy.id as Address,
     args: [BigInt(lastDispute?.disputeId ?? 0), BigInt(ABSTAINED_RULING)],
+    onSuccess: () => {
+      setIsModalOpened(false);
+    },
     onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
         function: "rule",
-        id: proposalData.proposalNumber,
+        id: proposalData.id,
         containerId: proposalData.strategy.id,
       });
     },
@@ -253,7 +269,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   };
 
   const content = (
-    <div className="flex md:flex-col gap-20">
+    <div className="flex md:flex-col gap-10">
       {isDisputed ?
         <div className="p-16 rounded-lg">
           {disputes.map((dispute) => (
@@ -262,7 +278,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             </Fragment>
           ))}
         </div>
-      : <>
+      : <div>
           <textarea
             id="reason"
             value={reason}
@@ -275,7 +291,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             infoBoxType="info"
             content="Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has one week to settle any disputes before it can be closed and collateral is returned."
           />
-        </>
+        </div>
       }
       <ProposalTimeline proposalData={proposalData} disputes={disputes} />
     </div>
@@ -358,12 +374,19 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             >
               Cancel
             </Button>
+
             <Button
               onClick={handleSubmit}
               color="danger"
-              tooltip={isEnoughBalance ? "" : "Insufficient balance"}
+              tooltip={
+                isEnoughBalance ?
+                  isCooldown ?
+                    "Need to wait for 2 hours before disputin again"
+                  : ""
+                : "Insufficient balance"
+              }
               tooltipSide="tooltip-left"
-              disabled={!isEnoughBalance}
+              disabled={!isEnoughBalance || isCooldown}
             >
               Dispute
             </Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
@@ -92,11 +92,7 @@ export function Proposals({
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
   // Queries
-  const {
-    data: memberData,
-    error,
-    refetch: refetchIsMemberQuery,
-  } = useSubgraphQuery<isMemberQuery>({
+  const { data: memberData, error } = useSubgraphQuery<isMemberQuery>({
     query: isMemberDocument,
     variables: {
       me: wallet?.toLowerCase(),
@@ -110,8 +106,8 @@ export function Proposals({
     enabled: !!wallet,
   });
 
-  const { data: memberStrategyData, refetch: refetchgetMemberStrategyQuery } =
-    useSubgraphQuery<getMemberStrategyQuery>({
+  const { data: memberStrategyData } = useSubgraphQuery<getMemberStrategyQuery>(
+    {
       query: getMemberStrategyDocument,
       variables: {
         member_strategy: `${wallet?.toLowerCase()}-${strategy.id.toLowerCase()}`,
@@ -125,7 +121,8 @@ export function Proposals({
         { topic: "member", id: wallet },
       ],
       enabled: !!wallet,
-    });
+    },
+  );
 
   // Derived state
   const isMemberCommunity =
@@ -139,13 +136,6 @@ export function Proposals({
       console.error("Error while fetching member data: ", error);
     }
   }, [error]);
-
-  useEffect(() => {
-    if (wallet) {
-      refetchIsMemberQuery();
-      refetchgetMemberStrategyQuery();
-    }
-  }, [wallet]);
 
   useEffect(() => {
     const stakesFiltered =
@@ -167,13 +157,13 @@ export function Proposals({
 
     setInputAllocatedTokens(Number(totalStaked));
     setStakedFilters(memberStakes);
-  }, [memberData?.member, strategy.id]);
+  }, [memberData?.member?.stakes, strategy.id]);
 
   useEffect(() => {
     setMemberActivatedPoints(
       Number(memberData?.member?.memberCommunity?.[0]?.stakedTokens ?? 0n),
     );
-  }, [memberStrategyData, memberData?.member?.memberCommunity]);
+  }, [memberData?.member?.memberCommunity?.[0]?.stakedTokens]);
 
   useEffect(() => {
     if (memberActivatedStrategy === false) {
@@ -292,6 +282,9 @@ export function Proposals({
     functionName: "allocate",
     contractName: "Allo",
     fallbackErrorMessage: "Error allocating points. Please try again.",
+    onSuccess: () => {
+      setAllocationView(false);
+    },
     onConfirmations: () => {
       publish({
         topic: "proposal",
@@ -403,28 +396,29 @@ export function Proposals({
         <div className="flex flex-col gap-6">
           {proposals && inputs ?
             proposals.map((proposalData, i) => (
-              <ProposalCard
-                key={proposalData.id}
-                proposalData={proposalData}
-                inputData={inputs[i]}
-                stakedFilter={stakedFilters[i]}
-                index={i}
-                isAllocationView={allocationView}
-                tooltipMessage={tooltipMessage}
-                memberActivatedPoints={memberActivatedPoints}
-                memberPoolWeight={memberPoolWeight}
-                executeDisabled={
-                  proposalData.proposalStatus == 4 ||
-                  !isConnected ||
-                  missmatchUrl
-                }
-                strategy={strategy}
-                tokenDecimals={tokenDecimals}
-                alloInfo={alloInfo}
-                triggerRenderProposals={triggerRenderProposals}
-                inputHandler={inputHandler}
-                tokenData={strategy.registryCommunity.garden}
-              />
+              <Fragment key={proposalData.proposalNumber}>
+                <ProposalCard
+                  proposalData={proposalData}
+                  inputData={inputs[i]}
+                  stakedFilter={stakedFilters[i]}
+                  index={i}
+                  isAllocationView={allocationView}
+                  tooltipMessage={tooltipMessage}
+                  memberActivatedPoints={memberActivatedPoints}
+                  memberPoolWeight={memberPoolWeight}
+                  executeDisabled={
+                    proposalData.proposalStatus == 4 ||
+                    !isConnected ||
+                    missmatchUrl
+                  }
+                  strategy={strategy}
+                  tokenDecimals={tokenDecimals}
+                  alloInfo={alloInfo}
+                  triggerRenderProposals={triggerRenderProposals}
+                  inputHandler={inputHandler}
+                  tokenData={strategy.registryCommunity.garden}
+                />
+              </Fragment>
             ))
           : <LoadingSpinner />}
         </div>
@@ -455,7 +449,10 @@ export function Proposals({
               <p>Share it with the community and get support!</p>
               <CheckPassport strategyAddr={strategy.id as Address}>
                 <Link href={createProposalUrl}>
-                  <Button icon={<PlusIcon height={24} width={24} />} disabled={!isConnected || missmatchUrl}>
+                  <Button
+                    icon={<PlusIcon height={24} width={24} />}
+                    disabled={!isConnected || missmatchUrl}
+                  >
                     Create a proposal
                   </Button>
                 </Link>

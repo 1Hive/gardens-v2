@@ -5,13 +5,13 @@
     {
       "name": "RegistryFactoryV0_0",
       "startBlock": 71164980,
-      "address": "0xf06ad944eb570f697d86c10d89319c78927513b9",
+      "address": "0x8f5c6d20a539467bb22aece2a691f9489fc85a9e",
       "customTemplate": "registryFactory"
     },
     {
       "name": "PassportScorer",
       "startBlock": 71164980,
-      "address": "0x8d2af5ab2c70a76c980a8bf239d0323aafcf09e3",
+      "address": "0x073bbfa650ff39d47e6d6d476ca9654d57818a44",
       "customTemplate": "passportScorer"
     }
   ]
