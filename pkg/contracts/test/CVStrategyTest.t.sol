@@ -632,10 +632,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // cv.setMaxRatio(_etherToFloat(0.2 ether)); // beta = maxRatio
         // cv.setWeight(_etherToFloat(0.002 ether)); // RHO = p  = weight
         StrategyStruct.CVParams memory params = StrategyStruct.CVParams({
-        maxRatio: _etherToFloat(0.2 ether),
-        weight: _etherToFloat(0.002 ether),
-        decay: _etherToFloat(0.9 ether),
-        minThresholdPoints: 0
+            maxRatio: _etherToFloat(0.2 ether),
+            weight: _etherToFloat(0.002 ether),
+            decay: _etherToFloat(0.9 ether),
+            minThresholdPoints: 0
         });
         StrategyStruct.ArbitrableConfig memory arbConfig;
         vm.startPrank(address(_councilSafe()));
@@ -676,12 +676,15 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         StrategyStruct.ArbitrableConfig memory arbConfig;
         vm.startPrank(address(_councilSafe()));
-        cv.setPoolParams(arbConfig, StrategyStruct.CVParams({
-        maxRatio: _etherToFloat(0.2 ether),
-        weight: _etherToFloat(0.002 ether),
-        decay: _etherToFloat(0.9 ether),
-        minThresholdPoints: 0
-        }));
+        cv.setPoolParams(
+            arbConfig,
+            StrategyStruct.CVParams({
+                maxRatio: _etherToFloat(0.2 ether),
+                weight: _etherToFloat(0.002 ether),
+                decay: _etherToFloat(0.9 ether),
+                minThresholdPoints: 0
+            })
+        );
         vm.stopPrank();
 
         uint256 AMOUNT_STAKED = 45000;
@@ -943,7 +946,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
-        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        uint256 rollTo100 =
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
         vm.roll(rollTo100 * 2);
 
         console.log("after block.number", block.number);
@@ -1000,12 +1004,15 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         StrategyStruct.ArbitrableConfig memory arbConfig;
         vm.startPrank(address(_councilSafe()));
-        cv.setPoolParams(arbConfig, StrategyStruct.CVParams({
-        maxRatio: _etherToFloat(0.1 ether),
-        weight: _etherToFloat(0.0005 ether),
-        decay: _etherToFloat(0.9965402 ether),
-        minThresholdPoints: MIN_THRESHOLD_PTS
-        }));
+        cv.setPoolParams(
+            arbConfig,
+            StrategyStruct.CVParams({
+                maxRatio: _etherToFloat(0.1 ether),
+                weight: _etherToFloat(0.0005 ether),
+                decay: _etherToFloat(0.9965402 ether),
+                minThresholdPoints: MIN_THRESHOLD_PTS
+            })
+        );
         vm.stopPrank();
         // startMeasuringGas("Support a Proposal");
         int256 SUPPORT_PCT = int256(MINIMUM_STAKE);
@@ -1046,7 +1053,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
-        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        uint256 rollTo100 =
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
         vm.roll(rollTo100 * 2);
 
         console.log("after block.number", block.number);
@@ -1087,12 +1095,15 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
 
         vm.startPrank(address(_councilSafe()));
-        cv.setPoolParams(arbConfig, StrategyStruct.CVParams({
-        maxRatio: _etherToFloat(0.1 ether),
-        weight: _etherToFloat(0.0005 ether),
-        decay: _etherToFloat(0.9965402 ether),
-        minThresholdPoints: 0
-        }));
+        cv.setPoolParams(
+            arbConfig,
+            StrategyStruct.CVParams({
+                maxRatio: _etherToFloat(0.1 ether),
+                weight: _etherToFloat(0.0005 ether),
+                decay: _etherToFloat(0.9965402 ether),
+                minThresholdPoints: 0
+            })
+        );
         vm.stopPrank();
         cv.updateProposalConviction(proposalId);
         assertEq(cv.canExecuteProposal(proposalId), true, "canExecuteProposal");
@@ -1218,7 +1229,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             revert("block.number not expected");
         }
 
-        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        uint256 rollTo100 =
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
 
         vm.roll(rollTo100 * 2);
         console.log("after block.number", block.number);
@@ -1342,7 +1354,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             revert("block.number not expected");
         }
 
-        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        uint256 rollTo100 =
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
         vm.roll(rollTo100 * 2);
         console.log("after block.number", block.number);
         console.log("Conviction After:  %s", cv.updateProposalConviction(proposalId));
@@ -1364,15 +1377,17 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // cv.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         // cv.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
 
-
         // StrategyStruct.ArbitrableConfig memory arbConfig;
         vm.startPrank(address(_councilSafe()));
-        cv.setPoolParams(StrategyStruct.ArbitrableConfig(IArbitrator(address(0)),address(0),0,0,0,0), StrategyStruct.CVParams({
-        maxRatio: _etherToFloat(0.1 ether),
-        weight: _etherToFloat(0.0005 ether),
-        decay: _etherToFloat(0.9965402 ether),
-        minThresholdPoints: 0
-        }));
+        cv.setPoolParams(
+            StrategyStruct.ArbitrableConfig(IArbitrator(address(0)), address(0), 0, 0, 0, 0),
+            StrategyStruct.CVParams({
+                maxRatio: _etherToFloat(0.1 ether),
+                weight: _etherToFloat(0.0005 ether),
+                decay: _etherToFloat(0.9965402 ether),
+                minThresholdPoints: 0
+            })
+        );
         vm.stopPrank();
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setDecay.selector, _etherToFloat(0.9965402 ether)));
         // safeHelper(address(cv), 0, abi.encodeWithSelector(cv.setMaxRatio.selector, _etherToFloat(0.1 ether)));
@@ -1441,7 +1456,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             "maxCVStaked"
         );
 
-        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        uint256 rollTo100 =
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
 
         vm.roll(rollTo100);
         // vm.roll(110);
@@ -1814,7 +1830,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("TOTAL POINTS ACTIVATED", cv.totalEffectiveActivePoints());
         stopMeasuringGas();
 
-        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        uint256 rollTo100 =
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
         vm.roll(rollTo100);
 
         cv.updateProposalConviction(proposalId);
@@ -1895,7 +1912,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("TOTAL POINTS ACTIVATED", cv.totalEffectiveActivePoints());
         stopMeasuringGas();
 
-        uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+        uint256 rollTo100 =
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
         vm.roll(rollTo100);
 
         cv.updateProposalConviction(proposalId);

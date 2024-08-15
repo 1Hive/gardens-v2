@@ -64,6 +64,12 @@ library StrategyStruct {
 
     }
 
+    struct ProposalDisputeInfo {
+        uint256 disputeId;
+        uint256 disputeTimestamp;
+        address challenger;
+    }
+
     struct Proposal {
         uint256 proposalId;
         uint256 requestedAmount;
@@ -76,9 +82,7 @@ library StrategyStruct {
         ProposalStatus proposalStatus;
         mapping(address => uint256) voterStakedPoints; // voter staked points
         Metadata metadata;
-        uint256 disputeId;
-        uint256 disputeTimestamp;
-        address challenger;
+        ProposalDisputeInfo disputeInfo;
         uint256 lastDisputeCompletion;
         uint256 creationCollateralAmount;
     }
@@ -1048,7 +1052,10 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
                 revert ArbitrationConfigCannotBeChangedDuringDispute();
             }
 
-            if (arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator && arbitrableConfig.tribunalSafe != address(0)) {
+            if (
+                arbitrableConfig.arbitrator != _arbitrableConfig.arbitrator
+                    && arbitrableConfig.tribunalSafe != address(0)
+            ) {
                 arbitrableConfig.arbitrator.registerSafe(arbitrableConfig.tribunalSafe);
                 emit TribunaSafeRegistered(
                     address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
@@ -1127,15 +1134,20 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         uint256 disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
         proposal.proposalStatus = StrategyStruct.ProposalStatus.Disputed;
-        proposal.disputeId = disputeId;
-        proposal.disputeTimestamp = block.timestamp;
-        proposal.challenger = msg.sender;
+        proposal.disputeInfo.disputeId = disputeId;
+        proposal.disputeInfo.disputeTimestamp = block.timestamp;
+        proposal.disputeInfo.challenger = msg.sender;
         disputeIdToProposalId[disputeId] = proposalId;
 
         disputeCount++;
 
         emit ProposalDisputed(
-            arbitrableConfig.arbitrator, proposalId, disputeId, msg.sender, context, proposal.disputeTimestamp
+            arbitrableConfig.arbitrator,
+            proposalId,
+            disputeId,
+            msg.sender,
+            context,
+            proposal.disputeInfo.disputeTimestamp
         );
     }
 
@@ -1155,7 +1167,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             revert DisputeCooldownNotPassed(proposalId);
         }
 
-        bool isTimeOut = block.timestamp > proposal.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
+        bool isTimeOut = block.timestamp > proposal.disputeInfo.disputeTimestamp + arbitrableConfig.defaultRulingTimeout;
 
         if (!isTimeOut && msg.sender != address(arbitrableConfig.arbitrator)) {
             revert OnlyArbitrator();
@@ -1172,21 +1184,21 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
                 proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
             }
             collateralVault.withdrawCollateral(
-                proposalId, proposal.challenger, arbitrableConfig.challengerCollateralAmount
+                proposalId, proposal.disputeInfo.challenger, arbitrableConfig.challengerCollateralAmount
             );
             collateralVault.withdrawCollateral(proposalId, proposal.submitter, proposal.creationCollateralAmount);
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
             collateralVault.withdrawCollateralFor(
                 proposalId,
-                proposal.challenger,
+                proposal.disputeInfo.challenger,
                 address(registryCommunity.councilSafe()),
                 arbitrableConfig.challengerCollateralAmount
             );
         } else if (_ruling == 2) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
             collateralVault.withdrawCollateral(
-                proposalId, proposal.challenger, arbitrableConfig.challengerCollateralAmount
+                proposalId, proposal.disputeInfo.challenger, arbitrableConfig.challengerCollateralAmount
             );
             collateralVault.withdrawCollateralFor(
                 proposalId,
@@ -1195,7 +1207,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
                 proposal.creationCollateralAmount / 2
             );
             collateralVault.withdrawCollateralFor(
-                proposalId, proposal.submitter, proposal.challenger, proposal.creationCollateralAmount / 2
+                proposalId, proposal.submitter, proposal.disputeInfo.challenger, proposal.creationCollateralAmount / 2
             );
         }
 
