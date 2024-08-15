@@ -195,13 +195,12 @@ contract RegistryCommunityV0_0 is
 
         registry = IRegistry(allo.getRegistry());
 
-        // address[] memory owners = councilSafe.getOwners();
+        address[] memory owners = councilSafe.getOwners();
         address[] memory pool_initialMembers = new address[](3);
 
-        pool_initialMembers[0] = msg.sender;
-        // for (uint256 i = 0; i < owners.length; i++) {
-        //     pool_initialMembers[i] = owners[i];
-        // }
+        for (uint256 i = 0; i < owners.length; i++) {
+            pool_initialMembers[i] = owners[i];
+        }
 
         pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);
         pool_initialMembers[pool_initialMembers.length - 2] = address(this);

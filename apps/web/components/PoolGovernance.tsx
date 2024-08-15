@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Dnum } from "dnum";
-import { Address } from "wagmi";
+import { Address, useAccount } from "wagmi";
 import {
   ActivatePoints,
   Badge,
@@ -32,8 +32,8 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   memberActivatedStrategy,
 }) => {
   const showPoolGovernanceData = isMemberCommunity && memberActivatedStrategy;
-
   const poolSystem = strategy.config.pointSystem;
+  const { address } = useAccount();
 
   const poolSystemDefinition: { [key: number]: string } = {
     0: "This pool has a fixed points system, meaning every member has the same governance weight, limited to their registration stake.",
@@ -60,39 +60,41 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
           </CheckPassport>
         </div>
       </header>
-      <div className="mt-4 flex flex-col justify-between items-start">
-        <div className="flex flex-1 gap-10">
-          <div className="flex flex-col items-start gap-4">
-            <div className="flex items-center gap-6">
-              <p className="subtitle2">Your stake in the community:</p>
-              <DisplayNumber
-                tokenSymbol={strategy.registryCommunity.garden.symbol}
-                className="subtitle2 text-primary-content"
-                number={
-                  [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
-                }
-              />
-              <Badge status={memberActivatedStrategy ? 1 : 0} />
-            </div>
-            {showPoolGovernanceData && (
-              <div className="flex gap-6">
-                <div className="flex flex-col items-start gap-1">
-                  <p className="subtitle2">Your governance weight:</p>
-                  <h2 className="text-primary-content">
-                    {memberPoolWeight.toFixed(2)} %
-                  </h2>
-                </div>
-
-                <InfoBox
-                  content={poolSystemDefinition[poolSystem]}
-                  infoBoxType="info"
-                  classNames="flex-1 w-full"
+      {address && (
+        <div className="mt-4 flex flex-col justify-between items-start">
+          <div className="flex flex-1 gap-10">
+            <div className="flex flex-col items-start gap-4">
+              <div className="flex items-center gap-6">
+                <p className="subtitle2">Your stake in the community:</p>
+                <DisplayNumber
+                  tokenSymbol={strategy.registryCommunity.garden.symbol}
+                  className="subtitle2 text-primary-content"
+                  number={
+                    [BigInt(memberTokensInCommunity), tokenDecimals] as Dnum
+                  }
                 />
+                <Badge status={memberActivatedStrategy ? 1 : 0} />
               </div>
-            )}
+              {showPoolGovernanceData && (
+                <div className="flex gap-6">
+                  <div className="flex flex-col items-start gap-1">
+                    <p className="subtitle2">Your governance weight:</p>
+                    <h2 className="text-primary-content">
+                      {memberPoolWeight.toFixed(2)} %
+                    </h2>
+                  </div>
+
+                  <InfoBox
+                    content={poolSystemDefinition[poolSystem]}
+                    infoBoxType="info"
+                    classNames="flex-1 w-full"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 };
