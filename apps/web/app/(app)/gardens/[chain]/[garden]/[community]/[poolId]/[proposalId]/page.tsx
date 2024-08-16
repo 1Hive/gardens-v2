@@ -170,34 +170,36 @@ export default function Page({
               </div>
             </div>
             <p>{ipfsResult?.description}</p>
-            <div className="flex flex-col gap-2">
-              {!isSignalingType && (
-                <>
-                  <Statistic
-                    label={"requested amount"}
-                    icon={<InformationCircleIcon />}
-                  >
-                    <DisplayNumber
-                      number={formatUnits(requestedAmount, 18)}
-                      tokenSymbol={tokenSymbol}
-                      compact={true}
-                      className="font-bold text-black"
-                    />
-                  </Statistic>
-                  <Statistic label={"beneficiary"} icon={<UserIcon />}>
-                    <EthAddress address={beneficiary} actions="copy" />
-                  </Statistic>
-                </>
-              )}
-              <Statistic label={"created by"} icon={<UserIcon />}>
-                <EthAddress address={submitter} actions="copy" />
-              </Statistic>
+            <div className="flex justify-between">
+              <div className="flex flex-col gap-2">
+                {!isSignalingType && (
+                  <>
+                    <Statistic
+                      label={"requested amount"}
+                      icon={<InformationCircleIcon />}
+                    >
+                      <DisplayNumber
+                        number={formatUnits(requestedAmount, 18)}
+                        tokenSymbol={tokenSymbol}
+                        compact={true}
+                        className="font-bold text-black"
+                      />
+                    </Statistic>
+                    <Statistic label={"beneficiary"} icon={<UserIcon />}>
+                      <EthAddress address={beneficiary} actions="copy" />
+                    </Statistic>
+                  </>
+                )}
+                <Statistic label={"created by"} icon={<UserIcon />}>
+                  <EthAddress address={submitter} actions="copy" />
+                </Statistic>
+              </div>
+              <div className="flex items-end">
+                <DisputeButton
+                  proposalData={{ ...proposalData, ...ipfsResult }}
+                />
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="w-full justify-end flex gap-4">
-          <div className="flex w-full justify-end">
-            <DisputeButton proposalData={{ ...proposalData, ...ipfsResult }} />
           </div>
         </div>
       </header>
