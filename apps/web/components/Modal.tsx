@@ -22,15 +22,29 @@ export function Modal({
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
+    const dialogElement = dialogRef.current;
+
     if (isOpen) {
-      dialogRef.current?.showModal();
+      dialogElement?.showModal();
     } else {
-      dialogRef.current?.close();
+      dialogElement?.close();
     }
-  }, [isOpen]);
+
+    const handleDialogClose = () => {
+      if (!dialogElement?.open) {
+        onClose();
+      }
+    };
+
+    dialogElement?.addEventListener("close", handleDialogClose);
+
+    return () => {
+      dialogElement?.removeEventListener("close", handleDialogClose);
+    };
+  }, [isOpen, onClose]);
 
   const handleClose = () => {
-    onClose?.();
+    onClose();
     dialogRef.current?.close();
   };
 
