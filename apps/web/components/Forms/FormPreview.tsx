@@ -1,6 +1,6 @@
-import React from "react";
+import React, { ReactNode } from "react";
 
-export type FormRow = { label: string; data: string | number | boolean };
+export type FormRow = { label: string; data: ReactNode };
 
 type Props = {
   previewTitle: string;

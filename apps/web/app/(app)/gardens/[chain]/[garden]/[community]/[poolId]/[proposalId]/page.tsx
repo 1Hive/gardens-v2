@@ -80,6 +80,7 @@ export default function Page({
   } = useConvictionRead({
     proposalData,
     tokenData: data?.tokenGarden,
+    enabled: proposalData?.proposalNumber != null,
   });
 
   const tokenSymbol = data?.tokenGarden?.symbol;
@@ -132,7 +133,7 @@ export default function Page({
   if (
     !proposalData ||
     !ipfsResult ||
-    !proposalIdNumber ||
+    proposalIdNumber == null ||
     updateConvictionLast == null
   ) {
     return (
@@ -201,9 +202,13 @@ export default function Page({
         </div>
       </header>
       <section className="section-layout">
-        {status && ProposalStatus[status] === "executed" ?
-          <h4 className="text-primary-content text-center">
-            Proposal passed and executed successfully!
+        {status && status !== "active" && status !== "disputed" ?
+          <h4
+            className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
+          >
+            {status === "executed" ?
+              "Proposal passed and executed successfully!"
+            : `Proposal as been ${status}.`}
           </h4>
         : <>
             <h2>Metrics</h2>
@@ -217,7 +222,7 @@ export default function Page({
           </>
         }
         <div className="absolute top-8 right-10">
-          {ProposalStatus[status] !== "executed" && !isSignalingType && (
+          {status === "active" && !isSignalingType && (
             <Button
               onClick={() =>
                 writeDistribute?.({

@@ -1,8 +1,7 @@
 import { toast } from "react-toastify";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
-const ipfsGateway =
-  process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "https://ipfs.io/ipfs/";
+const ipfsGateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "ipfs.io";
 
 export const ipfsJsonUpload = async (
   payload: string | object,
@@ -67,7 +66,8 @@ export const ipfsFileUpload = async (selectedFile: File) => {
 };
 
 export const fetchIpfs = async <TResult>(ipfsHash: string) => {
-  const ipfsResult = await fetch(`${ipfsGateway}${ipfsHash}`, {
+  const ipfsUri = `https://${ipfsGateway}/ipfs/${ipfsHash}?${process.env.NEXT_PUBLIC_PINATA_KEY ? "pinataGatewayToken=" + process.env.NEXT_PUBLIC_PINATA_KEY : ""}`;
+  const ipfsResult = await fetch(ipfsUri, {
     method: "GET",
     headers: {
       "content-type": "application/json",

@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  AnyVariables,
-  DocumentInput,
-  OperationContext,
-  OperationResult,
-} from "@urql/next";
+import { AnyVariables, DocumentInput, OperationContext } from "@urql/next";
 import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
@@ -156,6 +151,7 @@ export function useSubgraphQuery<
       toast.loading("Pulling new data", {
         toastId: pendingRefreshToastId,
         autoClose: false,
+        closeOnClick: true,
         style: {
           width: "fit-content",
           marginLeft: "auto",

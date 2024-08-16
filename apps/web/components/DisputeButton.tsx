@@ -73,26 +73,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const { address } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
 
-  // TODO: Remove fake
-  // const disputeTimestamp = useMemo(() => {
-  //   // timestamp of now -  2days
-  //   return Date.now() / 1000;
-  // }, []);
-  // let dispute = {
-  //   id: 1,
-  //   reasonHash: "QmSoxngvbp1k1Dy5SV5YchrQFDaNwf94dRHuHXpxFQMNcc",
-  //   status: 0, // 0: Waiting, 1: Solved
-  //   outcome: 1, // 0: Abstained, 1: Approved, 2: Rejected
-  //   maxDelaySec: 259200, // 3 days -> 259200
-  //   challenger: "0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6",
-  //   abstainOutcome: 2, // 1: Approved, 2: Rejected
-  //   timestamp: disputeTimestamp,
-  //   ruledAt: disputeTimestamp + 259200,
-  // };
-  // proposalData.proposalStatus = 5;
-  // proposalData.strategy.config.defaultRuling = 1;
-  // End of TODO
-
   const config = proposalData.strategy.config;
 
   const { data: disputesResult } = useSubgraphQuery<getProposalDisputesQuery>({
@@ -107,44 +87,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
       type: "update",
     },
     enabled: !!proposalData,
-
-    // TODO: Remove fake
-    // modifier: (x) => {
-    //   x.proposalDisputes = [
-    //     {
-    //       id: "1",
-    //       disputeId: 1,
-    //       challenger: "0x07AD02e0C1FA0b09fC945ff197E18e9C256838c6",
-    //       context: "QmSoxngvbp1k1Dy5SV5YchrQFDaNwf94dRHuHXpxFQMNcc",
-    //       createdAt: 1631260400,
-    //       status: 1,
-    //       rulingOutcome: 1,
-    //       ruledAt: 1631270400,
-    //       metadata: {
-    //         reason:
-    //           "This proposal is not in compliance with the community covenant.",
-    //       },
-    //     },
-    //     {
-    //       id: "3",
-    //       disputeId: 3,
-    //       challenger: "0x07AD02e0C1FA0b09fC945ff197E18e9C256838c68",
-    //       context: "QmSoxngvbp1k1Dy5SV5YchrQFDaNwf94dRHuHXpxFQMNcc",
-    //       createdAt: disputeTimestamp + 1 * 24 * 3600,
-    //       status: 0,
-    //       // rulingOutcome: 1,
-    //       // ruledAt: 1631270400,
-    //       metadata: {
-    //         reason:
-    //           "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu commodo odio. Ut venenatis tellus a lectus facilisis tincidunt. Maecenas id porta massa. Vestibulum dapibus dolor leo, et mollis turpis vestibulum id. Aliquam erat volutpat. Vestibulum sed lorem eget nibh eleifend hendrerit a eu eros. Pellentesque nulla mauris, sagittis in erat eget, tincidunt sollicitudin nisi. Pellentesque non mi ac diam pretium mattis in sit amet purus. Suspendisse quis mollis elit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Etiam pellentesque lacinia lorem. Ut aliquam risus eros, id feugiat justo tempor non. In varius tellus sit amet est pretium rutrum commodo sed lorem. Phasellus non ornare justo, sit amet rutrum turpis.",
-    //       },
-    //     },
-    //   ];
-    //   return x;
-    // },
   });
 
-  // const arbitrationCost = 500000000000000000n; // TODO: Remove fake
   const { data: arbitrationCost } = useContractRead({
     abi: iArbitratorABI,
     functionName: "arbitrationCost",
@@ -178,10 +122,12 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     proposalData &&
     lastDispute &&
     ProposalStatus[proposalData.proposalStatus] === "disputed";
+
   const isTimeout =
     lastDispute &&
     config &&
     +lastDispute.createdAt + +config.defaultRulingTimeout < Date.now() / 1000;
+
   const disputes = disputesResult?.proposalDisputes ?? [];
 
   const isCouncilSafe = config.tribunalSafe === address?.toLowerCase();
@@ -403,24 +349,30 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   return (
     <>
-      <Button
-        color="danger"
-        btnStyle="outline"
-        onClick={() => setIsModalOpened(true)}
-      >
-        {isDisputed ? "Open dispute" : "Dispute"}
-      </Button>
-      <Modal
-        title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
-        onClose={() => setIsModalOpened(false)}
-        isOpen={isModalOpened}
-      >
-        {content}
-        {buttons}
-      </Modal>
+      {ProposalStatus[proposalData?.proposalStatus] === "active" ||
+        (ProposalStatus[proposalData?.proposalStatus] === "disputed" && (
+          <>
+            <Button
+              color="danger"
+              btnStyle="outline"
+              onClick={() => setIsModalOpened(true)}
+            >
+              {isDisputed ? "Open dispute" : "Dispute"}
+            </Button>
+            <Modal
+              title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
+              onClose={() => setIsModalOpened(false)}
+              isOpen={isModalOpened}
+            >
+              {content}
+              {buttons}
+            </Modal>
+          </>
+        ))}
     </>
   );
 };
+
 type DisputeMetadata = {
   reason: string;
 };

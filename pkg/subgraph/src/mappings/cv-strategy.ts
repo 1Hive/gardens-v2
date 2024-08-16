@@ -139,7 +139,9 @@ export function handleProposalCreated(event: ProposalCreated): void {
   newProposal.requestedAmount = proposal.getRequestedAmount();
   newProposal.maxCVStaked = maxConviction;
 
-  newProposal.proposalStatus = PROPOSAL_STATUS_ACTIVE;
+  newProposal.proposalStatus = BigInt.fromI32(
+    cvc.getProposal(event.params.proposalId).getProposalStatus()
+  );
   // newProposal.proposalType = BigInt.fromI32(proposal.proposalType());
   newProposal.submitter = proposal.getSubmitter().toHex();
   // newProposal.voterStakedPointsPct = proposal.getVoterStakedPointsPct();
@@ -529,7 +531,12 @@ export function handleProposalDisputed(event: ProposalDisputed): void {
     log.error("CvStrategy: Proposal not found with: {}", [proposalId]);
     return;
   }
-  proposal.proposalStatus = PROPOSAL_STATUS_DISPUTED;
+
+  let cvc = CVStrategyContract.bind(event.address);
+
+  proposal.proposalStatus = BigInt.fromI32(
+    cvc.getProposal(event.params.proposalId).getProposalStatus()
+  );
   proposal.save();
 }
 
@@ -563,10 +570,11 @@ export function handleDisputeRuled(event: Ruling): void {
 
   dispute.save();
 
-  proposal.proposalStatus =
-    dispute.rulingOutcome === DISPUTE_RULED_IN_FAVOR_OF_CHALLENGER
-      ? PROPOSAL_STATUS_REJECTED
-      : PROPOSAL_STATUS_ACTIVE;
+  let cvc = CVStrategyContract.bind(event.address);
+
+  proposal.proposalStatus = BigInt.fromI32(
+    cvc.getProposal(proposal.proposalNumber).getProposalStatus()
+  );
 
   proposal.save();
 }

@@ -35,7 +35,7 @@ export const FormAddressInput = ({
   registerKey = "",
   registerOptions,
   required = false,
-  readOnly,
+  readOnly = false,
   className,
   value = undefined,
   disabled = false,
@@ -95,10 +95,13 @@ export const FormAddressInput = ({
     modifier = "border-error";
   } else if (disabled) {
     modifier = "border-disabled bg-base-300";
+  } else if (readOnly) {
+    modifier =
+      "!border-gray-300 !focus-within:border-gray-300 focus-within:outline !outline-gray-300 cursor-not-allowed";
   }
 
   return (
-    <div className={`flex flex-col ${className ?? ""}`}>
+    <div className={`flex flex-col max-w-md ${className ?? ""}`}>
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer">
           <span className="label-text">
@@ -109,21 +112,19 @@ export const FormAddressInput = ({
         </label>
       )}
       <div
-        className={`form-control input input-info flex flex-row font-normal items-center w-[460px] ${modifier}`}
+        className={`form-control input input-info flex flex-row font-normal items-center ${modifier}`}
       >
         <input
           ref={inputRef}
-          className={
-            "input px-0 w-full border-none focus:border-none outline-none focus:outline-none"
-          }
+          className={`input px-0 w-full border-none focus:border-none outline-none focus:outline-none ${readOnly || disabled ? "cursor-not-allowed" : ""}`}
           placeholder={placeholder || "Enter address or ENS name"}
           id={registerKey}
           name={registerKey}
           value={input}
           onChange={(ev) => setInput(ev.target.value)}
           disabled={disabled}
-          required={required}
           readOnly={readOnly}
+          required={required}
           {...register(registerKey, {
             required,
             ...registerOptions,

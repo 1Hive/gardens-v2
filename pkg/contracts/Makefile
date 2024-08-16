@@ -102,7 +102,7 @@ deploy-testnet-multi-sep:
 	--account pkGarden \
 	--sig "run(string)" 'sepolia' \
 	--ffi \
-	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast \
 	--legacy \
 	--force \
@@ -114,7 +114,7 @@ deploy-testnet-multi-sep-v0:
 	--account pkGarden \
 	--sig "run(string)" 'sepolia' \
 	--ffi \
-	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast \
 	--legacy \
 	--via-ir \
@@ -126,9 +126,10 @@ deploy-verify-multi-sep-v0:
 	--account pkGarden \
 	--sig "run(string)" 'sepolia' \
 	--ffi \
-	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--legacy \
 	--via-ir \
+	--verify \
 	-vvv
 	
 deploy-verify-multi-sep: 
@@ -136,7 +137,7 @@ deploy-verify-multi-sep:
 	--rpc-url $(RPC_URL_SEP_TESTNET) \
 	--account pkGarden \
 	--verify \
-	--etherscan-api-key $(ETHERSCAN_API_KEY_ETH_SEP) \
+	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	-vv
 	
 deploy-testnet-multi-op: 
@@ -169,23 +170,18 @@ deploy-testnet-multi-arb-v0:
 	--broadcast \
 	--legacy \
 	--via-ir \
-	-vvv
+	-vvv \
+	# --etherscan-api-key $(ARBISCAN_API_KEY) \
+	# --verify \
+	# --slow
 
 verify-testnet-multi-arb-v0: 
 	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
-	--ffi \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
-	--chain-id 421614 \
 	--verify \
-	--legacy \
-	--via-ir \
-	-vvv \
-	--resume \
-  --verifier blockscout \
-	--verifier-url https://arb-sepolia.blockscout.com/api/
+	--slow
 
 deploy-verify: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
