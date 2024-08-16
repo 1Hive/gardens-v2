@@ -21,6 +21,7 @@ import { getProposals } from "@/actions/getProposals";
 import {
   Button,
   CheckPassport,
+  InfoWrapper,
   PoolGovernance,
   ProposalCard,
 } from "@/components";
@@ -56,6 +57,7 @@ type Stats = {
   name: string;
   stat: number | string;
   className: string;
+  info: string;
 };
 
 interface ProposalsProps {
@@ -322,25 +324,28 @@ export function Proposals({
   const stats: Stats[] = [
     {
       id: 1,
-      name: "Pool Weight",
+      name: "Your pool weight",
       stat: memberPoolWeight,
       className: poolWeightClassName,
+      info: "Represents your influence or voting power in this pool",
     },
     {
       id: 2,
-      name: "Allocated Pool Weight",
+      name: "Your pool weight used",
       stat: calcPoolWeightUsed(memberSupportedProposalsPct),
       className: poolWeightClassName,
+      info: "How much of your pool weight has been allocated to proposals.",
     },
     {
       id: 3,
-      name: "Total Allocation Percentage",
+      name: "Total allocated",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
+      info: "This percentage reflects how much of your pool used is supporting proposals.",
     },
   ];
 
@@ -468,7 +473,7 @@ export function Proposals({
 function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
     <div className="mt-10">
-      <h3>Your Allocation Overview</h3>
+      <h3>Allocation Overview</h3>
       <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <div key={stat.id} className="section-layout sm:px-6 sm:pt-6">
@@ -488,10 +493,10 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
 
               <p className="ml-20 truncate">{stat.name}</p>
             </div>
-            <div className="stats-baseline ml-20 flex">
-              <p className="text-2xl font-semibold text-neutral-content">
-                {stat.stat} %
-              </p>
+            <div className="ml-20">
+              <InfoWrapper tooltip={stat.info}>
+                <p className="text-2xl font-semibold">{stat.stat} %</p>
+              </InfoWrapper>
             </div>
           </div>
         ))}
