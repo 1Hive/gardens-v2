@@ -259,22 +259,22 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         // strategy2.setWeight(_etherToFloat(0.010367 ether)); // RHO = p  = weight
 
         // Goss: Commented to support EOA as coucilsafe
-        // safeHelper(
-        //     Safe(payable(COUNCIL_SAFE)),
-        //     councilMemberPKEnv,
-        //     address(registryCommunity),
-        //     abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
-        // );
-        registryCommunity.addStrategy(_strategy1);
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
+        );
+        // registryCommunity.addStrategy(_strategy1);
 
         // Goss: Commented to support EOA as coucilsafe
-        // safeHelper(
-        //     Safe(payable(COUNCIL_SAFE)),
-        //     councilMemberPKEnv,
-        //     address(registryCommunity),
-        //     abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
-        // );
-        registryCommunity.addStrategy(_strategy2);
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
+        );
+        // registryCommunity.addStrategy(_strategy2);
 
         token.mint(address(pool_admin()), 10_000 ether);
         token.approve(address(registryCommunity), type(uint256).max);
@@ -356,21 +356,21 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         data2 = abi.encode(proposal2);
         allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
-        // safeHelper(
-        //     Safe(payable(COUNCIL_SAFE)),
-        //     councilMemberPKEnv,
-        //     address(registryCommunity),
-        //     abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy1)
-        // );
-        registryCommunity.removeStrategy(_strategy1);
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy1)
+        );
+        // registryCommunity.removeStrategy(_strategy1);
 
-        // safeHelper(
-        //     Safe(payable(COUNCIL_SAFE)),
-        //     councilMemberPKEnv,
-        //     address(registryCommunity),
-        //     abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy2)
-        // );
-        registryCommunity.removeStrategy(_strategy2);
+        safeHelper(
+            Safe(payable(COUNCIL_SAFE)),
+            councilMemberPKEnv,
+            address(registryCommunity),
+            abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy2)
+        );
+        // registryCommunity.removeStrategy(_strategy2);
 
         vm.stopBroadcast();
     }
