@@ -17,7 +17,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
-import {IRegistryCommunityV0_0} from "./interfaces/IRegistryCommunity.sol";
+import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";
 
 interface IPointStrategy {
     function deactivatePoints(address _member) external;

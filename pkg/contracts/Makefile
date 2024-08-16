@@ -169,23 +169,20 @@ deploy-testnet-multi-arb-v0:
 	--broadcast \
 	--legacy \
 	--via-ir \
-	-vvv
+	-vvv \
+	--etherscan-api-key $(TENDERLY_ACCESS_TOKEN) \
+	--verify \
+	--verifier-url $(TENDERLY_VERIFIER_URL) \
+	--slow
 
 verify-testnet-multi-arb-v0: 
 	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
-	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
-	--ffi \
-	--etherscan-api-key $(ARBISCAN_API_KEY) \
-	--chain-id 421614 \
+	--etherscan-api-key $(TENDERLY_ACCESS_TOKEN) \
 	--verify \
-	--legacy \
-	--via-ir \
-	-vvv \
-	--resume \
-  --verifier blockscout \
-	--verifier-url https://arb-sepolia.blockscout.com/api/
+	--verifier-url $(TENDERLY_VERIFIER_URL) \
+	--slow
 
 deploy-verify: 
 	-forge script script/DeployCVArbSepolia.s.sol:DeployCVArbSepolia \
