@@ -47,6 +47,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
     uint256 public WAIT_TIME = 20000;
 
     string public CURRENT_NETWORK = "arbsepolia";
+    string public ETH_SEPOLIA = "sepolia";
 
     address BENEFICIARY = 0xc583789751910E39Fd2Ddb988AD05567Bcd81334;
 
@@ -258,6 +259,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         // strategy2.setMaxRatio(_etherToFloat(0.3219782 ether)); // beta = maxRatio
         // strategy2.setWeight(_etherToFloat(0.010367 ether)); // RHO = p  = weight
 
+        _sleepIfNetwork(CURRENT_NETWORK, ETH_SEPOLIA);
         // Goss: Commented to support EOA as coucilsafe
         safeHelper(
             Safe(payable(COUNCIL_SAFE)),
@@ -266,6 +268,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy1)
         );
         // registryCommunity.addStrategy(_strategy1);
+        _sleepIfNetwork(CURRENT_NETWORK, ETH_SEPOLIA);
 
         // Goss: Commented to support EOA as coucilsafe
         safeHelper(
@@ -274,6 +277,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             address(registryCommunity),
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
         );
+        _sleepIfNetwork(CURRENT_NETWORK, ETH_SEPOLIA);
         //registryCommunity.addStrategy(_strategy2);
 
         token.mint(address(pool_admin()), 10_000 ether);
@@ -356,6 +360,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         data2 = abi.encode(proposal2);
         allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
+        _sleepIfNetwork(CURRENT_NETWORK, ETH_SEPOLIA);
         safeHelper(
             Safe(payable(COUNCIL_SAFE)),
             councilMemberPKEnv,
@@ -364,6 +369,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         );
         //registryCommunity.removeStrategy(_strategy1);
 
+        _sleepIfNetwork(CURRENT_NETWORK, ETH_SEPOLIA);
         safeHelper(
             Safe(payable(COUNCIL_SAFE)),
             councilMemberPKEnv,
@@ -373,5 +379,16 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         //registryCommunity.removeStrategy(_strategy2);
 
         vm.stopBroadcast();
+    }
+
+    function _isEqual(string memory a, string memory b) internal pure returns (bool) {
+        return (keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b)));
+    }
+
+    function _sleepIfNetwork(string memory network, string memory networkName) internal {
+        if (_isEqual(network, networkName)) {
+            // console2.log("Sleeping for %s", WAIT_TIME);
+            vm.sleep(WAIT_TIME);
+        }
     }
 }
