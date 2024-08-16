@@ -315,7 +315,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
               />
             )}
           </div>
-
           <div className="flex gap-2">
             <Button
               onClick={() => setIsModalOpened(false)}
@@ -324,7 +323,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             >
               Cancel
             </Button>
-
             <Button
               onClick={handleSubmit}
               color="danger"

@@ -213,7 +213,26 @@ export default function Page({
             : `Proposal as been ${status}.`}
           </h4>
         : <>
-            <h2>Metrics</h2>
+            <div className="flex justify-between">
+              <h2>Metrics</h2>
+              {status === "active" && !isSignalingType && (
+                <Button
+                  onClick={() =>
+                    writeDistribute?.({
+                      args: [
+                        [],
+                        encodedDataProposalId(proposalIdNumber),
+                        "0x0",
+                      ],
+                    })
+                  }
+                  disabled={currentConvictionPct < thresholdPct}
+                  tooltip="Proposal not executable"
+                >
+                  Execute
+                </Button>
+              )}
+            </div>
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
               thresholdPct={thresholdPct}
@@ -223,21 +242,6 @@ export default function Page({
             />
           </>
         }
-        <div className="absolute top-8 right-10">
-          {status === "active" && !isSignalingType && (
-            <Button
-              onClick={() =>
-                writeDistribute?.({
-                  args: [[], encodedDataProposalId(proposalIdNumber), "0x0"],
-                })
-              }
-              disabled={currentConvictionPct < thresholdPct}
-              tooltip="Proposal not executable"
-            >
-              Execute
-            </Button>
-          )}
-        </div>
       </section>
     </div>
   );
