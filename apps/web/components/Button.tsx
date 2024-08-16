@@ -79,18 +79,17 @@ export function Button({
   icon,
   type = "button",
 }: ButtonProps) {
-  // const buttonContent =
-  //   isLoading ? <span className="loading loading-spinner" /> : children;
-
   const buttonElement = (
     <button
       type={type}
       className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
-      flex relative cursor-pointer items-center justify-center gap-2 rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
+      flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
-      <div className={isLoading ? "invisible" : "visible"}>
+      <div
+        className={`${isLoading ? "invisible" : "visible"} flex gap-2 items-center`}
+      >
         {icon && icon} {children}
       </div>
       <span
