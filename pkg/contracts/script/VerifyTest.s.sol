@@ -70,6 +70,13 @@ contract VerifyTest is BaseMultiChain {
 
         assertTrue(address(allo) != address(0));
 
+        ERC1967Proxy proxy = new ERC1967Proxy(
+            address(new RegistryFactoryV0_0()),
+            abi.encodeWithSelector(
+                RegistryFactoryV0_0.initialize.selector, address(SENDER), address(SENDER), address(SENDER)
+            )
+        );
+
         vm.stopBroadcast();
     }
 

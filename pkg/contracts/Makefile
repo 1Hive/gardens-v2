@@ -204,6 +204,19 @@ add-strategy: #make add-strategy S=0x1234
 	--broadcast \
 	-vvvv
 
+deploy-test-arb: 
+	-forge script script/VerifyTest.s.sol:VerifyTest \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 421614 \
+	--broadcast \
+	--legacy \
+	--force \
+	--verify \
+	-vvv
+
 # Optimism Sepolia
 
 deploy-testnet-multi-op: 

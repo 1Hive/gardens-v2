@@ -88,7 +88,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         return json;
     }
 
-    function run() public {
+    function run() public virtual {
         // string memory net = vm.prompt("Enter network name");
         string memory net = "";
         run(net);
@@ -96,7 +96,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
 
     function runCurrentNetwork() public virtual;
 
-    function run(string memory network) public {
+    function run(string memory network) public virtual {
         vm.startBroadcast(pool_admin());
 
         if (bytes(network).length != 0) {
