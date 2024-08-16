@@ -8,6 +8,7 @@ import {
   InformationCircleIcon,
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
+import { StopIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
@@ -165,6 +166,23 @@ export default function PoolHeader({
       });
     },
   });
+  const { write: removeStrategyByPoolId } = useContractWriteWithConfirmations({
+    address: communityAddr,
+    abi: abiWithErrors(registryCommunityABI),
+    contractName: "Registry Community",
+    functionName: "removeStrategyByPoolId",
+    fallbackErrorMessage: "Error creating a pool. Please ty again.",
+    args: [BigInt(poolId)],
+    onConfirmations: () => {
+      publish({
+        topic: "pool",
+        function: "removeStrategyByPoolId",
+        type: "update",
+        containerId: communityAddr,
+        chainId: chainId,
+      });
+    },
+  });
 
   return (
     <section className="section-layout flex flex-col gap-0 overflow-hidden">
@@ -185,8 +203,18 @@ export default function PoolHeader({
               >
                 Edit
               </Button>
-              {!isEnabled && (
+              {isEnabled ?
                 <Button
+                  icon={<StopIcon height={24} width={24} />}
+                  disabled={!isConnected || missmatchUrl}
+                  tooltip={tooltipMessage}
+                  onClick={() => removeStrategyByPoolId()}
+                  btnStyle="outline"
+                  color="danger"
+                >
+                  Disable
+                </Button>
+              : <Button
                   icon={<CheckIcon height={24} width={24} />}
                   disabled={!isConnected || missmatchUrl}
                   tooltip={tooltipMessage}
@@ -194,7 +222,7 @@ export default function PoolHeader({
                 >
                   Approve
                 </Button>
-              )}
+              }
             </div>
           )}
         </div>
@@ -222,6 +250,7 @@ export default function PoolHeader({
               disputeCollateral: disputeCollateral,
               tribunalAddress: tribunalAddress,
             }}
+            setModalOpen={setIsOpenModal}
           />
         </Modal>
       </header>

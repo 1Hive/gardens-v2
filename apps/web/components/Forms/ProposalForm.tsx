@@ -71,6 +71,9 @@ const abiParameters = [
 const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
 function formatNumber(num: string | number): string {
+  if (num == 0) {
+    return "0";
+  }
   // Convert to number if it's a string
   const number = typeof num === "string" ? parseFloat(num) : num;
 
@@ -404,7 +407,7 @@ export const ProposalForm = ({
             <Button
               onClick={() => createProposal()}
               isLoading={loading}
-              disabled={isEnoughBalance}
+              disabled={!isEnoughBalance}
               tooltip={isEnoughBalance ? "" : "Insufficient balance"}
             >
               Submit

@@ -62,7 +62,7 @@ export const chainDataMap: {
     blockTime: 0.23,
     confirmations: 1, // 7
     passportScorer: "0x0000000000000000000000000000000000000000",
-    arbitrator: "0xbff8a6c13d6536d48dce27186fc3fb503539e5f0",
+    arbitrator: "0xd9bb041191668d2bc74f3b1aa2b16dc09fba5f15",
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
   },
   42161: {

@@ -13,6 +13,8 @@ type Props = {
   registerOptions?: RegisterOptions;
   options: Option[];
   tooltip?: string;
+  readOnly?: boolean;
+  disabled?: boolean;
 };
 
 export function FormSelect({
@@ -23,6 +25,8 @@ export function FormSelect({
   registerOptions,
   options,
   tooltip,
+  readOnly,
+  disabled,
 }: Props) {
   return (
     <>
@@ -32,12 +36,15 @@ export function FormSelect({
         : label}
       </label>
       <select
-        className="select select-info w-full max-w-md"
+        className={`select select-info w-full max-w-md ${readOnly ? "!border-gray-300 focus:outline !outline-gray-300 !pointer-events-none bg-none	" : ""}`}
         id={registerKey}
         {...register(registerKey, {
           required,
+          readOnly,
+          disabled,
           ...registerOptions,
         })}
+        disabled={disabled}
       >
         {options.map(({ value, label: lab }) => (
           <option value={value} key={value}>

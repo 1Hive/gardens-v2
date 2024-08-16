@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
-import { Address, formatUnits, parseUnits } from "viem";
+import { Address, formatUnits, getAddress, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
@@ -9,6 +8,7 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { Button } from "../Button";
+import { EthAddress } from "../EthAddress";
 import { InfoBox } from "../InfoBox";
 import { chainDataMap } from "@/configs/chainServer";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -46,6 +46,7 @@ type Props = {
   initValues: FormInputs;
   proposalType: string;
   proposalOnDispute: boolean;
+  setModalOpen: (value: boolean) => void;
 };
 
 export default function PoolEditForm({
@@ -54,12 +55,12 @@ export default function PoolEditForm({
   chainId,
   initValues,
   proposalType,
-  proposalOnDispute,
+  proposalOnDispute: isProposalOnDispute,
+  setModalOpen,
 }: Props) {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<FormInputs>({
     defaultValues: {
@@ -124,13 +125,24 @@ export default function PoolEditForm({
     },
     defaultResolution: {
       label: "Default resolution:",
-      parse: (value: string) => DisputeOutcome[value],
+      parse: (value: string) =>
+        DisputeOutcome[value] == "approved" ? "Approve" : "Reject",
     },
     proposalCollateral: {
       label: "Proposal collateral:",
+      parse: (value: string) =>
+        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
     },
-    challengeCollateral: {
+    disputeCollateral: {
       label: "Dispute collateral:",
+      parse: (value: string) =>
+        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+    },
+    tribunalAddress: {
+      label: "Tribunal safe:",
+      parse: (value: string) => (
+        <EthAddress address={value as Address} icon={"ens"} />
+      ),
     },
   };
 
@@ -206,6 +218,10 @@ export default function PoolEditForm({
       convictionGrowth: previewData.convictionGrowth,
       minThresholdPoints: previewData.minThresholdPoints,
       spendingLimit: previewData.spendingLimit,
+      defaultResolution: previewData.defaultResolution,
+      proposalCollateral: previewData.proposalCollateral,
+      disputeCollateral: previewData.disputeCollateral,
+      tribunalAddress: tribunalAddress,
     };
 
     Object.entries(reorderedData).forEach(([key, value]) => {
@@ -242,7 +258,12 @@ export default function PoolEditForm({
         chainId: chainId,
       });
     },
-    onError: () => toast.error("Something went wrong editing pool, check logs"),
+    onSettled: () => {
+      setLoading(false);
+    },
+    onSuccess: () => {
+      setModalOpen(false);
+    },
   });
 
   const handlePreview = (data: FormInputs) => {
@@ -376,32 +397,26 @@ export default function PoolEditForm({
           </div>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
-              {proposalOnDispute ?
-                <>
-                  <h3 className="my-4 text-xl">
-                    Proposal in pool under dispute!
-                  </h3>
-                  <InfoBox
-                    infoBoxType="warning"
-                    content={`This pool currently has at least one disputed proposal, please 
-                      wait for it to be resolved before editing proposal dispute resolution settings.`}
-                  />
-                </>
-              : <>
-                  <h3 className="my-4 text-xl">Proposal dispute resolution</h3>
-                  <InfoBox
-                    infoBoxType="info"
-                    content={`The tribunal Safe, represented by trusted members, is
+              <h3 className="my-4 text-xl">Arbitration settings</h3>
+              {isProposalOnDispute ?
+                <InfoBox
+                  infoBoxType="warning"
+                  content={
+                    "A disputed proposal is pending resolution. Please wait until it's resolved before adjusting proposal dispute settings."
+                  }
+                />
+              : <InfoBox
+                  infoBoxType="info"
+                  content={`The tribunal Safe, represented by trusted members, is
                       responsible for resolving proposal disputes. The global tribunal
                       Safe is a shared option featuring trusted members of the Gardens
                       community. Its use is recommended for objective dispute
                       resolution.`}
-                  />
-                </>
+                />
               }
             </div>
-            {!proposalOnDispute && (
-              <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4">
+              {!isProposalOnDispute && (
                 <div className="flex gap-4 mt-2">
                   <FormRadioButton
                     label="Global gardens tribunal"
@@ -431,57 +446,62 @@ export default function PoolEditForm({
                     value="custom"
                   />
                 </div>
-                <FormAddressInput
-                  label="Tribunal address"
-                  registerKey="tribunalAddress"
+              )}
+              <FormAddressInput
+                label="Tribunal address"
+                registerKey="tribunalAddress"
+                register={register}
+                required
+                onChange={(newValue) => setTribunalAddress(newValue)}
+                value={tribunalAddress}
+                readOnly={isProposalOnDispute}
+              />
+              <div className="flex flex-col">
+                <FormSelect
+                  tooltip="The default resolution will be applied in the case of abstained or dispute ruling timeout."
+                  label="Default resolution"
                   required
-                  onChange={(newValue) => setTribunalAddress(newValue)}
-                  value={tribunalAddress}
+                  register={register}
+                  errors={errors}
+                  options={Object.entries(DisputeOutcome)
+                    .slice(1)
+                    .map(([value, text]) => ({
+                      label: capitalize(text),
+                      value: +value,
+                    }))}
+                  registerKey="defaultResolution"
+                  readOnly={isProposalOnDispute}
                 />
-                <div className="flex flex-col">
-                  <FormSelect
-                    tooltip="The default resolution will be applied in the case of abstained or dispute ruling timeout."
-                    label="Default resolution"
-                    required
-                    register={register}
-                    errors={errors}
-                    options={Object.entries(DisputeOutcome)
-                      .slice(1)
-                      .map(([value, text]) => ({
-                        label: capitalize(text),
-                        value: +value,
-                      }))}
-                    registerKey="defaultResolution"
-                  />
-                </div>
-                <div className="flex gap-4 max-w-md">
-                  <FormInput
-                    tooltip="Proposal submission stake. Locked until proposal is resolved, can be forfeited if disputed."
-                    type="number"
-                    label={`Proposal collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
-                    register={register}
-                    registerKey="proposalCollateral"
-                    required
-                    otherProps={{
-                      step: 1 / 10 ** ETH_DECIMALS,
-                      min: 1 / 10 ** ETH_DECIMALS,
-                    }}
-                  />
-                  <FormInput
-                    tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
-                    type="number"
-                    label={`Dispute collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
-                    register={register}
-                    registerKey="disputeCollateral"
-                    required
-                    otherProps={{
-                      step: 1 / 10 ** ETH_DECIMALS,
-                      min: 1 / 10 ** ETH_DECIMALS,
-                    }}
-                  />
-                </div>
               </div>
-            )}
+              <div className="flex gap-4 max-w-md">
+                <FormInput
+                  tooltip="Proposal submission stake. Locked until proposal is resolved, can be forfeited if disputed."
+                  type="number"
+                  label={`Proposal collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
+                  register={register}
+                  registerKey="proposalCollateral"
+                  required
+                  readOnly={isProposalOnDispute}
+                  otherProps={{
+                    step: 1 / 10 ** ETH_DECIMALS,
+                    min: 1 / 10 ** ETH_DECIMALS,
+                  }}
+                />
+                <FormInput
+                  tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
+                  type="number"
+                  label={`Dispute collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
+                  register={register}
+                  registerKey="disputeCollateral"
+                  required
+                  otherProps={{
+                    step: 1 / 10 ** ETH_DECIMALS,
+                    min: 1 / 10 ** ETH_DECIMALS,
+                  }}
+                  readOnly={isProposalOnDispute}
+                />
+              </div>
+            </div>
           </div>
         </div>
       }

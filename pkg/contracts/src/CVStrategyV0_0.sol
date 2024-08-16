@@ -17,7 +17,8 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
-import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";
 
 interface IPointStrategy {
     function deactivatePoints(address _member) external;
@@ -61,6 +62,7 @@ library StrategyStruct {
         Executed, // A vote that has been executed
         Disputed, // A vote that has been disputed
         Rejected // A vote that has been rejected
+
     }
 
     struct ProposalDisputeInfo {
@@ -1034,20 +1036,19 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     ) internal {
         if (
             _arbitrableConfig.tribunalSafe != address(0) && address(_arbitrableConfig.arbitrator) != address(0)
-            &&
-            (
-            _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
-                || _arbitrableConfig.arbitrator != arbitrableConfig.arbitrator
-                || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
-                || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
-                || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
-                || _arbitrableConfig.defaultRulingTimeout != arbitrableConfig.defaultRulingTimeout
-            )
+                && (
+                    _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
+                        || _arbitrableConfig.arbitrator != arbitrableConfig.arbitrator
+                        || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
+                        || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
+                        || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
+                        || _arbitrableConfig.defaultRulingTimeout != arbitrableConfig.defaultRulingTimeout
+                )
         ) {
             if (disputeCount != 0) {
                 revert ArbitrationConfigCannotBeChangedDuringDispute();
             }
-            
+
             _arbitrableConfig.arbitrator.registerSafe(_arbitrableConfig.tribunalSafe);
             emit TribunaSafeRegistered(
                 address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
@@ -1067,7 +1068,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             revert ProposalNotInList(proposalId);
         }
 
-        // Goss: Remove it to have access to this wen disputed or proposal closed (to see the chart)
+        // Goss: Remove it to have access to this when disputed or proposal closed (to see the chart)
         // if (proposal.proposalStatus != StrategyStruct.ProposalStatus.Active) {
         //     revert ProposalNotActive(proposalId);
         // }

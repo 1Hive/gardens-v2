@@ -12,6 +12,7 @@ import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
+import { EthAddress } from "../EthAddress";
 import { InfoBox } from "../InfoBox";
 import { Button } from "@/components/Button";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -107,6 +108,10 @@ const proposalInputMap: Record<string, number[]> = {
   convictionGrowth: [0, 1],
   isSybilResistanceRequired: [0, 1],
   passportThreshold: [0, 1],
+  defaultResolution: [0, 1],
+  proposalCollateral: [0, 1],
+  disputeCollateral: [0, 1],
+  tribunalAddress: [0, 1],
 };
 
 const shouldRenderInputMap = (key: string, value: number): boolean => {
@@ -175,16 +180,6 @@ export function PoolForm({ token, communityAddr }: Props) {
       label: "Strategy type:",
       parse: (value: string) => PoolTypes[value],
     },
-    defaultResolution: {
-      label: "Default resolution:",
-      parse: (value: string) => DisputeOutcome[value],
-    },
-    proposalCollateral: {
-      label: "Proposal collateral:",
-    },
-    challengeCollateral: {
-      label: "Dispute collateral:",
-    },
     pointSystemType: {
       label: "Voting Weight System:",
       parse: (value: string) => PointSystems[value],
@@ -205,6 +200,27 @@ export function PoolForm({ token, communityAddr }: Props) {
     passportThreshold: {
       label: "Passport score required:",
       parse: (value: number) => value,
+    },
+    defaultResolution: {
+      label: "Default resolution:",
+      parse: (value: string) =>
+        DisputeOutcome[value] == "approved" ? "Approve" : "Reject",
+    },
+    proposalCollateral: {
+      label: "Proposal collateral:",
+      parse: (value: string) =>
+        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+    },
+    disputeCollateral: {
+      label: "Dispute collateral:",
+      parse: (value: string) =>
+        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+    },
+    tribunalAddress: {
+      label: "Tribunal safe:",
+      parse: (value: string) => (
+        <EthAddress address={value as Address} icon={"ens"} />
+      ),
     },
   };
 
@@ -416,6 +432,10 @@ export function PoolForm({ token, communityAddr }: Props) {
       convictionGrowth: previewData.convictionGrowth,
       isSybilResistanceRequired: previewData.isSybilResistanceRequired,
       passportThreshold: previewData.passportThreshold,
+      defaultResolution: previewData.defaultResolution,
+      proposalCollateral: previewData.proposalCollateral,
+      disputeCollateral: previewData.disputeCollateral,
+      tribunalAddress: tribunalAddress,
     };
 
     Object.entries(reorderedData).forEach(([key, value]) => {
@@ -498,7 +518,7 @@ export function PoolForm({ token, communityAddr }: Props) {
 
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
-              <h3 className="my-4 text-xl">Proposal dispute resolution</h3>
+              <h3 className="my-4 text-xl">Arbitration settings</h3>
               <InfoBox
                 infoBoxType="info"
                 content={`The tribunal Safe, represented by trusted members, is
