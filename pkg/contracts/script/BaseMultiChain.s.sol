@@ -49,7 +49,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
     string public CURRENT_NETWORK = "arbsepolia";
     string public ETH_SEPOLIA = "sepolia";
 
-    address BENEFICIARY = 0xc583789751910E39Fd2Ddb988AD05567Bcd81334;
+    address public BENEFICIARY = 0xc583789751910E39Fd2Ddb988AD05567Bcd81334;
 
     uint256 councilMemberPKEnv;
     address allo_proxy;
@@ -94,6 +94,8 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         run(net);
     }
 
+    function runCurrentNetwork() public virtual;
+
     function run(string memory network) public {
         vm.startBroadcast(pool_admin());
 
@@ -106,7 +108,6 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         uint256 chainId = json.readUint(getKeyNetwork(".chainId"));
         string memory name = json.readString(getKeyNetwork(".name"));
         SENDER = json.readAddress(getKeyNetwork(".ENVS.SENDER"));
-        ERC1967Proxy proxy;
 
         console2.log("name: %s", name);
         console2.log("sender: %s", SENDER);
@@ -162,6 +163,8 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         // if (REGISTRY_FACTORY == address(0)) {
         //     REGISTRY_FACTORY = json.readAddress(getKeyNetwork(".ENVS.REGISTRY_FACTORY"));
         // }
+        ERC1967Proxy proxy;
+
         if (REGISTRY_FACTORY == address(0)) {
             // registryFactory = new RegistryFactoryV0_0();
             RegistryCommunityV0_0 comm = new RegistryCommunityV0_0();
