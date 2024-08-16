@@ -170,18 +170,16 @@ deploy-testnet-multi-arb-v0:
 	--legacy \
 	--via-ir \
 	-vvv \
-	--etherscan-api-key $(TENDERLY_ACCESS_TOKEN) \
-	--verify \
-	--verifier-url $(TENDERLY_VERIFIER_URL) \
-	--slow
+	# --etherscan-api-key $(ARBISCAN_API_KEY) \
+	# --verify \
+	# --slow
 
 verify-testnet-multi-arb-v0: 
 	-forge script script/DeployCVMultiChainV0_0.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--account pkGarden \
-	--etherscan-api-key $(TENDERLY_ACCESS_TOKEN) \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--verify \
-	--verifier-url $(TENDERLY_VERIFIER_URL) \
 	--slow
 
 deploy-verify: 

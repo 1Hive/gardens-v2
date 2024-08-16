@@ -219,9 +219,6 @@ contract RegistryCommunityV0_0 is
         address[] strategies;
     }
 
-    event Log(string message);
-    event Log(bytes message);
-
     function initialize(RegistryCommunityV0_0.InitializeParams memory params, address _collateralVaultTemplate)
         public
         initializer
@@ -262,17 +259,15 @@ contract RegistryCommunityV0_0 is
 
         address[] memory pool_initialMembers;
         // Support EOA as coucil safe
-        try councilSafe.getOwners() returns (address[] memory owners) {
+        if (address(councilSafe).code.length == 0) {
+            pool_initialMembers = new address[](3);
+            pool_initialMembers[0] = msg.sender;
+        } else {
+            address[] memory owners = councilSafe.getOwners();
             pool_initialMembers = new address[](owners.length + 2);
             for (uint256 i = 0; i < owners.length; i++) {
                 pool_initialMembers[i] = owners[i];
             }
-        } catch Error(string memory reason) {
-            pool_initialMembers = new address[](3);
-            pool_initialMembers[0] = msg.sender;
-            emit Log(reason);
-        } catch (bytes memory reason) {
-            emit Log(reason);
         }
 
         pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);
