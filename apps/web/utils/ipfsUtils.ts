@@ -1,18 +1,15 @@
 import { toast } from "react-toastify";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
-type MetadataV1 = {
-  title: string;
-  description: string;
-};
+const ipfsGateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "ipfs.io";
 
-const ipfsGateway =
-  process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "https://ipfs.io/ipfs/";
-
-export const ipfsJsonUpload = async (payload: object, toastId?: string) => {
-  const fetchPromise = fetch("/api/ipfs", {
+export const ipfsJsonUpload = async (
+  payload: string | object,
+  toastId?: string,
+) => {
+  const fetchPromise: Promise<string> = fetch("/api/ipfs", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: typeof payload === "string" ? payload : JSON.stringify(payload),
     headers: {
       "content-type": "application/json",
     },
@@ -68,22 +65,15 @@ export const ipfsFileUpload = async (selectedFile: File) => {
   }
 };
 
-export const getIpfsMetadata = async (ipfsHash: string) => {
-  let title = "No title found";
-  let description = "No description found";
-  try {
-    const rawProposalMetadata = await fetch(`${ipfsGateway}${ipfsHash}`, {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-      },
-    });
+export const fetchIpfs = async <TResult>(ipfsHash: string) => {
+  const ipfsUri = `https://${ipfsGateway}/ipfs/${ipfsHash}?${process.env.NEXT_PUBLIC_PINATA_KEY ? "pinataGatewayToken=" + process.env.NEXT_PUBLIC_PINATA_KEY : ""}`;
+  const ipfsResult = await fetch(ipfsUri, {
+    method: "GET",
+    headers: {
+      "content-type": "application/json",
+    },
+  });
 
-    const proposalMetadata: MetadataV1 = await rawProposalMetadata.json();
-    if (title) title = proposalMetadata?.title;
-    if (description) description = proposalMetadata?.description;
-  } catch (error) {
-    console.error(error);
-  }
-  return { title: title, description: description };
+  const proposalMetadata: TResult = await ipfsResult.json();
+  return proposalMetadata;
 };

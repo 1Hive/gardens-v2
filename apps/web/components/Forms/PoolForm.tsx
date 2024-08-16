@@ -4,31 +4,46 @@ import "viem/window";
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { Address, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
+import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
+import { EthAddress } from "../EthAddress";
+import { InfoBox } from "../InfoBox";
 import { Button } from "@/components/Button";
-import { chainDataMap } from "@/configs/chainServer";
-import { getConfigByChain } from "@/constants/contracts";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
-import { pointSystems, poolTypes } from "@/types";
+import { DisputeOutcome, PointSystems, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
-import { CV_PERCENTAGE_SCALE, CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
+import {
+  calculateDecay,
+  CV_PERCENTAGE_SCALE,
+  CV_SCALE_PRECISION,
+  ETH_DECIMALS,
+  MAX_RATIO_CONSTANT,
+} from "@/utils/numbers";
+import { capitalize } from "@/utils/text";
 
 type PoolSettings = {
   spendingLimit?: number;
   minimumConviction?: number;
   convictionGrowth?: number;
+};
+
+type ArbitrationSettings = {
+  defaultResolution: number;
+  proposalCollateral: number;
+  disputeCollateral: number;
+  tribunalAddress: string;
 };
 
 type FormInputs = {
@@ -38,30 +53,16 @@ type FormInputs = {
   pointSystemType: number;
   optionType?: number;
   maxAmount?: number;
-  minThresholdPoints: string;
+  minThresholdPoints: string | number;
   passportThreshold?: number;
   isSybilResistanceRequired: boolean;
-} & PoolSettings;
-
-type InitializeParams = [
-  Address,
-  bigint,
-  bigint,
-  bigint,
-  bigint,
-  number,
-  number,
-  [bigint],
-  Address,
-];
-type Metadata = [bigint, string];
-type CreatePoolParams = [Address, InitializeParams, Metadata];
+} & PoolSettings &
+  ArbitrationSettings;
 
 type Props = {
   communityAddr: Address;
   alloAddr: Address;
   token: TokenGarden;
-  chainId: number;
 };
 
 const poolSettingValues: Record<
@@ -94,8 +95,6 @@ const poolSettingValues: Record<
   },
 };
 
-// conditionally renders inputs for different pool types
-// 0: signaling, 1: funding, 2: streaming
 const proposalInputMap: Record<string, number[]> = {
   title: [0, 1, 2],
   description: [0, 1, 2],
@@ -109,23 +108,18 @@ const proposalInputMap: Record<string, number[]> = {
   convictionGrowth: [0, 1],
   isSybilResistanceRequired: [0, 1],
   passportThreshold: [0, 1],
+  defaultResolution: [0, 1],
+  proposalCollateral: [0, 1],
+  disputeCollateral: [0, 1],
+  tribunalAddress: [0, 1],
 };
 
-const renderInputMap = (key: string, value: number): boolean => {
+const shouldRenderInputMap = (key: string, value: number): boolean => {
   return proposalInputMap[key]?.includes(Number(value)) ?? false;
 };
 
-function calculateDecay(blockTime: number, convictionGrowth: number) {
-  const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
-
-  const result = Math.floor(
-    Math.pow(10, 7) * Math.pow(1 / 2, blockTime / halfLifeInSeconds),
-  );
-
-  return result;
-}
-
-export function PoolForm({ token, communityAddr, chainId }: Props) {
+export function PoolForm({ token, communityAddr }: Props) {
+  const chain = useChainFromPath()!;
   const {
     register,
     handleSubmit,
@@ -137,20 +131,31 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     defaultValues: {
       strategyType: 1,
       pointSystemType: 0,
+      defaultResolution: 1,
+      minThresholdPoints: 0,
+      proposalCollateral: +(
+        process.env.NEXT_PUBLIC_DEFAULT_PROPOSAL_COLLATERAL! || 0.002
+      ),
+      disputeCollateral: +(
+        process.env.NEXT_PUBLIC_DEFAULT_DISPUTE_COLLATERAL! || 0.001
+      ),
     },
   });
+  const isSybilResistanceRequired = watch("isSybilResistanceRequired");
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token?.decimals;
-  const INPUT_MIN_THRESHOLD_MIN_VALUE = 0;
+  const INPUT_MIN_THRESHOLD_VALUE = 0;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [optionType, setOptionType] = useState(1);
+  const [tribunalAddress, setTribunalAddress] = useState(
+    chain.globalTribunal ?? "",
+  );
   const [loading, setLoading] = useState(false);
-  const { publish } = usePubSubContext();
   const router = useRouter();
   const pathname = usePathname();
+  const { publish } = usePubSubContext();
 
-  const isSybilResistanceRequired = watch("isSybilResistanceRequired");
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
@@ -173,11 +178,11 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     },
     strategyType: {
       label: "Strategy type:",
-      parse: (value: string) => poolTypes[value],
+      parse: (value: string) => PoolTypes[value],
     },
     pointSystemType: {
       label: "Voting Weight System:",
-      parse: (value: string) => pointSystems[value],
+      parse: (value: string) => PointSystems[value],
     },
     maxAmount: {
       label: "Token max amount:",
@@ -185,8 +190,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     minThresholdPoints: {
       label: "Minimum threshold points:",
       parse: (value: string) => {
-        // check if string is empty or undefined with ||
-        return value || "0";
+        return value ?? "0";
       },
     },
     isSybilResistanceRequired: {
@@ -196,6 +200,27 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     passportThreshold: {
       label: "Passport score required:",
       parse: (value: number) => value,
+    },
+    defaultResolution: {
+      label: "Default resolution:",
+      parse: (value: string) =>
+        DisputeOutcome[value] == "approved" ? "Approve" : "Reject",
+    },
+    proposalCollateral: {
+      label: "Proposal collateral:",
+      parse: (value: string) =>
+        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+    },
+    disputeCollateral: {
+      label: "Dispute collateral:",
+      parse: (value: string) =>
+        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+    },
+    tribunalAddress: {
+      label: "Tribunal safe:",
+      parse: (value: string) => (
+        <EthAddress address={value as Address} icon={"ens"} />
+      ),
     },
   };
 
@@ -236,74 +261,110 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
     const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
     const weightNum = minimumConviction * maxRatioNum ** 2;
 
-    const blockTime = chainDataMap[chainId].blockTime;
+    const blockTime = chain.blockTime;
     // pool settings
+
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));
     const weight = BigInt(Math.round(weightNum * CV_SCALE_PRECISION));
-    const decay = BigInt(
-      Math.round(calculateDecay(blockTime, convictionGrowth)),
-    );
+    const decay = BigInt(calculateDecay(blockTime, convictionGrowth));
 
     const minThresholdPoints = parseUnits(
       (previewData?.minThresholdPoints ?? 0).toString(),
       token?.decimals,
     );
 
-    const metadata: Metadata = [BigInt(1), ipfsHash];
-
     const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
-    const passportScorerAddr = getConfigByChain(chainId)?.passportScorer ?? "0x";
 
-    const params: InitializeParams = [
-      communityAddr as Address,
-      decay,
-      maxRatio,
-      weight,
-      minThresholdPoints,
-      previewData?.strategyType as number, // proposalType
-      previewData?.pointSystemType as number, // pointSystem
-      [parseUnits(maxAmountStr, token?.decimals)], // pointConfig
-      passportScorerAddr,
-    ];
+    if (!previewData) {
+      throw new Error("No preview data");
+    }
 
-    const args: CreatePoolParams = [token?.id as Address, params, metadata];
-    console.debug(args);
-    write({ args: args });
+    writeCreatePool({
+      args: [
+        token?.id as Address,
+        {
+          cvParams: {
+            decay: decay,
+            maxRatio: maxRatio,
+            weight: weight,
+            minThresholdPoints: minThresholdPoints,
+          },
+          arbitrableConfig: {
+            defaultRuling: BigInt(previewData.defaultResolution),
+            defaultRulingTimeout: BigInt(
+              process.env.NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT ?? 300,
+            ),
+            submitterCollateralAmount: parseUnits(
+              previewData.proposalCollateral.toString(),
+              ETH_DECIMALS,
+            ),
+            challengerCollateralAmount: parseUnits(
+              previewData.disputeCollateral.toString(),
+              ETH_DECIMALS,
+            ),
+            tribunalSafe: tribunalAddress as Address,
+            arbitrator: chain.arbitrator as Address,
+          },
+          pointConfig: { maxAmount: parseUnits(maxAmountStr, token?.decimals) },
+          pointSystem: previewData.pointSystemType,
+          proposalType: previewData.strategyType,
+          registryCommunity: communityAddr,
+          sybilScorer: chain.passportScorer as Address,
+        },
+        {
+          protocol: 1n,
+          pointer: ipfsHash,
+        },
+      ],
+    });
   };
 
-  const { write } = useContractWriteWithConfirmations({
+  const { write: writeCreatePool } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool. Please ty again.",
     onConfirmations: (receipt) => {
-      const newPoolData = getEventFromReceipt(receipt, "RegistryCommunity", "PoolCreated").args;
+      const newPoolData = getEventFromReceipt(
+        receipt,
+        "RegistryCommunity",
+        "PoolCreated",
+      ).args;
       publish({
         topic: "pool",
         function: "createPool",
         type: "add",
         id: newPoolData._poolId.toString(), // Never propagate direct bigint outside of javascript environment
         containerId: communityAddr,
-        chainId: chainId,
+        chainId: chain.id,
       });
       if (isSybilResistanceRequired) {
         addStrategy(newPoolData);
       } else {
         setLoading(false);
       }
+      router.push(
+        pathname?.replace(
+          "/create-pool",
+          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId}`,
+        ),
+      );
     },
-    onError: () =>
-      toast.error("Something went wrong creating a pool, check logs"),
   });
 
-  const addStrategy = async (newPoolData: ReturnType<typeof getEventFromReceipt<"RegistryCommunity", "PoolCreated">>["args"]) => {
+  const addStrategy = async (
+    newPoolData: ReturnType<
+      typeof getEventFromReceipt<"RegistryCommunity", "PoolCreated">
+    >["args"],
+  ) => {
     try {
       const res = await fetch("/api/passport-oracle/addStrategy", {
         method: "POST",
         body: JSON.stringify({
           strategy: newPoolData._strategy,
-          threshold: (previewData?.passportThreshold ?? 0) * CV_PERCENTAGE_SCALE,
+          threshold:
+            (previewData?.passportThreshold ?? 0) * CV_PERCENTAGE_SCALE,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -311,7 +372,12 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
       });
       console.debug(res);
       setLoading(false);
-      router.push(pathname?.replace("/create-pool", `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId.toString()}`));
+      router.push(
+        pathname?.replace(
+          "/create-pool",
+          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId.toString()}`,
+        ),
+      );
     } catch (error) {
       console.error(error);
       setLoading(false);
@@ -366,11 +432,14 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
       convictionGrowth: previewData.convictionGrowth,
       isSybilResistanceRequired: previewData.isSybilResistanceRequired,
       passportThreshold: previewData.passportThreshold,
+      defaultResolution: previewData.defaultResolution,
+      proposalCollateral: previewData.proposalCollateral,
+      disputeCollateral: previewData.disputeCollateral,
+      tribunalAddress: tribunalAddress,
     };
 
     Object.entries(reorderedData).forEach(([key, value]) => {
       const formRow = formRowTypes[key];
-
       if (formRow && shouldRenderInPreview(key)) {
         const parsedValue = formRow.parse ? formRow.parse(value) : value;
         formattedRows.push({
@@ -388,14 +457,14 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
   const shouldRenderInPreview = (key: string) => {
     if (key === "passportThreshold") {
       return previewData?.isSybilResistanceRequired;
-    } else if (key === "maxAmount" ) {
-      if ( previewData?.pointSystemType) {
-        return pointSystems[previewData?.pointSystemType] === "capped";
+    } else if (key === "maxAmount") {
+      if (previewData?.pointSystemType) {
+        return PointSystems[previewData?.pointSystemType] === "capped";
       } else {
         return false;
       }
     } else {
-      return renderInputMap(key, strategyType);
+      return shouldRenderInputMap(key, strategyType);
     }
   };
 
@@ -438,10 +507,101 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               register={register}
               errors={errors}
               registerKey="strategyType"
-              options={Object.entries(poolTypes)
+              options={Object.entries(PoolTypes)
                 .slice(0, -1)
-                .map(([value, text]) => ({ label: text, value: value }))}
+                .map(([value, text]) => ({
+                  label: capitalize(text),
+                  value: value,
+                }))}
             />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <h3 className="my-4 text-xl">Arbitration settings</h3>
+              <InfoBox
+                infoBoxType="info"
+                content={`The tribunal Safe, represented by trusted members, is
+                responsible for resolving proposal disputes. The global tribunal
+                Safe is a shared option featuring trusted members of the Gardens
+                community. Its use is recommended for objective dispute
+                resolution.`}
+              />
+            </div>
+            <div className="flex gap-4 mt-2">
+              <FormRadioButton
+                label="Global gardens tribunal"
+                checked={
+                  tribunalAddress.toLowerCase() ===
+                  chain.globalTribunal?.toLowerCase()
+                }
+                onChange={() => setTribunalAddress(chain.globalTribunal ?? "")}
+                registerKey="tribunalOption"
+                value="global"
+              />
+              <FormRadioButton
+                label="Custom tribunal"
+                checked={
+                  tribunalAddress.toLowerCase() !==
+                  chain.globalTribunal?.toLowerCase()
+                }
+                onChange={() => {
+                  setTribunalAddress((oldAddress) =>
+                    chain.globalTribunal ? "" : oldAddress,
+                  );
+                  document.getElementById("tribunalAddress")?.focus();
+                }}
+                registerKey="tribunalOption"
+                value="custom"
+              />
+            </div>
+            <FormAddressInput
+              label="Tribunal address"
+              registerKey="tribunalAddress"
+              onChange={(newValue) => setTribunalAddress(newValue)}
+              value={tribunalAddress}
+            />
+            <div className="flex flex-col">
+              <FormSelect
+                tooltip="The default resolution will be applied in the case of abstained or dispute ruling timeout."
+                label="Default resolution"
+                options={Object.entries(DisputeOutcome)
+                  .slice(1)
+                  .map(([value, text]) => ({
+                    label: capitalize(text),
+                    value: value,
+                  }))}
+                registerKey="defaultResolution"
+                register={register}
+                errors={undefined}
+              />
+            </div>
+            <div className="flex gap-4 max-w-md">
+              <FormInput
+                tooltip="Proposal submission stake. Locked until proposal is resolved, can be forfeited if disputed."
+                type="number"
+                label={`Proposal collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
+                register={register}
+                registerKey="proposalCollateral"
+                required
+                otherProps={{
+                  step: 1 / 10 ** ETH_DECIMALS,
+                  min: 1 / 10 ** ETH_DECIMALS,
+                }}
+              />
+              <FormInput
+                tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
+                type="number"
+                label={`Dispute collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
+                register={register}
+                registerKey="disputeCollateral"
+                required
+                otherProps={{
+                  step: 1 / 10 ** ETH_DECIMALS,
+                  min: 1 / 10 ** ETH_DECIMALS,
+                }}
+              />
+            </div>
           </div>
           <div className="flex flex-col">
             <h4 className="my-4 text-xl">Select pool settings</h4>
@@ -464,7 +624,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               )}
             </div>
             <div className="mb-6 mt-2 flex flex-col">
-              {renderInputMap("spendingLimit", strategyType) && (
+              {shouldRenderInputMap("spendingLimit", strategyType) && (
                 <div className="flex max-w-64 flex-col">
                   <FormInput
                     label="Spending limit"
@@ -495,7 +655,7 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
                   </FormInput>
                 </div>
               )}
-              {renderInputMap("minimumConviction", strategyType) && (
+              {shouldRenderInputMap("minimumConviction", strategyType) && (
                 <div className="flex max-w-64 flex-col">
                   <FormInput
                     label="Minimum conviction"
@@ -559,20 +719,21 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               </div>
             </div>
           </div>
-          {renderInputMap("minThresholdPoints", strategyType) && (
+          {shouldRenderInputMap("minThresholdPoints", strategyType) && (
             <div className="flex flex-col">
               <FormInput
                 label="Minimum threshold points"
                 register={register}
                 registerOptions={{
                   min: {
-                    value: INPUT_MIN_THRESHOLD_MIN_VALUE,
-                    message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_MIN_VALUE}`,
+                    value: INPUT_MIN_THRESHOLD_VALUE,
+                    message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_VALUE}`,
                   },
                 }}
+                required
                 otherProps={{
                   step: INPUT_TOKEN_MIN_VALUE,
-                  min: INPUT_MIN_THRESHOLD_MIN_VALUE,
+                  min: INPUT_MIN_THRESHOLD_VALUE,
                 }}
                 errors={errors}
                 registerKey="minThresholdPoints"
@@ -588,13 +749,13 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               register={register}
               errors={errors}
               registerKey="pointSystemType"
-              options={Object.entries(pointSystems).map(([value, text]) => ({
+              options={Object.entries(PointSystems).map(([value, text]) => ({
                 label: text,
                 value: value,
               }))}
             />
           </div>
-          {pointSystems[pointSystemType] === "capped" && (
+          {pointSystemType == 1 && (
             <div className="flex flex-col">
               <FormInput
                 label="Token max amount"
@@ -622,37 +783,38 @@ export function PoolForm({ token, communityAddr, chainId }: Props) {
               </FormInput>
             </div>
           )}
-          {renderInputMap("isSybilResistanceRequired", strategyType) && <div className="flex flex-col">
-            <FormCheckBox
-              label="Add sybil resistance with Gitcoin Passport"
-              register={register}
-              errors={errors}
-              registerKey="isSybilResistanceRequired"
-              type="checkbox"
-            />
-            {isSybilResistanceRequired &&
-            <FormInput
-              label="Gitcoin Passport score required"
-              register={register}
-              required
-              registerOptions={{
-                min: {
-                  value: 1 / CV_PERCENTAGE_SCALE,
-                  message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
-                },
-              }}
-              otherProps={{
-                step: 1 / CV_PERCENTAGE_SCALE,
-                min: 1 / CV_PERCENTAGE_SCALE,
-              }}
-              errors={errors}
-              registerKey="passportThreshold"
-              type="number"
-              placeholder="0"
-            />
-            }
-          </div>
-          }
+          {shouldRenderInputMap("isSybilResistanceRequired", strategyType) && (
+            <div className="flex flex-col">
+              <FormCheckBox
+                label="Add sybil resistance with Gitcoin Passport"
+                register={register}
+                errors={errors}
+                registerKey="isSybilResistanceRequired"
+                type="checkbox"
+              />
+              {isSybilResistanceRequired && (
+                <FormInput
+                  label="Gitcoin Passport score required"
+                  register={register}
+                  required
+                  registerOptions={{
+                    min: {
+                      value: 1 / CV_PERCENTAGE_SCALE,
+                      message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                    },
+                  }}
+                  otherProps={{
+                    step: 1 / CV_PERCENTAGE_SCALE,
+                    min: 1 / CV_PERCENTAGE_SCALE,
+                  }}
+                  errors={errors}
+                  registerKey="passportThreshold"
+                  type="number"
+                  placeholder="0"
+                />
+              )}
+            </div>
+          )}
         </div>
       }
       <div className="flex w-full items-center justify-center py-6">

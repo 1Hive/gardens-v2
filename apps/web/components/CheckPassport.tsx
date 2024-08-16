@@ -221,7 +221,11 @@ export function CheckPassport({
         {children}
       </div>
 
-      <Modal title="Gitcoin passport" isOpen={isOpenModal}>
+      <Modal
+        title="Gitcoin passport"
+        isOpen={isOpenModal}
+        onClose={() => setIsOpenModal(false)}
+      >
         <div className="flex flex-col gap-8">
           <div>
             <p>

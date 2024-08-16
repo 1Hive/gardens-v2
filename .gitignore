@@ -54,3 +54,4 @@ lcov.info
 # pkg/contracts/out/**
 # !pkg/contracts/out/CVStrategy.sol/CVStrategy.json
 # pkg/contracts/out
+pkg/contracts/script/Playground.s.sol

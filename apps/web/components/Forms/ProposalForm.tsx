@@ -4,15 +4,16 @@ import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
-import { Allo, TokenGarden } from "#/subgraph/.graphclient";
+import { Allo, CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
+import { WalletBalance } from "../WalletBalance";
 import { Button } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { alloABI } from "@/src/generated";
-import { poolTypes } from "@/types";
+import { PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -27,6 +28,11 @@ type FormInputs = {
 };
 
 type ProposalFormProps = {
+  strategy: Pick<CVStrategy, "id"> & {
+    config: {
+      submitterCollateralAmount: bigint;
+    };
+  };
   poolId: number;
   proposalType: number;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
@@ -65,6 +71,9 @@ const abiParameters = [
 const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
 function formatNumber(num: string | number): string {
+  if (num == 0) {
+    return "0";
+  }
   // Convert to number if it's a string
   const number = typeof num === "string" ? parseFloat(num) : num;
 
@@ -96,6 +105,7 @@ function formatNumber(num: string | number): string {
 }
 
 export const ProposalForm = ({
+  strategy,
   poolId,
   proposalType,
   alloInfo,
@@ -134,6 +144,7 @@ export const ProposalForm = ({
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
+  const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const tokenSymbol = tokenGarden.symbol || "";
@@ -150,7 +161,9 @@ export const ProposalForm = ({
     6,
   );
 
-  const proposalTypeName = poolTypes[proposalType];
+  const proposalTypeName = PoolTypes[proposalType];
+
+  const arbitrationConfig = strategy.config;
 
   const createProposal = async () => {
     setLoading(true);
@@ -165,7 +178,8 @@ export const ProposalForm = ({
         throw new Error("No preview data");
       }
       const encodedData = getEncodeData(ipfsHash);
-      write({ args: [poolId, encodedData] });
+
+      write({ args: [BigInt(poolId), encodedData] });
     }
     setLoading(false);
   };
@@ -181,6 +195,7 @@ export const ProposalForm = ({
     contractName: "Allo",
     functionName: "registerRecipient",
     fallbackErrorMessage: "Error creating Proposal. Please try again.",
+    value: arbitrationConfig.submitterCollateralAmount,
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(
         receipt,
@@ -366,7 +381,18 @@ export const ProposalForm = ({
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-center py-6">
+      <div className="flex w-full items-center justify-between py-6">
+        <div>
+          {arbitrationConfig && (
+            <WalletBalance
+              askedAmount={arbitrationConfig.submitterCollateralAmount}
+              label="Proposal stake"
+              setIsEnoughBalance={setIsEnoughBalance}
+              token="native"
+              tooltip="A stake is required for proposal submission. It will be refunded upon proposal execution or cancellation, except in the case of disputes, where it is forfeited."
+            />
+          )}
+        </div>
         {showPreview ?
           <div className="flex items-center gap-10">
             <Button
@@ -378,7 +404,12 @@ export const ProposalForm = ({
             >
               Edit
             </Button>
-            <Button onClick={() => createProposal()} isLoading={loading}>
+            <Button
+              onClick={() => createProposal()}
+              isLoading={loading}
+              disabled={!isEnoughBalance}
+              tooltip={isEnoughBalance ? "" : "Insufficient balance"}
+            >
               Submit
             </Button>
           </div>

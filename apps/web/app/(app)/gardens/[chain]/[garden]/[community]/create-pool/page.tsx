@@ -12,9 +12,9 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export default function Page({
-  params: { chain, garden, community },
+  params: { garden, community },
 }: {
-  params: { chain: number; garden: string; community: string };
+  params: { garden: string; community: string };
 }) {
   const { data: result } = useSubgraphQuery<getPoolCreationDataQuery>({
     query: getPoolCreationDataDocument,
@@ -36,7 +36,6 @@ export default function Page({
             alloAddr={alloAddr}
             token={token as TokenGarden}
             communityAddr={community as Address}
-            chainId={chain}
           />
         </section>
       </div>

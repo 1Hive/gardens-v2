@@ -15,7 +15,7 @@ import {
   registryCommunityABI,
   cvStrategyABI,
 } from "@/src/generated";
-import { getViemChain } from "@/utils/viem";
+import { getViemChain } from "@/utils/web3";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
 

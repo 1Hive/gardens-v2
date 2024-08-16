@@ -26,8 +26,6 @@ export function abiWithErrors(abi: Abi) {
   return [...abi, ...errorsABI];
 }
 
-export function abiWithErrors2<Tabi extends Abi>(
-  abi: Tabi,
-) {
-  return [...abi, ...errorsABI] as Tabi & typeof errorsABI;
+export function abiWithErrors2<Tabi extends Abi>(abi: Tabi) {
+  return [...abi, ...errorsABI];
 }

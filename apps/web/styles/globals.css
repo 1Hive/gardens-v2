@@ -173,8 +173,8 @@ caption {
 }
 
 .tooltip {
- --tooltip-color: #1F2937;
- --tooltip-text-color: #ffffff;
+  --tooltip-color: #1f2937;
+  --tooltip-text-color: #ffffff;
 }
 
 .tooltip:before {
@@ -211,5 +211,14 @@ caption {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Adreth */
+.icon-only img {
+  width: 2rem;
+  height: 2rem;
+  & + span {
+    display: none;
   }
 }

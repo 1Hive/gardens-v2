@@ -29,8 +29,12 @@ export default function RootLayout({
       className={`${inter.variable} ${chakra.variable} bg-primary`}
     >
       <body className="min-h-screen bg-primary font-chakra">
-        <Providers>{children}</Providers>
+        <div id="modal-root" />
+        <Providers>
+          <>{children}</>
+        </Providers>
         <ToastContainer
+          style={{ zIndex: 1000 }}
           position="top-right"
           autoClose={5000}
           hideProgressBar={false}

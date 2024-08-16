@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import "forge-std/console.sol";
-
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
@@ -19,8 +17,8 @@ import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {FAllo} from "./interfaces/FAllo.sol";
 import {ISafe} from "./interfaces/ISafe.sol";
-import {RegistryFactory} from "./RegistryFactory.sol";
-import {IPointStrategy, StrategyStruct, CVStrategyV0_0} from "./CVStrategyV0_0.sol";
+import {IRegistryFactory} from "./IRegistryFactory.sol";
+import {CVStrategyV0_0, StrategyStruct, IPointStrategy} from "./CVStrategyV0_0.sol";
 
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
@@ -32,9 +30,75 @@ contract RegistryCommunityV0_0 is
     ReentrancyGuardUpgradeable,
     AccessControlUpgradeable
 {
+    /*|--------------------------------------------|*/
+    /*|                 EVENTS                     |*/
+    /*|--------------------------------------------|*/
+
+    event AlloSet(address _allo);
+    event CouncilSafeSet(address _safe);
+    event CouncilSafeChangeStarted(address _safeOwner, address _newSafeOwner);
+    event MemberRegistered(address _member, uint256 _amountStaked);
+    event MemberUnregistered(address _member, uint256 _amountReturned);
+    event MemberKicked(address _member, address _transferAddress, uint256 _amountReturned);
+    event CommunityFeeUpdated(uint256 _newFee);
+    event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
+    event StrategyAdded(address _strategy);
+    event StrategyRemoved(address _strategy);
+    event MemberActivatedStrategy(address _member, address _strategy, uint256 _pointsToIncrease);
+    event MemberDeactivatedStrategy(address _member, address _strategy);
+    event BasisStakedAmountSet(uint256 _newAmount);
+    event MemberPowerIncreased(address _member, uint256 _stakedAmount);
+    event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
+    event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
+
+    /*|--------------------------------------------|*/
+    /*|              CUSTOM ERRORS                 |*/
+    /*|--------------------------------------------|*/
+
+    error AddressCannotBeZero();
+    error RegistryCannotBeZero();
+    error UserNotInCouncil(address _user);
+    error UserNotInRegistry();
+    error UserAlreadyRegistered();
+    error UserNotGardenOwner();
+    error UserAlreadyActivated();
+    error UserAlreadyDeactivated();
+    error StrategyExists();
+    error StrategyDisabled();
+    error SenderNotNewOwner();
+    error SenderNotStrategy();
+    error ValueCannotBeZero();
+    error NewFeeGreaterThanMax();
+    error KickNotEnabled();
+    error PointsDeactivated();
+    error DecreaseUnderMinimum();
+    error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower);
+
+    /*|--------------------------------------------|*/
+    /*|              STRUCTS/ENUMS                 |*/
+    /*|--------------------------------------------|*/
+
+    struct InitializeParams {
+        address _allo;
+        IERC20 _gardenToken;
+        uint256 _registerStakeAmount;
+        uint256 _communityFee;
+        uint256 _nonce;
+        address _registryFactory;
+        address _feeReceiver;
+        Metadata _metadata;
+        address payable _councilSafe;
+        string _communityName;
+        bool _isKickEnabled;
+        string covenantIpfsHash;
+        address _strategyTemplate; // Can be altered to be scam strategy, out of scope for now
+    }
+
     using ERC165Checker for address;
     using SafeERC20 for IERC20;
     using Clone for address;
+
+    address private collateralVaultTemplate;
 
     /// @notice The native address to represent native token eg: ETH in mainnet
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -42,16 +106,16 @@ contract RegistryCommunityV0_0 is
     uint256 public constant PRECISION_SCALE = 10 ** 4;
     /// @notice The maximum fee that can be charged to the community
     uint256 public constant MAX_FEE = 10 * PRECISION_SCALE;
-
-    /// @notice Enable or disable the kick feature
-    bool public isKickEnabled;
-
     /// @notice The amount of tokens required to register a member
     uint256 public registerStakeAmount;
     /// @notice The fee charged to the community for each registration
     uint256 public communityFee;
+    /// @notice The nonce used to create new strategy clones
+    uint256 public cloneNonce;
     /// @notice The profileId of the community in the Allo Registry
     bytes32 public profileId;
+    /// @notice Enable or disable the kick feature
+    bool public isKickEnabled;
 
     /// @notice The address that receives the community fee
     address public feeReceiver;
@@ -59,8 +123,6 @@ contract RegistryCommunityV0_0 is
     address public registryFactory;
     /// @notice The address of the strategy template
     address public strategyTemplate;
-    /// @notice The nonce used to create new strategy clones
-    uint256 public cloneNonce;
     /// @notice The address of the pending council safe owner
     address payable public pendingCouncilSafe;
 
@@ -101,32 +163,12 @@ contract RegistryCommunityV0_0 is
     bytes32 public constant COUNCIL_MEMBER = keccak256("COUNCIL_MEMBER");
 
     /*|--------------------------------------------|*/
-    /*|                 EVENTS                     |*/
-    /*|--------------------------------------------|*/
-
-    event AlloSet(address _allo);
-    event CouncilSafeSet(address _safe);
-    event CouncilSafeChangeStarted(address _safeOwner, address _newSafeOwner);
-    event MemberRegistered(address _member, uint256 _amountStaked);
-    event MemberUnregistered(address _member, uint256 _amountReturned);
-    event MemberKicked(address _member, address _transferAddress, uint256 _amountReturned);
-    event CommunityFeeUpdated(uint256 _newFee);
-    event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
-    event StrategyAdded(address _strategy);
-    event StrategyRemoved(address _strategy);
-    event MemberActivatedStrategy(address _member, address _strategy, uint256 _pointsToIncrease);
-    event MemberDeactivatedStrategy(address _member, address _strategy);
-    event BasisStakedAmountSet(uint256 _newAmount);
-    event MemberPowerIncreased(address _member, uint256 _stakedAmount);
-    event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
-    event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata);
-    /*|--------------------------------------------|*/
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
 
     function onlyCouncilSafe() private view {
         if (!hasRole(COUNCIL_MEMBER, msg.sender)) {
-            revert UserNotInCouncil();
+            revert UserNotInCouncil(msg.sender);
         }
     }
 
@@ -160,28 +202,9 @@ contract RegistryCommunityV0_0 is
         }
     }
 
-    /*|--------------------------------------------|*/
-    /*|              CUSTOM ERRORS                 |*/
-    /*|--------------------------------------------|*/
-
-    error AddressCannotBeZero();
-    error RegistryCannotBeZero();
-    error UserNotInCouncil();
-    error UserNotInRegistry();
-    error UserAlreadyRegistered();
-    error UserNotGardenOwner();
-    error UserAlreadyActivated();
-    error UserAlreadyDeactivated();
-    error StrategyExists();
-    error StrategyDisabled();
-    error SenderNotNewOwner();
-    error SenderNotStrategy();
-    error ValueCannotBeZero();
-    error NewFeeGreaterThanMax();
-    error KickNotEnabled();
-    error PointsDeactivated();
-    error DecreaseUnderMinimum();
-    error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower);
+    function _revertZeroAddress(address _address) internal pure {
+        if (_address == address(0)) revert AddressCannotBeZero();
+    }
 
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -196,37 +219,10 @@ contract RegistryCommunityV0_0 is
         address[] strategies;
     }
 
-    /// @notice Initialize the contract with the required parameters
-    /// @param _allo The Allo contract address
-    /// @param _gardenToken The token used to stake in the community
-    /// @param _registerStakeAmount The amount of tokens required to register a member
-    /// @param _communityFee The fee charged to the community for each registration
-    /// @param _nonce The nonce used to create new profiles in the Allo Registry
-    /// @param _registryFactory The address of the registry factory
-    /// @param _feeReceiver The address that receives the community fee
-    /// @param _metadata The covenant IPFS hash of community
-    /// @param _councilSafe The council safe contract address
-    /// @param _communityName The community name
-    /// @param _isKickEnabled Enable or disable the kick feature
-    /// @param covenantIpfsHash The covenant IPFS hash of community
-    /// @param _strategyTemplate The address of the strategy template
-    struct InitializeParams {
-        address _allo;
-        IERC20 _gardenToken;
-        uint256 _registerStakeAmount;
-        uint256 _communityFee;
-        uint256 _nonce;
-        address _registryFactory;
-        address _feeReceiver;
-        Metadata _metadata;
-        address payable _councilSafe;
-        string _communityName;
-        bool _isKickEnabled;
-        string covenantIpfsHash;
-        address _strategyTemplate;
-    }
-
-    function initialize(RegistryCommunityV0_0.InitializeParams memory params) public initializer {
+    function initialize(RegistryCommunityV0_0.InitializeParams memory params, address _collateralVaultTemplate)
+        public
+        initializer
+    {
         __Ownable_init();
         __ReentrancyGuard_init();
         __AccessControl_init();
@@ -261,11 +257,17 @@ contract RegistryCommunityV0_0 is
 
         registry = IRegistry(allo.getRegistry());
 
-        address[] memory owners = councilSafe.getOwners();
-        address[] memory pool_initialMembers = new address[](owners.length + 2);
-
-        for (uint256 i = 0; i < owners.length; i++) {
-            pool_initialMembers[i] = owners[i];
+        address[] memory pool_initialMembers;
+        // Support EOA as coucil safe
+        if (address(councilSafe).code.length == 0) {
+            pool_initialMembers = new address[](3);
+            pool_initialMembers[0] = msg.sender;
+        } else {
+            address[] memory owners = councilSafe.getOwners();
+            pool_initialMembers = new address[](owners.length + 2);
+            for (uint256 i = 0; i < owners.length; i++) {
+                pool_initialMembers[i] = owners[i];
+            }
         }
 
         pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);
@@ -277,6 +279,8 @@ contract RegistryCommunityV0_0 is
 
         initialMembers = pool_initialMembers;
 
+        collateralVaultTemplate = _collateralVaultTemplate;
+
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
@@ -284,11 +288,10 @@ contract RegistryCommunityV0_0 is
         public
         returns (uint256 poolId, address strategy)
     {
-        // address strategyClone = Clone.createClone(strategyTemplate, cloneNonce++);
-        // address strategyClone = address(new CVStrategyV0_0());
         address strategyProxy = address(
             new ERC1967Proxy(
-                address(new CVStrategyV0_0()), abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo))
+                address(strategyTemplate),
+                abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate)
             )
         );
 
@@ -384,7 +387,7 @@ contract RegistryCommunityV0_0 is
             pointsToIncrease = IPointStrategy(memberStrategies[i]).increasePower(member, _amountStaked);
             if (pointsToIncrease != 0) {
                 memberPowerInStrategy[member][memberStrategies[i]] += pointsToIncrease;
-                console.log("Strategy power", memberPowerInStrategy[member][memberStrategies[i]]);
+                // console.log("Strategy power", memberPowerInStrategy[member][memberStrategies[i]]);
             }
             //}
         }
@@ -395,9 +398,9 @@ contract RegistryCommunityV0_0 is
     }
 
     /*
-    * @notice Decrease the power of a member in a strategy
-    * @param _amountUnstaked The amount of tokens to unstake
-    */
+     * @notice Decrease the power of a member in a strategy
+     * @param _amountUnstaked The amount of tokens to unstake
+     */
     function decreasePower(uint256 _amountUnstaked) public nonReentrant {
         onlyRegistryMemberSender();
         address member = msg.sender;
@@ -439,9 +442,6 @@ contract RegistryCommunityV0_0 is
         return addressToMemberInfo[_member].stakedAmount;
     }
 
-    // function getGardenTokenDecimals() public view returns (uint256){
-    //     return gardenToken.decimals();
-    // }
     function addStrategyByPoolId(uint256 poolId) public {
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
@@ -462,10 +462,6 @@ contract RegistryCommunityV0_0 is
         }
         enabledStrategies[_newStrategy] = true;
         emit StrategyAdded(_newStrategy);
-    }
-
-    function _revertZeroAddress(address _address) internal pure {
-        if (_address == address(0)) revert AddressCannotBeZero();
     }
 
     function removeStrategyByPoolId(uint256 poolId) public {
@@ -514,7 +510,7 @@ contract RegistryCommunityV0_0 is
     function stakeAndRegisterMember() public nonReentrant {
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
-        RegistryFactory gardensFactory = RegistryFactory(registryFactory);
+        IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
         uint256 gardensFeeAmount =
             (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
@@ -523,7 +519,7 @@ contract RegistryCommunityV0_0 is
 
             newMember.stakedAmount = registerStakeAmount;
             // console.log("registerStakeAmount", registerStakeAmount);
-            console.log("gardenToken", address(gardenToken));
+            // console.log("gardenToken", address(gardenToken));
 
             gardenToken.safeTransferFrom(
                 _member, address(this), registerStakeAmount + communityFeeAmount + gardensFeeAmount
@@ -532,14 +528,14 @@ contract RegistryCommunityV0_0 is
             //individually. Check vulnerabilites for that with Felipe
             // gardenToken.approve(feeReceiver,communityFeeAmount);
             //Error: ProtocolFee is equal to zero
-            console.log("communityFeeAmount", communityFeeAmount);
+            // console.log("communityFeeAmount", communityFeeAmount);
             if (communityFeeAmount > 0) {
-                console.log("feeReceiver", feeReceiver);
+                // console.log("feeReceiver", feeReceiver);
                 gardenToken.safeTransfer(feeReceiver, communityFeeAmount);
             }
-            console.log("gardensFeeAmount", gardensFeeAmount);
+            // console.log("gardensFeeAmount", gardensFeeAmount);
             if (gardensFeeAmount > 0) {
-                console.log("gardensFactory.getGardensFeeReceiver()", gardensFactory.getGardensFeeReceiver());
+                // console.log("gardensFactory.getGardensFeeReceiver()", gardensFactory.getGardensFeeReceiver());
                 gardenToken.safeTransfer(gardensFactory.getGardensFeeReceiver(), gardensFeeAmount);
             }
 
@@ -548,7 +544,7 @@ contract RegistryCommunityV0_0 is
     }
 
     function getStakeAmountWithFees() public view returns (uint256) {
-        RegistryFactory gardensFactory = RegistryFactory(registryFactory);
+        IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
         uint256 gardensFeeAmount =
             (registerStakeAmount * gardensFactory.getProtocolFee(address(this))) / (100 * PRECISION_SCALE);
@@ -574,6 +570,7 @@ contract RegistryCommunityV0_0 is
         communityFee = _newCommunityFee;
         emit CommunityFeeUpdated(_newCommunityFee);
     }
+
     //function updateMinimumStake()
 
     function isCouncilMember(address _member) public view returns (bool) {
