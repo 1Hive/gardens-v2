@@ -27,10 +27,8 @@ export default function Page({
   return result ?
       <div className="page-layout">
         <section className="section-layout">
-          <div className="text-center sm:mt-5">
-            <h2 className="text-xl font-semibold leading-6 text-gray-900">
-              Create a Pool in {communityName} community
-            </h2>
+          <div className="text-center sm:mt-5 mb-12">
+            <h2 className="">Create a Pool in {communityName} community</h2>
           </div>
           <PoolForm
             alloAddr={alloAddr}

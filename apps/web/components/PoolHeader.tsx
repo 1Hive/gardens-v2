@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import {
   BoltIcon,
   ChartBarIcon,
@@ -32,6 +31,7 @@ import {
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
+import { useState } from "react";
 
 type Props = {
   ipfsResult: MetadataV1 | null;
@@ -153,7 +153,7 @@ export default function PoolHeader({
     abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "addStrategyByPoolId",
-    fallbackErrorMessage: "Error creating a pool. Please ty again.",
+    fallbackErrorMessage: "Error approving pool. Please try again.",
     args: [BigInt(poolId)],
     onConfirmations: () => {
       publish({
