@@ -17,7 +17,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
-import {IRegistryCommunityV0_0} from "./interfaces/IRegistryCommunity.sol";
+import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";
 
 interface IPointStrategy {
     function deactivatePoints(address _member) external;
@@ -595,7 +595,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             poolAmount -= proposal.requestedAmount; // CEI
 
             _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
-            // _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
@@ -603,7 +602,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
             );
 
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
-            // emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
         } //signaling do nothing @todo write tests @todo add end date
     }
 
@@ -1035,17 +1033,21 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         StrategyStruct.CVParams memory _cvParams
     ) internal {
         if (
+            _arbitrableConfig.tribunalSafe != address(0) && address(_arbitrableConfig.arbitrator) != address(0)
+            &&
+            (
             _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
                 || _arbitrableConfig.arbitrator != arbitrableConfig.arbitrator
                 || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
                 || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
                 || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
                 || _arbitrableConfig.defaultRulingTimeout != arbitrableConfig.defaultRulingTimeout
+            )
         ) {
             if (disputeCount != 0) {
                 revert ArbitrationConfigCannotBeChangedDuringDispute();
             }
-
+            
             _arbitrableConfig.arbitrator.registerSafe(_arbitrableConfig.tribunalSafe);
             emit TribunaSafeRegistered(
                 address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe

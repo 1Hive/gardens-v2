@@ -23,15 +23,77 @@ import {CVStrategyV0_0, StrategyStruct, IPointStrategy} from "./CVStrategyV0_0.s
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {IRegistryCommunityV0_0} from "./interfaces/IRegistryCommunity.sol";
 
 contract RegistryCommunityV0_0 is
     OwnableUpgradeable,
     UUPSUpgradeable,
     ReentrancyGuardUpgradeable,
-    AccessControlUpgradeable,
-    IRegistryCommunityV0_0
+    AccessControlUpgradeable
 {
+    /*|--------------------------------------------|*/
+    /*|                 EVENTS                     |*/
+    /*|--------------------------------------------|*/
+
+    event AlloSet(address _allo);
+    event CouncilSafeSet(address _safe);
+    event CouncilSafeChangeStarted(address _safeOwner, address _newSafeOwner);
+    event MemberRegistered(address _member, uint256 _amountStaked);
+    event MemberUnregistered(address _member, uint256 _amountReturned);
+    event MemberKicked(address _member, address _transferAddress, uint256 _amountReturned);
+    event CommunityFeeUpdated(uint256 _newFee);
+    event RegistryInitialized(bytes32 _profileId, string _communityName, Metadata _metadata);
+    event StrategyAdded(address _strategy);
+    event StrategyRemoved(address _strategy);
+    event MemberActivatedStrategy(address _member, address _strategy, uint256 _pointsToIncrease);
+    event MemberDeactivatedStrategy(address _member, address _strategy);
+    event BasisStakedAmountSet(uint256 _newAmount);
+    event MemberPowerIncreased(address _member, uint256 _stakedAmount);
+    event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
+    event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
+
+    /*|--------------------------------------------|*/
+    /*|              CUSTOM ERRORS                 |*/
+    /*|--------------------------------------------|*/
+
+    error AddressCannotBeZero();
+    error RegistryCannotBeZero();
+    error UserNotInCouncil(address _user);
+    error UserNotInRegistry();
+    error UserAlreadyRegistered();
+    error UserNotGardenOwner();
+    error UserAlreadyActivated();
+    error UserAlreadyDeactivated();
+    error StrategyExists();
+    error StrategyDisabled();
+    error SenderNotNewOwner();
+    error SenderNotStrategy();
+    error ValueCannotBeZero();
+    error NewFeeGreaterThanMax();
+    error KickNotEnabled();
+    error PointsDeactivated();
+    error DecreaseUnderMinimum();
+    error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower);
+
+    /*|--------------------------------------------|*/
+    /*|              STRUCTS/ENUMS                 |*/
+    /*|--------------------------------------------|*/
+
+    struct InitializeParams {
+        address _allo;
+        IERC20 _gardenToken;
+        uint256 _registerStakeAmount;
+        uint256 _communityFee;
+        uint256 _nonce;
+        address _registryFactory;
+        address _feeReceiver;
+        Metadata _metadata;
+        address payable _councilSafe;
+        string _communityName;
+        bool _isKickEnabled;
+        string covenantIpfsHash;
+        address _strategyTemplate; // Can be altered to be scam strategy, out of scope for now
+    }
+
     using ERC165Checker for address;
     using SafeERC20 for IERC20;
     using Clone for address;
@@ -195,11 +257,17 @@ contract RegistryCommunityV0_0 is
 
         registry = IRegistry(allo.getRegistry());
 
-        address[] memory owners = councilSafe.getOwners();
-        address[] memory pool_initialMembers = new address[](3);
-
-        for (uint256 i = 0; i < owners.length; i++) {
-            pool_initialMembers[i] = owners[i];
+        address[] memory pool_initialMembers;
+        // Support EOA as coucil safe
+        if (address(councilSafe).code.length == 0) {
+            pool_initialMembers = new address[](3);
+            pool_initialMembers[0] = msg.sender;
+        } else {
+            address[] memory owners = councilSafe.getOwners();
+            pool_initialMembers = new address[](owners.length + 2);
+            for (uint256 i = 0; i < owners.length; i++) {
+                pool_initialMembers[i] = owners[i];
+            }
         }
 
         pool_initialMembers[pool_initialMembers.length - 1] = address(councilSafe);
