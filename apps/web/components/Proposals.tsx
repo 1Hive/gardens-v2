@@ -5,6 +5,7 @@ import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
+import { filter } from "lodash-es";
 import Link from "next/link";
 import { Address as AddressType, useAccount } from "wagmi";
 import {
@@ -30,7 +31,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, cvStrategyABI } from "@/src/generated";
-import { LightCVStrategy } from "@/types";
+import { LightCVStrategy, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -197,7 +198,10 @@ export function Proposals({
     getProposals(wallet, strategy)
       .then((res) => {
         if (res !== undefined) {
-          setProposals(res);
+          const filteredProposals = res.filter(
+            ({ status }) => ProposalStatus[status] !== "rejected",
+          );
+          setProposals(filteredProposals);
         } else {
           console.debug("No proposals");
         }
