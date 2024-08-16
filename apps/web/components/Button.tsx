@@ -15,6 +15,11 @@ type ButtonProps = {
   className?: string;
   disabled?: boolean;
   tooltip?: string;
+  tooltipSide?:
+    | "tooltip-top"
+    | "tooltip-bottom"
+    | "tooltip-left"
+    | "tooltip-right";
   children: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
@@ -44,12 +49,13 @@ const btnStyles: BtnStyles = {
   },
   outline: {
     primary:
-      "text-primary-content outline outline-2 outline-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
-    secondary: "",
+      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
+    secondary:
+      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:outline-secondary-hover-content",
     tertiary: "",
     danger:
-      "text-danger-button outline outline-2 outline-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
-    disabled: "text-neutral-soft outline outline-2 outline-neutral-soft",
+      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
+    disabled: "text-neutral-soft border border-neutral-soft",
   },
   link: {
     primary: "text-primary-content",
@@ -61,10 +67,11 @@ const btnStyles: BtnStyles = {
 };
 
 export function Button({
-  onClick = () => {},
+  onClick,
   className: styles,
   disabled = false,
   tooltip = "Connect wallet",
+  tooltipSide = "tooltip-top",
   children,
   btnStyle = "filled",
   color = "primary",
@@ -72,29 +79,23 @@ export function Button({
   icon,
   type = "button",
 }: ButtonProps) {
+  const buttonContent =
+    isLoading ? <span className="loading loading-spinner" /> : children;
+
   const buttonElement = (
     <button
       type={type}
       className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
-      relative cursor-pointer items-center justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
+      flex cursor-pointer items-center justify-center gap-2 rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
-      <div
-        className={`flex gap-2 items-center justify-center transition-opacity ${isLoading ? "opacity-0" : "opacity-100"}`}
-      >
-        {icon && icon} {children}
-      </div>
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="loading loading-spinner" />
-        </div>
-      )}
+      {icon && icon} {buttonContent}
     </button>
   );
 
   return disabled ?
-      <div className={`tooltip ${styles}`} data-tip={tooltip}>
+      <div className={`tooltip ${tooltipSide} ${styles}`} data-tip={tooltip}>
         {buttonElement}
       </div>
     : buttonElement;

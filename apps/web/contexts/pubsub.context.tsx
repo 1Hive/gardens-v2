@@ -72,7 +72,7 @@ export type ChangeEventScope = {
   containerId?:
     | ChangeEventPayload["containerId"]
     | ChangeEventPayload["containerId"][];
-  action?: ChangeEventPayload["function"] | ChangeEventPayload["function"][];
+  function?: ChangeEventPayload["function"] | ChangeEventPayload["function"][];
   chainId?: ChangeEventPayload["chainId"] | ChangeEventPayload["chainId"][];
   id?: ChangeEventPayload["id"] | ChangeEventPayload["id"][];
 } & { [key: string]: Native | Native[] };
@@ -93,7 +93,9 @@ const PubSubContext = createContext<PubSubContextData | undefined>(undefined);
 export function usePubSubContext() {
   const context = useContext(PubSubContext);
   if (!context) {
-    throw new Error("usePubSubContext must be used within a WebSocketProvider");
+    throw new Error(
+      "⚡ WS: usePubSubContext must be used within a WebSocketProvider",
+    );
   }
   return context;
 }

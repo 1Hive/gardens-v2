@@ -75,9 +75,11 @@ export function ActivatePoints({
   async function handleChange() {
     if (connectedAccount) {
       if (isMemberActivated) {
-        writeDeactivatePoints?.();
+        writeDeactivatePoints?.({ args: [] });
       } else {
-        writeActivatePoints?.();
+        writeActivatePoints?.({
+          args: [],
+        });
       }
     } else {
       openConnectModal?.();

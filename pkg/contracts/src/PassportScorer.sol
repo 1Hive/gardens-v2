@@ -154,4 +154,6 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    uint256[50] private __gap;
 }

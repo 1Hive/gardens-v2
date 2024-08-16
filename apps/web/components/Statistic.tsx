@@ -1,11 +1,12 @@
 import React from "react";
-import { capitalize } from "@/utils/text";
 
 type IdentifierProps = {
   icon?: React.ReactNode;
-  count?: number | string;
-  label: string;
+  count?: number | string | React.ReactNode;
+  label?: string | React.ReactNode;
   children?: React.ReactNode;
+  className?: string;
+  tooltip?: string;
 };
 
 export const Statistic = ({
@@ -13,15 +14,16 @@ export const Statistic = ({
   count,
   label,
   children,
+  className,
 }: IdentifierProps) => {
-  const iconClassNames = "h-6 w-6";
-
   return (
-    <div className="flex items-center gap-2 text-neutral-soft-content">
-      {icon && <div className={iconClassNames}>{icon}</div>}
-      {label && (
-        <p>
-          {capitalize(label)}: {count}
+    <div
+      className={`flex items-center gap-2 text-neutral-soft-content ${className}`}
+    >
+      {icon && <div className="h-6 w-6">{icon}</div>}
+      {(label ?? count) && (
+        <p className="first-letter:uppercase">
+          {label}: {count}
         </p>
       )}
       {children}

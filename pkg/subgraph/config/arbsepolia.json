@@ -3,10 +3,16 @@
   "chainId": 421614,
   "dataSources": [
     {
-      "name": "RegistryFactory",
-      "startBlock": 46157748,
-      "address": "0x197a3115f932df5aee2a4b5732e8586a00ccf243",
+      "name": "RegistryFactoryV0_0",
+      "startBlock": 71164980,
+      "address": "0x8f5c6d20a539467bb22aece2a691f9489fc85a9e",
       "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 71164980,
+      "address": "0x073bbfa650ff39d47e6d6d476ca9654d57818a44",
+      "customTemplate": "passportScorer"
     }
   ]
 }

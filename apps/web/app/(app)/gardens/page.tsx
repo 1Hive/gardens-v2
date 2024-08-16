@@ -43,15 +43,25 @@ export default function Page() {
   );
 
   const GardenList = useMemo(() => {
-    return fetching ?
-        <LoadingSpinner />
-      : <>
-          {tokenGardens?.map((garden) => (
-            <div key={garden.id}>
-              <GardenCard garden={garden} />
-            </div>
-          ))}
-        </>;
+    if (!tokenGardens) {
+      return <LoadingSpinner />;
+    }
+    if (tokenGardens.length) {
+      return (
+        <>
+          {tokenGardens
+            .sort(
+              (a, b) =>
+                (a.communities?.length ?? 0) - (b.communities?.length ?? 0),
+            )
+            .map((garden) => (
+              <div key={garden.id}>
+                <GardenCard garden={garden} />
+              </div>
+            ))}
+        </>
+      );
+    }
   }, [fetching, tokenGardens?.length]);
 
   return (

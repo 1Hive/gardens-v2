@@ -117,7 +117,7 @@ export default function Page({
                 <h2>{tokenGarden?.name}</h2>{" "}
                 <TokenLabel chainId={chain} classNames="bg-neutral-soft" />
               </div>
-              <EthAddress address={tokenGarden?.id as Address} />
+              <EthAddress icon={false} address={tokenGarden?.id as Address} />
             </div>
             <p className="max-w-lg">
               Discover communities in the

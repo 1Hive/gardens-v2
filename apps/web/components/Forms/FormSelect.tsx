@@ -1,5 +1,6 @@
 import React from "react";
 import { RegisterOptions } from "react-hook-form";
+import { InfoWrapper } from "../InfoWrapper";
 
 export type Option = { label: string; value: string | number };
 
@@ -11,6 +12,7 @@ type Props = {
   required?: boolean;
   registerOptions?: RegisterOptions;
   options: Option[];
+  tooltip?: string;
 };
 
 export function FormSelect({
@@ -20,11 +22,14 @@ export function FormSelect({
   required = false,
   registerOptions,
   options,
+  tooltip,
 }: Props) {
   return (
     <>
-      <label htmlFor={registerKey} className="my-2 text-lg text-black">
-        {label}
+      <label htmlFor={registerKey} className="label w-fit">
+        {tooltip ?
+          <InfoWrapper tooltip={tooltip}>{label}</InfoWrapper>
+        : label}
       </label>
       <select
         className="select select-info w-full max-w-md"
