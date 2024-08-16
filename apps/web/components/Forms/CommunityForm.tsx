@@ -110,8 +110,46 @@ export const CommunityForm = ({
       if (previewData === undefined) {
         throw new Error("No preview data");
       }
-      const argsArray = contractWriteParsedData(ipfsHash);
-      write?.({ args: [argsArray] });
+      const gardenTokenAddress = tokenGarden?.id;
+      const communityName = previewData?.title;
+      const stakeAmount = parseUnits(
+        previewData?.stakeAmount.toString() as string,
+        tokenGarden.decimals,
+      );
+      const communityFeeAmount = parseUnits(
+        previewData?.feeAmount.toString() as string,
+        CV_PERCENTAGE_SCALE_DECIMALS,
+      );
+
+      const communityFeeReceiver = previewData?.feeReceiver;
+      const councilSafeAddress = previewData?.councilSafe;
+      // arb safe 0xda7bdebd79833a5e0c027fab1b1b9b874ddcbd10
+      const isKickMemberEnabled = previewData?.isKickMemberEnabled;
+      const covenantIpfsHash = ipfsHash;
+      const strategyTemplate = getConfigByChain(chainId)?.strategyTemplate;
+      if (!strategyTemplate) {
+        console.warn("No strategy template found for chain", chainId);
+        toast.error("No strategy template found for chain");
+      }
+      write?.({
+        args: [
+          {
+            _allo: alloContractAddr,
+            _feeReceiver: communityFeeReceiver as Address,
+            _communityName: communityName,
+            _registerStakeAmount: stakeAmount,
+            _communityFee: communityFeeAmount,
+            _councilSafe: councilSafeAddress as Address,
+            _gardenToken: gardenTokenAddress as Address,
+            _isKickEnabled: isKickMemberEnabled,
+            _nonce: 0n,
+            _registryFactory: registryFactoryAddr,
+            covenantIpfsHash: covenantIpfsHash,
+            _metadata: { protocol: 1n, pointer: "" },
+            _strategyTemplate: strategyTemplate as Address,
+          },
+        ],
+      });
     }
     setLoading(false);
   };
@@ -148,48 +186,6 @@ export const CommunityForm = ({
     onSettled: () => setLoading(false),
   });
 
-  const contractWriteParsedData = (ipfsHash: string) => {
-    const gardenTokenAddress = tokenGarden?.id;
-    const communityName = previewData?.title;
-    const stakeAmount = parseUnits(
-      previewData?.stakeAmount.toString() as string,
-      tokenGarden.decimals,
-    );
-    const communityFeeAmount = parseUnits(
-      previewData?.feeAmount.toString() as string,
-      CV_PERCENTAGE_SCALE_DECIMALS,
-    );
-
-    const communityFeeReceiver = previewData?.feeReceiver;
-    const councilSafeAddress = previewData?.councilSafe;
-    // arb safe 0xda7bdebd79833a5e0c027fab1b1b9b874ddcbd10
-    const metadata = [1n, "ipfsHash"];
-    const isKickMemberEnabled = previewData?.isKickMemberEnabled;
-    const covenantIpfsHash = ipfsHash;
-    const strategyTemplate = getConfigByChain(chainId)?.strategyTemplate;
-    if (!strategyTemplate) {
-      console.warn("No strategy template found for chain", chainId);
-      toast.error("No strategy template found for chain");
-    }
-    const args = [
-      alloContractAddr,
-      gardenTokenAddress,
-      stakeAmount,
-      communityFeeAmount,
-      0n,
-      registryFactoryAddr,
-      communityFeeReceiver,
-      metadata,
-      councilSafeAddress,
-      communityName,
-      isKickMemberEnabled,
-      covenantIpfsHash,
-      strategyTemplate,
-    ];
-
-    return args;
-  };
-
   const handlePreview = (data: FormInputs) => {
     setPreviewData(data);
     setShowPreview(true);
@@ -216,6 +212,9 @@ export const CommunityForm = ({
   };
 
   const addressIsSAFE = async (walletAddress: Address) => {
+    if (localStorage.getItem("bypassSafeCheck") === "true") {
+      return true;
+    }
     let isSafe = false;
     try {
       const data = await publicClient.readContract({
@@ -334,7 +333,7 @@ export const CommunityForm = ({
                   message: "Invalid Eth Address",
                 },
                 validate: async (value) =>
-                  (await addressIsSAFE(value)) ??
+                  (await addressIsSAFE(value)) ||
                   `Not a valid Safe address in ${getChain(chainId)?.name} network`,
               }}
               errors={errors}

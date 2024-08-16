@@ -13,3 +13,5 @@ export function getViemChain(chainId: ChainId): Chain {
 
   throw new Error(`Chain with id ${chainId} not found`);
 }
+
+export const isENS = (address = "") => /.+\.eth$/i.test(address);

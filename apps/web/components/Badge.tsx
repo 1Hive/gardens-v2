@@ -3,8 +3,7 @@ import {
   CurrencyDollarIcon,
   HandThumbUpIcon,
 } from "@heroicons/react/24/outline";
-import { poolTypes, proposalStatus } from "@/types";
-import { capitalize } from "@/utils/text";
+import { PoolTypes, ProposalStatus } from "@/types";
 
 type BadgeProps = {
   type?: number;
@@ -52,8 +51,8 @@ export function Badge({
 
   // Determine the label content
   const content =
-    isStatusBadge ? proposalStatus[status]
-    : ispoolTypeDefined ? poolTypes[type] ?? label
+    isStatusBadge ? ProposalStatus[status]
+    : ispoolTypeDefined ? PoolTypes[type] ?? label
     : label;
 
   //For type => conditionally set the icon based on type === poolTypes[type]
@@ -64,7 +63,7 @@ export function Badge({
         signaling: <HandThumbUpIcon className="h-6 w-6 text-inherit" />,
         funding: <CurrencyDollarIcon className="h-6 w-6 text-inherit" />,
       };
-      return type ? iconMap[poolTypes[type]] ?? null : null;
+      return type != null ? iconMap[PoolTypes[type]] ?? null : null;
     })();
 
   return (
@@ -72,9 +71,13 @@ export function Badge({
       className={`${BASE_STYLES} ${styles} ${classNames} flex items-center gap-2`}
     >
       {iconIncluded && (
-        <div className="h-6 w-6 text-inherit">{iconIncluded}</div>
+        <div
+          className={`h-6 w-6 text-inherit ${isCapitalize ? "first-letter:uppercase" : ""}`}
+        >
+          {iconIncluded}
+        </div>
       )}
-      <h6>{isCapitalize ? content : capitalize(content ?? "")}</h6>
+      <h6>{content}</h6>
     </div>
   );
 }

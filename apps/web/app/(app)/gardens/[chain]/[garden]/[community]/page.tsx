@@ -27,7 +27,7 @@ import {
   PoolCard,
   RegisterMember,
   Statistic,
-  InfoIcon,
+  InfoWrapper,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
@@ -36,7 +36,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { poolTypes } from "@/types";
+import { PoolTypes } from "@/types";
 import {
   dn,
   parseToken,
@@ -127,13 +127,13 @@ export default function Page({
 
   const signalingPools = strategies.filter(
     (strategy) =>
-      poolTypes[strategy.config?.proposalType] === "signaling" &&
+      PoolTypes[strategy.config?.proposalType] === "signaling" &&
       strategy.isEnabled,
   );
 
   const fundingPools = strategies.filter(
     (strategy) =>
-      poolTypes[strategy.config?.proposalType] === "funding" &&
+      PoolTypes[strategy.config?.proposalType] === "funding" &&
       strategy.isEnabled,
   );
   const activePools = strategies?.filter((strategy) => strategy?.isEnabled);
@@ -214,7 +214,7 @@ export default function Page({
         <div className="flex flex-1 flex-col gap-2">
           <div>
             <h2>{communityName}</h2>
-            <EthAddress address={communityAddr as Address} />
+            <EthAddress icon={false} address={communityAddr as Address} />
           </div>
           <div className="flex flex-col gap-2">
             <Statistic
@@ -234,10 +234,10 @@ export default function Page({
                 tokenSymbol={tokenGarden.symbol}
               />
             </Statistic>
-            <div className="flex">
-              <p className="subtitle2">Registration stake:</p>
-              <InfoIcon
-                content={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
+            <div className="flex gap-2">
+              <p className="font-medium">Registration stake:</p>
+              <InfoWrapper
+                tooltip={`Registration amount: ${parseToken(registrationAmount)} ${tokenGarden.symbol}\nCommunity fee: ${parseToken(parsedCommunityFee())} ${tokenGarden.symbol}`}
               >
                 <DisplayNumber
                   number={[getTotalRegistrationCost(), tokenGarden?.decimals]}
@@ -246,7 +246,7 @@ export default function Page({
                   compact={true}
                   tokenSymbol={tokenGarden.symbol}
                 />
-              </InfoIcon>
+              </InfoWrapper>
             </div>
           </div>
         </div>

@@ -129,6 +129,7 @@ deploy-verify-multi-sep-v0:
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--legacy \
 	--via-ir \
+	--verify \
 	-vvv
 	
 deploy-verify-multi-sep: 

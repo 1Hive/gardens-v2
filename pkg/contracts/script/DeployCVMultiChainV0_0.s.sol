@@ -274,7 +274,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             address(registryCommunity),
             abi.encodeWithSelector(registryCommunity.addStrategy.selector, _strategy2)
         );
-        // registryCommunity.addStrategy(_strategy2);
+        //registryCommunity.addStrategy(_strategy2);
 
         token.mint(address(pool_admin()), 10_000 ether);
         token.approve(address(registryCommunity), type(uint256).max);
@@ -362,7 +362,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             address(registryCommunity),
             abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy1)
         );
-        // registryCommunity.removeStrategy(_strategy1);
+        //registryCommunity.removeStrategy(_strategy1);
 
         safeHelper(
             Safe(payable(COUNCIL_SAFE)),
@@ -370,7 +370,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             address(registryCommunity),
             abi.encodeWithSelector(registryCommunity.removeStrategy.selector, _strategy2)
         );
-        // registryCommunity.removeStrategy(_strategy2);
+        //registryCommunity.removeStrategy(_strategy2);
 
         vm.stopBroadcast();
     }

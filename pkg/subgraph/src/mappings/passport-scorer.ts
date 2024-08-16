@@ -33,7 +33,7 @@ export function handleUserScoreAdded(event: UserScoreAdded): void {
 export function handleUserRemoved(event: UserRemoved): void {
   let passportUser = PassportUser.load(event.params.user.toHexString());
   if (passportUser == null) {
-    log.debug("PassportUser not found: {}", [event.params.user.toHexString()]);
+    log.debug("PassportScorer: PassportUser not found: {}", [event.params.user.toHexString()]);
     return;
   }
   passportUser.score = BigInt.fromI32(0);
@@ -48,7 +48,7 @@ export function handleStrategyAdded(event: StrategyAdded): void {
   }
   let cvStrategy = CVStrategy.load(event.params.strategy.toHexString());
   if (cvStrategy == null) {
-    log.debug("CvStrategy  not found: {}", [
+    log.debug("PassportScorer: CvStrategy  not found: {}", [
       event.params.strategy.toHexString(),
     ]);
     return;
@@ -66,7 +66,7 @@ export function handleStrategyAdded(event: StrategyAdded): void {
 export function handleStrategyActivated(event: StrategyActivated): void {
   let strategy = PassportStrategy.load(event.params.strategy.toHexString());
   if (strategy == null) {
-    log.debug("PassportStrategy  not found: {}", [
+    log.debug("PassportScorer: PassportStrategy  not found: {}", [
       event.params.strategy.toHexString(),
     ]);
     return;

@@ -106,6 +106,7 @@ export function useSubgraphQueryMultiChain<
               toast.loading("Pulling new data", {
                 toastId: pendingRefreshToastId,
                 autoClose: false,
+                closeOnClick: true,
                 style: {
                   width: "fit-content",
                   marginLeft: "auto",

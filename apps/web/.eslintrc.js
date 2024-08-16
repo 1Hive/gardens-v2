@@ -85,5 +85,6 @@ module.exports = {
     "react/no-array-index-key": "warn",
     indent: "off",
     "@typescript-eslint/indent": "off",
+    "jsx-a11y/label-has-associated-control": "off",
   },
 };
