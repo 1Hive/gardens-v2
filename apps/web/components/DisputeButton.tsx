@@ -159,13 +159,17 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   async function handleSubmit() {
     setIsLoading(true);
-    const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
-    if (!reasonHash) {
-      return;
+    try {
+      const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
+      if (!reasonHash) {
+        return;
+      }
+      await writeDisputeProposalAsync({
+        args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
+      });
+    } catch (error) {
+      setIsLoading(false);
     }
-    await writeDisputeProposalAsync({
-      args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
-    });
     setIsLoading(false);
   }
 
