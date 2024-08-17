@@ -21,6 +21,7 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
     mapping(address => CommunityInfo) communityToInfo;
     address public gardensFeeReceiver;
     address public registryCommunityTemplate;
+    address public strategyTemplate;
     address public collateralVaultTemplate; //@todo go private to produce less bytecode
 
     /*|--------------------------------------------|*/
@@ -49,6 +50,7 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
     function initialize(
         address _gardensFeeReceiver,
         address _registryCommunityTemplate,
+        address _strategyTemplate,
         address _collateralVaultTemplate
     ) public virtual initializer {
         __Ownable_init();
@@ -58,6 +60,7 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
         _revertZeroAddress(_collateralVaultTemplate);
         gardensFeeReceiver = _gardensFeeReceiver;
         registryCommunityTemplate = _registryCommunityTemplate;
+        strategyTemplate = _strategyTemplate;
         collateralVaultTemplate = _collateralVaultTemplate;
         emit FeeReceiverSet(_gardensFeeReceiver);
         // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
@@ -73,7 +76,7 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
 
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(registryCommunityTemplate),
-            abi.encodeWithSelector(RegistryCommunityV0_0.initialize.selector, params, collateralVaultTemplate)
+            abi.encodeWithSelector(RegistryCommunityV0_0.initialize.selector, params, strategyTemplate, collateralVaultTemplate)
         );
 
         RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(payable(address(proxy)));

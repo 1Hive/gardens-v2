@@ -231,7 +231,7 @@ deploy-testnet-multi-op:
 
 # Arbitrum
 
-deploy-multi-arb: 
+deploy-multi-arbitrum: 
 	-forge script script/DeployCVMultiChainProd.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
@@ -241,5 +241,18 @@ deploy-multi-arb:
 	--broadcast \
 	--legacy \
 	--via-ir \
+	-vvv
+
+verify-arbitrum: 
+	-forge script script/DeployCVMultiChainProd.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--account pkGarden \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--ffi \
+	--chain-id 42161 \
+	--legacy \
+	--verify \
+	--via-ir \
 	-vvv \
-	--force \
+	--slow

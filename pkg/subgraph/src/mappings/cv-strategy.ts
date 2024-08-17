@@ -22,8 +22,6 @@ import {
   Ruling,
   ProposalDisputed,
   PoolParamsUpdated,
-  InitializedCVDataCvParamsStruct,
-  InitializedCVDataArbitrableConfigStruct,
   PoolParamsUpdatedCvParamsStruct,
   PoolParamsUpdatedArbitrableConfigStruct
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
@@ -37,14 +35,8 @@ import { json, JSONValueKind } from "@graphprotocol/graph-ts";
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
 
-const PROPOSAL_STATUS_ACTIVE = BigInt.fromI32(1);
-const PROPOSAL_STATUS_DISPUTED = BigInt.fromI32(5);
-const PROPOSAL_STATUS_REJECTED = BigInt.fromI32(6);
-
 const DISPUTE_STATUS_WAITING = BigInt.fromI32(0);
 const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
-
-const DISPUTE_RULED_IN_FAVOR_OF_CHALLENGER = BigInt.fromI32(2);
 
 export function handleInitialized(event: InitializedCV): void {
   log.debug("CVStrategy: handleInitialized {}", [
@@ -83,9 +75,11 @@ export function handleInitialized(event: InitializedCV): void {
   config.maxAmount = maxAmount;
 
   log.debug("handleInitialized changetypes", []);
+  // @ts-ignore
   let cvParams = changetype<PoolParamsUpdatedCvParamsStruct>(
     event.params.data.cvParams
   );
+  // @ts-ignore
   let arbitrableConfig = changetype<PoolParamsUpdatedArbitrableConfigStruct>(
     event.params.data.arbitrableConfig
   );

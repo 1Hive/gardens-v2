@@ -1,4 +1,5 @@
 import {
+  arbitrum,
   arbitrumSepolia,
   localhost,
   optimismSepolia,
@@ -13,6 +14,7 @@ const ENV = process.env.NEXT_PUBLIC_ENV_GARDENS;
 const envRpcUrlArbTestnet = process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET;
 const envRpcUrlOpTestnet = process.env.NEXT_PUBLIC_RPC_URL_OP_TESTNET;
 const envRpcUrlEthSepoliaTestnet = process.env.NEXT_PUBLIC_RPC_URL_ETH_TESTNET;
+const envRpcUrlArbitrum = process.env.NEXT_PUBLIC_RPC_URL_ARBITRUM;
 
 export const isProd = ENV === "prod";
 
@@ -45,17 +47,11 @@ let subgraphAddresses: RPCSubgraphAddr = {
     rpcUrl: envRpcUrlEthSepoliaTestnet,
     subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP ?? "",
   },
+  [arbitrum.id as number]: {
+    rpcUrl: envRpcUrlArbitrum,
+    subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARBITRUM ?? "",
+  },
 };
-
-for (const chainId in subgraphAddresses) {
-  const chain = getChain(chainId);
-  if (chain?.id) {
-    const addrs = getRunLatestAddrs(chain.id);
-    if (addrs) {
-      subgraphAddresses[chain.id].strategyTemplate = addrs.strategyTemplate;
-    }
-  }
-}
 
 export function getConfigByChain(chainId: number | string) {
   const currentChain = getChain(chainId);

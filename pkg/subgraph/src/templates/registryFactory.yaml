@@ -28,4 +28,6 @@
           handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
           handler: handleProtocolFeeSet  
+        - event: Initialized(uint8)
+          handler: handleRegistryInitialized  
       file: ./src/mappings/registry-factory.ts

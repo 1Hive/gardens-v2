@@ -6,6 +6,7 @@ import {
   Optimism,
   Polygon,
 } from "@thirdweb-dev/chain-icons";
+import { Address } from "viem";
 import {
   arbitrum,
   arbitrumSepolia,
@@ -42,9 +43,10 @@ export const chainDataMap: {
     explorer: string;
     blockTime: number;
     confirmations: number;
-    arbitrator?: string;
-    passportScorer: string;
-    globalTribunal?: string;
+    arbitrator?: Address;
+    passportScorer: Address;
+    globalTribunal?: Address;
+    allo?: Address;
   };
 } = {
   1337: {
@@ -72,6 +74,9 @@ export const chainDataMap: {
     blockTime: 0.23,
     confirmations: 1, // 7
     passportScorer: "0x0000000000000000000000000000000000000000",
+    arbitrator: "0x450967c1497ab95df8530a9a8eaae5e951171dee",
+    globalTribunal: "0xd4Cc31176E6C1Bab7010f8b19498A58F66aEb49c",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
   },
   1: {
     name: mainnet.name,

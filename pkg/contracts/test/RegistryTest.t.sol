@@ -114,6 +114,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
                 RegistryFactoryV0_0.initialize.selector,
                 address(protocolFeeReceiver),
                 address(new RegistryCommunityV0_0()),
+                address(new CVStrategyV0_0()),
                 address(new CollateralVault())
             )
         );
@@ -126,7 +127,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         vm.stopPrank();
 
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -951,7 +951,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
     function test_revert_initialize_zeroStake() public {
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = 0;

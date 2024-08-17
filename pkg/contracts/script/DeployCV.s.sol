@@ -80,6 +80,7 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
                 RegistryFactoryV0_0.initialize.selector,
                 address(protocolFeeReceiver),
                 address(new RegistryCommunityV0_0()),
+                address(new CVStrategyV0_0()),
                 address(new CollateralVault())
             )
         );
@@ -95,7 +96,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         console2.log("Safe Arbitrator Addr: %s", address(safeArbitrator));
 
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(new CVStrategyV0_0());
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
@@ -285,7 +285,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         RegistryCommunityV0_0.InitializeParams memory params;
 
         params._allo = address(allo);
-        params._strategyTemplate = address(new CVStrategyV0_0());
 
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;

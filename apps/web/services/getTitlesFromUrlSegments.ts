@@ -53,14 +53,14 @@ interface QueryMapItem {
 const queryMap: Record<number, QueryMapItem> = {
   2: {
     document: getTokenTitleDocument,
-    getVariables: (tokenAddr: string) => ({ tokenAddr }),
+    getVariables: (tokenAddr: string) => ({ tokenAddr: tokenAddr.toLowerCase() }),
     parseResult: async (
       resData: TokenTitleResult,
     ): Promise<(string | undefined)[]> => [resData?.tokenGarden?.name],
   },
   3: {
     document: getCommunityTitlesDocument,
-    getVariables: (communityAddr: string) => ({ communityAddr }),
+    getVariables: (communityAddr: string) => ({ communityAddr: communityAddr.toLowerCase() }),
     parseResult: async (
       resData: CommunityTitlesResult,
     ): Promise<(string | undefined)[]> => {

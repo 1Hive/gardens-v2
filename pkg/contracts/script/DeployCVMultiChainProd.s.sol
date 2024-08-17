@@ -42,21 +42,21 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
     address public COUNCIL_SAFE; // check networks.json file
     address public SAFE_PROXY_FACTORY; // check networks.json file
     // address public REGISTRY_FACTORY = 0xC98c004A1d6c62E0C42ECEe1a924dc216aac2094;
-    address public REGISTRY_FACTORY = 0xd7b72Fcb6A4e2857685175F609D1498ff5392E46;
 
     uint256 public WAIT_TIME = 20000;
 
     string public CURRENT_NETWORK = "arbsepolia";
 
     address BENEFICIARY = 0xc583789751910E39Fd2Ddb988AD05567Bcd81334;
-    PassportScorer PASSPORT_SCORER = PassportScorer(0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd);
-    SafeArbitrator ARBITRATOR;
+
+    RegistryFactoryV0_0 public REGISTRY_FACTORY; // = RegistryFactoryV0_0(0xd7b72Fcb6A4e2857685175F609D1498ff5392E46);
+    PassportScorer PASSPORT_SCORER; // = PassportScorer(0x83bDE2E2D8AcAAad2D300DA195dF3cf86b234bdd);
+    SafeArbitrator ARBITRATOR; // = SafeArbitrator(0x450967C1497Ab95dF8530A9a8eAaE5E951171Dee);
 
     uint256 councilMemberPKEnv;
     address allo_proxy;
     Allo allo;
     GV2ERC20 token;
-    RegistryFactoryV0_0 registryFactory;
 
     function pool_admin() public virtual override returns (address) {
         return address(SENDER);
@@ -163,26 +163,25 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         }
         console2.log("Arbitrator Addr: %s", address(ARBITRATOR));
 
-        if (REGISTRY_FACTORY == address(0)) {
-            RegistryCommunityV0_0 comm = new RegistryCommunityV0_0();
-            console2.log("Registry Community Addr: %s", address(comm));
+        if (address(REGISTRY_FACTORY) == address(0)) {
             proxy = new ERC1967Proxy(
                 address(new RegistryFactoryV0_0()),
                 abi.encodeWithSelector(
                     RegistryFactoryV0_0.initialize.selector,
                     address(SENDER),
-                    address(comm),
+                    address(new RegistryCommunityV0_0()),
+                    address(new CVStrategyV0_0()),
                     address(new CollateralVault())
                 )
             );
-            registryFactory = RegistryFactoryV0_0(address(proxy));
+            REGISTRY_FACTORY = RegistryFactoryV0_0(address(proxy));
         } else {
-            registryFactory = RegistryFactoryV0_0(REGISTRY_FACTORY);
+            REGISTRY_FACTORY = RegistryFactoryV0_0(REGISTRY_FACTORY);
         }
-        console2.log("Registry Factory Addr: %s", address(registryFactory));
+        console2.log("Registry Factory Addr: %s", address(REGISTRY_FACTORY));
 
-        assertTrue(registryFactory.registryCommunityTemplate() != address(0x0), "Registry Community Template not set");
-        assertTrue(registryFactory.collateralVaultTemplate() != address(0x0), "Collateral Vault Template not set");
+        assertTrue(REGISTRY_FACTORY.registryCommunityTemplate() != address(0x0), "Registry Community Template not set");
+        assertTrue(REGISTRY_FACTORY.collateralVaultTemplate() != address(0x0), "Collateral Vault Template not set");
 
         // RegistryCommunityV0_0.InitializeParams memory params;
 

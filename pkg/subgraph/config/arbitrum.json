@@ -1,0 +1,18 @@
+{
+  "network": "arbitrum-one",
+  "chainId": 42161,
+  "dataSources": [
+    {
+      "name": "RegistryFactoryV0_0",
+      "startBlock": 243718000,
+      "address": "0x043af28209abd9684a708fe7b01e0682d397542b",
+      "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 243718000,
+      "address": "0x54c320947549349a22719076832d546a2d21c6ad",
+      "customTemplate": "passportScorer"
+    }
+  ]
+}

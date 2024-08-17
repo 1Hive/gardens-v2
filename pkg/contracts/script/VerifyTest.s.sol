@@ -70,10 +70,19 @@ contract VerifyTest is BaseMultiChain {
 
         assertTrue(address(allo) != address(0));
 
-        ERC1967Proxy proxy = new ERC1967Proxy(
+        // --- Deploy all contracts that need verification ---
+
+        new ERC1967Proxy(
+            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 0 ether)
+        );
+
+        new ERC1967Proxy(
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(
-                RegistryFactoryV0_0.initialize.selector, address(SENDER), address(SENDER), address(SENDER)
+                RegistryFactoryV0_0.initialize.selector,
+                new RegistryCommunityV0_0(),
+                new CVStrategyV0_0(),
+                new CollateralVault()
             )
         );
 

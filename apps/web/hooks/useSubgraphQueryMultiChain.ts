@@ -7,7 +7,7 @@ import {
 } from "@urql/next";
 import { debounce, isEqual } from "lodash-es";
 import { toast } from "react-toastify";
-import { arbitrumSepolia, localhost, sepolia } from "viem/chains";
+import { arbitrum, arbitrumSepolia, localhost, sepolia } from "viem/chains";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
 import { getConfigByChain } from "@/constants/contracts";
@@ -25,9 +25,10 @@ import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 
 const allChains: ChainId[] = [
-  sepolia.id,
-  arbitrumSepolia.id,
+  // sepolia.id,
+  // arbitrumSepolia.id,
   // optimismSepolia.id,
+  arbitrum.id,
 ];
 if (process.env.NODE_ENV === "development") {
   allChains.push(localhost.id);

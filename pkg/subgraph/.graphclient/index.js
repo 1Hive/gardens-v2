@@ -50,7 +50,7 @@ export async function getMeshOptions() {
     const additionalTypeDefs = [];
     const gv2Handler = new GraphqlHandler({
         name: "gv2",
-        config: { "endpoint": "https://api.studio.thegraph.com/proxy/70985/gv2-arbsepolia/version/latest" },
+        config: { "endpoint": "https://api.studio.thegraph.com/query/70985/gv2-ethsepolia/version/latest" },
         baseDir,
         cache,
         pubsub,

@@ -91,7 +91,6 @@ contract RegistryCommunityV0_0 is
         string _communityName;
         bool _isKickEnabled;
         string covenantIpfsHash;
-        address _strategyTemplate; // Can be altered to be scam strategy, out of scope for now
     }
 
     using ERC165Checker for address;
@@ -219,10 +218,11 @@ contract RegistryCommunityV0_0 is
         address[] strategies;
     }
 
-    function initialize(RegistryCommunityV0_0.InitializeParams memory params, address _collateralVaultTemplate)
-        public
-        initializer
-    {
+    function initialize(
+        RegistryCommunityV0_0.InitializeParams memory params,
+        address _strategyTemplate,
+        address _collateralVaultTemplate
+    ) public initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
         __AccessControl_init();
@@ -233,7 +233,6 @@ contract RegistryCommunityV0_0 is
         _revertZeroAddress(params._councilSafe);
         _revertZeroAddress(params._allo);
         _revertZeroAddress(params._registryFactory);
-        _revertZeroAddress(params._strategyTemplate);
 
         if (params._communityFee != 0) {
             _revertZeroAddress(params._feeReceiver);
@@ -251,7 +250,6 @@ contract RegistryCommunityV0_0 is
         registryFactory = params._registryFactory;
         feeReceiver = params._feeReceiver;
         councilSafe = ISafe(params._councilSafe);
-        strategyTemplate = params._strategyTemplate;
 
         _grantRole(COUNCIL_MEMBER, params._councilSafe);
 
@@ -279,6 +277,7 @@ contract RegistryCommunityV0_0 is
 
         initialMembers = pool_initialMembers;
 
+        strategyTemplate = _strategyTemplate;
         collateralVaultTemplate = _collateralVaultTemplate;
 
         emit RegistryInitialized(profileId, communityName, params._metadata);
