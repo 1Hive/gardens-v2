@@ -6,6 +6,7 @@ import {
   Maybe,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { useChainIdFromPath } from "./useChainIdFromPath";
 import { cvStrategyABI } from "@/src/generated";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt } from "@/utils/numbers";
@@ -31,33 +32,21 @@ export const useConvictionRead = ({
   tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined;
   enabled?: boolean;
 }) => {
-  const cvStrategyContract = {
+  const chainId = useChainIdFromPath();
+  const { data: updateConvictionLast, error } = useContractRead({
+    chainId,
     address: (proposalData?.strategy.id ?? zeroAddress) as Address,
     abi: cvStrategyABI,
-    enabled: !!proposalData,
-  };
-
-  const { data: updateConvictionLast, error } = useContractRead({
-    ...cvStrategyContract,
     functionName: "updateProposalConviction" as any,
     args: [BigInt(proposalData?.proposalNumber ?? 0)],
-    enabled,
+    enabled: enabled && !!proposalData,
   });
 
   if (error) {
     logOnce("error", "Error reading conviction", error);
   }
 
-  if (!enabled) {
-    return {
-      thresholdPct: undefined,
-      totalSupportPct: undefined,
-      currentConvictionPct: undefined,
-      updateConvictionLast: undefined,
-    };
-  }
-
-  if (!proposalData || updateConvictionLast == null) {
+  if (!enabled || !proposalData || updateConvictionLast == null) {
     return {
       thresholdPct: undefined,
       totalSupportPct: undefined,

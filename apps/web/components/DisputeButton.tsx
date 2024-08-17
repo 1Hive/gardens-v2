@@ -28,6 +28,7 @@ import { Modal } from "./Modal";
 import { ProposalTimeline } from "./ProposalTimeline";
 import { WalletBalance } from "./WalletBalance";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { MetadataV1, useIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -72,6 +73,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const { publish } = usePubSubContext();
   const { address } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
+  const chainId = useChainIdFromPath();
 
   const config = proposalData.strategy.config;
 
@@ -90,6 +92,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   });
 
   const { data: arbitrationCost } = useContractRead({
+    chainId,
     abi: iArbitratorABI,
     functionName: "arbitrationCost",
     address: config?.arbitrator as Address,
@@ -98,6 +101,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   });
 
   const { data: disputeCooldown } = useContractRead({
+    chainId,
     abi: cvStrategyABI,
     functionName: "DISPUTE_COOLDOWN_SEC",
     address: proposalData.strategy.id as Address,
