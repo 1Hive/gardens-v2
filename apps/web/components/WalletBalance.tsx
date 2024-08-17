@@ -76,10 +76,10 @@ export const WalletBalance: FC<Props> = ({
             <p className="font-medium">Your balance:</p>
             <div
               className={`tooltip ml-2 flex cursor-pointer items-center ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"} `}
-              data-tip={`${isEnoughBalanceRef.current ? balance : "Insufficient balance"}`}
+              data-tip={`${isEnoughBalanceRef.current ? `${(+formatEther(data?.value ?? 0n)).toPrecision(2)} ETH` : "Insufficient balance"}`}
             >
               <DisplayNumber
-                number={(+(data?.formatted ?? 0)).toPrecision(2).toString()}
+                number={(+(data?.formatted ?? 0)).toPrecision(2)}
                 className={`font-semibold ${isEnoughBalanceRef.current ? "text-primary-content" : "text-neutral-soft-content"}`}
                 disableTooltip={true}
                 compact={true}

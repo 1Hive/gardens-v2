@@ -40,12 +40,12 @@ export default function Page({
   return tokenInfo ?
       <div className="page-layout">
         <section className="section-layout">
-          <div className="text-center sm:mt-5">
-            <h2 className="text-xl font-semibold leading-6 text-gray-900">
+          <div className="text-center sm:mt-5 mb-12">
+            <h2 className="mb-2">
               Welcome to the {tokenInfo.symbol} Community Form!
             </h2>
-            <div className="mt-1">
-              <p className="text-sm">
+            <div className="">
+              <p className="">
                 Create a vibrant community around the {tokenInfo.name} by
                 providing the necessary details below.
               </p>

@@ -151,12 +151,10 @@ export function ConnectWallet() {
                               </div>
                               <div className="flex justify-between py-1">
                                 <p className="subtitle2">Balance</p>
-
                                 <DisplayNumber
                                   number={(token?.formatted ?? 0).toString()}
                                   tokenSymbol={token?.symbol}
                                   className="text-primary-content"
-                                  compact={true}
                                 />
                               </div>
                             </Menu.Item>
@@ -199,17 +197,6 @@ export function ConnectWallet() {
                 </Menu>
               );
             })()}
-            {urlChainId === chain?.id && tokenUrlAddress !== undefined && (
-              <div className="py-2 flex flex-col gap-0.5">
-                <p className="text-xs font-medium">Balance</p>
-                <DisplayNumber
-                  number={(token?.formatted ?? 0).toString()}
-                  tokenSymbol={token?.symbol}
-                  className="text-primary-content"
-                  compact={true}
-                />
-              </div>
-            )}
           </>
         );
       }}

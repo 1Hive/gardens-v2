@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   BoltIcon,
   ChartBarIcon,
@@ -154,7 +154,7 @@ export default function PoolHeader({
     abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "addStrategyByPoolId",
-    fallbackErrorMessage: "Error creating a pool. Please ty again.",
+    fallbackErrorMessage: "Error approving pool. Please try again.",
     args: [BigInt(poolId)],
     onConfirmations: () => {
       publish({
@@ -171,7 +171,7 @@ export default function PoolHeader({
     abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "removeStrategyByPoolId",
-    fallbackErrorMessage: "Error creating a pool. Please ty again.",
+    fallbackErrorMessage: "Error disabling pool. Please try again.",
     args: [BigInt(poolId)],
     onConfirmations: () => {
       publish({
