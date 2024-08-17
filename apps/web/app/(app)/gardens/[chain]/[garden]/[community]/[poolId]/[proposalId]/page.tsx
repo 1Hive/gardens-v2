@@ -4,6 +4,7 @@ import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
+import { useAccount } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
@@ -49,6 +50,7 @@ export default function Page({
     garden: string;
   };
 }) {
+  const { isDisconnected } = useAccount();
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -231,8 +233,15 @@ export default function Page({
                       ],
                     })
                   }
-                  disabled={currentConvictionPct < thresholdPct}
-                  tooltip="Proposal not executable"
+                  disabled={
+                    currentConvictionPct < thresholdPct || isDisconnected
+                  }
+                  tooltip={
+                    isDisconnected ? "Connect wallet"
+                    : currentConvictionPct < thresholdPct ?
+                      "Proposal not executable"
+                    : undefined
+                  }
                 >
                   Execute
                 </Button>

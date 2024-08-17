@@ -71,9 +71,10 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const [reason, setReason] = useState("");
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const { publish } = usePubSubContext();
-  const { address } = useAccount();
-  const [isLoading, setIsLoading] = useState(false);
+  const { address, isDisconnected } = useAccount();
+  const [isDisputeCreateLoading, setIsDisputeCreateLoading] = useState(false);
   const chainId = useChainIdFromPath();
+  const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
 
   const config = proposalData.strategy.config;
 
@@ -145,6 +146,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
       address: proposalData?.strategy.id as Address,
       onSuccess: () => {
         setIsModalOpened(false);
+        setIsDisputeCreateLoading(false);
       },
       onConfirmations: () => {
         publish({
@@ -158,19 +160,14 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     });
 
   async function handleSubmit() {
-    setIsLoading(true);
-    try {
-      const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
-      if (!reasonHash) {
-        return;
-      }
-      await writeDisputeProposalAsync({
-        args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
-      });
-    } catch (error) {
-      setIsLoading(false);
+    setIsDisputeCreateLoading(true);
+    const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
+    if (!reasonHash) {
+      return;
     }
-    setIsLoading(false);
+    await writeDisputeProposalAsync({
+      args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
+    });
   }
 
   const { write: writeSubmitRuling } = useContractWriteWithConfirmations({
@@ -180,6 +177,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     address: config?.arbitrator as Address,
     onSuccess: () => {
       setIsModalOpened(false);
+      setisRulingLoading(false);
     },
     onConfirmations: () => {
       publish({
@@ -200,6 +198,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     args: [BigInt(lastDispute?.disputeId ?? 0), BigInt(ABSTAINED_RULING)],
     onSuccess: () => {
       setIsModalOpened(false);
+      setisRulingLoading(false);
     },
     onConfirmations: () => {
       publish({
@@ -213,6 +212,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   });
 
   const handleSubmitRuling = (ruling: number) => {
+    setisRulingLoading(ruling);
     if (isTimeout) {
       writeRuleAbstain();
     } else {
@@ -266,6 +266,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                   color="secondary"
                   btnStyle="outline"
                   onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
+                  isLoading={rulingLoading === ABSTAINED_RULING}
                 >
                   <InfoWrapper
                     classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
@@ -282,6 +283,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                       color="primary"
                       btnStyle="outline"
                       onClick={() => handleSubmitRuling(APPROVED_RULING)}
+                      isLoading={rulingLoading === APPROVED_RULING}
                     >
                       <InfoWrapper
                         classNames="[&>svg]:text-primary-content"
@@ -296,6 +298,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                       color="danger"
                       btnStyle="outline"
                       onClick={() => handleSubmitRuling(REJECTED_RULING)}
+                      isLoading={rulingLoading === REJECTED_RULING}
                     >
                       <InfoWrapper
                         classNames="[&>svg]:text-error-content [&:before]:mr-10 tooltip-left"
@@ -343,7 +346,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
               }
               tooltipSide="tooltip-left"
               disabled={!isEnoughBalance || isCooldown}
-              isLoading={isLoading}
+              isLoading={isDisputeCreateLoading}
             >
               Dispute
             </Button>
@@ -362,6 +365,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             color="danger"
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
+            disabled={isDisconnected}
+            tooltip="Connect wallet"
           >
             {isDisputed ? "Open dispute" : "Dispute"}
           </Button>
