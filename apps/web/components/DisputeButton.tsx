@@ -146,6 +146,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
       address: proposalData?.strategy.id as Address,
       onSuccess: () => {
         setIsModalOpened(false);
+      },
+      onSettled: () => {
         setIsDisputeCreateLoading(false);
       },
       onConfirmations: () => {
@@ -153,8 +155,9 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
           topic: "proposal",
           type: "update",
           function: "disputeProposal",
-          id: proposalData.id,
+          id: proposalData.proposalNumber,
           containerId: proposalData.strategy.id,
+          chainId,
         });
       },
     });
@@ -177,15 +180,16 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     address: config?.arbitrator as Address,
     onSuccess: () => {
       setIsModalOpened(false);
-      setisRulingLoading(false);
     },
+    onSettled: () => setisRulingLoading(false),
     onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
         function: "executeRuling",
-        id: proposalData.id,
+        id: proposalData.proposalNumber,
         containerId: proposalData.strategy.id,
+        chainId,
       });
     },
   });
@@ -198,15 +202,16 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     args: [BigInt(lastDispute?.disputeId ?? 0), BigInt(ABSTAINED_RULING)],
     onSuccess: () => {
       setIsModalOpened(false);
-      setisRulingLoading(false);
     },
+    onSettled: () => setisRulingLoading(false),
     onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
         function: "rule",
-        id: proposalData.id,
+        id: proposalData.proposalNumber,
         containerId: proposalData.strategy.id,
+        chainId,
       });
     },
   });
@@ -259,60 +264,66 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     <div className="modal-action w-full">
       {isDisputed ?
         <div className="w-full flex justify-end gap-4">
-          {DisputeStatus[lastDispute.status] === "waiting" &&
-            (isCouncilSafe || isTimeout) && (
-              <>
-                <Button
-                  color="secondary"
-                  btnStyle="outline"
-                  onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
-                  isLoading={rulingLoading === ABSTAINED_RULING}
+          {(
+            DisputeStatus[lastDispute.status] === "waiting" &&
+            (isCouncilSafe || isTimeout)
+          ) ?
+            <>
+              <Button
+                color="secondary"
+                btnStyle="outline"
+                onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
+                isLoading={rulingLoading === ABSTAINED_RULING}
+              >
+                <InfoWrapper
+                  classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
+                  tooltip={
+                    "Abstain to let other tribunal-safe members decide the outcome."
+                  }
                 >
-                  <InfoWrapper
-                    classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
-                    tooltip={
-                      "Abstain to let other tribunal-safe members decide the outcome."
-                    }
+                  Abstain
+                </InfoWrapper>
+              </Button>
+              {!isTimeout && (
+                <>
+                  <Button
+                    color="primary"
+                    btnStyle="outline"
+                    onClick={() => handleSubmitRuling(APPROVED_RULING)}
+                    isLoading={rulingLoading === APPROVED_RULING}
                   >
-                    Abstain
-                  </InfoWrapper>
-                </Button>
-                {!isTimeout && (
-                  <>
-                    <Button
-                      color="primary"
-                      btnStyle="outline"
-                      onClick={() => handleSubmitRuling(APPROVED_RULING)}
-                      isLoading={rulingLoading === APPROVED_RULING}
+                    <InfoWrapper
+                      classNames="[&>svg]:text-primary-content"
+                      tooltip={
+                        "Approve if the dispute is invalid and the proposal should be kept active."
+                      }
                     >
-                      <InfoWrapper
-                        classNames="[&>svg]:text-primary-content"
-                        tooltip={
-                          "Approve if the dispute is invalid and the proposal should be kept active."
-                        }
-                      >
-                        Approve
-                      </InfoWrapper>
-                    </Button>
-                    <Button
-                      color="danger"
-                      btnStyle="outline"
-                      onClick={() => handleSubmitRuling(REJECTED_RULING)}
-                      isLoading={rulingLoading === REJECTED_RULING}
+                      Approve
+                    </InfoWrapper>
+                  </Button>
+                  <Button
+                    color="danger"
+                    btnStyle="outline"
+                    onClick={() => handleSubmitRuling(REJECTED_RULING)}
+                    isLoading={rulingLoading === REJECTED_RULING}
+                  >
+                    <InfoWrapper
+                      classNames="[&>svg]:text-error-content [&:before]:mr-10 tooltip-left"
+                      tooltip={
+                        "Reject if, regarding the community covenant, the proposal is violating the rules."
+                      }
                     >
-                      <InfoWrapper
-                        classNames="[&>svg]:text-error-content [&:before]:mr-10 tooltip-left"
-                        tooltip={
-                          "Reject if, regarding the community covenant, the proposal is violating the rules."
-                        }
-                      >
-                        Reject
-                      </InfoWrapper>
-                    </Button>
-                  </>
-                )}
-              </>
-            )}
+                      Reject
+                    </InfoWrapper>
+                  </Button>
+                </>
+              )}
+            </>
+          : <InfoBox
+              infoBoxType="info"
+              content="Waiting for dispute resolution"
+            />
+          }
         </div>
       : <div className="flex w-full justify-between items-end">
           <div>
