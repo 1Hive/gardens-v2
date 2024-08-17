@@ -158,7 +158,7 @@ export default function Page({
             <div>
               <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                 <h2>
-                  {ipfsResult?.title} #{proposalIdNumber}
+                  {ipfsResult?.title} #{proposalIdNumber.toString()}
                 </h2>
                 <Badge type={proposalType} />
               </div>

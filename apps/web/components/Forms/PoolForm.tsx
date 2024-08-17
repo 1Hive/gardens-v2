@@ -745,7 +745,7 @@ export function PoolForm({ token, communityAddr }: Props) {
 
           <div className="flex flex-col">
             <FormSelect
-              label="Voting Weight System"
+              label="Pool System"
               register={register}
               errors={errors}
               registerKey="pointSystemType"
