@@ -65,7 +65,9 @@ export default function Page({
   const proposalData = data?.cvproposal;
   const metadata = proposalData?.metadata;
   const proposalIdNumber =
-    !!proposalData ? BigInt(proposalData.proposalNumber) : undefined;
+    proposalData?.proposalNumber ?
+      BigInt(proposalData.proposalNumber)
+    : undefined;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
@@ -158,14 +160,17 @@ export default function Page({
             <div>
               <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                 <h2>
-                  {ipfsResult?.title} #{proposalIdNumber}
+                  {ipfsResult?.title} #{proposalData?.proposalNumber}
                 </h2>
                 <Badge type={proposalType} />
               </div>
               <div className="flex items-center justify-between gap-4 sm:justify-start">
                 <Badge status={proposalData.proposalStatus} />
-                <p className="font-semibold">
-                  {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                <p className="">
+                  Created:{" "}
+                  <span className="font-semibold">
+                    {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                  </span>
                 </p>
               </div>
             </div>
