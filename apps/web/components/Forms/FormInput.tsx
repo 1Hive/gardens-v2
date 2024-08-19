@@ -91,7 +91,7 @@ export function FormInput({
         {children}
       </div>
       {errors && (
-        <p className="text-red mt-2 text-sm">
+        <p className="text-error mt-2 text-sm font-semibold ml-1">
           {errors[registerKey]?.message || ""}
         </p>
       )}

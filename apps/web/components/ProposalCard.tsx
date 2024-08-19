@@ -111,8 +111,9 @@ export function ProposalCard({
                     }
                   />
                   <div className="flex w-full justify-between px-2.5">
-                    {[...Array(21)].map((_) => (
-                      <span className="text-[8px]" key={"span_"}>
+                    {[...Array(21)].map((_, i) => (
+                      // eslint-disable-next-line react/no-array-index-key
+                      <span className="text-[8px]" key={`span_${i}`}>
                         |
                       </span>
                     ))}

@@ -19,32 +19,15 @@ export function FormPreview({
     return <>Error no Data</>;
   }
 
-  // description or covenant
-  {
-    /* <h3 className="text-sm font-medium leading-6 text-gray-900">
-Covenant
-</h3>
-<p className="text-md max-h-56 overflow-y-auto rounded-xl border p-2 leading-7">
-{covenant}
-</p> */
-  }
-
   return (
     <>
-      {/* <div className="divider-default divider" /> */}
-      <div className="px-4 sm:px-0 py-4">
-        <h4 className="mt-0 max-w-2xl leading-6 text-gray-600">
-          {previewTitle}
-        </h4>
+      <div className="px-4 sm:px-0 mb-12 mt-16">
+        <p className="subtitle font-medium">{previewTitle}</p>
       </div>
       {title && description && (
-        <div className="my-6 flex flex-col items-center">
-          <h4 className="text-xl font-medium leading-6 text-gray-900">
-            {title}
-          </h4>
-          <p className="text-md max-h-56 overflow-y-auto rounded-xl text-center leading-7">
-            {description}
-          </p>
+        <div className="my-8 flex flex-col">
+          <h3 className="mb-4">{title}</h3>
+          <p className="">{description}</p>
         </div>
       )}
 

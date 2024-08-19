@@ -43,7 +43,7 @@ type FormRowTypes = {
   parse?: (value: any) => string;
 };
 
-const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
+const ethereumAddressRegEx = /^0x[a-fA-F0-9]{40}$/;
 
 export const CommunityForm = ({
   chainId,

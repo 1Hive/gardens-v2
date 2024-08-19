@@ -5,6 +5,7 @@ import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
+import { filter } from "lodash-es";
 import Link from "next/link";
 import { Address as AddressType, useAccount } from "wagmi";
 import {
@@ -30,7 +31,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, cvStrategyABI } from "@/src/generated";
-import { LightCVStrategy } from "@/types";
+import { LightCVStrategy, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -98,11 +99,18 @@ export function Proposals({
       me: wallet?.toLowerCase(),
       comm: strategy.registryCommunity.id.toLowerCase(),
     },
-    changeScope: {
-      topic: "member",
-      id: wallet,
-      type: ["add", "delete"],
-    },
+    changeScope: [
+      {
+        topic: "member",
+        id: wallet,
+        type: ["add", "delete"],
+      },
+      {
+        topic: "proposal",
+        containerId: strategy.id,
+        function: "allocate",
+      },
+    ],
     enabled: !!wallet,
   });
 
@@ -197,7 +205,11 @@ export function Proposals({
     getProposals(wallet, strategy)
       .then((res) => {
         if (res !== undefined) {
-          setProposals(res);
+          const filteredProposals = res.filter(
+            ({ status }) => ProposalStatus[status] !== "rejected",
+          );
+          console.log(filteredProposals);
+          setProposals(filteredProposals);
         } else {
           console.debug("No proposals");
         }
@@ -289,9 +301,8 @@ export function Proposals({
       publish({
         topic: "proposal",
         type: "update",
-        id: alloInfo.id,
+        containerId: strategy.id,
         function: "allocate",
-        urlChainId,
       });
     },
   });
@@ -471,7 +482,10 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
       <h3>Your Allocation Overview</h3>
       <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
-          <div key={stat.id} className="section-layout sm:px-6 sm:pt-6">
+          <div
+            key={`stat_${stat.id}`}
+            className="section-layout sm:px-6 sm:pt-6"
+          >
             <div>
               <div
                 className={`radial-progress absolute rounded-full border-4 border-neutral transition-all duration-300 ease-in-out ${stat.className}`}
