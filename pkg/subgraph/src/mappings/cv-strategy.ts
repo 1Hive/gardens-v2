@@ -56,11 +56,13 @@ export function handleInitialized(event: InitializedCV): void {
   let alloAddr = cvc.getAllo();
   log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
   const allo = AlloContract.bind(alloAddr);
-  let metadata = allo.getPool(poolId).metadata.pointer;
+  const alloPool = allo.getPool(poolId);
+  let metadata = alloPool.metadata.pointer;
   if (metadata) {
     log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
     cvs.metadata = metadata ? metadata.toString() : null;
   }
+  cvs.token = alloPool.token.toHexString();
   cvs.poolId = poolId;
   cvs.registryCommunity = registryCommunity;
   let config = new CVStrategyConfig(

@@ -361,8 +361,6 @@ export function handlePoolCreated(event: PoolCreated): void {
   ]);
 
   const strategyAddress = event.params._strategy;
-  // const poolId = event.params._poolId;
-  // const community = event.params._community;
 
   CVStrategyTemplate.create(strategyAddress);
 }
