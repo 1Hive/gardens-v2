@@ -168,7 +168,6 @@ export function ProposalCard({
                 (stakedFilter?.value > 0 ?
                   <p
                     className="text-primary-content text-xs flex items-center justify-center
-                  
                 gap-3"
                   >
                     Total allocated{" "}
