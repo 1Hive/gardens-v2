@@ -3,17 +3,19 @@
 import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
-import { Allo, TokenGarden } from "#/subgraph/.graphclient";
+import { Allo, CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
+import { WalletBalance } from "../WalletBalance";
 import { Button } from "@/components";
+import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { alloABI } from "@/src/generated";
-import { poolTypes } from "@/types";
+import { PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
+import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { formatTokenAmount } from "@/utils/numbers";
 
@@ -26,6 +28,11 @@ type FormInputs = {
 };
 
 type ProposalFormProps = {
+  strategy: Pick<CVStrategy, "id"> & {
+    config: {
+      submitterCollateralAmount: bigint;
+    };
+  };
   poolId: number;
   proposalType: number;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
@@ -63,7 +70,42 @@ const abiParameters = [
 
 const ethereumAddressRegEx = /^(0x)?[0-9a-fA-F]{40}$/;
 
+function formatNumber(num: string | number): string {
+  if (num == 0) {
+    return "0";
+  }
+  // Convert to number if it's a string
+  const number = typeof num === "string" ? parseFloat(num) : num;
+
+  // Check if the number is NaN
+  if (isNaN(number)) {
+    return "Invalid Number";
+  }
+
+  // If the absolute value is greater than or equal to 1, use toFixed(2)
+  if (Math.abs(number) >= 1) {
+    return number.toFixed(2);
+  }
+
+  // For numbers between 0 and 1 (exclusive)
+  const parts = number.toString().split("e");
+  const exponent = parts[1] ? parseInt(parts[1]) : 0;
+
+  if (exponent < -3) {
+    // For very small numbers, use exponential notation with 4 significant digits
+    return number.toPrecision(4);
+  } else {
+    // For numbers between 0.001 and 1, show at least 4 decimal places
+    const decimalPlaces = Math.max(
+      4,
+      -Math.floor(Math.log10(Math.abs(number))) + 3,
+    );
+    return number.toFixed(decimalPlaces);
+  }
+}
+
 export const ProposalForm = ({
+  strategy,
   poolId,
   proposalType,
   alloInfo,
@@ -102,6 +144,7 @@ export const ProposalForm = ({
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
+  const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const tokenSymbol = tokenGarden.symbol || "";
@@ -115,37 +158,30 @@ export const ProposalForm = ({
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
     tokenGarden?.decimals as number,
+    6,
   );
 
-  const proposalTypeName = poolTypes[proposalType];
+  const proposalTypeName = PoolTypes[proposalType];
 
-  const createProposal = () => {
+  const arbitrationConfig = strategy.config;
+
+  const createProposal = async () => {
     setLoading(true);
     const json = {
       title: getValues("title"),
       description: getValues("description"),
     };
 
-    const ipfsUpload = ipfsJsonUpload(json);
+    const ipfsHash = await ipfsJsonUpload(json);
+    if (ipfsHash) {
+      if (previewData === undefined) {
+        throw new Error("No preview data");
+      }
+      const encodedData = getEncodeData(ipfsHash);
 
-    toast
-      .promise(ipfsUpload, {
-        pending: "Preparing everything, wait a moment...",
-        // success: "All ready!",
-        error: "Error uploading data to IPFS",
-      })
-      .then((ipfsHash) => {
-        console.info("Uploaded to: https://ipfs.io/ipfs/" + ipfsHash);
-        if (previewData === undefined) {
-          throw new Error("No preview data");
-        }
-        const encodedData = getEncodeData(ipfsHash);
-        write({ args: [poolId, encodedData] });
-      })
-      .catch((error: any) => {
-        setLoading(false);
-        console.error(error);
-      });
+      write({ args: [BigInt(poolId), encodedData] });
+    }
+    setLoading(false);
   };
 
   const handlePreview = (data: FormInputs) => {
@@ -156,21 +192,32 @@ export const ProposalForm = ({
   const { write } = useContractWriteWithConfirmations({
     address: alloInfo.id as Address,
     abi: abiWithErrors(alloABI),
+    contractName: "Allo",
     functionName: "registerRecipient",
-    onConfirmations: () => {
+    fallbackErrorMessage: "Error creating Proposal. Please try again.",
+    value: arbitrationConfig.submitterCollateralAmount,
+    onConfirmations: (receipt) => {
+      const proposalId = getEventFromReceipt(
+        receipt,
+        "CVStrategy",
+        "ProposalCreated",
+      ).args.proposalId;
       publish({
         topic: "proposal",
         type: "update",
         function: "registerRecipient",
+        containerId: poolId,
+        id: proposalId.toString(), // proposalId is a bigint
         chainId,
       });
       if (pathname) {
-        router.push(pathname.replace("/create-proposal", ""));
+        router.push(
+          pathname.replace(
+            "/create-proposal",
+            `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`,
+          ),
+        );
       }
-    },
-    onError: (err) => {
-      console.warn(err);
-      toast.error("Something went wrong creating Proposal");
     },
     onSettled: () => setLoading(false),
   });
@@ -246,6 +293,7 @@ export const ProposalForm = ({
 
     return formattedRows;
   };
+
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -255,18 +303,18 @@ export const ProposalForm = ({
           formRows={formatFormRows()}
           previewTitle="Check proposals details"
         />
-        : <div className="flex flex-col gap-2 overflow-hidden p-1">
+      : <div className="flex flex-col gap-2 overflow-hidden p-1">
           {proposalTypeName === "funding" && (
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${spendingLimitString} ${tokenSymbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
+                subLabel={`Max ${formatNumber(spendingLimitString)} ${tokenSymbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
                 register={register}
                 required
                 registerOptions={{
                   max: {
                     value: spendingLimitNumber,
-                    message: `Max amount cannot exceed ${spendingLimitString} ${tokenSymbol}`,
+                    message: `Max amount cannot exceed ${formatNumber(spendingLimitString)} ${tokenSymbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
@@ -333,7 +381,18 @@ export const ProposalForm = ({
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-center py-6">
+      <div className="flex w-full items-center justify-between py-6">
+        <div>
+          {arbitrationConfig && (
+            <WalletBalance
+              askedAmount={arbitrationConfig.submitterCollateralAmount}
+              label="Proposal stake"
+              setIsEnoughBalance={setIsEnoughBalance}
+              token="native"
+              tooltip="A stake is required for proposal submission. It will be refunded upon proposal execution or cancellation, except in the case of disputes, where it is forfeited."
+            />
+          )}
+        </div>
         {showPreview ?
           <div className="flex items-center gap-10">
             <Button
@@ -345,11 +404,16 @@ export const ProposalForm = ({
             >
               Edit
             </Button>
-            <Button onClick={() => createProposal()} isLoading={loading}>
+            <Button
+              onClick={() => createProposal()}
+              isLoading={loading}
+              disabled={!isEnoughBalance}
+              tooltip={isEnoughBalance ? "" : "Insufficient balance"}
+            >
               Submit
             </Button>
           </div>
-          : <Button type="submit">Preview</Button>}
+        : <Button type="submit">Preview</Button>}
       </div>
     </form>
   );

@@ -37,28 +37,28 @@ export default function Page({
     .alloAddress as Address;
 
   return tokenGarden ?
-    <div className="page-layout">
-      <section className="section-layout">
-        <div className="text-center sm:mt-5">
-          <h2 className="text-xl font-semibold leading-6 text-gray-900">
+      <div className="page-layout">
+        <section className="section-layout">
+          <div className="text-center sm:mt-5 mb-12">
+            <h2 className="mb-2">
               Welcome to the {tokenGarden.symbol} Community Form!
-          </h2>
-          <div className="mt-1">
-            <p className="text-sm">
+            </h2>
+            <div className="">
+              <p className="">
                 Create a vibrant community around the {tokenGarden.name} by
                 providing the necessary details below.
-            </p>
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
-      <CommunityForm
-        chainId={chain}
-        tokenGarden={tokenGarden}
-        registryFactoryAddr={registryFactoryAddr}
-        alloContractAddr={alloContractAddr}
-      />
-    </div>
+          <CommunityForm
+            chainId={chain}
+            tokenGarden={tokenGarden}
+            registryFactoryAddr={registryFactoryAddr}
+            alloContractAddr={alloContractAddr}
+          />
+        </section>
+      </div>
     : <div className="mt-96">
-      <LoadingSpinner />
-    </div>;
+        <LoadingSpinner />
+      </div>;
 }

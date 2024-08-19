@@ -4,6 +4,7 @@ import {
   Ethereum,
   GnosisGno,
   Optimism,
+  Polygon,
 } from "@thirdweb-dev/chain-icons";
 import {
   arbitrum,
@@ -15,6 +16,7 @@ import {
   optimism,
   optimismSepolia,
   sepolia,
+  polygon,
 } from "viem/chains";
 import { ChainId } from "@/types";
 
@@ -34,12 +36,15 @@ export const chains: Chain[] = [
 ];
 
 export const chainDataMap: {
-  [key: number]: {
+  [key: number | string]: {
     name: string;
     icon: FC;
     explorer: string;
     blockTime: number;
     confirmations: number;
+    arbitrator?: string;
+    passportScorer: string;
+    globalTribunal?: string;
   };
 } = {
   1337: {
@@ -48,55 +53,75 @@ export const chainDataMap: {
     explorer: "",
     blockTime: 0.23,
     confirmations: 1,
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   421614: {
     name: arbitrumSepolia.name,
     icon: Arbitrum,
-    explorer: "https://sepolia.arbiscan.io/address/",
+    explorer: "https://sepolia-explorer.arbitrum.io",
     blockTime: 0.23,
     confirmations: 1, // 7
+    passportScorer: "0x0000000000000000000000000000000000000000",
+    arbitrator: "0xd9bb041191668d2bc74f3b1aa2b16dc09fba5f15",
+    globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
   },
   42161: {
     name: arbitrum.name,
     icon: Arbitrum,
-    explorer: "https://arbiscan.io/address/",
+    explorer: "https://arbitrum.blockscout.com",
     blockTime: 0.23,
     confirmations: 1, // 7
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   1: {
     name: mainnet.name,
     icon: Ethereum,
-    explorer: "https://etherscan.io/address/",
+    explorer: "https://eth.blockscout.com",
     blockTime: 12,
     confirmations: 1, // 3
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   11155111: {
     name: sepolia.name,
     icon: Ethereum,
-    explorer: "https://sepolia.etherscan.io/address/",
+    explorer: "https://eth-sepolia.blockscout.com",
     blockTime: 12,
     confirmations: 1, // 3
+    arbitrator: "0xbff8a6c13d6536d48dce27186fc3fb503539e5f0",
+    passportScorer: "0x0e3992731e4ba388ccbb6fc92a030f809ebffc23",
+    globalTribunal: "0xc6Eaf449f79B081300F5317122B2Dff3f039ad0b",
   },
   10: {
     name: optimism.name,
     icon: Optimism,
-    explorer: "https://optimistic.etherscan.io/address/",
+    explorer: "https://optimism.blockscout.com",
     blockTime: 2,
     confirmations: 1, // 2
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   11155420: {
     name: optimismSepolia.name,
     icon: Optimism,
-    explorer: "https://sepolia-optimism.etherscan.io/address/",
+    explorer: "https://optimism-sepolia.blockscout.com",
     blockTime: 2,
     confirmations: 1, // 2
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
   100: {
     name: gnosis.name,
     icon: GnosisGno,
-    explorer: "https://gnosisscan.io/address/",
+    explorer: "https://gnosis.blockscout.com",
     blockTime: 5.2,
     confirmations: 1, // 4
+    passportScorer: "0x0000000000000000000000000000000000000000",
+  },
+  137: {
+    name: polygon.name,
+    icon: Polygon,
+    explorer: "https://polygon.blockscout.com",
+    blockTime: 2.1,
+    confirmations: 1, // 4
+    passportScorer: "0x0000000000000000000000000000000000000000",
   },
 };
 

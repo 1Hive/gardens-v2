@@ -1,12 +1,12 @@
 import React from "react";
-import { UserGroupIcon } from "@heroicons/react/24/outline";
-import { capitalize } from "@/utils/text";
 
 type IdentifierProps = {
   icon?: React.ReactNode;
-  count?: number | string;
-  label: string;
+  count?: number | string | React.ReactNode;
+  label?: string | React.ReactNode;
   children?: React.ReactNode;
+  className?: string;
+  tooltip?: string;
 };
 
 export const Statistic = ({
@@ -14,20 +14,21 @@ export const Statistic = ({
   count,
   label,
   children,
+  tooltip,
 }: IdentifierProps) => {
-  const iconClassNames = "h-6 w-6";
-  const defaultIcon = <UserGroupIcon className={iconClassNames} />;
-
   return (
     <div className="flex items-center gap-2 text-neutral-soft-content">
-      {icon ?
-        <div className={iconClassNames}>{icon}</div>
-        : <div className={iconClassNames}>{defaultIcon}</div>}
-      {label && (
-        <p className="">
-          {capitalize(label)}: {count}
-        </p>
-      )}
+      <div
+        className={"tooltip flex cursor-default items-center max-w-sm"}
+        data-tip={tooltip}
+      >
+        {icon && <div className="mr-1">{icon}</div>}
+        {label && (
+          <p className="first-letter:uppercase">
+            {label}: {count}
+          </p>
+        )}
+      </div>
       {children}
     </div>
   );

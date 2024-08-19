@@ -5,16 +5,21 @@ import { Size } from "@/types";
 
 type ButtonProps = {
   type?:
-  | "button"
-  | "submit"
-  | "reset"
-  | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+    | "button"
+    | "submit"
+    | "reset"
+    | React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
   btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
   className?: string;
   disabled?: boolean;
   tooltip?: string;
+  tooltipSide?:
+    | "tooltip-top"
+    | "tooltip-bottom"
+    | "tooltip-left"
+    | "tooltip-right";
   children: React.ReactNode;
   isLoading?: boolean;
   size?: Size;
@@ -22,8 +27,13 @@ type ButtonProps = {
   walletConnected?: boolean;
 };
 
-type Color = "primary" | "secondary" | "tertiary" | "danger" | "disabled";
-type BtnStyle = "filled" | "outline" | "link";
+export type Color =
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "danger"
+  | "disabled";
+export type BtnStyle = "filled" | "outline" | "link";
 
 type BtnStyles = Record<BtnStyle, Record<Color, string>>;
 
@@ -39,12 +49,13 @@ const btnStyles: BtnStyles = {
   },
   outline: {
     primary:
-      "text-primary-content outline outline-2 outline-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
-    secondary: "",
+      "text-primary-content border border-primary-content hover:text-primary-hover-content hover:outline-primary-hover-content",
+    secondary:
+      "text-secondary-content border border-secondary-content hover:text-secondary-hover-content hover:outline-secondary-hover-content",
     tertiary: "",
     danger:
-      "text-danger-button outline outline-2 outline-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
-    disabled: "text-neutral-soft outline outline-2 outline-neutral-soft",
+      "text-danger-button border border-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
+    disabled: "text-neutral-soft border border-neutral-soft",
   },
   link: {
     primary: "text-primary-content",
@@ -60,6 +71,7 @@ export function Button({
   className: styles,
   disabled = false,
   tooltip = "Connect wallet",
+  tooltipSide = "tooltip-top",
   children,
   btnStyle = "filled",
   color = "primary",
@@ -67,24 +79,28 @@ export function Button({
   icon,
   type = "button",
 }: ButtonProps) {
-  const buttonContent =
-    isLoading ? <span className="loading loading-spinner" /> : children;
-
   const buttonElement = (
     <button
       type={type}
       className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
-      flex cursor-pointer items-center justify-center gap-2 rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
+      flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
-      {icon && icon} {buttonContent}
+      <div
+        className={`${isLoading ? "invisible" : "visible"} flex gap-2 items-center`}
+      >
+        {icon && icon} {children}
+      </div>
+      <span
+        className={`loading loading-spinner absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${isLoading ? "block" : "hidden"}`}
+      />
     </button>
   );
 
   return disabled ?
-    <div className={`tooltip ${styles}`} data-tip={tooltip}>
-      {buttonElement}
-    </div>
+      <div className={`tooltip ${tooltipSide} ${styles}`} data-tip={tooltip}>
+        {buttonElement}
+      </div>
     : buttonElement;
 }

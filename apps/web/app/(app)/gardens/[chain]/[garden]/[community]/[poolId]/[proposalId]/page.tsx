@@ -1,23 +1,33 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
-import { Address, formatUnits } from "viem";
-import { useContractRead } from "wagmi";
+import { toast } from "react-toastify";
+import { Address, encodeAbiParameters, formatUnits } from "viem";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
 } from "#/subgraph/.graphclient";
-import { proposalImg } from "@/assets";
-import { Badge, DisplayNumber, EthAddress, Statistic } from "@/components";
+import {
+  Badge,
+  Button,
+  DisplayNumber,
+  EthAddress,
+  Statistic,
+} from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useConvictionRead } from "@/hooks/useConvictionRead";
+import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { cvStrategyABI } from "@/src/generated";
-import { poolTypes, proposalStatus } from "@/types";
-import { getIpfsMetadata } from "@/utils/ipfsUtils";
-import { calculatePercentageBigInt } from "@/utils/numbers";
+import { alloABI } from "@/src/generated";
+import { PoolTypes, ProposalStatus } from "@/types";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { useErrorDetails } from "@/utils/getErrorName";
 
 const prettyTimestamp = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -32,9 +42,13 @@ const prettyTimestamp = (timestamp: number) => {
 export default function Page({
   params: { proposalId, garden },
 }: {
-  params: { proposalId: string; poolId: string; chain: string; garden: string };
+  params: {
+    proposalId: string;
+    poolId: string;
+    chain: string;
+    garden: string;
+  };
 }) {
-  // TODO: fetch garden decimals in query
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -49,100 +63,80 @@ export default function Page({
   });
 
   const proposalData = data?.cvproposal;
-
   const metadata = proposalData?.metadata;
+  const proposalIdNumber =
+    proposalData?.proposalNumber ?
+      BigInt(proposalData.proposalNumber)
+    : undefined;
 
-  const [ipfsResult, setIpfsResult] =
-    useState<Awaited<ReturnType<typeof getIpfsMetadata>>>();
+  const { publish } = usePubSubContext();
+  const chainId = useChainIdFromPath();
 
-  useEffect(() => {
-    if (metadata) {
-      getIpfsMetadata(metadata).then((d) => {
-        setIpfsResult(d);
-      });
-    }
-  }, [metadata]);
+  const { data: ipfsResult } = useProposalMetadataIpfsFetch({ hash: metadata });
 
-  const cvStrategyContract = {
-    address: proposalData?.strategy.id as Address,
-    abi: cvStrategyABI,
-  };
-
-  const proposalIdNumber = proposalData?.proposalNumber;
-
-  const { data: thFromContract } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "calculateThreshold",
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  });
-
-  const { data: totalEffectiveActivePoints } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "totalEffectiveActivePoints",
-  });
-
-  const { data: stakeAmountFromContract } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "getProposalStakedAmount",
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  });
-
-  const isProposalEnded =
-    !!proposalData &&
-    (proposalStatus[proposalData.proposalStatus] !== "executed" ||
-      proposalStatus[proposalData.proposalStatus] !== "cancelled");
-
-  const { data: updateConvictionLast } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "updateProposalConviction" as any, // TODO: fix CVStrategy.updateProposalConviction to view in contract
-    args: [proposalIdNumber],
-    enabled: !!proposalIdNumber,
-  }) as { data: bigint | undefined };
-
-  const { data: maxCVSupply } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "getMaxConviction",
-    args: [totalEffectiveActivePoints ?? 0n],
-    enabled: !!totalEffectiveActivePoints,
+  const {
+    currentConvictionPct,
+    thresholdPct,
+    totalSupportPct,
+    updateConvictionLast,
+  } = useConvictionRead({
+    proposalData,
+    tokenData: data?.tokenGarden,
+    enabled: proposalData?.proposalNumber != null,
   });
 
   const tokenSymbol = data?.tokenGarden?.symbol;
-  const tokenDecimals = data?.tokenGarden?.decimals;
-  const convictionLast = proposalData?.convictionLast;
-  const threshold = proposalData?.threshold;
   const proposalType = proposalData?.strategy.config?.proposalType;
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
-  const status = proposalData?.proposalStatus;
-  const stakedAmount = proposalData?.stakedAmount;
+  const isSignalingType = PoolTypes[proposalType] === "signaling";
 
+  //encode proposal id to pass as argument to distribute function
+  const encodedDataProposalId = (proposalId_: bigint) => {
+    const encodedProposalId = encodeAbiParameters(
+      [{ name: "proposalId", type: "uint" }],
+      [proposalId_],
+    );
+    return encodedProposalId;
+  };
+
+  //distribution function from Allo contract
+  //args: poolId, strategyId, encoded proposalId
+  const {
+    write: writeDistribute,
+    error: errorDistribute,
+    isError: isErrorDistribute,
+  } = useContractWriteWithConfirmations({
+    address: data?.allos[0]?.id as Address,
+    abi: abiWithErrors(alloABI),
+    functionName: "distribute",
+    contractName: "Allo",
+    fallbackErrorMessage: "Error executing proposal. Please try again.",
+    onConfirmations: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "distribute",
+        id: proposalId,
+        containerId: data?.cvproposal?.strategy?.id,
+        chainId,
+      });
+    },
+  });
+
+  const distributeErrorName = useErrorDetails(errorDistribute);
   useEffect(() => {
-    if (!proposalData) {
-      return;
+    if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
+      toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
     }
-
-    console.debug({
-      requestedAmount,
-      maxCVSupply,
-      threshold,
-      thFromContract,
-      stakedAmount,
-      stakeAmountFromContract: stakeAmountFromContract,
-      totalEffectiveActivePoints,
-      updateConvictionLast,
-      convictionLast,
-    });
-  }, [proposalData]);
+  }, [isErrorDistribute]);
 
   if (
     !proposalData ||
     !ipfsResult ||
-    !maxCVSupply ||
-    !totalEffectiveActivePoints ||
-    (updateConvictionLast == null && !isProposalEnded)
+    proposalIdNumber == null ||
+    updateConvictionLast == null
   ) {
     return (
       <div className="mt-96">
@@ -151,102 +145,107 @@ export default function Page({
     );
   }
 
-  const isSignalingType = poolTypes[proposalType] === "signaling";
-
-  let thresholdPct = calculatePercentageBigInt(
-    threshold,
-    maxCVSupply,
-    tokenDecimals,
-  );
-
-  let totalSupportPct = calculatePercentageBigInt(
-    stakedAmount,
-    totalEffectiveActivePoints,
-    tokenDecimals,
-  );
-
-  let currentConvictionPct = calculatePercentageBigInt(
-    BigInt(updateConvictionLast ?? 0),
-    maxCVSupply,
-    tokenDecimals,
-  );
-
-  console.debug({
-    thresholdPct,
-    totalSupportPct,
-    currentConvictionPct,
-  });
+  const status = ProposalStatus[proposalData.proposalStatus];
 
   return (
     <div className="page-layout">
-      <header className="section-layout flex flex-col items-start gap-10 sm:flex-row">
-        <div className="flex w-full items-center justify-center sm:w-auto">
-          <Image
-            src={proposalImg}
-            alt={`proposal image ${proposalIdNumber}`}
-            height={160}
-            width={160}
-            className="min-h-[160px] min-w-[160px]"
-          />
-        </div>
-        <div className="flex w-full flex-col gap-8">
-          <div>
-            <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-              <h2>
-                {ipfsResult?.title} #{proposalIdNumber}
-              </h2>
-              <Badge type={proposalType} />
-            </div>
-            <div className="flex items-center justify-between gap-4 sm:justify-start">
-              <Badge status={status} />
-              <p className="font-semibold">
-                {prettyTimestamp(proposalData?.createdAt ?? 0)}
-              </p>
-            </div>
+      <header
+        className={`section-layout flex flex-col gap-8 border ${status === "disputed" ? "!border-error-content" : ""} ${status === "executed" ? "!border-primary-content" : ""}`}
+      >
+        <div className="flex flex-col items-start gap-10 sm:flex-row">
+          <div className="flex w-full items-center justify-center sm:w-auto">
+            <Hashicon value={proposalId} size={90} />
           </div>
-          <p>{ipfsResult?.description}</p>
-          <div className="flex flex-col gap-2">
-            {!isSignalingType && (
-              <>
-                <Statistic
-                  label={"requested amount"}
-                  icon={<InformationCircleIcon />}
-                >
-                  <DisplayNumber
-                    number={formatUnits(requestedAmount, 18)}
-                    tokenSymbol={tokenSymbol}
-                    compact={true}
-                    className="font-bold text-black"
-                  />
+          <div className="flex w-full flex-col gap-8">
+            <div>
+              <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                <h2>
+                  {ipfsResult?.title} #{proposalData?.proposalNumber}
+                </h2>
+                <Badge type={proposalType} />
+              </div>
+              <div className="flex items-center justify-between gap-4 sm:justify-start">
+                <Badge status={proposalData.proposalStatus} />
+                <p className="">
+                  Created:{" "}
+                  <span className="font-semibold">
+                    {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <p>{ipfsResult?.description}</p>
+            <div className="flex justify-between">
+              <div className="flex flex-col gap-2">
+                {!isSignalingType && (
+                  <>
+                    <Statistic
+                      label={"requested amount"}
+                      icon={<InformationCircleIcon />}
+                    >
+                      <DisplayNumber
+                        number={formatUnits(requestedAmount, 18)}
+                        tokenSymbol={tokenSymbol}
+                        compact={true}
+                        className="font-bold text-black"
+                      />
+                    </Statistic>
+                    <Statistic label={"beneficiary"} icon={<UserIcon />}>
+                      <EthAddress address={beneficiary} actions="copy" />
+                    </Statistic>
+                  </>
+                )}
+                <Statistic label={"created by"} icon={<UserIcon />}>
+                  <EthAddress address={submitter} actions="copy" />
                 </Statistic>
-                <Statistic label={"beneficiary"} icon={<UserIcon />}>
-                  <EthAddress address={beneficiary} actions="copy" />
-                </Statistic>
-              </>
-            )}
-            <Statistic label={"created by"} icon={<UserIcon />}>
-              <EthAddress address={submitter} actions="copy" />
-            </Statistic>
+              </div>
+              <div className="flex items-end">
+                <DisputeButton
+                  proposalData={{ ...proposalData, ...ipfsResult }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </header>
       <section className="section-layout">
-        <h2>Metrics</h2>
-        {/* TODO: need designs for this entire section */}
-        {status && proposalStatus[status] === "executed" ?
-          <div className="my-8 flex w-full justify-center">
-            <div className="badge badge-success p-4 text-primary">
-              Proposal passed and executed successfully
+        {status && status !== "active" && status !== "disputed" ?
+          <h4
+            className={`text-center ${status === "executed" ? "text-primary-content" : "text-error-content"}`}
+          >
+            {status === "executed" ?
+              "Proposal passed and executed successfully!"
+            : `Proposal as been ${status}.`}
+          </h4>
+        : <>
+            <div className="flex justify-between">
+              <h2>Metrics</h2>
+              {status === "active" && !isSignalingType && (
+                <Button
+                  onClick={() =>
+                    writeDistribute?.({
+                      args: [
+                        [],
+                        encodedDataProposalId(proposalIdNumber),
+                        "0x0",
+                      ],
+                    })
+                  }
+                  disabled={currentConvictionPct < thresholdPct}
+                  tooltip="Proposal not executable"
+                >
+                  Execute
+                </Button>
+              )}
             </div>
-          </div>
-          : <div className="mt-10 flex justify-evenly">
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
               thresholdPct={thresholdPct}
               proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
+              proposalId={Number(proposalIdNumber)}
             />
-          </div>
+          </>
         }
       </section>
     </div>

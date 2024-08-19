@@ -54,8 +54,8 @@ query getTokenGardens {
   }
 }
 
-query getMemberStrategy($wallet: ID!) {
-  memberStrategy(id: $wallet) {
+query getMemberStrategy($member_strategy: ID!) {
+  memberStrategy(id: $member_strategy) {
     id
     totalStakedPoints
     activatedPoints
@@ -69,7 +69,7 @@ query getMemberStrategy($wallet: ID!) {
 }
 
 query isMember($me: ID!, $comm: String!) {
-  members(where: { id: $me }) {
+  member(id: $me) {
     id
     stakes {
       id
@@ -95,6 +95,7 @@ query isMember($me: ID!, $comm: String!) {
     }
     memberCommunity(where: { registryCommunity_contains: $comm }) {
       stakedTokens
+      isRegistered
       registryCommunity {
         id
       }
@@ -253,13 +254,23 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     config {
       id
-      proposalType
-      pointSystem
+      arbitrator
+      defaultRuling
+      defaultRulingTimeout
+      challengerCollateralAmount
+      submitterCollateralAmount
+      tribunalSafe
+      weight
+      decay
+      maxAmount
       maxRatio
       minThresholdPoints
+      pointSystem
+      proposalType
     }
     registryCommunity {
       id
+      councilSafe
       isValid
       garden {
         id
@@ -276,17 +287,30 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       requestedToken
       proposalStatus
       stakedAmount
+      convictionLast
+      threshold
+      strategy {
+        id
+        maxCVSupply
+        totalEffectiveActivePoints
+      }
     }
   }
 }
 
 query getProposalData($garden: ID!, $proposalId: ID!) {
+  allos {
+    id
+    chainId
+    tokenNative
+  }
   tokenGarden(id: $garden) {
     name
     symbol
     decimals
   }
   cvproposal(id: $proposalId) {
+    id
     proposalNumber
     beneficiary
     blockLast
@@ -303,10 +327,17 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     version
     strategy {
       id
+      maxCVSupply
+      totalEffectiveActivePoints
       config {
         proposalType
         pointSystem
         minThresholdPoints
+        challengerCollateralAmount
+        arbitrator
+        defaultRuling
+        defaultRulingTimeout
+        tribunalSafe
       }
     }
   }
@@ -400,5 +431,74 @@ query getProposalTitles($proposalId: ID!) {
         }
       }
     }
+  }
+}
+
+query getPassportScorer($scorerId: ID!) {
+  passportScorer(id: $scorerId) {
+    id
+    strategies {
+      id
+      strategy {
+        id
+      }
+      threshold
+      councilSafe
+      active
+    }
+    users {
+      id
+      userAddress
+      score
+      lastUpdated
+    }
+  }
+}
+
+query getPassportStrategy($strategyId: ID!) {
+  passportStrategy(id: $strategyId) {
+    id
+    strategy {
+      id
+    }
+    threshold
+    councilSafe
+    active
+  }
+}
+
+query getPassportUser($userId: ID!) {
+  passportUser(id: $userId) {
+    id
+    userAddress
+    score
+    lastUpdated
+  }
+}
+
+query getProposalDisputes($proposalId: ID!) {
+  proposalDisputes(where: { proposal_: { id: $proposalId } }) {
+    id
+    disputeId
+    status
+    challenger
+    context
+    metadata {
+      reason
+    }
+    createdAt
+    ruledAt
+    rulingOutcome
+  }
+}
+
+query getStrategyArbitrationConfig($strategyConfigId: ID!) {
+  cvstrategyConfig(id: $strategyConfigId) {
+    challengerCollateralAmount
+    submitterCollateralAmount
+    arbitrator
+    tribunalSafe
+    defaultRuling
+    defaultRulingTimeout
   }
 }

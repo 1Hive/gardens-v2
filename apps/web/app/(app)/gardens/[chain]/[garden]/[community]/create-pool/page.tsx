@@ -12,9 +12,9 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
 export default function Page({
-  params: { chain, garden, community },
+  params: { garden, community },
 }: {
-  params: { chain: number; garden: string; community: string };
+  params: { garden: string; community: string };
 }) {
   const { data: result } = useSubgraphQuery<getPoolCreationDataQuery>({
     query: getPoolCreationDataDocument,
@@ -25,22 +25,19 @@ export default function Page({
   let communityName = result?.registryCommunity?.communityName as string;
 
   return result ?
-    <div className="page-layout">
-      <section className="section-layout">
-        <div className="text-center sm:mt-5">
-          <h2 className="text-xl font-semibold leading-6 text-gray-900">
-              Create a Pool in {communityName} community
-          </h2>
-        </div>
-        <PoolForm
-          alloAddr={alloAddr}
-          token={token as TokenGarden}
-          communityAddr={community as Address}
-          chainId={chain}
-        />
-      </section>
-    </div>
+      <div className="page-layout">
+        <section className="section-layout">
+          <div className="text-center sm:mt-5 mb-12">
+            <h2 className="">Create a Pool in {communityName} community</h2>
+          </div>
+          <PoolForm
+            alloAddr={alloAddr}
+            token={token as TokenGarden}
+            communityAddr={community as Address}
+          />
+        </section>
+      </div>
     : <div className="mt-96">
-      <LoadingSpinner />
-    </div>;
+        <LoadingSpinner />
+      </div>;
 }

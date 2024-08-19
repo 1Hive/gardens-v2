@@ -15,6 +15,7 @@ export const SCALE_PRECISION_DECIMALS =
 
 export const CV_SCALE_PRECISION = 10 ** 7;
 export const CV_SCALE_PRECISION_DECIMALS = 7;
+export const ETH_DECIMALS = 18;
 
 export function parseToken(value: dn.Dnum | string, compact?: boolean) {
   const str =
@@ -51,13 +52,17 @@ export function parseToken(value: dn.Dnum | string, compact?: boolean) {
 function formatTokenAmount(
   value: string | number | bigint | undefined,
   decimals: number,
+  digits?: number,
 ) {
+  if (digits === undefined) {
+    digits = 2;
+  }
   if (!value) {
     return "0";
   }
   const num = [BigInt(value), decimals] as const;
 
-  return dn.format(num, { digits: 2 });
+  return dn.format(num, { digits: digits });
 }
 
 function calculateFees(
@@ -162,6 +167,15 @@ function calculatePercentageDecimals(
   return Number(formattedPercentage);
 }
 
+function calculateDecay(blockTime: number, convictionGrowth: number) {
+  const halfLifeInSeconds = convictionGrowth * 24 * 60 * 60;
+
+  const result =
+    Math.pow(10, 7) * Math.pow(1 / 2, blockTime / halfLifeInSeconds);
+
+  return Math.floor(result);
+}
+
 export {
   calculateFees,
   formatTokenAmount,
@@ -170,4 +184,5 @@ export {
   calculatePercentageDecimals,
   calculatePercentageBigInt,
   calculatePercentage,
+  calculateDecay,
 };

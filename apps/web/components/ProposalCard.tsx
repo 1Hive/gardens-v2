@@ -1,39 +1,34 @@
 "use client";
 
-import React, { useEffect } from "react";
-import Link from "next/link";
+import { Hashicon } from "@emeraldpay/hashicon-react";
 import { usePathname } from "next/navigation";
-import { toast } from "react-toastify";
-import { encodeAbiParameters } from "viem";
-import { Address } from "wagmi";
+import { formatUnits } from "viem";
 import { Allo } from "#/subgraph/.graphclient";
-import { Badge } from "./Badge";
-import { Button } from "./Button";
+import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
-import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
-import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { alloABI } from "@/src/generated";
-import { LightCVStrategy, poolTypes } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
-import { useErrorDetails } from "@/utils/getErrorName";
+import { Badge, Card } from "@/components";
+import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useConvictionRead } from "@/hooks/useConvictionRead";
+import { LightCVStrategy, PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
 
-type Props = {
+type ProposalCardProps = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   index: number;
-  isEditView: boolean;
-  tooltipMessage: string;
+  isAllocationView: boolean;
   memberActivatedPoints: number;
   memberPoolWeight: number;
   executeDisabled: boolean;
+  tooltipMessage: string;
   strategy: LightCVStrategy;
   tokenDecimals: number;
   alloInfo: Allo;
+  tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
   inputHandler: (i: number, value: number) => void;
   triggerRenderProposals: () => void;
 };
@@ -43,184 +38,168 @@ export function ProposalCard({
   inputData,
   stakedFilter,
   index,
-  isEditView,
-  tooltipMessage,
+  isAllocationView,
   memberActivatedPoints,
-  memberPoolWeight,
-  executeDisabled,
   strategy,
-  alloInfo,
+  tokenData,
   inputHandler,
-  triggerRenderProposals,
-}: Props) {
-  const { title, id, proposalNumber, proposalStatus } = proposalData;
+}: ProposalCardProps) {
+  const { title, id, proposalNumber, proposalStatus, requestedAmount, type } =
+    proposalData;
   const pathname = usePathname();
 
-  const { publish } = usePubSubContext();
-  const chainId = useChainIdFromPath();
+  const searchParams = useCollectQueryParams();
+  // TODO: ADD border color when new proposal is added
+  const isNewProposal =
+    searchParams[QUERY_PARAMS.poolPage.newPropsoal] ==
+    proposalData.proposalNumber;
 
-  const calcPoolWeightUsed = (number: number) => {
-    return memberPoolWeight == 0 ? 0 : (
-      ((number / 100) * memberPoolWeight).toFixed(2)
-    );
-  };
+  const { currentConvictionPct, thresholdPct, totalSupportPct } =
+    useConvictionRead({
+      proposalData,
+      tokenData,
+    });
 
-  //encode proposal id to pass as argument to distribute function
-  const encodedDataProposalId = (proposalId: number) => {
-    const encodedProposalId = encodeAbiParameters(
-      [{ name: "proposalId", type: "uint" }],
-      [BigInt(proposalId)],
-    );
+  //TODO: move execute func to proposalId page
 
-    return encodedProposalId;
-  };
+  const inputValue = calculatePercentage(
+    inputData.value,
+    memberActivatedPoints,
+  );
 
-  //executing proposal distribute function / alert error if not executable / notification if success
-  const {
-    transactionData: distributeTxData,
-    write: writeDistribute,
-    error: errorDistribute,
-    isError: isErrorDistribute,
-    status: distributeStatus,
-  } = useContractWriteWithConfirmations({
-    address: alloInfo.id as Address,
-    abi: abiWithErrors(alloABI),
-    functionName: "distribute",
-    onConfirmations: () => {
-      publish({
-        topic: "proposal",
-        type: "update",
-        function: "distribute",
-        id,
-        containerId: strategy.poolId,
-        chainId,
-      });
-    },
-  });
+  const allocatedInProposal = calculatePercentage(
+    stakedFilter?.value,
+    memberActivatedPoints,
+  );
 
-  const distributeErrorName = useErrorDetails(errorDistribute);
-  useEffect(() => {
-    if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
-      toast.error("NOT EXECUTABLE:" + "  " + distributeErrorName.errorName);
-    }
-  }, [isErrorDistribute]);
+  const isSignalingType = PoolTypes[type] === "signaling";
 
-  const {
-    updateTransactionStatus: updateDistributeTransactionStatus,
-    txConfirmationHash: distributeTxConfirmationHash,
-  } = useTransactionNotification(distributeTxData);
-
-  useEffect(() => {
-    updateDistributeTransactionStatus(distributeStatus);
-  }, [distributeStatus]);
-
-  useEffect(() => {
-    triggerRenderProposals();
-  }, [distributeTxConfirmationHash]);
-
-  return (
-    <div
-      className="bg-surface flex flex-col items-center justify-center gap-4 rounded-lg p-8"
-      key={title + "_" + proposalNumber}
-    >
-      <div className="flex w-full items-center justify-between ">
-        <div className="flex flex-[30%] flex-col items-baseline gap-2">
-          <h4 className="text-xl font-bold">{title}</h4>
-          <span className="text-md">ID {proposalNumber}</span>
+  const proposalCardContent = (
+    <>
+      <div
+        className={`grid grid-cols-10 gap-8  py-3 ${isAllocationView && "section-layout"}`}
+      >
+        <div
+          className={`col-span-3 flex gap-6 ${isAllocationView && "col-span-9"}`}
+        >
+          <Hashicon value={id} size={45} />
+          <div className="overflow-hidden">
+            <h4 className="truncate first-letter:uppercase">{title}</h4>
+            <h6 className="text-sm">ID {proposalNumber}</h6>
+          </div>
         </div>
-
-        <div className="flex items-center gap-8">
-          <Badge status={proposalStatus} />
-          {/* Button to test distribute */}
-          {!isEditView && poolTypes[proposalData.type] == "funding" && (
-            <Button
-              // TODO: add flexible tooltip and func to check executability
-              disabled={executeDisabled}
-              tooltip={
-                proposalStatus == 4 ?
-                  "Proposal already executed"
-                  : tooltipMessage
-              }
-              onClick={() =>
-                writeDistribute?.({
-                  args: [
-                    strategy.poolId,
-                    [strategy.id],
-                    encodedDataProposalId(proposalNumber),
-                  ],
-                })
-              }
-            >
-              Execute proposal
-            </Button>
-          )}
-          <>
-            <Link href={`${pathname}/${id}`}>
-              <Button btnStyle="outline">View Proposal</Button>
-            </Link>
-          </>
-        </div>
-      </div>
-      {isEditView && (
-        <div className="flex w-full flex-wrap items-center justify-between gap-6">
-          <div className="flex items-center gap-8">
-            <div>
-              <input
-                type="range"
-                min={0}
-                max={memberActivatedPoints}
-                value={inputData?.value ?? 0}
-                className={"range range-success range-sm min-w-[420px] cursor-pointer"}
-                step={memberActivatedPoints / 100}
-                onChange={(e) => inputHandler(index, Number(e.target.value))}
-              />
-              <div className="flex w-full justify-between px-[10px]">
-                {[...Array(21)].map((_, i) => (
-                  <span className="text-[8px]" key={"span_" + i}>
-                    |
-                  </span>
-                ))}
+        <Badge
+          status={proposalStatus}
+          classNames={`self-center ${isAllocationView ? "justify-self-end" : "justify-self-start"}`}
+        />
+        {isAllocationView ?
+          <div className="col-span-10 mt-4">
+            <div className=" flex w-full flex-wrap items-center justify-between gap-6">
+              <div className="flex items-center gap-8">
+                <div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={memberActivatedPoints}
+                    value={inputData.value}
+                    className={
+                      "range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]"
+                    }
+                    step={memberActivatedPoints / 100}
+                    onChange={(e) =>
+                      inputHandler(index, Number(e.target.value))
+                    }
+                  />
+                  <div className="flex w-full justify-between px-2.5">
+                    {[...Array(21)].map((_, i) => (
+                      // eslint-disable-next-line react/no-array-index-key
+                      <span className="text-[8px]" key={`span_${i}`}>
+                        |
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-2">
+                  {Number(inputValue) > 0 ?
+                    <>
+                      <p className="flex items-center gap-2 text-primary-content">
+                        Total allocated{" "}
+                        <span className="font-chakra text-2xl font-semibold">
+                          {inputValue}{" "}
+                        </span>
+                        %
+                      </p>
+                    </>
+                  : <p className="text-neutral-soft-content">No allocation</p>}
+                </div>
               </div>
             </div>
-            <div className="mb-2">
-              <p className="text-xl font-semibold">
-                {Number(
-                  (inputData?.value * 100) / memberActivatedPoints,
-                ).toFixed(2)}
-                %
-              </p>
+          </div>
+        : <>
+            <div className="col-span-3 ml-10 self-center justify-self-start">
+              {stakedFilter &&
+                (stakedFilter?.value > 0 ?
+                  <p
+                    className="text-primary-content text-xs flex items-center justify-center
+                  // TODO: calculate data when fetching ok from subgrpah
+                gap-1"
+                  >
+                    You allocate{" "}
+                    <span className="font-medium text-2xl">
+                      {`${allocatedInProposal.toString()}%`}
+                    </span>{" "}
+                    pool weight
+                  </p>
+                : <p className="text-xs text-neutral-soft-content text-center">
+                    No allocation mad
+                  </p>)}
             </div>
-          </div>
-          <div className="flex max-w-sm flex-1 items-baseline justify-center gap-2 px-8">
-            {inputData?.value < stakedFilter?.value ?
-              <p className="text-center">
-                Removing to
-                <span className="px-2 py-1 text-xl font-semibold text-info">
-                  {calcPoolWeightUsed(
-                    calculatePercentage(
-                      inputData?.value ?? 0,
-                      memberActivatedPoints,
-                    ),
-                  )}
-                </span>
-                % of pool weight
-              </p>
-              : <p className="text-center">
-                Assigning
-                <span className="px-2 py-2 text-2xl font-semibold text-info">
-                  {calcPoolWeightUsed(
-                    calculatePercentage(
-                      inputData?.value ?? 0,
-                      memberActivatedPoints,
-                    ),
-                  )}
-                </span>
-                % of pool weight
-              </p>
-            }
-          </div>
-        </div>
-      )}
-    </div>
+            <div className="col-span-3 self-center flex flex-col gap-2">
+              {currentConvictionPct != null &&
+                thresholdPct != null &&
+                totalSupportPct != null && (
+                  <div className="h-4">
+                    <ConvictionBarChart
+                      compact
+                      currentConvictionPct={currentConvictionPct}
+                      thresholdPct={isSignalingType ? 0 : thresholdPct}
+                      proposalSupportPct={totalSupportPct}
+                      isSignalingType={isSignalingType}
+                      proposalId={proposalNumber}
+                    />
+                  </div>
+                )}
+              {!isSignalingType && (
+                <div className="flex items-baseline gap-1">
+                  <p className="text-xs text-neutral-soft-content">
+                    Requested amount:{" "}
+                  </p>
+                  <DisplayNumber
+                    number={formatUnits(requestedAmount, 18)}
+                    tokenSymbol={strategy.registryCommunity.garden.symbol}
+                    compact={true}
+                    className="text-neutral-soft-content text-xs"
+                  />
+                </div>
+              )}
+            </div>
+          </>
+        }
+      </div>
+    </>
+  );
+
+  return (
+    <>
+      {isAllocationView ?
+        proposalCardContent
+      : <Card
+          href={`${pathname}/${id}`}
+          className={`py-4 ${isNewProposal ? "!border-accent !border-2" : ""}`}
+        >
+          {proposalCardContent}
+        </Card>
+      }
+    </>
   );
 }

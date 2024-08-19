@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { CubeTransparentIcon, PlusIcon } from "@heroicons/react/24/outline";
+import {
+  CubeTransparentIcon,
+  PlusIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
@@ -17,6 +21,8 @@ import {
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/constants/contracts";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
@@ -27,7 +33,12 @@ export default function Page({
 }: {
   params: { chain: number; garden: string };
 }) {
-  const { data: result, error } = useSubgraphQuery<getGardenQuery>({
+  const searchParams = useCollectQueryParams();
+  const {
+    data: result,
+    error,
+    refetch,
+  } = useSubgraphQuery<getGardenQuery>({
     query: getGardenDocument,
     variables: { addr: garden },
     changeScope: [
@@ -50,9 +61,21 @@ export default function Page({
     }
   }, [error]);
 
-  let communities = result?.tokenGarden?.communities ?? [];
+  let communities =
+    result?.tokenGarden?.communities?.filter((com) => com.isValid) ?? [];
 
-  communities = communities.filter((com) => com.isValid);
+  useEffect(() => {
+    const newCommunityId =
+      searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase();
+
+    if (
+      newCommunityId &&
+      result &&
+      !communities.some((c) => c.id.toLowerCase() === newCommunityId)
+    ) {
+      refetch();
+    }
+  }, [searchParams, result]);
 
   const tokenGarden = result?.tokenGarden;
 
@@ -91,9 +114,10 @@ export default function Page({
           <div>
             <div className="mb-2 flex flex-col">
               <div className="flex items-center gap-4">
-                <h2>{tokenGarden?.name}</h2> <TokenLabel chainId={chain} />
+                <h2>{tokenGarden?.name}</h2>{" "}
+                <TokenLabel chainId={chain} classNames="bg-neutral-soft" />
               </div>
-              <EthAddress address={tokenGarden?.id as Address} />
+              <EthAddress icon={false} address={tokenGarden?.id as Address} />
             </div>
             <p className="max-w-lg">
               Discover communities in the
@@ -109,7 +133,11 @@ export default function Page({
               icon={<CubeTransparentIcon />}
               count={communities?.length ?? 0}
             />
-            <Statistic label="members" count={gardenTotalMembers()} />
+            <Statistic
+              label="members"
+              count={gardenTotalMembers()}
+              icon={<UserGroupIcon />}
+            />
           </div>
         </div>
       </header>
@@ -138,12 +166,12 @@ export default function Page({
             <Image
               src={tree2}
               alt="tree"
-              className="absolute bottom-0 left-5"
+              className="absolute bottom-0 -left-10 h-52"
             />
             <Image
               src={tree3}
               alt="tree"
-              className="absolute bottom-0 right-5"
+              className="absolute bottom-0 -right-10 h-60 "
             />
             <Image
               src={grassLarge}

@@ -1,12 +1,12 @@
-import React from "react";
+import React, { ReactNode } from "react";
 
-export type FormRow = { label: string; data: string | number | boolean };
+export type FormRow = { label: string; data: ReactNode };
 
 type Props = {
   previewTitle: string;
   formRows?: FormRow[];
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
 };
 
 export function FormPreview({
@@ -19,33 +19,21 @@ export function FormPreview({
     return <>Error no Data</>;
   }
 
-  // description or covenant
-  {
-    /* <h3 className="text-sm font-medium leading-6 text-gray-900">
-Covenant
-</h3>
-<p className="text-md max-h-56 overflow-y-auto rounded-xl border p-2 leading-7">
-{covenant}
-</p> */
-  }
-
   return (
     <>
-      <div className="divider-default divider" />
-      <div className="px-4 sm:px-0">
-        <p className="mt-0 max-w-2xl text-sm leading-6 text-gray-500">
-          {previewTitle}
-        </p>
+      <div className="px-4 sm:px-0 mb-12 mt-16">
+        <p className="subtitle font-medium">{previewTitle}</p>
       </div>
-      <div className="my-6 flex flex-col items-center">
-        <h4 className="text-xl font-medium leading-6 text-gray-900">{title}</h4>
-        <p className="text-md max-h-56 overflow-y-auto rounded-xl text-center leading-7">
-          {description}
-        </p>
-      </div>
+      {title && description && (
+        <div className="my-8 flex flex-col">
+          <h3 className="mb-4">{title}</h3>
+          <p className="">{description}</p>
+        </div>
+      )}
+
       <div className="relative">
-        {formRows.map(({ label, data }, id) => (
-          <React.Fragment key={label + "_" + id}>
+        {formRows.map(({ label, data }) => (
+          <React.Fragment key={label}>
             <PreviewDataRow label={label} data={data} />
           </React.Fragment>
         ))}

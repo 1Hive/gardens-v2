@@ -1,9 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import {
+  ChevronRightIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Button } from "./Button";
 import { getTitlesFromUrlSegments } from "@/services/getTitlesFromUrlSegments";
 
 interface Breadcrumb {
@@ -18,6 +22,15 @@ const truncateString = (str: string) => {
 export function Breadcrumbs() {
   const path = usePathname();
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
+  const notAuditedDisclaimerAckStorageKey = "NotAuditedDisclaimerAck";
+  const [openDisclaimer, setOpenDisclaimer] = useState(false);
+
+  useEffect(() => {
+    const disclaimerAcknowledged = localStorage.getItem(
+      notAuditedDisclaimerAckStorageKey,
+    );
+    setOpenDisclaimer(disclaimerAcknowledged !== "true");
+  }, []);
 
   const fetchBreadcrumbs = async (): Promise<Breadcrumb[]> => {
     const segments = path.split("/").filter((segment) => segment !== "");
@@ -53,6 +66,11 @@ export function Breadcrumbs() {
     })();
   }, [path]);
 
+  const handleDisclaimerAcknowledgment = () => {
+    setOpenDisclaimer(false);
+    localStorage.setItem(notAuditedDisclaimerAckStorageKey, "true");
+  };
+
   if (!breadcrumbs.length) {
     return <></>;
   }
@@ -74,7 +92,7 @@ export function Breadcrumbs() {
                 <span className="subtitle2 truncate font-semibold text-neutral-soft-content">
                   {label}
                 </span>
-                : <Link
+              : <Link
                   href={href}
                   className="subtitle2 truncate font-semibold text-primary-content"
                 >
@@ -85,6 +103,32 @@ export function Breadcrumbs() {
           ))}
         </ol>
       </div>
+      {openDisclaimer && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 px-6 pb-6 z-10">
+          <div className="border1 pointer-events-auto max-w-xl rounded-xl bg-neutral p-6 shadow-lg flex flex-col gap-4 items-start justify-start">
+            <div className="flex gap-2 items-center">
+              <ExclamationTriangleIcon className="w-8 h-8 text-danger-button" />
+              <h5>Disclaimer</h5>
+            </div>
+            <p className="text-wrap text-justify">
+              You are exploring the frontier with our contracts.{" "}
+              <span className="subtitle2">
+                Please note that they have not been audited yet
+              </span>
+              . Exercise caution and proceed at your own risk.
+            </p>
+            <div>
+              <Button
+                btnStyle="filled"
+                onClick={handleDisclaimerAcknowledgment}
+                color="danger"
+              >
+                I understand
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

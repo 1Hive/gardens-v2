@@ -23,6 +23,14 @@ type CVStrategyConfig @entity(immutable: false) {
   proposalType: BigInt!
   pointSystem: BigInt!
   maxAmount: BigInt
+
+  # Arbitration Config
+  arbitrator: String!
+  tribunalSafe: String!
+  challengerCollateralAmount: BigInt!
+  submitterCollateralAmount: BigInt!
+  defaultRuling: BigInt!
+  defaultRulingTimeout: BigInt!
 }
 
 type CVProposal @entity(immutable: false) {
@@ -136,4 +144,47 @@ type Allo @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
   tokenNative: String!
+}
+
+type PassportScorer @entity(immutable: false) {
+  id: ID!
+  strategies: [PassportStrategy!] @derivedFrom(field: "passportScorer")
+  users: [PassportUser!] @derivedFrom(field: "passportScorer")
+}
+
+type PassportStrategy @entity(immutable: false) {
+  id: ID!
+  passportScorer: PassportScorer!
+  strategy: CVStrategy!
+  threshold: BigInt!
+  councilSafe: String!
+  active: Boolean!
+}
+
+type PassportUser @entity(immutable: false) {
+  id: ID!
+  passportScorer: PassportScorer!
+  userAddress: String!
+  score: BigInt!
+  lastUpdated: BigInt!
+}
+
+type ProposalDispute @entity(immutable: false) {
+  id: ID!
+  createdAt: BigInt!
+  disputeId: BigInt!
+  proposal: CVProposal!
+  status: BigInt!
+  challenger: String!
+  context: String!
+  metadata: ProposalDisputeMetadata!
+
+  # When ruled
+  rulingOutcome: BigInt
+  ruledAt: BigInt
+}
+
+type ProposalDisputeMetadata @entity(immutable: false) {
+  id: ID!
+  reason: String!
 }

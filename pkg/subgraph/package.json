@@ -12,14 +12,15 @@
     "build:ethsep": "pnpm manifest:ethsep && graph codegen && graph build",
     "create-local": "graph create --node http://localhost:8020/ kamikazebr/gv2",
     "remove-local": "graph remove --node http://localhost:8020/ kamikazebr/gv2",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 kamikazebr/gv2 -l v0.0.3",
+    "deploy:local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 kamikazebr/gv2 -l v0.0.3",
     "deploy:arbsep": "pnpm manifest:arbsep && graph deploy --studio gv2-arbsepolia",
+    "deploy:ethsep": "pnpm manifest:ethsep && graph deploy --studio gv2-ethsepolia",
     "build-deploy:arbsep": "pnpm build:arbsep && pnpm deploy:arbsep:last",
     "build-deploy:ethsep": "pnpm build:ethsep && pnpm deploy:ethsep:last",
-    "local": "pnpm create-local && pnpm build && pnpm deploy-local",
+    "local": "pnpm create-local && pnpm build && pnpm deploy:local",
     "last-addr": "ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-addr.ts",
     "build-client": "graphclient build --fileType js",
-    "build-all": "pnpm create-local && pnpm build && pnpm deploy-local",
+    "build-all": "pnpm create-local && pnpm build && pnpm deploy:local",
     "deploy:arbsep:last": "dotenvx run -- ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-version.ts gv2-arbsepolia",
     "deploy:ethsep:last": "dotenvx run -- ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-version.ts gv2-ethsepolia",
     "codegen": "graph codegen"
@@ -29,6 +30,7 @@
     "@graphprotocol/graph-ts": "^0.34.0",
     "@types/node": "*",
     "node-fetch": "*",
+    "process": "^0.11.10",
     "typescript": ">=2.7"
   },
   "devDependencies": {

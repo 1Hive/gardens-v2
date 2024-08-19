@@ -1,3 +1,5 @@
+// api/ably-auth
+
 import Ably from "ably";
 import { NextResponse } from "next/server";
 import { HTTP_CODES } from "../utils";

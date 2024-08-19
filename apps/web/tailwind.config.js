@@ -22,8 +22,10 @@ module.exports = {
           "neutral-inverted-content": "#FFFFFF",
           "tertiary-soft": "#E5F7FA",
           "tertiary-content": "#2AAAE5",
+          accent: "#37CDFA",
           "danger-button": "#EB4848",
           "danger-content": "#EB4848",
+          "error-content": "#EB4848",
           //additions:
           "neutral-soft-content": "#8C8C8C",
           "primary-hover-content": "#49A612",
@@ -31,6 +33,7 @@ module.exports = {
           "primary-button": "#65AD18",
           "danger-hover-content": "#D03A3A",
           "danger-soft": "#FFE6E6",
+          "warning-content": "#FF9500",
         },
       },
     ],

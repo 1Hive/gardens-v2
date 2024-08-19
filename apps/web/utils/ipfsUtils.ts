@@ -1,26 +1,49 @@
-type MetadataV1 = {
-  title: string;
-  description: string;
-};
+import { toast } from "react-toastify";
+import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
-export const ipfsJsonUpload = async (form: object) => {
-  try {
-    const res = await fetch("/api/ipfs", {
-      method: "POST",
-      body: JSON.stringify(form),
-      headers: {
-        "content-type": "application/json",
-      },
-    });
+const ipfsGateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "ipfs.io";
+
+export const ipfsJsonUpload = async (
+  payload: string | object,
+  toastId?: string,
+) => {
+  const fetchPromise: Promise<string> = fetch("/api/ipfs", {
+    method: "POST",
+    body: typeof payload === "string" ? payload : JSON.stringify(payload),
+    headers: {
+      "content-type": "application/json",
+    },
+  }).then(async (res) => {
     const json = await res.json();
-    if (json?.IpfsHash) {
-      return await Promise.resolve(json.IpfsHash);
-    } else {
-      return await Promise.reject(json);
-    }
-  } catch (err) {
-    console.error(err);
-  }
+    console.info("Uploaded to: " + json.IpfsHash, { payload });
+    return json.IpfsHash;
+  });
+
+  return toast
+    .promise(fetchPromise, {
+      pending: {
+        toastId,
+        render: "Uploading data...",
+        type: "default",
+        closeOnClick: true,
+        isLoading: true,
+        style: {
+          width: "fit-content",
+          marginLeft: "auto",
+        },
+      },
+      error: {
+        toastId,
+        render: "Error uploading data. Please try again.",
+        type: "error",
+        closeOnClick: true,
+        autoClose: NOTIFICATION_AUTO_CLOSE_DELAY,
+      },
+    })
+    .catch((error) => {
+      console.error("Error uploading data to IPFS", { payload, error });
+      return null;
+    });
 };
 
 export const ipfsFileUpload = async (selectedFile: File) => {
@@ -42,25 +65,15 @@ export const ipfsFileUpload = async (selectedFile: File) => {
   }
 };
 
-export const getIpfsMetadata = async (ipfsHash: string) => {
-  let title = "No title found";
-  let description = "No description found";
-  try {
-    const rawProposalMetadata = await fetch(
-      `https://ipfs.io/ipfs/${ipfsHash}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-        },
-      },
-    );
+export const fetchIpfs = async <TResult>(ipfsHash: string) => {
+  const ipfsUri = `https://${ipfsGateway}/ipfs/${ipfsHash}?${process.env.NEXT_PUBLIC_PINATA_KEY ? "pinataGatewayToken=" + process.env.NEXT_PUBLIC_PINATA_KEY : ""}`;
+  const ipfsResult = await fetch(ipfsUri, {
+    method: "GET",
+    headers: {
+      "content-type": "application/json",
+    },
+  });
 
-    const proposalMetadata: MetadataV1 = await rawProposalMetadata.json();
-    if (title) title = proposalMetadata?.title;
-    if (description) description = proposalMetadata?.description;
-  } catch (error) {
-    console.error(error);
-  }
-  return { title: title, description: description };
+  const proposalMetadata: TResult = await ipfsResult.json();
+  return proposalMetadata;
 };

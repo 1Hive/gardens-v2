@@ -9,8 +9,8 @@ export function ThemeButton() {
   const { resolvedTheme, setTheme } = useTheme();
   const isMounted = useIsMounted();
 
-  if (!isMounted) {
-    return null;
+  if (!isMounted.current) {
+    return <></>;
   }
 
   return (
@@ -20,7 +20,7 @@ export function ThemeButton() {
     >
       {resolvedTheme === "dark" ?
         <SunIcon className="h-5 w-5" aria-hidden="true" />
-        : <MoonIcon className="h-5 w-5" aria-hidden="true" />}
+      : <MoonIcon className="h-5 w-5" aria-hidden="true" />}
     </button>
   );
 }

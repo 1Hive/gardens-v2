@@ -14,15 +14,16 @@ import {
   TokenGarden,
 } from "#/subgraph/.graphclient";
 import { blueLand, grass } from "@/assets";
-import { Badge, Card, Statistic } from "@/components";
-import { poolTypes } from "@/types";
-import { formatTokenAmount } from "@/utils/numbers";
+import { Badge, Card, DisplayNumber, Statistic } from "@/components";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { PoolTypes } from "@/types";
 
 type Props = {
-  tokenGarden: Pick<TokenGarden, "decimals">;
+  tokenGarden: Pick<TokenGarden, "decimals" | "symbol">;
   pool: Pick<
-  CVStrategy,
-  "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
+    CVStrategy,
+    "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
   > & {
     proposals: Pick<CVProposal, "id">[];
     config: Pick<CVStrategyConfig, "proposalType">;
@@ -31,14 +32,21 @@ type Props = {
 
 export function PoolCard({ pool, tokenGarden }: Props) {
   const pathname = usePathname();
+  const searchParams = useCollectQueryParams();
 
   let { poolAmount, poolId, proposals, isEnabled, config } = pool;
 
   poolAmount = poolAmount || 0;
   const poolType = config?.proposalType as number | undefined;
 
+  const isNewPool =
+    searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId;
+
   return (
-    <Card href={`${pathname}/${poolId}`}>
+    <Card
+      href={`${pathname}/${poolId}`}
+      className={isNewPool ? "!border-accent !border-2" : ""}
+    >
       <header className="mb-4 flex w-full items-center justify-between">
         <h4>Pool #{poolId}</h4>
         <Badge type={poolType} />
@@ -49,23 +57,25 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           count={proposals.length}
           label="proposals"
         />
-        {poolType && poolTypes[poolType] === "funding" && (
-          <Statistic
-            icon={<CurrencyDollarIcon />}
-            count={formatTokenAmount(poolAmount, tokenGarden?.decimals)}
-            label="funds available"
-          />
+        {poolType && PoolTypes[poolType] === "funding" && (
+          <Statistic icon={<CurrencyDollarIcon />} label="funds available">
+            <DisplayNumber
+              number={[BigInt(poolAmount), tokenGarden.decimals]}
+              compact={true}
+              tokenSymbol={tokenGarden.symbol}
+            />
+          </Statistic>
         )}
       </div>
       {!isEnabled ?
-        <div className="banner">
+        <div className="banner  min-w-[262px]">
           <ClockIcon className="h-8 w-8 text-secondary-content" />
           <h6>Waiting for approval</h6>
         </div>
-        : <Image
-          src={poolType && poolTypes[poolType] === "funding" ? blueLand : grass}
+      : <Image
+          src={poolType && PoolTypes[poolType] === "funding" ? blueLand : grass}
           alt="Garden land"
-          className="h-10 w-full rounded-lg object-cover"
+          className="h-12 w-full rounded-lg object-cover"
         />
       }
     </Card>

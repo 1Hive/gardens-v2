@@ -1,12 +1,14 @@
 "use client";
 
 import React from "react";
-import { RectangleGroupIcon } from "@heroicons/react/24/outline";
+import { RectangleGroupIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import { commImg } from "@/assets";
+import { QUERY_PARAMS } from "@/constants/query-params";
+import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 
 type CommunityCardProps = {
   name: string;
@@ -22,8 +24,17 @@ export function CommunityCard({
   id,
 }: CommunityCardProps) {
   const pathname = usePathname();
+  const searchParams = useCollectQueryParams();
+  const isNewCommunity =
+    searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase() ===
+    id.toLowerCase();
+
   return (
-    <Card href={`${pathname}/${id}`} className="w-[273px]">
+    <Card
+      key={id}
+      href={`${pathname}/${id}`}
+      className={`w-[313px] ${isNewCommunity ? "!border-accent !border-2" : ""}`}
+    >
       <Image
         src={commImg}
         alt={`${name} community`}
@@ -32,11 +43,17 @@ export function CommunityCard({
         width={100}
       />
       <div className="flex flex-col gap-2">
-        {/* fixed height for 2row title */}
-        <div className="flex h-[37px] items-center">
-          <h5>{name}</h5>
+        <div
+          className="flex items-start w-fit max-w-full tooltip"
+          data-tip={name}
+        >
+          <h3 className="truncate tooltip">{name}</h3>
         </div>
-        <Statistic label="members" count={membersCount} />
+        <Statistic
+          label="members"
+          count={membersCount}
+          icon={<UserGroupIcon />}
+        />
         <Statistic
           label="pools"
           icon={<RectangleGroupIcon />}

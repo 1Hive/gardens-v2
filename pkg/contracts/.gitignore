@@ -7,7 +7,9 @@ out/*
 !out/*ISafe*
 out/*Test*
 out/*Deploy*
-
+!out/*PassportScorer*
 !out/utils/
 out/utils/*
+!out/*SafeArbitrator*
+!out/*IArbitrator*
 !out/utils/Mock*

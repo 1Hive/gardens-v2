@@ -63,15 +63,16 @@ export type ChangeEventTopic =
   | "pool"
   | "proposal"
   | "member";
+
 type Native = string | number | boolean | null | undefined;
 
 export type ChangeEventScope = {
   topic: ChangeEventTopic;
   type?: ChangeEventPayload["type"] | ChangeEventPayload["type"][];
   containerId?:
-  | ChangeEventPayload["containerId"]
-  | ChangeEventPayload["containerId"][];
-  action?: ChangeEventPayload["function"] | ChangeEventPayload["function"][];
+    | ChangeEventPayload["containerId"]
+    | ChangeEventPayload["containerId"][];
+  function?: ChangeEventPayload["function"] | ChangeEventPayload["function"][];
   chainId?: ChangeEventPayload["chainId"] | ChangeEventPayload["chainId"][];
   id?: ChangeEventPayload["id"] | ChangeEventPayload["id"][];
 } & { [key: string]: Native | Native[] };
@@ -92,7 +93,9 @@ const PubSubContext = createContext<PubSubContextData | undefined>(undefined);
 export function usePubSubContext() {
   const context = useContext(PubSubContext);
   if (!context) {
-    throw new Error("usePubSubContext must be used within a WebSocketProvider");
+    throw new Error(
+      "⚡ WS: usePubSubContext must be used within a WebSocketProvider",
+    );
   }
   return context;
 }
@@ -113,11 +116,11 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
 
   const subscriptionsMap = useRef(
     new Map<
-    SubscriptionId,
-    {
-      scopes: ChangeEventScope[];
-      onChangeEvent: (payload: ChangeEventPayload) => void;
-    }
+      SubscriptionId,
+      {
+        scopes: ChangeEventScope[];
+        onChangeEvent: (payload: ChangeEventPayload) => void;
+      }
     >(),
   );
 

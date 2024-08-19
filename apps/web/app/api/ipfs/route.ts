@@ -1,3 +1,5 @@
+// api/ipfs
+
 import { Readable } from "stream";
 import pinataSDK from "@pinata/sdk";
 import { NextRequest, NextResponse } from "next/server";
@@ -55,6 +57,9 @@ export async function POST(req: NextRequest) {
       );
     }
   } else {
-    return NextResponse.json({ message: "Invalid request" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid request" },
+      { status: 400 },
+    );
   }
 }

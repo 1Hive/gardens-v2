@@ -3,10 +3,16 @@
   "chainId": 1337,
   "dataSources": [
     {
-      "name": "RegistryFactory",
+      "name": "RegistryFactoryV0_0",
+      "startBlock": 0,
+      "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+      "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
       "startBlock": 0,
       "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-      "customTemplate": "registryFactory"
+      "customTemplate": "passportScorer"
     }
   ]
 }

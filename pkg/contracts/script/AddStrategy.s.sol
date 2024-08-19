@@ -4,28 +4,28 @@ pragma solidity ^0.8.13;
 import "forge-std/console2.sol";
 import "forge-std/Script.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../src/CVStrategy.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers} from "../test/CVStrategyHelpers.sol";
-import {MockERC20 as AMockERC20} from "allo-v2-test/utils/MockERC20.sol";
-import {RegistryFactory} from "../src/RegistryFactory.sol";
+import {CVStrategyHelpersV0_0, CVStrategyV0_0} from "../test/CVStrategyHelpersV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
-import {Safe} from "safe-contracts/contracts/Safe.sol";
+import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
+// import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 
-contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
+contract AddStrategy is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;
 
-    address public SENDER = 0x2F9e113434aeBDd70bB99cB6505e1F726C578D6d;
+    address public SENDER = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
 
     address public TOKEN = 0xcc6c8B9f745dB2277f7aaC1Bc026d5C2Ea7bD88D;
     // address public SAFE = 0x70471a50d4655C1677B7f0C5cAdD7a0410Aa2607;
@@ -97,7 +97,7 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
             COMMUNITY = _comm;
         }
 
-        RegistryCommunity registryCommunity = RegistryCommunity(COMMUNITY);
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(COMMUNITY);
 
         if (SAFE == address(0)) {
             SAFE = address(registryCommunity.councilSafe());
@@ -109,7 +109,7 @@ contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
         assertTrue(address(registryCommunity.councilSafe()) != address(0), "Council Safe not set");
         assertTrue(address(councilSafeDeploy) != address(0), "Council Safe empty");
 
-        CVStrategy strategy1 = CVStrategy(_strategy);
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(_strategy);
 
         safeHelper(
             councilSafeDeploy,

@@ -20,7 +20,7 @@ type EthAddressProps = {
 export const EthAddress = ({
   address,
   actions = "all",
-  icon = false,
+  icon = "ens",
 }: EthAddressProps) => {
   const chain = useChainFromPath();
   // const theme: ThemeDeclaration = {
@@ -39,25 +39,24 @@ export const EthAddress = ({
   //   popupShadow: "black",
   // };
 
-  return address && chain ?
-    <Addreth
-      // theme={theme}
-      theme={{
-        base: "simple-light",
-        textColor: "var(--color-green-500)",
-        badgeIconRadius: 12,
-        badgeHeight: 32,
-        fontSize: 16,
-      }}
-      actions={actions}
-      icon={icon}
-      address={address as Address}
-      explorer={(addr) => ({
-        name: chainDataMap[chain.id].name,
-        url: `${chainDataMap[chain.id].explorer}${addr}`,
-        accountUrl: `${chainDataMap[chain.id].explorer}${addr}`,
-      })}
-      ens={!chain?.testnet}
-    />
+  return address && chain?.id ?
+      <Addreth
+        // theme={theme}
+        theme={{
+          base: "simple-light",
+          textColor: "var(--color-green-500)",
+          badgeIconRadius: 12,
+          badgeHeight: 32,
+          fontSize: 16,
+        }}
+        actions={actions}
+        icon={icon}
+        address={address as Address}
+        explorer={(addr) => ({
+          name: chainDataMap[chain.id!].name,
+          url: `${chainDataMap[chain.id!].explorer}/address/${addr}`,
+          accountUrl: `${chainDataMap[chain.id!].explorer}/address/${addr}`,
+        })}
+      />
     : <LoadingSpinner />;
 };
