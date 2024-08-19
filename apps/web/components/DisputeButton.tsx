@@ -155,13 +155,17 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   async function handleSubmit() {
     setIsLoading(true);
-    const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
-    if (!reasonHash) {
-      return;
+    try {
+      const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
+      if (!reasonHash) {
+        return;
+      }
+      await writeDisputeProposalAsync({
+        args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
+      });
+    } catch (error) {
+      setIsLoading(false);
     }
-    await writeDisputeProposalAsync({
-      args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
-    });
     setIsLoading(false);
   }
 
@@ -315,7 +319,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
               />
             )}
           </div>
-
           <div className="flex gap-2">
             <Button
               onClick={() => setIsModalOpened(false)}
@@ -324,7 +327,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             >
               Cancel
             </Button>
-
             <Button
               onClick={handleSubmit}
               color="danger"
@@ -349,26 +351,26 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   return (
     <>
-      {ProposalStatus[proposalData?.proposalStatus] === "active" ||
-        (ProposalStatus[proposalData?.proposalStatus] === "disputed" && (
-          <>
-            <Button
-              color="danger"
-              btnStyle="outline"
-              onClick={() => setIsModalOpened(true)}
-            >
-              {isDisputed ? "Open dispute" : "Dispute"}
-            </Button>
-            <Modal
-              title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
-              onClose={() => setIsModalOpened(false)}
-              isOpen={isModalOpened}
-            >
-              {content}
-              {buttons}
-            </Modal>
-          </>
-        ))}
+      {(ProposalStatus[proposalData?.proposalStatus] === "active" ||
+        ProposalStatus[proposalData?.proposalStatus] === "disputed") && (
+        <>
+          <Button
+            color="danger"
+            btnStyle="outline"
+            onClick={() => setIsModalOpened(true)}
+          >
+            {isDisputed ? "Open dispute" : "Dispute"}
+          </Button>
+          <Modal
+            title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
+            onClose={() => setIsModalOpened(false)}
+            isOpen={isModalOpened}
+          >
+            {content}
+            {buttons}
+          </Modal>
+        </>
+      )}
     </>
   );
 };

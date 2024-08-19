@@ -54,11 +54,16 @@ export const useTransactionNotification = ({
     let notifProps: Parameters<typeof TransactionStatusNotification>[0];
     let toastOptions: Partial<ToastOptions>;
 
-    const clickToExplorer = () =>
-      window.open(
-        `${chainDataMap[chain?.id ?? 0].explorer}/tx/${transactionData?.hash}`,
-        "_blank",
-      );
+    const clickToExplorer = () => {
+      if (transactionData?.hash) {
+        window.open(
+          `${chainDataMap[chain?.id ?? 0].explorer}/tx/${transactionData?.hash}`,
+          "_blank",
+        );
+      } else {
+        return;
+      }
+    };
 
     switch (transactionStatus) {
       case "waiting":
@@ -172,6 +177,8 @@ export const TransactionStatusNotification = ({
       textColor = "text-error";
       break;
   }
+
+  // if error on wagmi or no tx hash then not clickable
 
   return (
     <div className="flex flex-row items-center gap-2">

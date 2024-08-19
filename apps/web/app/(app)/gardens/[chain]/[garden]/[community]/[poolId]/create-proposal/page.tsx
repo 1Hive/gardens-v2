@@ -47,12 +47,10 @@ export default function Page({
   return (
     <div className="page-layout">
       <section className="section-layout">
-        <div className="text-center sm:mt-5">
-          <h2 className="text-xl font-semibold leading-6 text-gray-900">
-            Create a Proposal in Pool #{poolId}
-          </h2>
-          <div className="mt-1">
-            <h4 className="text-sm">{metadata.title}</h4>
+        <div className="text-center sm:mt-5 mb-12">
+          <h2 className="mb-2">Create a Proposal in Pool #{poolId}</h2>
+          <div className="">
+            <h4 className="">{metadata.title}</h4>
           </div>
         </div>
         <ProposalForm

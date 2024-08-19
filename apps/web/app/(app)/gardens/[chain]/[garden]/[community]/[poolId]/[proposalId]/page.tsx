@@ -65,7 +65,9 @@ export default function Page({
   const proposalData = data?.cvproposal;
   const metadata = proposalData?.metadata;
   const proposalIdNumber =
-    !!proposalData ? BigInt(proposalData.proposalNumber) : undefined;
+    proposalData?.proposalNumber ?
+      BigInt(proposalData.proposalNumber)
+    : undefined;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
@@ -164,40 +166,45 @@ export default function Page({
               </div>
               <div className="flex items-center justify-between gap-4 sm:justify-start">
                 <Badge status={proposalData.proposalStatus} />
-                <p className="font-semibold">
-                  {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                <p className="">
+                  Created:{" "}
+                  <span className="font-semibold">
+                    {prettyTimestamp(proposalData?.createdAt ?? 0)}
+                  </span>
                 </p>
               </div>
             </div>
             <p>{ipfsResult?.description}</p>
-            <div className="flex flex-col gap-2">
-              {!isSignalingType && (
-                <>
-                  <Statistic
-                    label={"requested amount"}
-                    icon={<InformationCircleIcon />}
-                  >
-                    <DisplayNumber
-                      number={formatUnits(requestedAmount, 18)}
-                      tokenSymbol={tokenSymbol}
-                      compact={true}
-                      className="font-bold text-black"
-                    />
-                  </Statistic>
-                  <Statistic label={"beneficiary"} icon={<UserIcon />}>
-                    <EthAddress address={beneficiary} actions="copy" />
-                  </Statistic>
-                </>
-              )}
-              <Statistic label={"created by"} icon={<UserIcon />}>
-                <EthAddress address={submitter} actions="copy" />
-              </Statistic>
+            <div className="flex justify-between">
+              <div className="flex flex-col gap-2">
+                {!isSignalingType && (
+                  <>
+                    <Statistic
+                      label={"requested amount"}
+                      icon={<InformationCircleIcon />}
+                    >
+                      <DisplayNumber
+                        number={formatUnits(requestedAmount, 18)}
+                        tokenSymbol={tokenSymbol}
+                        compact={true}
+                        className="font-bold text-black"
+                      />
+                    </Statistic>
+                    <Statistic label={"beneficiary"} icon={<UserIcon />}>
+                      <EthAddress address={beneficiary} actions="copy" />
+                    </Statistic>
+                  </>
+                )}
+                <Statistic label={"created by"} icon={<UserIcon />}>
+                  <EthAddress address={submitter} actions="copy" />
+                </Statistic>
+              </div>
+              <div className="flex items-end">
+                <DisputeButton
+                  proposalData={{ ...proposalData, ...ipfsResult }}
+                />
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="w-full justify-end flex gap-4">
-          <div className="flex w-full justify-end">
-            <DisputeButton proposalData={{ ...proposalData, ...ipfsResult }} />
           </div>
         </div>
       </header>
@@ -211,7 +218,26 @@ export default function Page({
             : `Proposal as been ${status}.`}
           </h4>
         : <>
-            <h2>Metrics</h2>
+            <div className="flex justify-between">
+              <h2>Metrics</h2>
+              {status === "active" && !isSignalingType && (
+                <Button
+                  onClick={() =>
+                    writeDistribute?.({
+                      args: [
+                        BigInt(poolId),
+                        [proposalData?.strategy.id as Address],
+                        encodedDataProposalId(proposalIdNumber),
+                      ],
+                    })
+                  }
+                  disabled={currentConvictionPct < thresholdPct}
+                  tooltip="Proposal not executable"
+                >
+                  Execute
+                </Button>
+              )}
+            </div>
             <ConvictionBarChart
               currentConvictionPct={currentConvictionPct}
               thresholdPct={thresholdPct}
