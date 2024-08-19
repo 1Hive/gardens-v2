@@ -150,13 +150,6 @@ export function ProposalCard({
                           <p className="text-primary-content">Pool weight</p>
                         </div>
                       </div>
-                      {/* <p className="flex items-center gap-2 text-primary-content">
-                        Total allocated{" "}
-                        <span className="font-chakra text-2xl font-semibold">
-                          {inputValue}{" "}
-                        </span>
-                        %
-                      </p> */}
                     </>
                   : <p className="text-neutral-soft-content">No allocation</p>}
                 </div>
@@ -169,7 +162,6 @@ export function ProposalCard({
                 (stakedFilter?.value > 0 ?
                   <p
                     className="text-primary-content text-xs flex items-center justify-center
-                  
                 gap-3"
                   >
                     Total allocated{" "}

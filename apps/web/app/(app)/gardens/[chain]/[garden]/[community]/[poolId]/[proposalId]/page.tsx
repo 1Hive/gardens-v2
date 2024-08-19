@@ -41,7 +41,7 @@ const prettyTimestamp = (timestamp: number) => {
 };
 
 export default function Page({
-  params: { proposalId, garden },
+  params: { proposalId, garden, poolId },
 }: {
   params: {
     proposalId: string;
@@ -162,7 +162,7 @@ export default function Page({
             <div>
               <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                 <h2>
-                  {ipfsResult?.title} #{proposalData?.proposalNumber}
+                  {ipfsResult?.title} #{proposalIdNumber.toString()}
                 </h2>
                 <Badge type={proposalType} />
               </div>
@@ -227,9 +227,9 @@ export default function Page({
                   onClick={() =>
                     writeDistribute?.({
                       args: [
-                        [],
+                        BigInt(poolId),
+                        [proposalData?.strategy.id as Address],
                         encodedDataProposalId(proposalIdNumber),
-                        "0x0",
                       ],
                     })
                   }
@@ -256,6 +256,25 @@ export default function Page({
             />
           </>
         }
+        <div className="absolute top-8 right-10">
+          {status === "active" && !isSignalingType && (
+            <Button
+              onClick={() =>
+                writeDistribute?.({
+                  args: [
+                    BigInt(poolId),
+                    [proposalData?.strategy.id as Address],
+                    encodedDataProposalId(proposalIdNumber),
+                  ],
+                })
+              }
+              disabled={currentConvictionPct < thresholdPct}
+              tooltip="Proposal not executable"
+            >
+              Execute
+            </Button>
+          )}
+        </div>
       </section>
     </div>
   );
