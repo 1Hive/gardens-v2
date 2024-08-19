@@ -40,7 +40,7 @@ const prettyTimestamp = (timestamp: number) => {
 };
 
 export default function Page({
-  params: { proposalId, garden },
+  params: { proposalId, garden, poolId },
 }: {
   params: {
     proposalId: string;
@@ -225,9 +225,9 @@ export default function Page({
                   onClick={() =>
                     writeDistribute?.({
                       args: [
-                        [],
+                        BigInt(poolId),
+                        [proposalData?.strategy.id as Address],
                         encodedDataProposalId(proposalIdNumber),
-                        "0x0",
                       ],
                     })
                   }
