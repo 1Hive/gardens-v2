@@ -40,6 +40,7 @@ export function ProposalCard({
   index,
   isAllocationView,
   memberActivatedPoints,
+  memberPoolWeight,
   strategy,
   tokenData,
   inputHandler,
@@ -71,6 +72,11 @@ export function ProposalCard({
     stakedFilter?.value,
     memberActivatedPoints,
   );
+
+  const poolWeightAllocatedInProposal = (
+    (inputValue * memberPoolWeight) /
+    100
+  ).toFixed(2);
 
   const isSignalingType = PoolTypes[type] === "signaling";
 
@@ -122,13 +128,28 @@ export function ProposalCard({
                 <div className="mb-2">
                   {Number(inputValue) > 0 ?
                     <>
-                      <p className="flex items-center gap-2 text-primary-content">
-                        Total allocated{" "}
-                        <span className="font-chakra text-2xl font-semibold">
-                          {inputValue}{" "}
-                        </span>
-                        %
-                      </p>
+                      <div className="flex gap-10">
+                        <div className="flex flex-col items-center justify-center">
+                          <p className="subtitle2">
+                            <span className="text-2xl font-semibold text-primary-content">
+                              {inputValue}
+                            </span>
+                            /100%
+                          </p>
+                          <p className="text-primary-content">
+                            Total allocated
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-center justify-center">
+                          <p className="subtitle2">
+                            <span className="text-2xl font-semibold text-primary-content">
+                              {poolWeightAllocatedInProposal}
+                            </span>
+                            /{memberPoolWeight}%
+                          </p>
+                          <p className="text-primary-content">Pool weight</p>
+                        </div>
+                      </div>
                     </>
                   : <p className="text-neutral-soft-content">No allocation</p>}
                 </div>
@@ -136,22 +157,20 @@ export function ProposalCard({
             </div>
           </div>
         : <>
-            <div className="col-span-3 ml-10 self-center justify-self-start">
+            <div className="col-span-3 ml-20 self-center justify-self-start">
               {stakedFilter &&
                 (stakedFilter?.value > 0 ?
                   <p
                     className="text-primary-content text-xs flex items-center justify-center
-                  // TODO: calculate data when fetching ok from subgrpah
-                gap-1"
+                gap-3"
                   >
-                    You allocate{" "}
+                    Total allocated{" "}
                     <span className="font-medium text-2xl">
                       {`${allocatedInProposal.toString()}%`}
-                    </span>{" "}
-                    pool weight
+                    </span>
                   </p>
                 : <p className="text-xs text-neutral-soft-content text-center">
-                    No allocation mad
+                    No allocation yet
                   </p>)}
             </div>
             <div className="col-span-3 self-center flex flex-col gap-2">

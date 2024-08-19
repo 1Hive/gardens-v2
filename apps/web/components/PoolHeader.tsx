@@ -126,7 +126,7 @@ export default function PoolHeader({
     },
     {
       label: "Conviction growth",
-      value: `${convictionGrowth.toFixed(2)} in days`,
+      value: `${convictionGrowth.toFixed(2)} days`,
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life",
     },
     {
@@ -269,7 +269,7 @@ export default function PoolHeader({
               />
             </Statistic>
           )}
-          <Statistic label="voting weight system">
+          <Statistic label="pool system">
             <div className="flex flex-col gap-3 sm:flex-row">
               <Badge
                 label="conviction voting"
