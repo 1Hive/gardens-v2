@@ -28,6 +28,7 @@ const PROPOSAL_STATUS_STYLES = [
   "bg-danger-soft text-danger-content",
   "bg-tertiary-soft text-tertiary-content",
   "bg-danger-soft text-danger-content",
+  "bg-danger-soft text-danger-content",
 ];
 
 const BASE_STYLES = "border-none rounded-full leading-5 py-2 px-4 text-base";
