@@ -195,11 +195,9 @@ export function ConnectWallet() {
                                 Disconnect
                               </Button>
                             </Menu.Item>
-                            {/* TODO: for prod lint to a */}
-
                             <div className="flex gap-2 items-center justify-end border-t-[1px] border-neutral-soft pt-4">
                               <a
-                                href="https://www.gardens.fund/"
+                                href="/"
                                 target="_blank"
                                 rel="noreferrer"
                                 className="text-primary-content subtitle2 flex items-center gap-1"
