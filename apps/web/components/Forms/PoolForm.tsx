@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
+import { useToken } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
@@ -113,6 +114,7 @@ const proposalInputMap: Record<string, number[]> = {
   proposalCollateral: [0, 1],
   disputeCollateral: [0, 1],
   tribunalAddress: [0, 1],
+  poolTokenAddress: [0, 1],
 };
 
 const shouldRenderInputMap = (key: string, value: number): boolean => {
@@ -128,6 +130,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     getValues,
     setValue,
     watch,
+    trigger,
   } = useForm<FormInputs>({
     defaultValues: {
       strategyType: 1,
@@ -157,7 +160,10 @@ export function PoolForm({ token, communityAddr }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { publish } = usePubSubContext();
-
+  const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
+  const { data: customTokenData } = useToken({
+    address: watchedAddress ?? "0x",
+  });
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
@@ -222,6 +228,15 @@ export function PoolForm({ token, communityAddr }: Props) {
       label: "Tribunal safe:",
       parse: (value: string) => (
         <EthAddress address={value as Address} icon={"ens"} />
+      ),
+    },
+    poolTokenAddress: {
+      label: "Pool token address:",
+      parse: (value: string) => (
+        <div className="flex gap-2 items-center">
+          <EthAddress address={value as Address} />
+          <span className="text-black">{customTokenData?.symbol}</span>
+        </div>
       ),
     },
   };
@@ -424,6 +439,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     let formattedRows: FormRow[] = [];
 
     const reorderedData = {
+      poolTokenAddress: previewData.poolTokenAddress,
       strategyType: previewData.strategyType,
       pointSystemType: previewData.pointSystemType,
       maxAmount: previewData.maxAmount,
@@ -470,6 +486,12 @@ export function PoolForm({ token, communityAddr }: Props) {
     }
   };
 
+  useEffect(() => {
+    if (watchedAddress) {
+      trigger("poolTokenAddress");
+    }
+  }, [customTokenData, watchedAddress, trigger]);
+
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -513,10 +535,9 @@ export function PoolForm({ token, communityAddr }: Props) {
                   value: ethAddressRegEx,
                   message: "Invalid Eth Address",
                 },
-                // validate that is an ERC20 address
-                // validate: async (value) =>
-                //   (await addressIsSAFE(value)) ||
-                //   `Not a valid Safe address in ${getChain(chainId)?.name} network`,
+                validate: () =>
+                  customTokenData?.symbol !== undefined ||
+                  "Not a supported ERC20 token",
               }}
               errors={errors}
               registerKey="poolTokenAddress"
@@ -524,9 +545,9 @@ export function PoolForm({ token, communityAddr }: Props) {
               type="text"
               className="pr-14"
             >
-              {watch("poolTokenAddress").toLowerCase() === token.id && (
+              {customTokenData?.symbol && (
                 <span className="absolute right-4 top-4 text-black">
-                  {token.symbol}
+                  {customTokenData?.symbol}
                 </span>
               )}
             </FormInput>
