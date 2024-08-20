@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useToken } from "wagmi";
 import {
   getAlloQuery,
   getPoolDataDocument,
@@ -27,6 +28,7 @@ export default function Page({
   params: { chain: string; poolId: number; garden: string };
 }) {
   const searchParams = useCollectQueryParams();
+
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden },
@@ -42,6 +44,12 @@ export default function Page({
       },
     ],
   });
+  const strategyObj = data?.cvstrategies?.[0];
+  const poolTokenAddr = strategyObj?.token as Address;
+  const { data: poolToken } = useToken({
+    address: poolTokenAddr,
+    enabled: !!poolTokenAddr,
+  });
 
   useEffect(() => {
     if (error) {
@@ -52,8 +60,6 @@ export default function Page({
   const { metadata: ipfsResult } = useProposalMetadataIpfsFetch({
     hash: data?.cvstrategies?.[0]?.metadata,
   });
-
-  const strategyObj = data?.cvstrategies?.[0];
 
   useEffect(() => {
     if (!strategyObj) {
@@ -79,7 +85,7 @@ export default function Page({
 
   const tokenGarden = data?.tokenGarden;
 
-  if (!tokenGarden) {
+  if (!tokenGarden || !poolToken) {
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -104,6 +110,7 @@ export default function Page({
   return (
     <div className="page-layout">
       <PoolHeader
+        poolToken={poolToken}
         token={tokenGarden}
         strategy={strategyObj}
         poolId={poolId}
@@ -118,15 +125,16 @@ export default function Page({
         <>
           {PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
+              poolToken={poolToken}
               alloInfo={alloInfo}
               poolId={poolId}
               poolAmount={poolAmount}
               communityAddress={communityAddress}
-              tokenGarden={tokenGarden}
               chainId={chain}
             />
           )}
           <Proposals
+            poolToken={poolToken}
             strategy={strategyObj}
             alloInfo={alloInfo}
             communityAddress={communityAddress}

@@ -5,7 +5,7 @@ import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
-import { filter } from "lodash-es";
+import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
 import { Address as AddressType, useAccount } from "wagmi";
 import {
@@ -27,7 +27,6 @@ import {
   ProposalCard,
 } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -64,6 +63,7 @@ type Stats = {
 interface ProposalsProps {
   strategy: LightCVStrategy;
   alloInfo: Allo;
+  poolToken: FetchTokenResult;
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;
@@ -72,6 +72,7 @@ interface ProposalsProps {
 export function Proposals({
   strategy,
   alloInfo,
+  poolToken,
   communityAddress,
   createProposalUrl,
 }: ProposalsProps) {
@@ -89,7 +90,6 @@ export function Proposals({
 
   // Hooks
   const { address: wallet } = useAccount();
-  const urlChainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
@@ -210,7 +210,7 @@ export function Proposals({
           const filteredProposals = res.filter(
             ({ status }) => ProposalStatus[status] !== "rejected",
           );
-          console.log(filteredProposals);
+          console.debug(filteredProposals);
           setProposals(filteredProposals);
         } else {
           console.debug("No proposals");
@@ -427,7 +427,7 @@ export function Proposals({
                     !isConnected ||
                     missmatchUrl
                   }
-                  strategy={strategy}
+                  poolToken={poolToken}
                   tokenDecimals={tokenDecimals}
                   alloInfo={alloInfo}
                   triggerRenderProposals={triggerRenderProposals}
