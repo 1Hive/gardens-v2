@@ -31,7 +31,7 @@ import {
   ETH_DECIMALS,
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
-import { capitalize } from "@/utils/text";
+import { capitalize, ethAddressRegEx } from "@/utils/text";
 
 type PoolSettings = {
   spendingLimit?: number;
@@ -49,6 +49,7 @@ type ArbitrationSettings = {
 type FormInputs = {
   title: string;
   description: string;
+  poolTokenAddress: string;
   strategyType: number;
   pointSystemType: number;
   optionType?: number;
@@ -60,9 +61,9 @@ type FormInputs = {
   ArbitrationSettings;
 
 type Props = {
-  communityAddr: Address;
-  alloAddr: Address;
-  token: TokenGarden;
+  communityAddr: `0x${string}`;
+  alloAddr: `0x${string}`;
+  token: Pick<TokenGarden, "decimals" | "id" | "symbol">;
 };
 
 const poolSettingValues: Record<
@@ -133,6 +134,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       pointSystemType: 0,
       defaultResolution: 1,
       minThresholdPoints: 0,
+      poolTokenAddress: token.id,
       proposalCollateral: +(
         process.env.NEXT_PUBLIC_DEFAULT_PROPOSAL_COLLATERAL! || 0.002
       ),
@@ -142,7 +144,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     },
   });
   const isSybilResistanceRequired = watch("isSybilResistanceRequired");
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token?.decimals;
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
@@ -270,7 +272,7 @@ export function PoolForm({ token, communityAddr }: Props) {
 
     const minThresholdPoints = parseUnits(
       (previewData?.minThresholdPoints ?? 0).toString(),
-      token?.decimals,
+      token.decimals,
     );
 
     const maxAmountStr = (previewData?.maxAmount ?? 0).toString();
@@ -281,7 +283,7 @@ export function PoolForm({ token, communityAddr }: Props) {
 
     writeCreatePool({
       args: [
-        token?.id as Address,
+        previewData.poolTokenAddress as Address,
         {
           cvParams: {
             decay: decay,
@@ -305,7 +307,7 @@ export function PoolForm({ token, communityAddr }: Props) {
             tribunalSafe: tribunalAddress as Address,
             arbitrator: chain.arbitrator as Address,
           },
-          pointConfig: { maxAmount: parseUnits(maxAmountStr, token?.decimals) },
+          pointConfig: { maxAmount: parseUnits(maxAmountStr, token.decimals) },
           pointSystem: previewData.pointSystemType,
           proposalType: previewData.strategyType,
           registryCommunity: communityAddr,
@@ -500,6 +502,34 @@ export function PoolForm({ token, communityAddr }: Props) {
               rows={7}
               placeholder="Enter a description of your pool..."
             />
+          </div>
+          <div className="flex flex-col">
+            <FormInput
+              label="Pool token ERC20 address"
+              register={register}
+              required
+              registerOptions={{
+                pattern: {
+                  value: ethAddressRegEx,
+                  message: "Invalid Eth Address",
+                },
+                // validate that is an ERC20 address
+                // validate: async (value) =>
+                //   (await addressIsSAFE(value)) ||
+                //   `Not a valid Safe address in ${getChain(chainId)?.name} network`,
+              }}
+              errors={errors}
+              registerKey="poolTokenAddress"
+              placeholder="0x.."
+              type="text"
+              className="pr-14"
+            >
+              {watch("poolTokenAddress").toLowerCase() === token.id && (
+                <span className="absolute right-4 top-4 text-black">
+                  {token.symbol}
+                </span>
+              )}
+            </FormInput>
           </div>
           <div className="flex flex-col">
             <FormSelect
@@ -778,7 +808,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                 placeholder="0"
               >
                 <span className="absolute right-4 top-4 text-black">
-                  {token?.symbol}
+                  {token.symbol}
                 </span>
               </FormInput>
             </div>
