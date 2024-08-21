@@ -271,7 +271,10 @@ export default function PoolEditForm({
     setShowPreview(true);
   };
   return (
-    <form onSubmit={handleSubmit(handlePreview)} className=" max-w-2xl">
+    <form
+      onSubmit={handleSubmit(handlePreview)}
+      className="w-[480px] max-w-2xl"
+    >
       {showPreview ?
         <FormPreview
           formRows={formatFormRows()}
@@ -395,112 +398,88 @@ export default function PoolEditForm({
               </div>
             )}
           </div>
+          {/* arbitration section */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
-              <h3 className="my-4 text-xl">Arbitration settings</h3>
-              {isProposalOnDispute ?
-                <InfoBox
-                  infoBoxType="warning"
-                  content={
-                    "A disputed proposal is pending resolution. Please wait until it's resolved before adjusting proposal dispute settings."
-                  }
-                />
-              : <InfoBox
-                  infoBoxType="info"
-                  content={`The tribunal Safe, represented by trusted members, is
-                      responsible for resolving proposal disputes. The global tribunal
-                      Safe is a shared option featuring trusted members of the Gardens
-                      community. Its use is recommended for objective dispute
-                      resolution.`}
-                />
-              }
+              <h4 className="my-4">Arbitration settings</h4>
             </div>
-            <div className="flex flex-col gap-4">
-              {!isProposalOnDispute && (
-                <div className="flex gap-4 mt-2">
-                  <FormRadioButton
-                    label="Global gardens tribunal"
-                    checked={
-                      tribunalAddress.toLowerCase() ===
-                      chain.globalTribunal?.toLowerCase()
-                    }
-                    onChange={() =>
-                      setTribunalAddress(chain.globalTribunal ?? "")
-                    }
-                    registerKey="tribunalOption"
-                    value="global"
-                  />
-                  <FormRadioButton
-                    label="Custom tribunal"
-                    checked={
-                      tribunalAddress.toLowerCase() !==
-                      chain.globalTribunal?.toLowerCase()
-                    }
-                    onChange={() => {
-                      setTribunalAddress((oldAddress) =>
-                        chain.globalTribunal ? "" : oldAddress,
-                      );
-                      document.getElementById("tribunalAddress")?.focus();
-                    }}
-                    registerKey="tribunalOption"
-                    value="custom"
-                  />
-                </div>
-              )}
-              <FormAddressInput
-                label="Tribunal address"
-                registerKey="tribunalAddress"
-                register={register}
-                required
-                onChange={(newValue) => setTribunalAddress(newValue)}
-                value={tribunalAddress}
-                readOnly={isProposalOnDispute}
+            <div className="flex gap-4 mt-2">
+              <FormRadioButton
+                label="Global gardens tribunal"
+                checked={
+                  tribunalAddress.toLowerCase() ===
+                  chain.globalTribunal?.toLowerCase()
+                }
+                onChange={() => setTribunalAddress(chain.globalTribunal ?? "")}
+                registerKey="tribunalOption"
+                value="global"
               />
-              <div className="flex flex-col">
-                <FormSelect
-                  tooltip="The default resolution will be applied in the case of abstained or dispute ruling timeout."
-                  label="Default resolution"
-                  required
-                  register={register}
-                  errors={errors}
-                  options={Object.entries(DisputeOutcome)
-                    .slice(1)
-                    .map(([value, text]) => ({
-                      label: capitalize(text),
-                      value: +value,
-                    }))}
-                  registerKey="defaultResolution"
-                  readOnly={isProposalOnDispute}
-                />
-              </div>
-              <div className="flex gap-4 max-w-md">
-                <FormInput
-                  tooltip="Proposal submission stake. Locked until proposal is resolved, can be forfeited if disputed."
-                  type="number"
-                  label={`Proposal collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
-                  register={register}
-                  registerKey="proposalCollateral"
-                  required
-                  readOnly={isProposalOnDispute}
-                  otherProps={{
-                    step: 1 / 10 ** ETH_DECIMALS,
-                    min: 1 / 10 ** ETH_DECIMALS,
-                  }}
-                />
-                <FormInput
-                  tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
-                  type="number"
-                  label={`Dispute collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
-                  register={register}
-                  registerKey="disputeCollateral"
-                  required
-                  otherProps={{
-                    step: 1 / 10 ** ETH_DECIMALS,
-                    min: 1 / 10 ** ETH_DECIMALS,
-                  }}
-                  readOnly={isProposalOnDispute}
-                />
-              </div>
+              <FormRadioButton
+                label="Custom tribunal"
+                checked={
+                  tribunalAddress.toLowerCase() !==
+                  chain.globalTribunal?.toLowerCase()
+                }
+                onChange={() => {
+                  setTribunalAddress((oldAddress) =>
+                    chain.globalTribunal ? "" : oldAddress,
+                  );
+                  document.getElementById("tribunalAddress")?.focus();
+                }}
+                registerKey="tribunalOption"
+                value="custom"
+              />
+            </div>
+            <FormAddressInput
+              tooltip="The tribunal Safe, represented by trusted members, is
+                responsible for resolving proposal disputes. The global tribunal
+                Safe is a shared option featuring trusted members of the Gardens
+                community. It's use is recommended for objective dispute resolution."
+              label="Tribunal address"
+              registerKey="tribunalAddress"
+              onChange={(newValue) => setTribunalAddress(newValue)}
+              value={tribunalAddress}
+            />
+            <div className="flex flex-col">
+              <FormSelect
+                tooltip="The default resolution will be applied in the case of abstained or dispute ruling timeout."
+                label="Default resolution"
+                options={Object.entries(DisputeOutcome)
+                  .slice(1)
+                  .map(([value, text]) => ({
+                    label: capitalize(text),
+                    value: value,
+                  }))}
+                registerKey="defaultResolution"
+                register={register}
+                errors={undefined}
+              />
+            </div>
+            <div className="flex gap-4 max-w-md">
+              <FormInput
+                tooltip="Proposal submission stake. Locked until proposal is resolved, can be forfeited if disputed."
+                type="number"
+                label={`Proposal collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
+                register={register}
+                registerKey="proposalCollateral"
+                required
+                otherProps={{
+                  step: 1 / 10 ** ETH_DECIMALS,
+                  min: 1 / 10 ** ETH_DECIMALS,
+                }}
+              />
+              <FormInput
+                tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
+                type="number"
+                label={`Dispute collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
+                register={register}
+                registerKey="disputeCollateral"
+                required
+                otherProps={{
+                  step: 1 / 10 ** ETH_DECIMALS,
+                  min: 1 / 10 ** ETH_DECIMALS,
+                }}
+              />
             </div>
           </div>
         </div>
@@ -521,7 +500,20 @@ export default function PoolEditForm({
               Submit
             </Button>
           </div>
-        : <Button type="submit">Preview</Button>}
+        : <div className="flex items-center gap-10">
+            <Button
+              className="flex-1"
+              btnStyle="outline"
+              color="danger"
+              onClick={() => setModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button className="flex-1" type="submit">
+              Preview
+            </Button>
+          </div>
+        }
       </div>
     </form>
   );
