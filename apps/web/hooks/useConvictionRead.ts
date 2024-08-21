@@ -13,7 +13,12 @@ import { calculatePercentageBigInt } from "@/utils/numbers";
 type ProposalDataLight = Maybe<
   Pick<
     CVProposal,
-    "proposalNumber" | "convictionLast" | "stakedAmount" | "threshold"
+    | "proposalNumber"
+    | "convictionLast"
+    | "stakedAmount"
+    | "threshold"
+    | "requestedAmount"
+    | "blockLast"
   > & {
     strategy: Pick<
       CVStrategy,
@@ -37,6 +42,7 @@ export const useConvictionRead = ({
     enabled: !!proposalData,
   };
 
+  //actual way of getting conviction from contract
   const { data: updateConvictionLast, error } = useContractRead({
     ...cvStrategyContract,
     functionName: "updateProposalConviction" as any,
@@ -44,8 +50,37 @@ export const useConvictionRead = ({
     enabled,
   });
 
+  //new way of getting conviction from contract: DONT SEE THIS TO GET THE RIGHT CONVICTION
+  const { data: convictionFromContract, error: errorConviction } =
+    useContractRead({
+      ...cvStrategyContract,
+      functionName: "calculateConviction" as any,
+      args: [
+        BigInt(proposalData?.blockLast ?? 0),
+        BigInt(proposalData?.convictionLast),
+        BigInt(proposalData?.stakedAmount),
+      ],
+      enabled,
+    });
+
+  const { data: thresholdFromContract, error: errorThreshold } =
+    useContractRead({
+      ...cvStrategyContract,
+      functionName: "calculateThreshold" as any,
+      args: [proposalData?.requestedAmount ?? 0],
+      enabled,
+    });
+
   if (error) {
     logOnce("error", "Error reading conviction", error);
+  }
+
+  if (errorThreshold) {
+    logOnce("error", "Error reading threshold", errorThreshold);
+  }
+
+  if (errorConviction) {
+    logOnce("error", "Error reading conviction", errorConviction);
   }
 
   if (!enabled) {
@@ -67,7 +102,7 @@ export const useConvictionRead = ({
   }
 
   let thresholdPct = calculatePercentageBigInt(
-    proposalData!.threshold,
+    thresholdFromContract as bigint,
     proposalData.strategy.maxCVSupply,
     token?.decimals ?? 18,
   );
