@@ -133,12 +133,8 @@ export function PoolForm({ token, communityAddr }: Props) {
       pointSystemType: 0,
       defaultResolution: 1,
       minThresholdPoints: 0,
-      proposalCollateral: +(
-        process.env.NEXT_PUBLIC_DEFAULT_PROPOSAL_COLLATERAL! || 0.002
-      ),
-      disputeCollateral: +(
-        process.env.NEXT_PUBLIC_DEFAULT_DISPUTE_COLLATERAL! || 0.001
-      ),
+      proposalCollateral: 0.002,
+      disputeCollateral: 0.001,
     },
   });
   const isSybilResistanceRequired = watch("isSybilResistanceRequired");

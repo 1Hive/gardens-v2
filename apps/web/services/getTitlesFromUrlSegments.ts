@@ -158,7 +158,6 @@ export async function getTitlesFromUrlSegments(
       address: segments[2] as Address,
       chainId: parseInt(segments[1]),
     };
-    console.log("tokenArgs", tokenArgs);
     const tokenData = await fetchToken(tokenArgs)
       .then((token) => token?.symbol)
       .catch(() => {

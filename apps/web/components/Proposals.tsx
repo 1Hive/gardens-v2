@@ -5,7 +5,6 @@ import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
-import { filter } from "lodash-es";
 import Link from "next/link";
 import { Address, Address as AddressType, useAccount } from "wagmi";
 import {
@@ -26,7 +25,6 @@ import {
   ProposalCard,
 } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -88,7 +86,6 @@ export function Proposals({
 
   // Hooks
   const { address: wallet } = useAccount();
-  const urlChainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
@@ -209,7 +206,6 @@ export function Proposals({
           const filteredProposals = res.filter(
             ({ status }) => ProposalStatus[status] !== "rejected",
           );
-          console.log(filteredProposals);
           setProposals(filteredProposals);
         } else {
           console.debug("No proposals");

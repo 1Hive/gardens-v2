@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Address, formatUnits, getAddress, parseUnits } from "viem";
+import { Address, formatUnits, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";

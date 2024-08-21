@@ -51,7 +51,6 @@ type ChainData = {
   rpcUrl: string;
   subgraphUrl: string;
   globalTribunal?: Address;
-
   arbitrator: Address;
   passportScorer: Address;
   allo: Address;
