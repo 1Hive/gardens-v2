@@ -3,7 +3,7 @@
 import React from "react";
 import { Disclosure } from "@headlessui/react";
 import {
-  BookOpenIcon,
+  ArrowTopRightOnSquareIcon,
   Bars3Icon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -50,12 +50,12 @@ export function NavBar() {
                   rel="noreferrer"
                   className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
                 >
-                  <BookOpenIcon
+                  Docs
+                  <ArrowTopRightOnSquareIcon
                     width={16}
                     height={16}
                     className="text-primary-content"
                   />
-                  Docs
                 </a>
                 <ConnectWallet />
               </div>
