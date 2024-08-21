@@ -2,6 +2,7 @@ import React, { FC } from "react";
 import {
   Arbitrum,
   Ethereum,
+  GnosisGno,
   Optimism,
   Polygon,
 } from "@thirdweb-dev/chain-icons";
@@ -10,7 +11,9 @@ import {
   arbitrum,
   arbitrumSepolia,
   Chain,
+  gnosis,
   localhost,
+  mainnet,
   optimism,
   polygon,
   sepolia,
@@ -153,34 +156,34 @@ export const chainConfigMap: {
     passportScorer: "0xa71023bc64c9711c2037ab491de80fd74504bd55",
     isTestnet: false,
   },
-  // 100: {
-  //   name: gnosis.name,
-  //   icon: GnosisGno,
-  //   explorer: "https://gnosis.blockscout.com",
-  //   blockTime: 5.2,
-  //   confirmations: 4, // 4
-  //   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_GNOSIS!,
-  //   subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS!,
-  //   globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
-  //   allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-  //   arbitrator: "0xc5b0c764cf8ab274cb1505a6532f0b16d0660463",
-  //   passportScorer: "0xc137c30ac0f21ce75bb484e88fb8701024f82d25",
-  //   isTestnet: false,
-  // },
-  // 1: {
-  //   name: mainnet.name,
-  //   icon: Ethereum,
-  //   explorer: "https://eth.blockscout.com",
-  //   blockTime: 12,
-  //   confirmations: 3, // 3
-  //   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ETHEREUM!,
-  //   subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM!,
-  //   globalTribunal: "0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e",
-  //   allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-  //   arbitrator: "0xc5b0c764cf8ab274cb1505a6532f0b16d0660463",
-  //   passportScorer: "0xc137c30ac0f21ce75bb484e88fb8701024f82d25",
-  //   isTestnet: false,
-  // },
+  100: {
+    name: gnosis.name,
+    icon: GnosisGno,
+    explorer: "https://gnosis.blockscout.com",
+    blockTime: 5.2,
+    confirmations: 4, // 4
+    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_GNOSIS!,
+    subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS!,
+    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    allo: "0x",
+    arbitrator: "0x",
+    passportScorer: "0x",
+    isTestnet: false,
+  },
+  1: {
+    name: mainnet.name,
+    icon: Ethereum,
+    explorer: "https://eth.blockscout.com",
+    blockTime: 12,
+    confirmations: 3, // 3
+    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ETHEREUM!,
+    subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM!,
+    globalTribunal: "0x",
+    allo: "0x",
+    arbitrator: "0x",
+    passportScorer: "0x",
+    isTestnet: false,
+  },
 };
 
 // export const chainConfigMap: { [key: number | string]: ChainData } = {};
