@@ -2,7 +2,6 @@ import React, { FC } from "react";
 import {
   Arbitrum,
   Ethereum,
-  GnosisGno,
   Optimism,
   Polygon,
 } from "@thirdweb-dev/chain-icons";
@@ -11,14 +10,11 @@ import {
   arbitrum,
   arbitrumSepolia,
   Chain,
-  gnosis,
   localhost,
-  mainnet,
   optimism,
   polygon,
   sepolia,
 } from "viem/chains";
-import { networks } from "../../../pkg/contracts/config/networks.json";
 import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
