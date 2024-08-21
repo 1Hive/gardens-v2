@@ -166,7 +166,7 @@ export async function getTitlesFromUrlSegments(
         toast.error("Token not found");
         return undefined;
       });
-    return [tokenData];
+    return [tokenData, parseStaticSegment(segments[segmentsLength - 1])];
   }
 
   const queryItem = queryMap[entityIndex];

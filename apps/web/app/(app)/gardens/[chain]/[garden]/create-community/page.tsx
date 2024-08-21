@@ -33,7 +33,7 @@ export default function Page({
 
   const { data: tokenInfo } = useToken({
     address: garden as Address,
-    chainId: chain,
+    chainId: +chain,
   });
 
   const registryFactoryAddr = result?.registryFactories?.[0].id as Address;

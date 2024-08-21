@@ -89,7 +89,7 @@ export function useSubgraphQueryMultiChain<
     async (chainsOverride?: ChainId[], retryOnNoChange?: boolean) => {
       const chainSubgraphs = (chainsOverride ?? chainIds ?? allChains).map(
         (chain) => ({
-          chainId: chain,
+          chainId: +chain,
           url: getConfigByChain(chain)?.subgraphUrl,
         }),
       );
