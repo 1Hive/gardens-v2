@@ -9,7 +9,7 @@ import {
   useWaitForTransaction,
 } from "wagmi";
 import { useTransactionNotification } from "./useTransactionNotification";
-import { chainDataMap } from "@/configs/chainServer";
+import { chainConfigMap } from "@/configs/chains";
 
 export type ComputedStatus =
   | "loading"
@@ -70,7 +70,7 @@ export function useContractWriteWithConfirmations<
     chainId: +propsWithChainId.chainId,
     confirmations:
       propsWithChainId.confirmations ??
-      chainDataMap[+propsWithChainId.chainId].confirmations,
+      chainConfigMap[+propsWithChainId.chainId].confirmations,
   });
 
   const computedStatus = useMemo(() => {

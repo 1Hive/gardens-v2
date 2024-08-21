@@ -1,11 +1,13 @@
+import { fetchToken } from "@wagmi/core";
 import { DocumentNode } from "graphql";
+import { toast } from "react-toastify";
+import { Address } from "viem";
 import {
   CVProposal,
   CVStrategy,
   getCommunityTitlesDocument,
   getPoolTitlesDocument,
   getProposalTitlesDocument,
-  getTokenTitleDocument,
   RegistryCommunity,
   TokenGarden,
 } from "#/subgraph/.graphclient";
@@ -13,10 +15,6 @@ import { initUrqlClient, queryByChain } from "@/providers/urql";
 import { capitalize } from "@/utils/text";
 
 const { urqlClient } = initUrqlClient();
-
-interface TokenTitleResult {
-  tokenGarden?: Pick<TokenGarden, "name">;
-}
 
 interface CommunityTitlesResult {
   registryCommunity?: Pick<RegistryCommunity, "communityName"> & {
@@ -51,16 +49,11 @@ interface QueryMapItem {
 }
 
 const queryMap: Record<number, QueryMapItem> = {
-  2: {
-    document: getTokenTitleDocument,
-    getVariables: (tokenAddr: string) => ({ tokenAddr: tokenAddr.toLowerCase() }),
-    parseResult: async (
-      resData: TokenTitleResult,
-    ): Promise<(string | undefined)[]> => [resData?.tokenGarden?.name],
-  },
   3: {
     document: getCommunityTitlesDocument,
-    getVariables: (communityAddr: string) => ({ communityAddr: communityAddr.toLowerCase() }),
+    getVariables: (communityAddr: string) => ({
+      communityAddr: communityAddr.toLowerCase(),
+    }),
     parseResult: async (
       resData: CommunityTitlesResult,
     ): Promise<(string | undefined)[]> => {
@@ -160,10 +153,23 @@ export async function getTitlesFromUrlSegments(
   const isStaticSegment = segments[segmentsLength - 1].includes("create");
   const entityIndex = isStaticSegment ? segmentsLength - 2 : segmentsLength - 1;
 
-  const queryItem = queryMap[entityIndex];
-  if (!queryItem) {
-    throw new Error(`No query defined for entity index: ${entityIndex}`);
+  if (entityIndex === 2) {
+    const tokenArgs = {
+      address: segments[2] as Address,
+      chainId: parseInt(segments[1]),
+    };
+    console.log("tokenArgs", tokenArgs);
+    const tokenData = await fetchToken(tokenArgs)
+      .then((token) => token?.symbol)
+      .catch(() => {
+        console.error("Error fetching token from address: ", tokenArgs);
+        toast.error("Token not found");
+        return undefined;
+      });
+    return [tokenData];
   }
+
+  const queryItem = queryMap[entityIndex];
 
   try {
     const result = await queryByChain(

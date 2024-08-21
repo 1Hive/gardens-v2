@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
 import {
   getTokenGardensDocument,
@@ -12,27 +12,18 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 
 export default function Page() {
-  const {
-    data: gardens,
-    fetching,
-    errors,
-  } = useSubgraphQueryMultiChain<getTokenGardensQuery>({
-    query: getTokenGardensDocument,
-    changeScope: [
-      {
-        topic: "garden",
-      },
-      {
-        topic: "community",
-      },
-    ],
-  });
-
-  useEffect(() => {
-    if (errors.size) {
-      console.error("Error fetching token gardens:", Array.from(errors));
-    }
-  }, [errors.size]);
+  const { data: gardens, fetching } =
+    useSubgraphQueryMultiChain<getTokenGardensQuery>({
+      query: getTokenGardensDocument,
+      changeScope: [
+        {
+          topic: "garden",
+        },
+        {
+          topic: "community",
+        },
+      ],
+    });
 
   const tokenGardens = useMemo(
     () =>
@@ -61,6 +52,8 @@ export default function Page() {
             ))}
         </>
       );
+    } else {
+      return <div className="text-center">No Gardens</div>;
     }
   }, [fetching, tokenGardens?.length]);
 

@@ -9,6 +9,8 @@
     "manifest:arbsep": "node ./src/scripts/mustache arbsepolia",
     "manifest:ethsep": "node ./src/scripts/mustache ethsepolia",
     "manifest:arbitrum": "node ./src/scripts/mustache arbitrum",
+    "manifest:optimism": "node ./src/scripts/mustache optimism",
+    "manifest:matic": "node ./src/scripts/mustache matic",
     "build:arbsep": "pnpm manifest:arbsep && graph codegen && graph build",
     "build:ethsep": "pnpm manifest:ethsep && graph codegen && graph build",
     "create-local": "graph create --node http://localhost:8020/ kamikazebr/gv2",
@@ -17,6 +19,8 @@
     "deploy:arbsep": "pnpm manifest:arbsep && graph deploy --studio gv2-arbsepolia",
     "deploy:ethsep": "pnpm manifest:ethsep && graph deploy --studio gv2-ethsepolia",
     "deploy:arbitrum": "pnpm manifest:arbitrum && graph deploy --studio gv2-arbitrum",
+    "deploy:optimism": "pnpm manifest:optimism && graph deploy --studio gv2-optimism",
+    "deploy:matic": "pnpm manifest:matic && graph deploy --studio gv2-matic",
     "build-deploy:arbsep": "pnpm build:arbsep && pnpm deploy:arbsep:last",
     "build-deploy:ethsep": "pnpm build:ethsep && pnpm deploy:ethsep:last",
     "local": "pnpm create-local && pnpm build && pnpm deploy:local",
@@ -25,15 +29,15 @@
     "build-all": "pnpm create-local && pnpm build && pnpm deploy:local",
     "deploy:arbsep:last": "dotenvx run -- ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-version.ts gv2-arbsepolia",
     "deploy:ethsep:last": "dotenvx run -- ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-version.ts gv2-ethsepolia",
-    "codegen": "graph codegen"
+    "codegen": "graph codegen",
+    "tsc": "tsc"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.69.2",
     "@graphprotocol/graph-ts": "^0.34.0",
     "@types/node": "*",
     "node-fetch": "*",
-    "process": "^0.11.10",
-    "typescript": ">=2.7"
+    "process": "^0.11.10"
   },
   "devDependencies": {
     "@graphprotocol/client-cli": "^3.0.0",

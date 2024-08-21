@@ -89,7 +89,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         ERC1967Proxy strategyProxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()),
-            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()))
+            abi.encodeWithSelector(
+                CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()), pool_admin()
+            )
         );
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
@@ -112,6 +114,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(
                 RegistryFactoryV0_0.initialize.selector,
+                gardenOwner,
                 address(protocolFeeReceiver),
                 address(new RegistryCommunityV0_0()),
                 address(new CVStrategyV0_0()),
@@ -147,7 +150,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         Upgrades.upgradeProxy(
             address(_registryFactory()),
             "RegistryFactoryV0_1.sol",
-            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
+            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, gardenOwner)
         );
         assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
         vm.stopPrank();

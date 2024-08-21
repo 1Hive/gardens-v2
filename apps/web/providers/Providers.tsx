@@ -26,7 +26,7 @@ import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
 import ThemeProvider from "./ThemeProvider";
 import { UrqlProvider } from "./UrqlProvider";
-import { chains } from "@/configs/chainServer";
+import { chains } from "@/configs/chains";
 import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 

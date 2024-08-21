@@ -4,7 +4,7 @@ import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useIsMounted } from "./useIsMounted";
-import { getConfigByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/configs/chains";
 import {
   ChangeEventScope,
   SubscriptionId,

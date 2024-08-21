@@ -3,7 +3,7 @@ import { Chain, createPublicClient, http, PublicClient } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 import { useChainId } from "wagmi";
 import { useChainFromPath } from "./useChainFromPath";
-import { getChain } from "@/configs/chainServer";
+import { getChain } from "@/configs/chains";
 
 export const useViemClient = function () {
   const chainFromPath = useChainFromPath() as Chain;

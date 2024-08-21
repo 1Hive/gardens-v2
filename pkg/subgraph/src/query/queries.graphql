@@ -142,33 +142,27 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
   }
 }
 
-query getGarden($addr: ID!) {
-  tokenGarden(id: $addr) {
+query getGardenCommunities($chainId: BigInt!) {
+  registryCommunities(where: { chainId: $chainId }) {
     id
-    name
-    symbol
-    decimals
     chainId
-    communities {
+    isValid
+    covenantIpfsHash
+    communityName
+    protocolFee
+    communityFee
+    registerToken
+    registerStakeAmount
+    alloAddress
+    members(where: { stakedTokens_gt: "0" }) {
       id
-      isValid
-      covenantIpfsHash
-      communityName
-      protocolFee
-      communityFee
-      registerToken
-      registerStakeAmount
-      alloAddress
-      members(where: { stakedTokens_gt: "0" }) {
-        id
-        memberAddress
-      }
-      strategies(where: { isEnabled: true }) {
-        id
-        totalEffectiveActivePoints
-        poolId
-        poolAmount
-      }
+      memberAddress
+    }
+    strategies(where: { isEnabled: true }) {
+      id
+      totalEffectiveActivePoints
+      poolId
+      poolAmount
     }
   }
 }
@@ -210,20 +204,9 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
   }
 }
 
-query getCommunityCreationData($addr: ID!) {
+query getCommunityCreationData {
   registryFactories {
     id
-  }
-  tokenGarden(id: $addr) {
-    id
-    name
-    symbol
-    decimals
-    chainId
-    communities {
-      alloAddress
-      isValid
-    }
   }
 }
 

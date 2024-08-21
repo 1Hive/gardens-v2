@@ -10,7 +10,7 @@ import { FormSelect } from "./FormSelect";
 import { Button } from "../Button";
 import { EthAddress } from "../EthAddress";
 import { InfoBox } from "../InfoBox";
-import { chainDataMap } from "@/configs/chainServer";
+import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -163,7 +163,7 @@ export default function PoolEditForm({
     const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
     const weightNum = minimumConviction * maxRatioNum ** 2;
 
-    const blockTime = chainDataMap[chainId].blockTime;
+    const blockTime = chainConfigMap[chainId].blockTime;
 
     // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));

@@ -4,7 +4,7 @@ import React from "react";
 import { Addreth } from "addreth";
 import { Address } from "viem";
 import { LoadingSpinner } from "./LoadingSpinner";
-import { chainDataMap } from "@/configs/chainServer";
+import { chainConfigMap } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 
 type EthAddressProps = {
@@ -53,9 +53,9 @@ export const EthAddress = ({
         icon={icon}
         address={address as Address}
         explorer={(addr) => ({
-          name: chainDataMap[chain.id!].name,
-          url: `${chainDataMap[chain.id!].explorer}/address/${addr}`,
-          accountUrl: `${chainDataMap[chain.id!].explorer}/address/${addr}`,
+          name: chainConfigMap[chain.id!].name,
+          url: `${chainConfigMap[chain.id!].explorer}/address/${addr}`,
+          accountUrl: `${chainConfigMap[chain.id!].explorer}/address/${addr}`,
         })}
       />
     : <LoadingSpinner />;

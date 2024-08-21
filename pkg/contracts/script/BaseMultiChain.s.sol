@@ -174,6 +174,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
                 abi.encodeWithSelector(
                     RegistryFactoryV0_0.initialize.selector,
                     address(SENDER),
+                    address(SENDER),
                     address(comm),
                     address(new CollateralVault())
                 )

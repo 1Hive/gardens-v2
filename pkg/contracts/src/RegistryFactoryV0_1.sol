@@ -2,10 +2,8 @@
 pragma solidity ^0.8.19;
 
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
-
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
-
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
 
 struct CommunityInfo {
     uint256 fee;
@@ -26,7 +24,7 @@ contract RegistryFactoryV0_1 is RegistryFactoryV0_0 {
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
 
-    function initializeV2() public reinitializer(2) {
-        __Ownable_init();
+    function initializeV2(address _owner) public reinitializer(2) {
+        transferOwnership(_owner);
     }
 }

@@ -20,7 +20,7 @@ import PoolEditForm from "./Forms/PoolEditForm";
 import { Modal } from "./Modal";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
-import { chainDataMap } from "@/configs/chainServer";
+import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
@@ -88,7 +88,7 @@ export default function PoolHeader({
   const { address } = useAccount();
   const { publish } = usePubSubContext();
 
-  const blockTime = chainDataMap[chainId].blockTime;
+  const blockTime = chainConfigMap[chainId].blockTime;
   const isCouncilSafe =
     address?.toLowerCase() ===
     strategy.registryCommunity.councilSafe?.toLowerCase();

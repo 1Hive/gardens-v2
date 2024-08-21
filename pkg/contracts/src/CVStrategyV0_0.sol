@@ -125,7 +125,7 @@ library StrategyStruct {
     }
 }
 
-contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
+contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -248,9 +248,9 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
-    function init(address _allo, address _collateralVaultTemplate) external virtual initializer {
+    function init(address _allo, address _collateralVaultTemplate, address owner) external virtual initializer {
         super.init(_allo, "CVStrategy");
-        __Ownable_init();
+        _transferOwnership(owner);
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
@@ -288,6 +288,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
     receive() external payable {
         //@todo allow only allo protocol to fund it.
+        // Goss: Or only allow expecteded tokens to be sent and increment poolAmount
         // // surpressStateMutabilityWarning++;
     }
 
@@ -596,7 +597,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
             poolAmount -= proposal.requestedAmount; // CEI
 
-            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
+            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
@@ -1222,8 +1223,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         proposal.lastDisputeCompletion = block.timestamp;
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
     }
-
-    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     uint256[50] private __gap;
 }

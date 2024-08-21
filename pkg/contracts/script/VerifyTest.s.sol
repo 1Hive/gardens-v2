@@ -80,6 +80,8 @@ contract VerifyTest is BaseMultiChain {
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(
                 RegistryFactoryV0_0.initialize.selector,
+                address(SENDER),
+                address(SENDER),
                 new RegistryCommunityV0_0(),
                 new CVStrategyV0_0(),
                 new CollateralVault()

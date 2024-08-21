@@ -111,6 +111,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(
                 RegistryFactoryV0_0.initialize.selector,
+                factoryOwner,
                 address(protocolFeeReceiver),
                 address(new RegistryCommunityV0_0()),
                 address(new CVStrategyV0_0()),

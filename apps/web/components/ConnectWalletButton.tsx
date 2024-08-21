@@ -20,7 +20,7 @@ import {
 } from "wagmi";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
-import { ChainIcon } from "@/configs/chainServer";
+import { ChainIcon } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { formatAddress } from "@/utils/formatAddress";
 

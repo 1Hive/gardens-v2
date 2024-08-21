@@ -6,7 +6,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {AccessControlUpgradeable} from
@@ -19,17 +18,11 @@ import {FAllo} from "./interfaces/FAllo.sol";
 import {ISafe} from "./interfaces/ISafe.sol";
 import {IRegistryFactory} from "./IRegistryFactory.sol";
 import {CVStrategyV0_0, StrategyStruct, IPointStrategy} from "./CVStrategyV0_0.sol";
-
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
-
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
 
-contract RegistryCommunityV0_0 is
-    OwnableUpgradeable,
-    UUPSUpgradeable,
-    ReentrancyGuardUpgradeable,
-    AccessControlUpgradeable
-{
+contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
     /*|--------------------------------------------|*/
@@ -221,9 +214,10 @@ contract RegistryCommunityV0_0 is
     function initialize(
         RegistryCommunityV0_0.InitializeParams memory params,
         address _strategyTemplate,
-        address _collateralVaultTemplate
+        address _collateralVaultTemplate,
+        address owner
     ) public initializer {
-        __Ownable_init();
+        _transferOwnership(owner);
         __ReentrancyGuard_init();
         __AccessControl_init();
 
@@ -290,7 +284,7 @@ contract RegistryCommunityV0_0 is
         address strategyProxy = address(
             new ERC1967Proxy(
                 address(strategyTemplate),
-                abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate)
+                abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, owner())
             )
         );
 
@@ -613,8 +607,6 @@ contract RegistryCommunityV0_0 is
         gardenToken.transfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
-
-    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     uint256[50] private __gap;
 }

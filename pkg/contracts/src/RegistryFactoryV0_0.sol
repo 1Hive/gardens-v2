@@ -2,9 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
-
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
@@ -15,14 +13,14 @@ struct CommunityInfo {
 }
 /// @custom:oz-upgrades-from RegistryFactory
 
-contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
+contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
     uint256 public nonce;
 
     mapping(address => CommunityInfo) communityToInfo;
     address public gardensFeeReceiver;
     address public registryCommunityTemplate;
     address public strategyTemplate;
-    address public collateralVaultTemplate; //@todo go private to produce less bytecode
+    address public collateralVaultTemplate;
 
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -39,6 +37,7 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
 
     error CommunityInvalid(address _community);
     error AddressCannotBeZero();
+
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
@@ -48,12 +47,13 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
     }
 
     function initialize(
+        address _owner,
         address _gardensFeeReceiver,
         address _registryCommunityTemplate,
         address _strategyTemplate,
         address _collateralVaultTemplate
     ) public virtual initializer {
-        __Ownable_init();
+        ProxyOwnableUpgrader.initialize(_owner);
         nonce = 0;
         _revertZeroAddress(_gardensFeeReceiver);
         _revertZeroAddress(_registryCommunityTemplate);
@@ -76,7 +76,9 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
 
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(registryCommunityTemplate),
-            abi.encodeWithSelector(RegistryCommunityV0_0.initialize.selector, params, strategyTemplate, collateralVaultTemplate)
+            abi.encodeWithSelector(
+                RegistryCommunityV0_0.initialize.selector, params, strategyTemplate, collateralVaultTemplate, owner()
+            )
         );
 
         RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(payable(address(proxy)));
@@ -118,8 +120,6 @@ contract RegistryFactoryV0_0 is OwnableUpgradeable, UUPSUpgradeable {
 
         return communityToInfo[_community].fee;
     }
-
-    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 
     uint256[50] private __gap;
 }

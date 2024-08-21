@@ -13,7 +13,7 @@ import {
   TxInProgress,
   TxIdle,
 } from "@/assets";
-import { chainDataMap } from "@/configs/chainServer";
+import { chainConfigMap } from "@/configs/chains";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
 type TransactionData = WriteContractResult | undefined;
@@ -57,7 +57,7 @@ export const useTransactionNotification = ({
     const clickToExplorer = () => {
       if (transactionData?.hash) {
         window.open(
-          `${chainDataMap[chain?.id ?? 0].explorer}/tx/${transactionData?.hash}`,
+          `${chainConfigMap[chain?.id ?? 0].explorer}/tx/${transactionData?.hash}`,
           "_blank",
         );
       } else {
