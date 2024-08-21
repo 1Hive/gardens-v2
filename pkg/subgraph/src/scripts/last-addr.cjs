@@ -133,6 +133,8 @@ function getRunLatestAddrs(chainId) {
 try {
   const latestAddress = getRunLatestAddrs(chainArg);
   console.debug({ latestAddress });
-} catch (error) {}
+} catch (error) {
+  console.error(error);
+}
 
 module.exports = { getRunLatestAddrs };

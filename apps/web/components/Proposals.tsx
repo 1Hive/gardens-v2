@@ -7,7 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { filter } from "lodash-es";
 import Link from "next/link";
-import { Address as AddressType, useAccount } from "wagmi";
+import { Address, Address as AddressType, useAccount } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -16,7 +16,6 @@ import {
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { Address } from "#/subgraph/src/scripts/last-addr";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { getProposals } from "@/actions/getProposals";
 import {
