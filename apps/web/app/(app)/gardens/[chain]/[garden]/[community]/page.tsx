@@ -12,7 +12,7 @@ import Markdown from "markdown-to-jsx";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useToken } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
@@ -53,7 +53,10 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
-
+  const { data: tokenGarden } = useToken({
+    address: tokenAddr as Address,
+    chainId: +chain,
+  });
   const {
     data: result,
     error,
@@ -68,7 +71,6 @@ export default function Page({
   });
 
   const registryCommunity = result?.registryCommunity;
-  const tokenGarden = result?.tokenGarden;
 
   let {
     communityName,

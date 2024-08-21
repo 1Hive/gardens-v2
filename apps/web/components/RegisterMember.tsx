@@ -22,7 +22,7 @@ import { getTxMessage } from "@/utils/transactionMessages";
 
 type RegisterMemberProps = {
   registrationCost: bigint;
-  token: Pick<TokenGarden, "symbol" | "id" | "decimals">;
+  token: Pick<TokenGarden, "symbol" | "address" | "decimals">;
   registryCommunity: Pick<RegistryCommunity, "communityName" | "id">;
   memberData: isMemberQuery | undefined;
 };
@@ -55,7 +55,7 @@ export function RegisterMember({
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
-    token: token.id as Address,
+    token: token.address as Address,
     chainId: urlChainId,
   });
 
@@ -119,7 +119,7 @@ export function RegisterMember({
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
     accountAddress,
-    token.id as Address,
+    token.address as Address,
     token.symbol,
     communityAddress as Address,
     registrationCost,

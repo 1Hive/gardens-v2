@@ -36,7 +36,7 @@ type IncreasePowerProps = {
     | "registerStakeAmount"
     | "registerToken"
   >;
-  tokenGarden: Pick<TokenGarden, "symbol" | "decimals" | "id">;
+  tokenGarden: Pick<TokenGarden, "symbol" | "decimals" | "address">;
   registrationAmount: Dnum;
 };
 
@@ -49,7 +49,7 @@ export const IncreasePower = ({
   const {
     symbol: tokenSymbol,
     decimals: tokenDecimals,
-    id: registerToken,
+    address: registerToken,
   } = tokenGarden;
   const {
     communityName,
