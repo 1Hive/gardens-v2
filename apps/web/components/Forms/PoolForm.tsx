@@ -502,82 +502,158 @@ export function PoolForm({ token, communityAddr }: Props) {
           previewTitle="Check pool creation details"
         />
       : <div className="flex flex-col gap-6">
-          <div className="flex flex-col">
-            <FormInput
-              label="Pool Name"
-              register={register}
-              required
-              errors={errors}
-              registerKey="title"
-              type="text"
-              placeholder="Your pool name..."
-            />
-          </div>
-          <div className="flex flex-col">
-            <FormInput
-              label="Description"
-              register={register}
-              required
-              errors={errors}
-              registerKey="description"
-              type="textarea"
-              rows={7}
-              placeholder="Enter a description of your pool..."
-            />
-          </div>
-          <div className="flex flex-col">
-            <FormInput
-              label="Pool token ERC20 address"
-              register={register}
-              required
-              registerOptions={{
-                pattern: {
-                  value: ethAddressRegEx,
-                  message: "Invalid Eth Address",
-                },
-                validate: () =>
-                  customTokenData?.symbol !== undefined ||
-                  "Not a supported ERC20 token",
-              }}
-              errors={errors}
-              registerKey="poolTokenAddress"
-              placeholder="0x.."
-              type="text"
-              className="pr-14"
-            >
-              {customTokenData?.symbol && (
-                <span className="absolute right-4 top-4 text-black">
-                  {customTokenData?.symbol}
-                </span>
-              )}
-            </FormInput>
-          </div>
-          <div className="flex flex-col">
-            <FormSelect
-              label="Strategy type"
-              register={register}
-              errors={errors}
-              registerKey="strategyType"
-              options={Object.entries(PoolTypes)
-                .slice(0, -1)
-                .map(([value, text]) => ({
-                  label: capitalize(text),
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col">
+              <FormInput
+                label="Pool Name"
+                register={register}
+                required
+                errors={errors}
+                registerKey="title"
+                type="text"
+                placeholder="Your pool name..."
+              />
+            </div>
+            <div className="flex flex-col">
+              <FormInput
+                label="Description"
+                register={register}
+                required
+                errors={errors}
+                registerKey="description"
+                type="textarea"
+                rows={7}
+                placeholder="Enter a description of your pool..."
+              />
+            </div>
+            <div className="flex flex-col">
+              <FormInput
+                label="Pool token ERC20 address"
+                register={register}
+                required
+                registerOptions={{
+                  pattern: {
+                    value: ethAddressRegEx,
+                    message: "Invalid Eth Address",
+                  },
+                  validate: () =>
+                    customTokenData?.symbol !== undefined ||
+                    "Not a supported ERC20 token",
+                }}
+                errors={errors}
+                registerKey="poolTokenAddress"
+                placeholder="0x.."
+                type="text"
+                className="pr-14"
+              >
+                {customTokenData?.symbol && (
+                  <span className="absolute right-4 top-4 text-black">
+                    {customTokenData?.symbol}
+                  </span>
+                )}
+              </FormInput>
+            </div>
+            <div className="flex flex-col">
+              <FormSelect
+                label="Pool type"
+                register={register}
+                errors={errors}
+                registerKey="strategyType"
+                options={Object.entries(PoolTypes)
+                  .slice(0, -1)
+                  .map(([value, text]) => ({
+                    label: capitalize(text),
+                    value: value,
+                  }))}
+              />
+            </div>
+            <div className="flex flex-col">
+              <FormSelect
+                label="Pool System"
+                register={register}
+                errors={errors}
+                registerKey="pointSystemType"
+                options={Object.entries(PointSystems).map(([value, text]) => ({
+                  label: text,
                   value: value,
                 }))}
-            />
+              />
+            </div>
+            {pointSystemType == 1 && (
+              <div className="flex flex-col">
+                <FormInput
+                  label="Token max amount"
+                  register={register}
+                  required
+                  registerOptions={{
+                    min: {
+                      value: INPUT_TOKEN_MIN_VALUE,
+                      message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                    },
+                  }}
+                  otherProps={{
+                    step: INPUT_TOKEN_MIN_VALUE,
+                    min: INPUT_TOKEN_MIN_VALUE,
+                  }}
+                  errors={errors}
+                  className="pr-14"
+                  registerKey="maxAmount"
+                  type="number"
+                  placeholder="0"
+                >
+                  <span className="absolute right-4 top-4 text-black">
+                    {token.symbol}
+                  </span>
+                </FormInput>
+              </div>
+            )}
+            {shouldRenderInputMap(
+              "isSybilResistanceRequired",
+              strategyType,
+            ) && (
+              <div className="flex flex-col">
+                <FormCheckBox
+                  label="Add sybil resistance with Gitcoin Passport"
+                  register={register}
+                  errors={errors}
+                  registerKey="isSybilResistanceRequired"
+                  type="checkbox"
+                />
+                {isSybilResistanceRequired && (
+                  <FormInput
+                    label="Gitcoin Passport score required"
+                    register={register}
+                    required
+                    registerOptions={{
+                      min: {
+                        value: 1 / CV_PERCENTAGE_SCALE,
+                        message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                      },
+                    }}
+                    otherProps={{
+                      step: 1 / CV_PERCENTAGE_SCALE,
+                      min: 1 / CV_PERCENTAGE_SCALE,
+                    }}
+                    errors={errors}
+                    registerKey="passportThreshold"
+                    type="number"
+                    placeholder="0"
+                  />
+                )}
+              </div>
+            )}
           </div>
-
+          <InfoBox
+            classNames="w-fit mt-4"
+            infoBoxType="warning"
+            content={
+              "The following sections maybe updated by the council in the future."
+            }
+          />
+          {/* arbitration section */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
-              <h3 className="my-4 text-xl">Arbitration settings</h3>
-              <InfoBox
-                infoBoxType="info"
-                content={`The tribunal Safe, represented by trusted members, is
-                responsible for resolving proposal disputes. The global tribunal
-                Safe is a shared option featuring trusted members of the Gardens
-                community. Its use is recommended for objective dispute
-                resolution.`}
-              />
+              <h4 className="my-4">Arbitration settings</h4>
             </div>
             <div className="flex gap-4 mt-2">
               <FormRadioButton
@@ -607,6 +683,10 @@ export function PoolForm({ token, communityAddr }: Props) {
               />
             </div>
             <FormAddressInput
+              tooltip="The tribunal Safe, represented by trusted members, is
+                responsible for resolving proposal disputes. The global tribunal
+                Safe is a shared option featuring trusted members of the Gardens
+                community. It's use is recommended for objective dispute resolution."
               label="Tribunal address"
               registerKey="tribunalAddress"
               onChange={(newValue) => setTribunalAddress(newValue)}
@@ -654,8 +734,9 @@ export function PoolForm({ token, communityAddr }: Props) {
               />
             </div>
           </div>
+          {/* pool settings section */}
           <div className="flex flex-col">
-            <h4 className="my-4 text-xl">Select pool settings</h4>
+            <h4 className="my-4">Pool settings</h4>
             <div className="flex gap-8">
               {Object.entries(poolSettingValues).map(
                 ([key, { label, description }]) => {
@@ -678,6 +759,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               {shouldRenderInputMap("spendingLimit", strategyType) && (
                 <div className="flex max-w-64 flex-col">
                   <FormInput
+                    tooltip="Max percentage of the pool funds that can be spent in a single proposal"
                     label="Spending limit"
                     register={register}
                     required
@@ -709,6 +791,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               {shouldRenderInputMap("minimumConviction", strategyType) && (
                 <div className="flex max-w-64 flex-col">
                   <FormInput
+                    tooltip="% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass."
                     label="Minimum conviction"
                     register={register}
                     required
@@ -739,6 +822,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               )}
               <div className="flex max-w-64 flex-col">
                 <FormInput
+                  tooltip="It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life"
                   label="Conviction growth"
                   register={register}
                   required
@@ -769,103 +853,31 @@ export function PoolForm({ token, communityAddr }: Props) {
                 </FormInput>
               </div>
             </div>
-          </div>
-          {shouldRenderInputMap("minThresholdPoints", strategyType) && (
-            <div className="flex flex-col">
-              <FormInput
-                label="Minimum threshold points"
-                register={register}
-                registerOptions={{
-                  min: {
-                    value: INPUT_MIN_THRESHOLD_VALUE,
-                    message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_VALUE}`,
-                  },
-                }}
-                required
-                otherProps={{
-                  step: INPUT_TOKEN_MIN_VALUE,
-                  min: INPUT_MIN_THRESHOLD_VALUE,
-                }}
-                errors={errors}
-                registerKey="minThresholdPoints"
-                type="number"
-                placeholder="0"
-              />
-            </div>
-          )}
-
-          <div className="flex flex-col">
-            <FormSelect
-              label="Pool System"
-              register={register}
-              errors={errors}
-              registerKey="pointSystemType"
-              options={Object.entries(PointSystems).map(([value, text]) => ({
-                label: text,
-                value: value,
-              }))}
-            />
-          </div>
-          {pointSystemType == 1 && (
-            <div className="flex flex-col">
-              <FormInput
-                label="Token max amount"
-                register={register}
-                required
-                registerOptions={{
-                  min: {
-                    value: INPUT_TOKEN_MIN_VALUE,
-                    message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
-                  },
-                }}
-                otherProps={{
-                  step: INPUT_TOKEN_MIN_VALUE,
-                  min: INPUT_TOKEN_MIN_VALUE,
-                }}
-                errors={errors}
-                className="pr-14"
-                registerKey="maxAmount"
-                type="number"
-                placeholder="0"
-              >
-                <span className="absolute right-4 top-4 text-black">
-                  {token.symbol}
-                </span>
-              </FormInput>
-            </div>
-          )}
-          {shouldRenderInputMap("isSybilResistanceRequired", strategyType) && (
-            <div className="flex flex-col">
-              <FormCheckBox
-                label="Add sybil resistance with Gitcoin Passport"
-                register={register}
-                errors={errors}
-                registerKey="isSybilResistanceRequired"
-                type="checkbox"
-              />
-              {isSybilResistanceRequired && (
+            {shouldRenderInputMap("minThresholdPoints", strategyType) && (
+              <div className="flex flex-col">
                 <FormInput
-                  label="Gitcoin Passport score required"
+                  tooltip={`A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`}
+                  label="Minimum threshold points"
                   register={register}
-                  required
                   registerOptions={{
                     min: {
-                      value: 1 / CV_PERCENTAGE_SCALE,
-                      message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                      value: INPUT_MIN_THRESHOLD_VALUE,
+                      message: `Amount must be greater than ${INPUT_MIN_THRESHOLD_VALUE}`,
                     },
                   }}
+                  required
                   otherProps={{
-                    step: 1 / CV_PERCENTAGE_SCALE,
-                    min: 1 / CV_PERCENTAGE_SCALE,
+                    step: INPUT_TOKEN_MIN_VALUE,
+                    min: INPUT_MIN_THRESHOLD_VALUE,
                   }}
                   errors={errors}
-                  registerKey="passportThreshold"
+                  registerKey="minThresholdPoints"
                   type="number"
                   placeholder="0"
                 />
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       }
       <div className="flex w-full items-center justify-center py-6">
