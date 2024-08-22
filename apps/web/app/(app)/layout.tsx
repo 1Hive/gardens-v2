@@ -10,7 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       style={{ backgroundImage: `url('${Banner.src}')` }}
     >
       <NavBar />
-      <main className="mt-10 flex flex-col items-center">
+      <main className="mt-10 flex flex-col items-center min-h-screen">
         <nav className="w-full max-w-6xl">
           <div className="mx-8 flex gap-4 truncate">
             <GoBackButton />
