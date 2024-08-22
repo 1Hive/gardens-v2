@@ -9,6 +9,7 @@ import {
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import { StopIcon } from "@heroicons/react/24/solid";
+import { FetchTokenResult } from "@wagmi/core";
 import Markdown from "markdown-to-jsx";
 import Image from "next/image";
 import { Address } from "viem";
@@ -41,6 +42,7 @@ type Props = {
   isEnabled: boolean;
   strategy: getPoolDataQuery["cvstrategies"][0];
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
+  poolToken: FetchTokenResult;
   pointSystem: number;
   chainId: string;
   proposalType: string;
@@ -79,6 +81,7 @@ export default function PoolHeader({
   isEnabled,
   strategy,
   token,
+  poolToken,
   pointSystem,
   chainId,
   proposalType,
@@ -279,7 +282,7 @@ export default function PoolHeader({
             <Statistic label="funding token">
               <Badge
                 isCapitalize
-                label={token.symbol}
+                label={poolToken?.symbol}
                 icon={<Square3Stack3DIcon />}
               />
             </Statistic>

@@ -226,6 +226,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     decimals
   }
   cvstrategies(where: { poolId: $poolId }) {
+    token
     poolAmount
     metadata
     id
@@ -310,6 +311,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     version
     strategy {
       id
+      token
       maxCVSupply
       totalEffectiveActivePoints
       config {
