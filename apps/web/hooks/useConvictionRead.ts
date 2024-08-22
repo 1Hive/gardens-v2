@@ -117,5 +117,6 @@ export const useConvictionRead = ({
     thresholdPct,
     totalSupportPct,
     currentConvictionPct,
+    convictionFromContract,
   };
 };
