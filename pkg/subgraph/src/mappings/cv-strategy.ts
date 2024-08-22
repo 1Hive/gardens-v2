@@ -248,6 +248,7 @@ export function handleSupportAdded(event: SupportAdded): void {
   memberStrategy.save();
   cvp.maxCVStaked = maxConviction;
 
+  cvp.blockLast = event.block.number;
   cvp.stakedAmount = event.params.totalStakedAmount;
   cvp.convictionLast = event.params.convictionLast;
   cvp.save();

@@ -1024,6 +1024,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
         // calculateConviction and store it
         conviction = calculateConviction(
+            // TODO: Goss -> we should do this math inside the func so UI does not need to fetch latest block
             blockNumber - _proposal.blockLast, // we assert it doesn't overflow above
             _proposal.convictionLast,
             _oldStaked
