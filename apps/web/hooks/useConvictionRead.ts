@@ -18,7 +18,6 @@ type ProposalDataLight = Maybe<
     | "stakedAmount"
     | "threshold"
     | "requestedAmount"
-    | "blockLast"
   > & {
     strategy: Pick<
       CVStrategy,
@@ -50,19 +49,6 @@ export const useConvictionRead = ({
     enabled,
   });
 
-  //new way of getting conviction from contract: DONT SEE THIS TO GET THE RIGHT CONVICTION
-  const { data: convictionFromContract, error: errorConviction } =
-    useContractRead({
-      ...cvStrategyContract,
-      functionName: "calculateConviction" as any,
-      args: [
-        BigInt(proposalData?.blockLast ?? 0),
-        BigInt(proposalData?.convictionLast),
-        BigInt(proposalData?.stakedAmount),
-      ],
-      enabled,
-    });
-
   const { data: thresholdFromContract, error: errorThreshold } =
     useContractRead({
       ...cvStrategyContract,
@@ -77,10 +63,6 @@ export const useConvictionRead = ({
 
   if (errorThreshold) {
     logOnce("error", "Error reading threshold", errorThreshold);
-  }
-
-  if (errorConviction) {
-    logOnce("error", "Error reading conviction", errorConviction);
   }
 
   if (!enabled) {
