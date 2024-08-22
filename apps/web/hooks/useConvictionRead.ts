@@ -18,6 +18,7 @@ type ProposalDataLight = Maybe<
     | "stakedAmount"
     | "threshold"
     | "requestedAmount"
+    | "blockLast"
   > & {
     strategy: Pick<
       CVStrategy,
@@ -41,13 +42,18 @@ export const useConvictionRead = ({
     enabled: !!proposalData,
   };
 
-  //actual way of getting conviction from contract
-  const { data: updateConvictionLast, error } = useContractRead({
-    ...cvStrategyContract,
-    functionName: "updateProposalConviction" as any,
-    args: [BigInt(proposalData?.proposalNumber ?? 0)],
-    enabled,
-  });
+  //new way of getting conviction from contract
+  const { data: convictionFromContract, error: errorConviction } =
+    useContractRead({
+      ...cvStrategyContract,
+      functionName: "calculateConviction" as any,
+      args: [
+        BigInt(proposalData?.blockLast),
+        BigInt(proposalData?.convictionLast),
+        BigInt(proposalData?.stakedAmount),
+      ],
+      enabled,
+    });
 
   const { data: thresholdFromContract, error: errorThreshold } =
     useContractRead({
@@ -57,12 +63,12 @@ export const useConvictionRead = ({
       enabled,
     });
 
-  if (error) {
-    logOnce("error", "Error reading conviction", error);
-  }
-
   if (errorThreshold) {
     logOnce("error", "Error reading threshold", errorThreshold);
+  }
+
+  if (errorConviction) {
+    logOnce("error", "Error reading conviction", errorConviction);
   }
 
   if (!enabled) {
@@ -74,7 +80,7 @@ export const useConvictionRead = ({
     };
   }
 
-  if (!proposalData || updateConvictionLast == null) {
+  if (!proposalData || convictionFromContract == null) {
     return {
       thresholdPct: undefined,
       totalSupportPct: undefined,
@@ -96,7 +102,7 @@ export const useConvictionRead = ({
   );
 
   let currentConvictionPct = calculatePercentageBigInt(
-    updateConvictionLast as bigint,
+    convictionFromContract as bigint,
     proposalData.strategy.maxCVSupply,
     token?.decimals ?? 18,
   );
@@ -105,13 +111,11 @@ export const useConvictionRead = ({
     thresholdPct,
     totalSupportPct,
     currentConvictionPct,
-    updateConvictionLast,
   });
 
   return {
     thresholdPct,
     totalSupportPct,
     currentConvictionPct,
-    updateConvictionLast,
   };
 };
