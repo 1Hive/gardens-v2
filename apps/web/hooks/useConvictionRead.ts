@@ -1,5 +1,5 @@
 import { zeroAddress } from "viem";
-import { Address, useContractRead } from "wagmi";
+import { Address, useBlockNumber, useContractRead } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
@@ -42,18 +42,28 @@ export const useConvictionRead = ({
     enabled: !!proposalData,
   };
 
+  //const blockNumber = useBlockNumber();
+  //const timePassed = BigInt(blockNumber?.data ?? 0n) - (blockLast ?? 0n);
+
   //new way of getting conviction from contract
-  const { data: convictionFromContract, error: errorConviction } =
-    useContractRead({
-      ...cvStrategyContract,
-      functionName: "calculateConviction" as any,
-      args: [
-        BigInt(proposalData?.blockLast),
-        BigInt(proposalData?.convictionLast),
-        BigInt(proposalData?.stakedAmount),
-      ],
-      enabled,
-    });
+  // const { data: convictionFromContract, error: errorConviction } =
+  //   useContractRead({
+  //     ...cvStrategyContract,
+  //     functionName: "calculateConviction",
+  //     args: [
+  //       timePassed,
+  //       proposalData?.convictionLast,
+  //       proposalData?.stakedAmount,
+  //     ],
+  //     enabled: enabled,
+  //   });
+
+  const { data: updatedConviction, error: errorConviction } = useContractRead({
+    ...cvStrategyContract,
+    functionName: "updateProposalConviction" as any,
+    args: [BigInt(proposalData?.proposalNumber ?? 0)],
+    enabled,
+  });
 
   const { data: thresholdFromContract, error: errorThreshold } =
     useContractRead({
@@ -76,16 +86,16 @@ export const useConvictionRead = ({
       thresholdPct: undefined,
       totalSupportPct: undefined,
       currentConvictionPct: undefined,
-      updateConvictionLast: undefined,
+      updatedConviction: undefined,
     };
   }
 
-  if (!proposalData || convictionFromContract == null) {
+  if (!proposalData || updatedConviction == null) {
     return {
       thresholdPct: undefined,
       totalSupportPct: undefined,
       currentConvictionPct: undefined,
-      updateConvictionLast: undefined,
+      updatedConviction: undefined,
     };
   }
 
@@ -102,10 +112,20 @@ export const useConvictionRead = ({
   );
 
   let currentConvictionPct = calculatePercentageBigInt(
-    convictionFromContract as bigint,
+    BigInt(updatedConviction.toString()),
     proposalData.strategy.maxCVSupply,
     token?.decimals ?? 18,
   );
+
+  // console.log({
+  //   convictionFromContract,
+  //   updatedConviction,
+  //   convictionLast,
+  //   maxCVSupply: proposalData.strategy.maxCVSupply,
+  //   stakedAmount: proposalData.stakedAmount,
+  //   totalEffectiveActivePoints:
+  //     proposalData.strategy.totalEffectiveActivePoints,
+  // });
 
   logOnce("debug", "Conviction computed numbers", {
     thresholdPct,
@@ -117,6 +137,6 @@ export const useConvictionRead = ({
     thresholdPct,
     totalSupportPct,
     currentConvictionPct,
-    convictionFromContract,
+    updatedConviction,
   };
 };
