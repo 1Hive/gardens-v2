@@ -74,17 +74,17 @@ export function ConnectWallet() {
                 );
               }
               //WRONG NETWORK! button if wallet is connected to unsupported chains
-              if (chain.unsupported) {
-                return (
-                  <Button
-                    onClick={openChainModal}
-                    btnStyle="outline"
-                    color="danger"
-                  >
-                    Wrong network
-                  </Button>
-                );
-              }
+              // if (chain.unsupported) {
+              //   return (
+              //     <Button
+              //       onClick={openChainModal}
+              //       btnStyle="outline"
+              //       color="danger"
+              //     >
+              //       Wrong network
+              //     </Button>
+              //   );
+              // }
 
               //Is CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
               //Dropdown menu with wallet, balance, switch network and disconnect buttons
