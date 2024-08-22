@@ -87,12 +87,6 @@ export default function Page() {
           </div>
         </section>
       </div>
-      <Image
-        src={Banner}
-        alt="gardens"
-        className="absolute inset-0 object-cover w-full h-full"
-        loading="lazy"
-      />
     </>
   );
 }
