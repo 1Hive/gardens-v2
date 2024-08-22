@@ -9,6 +9,7 @@ import {
   Square3Stack3DIcon,
 } from "@heroicons/react/24/outline";
 import { StopIcon } from "@heroicons/react/24/solid";
+import Markdown from "markdown-to-jsx";
 import Image from "next/image";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
@@ -254,7 +255,21 @@ export default function PoolHeader({
           />
         </Modal>
       </header>
-      <p>{ipfsResult?.description}</p>
+      <Markdown
+        options={{
+          disableParsingRawHTML: true,
+          overrides: {
+            h1: { props: { className: "text-2xl font-semibold my-3" } },
+            h2: { props: { className: "text-xl font-semibold my-2" } },
+            h3: { props: { className: "text-lg font-semibold my-1" } },
+            h4: { props: { className: "text-base font-semibold" } },
+            h5: { props: { className: "text-sm font-semibold" } },
+            h6: { props: { className: "text-xs font-semibold" } },
+          },
+        }}
+      >
+        {ipfsResult?.description ?? "No description found"}
+      </Markdown>
       <div className="mb-10 mt-8 flex items-start gap-24">
         <div className="flex flex-col gap-2 max-w-fit">
           <Statistic label="pool type">

@@ -904,7 +904,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         vm.startPrank(pool_admin());
         StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        uint256 poolId = createPool(
+        createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),

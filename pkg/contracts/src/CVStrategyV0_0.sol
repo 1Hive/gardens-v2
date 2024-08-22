@@ -288,7 +288,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     receive() external payable {
         //@todo allow only allo protocol to fund it.
-        // Goss: Or only allow expecteded tokens to be sent and increment poolAmount
         // // surpressStateMutabilityWarning++;
     }
 

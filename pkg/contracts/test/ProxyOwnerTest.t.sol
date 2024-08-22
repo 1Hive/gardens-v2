@@ -12,6 +12,7 @@ import {CollateralVault} from "../src/CollateralVault.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 import {ProxyOwnableUpgrader} from "../src/ProxyOwnableUpgrader.sol";
+import {Options} from "openzeppelin-foundry-upgrades/Options.sol";
 
 contract ProxyOwnerTest is Test {
     address deployerWallet = makeAddr("deployerWallet");
@@ -70,7 +71,7 @@ contract ProxyOwnerTest is Test {
         );
     }
 
-    // function test_Revert_transferProxyAdminOwnership() public {
+    // function test_Revert_transferProxyAdminOwnershipNotExpectedOwner() public {
     //     vm.startPrank(deployerWallet);
 
     //     ProxyOwner proxyOwner = ProxyOwner(
@@ -93,9 +94,7 @@ contract ProxyOwnerTest is Test {
     //         )
     //     );
 
-    //     vm.expectRevert(
-    //         abi.encodeWithSelector(ProxyOwnableUpgrader.CallerNotOwner.selector, deployerWallet, anotherWallet)
-    //     );
+    //     vm.expectRevert();
 
     //     Upgrades.upgradeProxy(
     //         address(proxyRegistryFactory),
@@ -119,14 +118,12 @@ contract ProxyOwnerTest is Test {
     //         )
     //     );
 
-    //     vm.expectRevert(
-    //         abi.encodeWithSelector(ProxyOwnableUpgrader.CallerNotOwner.selector, deployerWallet, anotherWallet)
-    //     );
+    //     vm.expectRevert();
 
     //     Upgrades.upgradeProxy(
     //         address(proxyRegistryFactory),
     //         "RegistryFactoryV0_1.sol",
-    //         abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, anotherWallet)
+    //         abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, deployerWallet)
     //     );
     // }
 }
