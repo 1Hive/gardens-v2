@@ -532,11 +532,11 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     // [[[proposalId, delta],[proposalId, delta]]]
     // layout.txs -> // console.log(data)
     // data = bytes
-    function supportProposal(StrategyStruct.ProposalSupport[] memory) public pure {
-        // // surpressStateMutabilityWarning++;
-        revert NotImplemented();
-        // allo().allocate(poolId, abi.encode(proposalId));
-    }
+    // function supportProposal(StrategyStruct.ProposalSupport[] memory) public pure {
+    //     // // surpressStateMutabilityWarning++;
+    //     revert NotImplemented();
+    //     // allo().allocate(poolId, abi.encode(proposalId));
+    // }
 
     // only called via allo.sol by users to allocate to a recipient
     // this will update some data in this contract to store votes, etc.
@@ -630,13 +630,12 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     // since there is no need for Pending or Rejected
     function _getRecipientStatus(address _recipientId) internal pure override returns (Status) {
         // surpressStateMutabilityWarning;
-        return _recipientId == address(0) ? Status.Rejected : Status.Accepted;
+        // return _recipientId == address(0) ? Status.Rejected : Status.Accepted;
     }
 
     /// @return Input the values you would send to distribute(), get the amounts each recipient in the array would receive
     function getPayouts(address[] memory, bytes[] memory) external pure override returns (PayoutSummary[] memory) {
-        // surpressStateMutabilityWarning;
-        revert NotImplemented();
+        // surpressStateMutabilityWarning
         // PayoutSummary[] memory payouts = new PayoutSummary[](0);
         // return payouts;
     }
@@ -648,8 +647,8 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         returns (PayoutSummary memory)
     {
         // surpressStateMutabilityWarning;
-        _data;
-        return PayoutSummary(_recipientId, 0);
+        // _data;
+        // return PayoutSummary(_recipientId, 0);
     }
 
     function _afterIncreasePoolAmount(uint256 _amount) internal virtual override {
@@ -660,7 +659,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
     function _isValidAllocator(address _allocator) internal pure override returns (bool) {
         // surpressStateMutabilityWarning;
-        return _allocator == address(0) ? false : true;
     }
 
     function setPoolActive(bool _active) external {

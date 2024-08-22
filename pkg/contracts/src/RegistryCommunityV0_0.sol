@@ -585,7 +585,7 @@ contract RegistryCommunityV0_0 is
         delete addressToMemberInfo[_member];
         delete strategiesByMember[_member];
 
-        gardenToken.transfer(_member, member.stakedAmount);
+        gardenToken.safeTransfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
 
@@ -611,7 +611,7 @@ contract RegistryCommunityV0_0 is
         deactivateAllStrategies(_member);
         delete addressToMemberInfo[_member];
 
-        gardenToken.transfer(_transferAddress, member.stakedAmount);
+        gardenToken.safeTransfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
 
