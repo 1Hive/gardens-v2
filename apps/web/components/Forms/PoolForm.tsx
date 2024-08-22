@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
+import { polygon } from "viem/chains";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
@@ -118,6 +119,11 @@ const shouldRenderInputMap = (key: string, value: number): boolean => {
   return proposalInputMap[key]?.includes(Number(value)) ?? false;
 };
 
+const defaultEthProposalColateral = 0.002;
+const defaultEthChallengeColateral = 0.001;
+const defaultMaticProposalColateral = 10;
+const defaultMaticChallengeColateral = 5;
+
 export function PoolForm({ token, communityAddr }: Props) {
   const chain = useChainFromPath()!;
   const {
@@ -133,8 +139,14 @@ export function PoolForm({ token, communityAddr }: Props) {
       pointSystemType: 0,
       defaultResolution: 1,
       minThresholdPoints: 0,
-      proposalCollateral: 0.002,
-      disputeCollateral: 0.001,
+      proposalCollateral:
+        chain.id === polygon.id ?
+          defaultMaticProposalColateral
+        : defaultEthProposalColateral,
+      disputeCollateral:
+        chain.id === polygon.id ?
+          defaultMaticChallengeColateral
+        : defaultEthChallengeColateral,
     },
   });
   const isSybilResistanceRequired = watch("isSybilResistanceRequired");
