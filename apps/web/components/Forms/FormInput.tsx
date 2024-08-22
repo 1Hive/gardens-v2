@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
 import { HTMLInputTypeAttribute } from "react";
@@ -17,6 +18,7 @@ type Props = {
   children?: any;
   rows?: number;
   readOnly?: boolean;
+  disabled?: boolean;
   otherProps?: any;
   className?: string;
   value?: string | number;
@@ -38,6 +40,7 @@ export function FormInput({
   children,
   rows,
   readOnly,
+  disabled,
   otherProps,
   className,
   value = undefined,
@@ -46,7 +49,7 @@ export function FormInput({
   onChange,
 }: Props) {
   const fixedInputClassname =
-    "border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed";
+    "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
   return (
     <div className="flex flex-col">
       {label && (
@@ -68,8 +71,12 @@ export function FormInput({
             className={`hide-input-arrows input input-bordered ${errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname} ${className}`}
             required={required}
             step={step}
+            disabled={disabled || readOnly}
+            readOnly={readOnly || disabled}
             {...register(registerKey, {
               required,
+              readOnly,
+              disabled,
               ...registerOptions,
             })}
             {...otherProps}
@@ -79,7 +86,8 @@ export function FormInput({
             className={`${className} textarea textarea-info line-clamp-5 w-full ${errors[registerKey] ? "input-error" : "input-info"}`}
             required={required}
             rows={rows}
-            readOnly={readOnly}
+            disabled={disabled || readOnly}
+            readOnly={readOnly || disabled}
             id={registerKey}
             {...register(registerKey, {
               required,

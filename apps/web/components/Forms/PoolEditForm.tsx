@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Address, formatUnits, getAddress, parseUnits } from "viem";
+import { Address, formatUnits, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
@@ -83,7 +83,6 @@ export default function PoolEditForm({
   });
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
-
   const shouldRenderInput = (key: string): boolean => {
     if (
       PoolTypes[proposalType] === "signaling" &&
@@ -280,7 +279,8 @@ export default function PoolEditForm({
           formRows={formatFormRows()}
           previewTitle="Check pool details"
         />
-      : <div className="flex flex-col">
+      : <div className="flex flex-col gap-6">
+          {/* pool settings section */}
           <div className="flex flex-col gap-6">
             {shouldRenderInput("minimumConviction") && (
               <div className="flex max-w-64 flex-col">
@@ -402,34 +402,46 @@ export default function PoolEditForm({
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
               <h4 className="my-4">Arbitration settings</h4>
+              {isProposalOnDispute && (
+                <InfoBox
+                  infoBoxType="warning"
+                  content={
+                    "A disputed proposal is pending resolution. Please wait until it's resolved before adjusting proposal dispute settings."
+                  }
+                />
+              )}
             </div>
-            <div className="flex gap-4 mt-2">
-              <FormRadioButton
-                label="Global gardens tribunal"
-                checked={
-                  tribunalAddress.toLowerCase() ===
-                  chain.globalTribunal?.toLowerCase()
-                }
-                onChange={() => setTribunalAddress(chain.globalTribunal ?? "")}
-                registerKey="tribunalOption"
-                value="global"
-              />
-              <FormRadioButton
-                label="Custom tribunal"
-                checked={
-                  tribunalAddress.toLowerCase() !==
-                  chain.globalTribunal?.toLowerCase()
-                }
-                onChange={() => {
-                  setTribunalAddress((oldAddress) =>
-                    chain.globalTribunal ? "" : oldAddress,
-                  );
-                  document.getElementById("tribunalAddress")?.focus();
-                }}
-                registerKey="tribunalOption"
-                value="custom"
-              />
-            </div>
+            {!isProposalOnDispute && (
+              <div className="flex gap-4 mt-2">
+                <FormRadioButton
+                  label="Global gardens tribunal"
+                  checked={
+                    tribunalAddress.toLowerCase() ===
+                    chain.globalTribunal?.toLowerCase()
+                  }
+                  onChange={() =>
+                    setTribunalAddress(chain.globalTribunal ?? "")
+                  }
+                  registerKey="tribunalOption"
+                  value="global"
+                />
+                <FormRadioButton
+                  label="Custom tribunal"
+                  checked={
+                    tribunalAddress.toLowerCase() !==
+                    chain.globalTribunal?.toLowerCase()
+                  }
+                  onChange={() => {
+                    setTribunalAddress((oldAddress) =>
+                      chain.globalTribunal ? "" : oldAddress,
+                    );
+                    document.getElementById("tribunalAddress")?.focus();
+                  }}
+                  registerKey="tribunalOption"
+                  value="custom"
+                />
+              </div>
+            )}
             <FormAddressInput
               tooltip="The tribunal Safe, represented by trusted members, is
                 responsible for resolving proposal disputes. The global tribunal
@@ -437,8 +449,11 @@ export default function PoolEditForm({
                 community. It's use is recommended for objective dispute resolution."
               label="Tribunal address"
               registerKey="tribunalAddress"
+              register={register}
+              required
               onChange={(newValue) => setTribunalAddress(newValue)}
               value={tribunalAddress}
+              readOnly={isProposalOnDispute}
             />
             <div className="flex flex-col">
               <FormSelect
@@ -450,7 +465,9 @@ export default function PoolEditForm({
                     label: capitalize(text),
                     value: value,
                   }))}
+                required
                 registerKey="defaultResolution"
+                readOnly={isProposalOnDispute}
                 register={register}
                 errors={undefined}
               />
@@ -467,6 +484,7 @@ export default function PoolEditForm({
                   step: 1 / 10 ** ETH_DECIMALS,
                   min: 1 / 10 ** ETH_DECIMALS,
                 }}
+                readOnly={isProposalOnDispute}
               />
               <FormInput
                 tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
@@ -479,6 +497,7 @@ export default function PoolEditForm({
                   step: 1 / 10 ** ETH_DECIMALS,
                   min: 1 / 10 ** ETH_DECIMALS,
                 }}
+                readOnly={isProposalOnDispute}
               />
             </div>
           </div>
