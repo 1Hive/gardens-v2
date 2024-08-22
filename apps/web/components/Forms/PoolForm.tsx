@@ -645,9 +645,9 @@ export function PoolForm({ token, communityAddr }: Props) {
           </div>
           <InfoBox
             classNames="w-fit mt-4"
-            infoBoxType="warning"
+            infoBoxType="info"
             content={
-              "The following sections maybe updated by the council in the future."
+              "The following sections can be updated by the council in the future."
             }
           />
           {/* arbitration section */}
