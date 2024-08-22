@@ -157,7 +157,6 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
 
     function testCreateDispute() public {
         uint256 proposalId = createProposal();
-        console.log("Proposal ID: ", proposalId);
         vm.deal(challenger, 10 ether);
         vm.prank(challenger);
 
