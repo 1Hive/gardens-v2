@@ -78,7 +78,7 @@ export default function Page({
     currentConvictionPct,
     thresholdPct,
     totalSupportPct,
-    updateConvictionLast,
+    updatedConviction,
   } = useConvictionRead({
     proposalData,
     tokenData: data?.tokenGarden,
@@ -136,7 +136,7 @@ export default function Page({
     !proposalData ||
     !ipfsResult ||
     proposalIdNumber == null ||
-    updateConvictionLast == null
+    updatedConviction == null
   ) {
     return (
       <div className="mt-96">
