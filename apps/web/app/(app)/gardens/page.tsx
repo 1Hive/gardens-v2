@@ -6,7 +6,7 @@ import {
   getTokenGardensDocument,
   getTokenGardensQuery,
 } from "#/subgraph/.graphclient";
-import { clouds1, clouds2, Banner } from "@/assets";
+import { clouds1, clouds2 } from "@/assets";
 import { GardenCard } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
