@@ -22,6 +22,7 @@ import {
   CV_PERCENTAGE_SCALE,
   CV_PERCENTAGE_SCALE_DECIMALS,
 } from "@/utils/numbers";
+import { ethAddressRegEx } from "@/utils/text";
 
 //protocol : 1 => means ipfs!, to do some checks later
 
@@ -40,8 +41,6 @@ type FormRowTypes = {
   label: string;
   parse?: (value: any) => string;
 };
-
-const ethereumAddressRegEx = /^0x[a-fA-F0-9]{40}$/;
 
 export const CommunityForm = ({
   chainId,
@@ -302,7 +301,7 @@ export const CommunityForm = ({
               required
               registerOptions={{
                 pattern: {
-                  value: ethereumAddressRegEx,
+                  value: ethAddressRegEx,
                   message: "Invalid Eth Address",
                 },
               }}
@@ -319,7 +318,7 @@ export const CommunityForm = ({
               required
               registerOptions={{
                 pattern: {
-                  value: ethereumAddressRegEx,
+                  value: ethAddressRegEx,
                   message: "Invalid Eth Address",
                 },
                 validate: async (value) =>

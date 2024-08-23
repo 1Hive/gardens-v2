@@ -5,6 +5,7 @@ import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
+import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
 import { Address, Address as AddressType, useAccount } from "wagmi";
 import {
@@ -61,6 +62,7 @@ type Stats = {
 interface ProposalsProps {
   strategy: LightCVStrategy;
   alloInfo: Allo;
+  poolToken: FetchTokenResult;
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;
@@ -69,6 +71,7 @@ interface ProposalsProps {
 export function Proposals({
   strategy,
   alloInfo,
+  poolToken,
   communityAddress,
   createProposalUrl,
 }: ProposalsProps) {
@@ -422,7 +425,7 @@ export function Proposals({
                     !isConnected ||
                     missmatchUrl
                   }
-                  strategy={strategy}
+                  poolToken={poolToken}
                   tokenDecimals={tokenDecimals}
                   alloInfo={alloInfo}
                   triggerRenderProposals={triggerRenderProposals}

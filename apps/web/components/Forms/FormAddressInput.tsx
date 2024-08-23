@@ -94,10 +94,10 @@ export const FormAddressInput = ({
   if (errors || !isValid) {
     modifier = "border-error";
   } else if (disabled) {
-    modifier = "border-disabled bg-base-300";
+    modifier = "border-disabled";
   } else if (readOnly) {
     modifier =
-      "!border-gray-300 !focus-within:border-gray-300 focus-within:outline !outline-gray-300 cursor-not-allowed";
+      "!border-gray-300 !focus-within:border-gray-300 focus-within:outline !outline-gray-300 cursor-not-allowed bg-transparent";
   }
 
   return (
@@ -122,11 +122,13 @@ export const FormAddressInput = ({
           name={registerKey}
           value={input}
           onChange={(ev) => setInput(ev.target.value)}
-          disabled={disabled}
-          readOnly={readOnly}
+          disabled={disabled || readOnly}
+          readOnly={readOnly || disabled}
           required={required}
           {...register(registerKey, {
             required,
+            readOnly,
+            disabled,
             ...registerOptions,
           })}
         />

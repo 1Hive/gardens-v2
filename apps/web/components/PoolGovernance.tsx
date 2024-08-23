@@ -63,7 +63,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
       {address && (
         <div className="mt-4 flex flex-col justify-between items-start">
           <div className="flex flex-1 gap-10">
-            <div className="flex flex-col items-start gap-4">
+            <div className="flex flex-col items-start gap-2">
               <div className="flex items-center gap-6">
                 <p className="subtitle2">Your stake in the community:</p>
                 <DisplayNumber
@@ -76,22 +76,19 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
                 <Badge status={memberActivatedStrategy ? 1 : 0} />
               </div>
               {showPoolGovernanceData && (
-                <div className="flex gap-6">
-                  <div className="flex flex-col items-start gap-1">
-                    <p className="subtitle2">Your governance weight:</p>
-                    <h2 className="text-primary-content">
-                      {memberPoolWeight.toFixed(2)} %
-                    </h2>
-                  </div>
-
-                  <InfoBox
-                    content={poolSystemDefinition[poolSystem]}
-                    infoBoxType="info"
-                    classNames="flex-1 w-full"
-                  />
+                <div className="flex items-start gap-6">
+                  <p className="subtitle2">Your governance weight:</p>
+                  <p className="subtitle2 text-primary-content">
+                    {memberPoolWeight.toFixed(2)} %
+                  </p>
                 </div>
               )}
             </div>
+            <InfoBox
+              content={poolSystemDefinition[poolSystem]}
+              infoBoxType="info"
+              classNames="flex-1 w-full"
+            />
           </div>
         </div>
       )}

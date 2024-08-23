@@ -253,6 +253,10 @@ export const ConvictionBarChart = ({
     },
     animation: true,
     barGap: "-100%",
+    showBackground: true,
+    backgroundStyle: {
+      color: "#D5D5D5",
+    },
     series: [
       {
         type: "bar",
@@ -261,11 +265,7 @@ export const ConvictionBarChart = ({
           color: "#A8E066",
           borderRadius: borderRadius,
         },
-        showBackground: true,
-        backgroundStyle: {
-          color: "#D5D5D5",
-          borderRadius: borderRadius,
-        },
+
         label: {
           show: !compact ?? false,
           position: "insideRight",
