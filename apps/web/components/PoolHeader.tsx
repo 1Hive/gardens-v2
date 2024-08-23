@@ -148,7 +148,10 @@ export default function PoolHeader({
   const filteredPoolConfig =
     PoolTypes[proposalType] === "signaling" ?
       poolConfig.filter(
-        (config) => !["Spending limit", "Min Threshold"].includes(config.label),
+        (config) =>
+          !["Spending limit", "Min Threshold", "Min conviction"].includes(
+            config.label,
+          ),
       )
     : poolConfig;
 
