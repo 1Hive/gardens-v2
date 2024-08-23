@@ -24,14 +24,15 @@ export default function Page({
     hash: strategyObj?.metadata,
   });
 
-  if (!strategyObj) {
-    return <div>{`Pool ${poolId} not found`}</div>;
+  const tokenGarden = data?.tokenGarden;
+
+  if (!tokenGarden || !metadata || !strategyObj) {
+    return <LoadingSpinner />;
   }
 
   const alloInfo = data?.allos[0];
   const proposalType = strategyObj.config?.proposalType as number;
   const poolAmount = strategyObj.poolAmount as number;
-  const tokenGarden = data.tokenGarden;
 
   const maxRatioDivPrecision =
     (Number(strategyObj.config?.maxRatio) / CV_SCALE_PRECISION) *
@@ -39,10 +40,6 @@ export default function Page({
 
   const spendingLimitPct = maxRatioDivPrecision * 100;
   const poolAmountSpendingLimit = poolAmount * maxRatioDivPrecision;
-
-  if (!tokenGarden || !metadata) {
-    return <LoadingSpinner />;
-  }
 
   return (
     <div className="page-layout">
