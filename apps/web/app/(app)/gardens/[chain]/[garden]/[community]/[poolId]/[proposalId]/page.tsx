@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
-import Markdown from "markdown-to-jsx";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
 import { useAccount, useToken } from "wagmi";
@@ -20,6 +19,7 @@ import {
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -180,21 +180,9 @@ export default function Page({
                 </p>
               </div>
             </div>
-            <Markdown
-              options={{
-                disableParsingRawHTML: true,
-                overrides: {
-                  h1: { props: { className: "text-2xl font-semibold my-3" } },
-                  h2: { props: { className: "text-xl font-semibold my-2" } },
-                  h3: { props: { className: "text-lg font-semibold my-1" } },
-                  h4: { props: { className: "text-base font-semibold" } },
-                  h5: { props: { className: "text-sm font-semibold" } },
-                  h6: { props: { className: "text-xs font-semibold" } },
-                },
-              }}
-            >
+            <MarkdownWrapper>
               {ipfsResult?.description ?? "No description found"}
-            </Markdown>
+            </MarkdownWrapper>
             <div className="flex justify-between">
               <div className="flex flex-col gap-2">
                 {!isSignalingType && (

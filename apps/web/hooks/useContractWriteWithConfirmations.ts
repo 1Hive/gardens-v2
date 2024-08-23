@@ -8,8 +8,10 @@ import {
   UseContractWriteConfig,
   useWaitForTransaction,
 } from "wagmi";
+import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
+import { logOnce } from "@/utils/log";
 
 export type ComputedStatus =
   | "loading"
@@ -41,21 +43,23 @@ export function useContractWriteWithConfirmations<
   },
 ) {
   const toastId = props.contractName + "_" + props.functionName;
-  const chainId = useChainId();
+  const chainIdFromWallet = useChainId();
+  const chainIdFromPath = useChainIdFromPath();
   let propsWithChainId = {
     ...props,
-    chainId: props.chainId ?? chainId,
+    chainId: props.chainId ?? chainIdFromPath ?? chainIdFromWallet,
   };
 
   function logError(error: any, variables: any, context: string) {
-    console.error(
+    logOnce(
+      "error",
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
       { error, variables, context },
     );
   }
 
   const txResult = useContractWrite(
-    props as UseContractWriteConfig<TAbi, TFunctionName, TMode>,
+    propsWithChainId as UseContractWriteConfig<TAbi, TFunctionName, TMode>,
   );
 
   propsWithChainId.onError = (

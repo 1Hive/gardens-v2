@@ -8,7 +8,6 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Dnum } from "dnum";
-import Markdown from "markdown-to-jsx";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
@@ -31,6 +30,7 @@ import {
   InfoWrapper,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -340,21 +340,7 @@ export default function Page({
         <h2 className="mb-4">Covenant</h2>
         {registryCommunity?.covenantIpfsHash ?
           covenant ?
-            <Markdown
-              options={{
-                disableParsingRawHTML: true,
-                overrides: {
-                  h1: { props: { className: "text-2xl font-semibold my-3" } },
-                  h2: { props: { className: "text-xl font-semibold my-2" } },
-                  h3: { props: { className: "text-lg font-semibold my-1" } },
-                  h4: { props: { className: "text-base font-semibold" } },
-                  h5: { props: { className: "text-sm font-semibold" } },
-                  h6: { props: { className: "text-xs font-semibold" } },
-                },
-              }}
-            >
-              {covenant}
-            </Markdown>
+            <MarkdownWrapper>{covenant}</MarkdownWrapper>
           : <LoadingSpinner />
         : <p className="italic">No covenant was submitted.</p>}
         <div className="mt-10 flex justify-center">
