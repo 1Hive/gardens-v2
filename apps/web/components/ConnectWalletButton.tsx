@@ -45,7 +45,6 @@ export function ConnectWallet() {
       {({
         account: accountAddress,
         chain,
-        openChainModal,
         openConnectModal,
         mounted,
       }) => {

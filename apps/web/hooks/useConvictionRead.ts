@@ -1,5 +1,5 @@
 import { zeroAddress } from "viem";
-import { Address, useBlockNumber, useContractRead } from "wagmi";
+import { Address, useContractRead } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
@@ -37,9 +37,11 @@ export const useConvictionRead = ({
   tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined;
   enabled?: boolean;
 }) => {
+  const chainIdFromPath = useChainIdFromPath();
   const cvStrategyContract = {
     address: (proposalData?.strategy.id ?? zeroAddress) as Address,
     abi: cvStrategyABI,
+    chainId: chainIdFromPath,
     enabled: !!proposalData,
   };
 
