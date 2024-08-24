@@ -330,6 +330,7 @@ export type CVProposal_orderBy =
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
+  | 'strategy__token'
   | 'beneficiary'
   | 'requestedAmount'
   | 'requestedToken'
@@ -355,6 +356,7 @@ export type CVStrategy = {
   maxCVSupply: Scalars['BigInt']['output'];
   totalEffectiveActivePoints: Scalars['BigInt']['output'];
   isEnabled: Scalars['Boolean']['output'];
+  token: Scalars['String']['output'];
 };
 
 
@@ -556,6 +558,7 @@ export type CVStrategyConfig_orderBy =
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
+  | 'strategy__token'
   | 'D'
   | 'decay'
   | 'maxRatio'
@@ -686,6 +689,26 @@ export type CVStrategy_filter = {
   isEnabled_not?: InputMaybe<Scalars['Boolean']['input']>;
   isEnabled_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
   isEnabled_not_in?: InputMaybe<Array<Scalars['Boolean']['input']>>;
+  token?: InputMaybe<Scalars['String']['input']>;
+  token_not?: InputMaybe<Scalars['String']['input']>;
+  token_gt?: InputMaybe<Scalars['String']['input']>;
+  token_lt?: InputMaybe<Scalars['String']['input']>;
+  token_gte?: InputMaybe<Scalars['String']['input']>;
+  token_lte?: InputMaybe<Scalars['String']['input']>;
+  token_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  token_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  token_contains?: InputMaybe<Scalars['String']['input']>;
+  token_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  token_not_contains?: InputMaybe<Scalars['String']['input']>;
+  token_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  token_starts_with?: InputMaybe<Scalars['String']['input']>;
+  token_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  token_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  token_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  token_ends_with?: InputMaybe<Scalars['String']['input']>;
+  token_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  token_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  token_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
@@ -732,7 +755,8 @@ export type CVStrategy_orderBy =
   | 'memberActive'
   | 'maxCVSupply'
   | 'totalEffectiveActivePoints'
-  | 'isEnabled';
+  | 'isEnabled'
+  | 'token';
 
 export type Member = {
   id: Scalars['ID']['output'];
@@ -972,6 +996,7 @@ export type MemberStrategy_orderBy =
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
+  | 'strategy__token'
   | 'totalStakedPoints'
   | 'activatedPoints';
 
@@ -1158,6 +1183,7 @@ export type PassportStrategy_orderBy =
   | 'strategy__maxCVSupply'
   | 'strategy__totalEffectiveActivePoints'
   | 'strategy__isEnabled'
+  | 'strategy__token'
   | 'threshold'
   | 'councilSafe'
   | 'active';

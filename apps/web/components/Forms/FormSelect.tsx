@@ -36,7 +36,7 @@ export function FormSelect({
         : label}
       </label>
       <select
-        className={`select select-info w-full max-w-md ${readOnly ? "!border-gray-300 focus:outline !outline-gray-300 !pointer-events-none bg-none	" : ""}`}
+        className={`select select-info w-full max-w-md ${readOnly && "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"}`}
         id={registerKey}
         {...register(registerKey, {
           required,

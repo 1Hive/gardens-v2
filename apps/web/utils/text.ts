@@ -4,3 +4,5 @@ export function capitalize(str: string): string {
   }
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
+
+export const ethAddressRegEx = /^0x[a-fA-F0-9]{40}$/;
