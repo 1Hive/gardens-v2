@@ -1,6 +1,7 @@
 "use client";
 
 import { Hashicon } from "@emeraldpay/hashicon-react";
+import { FetchTokenResult } from "@wagmi/core";
 import { usePathname } from "next/navigation";
 import { formatUnits } from "viem";
 import { Allo } from "#/subgraph/.graphclient";
@@ -12,7 +13,7 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
-import { LightCVStrategy, PoolTypes } from "@/types";
+import { PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
 
 type ProposalCardProps = {
@@ -20,12 +21,12 @@ type ProposalCardProps = {
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   index: number;
+  poolToken: FetchTokenResult;
   isAllocationView: boolean;
   memberActivatedPoints: number;
   memberPoolWeight: number;
   executeDisabled: boolean;
   tooltipMessage: string;
-  strategy: LightCVStrategy;
   tokenDecimals: number;
   alloInfo: Allo;
   tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
@@ -38,10 +39,10 @@ export function ProposalCard({
   inputData,
   stakedFilter,
   index,
+  poolToken,
   isAllocationView,
   memberActivatedPoints,
   memberPoolWeight,
-  strategy,
   tokenData,
   inputHandler,
 }: ProposalCardProps) {
@@ -194,8 +195,8 @@ export function ProposalCard({
                     Requested amount:{" "}
                   </p>
                   <DisplayNumber
-                    number={formatUnits(requestedAmount, 18)}
-                    tokenSymbol={strategy.registryCommunity.garden.symbol}
+                    number={formatUnits(requestedAmount, poolToken.decimals)}
+                    tokenSymbol={poolToken.symbol}
                     compact={true}
                     className="text-neutral-soft-content text-xs"
                   />

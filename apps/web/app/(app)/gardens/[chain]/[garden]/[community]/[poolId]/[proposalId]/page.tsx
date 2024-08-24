@@ -4,6 +4,7 @@ import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
+import { useToken } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
@@ -68,24 +69,27 @@ export default function Page({
     proposalData?.proposalNumber ?
       BigInt(proposalData.proposalNumber)
     : undefined;
+  const poolTokenAddr = proposalData?.strategy.token as Address;
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
-
+  const { data: poolToken } = useToken({
+    address: poolTokenAddr,
+    enabled: !!poolTokenAddr,
+  });
   const { data: ipfsResult } = useProposalMetadataIpfsFetch({ hash: metadata });
 
   const {
     currentConvictionPct,
     thresholdPct,
     totalSupportPct,
-    updateConvictionLast,
+    updatedConviction,
   } = useConvictionRead({
     proposalData,
     tokenData: data?.tokenGarden,
     enabled: proposalData?.proposalNumber != null,
   });
 
-  const tokenSymbol = data?.tokenGarden?.symbol;
   const proposalType = proposalData?.strategy.config?.proposalType;
   const requestedAmount = proposalData?.requestedAmount;
   const beneficiary = proposalData?.beneficiary as Address | undefined;
@@ -136,7 +140,7 @@ export default function Page({
     !proposalData ||
     !ipfsResult ||
     proposalIdNumber == null ||
-    updateConvictionLast == null
+    updatedConviction == null
   ) {
     return (
       <div className="mt-96">
@@ -185,7 +189,7 @@ export default function Page({
                     >
                       <DisplayNumber
                         number={formatUnits(requestedAmount, 18)}
-                        tokenSymbol={tokenSymbol}
+                        tokenSymbol={poolToken?.symbol}
                         compact={true}
                         className="font-bold text-black"
                       />

@@ -329,6 +329,7 @@ enum CVProposal_orderBy {
   strategy__maxCVSupply
   strategy__totalEffectiveActivePoints
   strategy__isEnabled
+  strategy__token
   beneficiary
   requestedAmount
   requestedToken
@@ -355,6 +356,7 @@ type CVStrategy {
   maxCVSupply: BigInt!
   totalEffectiveActivePoints: BigInt!
   isEnabled: Boolean!
+  token: String!
 }
 
 type CVStrategyConfig {
@@ -538,6 +540,7 @@ enum CVStrategyConfig_orderBy {
   strategy__maxCVSupply
   strategy__totalEffectiveActivePoints
   strategy__isEnabled
+  strategy__token
   D
   decay
   maxRatio
@@ -669,6 +672,26 @@ input CVStrategy_filter {
   isEnabled_not: Boolean
   isEnabled_in: [Boolean!]
   isEnabled_not_in: [Boolean!]
+  token: String
+  token_not: String
+  token_gt: String
+  token_lt: String
+  token_gte: String
+  token_lte: String
+  token_in: [String!]
+  token_not_in: [String!]
+  token_contains: String
+  token_contains_nocase: String
+  token_not_contains: String
+  token_not_contains_nocase: String
+  token_starts_with: String
+  token_starts_with_nocase: String
+  token_not_starts_with: String
+  token_not_starts_with_nocase: String
+  token_ends_with: String
+  token_ends_with_nocase: String
+  token_not_ends_with: String
+  token_not_ends_with_nocase: String
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [CVStrategy_filter]
@@ -716,6 +739,7 @@ enum CVStrategy_orderBy {
   maxCVSupply
   totalEffectiveActivePoints
   isEnabled
+  token
 }
 
 """
@@ -945,6 +969,7 @@ enum MemberStrategy_orderBy {
   strategy__maxCVSupply
   strategy__totalEffectiveActivePoints
   strategy__isEnabled
+  strategy__token
   totalStakedPoints
   activatedPoints
 }
@@ -1117,6 +1142,7 @@ enum PassportStrategy_orderBy {
   strategy__maxCVSupply
   strategy__totalEffectiveActivePoints
   strategy__isEnabled
+  strategy__token
   threshold
   councilSafe
   active
