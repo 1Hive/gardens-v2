@@ -74,8 +74,10 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(
                 RegistryFactoryV0_0.initialize.selector,
+                address(factoryOwner),
                 address(protocolFeeReceiver),
                 address(new RegistryCommunityV0_0()),
+                address(new CVStrategyV0_0()),
                 address(new CollateralVault())
             )
         );
@@ -85,7 +87,6 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         vm.stopPrank();
 
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -186,7 +187,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         assertEq(uint256(status), uint256(SafeArbitrator.DisputeStatus.Solved));
     }
 
-    function testArbitrationCost() public {
+    function testArbitrationCost() public view {
         uint256 cost = safeArbitrator.arbitrationCost("");
         assertEq(cost, ARBITRATION_FEE);
     }
