@@ -85,8 +85,8 @@ export const chainConfigMap: {
     subgraphUrl: process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP!,
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-    arbitrator: "0xc5b0c764cf8ab274cb1505a6532f0b16d0660463",
-    passportScorer: "0xc137c30ac0f21ce75bb484e88fb8701024f82d25",
+    arbitrator: "0xe32566076534973ff78b512ec6a321a58c2b735c",
+    passportScorer: "0xff53a163e43eccc00d8fde7aca24aa9fa4da7356",
     isTestnet: true,
   },
   11155111: {

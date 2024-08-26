@@ -215,7 +215,7 @@ export function ProposalCard({
         proposalCardContent
       : <Card
           href={`${pathname}/${id}`}
-          className={`py-4 ${isNewProposal ? "!border-accent !border-2" : ""}`}
+          className={`py-4 ${isNewProposal ? "shadow-2xl" : ""}`}
         >
           {proposalCardContent}
         </Card>

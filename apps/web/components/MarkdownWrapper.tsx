@@ -12,6 +12,7 @@ const MarkdownWrapper = ({ children, optionsOverride }: Props) => {
       options={{
         disableParsingRawHTML: true,
         overrides: {
+          hr: { props: { className: "my-4" } },
           h1: { props: { className: "text-xl font-semibold my-3" } },
           h2: { props: { className: "text-xl font-semibold my-2" } },
           h3: { props: { className: "text-lg font-semibold my-1" } },

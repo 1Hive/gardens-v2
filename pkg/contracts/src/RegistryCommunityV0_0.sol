@@ -241,6 +241,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         isKickEnabled = params._isKickEnabled;
         communityName = params._communityName;
         covenantIpfsHash = params.covenantIpfsHash;
+        
         registryFactory = params._registryFactory;
         feeReceiver = params._feeReceiver;
         councilSafe = ISafe(params._councilSafe);

@@ -9,6 +9,10 @@ export const useCollectQueryParams = () => {
   const [queryParams, setQueryParams] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (Object.keys(queryParams).length) {
+      return; // already collected
+    }
+
     const temp = Array.from(searchParams.entries()).reduce<
       Record<string, string>
     >((acc, [key, value]) => {
