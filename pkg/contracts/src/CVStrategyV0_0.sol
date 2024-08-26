@@ -638,6 +638,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         // surpressStateMutabilityWarning
         // PayoutSummary[] memory payouts = new PayoutSummary[](0);
         // return payouts;
+        revert NotImplemented();
     }
 
     function _getPayout(address _recipientId, bytes memory _data)
