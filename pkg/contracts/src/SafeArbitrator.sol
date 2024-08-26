@@ -12,6 +12,10 @@ import {IArbitrator} from "./interfaces/IArbitrator.sol";
 /// @title Safe Arbitrator
 /// @dev This is an arbitrator middleware that will allow a safe to decide on the result of disputes.
 contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable {
+    event ArbitrationFeeUpdated(uint256 _newArbitrationFee);
+    event SafeRegistered(address indexed _arbitrable, address _safe);
+    event SafeArbitratorInitialized(uint256 _arbitrationFee);
+
     enum DisputeStatus {
         Waiting, // The dispute is waiting for the ruling or not created.
         Solved // The dispute is resolved.
@@ -33,6 +37,9 @@ contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable {
     mapping(address arbitrable => address safe) public arbitrableTribunalSafe; //Map arbitrable address to tribunal safe address
 
     error OnlySafe(address sender, address safe);
+    error NotEnoughArbitrationFees();
+    error InvalidRuling();
+    error DisputeAlreadySolved();
 
     modifier onlySafe(address _arbitrable) {
         if (msg.sender == arbitrableTribunalSafe[_arbitrable]) {
@@ -45,16 +52,19 @@ contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable {
     function initialize(uint256 _arbitrationFee) public initializer {
         __Ownable_init();
         arbitrationFee = _arbitrationFee;
+        emit SafeArbitratorInitialized(_arbitrationFee);
     }
 
     /// @dev Set the arbitration fee. Only callable by the owner.
     /// @param _arbitrationFee Amount to be paid for arbitration.
     function setArbitrationFee(uint256 _arbitrationFee) external onlyOwner {
         arbitrationFee = _arbitrationFee;
+        emit ArbitrationFeeUpdated(_arbitrationFee);
     }
 
     function registerSafe(address _safe) external {
         arbitrableTribunalSafe[msg.sender] = _safe;
+        emit SafeRegistered(msg.sender, _safe);
     }
 
     /// @inheritdoc IArbitrator
@@ -64,7 +74,9 @@ contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable {
         override
         returns (uint256 disputeID)
     {
-        require(msg.value >= arbitrationCost(_extraData), "Arbitration fees: not enough.");
+        if (msg.value < arbitrationCost(_extraData)) {
+            revert NotEnoughArbitrationFees();
+        }
         disputeID = disputes.length;
         disputes.push(
             DisputeStruct({
@@ -96,8 +108,13 @@ contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable {
     /// @param _arbitrable Address of the arbitrable that the safe rules for".
     function executeRuling(uint256 _disputeID, uint256 _ruling, address _arbitrable) external onlySafe(_arbitrable) {
         DisputeStruct storage dispute = disputes[_disputeID];
-        require(_ruling < dispute.choices, "Invalid ruling.");
-        require(dispute.status != DisputeStatus.Solved, "The dispute must not be solved.");
+
+        if (_ruling > dispute.choices) {
+            revert InvalidRuling();
+        }
+        if (dispute.status == DisputeStatus.Solved) {
+            revert DisputeAlreadySolved();
+        }
 
         dispute.ruling = _ruling;
         dispute.status = DisputeStatus.Solved;

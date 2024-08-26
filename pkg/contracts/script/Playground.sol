@@ -57,7 +57,6 @@ contract Playground is Script, CVStrategyHelpersV0_0, SafeSetup {
         console.log("Default ruling: ", defaultRuling);
         console.log("Default ruling timeout: ", defaultRulingTimeout);
 
-
         // vm.startBroadcast(pool_admin());
         // CVStrategyV0_0 strategy = CVStrategyV0_0(payable(CV_STRATEGY_PROXY));
         // Safe councilSafeDeploy = Safe(COUNCIL_SAFE);
