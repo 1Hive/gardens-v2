@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
+import { Address } from "viem";
 import { useToken } from "wagmi";
 import {
   getAlloQuery,
   getPoolDataDocument,
   getPoolDataQuery,
 } from "#/subgraph/.graphclient";
-import { Address } from "#/subgraph/src/scripts/last-addr";
 import { PoolMetrics, Proposals } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";

@@ -125,7 +125,7 @@ library StrategyStruct {
     }
 }
 
-contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
+contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -248,9 +248,8 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
-    function init(address _allo, address _collateralVaultTemplate) external virtual initializer {
-        super.init(_allo, "CVStrategy");
-        __Ownable_init();
+    function init(address _allo, address _collateralVaultTemplate, address owner) external virtual initializer {
+        super.init(_allo, "CVStrategy", owner);
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
@@ -532,11 +531,11 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     // [[[proposalId, delta],[proposalId, delta]]]
     // layout.txs -> // console.log(data)
     // data = bytes
-    function supportProposal(StrategyStruct.ProposalSupport[] memory) public pure {
-        // // surpressStateMutabilityWarning++;
-        revert NotImplemented();
-        // allo().allocate(poolId, abi.encode(proposalId));
-    }
+    // function supportProposal(StrategyStruct.ProposalSupport[] memory) public pure {
+    //     // // surpressStateMutabilityWarning++;
+    //     revert NotImplemented();
+    //     // allo().allocate(poolId, abi.encode(proposalId));
+    // }
 
     // only called via allo.sol by users to allocate to a recipient
     // this will update some data in this contract to store votes, etc.
@@ -596,7 +595,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
             poolAmount -= proposal.requestedAmount; // CEI
 
-            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount); //should revert
+            _transferAmount(pool.token, proposal.beneficiary, proposal.requestedAmount);
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
@@ -630,13 +629,12 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
     // since there is no need for Pending or Rejected
     function _getRecipientStatus(address _recipientId) internal pure override returns (Status) {
         // surpressStateMutabilityWarning;
-        return _recipientId == address(0) ? Status.Rejected : Status.Accepted;
+        // return _recipientId == address(0) ? Status.Rejected : Status.Accepted;
     }
 
     /// @return Input the values you would send to distribute(), get the amounts each recipient in the array would receive
     function getPayouts(address[] memory, bytes[] memory) external pure override returns (PayoutSummary[] memory) {
-        // surpressStateMutabilityWarning;
-        revert NotImplemented();
+        // surpressStateMutabilityWarning
         // PayoutSummary[] memory payouts = new PayoutSummary[](0);
         // return payouts;
     }
@@ -648,8 +646,8 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         returns (PayoutSummary memory)
     {
         // surpressStateMutabilityWarning;
-        _data;
-        return PayoutSummary(_recipientId, 0);
+        // _data;
+        // return PayoutSummary(_recipientId, 0);
     }
 
     function _afterIncreasePoolAmount(uint256 _amount) internal virtual override {
@@ -660,7 +658,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
 
     function _isValidAllocator(address _allocator) internal pure override returns (bool) {
         // surpressStateMutabilityWarning;
-        return _allocator == address(0) ? false : true;
     }
 
     function setPoolActive(bool _active) external {
@@ -1024,6 +1021,7 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         }
         // calculateConviction and store it
         conviction = calculateConviction(
+            // TODO: Goss -> we should do this math inside the func so UI does not need to fetch latest block
             blockNumber - _proposal.blockLast, // we assert it doesn't overflow above
             _proposal.convictionLast,
             _oldStaked
@@ -1081,10 +1079,11 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         return ((amount * D) / (D - cvParams.decay));
     }
 
-    function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
-        registryCommunity = RegistryCommunityV0_0(_registryCommunity);
-        emit RegistryUpdated(_registryCommunity);
-    }
+    //If we want to keep, we need a func to transfer power mapping (and more) in Registry contract -Kev
+    // function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
+    //     registryCommunity = RegistryCommunityV0_0(_registryCommunity);
+    //     emit RegistryUpdated(_registryCommunity);
+    // }
 
     function setSybilScorer(address _sybilScorer) external {
         onlyCouncilSafe();
@@ -1222,8 +1221,6 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         proposal.lastDisputeCompletion = block.timestamp;
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
     }
-
-    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     uint256[50] private __gap;
 }

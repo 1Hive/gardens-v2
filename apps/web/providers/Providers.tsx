@@ -26,7 +26,6 @@ import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
 import ThemeProvider from "./ThemeProvider";
 import { UrqlProvider } from "./UrqlProvider";
-import { chains } from "@/configs/chainServer";
 import { PubSubProvider } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 
@@ -42,12 +41,15 @@ const Providers = ({ children }: Props) => {
   const chain = useChainFromPath() as Chain;
 
   const createCustomConfig = () => {
-    const publicClient = configureChains(chain ? [mainnet, chain] : [mainnet], [
-      publicProvider(),
-      alchemyProvider({
-        apiKey: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET ?? "",
-      }),
-    ]).publicClient;
+    const { publicClient, chains } = configureChains(
+      chain ? [chain, mainnet] : [mainnet],
+      [
+        publicProvider(),
+        alchemyProvider({
+          apiKey: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET ?? "",
+        }),
+      ],
+    );
     const connectors = connectorsForWallets([
       {
         groupName: "Recommended",

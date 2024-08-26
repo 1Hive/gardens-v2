@@ -4,7 +4,7 @@ import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
-import { useToken } from "wagmi";
+import { useAccount, useToken } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
@@ -19,6 +19,7 @@ import {
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -50,6 +51,7 @@ export default function Page({
     garden: string;
   };
 }) {
+  const { isDisconnected } = useAccount();
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -178,7 +180,9 @@ export default function Page({
                 </p>
               </div>
             </div>
-            <p>{ipfsResult?.description}</p>
+            <MarkdownWrapper>
+              {ipfsResult?.description ?? "No description found"}
+            </MarkdownWrapper>
             <div className="flex justify-between">
               <div className="flex flex-col gap-2">
                 {!isSignalingType && (
@@ -235,8 +239,15 @@ export default function Page({
                       ],
                     })
                   }
-                  disabled={currentConvictionPct < thresholdPct}
-                  tooltip="Proposal not executable"
+                  disabled={
+                    currentConvictionPct < thresholdPct || isDisconnected
+                  }
+                  tooltip={
+                    isDisconnected ? "Connect wallet"
+                    : currentConvictionPct < thresholdPct ?
+                      "Proposal not executable"
+                    : undefined
+                  }
                 >
                   Execute
                 </Button>

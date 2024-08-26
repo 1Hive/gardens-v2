@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
+import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
+
 // Interfaces
 import {IStrategy, IAllo} from "allo-v2-contracts/core/interfaces/IStrategy.sol";
 
@@ -8,18 +10,14 @@ import {IStrategy, IAllo} from "allo-v2-contracts/core/interfaces/IStrategy.sol"
 // import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
 import {Transfer} from "allo-v2-contracts/core/libraries/Transfer.sol";
 import {Errors} from "allo-v2-contracts/core/libraries/Errors.sol";
-
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-
-// import "forge-std/console.sol";
-
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
 /// @title BaseStrategy Contract
 /// @author @thelostone-mc <aditya@gitcoin.co>, @0xKurt <kurt@gitcoin.co>, @codenamejason <jason@gitcoin.co>, @0xZakk <zakk@gitcoin.co>, @nfrgosselin <nate@gitcoin.co>
 /// @notice This contract is the base contract for all strategies
 /// @dev This contract is implemented by all strategies.
 
-abstract contract BaseStrategyUpgradeable is UUPSUpgradeable, IStrategy, Transfer, Errors {
+abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Transfer, Errors {
     /// ==========================
     /// === Storage Variables ====
     /// ==========================
@@ -39,7 +37,8 @@ abstract contract BaseStrategyUpgradeable is UUPSUpgradeable, IStrategy, Transfe
     // / @param _name Name of the strategy
     // constructor( {}
 
-    function init(address _allo, string memory _name) public virtual {
+    function init(address _allo, string memory _name, address owner) public virtual onlyInitializing {
+        super.initialize(owner);
         allo = IAllo(_allo);
         strategyId = keccak256(abi.encode(_name));
     }

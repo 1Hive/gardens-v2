@@ -78,8 +78,10 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(
                 RegistryFactoryV0_0.initialize.selector,
+                pool_admin(),
                 address(protocolFeeReceiver),
                 address(new RegistryCommunityV0_0()),
+                address(new CVStrategyV0_0()),
                 address(new CollateralVault())
             )
         );
@@ -95,7 +97,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         console2.log("Safe Arbitrator Addr: %s", address(safeArbitrator));
 
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(new CVStrategyV0_0());
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
@@ -285,7 +286,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         RegistryCommunityV0_0.InitializeParams memory params;
 
         params._allo = address(allo);
-        params._strategyTemplate = address(new CVStrategyV0_0());
 
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -302,7 +302,9 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         token.mint(address(pool_admin()), 10_000 ether);
         ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()),
-            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()))
+            abi.encodeWithSelector(
+                CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()), pool_admin()
+            )
         );
         CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(strategy1Proxy));
 
@@ -314,7 +316,9 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
 
         ERC1967Proxy strategy2Proxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()),
-            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()))
+            abi.encodeWithSelector(
+                CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()), pool_admin()
+            )
         );
 
         CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(strategy2Proxy));

@@ -4,7 +4,7 @@ import { isEqual } from "lodash-es";
 import { toast } from "react-toastify";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useIsMounted } from "./useIsMounted";
-import { getConfigByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/configs/chains";
 import {
   ChangeEventScope,
   SubscriptionId,
@@ -114,6 +114,13 @@ export function useSubgraphQuery<
   }, [connected]);
 
   const fetch = async () => {
+    const withLowercaseAddresses: AnyVariables = {};
+    Object.entries({ ...variables }).forEach(([key, value]) => {
+      withLowercaseAddresses[key] =
+        typeof value === "string" && value.startsWith("0x") ?
+          value?.toLowerCase()
+        : value;
+    });
     const res = await urqlClient.query<Data>(query, variables, {
       ...context,
       url: config?.subgraphUrl,

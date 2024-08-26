@@ -11,7 +11,7 @@ import { Dnum } from "dnum";
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useToken } from "wagmi";
 import {
   getCommunityDocument,
   getCommunityQuery,
@@ -30,8 +30,9 @@ import {
   InfoWrapper,
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
-import { isProd } from "@/constants/contracts";
+import { isProd } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
@@ -52,7 +53,10 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
-
+  const { data: tokenGarden } = useToken({
+    address: tokenAddr as Address,
+    chainId: +chain,
+  });
   const {
     data: result,
     error,
@@ -67,7 +71,6 @@ export default function Page({
   });
 
   const registryCommunity = result?.registryCommunity;
-  const tokenGarden = result?.tokenGarden;
 
   let {
     communityName,
@@ -337,7 +340,7 @@ export default function Page({
         <h2 className="mb-4">Covenant</h2>
         {registryCommunity?.covenantIpfsHash ?
           covenant ?
-            <p>{covenant}</p>
+            <MarkdownWrapper>{covenant}</MarkdownWrapper>
           : <LoadingSpinner />
         : <p className="italic">No covenant was submitted.</p>}
         <div className="mt-10 flex justify-center">

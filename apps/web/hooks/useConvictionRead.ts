@@ -1,11 +1,12 @@
 import { zeroAddress } from "viem";
-import { Address, useBlockNumber, useContractRead } from "wagmi";
+import { Address, useContractRead } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
   Maybe,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { useChainIdFromPath } from "./useChainIdFromPath";
 import { cvStrategyABI } from "@/src/generated";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt } from "@/utils/numbers";
@@ -36,9 +37,11 @@ export const useConvictionRead = ({
   tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined;
   enabled?: boolean;
 }) => {
+  const chainIdFromPath = useChainIdFromPath();
   const cvStrategyContract = {
     address: (proposalData?.strategy.id ?? zeroAddress) as Address,
     abi: cvStrategyABI,
+    chainId: chainIdFromPath,
     enabled: !!proposalData,
   };
 

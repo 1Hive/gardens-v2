@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Abi } from "viem";
+import { Abi, Address } from "viem";
 import { useAccount } from "wagmi";
 import { CVStrategy } from "#/subgraph/.graphclient";
-import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useViemClient } from "./useViemClient";
 import { cvStrategyABI } from "@/src/generated";
 import { SCALE_PRECISION } from "@/utils/numbers";

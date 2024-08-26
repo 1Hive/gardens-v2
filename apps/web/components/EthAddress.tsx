@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-import { Addreth } from "addreth";
+import { Addreth } from "addreth/no-wagmi";
 import { Address } from "viem";
 import { LoadingSpinner } from "./LoadingSpinner";
-import { chainDataMap } from "@/configs/chainServer";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 
 type EthAddressProps = {
@@ -20,7 +19,7 @@ type EthAddressProps = {
 export const EthAddress = ({
   address,
   actions = "all",
-  icon = "ens",
+  icon = "identicon",
 }: EthAddressProps) => {
   const chain = useChainFromPath();
   // const theme: ThemeDeclaration = {
@@ -52,10 +51,10 @@ export const EthAddress = ({
         actions={actions}
         icon={icon}
         address={address as Address}
-        explorer={(addr) => ({
-          name: chainDataMap[chain.id!].name,
-          url: `${chainDataMap[chain.id!].explorer}/address/${addr}`,
-          accountUrl: `${chainDataMap[chain.id!].explorer}/address/${addr}`,
+        explorer={(addr: string) => ({
+          name: chain.name,
+          url: `${chain.explorer}/address/${addr}`,
+          accountUrl: `${chain.explorer}/address/${addr}`,
         })}
       />
     : <LoadingSpinner />;

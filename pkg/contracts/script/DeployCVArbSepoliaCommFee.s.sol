@@ -69,7 +69,6 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
 
         RegistryCommunityV0_0.InitializeParams memory params;
 
-        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;

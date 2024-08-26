@@ -41,11 +41,10 @@ export function PoolCard({ pool, tokenGarden }: Props) {
 
   const isNewPool =
     searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId;
-
   return (
     <Card
       href={`${pathname}/${poolId}`}
-      className={isNewPool ? "!border-accent !border-2" : ""}
+      className={isNewPool ? "shadow-2xl" : ""}
     >
       <header className="mb-4 flex w-full items-center justify-between">
         <h4>Pool #{poolId}</h4>

@@ -83,7 +83,7 @@ export function FormInput({
           />
         : <textarea
             placeholder={placeholder}
-            className={`${className} textarea textarea-info line-clamp-5 w-full ${errors[registerKey] ? "input-error" : "input-info"}`}
+            className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 ${errors[registerKey] ? "input-error" : "input-info"}`}
             required={required}
             rows={rows}
             disabled={disabled || readOnly}

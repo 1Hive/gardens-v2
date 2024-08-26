@@ -5,7 +5,6 @@ import { Address } from "viem";
 import {
   getPoolCreationDataDocument,
   getPoolCreationDataQuery,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { PoolForm } from "@/components/Forms/PoolForm";
 import { LoadingSpinner } from "@/components/LoadingSpinner";

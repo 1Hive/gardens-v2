@@ -89,7 +89,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         ERC1967Proxy strategyProxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()),
-            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()))
+            abi.encodeWithSelector(
+                CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()), pool_admin()
+            )
         );
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
@@ -112,8 +114,10 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(
                 RegistryFactoryV0_0.initialize.selector,
+                gardenOwner,
                 address(protocolFeeReceiver),
                 address(new RegistryCommunityV0_0()),
+                address(new CVStrategyV0_0()),
                 address(new CollateralVault())
             )
         );
@@ -126,7 +130,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         vm.stopPrank();
 
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -147,7 +150,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         Upgrades.upgradeProxy(
             address(_registryFactory()),
             "RegistryFactoryV0_1.sol",
-            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
+            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, gardenOwner)
         );
         assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
         vm.stopPrank();
@@ -370,6 +373,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
+        assertEq(strategy.getMaxAmount(), 200 * DECIMALS);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -901,7 +905,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         vm.startPrank(pool_admin());
         StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        uint256 poolId = createPool(
+        createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
@@ -951,7 +955,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
     function test_revert_initialize_zeroStake() public {
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = 0;

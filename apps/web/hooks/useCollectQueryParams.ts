@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { logOnce } from "@/utils/log";
 
 export const useCollectQueryParams = () => {
   const router = useRouter();
@@ -8,6 +9,10 @@ export const useCollectQueryParams = () => {
   const [queryParams, setQueryParams] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (Object.keys(queryParams).length) {
+      return; // already collected
+    }
+
     const temp = Array.from(searchParams.entries()).reduce<
       Record<string, string>
     >((acc, [key, value]) => {
@@ -16,6 +21,7 @@ export const useCollectQueryParams = () => {
     }, {});
     setQueryParams(temp);
     router.replace(path, { search: "" });
+    logOnce("debug", "Collected query params: ", temp);
   }, []);
 
   return queryParams;

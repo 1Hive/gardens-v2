@@ -18,10 +18,11 @@ import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
 import PoolEditForm from "./Forms/PoolEditForm";
+import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
-import { chainDataMap } from "@/configs/chainServer";
+import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
@@ -91,7 +92,7 @@ export default function PoolHeader({
   const { address } = useAccount();
   const { publish } = usePubSubContext();
 
-  const blockTime = chainDataMap[chainId].blockTime;
+  const blockTime = chainConfigMap[chainId].blockTime;
   const isCouncilSafe =
     address?.toLowerCase() ===
     strategy.registryCommunity.councilSafe?.toLowerCase();
@@ -260,7 +261,9 @@ export default function PoolHeader({
           />
         </Modal>
       </header>
-      <p>{ipfsResult?.description}</p>
+      <MarkdownWrapper>
+        {ipfsResult?.description ?? "No description found"}
+      </MarkdownWrapper>
       <div className="mb-10 mt-8 flex items-start gap-24">
         <div className="flex flex-col gap-2 max-w-fit">
           <Statistic label="pool type">

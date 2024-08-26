@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Address, useContractRead } from "wagmi";
+import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "./useContractWriteWithConfirmations";
 import { TransactionProps } from "@/components/TransactionModal";
 import { erc20ABI } from "@/src/generated";
@@ -17,6 +18,7 @@ export function useHandleAllowance(
   allowanceTxProps: TransactionProps;
   handleAllowance: () => void;
 } {
+  const chainId = useChainIdFromPath();
   const [allowanceTxProps, setAllowanceTxProps] = useState<TransactionProps>({
     contractName: `${tokenSymbol} expenditure approval`,
     message: "",
@@ -24,6 +26,7 @@ export function useHandleAllowance(
   });
 
   const { refetch: refetchAllowance } = useContractRead({
+    chainId,
     address: tokenAddr,
     abi: abiWithErrors(erc20ABI),
     args: [accountAddr as Address, spenderAddr],

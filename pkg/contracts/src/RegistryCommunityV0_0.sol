@@ -6,7 +6,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
-import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from
     "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {AccessControlUpgradeable} from
@@ -19,17 +18,11 @@ import {FAllo} from "./interfaces/FAllo.sol";
 import {ISafe} from "./interfaces/ISafe.sol";
 import {IRegistryFactory} from "./IRegistryFactory.sol";
 import {CVStrategyV0_0, StrategyStruct, IPointStrategy} from "./CVStrategyV0_0.sol";
-
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
-
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
 
-contract RegistryCommunityV0_0 is
-    OwnableUpgradeable,
-    UUPSUpgradeable,
-    ReentrancyGuardUpgradeable,
-    AccessControlUpgradeable
-{
+contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
     /*|--------------------------------------------|*/
@@ -91,7 +84,6 @@ contract RegistryCommunityV0_0 is
         string _communityName;
         bool _isKickEnabled;
         string covenantIpfsHash;
-        address _strategyTemplate; // Can be altered to be scam strategy, out of scope for now
     }
 
     using ERC165Checker for address;
@@ -219,11 +211,13 @@ contract RegistryCommunityV0_0 is
         address[] strategies;
     }
 
-    function initialize(RegistryCommunityV0_0.InitializeParams memory params, address _collateralVaultTemplate)
-        public
-        initializer
-    {
-        __Ownable_init();
+    function initialize(
+        RegistryCommunityV0_0.InitializeParams memory params,
+        address _strategyTemplate,
+        address _collateralVaultTemplate,
+        address owner
+    ) public initializer {
+        super.initialize(owner);
         __ReentrancyGuard_init();
         __AccessControl_init();
 
@@ -233,7 +227,6 @@ contract RegistryCommunityV0_0 is
         _revertZeroAddress(params._councilSafe);
         _revertZeroAddress(params._allo);
         _revertZeroAddress(params._registryFactory);
-        _revertZeroAddress(params._strategyTemplate);
 
         if (params._communityFee != 0) {
             _revertZeroAddress(params._feeReceiver);
@@ -248,10 +241,10 @@ contract RegistryCommunityV0_0 is
         isKickEnabled = params._isKickEnabled;
         communityName = params._communityName;
         covenantIpfsHash = params.covenantIpfsHash;
+        
         registryFactory = params._registryFactory;
         feeReceiver = params._feeReceiver;
         councilSafe = ISafe(params._councilSafe);
-        strategyTemplate = params._strategyTemplate;
 
         _grantRole(COUNCIL_MEMBER, params._councilSafe);
 
@@ -279,6 +272,7 @@ contract RegistryCommunityV0_0 is
 
         initialMembers = pool_initialMembers;
 
+        strategyTemplate = _strategyTemplate;
         collateralVaultTemplate = _collateralVaultTemplate;
 
         emit RegistryInitialized(profileId, communityName, params._metadata);
@@ -291,7 +285,7 @@ contract RegistryCommunityV0_0 is
         address strategyProxy = address(
             new ERC1967Proxy(
                 address(strategyTemplate),
-                abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate)
+                abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, owner())
             )
         );
 
@@ -585,7 +579,7 @@ contract RegistryCommunityV0_0 is
         delete addressToMemberInfo[_member];
         delete strategiesByMember[_member];
 
-        gardenToken.transfer(_member, member.stakedAmount);
+        gardenToken.safeTransfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
 
@@ -611,11 +605,9 @@ contract RegistryCommunityV0_0 is
         deactivateAllStrategies(_member);
         delete addressToMemberInfo[_member];
 
-        gardenToken.transfer(_transferAddress, member.stakedAmount);
+        gardenToken.safeTransfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
-
-    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     uint256[50] private __gap;
 }

@@ -7,7 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
-import { Address as AddressType, useAccount } from "wagmi";
+import { Address, Address as AddressType, useAccount } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -16,7 +16,6 @@ import {
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { Address } from "#/subgraph/src/scripts/last-addr";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { getProposals } from "@/actions/getProposals";
 import {
@@ -210,7 +209,6 @@ export function Proposals({
           const filteredProposals = res.filter(
             ({ status }) => ProposalStatus[status] !== "rejected",
           );
-          console.debug(filteredProposals);
           setProposals(filteredProposals);
         } else {
           console.debug("No proposals");

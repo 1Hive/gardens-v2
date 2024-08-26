@@ -1,38 +1,29 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
 import {
   getTokenGardensDocument,
   getTokenGardensQuery,
 } from "#/subgraph/.graphclient";
-import { clouds1, clouds2, Banner } from "@/assets";
+import { clouds1, clouds2 } from "@/assets";
 import { GardenCard } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 
 export default function Page() {
-  const {
-    data: gardens,
-    fetching,
-    errors,
-  } = useSubgraphQueryMultiChain<getTokenGardensQuery>({
-    query: getTokenGardensDocument,
-    changeScope: [
-      {
-        topic: "garden",
-      },
-      {
-        topic: "community",
-      },
-    ],
-  });
-
-  useEffect(() => {
-    if (errors.size) {
-      console.error("Error fetching token gardens:", Array.from(errors));
-    }
-  }, [errors.size]);
+  const { data: gardens, fetching } =
+    useSubgraphQueryMultiChain<getTokenGardensQuery>({
+      query: getTokenGardensDocument,
+      changeScope: [
+        {
+          topic: "garden",
+        },
+        {
+          topic: "community",
+        },
+      ],
+    });
 
   const tokenGardens = useMemo(
     () =>
@@ -61,6 +52,8 @@ export default function Page() {
             ))}
         </>
       );
+    } else {
+      return <div className="text-center">No Gardens</div>;
     }
   }, [fetching, tokenGardens?.length]);
 
@@ -89,17 +82,11 @@ export default function Page() {
           <div className="relative" />
         </header>
         <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8 2xl:mt-10">
-          <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(320px,1fr))] z-10">
+          <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,320px)] z-10">
             {GardenList}
           </div>
         </section>
       </div>
-      <Image
-        src={Banner}
-        alt="gardens"
-        className="absolute inset-0 object-cover w-full h-full"
-        loading="lazy"
-      />
     </>
   );
 }

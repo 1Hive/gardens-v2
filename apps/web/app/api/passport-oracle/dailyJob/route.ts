@@ -10,7 +10,7 @@ import {
   Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { getConfigByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/configs/chains";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
@@ -145,13 +145,13 @@ const updateScoresOnChain = async (
 const updateScores = async () => {
   const subgraphResponse = await urqlClient
     .query<{ passportUsers: PassportUser[] }>(
-    query,
-    {},
-    {
-      url: SUBGRAPH,
-      requestPolicy: "network-only",
-    },
-  )
+      query,
+      {},
+      {
+        url: SUBGRAPH,
+        requestPolicy: "network-only",
+      },
+    )
     .toPromise();
 
   if (!subgraphResponse.data) {

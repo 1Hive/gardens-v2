@@ -10,6 +10,7 @@ type CVStrategy @entity(immutable: false) {
   maxCVSupply: BigInt!
   totalEffectiveActivePoints: BigInt!
   isEnabled: Boolean!
+  token: String!
 }
 
 type CVStrategyConfig @entity(immutable: false) {

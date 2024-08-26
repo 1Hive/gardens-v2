@@ -3,15 +3,13 @@
 import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { Button } from "@/components";
-import { getChain } from "@/configs/chainServer";
-import { getConfigByChain } from "@/constants/contracts";
+import { getChain } from "@/configs/chains";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
@@ -48,12 +46,10 @@ export const CommunityForm = ({
   chainId,
   tokenGarden,
   registryFactoryAddr,
-  alloContractAddr,
 }: {
   chainId: number;
-  tokenGarden: TokenGarden;
+  tokenGarden: Pick<TokenGarden, "address" | "symbol" | "decimals">;
   registryFactoryAddr: Address;
-  alloContractAddr: Address;
 }) => {
   const {
     register,
@@ -71,7 +67,7 @@ export const CommunityForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const chainFromPath = useChainFromPath();
+  const chainFromPath = useChainFromPath()!;
 
   // const [file, setFile] = useState<File | null>(null);
 
@@ -109,7 +105,7 @@ export const CommunityForm = ({
       if (previewData === undefined) {
         throw new Error("No preview data");
       }
-      const gardenTokenAddress = tokenGarden?.id;
+      const gardenTokenAddress = tokenGarden.address;
       const communityName = previewData?.title;
       const stakeAmount = parseUnits(
         previewData?.stakeAmount.toString() as string,
@@ -125,15 +121,11 @@ export const CommunityForm = ({
       // arb safe 0xda7bdebd79833a5e0c027fab1b1b9b874ddcbd10
       const isKickMemberEnabled = previewData?.isKickMemberEnabled;
       const covenantIpfsHash = ipfsHash;
-      const strategyTemplate = getConfigByChain(chainId)?.strategyTemplate;
-      if (!strategyTemplate) {
-        console.warn("No strategy template found for chain", chainId);
-        toast.error("No strategy template found for chain");
-      }
+
       write?.({
         args: [
           {
-            _allo: alloContractAddr,
+            _allo: chainFromPath.allo as Address,
             _feeReceiver: communityFeeReceiver as Address,
             _communityName: communityName,
             _registerStakeAmount: stakeAmount,
@@ -145,7 +137,6 @@ export const CommunityForm = ({
             _registryFactory: registryFactoryAddr,
             covenantIpfsHash: covenantIpfsHash,
             _metadata: { protocol: 1n, pointer: "" },
-            _strategyTemplate: strategyTemplate as Address,
           },
         ],
       });
@@ -169,8 +160,7 @@ export const CommunityForm = ({
         topic: "community",
         type: "add",
         function: "createRegistry",
-        containerId: tokenGarden.id,
-        chainId: tokenGarden.chainId,
+        containerId: tokenGarden.address,
         id: newCommunityAddr, // new community address
       });
       if (pathname) {

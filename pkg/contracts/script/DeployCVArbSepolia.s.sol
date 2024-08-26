@@ -69,7 +69,6 @@ contract DeployCVArbSepolia is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
         RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
         RegistryCommunityV0_0.InitializeParams memory params;
 
-        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;

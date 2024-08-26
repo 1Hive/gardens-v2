@@ -10,7 +10,7 @@ import { getTokenGardensQuery } from "#/subgraph/.graphclient";
 import { Statistic, TokenLabel } from ".";
 import { gardenLand } from "@/assets";
 import { Card } from "@/components/Card";
-import { getChain } from "@/configs/chainServer";
+import { getConfigByChain } from "@/configs/chains";
 
 type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
@@ -52,7 +52,7 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
               <p className="text-neutral-content text-sm">Network:</p>
               <div className="flex gap-2.5 items-center">
                 <h5 className="text-neutral-content">
-                  {getChain(chainId)?.name}
+                  {getConfigByChain(chainId)?.name}
                 </h5>
               </div>
             </div>

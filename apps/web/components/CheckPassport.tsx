@@ -10,7 +10,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { Modal } from "@/components";
-import { isProd } from "@/constants/contracts";
+import { isProd } from "@/configs/chains";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
 

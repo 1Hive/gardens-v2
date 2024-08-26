@@ -13,7 +13,7 @@ import {
 import Image from "next/image";
 import { newLogo, commF, HomeBanner } from "@/assets";
 import { Button } from "@/components";
-import { ChainIcon } from "@/configs/chainServer";
+import { ChainIcon } from "@/configs/chains";
 
 export default function Page() {
   return (
