@@ -37,7 +37,8 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     // / @param _name Name of the strategy
     // constructor( {}
 
-    function init(address _allo, string memory _name) public virtual {
+    function init(address _allo, string memory _name, address owner) public virtual onlyInitializing {
+        super.initialize(owner);
         allo = IAllo(_allo);
         strategyId = keccak256(abi.encode(_name));
     }

@@ -249,8 +249,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
     function init(address _allo, address _collateralVaultTemplate, address owner) external virtual initializer {
-        super.init(_allo, "CVStrategy");
-        _transferOwnership(owner);
+        super.init(_allo, "CVStrategy", owner);
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 

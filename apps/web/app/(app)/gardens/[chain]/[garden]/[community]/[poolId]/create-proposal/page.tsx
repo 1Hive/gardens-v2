@@ -27,7 +27,11 @@ export default function Page({
   const tokenGarden = data?.tokenGarden;
 
   if (!tokenGarden || !metadata || !strategyObj) {
-    return <LoadingSpinner />;
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   const alloInfo = data?.allos[0];

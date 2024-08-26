@@ -11,7 +11,6 @@ import {
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { useTransactionNotification } from "./useTransactionNotification";
 import { chainConfigMap } from "@/configs/chains";
-import { logOnce } from "@/utils/log";
 
 export type ComputedStatus =
   | "loading"
@@ -51,8 +50,7 @@ export function useContractWriteWithConfirmations<
   };
 
   function logError(error: any, variables: any, context: string) {
-    logOnce(
-      "error",
+    console.error(
       `Error with transaction [${props.contractName} -> ${props.functionName}]`,
       { error, variables, context },
     );

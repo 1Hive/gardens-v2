@@ -129,6 +129,7 @@ verify-testnet-multi-arb:
 	--account pkGarden \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--verify \
+	--via-ir \
 	--slow
 
 	

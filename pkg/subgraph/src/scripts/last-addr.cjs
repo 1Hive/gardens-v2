@@ -105,7 +105,7 @@ function getRunLatestAddrs(chainId) {
 
   const chain = Object.values(viemChains).find(
     (x) =>
-      ("id" in x && x.id === chainId) ||
+      ("id" in x && x.id == chainId) ||
       ("network" in x && x.network === chainId),
   );
 

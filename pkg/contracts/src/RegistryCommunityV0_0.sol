@@ -217,7 +217,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         address _collateralVaultTemplate,
         address owner
     ) public initializer {
-        _transferOwnership(owner);
+        super.initialize(owner);
         __ReentrancyGuard_init();
         __AccessControl_init();
 
