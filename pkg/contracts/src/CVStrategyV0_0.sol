@@ -1079,10 +1079,11 @@ contract CVStrategyV0_0 is OwnableUpgradeable, BaseStrategyUpgradeable, IArbitra
         return ((amount * D) / (D - cvParams.decay));
     }
 
-    function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
-        registryCommunity = RegistryCommunityV0_0(_registryCommunity);
-        emit RegistryUpdated(_registryCommunity);
-    }
+    //If we want to keep, we need a func to transfer power mapping (and more) in Registry contract -Kev
+    // function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
+    //     registryCommunity = RegistryCommunityV0_0(_registryCommunity);
+    //     emit RegistryUpdated(_registryCommunity);
+    // }
 
     function setSybilScorer(address _sybilScorer) external {
         onlyCouncilSafe();
