@@ -31,6 +31,7 @@ import { registryCommunityABI } from "@/src/generated";
 import { PointSystems, PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import {
+  convertSecondsToReadableTime,
   CV_SCALE_PRECISION,
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
@@ -49,7 +50,7 @@ type Props = {
   spendingLimitPct: number;
 };
 
-function calculateConvictionGrowthInDays(
+function calculateConvictionGrowthInSeconds(
   decay: number,
   blockTime: number,
 ): number {
@@ -57,9 +58,7 @@ function calculateConvictionGrowthInDays(
 
   const halfLifeInSeconds = blockTime / Math.log2(1 / scaledDecay);
 
-  const convictionGrowth = halfLifeInSeconds / (24 * 60 * 60);
-
-  return convictionGrowth;
+  return halfLifeInSeconds;
 }
 
 function calculateMinimumConviction(weight: number, spendingLimit: number) {
@@ -102,7 +101,7 @@ export default function PoolHeader({
     spendingLimitPct * MAX_RATIO_CONSTANT,
   );
 
-  const convictionGrowth = calculateConvictionGrowthInDays(
+  const convictionGrowth = calculateConvictionGrowthInSeconds(
     strategy.config.decay,
     blockTime,
   );
@@ -122,15 +121,17 @@ export default function PoolHeader({
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
   );
 
+  const { value, unit } = convertSecondsToReadableTime(convictionGrowth);
+
   const poolConfig = [
     {
       label: "Min conviction",
-      value: `${minimumConviction.toFixed(2)} %`,
+      value: `${minimumConviction.toPrecision(2)} %`,
       info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
     },
     {
       label: "Conviction growth",
-      value: `${convictionGrowth.toFixed(2)} days`,
+      value: `${value} ${unit}${value !== 1 ? "s" : ""}`,
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life",
     },
     {
