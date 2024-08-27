@@ -93,6 +93,10 @@ export default function PoolHeader({
 
   const blockTime = chainConfigMap[chainId].blockTime;
 
+  const isCouncilSafe =
+    address?.toLowerCase() ===
+    strategy.registryCommunity.councilSafe?.toLowerCase();
+
   const minimumConviction = calculateMinimumConviction(
     strategy.config.weight,
     spendingLimitPct * MAX_RATIO_CONSTANT,
@@ -158,6 +162,7 @@ export default function PoolHeader({
     abi: abiWithErrors2(safeABI),
     functionName: "isOwner",
     chainId: Number(chainId),
+    enabled: !!address,
     args: [address?.toLowerCase() as Address],
   });
 
@@ -196,15 +201,11 @@ export default function PoolHeader({
     },
   });
 
-  const isCouncilSafe =
-    address?.toLowerCase() ===
-    strategy.registryCommunity.councilSafe?.toLowerCase();
-
   //Disable Council Safe Buttons: Edit, Disable and Approve
   const disableCouncilSafeBtnCondition: ConditionObject[] = [
     {
       condition: !isCouncilSafe,
-      message: "Connect with counicl safe address",
+      message: "Connect with council safe address",
     },
   ];
 
