@@ -12,7 +12,7 @@ import { StopIcon } from "@heroicons/react/24/solid";
 import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
 import { Address } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useContractRead } from "wagmi";
 import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -25,11 +25,11 @@ import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
-import { registryCommunityABI } from "@/src/generated";
+import { registryCommunityABI, safeABI } from "@/src/generated";
 import { PointSystems, PoolTypes, ProposalStatus } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   CV_SCALE_PRECISION,
   formatTokenAmount,
@@ -87,15 +87,11 @@ export default function PoolHeader({
   proposalType,
   spendingLimitPct,
 }: Props) {
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
   const { publish } = usePubSubContext();
 
   const blockTime = chainConfigMap[chainId].blockTime;
-  const isCouncilSafe =
-    address?.toLowerCase() ===
-    strategy.registryCommunity.councilSafe?.toLowerCase();
 
   const minimumConviction = calculateMinimumConviction(
     strategy.config.weight,
@@ -156,6 +152,15 @@ export default function PoolHeader({
       )
     : poolConfig;
 
+  //hooks
+  const { data: isCouncilMember } = useContractRead({
+    address: strategy.registryCommunity.councilSafe as Address,
+    abi: abiWithErrors2(safeABI),
+    functionName: "isOwner",
+    chainId: Number(chainId),
+    args: [address?.toLowerCase() as Address],
+  });
+
   const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
@@ -191,6 +196,27 @@ export default function PoolHeader({
     },
   });
 
+  const isCouncilSafe =
+    address?.toLowerCase() ===
+    strategy.registryCommunity.councilSafe?.toLowerCase();
+
+  //Disable Council Safe Buttons: Edit, Disable and Approve
+  const disableCouncilSafeBtnCondition: ConditionObject[] = [
+    {
+      condition: !isCouncilSafe,
+      message: "Connect with counicl safe address",
+    },
+  ];
+
+  const disableCouncilSafeButtons = disableCouncilSafeBtnCondition.some(
+    (cond) => cond.condition,
+  );
+
+  const { tooltipMessage, missmatchUrl, isConnected } = useDisableButtons(
+    disableCouncilSafeBtnCondition,
+  );
+
+  //
   return (
     <section className="section-layout flex flex-col gap-0 overflow-hidden">
       <header className="mb-2 flex flex-col">
@@ -198,13 +224,15 @@ export default function PoolHeader({
           <h2>
             {ipfsResult?.title} #{poolId}
           </h2>
-          {isCouncilSafe && (
+          {(isCouncilMember || isCouncilSafe) && (
             // true
             <div className="flex gap-2">
               <Button
                 btnStyle="outline"
                 icon={<Cog6ToothIcon height={24} width={24} />}
-                disabled={!isConnected || missmatchUrl}
+                disabled={
+                  !isConnected || missmatchUrl || disableCouncilSafeButtons
+                }
                 tooltip={tooltipMessage}
                 onClick={() => setIsOpenModal(true)}
               >
@@ -213,7 +241,9 @@ export default function PoolHeader({
               {isEnabled ?
                 <Button
                   icon={<StopIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl}
+                  disabled={
+                    !isConnected || missmatchUrl || disableCouncilSafeButtons
+                  }
                   tooltip={tooltipMessage}
                   onClick={() => removeStrategyByPoolId()}
                   btnStyle="outline"
@@ -223,7 +253,9 @@ export default function PoolHeader({
                 </Button>
               : <Button
                   icon={<CheckIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl}
+                  disabled={
+                    !isConnected || missmatchUrl || disableCouncilSafeButtons
+                  }
                   tooltip={tooltipMessage}
                   onClick={() => addStrategyByPoolId()}
                 >
