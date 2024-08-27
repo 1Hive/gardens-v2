@@ -1284,7 +1284,7 @@ export type ProposalDispute = {
   status: Scalars['BigInt']['output'];
   challenger: Scalars['String']['output'];
   context: Scalars['String']['output'];
-  metadata: ProposalDisputeMetadata;
+  metadata?: Maybe<ProposalDisputeMetadata>;
   rulingOutcome?: Maybe<Scalars['BigInt']['output']>;
   ruledAt?: Maybe<Scalars['BigInt']['output']>;
 };

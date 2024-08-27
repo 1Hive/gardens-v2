@@ -178,7 +178,7 @@ type ProposalDispute @entity(immutable: false) {
   status: BigInt!
   challenger: String!
   context: String!
-  metadata: ProposalDisputeMetadata!
+  metadata: ProposalDisputeMetadata
 
   # When ruled
   rulingOutcome: BigInt

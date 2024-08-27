@@ -64,10 +64,10 @@ export function ProposalCard({
 
   //TODO: move execute func to proposalId page
 
-  const inputValue = calculatePercentage(
+  const inputValue = inputData ? calculatePercentage(
     inputData.value,
     memberActivatedPoints,
-  );
+  ) : 0;
 
   const allocatedInProposal = calculatePercentage(
     stakedFilter?.value,
@@ -108,7 +108,7 @@ export function ProposalCard({
                     type="range"
                     min={0}
                     max={memberActivatedPoints}
-                    value={inputData.value}
+                    value={inputData?.value}
                     className={
                       "range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]"
                     }

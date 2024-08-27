@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
 import { polygon } from "viem/chains";
-import { useToken } from "wagmi";
+import { useContractRead, useToken } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
@@ -22,6 +22,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { registryCommunityABI } from "@/src/generated";
+import { safeABI } from "@/src/generated";
 import { DisputeOutcome, PointSystems, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
@@ -260,6 +261,12 @@ export function PoolForm({ token, communityAddr }: Props) {
     setPreviewData(data);
     setShowPreview(true);
   };
+
+  const { data: owners } = useContractRead({
+    abi: safeABI,
+    functionName: "getOwners",
+    address: communityAddr,
+  });
 
   const contractWrite = async (ipfsHash: string) => {
     let spendingLimit: number;

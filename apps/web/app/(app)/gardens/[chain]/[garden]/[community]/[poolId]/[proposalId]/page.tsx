@@ -52,6 +52,7 @@ export default function Page({
   };
 }) {
   const { isDisconnected } = useAccount();
+  const [strategyId, proposalNumber] = proposalId.split("-");
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -60,7 +61,8 @@ export default function Page({
     },
     changeScope: {
       topic: "proposal",
-      id: proposalId,
+      containerId: strategyId,
+      id: proposalNumber,
       type: "update",
     },
   });
