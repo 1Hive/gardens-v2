@@ -265,24 +265,6 @@ export function Proposals({
     setInputAllocatedTokens(currentPoints + value);
   };
 
-  const submit = async () => {
-    if (!inputs) {
-      console.error("Inputs not yet computed");
-      return;
-    }
-    const proposalsDifferencesArr = getProposalsInputsDifferences(
-      inputs,
-      stakedFilters,
-    );
-    const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
-      proposalsDifferencesArr,
-    ]);
-    const poolId = Number(strategy.poolId);
-    writeAllocate({
-      args: [BigInt(poolId), encodedData as AddressType],
-    });
-  };
-
   // Contract interaction
   const {
     write: writeAllocate,
@@ -306,6 +288,23 @@ export function Proposals({
       });
     },
   });
+  const submit = async () => {
+    if (!inputs) {
+      console.error("Inputs not yet computed");
+      return;
+    }
+    const proposalsDifferencesArr = getProposalsInputsDifferences(
+      inputs,
+      stakedFilters,
+    );
+    const encodedData = encodeFunctionParams(cvStrategyABI, "allocate", [
+      proposalsDifferencesArr,
+    ]);
+    const poolId = Number(strategy.poolId);
+    writeAllocate({
+      args: [BigInt(poolId), encodedData as AddressType],
+    });
+  };
 
   useErrorDetails(errorAllocate, "errorAllocate");
 
