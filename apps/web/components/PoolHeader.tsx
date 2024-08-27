@@ -225,7 +225,7 @@ export default function PoolHeader({
           <h2>
             {ipfsResult?.title} #{poolId}
           </h2>
-          {(isCouncilMember || isCouncilSafe) && (
+          {(isCouncilMember ?? isCouncilSafe) && (
             // true
             <div className="flex gap-2">
               <Button
