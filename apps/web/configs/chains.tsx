@@ -24,7 +24,7 @@ type ChainIconProps = React.SVGProps<SVGSVGElement> & {
   chain: number | string;
 };
 
-const envFromStorage = localStorage.getItem("env");
+const envFromStorage = localStorage?.getItem("env");
 export const isProd =
   localStorage.envFromStorage ? envFromStorage : (
     process.env.NEXT_PUBLIC_ENV_GARDENS === "prod"

@@ -523,7 +523,7 @@ export function handleProposalDisputed(event: ProposalDisputed): void {
   dispute.metadata = event.params.context;
   dispute.status = DISPUTE_STATUS_WAITING;
 
-  ProposalDisputeMetadataTemplate.create(dispute.metadata);
+  ProposalDisputeMetadataTemplate.create(event.params.context);
   dispute.save();
 
   // Change proposal status to disputed
