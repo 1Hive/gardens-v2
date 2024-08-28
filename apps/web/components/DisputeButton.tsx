@@ -30,14 +30,17 @@ import { WalletBalance } from "./WalletBalance";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1, useIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import {
   cvStrategyABI,
   iArbitratorABI,
+  safeABI,
   safeArbitratorABI,
 } from "@/src/generated";
 import { DisputeStatus, ProposalStatus } from "@/types";
+import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 
@@ -134,7 +137,16 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const disputes = disputesResult?.proposalDisputes ?? [];
 
-  const isCouncilSafe = config.tribunalSafe === address?.toLowerCase();
+  const isTribunalSafe = config.tribunalSafe === address?.toLowerCase();
+
+  const { data: isTribunalMember } = useContractRead({
+    address: config.tribunalSafe as Address,
+    abi: abiWithErrors2(safeABI),
+    functionName: "isOwner",
+    chainId: Number(chainId),
+    enabled: !!address,
+    args: [address as Address],
+  });
 
   const { writeAsync: writeDisputeProposalAsync } =
     useContractWriteWithConfirmations({
@@ -259,13 +271,27 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     </div>
   );
 
+  //Disable only tribunal safe  buttons: Reject and Approve
+  const disableTribunalSafeBtnCondition: ConditionObject[] = [
+    {
+      condition: !isTribunalSafe,
+      message: "Connect with tribunal safe address",
+    },
+  ];
+
+  const disableTribunalSafeButtons = disableTribunalSafeBtnCondition.some(
+    (cond) => cond.condition,
+  );
+
+  const { tooltipMessage } = useDisableButtons(disableTribunalSafeBtnCondition);
+
   const buttons = (
     <div className="modal-action w-full">
       {isDisputed ?
         <div className="w-full flex justify-end gap-4">
           {(
             DisputeStatus[lastDispute.status] === "waiting" &&
-            (isCouncilSafe || isTimeout)
+            (isTribunalMember || isTribunalSafe || isTimeout)
           ) ?
             <>
               <Button
@@ -290,6 +316,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     btnStyle="outline"
                     onClick={() => handleSubmitRuling(APPROVED_RULING)}
                     isLoading={rulingLoading === APPROVED_RULING}
+                    disabled={disableTribunalSafeButtons}
+                    tooltip={tooltipMessage}
                   >
                     <InfoWrapper
                       classNames="[&>svg]:text-primary-content"
@@ -305,6 +333,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     btnStyle="outline"
                     onClick={() => handleSubmitRuling(REJECTED_RULING)}
                     isLoading={rulingLoading === REJECTED_RULING}
+                    disabled={disableTribunalSafeButtons}
+                    tooltip={tooltipMessage}
                   >
                     <InfoWrapper
                       classNames="[&>svg]:text-error-content [&:before]:mr-10 tooltip-left"
