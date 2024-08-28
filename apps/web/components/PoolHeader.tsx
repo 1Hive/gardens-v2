@@ -217,7 +217,6 @@ export default function PoolHeader({
     disableCouncilSafeBtnCondition,
   );
 
-  //
   return (
     <section className="section-layout flex flex-col gap-0 overflow-hidden">
       <header className="mb-2 flex flex-col">
