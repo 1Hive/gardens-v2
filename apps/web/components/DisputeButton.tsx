@@ -291,7 +291,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         <div className="w-full flex justify-end gap-4">
           {(
             DisputeStatus[lastDispute.status] === "waiting" &&
-            (isTribunalMember || isTribunalSafe || isTimeout)
+            ((isTribunalMember ?? isTribunalSafe) || isTimeout)
           ) ?
             <>
               <Button
