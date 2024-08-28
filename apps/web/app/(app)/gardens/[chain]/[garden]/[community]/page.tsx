@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   CurrencyDollarIcon,
   PlusIcon,
@@ -53,6 +53,7 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
+  const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
     address: tokenAddr as Address,
     chainId: +chain,
@@ -153,6 +154,20 @@ export default function Page({
       refetch();
     }
   }, [searchParams, poolsInReview]);
+
+  useEffect(() => {
+    if (
+      searchParams[QUERY_PARAMS.communityPage.covenant] !== undefined &&
+      covenantSectionRef.current
+    ) {
+      const elementTop =
+        covenantSectionRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementTop - 130,
+        behavior: "smooth",
+      });
+    }
+  }, [covenantSectionRef.current, searchParams]);
 
   if (!tokenGarden || !registryCommunity) {
     return (
@@ -336,7 +351,7 @@ export default function Page({
           </div>
         </div>
       </section>
-      <section className="section-layout">
+      <section ref={covenantSectionRef} className="section-layout">
         <h2 className="mb-4">Covenant</h2>
         {registryCommunity?.covenantIpfsHash ?
           covenant ?
