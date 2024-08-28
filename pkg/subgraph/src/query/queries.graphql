@@ -265,7 +265,11 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     proposals {
       id
       proposalNumber
-      metadata
+      metadata {
+        title
+        description
+      }
+      metadataHash
       beneficiary
       requestedAmount
       requestedToken
@@ -301,7 +305,11 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     blockLast
     convictionLast
     createdAt
-    metadata
+    metadata {
+      title
+      description
+    }
+    metadataHash
     proposalStatus
     requestedAmount
     requestedToken
@@ -364,7 +372,11 @@ query getStrategyByPool($poolId: BigInt!) {
     proposals {
       id
       proposalNumber
-      metadata
+      metadata {
+        title
+        description
+      }
+      metadataHash
       beneficiary
       requestedAmount
       requestedToken
@@ -406,7 +418,11 @@ query getPoolTitles($poolId: BigInt!) {
 query getProposalTitles($proposalId: ID!) {
   cvproposal(id: $proposalId) {
     proposalNumber
-    metadata
+    metadata {
+      title
+      description
+    }
+    metadataHash
     strategy {
       poolId
       metadata

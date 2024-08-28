@@ -40,9 +40,7 @@ deploy:
 	--sender 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \
 	--unlocked \
 	--via-ir \
-	--broadcast -vvvvv \
-	--via-ir \
-	--force 
+	--broadcast -vvvvv
 
 add-strategy-local: #make add-strategy S=0x1234 
 	-forge script script/AddStrategy.s.sol:AddStrategy \
@@ -62,7 +60,6 @@ deploy-testnet-multi-sep:
 	--account pkGarden \
 	--sig "run(string)" 'sepolia' \
 	--ffi \
-	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast \
 	--legacy \
 	--via-ir \

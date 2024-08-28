@@ -89,7 +89,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
       containerId: proposalData?.strategy.id,
       type: "update",
     },
-    enabled: !!proposalData,
   });
 
   const { data: arbitrationCost } = useContractRead({
@@ -123,10 +122,10 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     !!disputeCooldown &&
     +lastDispute.ruledAt + Number(disputeCooldown) > Date.now() / 1000;
 
+  const proposalStatus = ProposalStatus[proposalData.proposalStatus];
+
   const isDisputed =
-    proposalData &&
-    lastDispute &&
-    ProposalStatus[proposalData.proposalStatus] === "disputed";
+    !!proposalData && !!lastDispute && proposalStatus === "disputed";
 
   const isTimeout =
     lastDispute &&
@@ -232,8 +231,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   };
 
   const content = (
-    <div className="flex md:flex-col gap-10">
-      {isDisputed ?
+    <div className="flex flex-col gap-10 lg:min-w-[800px]">
+      {isDisputed || proposalStatus === "rejected" ?
         <div className="p-16 rounded-lg">
           {disputes.map((dispute) => (
             <Fragment key={dispute.id}>
@@ -369,28 +368,33 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   return (
     <>
-      {(ProposalStatus[proposalData?.proposalStatus] === "active" ||
-        ProposalStatus[proposalData?.proposalStatus] === "disputed") && (
-        <>
-          <Button
-            color="danger"
-            btnStyle="outline"
-            onClick={() => setIsModalOpened(true)}
-            disabled={isDisconnected}
-            tooltip="Connect wallet"
-          >
-            {isDisputed ? "Open dispute" : "Dispute"}
-          </Button>
-          <Modal
-            title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
-            onClose={() => setIsModalOpened(false)}
-            isOpen={isModalOpened}
-          >
-            {content}
-            {buttons}
-          </Modal>
-        </>
-      )}
+      {proposalData &&
+        disputesResult &&
+        (proposalStatus === "active" ||
+          proposalStatus === "disputed" ||
+          proposalStatus === "rejected") && (
+          <>
+            <Button
+              color="danger"
+              btnStyle="outline"
+              onClick={() => setIsModalOpened(true)}
+              disabled={isDisconnected}
+              tooltip="Connect wallet"
+            >
+              {isDisputed || proposalStatus === "rejected" ?
+                "Open dispute"
+              : "Dispute"}
+            </Button>
+            <Modal
+              title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
+              onClose={() => setIsModalOpened(false)}
+              isOpen={isModalOpened}
+            >
+              {content}
+              {proposalStatus !== "rejected" && buttons}
+            </Modal>
+          </>
+        )}
     </>
   );
 };
@@ -406,7 +410,7 @@ const DisputeMessage = ({
     ProposalDispute,
     "id" | "challenger" | "context" | "createdAt"
   > & {
-    metadata: Pick<ProposalDisputeMetadata, "reason">;
+    metadata?: Pick<ProposalDisputeMetadata, "reason"> | null;
   };
   title?: string;
 }) => {
@@ -464,7 +468,7 @@ const DisputeMessage = ({
         )}
       </div>
       <div className="chat-bubble shadow-lg bg-neutral-200">
-        {dispute.metadata.reason ?? disputeMetadata?.reason}
+        {dispute.metadata?.reason ?? disputeMetadata?.reason}
       </div>
     </div>
   );
