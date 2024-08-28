@@ -163,7 +163,7 @@ export default function PoolHeader({
     functionName: "isOwner",
     chainId: Number(chainId),
     enabled: !!address,
-    args: [address?.toLowerCase() as Address],
+    args: [address as Address],
   });
 
   const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
