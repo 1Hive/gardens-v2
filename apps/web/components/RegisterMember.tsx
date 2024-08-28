@@ -141,7 +141,9 @@ export function RegisterMember({
       handleAllowanceResetState();
       handleRegistrationResetState();
       setIsOpenModal(true);
-      handleSignature();
+      if (covenantAgreementTx.status !== "loading") {
+        handleSignature();
+      }
     }
   }, [
     isMember,

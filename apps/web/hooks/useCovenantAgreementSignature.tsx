@@ -1,4 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import { usePathname } from "next/navigation";
 import { useSignMessage } from "wagmi";
 import { TransactionProps } from "@/components/TransactionModal";
 import { getTxMessage } from "@/utils/transactionMessages";
@@ -14,32 +16,45 @@ export function useCovenantAgreementSignature(
   covenantAgreementTxProps: TransactionProps;
   handleSignature: () => void;
 } {
+  const path = usePathname();
+  const CovenantTitle = (
+    <div className="flex gap-2">
+      <a
+        href={`${path}?covenant`}
+        target="_blank"
+        rel="noreferrer"
+        className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
+      >
+        Covenant
+        <ArrowTopRightOnSquareIcon
+          width={16}
+          height={16}
+          className="text-primary-content"
+        />
+      </a>
+      Agreement
+    </div>
+  );
   const [covenantAgreementTxProps, setCovenantAgreementTxProps] =
     useState<TransactionProps>(() => ({
-      contractName: "Covenant Agreement",
+      contractName: CovenantTitle,
       message: getTxMessage("idle"),
       status: "idle",
     }));
 
-  const {
-    signMessage,
-    isLoading,
-    isSuccess,
-    isError,
-    error: covenantAgreementTxError,
-  } = useSignMessage({
+  const { signMessage, isLoading } = useSignMessage({
     message: message,
     onSettled(data, error) {
       const customError = error as CustomError;
       if (error) {
         setCovenantAgreementTxProps({
-          contractName: "Covenant Agreement",
+          contractName: CovenantTitle,
           message: getTxMessage("error", error, customError?.details),
           status: "error",
         });
       } else if (data) {
         setCovenantAgreementTxProps({
-          contractName: "Covenant Agreement",
+          contractName: CovenantTitle,
           message: getTxMessage("success"),
           status: "success",
         });
@@ -51,19 +66,15 @@ export function useCovenantAgreementSignature(
   useEffect(() => {
     if (isLoading) {
       setCovenantAgreementTxProps({
-        contractName: "Covenant Agreement",
+        contractName: CovenantTitle,
         message: getTxMessage("loading"),
         status: "loading",
       });
     }
   }, [isLoading]);
 
-  const handleSignature = useCallback(() => {
-    signMessage();
-  }, [signMessage]);
-
   return {
     covenantAgreementTxProps,
-    handleSignature,
+    handleSignature: signMessage,
   };
 }
