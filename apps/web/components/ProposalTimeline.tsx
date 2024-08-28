@@ -60,6 +60,8 @@ export const ProposalTimeline: FC<Props> = ({
     +lastDispute.createdAt + +arbitrationConfig.defaultRulingTimeout <
       Date.now() / 1000;
 
+  const isEnded = proposalStatus !== "active" && proposalStatus !== "disputed";
+
   return (
     <ul
       className={`timeline timeline-vertical sm:timeline-horizontal mt-5 ${className}`}
@@ -171,9 +173,9 @@ export const ProposalTimeline: FC<Props> = ({
                   <CheckIcon className="w-4 m-0.5" />
                 </div>
               : futureNode}
-
               {isLastDispute && proposalStatus !== "active" ?
-                (!isRuled || !isRejected) &&
+                !isRuled &&
+                !isEnded &&
                 (!isTimeout || defaultRuling === "approved") &&
                 futureHR
               : pastHR}

@@ -59,8 +59,7 @@ export function ProposalCard({
   const searchParams = useCollectQueryParams();
   // TODO: ADD border color when new proposal is added
   const isNewProposal =
-    searchParams[QUERY_PARAMS.poolPage.newPropsoal] ==
-    proposalData.proposalNumber;
+    searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalNumber;
 
   const { currentConvictionPct, thresholdPct, totalSupportPct } =
     useConvictionRead({
@@ -221,7 +220,7 @@ export function ProposalCard({
         proposalCardContent
       : <Card
           href={`${pathname}/${id}`}
-          className={`py-4 ${isNewProposal ? "shadow-2xl" : ""}`}
+          className={`py-4 ${isNewProposal ? "shadow-xl" : ""}`}
         >
           {proposalCardContent}
         </Card>

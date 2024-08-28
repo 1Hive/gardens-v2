@@ -440,7 +440,7 @@ export function Proposals({
                 ))}
               <details className="collapse collapse-arrow">
                 <summary className="collapse-title text-xl font-medium bg-neutral-soft mb-4 rounded-b-2xl">
-                  Click to see completed proposals
+                  Click to see ended proposals
                 </summary>
                 <div className="collapse-content px-0 flex flex-col gap-6">
                   {proposals
