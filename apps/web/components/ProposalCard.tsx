@@ -46,8 +46,14 @@ export function ProposalCard({
   tokenData,
   inputHandler,
 }: ProposalCardProps) {
-  const { title, id, proposalNumber, proposalStatus, requestedAmount, type } =
-    proposalData;
+  const {
+    metadata,
+    id,
+    proposalNumber,
+    proposalStatus,
+    requestedAmount,
+    type,
+  } = proposalData;
   const pathname = usePathname();
 
   const searchParams = useCollectQueryParams();
@@ -64,10 +70,8 @@ export function ProposalCard({
 
   //TODO: move execute func to proposalId page
 
-  const inputValue = inputData ? calculatePercentage(
-    inputData.value,
-    memberActivatedPoints,
-  ) : 0;
+  const inputValue =
+    inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
 
   const allocatedInProposal = calculatePercentage(
     stakedFilter?.value,
@@ -91,7 +95,9 @@ export function ProposalCard({
         >
           <Hashicon value={id} size={45} />
           <div className="overflow-hidden">
-            <h4 className="truncate first-letter:uppercase">{title}</h4>
+            <h4 className="truncate first-letter:uppercase">
+              {metadata.title}
+            </h4>
             <h6 className="text-sm">ID {proposalNumber}</h6>
           </div>
         </div>

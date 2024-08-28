@@ -368,31 +368,33 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   return (
     <>
-      {(proposalStatus === "active" ||
-        proposalStatus === "disputed" ||
-        proposalStatus === "rejected") && (
-        <>
-          <Button
-            color="danger"
-            btnStyle="outline"
-            onClick={() => setIsModalOpened(true)}
-            disabled={isDisconnected}
-            tooltip="Connect wallet"
-          >
-            {isDisputed || proposalStatus === "rejected" ?
-              "Open dispute"
-            : "Dispute"}
-          </Button>
-          <Modal
-            title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
-            onClose={() => setIsModalOpened(false)}
-            isOpen={isModalOpened}
-          >
-            {content}
-            {proposalStatus !== "rejected" && buttons}
-          </Modal>
-        </>
-      )}
+      {proposalData &&
+        disputesResult &&
+        (proposalStatus === "active" ||
+          proposalStatus === "disputed" ||
+          proposalStatus === "rejected") && (
+          <>
+            <Button
+              color="danger"
+              btnStyle="outline"
+              onClick={() => setIsModalOpened(true)}
+              disabled={isDisconnected}
+              tooltip="Connect wallet"
+            >
+              {isDisputed || proposalStatus === "rejected" ?
+                "Open dispute"
+              : "Dispute"}
+            </Button>
+            <Modal
+              title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
+              onClose={() => setIsModalOpened(false)}
+              isOpen={isModalOpened}
+            >
+              {content}
+              {proposalStatus !== "rejected" && buttons}
+            </Modal>
+          </>
+        )}
     </>
   );
 };
