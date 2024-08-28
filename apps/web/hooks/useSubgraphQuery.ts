@@ -78,7 +78,7 @@ export function useSubgraphQuery<
   }
 
   useEffect(() => {
-    if (!connected || !changeScope || !changeScope.length) {
+    if (!changeScope || changeScope.length === 0) {
       return;
     }
 
