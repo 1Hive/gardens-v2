@@ -7,7 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
-import { Address, Address as AddressType, useAccount } from "wagmi";
+import { Address, useAccount } from "wagmi";
 import {
   Allo,
   CVProposal,
