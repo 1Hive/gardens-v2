@@ -135,7 +135,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const disputes = disputesResult?.proposalDisputes ?? [];
 
-  const isCouncilSafe = config.tribunalSafe === address?.toLowerCase();
+  const isTribunalSafe = config.tribunalSafe === address?.toLowerCase();
 
   const { writeAsync: writeDisputeProposalAsync } =
     useContractWriteWithConfirmations({
@@ -266,7 +266,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         <div className="w-full flex justify-end gap-4">
           {(
             DisputeStatus[lastDispute.status] === "waiting" &&
-            (isCouncilSafe || isTimeout)
+            (isTribunalSafe || isTimeout)
           ) ?
             <>
               <Button
