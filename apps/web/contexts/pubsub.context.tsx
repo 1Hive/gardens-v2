@@ -193,8 +193,8 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       scope: ChangeEventScope[] | ChangeEventScope,
       onChangeEvent: (payload: ChangeEventPayload) => void,
     ) => {
-      console.debug("⚡ WS: subscribe", scope);
       const subscriptionId = uniqueId();
+      console.debug(`⚡ WS: subscribe ${subscriptionId}`, scope);
       subMap.set(subscriptionId, {
         scopes: (scope.length ? scope : [scope]) as ChangeEventScope[],
         onChangeEvent,
@@ -205,6 +205,7 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   );
 
   const unsubscribe = (subscriptionId: SubscriptionId) => {
+    console.debug(`⚡ WS: unsubscribe ${subscriptionId}`);
     subMap.delete(subscriptionId);
   };
 

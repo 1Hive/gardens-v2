@@ -2,10 +2,9 @@
 import { useEffect } from "react";
 import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
-import Markdown from "markdown-to-jsx";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
-import { useToken, useAccount } from "wagmi";
+import { useAccount, useToken, useAccount } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
@@ -20,6 +19,7 @@ import {
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -52,6 +52,7 @@ export default function Page({
   };
 }) {
   const { isDisconnected } = useAccount();
+  const [strategyId, proposalNumber] = proposalId.split("-");
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -60,13 +61,13 @@ export default function Page({
     },
     changeScope: {
       topic: "proposal",
-      id: proposalId,
+      containerId: strategyId,
+      id: proposalNumber,
       type: "update",
     },
   });
 
   const proposalData = data?.cvproposal;
-  const metadata = proposalData?.metadata;
   const proposalIdNumber =
     proposalData?.proposalNumber ?
       BigInt(proposalData.proposalNumber)
@@ -79,13 +80,17 @@ export default function Page({
     address: poolTokenAddr,
     enabled: !!poolTokenAddr,
   });
-  const { data: ipfsResult } = useProposalMetadataIpfsFetch({ hash: metadata });
+  const { data: ipfsResult } = useProposalMetadataIpfsFetch({
+    hash: proposalData?.metadataHash,
+    enabled: !proposalData?.metadata,
+  });
+  const metadata = proposalData?.metadata ?? ipfsResult;
 
   const {
     currentConvictionPct,
     thresholdPct,
     totalSupportPct,
-    updateConvictionLast,
+    updatedConviction,
   } = useConvictionRead({
     proposalData,
     tokenData: data?.tokenGarden,
@@ -140,9 +145,9 @@ export default function Page({
 
   if (
     !proposalData ||
-    !ipfsResult ||
+    !metadata ||
     proposalIdNumber == null ||
-    updateConvictionLast == null
+    updatedConviction == null
   ) {
     return (
       <div className="mt-96">
@@ -166,7 +171,7 @@ export default function Page({
             <div>
               <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                 <h2>
-                  {ipfsResult?.title} #{proposalIdNumber.toString()}
+                  {metadata?.title} #{proposalIdNumber.toString()}
                 </h2>
                 <Badge type={proposalType} />
               </div>
@@ -180,21 +185,9 @@ export default function Page({
                 </p>
               </div>
             </div>
-            <Markdown
-              options={{
-                disableParsingRawHTML: true,
-                overrides: {
-                  h1: { props: { className: "text-2xl font-semibold my-3" } },
-                  h2: { props: { className: "text-xl font-semibold my-2" } },
-                  h3: { props: { className: "text-lg font-semibold my-1" } },
-                  h4: { props: { className: "text-base font-semibold" } },
-                  h5: { props: { className: "text-sm font-semibold" } },
-                  h6: { props: { className: "text-xs font-semibold" } },
-                },
-              }}
-            >
-              {ipfsResult?.description ?? "No description found"}
-            </Markdown>
+            <MarkdownWrapper>
+              {metadata?.description ?? "No description found"}
+            </MarkdownWrapper>
             <div className="flex justify-between">
               <div className="flex flex-col gap-2">
                 {!isSignalingType && (
@@ -221,7 +214,7 @@ export default function Page({
               </div>
               <div className="flex items-end">
                 <DisputeButton
-                  proposalData={{ ...proposalData, ...ipfsResult }}
+                  proposalData={{ ...proposalData, ...metadata }}
                 />
               </div>
             </div>

@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
-import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
 
 struct CommunityInfo {
     uint256 fee;

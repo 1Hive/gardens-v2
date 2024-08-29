@@ -203,13 +203,10 @@ export function Proposals({
     if (fetchingProposals == null) {
       setFetchingProposals(true);
     }
-    getProposals(wallet, strategy)
+    getProposals(strategy)
       .then((res) => {
         if (res !== undefined) {
-          const filteredProposals = res.filter(
-            ({ status }) => ProposalStatus[status] !== "rejected",
-          );
-          setProposals(filteredProposals);
+          setProposals(res);
         } else {
           console.debug("No proposals");
         }
@@ -409,31 +406,77 @@ export function Proposals({
         </div>
         <div className="flex flex-col gap-6">
           {proposals && inputs ?
-            proposals.map((proposalData, i) => (
-              <Fragment key={proposalData.proposalNumber}>
-                <ProposalCard
-                  proposalData={proposalData}
-                  inputData={inputs[i]}
-                  stakedFilter={stakedFilters[i]}
-                  index={i}
-                  isAllocationView={allocationView}
-                  tooltipMessage={tooltipMessage}
-                  memberActivatedPoints={memberActivatedPoints}
-                  memberPoolWeight={memberPoolWeight}
-                  executeDisabled={
-                    proposalData.proposalStatus == 4 ||
-                    !isConnected ||
-                    missmatchUrl
-                  }
-                  poolToken={poolToken}
-                  tokenDecimals={tokenDecimals}
-                  alloInfo={alloInfo}
-                  triggerRenderProposals={triggerRenderProposals}
-                  inputHandler={inputHandler}
-                  tokenData={strategy.registryCommunity.garden}
-                />
-              </Fragment>
-            ))
+            <>
+              {proposals
+                .filter(
+                  (x) =>
+                    ProposalStatus[x.status] === "active" ||
+                    ProposalStatus[x.status] === "disputed",
+                )
+                .map((proposalData, i) => (
+                  <Fragment key={proposalData.proposalNumber}>
+                    <ProposalCard
+                      proposalData={proposalData}
+                      inputData={inputs[i]}
+                      stakedFilter={stakedFilters[i]}
+                      index={i}
+                      isAllocationView={allocationView}
+                      tooltipMessage={tooltipMessage}
+                      memberActivatedPoints={memberActivatedPoints}
+                      memberPoolWeight={memberPoolWeight}
+                      executeDisabled={
+                        proposalData.proposalStatus == 4 ||
+                        !isConnected ||
+                        missmatchUrl
+                      }
+                      poolToken={poolToken}
+                      tokenDecimals={tokenDecimals}
+                      alloInfo={alloInfo}
+                      triggerRenderProposals={triggerRenderProposals}
+                      inputHandler={inputHandler}
+                      tokenData={strategy.registryCommunity.garden}
+                    />
+                  </Fragment>
+                ))}
+              <details className="collapse collapse-arrow">
+                <summary className="collapse-title text-xl font-medium bg-neutral-soft mb-4 rounded-b-2xl">
+                  Click to see ended proposals
+                </summary>
+                <div className="collapse-content px-0 flex flex-col gap-6">
+                  {proposals
+                    .filter(
+                      (x) =>
+                        ProposalStatus[x.status] !== "active" &&
+                        ProposalStatus[x.status] !== "disputed",
+                    )
+                    .map((proposalData, i) => (
+                      <Fragment key={proposalData.proposalNumber}>
+                        <ProposalCard
+                          proposalData={proposalData}
+                          inputData={inputs[i]}
+                          stakedFilter={stakedFilters[i]}
+                          index={i}
+                          isAllocationView={allocationView}
+                          tooltipMessage={tooltipMessage}
+                          memberActivatedPoints={memberActivatedPoints}
+                          memberPoolWeight={memberPoolWeight}
+                          executeDisabled={
+                            proposalData.proposalStatus == 4 ||
+                            !isConnected ||
+                            missmatchUrl
+                          }
+                          poolToken={poolToken}
+                          tokenDecimals={tokenDecimals}
+                          alloInfo={alloInfo}
+                          triggerRenderProposals={triggerRenderProposals}
+                          inputHandler={inputHandler}
+                          tokenData={strategy.registryCommunity.garden}
+                        />
+                      </Fragment>
+                    ))}
+                </div>
+              </details>
+            </>
           : <LoadingSpinner />}
         </div>
         {allocationView ?

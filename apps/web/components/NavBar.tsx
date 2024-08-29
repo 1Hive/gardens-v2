@@ -2,7 +2,11 @@
 
 import React from "react";
 import { Disclosure } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowTopRightOnSquareIcon,
+  Bars3Icon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { newLogo } from "@/assets";
@@ -38,19 +42,21 @@ export function NavBar() {
                     pre-beta release{" "}
                   </p>
                 </div>
-                <div className="hidden sm:ml-4 sm:flex sm:space-x-8">
-                  {/* {navItems.map(({ name, href }) => (
-                    <Link
-                      key={href}
-                      href={href}
-                      className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                    >
-                      {name}
-                    </Link>
-                  ))} */}
-                </div>
               </div>
-              <div className="hidden sm:ml-6 sm:flex sm:items-center">
+              <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
+                <a
+                  href="https://docs.gardens.fund"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
+                >
+                  Docs
+                  <ArrowTopRightOnSquareIcon
+                    width={16}
+                    height={16}
+                    className="text-primary-content"
+                  />
+                </a>
                 <ConnectWallet />
               </div>
               <div className="-mr-2 flex items-center sm:hidden">
@@ -71,7 +77,6 @@ export function NavBar() {
               </div>
             </div>
           </div>
-
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 pb-3 pt-2">
               {navItems.map(({ name, href }) => (
@@ -83,16 +88,6 @@ export function NavBar() {
                   {name}
                 </Link>
               ))}
-            </div>
-            <div className="flex border-t border-gray-200 p-4">
-              {/* <ConnectButton /> */}
-              {/* <Button
-                disabled={connecting}
-                onClick={() => (wallet ? disconnect(wallet) : connect())}
-                className="bg-primary"
-              >
-                {connecting ? "Connecting" : wallet ? "Disconnect" : "Connect"}
-              </Button> */}
             </div>
           </Disclosure.Panel>
         </>

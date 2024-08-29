@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
 import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
-
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 
@@ -53,7 +52,7 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         address _strategyTemplate,
         address _collateralVaultTemplate
     ) public virtual initializer {
-        ProxyOwnableUpgrader.initialize(_owner);
+        super.initialize(_owner);
         nonce = 0;
         _revertZeroAddress(_gardensFeeReceiver);
         _revertZeroAddress(_registryCommunityTemplate);

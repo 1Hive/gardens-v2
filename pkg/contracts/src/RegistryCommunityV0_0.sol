@@ -217,7 +217,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         address _collateralVaultTemplate,
         address owner
     ) public initializer {
-        _transferOwnership(owner);
+        super.initialize(owner);
         __ReentrancyGuard_init();
         __AccessControl_init();
 
@@ -241,6 +241,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         isKickEnabled = params._isKickEnabled;
         communityName = params._communityName;
         covenantIpfsHash = params.covenantIpfsHash;
+        
         registryFactory = params._registryFactory;
         feeReceiver = params._feeReceiver;
         councilSafe = ISafe(params._councilSafe);
@@ -578,7 +579,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         delete addressToMemberInfo[_member];
         delete strategiesByMember[_member];
 
-        gardenToken.transfer(_member, member.stakedAmount);
+        gardenToken.safeTransfer(_member, member.stakedAmount);
         emit MemberUnregistered(_member, member.stakedAmount);
     }
 
@@ -604,7 +605,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         deactivateAllStrategies(_member);
         delete addressToMemberInfo[_member];
 
-        gardenToken.transfer(_transferAddress, member.stakedAmount);
+        gardenToken.safeTransfer(_transferAddress, member.stakedAmount);
         emit MemberKicked(_member, _transferAddress, member.stakedAmount);
     }
 

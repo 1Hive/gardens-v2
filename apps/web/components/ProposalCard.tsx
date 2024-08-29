@@ -46,15 +46,20 @@ export function ProposalCard({
   tokenData,
   inputHandler,
 }: ProposalCardProps) {
-  const { title, id, proposalNumber, proposalStatus, requestedAmount, type } =
-    proposalData;
+  const {
+    metadata,
+    id,
+    proposalNumber,
+    proposalStatus,
+    requestedAmount,
+    type,
+  } = proposalData;
   const pathname = usePathname();
 
   const searchParams = useCollectQueryParams();
   // TODO: ADD border color when new proposal is added
   const isNewProposal =
-    searchParams[QUERY_PARAMS.poolPage.newPropsoal] ==
-    proposalData.proposalNumber;
+    searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalNumber;
 
   const { currentConvictionPct, thresholdPct, totalSupportPct } =
     useConvictionRead({
@@ -64,10 +69,8 @@ export function ProposalCard({
 
   //TODO: move execute func to proposalId page
 
-  const inputValue = calculatePercentage(
-    inputData.value,
-    memberActivatedPoints,
-  );
+  const inputValue =
+    inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
 
   const allocatedInProposal = calculatePercentage(
     stakedFilter?.value,
@@ -91,7 +94,9 @@ export function ProposalCard({
         >
           <Hashicon value={id} size={45} />
           <div className="overflow-hidden">
-            <h4 className="truncate first-letter:uppercase">{title}</h4>
+            <h4 className="truncate first-letter:uppercase">
+              {metadata.title}
+            </h4>
             <h6 className="text-sm">ID {proposalNumber}</h6>
           </div>
         </div>
@@ -108,7 +113,7 @@ export function ProposalCard({
                     type="range"
                     min={0}
                     max={memberActivatedPoints}
-                    value={inputData.value}
+                    value={inputData?.value}
                     className={
                       "range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]"
                     }
@@ -215,7 +220,7 @@ export function ProposalCard({
         proposalCardContent
       : <Card
           href={`${pathname}/${id}`}
-          className={`py-4 ${isNewProposal ? "!border-accent !border-2" : ""}`}
+          className={`py-4 ${isNewProposal ? "shadow-xl" : ""}`}
         >
           {proposalCardContent}
         </Card>

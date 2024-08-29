@@ -12,9 +12,9 @@ dataSources:
         type: Int
         data: 421614
     source:
-      address: "0x116124ef60ea9d325fc7b653b0dd4f8b4fc152a3"
+      address: "0x3d21D7C4c79bA08326C455E8CfEe2DEcec2c887e"
       abi: RegistryFactoryV0_0
-      startBlock: 71372968
+      startBlock: 73590700
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -46,9 +46,9 @@ dataSources:
         type: Int
         data: 421614
     source:
-      address: "0x860a8a650a38cf51c8d8259c301a5654568fce46"
+      address: "0xfF53a163e43EccC00d8FdE7acA24aa9FA4da7356"
       abi: PassportScorer
-      startBlock: 71372968
+      startBlock: 73590700
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -188,6 +188,19 @@ templates:
       handler: handleProposalDisputeMetadata
       entities:
         - ProposalDisputeMetadata
+      abis:
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+  
+  - name: ProposalMetadata
+    kind: file/ipfs
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/proposal-metadata.ts
+      handler: handleProposalMetadata
+      entities:
+        - ProposalMetadata
       abis:
         - name: CVStrategyV0_0
           file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json

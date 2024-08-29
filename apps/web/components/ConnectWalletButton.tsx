@@ -2,11 +2,7 @@
 
 import React, { Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
-import {
-  ChevronUpIcon,
-  PowerIcon,
-  ArrowTopRightOnSquareIcon,
-} from "@heroicons/react/24/solid";
+import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import cn from "classnames";
 import Image from "next/image";
@@ -49,7 +45,6 @@ export function ConnectWallet() {
       {({
         account: accountAddress,
         chain,
-        openChainModal,
         openConnectModal,
         mounted,
       }) => {
@@ -193,35 +188,6 @@ export function ConnectWallet() {
                                 Disconnect
                               </Button>
                             </Menu.Item>
-                            <div className="flex gap-2 items-center justify-end border-t-[1px] border-neutral-soft pt-4">
-                              <a
-                                href="/"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-primary-content subtitle2 flex items-center gap-1"
-                              >
-                                Home
-                                <ArrowTopRightOnSquareIcon
-                                  width={16}
-                                  height={16}
-                                  className="text-primary-content"
-                                />
-                              </a>
-                              <div className="text-neutral-soft">|</div>
-                              <a
-                                href="https://docs.gardens.fund"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-primary-content subtitle2 flex items-center gap-1"
-                              >
-                                Docs
-                                <ArrowTopRightOnSquareIcon
-                                  width={16}
-                                  height={16}
-                                  className="text-primary-content"
-                                />
-                              </a>
-                            </div>
                           </div>
                         </Menu.Items>
                       </Transition>
