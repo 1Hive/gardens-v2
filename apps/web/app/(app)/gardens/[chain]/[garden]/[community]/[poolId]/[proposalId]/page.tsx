@@ -4,7 +4,7 @@ import { Hashicon } from "@emeraldpay/hashicon-react";
 import { InformationCircleIcon, UserIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 import { Address, encodeAbiParameters, formatUnits } from "viem";
-import { useAccount, useToken, useAccount } from "wagmi";
+import { useAccount, useToken } from "wagmi";
 import {
   getProposalDataDocument,
   getProposalDataQuery,
