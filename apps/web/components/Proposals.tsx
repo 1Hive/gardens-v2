@@ -7,6 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
+import { parseAbiParameters, encodeAbiParameters } from "viem";
 import { Address, Address as AddressType, useAccount } from "wagmi";
 import {
   Allo,
@@ -35,7 +36,6 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
-import { parseAbiParameters, encodeAbiParameters } from "viem";
 
 // Types
 export type ProposalInputItem = {
@@ -300,7 +300,7 @@ export function Proposals({
     );
 
     const abiTypes = parseAbiParameters(
-      `(uint256 proposalId, int256 deltaSupport)[]`,
+      "(uint256 proposalId, int256 deltaSupport)[]",
     );
     const encodedData = encodeAbiParameters(abiTypes, [
       proposalsDifferencesArr,
