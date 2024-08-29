@@ -262,24 +262,6 @@ export function Proposals({
     setInputAllocatedTokens(currentPoints + value);
   };
 
-  const submit = async () => {
-    if (!inputs) {
-      console.error("Inputs not yet computed");
-      return;
-    }
-    const proposalsDifferencesArr = getProposalsInputsDifferences(
-      inputs,
-      stakedFilters,
-    );
-    const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
-      proposalsDifferencesArr,
-    ]);
-    const poolId = Number(strategy.poolId);
-    writeAllocate({
-      args: [BigInt(poolId), encodedData as AddressType],
-    });
-  };
-
   // Contract interaction
   const {
     write: writeAllocate,
@@ -303,6 +285,23 @@ export function Proposals({
       });
     },
   });
+  const submit = async () => {
+    if (!inputs) {
+      console.error("Inputs not yet computed");
+      return;
+    }
+    const proposalsDifferencesArr = getProposalsInputsDifferences(
+      inputs,
+      stakedFilters,
+    );
+    const encodedData = encodeFunctionParams(cvStrategyABI, "allocate", [
+      proposalsDifferencesArr,
+    ]);
+    const poolId = Number(strategy.poolId);
+    writeAllocate({
+      args: [BigInt(poolId), encodedData as AddressType],
+    });
+  };
 
   useErrorDetails(errorAllocate, "errorAllocate");
 
@@ -366,6 +365,12 @@ export function Proposals({
   );
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
+  );
+
+  const endedProposals = proposals?.filter(
+    (x) =>
+      ProposalStatus[x.status] !== "active" &&
+      ProposalStatus[x.status] !== "disputed",
   );
 
   // Render
@@ -438,44 +443,46 @@ export function Proposals({
                     />
                   </Fragment>
                 ))}
-              <details className="collapse collapse-arrow">
-                <summary className="collapse-title text-xl font-medium bg-neutral-soft mb-4 rounded-b-2xl">
-                  Click to see ended proposals
-                </summary>
-                <div className="collapse-content px-0 flex flex-col gap-6">
-                  {proposals
-                    .filter(
-                      (x) =>
-                        ProposalStatus[x.status] !== "active" &&
-                        ProposalStatus[x.status] !== "disputed",
-                    )
-                    .map((proposalData, i) => (
-                      <Fragment key={proposalData.proposalNumber}>
-                        <ProposalCard
-                          proposalData={proposalData}
-                          inputData={inputs[i]}
-                          stakedFilter={stakedFilters[i]}
-                          index={i}
-                          isAllocationView={allocationView}
-                          tooltipMessage={tooltipMessage}
-                          memberActivatedPoints={memberActivatedPoints}
-                          memberPoolWeight={memberPoolWeight}
-                          executeDisabled={
-                            proposalData.proposalStatus == 4 ||
-                            !isConnected ||
-                            missmatchUrl
-                          }
-                          poolToken={poolToken}
-                          tokenDecimals={tokenDecimals}
-                          alloInfo={alloInfo}
-                          triggerRenderProposals={triggerRenderProposals}
-                          inputHandler={inputHandler}
-                          tokenData={strategy.registryCommunity.garden}
-                        />
-                      </Fragment>
-                    ))}
-                </div>
-              </details>
+              {!allocationView && !!endedProposals?.length && (
+                <details className="collapse collapse-arrow">
+                  <summary className="collapse-title text-md font-medium bg-neutral-soft mb-4 rounded-b-2xl flex content-center">
+                    Click to see ended proposals
+                  </summary>
+                  <div className="collapse-content px-0 flex flex-col gap-6">
+                    {proposals
+                      .filter(
+                        (x) =>
+                          ProposalStatus[x.status] !== "active" &&
+                          ProposalStatus[x.status] !== "disputed",
+                      )
+                      .map((proposalData, i) => (
+                        <Fragment key={proposalData.proposalNumber}>
+                          <ProposalCard
+                            proposalData={proposalData}
+                            inputData={inputs[i]}
+                            stakedFilter={stakedFilters[i]}
+                            index={i}
+                            isAllocationView={allocationView}
+                            tooltipMessage={tooltipMessage}
+                            memberActivatedPoints={memberActivatedPoints}
+                            memberPoolWeight={memberPoolWeight}
+                            executeDisabled={
+                              proposalData.proposalStatus == 4 ||
+                              !isConnected ||
+                              missmatchUrl
+                            }
+                            poolToken={poolToken}
+                            tokenDecimals={tokenDecimals}
+                            alloInfo={alloInfo}
+                            triggerRenderProposals={triggerRenderProposals}
+                            inputHandler={inputHandler}
+                            tokenData={strategy.registryCommunity.garden}
+                          />
+                        </Fragment>
+                      ))}
+                  </div>
+                </details>
+              )}
             </>
           : <LoadingSpinner />}
         </div>
