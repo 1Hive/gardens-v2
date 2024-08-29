@@ -35,6 +35,7 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
+import { parseAbiParameters, encodeAbiParameters } from "viem";
 
 // Types
 export type ProposalInputItem = {
@@ -225,16 +226,19 @@ export function Proposals({
   const getProposalsInputsDifferences = (
     inputData: ProposalInputItem[],
     currentData: ProposalInputItem[],
-  ): [number, bigint][] => {
-    return inputData.reduce<[number, bigint][]>((acc, input) => {
-      const current = currentData.find((item) => item.id === input.id);
-      const diff =
-        BigInt(Math.floor(input.value)) - BigInt(current?.value ?? 0);
-      if (diff !== 0n) {
-        acc.push([Number(input.id), diff]);
-      }
-      return acc;
-    }, []);
+  ) => {
+    return inputData.reduce<{ proposalId: bigint; deltaSupport: bigint }[]>(
+      (acc, input) => {
+        const current = currentData.find((item) => item.id === input.id);
+        const diff =
+          BigInt(Math.floor(input.value)) - BigInt(current?.value ?? 0);
+        if (diff !== 0n) {
+          acc.push({ proposalId: BigInt(input.id), deltaSupport: diff });
+        }
+        return acc;
+      },
+      [],
+    );
   };
 
   const calculateTotalTokens = (exceptIndex?: number) => {
@@ -294,12 +298,16 @@ export function Proposals({
       inputs,
       stakedFilters,
     );
-    const encodedData = encodeFunctionParams(cvStrategyABI, "allocate", [
+
+    const abiTypes = parseAbiParameters(
+      `(uint256 proposalId, int256 deltaSupport)[]`,
+    );
+    const encodedData = encodeAbiParameters(abiTypes, [
       proposalsDifferencesArr,
     ]);
     const poolId = Number(strategy.poolId);
     writeAllocate({
-      args: [BigInt(poolId), encodedData as AddressType],
+      args: [BigInt(poolId), encodedData],
     });
   };
 
@@ -413,11 +421,11 @@ export function Proposals({
           {proposals && inputs ?
             <>
               {proposals
-                .filter(
-                  (x) =>
-                    ProposalStatus[x.status] === "active" ||
-                    ProposalStatus[x.status] === "disputed",
-                )
+                // .filter(
+                //   (x) =>
+                //     ProposalStatus[x.status] === "active" ||
+                //     ProposalStatus[x.status] === "disputed",
+                // )
                 .map((proposalData, i) => (
                   <Fragment key={proposalData.proposalNumber}>
                     <ProposalCard
@@ -443,7 +451,7 @@ export function Proposals({
                     />
                   </Fragment>
                 ))}
-              {!allocationView && !!endedProposals?.length && (
+              {/* {!allocationView && !!endedProposals?.length && (
                 <details className="collapse collapse-arrow">
                   <summary className="collapse-title text-md font-medium bg-neutral-soft mb-4 rounded-b-2xl flex content-center">
                     Click to see ended proposals
@@ -482,7 +490,7 @@ export function Proposals({
                       ))}
                   </div>
                 </details>
-              )}
+              )} */}
             </>
           : <LoadingSpinner />}
         </div>
