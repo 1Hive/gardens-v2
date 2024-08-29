@@ -25,14 +25,13 @@ export function useCovenantAgreementSignature(
         rel="noreferrer"
         className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
       >
-        Covenant
+        Covenant Agreement
         <ArrowTopRightOnSquareIcon
           width={16}
           height={16}
           className="text-primary-content"
         />
       </a>
-      Agreement
     </div>
   );
   const [covenantAgreementTxProps, setCovenantAgreementTxProps] =
