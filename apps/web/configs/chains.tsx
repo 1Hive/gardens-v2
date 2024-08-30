@@ -21,8 +21,6 @@ type ChainIconProps = React.SVGProps<SVGSVGElement> & {
   chain: number | string;
 };
 
-export const isProd = process.env.NEXT_PUBLIC_ENV_GARDENS === "prod";
-
 export const chains: Chain[] = [
   arbitrumSepolia,
   // optimismSepolia,

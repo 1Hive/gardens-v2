@@ -9,7 +9,8 @@ import { debounce, isEqual } from "lodash-es";
 import { toast } from "react-toastify";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
-import { chains, getConfigByChain, isProd } from "@/configs/chains";
+import { chains, getConfigByChain } from "@/configs/chains";
+import { isProd } from "@/configs/isProd";
 import {
   ChangeEventScope,
   SubscriptionId,

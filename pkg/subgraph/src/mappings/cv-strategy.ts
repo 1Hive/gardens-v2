@@ -7,7 +7,10 @@ import {
   Member,
   ProposalDispute
 } from "../../generated/schema";
-import { ProposalDisputeMetadata as ProposalDisputeMetadataTemplate } from "../../generated/templates";
+import {
+  ProposalDisputeMetadata as ProposalDisputeMetadataTemplate,
+  ProposalMetadata as ProposalMetadataTemplate
+} from "../../generated/templates";
 
 import {
   Distributed,
@@ -145,11 +148,12 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   const pointer = cvc.getMetadata(event.params.proposalId).pointer;
 
+  newProposal.metadataHash = pointer;
   newProposal.metadata = pointer;
-  // const metadataID = `${pointer}-${proposalIdString}`;
-  const metadataID = `${pointer}`;
+  ProposalMetadataTemplate.create(pointer);
+
   // newProposal.proposalMeta = metadataID;
-  log.debug("CVStrategy: handleProposalCreated pointer:{}", [metadataID]);
+  log.debug("CVStrategy: handleProposalCreated: {}", [proposalIdString]);
   newProposal.createdAt = event.block.timestamp;
   newProposal.updatedAt = event.block.timestamp;
 
@@ -519,7 +523,7 @@ export function handleProposalDisputed(event: ProposalDisputed): void {
   dispute.metadata = event.params.context;
   dispute.status = DISPUTE_STATUS_WAITING;
 
-  ProposalDisputeMetadataTemplate.create(dispute.metadata);
+  ProposalDisputeMetadataTemplate.create(event.params.context);
   dispute.save();
 
   // Change proposal status to disputed

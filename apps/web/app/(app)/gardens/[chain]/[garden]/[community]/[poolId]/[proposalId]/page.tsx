@@ -52,6 +52,7 @@ export default function Page({
   };
 }) {
   const { isDisconnected } = useAccount();
+  const [strategyId, proposalNumber] = proposalId.split("-");
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -60,13 +61,13 @@ export default function Page({
     },
     changeScope: {
       topic: "proposal",
-      id: proposalId,
+      containerId: strategyId,
+      id: proposalNumber,
       type: "update",
     },
   });
 
   const proposalData = data?.cvproposal;
-  const metadata = proposalData?.metadata;
   const proposalIdNumber =
     proposalData?.proposalNumber ?
       BigInt(proposalData.proposalNumber)
@@ -79,7 +80,11 @@ export default function Page({
     address: poolTokenAddr,
     enabled: !!poolTokenAddr,
   });
-  const { data: ipfsResult } = useProposalMetadataIpfsFetch({ hash: metadata });
+  const { data: ipfsResult } = useProposalMetadataIpfsFetch({
+    hash: proposalData?.metadataHash,
+    enabled: !proposalData?.metadata,
+  });
+  const metadata = proposalData?.metadata ?? ipfsResult;
 
   const {
     currentConvictionPct,
@@ -140,7 +145,7 @@ export default function Page({
 
   if (
     !proposalData ||
-    !ipfsResult ||
+    !metadata ||
     proposalIdNumber == null ||
     updatedConviction == null
   ) {
@@ -166,7 +171,7 @@ export default function Page({
             <div>
               <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                 <h2>
-                  {ipfsResult?.title} #{proposalIdNumber.toString()}
+                  {metadata?.title} #{proposalIdNumber.toString()}
                 </h2>
                 <Badge type={proposalType} />
               </div>
@@ -181,7 +186,7 @@ export default function Page({
               </div>
             </div>
             <MarkdownWrapper>
-              {ipfsResult?.description ?? "No description found"}
+              {metadata?.description ?? "No description found"}
             </MarkdownWrapper>
             <div className="flex justify-between">
               <div className="flex flex-col gap-2">
@@ -209,7 +214,7 @@ export default function Page({
               </div>
               <div className="flex items-end">
                 <DisputeButton
-                  proposalData={{ ...proposalData, ...ipfsResult }}
+                  proposalData={{ ...proposalData, ...metadata }}
                 />
               </div>
             </div>
