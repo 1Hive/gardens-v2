@@ -46,7 +46,7 @@
       "testnet": true,
       "no-safe": false,
       "ENVS": {
-        "SENDER": "0x07ad02e0c1fa0b09fc945ff197e18e9c256838c6",
+        "SENDER": "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
         "COUNCIL_SAFE": "0xc6Eaf449f79B081300F5317122B2Dff3f039ad0b",
         "SAFE_PROXY_FACTORY": "0xC22834581EbC8527d974F8a1c97E1bEA4EF910BC",
         "TOKEN": "0xb34d5a6186fe1aee35005886271f3b2ca2d17c20",
