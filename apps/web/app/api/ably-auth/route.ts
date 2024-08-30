@@ -3,7 +3,6 @@
 import Ably from "ably";
 import { NextResponse } from "next/server";
 import { HTTP_CODES } from "../utils";
-import { isProd } from "@/configs/chains";
 import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
 
 export async function POST() {
@@ -31,7 +30,7 @@ export async function POST() {
     return NextResponse.json({
       status: HTTP_CODES.SERVER_ERROR,
       message: "Failed to generate token",
-      error: isProd ? undefined : error,
+      error: process.env.NODE_ENV === "production" ? undefined : error,
     });
   }
 }
