@@ -14,6 +14,8 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {AccessControlUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
@@ -122,10 +124,11 @@ library StrategyStruct {
         ArbitrableConfig arbitrableConfig;
         address registryCommunity;
         address sybilScorer;
+        address[] initialAllowlist;
     }
 }
 
-contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
+contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165, AccessControlUpgradeable {
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -264,13 +267,30 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (ip.registryCommunity == address(0)) {
             revert RegistryCannotBeZero();
         }
-
+        //Set councilsafe to whitelist admin
         registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
 
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
+        // Only to call grantRole in initialize
+        _setupRole(DEFAULT_ADMIN_ROLE, address(allo));
+        // For future grantRole calls from the council safe
+        _setupRole(DEFAULT_ADMIN_ROLE, address(registryCommunity.councilSafe()));
+        if (ip.initialAllowlist.length == 0) {
+            grantRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), address(0));
+        }
+        /*
+        if (ip.initialAllowlist.length == 0 && address(sybilScorer) == address(0)) {
+            // other approach, would have a local bool variable "allowAll"
+            allowAll = true;
+        }
+        */
+        else {
+            _addToAllowlist(ip.initialAllowlist);
+        }
+        revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), address(allo));
 
         _setPoolParams(ip.arbitrableConfig, ip.cvParams);
 
@@ -290,7 +310,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // // surpressStateMutabilityWarning++;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC165, AccessControlUpgradeable)
+        returns (bool)
+    {
         return interfaceId == type(IPointStrategy).interfaceId || super.supportsInterface(interfaceId);
     }
 
@@ -328,7 +354,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function _canExecuteAction(address _user) internal view returns (bool) {
         if (address(sybilScorer) == address(0)) {
+            // if (registry.hasRole(address(0))) {
             return true;
+            // }
+            // else {
+            // return isWhitelisted(_user);
+            // }
         }
         return sybilScorer.canExecuteAction(_user, address(this));
     }
@@ -993,6 +1024,34 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function totalEffectiveActivePoints() public view returns (uint256) {
         return totalPointsActivated;
+    }
+
+    //TODO
+    function _addToAllowlist(address[] memory members) internal {
+        bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+
+        if (hasRole(allowlistRole, address(0))) {
+            revokeRole(allowlistRole, address(0));
+        }
+        for (uint256 i = 0; i < members.length; i++) {
+            if (!hasRole(allowlistRole, members[i])) {
+                grantRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
+            }
+        }
+    }
+
+    function addToAllowlist(address[] memory members) public {
+        onlyCouncilSafe();
+        _addToAllowlist(members);
+    }
+
+    function removeFromAllowList(address[] memory members) public {
+        onlyCouncilSafe();
+        for (uint256 i = 0; i < members.length; i++) {
+            if (hasRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i])) {
+                revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
+            }
+        }
     }
 
     /**

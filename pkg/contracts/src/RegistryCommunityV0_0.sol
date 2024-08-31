@@ -211,6 +211,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         address[] strategies;
     }
 
+    // AUDIT: acknowledged upgradeable contract hat does not protect initialize functions,
     function initialize(
         RegistryCommunityV0_0.InitializeParams memory params,
         address _strategyTemplate,
@@ -241,7 +242,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         isKickEnabled = params._isKickEnabled;
         communityName = params._communityName;
         covenantIpfsHash = params.covenantIpfsHash;
-        
+
         registryFactory = params._registryFactory;
         feeReceiver = params._feeReceiver;
         councilSafe = ISafe(params._councilSafe);
