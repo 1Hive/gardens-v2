@@ -374,11 +374,11 @@ export function Proposals({
     disableManageSupportBtnCondition,
   );
 
-  const endedProposals = proposals?.filter(
-    (x) =>
-      ProposalStatus[x.status] !== "active" &&
-      ProposalStatus[x.status] !== "disputed",
-  );
+  // const endedProposals = proposals?.filter(
+  //   (x) =>
+  //     ProposalStatus[x.status] !== "active" &&
+  //     ProposalStatus[x.status] !== "disputed",
+  // );
 
   // Render
   return (
