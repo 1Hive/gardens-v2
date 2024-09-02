@@ -80,7 +80,7 @@ export const chainConfigMap: {
     blockTime: 0.23,
     confirmations: 7,
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET!,
-    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP?.replace("/latest", "")}/${SUBGRAPH_TESTNET_VERSION}`,
+    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP?.replace("/version/latest", "")}/${SUBGRAPH_TESTNET_VERSION}`,
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xe32566076534973ff78b512ec6a321a58c2b735c",
@@ -94,7 +94,7 @@ export const chainConfigMap: {
     blockTime: 12,
     confirmations: 1, // 3
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ETH_TESTNET!,
-    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP?.replace("/latest", "")}/${SUBGRAPH_TESTNET_VERSION}`,
+    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP?.replace("/version/latest", "")}/${SUBGRAPH_TESTNET_VERSION}`,
     globalTribunal: "0xc6Eaf449f79B081300F5317122B2Dff3f039ad0b",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x",
@@ -118,7 +118,7 @@ export const chainConfigMap: {
     blockTime: 0.25,
     confirmations: 7, // 7
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ARBITRUM!,
-    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARBITRUM?.replace("/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
+    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARBITRUM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xd58ff588177f02cc535a0e235a4c002a17e27202",
@@ -132,7 +132,7 @@ export const chainConfigMap: {
     blockTime: 2,
     confirmations: 2, // 2
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_OPTIMISM!,
-    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_OPTIMISM?.replace("/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
+    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_OPTIMISM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9",
@@ -146,7 +146,7 @@ export const chainConfigMap: {
     blockTime: 2.1,
     confirmations: 4, // 4
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_MATIC!,
-    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_MATIC?.replace("/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
+    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_MATIC?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x7842e2d0dda2e64727c251382e9b1ee70fa33b94",
@@ -160,7 +160,7 @@ export const chainConfigMap: {
   //   blockTime: 5.2,
   //   confirmations: 4, // 4
   //   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_GNOSIS!,
-  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
+  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
   //   globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
   //   allo: "0x",
   //   arbitrator: "0x",
@@ -174,7 +174,7 @@ export const chainConfigMap: {
   //   blockTime: 12,
   //   confirmations: 3, // 3
   //   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ETHEREUM!,
-  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM?.replace("/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
+  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
   //   globalTribunal: "0x",
   //   allo: "0x",
   //   arbitrator: "0x",
