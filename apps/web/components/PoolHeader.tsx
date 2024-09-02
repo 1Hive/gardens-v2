@@ -108,7 +108,7 @@ export default function PoolHeader({
 
   const minThresholdPoints = formatTokenAmount(
     strategy.config.minThresholdPoints,
-    token.decimals,
+    +token.decimals,
   );
   const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
   const communityAddr = strategy.registryCommunity.id as Address;
