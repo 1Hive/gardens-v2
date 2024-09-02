@@ -14,8 +14,6 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {AccessControlUpgradeable} from
-    "openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
@@ -128,7 +126,7 @@ library StrategyStruct {
     }
 }
 
-contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165, AccessControlUpgradeable {
+contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -274,23 +272,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
-        // Only to call grantRole in initialize
-        _setupRole(DEFAULT_ADMIN_ROLE, address(allo));
-        // For future grantRole calls from the council safe
-        _setupRole(DEFAULT_ADMIN_ROLE, address(registryCommunity.councilSafe()));
-        if (ip.initialAllowlist.length == 0) {
-            grantRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), address(0));
-        }
-        /*
-        if (ip.initialAllowlist.length == 0 && address(sybilScorer) == address(0)) {
-            // other approach, would have a local bool variable "allowAll"
-            allowAll = true;
-        }
-        */
-        else {
-            _addToAllowlist(ip.initialAllowlist);
-        }
-        revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), address(allo));
 
         _setPoolParams(ip.arbitrableConfig, ip.cvParams);
 
@@ -314,7 +295,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         public
         view
         virtual
-        override(ERC165, AccessControlUpgradeable)
+        override(ERC165)
         returns (bool)
     {
         return interfaceId == type(IPointStrategy).interfaceId || super.supportsInterface(interfaceId);
@@ -354,7 +335,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function _canExecuteAction(address _user) internal view returns (bool) {
         if (address(sybilScorer) == address(0)) {
-            // if (registry.hasRole(address(0))) {
+            // if (registry.registryCommunity.hasRole(address(0))) {
             return true;
             // }
             // else {
@@ -1030,12 +1011,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function _addToAllowlist(address[] memory members) internal {
         bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
 
-        if (hasRole(allowlistRole, address(0))) {
-            revokeRole(allowlistRole, address(0));
+        if (registryCommunity.hasRole(allowlistRole, address(0))) {
+            registryCommunity.revokeRole(allowlistRole, address(0));
         }
         for (uint256 i = 0; i < members.length; i++) {
-            if (!hasRole(allowlistRole, members[i])) {
-                grantRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
+            if (!registryCommunity.hasRole(allowlistRole, members[i])) {
+                registryCommunity.grantRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
             }
         }
     }
@@ -1048,8 +1029,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function removeFromAllowList(address[] memory members) public {
         onlyCouncilSafe();
         for (uint256 i = 0; i < members.length; i++) {
-            if (hasRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i])) {
-                revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
+            if (registryCommunity.hasRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i])) {
+                registryCommunity.revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
             }
         }
     }
