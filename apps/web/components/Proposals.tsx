@@ -368,11 +368,11 @@ export function Proposals({
     disableManageSupportBtnCondition,
   );
 
-  const endedProposals = proposals?.filter(
-    (x) =>
-      ProposalStatus[x.status] !== "active" &&
-      ProposalStatus[x.status] !== "disputed",
-  );
+  // const endedProposals = proposals?.filter(
+  //   (x) =>
+  //     ProposalStatus[x.status] !== "active" &&
+  //     ProposalStatus[x.status] !== "disputed",
+  // );
 
   // Render
   return (
@@ -444,7 +444,7 @@ export function Proposals({
                     />
                   </Fragment>
                 ))}
-              {!allocationView && !!endedProposals?.length && (
+              {!allocationView && (
                 <details className="collapse collapse-arrow">
                   <summary className="collapse-title text-md font-medium bg-neutral-soft mb-4 rounded-b-2xl flex content-center">
                     Click to see ended proposals
