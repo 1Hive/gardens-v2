@@ -497,7 +497,7 @@ const DisputeMessage = ({
         )}
       </div>
       <div className="chat-bubble shadow-lg bg-neutral-200">
-        {dispute.metadata.reason ?? disputeMetadata?.reason}
+        {dispute.metadata?.reason ?? disputeMetadata?.reason}
       </div>
     </div>
   );
