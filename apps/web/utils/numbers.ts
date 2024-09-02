@@ -17,6 +17,25 @@ export const CV_SCALE_PRECISION = 10 ** 7;
 export const CV_SCALE_PRECISION_DECIMALS = 7;
 export const ETH_DECIMALS = 18;
 
+export function convertSecondsToReadableTime(totalSeconds: number): {
+  value: number;
+  unit: "second" | "minute" | "hour" | "day";
+} {
+  const days = totalSeconds / (24 * 60 * 60);
+  const hours = totalSeconds / (60 * 60);
+  const minutes = totalSeconds / 60;
+
+  if (days >= 1) {
+    return { value: Number(days.toPrecision(2)), unit: "day" };
+  } else if (hours >= 1) {
+    return { value: Number(hours.toPrecision(2)), unit: "hour" };
+  } else if (minutes >= 1) {
+    return { value: Number(minutes.toPrecision(2)), unit: "minute" };
+  } else {
+    return { value: Number(totalSeconds.toPrecision(2)), unit: "second" };
+  }
+}
+
 export function parseToken(value: dn.Dnum | string, compact?: boolean) {
   const str =
     typeof value === "string" ? value : (
@@ -60,7 +79,7 @@ function formatTokenAmount(
   if (!value) {
     return "0";
   }
-  const num = [BigInt(Number(value).toFixed()), decimals] as const;
+  const num = [BigInt(value), decimals] as const;
 
   return dn.format(num, { digits: digits });
 }
