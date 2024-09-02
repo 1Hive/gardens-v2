@@ -308,7 +308,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     isLoading={rulingLoading === REJECTED_RULING}
                   >
                     <InfoWrapper
-                      classNames="[&>svg]:text-danger-content [&:before]:mr-10 tooltip-left"
+                      classNames="[&>svg]:text-danger-button [&:before]:mr-10 tooltip-left"
                       tooltip={
                         "Reject if the proposal violates the rules outlined in the community covenant."
                       }
@@ -464,7 +464,7 @@ const DisputeMessage = ({
         )}
       </div>
       <div className="chat-bubble shadow-lg bg-neutral-200">
-        {dispute.metadata.reason ?? disputeMetadata?.reason}
+        {dispute.metadata?.reason ?? disputeMetadata?.reason}
       </div>
     </div>
   );
