@@ -165,6 +165,9 @@ export default function PoolHeader({
     chainId: Number(chainId),
     enabled: !!address,
     args: [address as Address],
+    onError: () => {
+      console.error("Error reading isOwner");
+    },
   });
 
   const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
