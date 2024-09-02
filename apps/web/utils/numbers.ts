@@ -79,7 +79,7 @@ function formatTokenAmount(
   if (!value) {
     return "0";
   }
-  const num = [BigInt(Number(value).toFixed()), decimals] as const;
+  const num = [BigInt(value), decimals] as const;
 
   return dn.format(num, { digits: digits });
 }
