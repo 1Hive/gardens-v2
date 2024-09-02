@@ -146,6 +146,9 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     chainId: Number(chainId),
     enabled: !!address,
     args: [address as Address],
+    onError: () => {
+      console.error("Error reading isOwner from Tribunal Safe");
+    },
   });
 
   const { writeAsync: writeDisputeProposalAsync } =
