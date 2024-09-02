@@ -148,7 +148,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     enabled: !!address,
     args: [address as Address],
     onError: () => {
-      console.error("Error reading isOwner");
+      console.error("Error reading isOwner from Tribunal Safe");
     },
   });
 

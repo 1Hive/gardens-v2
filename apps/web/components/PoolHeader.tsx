@@ -108,7 +108,7 @@ export default function PoolHeader({
 
   const minThresholdPoints = formatTokenAmount(
     strategy.config.minThresholdPoints,
-    token.decimals,
+    +token.decimals,
   );
   const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
   const communityAddr = strategy.registryCommunity.id as Address;
@@ -166,7 +166,7 @@ export default function PoolHeader({
     enabled: !!address,
     args: [address as Address],
     onError: () => {
-      console.error("Error reading isOwner");
+      console.error("Error reading isOwner from Coucil Safe");
     },
   });
 
