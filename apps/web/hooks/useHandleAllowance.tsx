@@ -17,6 +17,7 @@ export function useHandleAllowance(
 ): {
   allowanceTxProps: TransactionProps;
   handleAllowance: () => void;
+  resetState: () => void;
 } {
   const chainId = useChainIdFromPath();
   const [allowanceTxProps, setAllowanceTxProps] = useState<TransactionProps>({
@@ -75,8 +76,16 @@ export function useHandleAllowance(
     }
   }, [transactionStatus]);
 
+  const resetState = () =>
+    setAllowanceTxProps({
+      contractName: `${tokenSymbol} expenditure approval`,
+      message: getTxMessage("idle"),
+      status: "idle",
+    });
+
   return {
     allowanceTxProps,
     handleAllowance,
+    resetState,
   };
 }
