@@ -23,12 +23,12 @@ import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 // import {StrategyStruct} from "../src/libraries/StrategyStruct.sol";
-// import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
+// import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 
 import {CollateralVault} from "../src/CollateralVault.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
-import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategyV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_0.sol";
 
 import {ISybilScorer, PassportData} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
@@ -41,7 +41,7 @@ import {ABDKMath64x64} from "./ABDKMath64x64.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 
 /* @dev Run
  * forge test --mc CVStrategyTest -vvvvv
@@ -78,7 +78,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     address factoryOwner = makeAddr("registryFactoryDeployer");
     address protocolFeeReceiver = makeAddr("multisigReceiver");
     address gardenMember = makeAddr("gardenMember");
-
 
     function setUp() public {
         __RegistrySetupFull();
@@ -2090,16 +2089,16 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     function testRevert_setPoolParams_ongoingDispute() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(address(token), 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
-        (,,,uint256 challengerCollateralAmount,,) = cv.arbitrableConfig();
+        (,,, uint256 challengerCollateralAmount,,) = cv.arbitrableConfig();
         uint256 totalFee = challengerCollateralAmount + safeArbitrator.arbitrationCost("0x");
         vm.deal(address(this), totalFee);
-        cv.disputeProposal{value:totalFee}(proposalId,"Dont like this proposal","0x");
+        cv.disputeProposal{value: totalFee}(proposalId, "Dont like this proposal", "0x");
         assertNotEq(cv.disputeCount(), 0);
         StrategyStruct.CVParams memory params = StrategyStruct.CVParams({
-        maxRatio: _etherToFloat(0.25 ether),
-        weight: _etherToFloat(0.002 ether),
-        decay: _etherToFloat(0.9 ether),
-        minThresholdPoints: 0
+            maxRatio: _etherToFloat(0.25 ether),
+            weight: _etherToFloat(0.002 ether),
+            decay: _etherToFloat(0.9 ether),
+            minThresholdPoints: 0
         });
         StrategyStruct.ArbitrableConfig memory arbConfig = StrategyStruct.ArbitrableConfig(
             safeArbitrator, payable(address(_councilSafe())), 0.25 ether, 0.2 ether, 1, 300
@@ -2108,8 +2107,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ArbitrationConfigCannotBeChangedDuringDispute.selector));
         cv.setPoolParams(arbConfig, params);
         vm.stopPrank();
-
     }
+
     function testRevert_distribute_onlyAllo_Native() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
@@ -2249,7 +2248,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         bytes memory data = abi.encode(proposal);
         (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
         vm.deal(address(this), submitterCollateralAmount);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.InsufficientCollateral.selector,0,submitterCollateralAmount));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategyV0_0.InsufficientCollateral.selector, 0, submitterCollateralAmount)
+        );
         uint256 WRONG_PROPOSAL_ID = uint160(allo().registerRecipient{value: 0}(poolId, data));
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
 
