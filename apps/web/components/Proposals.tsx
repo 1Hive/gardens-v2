@@ -7,6 +7,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
+import { parseAbiParameters, encodeAbiParameters } from "viem";
 import { Address, useAccount } from "wagmi";
 import {
   Allo,
@@ -29,13 +30,11 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, cvStrategyABI } from "@/src/generated";
+import { alloABI } from "@/src/generated";
 import { LightCVStrategy, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
-import { parseAbiParameters, encodeAbiParameters } from "viem";
 
 // Types
 export type ProposalInputItem = {
@@ -300,7 +299,7 @@ export function Proposals({
     );
 
     const abiTypes = parseAbiParameters(
-      `(uint256 proposalId, int256 deltaSupport)[]`,
+      "(uint256 proposalId, int256 deltaSupport)[]",
     );
     const encodedData = encodeAbiParameters(abiTypes, [
       proposalsDifferencesArr,
