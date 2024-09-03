@@ -1,9 +1,10 @@
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#default-profile
 [profile.default]
 solc-version = "0.8.19"
-src = 'pkg/contracts'
+src = 'pkg/contracts/src'
 test = 'pkg/contracts/test'
 out = 'pkg/contracts/out'
+script='pkg/contracts/script'
 libs = ['lib']
 ffi = true
 ast = true

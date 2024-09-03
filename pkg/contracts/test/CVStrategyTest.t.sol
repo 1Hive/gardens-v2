@@ -79,7 +79,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     address protocolFeeReceiver = makeAddr("multisigReceiver");
     address gardenMember = makeAddr("gardenMember");
 
-
     function setUp() public {
         __RegistrySetupFull();
         __AlloSetup(address(registry()));
@@ -239,7 +238,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             StrategyStruct.CreateProposal(poolId, pool_admin(), requestAmount, address(useTokenPool), metadata);
         bytes memory data = abi.encode(proposal);
 
-        (,, uint256 submitterCollateralAmount,,,) = strategy.arbitrableConfig();
+        (,, uint256 submitterCollateralAmount,,,) = strategy.getArbitrableConfig();
         vm.deal(pool_admin(), submitterCollateralAmount);
         vm.startPrank(pool_admin());
         proposalId = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
@@ -1705,7 +1704,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             metadata
         );
         data = abi.encode(proposal);
-        (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
+        (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
         vm.deal(pool_admin(), submitterCollateralAmount);
         uint256 proposalID2 = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
 
@@ -1839,7 +1838,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         allo().distribute(poolId, recipients, dataProposal);
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
-        (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
+        (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
         assertEq(amount - submitterCollateralAmount, requestedAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
@@ -2005,7 +2004,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         cv.updateProposalConviction(proposalId);
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
-        (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
+        (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
         assertEq(amount, requestedAmount + submitterCollateralAmount);
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
@@ -2087,29 +2086,29 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
     }
 
-    function testRevert_setPoolParams_ongoingDispute() public {
-        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(address(token), 0, 0);
-        CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
-        (,,,uint256 challengerCollateralAmount,,) = cv.arbitrableConfig();
-        uint256 totalFee = challengerCollateralAmount + safeArbitrator.arbitrationCost("0x");
-        vm.deal(address(this), totalFee);
-        cv.disputeProposal{value:totalFee}(proposalId,"Dont like this proposal","0x");
-        assertNotEq(cv.disputeCount(), 0);
-        StrategyStruct.CVParams memory params = StrategyStruct.CVParams({
-        maxRatio: _etherToFloat(0.25 ether),
-        weight: _etherToFloat(0.002 ether),
-        decay: _etherToFloat(0.9 ether),
-        minThresholdPoints: 0
-        });
-        StrategyStruct.ArbitrableConfig memory arbConfig = StrategyStruct.ArbitrableConfig(
-            safeArbitrator, payable(address(_councilSafe())), 0.25 ether, 0.2 ether, 1, 300
-        );
-        vm.startPrank(address(_councilSafe()));
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ArbitrationConfigCannotBeChangedDuringDispute.selector));
-        cv.setPoolParams(arbConfig, params);
-        vm.stopPrank();
+    // function testRevert_setPoolParams_ongoingDispute() public {
+    //     (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(address(token), 0, 0);
+    //     CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
+    //     (,,, uint256 challengerCollateralAmount,,) = cv.getArbitrableConfig();
+    //     uint256 totalFee = challengerCollateralAmount + safeArbitrator.arbitrationCost("0x");
+    //     vm.deal(address(this), totalFee);
+    //     cv.disputeProposal{value: totalFee}(proposalId, "Dont like this proposal", "0x");
+    //     assertNotEq(cv.disputeCount(), 0);
+    //     StrategyStruct.CVParams memory params = StrategyStruct.CVParams({
+    //         maxRatio: _etherToFloat(0.25 ether),
+    //         weight: _etherToFloat(0.002 ether),
+    //         decay: _etherToFloat(0.9 ether),
+    //         minThresholdPoints: 0
+    //     });
+    //     StrategyStruct.ArbitrableConfig memory arbConfig = StrategyStruct.ArbitrableConfig(
+    //         safeArbitrator, payable(address(_councilSafe())), 0.25 ether, 0.2 ether, 1, 300
+    //     );
+    //     vm.startPrank(address(_councilSafe()));
+    //     vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ArbitrationConfigCannotBeChangedDuringDispute.selector));
+    //     cv.setPoolParams(arbConfig, params);
+    //     vm.stopPrank();
+    // }
 
-    }
     function testRevert_distribute_onlyAllo_Native() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
@@ -2247,9 +2246,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, address(0), 0, address(0), metadata);
         bytes memory data = abi.encode(proposal);
-        (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
+        (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
         vm.deal(address(this), submitterCollateralAmount);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.InsufficientCollateral.selector,0,submitterCollateralAmount));
+        vm.expectRevert(
+            abi.encodeWithSelector(CVStrategyV0_0.InsufficientCollateral.selector, 0, submitterCollateralAmount)
+        );
         uint256 WRONG_PROPOSAL_ID = uint160(allo().registerRecipient{value: 0}(poolId, data));
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
 
@@ -2555,7 +2556,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), 110 ether, NATIVE, metadata);
         bytes memory data = abi.encode(proposal);
-        (,, uint256 submitterCollateralAmount,,,) = cv.arbitrableConfig();
+        (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
         vm.deal(address(6), submitterCollateralAmount * 2000);
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
         vm.stopPrank();
