@@ -406,7 +406,7 @@ const DisputeMessage = ({
     ProposalDispute,
     "id" | "challenger" | "context" | "createdAt"
   > & {
-    metadata: Pick<ProposalDisputeMetadata, "reason">;
+    metadata: Pick<ProposalDisputeMetadata, "reason"> | null;
   };
   title?: string;
 }) => {
