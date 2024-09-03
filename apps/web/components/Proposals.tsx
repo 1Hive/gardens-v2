@@ -333,14 +333,14 @@ export function Proposals({
       name: "Your pool weight",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Represents your influence or voting power in the pool",
+      info: "Represents your voting power within the pool",
     },
     {
       id: 2,
       name: "Pool weight used",
       stat: calcPoolWeightUsed(memberSupportedProposalsPct),
       className: poolWeightClassName,
-      info: "This indicates how much of your pool weight you allocated in proposals.",
+      info: "Indicates the portion of your pool weight allocated in proposals.",
     },
     {
       id: 3,
@@ -351,7 +351,7 @@ export function Proposals({
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "This percentage reflects how much of your pool weight is supporting proposals.",
+      info: "Reflects the percentage of your pool weight supporting proposals.",
     },
   ];
 
