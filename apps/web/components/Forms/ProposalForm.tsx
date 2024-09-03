@@ -150,7 +150,7 @@ export const ProposalForm = ({
 
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
-    tokenGarden?.decimals as number,
+    +tokenGarden?.decimals,
     6,
   );
 

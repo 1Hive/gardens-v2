@@ -16,8 +16,6 @@ import {
 import { chainConfigMap } from "@/configs/chains";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
-type TransactionData = WriteContractResult | undefined;
-
 export const useTransactionNotification = ({
   toastId: toastIdProp,
   transactionData,
@@ -25,22 +23,18 @@ export const useTransactionNotification = ({
   transactionStatus,
   enabled,
   fallbackErrorMessage,
+  contractName,
 }: {
   toastId?: string;
-  transactionData: TransactionData | null | undefined;
+  transactionData: WriteContractResult | null | undefined;
   transactionError: Error | null | undefined;
   transactionStatus?: ComputedStatus;
   enabled?: boolean;
   fallbackErrorMessage?: string;
+  contractName?: React.ReactNode;
 }) => {
   const toastId = toastIdProp ?? uniqueId();
   const chain = useChainFromPath();
-
-  useEffect(() => {
-    if (transactionData?.hash) {
-      console.info("Tx hash: ", transactionData.hash);
-    }
-  }, [transactionData?.hash]);
 
   useEffect(() => {
     if (!enabled || !transactionStatus) {
@@ -49,6 +43,7 @@ export const useTransactionNotification = ({
 
     const txNotifProps = {
       status: transactionStatus,
+      contractName,
     };
 
     let notifProps: Parameters<typeof TransactionStatusNotification>[0];
@@ -60,8 +55,6 @@ export const useTransactionNotification = ({
           `${chainConfigMap[chain?.id ?? 0].explorer}/tx/${transactionData?.hash}`,
           "_blank",
         );
-      } else {
-        return;
       }
     };
 
@@ -85,7 +78,7 @@ export const useTransactionNotification = ({
       case "success":
         notifProps = {
           ...txNotifProps,
-          message: "Transaction successfull",
+          message: "Transaction successful",
           showClickToExplorer: true,
         };
         toastOptions = {
@@ -145,9 +138,9 @@ export const TransactionStatusNotification = ({
   showClickToExplorer,
   index,
 }: {
-  message: string;
+  message: React.ReactNode;
   status: "idle" | "waiting" | "loading" | "success" | "error";
-  contractName?: string;
+  contractName?: React.ReactNode;
   showClickToExplorer?: boolean;
   index?: number;
 }) => {
@@ -177,8 +170,6 @@ export const TransactionStatusNotification = ({
       textColor = "text-error";
       break;
   }
-
-  // if error on wagmi or no tx hash then not clickable
 
   return (
     <div className="flex flex-row items-center gap-2">
