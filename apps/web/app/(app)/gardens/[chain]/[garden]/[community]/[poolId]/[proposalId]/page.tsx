@@ -91,6 +91,7 @@ export default function Page({
     thresholdPct,
     totalSupportPct,
     updatedConviction,
+    thresholdFromContract,
   } = useConvictionRead({
     proposalData,
     tokenData: data?.tokenGarden,
@@ -155,6 +156,33 @@ export default function Page({
       </div>
     );
   }
+
+  function getRemainingTimeToPass(
+    threshold: bigint,
+    conviction: bigint,
+    amount: bigint,
+    alpha: bigint,
+  ): number {
+    const a = alpha;
+    const y = BigInt(threshold.toString());
+    const y0 = BigInt(conviction.toString());
+    const x = BigInt(amount.toString());
+
+    const numerator = (a - 1n) * y + x;
+    const denominator = (a - 1n) * y0 + x;
+    const result = Number(numerator) / Number(denominator);
+
+    return Math.log(result) / Math.log(Number(a));
+  }
+
+  console.log(
+    getRemainingTimeToPass(
+      thresholdFromContract,
+      updatedConviction,
+      requestedAmount,
+      9999799n,
+    ),
+  );
 
   const status = ProposalStatus[proposalData.proposalStatus];
 

@@ -93,12 +93,17 @@ export const useConvictionRead = ({
     };
   }
 
-  if (!proposalData || updatedConviction == null) {
+  if (
+    !proposalData ||
+    updatedConviction == null ||
+    thresholdFromContract == null
+  ) {
     return {
       thresholdPct: undefined,
       totalSupportPct: undefined,
       currentConvictionPct: undefined,
       updatedConviction: undefined,
+      thresholdFromContract: undefined,
     };
   }
 
@@ -140,6 +145,7 @@ export const useConvictionRead = ({
     thresholdPct,
     totalSupportPct,
     currentConvictionPct,
-    updatedConviction,
+    updatedConviction: BigInt(updatedConviction.toString()),
+    thresholdFromContract: BigInt(thresholdFromContract.toString()),
   };
 };
