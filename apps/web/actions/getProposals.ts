@@ -27,7 +27,7 @@ export async function getProposals(strategy: LightCVStrategy) {
             if (p.metadata) {
               return p.metadata;
             } else {
-              return fetchIpfs<(typeof results)[number]>(p.metadataHash);
+              return fetchIpfs<(typeof results)[number] | null>(p.metadataHash);
             }
           }),
         );
