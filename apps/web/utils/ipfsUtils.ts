@@ -59,11 +59,14 @@ export const ipfsFileUpload = async (selectedFile: File) => {
       return await Promise.reject(json);
     }
   } catch (err) {
-    console.error(err); 
+    console.error(err);
   }
 };
 
-export const fetchIpfs = async <TResult>(ipfsHash: string) => {
+export const fetchIpfs = async <TResult>(
+  ipfsHash: string,
+  isStringResult?: boolean,
+) => {
   const ipfsEndpoint = `/api/ipfs/${ipfsHash}`;
   const res = await fetch(ipfsEndpoint, {
     method: "GET",
@@ -77,6 +80,12 @@ export const fetchIpfs = async <TResult>(ipfsHash: string) => {
     return null;
   }
 
-  const proposalMetadata: TResult = await res.json();
-  return proposalMetadata;
+  let result;
+  if (isStringResult) {
+    result = await res.text();
+  } else {
+    result = await res.json();
+  }
+
+  return result as TResult;
 };
