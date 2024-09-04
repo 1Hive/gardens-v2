@@ -55,7 +55,7 @@ type ChainData = {
 };
 
 const SUBGRAPH_TESTNET_VERSION = "0.23";
-const SUBGRAPH_PRODNET_VERSION = "1.0";
+const SUBGRAPH_PRODNET_VERSION = "1.1";
 
 export const chainConfigMap: {
   [key: number | string]: ChainData;
