@@ -16,6 +16,7 @@ import {
   EthAddress,
   Statistic,
 } from "@/components";
+import CancelButton from "@/components/CancelButton";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -26,7 +27,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, cvStrategyABI } from "@/src/generated";
+import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -139,24 +140,6 @@ export default function Page({
     },
   });
 
-  const { write: writeCancel } = useContractWriteWithConfirmations({
-    address: strategyId as Address,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "cancelProposal",
-    contractName: "CV Strategy",
-    fallbackErrorMessage: "Error cancelling proposal. Please try again.",
-    onConfirmations: () => {
-      publish({
-        topic: "proposal",
-        type: "update",
-        function: "cancelProposal",
-        id: proposalNumber,
-        containerId: strategyId,
-        chainId,
-      });
-    },
-  });
-
   const distributeErrorName = useErrorDetails(errorDistribute);
   useEffect(() => {
     if (isErrorDistribute && distributeErrorName.errorName !== undefined) {
@@ -235,13 +218,9 @@ export default function Page({
               </div>
               <div className="flex items-end">
                 {isProposerConnected && proposalStatus === "active" ?
-                  <Button
-                    btnStyle="outline"
-                    color="danger"
-                    onClick={() => writeCancel({ args: [proposalIdNumber] })}
-                  >
-                    Cancel
-                  </Button>
+                  <CancelButton
+                    proposalData={{ ...proposalData, ...metadata }}
+                  />
                 : <DisputeButton
                     proposalData={{ ...proposalData, ...metadata }}
                   />
