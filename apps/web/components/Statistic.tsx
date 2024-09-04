@@ -17,21 +17,19 @@ export const Statistic = ({
   tooltip,
 }: IdentifierProps) => {
   return (
-    <>
-      <div className="flex items-center gap-2 text-neutral-soft-content">
-        {icon && <div className="w-6 h-6">{icon}</div>}
-        <div
-          className={"tooltip flex cursor-default items-center max-w-sm"}
-          data-tip={tooltip}
-        >
-          {label && (
-            <p className="first-letter:uppercase">
-              {label}: {count}
-            </p>
-          )}
-        </div>
-        {children}
+    <div className="flex items-center gap-2 text-neutral-soft-content">
+      {icon && <div className="w-6 h-6">{icon}</div>}
+      <div
+        className={"tooltip flex cursor-default items-center max-w-sm"}
+        data-tip={tooltip}
+      >
+        {label && (
+          <p className="first-letter:uppercase">
+            {label}: {count}
+          </p>
+        )}
       </div>
-    </>
+      {children}
+    </div>
   );
 };
