@@ -2,6 +2,7 @@
 [profile.default]
 solc-version = "0.8.19"
 src = 'pkg/contracts/src'
+script = 'pkg/contracts/script'
 test = 'pkg/contracts/test'
 out = 'pkg/contracts/out'
 script='pkg/contracts/script'

@@ -7,6 +7,7 @@ import {
 } from "@urql/next";
 import { debounce, isEqual } from "lodash-es";
 import { toast } from "react-toastify";
+import { localhost } from "viem/chains";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
 import { chains, getConfigByChain } from "@/configs/chains";
@@ -25,7 +26,7 @@ import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 
 const allChains: ChainId[] = Object.values(chains)
-  .filter((x) => (isProd ? !x.testnet : !!x.testnet)) // if prod, only prod chains
+  .filter((x) => (isProd ? !x.testnet : !!x.testnet || x.id === localhost.id))
   .map((x) => x.id);
 
 const pendingRefreshToastId = "pending-refresh";
