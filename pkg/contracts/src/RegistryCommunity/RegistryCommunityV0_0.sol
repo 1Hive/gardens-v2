@@ -211,11 +211,11 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         address[] strategies;
     }
 
-    function setStrategyTemplate(address template) external {
+    function setStrategyTemplate(address template) external onlyOwner {
         strategyTemplate = template;
     }
 
-    function setCollateralVaultTemplate(address template) external {
+    function setCollateralVaultTemplate(address template) external onlyOwner {
         collateralVaultTemplate = template;
     }
 
