@@ -33,11 +33,8 @@ export const useIpfsFetch = <TResult>({
     (async () => {
       try {
         let resp = await fetchIpfs<TResult>(hash);
-        if (resp !== null) {
-          if (modifier) {
-            resp = await modifier(resp);
-          }
-          setData(resp);
+        if (modifier && resp) {
+          resp = await modifier(resp);
         }
       } catch (e: any) {
         setError(e);
