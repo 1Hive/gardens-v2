@@ -323,10 +323,6 @@ const ChainsDeploy = () => {
         <div className="mx-auto max-w-2xl lg:max-w-none">
           <h2 className="font-semibold leading-8">Soon available on</h2>
           <div className="mx-auto mt-10 grid grid-cols-2 items-center gap-x-8 gap-y-10 sm:gap-x-10 lg:mx-0 lg:grid-cols-4">
-            <div className=" flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
-              <ChainIcon chain={100} height={48} />
-              <h5 className="text-center">Gnosis</h5>
-            </div>
             <div className="flec-col flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={10} height={48} />
               <h5 className="text-center"> Optimism</h5>
@@ -338,6 +334,10 @@ const ChainsDeploy = () => {
             <div className="flec-col flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={137} height={48} />
               <h5 className="text-center">Polygon</h5>
+            </div>
+            <div className=" flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
+              <ChainIcon chain={100} height={48} />
+              <h5 className="text-center">Gnosis</h5>
             </div>
           </div>
         </div>
