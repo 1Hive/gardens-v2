@@ -31,7 +31,7 @@ export async function getProposals(strategy: LightCVStrategy) {
             }
           }),
         );
-        results.push(...batchResults);
+        results.push(...batchResults.filter((x) => !!x));
         await sleep(delay);
       }
 
