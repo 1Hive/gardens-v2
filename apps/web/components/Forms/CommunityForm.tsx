@@ -87,9 +87,12 @@ export const CommunityForm = ({
     },
     feeAmount: {
       label: "Community Fee Amount:",
-      parse: (value: number) => `${value} %`,
+      parse: (value: number) => `${value || "0"}%`,
     },
-    feeReceiver: { label: "Fee Receiver:" },
+    feeReceiver: {
+      label: "Fee Receiver:",
+      parse: (value: string) => value || "0x",
+    },
     councilSafe: { label: "Council Safe:" },
   };
 
@@ -116,7 +119,9 @@ export const CommunityForm = ({
         CV_PERCENTAGE_SCALE_DECIMALS,
       );
 
-      const communityFeeReceiver = previewData?.feeReceiver;
+      const communityFeeReceiver =
+        previewData?.feeReceiver ||
+        "0x0000000000000000000000000000000000000000";
       const councilSafeAddress = previewData?.councilSafe;
       // arb safe 0xda7bdebd79833a5e0c027fab1b1b9b874ddcbd10
       const isKickMemberEnabled = previewData?.isKickMemberEnabled;
@@ -270,7 +275,6 @@ export const CommunityForm = ({
             <FormInput
               label="Community fee %"
               register={register}
-              required
               errors={errors}
               registerKey="feeAmount"
               type="number"
@@ -298,7 +302,6 @@ export const CommunityForm = ({
             <FormInput
               label="Community fee Receiver address"
               register={register}
-              required
               registerOptions={{
                 pattern: {
                   value: ethAddressRegEx,
