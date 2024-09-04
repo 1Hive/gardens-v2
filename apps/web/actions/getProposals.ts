@@ -22,16 +22,18 @@ export async function getProposals(strategy: LightCVStrategy) {
       // Process each chunk
       let results: Array<Pick<ProposalMetadata, "title" | "description">> = [];
       for (const chunk of chunks) {
-        const batchResults = await Promise.all(
-          chunk.map((p) => {
-            if (p.metadata) {
-              return p.metadata;
-            } else {
-              return fetchIpfs<(typeof results)[number] | null>(p.metadataHash);
+        chunk.forEach(async (p) => {
+          if (p.metadata) {
+            results.push(p.metadata);
+          } else {
+            const ipfsRes = await fetchIpfs<(typeof results)[number] | null>(
+              p.metadataHash,
+            );
+            if (ipfsRes) {
+              results.push(ipfsRes);
             }
-          }),
-        );
-        results.push(...batchResults.filter((x) => !!x));
+          }
+        });
         await sleep(delay);
       }
 
