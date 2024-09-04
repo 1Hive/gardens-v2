@@ -567,6 +567,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                 register={register}
                 errors={errors}
                 registerKey="strategyType"
+                required
                 options={Object.entries(PoolTypes)
                   .slice(0, -1)
                   .map(([value, text]) => ({
@@ -580,6 +581,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                 label="Pool System"
                 register={register}
                 errors={errors}
+                required
                 registerKey="pointSystemType"
                 options={Object.entries(PointSystems).map(([value, text]) => ({
                   label: text,
@@ -697,6 +699,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                 community. It's use is recommended for objective dispute resolution."
               label="Tribunal address"
               registerKey="tribunalAddress"
+              required
               onChange={(newValue) => setTribunalAddress(newValue)}
               value={tribunalAddress}
             />
@@ -710,12 +713,13 @@ export function PoolForm({ token, communityAddr }: Props) {
                     label: capitalize(text),
                     value: value,
                   }))}
+                required
                 registerKey="defaultResolution"
                 register={register}
                 errors={undefined}
               />
             </div>
-            <div className="flex gap-4 max-w-md">
+            <div className="flex gap-4 max-w-[480px]">
               <FormInput
                 tooltip="Proposal submission stake. Locked until proposal is resolved, can be forfeited if disputed."
                 type="number"
