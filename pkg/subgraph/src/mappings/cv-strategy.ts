@@ -1,4 +1,5 @@
 import {
+  ArbitrableConfig,
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
@@ -13,6 +14,7 @@ import {
 } from "../../generated/templates";
 
 import {
+  ArbitrableConfigUpdated,
   Distributed,
   InitializedCV,
   ProposalCreated,
@@ -84,11 +86,11 @@ export function handleInitialized(event: InitializedCV): void {
     event.params.data.cvParams
   );
   // @ts-ignore
-  let arbitrableConfig = changetype<PoolParamsUpdatedArbitrableConfigStruct>(
-    event.params.data.arbitrableConfig
-  );
+  // let arbitrableConfig = changetype<PoolParamsUpdatedArbitrableConfigStruct>(
+  //   event.params.data.arbitrableConfig
+  // );
 
-  computeConfig(config, cvParams, arbitrableConfig);
+  computeConfig(config, cvParams);
 
   config.D = cvc.D();
   config.save();
@@ -136,6 +138,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   newProposal.requestedAmount = proposal.getRequestedAmount();
   newProposal.maxCVStaked = maxConviction;
+  newProposal.arbitrableConfig = `${event.address.toHex()}-${proposal.getArbitrableConfigId().toString()}`;
 
   newProposal.proposalStatus = BigInt.fromI32(
     cvc.getProposal(event.params.proposalId).getProposalStatus()
@@ -458,27 +461,32 @@ export function handlePoolParamsUpdated(event: PoolParamsUpdated): void {
     ]
   );
 
-  log.debug(
-    "handlePoolParamsUpdated: ArbitrationConfig:[arbitrator:{},tribunalSafe:{},challengerCollateralAmount:{},submitterCollateralAmount:{},defaultRuling:{},defaultRulingTimeout:{}]",
-    [
-      event.params.arbitrableConfig.arbitrator.toHexString(),
-      event.params.arbitrableConfig.tribunalSafe.toHexString(),
-      event.params.arbitrableConfig.challengerCollateralAmount.toString(),
-      event.params.arbitrableConfig.submitterCollateralAmount.toString(),
-      event.params.arbitrableConfig.defaultRuling.toString(),
-      event.params.arbitrableConfig.defaultRulingTimeout.toString()
-    ]
-  );
-
-  computeConfig(config, event.params.cvParams, event.params.arbitrableConfig);
+  computeConfig(config, event.params.cvParams);
 
   config.save();
 }
 
+export function handleArbitrableConfigUpdated(event: ArbitrableConfigUpdated): void {
+  let arbitrableConfig = new ArbitrableConfig(
+    `${event.address.toHex()}-${event.params.currentArbitrableConfig.toString()}`
+  );
+  arbitrableConfig.strategy = event.address.toHexString();
+  arbitrableConfig.arbitrator = event.params.arbitrator.toHexString();
+  arbitrableConfig.tribunalSafe = event.params.tribunalSafe.toHexString();
+  arbitrableConfig.challengerCollateralAmount =
+  event.params.challengerCollateralAmount;
+  arbitrableConfig.submitterCollateralAmount =
+    event.params.submitterCollateralAmount;
+  arbitrableConfig.defaultRuling = event.params.defaultRuling;
+  arbitrableConfig.defaultRulingTimeout = event.params.defaultRulingTimeout;
+  
+  arbitrableConfig.save();
+
+}
+
 function computeConfig(
   config: CVStrategyConfig,
-  cvParams: PoolParamsUpdatedCvParamsStruct,
-  arbitrationConfig: PoolParamsUpdatedArbitrableConfigStruct
+  cvParams: PoolParamsUpdatedCvParamsStruct
 ): void {
   // CV Params
   log.debug("CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]", [
@@ -492,15 +500,6 @@ function computeConfig(
   config.minThresholdPoints = cvParams.minThresholdPoints;
   config.maxRatio = cvParams.maxRatio;
 
-  // ArbitrationConfig
-  config.arbitrator = arbitrationConfig.arbitrator.toHexString();
-  config.tribunalSafe = arbitrationConfig.tribunalSafe.toHexString();
-  config.challengerCollateralAmount =
-    arbitrationConfig.challengerCollateralAmount;
-  config.submitterCollateralAmount =
-    arbitrationConfig.submitterCollateralAmount;
-  config.defaultRuling = arbitrationConfig.defaultRuling;
-  config.defaultRulingTimeout = arbitrationConfig.defaultRulingTimeout;
 }
 
 export function handleProposalDisputed(event: ProposalDisputed): void {

@@ -266,6 +266,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             ,
             ,
             ,
+            ,
         ) = cv.getProposal(proposalId);
 
         assertTrue(proposalStatus == _toBeChecked, "ProposalStatus");
@@ -1004,6 +1005,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             // uint256 blockLast,
             uint256 convictionLast,
             uint256 threshold, // uint256 voterPointsPct
+            ,
         ) = cv.getProposal(proposalId);
 
         // console.log("Requested Amount: %s", requestedAmount);
@@ -1111,6 +1113,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             // uint256 blockLast,
             uint256 convictionLast,
             uint256 threshold, // uint256 voterPointsPct
+            ,
         ) = cv.getProposal(proposalId);
 
         // console.log("Requested Amount: %s", requestedAmount);
@@ -1244,6 +1247,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             // uint256 blockLast,
             uint256 convictionLast,
             uint256 threshold, // uint256 voterPointsPct
+            ,
         ) = cv.getProposal(proposalId);
 
         // console.log("Requested Amount: %s", requestedAmount);
@@ -1369,6 +1373,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             // uint256 blockLast,
             uint256 convictionLast,
             uint256 threshold, // uint256 voterPointsPct
+            ,
         ) = cv.getProposal(proposalId);
 
         // console.log("Requested Amount: %s", requestedAmount);
@@ -1521,7 +1526,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             // uint256 blockLast,
             uint256 convictionLast,
             uint256 threshold,
-            uint256 voterPointsPct
+            uint256 voterPointsPct,
         ) = cv.getProposal(proposalId);
 
         // console.log("Requested Amount: %s", requestedAmount);
@@ -1636,7 +1641,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             // uint256 blockLast,
             uint256 convictionLast,
             uint256 threshold,
-            uint256 voterStakedPoints
+            uint256 voterStakedPoints,
         ) = cv.getProposal(proposalId);
 
         // console.log("Requested Amount: %s", requestedAmount);
@@ -1812,6 +1817,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             ,
             uint256 convictionLast,
             uint256 threshold, // uint256 voterPointsPct
+            ,
         ) = cv.getProposal(proposalId);
 
         // console.log("Proposal Status: %s", proposalStatus);
@@ -1889,6 +1895,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             ,
             uint256 convictionLast,
             uint256 threshold, // uint256 voterPointsPct
+            ,
         ) = cv.getProposal(proposalId);
 
         // console.log("Proposal Status: %s", proposalStatus);
@@ -1971,6 +1978,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             ,
             uint256 convictionLast,
             uint256 threshold, // uint256 voterPointsPct
+            ,
         ) = cv.getProposal(proposalId);
 
         // console.log("Proposal Status: %s", proposalStatus);
@@ -2295,6 +2303,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             uint256 blockLast,
             uint256 convictionLast,
             uint256 threshold, // uint256 voterPointsPct
+            ,
         ) = cv.getProposal(proposalId);
 
         // console.log("Proposal Status: %s", proposalStatus);

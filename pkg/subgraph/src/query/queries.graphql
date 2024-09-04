@@ -238,12 +238,6 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     config {
       id
-      arbitrator
-      defaultRuling
-      defaultRulingTimeout
-      challengerCollateralAmount
-      submitterCollateralAmount
-      tribunalSafe
       weight
       decay
       maxAmount
@@ -327,12 +321,15 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
         proposalType
         pointSystem
         minThresholdPoints
-        challengerCollateralAmount
-        arbitrator
-        defaultRuling
-        defaultRulingTimeout
-        tribunalSafe
       }
+    }
+    arbitrableConfig {
+      arbitrator
+      defaultRuling
+      defaultRulingTimeout
+      challengerCollateralAmount
+      submitterCollateralAmount
+      tribunalSafe
     }
   }
 }
@@ -494,13 +491,24 @@ query getProposalDisputes($proposalId: ID!) {
   }
 }
 
-query getStrategyArbitrationConfig($strategyConfigId: ID!) {
-  cvstrategyConfig(id: $strategyConfigId) {
+query getArbitrableConfigs($strategyId: ID!) {
+  arbitrableConfigs(where: { strategy: $strategyId }) {
+    arbitrator
     challengerCollateralAmount
     submitterCollateralAmount
-    arbitrator
     tribunalSafe
     defaultRuling
     defaultRulingTimeout
   }
 }
+
+# query getStrategyArbitrationConfig($strategyConfigId: ID!) {
+#   cvstrategyConfig(id: $strategyConfigId) {
+#     challengerCollateralAmount
+#     submitterCollateralAmount
+#     arbitrator
+#     tribunalSafe
+#     defaultRuling
+#     defaultRulingTimeout
+#   }
+# }

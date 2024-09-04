@@ -24,8 +24,11 @@ type CVStrategyConfig @entity(immutable: false) {
   proposalType: BigInt!
   pointSystem: BigInt!
   maxAmount: BigInt
+}
 
-  # Arbitration Config
+type ArbitrableConfig @entity(immutable: false) {
+  id: ID!
+  strategy: CVStrategy!
   arbitrator: String!
   tribunalSafe: String!
   challengerCollateralAmount: BigInt!
@@ -56,6 +59,7 @@ type CVProposal @entity(immutable: false) {
   # agreementActionId: BigInt!
   createdAt: BigInt!
   updatedAt: BigInt!
+  arbitrableConfig: ArbitrableConfig!
 }
 
 # type ProposalMeta @entity(immutable: false) {

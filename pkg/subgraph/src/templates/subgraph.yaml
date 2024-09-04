@@ -116,6 +116,8 @@ templates:
           handler: handleDisputeRuled
         - event: ProposalCancelled(uint256)
           handler: handleProposalCancelled
+        - event: ArbitrableConfigUpdated(uint256,address,address,uint256,uint256,uint256,uint256)
+          handler: handleArbitrableConfigUpdated
  
       file: ./src/mappings/cv-strategy.ts
   

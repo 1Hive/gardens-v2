@@ -5,7 +5,6 @@ src = 'pkg/contracts/src'
 script = 'pkg/contracts/script'
 test = 'pkg/contracts/test'
 out = 'pkg/contracts/out'
-script='pkg/contracts/script'
 libs = ['lib']
 ffi = true
 ast = true
