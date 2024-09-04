@@ -114,6 +114,8 @@ templates:
           handler: handleProposalDisputed
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleDisputeRuled
+        - event: ProposalCancelled(uint256)
+          handler: handleProposalCancelled
  
       file: ./src/mappings/cv-strategy.ts
   
