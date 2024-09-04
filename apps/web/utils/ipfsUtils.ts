@@ -65,7 +65,10 @@ export const ipfsFileUpload = async (selectedFile: File) => {
   }
 };
 
-export const fetchIpfs = async <TResult>(ipfsHash: string) => {
+export const fetchIpfs = async <TResult>(
+  ipfsHash: string,
+  isStringResult?: boolean,
+) => {
   const ipfsUri = `https://${ipfsGateway}/ipfs/${ipfsHash}?${process.env.NEXT_PUBLIC_PINATA_KEY ? "pinataGatewayToken=" + process.env.NEXT_PUBLIC_PINATA_KEY : ""}`;
   const ipfsResult = await fetch(ipfsUri, {
     method: "GET",
@@ -74,6 +77,12 @@ export const fetchIpfs = async <TResult>(ipfsHash: string) => {
     },
   });
 
-  const proposalMetadata: TResult = await ipfsResult.json();
-  return proposalMetadata;
+  let result;
+  if (isStringResult) {
+    result = await ipfsResult.text();
+  } else {
+    result = await ipfsResult.json();
+  }
+
+  return result as TResult;
 };
