@@ -77,6 +77,11 @@ export const fetchIpfs = async <TResult>(
     },
   });
 
+  if (!ipfsResult.ok) {
+    console.error("Error fetching IPFS data", { ipfsUri });
+    return null;
+  }
+
   let result;
   if (isStringResult) {
     result = await ipfsResult.text();
