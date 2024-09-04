@@ -3,9 +3,9 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategyV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
+import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
 import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
@@ -23,11 +23,9 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
     CVStrategyV0_0 cvStrategy;
     uint256 poolId;
     RegistryCommunityV0_0 internal registryCommunity;
-    RegistryFactoryV0_0 registryFactory;
     GV2ERC20 public token;
     // address allo_owner = address(0x1);
     address factoryOwner = address(1);
-    address protocolFeeReceiver = address(2);
     // address local = address(0x5);
     // address pool_admin = address(3);
     address challenger = address(3);
@@ -64,25 +62,18 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
 
         vm.startPrank(factoryOwner);
 
-        ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
-            address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, ARBITRATION_FEE)
-        );
-        safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
-
-        // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(new RegistryFactoryV0_0()),
-            abi.encodeWithSelector(
-                RegistryFactoryV0_0.initialize.selector,
-                address(factoryOwner),
-                address(protocolFeeReceiver),
-                address(new RegistryCommunityV0_0()),
-                address(new CVStrategyV0_0()),
-                address(new CollateralVault())
+        safeArbitrator = SafeArbitrator(
+            payable(
+                address(
+                    new ERC1967Proxy(
+                        address(new SafeArbitrator()),
+                        abi.encodeWithSelector(SafeArbitrator.initialize.selector, ARBITRATION_FEE)
+                    )
+                )
             )
         );
 
-        registryFactory = RegistryFactoryV0_0(address(proxy));
+        // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
 
         vm.stopPrank();
 
@@ -97,24 +88,40 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+        registryCommunity = RegistryCommunityV0_0(
+            RegistryFactoryV0_0(
+                address(
+                    new ERC1967Proxy(
+                        address(new RegistryFactoryV0_0()),
+                        abi.encodeWithSelector(
+                            RegistryFactoryV0_0.initialize.selector,
+                            address(factoryOwner),
+                            address(2),
+                            address(new RegistryCommunityV0_0()),
+                            address(new CVStrategyV0_0()),
+                            address(new CollateralVault())
+                        )
+                    )
+                )
+            ).createRegistry(params)
+        );
 
         uint256 _poolId;
         address _strategy;
 
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = StrategyStruct.ArbitrableConfig(
-            safeArbitrator, payable(address(_councilSafe())), 0.02 ether, 0.01 ether, 1, 300
+        (_poolId, _strategy) = registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                StrategyStruct.ProposalType.Funding,
+                StrategyStruct.PointSystem.Unlimited,
+                StrategyStruct.PointSystemConfig(200 * DECIMALS),
+                StrategyStruct.ArbitrableConfig(
+                    safeArbitrator, payable(address(_councilSafe())), 0.02 ether, 0.01 ether, 1, 300
+                )
+            ),
+            metadata
         );
-
-        StrategyStruct.InitializeParams memory poolParams = getParams(
-            address(registryCommunity),
-            StrategyStruct.ProposalType.Funding,
-            StrategyStruct.PointSystem.Unlimited,
-            StrategyStruct.PointSystemConfig(200 * DECIMALS),
-            arbitrableConfig
-        );
-
-        (_poolId, _strategy) = registryCommunity.createPool(NATIVE, poolParams, metadata);
 
         poolId = _poolId;
         cvStrategy = CVStrategyV0_0(payable(_strategy));
