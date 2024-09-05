@@ -19,6 +19,7 @@ import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { PointSystems, PoolTypes } from "@/types";
+import { capitalize } from "@/utils/text";
 
 type Props = {
   tokenGarden: Pick<TokenGarden, "decimals" | "symbol">;
@@ -48,18 +49,15 @@ export function PoolCard({ pool, tokenGarden }: Props) {
       className={isNewPool ? "shadow-2xl" : ""}
     >
       <header className="mb-4 flex w-full items-center justify-between">
-        <div>
-          <h4>Pool #{poolId}</h4>
-          {/* <p className="subtitle2 pt-0.5 text-tertiary-content first-letter:capitalize">
-            {PointSystems[config?.pointSystem]}
-          </p> */}
-        </div>
+        <h4>Pool #{poolId}</h4>
         <Badge type={poolType} />
       </header>
       <div className="mb-10 flex min-h-[60px] flex-col gap-2">
-        <Statistic icon={<BoltIcon />} label="type">
-          <Badge label={PointSystems[config?.pointSystem]} />
-        </Statistic>
+        <Statistic
+          icon={<BoltIcon />}
+          label="Pool system"
+          count={capitalize(PointSystems[config?.pointSystem])}
+        ></Statistic>
         <Statistic
           icon={<HandRaisedIcon />}
           count={proposals.length}
