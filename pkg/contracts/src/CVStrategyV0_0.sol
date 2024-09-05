@@ -130,7 +130,14 @@ library StrategyStruct {
     }
 }
 
-contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
+contract CVStrategyV0_0 is
+    BaseStrategyUpgradeable,
+    IArbitrable,
+    IPointStrategy,
+    ERC165,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable
+{
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -253,9 +260,15 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
-    // False positive    
+    // False positive
     // slither-disable-next-line unprotected-upgrade
-    function init(address _allo, address _collateralVaultTemplate, address owner) external virtual initializer onlyInitializing{
+    function init(address _allo, address _collateralVaultTemplate, address owner)
+        external
+        virtual
+        initializer
+        onlyInitializing
+        
+    {
         super.init(_allo, "CVStrategy", owner);
         collateralVaultTemplate = _collateralVaultTemplate;
     }
@@ -647,7 +660,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // uint256 convictionLast = updateProposalConviction(proposalId);
         (uint256 convictionLast, uint256 blockNumber) =
             _checkBlockAndCalculateConviction(proposal, proposal.stakedAmount);
-        // slither-disable-next-line incorrect-equality    
+        // slither-disable-next-line incorrect-equality
         if (convictionLast == 0 && blockNumber == 0) {
             convictionLast = proposal.convictionLast;
         }
@@ -983,7 +996,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // denom = maxRatio / 1 - _requestedAmount / funds;
         uint256 denom = (cvParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
         // Slither: Multiplication after division acknowledged, controlled by decimal shifting
-        // slither-disable-next-line divide-before-multiply    
+        // slither-disable-next-line divide-before-multiply
         _threshold = (
             (((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - cvParams.decay))
                 * totalEffectiveActivePoints()
@@ -1123,7 +1136,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             emit TribunaSafeRegistered(
                 address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
             );
-
         }
 
         cvParams = _cvParams;

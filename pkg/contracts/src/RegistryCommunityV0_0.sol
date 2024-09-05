@@ -71,6 +71,18 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
 
+    /// @dev Initialize parameters for the contract
+    /// @param _allo The Allo contract address
+    /// @param _gardenToken The token used to stake in the community
+    /// @param _registerStakeAmount The amount of tokens required to register a member
+    /// @param _communityFee The fee charged to the community for each registration
+    /// @param _nonce The nonce used to create new strategy clones
+    /// @param _registryFactory The address of the registry factory
+    /// @param _feeReceiver The address that receives the community fee
+    /// @param _metadata The covenant IPFS hash of the community
+    /// @param _councilSafe The council safe contract address
+    /// @param _communityName The community name
+    /// @param _isKickEnabled Enable or disable the kick feature
     struct InitializeParams {
         address _allo;
         IERC20 _gardenToken;

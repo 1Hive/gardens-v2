@@ -94,12 +94,16 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
             )
         );
 
+
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
             address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
         );
         safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
 
         strategy = CVStrategyV0_0(payable(strategyProxy));
+        // strategy.init(address(allo()),address(this),address(this)); @todo Kev create a testRevert
+        // allo.createPoolWithCustomStrategy() @todo kev create new testRvert
+
         //        strategy = address(new MockStrategy(address(allo())));
         // uint256 poolId = createPool(
         //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, StrategyStruct.ProposalType(0)

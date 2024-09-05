@@ -33,9 +33,10 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// ====================================
 
     /// @notice Constructor to set the Allo contract and "strategyId'.
+    /// @notice `init` here its the initialize for upgradable contracts, different from `initialize()` that its used for Allo
     /// @param _allo Address of the Allo contract.
-    // / @param _name Name of the strategy
-    // constructor( {}
+    /// @param _name Name of the strategy
+    /// @param owner Address of the owner of the strategy
 
     function init(address _allo, string memory _name, address owner) public virtual onlyInitializing {
         super.initialize(owner);
