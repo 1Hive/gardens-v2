@@ -40,6 +40,8 @@ import { LightCVStrategy } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
+import { chain } from "lodash-es";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 
 // Types
 export type ProposalInputItem = {
@@ -95,6 +97,7 @@ export function Proposals({
   // Hooks
   const { address: wallet } = useAccount();
   const { publish } = usePubSubContext();
+  const chainId = useChainIdFromPath();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
@@ -144,6 +147,7 @@ export function Proposals({
     abi: registryCommunityABI,
     functionName: "getMemberPowerInStrategy",
     args: [wallet as Address, strategy.id as Address],
+    chainId: chainId,
     enabled: !!wallet,
   });
 
