@@ -59,24 +59,33 @@ export const ipfsFileUpload = async (selectedFile: File) => {
       return await Promise.reject(json);
     }
   } catch (err) {
-    console.error(err); 
+    console.error(err);
   }
 };
 
-export const fetchIpfs = async <TResult>(ipfsHash: string) => {
-  const ipfsEndpoint = `/api/ipfs/${ipfsHash}`;
-  const res = await fetch(ipfsEndpoint, {
+export const fetchIpfs = async <TResult>(
+  ipfsHash: string,
+  isStringResult?: boolean,
+) => {
+  const ipfsEndpoint = `/api/ipfs/${ipfsHash}${isStringResult ? "?isText=true" : ""}`;
+  const ipfsResult = await fetch(ipfsEndpoint, {
     method: "GET",
     headers: {
       "content-type": "application/json",
     },
   });
 
-  if (!res.ok) {
+  if (!ipfsResult.ok) {
     console.error("Error fetching IPFS data", { ipfsEndpoint });
     return null;
   }
 
-  const proposalMetadata: TResult = await res.json();
-  return proposalMetadata;
+  let result;
+  if (isStringResult) {
+    result = await ipfsResult.text();
+  } else {
+    result = await ipfsResult.json();
+  }
+
+  return result as TResult;
 };
