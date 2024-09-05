@@ -26,14 +26,13 @@ import {
   ProposalDisputed,
   PoolParamsUpdated,
   PoolParamsUpdatedCvParamsStruct,
-  PoolParamsUpdatedArbitrableConfigStruct
+  PoolParamsUpdatedArbitrableConfigStruct,
+  ProposalCancelled
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
 
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
-
-import { json, JSONValueKind } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
@@ -575,6 +574,27 @@ export function handleDisputeRuled(event: Ruling): void {
 
   proposal.proposalStatus = BigInt.fromI32(
     cvc.getProposal(proposal.proposalNumber).getProposalStatus()
+  );
+
+  proposal.save();
+}
+
+export function handleProposalCancelled(event: ProposalCancelled): void {
+  log.debug("CVStrategy: handleProposalCancelled: proposalId: {}", [
+    event.params.proposalId.toString()
+  ]);
+  let proposalId =
+    event.address.toHexString() + "-" + event.params.proposalId.toString();
+  let proposal = CVProposal.load(proposalId);
+  if (proposal == null) {
+    log.error("CvStrategy: Proposal not found with: {}", [proposalId]);
+    return;
+  }
+
+  let cvc = CVStrategyContract.bind(event.address);
+
+  proposal.proposalStatus = BigInt.fromI32(
+    cvc.getProposal(event.params.proposalId).getProposalStatus()
   );
 
   proposal.save();

@@ -32,11 +32,21 @@ export function FormSelect({
     <>
       <label htmlFor={registerKey} className="label w-fit">
         {tooltip ?
-          <InfoWrapper tooltip={tooltip}>{label}</InfoWrapper>
-        : label}
+          <InfoWrapper tooltip={tooltip}>
+            {label}
+            {required && <span className="ml-1">*</span>}
+          </InfoWrapper>
+        : <>
+            {label}
+            {required && <span className="ml-1">*</span>}
+          </>
+        }
       </label>
       <select
-        className={`select select-info w-full max-w-md ${readOnly && "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"}`}
+        className={`select select-info w-full max-w-md ${
+          readOnly &&
+          "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
+        }`}
         id={registerKey}
         {...register(registerKey, {
           required,
