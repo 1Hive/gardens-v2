@@ -17,7 +17,7 @@ import { blueLand, grass } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
-import { PoolTypes } from "@/types";
+import { PointSystems, PoolTypes } from "@/types";
 
 type Props = {
   tokenGarden: Pick<TokenGarden, "decimals" | "symbol">;
@@ -26,7 +26,7 @@ type Props = {
     "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
   > & {
     proposals: Pick<CVProposal, "id">[];
-    config: Pick<CVStrategyConfig, "proposalType">;
+    config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
   };
 };
 
@@ -47,7 +47,12 @@ export function PoolCard({ pool, tokenGarden }: Props) {
       className={isNewPool ? "shadow-2xl" : ""}
     >
       <header className="mb-4 flex w-full items-center justify-between">
-        <h4>Pool #{poolId}</h4>
+        <div>
+          <h4>Pool #{poolId}</h4>
+          <p className="subtitle2 pt-0.5 text-secondary-content">
+            {PointSystems[config?.pointSystem]}
+          </p>
+        </div>
         <Badge type={poolType} />
       </header>
       <div className="mb-10 flex min-h-[60px] flex-col gap-2">
