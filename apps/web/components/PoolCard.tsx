@@ -64,7 +64,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           label="proposals"
         />
         {poolType && PoolTypes[poolType] === "funding" && (
-          <Statistic icon={<CurrencyDollarIcon />} label="funds available">
+          <Statistic icon={<CurrencyDollarIcon />} label="funds">
             <DisplayNumber
               number={[BigInt(poolAmount), tokenGarden.decimals]}
               compact={true}
