@@ -178,7 +178,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
-    event PoolParamsUpdated(StrategyStruct.CVParams cvParams, StrategyStruct.ArbitrableConfig arbitrableConfig);
+    event CVParamsUpdated(StrategyStruct.CVParams cvParams);
     event RegistryUpdated(address registryCommunity);
     event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
     event ProposalDisputed(
@@ -192,7 +192,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     event TribunaSafeRegistered(address strategy, address arbitrator, address tribunalSafe);
     event ProposalCancelled(uint256 proposalId);
     event ArbitrableConfigUpdated(
-        uint256 currentArbitrableConfig,
+        uint256 currentArbitrableConfigVersion,
         IArbitrator arbitrator,
         address tribunalSafe,
         uint256 submitterCollateralAmount,
@@ -225,7 +225,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     uint256 public cloneNonce;
     uint64 public disputeCount = 0;
     uint256 public proposalCounter = 0;
-    uint256 public currentArbitrableConfig = 0;
+    uint256 public currentArbitrableConfigVersion = 0;
 
     uint256 public totalStaked;
     uint256 public totalPointsActivated;
@@ -385,11 +385,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
 
         if (
-            address(arbitrableConfigs[currentArbitrableConfig].arbitrator) != address(0)
-                && msg.value < arbitrableConfigs[currentArbitrableConfig].submitterCollateralAmount
+            address(arbitrableConfigs[currentArbitrableConfigVersion].arbitrator) != address(0)
+                && msg.value < arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
         ) {
             revert InsufficientCollateral(
-                msg.value, arbitrableConfigs[currentArbitrableConfig].submitterCollateralAmount
+                msg.value, arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
             );
         }
 
@@ -407,7 +407,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         p.convictionLast = 0;
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
-        p.arbitrableConfigId = currentArbitrableConfig;
+        p.arbitrableConfigId = currentArbitrableConfigVersion;
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
         emit ProposalCreated(poolId, proposalId);
@@ -614,7 +614,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
-                proposalId, proposal.submitter, arbitrableConfigs[currentArbitrableConfig].submitterCollateralAmount
+                proposalId,
+                proposal.submitter,
+                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
             );
 
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
@@ -784,12 +786,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         )
     {
         return (
-            arbitrableConfigs[currentArbitrableConfig].arbitrator,
-            arbitrableConfigs[currentArbitrableConfig].tribunalSafe,
-            arbitrableConfigs[currentArbitrableConfig].submitterCollateralAmount,
-            arbitrableConfigs[currentArbitrableConfig].challengerCollateralAmount,
-            arbitrableConfigs[currentArbitrableConfig].defaultRuling,
-            arbitrableConfigs[currentArbitrableConfig].defaultRulingTimeout
+            arbitrableConfigs[currentArbitrableConfigVersion].arbitrator,
+            arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe,
+            arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount,
+            arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount,
+            arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling,
+            arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout
         );
     }
 
@@ -1077,33 +1079,32 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (
             _arbitrableConfig.tribunalSafe != address(0) && address(_arbitrableConfig.arbitrator) != address(0)
                 && (
-                    _arbitrableConfig.tribunalSafe != arbitrableConfigs[currentArbitrableConfig].tribunalSafe
-                        || _arbitrableConfig.arbitrator != arbitrableConfigs[currentArbitrableConfig].arbitrator
+                    _arbitrableConfig.tribunalSafe != arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe
+                        || _arbitrableConfig.arbitrator != arbitrableConfigs[currentArbitrableConfigVersion].arbitrator
                         || _arbitrableConfig.submitterCollateralAmount
-                            != arbitrableConfigs[currentArbitrableConfig].submitterCollateralAmount
+                            != arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
                         || _arbitrableConfig.challengerCollateralAmount
-                            != arbitrableConfigs[currentArbitrableConfig].challengerCollateralAmount
-                        || _arbitrableConfig.defaultRuling != arbitrableConfigs[currentArbitrableConfig].defaultRuling
+                            != arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount
+                        || _arbitrableConfig.defaultRuling != arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling
                         || _arbitrableConfig.defaultRulingTimeout
-                            != arbitrableConfigs[currentArbitrableConfig].defaultRulingTimeout
+                            != arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout
                 )
         ) {
             if (
-                arbitrableConfigs[currentArbitrableConfig].tribunalSafe != _arbitrableConfig.tribunalSafe
-                    || arbitrableConfigs[currentArbitrableConfig].arbitrator != _arbitrableConfig.arbitrator
+                arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe != _arbitrableConfig.tribunalSafe
+                    || arbitrableConfigs[currentArbitrableConfigVersion].arbitrator != _arbitrableConfig.arbitrator
             ) {
                 _arbitrableConfig.arbitrator.registerSafe(_arbitrableConfig.tribunalSafe);
+                emit TribunaSafeRegistered(
+                    address(this), address(_arbitrableConfig.arbitrator), _arbitrableConfig.tribunalSafe
+                );
             }
 
-            emit TribunaSafeRegistered(
-                address(this), address(_arbitrableConfig.arbitrator), _arbitrableConfig.tribunalSafe
-            );
-
-            currentArbitrableConfig++;
-            arbitrableConfigs[currentArbitrableConfig] = _arbitrableConfig;
+            currentArbitrableConfigVersion++;
+            arbitrableConfigs[currentArbitrableConfigVersion] = _arbitrableConfig;
 
             emit ArbitrableConfigUpdated(
-                currentArbitrableConfig,
+                currentArbitrableConfigVersion,
                 _arbitrableConfig.arbitrator,
                 _arbitrableConfig.tribunalSafe,
                 _arbitrableConfig.submitterCollateralAmount,
@@ -1114,7 +1115,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
 
         cvParams = _cvParams;
-        emit PoolParamsUpdated(_cvParams, _arbitrableConfig);
+        emit CVParamsUpdated(_cvParams);
     }
 
     function updateProposalConviction(uint256 proposalId) public returns (uint256) {
@@ -1267,13 +1268,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 proposalId,
                 proposal.submitter,
                 address(registryCommunity.councilSafe()),
-                arbitrableConfigs[currentArbitrableConfig].submitterCollateralAmount / 2
+                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
             );
             collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 proposal.disputeInfo.challenger,
-                arbitrableConfigs[currentArbitrableConfig].submitterCollateralAmount / 2
+                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
             );
         }
 

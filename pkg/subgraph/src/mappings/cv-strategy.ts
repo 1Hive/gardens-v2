@@ -26,9 +26,8 @@ import {
   PointsDeactivated,
   Ruling,
   ProposalDisputed,
-  PoolParamsUpdated,
-  PoolParamsUpdatedCvParamsStruct,
-  PoolParamsUpdatedArbitrableConfigStruct,
+  CVParamsUpdated,
+  CVParamsUpdatedCvParamsStruct,
   ProposalCancelled
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
@@ -82,13 +81,9 @@ export function handleInitialized(event: InitializedCV): void {
 
   log.debug("handleInitialized changetypes", []);
   // @ts-ignore
-  let cvParams = changetype<PoolParamsUpdatedCvParamsStruct>(
+  let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(
     event.params.data.cvParams
   );
-  // @ts-ignore
-  // let arbitrableConfig = changetype<PoolParamsUpdatedArbitrableConfigStruct>(
-  //   event.params.data.arbitrableConfig
-  // );
 
   computeConfig(config, cvParams);
 
@@ -434,7 +429,7 @@ export function handlePowerDecreased(event: PowerDecreased): void {
   memberStrategy.save();
 }
 
-export function handlePoolParamsUpdated(event: PoolParamsUpdated): void {
+export function handleCVParamsUpdated(event: CVParamsUpdated): void {
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
     log.error("CVStrategy: handlePoolParamsUpdated cvs not found: {}", [
@@ -468,7 +463,7 @@ export function handlePoolParamsUpdated(event: PoolParamsUpdated): void {
 
 export function handleArbitrableConfigUpdated(event: ArbitrableConfigUpdated): void {
   let arbitrableConfig = new ArbitrableConfig(
-    `${event.address.toHex()}-${event.params.currentArbitrableConfig.toString()}`
+    `${event.address.toHex()}-${event.params.currentArbitrableConfigVersion.toString()}`
   );
   arbitrableConfig.strategy = event.address.toHexString();
   arbitrableConfig.arbitrator = event.params.arbitrator.toHexString();
@@ -486,7 +481,7 @@ export function handleArbitrableConfigUpdated(event: ArbitrableConfigUpdated): v
 
 function computeConfig(
   config: CVStrategyConfig,
-  cvParams: PoolParamsUpdatedCvParamsStruct
+  cvParams: CVParamsUpdatedCvParamsStruct
 ): void {
   // CV Params
   log.debug("CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]", [
