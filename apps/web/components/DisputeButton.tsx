@@ -126,10 +126,10 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     !!disputeCooldown &&
     +lastDispute.ruledAt + Number(disputeCooldown) > Date.now() / 1000;
 
+  const proposalStatus = ProposalStatus[proposalData.proposalStatus];
+
   const isDisputed =
-    proposalData &&
-    lastDispute &&
-    ProposalStatus[proposalData.proposalStatus] === "disputed";
+    proposalData && lastDispute && proposalStatus === "disputed";
 
   const isTimeout =
     lastDispute &&
@@ -137,6 +137,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     +lastDispute.createdAt + +config.defaultRulingTimeout < Date.now() / 1000;
 
   const disputes = disputesResult?.proposalDisputes ?? [];
+
+  const isProposalEnded = proposalStatus !== "active" && !isDisputed;
 
   const isTribunalSafe = config.tribunalSafe === address?.toLowerCase();
 
@@ -248,7 +250,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const content = (
     <div className="flex md:flex-col gap-10">
-      {isDisputed ?
+      {proposalStatus !== "active" ?
         <div className="p-16 rounded-lg">
           {disputes.map((dispute) => (
             <Fragment key={dispute.id}>
@@ -402,8 +404,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   return (
     <>
-      {(ProposalStatus[proposalData?.proposalStatus] === "active" ||
-        ProposalStatus[proposalData?.proposalStatus] === "disputed") && (
+      {(proposalStatus === "active" || lastDispute != null) && (
         <>
           <Button
             color="danger"
@@ -412,7 +413,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             disabled={isDisconnected}
             tooltip="Connect wallet"
           >
-            {isDisputed ? "Open dispute" : "Dispute"}
+            {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
           </Button>
           <Modal
             title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
@@ -420,7 +421,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             isOpen={isModalOpened}
           >
             {content}
-            {buttons}
+            {!isProposalEnded && buttons}
           </Modal>
         </>
       )}
@@ -439,7 +440,7 @@ const DisputeMessage = ({
     ProposalDispute,
     "id" | "challenger" | "context" | "createdAt"
   > & {
-    metadata: Pick<ProposalDisputeMetadata, "reason"> | null;
+    metadata?: Maybe<Pick<ProposalDisputeMetadata, "reason">>;
   };
   title?: string;
 }) => {
