@@ -8,12 +8,7 @@ import {
 import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
 import { parseAbiParameters, encodeAbiParameters } from "viem";
-import {
-  Address,
-  Address as AddressType,
-  useAccount,
-  useContractRead,
-} from "wagmi";
+import { Address, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -32,6 +27,7 @@ import {
   ProposalCard,
 } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -40,8 +36,6 @@ import { LightCVStrategy } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
-import { chain } from "lodash-es";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 
 // Types
 export type ProposalInputItem = {

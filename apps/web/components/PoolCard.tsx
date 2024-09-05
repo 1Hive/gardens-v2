@@ -57,7 +57,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
           icon={<BoltIcon />}
           label="Pool system"
           count={capitalize(PointSystems[config?.pointSystem])}
-        ></Statistic>
+         />
         <Statistic
           icon={<HandRaisedIcon />}
           count={proposals.length}
