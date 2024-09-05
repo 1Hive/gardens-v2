@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BoltIcon,
   ClockIcon,
   CurrencyDollarIcon,
   HandRaisedIcon,
@@ -49,13 +50,16 @@ export function PoolCard({ pool, tokenGarden }: Props) {
       <header className="mb-4 flex w-full items-center justify-between">
         <div>
           <h4>Pool #{poolId}</h4>
-          <p className="subtitle2 pt-0.5 text-secondary-content">
+          {/* <p className="subtitle2 pt-0.5 text-tertiary-content first-letter:capitalize">
             {PointSystems[config?.pointSystem]}
-          </p>
+          </p> */}
         </div>
         <Badge type={poolType} />
       </header>
       <div className="mb-10 flex min-h-[60px] flex-col gap-2">
+        <Statistic icon={<BoltIcon />} label="type">
+          <Badge label={PointSystems[config?.pointSystem]} />
+        </Statistic>
         <Statistic
           icon={<HandRaisedIcon />}
           count={proposals.length}
