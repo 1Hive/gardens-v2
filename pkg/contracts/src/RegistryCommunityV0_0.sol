@@ -212,6 +212,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     }
 
     // AUDIT: acknowledged upgradeable contract hat does not protect initialize functions,
+    // slither-disable-next-line unprotected-upgrade
     function initialize(
         RegistryCommunityV0_0.InitializeParams memory params,
         address _strategyTemplate,
@@ -314,7 +315,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
     }
 
-    function activateMemberInStrategy(address _member, address _strategy) public {
+    function activateMemberInStrategy(address _member, address _strategy) public nonReentrant{
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
         _revertZeroAddress(_strategy);

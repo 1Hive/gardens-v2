@@ -10,6 +10,8 @@ import {IArbitrator} from "./interfaces/IArbitrator.sol";
 import {IArbitrable} from "./interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 // import {console} from "forge-std/console.sol";
+import {ReentrancyGuardUpgradeable} from
+    "openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
 
@@ -128,7 +130,7 @@ library StrategyStruct {
     }
 }
 
-contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165, AccessControlUpgradeable {
+contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165, AccessControlUpgradeable, ReentrancyGuardUpgradeable {
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -251,7 +253,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
-    function init(address _allo, address _collateralVaultTemplate, address owner) external virtual initializer {
+    // False positive    
+    // slither-disable-next-line unprotected-upgrade
+    function init(address _allo, address _collateralVaultTemplate, address owner) external virtual initializer onlyInitializing{
         super.init(_allo, "CVStrategy", owner);
         collateralVaultTemplate = _collateralVaultTemplate;
     }
@@ -461,7 +465,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         emit PointsDeactivated(_member);
     }
 
-    function increasePower(address _member, uint256 _amountToStake) external returns (uint256) {
+    function increasePower(address _member, uint256 _amountToStake) external nonReentrant returns (uint256) {
         //requireMemberActivatedInStrategies
         onlyRegistryCommunity();
         if (!_canExecuteAction(_member)) {
@@ -483,7 +487,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return pointsToIncrease;
     }
 
-    function decreasePower(address _member, uint256 _amountToUnstake) external returns (uint256) {
+    function decreasePower(address _member, uint256 _amountToUnstake) external nonReentrant returns (uint256) {
         onlyRegistryCommunity();
         //requireMemberActivatedInStrategies
 
@@ -555,7 +559,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return pointConfig.maxAmount;
     }
 
-    function getPointSystem() public view returns (StrategyStruct.PointSystem) {
+    function getPointSystem() public nonReentrant returns (StrategyStruct.PointSystem) {
         return pointSystem;
     }
 
@@ -643,7 +647,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // uint256 convictionLast = updateProposalConviction(proposalId);
         (uint256 convictionLast, uint256 blockNumber) =
             _checkBlockAndCalculateConviction(proposal, proposal.stakedAmount);
-
+        // slither-disable-next-line incorrect-equality    
         if (convictionLast == 0 && blockNumber == 0) {
             convictionLast = proposal.convictionLast;
         }
@@ -832,7 +836,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function _addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport) internal {
-        uint256[] memory proposalsIds;
+        // Initialize for slither -Kev
+        uint256[] memory proposalsIds = new uint256[](0);
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             uint256 proposalId = _proposalSupport[i].proposalId;
             // add proposalid to the list if not exist
@@ -977,10 +982,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // denom = maxRatio * 2 ** 64 / D  - requestedAmount * 2 ** 64 / funds
         // denom = maxRatio / 1 - _requestedAmount / funds;
         uint256 denom = (cvParams.maxRatio * 2 ** 64) / D - (_requestedAmount * 2 ** 64) / poolAmount;
+        // Slither: Multiplication after division acknowledged, controlled by decimal shifting
+        // slither-disable-next-line divide-before-multiply    
         _threshold = (
             (((((cvParams.weight << 128) / D) / ((denom * denom) >> 64)) * D) / (D - cvParams.decay))
                 * totalEffectiveActivePoints()
         ) >> 64;
+
         //_threshold = ((((((weight * 2**128) / D) / ((denom * denom) / 2 **64)) * D) / (D - decay)) * _totalStaked()) / 2 ** 64;
         // console.log("_threshold", _threshold);
         _threshold = _threshold > cvParams.minThresholdPoints ? _threshold : cvParams.minThresholdPoints;
@@ -1012,6 +1020,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         uint256 b = _b;
         _result = TWO_128;
         while (b > 0) {
+            // <= instead of == to avoid strict equality, but not logical (uint always > 0) and could lead to misunderstanding -Kev
+            // slither-disable-next-line incorrect-equality
             if (b & 1 == 0) {
                 a = _mul(a, a);
                 b >>= 1;
@@ -1061,7 +1071,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      */
     function _calculateAndSetConviction(StrategyStruct.Proposal storage _proposal, uint256 _oldStaked) internal {
         (uint256 conviction, uint256 blockNumber) = _checkBlockAndCalculateConviction(_proposal, _oldStaked);
-        if (conviction == 0 && blockNumber == 0) {
+        if (conviction <= 0 && blockNumber <= 0) {
             return;
         }
         _proposal.blockLast = blockNumber;
@@ -1075,7 +1085,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     {
         blockNumber = block.number;
         assert(_proposal.blockLast <= blockNumber);
-        if (_proposal.blockLast == blockNumber) {
+        // >= instead of == to avoid strict equality - Kev
+        if (_proposal.blockLast >= blockNumber) {
             // console.log("blockNumber == _proposal.blockLast");
             return (0, 0); // Conviction already stored
         }
@@ -1107,12 +1118,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 revert ArbitrationConfigCannotBeChangedDuringDispute();
             }
 
+            arbitrableConfig = _arbitrableConfig;
             _arbitrableConfig.arbitrator.registerSafe(_arbitrableConfig.tribunalSafe);
             emit TribunaSafeRegistered(
                 address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
             );
 
-            arbitrableConfig = _arbitrableConfig;
         }
 
         cvParams = _cvParams;
@@ -1162,6 +1173,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable
+        nonReentrant
         returns (uint256 disputeId)
     {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];

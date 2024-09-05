@@ -44,7 +44,7 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
     function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
-
+    // slither-disable-next-line unprotected-upgrade
     function initialize(
         address _owner,
         address _gardensFeeReceiver,
