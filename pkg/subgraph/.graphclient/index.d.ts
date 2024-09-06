@@ -1148,7 +1148,7 @@ export type ProposalDispute = {
     status: Scalars['BigInt']['output'];
     challenger: Scalars['String']['output'];
     context: Scalars['String']['output'];
-    metadata: ProposalDisputeMetadata;
+    metadata?: Maybe<ProposalDisputeMetadata>;
     rulingOutcome?: Maybe<Scalars['BigInt']['output']>;
     ruledAt?: Maybe<Scalars['BigInt']['output']>;
 };
@@ -2833,7 +2833,7 @@ export type ProposalDisputeResolvers<ContextType = MeshContext, ParentType exten
     status?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     challenger?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     context?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-    metadata?: Resolver<ResolversTypes['ProposalDisputeMetadata'], ParentType, ContextType>;
+    metadata?: Resolver<Maybe<ResolversTypes['ProposalDisputeMetadata']>, ParentType, ContextType>;
     rulingOutcome?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     ruledAt?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -3195,7 +3195,7 @@ export type getCommunityQuery = {
         members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'stakedTokens'>>>;
         strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'isEnabled' | 'poolAmount' | 'poolId' | 'metadata'> & {
             proposals: Array<Pick<CVProposal, 'id'>>;
-            config: Pick<CVStrategyConfig, 'proposalType'>;
+            config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>;
         })>>;
     })>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'symbol' | 'decimals' | 'id'>>;
@@ -3327,7 +3327,7 @@ export type getProposalDisputesQueryVariables = Exact<{
 }>;
 export type getProposalDisputesQuery = {
     proposalDisputes: Array<(Pick<ProposalDispute, 'id' | 'disputeId' | 'status' | 'challenger' | 'context' | 'createdAt' | 'ruledAt' | 'rulingOutcome'> & {
-        metadata: Pick<ProposalDisputeMetadata, 'reason'>;
+        metadata?: Maybe<Pick<ProposalDisputeMetadata, 'reason'>>;
     })>;
 };
 export type getStrategyArbitrationConfigQueryVariables = Exact<{
