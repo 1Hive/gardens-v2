@@ -491,7 +491,7 @@ query getProposalDisputes($proposalId: ID!) {
   }
 }
 
-query getArbitrableConfigs($strategyId: ID!) {
+query getArbitrableConfigs($strategyId: String!) {
   arbitrableConfigs(where: { strategy: $strategyId }) {
     arbitrator
     challengerCollateralAmount

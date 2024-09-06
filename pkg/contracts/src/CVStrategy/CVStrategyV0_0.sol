@@ -306,7 +306,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
-    function checkSenderIsMember(address _sender) internal view {
+    function checkSenderIsMember(address _sender) internal view virtual {
         if (_sender == address(0)) {
             revert UserCannotBeZero();
         }
@@ -319,17 +319,17 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // _;
     }
 
-    function onlyRegistryCommunity() internal view {
+    function onlyRegistryCommunity() internal virtual view {
         if (msg.sender != address(registryCommunity)) {
             revert OnlyCommunityAllowed();
         }
     }
 
-    function _revertZeroAddress(address _address) internal pure {
+    function _revertZeroAddress(address _address) internal virtual pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
-    function onlyCouncilSafe() internal view {
+    function onlyCouncilSafe() internal virtual view {
         if (msg.sender != address(registryCommunity.councilSafe())) {
             revert OnlyCouncilSafe();
         }
@@ -799,7 +799,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return proposals[_proposalId].voterStakedPoints[_voter];
     }
 
-    function getBasisStakedAmount() internal view returns (uint256) {
+    function getBasisStakedAmount() internal virtual view returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
 

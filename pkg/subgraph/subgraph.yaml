@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: localhost
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
-      address: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"
+      address: "0x7a603877488db46c0f6b40c2c770becfd7a65593"
       abi: RegistryFactoryV0_0
-      startBlock: 0
+      startBlock: 77903587
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -40,15 +40,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: localhost
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
-      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
+      address: "0xf0988f8c1c2fb62ea746b86c1ce70636fa4a49ff"
       abi: PassportScorer
-      startBlock: 0
+      startBlock: 77903587
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -72,7 +72,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -134,7 +134,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: CVStrategyV0_0
     mapping:
