@@ -36,9 +36,9 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   const { address } = useAccount();
 
   const poolSystemDefinition: { [key: number]: string } = {
-    0: "This pool has a fixed points system, meaning every member has the same governance weight, limited to their registration stake.",
-    1: "This pool has a capped points system, meaning your governance weight will increase but capped based to maximum of tokens you have staked.",
-    2: "This pool has an unlimited points system, allowing you to increase your governance weight without restrictions as you stake more tokens.",
+    0: "This pool has a fixed system, meaning every member has the same governance weight, limited to their registration stake.",
+    1: "This pool has a capped system, allowing your governance weight to increase with more tokens staked, but only up to a limit.",
+    2: "This pool has an unlimited system, allowing you to increase your governance weight without restrictions as you stake more tokens.",
     3: "This pool has a quadratic points system, meaning your governance weight grows at a squared rate relative to the tokens you have staked.",
   };
 

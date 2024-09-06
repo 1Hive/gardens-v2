@@ -186,6 +186,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       metadata
       config {
         proposalType
+        pointSystem
       }
       proposals {
         id

@@ -3305,7 +3305,7 @@ export type getCommunityQuery = {
         members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'stakedTokens'>>>;
         strategies?: Maybe<Array<(Pick<CVStrategy, 'id' | 'isEnabled' | 'poolAmount' | 'poolId' | 'metadata'> & {
             proposals: Array<Pick<CVProposal, 'id'>>;
-            config: Pick<CVStrategyConfig, 'proposalType'>;
+            config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem'>;
         })>>;
     })>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'symbol' | 'decimals' | 'id'>>;
