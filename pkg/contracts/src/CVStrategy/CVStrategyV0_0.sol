@@ -83,7 +83,7 @@ library StrategyStruct {
         Metadata metadata;
         ProposalDisputeInfo disputeInfo;
         uint256 lastDisputeCompletion;
-        uint256 arbitrableConfigId;
+        uint256 arbitrableConfigVersion;
     }
 
     struct ProposalSupport {
@@ -407,7 +407,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         p.convictionLast = 0;
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
-        p.arbitrableConfigId = currentArbitrableConfigVersion;
+        p.arbitrableConfigVersion = currentArbitrableConfigVersion;
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
         emit ProposalCreated(poolId, proposalId);
@@ -712,7 +712,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      * @return convictionLast Last conviction calculated
      * @return threshold Proposal threshold
      * @return voterStakedPoints Voter staked points
-     * @return arbitrableConfigId Proposal arbitrable config id
+     * @return arbitrableConfigVersion Proposal arbitrable config id
      */
     function getProposal(uint256 _proposalId)
         external
@@ -728,7 +728,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             uint256 convictionLast,
             uint256 threshold,
             uint256 voterStakedPoints,
-            uint256 arbitrableConfigId
+            uint256 arbitrableConfigVersion
         )
     {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
@@ -745,7 +745,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             proposal.convictionLast,
             threshold,
             proposal.voterStakedPoints[msg.sender],
-            proposal.arbitrableConfigId
+            proposal.arbitrableConfigVersion
         );
     }
 
@@ -1164,7 +1164,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         returns (uint256 disputeId)
     {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigId];
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
 
         if (address(arbitrableConfig.arbitrator) == address(0)) {
             revert ArbitratorCannotBeZero();
@@ -1220,7 +1220,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function rule(uint256 _disputeID, uint256 _ruling) external override {
         uint256 proposalId = disputeIdToProposalId[_disputeID];
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigId];
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
 
         if (proposalId == 0) {
             revert ProposalNotInList(proposalId);
@@ -1295,7 +1295,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         collateralVault.withdrawCollateral(
             proposalId,
             proposals[proposalId].submitter,
-            arbitrableConfigs[proposals[proposalId].arbitrableConfigId].submitterCollateralAmount
+            arbitrableConfigs[proposals[proposalId].arbitrableConfigVersion].submitterCollateralAmount
         );
 
         proposals[proposalId].proposalStatus = StrategyStruct.ProposalStatus.Cancelled;

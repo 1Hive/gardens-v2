@@ -280,6 +280,19 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       }
     }
   }
+  arbitrableConfigs(
+    first: 1
+    orderBy: version
+    orderDirection: desc
+    where: { strategy_: { poolId: $poolId } }
+  ) {
+    submitterCollateralAmount
+    challengerCollateralAmount
+    arbitrator
+    defaultRuling
+    defaultRulingTimeout
+    tribunalSafe
+  }
 }
 
 query getProposalData($garden: ID!, $proposalId: ID!) {

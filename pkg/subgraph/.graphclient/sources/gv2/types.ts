@@ -85,6 +85,7 @@ export type Allo_orderBy =
 
 export type ArbitrableConfig = {
   id: Scalars['ID']['output'];
+  version: Scalars['BigInt']['output'];
   strategy: CVStrategy;
   arbitrator: Scalars['String']['output'];
   tribunalSafe: Scalars['String']['output'];
@@ -103,6 +104,14 @@ export type ArbitrableConfig_filter = {
   id_lte?: InputMaybe<Scalars['ID']['input']>;
   id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
   id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  version?: InputMaybe<Scalars['BigInt']['input']>;
+  version_not?: InputMaybe<Scalars['BigInt']['input']>;
+  version_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  version_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  version_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  version_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  version_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  version_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   strategy?: InputMaybe<Scalars['String']['input']>;
   strategy_not?: InputMaybe<Scalars['String']['input']>;
   strategy_gt?: InputMaybe<Scalars['String']['input']>;
@@ -204,6 +213,7 @@ export type ArbitrableConfig_filter = {
 
 export type ArbitrableConfig_orderBy =
   | 'id'
+  | 'version'
   | 'strategy'
   | 'strategy__id'
   | 'strategy__poolId'
@@ -530,6 +540,7 @@ export type CVProposal_orderBy =
   | 'updatedAt'
   | 'arbitrableConfig'
   | 'arbitrableConfig__id'
+  | 'arbitrableConfig__version'
   | 'arbitrableConfig__arbitrator'
   | 'arbitrableConfig__tribunalSafe'
   | 'arbitrableConfig__challengerCollateralAmount'

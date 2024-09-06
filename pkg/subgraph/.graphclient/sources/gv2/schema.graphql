@@ -78,6 +78,7 @@ enum Allo_orderBy {
 
 type ArbitrableConfig {
   id: ID!
+  version: BigInt!
   strategy: CVStrategy!
   arbitrator: String!
   tribunalSafe: String!
@@ -96,6 +97,14 @@ input ArbitrableConfig_filter {
   id_lte: ID
   id_in: [ID!]
   id_not_in: [ID!]
+  version: BigInt
+  version_not: BigInt
+  version_gt: BigInt
+  version_lt: BigInt
+  version_gte: BigInt
+  version_lte: BigInt
+  version_in: [BigInt!]
+  version_not_in: [BigInt!]
   strategy: String
   strategy_not: String
   strategy_gt: String
@@ -197,6 +206,7 @@ input ArbitrableConfig_filter {
 
 enum ArbitrableConfig_orderBy {
   id
+  version
   strategy
   strategy__id
   strategy__poolId
@@ -530,6 +540,7 @@ enum CVProposal_orderBy {
   updatedAt
   arbitrableConfig
   arbitrableConfig__id
+  arbitrableConfig__version
   arbitrableConfig__arbitrator
   arbitrableConfig__tribunalSafe
   arbitrableConfig__challengerCollateralAmount

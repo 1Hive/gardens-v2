@@ -461,22 +461,24 @@ export function handleCVParamsUpdated(event: CVParamsUpdated): void {
   config.save();
 }
 
-export function handleArbitrableConfigUpdated(event: ArbitrableConfigUpdated): void {
+export function handleArbitrableConfigUpdated(
+  event: ArbitrableConfigUpdated
+): void {
   let arbitrableConfig = new ArbitrableConfig(
     `${event.address.toHex()}-${event.params.currentArbitrableConfigVersion.toString()}`
   );
+  arbitrableConfig.version = event.params.currentArbitrableConfigVersion;
   arbitrableConfig.strategy = event.address.toHexString();
   arbitrableConfig.arbitrator = event.params.arbitrator.toHexString();
   arbitrableConfig.tribunalSafe = event.params.tribunalSafe.toHexString();
   arbitrableConfig.challengerCollateralAmount =
-  event.params.challengerCollateralAmount;
+    event.params.challengerCollateralAmount;
   arbitrableConfig.submitterCollateralAmount =
     event.params.submitterCollateralAmount;
   arbitrableConfig.defaultRuling = event.params.defaultRuling;
   arbitrableConfig.defaultRulingTimeout = event.params.defaultRulingTimeout;
-  
-  arbitrableConfig.save();
 
+  arbitrableConfig.save();
 }
 
 function computeConfig(
@@ -494,7 +496,6 @@ function computeConfig(
   config.decay = cvParams.decay;
   config.minThresholdPoints = cvParams.minThresholdPoints;
   config.maxRatio = cvParams.maxRatio;
-
 }
 
 export function handleProposalDisputed(event: ProposalDisputed): void {

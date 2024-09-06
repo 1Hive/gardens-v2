@@ -123,6 +123,7 @@ export type Allo_filter = {
 export type Allo_orderBy = 'id' | 'chainId' | 'tokenNative';
 export type ArbitrableConfig = {
     id: Scalars['ID']['output'];
+    version: Scalars['BigInt']['output'];
     strategy: CVStrategy;
     arbitrator: Scalars['String']['output'];
     tribunalSafe: Scalars['String']['output'];
@@ -140,6 +141,14 @@ export type ArbitrableConfig_filter = {
     id_lte?: InputMaybe<Scalars['ID']['input']>;
     id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
     id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    version?: InputMaybe<Scalars['BigInt']['input']>;
+    version_not?: InputMaybe<Scalars['BigInt']['input']>;
+    version_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    version_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    version_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    version_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    version_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    version_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     strategy?: InputMaybe<Scalars['String']['input']>;
     strategy_not?: InputMaybe<Scalars['String']['input']>;
     strategy_gt?: InputMaybe<Scalars['String']['input']>;
@@ -238,7 +247,7 @@ export type ArbitrableConfig_filter = {
     and?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
 };
-export type ArbitrableConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout';
+export type ArbitrableConfig_orderBy = 'id' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout';
 export type BlockChangedFilter = {
     number_gte: Scalars['Int']['input'];
 };
@@ -513,7 +522,7 @@ export type CVProposal_filter = {
     and?: InputMaybe<Array<InputMaybe<CVProposal_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVProposal_filter>>>;
 };
-export type CVProposal_orderBy = 'id' | 'proposalNumber' | 'metadata' | 'metadata__id' | 'metadata__title' | 'metadata__description' | 'metadataHash' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'blockLast' | 'convictionLast' | 'threshold' | 'maxCVStaked' | 'stakedAmount' | 'submitter' | 'createdAt' | 'updatedAt' | 'arbitrableConfig' | 'arbitrableConfig__id' | 'arbitrableConfig__arbitrator' | 'arbitrableConfig__tribunalSafe' | 'arbitrableConfig__challengerCollateralAmount' | 'arbitrableConfig__submitterCollateralAmount' | 'arbitrableConfig__defaultRuling' | 'arbitrableConfig__defaultRulingTimeout';
+export type CVProposal_orderBy = 'id' | 'proposalNumber' | 'metadata' | 'metadata__id' | 'metadata__title' | 'metadata__description' | 'metadataHash' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'beneficiary' | 'requestedAmount' | 'requestedToken' | 'proposalStatus' | 'blockLast' | 'convictionLast' | 'threshold' | 'maxCVStaked' | 'stakedAmount' | 'submitter' | 'createdAt' | 'updatedAt' | 'arbitrableConfig' | 'arbitrableConfig__id' | 'arbitrableConfig__version' | 'arbitrableConfig__arbitrator' | 'arbitrableConfig__tribunalSafe' | 'arbitrableConfig__challengerCollateralAmount' | 'arbitrableConfig__submitterCollateralAmount' | 'arbitrableConfig__defaultRuling' | 'arbitrableConfig__defaultRulingTimeout';
 export type CVStrategy = {
     id: Scalars['ID']['output'];
     poolId: Scalars['BigInt']['output'];
@@ -2813,6 +2822,7 @@ export type AlloResolvers<ContextType = MeshContext, ParentType extends Resolver
 }>;
 export type ArbitrableConfigResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['ArbitrableConfig'] = ResolversParentTypes['ArbitrableConfig']> = ResolversObject<{
     id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    version?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     strategy?: Resolver<ResolversTypes['CVStrategy'], ParentType, ContextType>;
     arbitrator?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
     tribunalSafe?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3334,6 +3344,7 @@ export type getPoolDataQuery = {
             strategy: Pick<CVStrategy, 'id' | 'maxCVSupply' | 'totalEffectiveActivePoints'>;
         })>;
     })>;
+    arbitrableConfigs: Array<Pick<ArbitrableConfig, 'submitterCollateralAmount' | 'challengerCollateralAmount' | 'arbitrator' | 'defaultRuling' | 'defaultRulingTimeout' | 'tribunalSafe'>>;
 };
 export type getProposalDataQueryVariables = Exact<{
     garden: Scalars['ID']['input'];
