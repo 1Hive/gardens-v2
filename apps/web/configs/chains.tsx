@@ -2,6 +2,7 @@ import React, { FC } from "react";
 import {
   Arbitrum,
   Ethereum,
+  GnosisGno,
   Optimism,
   Polygon,
 } from "@thirdweb-dev/chain-icons";
@@ -10,6 +11,7 @@ import {
   arbitrum,
   arbitrumSepolia,
   Chain,
+  gnosis,
   localhost,
   optimism,
   polygon,
@@ -153,20 +155,20 @@ export const chainConfigMap: {
     passportScorer: "0xa71023bc64c9711c2037ab491de80fd74504bd55",
     isTestnet: false,
   },
-  // 100: {
-  //   name: gnosis.name,
-  //   icon: GnosisGno,
-  //   explorer: "https://gnosis.blockscout.com",
-  //   blockTime: 5.2,
-  //   confirmations: 4, // 4
-  //   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_GNOSIS!,
-  //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
-  //   globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
-  //   allo: "0x",
-  //   arbitrator: "0x",
-  //   passportScorer: "0x",
-  //   isTestnet: false,
-  // },
+  100: {
+    name: gnosis.name,
+    icon: GnosisGno,
+    explorer: "https://gnosis.blockscout.com",
+    blockTime: 5.2,
+    confirmations: 4, // 4
+    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_GNOSIS!,
+    subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
+    globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
+    allo: "0x",
+    arbitrator: "0x",
+    passportScorer: "0x",
+    isTestnet: false,
+  },
   // 1: {
   //   name: mainnet.name,
   //   icon: Ethereum,
