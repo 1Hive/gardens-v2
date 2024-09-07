@@ -28,18 +28,21 @@ import {
   ProposalDisputed,
   CVParamsUpdated,
   CVParamsUpdatedCvParamsStruct,
-  ProposalCancelled
+  ProposalCancelled,
+  AllowlistMembersAdded,
+  AllowlistMembersRemoved
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
 
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
 
 const DISPUTE_STATUS_WAITING = BigInt.fromI32(0);
 const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
+const ADDRESS_ZERO = "0x0000000000000000000000000000";
 
 export function handleInitialized(event: InitializedCV): void {
   log.debug("CVStrategy: handleInitialized {}", [
@@ -86,6 +89,7 @@ export function handleInitialized(event: InitializedCV): void {
   );
 
   computeConfig(config, cvParams);
+  computeAllowList(config, event.params.data.initialAllowlist, []);
 
   config.D = cvc.D();
   config.save();
@@ -133,7 +137,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   newProposal.requestedAmount = proposal.getRequestedAmount();
   newProposal.maxCVStaked = maxConviction;
-  newProposal.arbitrableConfig = `${event.address.toHex()}-${proposal.getArbitrableConfigId().toString()}`;
+  newProposal.arbitrableConfig = `${event.address.toHex()}-${proposal.getArbitrableConfigVersion().toString()}`;
 
   newProposal.proposalStatus = BigInt.fromI32(
     cvc.getProposal(event.params.proposalId).getProposalStatus()
@@ -457,6 +461,7 @@ export function handleCVParamsUpdated(event: CVParamsUpdated): void {
   );
 
   computeConfig(config, event.params.cvParams);
+  computeAllowList(config, [], []);
 
   config.save();
 }
@@ -479,23 +484,6 @@ export function handleArbitrableConfigUpdated(
   arbitrableConfig.defaultRulingTimeout = event.params.defaultRulingTimeout;
 
   arbitrableConfig.save();
-}
-
-function computeConfig(
-  config: CVStrategyConfig,
-  cvParams: CVParamsUpdatedCvParamsStruct
-): void {
-  // CV Params
-  log.debug("CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]", [
-    cvParams.weight.toString(),
-    cvParams.decay.toString(),
-    cvParams.minThresholdPoints.toString(),
-    cvParams.maxRatio.toString()
-  ]);
-  config.weight = cvParams.weight;
-  config.decay = cvParams.decay;
-  config.minThresholdPoints = cvParams.minThresholdPoints;
-  config.maxRatio = cvParams.maxRatio;
 }
 
 export function handleProposalDisputed(event: ProposalDisputed): void {
@@ -593,4 +581,87 @@ export function handleProposalCancelled(event: ProposalCancelled): void {
   );
 
   proposal.save();
+}
+
+export function handleAllowlistMembersAdded(
+  event: AllowlistMembersAdded
+): void {
+  let config = CVStrategyConfig.load(
+    `${event.address.toHex()}-${event.params.poolId.toString()}-config`
+  );
+
+  if (config == null) {
+    log.error(
+      "CVStrategy: handleAllowlistMembersRemoved config not found: {}",
+      [`${event.address.toHex()}-${event.params.poolId.toString()}-config`]
+    );
+    return;
+  }
+  computeAllowList(config, event.params.members, []);
+  config.save();
+}
+
+export function handleAllowlistMembersRemoved(
+  event: AllowlistMembersRemoved
+): void {
+  let config = CVStrategyConfig.load(
+    `${event.address.toHex()}-${event.params.poolId.toString()}-config`
+  );
+
+  if (config == null) {
+    log.error(
+      "CVStrategy: handleAllowlistMembersRemoved config not found: {}",
+      [`${event.address.toHex()}-${event.params.poolId.toString()}-config`]
+    );
+    return;
+  }
+
+  computeAllowList(config, [], event.params.members);
+  config.save();
+}
+
+/// -- Helpers -- ///
+
+function computeConfig(
+  config: CVStrategyConfig,
+  cvParams: CVParamsUpdatedCvParamsStruct
+): void {
+  // CV Params
+  log.debug("CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]", [
+    cvParams.weight.toString(),
+    cvParams.decay.toString(),
+    cvParams.minThresholdPoints.toString(),
+    cvParams.maxRatio.toString()
+  ]);
+  config.weight = cvParams.weight;
+  config.decay = cvParams.decay;
+  config.minThresholdPoints = cvParams.minThresholdPoints;
+  config.maxRatio = cvParams.maxRatio;
+}
+
+function computeAllowList(
+  config: CVStrategyConfig,
+  addressToAdd: Address[],
+  addressToRemove: Address[]
+): void {
+  let members = config.allowlist;
+
+  if (members == null) {
+    members = [];
+  }
+
+  for (let i = 0; i < addressToAdd.length; i++) {
+    if (members.indexOf(addressToAdd[i].toHexString()) == -1) {
+      members.push(addressToAdd[i].toHexString());
+    }
+  }
+
+  for (let i = 0; i < addressToRemove.length; i++) {
+    let index = members.indexOf(addressToRemove[i].toHexString());
+    if (index != -1) {
+      members.splice(index, 1);
+    }
+  }
+
+  config.allowlist = members;
 }

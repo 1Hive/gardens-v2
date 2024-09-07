@@ -201,6 +201,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         uint256 defaultRuling,
         uint256 defaultRulingTimeout
     );
+    event AllowlistMembersRemoved(uint256 poolId, address[] members);
+    event AllowlistMembersAdded(uint256 poolId, address[] members);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -1062,6 +1064,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 registryCommunity.grantRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
             }
         }
+
+        emit AllowlistMembersAdded(poolId, members);
     }
 
     function addToAllowlist(address[] memory members) public {
@@ -1076,6 +1080,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 registryCommunity.revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
             }
         }
+
+        emit AllowlistMembersRemoved(poolId, members);
     }
 
     /**
