@@ -1,15 +1,15 @@
 "use client";
 
 import "viem/window";
-import React, { useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
 import { polygon } from "viem/chains";
 import { useToken } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
+import { AllowListInput } from "./AllowListInput";
 import { FormAddressInput } from "./FormAddressInput";
-import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
@@ -48,6 +48,8 @@ type ArbitrationSettings = {
   tribunalAddress: string;
 };
 
+type SybilResistanceType = "no" | "gitcoinPassport" | "allowList";
+
 type FormInputs = {
   title: string;
   description: string;
@@ -57,8 +59,8 @@ type FormInputs = {
   optionType?: number;
   maxAmount?: number;
   minThresholdPoints: string | number;
-  passportThreshold?: number;
-  isSybilResistanceRequired: boolean;
+  sybilResistanceValue?: undefined | number | Address[];
+  sybilResistanceType: SybilResistanceType;
 } & PoolSettings &
   ArbitrationSettings;
 
@@ -109,13 +111,32 @@ const proposalInputMap: Record<string, number[]> = {
   spendingLimit: [1],
   minimumConviction: [1],
   convictionGrowth: [0, 1],
-  isSybilResistanceRequired: [0, 1],
-  passportThreshold: [0, 1],
+  sybilResistanceType: [0, 1],
+  sybilResistanceValue: [0, 1],
   defaultResolution: [0, 1],
   proposalCollateral: [0, 1],
   disputeCollateral: [0, 1],
   tribunalAddress: [0, 1],
   poolTokenAddress: [0, 1],
+};
+
+const sybilResistanceOptions: Record<SybilResistanceType, string> = {
+  no: "No sybil resistance",
+  allowList: "Allow list",
+  gitcoinPassport: "Gitcoin passport",
+};
+
+const sybilResistancePreview = (
+  sybilType: SybilResistanceType,
+  value?: string | Address[],
+): ReactNode => {
+  const previewMap: Record<SybilResistanceType, ReactNode> = {
+    no: "No sybil resistance required (anyone can vote)",
+    allowList: "[download addresses csv]",
+    gitcoinPassport: `Passport score required: ${value}`,
+  };
+
+  return previewMap[sybilType];
 };
 
 const shouldRenderInputMap = (key: string, value: number): boolean => {
@@ -154,7 +175,8 @@ export function PoolForm({ token, communityAddr }: Props) {
         : defaultEthChallengeColateral,
     },
   });
-  const isSybilResistanceRequired = watch("isSybilResistanceRequired");
+  const sybilResistanceType = watch("sybilResistanceType");
+  const sybilResistanceValue = watch("sybilResistanceValue");
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
 
@@ -175,7 +197,10 @@ export function PoolForm({ token, communityAddr }: Props) {
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
-  const formRowTypes: Record<string, any> = {
+  const formRowTypes: Record<
+    string,
+    { label: string; parse?: (value: any) => ReactNode | string }
+  > = {
     optionType: {
       label: "Pool settings:",
       parse: (value: number) => poolSettingValues[value].label,
@@ -209,13 +234,13 @@ export function PoolForm({ token, communityAddr }: Props) {
         return value ?? "0";
       },
     },
-    isSybilResistanceRequired: {
-      label: "Sybil resistance enabled:",
-      parse: (value: boolean) => (value ? "Yes" : "No"),
-    },
-    passportThreshold: {
-      label: "Passport score required:",
-      parse: (value: number) => value,
+    sybilResistanceType: {
+      label: "Sybil resistance:",
+      parse: () =>
+        sybilResistancePreview(
+          sybilResistanceType,
+          sybilResistanceValue?.toString(),
+        ),
     },
     defaultResolution: {
       label: "Default resolution:",
@@ -364,7 +389,7 @@ export function PoolForm({ token, communityAddr }: Props) {
         containerId: communityAddr,
         chainId: chain.id,
       });
-      if (isSybilResistanceRequired) {
+      if (sybilResistanceType === "gitcoinPassport") {
         addStrategy(newPoolData);
       } else {
         setLoading(false);
@@ -384,12 +409,15 @@ export function PoolForm({ token, communityAddr }: Props) {
     >["args"],
   ) => {
     try {
+      if (typeof previewData?.sybilResistanceValue !== "number") {
+        throw new Error("Gitcoin pasport value is not number");
+      }
       const res = await fetch("/api/passport-oracle/addStrategy", {
         method: "POST",
         body: JSON.stringify({
           strategy: newPoolData._strategy,
           threshold:
-            (previewData?.passportThreshold ?? 0) * CV_PERCENTAGE_SCALE,
+            (previewData?.sybilResistanceValue ?? 0) * CV_PERCENTAGE_SCALE,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -456,8 +484,8 @@ export function PoolForm({ token, communityAddr }: Props) {
       spendingLimit: previewData.spendingLimit,
       minimumConviction: previewData.minimumConviction,
       convictionGrowth: previewData.convictionGrowth,
-      isSybilResistanceRequired: previewData.isSybilResistanceRequired,
-      passportThreshold: previewData.passportThreshold,
+      sybilResistanceType: previewData.sybilResistanceType,
+      sybilResistanceValue: previewData.sybilResistanceValue,
       defaultResolution: previewData.defaultResolution,
       proposalCollateral: previewData.proposalCollateral,
       disputeCollateral: previewData.disputeCollateral,
@@ -481,9 +509,7 @@ export function PoolForm({ token, communityAddr }: Props) {
   };
 
   const shouldRenderInPreview = (key: string) => {
-    if (key === "passportThreshold") {
-      return previewData?.isSybilResistanceRequired;
-    } else if (key === "maxAmount") {
+    if (key === "maxAmount") {
       if (previewData?.pointSystemType) {
         return PointSystems[previewData?.pointSystemType] === "capped";
       } else {
@@ -499,7 +525,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       trigger("poolTokenAddress");
     }
   }, [customTokenData, watchedAddress, trigger]);
-
+  console.log(sybilResistanceValue);
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -617,19 +643,22 @@ export function PoolForm({ token, communityAddr }: Props) {
                 </FormInput>
               </div>
             )}
-            {shouldRenderInputMap(
-              "isSybilResistanceRequired",
-              strategyType,
-            ) && (
-              <div className="flex flex-col">
-                <FormCheckBox
-                  label="Add sybil resistance with Gitcoin Passport"
+            {shouldRenderInputMap("sybilResistanceType", strategyType) && (
+              <div className="flex flex-col gap-4">
+                <FormSelect
+                  label="Sybil resistance type"
                   register={register}
                   errors={errors}
-                  registerKey="isSybilResistanceRequired"
-                  type="checkbox"
+                  required
+                  registerKey="sybilResistanceType"
+                  options={Object.entries(sybilResistanceOptions).map(
+                    ([value, text]) => ({
+                      label: text,
+                      value: value,
+                    }),
+                  )}
                 />
-                {isSybilResistanceRequired && (
+                {sybilResistanceType === "gitcoinPassport" ?
                   <FormInput
                     label="Gitcoin Passport score required"
                     register={register}
@@ -645,11 +674,20 @@ export function PoolForm({ token, communityAddr }: Props) {
                       min: 1 / CV_PERCENTAGE_SCALE,
                     }}
                     errors={errors}
-                    registerKey="passportThreshold"
+                    registerKey="sybilResistanceValue"
                     type="number"
                     placeholder="0"
                   />
-                )}
+                : sybilResistanceType === "allowList" && (
+                    <AllowListInput
+                      label="Address list"
+                      register={register}
+                      registerKey="sybilResistanceValue"
+                      required
+                      errors={errors}
+                    />
+                  )
+                }
               </div>
             )}
           </div>
@@ -716,7 +754,6 @@ export function PoolForm({ token, communityAddr }: Props) {
                 required
                 registerKey="defaultResolution"
                 register={register}
-                errors={undefined}
               />
             </div>
             <div className="flex gap-4 max-w-[480px]">
