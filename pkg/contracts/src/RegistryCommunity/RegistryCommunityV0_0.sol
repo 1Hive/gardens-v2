@@ -306,6 +306,12 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
                 _grantRole(allowlistRole, _params.initialAllowlist[i]);
             }
         }
+
+        // Grant the strategy to grant for startegy specific allowlist
+        _setRoleAdmin(
+            keccak256(abi.encodePacked("ALLOWLIST", poolId)), keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
+        );
+        _grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
     }
 
     function createPool(

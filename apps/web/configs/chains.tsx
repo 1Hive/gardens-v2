@@ -6,7 +6,7 @@ import {
   Optimism,
   Polygon,
 } from "@thirdweb-dev/chain-icons";
-import { Address } from "viem";
+import { Address, zeroAddress } from "viem";
 import {
   arbitrum,
   arbitrumSepolia,
@@ -54,7 +54,7 @@ type ChainData = {
   isTestnet: boolean;
 };
 
-const SUBGRAPH_TESTNET_VERSION = "0.28";
+const SUBGRAPH_TESTNET_VERSION = "0.29";
 const SUBGRAPH_PRODNET_VERSION = "1.0";
 
 export const chainConfigMap: {
