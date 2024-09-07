@@ -54,7 +54,7 @@ type ChainData = {
   isTestnet: boolean;
 };
 
-const SUBGRAPH_TESTNET_VERSION = "0.23";
+const SUBGRAPH_TESTNET_VERSION = "0.28";
 const SUBGRAPH_PRODNET_VERSION = "1.0";
 
 export const chainConfigMap: {

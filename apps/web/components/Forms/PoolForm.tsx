@@ -335,6 +335,7 @@ export function PoolForm({ token, communityAddr }: Props) {
           proposalType: previewData.strategyType,
           registryCommunity: communityAddr,
           sybilScorer: chain.passportScorer as Address,
+          initialAllowlist: [], // TODO: Lucho
         },
         {
           protocol: 1n,
