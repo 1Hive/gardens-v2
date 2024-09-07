@@ -83,6 +83,153 @@ export type Allo_orderBy =
   | 'chainId'
   | 'tokenNative';
 
+export type ArbitrableConfig = {
+  id: Scalars['ID']['output'];
+  version: Scalars['BigInt']['output'];
+  strategy: CVStrategy;
+  arbitrator: Scalars['String']['output'];
+  tribunalSafe: Scalars['String']['output'];
+  challengerCollateralAmount: Scalars['BigInt']['output'];
+  submitterCollateralAmount: Scalars['BigInt']['output'];
+  defaultRuling: Scalars['BigInt']['output'];
+  defaultRulingTimeout: Scalars['BigInt']['output'];
+};
+
+export type ArbitrableConfig_filter = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  id_not?: InputMaybe<Scalars['ID']['input']>;
+  id_gt?: InputMaybe<Scalars['ID']['input']>;
+  id_lt?: InputMaybe<Scalars['ID']['input']>;
+  id_gte?: InputMaybe<Scalars['ID']['input']>;
+  id_lte?: InputMaybe<Scalars['ID']['input']>;
+  id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+  version?: InputMaybe<Scalars['BigInt']['input']>;
+  version_not?: InputMaybe<Scalars['BigInt']['input']>;
+  version_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  version_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  version_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  version_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  version_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  version_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  strategy?: InputMaybe<Scalars['String']['input']>;
+  strategy_not?: InputMaybe<Scalars['String']['input']>;
+  strategy_gt?: InputMaybe<Scalars['String']['input']>;
+  strategy_lt?: InputMaybe<Scalars['String']['input']>;
+  strategy_gte?: InputMaybe<Scalars['String']['input']>;
+  strategy_lte?: InputMaybe<Scalars['String']['input']>;
+  strategy_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  strategy_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  strategy_contains?: InputMaybe<Scalars['String']['input']>;
+  strategy_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_contains?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_starts_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_ends_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  strategy_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  strategy_?: InputMaybe<CVStrategy_filter>;
+  arbitrator?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_not?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_gt?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_lt?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_gte?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_lte?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  arbitrator_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  arbitrator_contains?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_not_contains?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_starts_with?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_ends_with?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  arbitrator_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_not?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_gt?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_lt?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_gte?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_lte?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  tribunalSafe_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  tribunalSafe_contains?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_not_contains?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_starts_with?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_ends_with?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  tribunalSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  challengerCollateralAmount?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  challengerCollateralAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  challengerCollateralAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  submitterCollateralAmount?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  submitterCollateralAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  submitterCollateralAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  defaultRuling?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRuling_not?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRuling_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRuling_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRuling_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRuling_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRuling_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  defaultRuling_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  defaultRulingTimeout?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRulingTimeout_not?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRulingTimeout_gt?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRulingTimeout_lt?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRulingTimeout_gte?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRulingTimeout_lte?: InputMaybe<Scalars['BigInt']['input']>;
+  defaultRulingTimeout_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  defaultRulingTimeout_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  /** Filter for the block changed event. */
+  _change_block?: InputMaybe<BlockChangedFilter>;
+  and?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
+  or?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
+};
+
+export type ArbitrableConfig_orderBy =
+  | 'id'
+  | 'version'
+  | 'strategy'
+  | 'strategy__id'
+  | 'strategy__poolId'
+  | 'strategy__poolAmount'
+  | 'strategy__metadata'
+  | 'strategy__maxCVSupply'
+  | 'strategy__totalEffectiveActivePoints'
+  | 'strategy__isEnabled'
+  | 'strategy__token'
+  | 'arbitrator'
+  | 'tribunalSafe'
+  | 'challengerCollateralAmount'
+  | 'submitterCollateralAmount'
+  | 'defaultRuling'
+  | 'defaultRulingTimeout';
+
 export type BlockChangedFilter = {
   number_gte: Scalars['Int']['input'];
 };
@@ -112,6 +259,7 @@ export type CVProposal = {
   submitter: Scalars['String']['output'];
   createdAt: Scalars['BigInt']['output'];
   updatedAt: Scalars['BigInt']['output'];
+  arbitrableConfig: ArbitrableConfig;
 };
 
 export type CVProposal_filter = {
@@ -333,6 +481,27 @@ export type CVProposal_filter = {
   updatedAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
   updatedAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   updatedAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  arbitrableConfig?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_not?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_gt?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_lt?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_gte?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_lte?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  arbitrableConfig_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  arbitrableConfig_contains?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_not_contains?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_starts_with?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_ends_with?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  arbitrableConfig_?: InputMaybe<ArbitrableConfig_filter>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVProposal_filter>>>;
@@ -368,7 +537,16 @@ export type CVProposal_orderBy =
   | 'stakedAmount'
   | 'submitter'
   | 'createdAt'
-  | 'updatedAt';
+  | 'updatedAt'
+  | 'arbitrableConfig'
+  | 'arbitrableConfig__id'
+  | 'arbitrableConfig__version'
+  | 'arbitrableConfig__arbitrator'
+  | 'arbitrableConfig__tribunalSafe'
+  | 'arbitrableConfig__challengerCollateralAmount'
+  | 'arbitrableConfig__submitterCollateralAmount'
+  | 'arbitrableConfig__defaultRuling'
+  | 'arbitrableConfig__defaultRulingTimeout';
 
 export type CVStrategy = {
   id: Scalars['ID']['output'];
@@ -414,12 +592,6 @@ export type CVStrategyConfig = {
   proposalType: Scalars['BigInt']['output'];
   pointSystem: Scalars['BigInt']['output'];
   maxAmount?: Maybe<Scalars['BigInt']['output']>;
-  arbitrator: Scalars['String']['output'];
-  tribunalSafe: Scalars['String']['output'];
-  challengerCollateralAmount: Scalars['BigInt']['output'];
-  submitterCollateralAmount: Scalars['BigInt']['output'];
-  defaultRuling: Scalars['BigInt']['output'];
-  defaultRulingTimeout: Scalars['BigInt']['output'];
 };
 
 export type CVStrategyConfig_filter = {
@@ -496,78 +668,6 @@ export type CVStrategyConfig_filter = {
   maxAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
   maxAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   maxAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  arbitrator?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_not?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_gt?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_lt?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_gte?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_lte?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_in?: InputMaybe<Array<Scalars['String']['input']>>;
-  arbitrator_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-  arbitrator_contains?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_not_contains?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_starts_with?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_ends_with?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-  arbitrator_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_not?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_gt?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_lt?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_gte?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_lte?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_in?: InputMaybe<Array<Scalars['String']['input']>>;
-  tribunalSafe_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
-  tribunalSafe_contains?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_not_contains?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_starts_with?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_not_starts_with?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_ends_with?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_not_ends_with?: InputMaybe<Scalars['String']['input']>;
-  tribunalSafe_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
-  challengerCollateralAmount?: InputMaybe<Scalars['BigInt']['input']>;
-  challengerCollateralAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
-  challengerCollateralAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
-  challengerCollateralAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
-  challengerCollateralAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
-  challengerCollateralAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
-  challengerCollateralAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  challengerCollateralAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  submitterCollateralAmount?: InputMaybe<Scalars['BigInt']['input']>;
-  submitterCollateralAmount_not?: InputMaybe<Scalars['BigInt']['input']>;
-  submitterCollateralAmount_gt?: InputMaybe<Scalars['BigInt']['input']>;
-  submitterCollateralAmount_lt?: InputMaybe<Scalars['BigInt']['input']>;
-  submitterCollateralAmount_gte?: InputMaybe<Scalars['BigInt']['input']>;
-  submitterCollateralAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
-  submitterCollateralAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  submitterCollateralAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  defaultRuling?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRuling_not?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRuling_gt?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRuling_lt?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRuling_gte?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRuling_lte?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRuling_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  defaultRuling_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  defaultRulingTimeout?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRulingTimeout_not?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRulingTimeout_gt?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRulingTimeout_lt?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRulingTimeout_gte?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRulingTimeout_lte?: InputMaybe<Scalars['BigInt']['input']>;
-  defaultRulingTimeout_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
-  defaultRulingTimeout_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
@@ -592,13 +692,7 @@ export type CVStrategyConfig_orderBy =
   | 'weight'
   | 'proposalType'
   | 'pointSystem'
-  | 'maxAmount'
-  | 'arbitrator'
-  | 'tribunalSafe'
-  | 'challengerCollateralAmount'
-  | 'submitterCollateralAmount'
-  | 'defaultRuling'
-  | 'defaultRulingTimeout';
+  | 'maxAmount';
 
 export type CVStrategy_filter = {
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -771,12 +865,6 @@ export type CVStrategy_orderBy =
   | 'config__proposalType'
   | 'config__pointSystem'
   | 'config__maxAmount'
-  | 'config__arbitrator'
-  | 'config__tribunalSafe'
-  | 'config__challengerCollateralAmount'
-  | 'config__submitterCollateralAmount'
-  | 'config__defaultRuling'
-  | 'config__defaultRulingTimeout'
   | 'proposals'
   | 'memberActive'
   | 'maxCVSupply'
@@ -1310,7 +1398,7 @@ export type ProposalDispute = {
   status: Scalars['BigInt']['output'];
   challenger: Scalars['String']['output'];
   context: Scalars['String']['output'];
-  metadata: ProposalDisputeMetadata;
+  metadata?: Maybe<ProposalDisputeMetadata>;
   rulingOutcome?: Maybe<Scalars['BigInt']['output']>;
   ruledAt?: Maybe<Scalars['BigInt']['output']>;
 };
@@ -1597,6 +1685,8 @@ export type Query = {
   cvstrategies: Array<CVStrategy>;
   cvstrategyConfig?: Maybe<CVStrategyConfig>;
   cvstrategyConfigs: Array<CVStrategyConfig>;
+  arbitrableConfig?: Maybe<ArbitrableConfig>;
+  arbitrableConfigs: Array<ArbitrableConfig>;
   cvproposal?: Maybe<CVProposal>;
   cvproposals: Array<CVProposal>;
   registryFactory?: Maybe<RegistryFactory>;
@@ -1663,6 +1753,24 @@ export type QuerycvstrategyConfigsArgs = {
   orderBy?: InputMaybe<CVStrategyConfig_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<CVStrategyConfig_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryarbitrableConfigArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type QueryarbitrableConfigsArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<ArbitrableConfig_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<ArbitrableConfig_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -2415,6 +2523,8 @@ export type Subscription = {
   cvstrategies: Array<CVStrategy>;
   cvstrategyConfig?: Maybe<CVStrategyConfig>;
   cvstrategyConfigs: Array<CVStrategyConfig>;
+  arbitrableConfig?: Maybe<ArbitrableConfig>;
+  arbitrableConfigs: Array<ArbitrableConfig>;
   cvproposal?: Maybe<CVProposal>;
   cvproposals: Array<CVProposal>;
   registryFactory?: Maybe<RegistryFactory>;
@@ -2481,6 +2591,24 @@ export type SubscriptioncvstrategyConfigsArgs = {
   orderBy?: InputMaybe<CVStrategyConfig_orderBy>;
   orderDirection?: InputMaybe<OrderDirection>;
   where?: InputMaybe<CVStrategyConfig_filter>;
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionarbitrableConfigArgs = {
+  id: Scalars['ID']['input'];
+  block?: InputMaybe<Block_height>;
+  subgraphError?: _SubgraphErrorPolicy_;
+};
+
+
+export type SubscriptionarbitrableConfigsArgs = {
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<ArbitrableConfig_orderBy>;
+  orderDirection?: InputMaybe<OrderDirection>;
+  where?: InputMaybe<ArbitrableConfig_filter>;
   block?: InputMaybe<Block_height>;
   subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -2977,6 +3105,10 @@ export type _SubgraphErrorPolicy_ =
   /** null **/
   cvstrategyConfigs: InContextSdkMethod<Query['cvstrategyConfigs'], QuerycvstrategyConfigsArgs, MeshContext>,
   /** null **/
+  arbitrableConfig: InContextSdkMethod<Query['arbitrableConfig'], QueryarbitrableConfigArgs, MeshContext>,
+  /** null **/
+  arbitrableConfigs: InContextSdkMethod<Query['arbitrableConfigs'], QueryarbitrableConfigsArgs, MeshContext>,
+  /** null **/
   cvproposal: InContextSdkMethod<Query['cvproposal'], QuerycvproposalArgs, MeshContext>,
   /** null **/
   cvproposals: InContextSdkMethod<Query['cvproposals'], QuerycvproposalsArgs, MeshContext>,
@@ -3053,6 +3185,10 @@ export type _SubgraphErrorPolicy_ =
   cvstrategyConfig: InContextSdkMethod<Subscription['cvstrategyConfig'], SubscriptioncvstrategyConfigArgs, MeshContext>,
   /** null **/
   cvstrategyConfigs: InContextSdkMethod<Subscription['cvstrategyConfigs'], SubscriptioncvstrategyConfigsArgs, MeshContext>,
+  /** null **/
+  arbitrableConfig: InContextSdkMethod<Subscription['arbitrableConfig'], SubscriptionarbitrableConfigArgs, MeshContext>,
+  /** null **/
+  arbitrableConfigs: InContextSdkMethod<Subscription['arbitrableConfigs'], SubscriptionarbitrableConfigsArgs, MeshContext>,
   /** null **/
   cvproposal: InContextSdkMethod<Subscription['cvproposal'], SubscriptioncvproposalArgs, MeshContext>,
   /** null **/

@@ -12,9 +12,9 @@ dataSources:
         type: Int
         data: 421614
     source:
-      address: "0x3d21D7C4c79bA08326C455E8CfEe2DEcec2c887e"
+      address: "0x7a603877488db46c0f6b40c2c770becfd7a65593"
       abi: RegistryFactoryV0_0
-      startBlock: 73590700
+      startBlock: 77903587
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -46,9 +46,9 @@ dataSources:
         type: Int
         data: 421614
     source:
-      address: "0xfF53a163e43EccC00d8FdE7acA24aa9FA4da7356"
+      address: "0xf0988f8c1c2fb62ea746b86c1ce70636fa4a49ff"
       abi: PassportScorer
-      startBlock: 73590700
+      startBlock: 77903587
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -170,12 +170,16 @@ templates:
           handler: handlePowerDecreased
         - event: PointsDeactivated(address)
           handler: handlePointsDeactivated
-        - event: PoolParamsUpdated((uint256,uint256,uint256,uint256),(address,address,uint256,uint256,uint256,uint256))
-          handler: handlePoolParamsUpdated
+        - event: CVParamsUpdated((uint256,uint256,uint256,uint256))
+          handler: handleCVParamsUpdated
         - event: ProposalDisputed(address,uint256,uint256,address,string,uint256)
           handler: handleProposalDisputed
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleDisputeRuled
+        - event: ProposalCancelled(uint256)
+          handler: handleProposalCancelled
+        - event: ArbitrableConfigUpdated(uint256,address,address,uint256,uint256,uint256,uint256)
+          handler: handleArbitrableConfigUpdated
  
       file: ./src/mappings/cv-strategy.ts
   

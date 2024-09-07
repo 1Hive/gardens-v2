@@ -7,7 +7,7 @@ import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "../src/CVStrategyV0_0.sol";
+import "../src/CVStrategy/CVStrategyV0_0.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
@@ -20,9 +20,9 @@ import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
-import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 
-import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";

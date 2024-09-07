@@ -38,6 +38,7 @@ import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
+import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
   dn,
   parseToken,
@@ -106,11 +107,10 @@ export default function Page({
     const fetchCovenant = async () => {
       if (registryCommunity?.covenantIpfsHash) {
         try {
-          const response = await fetch(
-            "https://ipfs.io/ipfs/" + registryCommunity.covenantIpfsHash,
+          const json = await fetchIpfs<{ covenant: string }>(
+            registryCommunity.covenantIpfsHash,
           );
-          const json = await response.json();
-          if (typeof json.covenant === "string") {
+          if (json && typeof json.covenant === "string") {
             setCovenant(json.covenant);
           }
         } catch (err) {

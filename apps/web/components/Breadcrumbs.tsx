@@ -113,7 +113,7 @@ export function Breadcrumbs() {
             <p className="text-wrap text-justify">
               Our smart contracts{" "}
               <span className="subtitle2">have not been audited</span> yet. Be
-              caution and proceed at your own risk.
+              cautious and proceed at your own risk.
             </p>
             <div>
               <Button

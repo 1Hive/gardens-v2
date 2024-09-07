@@ -14,13 +14,13 @@ import {AccessControlUpgradeable} from
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
-import {FAllo} from "./interfaces/FAllo.sol";
-import {ISafe} from "./interfaces/ISafe.sol";
-import {IRegistryFactory} from "./IRegistryFactory.sol";
-import {CVStrategyV0_0, StrategyStruct, IPointStrategy} from "./CVStrategyV0_0.sol";
+import {FAllo} from "../interfaces/FAllo.sol";
+import {ISafe} from "../interfaces/ISafe.sol";
+import {IRegistryFactory} from "../IRegistryFactory.sol";
+import {CVStrategyV0_0, StrategyStruct, IPointStrategy} from "../CVStrategy/CVStrategyV0_0.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {ProxyOwnableUpgrader} from "./ProxyOwnableUpgrader.sol";
+import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 
 contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
     /*|--------------------------------------------|*/
@@ -90,8 +90,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     using SafeERC20 for IERC20;
     using Clone for address;
 
-    address private collateralVaultTemplate;
-
     /// @notice The native address to represent native token eg: ETH in mainnet
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     /// @notice The precision scale used in the contract to avoid loss of precision
@@ -113,6 +111,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     address public feeReceiver;
     /// @notice The address of the registry factory
     address public registryFactory;
+    /// @notice The address of the collateral vault template
+    address public collateralVaultTemplate;
     /// @notice The address of the strategy template
     address public strategyTemplate;
     /// @notice The address of the pending council safe owner
@@ -158,37 +158,37 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
 
-    function onlyCouncilSafe() private view {
+    function onlyCouncilSafe() internal view virtual {
         if (!hasRole(COUNCIL_MEMBER, msg.sender)) {
             revert UserNotInCouncil(msg.sender);
         }
     }
 
-    function onlyRegistryMemberSender() private view {
+    function onlyRegistryMemberSender() internal view virtual {
         if (!isMember(msg.sender)) {
             revert UserNotInRegistry();
         }
     }
 
-    function onlyRegistryMemberAddress(address _sender) private view {
+    function onlyRegistryMemberAddress(address _sender) internal view {
         if (!isMember(_sender)) {
             revert UserNotInRegistry();
         }
     }
 
-    function onlyStrategyEnabled(address _strategy) private view {
+    function onlyStrategyEnabled(address _strategy) internal view {
         if (!enabledStrategies[_strategy]) {
             revert StrategyDisabled();
         }
     }
 
-    function onlyStrategyAddress(address _sender, address _strategy) private pure {
+    function onlyStrategyAddress(address _sender, address _strategy) internal pure {
         if (_sender != _strategy) {
             revert SenderNotStrategy();
         }
     }
 
-    function onlyActivatedInStrategy(address _strategy) private view {
+    function onlyActivatedInStrategy(address _strategy) internal view {
         if (!memberActivatedInStrategies[msg.sender][_strategy]) {
             revert PointsDeactivated();
         }
@@ -209,6 +209,14 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
     struct Strategies {
         address[] strategies;
+    }
+
+    function setStrategyTemplate(address template) external onlyOwner {
+        strategyTemplate = template;
+    }
+
+    function setCollateralVaultTemplate(address template) external onlyOwner {
+        collateralVaultTemplate = template;
     }
 
     // AUDIT: acknowledged upgradeable contract hat does not protect initialize functions,
@@ -491,7 +499,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
 
-    function _changeCouncilSafe() internal {
+    function _changeCouncilSafe() internal virtual {
         councilSafe = ISafe(pendingCouncilSafe);
         delete pendingCouncilSafe;
         emit CouncilSafeSet(pendingCouncilSafe);

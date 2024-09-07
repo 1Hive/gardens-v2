@@ -3,22 +3,20 @@ pragma solidity ^0.8.19;
 
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
-import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_0} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IArbitrator} from "./interfaces/IArbitrator.sol";
-import {IArbitrable} from "./interfaces/IArbitrable.sol";
+import {IArbitrator} from "../interfaces/IArbitrator.sol";
+import {IArbitrable} from "../interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 // import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {ISybilScorer, PassportData} from "./ISybilScorer.sol";
+import {ISybilScorer, PassportData} from "../ISybilScorer.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {BaseStrategyUpgradeable} from "./BaseStrategyUpgradeable.sol";
+import {BaseStrategyUpgradeable} from "../BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
-import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";
-import {RegistryCommunityV0_0} from "./RegistryCommunityV0_0.sol";
+import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 
 interface IPointStrategy {
     function deactivatePoints(address _member) external;
@@ -69,7 +67,6 @@ library StrategyStruct {
         uint256 disputeId;
         uint256 disputeTimestamp;
         address challenger;
-        uint256 submitterCollateralVault;
     }
 
     struct Proposal {
@@ -86,6 +83,7 @@ library StrategyStruct {
         Metadata metadata;
         ProposalDisputeInfo disputeInfo;
         uint256 lastDisputeCompletion;
+        uint256 arbitrableConfigVersion;
     }
 
     struct ProposalSupport {
@@ -161,11 +159,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     error OnlyArbitrator();
     error ProposalNotDisputed(uint256 _proposalId);
     error ArbitratorCannotBeZero();
+    error OnlySubmitter(address submitter, address sender);
     // Goss: Support Collateral Zero
     // error CollateralVaultCannotBeZero();
     error DefaultRulingNotSet();
     error DisputeCooldownNotPassed(uint256 _proposalId, uint256 _remainingSec);
-    error ArbitrationConfigCannotBeChangedDuringDispute();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -181,7 +179,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     event SupportAdded(
         address from, uint256 proposalId, uint256 amount, uint256 totalStakedAmount, uint256 convictionLast
     );
-    event PoolParamsUpdated(StrategyStruct.CVParams cvParams, StrategyStruct.ArbitrableConfig arbitrableConfig);
+    event CVParamsUpdated(StrategyStruct.CVParams cvParams);
     event RegistryUpdated(address registryCommunity);
     event MinThresholdPointsUpdated(uint256 before, uint256 minThresholdPoints);
     event ProposalDisputed(
@@ -193,6 +191,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         uint256 timestamp
     );
     event TribunaSafeRegistered(address strategy, address arbitrator, address tribunalSafe);
+    event ProposalCancelled(uint256 proposalId);
+    event ArbitrableConfigUpdated(
+        uint256 currentArbitrableConfigVersion,
+        IArbitrator arbitrator,
+        address tribunalSafe,
+        uint256 submitterCollateralAmount,
+        uint256 challengerCollateralAmount,
+        uint256 defaultRuling,
+        uint256 defaultRulingTimeout
+    );
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -204,20 +212,21 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     // Constants for fixed numbers
     uint256 public constant D = 10000000; //10**7
-    uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
-    uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
-    uint256 private constant TWO_64 = 0x10000000000000000; // 2**64
+    uint256 internal constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
+    uint256 internal constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
+    uint256 internal constant TWO_64 = 0x10000000000000000; // 2**64
     uint256 public constant MAX_STAKED_PROPOSALS = 10; // @todo not allow stake more than 10 proposals per user, don't count executed?
     uint256 public constant RULING_OPTIONS = 3;
     uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
 
-    address private collateralVaultTemplate = address(0x3b1fbFB04DB3585920b2eAdBb8839FC9680FE8cd); // Always deploye template to this address with Create3
+    address internal collateralVaultTemplate;
 
     // uint256 variables packed together
     uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
     uint256 public cloneNonce;
     uint64 public disputeCount = 0;
     uint256 public proposalCounter = 0;
+    uint256 public currentArbitrableConfigVersion = 0;
 
     uint256 public totalStaked;
     uint256 public totalPointsActivated;
@@ -230,7 +239,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // Struct variables for complex data structures
     StrategyStruct.PointSystem public pointSystem;
     StrategyStruct.PointSystemConfig public pointConfig;
-    StrategyStruct.ArbitrableConfig public arbitrableConfig;
 
     // Contract reference
     RegistryCommunityV0_0 public registryCommunity;
@@ -243,6 +251,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
     mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
     mapping(uint256 => uint256) public disputeIdToProposalId;
+    mapping(uint256 => StrategyStruct.ArbitrableConfig) public arbitrableConfigs;
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -304,7 +313,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
-    function checkSenderIsMember(address _sender) private view {
+    function checkSenderIsMember(address _sender) internal view virtual {
         if (_sender == address(0)) {
             revert UserCannotBeZero();
         }
@@ -317,17 +326,17 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // _;
     }
 
-    function onlyRegistryCommunity() private view {
+    function onlyRegistryCommunity() internal virtual view {
         if (msg.sender != address(registryCommunity)) {
             revert OnlyCommunityAllowed();
         }
     }
 
-    function _revertZeroAddress(address _address) internal pure {
+    function _revertZeroAddress(address _address) internal virtual pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
-    function onlyCouncilSafe() internal view {
+    function onlyCouncilSafe() internal virtual view {
         if (msg.sender != address(registryCommunity.councilSafe())) {
             revert OnlyCouncilSafe();
         }
@@ -343,6 +352,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             // }
         }
         return sybilScorer.canExecuteAction(_user, address(this));
+    }
+
+    function setCollateralVaultTemplate(address template) external onlyOwner {
+        collateralVaultTemplate = template;
     }
 
     // this is called via allo.sol to register recipients
@@ -384,9 +397,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
 
         if (
-            address(arbitrableConfig.arbitrator) != address(0) && msg.value < arbitrableConfig.submitterCollateralAmount
+            address(arbitrableConfigs[currentArbitrableConfigVersion].arbitrator) != address(0)
+                && msg.value < arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
         ) {
-            revert InsufficientCollateral(msg.value, arbitrableConfig.submitterCollateralAmount);
+            revert InsufficientCollateral(
+                msg.value, arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
+            );
         }
 
         uint256 proposalId = ++proposalCounter;
@@ -403,8 +419,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         p.convictionLast = 0;
         // p.agreementActionId = 0;
         p.metadata = proposal.metadata;
-        // Remember the initial colateral amount because can be changed after creation
-        p.disputeInfo.submitterCollateralVault = arbitrableConfig.submitterCollateralAmount;
+        p.arbitrableConfigVersion = currentArbitrableConfigVersion;
         collateralVault.depositCollateral{value: msg.value}(proposalId, p.submitter);
 
         emit ProposalCreated(poolId, proposalId);
@@ -611,7 +626,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Executed;
             collateralVault.withdrawCollateral(
-                proposalId, proposal.submitter, proposal.disputeInfo.submitterCollateralVault
+                proposalId,
+                proposal.submitter,
+                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
             );
 
             emit Distributed(proposalId, proposal.beneficiary, proposal.requestedAmount);
@@ -706,6 +723,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      * @return blockLast Last block when conviction was calculated
      * @return convictionLast Last conviction calculated
      * @return threshold Proposal threshold
+     * @return voterStakedPoints Voter staked points
+     * @return arbitrableConfigVersion Proposal arbitrable config id
      */
     function getProposal(uint256 _proposalId)
         external
@@ -720,7 +739,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             uint256 blockLast,
             uint256 convictionLast,
             uint256 threshold,
-            uint256 voterStakedPoints
+            uint256 voterStakedPoints,
+            uint256 arbitrableConfigVersion
         )
     {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
@@ -736,7 +756,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             proposal.blockLast,
             proposal.convictionLast,
             threshold,
-            proposal.voterStakedPoints[msg.sender]
+            proposal.voterStakedPoints[msg.sender],
+            proposal.arbitrableConfigVersion
         );
     }
 
@@ -764,11 +785,33 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return totalVoterStakePct[_voter];
     }
 
+    function getArbitrableConfig()
+        external
+        view
+        returns (
+            IArbitrator arbitrator,
+            address tribunalSafe,
+            uint256 submitterCollateralAmount,
+            uint256 challengerCollateralAmount,
+            uint256 defaultRuling,
+            uint256 defaultRulingTimeout
+        )
+    {
+        return (
+            arbitrableConfigs[currentArbitrableConfigVersion].arbitrator,
+            arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe,
+            arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount,
+            arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount,
+            arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling,
+            arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout
+        );
+    }
+
     function _internal_getProposalVoterStake(uint256 _proposalId, address _voter) internal view returns (uint256) {
         return proposals[_proposalId].voterStakedPoints[_voter];
     }
 
-    function getBasisStakedAmount() internal view returns (uint256) {
+    function getBasisStakedAmount() internal virtual view returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
 
@@ -1076,28 +1119,43 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (
             _arbitrableConfig.tribunalSafe != address(0) && address(_arbitrableConfig.arbitrator) != address(0)
                 && (
-                    _arbitrableConfig.tribunalSafe != arbitrableConfig.tribunalSafe
-                        || _arbitrableConfig.arbitrator != arbitrableConfig.arbitrator
-                        || _arbitrableConfig.submitterCollateralAmount != arbitrableConfig.submitterCollateralAmount
-                        || _arbitrableConfig.challengerCollateralAmount != arbitrableConfig.challengerCollateralAmount
-                        || _arbitrableConfig.defaultRuling != arbitrableConfig.defaultRuling
-                        || _arbitrableConfig.defaultRulingTimeout != arbitrableConfig.defaultRulingTimeout
+                    _arbitrableConfig.tribunalSafe != arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe
+                        || _arbitrableConfig.arbitrator != arbitrableConfigs[currentArbitrableConfigVersion].arbitrator
+                        || _arbitrableConfig.submitterCollateralAmount
+                            != arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount
+                        || _arbitrableConfig.challengerCollateralAmount
+                            != arbitrableConfigs[currentArbitrableConfigVersion].challengerCollateralAmount
+                        || _arbitrableConfig.defaultRuling != arbitrableConfigs[currentArbitrableConfigVersion].defaultRuling
+                        || _arbitrableConfig.defaultRulingTimeout
+                            != arbitrableConfigs[currentArbitrableConfigVersion].defaultRulingTimeout
                 )
         ) {
-            if (disputeCount != 0) {
-                revert ArbitrationConfigCannotBeChangedDuringDispute();
+            if (
+                arbitrableConfigs[currentArbitrableConfigVersion].tribunalSafe != _arbitrableConfig.tribunalSafe
+                    || arbitrableConfigs[currentArbitrableConfigVersion].arbitrator != _arbitrableConfig.arbitrator
+            ) {
+                _arbitrableConfig.arbitrator.registerSafe(_arbitrableConfig.tribunalSafe);
+                emit TribunaSafeRegistered(
+                    address(this), address(_arbitrableConfig.arbitrator), _arbitrableConfig.tribunalSafe
+                );
             }
 
-            _arbitrableConfig.arbitrator.registerSafe(_arbitrableConfig.tribunalSafe);
-            emit TribunaSafeRegistered(
-                address(this), address(arbitrableConfig.arbitrator), arbitrableConfig.tribunalSafe
-            );
+            currentArbitrableConfigVersion++;
+            arbitrableConfigs[currentArbitrableConfigVersion] = _arbitrableConfig;
 
-            arbitrableConfig = _arbitrableConfig;
+            emit ArbitrableConfigUpdated(
+                currentArbitrableConfigVersion,
+                _arbitrableConfig.arbitrator,
+                _arbitrableConfig.tribunalSafe,
+                _arbitrableConfig.submitterCollateralAmount,
+                _arbitrableConfig.challengerCollateralAmount,
+                _arbitrableConfig.defaultRuling,
+                _arbitrableConfig.defaultRulingTimeout
+            );
         }
 
         cvParams = _cvParams;
-        emit PoolParamsUpdated(_cvParams, _arbitrableConfig);
+        emit CVParamsUpdated(_cvParams);
     }
 
     function updateProposalConviction(uint256 proposalId) public returns (uint256) {
@@ -1146,6 +1204,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         returns (uint256 disputeId)
     {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
 
         if (address(arbitrableConfig.arbitrator) == address(0)) {
             revert ArbitratorCannotBeZero();
@@ -1201,6 +1260,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function rule(uint256 _disputeID, uint256 _ruling) external override {
         uint256 proposalId = disputeIdToProposalId[_disputeID];
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = arbitrableConfigs[proposal.arbitrableConfigVersion];
 
         if (proposalId == 0) {
             revert ProposalNotInList(proposalId);
@@ -1224,12 +1284,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             }
             if (arbitrableConfig.defaultRuling == 2) {
                 proposal.proposalStatus = StrategyStruct.ProposalStatus.Rejected;
+                collateralVault.withdrawCollateral(
+                    proposalId, proposal.submitter, arbitrableConfig.submitterCollateralAmount
+                );
             }
             collateralVault.withdrawCollateral(
                 proposalId, proposal.disputeInfo.challenger, arbitrableConfig.challengerCollateralAmount
-            );
-            collateralVault.withdrawCollateral(
-                proposalId, proposal.submitter, proposal.disputeInfo.submitterCollateralVault
             );
         } else if (_ruling == 1) {
             proposal.proposalStatus = StrategyStruct.ProposalStatus.Active;
@@ -1248,19 +1308,38 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 proposalId,
                 proposal.submitter,
                 address(registryCommunity.councilSafe()),
-                proposal.disputeInfo.submitterCollateralVault / 2
+                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
             );
             collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
                 proposal.disputeInfo.challenger,
-                proposal.disputeInfo.submitterCollateralVault / 2
+                arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
             );
         }
 
         disputeCount--;
         proposal.lastDisputeCompletion = block.timestamp;
         emit Ruling(arbitrableConfig.arbitrator, _disputeID, _ruling);
+    }
+
+    function cancelProposal(uint256 proposalId) external {
+        if (proposals[proposalId].proposalStatus != StrategyStruct.ProposalStatus.Active) {
+            revert ProposalNotActive(proposalId);
+        }
+
+        if (proposals[proposalId].submitter != msg.sender) {
+            revert OnlySubmitter(proposals[proposalId].submitter, msg.sender);
+        }
+
+        collateralVault.withdrawCollateral(
+            proposalId,
+            proposals[proposalId].submitter,
+            arbitrableConfigs[proposals[proposalId].arbitrableConfigVersion].submitterCollateralAmount
+        );
+
+        proposals[proposalId].proposalStatus = StrategyStruct.ProposalStatus.Cancelled;
+        emit ProposalCancelled(proposalId);
     }
 
     uint256[50] private __gap;
