@@ -92,7 +92,7 @@ templates:
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
+        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address[]))
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
@@ -108,14 +108,20 @@ templates:
           handler: handlePowerDecreased
         - event: PointsDeactivated(address)
           handler: handlePointsDeactivated
-        - event: PoolParamsUpdated((uint256,uint256,uint256,uint256),(address,address,uint256,uint256,uint256,uint256))
-          handler: handlePoolParamsUpdated
+        - event: CVParamsUpdated((uint256,uint256,uint256,uint256))
+          handler: handleCVParamsUpdated
         - event: ProposalDisputed(address,uint256,uint256,address,string,uint256)
           handler: handleProposalDisputed
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleDisputeRuled
         - event: ProposalCancelled(uint256)
           handler: handleProposalCancelled
+        - event: ArbitrableConfigUpdated(uint256,address,address,uint256,uint256,uint256,uint256)
+          handler: handleArbitrableConfigUpdated
+        - event: AllowlistMembersAdded(uint256,address[])
+          handler: handleAllowlistMembersAdded
+        - event: AllowlistMembersRemoved(uint256,address[])
+          handler: handleAllowlistMembersRemoved
  
       file: ./src/mappings/cv-strategy.ts
   

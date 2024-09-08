@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: localhost
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
-      address: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"
+      address: "0xe5294937f881a0b3805f2c8bf8183def1200d685"
       abi: RegistryFactoryV0_0
-      startBlock: 0
+      startBlock: 78248039
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -40,15 +40,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: localhost
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
-      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
+      address: "0x7c3f14ae55dd041c2623c168074bf0b2ae06480a"
       abi: PassportScorer
-      startBlock: 0
+      startBlock: 78248039
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -72,7 +72,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -134,7 +134,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -154,7 +154,7 @@ templates:
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
+        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address[]))
           handler: handleInitialized
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
@@ -170,14 +170,20 @@ templates:
           handler: handlePowerDecreased
         - event: PointsDeactivated(address)
           handler: handlePointsDeactivated
-        - event: PoolParamsUpdated((uint256,uint256,uint256,uint256),(address,address,uint256,uint256,uint256,uint256))
-          handler: handlePoolParamsUpdated
+        - event: CVParamsUpdated((uint256,uint256,uint256,uint256))
+          handler: handleCVParamsUpdated
         - event: ProposalDisputed(address,uint256,uint256,address,string,uint256)
           handler: handleProposalDisputed
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleDisputeRuled
         - event: ProposalCancelled(uint256)
           handler: handleProposalCancelled
+        - event: ArbitrableConfigUpdated(uint256,address,address,uint256,uint256,uint256,uint256)
+          handler: handleArbitrableConfigUpdated
+        - event: AllowlistMembersAdded(uint256,address[])
+          handler: handleAllowlistMembersAdded
+        - event: AllowlistMembersRemoved(uint256,address[])
+          handler: handleAllowlistMembersRemoved
  
       file: ./src/mappings/cv-strategy.ts
   

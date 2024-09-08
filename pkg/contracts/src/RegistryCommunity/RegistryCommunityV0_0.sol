@@ -158,13 +158,13 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
 
-    function onlyCouncilSafe() internal view {
+    function onlyCouncilSafe() internal view virtual {
         if (!hasRole(COUNCIL_MEMBER, msg.sender)) {
             revert UserNotInCouncil(msg.sender);
         }
     }
 
-    function onlyRegistryMemberSender() internal view {
+    function onlyRegistryMemberSender() internal view virtual {
         if (!isMember(msg.sender)) {
             revert UserNotInRegistry();
         }
@@ -219,6 +219,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         collateralVaultTemplate = template;
     }
 
+    // AUDIT: acknowledged upgradeable contract hat does not protect initialize functions,
     function initialize(
         RegistryCommunityV0_0.InitializeParams memory params,
         address _strategyTemplate,
@@ -297,7 +298,20 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
             )
         );
 
-        return createPool(strategyProxy, _token, _params, _metadata);
+        (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
+
+        if (address(_params.sybilScorer) == address(0)) {
+            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+            for (uint256 i = 0; i < _params.initialAllowlist.length; i++) {
+                _grantRole(allowlistRole, _params.initialAllowlist[i]);
+            }
+        }
+
+        // Grant the strategy to grant for startegy specific allowlist
+        _setRoleAdmin(
+            keccak256(abi.encodePacked("ALLOWLIST", poolId)), keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
+        );
+        _grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
     }
 
     function createPool(
@@ -491,7 +505,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
 
-    function _changeCouncilSafe() internal {
+    function _changeCouncilSafe() internal virtual {
         councilSafe = ISafe(pendingCouncilSafe);
         delete pendingCouncilSafe;
         emit CouncilSafeSet(pendingCouncilSafe);
