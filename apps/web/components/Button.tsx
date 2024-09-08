@@ -15,6 +15,7 @@ type ButtonProps = {
   className?: string;
   disabled?: boolean;
   tooltip?: string;
+  tooltipClassName?: string;
   tooltipSide?:
     | "tooltip-top"
     | "tooltip-bottom"
@@ -70,7 +71,8 @@ export function Button({
   onClick,
   className: styles,
   disabled = false,
-  tooltip = "Connect wallet",
+  tooltip,
+  tooltipClassName: tooltipStyles,
   tooltipSide = "tooltip-top",
   children,
   btnStyle = "filled",
@@ -98,8 +100,11 @@ export function Button({
     </button>
   );
 
-  return disabled ?
-      <div className={`tooltip ${tooltipSide} ${styles}`} data-tip={tooltip}>
+  return disabled || tooltip ?
+      <div
+        className={`tooltip ${tooltipSide} ${tooltipStyles}`}
+        data-tip={tooltip}
+      >
         {buttonElement}
       </div>
     : buttonElement;

@@ -2,13 +2,14 @@
 
 import "viem/window";
 import React, { ReactNode, useEffect, useState } from "react";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, parseUnits } from "viem";
 import { polygon } from "viem/chains";
 import { useToken } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
-import { AllowListInput } from "./AllowListInput";
+import { AllowListInput, exportAddresses } from "./AllowListInput";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
@@ -21,6 +22,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryCommunityABI } from "@/src/generated";
 import { DisputeOutcome, PointSystems, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -128,11 +130,25 @@ const sybilResistanceOptions: Record<SybilResistanceType, string> = {
 
 const sybilResistancePreview = (
   sybilType: SybilResistanceType,
+  addresses: string[],
   value?: string | Address[],
 ): ReactNode => {
   const previewMap: Record<SybilResistanceType, ReactNode> = {
     no: "No sybil resistance required (anyone can vote)",
-    allowList: "[download addresses csv]",
+    allowList: (
+      <div className="flex items-center gap-2">
+        <span className="">Allow list </span>
+        <Button
+          type="button"
+          btnStyle="outline"
+          className="!p-1"
+          onClick={() => exportAddresses(addresses)}
+          tooltip="Export"
+        >
+          <ArrowDownTrayIcon className="w-4 h-4" />
+        </Button>
+      </div>
+    ),
     gitcoinPassport: `Passport score required: ${value}`,
   };
 
@@ -194,6 +210,8 @@ export function PoolForm({ token, communityAddr }: Props) {
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
   });
+  const { tooltipMessage, isConnected } = useDisableButtons();
+
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
@@ -239,6 +257,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       parse: () =>
         sybilResistancePreview(
           sybilResistanceType,
+          Array.isArray(sybilResistanceValue) ? sybilResistanceValue : [],
           sybilResistanceValue?.toString(),
         ),
     },
@@ -374,7 +393,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "createPool",
-    fallbackErrorMessage: "Error creating a pool. Please ty again.",
+    fallbackErrorMessage: "Error creating a pool. Please try again.",
     onConfirmations: (receipt) => {
       const newPoolData = getEventFromReceipt(
         receipt,
@@ -525,7 +544,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       trigger("poolTokenAddress");
     }
   }, [customTokenData, watchedAddress, trigger]);
-  console.log(sybilResistanceValue);
+  console.log(sybilResistanceValue, errors);
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -680,10 +699,11 @@ export function PoolForm({ token, communityAddr }: Props) {
                   />
                 : sybilResistanceType === "allowList" && (
                     <AllowListInput
-                      label="Address list"
                       register={register}
                       registerKey="sybilResistanceValue"
+                      addresses={sybilResistanceValue}
                       required
+                      setValue={setValue}
                       errors={errors}
                     />
                   )
@@ -941,7 +961,12 @@ export function PoolForm({ token, communityAddr }: Props) {
             >
               Edit
             </Button>
-            <Button onClick={() => createPool()} isLoading={loading}>
+            <Button
+              onClick={() => createPool()}
+              isLoading={loading}
+              disabled={!isConnected}
+              tooltip={tooltipMessage}
+            >
               Submit
             </Button>
           </div>
