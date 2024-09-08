@@ -6,7 +6,7 @@ import {
   Optimism,
   Polygon,
 } from "@thirdweb-dev/chain-icons";
-import { Address, zeroAddress } from "viem";
+import { Address } from "viem";
 import {
   arbitrum,
   arbitrumSepolia,
