@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BoltIcon,
   ClockIcon,
   CurrencyDollarIcon,
   HandRaisedIcon,
@@ -17,7 +18,8 @@ import { blueLand, grass } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
-import { PoolTypes } from "@/types";
+import { PointSystems, PoolTypes } from "@/types";
+import { capitalize } from "@/utils/text";
 
 type Props = {
   tokenGarden: Pick<TokenGarden, "decimals" | "symbol">;
@@ -26,7 +28,7 @@ type Props = {
     "id" | "isEnabled" | "poolAmount" | "poolId" | "metadata"
   > & {
     proposals: Pick<CVProposal, "id">[];
-    config: Pick<CVStrategyConfig, "proposalType">;
+    config: Pick<CVStrategyConfig, "proposalType" | "pointSystem">;
   };
 };
 
@@ -52,12 +54,17 @@ export function PoolCard({ pool, tokenGarden }: Props) {
       </header>
       <div className="mb-10 flex min-h-[60px] flex-col gap-2">
         <Statistic
+          icon={<BoltIcon />}
+          label="Pool system"
+          count={capitalize(PointSystems[config?.pointSystem])}
+         />
+        <Statistic
           icon={<HandRaisedIcon />}
           count={proposals.length}
           label="proposals"
         />
         {poolType && PoolTypes[poolType] === "funding" && (
-          <Statistic icon={<CurrencyDollarIcon />} label="funds available">
+          <Statistic icon={<CurrencyDollarIcon />} label="funds">
             <DisplayNumber
               number={[BigInt(poolAmount), tokenGarden.decimals]}
               compact={true}

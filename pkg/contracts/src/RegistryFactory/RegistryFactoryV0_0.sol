@@ -41,7 +41,7 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
 
-    function _revertZeroAddress(address _address) internal pure {
+    function _revertZeroAddress(address _address) internal pure virtual {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 

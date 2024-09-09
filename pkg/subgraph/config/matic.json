@@ -1,17 +1,17 @@
 {
   "network": "matic",
-  "chainId": 42161,
+  "chainId": 137,
   "dataSources": [
     {
       "name": "RegistryFactoryV0_0",
-      "startBlock": 61429269,
-      "address": "0x8ee59f6a59dee56f4da16d0b86c7fb627e8a8e06",
+      "startBlock": 61584765,
+      "address": "0x57a9835b204dbcc101dbf981625a3625e8043b9c",
       "customTemplate": "registryFactory"
     },
     {
       "name": "PassportScorer",
-      "startBlock": 61429269,
-      "address": "0x55fe6263f9d26bb422febd95afd40047f03f3cbb",
+      "startBlock": 61584765,
+      "address": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
       "customTemplate": "passportScorer"
     }
   ]
