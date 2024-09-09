@@ -237,7 +237,7 @@ export default function Page({
           >
             {status === "executed" ?
               "Proposal passed and executed successfully!"
-            : `Proposal as been ${status}.`}
+            : `Proposal has been ${status}.`}
           </h4>
         : <>
             <div className="flex justify-between">
