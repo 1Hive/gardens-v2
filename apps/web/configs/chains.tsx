@@ -223,6 +223,6 @@ export function getChain(chainId: ChainId): Chain | undefined {
 
 export const ChainIcon: FC<ChainIconProps> = ({ chain, ...props }) => {
   const numericChainId = Number(chain);
-  const IconComponent = chainConfigMap[numericChainId].icon;
+  const IconComponent = chainConfigMap[numericChainId]?.icon;
   return IconComponent ? <IconComponent {...props} /> : null;
 };
