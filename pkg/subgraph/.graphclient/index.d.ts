@@ -131,6 +131,7 @@ export type ArbitrableConfig = {
     submitterCollateralAmount: Scalars['BigInt']['output'];
     defaultRuling: Scalars['BigInt']['output'];
     defaultRulingTimeout: Scalars['BigInt']['output'];
+    allowlist?: Maybe<Array<Scalars['String']['output']>>;
 };
 export type ArbitrableConfig_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
@@ -242,12 +243,18 @@ export type ArbitrableConfig_filter = {
     defaultRulingTimeout_lte?: InputMaybe<Scalars['BigInt']['input']>;
     defaultRulingTimeout_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     defaultRulingTimeout_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    allowlist?: InputMaybe<Array<Scalars['String']['input']>>;
+    allowlist_not?: InputMaybe<Array<Scalars['String']['input']>>;
+    allowlist_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    allowlist_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+    allowlist_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    allowlist_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
 };
-export type ArbitrableConfig_orderBy = 'id' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout';
+export type ArbitrableConfig_orderBy = 'id' | 'version' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'arbitrator' | 'tribunalSafe' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'defaultRuling' | 'defaultRulingTimeout' | 'allowlist';
 export type BlockChangedFilter = {
     number_gte: Scalars['Int']['input'];
 };
@@ -562,6 +569,7 @@ export type CVStrategyConfig = {
     proposalType: Scalars['BigInt']['output'];
     pointSystem: Scalars['BigInt']['output'];
     maxAmount?: Maybe<Scalars['BigInt']['output']>;
+    allowlist?: Maybe<Array<Scalars['String']['output']>>;
 };
 export type CVStrategyConfig_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
@@ -637,12 +645,18 @@ export type CVStrategyConfig_filter = {
     maxAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
     maxAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
     maxAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    allowlist?: InputMaybe<Array<Scalars['String']['input']>>;
+    allowlist_not?: InputMaybe<Array<Scalars['String']['input']>>;
+    allowlist_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    allowlist_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+    allowlist_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+    allowlist_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
 };
-export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount';
+export type CVStrategyConfig_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'D' | 'decay' | 'maxRatio' | 'minThresholdPoints' | 'weight' | 'proposalType' | 'pointSystem' | 'maxAmount' | 'allowlist';
 export type CVStrategy_filter = {
     id?: InputMaybe<Scalars['ID']['input']>;
     id_not?: InputMaybe<Scalars['ID']['input']>;
@@ -2830,6 +2844,7 @@ export type ArbitrableConfigResolvers<ContextType = MeshContext, ParentType exte
     submitterCollateralAmount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     defaultRuling?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     defaultRulingTimeout?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    allowlist?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export interface BigDecimalScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['BigDecimal'], any> {
@@ -2889,6 +2904,7 @@ export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType exte
     proposalType?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     pointSystem?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     maxAmount?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    allowlist?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export interface Int8ScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Int8'], any> {
@@ -3335,7 +3351,7 @@ export type getPoolDataQuery = {
     tokenGarden?: Maybe<Pick<TokenGarden, 'address' | 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'token' | 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled'> & {
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
-        config: Pick<CVStrategyConfig, 'id' | 'weight' | 'decay' | 'maxAmount' | 'maxRatio' | 'minThresholdPoints' | 'pointSystem' | 'proposalType'>;
+        config: Pick<CVStrategyConfig, 'id' | 'weight' | 'decay' | 'maxAmount' | 'maxRatio' | 'minThresholdPoints' | 'pointSystem' | 'proposalType' | 'allowlist'>;
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'councilSafe' | 'isValid'> & {
             garden: Pick<TokenGarden, 'id' | 'symbol' | 'decimals'>;
         });

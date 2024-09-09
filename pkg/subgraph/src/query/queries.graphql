@@ -246,6 +246,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       minThresholdPoints
       pointSystem
       proposalType
+      allowlist
     }
     registryCommunity {
       id
