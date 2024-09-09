@@ -142,9 +142,14 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
   }
 }
 
-query getGardenCommunities($chainId: BigInt!) {
-  registryCommunities(where: { chainId: $chainId }) {
+query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
+  registryCommunities(
+    where: { chainId: $chainId, garden_: { id: $tokenGarden } }
+  ) {
     id
+    garden {
+      id
+    }
     chainId
     isValid
     covenantIpfsHash
