@@ -675,62 +675,63 @@ export function PoolForm({ token, communityAddr }: Props) {
                 </FormInput>
               </div>
             )}
-            {shouldRenderInputMap("sybilResistanceType", strategyType) && (
-              <div className="flex flex-col gap-4">
-                <FormSelect
-                  label="Sybil resistance type"
-                  register={register}
-                  errors={errors}
-                  required
-                  registerKey="sybilResistanceType"
-                  options={Object.entries(sybilResistanceOptions).map(
-                    ([value, text]) => ({
-                      label: text,
-                      value: value,
-                    }),
-                  )}
-                />
-                {sybilResistanceType === "gitcoinPassport" ?
-                  <FormInput
-                    label="Gitcoin Passport score required"
-                    register={register}
-                    required
-                    registerOptions={{
-                      min: {
-                        value: 1 / CV_PERCENTAGE_SCALE,
-                        message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
-                      },
-                    }}
-                    otherProps={{
-                      step: 1 / CV_PERCENTAGE_SCALE,
-                      min: 1 / CV_PERCENTAGE_SCALE,
-                    }}
-                    errors={errors}
-                    registerKey="sybilResistanceValue"
-                    type="number"
-                    placeholder="0"
-                  />
-                : sybilResistanceType === "allowList" && (
-                    <AllowListInput
-                      register={register}
-                      registerKey="sybilResistanceValue"
-                      addresses={sybilResistanceValue}
-                      required
-                      setValue={setValue}
-                      errors={errors}
-                    />
-                  )
-                }
-              </div>
-            )}
           </div>
+          <div className="border-border-neutral border-t-[1px]" />
           <InfoBox
-            classNames="w-fit mt-4"
+            classNames="w-fit"
             infoBoxType="info"
             content={
               "The following sections can be updated by the council in the future."
             }
           />
+          {shouldRenderInputMap("sybilResistanceType", strategyType) && (
+            <div className="flex flex-col gap-4">
+              <FormSelect
+                label="Sybil resistance type"
+                register={register}
+                errors={errors}
+                required
+                registerKey="sybilResistanceType"
+                options={Object.entries(sybilResistanceOptions).map(
+                  ([value, text]) => ({
+                    label: text,
+                    value: value,
+                  }),
+                )}
+              />
+              {sybilResistanceType === "gitcoinPassport" ?
+                <FormInput
+                  label="Gitcoin Passport score required"
+                  register={register}
+                  required
+                  registerOptions={{
+                    min: {
+                      value: 1 / CV_PERCENTAGE_SCALE,
+                      message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                    },
+                  }}
+                  otherProps={{
+                    step: 1 / CV_PERCENTAGE_SCALE,
+                    min: 1 / CV_PERCENTAGE_SCALE,
+                  }}
+                  errors={errors}
+                  registerKey="sybilResistanceValue"
+                  type="number"
+                  placeholder="0"
+                />
+              : sybilResistanceType === "allowList" && (
+                  <AllowListInput
+                    register={register}
+                    registerKey="sybilResistanceValue"
+                    addresses={sybilResistanceValue}
+                    required
+                    setValue={setValue}
+                    errors={errors}
+                  />
+                )
+              }
+            </div>
+          )}
           {/* arbitration section */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
