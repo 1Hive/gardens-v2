@@ -5,7 +5,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Address, parseUnits } from "viem";
+import { Address, parseUnits, zeroAddress } from "viem";
 import { polygon } from "viem/chains";
 import { useToken } from "wagmi";
 import { TokenGarden } from "#/subgraph/.graphclient";
@@ -50,7 +50,7 @@ type ArbitrationSettings = {
   tribunalAddress: string;
 };
 
-type SybilResistanceType = "no" | "gitcoinPassport" | "allowList";
+type SybilResistanceType = "noSybilResist" | "gitcoinPassport" | "allowList";
 
 type FormInputs = {
   title: string;
@@ -123,7 +123,7 @@ const proposalInputMap: Record<string, number[]> = {
 };
 
 const sybilResistanceOptions: Record<SybilResistanceType, string> = {
-  no: "No sybil resistance",
+  noSybilResist: "No sybil resistance",
   allowList: "Allow list",
   gitcoinPassport: "Gitcoin passport",
 };
@@ -134,7 +134,7 @@ const sybilResistancePreview = (
   value?: string | Address[],
 ): ReactNode => {
   const previewMap: Record<SybilResistanceType, ReactNode> = {
-    no: "No sybil resistance required (anyone can vote)",
+    noSybilResist: "No sybil resistance required (anyone can vote)",
     allowList: (
       <div className="flex items-center gap-2">
         <span className="">Allow list </span>
@@ -348,6 +348,17 @@ export function PoolForm({ token, communityAddr }: Props) {
       throw new Error("No preview data");
     }
 
+    // sybil resistance set
+    let allowList: Address[];
+    if (
+      sybilResistanceType === "allowList" &&
+      Array.isArray(sybilResistanceValue)
+    ) {
+      allowList = sybilResistanceValue;
+    } else {
+      allowList = [zeroAddress];
+    }
+
     writeCreatePool({
       args: [
         previewData.poolTokenAddress as Address,
@@ -379,7 +390,7 @@ export function PoolForm({ token, communityAddr }: Props) {
           proposalType: previewData.strategyType,
           registryCommunity: communityAddr,
           sybilScorer: chain.passportScorer as Address,
-          initialAllowlist: [], // TODO: Lucho
+          initialAllowlist: allowList,
         },
         {
           protocol: 1n,
