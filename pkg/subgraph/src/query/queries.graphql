@@ -142,33 +142,27 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
   }
 }
 
-query getGarden($addr: ID!) {
-  tokenGarden(id: $addr) {
+query getGardenCommunities($chainId: BigInt!) {
+  registryCommunities(where: { chainId: $chainId }) {
     id
-    name
-    symbol
-    decimals
     chainId
-    communities {
+    isValid
+    covenantIpfsHash
+    communityName
+    protocolFee
+    communityFee
+    registerToken
+    registerStakeAmount
+    alloAddress
+    members(where: { stakedTokens_gt: "0" }) {
       id
-      isValid
-      covenantIpfsHash
-      communityName
-      protocolFee
-      communityFee
-      registerToken
-      registerStakeAmount
-      alloAddress
-      members(where: { stakedTokens_gt: "0" }) {
-        id
-        memberAddress
-      }
-      strategies(where: { isEnabled: true }) {
-        id
-        totalEffectiveActivePoints
-        poolId
-        poolAmount
-      }
+      memberAddress
+    }
+    strategies(where: { isEnabled: true }) {
+      id
+      totalEffectiveActivePoints
+      poolId
+      poolAmount
     }
   }
 }
@@ -192,6 +186,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
       metadata
       config {
         proposalType
+        pointSystem
       }
       proposals {
         id
@@ -210,20 +205,9 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
   }
 }
 
-query getCommunityCreationData($addr: ID!) {
+query getCommunityCreationData {
   registryFactories {
     id
-  }
-  tokenGarden(id: $addr) {
-    id
-    name
-    symbol
-    decimals
-    chainId
-    communities {
-      alloAddress
-      isValid
-    }
   }
 }
 
@@ -243,6 +227,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     decimals
   }
   cvstrategies(where: { poolId: $poolId }) {
+    token
     poolAmount
     metadata
     id
@@ -281,13 +266,18 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     proposals {
       id
       proposalNumber
-      metadata
+      metadata {
+        title
+        description
+      }
+      metadataHash
       beneficiary
       requestedAmount
       requestedToken
       proposalStatus
       stakedAmount
       convictionLast
+      blockLast
       threshold
       strategy {
         id
@@ -316,7 +306,11 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     blockLast
     convictionLast
     createdAt
-    metadata
+    metadata {
+      title
+      description
+    }
+    metadataHash
     proposalStatus
     requestedAmount
     requestedToken
@@ -327,6 +321,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
     version
     strategy {
       id
+      token
       maxCVSupply
       totalEffectiveActivePoints
       config {
@@ -378,7 +373,11 @@ query getStrategyByPool($poolId: BigInt!) {
     proposals {
       id
       proposalNumber
-      metadata
+      metadata {
+        title
+        description
+      }
+      metadataHash
       beneficiary
       requestedAmount
       requestedToken
@@ -420,7 +419,11 @@ query getPoolTitles($poolId: BigInt!) {
 query getProposalTitles($proposalId: ID!) {
   cvproposal(id: $proposalId) {
     proposalNumber
-    metadata
+    metadata {
+      title
+      description
+    }
+    metadataHash
     strategy {
       poolId
       metadata

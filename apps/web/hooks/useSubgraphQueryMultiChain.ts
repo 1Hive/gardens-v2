@@ -7,10 +7,11 @@ import {
 } from "@urql/next";
 import { debounce, isEqual } from "lodash-es";
 import { toast } from "react-toastify";
-import { arbitrumSepolia, localhost, sepolia } from "viem/chains";
+import { localhost } from "viem/chains";
 import { useIsMounted } from "./useIsMounted";
 import { HTTP_CODES } from "@/app/api/utils";
-import { getConfigByChain } from "@/constants/contracts";
+import { chains, getConfigByChain } from "@/configs/chains";
+import { isProd } from "@/configs/isProd";
 import {
   ChangeEventScope,
   SubscriptionId,
@@ -24,14 +25,10 @@ import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 
-const allChains: ChainId[] = [
-  sepolia.id,
-  arbitrumSepolia.id,
-  // optimismSepolia.id,
-];
-if (process.env.NODE_ENV === "development") {
-  allChains.push(localhost.id);
-}
+const allChains: ChainId[] = Object.values(chains)
+  .filter((x) => (isProd ? !x.testnet : !!x.testnet || x.id === localhost.id))
+  .map((x) => x.id);
+
 const pendingRefreshToastId = "pending-refresh";
 
 export function useSubgraphQueryMultiChain<
@@ -94,7 +91,7 @@ export function useSubgraphQueryMultiChain<
     async (chainsOverride?: ChainId[], retryOnNoChange?: boolean) => {
       const chainSubgraphs = (chainsOverride ?? chainIds ?? allChains).map(
         (chain) => ({
-          chainId: chain,
+          chainId: +chain,
           url: getConfigByChain(chain)?.subgraphUrl,
         }),
       );

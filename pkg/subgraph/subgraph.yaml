@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: arbitrum-sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 421614
+        data: 1337
     source:
-      address: "0x116124ef60ea9d325fc7b653b0dd4f8b4fc152a3"
+      address: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"
       abi: RegistryFactoryV0_0
-      startBlock: 71372968
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -34,19 +34,21 @@ dataSources:
           handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
           handler: handleProtocolFeeSet  
+        - event: Initialized(uint8)
+          handler: handleRegistryInitialized  
       file: ./src/mappings/registry-factory.ts
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: arbitrum-sepolia
+    network: localhost
     context:
       chainId: 
         type: Int
-        data: 421614
+        data: 1337
     source:
-      address: "0x860a8a650a38cf51c8d8259c301a5654568fce46"
+      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
       abi: PassportScorer
-      startBlock: 71372968
+      startBlock: 0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -70,7 +72,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: arbitrum-sepolia
+    network: localhost
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -132,7 +134,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: arbitrum-sepolia
+    network: localhost
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -174,6 +176,8 @@ templates:
           handler: handleProposalDisputed
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleDisputeRuled
+        - event: ProposalCancelled(uint256)
+          handler: handleProposalCancelled
  
       file: ./src/mappings/cv-strategy.ts
   
@@ -186,6 +190,19 @@ templates:
       handler: handleProposalDisputeMetadata
       entities:
         - ProposalDisputeMetadata
+      abis:
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+  
+  - name: ProposalMetadata
+    kind: file/ipfs
+    mapping:
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      file: ./src/mappings/proposal-metadata.ts
+      handler: handleProposalMetadata
+      entities:
+        - ProposalMetadata
       abis:
         - name: CVStrategyV0_0
           file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json

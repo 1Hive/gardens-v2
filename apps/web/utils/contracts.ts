@@ -7,15 +7,21 @@ import type {
 } from "abitype";
 import { TransactionReceipt, decodeEventLog, getEventSelector } from "viem";
 import {
+  alloABI,
   cvStrategyABI,
+  passportScorerABI,
   registryCommunityABI,
   registryFactoryABI,
+  safeArbitratorABI,
 } from "@/src/generated";
 
 export const ContractABIs = {
   CVStrategy: cvStrategyABI,
   RegistryCommunity: registryCommunityABI,
   RegistryFactory: registryFactoryABI,
+  Allo: alloABI,
+  PassportScorer: passportScorerABI,
+  SafeArbitrator: safeArbitratorABI,
 };
 
 export type ContractName = keyof typeof ContractABIs;

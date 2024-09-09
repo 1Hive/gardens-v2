@@ -4,9 +4,11 @@ import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
+import { useToken } from "wagmi";
 import { Allo, CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
+import { LoadingSpinner } from "../LoadingSpinner";
 import { WalletBalance } from "../WalletBalance";
 import { Button } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -28,7 +30,7 @@ type FormInputs = {
 };
 
 type ProposalFormProps = {
-  strategy: Pick<CVStrategy, "id"> & {
+  strategy: Pick<CVStrategy, "id" | "token"> & {
     config: {
       submitterCollateralAmount: bigint;
     };
@@ -128,7 +130,7 @@ export const ProposalForm = ({
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
       label: "Requested amount:",
-      parse: (value: number) => `${value} ${tokenGarden.symbol}`,
+      parse: (value: number) => `${value} ${poolToken?.symbol}`,
     },
     beneficiary: {
       label: "Beneficiary:",
@@ -139,25 +141,16 @@ export const ProposalForm = ({
     strategy: { label: "Strategy:" },
   };
 
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
-
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [loading, setLoading] = useState(false);
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const tokenSymbol = tokenGarden.symbol || "";
-
-  const spendingLimitNumber = spendingLimit / 10 ** tokenGarden.decimals;
-
-  // console.log("spendingLimit:               %s", spendingLimit);
-  // console.log("spendingLimitNumber:         %s", spendingLimitNumber);
-  // console.log("spendingLimitPct:            %s", spendingLimitPct);
 
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
-    tokenGarden?.decimals as number,
+    +tokenGarden?.decimals,
     6,
   );
 
@@ -222,6 +215,23 @@ export const ProposalForm = ({
     onSettled: () => setLoading(false),
   });
 
+  const poolTokenAddr = strategy?.token as Address;
+  const { data: poolToken } = useToken({
+    address: poolTokenAddr,
+    enabled: !!poolTokenAddr,
+  });
+
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
+  const spendingLimitNumber = spendingLimit / 10 ** (poolToken?.decimals ?? 0);
+
+  if (!poolToken) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   const getEncodeData = (metadataIpfs: string) => {
     if (previewData === undefined) {
       throw new Error("no preview data");
@@ -232,7 +242,8 @@ export const ProposalForm = ({
     const strAmount = previewData.amount?.toString() || "";
     const requestedAmount = parseUnits(
       strAmount,
-      tokenGarden?.decimals as number,
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      poolToken?.decimals || 0,
     );
 
     console.debug([
@@ -308,13 +319,13 @@ export const ProposalForm = ({
             <div className="relative flex flex-col">
               <FormInput
                 label="Requested amount"
-                subLabel={`Max ${formatNumber(spendingLimitString)} ${tokenSymbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
+                subLabel={`Max ${formatNumber(spendingLimitString)} ${poolToken?.symbol} (${spendingLimitPct.toFixed(2)}% of Pool Funds)`}
                 register={register}
                 required
                 registerOptions={{
                   max: {
                     value: spendingLimitNumber,
-                    message: `Max amount cannot exceed ${formatNumber(spendingLimitString)} ${tokenSymbol}`,
+                    message: `Max amount cannot exceed ${formatNumber(spendingLimitString)} ${poolToken?.symbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
@@ -332,7 +343,7 @@ export const ProposalForm = ({
                 placeholder="0"
               >
                 <span className="absolute right-4 top-4 text-black">
-                  {tokenSymbol}
+                  {poolToken?.symbol}
                 </span>
               </FormInput>
             </div>

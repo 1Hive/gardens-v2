@@ -1,9 +1,10 @@
 "use client";
 
 import { FC, useEffect, useState } from "react";
+import { FetchTokenResult } from "@wagmi/core";
 import { parseUnits } from "viem";
 import { Address, useAccount } from "wagmi";
-import { Allo, TokenGarden } from "#/subgraph/.graphclient";
+import { Allo } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { DisplayNumber } from "./DisplayNumber";
 import { FormInput } from "./Forms";
@@ -19,7 +20,7 @@ import { getTxMessage } from "@/utils/transactionMessages";
 interface PoolMetricsProps {
   poolAmount: number;
   communityAddress: Address;
-  tokenGarden: Pick<TokenGarden, "symbol" | "decimals" | "address">;
+  poolToken: FetchTokenResult;
   alloInfo: Allo;
   poolId: number;
   chainId: string;
@@ -29,18 +30,18 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
   alloInfo,
   poolAmount,
   communityAddress,
-  tokenGarden,
+  poolToken,
   poolId,
   chainId,
 }) => {
-  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** tokenGarden.decimals;
+  const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** poolToken.decimals;
 
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [amount, setAmount] = useState<string>("");
   const { address: accountAddress } = useAccount();
   const { publish } = usePubSubContext();
 
-  const requestedAmount = parseUnits(amount, tokenGarden.decimals);
+  const requestedAmount = parseUnits(amount, poolToken.decimals);
 
   const {
     write: writeFundPool,
@@ -67,8 +68,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
 
   const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
     accountAddress,
-    tokenGarden.address as Address,
-    tokenGarden.symbol,
+    poolToken.address as Address,
+    poolToken.symbol,
     alloInfo.id as Address,
     requestedAmount,
     writeFundPool,
@@ -110,7 +111,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       >
         <div className="flex gap-2">
           <p>Adding:</p>
-          <DisplayNumber number={amount} tokenSymbol={tokenGarden.symbol} />
+          <DisplayNumber number={amount} tokenSymbol={poolToken.symbol} />
         </div>
       </TransactionModal>
       <section className="section-layout gap-4 flex flex-col">
@@ -119,8 +120,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
           <div className="flex gap-3 items-baseline">
             <p className="subtitle2">Funds available:</p>
             <DisplayNumber
-              number={[BigInt(poolAmount), tokenGarden.decimals]}
-              tokenSymbol={tokenGarden.symbol}
+              number={[BigInt(poolAmount), poolToken.decimals]}
+              tokenSymbol={poolToken.symbol}
               compact={true}
               className="subtitle2 text-primary-content"
             />
@@ -145,7 +146,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
               }}
             >
               <span className="absolute right-4 top-4 text-black">
-                {tokenGarden.symbol}
+                {poolToken.symbol}
               </span>
             </FormInput>
             <Button

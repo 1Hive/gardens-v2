@@ -111,11 +111,9 @@ export function Breadcrumbs() {
               <h5>Disclaimer</h5>
             </div>
             <p className="text-wrap text-justify">
-              You are exploring the frontier with our contracts.{" "}
-              <span className="subtitle2">
-                Please note that they have not been audited yet
-              </span>
-              . Exercise caution and proceed at your own risk.
+              Our smart contracts{" "}
+              <span className="subtitle2">have not been audited</span> yet. Be
+              cautious and proceed at your own risk.
             </p>
             <div>
               <Button

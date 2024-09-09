@@ -28,15 +28,19 @@ import { Modal } from "./Modal";
 import { ProposalTimeline } from "./ProposalTimeline";
 import { WalletBalance } from "./WalletBalance";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1, useIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import {
   cvStrategyABI,
   iArbitratorABI,
+  safeABI,
   safeArbitratorABI,
 } from "@/src/generated";
 import { DisputeStatus, ProposalStatus } from "@/types";
+import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 
@@ -70,8 +74,10 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const [reason, setReason] = useState("");
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const { publish } = usePubSubContext();
-  const { address } = useAccount();
-  const [isLoading, setIsLoading] = useState(false);
+  const { address, isDisconnected } = useAccount();
+  const [isDisputeCreateLoading, setIsDisputeCreateLoading] = useState(false);
+  const chainId = useChainIdFromPath();
+  const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
 
   const config = proposalData.strategy.config;
 
@@ -90,6 +96,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   });
 
   const { data: arbitrationCost } = useContractRead({
+    chainId,
     abi: iArbitratorABI,
     functionName: "arbitrationCost",
     address: config?.arbitrator as Address,
@@ -98,6 +105,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   });
 
   const { data: disputeCooldown } = useContractRead({
+    chainId,
     abi: cvStrategyABI,
     functionName: "DISPUTE_COOLDOWN_SEC",
     address: proposalData.strategy.id as Address,
@@ -130,7 +138,19 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const disputes = disputesResult?.proposalDisputes ?? [];
 
-  const isCouncilSafe = config.tribunalSafe === address?.toLowerCase();
+  const isTribunalSafe = config.tribunalSafe === address?.toLowerCase();
+
+  const { data: isTribunalMember } = useContractRead({
+    address: config.tribunalSafe as Address,
+    abi: abiWithErrors2(safeABI),
+    functionName: "isOwner",
+    chainId: Number(chainId),
+    enabled: !!address,
+    args: [address as Address],
+    onError: () => {
+      console.error("Error reading isOwner from Tribunal Safe");
+    },
+  });
 
   const { writeAsync: writeDisputeProposalAsync } =
     useContractWriteWithConfirmations({
@@ -142,31 +162,30 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
       onSuccess: () => {
         setIsModalOpened(false);
       },
+      onSettled: () => {
+        setIsDisputeCreateLoading(false);
+      },
       onConfirmations: () => {
         publish({
           topic: "proposal",
           type: "update",
           function: "disputeProposal",
-          id: proposalData.id,
+          id: proposalData.proposalNumber,
           containerId: proposalData.strategy.id,
+          chainId,
         });
       },
     });
 
   async function handleSubmit() {
-    setIsLoading(true);
-    try {
-      const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
-      if (!reasonHash) {
-        return;
-      }
-      await writeDisputeProposalAsync({
-        args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
-      });
-    } catch (error) {
-      setIsLoading(false);
+    setIsDisputeCreateLoading(true);
+    const reasonHash = await ipfsJsonUpload({ reason }, "disputeReason");
+    if (!reasonHash) {
+      return;
     }
-    setIsLoading(false);
+    await writeDisputeProposalAsync({
+      args: [BigInt(proposalData.proposalNumber), reasonHash, "0x0"],
+    });
   }
 
   const { write: writeSubmitRuling } = useContractWriteWithConfirmations({
@@ -177,13 +196,15 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     onSuccess: () => {
       setIsModalOpened(false);
     },
+    onSettled: () => setisRulingLoading(false),
     onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
         function: "executeRuling",
-        id: proposalData.id,
+        id: proposalData.proposalNumber,
         containerId: proposalData.strategy.id,
+        chainId,
       });
     },
   });
@@ -197,18 +218,21 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     onSuccess: () => {
       setIsModalOpened(false);
     },
+    onSettled: () => setisRulingLoading(false),
     onConfirmations: () => {
       publish({
         topic: "proposal",
         type: "update",
         function: "rule",
-        id: proposalData.id,
+        id: proposalData.proposalNumber,
         containerId: proposalData.strategy.id,
+        chainId,
       });
     },
   });
 
   const handleSubmitRuling = (ruling: number) => {
+    setisRulingLoading(ruling);
     if (isTimeout) {
       writeRuleAbstain();
     } else {
@@ -251,61 +275,88 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     </div>
   );
 
+  //Disable only tribunal safe  buttons: Reject and Approve
+  const disableTribunalSafeBtnCondition: ConditionObject[] = [
+    {
+      condition: !isTribunalSafe,
+      message: "Connect with tribunal safe address",
+    },
+  ];
+
+  const disableTribunalSafeButtons = disableTribunalSafeBtnCondition.some(
+    (cond) => cond.condition,
+  );
+
+  const { tooltipMessage } = useDisableButtons(disableTribunalSafeBtnCondition);
+
   const buttons = (
     <div className="modal-action w-full">
       {isDisputed ?
         <div className="w-full flex justify-end gap-4">
-          {DisputeStatus[lastDispute.status] === "waiting" &&
-            (isCouncilSafe || isTimeout) && (
-              <>
-                <Button
-                  color="secondary"
-                  btnStyle="outline"
-                  onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
+          {(
+            DisputeStatus[lastDispute.status] === "waiting" &&
+            ((isTribunalMember ?? isTribunalSafe) || isTimeout)
+          ) ?
+            <>
+              <Button
+                color="secondary"
+                btnStyle="outline"
+                onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
+                isLoading={rulingLoading === ABSTAINED_RULING}
+              >
+                <InfoWrapper
+                  classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
+                  tooltip={
+                    "Abstain to follow the pool's default resolution (approve/reject) and return collaterals to both parties."
+                  }
                 >
-                  <InfoWrapper
-                    classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
-                    tooltip={
-                      "Abstain to let other tribunal-safe members decide the outcome."
-                    }
+                  Abstain
+                </InfoWrapper>
+              </Button>
+              {!isTimeout && (
+                <>
+                  <Button
+                    color="primary"
+                    btnStyle="outline"
+                    onClick={() => handleSubmitRuling(APPROVED_RULING)}
+                    isLoading={rulingLoading === APPROVED_RULING}
+                    disabled={disableTribunalSafeButtons}
+                    tooltip={tooltipMessage}
                   >
-                    Abstain
-                  </InfoWrapper>
-                </Button>
-                {!isTimeout && (
-                  <>
-                    <Button
-                      color="primary"
-                      btnStyle="outline"
-                      onClick={() => handleSubmitRuling(APPROVED_RULING)}
+                    <InfoWrapper
+                      classNames="[&>svg]:text-primary-content"
+                      tooltip={
+                        "Approve if the dispute is invalid and the proposal should remain active."
+                      }
                     >
-                      <InfoWrapper
-                        classNames="[&>svg]:text-primary-content"
-                        tooltip={
-                          "Approve if the dispute is invalid and the proposal should be kept active."
-                        }
-                      >
-                        Approve
-                      </InfoWrapper>
-                    </Button>
-                    <Button
-                      color="danger"
-                      btnStyle="outline"
-                      onClick={() => handleSubmitRuling(REJECTED_RULING)}
+                      Approve
+                    </InfoWrapper>
+                  </Button>
+                  <Button
+                    color="danger"
+                    btnStyle="outline"
+                    onClick={() => handleSubmitRuling(REJECTED_RULING)}
+                    isLoading={rulingLoading === REJECTED_RULING}
+                    disabled={disableTribunalSafeButtons}
+                    tooltip={tooltipMessage}
+                  >
+                    <InfoWrapper
+                      classNames="[&>svg]:text-danger-button [&:before]:mr-10 tooltip-left"
+                      tooltip={
+                        "Reject if the proposal violates the rules outlined in the community covenant."
+                      }
                     >
-                      <InfoWrapper
-                        classNames="[&>svg]:text-error-content [&:before]:mr-10 tooltip-left"
-                        tooltip={
-                          "Reject if, regarding the community covenant, the proposal is violating the rules."
-                        }
-                      >
-                        Reject
-                      </InfoWrapper>
-                    </Button>
-                  </>
-                )}
-              </>
-            )}
+                      Reject
+                    </InfoWrapper>
+                  </Button>
+                </>
+              )}
+            </>
+          : <InfoBox
+              infoBoxType="info"
+              content="Waiting for dispute resolution"
+            />
+          }
         </div>
       : <div className="flex w-full justify-between items-end">
           <div>
@@ -333,13 +384,13 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
               tooltip={
                 isEnoughBalance ?
                   isCooldown ?
-                    "Need to wait for 2 hours before disputin again"
+                    "Please wait 2 hours before submitting another dispute"
                   : ""
                 : "Insufficient balance"
               }
               tooltipSide="tooltip-left"
               disabled={!isEnoughBalance || isCooldown}
-              isLoading={isLoading}
+              isLoading={isDisputeCreateLoading}
             >
               Dispute
             </Button>
@@ -358,6 +409,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             color="danger"
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
+            disabled={isDisconnected}
+            tooltip="Connect wallet"
           >
             {isDisputed ? "Open dispute" : "Dispute"}
           </Button>
@@ -386,7 +439,7 @@ const DisputeMessage = ({
     ProposalDispute,
     "id" | "challenger" | "context" | "createdAt"
   > & {
-    metadata: Pick<ProposalDisputeMetadata, "reason">;
+    metadata?: Maybe<Pick<ProposalDisputeMetadata, "reason">>;
   };
   title?: string;
 }) => {
@@ -444,7 +497,7 @@ const DisputeMessage = ({
         )}
       </div>
       <div className="chat-bubble shadow-lg bg-neutral-200">
-        {dispute.metadata.reason ?? disputeMetadata?.reason}
+        {dispute.metadata?.reason ?? disputeMetadata?.reason}
       </div>
     </div>
   );

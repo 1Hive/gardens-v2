@@ -13,16 +13,16 @@ import {CollateralVault} from "../src/CollateralVault.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {CVStrategyHelpersV0_0, CVStrategyV0_0} from "../test/CVStrategyHelpersV0_0.sol";
 import {TERC20} from "../test/shared/TERC20.sol";
-import {CVStrategyV0_0} from "../src/CVStrategyV0_0.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
+import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
-import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategyV0_0.sol";
+import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -78,8 +78,10 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(
                 RegistryFactoryV0_0.initialize.selector,
+                pool_admin(),
                 address(protocolFeeReceiver),
                 address(new RegistryCommunityV0_0()),
+                address(new CVStrategyV0_0()),
                 address(new CollateralVault())
             )
         );
@@ -95,7 +97,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         console2.log("Safe Arbitrator Addr: %s", address(safeArbitrator));
 
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(new CVStrategyV0_0());
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
@@ -179,23 +180,23 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         // strategy1.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
         // strategy1.setMaxRatio(_etherToFloat(0.1 ether)); // beta = maxRatio
         // strategy1.setWeight(_etherToFloat(0.0005 ether)); // RHO = p  = weight
-        StrategyStruct.CVParams memory poolParams1;
-        poolParams1.decay = _etherToFloat(0.9999799 ether); // alpha = decay
-        poolParams1.maxRatio = _etherToFloat(0.1 ether); // beta = maxRatio
-        poolParams1.weight = _etherToFloat(0.0005 ether); // RHO = p  = weight
-        safeHelper(
-            address(strategy1),
-            0,
-            abi.encodeWithSelector(strategy1.setPoolParams.selector, poolParams1, arbitrableConfig)
-        );
+        // StrategyStruct.CVParams memory poolParams1;
+        // poolParams1.decay = _etherToFloat(0.9999799 ether); // alpha = decay
+        // poolParams1.maxRatio = _etherToFloat(0.1 ether); // beta = maxRatio
+        // poolParams1.weight = _etherToFloat(0.0005 ether); // RHO = p  = weight
+        // safeHelper(
+        //     address(strategy1),
+        //     0,
+        //     abi.encodeWithSelector(strategy1.setPoolParams.selector, poolParams1, arbitrableConfig)
+        // );
 
-        // FAST 1 MIN GROWTH
-        // strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
-        safeHelper(
-            address(strategy2),
-            0,
-            abi.encodeWithSelector(strategy1.setPoolParams.selector, poolParams1, arbitrableConfig)
-        );
+        // // FAST 1 MIN GROWTH
+        // // strategy2.setDecay(_etherToFloat(0.9965402 ether)); // alpha = decay
+        // safeHelper(
+        //     address(strategy2),
+        //     0,
+        //     abi.encodeWithSelector(strategy1.setPoolParams.selector, poolParams1, arbitrableConfig)
+        // );
         vm.stopBroadcast();
 
         address[] memory membersStaked = new address[](7);
@@ -285,7 +286,6 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         RegistryCommunityV0_0.InitializeParams memory params;
 
         params._allo = address(allo);
-        params._strategyTemplate = address(new CVStrategyV0_0());
 
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -302,7 +302,9 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         token.mint(address(pool_admin()), 10_000 ether);
         ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()),
-            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()))
+            abi.encodeWithSelector(
+                CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()), pool_admin()
+            )
         );
         CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(strategy1Proxy));
 
@@ -314,7 +316,9 @@ contract DeployCV is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
 
         ERC1967Proxy strategy2Proxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()),
-            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()))
+            abi.encodeWithSelector(
+                CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()), pool_admin()
+            )
         );
 
         CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(strategy2Proxy));

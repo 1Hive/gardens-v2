@@ -1,0 +1,18 @@
+{
+  "network": "optimism",
+  "chainId": 10,
+  "dataSources": [
+    {
+      "name": "RegistryFactoryV0_0",
+      "startBlock": 124312270,
+      "address": "0xa71023bc64c9711c2037ab491de80fd74504bd55",
+      "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 124312270,
+      "address": "0x83bde2e2d8acaaad2d300da195df3cf86b234bdd",
+      "customTemplate": "passportScorer"
+    }
+  ]
+}

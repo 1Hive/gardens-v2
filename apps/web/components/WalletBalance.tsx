@@ -27,7 +27,7 @@ export const WalletBalance: FC<Props> = ({
   tooltip,
   setIsEnoughBalance,
 }) => {
-  const { address } = useAccount();
+  const { address, isDisconnected } = useAccount();
   const isEnoughBalanceRef = useRef(false);
 
   const { data } = useBalance({
@@ -48,9 +48,11 @@ export const WalletBalance: FC<Props> = ({
   }, [balance, askedAmount, setIsEnoughBalance]);
 
   return (
-    <>
+    <div>
       {!data ?
-        <div className="skeleton h-14 w-56 bg-neutral-soft" />
+        isDisconnected ?
+          <div />
+        : <div className="skeleton h-14 w-56 bg-neutral-soft" />
       : <div className="flex flex-col gap-1">
           <div className="flex">
             <p className="font-medium">{label}:</p>
@@ -94,6 +96,6 @@ export const WalletBalance: FC<Props> = ({
           </div>
         </div>
       }
-    </>
+    </div>
   );
 };

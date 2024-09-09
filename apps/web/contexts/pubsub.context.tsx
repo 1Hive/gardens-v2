@@ -10,6 +10,7 @@ import React, {
 import { Realtime } from "ably";
 import { uniqueId } from "lodash-es";
 import { CHANGE_EVENT_CHANNEL_NAME } from "@/globals";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { ChainId } from "@/types";
 
 // Define the shape of your context data
@@ -103,6 +104,7 @@ export function usePubSubContext() {
 export function PubSubProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<ChangeEventPayload[]>([]);
   const [connected, setConnected] = useState(false);
+  const chainId = useChainIdFromPath();
 
   const ablyClient = useMemo(
     () =>
@@ -191,8 +193,8 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
       scope: ChangeEventScope[] | ChangeEventScope,
       onChangeEvent: (payload: ChangeEventPayload) => void,
     ) => {
-      console.debug("⚡ WS: subscribe", scope);
       const subscriptionId = uniqueId();
+      console.debug(`⚡ WS: subscribe ${subscriptionId}`, scope);
       subMap.set(subscriptionId, {
         scopes: (scope.length ? scope : [scope]) as ChangeEventScope[],
         onChangeEvent,
@@ -203,13 +205,15 @@ export function PubSubProvider({ children }: { children: React.ReactNode }) {
   );
 
   const unsubscribe = (subscriptionId: SubscriptionId) => {
+    console.debug(`⚡ WS: unsubscribe ${subscriptionId}`);
     subMap.delete(subscriptionId);
   };
 
   const publish = (payload: ChangeEventScope) => {
-    ablyClient.channels
-      .get(CHANGE_EVENT_CHANNEL_NAME)
-      .publish(payload.topic, payload);
+    ablyClient.channels.get(CHANGE_EVENT_CHANNEL_NAME).publish(payload.topic, {
+      ...payload,
+      chainId: payload.chainId ?? chainId,
+    });
   };
 
   return (

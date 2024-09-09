@@ -2,10 +2,10 @@
 
 import React, { useEffect } from "react";
 import { Address } from "viem";
+import { useToken } from "wagmi";
 import {
   getCommunityCreationDataDocument,
   getCommunityCreationDataQuery,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { CommunityForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -31,30 +31,31 @@ export default function Page({
     }
   }, [getCommunityCreationDataQueryError]);
 
-  const registryFactoryAddr = result?.registryFactories?.[0].id as Address;
-  const tokenGarden = result?.tokenGarden as TokenGarden;
-  const alloContractAddr = result?.tokenGarden?.communities?.[0]
-    .alloAddress as Address;
+  const { data: tokenInfo } = useToken({
+    address: garden as Address,
+    chainId: +chain,
+  });
 
-  return tokenGarden ?
+  const registryFactoryAddr = result?.registryFactories?.[0].id as Address;
+
+  return tokenInfo ?
       <div className="page-layout">
         <section className="section-layout">
           <div className="text-center sm:mt-5 mb-12">
             <h2 className="mb-2">
-              Welcome to the {tokenGarden.symbol} Community Form!
+              Welcome to the {tokenInfo.symbol} Community Form!
             </h2>
             <div className="">
               <p className="">
-                Create a vibrant community around the {tokenGarden.name} by
+                Create a vibrant community around the {tokenInfo.name} by
                 providing the necessary details below.
               </p>
             </div>
           </div>
           <CommunityForm
             chainId={chain}
-            tokenGarden={tokenGarden}
+            tokenGarden={tokenInfo}
             registryFactoryAddr={registryFactoryAddr}
-            alloContractAddr={alloContractAddr}
           />
         </section>
       </div>

@@ -10,6 +10,7 @@ type CVStrategy @entity(immutable: false) {
   maxCVSupply: BigInt!
   totalEffectiveActivePoints: BigInt!
   isEnabled: Boolean!
+  token: String!
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -36,8 +37,8 @@ type CVStrategyConfig @entity(immutable: false) {
 type CVProposal @entity(immutable: false) {
   id: ID!
   proposalNumber: BigInt!
-  # proposalMeta: ProposalMeta!
-  metadata: String!
+  metadata: ProposalMetadata
+  metadataHash: String!
   version: BigInt
   strategy: CVStrategy!
   beneficiary: String!
@@ -71,6 +72,7 @@ type RegistryFactory @entity(immutable: false) {
   registryCommunities: [RegistryCommunity!]
     @derivedFrom(field: "registryFactory")
 }
+
 type RegistryCommunity @entity(immutable: false) {
   id: ID!
   chainId: BigInt!
@@ -177,7 +179,7 @@ type ProposalDispute @entity(immutable: false) {
   status: BigInt!
   challenger: String!
   context: String!
-  metadata: ProposalDisputeMetadata!
+  metadata: ProposalDisputeMetadata
 
   # When ruled
   rulingOutcome: BigInt
@@ -187,4 +189,10 @@ type ProposalDispute @entity(immutable: false) {
 type ProposalDisputeMetadata @entity(immutable: false) {
   id: ID!
   reason: String!
+}
+
+type ProposalMetadata @entity(immutable: false) {
+  id: ID!
+  title: String!
+  description: String!
 }

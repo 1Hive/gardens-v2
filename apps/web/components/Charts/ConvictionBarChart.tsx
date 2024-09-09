@@ -179,6 +179,8 @@ export const ConvictionBarChart = ({
     disabled: true,
   };
 
+  const borderRadius = [5];
+
   const markLine: MarkLineComponentOption = {
     symbol: "none",
     label: {
@@ -244,26 +246,26 @@ export const ConvictionBarChart = ({
     grid: {
       show: false,
       left: "0%",
-      right: "2%",
+      right: "3%",
       top: compact ? "0%" : "25%",
       bottom: compact ? "0%" : "25%",
       containLabel: false,
     },
     animation: true,
     barGap: "-100%",
+    showBackground: true,
+    backgroundStyle: {
+      color: "#D5D5D5",
+    },
     series: [
       {
         type: "bar",
         name: "Support",
         itemStyle: {
           color: "#A8E066",
-          borderRadius: [20, 20, 20, 20],
+          borderRadius: borderRadius,
         },
-        showBackground: true,
-        backgroundStyle: {
-          color: "#F0F0F0",
-          borderRadius: [20, 20, 20, 20],
-        },
+
         label: {
           show: !compact ?? false,
           position: "insideRight",
@@ -283,7 +285,7 @@ export const ConvictionBarChart = ({
         name: "Conviction",
         itemStyle: {
           color: "#65AD18",
-          borderRadius: [20, 20, 20, 20],
+          borderRadius: borderRadius,
         },
         label: {
           show: !compact ?? false,
@@ -305,7 +307,7 @@ export const ConvictionBarChart = ({
           barWidth: 23,
           data: [thresholdPct],
           itemStyle: {
-            borderRadius: [20, 20, 20, 20],
+            borderRadius: borderRadius,
             color: "#EEEEEE",
           },
           color: "#EEEEEE",

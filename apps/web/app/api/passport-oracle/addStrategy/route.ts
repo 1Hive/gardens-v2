@@ -9,7 +9,7 @@ import {
   Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { getConfigByChain } from "@/constants/contracts";
+import { getConfigByChain } from "@/configs/chains";
 import {
   passportScorerABI,
   registryCommunityABI,

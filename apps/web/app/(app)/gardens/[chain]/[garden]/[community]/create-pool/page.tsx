@@ -5,7 +5,6 @@ import { Address } from "viem";
 import {
   getPoolCreationDataDocument,
   getPoolCreationDataQuery,
-  TokenGarden,
 } from "#/subgraph/.graphclient";
 import { PoolForm } from "@/components/Forms/PoolForm";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -24,6 +23,14 @@ export default function Page({
   let alloAddr = result?.allos[0]?.id as Address;
   let communityName = result?.registryCommunity?.communityName as string;
 
+  if (!token) {
+    return (
+      <div className="mt-96">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   return result ?
       <div className="page-layout">
         <section className="section-layout">
@@ -32,7 +39,7 @@ export default function Page({
           </div>
           <PoolForm
             alloAddr={alloAddr}
-            token={token as TokenGarden}
+            token={token}
             communityAddr={community as Address}
           />
         </section>

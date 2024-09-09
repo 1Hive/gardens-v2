@@ -3,7 +3,10 @@
 // import { CTX_METADATA_ID, CTX_PROPOSAL_ID } from "./cv-strategy";
 
 import { Bytes, dataSource, json, log } from "@graphprotocol/graph-ts";
-import { ProposalDisputeMetadata } from "../../generated/schema";
+import {
+  ProposalDisputeMetadata,
+  ProposalMetadata
+} from "../../generated/schema";
 
 // https://kdghxz4drlsffkptavafm6ws2qkdwpdqauxstqioi3xdli7yjo4q.arweave.net/UMx754OK5FKp8wVAVnrS1BQ7PHAFLynBDkbuNaP4S7k
 // export function handleProposalMetadata(content: Bytes): void {
@@ -33,13 +36,31 @@ import { ProposalDisputeMetadata } from "../../generated/schema";
 
 export function handleProposalDisputeMetadata(content: Bytes): void {
   const cid = dataSource.stringParam();
-  log.debug("ProposalMetadata: Received dispute metadata with CID {}", [cid.toString()]);
+  log.debug("ProposalDisputeMetadata: Received dispute metadata with CID {}", [
+    cid.toString()
+  ]);
 
   let metadata = new ProposalDisputeMetadata(cid);
   const value = json.fromBytes(content).toObject();
 
   metadata.id = cid;
   metadata.reason = value.mustGet("reason").toString();
+
+  metadata.save();
+}
+
+export function handleProposalMetadata(content: Bytes): void {
+  const cid = dataSource.stringParam();
+  log.debug("ProposalMetadata: Received proposal metadata with CID {}", [
+    cid.toString()
+  ]);
+
+  let metadata = new ProposalMetadata(cid);
+  const value = json.fromBytes(content).toObject();
+
+  metadata.id = cid;
+  metadata.description = value.mustGet("description").toString();
+  metadata.title = value.mustGet("title").toString();
 
   metadata.save();
 }

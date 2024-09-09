@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useEffect, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { Address, useAccount, useBalance } from "wagmi";
 import {
   RegistryCommunity,
@@ -8,22 +8,26 @@ import {
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { BtnStyle, Button, Color } from "./Button";
-import { TransactionModal, TransactionProps } from "./TransactionModal";
+import { TransactionModal } from "./TransactionModal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useCovenantAgreementSignature } from "@/hooks/useCovenantAgreementSignature";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
+import { useHandleRegistration } from "@/hooks/useHandleRegistration";
 import { registryCommunityABI } from "@/src/generated";
 import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { gte } from "@/utils/numbers";
-import { getTxMessage } from "@/utils/transactionMessages";
 
 type RegisterMemberProps = {
   registrationCost: bigint;
-  token: Pick<TokenGarden, "symbol" | "id" | "decimals">;
-  registryCommunity: Pick<RegistryCommunity, "communityName" | "id">;
+  token: Pick<TokenGarden, "symbol" | "address" | "decimals">;
+  registryCommunity: Pick<
+    RegistryCommunity,
+    "communityName" | "id" | "covenantIpfsHash"
+  >;
   memberData: isMemberQuery | undefined;
 };
 
@@ -33,7 +37,11 @@ export function RegisterMember({
   registryCommunity,
   memberData,
 }: RegisterMemberProps) {
-  const { id: communityAddress, communityName } = registryCommunity;
+  const {
+    id: communityAddress,
+    communityName,
+    covenantIpfsHash,
+  } = registryCommunity;
   const { address: accountAddress } = useAccount();
   const urlChainId = useChainIdFromPath();
   const [isOpenModal, setIsOpenModal] = useState(false);
@@ -55,7 +63,7 @@ export function RegisterMember({
 
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
-    token: token.id as Address,
+    token: token.address as Address,
     chainId: urlChainId,
   });
 
@@ -98,63 +106,52 @@ export function RegisterMember({
   );
 
   const {
-    write: writeRegisterMember,
-    transactionStatus: registerMemberTxStatus,
-    error: registerMemberTxError,
-  } = useContractWriteWithConfirmations({
-    ...registryContractCallConfig,
-    functionName: "stakeAndRegisterMember",
-    showNotification: false,
-    onConfirmations: useCallback(() => {
-      publish({
-        topic: "member",
-        type: "add",
-        containerId: communityAddress,
-        function: "stakeAndRegisterMember",
-        id: communityAddress,
-        chainId: urlChainId,
-      });
-    }, [publish, communityAddress, urlChainId]),
-  });
+    registrationTxProps: registrationTx,
+    handleRegistration,
+    resetState: handleRegistrationResetState,
+  } = useHandleRegistration(
+    communityAddress as Address,
+    communityName ?? "",
+    urlChainId,
+  );
 
-  const { allowanceTxProps: allowanceTx, handleAllowance } = useHandleAllowance(
+  const {
+    allowanceTxProps: allowanceTx,
+    handleAllowance,
+    resetState: handleAllowanceResetState,
+  } = useHandleAllowance(
     accountAddress,
-    token.id as Address,
+    token.address as Address,
     token.symbol,
     communityAddress as Address,
     registrationCost,
-    writeRegisterMember,
+    handleRegistration,
   );
 
-  const [registrationTx, setRegistrationTx] = useState<TransactionProps>(
-    () => ({
-      contractName: `Register in ${communityName}`,
-      message: getTxMessage("idle"),
-      status: "idle",
-    }),
-  );
+  const message = `You agree with the terms and conditions of ${communityName} covenant: 
+    https://ipfs.io/ipfs/${covenantIpfsHash}`;
 
-  useEffect(() => {
-    setRegistrationTx((prev) => ({
-      ...prev,
-      message: getTxMessage(registerMemberTxStatus, registerMemberTxError),
-      status: registerMemberTxStatus ?? "idle",
-    }));
-  }, [registerMemberTxStatus, communityName]);
+  const { covenantAgreementTxProps: covenantAgreementTx, handleSignature } =
+    useCovenantAgreementSignature(message, handleAllowance);
 
   const handleClick = useCallback(() => {
     if (isMember) {
       writeUnregisterMember();
     } else {
+      handleAllowanceResetState();
+      handleRegistrationResetState();
       setIsOpenModal(true);
-      setRegistrationTx((prev) => ({
-        ...prev,
-        message: getTxMessage("idle"),
-        status: "idle",
-      }));
-      handleAllowance();
+      if (covenantAgreementTx.status !== "loading") {
+        handleSignature();
+      }
     }
-  }, [isMember, writeUnregisterMember, handleAllowance]);
+  }, [
+    isMember,
+    writeUnregisterMember,
+    handleAllowanceResetState,
+    handleRegistrationResetState,
+    handleSignature,
+  ]);
 
   const buttonProps: {
     onClick: () => void;
@@ -185,7 +182,7 @@ export function RegisterMember({
     <>
       <TransactionModal
         label={`Register in ${communityName}`}
-        transactions={[allowanceTx, registrationTx]}
+        transactions={[covenantAgreementTx, allowanceTx, registrationTx]}
         onClose={() => setIsOpenModal(false)}
         isOpen={isOpenModal}
       />

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
 import { HTMLInputTypeAttribute } from "react";
@@ -17,6 +18,7 @@ type Props = {
   children?: any;
   rows?: number;
   readOnly?: boolean;
+  disabled?: boolean;
   otherProps?: any;
   className?: string;
   value?: string | number;
@@ -38,6 +40,7 @@ export function FormInput({
   children,
   rows,
   readOnly,
+  disabled,
   otherProps,
   className,
   value = undefined,
@@ -46,14 +49,21 @@ export function FormInput({
   onChange,
 }: Props) {
   const fixedInputClassname =
-    "border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed";
+    "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
   return (
     <div className="flex flex-col">
       {label && (
-        <label htmlFor={registerKey} className="label cursor-pointer ">
+        <label htmlFor={registerKey} className="label cursor-pointer w-fit">
           {tooltip ?
-            <InfoWrapper tooltip={tooltip}>{label}</InfoWrapper>
-          : label}
+            <InfoWrapper tooltip={tooltip}>
+              {label}
+              {required && <span>*</span>}
+            </InfoWrapper>
+          : <>
+              {label}
+              {required && <span className="ml-1">*</span>}
+            </>
+          }
         </label>
       )}
       {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
@@ -65,21 +75,30 @@ export function FormInput({
             value={value}
             type={type}
             placeholder={placeholder}
-            className={`hide-input-arrows input input-bordered ${errors[registerKey] ? "input-error" : "input-info"} w-full ${readOnly && fixedInputClassname} ${className}`}
+            className={`hide-input-arrows input input-bordered ${
+              errors[registerKey] ? "input-error" : "input-info"
+            } w-full ${readOnly && fixedInputClassname} ${className}`}
             required={required}
             step={step}
+            disabled={disabled || readOnly}
+            readOnly={readOnly || disabled}
             {...register(registerKey, {
               required,
+              readOnly,
+              disabled,
               ...registerOptions,
             })}
             {...otherProps}
           />
         : <textarea
             placeholder={placeholder}
-            className={`${className} textarea textarea-info line-clamp-5 w-full ${errors[registerKey] ? "input-error" : "input-info"}`}
+            className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 ${
+              errors[registerKey] ? "input-error" : "input-info"
+            }`}
             required={required}
             rows={rows}
-            readOnly={readOnly}
+            disabled={disabled || readOnly}
+            readOnly={readOnly || disabled}
             id={registerKey}
             {...register(registerKey, {
               required,

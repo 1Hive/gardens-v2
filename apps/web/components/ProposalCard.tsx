@@ -1,6 +1,7 @@
 "use client";
 
 import { Hashicon } from "@emeraldpay/hashicon-react";
+import { FetchTokenResult } from "@wagmi/core";
 import { usePathname } from "next/navigation";
 import { formatUnits } from "viem";
 import { Allo } from "#/subgraph/.graphclient";
@@ -12,7 +13,7 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
-import { LightCVStrategy, PoolTypes } from "@/types";
+import { PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
 
 type ProposalCardProps = {
@@ -20,12 +21,12 @@ type ProposalCardProps = {
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   index: number;
+  poolToken: FetchTokenResult;
   isAllocationView: boolean;
   memberActivatedPoints: number;
   memberPoolWeight: number;
   executeDisabled: boolean;
   tooltipMessage: string;
-  strategy: LightCVStrategy;
   tokenDecimals: number;
   alloInfo: Allo;
   tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
@@ -38,21 +39,27 @@ export function ProposalCard({
   inputData,
   stakedFilter,
   index,
+  poolToken,
   isAllocationView,
   memberActivatedPoints,
-  strategy,
+  memberPoolWeight,
   tokenData,
   inputHandler,
 }: ProposalCardProps) {
-  const { title, id, proposalNumber, proposalStatus, requestedAmount, type } =
-    proposalData;
+  const {
+    metadata,
+    id,
+    proposalNumber,
+    proposalStatus,
+    requestedAmount,
+    type,
+  } = proposalData;
   const pathname = usePathname();
 
   const searchParams = useCollectQueryParams();
   // TODO: ADD border color when new proposal is added
   const isNewProposal =
-    searchParams[QUERY_PARAMS.poolPage.newPropsoal] ==
-    proposalData.proposalNumber;
+    searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalNumber;
 
   const { currentConvictionPct, thresholdPct, totalSupportPct } =
     useConvictionRead({
@@ -62,15 +69,18 @@ export function ProposalCard({
 
   //TODO: move execute func to proposalId page
 
-  const inputValue = calculatePercentage(
-    inputData.value,
-    memberActivatedPoints,
-  );
+  const inputValue =
+    inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
 
   const allocatedInProposal = calculatePercentage(
     stakedFilter?.value,
     memberActivatedPoints,
   );
+
+  const poolWeightAllocatedInProposal = (
+    (inputValue * memberPoolWeight) /
+    100
+  ).toFixed(2);
 
   const isSignalingType = PoolTypes[type] === "signaling";
 
@@ -84,7 +94,9 @@ export function ProposalCard({
         >
           <Hashicon value={id} size={45} />
           <div className="overflow-hidden">
-            <h4 className="truncate first-letter:uppercase">{title}</h4>
+            <h4 className="truncate first-letter:uppercase">
+              {metadata.title}
+            </h4>
             <h6 className="text-sm">ID {proposalNumber}</h6>
           </div>
         </div>
@@ -101,7 +113,7 @@ export function ProposalCard({
                     type="range"
                     min={0}
                     max={memberActivatedPoints}
-                    value={inputData.value}
+                    value={inputData?.value}
                     className={
                       "range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]"
                     }
@@ -122,13 +134,28 @@ export function ProposalCard({
                 <div className="mb-2">
                   {Number(inputValue) > 0 ?
                     <>
-                      <p className="flex items-center gap-2 text-primary-content">
-                        Total allocated{" "}
-                        <span className="font-chakra text-2xl font-semibold">
-                          {inputValue}{" "}
-                        </span>
-                        %
-                      </p>
+                      <div className="flex gap-10">
+                        <div className="flex flex-col items-center justify-center">
+                          <p className="subtitle2">
+                            <span className="text-2xl font-semibold text-primary-content">
+                              {inputValue}
+                            </span>
+                            /100%
+                          </p>
+                          <p className="text-primary-content">
+                            Total allocated
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-center justify-center">
+                          <p className="subtitle2">
+                            <span className="text-2xl font-semibold text-primary-content">
+                              {poolWeightAllocatedInProposal}
+                            </span>
+                            /{memberPoolWeight}%
+                          </p>
+                          <p className="text-primary-content">Pool weight</p>
+                        </div>
+                      </div>
                     </>
                   : <p className="text-neutral-soft-content">No allocation</p>}
                 </div>
@@ -136,22 +163,20 @@ export function ProposalCard({
             </div>
           </div>
         : <>
-            <div className="col-span-3 ml-10 self-center justify-self-start">
+            <div className="col-span-3 ml-20 self-center justify-self-start">
               {stakedFilter &&
                 (stakedFilter?.value > 0 ?
                   <p
                     className="text-primary-content text-xs flex items-center justify-center
-                  // TODO: calculate data when fetching ok from subgrpah
-                gap-1"
+                gap-3"
                   >
-                    You allocate{" "}
+                    Total allocated{" "}
                     <span className="font-medium text-2xl">
                       {`${allocatedInProposal.toString()}%`}
-                    </span>{" "}
-                    pool weight
+                    </span>
                   </p>
                 : <p className="text-xs text-neutral-soft-content text-center">
-                    No allocation mad
+                    No allocation yet
                   </p>)}
             </div>
             <div className="col-span-3 self-center flex flex-col gap-2">
@@ -175,8 +200,8 @@ export function ProposalCard({
                     Requested amount:{" "}
                   </p>
                   <DisplayNumber
-                    number={formatUnits(requestedAmount, 18)}
-                    tokenSymbol={strategy.registryCommunity.garden.symbol}
+                    number={formatUnits(requestedAmount, poolToken.decimals)}
+                    tokenSymbol={poolToken.symbol}
                     compact={true}
                     className="text-neutral-soft-content text-xs"
                   />
@@ -195,7 +220,7 @@ export function ProposalCard({
         proposalCardContent
       : <Card
           href={`${pathname}/${id}`}
-          className={`py-4 ${isNewProposal ? "!border-accent !border-2" : ""}`}
+          className={`py-4 ${isNewProposal ? "shadow-xl" : ""}`}
         >
           {proposalCardContent}
         </Card>

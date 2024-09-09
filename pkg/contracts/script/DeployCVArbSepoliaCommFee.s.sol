@@ -11,8 +11,8 @@ import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {CVStrategyHelpersV0_0, CVStrategyV0_0, StrategyStruct} from "../test/CVStrategyHelpersV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
@@ -69,7 +69,6 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
 
         RegistryCommunityV0_0.InitializeParams memory params;
 
-        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;

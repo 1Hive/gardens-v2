@@ -1,0 +1,18 @@
+{
+  "network": "matic",
+  "chainId": 42161,
+  "dataSources": [
+    {
+      "name": "RegistryFactoryV0_0",
+      "startBlock": 60851170,
+      "address": "0x54c320947549349a22719076832d546a2d21c6ad",
+      "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 60851170,
+      "address": "0xa71023bc64c9711c2037ab491de80fd74504bd55",
+      "customTemplate": "passportScorer"
+    }
+  ]
+}

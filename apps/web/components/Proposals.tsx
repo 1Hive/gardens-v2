@@ -5,9 +5,10 @@ import {
   AdjustmentsHorizontalIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
-import { filter } from "lodash-es";
+import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
-import { Address as AddressType, useAccount } from "wagmi";
+import { parseAbiParameters, encodeAbiParameters } from "viem";
+import { Address, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -16,12 +17,12 @@ import {
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
-import { Address } from "#/subgraph/src/scripts/last-addr";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { getProposals } from "@/actions/getProposals";
 import {
   Button,
   CheckPassport,
+  InfoWrapper,
   PoolGovernance,
   ProposalCard,
 } from "@/components";
@@ -30,10 +31,9 @@ import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, cvStrategyABI } from "@/src/generated";
-import { LightCVStrategy, ProposalStatus } from "@/types";
+import { alloABI, registryCommunityABI } from "@/src/generated";
+import { LightCVStrategy } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
 
@@ -57,11 +57,13 @@ type Stats = {
   name: string;
   stat: number | string;
   className: string;
+  info: string;
 };
 
 interface ProposalsProps {
   strategy: LightCVStrategy;
   alloInfo: Allo;
+  poolToken: FetchTokenResult;
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;
@@ -70,6 +72,7 @@ interface ProposalsProps {
 export function Proposals({
   strategy,
   alloInfo,
+  poolToken,
   communityAddress,
   createProposalUrl,
 }: ProposalsProps) {
@@ -87,8 +90,8 @@ export function Proposals({
 
   // Hooks
   const { address: wallet } = useAccount();
-  const urlChainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
+  const chainId = useChainIdFromPath();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
@@ -131,6 +134,16 @@ export function Proposals({
       enabled: !!wallet,
     },
   );
+
+  //Contract reads
+  const { data: memberPower } = useContractRead({
+    address: communityAddress,
+    abi: registryCommunityABI,
+    functionName: "getMemberPowerInStrategy",
+    args: [wallet as Address, strategy.id as Address],
+    chainId: chainId,
+    enabled: !!wallet,
+  });
 
   // Derived state
   const isMemberCommunity =
@@ -202,14 +215,10 @@ export function Proposals({
     if (fetchingProposals == null) {
       setFetchingProposals(true);
     }
-    getProposals(wallet, strategy)
+    getProposals(strategy)
       .then((res) => {
         if (res !== undefined) {
-          const filteredProposals = res.filter(
-            ({ status }) => ProposalStatus[status] !== "rejected",
-          );
-          console.log(filteredProposals);
-          setProposals(filteredProposals);
+          setProposals(res);
         } else {
           console.debug("No proposals");
         }
@@ -228,16 +237,19 @@ export function Proposals({
   const getProposalsInputsDifferences = (
     inputData: ProposalInputItem[],
     currentData: ProposalInputItem[],
-  ): [number, bigint][] => {
-    return inputData.reduce<[number, bigint][]>((acc, input) => {
-      const current = currentData.find((item) => item.id === input.id);
-      const diff =
-        BigInt(Math.floor(input.value)) - BigInt(current?.value ?? 0);
-      if (diff !== 0n) {
-        acc.push([Number(input.id), diff]);
-      }
-      return acc;
-    }, []);
+  ) => {
+    return inputData.reduce<{ proposalId: bigint; deltaSupport: bigint }[]>(
+      (acc, input) => {
+        const current = currentData.find((item) => item.id === input.id);
+        const diff =
+          BigInt(Math.floor(input.value)) - BigInt(current?.value ?? 0);
+        if (diff !== 0n) {
+          acc.push({ proposalId: BigInt(input.id), deltaSupport: diff });
+        }
+        return acc;
+      },
+      [],
+    );
   };
 
   const calculateTotalTokens = (exceptIndex?: number) => {
@@ -265,24 +277,6 @@ export function Proposals({
     setInputAllocatedTokens(currentPoints + value);
   };
 
-  const submit = async () => {
-    if (!inputs) {
-      console.error("Inputs not yet computed");
-      return;
-    }
-    const proposalsDifferencesArr = getProposalsInputsDifferences(
-      inputs,
-      stakedFilters,
-    );
-    const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
-      proposalsDifferencesArr,
-    ]);
-    const poolId = Number(strategy.poolId);
-    writeAllocate({
-      args: [BigInt(poolId), encodedData as AddressType],
-    });
-  };
-
   // Contract interaction
   const {
     write: writeAllocate,
@@ -306,6 +300,27 @@ export function Proposals({
       });
     },
   });
+  const submit = async () => {
+    if (!inputs) {
+      console.error("Inputs not yet computed");
+      return;
+    }
+    const proposalsDifferencesArr = getProposalsInputsDifferences(
+      inputs,
+      stakedFilters,
+    );
+
+    const abiTypes = parseAbiParameters(
+      "(uint256 proposalId, int256 deltaSupport)[]",
+    );
+    const encodedData = encodeAbiParameters(abiTypes, [
+      proposalsDifferencesArr,
+    ]);
+    const poolId = Number(strategy.poolId);
+    writeAllocate({
+      args: [BigInt(poolId), encodedData],
+    });
+  };
 
   useErrorDetails(errorAllocate, "errorAllocate");
 
@@ -315,7 +330,7 @@ export function Proposals({
     memberActivatedPoints,
   );
   const memberPoolWeight = calculatePercentage(
-    memberActivatedPoints,
+    Number(memberPower),
     strategy.totalEffectiveActivePoints,
   );
 
@@ -333,25 +348,28 @@ export function Proposals({
   const stats: Stats[] = [
     {
       id: 1,
-      name: "Pool Weight",
+      name: "Your pool weight",
       stat: memberPoolWeight,
       className: poolWeightClassName,
+      info: "Represents your voting power within the pool",
     },
     {
       id: 2,
-      name: "Allocated Pool Weight",
+      name: "Pool weight used",
       stat: calcPoolWeightUsed(memberSupportedProposalsPct),
       className: poolWeightClassName,
+      info: "Indicates the portion of your pool weight allocated in proposals.",
     },
     {
       id: 3,
-      name: "Total Allocation Percentage",
+      name: "Total allocated",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
+      info: "Reflects the percentage of your pool weight supporting proposals.",
     },
   ];
 
@@ -367,6 +385,12 @@ export function Proposals({
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
   );
+
+  // const endedProposals = proposals?.filter(
+  //   (x) =>
+  //     ProposalStatus[x.status] !== "active" &&
+  //     ProposalStatus[x.status] !== "disputed",
+  // );
 
   // Render
   return (
@@ -406,31 +430,79 @@ export function Proposals({
         </div>
         <div className="flex flex-col gap-6">
           {proposals && inputs ?
-            proposals.map((proposalData, i) => (
-              <Fragment key={proposalData.proposalNumber}>
-                <ProposalCard
-                  proposalData={proposalData}
-                  inputData={inputs[i]}
-                  stakedFilter={stakedFilters[i]}
-                  index={i}
-                  isAllocationView={allocationView}
-                  tooltipMessage={tooltipMessage}
-                  memberActivatedPoints={memberActivatedPoints}
-                  memberPoolWeight={memberPoolWeight}
-                  executeDisabled={
-                    proposalData.proposalStatus == 4 ||
-                    !isConnected ||
-                    missmatchUrl
-                  }
-                  strategy={strategy}
-                  tokenDecimals={tokenDecimals}
-                  alloInfo={alloInfo}
-                  triggerRenderProposals={triggerRenderProposals}
-                  inputHandler={inputHandler}
-                  tokenData={strategy.registryCommunity.garden}
-                />
-              </Fragment>
-            ))
+            <>
+              {proposals
+                // .filter(
+                //   (x) =>
+                //     ProposalStatus[x.status] === "active" ||
+                //     ProposalStatus[x.status] === "disputed",
+                // )
+                .map((proposalData, i) => (
+                  <Fragment key={proposalData.proposalNumber}>
+                    <ProposalCard
+                      proposalData={proposalData}
+                      inputData={inputs[i]}
+                      stakedFilter={stakedFilters[i]}
+                      index={i}
+                      isAllocationView={allocationView}
+                      tooltipMessage={tooltipMessage}
+                      memberActivatedPoints={memberActivatedPoints}
+                      memberPoolWeight={memberPoolWeight}
+                      executeDisabled={
+                        proposalData.proposalStatus == 4 ||
+                        !isConnected ||
+                        missmatchUrl
+                      }
+                      poolToken={poolToken}
+                      tokenDecimals={tokenDecimals}
+                      alloInfo={alloInfo}
+                      triggerRenderProposals={triggerRenderProposals}
+                      inputHandler={inputHandler}
+                      tokenData={strategy.registryCommunity.garden}
+                    />
+                  </Fragment>
+                ))}
+              {/* {!allocationView && !!endedProposals?.length && (
+                <details className="collapse collapse-arrow">
+                  <summary className="collapse-title text-md font-medium bg-neutral-soft mb-4 rounded-b-2xl flex content-center">
+                    Click to see ended proposals
+                  </summary>
+                  <div className="collapse-content px-0 flex flex-col gap-6">
+                    {proposals
+                      .filter(
+                        (x) =>
+                          ProposalStatus[x.status] !== "active" &&
+                          ProposalStatus[x.status] !== "disputed",
+                      )
+                      .map((proposalData, i) => (
+                        <Fragment key={proposalData.proposalNumber}>
+                          <ProposalCard
+                            proposalData={proposalData}
+                            inputData={inputs[i]}
+                            stakedFilter={stakedFilters[i]}
+                            index={i}
+                            isAllocationView={allocationView}
+                            tooltipMessage={tooltipMessage}
+                            memberActivatedPoints={memberActivatedPoints}
+                            memberPoolWeight={memberPoolWeight}
+                            executeDisabled={
+                              proposalData.proposalStatus == 4 ||
+                              !isConnected ||
+                              missmatchUrl
+                            }
+                            poolToken={poolToken}
+                            tokenDecimals={tokenDecimals}
+                            alloInfo={alloInfo}
+                            triggerRenderProposals={triggerRenderProposals}
+                            inputHandler={inputHandler}
+                            tokenData={strategy.registryCommunity.garden}
+                          />
+                        </Fragment>
+                      ))}
+                  </div>
+                </details>
+              )} */}
+            </>
           : <LoadingSpinner />}
         </div>
         {allocationView ?
@@ -479,7 +551,7 @@ export function Proposals({
 function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
     <div className="mt-10">
-      <h3>Your Allocation Overview</h3>
+      <h3>Allocation Overview</h3>
       <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <div
@@ -502,10 +574,10 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
 
               <p className="ml-20 truncate">{stat.name}</p>
             </div>
-            <div className="stats-baseline ml-20 flex">
-              <p className="text-2xl font-semibold text-neutral-content">
-                {stat.stat} %
-              </p>
+            <div className="ml-20">
+              <InfoWrapper tooltip={stat.info}>
+                <p className="text-2xl font-semibold">{stat.stat} %</p>
+              </InfoWrapper>
             </div>
           </div>
         ))}

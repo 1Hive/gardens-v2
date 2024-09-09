@@ -7,7 +7,7 @@ import { TokenGarden } from "#/subgraph/.graphclient";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 
 interface FaucetProps {
-  token: Pick<TokenGarden, "id" | "decimals" | "symbol">;
+  token: Pick<TokenGarden, "address" | "decimals" | "symbol">;
 }
 
 const MINT_AMMOUNT = 1000n;
@@ -21,7 +21,7 @@ export function TokenGardenFaucet({ token }: FaucetProps) {
 
   const erc20MintAbi = ["function mint(address to, uint256 amount) public"];
   const { writeAsync } = useContractWrite({
-    address: token.id as Address,
+    address: token.address as Address,
     abi: parseAbi(erc20MintAbi),
     functionName: "mint",
     chainId: urlChainId,

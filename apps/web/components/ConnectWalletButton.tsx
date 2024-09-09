@@ -16,7 +16,7 @@ import {
 } from "wagmi";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
-import { ChainIcon } from "@/configs/chainServer";
+import { ChainIcon } from "@/configs/chains";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { formatAddress } from "@/utils/formatAddress";
 
@@ -45,7 +45,6 @@ export function ConnectWallet() {
       {({
         account: accountAddress,
         chain,
-        openChainModal,
         openConnectModal,
         mounted,
       }) => {
@@ -70,17 +69,17 @@ export function ConnectWallet() {
                 );
               }
               //WRONG NETWORK! button if wallet is connected to unsupported chains
-              if (chain.unsupported) {
-                return (
-                  <Button
-                    onClick={openChainModal}
-                    btnStyle="outline"
-                    color="danger"
-                  >
-                    Wrong network
-                  </Button>
-                );
-              }
+              // if (chain.unsupported) {
+              //   return (
+              //     <Button
+              //       onClick={openChainModal}
+              //       btnStyle="outline"
+              //       color="danger"
+              //     >
+              //       Wrong network
+              //     </Button>
+              //   );
+              // }
 
               //Is CONNECTED to a supported chains with condition => urlChainId(urlChain) === chainId(wallet)
               //Dropdown menu with wallet, balance, switch network and disconnect buttons

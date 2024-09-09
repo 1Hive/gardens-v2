@@ -4,7 +4,6 @@ import {
   CVProposal,
   CVStrategyConfig,
   ProposalDispute,
-  ProposalDisputeMetadata,
 } from "#/subgraph/.graphclient";
 import { Countdown } from "./Countdown";
 import { DateComponent } from "./DateComponent";
@@ -28,9 +27,7 @@ type Props = {
       | "createdAt"
       | "ruledAt"
       | "rulingOutcome"
-    > & {
-      metadata: Pick<ProposalDisputeMetadata, "reason">;
-    }
+    >
   >;
   className?: string;
 };
@@ -58,21 +55,17 @@ export const ProposalTimeline: FC<Props> = ({
   );
 
   const lastDispute = disputes[disputes.length - 1];
-  // const isRuled =
-  //   !!lastDispute && DisputeStatus[lastDispute.status] === "solved";
-  // const isRejected =
-  //   !!lastDispute &&
-  //   isRuled &&
-  //   (DisputeOutcome[lastDispute.rulingOutcome] === "rejected" ||
-  //     (DisputeOutcome[lastDispute.rulingOutcome] === "abstained" &&
-  //       defaultRuling === "rejected"));
   const isLastDisputeTimeout =
     lastDispute &&
-    lastDispute.createdAt + arbitrationConfig.defaultRulingTimeout <
+    +lastDispute.createdAt + +arbitrationConfig.defaultRulingTimeout <
       Date.now() / 1000;
 
+  const isEnded = proposalStatus !== "active" && proposalStatus !== "disputed";
+
   return (
-    <ul className={`timeline mt-5 ${className}`}>
+    <ul
+      className={`timeline timeline-vertical sm:timeline-horizontal mt-5 ${className}`}
+    >
       <li className="flex-grow">
         <div className="timeline-start text-sm opacity-60">
           <DateComponent timestamp={proposalData.createdAt} />
@@ -108,7 +101,7 @@ export const ProposalTimeline: FC<Props> = ({
               <li className="flex-grow">
                 <hr className="bg-tertiary-content rounded-tr-none rounded-br-none" />
                 <div className="timeline-middle rounded-full text-tertiary-soft bg-tertiary-content my-0.5">
-                  <CheckIcon className="w-4 m-0.5" />
+                  <CheckIcon className="w-4 m-0.5 text-tertiary-content" />
                 </div>
                 <div className="timeline-start shadow-lg p-2 border border-tertiary-content rounded-lg flex items-center">
                   <InfoWrapper
@@ -180,8 +173,9 @@ export const ProposalTimeline: FC<Props> = ({
                   <CheckIcon className="w-4 m-0.5" />
                 </div>
               : futureNode}
-              {isLastDispute ?
-                (!isRuled || !isRejected) &&
+              {isLastDispute && proposalStatus !== "active" ?
+                !isRuled &&
+                !isEnded &&
                 (!isTimeout || defaultRuling === "approved") &&
                 futureHR
               : pastHR}

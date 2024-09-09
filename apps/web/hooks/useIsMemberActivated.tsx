@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
-import { Address } from "#/subgraph/src/scripts/last-addr";
+import { useAccount, Address } from "wagmi";
 import { useViemClient } from "./useViemClient";
 import { registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";

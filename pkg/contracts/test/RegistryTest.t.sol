@@ -20,12 +20,12 @@ import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
 import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
-import {RegistryFactoryV0_1} from "../src/RegistryFactoryV0_1.sol";
-import {CVStrategyV0_0, StrategyStruct, IArbitrator} from "../src/CVStrategyV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {RegistryFactoryV0_1} from "../src/RegistryFactory/RegistryFactoryV0_1.sol";
+import {CVStrategyV0_0, StrategyStruct, IArbitrator} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
@@ -89,7 +89,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         ERC1967Proxy strategyProxy = new ERC1967Proxy(
             address(new CVStrategyV0_0()),
-            abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()))
+            abi.encodeWithSelector(
+                CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()), pool_admin()
+            )
         );
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
@@ -112,8 +114,10 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
             address(new RegistryFactoryV0_0()),
             abi.encodeWithSelector(
                 RegistryFactoryV0_0.initialize.selector,
+                gardenOwner,
                 address(protocolFeeReceiver),
                 address(new RegistryCommunityV0_0()),
+                address(new CVStrategyV0_0()),
                 address(new CollateralVault())
             )
         );
@@ -126,7 +130,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         vm.stopPrank();
 
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -370,6 +373,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
+        assertEq(strategy.getMaxAmount(), 200 * DECIMALS);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
@@ -901,7 +905,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         vm.startPrank(pool_admin());
         StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        uint256 poolId = createPool(
+        createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
@@ -951,7 +955,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
     function test_revert_initialize_zeroStake() public {
         RegistryCommunityV0_0.InitializeParams memory params;
-        params._strategyTemplate = address(new CVStrategyV0_0());
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = 0;

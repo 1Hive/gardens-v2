@@ -1,27 +1,14 @@
-import { Address } from "viem";
-import { LightCVStrategy, LightProposal } from "@/types";
+import { ProposalMetadata } from "#/subgraph/.graphclient";
+import { LightCVStrategy } from "@/types";
+import { fetchIpfs } from "@/utils/ipfsUtils";
 
-export async function getProposals(
-  accountAddress: Address | undefined,
-  strategy: LightCVStrategy,
-) {
+export async function getProposals(strategy: LightCVStrategy) {
   try {
     const fetchIPFSDataBatch = async function (
-      proposals: LightProposal[],
+      proposals: (typeof strategy)["proposals"],
       batchSize = 5,
       delay = 300,
     ) {
-      // Fetch data for a batch of proposals
-      const fetchBatch = async (batch: any) =>
-        Promise.all(
-          batch.map((p: LightProposal) =>
-            fetch(`https://ipfs.io/ipfs/${p.metadata}`, {
-              method: "GET",
-              headers: { "content-type": "application/json" },
-            }).then((res) => res.json()),
-          ),
-        );
-
       // Introduce a delay
       const sleep = (ms: number) =>
         new Promise((resolve) => setTimeout(resolve, ms));
@@ -33,35 +20,43 @@ export async function getProposals(
       );
 
       // Process each chunk
-      let results = [];
+      let results: Array<Pick<ProposalMetadata, "title" | "description">> = [];
       for (const chunk of chunks) {
-        const batchResults = await fetchBatch(chunk);
-        results.push(...batchResults);
+        chunk.forEach(async (p) => {
+          if (p.metadata) {
+            results.push(p.metadata);
+          } else {
+            const ipfsRes = await fetchIpfs<(typeof results)[number] | null>(
+              p.metadataHash,
+            );
+            if (ipfsRes) {
+              results.push(ipfsRes);
+            }
+          }
+        });
         await sleep(delay);
       }
 
       return results;
     };
 
-    const transformProposals = async function (_strategy: LightCVStrategy) {
-      const proposalsData = await fetchIPFSDataBatch(_strategy.proposals);
-      const transformedProposals = proposalsData
-        .map((data, index) => {
-          const p = _strategy.proposals[index];
-          return {
-            ...p,
-            voterStakedPointsPct: 0,
-            stakedAmount: _strategy.proposals[index].stakedAmount,
+    const proposalsData = await fetchIPFSDataBatch(strategy.proposals);
+    const transformedProposals = proposalsData
+      .map((data, index) => {
+        const p = strategy.proposals[index];
+        return {
+          ...p,
+          voterStakedPointsPct: 0,
+          metadata: {
             title: data.title,
-            type: _strategy.config?.proposalType as number,
-            status: _strategy.proposals[index].proposalStatus,
-          };
-        })
-        .sort((a, b) => +a.proposalNumber - +b.proposalNumber); // Sort by proposal number ascending
-
-      return transformedProposals;
-    };
-    let transformedProposals = await transformProposals(strategy);
+            description: data.description,
+          },
+          stakedAmount: strategy.proposals[index].stakedAmount,
+          type: strategy.config?.proposalType as number,
+          status: strategy.proposals[index].proposalStatus,
+        };
+      })
+      .sort((a, b) => +a.proposalNumber - +b.proposalNumber); // Sort by proposal number ascending
 
     return transformedProposals;
   } catch (error) {

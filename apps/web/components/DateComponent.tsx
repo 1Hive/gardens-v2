@@ -12,6 +12,14 @@ export const DateComponent: React.FC<DateComponentProps> = ({
 }) => {
   const date = new Date(timestamp * 1000);
   const formattedDate = format(date, "MMMM, do"); // Format as "March, 10th"
+  const formattedTime = format(date, "HH:MM"); // Format as "10:30"
 
-  return <span className={className}>{formattedDate}</span>;
+  return (
+    <span
+      className={`tooltip cursor-default ${className}`}
+      data-tip={formattedTime}
+    >
+      {formattedDate}
+    </span>
+  );
 };

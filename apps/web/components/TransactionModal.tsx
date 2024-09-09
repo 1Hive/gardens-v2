@@ -17,7 +17,7 @@ export interface TransactionStep {
 export type TransactionProps = {
   message: string;
   status: "idle" | "waiting" | "loading" | "success" | "error";
-  contractName: string;
+  contractName: React.ReactNode;
   showClickToExplorer?: boolean;
 };
 

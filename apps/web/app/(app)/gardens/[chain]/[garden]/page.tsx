@@ -9,7 +9,11 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { Address } from "viem";
-import { getGardenDocument, getGardenQuery } from "#/subgraph/.graphclient";
+import { useToken } from "wagmi";
+import {
+  getGardenCommunitiesDocument,
+  getGardenCommunitiesQuery,
+} from "#/subgraph/.graphclient";
 import { ecosystem, grassLarge, tree2, tree3 } from "@/assets";
 import {
   Button,
@@ -20,7 +24,7 @@ import {
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
-import { isProd } from "@/constants/contracts";
+import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
@@ -34,17 +38,26 @@ export default function Page({
   params: { chain: number; garden: string };
 }) {
   const searchParams = useCollectQueryParams();
+  const { data: tokenGarden } = useToken({
+    address: garden as Address,
+    chainId: +chain,
+  });
+
   const {
     data: result,
     error,
     refetch,
-  } = useSubgraphQuery<getGardenQuery>({
-    query: getGardenDocument,
-    variables: { addr: garden },
+  } = useSubgraphQuery<getGardenCommunitiesQuery>({
+    query: getGardenCommunitiesDocument,
+    variables: { chainId: chain },
     changeScope: [
-      { topic: "member" },
+      {
+        topic: "member",
+        containerId: garden,
+      },
       {
         topic: "community",
+        containerId: garden,
       },
       {
         topic: "garden",
@@ -62,7 +75,7 @@ export default function Page({
   }, [error]);
 
   let communities =
-    result?.tokenGarden?.communities?.filter((com) => com.isValid) ?? [];
+    result?.registryCommunities?.filter((com) => com.isValid) ?? [];
 
   useEffect(() => {
     const newCommunityId =
@@ -77,9 +90,7 @@ export default function Page({
     }
   }, [searchParams, result]);
 
-  const tokenGarden = result?.tokenGarden;
-
-  if (!tokenGarden) {
+  if (!result) {
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -117,7 +128,10 @@ export default function Page({
                 <h2>{tokenGarden?.name}</h2>{" "}
                 <TokenLabel chainId={chain} classNames="bg-neutral-soft" />
               </div>
-              <EthAddress icon={false} address={tokenGarden?.id as Address} />
+              <EthAddress
+                icon={false}
+                address={tokenGarden?.address as Address}
+              />
             </div>
             <p className="max-w-lg">
               Discover communities in the

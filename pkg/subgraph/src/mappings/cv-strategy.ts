@@ -7,7 +7,10 @@ import {
   Member,
   ProposalDispute
 } from "../../generated/schema";
-import { ProposalDisputeMetadata as ProposalDisputeMetadataTemplate } from "../../generated/templates";
+import {
+  ProposalDisputeMetadata as ProposalDisputeMetadataTemplate,
+  ProposalMetadata as ProposalMetadataTemplate
+} from "../../generated/templates";
 
 import {
   Distributed,
@@ -22,29 +25,20 @@ import {
   Ruling,
   ProposalDisputed,
   PoolParamsUpdated,
-  InitializedCVDataCvParamsStruct,
-  InitializedCVDataArbitrableConfigStruct,
   PoolParamsUpdatedCvParamsStruct,
-  PoolParamsUpdatedArbitrableConfigStruct
+  PoolParamsUpdatedArbitrableConfigStruct,
+  ProposalCancelled
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
 
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
-
-import { json, JSONValueKind } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
 
-const PROPOSAL_STATUS_ACTIVE = BigInt.fromI32(1);
-const PROPOSAL_STATUS_DISPUTED = BigInt.fromI32(5);
-const PROPOSAL_STATUS_REJECTED = BigInt.fromI32(6);
-
 const DISPUTE_STATUS_WAITING = BigInt.fromI32(0);
 const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
-
-const DISPUTE_RULED_IN_FAVOR_OF_CHALLENGER = BigInt.fromI32(2);
 
 export function handleInitialized(event: InitializedCV): void {
   log.debug("CVStrategy: handleInitialized {}", [
@@ -64,11 +58,13 @@ export function handleInitialized(event: InitializedCV): void {
   let alloAddr = cvc.getAllo();
   log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
   const allo = AlloContract.bind(alloAddr);
-  let metadata = allo.getPool(poolId).metadata.pointer;
+  const alloPool = allo.getPool(poolId);
+  let metadata = alloPool.metadata.pointer;
   if (metadata) {
     log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
     cvs.metadata = metadata ? metadata.toString() : null;
   }
+  cvs.token = alloPool.token.toHexString();
   cvs.poolId = poolId;
   cvs.registryCommunity = registryCommunity;
   let config = new CVStrategyConfig(
@@ -83,9 +79,11 @@ export function handleInitialized(event: InitializedCV): void {
   config.maxAmount = maxAmount;
 
   log.debug("handleInitialized changetypes", []);
+  // @ts-ignore
   let cvParams = changetype<PoolParamsUpdatedCvParamsStruct>(
     event.params.data.cvParams
   );
+  // @ts-ignore
   let arbitrableConfig = changetype<PoolParamsUpdatedArbitrableConfigStruct>(
     event.params.data.arbitrableConfig
   );
@@ -149,11 +147,12 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   const pointer = cvc.getMetadata(event.params.proposalId).pointer;
 
+  newProposal.metadataHash = pointer;
   newProposal.metadata = pointer;
-  // const metadataID = `${pointer}-${proposalIdString}`;
-  const metadataID = `${pointer}`;
+  ProposalMetadataTemplate.create(pointer);
+
   // newProposal.proposalMeta = metadataID;
-  log.debug("CVStrategy: handleProposalCreated pointer:{}", [metadataID]);
+  log.debug("CVStrategy: handleProposalCreated: {}", [proposalIdString]);
   newProposal.createdAt = event.block.timestamp;
   newProposal.updatedAt = event.block.timestamp;
 
@@ -252,6 +251,7 @@ export function handleSupportAdded(event: SupportAdded): void {
   memberStrategy.save();
   cvp.maxCVStaked = maxConviction;
 
+  cvp.blockLast = event.block.number;
   cvp.stakedAmount = event.params.totalStakedAmount;
   cvp.convictionLast = event.params.convictionLast;
   cvp.save();
@@ -522,7 +522,7 @@ export function handleProposalDisputed(event: ProposalDisputed): void {
   dispute.metadata = event.params.context;
   dispute.status = DISPUTE_STATUS_WAITING;
 
-  ProposalDisputeMetadataTemplate.create(dispute.metadata);
+  ProposalDisputeMetadataTemplate.create(event.params.context);
   dispute.save();
 
   // Change proposal status to disputed
@@ -574,6 +574,27 @@ export function handleDisputeRuled(event: Ruling): void {
 
   proposal.proposalStatus = BigInt.fromI32(
     cvc.getProposal(proposal.proposalNumber).getProposalStatus()
+  );
+
+  proposal.save();
+}
+
+export function handleProposalCancelled(event: ProposalCancelled): void {
+  log.debug("CVStrategy: handleProposalCancelled: proposalId: {}", [
+    event.params.proposalId.toString()
+  ]);
+  let proposalId =
+    event.address.toHexString() + "-" + event.params.proposalId.toString();
+  let proposal = CVProposal.load(proposalId);
+  if (proposal == null) {
+    log.error("CvStrategy: Proposal not found with: {}", [proposalId]);
+    return;
+  }
+
+  let cvc = CVStrategyContract.bind(event.address);
+
+  proposal.proposalStatus = BigInt.fromI32(
+    cvc.getProposal(event.params.proposalId).getProposalStatus()
   );
 
   proposal.save();
