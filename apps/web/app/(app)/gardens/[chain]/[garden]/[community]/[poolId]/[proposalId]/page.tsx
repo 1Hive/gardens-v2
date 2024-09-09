@@ -25,7 +25,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
-import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
@@ -81,7 +81,7 @@ export default function Page({
     address: poolTokenAddr,
     enabled: !!poolTokenAddr,
   });
-  const { data: ipfsResult } = useProposalMetadataIpfsFetch({
+  const { data: ipfsResult } = useMetadataIpfsFetch({
     hash: proposalData?.metadataHash,
     enabled: !proposalData?.metadata,
   });

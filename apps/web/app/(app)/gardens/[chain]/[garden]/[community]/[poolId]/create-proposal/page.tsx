@@ -5,7 +5,7 @@ import { Address } from "viem";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { CV_SCALE_PRECISION, MAX_RATIO_CONSTANT } from "@/utils/numbers";
 
@@ -20,7 +20,7 @@ export default function Page({
   });
   const strategyObj = data?.cvstrategies?.[0];
 
-  const { metadata } = useProposalMetadataIpfsFetch({
+  const { metadata } = useMetadataIpfsFetch({
     hash: strategyObj?.metadata,
   });
 

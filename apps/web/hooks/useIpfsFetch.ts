@@ -53,7 +53,7 @@ export type MetadataV1 = {
   description: string;
 };
 
-export const useProposalMetadataIpfsFetch = ({
+export const useMetadataIpfsFetch = ({
   hash,
   enabled,
 }: {

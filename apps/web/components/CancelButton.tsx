@@ -56,7 +56,7 @@ function CancelButton({ proposalData }: Props) {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={`Cancel ${proposalData.title} #${proposalData.proposalNumber}`}
+        title={`Cancel proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
         icon={<ExclamationTriangleIcon color="#e74b4d" />}
       >
         <div>
