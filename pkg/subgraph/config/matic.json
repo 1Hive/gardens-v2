@@ -1,6 +1,6 @@
 {
   "network": "matic",
-  "chainId": 42161,
+  "chainId": 137,
   "dataSources": [
     {
       "name": "RegistryFactoryV0_0",
