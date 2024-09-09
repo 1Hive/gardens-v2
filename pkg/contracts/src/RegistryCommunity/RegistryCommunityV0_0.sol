@@ -158,13 +158,13 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
 
-    function onlyCouncilSafe() internal view {
+    function onlyCouncilSafe() internal virtual view {
         if (!hasRole(COUNCIL_MEMBER, msg.sender)) {
             revert UserNotInCouncil(msg.sender);
         }
     }
 
-    function onlyRegistryMemberSender() internal view {
+    function onlyRegistryMemberSender() internal virtual view {
         if (!isMember(msg.sender)) {
             revert UserNotInRegistry();
         }
@@ -491,7 +491,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
 
-    function _changeCouncilSafe() internal {
+    function _changeCouncilSafe() internal virtual {
         councilSafe = ISafe(pendingCouncilSafe);
         delete pendingCouncilSafe;
         emit CouncilSafeSet(pendingCouncilSafe);

@@ -8,7 +8,7 @@ import {
 import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
 import { parseAbiParameters, encodeAbiParameters } from "viem";
-import { Address, useAccount } from "wagmi";
+import { Address, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -27,10 +27,11 @@ import {
   ProposalCard,
 } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI } from "@/src/generated";
+import { alloABI, registryCommunityABI } from "@/src/generated";
 import { LightCVStrategy } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -90,6 +91,7 @@ export function Proposals({
   // Hooks
   const { address: wallet } = useAccount();
   const { publish } = usePubSubContext();
+  const chainId = useChainIdFromPath();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
@@ -132,6 +134,16 @@ export function Proposals({
       enabled: !!wallet,
     },
   );
+
+  //Contract reads
+  const { data: memberPower } = useContractRead({
+    address: communityAddress,
+    abi: registryCommunityABI,
+    functionName: "getMemberPowerInStrategy",
+    args: [wallet as Address, strategy.id as Address],
+    chainId: chainId,
+    enabled: !!wallet,
+  });
 
   // Derived state
   const isMemberCommunity =
@@ -318,7 +330,7 @@ export function Proposals({
     memberActivatedPoints,
   );
   const memberPoolWeight = calculatePercentage(
-    memberActivatedPoints,
+    Number(memberPower),
     strategy.totalEffectiveActivePoints,
   );
 
@@ -339,14 +351,14 @@ export function Proposals({
       name: "Your pool weight",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Represents your influence or voting power in the pool",
+      info: "Represents your voting power within the pool",
     },
     {
       id: 2,
       name: "Pool weight used",
       stat: calcPoolWeightUsed(memberSupportedProposalsPct),
       className: poolWeightClassName,
-      info: "This indicates how much of your pool weight you allocated in proposals.",
+      info: "Indicates the portion of your pool weight allocated in proposals.",
     },
     {
       id: 3,
@@ -357,7 +369,7 @@ export function Proposals({
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "This percentage reflects how much of your pool weight is supporting proposals.",
+      info: "Reflects the percentage of your pool weight supporting proposals.",
     },
   ];
 

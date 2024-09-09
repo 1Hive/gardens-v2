@@ -147,7 +147,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
             StrategyStruct.CreateProposal(poolId, pool_admin(), requestAmount, address(NATIVE), metadata);
         bytes memory data = abi.encode(proposal);
 
-        (,, uint256 submitterCollateralAmount,,,) = cvStrategy.arbitrableConfig();
+        (,, uint256 submitterCollateralAmount,,,) = cvStrategy.getArbitrableConfig();
         vm.deal(pool_admin(), submitterCollateralAmount);
 
         vm.startPrank(pool_admin());
