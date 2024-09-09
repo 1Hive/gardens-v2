@@ -28,6 +28,7 @@ import {
 } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
@@ -92,6 +93,8 @@ export function Proposals({
   const { address: wallet } = useAccount();
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
+  const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
+  const isAllowed = useCheckAllowList(allowList, wallet);
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
@@ -378,6 +381,10 @@ export function Proposals({
       condition: !memberActivatedStrategy,
       message: "Must have points activated to support proposals",
     },
+    {
+      condition: !isAllowed,
+      message: "Address not in allowlist",
+    },
   ];
   const disableManSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
@@ -418,8 +425,8 @@ export function Proposals({
                         <AdjustmentsHorizontalIcon height={24} width={24} />
                       }
                       onClick={() => setAllocationView((prev) => !prev)}
-                      disabled={disableManSupportButton}
-                      tooltip={String(tooltipMessage)}
+                      disabled={disableManSupportButton || !isAllowed}
+                      tooltip={tooltipMessage}
                     >
                       Manage support
                     </Button>
@@ -534,7 +541,8 @@ export function Proposals({
                 <Link href={createProposalUrl}>
                   <Button
                     icon={<PlusIcon height={24} width={24} />}
-                    disabled={!isConnected || missmatchUrl}
+                    disabled={!isConnected || missmatchUrl || !isAllowed}
+                    tooltip="Address not in allowlist"
                   >
                     Create a proposal
                   </Button>

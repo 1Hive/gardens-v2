@@ -3,9 +3,11 @@
 import React from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Address, useAccount } from "wagmi";
+import { CVStrategy, CVStrategyConfig } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { cvStrategyABI } from "@/src/generated";
@@ -13,14 +15,16 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
 
 type ActiveMemberProps = {
-  strategyAddress: Address;
+  strategy: Pick<CVStrategy, "id"> & {
+    config: Pick<CVStrategyConfig, "allowlist">;
+  };
   communityAddress: Address;
   isMemberActivated: boolean | undefined;
   isMember: boolean | undefined;
 };
 
 export function ActivatePoints({
-  strategyAddress,
+  strategy,
   communityAddress,
   isMember,
   isMemberActivated,
@@ -29,11 +33,13 @@ export function ActivatePoints({
   const { openConnectModal } = useConnectModal();
   const chainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
+  const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
+  const isAllowed = useCheckAllowList(allowList, connectedAccount);
 
   const { write: writeActivatePoints, error: errorActivatePoints } =
     useContractWriteWithConfirmations({
       chainId,
-      address: strategyAddress,
+      address: strategy.id as Address,
       contractName: "CV Strategy",
       abi: abiWithErrors(cvStrategyABI),
       functionName: "activatePoints",
@@ -52,7 +58,7 @@ export function ActivatePoints({
 
   const { write: writeDeactivatePoints, error: errorDeactivatePoints } =
     useContractWriteWithConfirmations({
-      address: strategyAddress,
+      address: strategy.id as Address,
       abi: abiWithErrors(cvStrategyABI),
       contractName: "CV Strategy",
       functionName: "deactivatePoints",
@@ -92,6 +98,10 @@ export function ActivatePoints({
       condition: !isMember,
       message: "Join community to activate points",
     },
+    {
+      condition: !isAllowed,
+      message: "Address not in allowlist",
+    },
   ];
 
   const disableActiveBtn = disableActiveBtnCondition.some(
@@ -107,7 +117,7 @@ export function ActivatePoints({
       onClick={handleChange}
       btnStyle={isMemberActivated ? "outline" : "filled"}
       color={isMemberActivated ? "danger" : "primary"}
-      disabled={missmatchUrl || disableActiveBtn}
+      disabled={missmatchUrl || disableActiveBtn || !isAllowed}
       tooltip={String(tooltipMessage)}
     >
       {isMemberActivated ? "Deactivate governance" : "Activate governance"}

@@ -52,7 +52,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             enableCheck={!memberActivatedStrategy}
           >
             <ActivatePoints
-              strategyAddress={strategy.id as Address}
+              strategy={strategy}
               communityAddress={communityAddress}
               isMemberActivated={memberActivatedStrategy}
               isMember={isMemberCommunity}

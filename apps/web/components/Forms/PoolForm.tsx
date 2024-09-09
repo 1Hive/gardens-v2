@@ -143,6 +143,7 @@ const sybilResistancePreview = (
           btnStyle="outline"
           className="!p-1"
           onClick={() => exportAddresses(addresses)}
+          showToolTip
           tooltip="Export"
         >
           <ArrowDownTrayIcon className="w-4 h-4" />
