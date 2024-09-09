@@ -18157,13 +18157,10 @@ const schemaAST = {
           },
           "arguments": [],
           "type": {
-            "kind": "NonNullType",
-            "type": {
-              "kind": "NamedType",
-              "name": {
-                "kind": "Name",
-                "value": "ProposalDisputeMetadata"
-              }
+            "kind": "NamedType",
+            "name": {
+              "kind": "Name",
+              "value": "ProposalDisputeMetadata"
             }
           },
           "directives": []

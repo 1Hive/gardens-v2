@@ -1271,7 +1271,7 @@ type ProposalDispute {
   status: BigInt!
   challenger: String!
   context: String!
-  metadata: ProposalDisputeMetadata!
+  metadata: ProposalDisputeMetadata
   rulingOutcome: BigInt
   ruledAt: BigInt
 }

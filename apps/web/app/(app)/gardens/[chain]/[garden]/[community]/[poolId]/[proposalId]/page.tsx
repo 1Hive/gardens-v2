@@ -276,25 +276,6 @@ export default function Page({
             />
           </>
         }
-        <div className="absolute top-8 right-10">
-          {status === "active" && !isSignalingType && (
-            <Button
-              onClick={() =>
-                writeDistribute?.({
-                  args: [
-                    BigInt(poolId),
-                    [proposalData?.strategy.id as Address],
-                    encodedDataProposalId(proposalIdNumber),
-                  ],
-                })
-              }
-              disabled={currentConvictionPct < thresholdPct}
-              tooltip="Proposal not executable"
-            >
-              Execute
-            </Button>
-          )}
-        </div>
       </section>
     </div>
   );

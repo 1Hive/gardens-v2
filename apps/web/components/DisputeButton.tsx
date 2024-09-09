@@ -439,7 +439,7 @@ const DisputeMessage = ({
     ProposalDispute,
     "id" | "challenger" | "context" | "createdAt"
   > & {
-    metadata: Pick<ProposalDisputeMetadata, "reason"> | null;
+    metadata?: Maybe<Pick<ProposalDisputeMetadata, "reason">>;
   };
   title?: string;
 }) => {
