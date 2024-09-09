@@ -133,7 +133,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   newProposal.requestedAmount = proposal.getRequestedAmount();
   newProposal.maxCVStaked = maxConviction;
-  newProposal.arbitrableConfig = `${event.address.toHex()}-${proposal.getArbitrableConfigId().toString()}`;
+  newProposal.arbitrableConfig = `${event.address.toHex()}-${proposal.getArbitrableConfigVersion().toString()}`;
 
   newProposal.proposalStatus = BigInt.fromI32(
     cvc.getProposal(event.params.proposalId).getProposalStatus()
