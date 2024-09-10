@@ -11,7 +11,7 @@ import {
   Battery50Icon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { newLogo, commF, HomeBanner } from "@/assets";
+import { newLogo, commF, Banner } from "@/assets";
 import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 
@@ -355,25 +355,23 @@ const SignUp = () => {
             Cultivate change with Gardens
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-center text-lg leading-8">
-            Join our pre-beta release and start growing your community.
+            Join our pre-beta release September 2024 and start growing your
+            community.
           </p>
           <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-4 rounded-xl">
-            {/* TODO: link to gardnes form */}
             <a
-              href="/gardens"
+              href="https://calendly.com/gardens-demo"
               className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
               target="_blank"
               rel="noreferrer"
             >
-              <Button>Launch App</Button>
+              <Button>Sign up</Button>
             </a>
             <Image
-              src={HomeBanner}
+              src={Banner}
               alt="gardens"
               className="absolute inset-0 w-full h-full object-cover -z-10"
               loading="lazy"
-              // width={1200}
-              // height={100}
             />
           </div>
         </div>
