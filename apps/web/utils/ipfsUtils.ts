@@ -67,15 +67,15 @@ export const fetchIpfs = async <TResult>(
   ipfsHash: string,
   isStringResult?: boolean,
 ) => {
-  const ipfsEndpoint = `/api/ipfs/${ipfsHash}`;
-  const res = await fetch(ipfsEndpoint, {
+  const ipfsEndpoint = `/api/ipfs/${ipfsHash}${isStringResult ? "?isText=true" : ""}`;
+  const ipfsResult = await fetch(ipfsEndpoint, {
     method: "GET",
     headers: {
       "content-type": "application/json",
     },
   });
 
-  if (!res.ok) {
+  if (!ipfsResult.ok) {
     console.error("Error fetching IPFS data", { ipfsEndpoint });
     return null;
   }

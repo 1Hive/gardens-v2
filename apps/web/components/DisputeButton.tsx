@@ -115,31 +115,23 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     arbitrationCost && config ?
       arbitrationCost + BigInt(config.challengerCollateralAmount)
     : undefined;
-
   const lastDispute =
     disputesResult?.proposalDisputes[
       disputesResult?.proposalDisputes.length - 1
     ];
-
   const isCooldown =
     !!lastDispute &&
     !!disputeCooldown &&
     +lastDispute.ruledAt + Number(disputeCooldown) > Date.now() / 1000;
-
   const proposalStatus = ProposalStatus[proposalData.proposalStatus];
-
   const isDisputed =
     proposalData && lastDispute && proposalStatus === "disputed";
-
   const isTimeout =
     lastDispute &&
     config &&
     +lastDispute.createdAt + +config.defaultRulingTimeout < Date.now() / 1000;
-
   const disputes = disputesResult?.proposalDisputes ?? [];
-
   const isProposalEnded = proposalStatus !== "active" && !isDisputed;
-
   const isTribunalSafe = config.tribunalSafe === address?.toLowerCase();
 
   const { data: isTribunalMember } = useContractRead({
@@ -305,6 +297,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                 btnStyle="outline"
                 onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                 isLoading={rulingLoading === ABSTAINED_RULING}
+                disabled={disableTribunalSafeButtons}
               >
                 <InfoWrapper
                   classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}

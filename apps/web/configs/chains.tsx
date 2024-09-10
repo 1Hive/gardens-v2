@@ -54,7 +54,7 @@ type ChainData = {
   isTestnet: boolean;
 };
 
-const SUBGRAPH_TESTNET_VERSION = "0.28";
+const SUBGRAPH_TESTNET_VERSION = "0.25";
 const SUBGRAPH_PRODNET_VERSION = "1.3";
 
 export const chainConfigMap: {
@@ -223,6 +223,6 @@ export function getChain(chainId: ChainId): Chain | undefined {
 
 export const ChainIcon: FC<ChainIconProps> = ({ chain, ...props }) => {
   const numericChainId = Number(chain);
-  const IconComponent = chainConfigMap[numericChainId].icon;
+  const IconComponent = chainConfigMap[numericChainId]?.icon;
   return IconComponent ? <IconComponent {...props} /> : null;
 };
