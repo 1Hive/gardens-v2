@@ -236,7 +236,6 @@ deploy-multi-arbitrum:
 	--broadcast \
 	--legacy \
 	--via-ir \
-	--priority-gas-price 1 \
 	-vvv
 
 verify-arbitrum: 
