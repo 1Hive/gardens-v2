@@ -9,7 +9,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
 import {IArbitrable} from "../interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
-// import {console} from "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "../ISybilScorer.sol";
 
@@ -284,7 +284,14 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
 
-        _setPoolParams(ip.arbitrableConfig, ip.cvParams);
+        // address[] memory emptyArray;
+        console.log("ALLOWLIST", ip.initialAllowlist[0]);
+        console.log("ALLO ADDRESS", address(allo));
+        console.log("CALLER", msg.sender);
+        console.log("cv address", address(this));
+
+
+        _setPoolParams(ip.arbitrableConfig, ip.cvParams, new address[](0), new address[](0));
 
         emit InitializedCV(_poolId, ip);
     }
@@ -345,13 +352,15 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function _canExecuteAction(address _user) internal view returns (bool) {
+        bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+        
         if (address(sybilScorer) == address(0)) {
-            // if (registry.registryCommunity.hasRole(address(0))) {
+            if (registryCommunity.hasRole(allowlistRole,address(0))) {
             return true;
-            // }
-            // else {
-            // return isWhitelisted(_user);
-            // }
+            }
+            else {
+            return registryCommunity.hasRole(allowlistRole, _user);
+            }
         }
         return sybilScorer.canExecuteAction(_user, address(this));
     }
@@ -1052,8 +1061,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return totalPointsActivated;
     }
 
-    //TODO
-    function _addToAllowlist(address[] memory members) internal {
+    function addToAllowList(address[] memory members) public {
+        onlyCouncilSafe();
+        _addToAllowList(members);
+    }
+    function _addToAllowList(address[] memory members) internal {
         bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
 
         if (registryCommunity.hasRole(allowlistRole, address(0))) {
@@ -1068,13 +1080,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         emit AllowlistMembersAdded(poolId, members);
     }
 
-    function addToAllowlist(address[] memory members) public {
+    function removeFromAllowList(address[] memory members) external {
         onlyCouncilSafe();
-        _addToAllowlist(members);
+        _removeFromAllowList(members);
     }
-
-    function removeFromAllowList(address[] memory members) public {
-        onlyCouncilSafe();
+    function _removeFromAllowList(address[] memory members) internal {
         for (uint256 i = 0; i < members.length; i++) {
             if (registryCommunity.hasRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i])) {
                 registryCommunity.revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
@@ -1120,7 +1130,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function _setPoolParams(
         StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
-        StrategyStruct.CVParams memory _cvParams
+        StrategyStruct.CVParams memory _cvParams,
+        address [] memory  membersToAdd,
+        address [] memory membersToRemove
+
     ) internal {
         if (
             _arbitrableConfig.tribunalSafe != address(0) && address(_arbitrableConfig.arbitrator) != address(0)
@@ -1159,8 +1172,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 _arbitrableConfig.defaultRulingTimeout
             );
         }
-
         cvParams = _cvParams;
+        _addToAllowList(membersToAdd);
+        _removeFromAllowList(membersToRemove);
         emit CVParamsUpdated(_cvParams);
     }
 
@@ -1198,10 +1212,19 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function setPoolParams(
         StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
-        StrategyStruct.CVParams memory _cvParams
+        StrategyStruct.CVParams memory _cvParams,
+        address [] memory  membersToAdd,
+        address [] memory membersToRemove
     ) external {
         onlyCouncilSafe();
-        _setPoolParams(_arbitrableConfig, _cvParams);
+        _setPoolParams(_arbitrableConfig, _cvParams, membersToAdd, membersToRemove);
+    }
+    
+    function setPoolParams(
+        StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
+        StrategyStruct.CVParams memory _cvParams) external {
+        onlyCouncilSafe();
+        _setPoolParams(_arbitrableConfig, _cvParams, new address[](0), new address[](0));
     }
 
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)

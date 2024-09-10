@@ -60,6 +60,8 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
         }
         params.pointConfig = pointConfig;
         params.arbitrableConfig = arbitrableConfig;
+        params.initialAllowlist = new address[](1);
+        params.initialAllowlist[0] = address(0);
     }
 
     function createPool(

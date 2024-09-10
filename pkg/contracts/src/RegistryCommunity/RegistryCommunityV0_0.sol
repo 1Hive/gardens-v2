@@ -226,7 +226,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     function setStrategyTemplate(address template) external onlyOwner {
         strategyTemplate = template;
     }
-
+    
     function setCollateralVaultTemplate(address template) external onlyOwner {
         collateralVaultTemplate = template;
     }
@@ -314,6 +314,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
 
         if (address(_params.sybilScorer) == address(0)) {
+            if(_params.initialAllowlist.length > 1000){
+                revert("Too many initial allowlist members, max is 1000");
+            }
             bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
             for (uint256 i = 0; i < _params.initialAllowlist.length; i++) {
                 _grantRole(allowlistRole, _params.initialAllowlist[i]);
