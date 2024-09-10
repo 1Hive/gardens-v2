@@ -82,9 +82,9 @@ export const fetchIpfs = async <TResult>(
 
   let result;
   if (isStringResult) {
-    result = await res.text();
+    result = await ipfsResult.text();
   } else {
-    result = await res.json();
+    result = await ipfsResult.json();
   }
 
   return result as TResult;
