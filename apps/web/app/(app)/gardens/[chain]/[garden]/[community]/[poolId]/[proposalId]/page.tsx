@@ -26,7 +26,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI } from "@/src/generated";
+import { alloABI, cvStrategyABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -51,7 +51,7 @@ export default function Page({
     garden: string;
   };
 }) {
-  const { isDisconnected } = useAccount();
+  const { isDisconnected, address } = useAccount();
   const [strategyId, proposalNumber] = proposalId.split("-");
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
@@ -85,6 +85,8 @@ export default function Page({
     enabled: !proposalData?.metadata,
   });
   const metadata = proposalData?.metadata ?? ipfsResult;
+  const isProposerConnected =
+    proposalData?.submitter === address?.toLowerCase();
 
   const {
     currentConvictionPct,
@@ -102,6 +104,7 @@ export default function Page({
   const beneficiary = proposalData?.beneficiary as Address | undefined;
   const submitter = proposalData?.submitter as Address | undefined;
   const isSignalingType = PoolTypes[proposalType] === "signaling";
+  const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
 
   //encode proposal id to pass as argument to distribute function
   const encodedDataProposalId = (proposalId_: bigint) => {
@@ -129,8 +132,26 @@ export default function Page({
         topic: "proposal",
         type: "update",
         function: "distribute",
-        id: proposalId,
-        containerId: data?.cvproposal?.strategy?.id,
+        id: proposalNumber,
+        containerId: strategyId,
+        chainId,
+      });
+    },
+  });
+
+  const { write: writeCancel } = useContractWriteWithConfirmations({
+    address: strategyId as Address,
+    abi: abiWithErrors(cvStrategyABI),
+    functionName: "cancelProposal",
+    contractName: "CV Strategy",
+    fallbackErrorMessage: "Error cancelling proposal. Please try again.",
+    onConfirmations: () => {
+      publish({
+        topic: "proposal",
+        type: "update",
+        function: "cancelProposal",
+        id: proposalNumber,
+        containerId: strategyId,
         chainId,
       });
     },
@@ -213,9 +234,18 @@ export default function Page({
                 </Statistic>
               </div>
               <div className="flex items-end">
-                <DisputeButton
-                  proposalData={{ ...proposalData, ...metadata }}
-                />
+                {isProposerConnected && proposalStatus === "active" ?
+                  <Button
+                    btnStyle="outline"
+                    color="danger"
+                    onClick={() => writeCancel({ args: [proposalIdNumber] })}
+                  >
+                    Cancel
+                  </Button>
+                : <DisputeButton
+                    proposalData={{ ...proposalData, ...metadata }}
+                  />
+                }
               </div>
             </div>
           </div>
@@ -267,25 +297,6 @@ export default function Page({
             />
           </>
         }
-        <div className="absolute top-8 right-10">
-          {status === "active" && !isSignalingType && (
-            <Button
-              onClick={() =>
-                writeDistribute?.({
-                  args: [
-                    BigInt(poolId),
-                    [proposalData?.strategy.id as Address],
-                    encodedDataProposalId(proposalIdNumber),
-                  ],
-                })
-              }
-              disabled={currentConvictionPct < thresholdPct}
-              tooltip="Proposal not executable"
-            >
-              Execute
-            </Button>
-          )}
-        </div>
       </section>
     </div>
   );

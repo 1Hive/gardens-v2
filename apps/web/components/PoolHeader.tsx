@@ -12,8 +12,12 @@ import { StopIcon } from "@heroicons/react/24/solid";
 import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
 import { Address } from "viem";
-import { useAccount } from "wagmi";
-import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
+import { useAccount, useContractRead } from "wagmi";
+import {
+  ArbitrableConfig,
+  getPoolDataQuery,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
@@ -25,12 +29,13 @@ import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
-import { registryCommunityABI } from "@/src/generated";
+import { registryCommunityABI, safeABI } from "@/src/generated";
 import { PointSystems, PoolTypes, ProposalStatus } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
+  convertSecondsToReadableTime,
   CV_SCALE_PRECISION,
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
@@ -41,6 +46,13 @@ type Props = {
   poolId: number;
   isEnabled: boolean;
   strategy: getPoolDataQuery["cvstrategies"][0];
+  arbitrableConfig: Pick<
+    ArbitrableConfig,
+    | "defaultRuling"
+    | "tribunalSafe"
+    | "submitterCollateralAmount"
+    | "challengerCollateralAmount"
+  >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
   poolToken: FetchTokenResult;
   pointSystem: number;
@@ -49,7 +61,7 @@ type Props = {
   spendingLimitPct: number;
 };
 
-function calculateConvictionGrowthInDays(
+function calculateConvictionGrowthInSeconds(
   decay: number,
   blockTime: number,
 ): number {
@@ -57,9 +69,7 @@ function calculateConvictionGrowthInDays(
 
   const halfLifeInSeconds = blockTime / Math.log2(1 / scaledDecay);
 
-  const convictionGrowth = halfLifeInSeconds / (24 * 60 * 60);
-
-  return convictionGrowth;
+  return halfLifeInSeconds;
 }
 
 function calculateMinimumConviction(weight: number, spendingLimit: number) {
@@ -80,6 +90,7 @@ export default function PoolHeader({
   poolId,
   isEnabled,
   strategy,
+  arbitrableConfig,
   token,
   poolToken,
   pointSystem,
@@ -87,12 +98,12 @@ export default function PoolHeader({
   proposalType,
   spendingLimitPct,
 }: Props) {
-  const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
   const { publish } = usePubSubContext();
 
   const blockTime = chainConfigMap[chainId].blockTime;
+
   const isCouncilSafe =
     address?.toLowerCase() ===
     strategy.registryCommunity.councilSafe?.toLowerCase();
@@ -102,35 +113,37 @@ export default function PoolHeader({
     spendingLimitPct * MAX_RATIO_CONSTANT,
   );
 
-  const convictionGrowth = calculateConvictionGrowthInDays(
+  const convictionGrowth = calculateConvictionGrowthInSeconds(
     strategy.config.decay,
     blockTime,
   );
 
   const minThresholdPoints = formatTokenAmount(
     strategy.config.minThresholdPoints,
-    token.decimals,
+    +token.decimals,
   );
   const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
   const communityAddr = strategy.registryCommunity.id as Address;
-  const defaultResolution = strategy.config.defaultRuling;
-  const proposalCollateral = strategy.config.submitterCollateralAmount;
-  const disputeCollateral = strategy.config.challengerCollateralAmount;
-  const tribunalAddress = strategy.config.tribunalSafe;
+  const defaultResolution = arbitrableConfig.defaultRuling;
+  const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
+  const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
+  const tribunalAddress = arbitrableConfig.tribunalSafe;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
   );
 
+  const { value, unit } = convertSecondsToReadableTime(convictionGrowth);
+
   const poolConfig = [
     {
       label: "Min conviction",
-      value: `${minimumConviction.toFixed(2)} %`,
+      value: `${minimumConviction.toPrecision(2)} %`,
       info: "% of Pool's voting weight needed to pass the smallest funding proposal possible. Higher funding requests demand greater conviction to pass.",
     },
     {
       label: "Conviction growth",
-      value: `${convictionGrowth.toFixed(2)} days`,
+      value: `${value} ${unit}${value !== 1 ? "s" : ""}`,
       info: "It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life",
     },
     {
@@ -155,6 +168,19 @@ export default function PoolHeader({
           ),
       )
     : poolConfig;
+
+  //hooks
+  const { data: isCouncilMember } = useContractRead({
+    address: strategy.registryCommunity.councilSafe as Address,
+    abi: abiWithErrors2(safeABI),
+    functionName: "isOwner",
+    chainId: Number(chainId),
+    enabled: !!address,
+    args: [address as Address],
+    onError: () => {
+      console.error("Error reading isOwner from Coucil Safe");
+    },
+  });
 
   const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
@@ -191,6 +217,22 @@ export default function PoolHeader({
     },
   });
 
+  //Disable Council Safe Buttons: Edit, Disable and Approve
+  const disableCouncilSafeBtnCondition: ConditionObject[] = [
+    {
+      condition: !isCouncilSafe,
+      message: "Connect with council safe address",
+    },
+  ];
+
+  const disableCouncilSafeButtons = disableCouncilSafeBtnCondition.some(
+    (cond) => cond.condition,
+  );
+
+  const { tooltipMessage, missmatchUrl, isConnected } = useDisableButtons(
+    disableCouncilSafeBtnCondition,
+  );
+
   return (
     <section className="section-layout flex flex-col gap-0 overflow-hidden">
       <header className="mb-2 flex flex-col">
@@ -198,13 +240,15 @@ export default function PoolHeader({
           <h2>
             {ipfsResult?.title} #{poolId}
           </h2>
-          {isCouncilSafe && (
+          {(isCouncilMember ?? isCouncilSafe) && (
             // true
             <div className="flex gap-2">
               <Button
                 btnStyle="outline"
                 icon={<Cog6ToothIcon height={24} width={24} />}
-                disabled={!isConnected || missmatchUrl}
+                disabled={
+                  !isConnected || missmatchUrl || disableCouncilSafeButtons
+                }
                 tooltip={tooltipMessage}
                 onClick={() => setIsOpenModal(true)}
               >
@@ -213,7 +257,9 @@ export default function PoolHeader({
               {isEnabled ?
                 <Button
                   icon={<StopIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl}
+                  disabled={
+                    !isConnected || missmatchUrl || disableCouncilSafeButtons
+                  }
                   tooltip={tooltipMessage}
                   onClick={() => removeStrategyByPoolId()}
                   btnStyle="outline"
@@ -223,7 +269,9 @@ export default function PoolHeader({
                 </Button>
               : <Button
                   icon={<CheckIcon height={24} width={24} />}
-                  disabled={!isConnected || missmatchUrl}
+                  disabled={
+                    !isConnected || missmatchUrl || disableCouncilSafeButtons
+                  }
                   tooltip={tooltipMessage}
                   onClick={() => addStrategyByPoolId()}
                 >

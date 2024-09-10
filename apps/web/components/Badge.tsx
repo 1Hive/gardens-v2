@@ -39,7 +39,6 @@ export function Badge({
   label,
   classNames,
   icon,
-  isCapitalize = false,
 }: BadgeProps): JSX.Element {
   const isStatusBadge = status !== undefined;
   const ispoolTypeDefined = type !== undefined;
@@ -73,13 +72,9 @@ export function Badge({
       className={`${BASE_STYLES} ${styles} ${classNames} flex items-center gap-2`}
     >
       {iconIncluded && (
-        <div
-          className={`h-6 w-6 text-inherit ${isCapitalize ? "first-letter:uppercase" : ""}`}
-        >
-          {iconIncluded}
-        </div>
+        <div className="h-6 w-6 text-inherit">{iconIncluded}</div>
       )}
-      <h6>{content}</h6>
+      <h6 className="first-letter:uppercase">{content}</h6>
     </div>
   );
 }

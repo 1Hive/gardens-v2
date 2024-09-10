@@ -11,9 +11,9 @@ import {
   useEnsName,
 } from "wagmi";
 import {
+  ArbitrableConfig,
   CVProposal,
   CVStrategy,
-  CVStrategyConfig,
   getProposalDisputesDocument,
   getProposalDisputesQuery,
   Maybe,
@@ -30,14 +30,17 @@ import { WalletBalance } from "./WalletBalance";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1, useIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import {
   cvStrategyABI,
   iArbitratorABI,
+  safeABI,
   safeArbitratorABI,
 } from "@/src/generated";
 import { DisputeStatus, ProposalStatus } from "@/types";
+import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 
@@ -47,16 +50,16 @@ type Props = {
       CVProposal,
       "id" | "proposalNumber" | "blockLast" | "proposalStatus" | "createdAt"
     > & {
-      strategy: Pick<CVStrategy, "id"> & {
-        config: Pick<
-          CVStrategyConfig,
-          | "arbitrator"
-          | "tribunalSafe"
-          | "challengerCollateralAmount"
-          | "defaultRuling"
-          | "defaultRulingTimeout"
-        >;
-      };
+      strategy: Pick<CVStrategy, "id">;
+      arbitrableConfig: Pick<
+        ArbitrableConfig,
+        | "defaultRulingTimeout"
+        | "defaultRuling"
+        | "arbitrator"
+        | "challengerCollateralAmount"
+        | "submitterCollateralAmount"
+        | "tribunalSafe"
+      >;
     }
   > &
     MetadataV1;
@@ -76,7 +79,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const chainId = useChainIdFromPath();
   const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
 
-  const config = proposalData.strategy.config;
+  const config = proposalData.arbitrableConfig;
 
   const { data: disputesResult } = useSubgraphQuery<getProposalDisputesQuery>({
     query: getProposalDisputesDocument,
@@ -89,6 +92,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
       containerId: proposalData?.strategy.id,
       type: "update",
     },
+    enabled: !!proposalData,
   });
 
   const { data: arbitrationCost } = useContractRead({
@@ -122,10 +126,10 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     !!disputeCooldown &&
     +lastDispute.ruledAt + Number(disputeCooldown) > Date.now() / 1000;
 
-  const proposalStatus = ProposalStatus[proposalData.proposalStatus];
-
   const isDisputed =
-    !!proposalData && !!lastDispute && proposalStatus === "disputed";
+    proposalData &&
+    lastDispute &&
+    ProposalStatus[proposalData.proposalStatus] === "disputed";
 
   const isTimeout =
     lastDispute &&
@@ -134,7 +138,19 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const disputes = disputesResult?.proposalDisputes ?? [];
 
-  const isCouncilSafe = config.tribunalSafe === address?.toLowerCase();
+  const isTribunalSafe = config.tribunalSafe === address?.toLowerCase();
+
+  const { data: isTribunalMember } = useContractRead({
+    address: config.tribunalSafe as Address,
+    abi: abiWithErrors2(safeABI),
+    functionName: "isOwner",
+    chainId: Number(chainId),
+    enabled: !!address,
+    args: [address as Address],
+    onError: () => {
+      console.error("Error reading isOwner from Tribunal Safe");
+    },
+  });
 
   const { writeAsync: writeDisputeProposalAsync } =
     useContractWriteWithConfirmations({
@@ -231,8 +247,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   };
 
   const content = (
-    <div className="flex flex-col gap-10 lg:min-w-[800px]">
-      {isDisputed || proposalStatus === "rejected" ?
+    <div className="flex md:flex-col gap-10">
+      {isDisputed ?
         <div className="p-16 rounded-lg">
           {disputes.map((dispute) => (
             <Fragment key={dispute.id}>
@@ -259,13 +275,27 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     </div>
   );
 
+  //Disable only tribunal safe  buttons: Reject and Approve
+  const disableTribunalSafeBtnCondition: ConditionObject[] = [
+    {
+      condition: !isTribunalSafe,
+      message: "Connect with tribunal safe address",
+    },
+  ];
+
+  const disableTribunalSafeButtons = disableTribunalSafeBtnCondition.some(
+    (cond) => cond.condition,
+  );
+
+  const { tooltipMessage } = useDisableButtons(disableTribunalSafeBtnCondition);
+
   const buttons = (
     <div className="modal-action w-full">
       {isDisputed ?
         <div className="w-full flex justify-end gap-4">
           {(
             DisputeStatus[lastDispute.status] === "waiting" &&
-            (isCouncilSafe || isTimeout)
+            ((isTribunalMember ?? isTribunalSafe) || isTimeout)
           ) ?
             <>
               <Button
@@ -277,7 +307,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                 <InfoWrapper
                   classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
                   tooltip={
-                    "Abstain to let other tribunal-safe members decide the outcome."
+                    "Abstain to follow the pool's default resolution (approve/reject) and return collaterals to both parties."
                   }
                 >
                   Abstain
@@ -290,11 +320,13 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     btnStyle="outline"
                     onClick={() => handleSubmitRuling(APPROVED_RULING)}
                     isLoading={rulingLoading === APPROVED_RULING}
+                    disabled={disableTribunalSafeButtons}
+                    tooltip={tooltipMessage}
                   >
                     <InfoWrapper
                       classNames="[&>svg]:text-primary-content"
                       tooltip={
-                        "Approve if the dispute is invalid and the proposal should be kept active."
+                        "Approve if the dispute is invalid and the proposal should remain active."
                       }
                     >
                       Approve
@@ -305,11 +337,13 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     btnStyle="outline"
                     onClick={() => handleSubmitRuling(REJECTED_RULING)}
                     isLoading={rulingLoading === REJECTED_RULING}
+                    disabled={disableTribunalSafeButtons}
+                    tooltip={tooltipMessage}
                   >
                     <InfoWrapper
-                      classNames="[&>svg]:text-error-content [&:before]:mr-10 tooltip-left"
+                      classNames="[&>svg]:text-danger-button [&:before]:mr-10 tooltip-left"
                       tooltip={
-                        "Reject if, regarding the community covenant, the proposal is violating the rules."
+                        "Reject if the proposal violates the rules outlined in the community covenant."
                       }
                     >
                       Reject
@@ -350,7 +384,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
               tooltip={
                 isEnoughBalance ?
                   isCooldown ?
-                    "Need to wait for 2 hours before disputin again"
+                    "Please wait 2 hours before submitting another dispute"
                   : ""
                 : "Insufficient balance"
               }
@@ -368,33 +402,28 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   return (
     <>
-      {proposalData &&
-        disputesResult &&
-        (proposalStatus === "active" ||
-          proposalStatus === "disputed" ||
-          proposalStatus === "rejected") && (
-          <>
-            <Button
-              color="danger"
-              btnStyle="outline"
-              onClick={() => setIsModalOpened(true)}
-              disabled={isDisconnected}
-              tooltip="Connect wallet"
-            >
-              {isDisputed || proposalStatus === "rejected" ?
-                "Open dispute"
-              : "Dispute"}
-            </Button>
-            <Modal
-              title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
-              onClose={() => setIsModalOpened(false)}
-              isOpen={isModalOpened}
-            >
-              {content}
-              {proposalStatus !== "rejected" && buttons}
-            </Modal>
-          </>
-        )}
+      {(ProposalStatus[proposalData?.proposalStatus] === "active" ||
+        ProposalStatus[proposalData?.proposalStatus] === "disputed") && (
+        <>
+          <Button
+            color="danger"
+            btnStyle="outline"
+            onClick={() => setIsModalOpened(true)}
+            disabled={isDisconnected}
+            tooltip="Connect wallet"
+          >
+            {isDisputed ? "Open dispute" : "Dispute"}
+          </Button>
+          <Modal
+            title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
+            onClose={() => setIsModalOpened(false)}
+            isOpen={isModalOpened}
+          >
+            {content}
+            {buttons}
+          </Modal>
+        </>
+      )}
     </>
   );
 };
@@ -410,7 +439,7 @@ const DisputeMessage = ({
     ProposalDispute,
     "id" | "challenger" | "context" | "createdAt"
   > & {
-    metadata?: Pick<ProposalDisputeMetadata, "reason"> | null;
+    metadata?: Maybe<Pick<ProposalDisputeMetadata, "reason">>;
   };
   title?: string;
 }) => {

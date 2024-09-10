@@ -20,12 +20,12 @@ import {TestStrategy} from "allo-v2-test/utils/TestStrategy.sol";
 import {MockStrategy} from "allo-v2-test/utils/MockStrategy.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
-import {RegistryFactoryV0_1} from "../src/RegistryFactoryV0_1.sol";
-import {CVStrategyV0_0, StrategyStruct, IArbitrator} from "../src/CVStrategyV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {RegistryFactoryV0_1} from "../src/RegistryFactory/RegistryFactoryV0_1.sol";
+import {CVStrategyV0_0, StrategyStruct, IArbitrator} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
@@ -154,7 +154,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         Upgrades.upgradeProxy(
             address(_registryFactory()),
             "RegistryFactoryV0_1.sol",
-            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, gardenOwner)
+            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
         );
         assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
         vm.stopPrank();

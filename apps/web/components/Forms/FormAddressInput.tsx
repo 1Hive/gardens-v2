@@ -106,8 +106,15 @@ export const FormAddressInput = ({
         <label htmlFor={registerKey} className="label cursor-pointer">
           <span className="label-text">
             {tooltip ?
-              <InfoWrapper tooltip={tooltip}>{label}</InfoWrapper>
-            : label}
+              <InfoWrapper tooltip={tooltip}>
+                {label}
+                {required && <span className="ml-1">*</span>}
+              </InfoWrapper>
+            : <>
+                {label}
+                {required && <span className="ml-1">*</span>}
+              </>
+            }
           </span>
         </label>
       )}

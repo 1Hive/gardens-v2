@@ -246,7 +246,7 @@ export const ConvictionBarChart = ({
     grid: {
       show: false,
       left: "0%",
-      right: "2%",
+      right: "3%",
       top: compact ? "0%" : "25%",
       bottom: compact ? "0%" : "25%",
       containLabel: false,

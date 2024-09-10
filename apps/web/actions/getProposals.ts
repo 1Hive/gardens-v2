@@ -1,4 +1,6 @@
+import { ProposalMetadata } from "#/subgraph/.graphclient";
 import { LightCVStrategy } from "@/types";
+import { fetchIpfs } from "@/utils/ipfsUtils";
 
 export async function getProposals(strategy: LightCVStrategy) {
   try {
@@ -18,23 +20,20 @@ export async function getProposals(strategy: LightCVStrategy) {
       );
 
       // Process each chunk
-      let results: Array<
-        NonNullable<(typeof strategy)["proposals"][number]["metadata"]>
-      > = [];
+      let results: Array<Pick<ProposalMetadata, "title" | "description">> = [];
       for (const chunk of chunks) {
-        const batchResults = await Promise.all(
-          chunk.map((p) => {
-            if (p.metadata) {
-              return p.metadata;
-            } else {
-              return fetch(`https://ipfs.io/ipfs/${p.metadataHash}`, {
-                method: "GET",
-                headers: { "content-type": "application/json" },
-              }).then((res) => res.json());
+        chunk.forEach(async (p) => {
+          if (p.metadata) {
+            results.push(p.metadata);
+          } else {
+            const ipfsRes = await fetchIpfs<(typeof results)[number] | null>(
+              p.metadataHash,
+            );
+            if (ipfsRes) {
+              results.push(ipfsRes);
             }
-          }),
-        );
-        results.push(...batchResults);
+          }
+        });
         await sleep(delay);
       }
 

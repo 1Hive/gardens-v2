@@ -4,10 +4,10 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
-import {RegistryFactoryV0_1} from "../src/RegistryFactoryV0_1.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunityV0_0.sol";
-import {CVStrategyV0_0} from "../src/CVStrategyV0_0.sol";
+import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
+import {RegistryFactoryV0_1} from "../src/RegistryFactory/RegistryFactoryV0_1.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
@@ -45,7 +45,7 @@ contract ProxyOwnerTest is Test {
         Upgrades.upgradeProxy(
             address(proxyRegistryFactory),
             "RegistryFactoryV0_1.sol",
-            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, deployerWallet)
+            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
         );
     }
 
@@ -67,7 +67,7 @@ contract ProxyOwnerTest is Test {
         Upgrades.upgradeProxy(
             address(proxyRegistryFactory),
             "RegistryFactoryV0_1.sol",
-            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, deployerWallet)
+            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
         );
     }
 
@@ -99,7 +99,7 @@ contract ProxyOwnerTest is Test {
     //     Upgrades.upgradeProxy(
     //         address(proxyRegistryFactory),
     //         "RegistryFactoryV0_1.sol",
-    //         abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, deployerWallet)
+    //         abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
     //     );
     // }
 
@@ -123,7 +123,7 @@ contract ProxyOwnerTest is Test {
     //     Upgrades.upgradeProxy(
     //         address(proxyRegistryFactory),
     //         "RegistryFactoryV0_1.sol",
-    //         abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, deployerWallet)
+    //         abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
     //     );
     // }
 }

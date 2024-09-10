@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   CurrencyDollarIcon,
   PlusIcon,
@@ -38,6 +38,7 @@ import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
+import { fetchIpfs } from "@/utils/ipfsUtils";
 import {
   dn,
   parseToken,
@@ -53,6 +54,7 @@ export default function Page({
   const searchParams = useCollectQueryParams();
   const { address: accountAddress } = useAccount();
   const [covenant, setCovenant] = useState<string | undefined>();
+  const covenantSectionRef = useRef<HTMLDivElement>(null);
   const { data: tokenGarden } = useToken({
     address: tokenAddr as Address,
     chainId: +chain,
@@ -105,11 +107,10 @@ export default function Page({
     const fetchCovenant = async () => {
       if (registryCommunity?.covenantIpfsHash) {
         try {
-          const response = await fetch(
-            "https://ipfs.io/ipfs/" + registryCommunity.covenantIpfsHash,
+          const json = await fetchIpfs<{ covenant: string }>(
+            registryCommunity.covenantIpfsHash,
           );
-          const json = await response.json();
-          if (typeof json.covenant === "string") {
+          if (json && typeof json.covenant === "string") {
             setCovenant(json.covenant);
           }
         } catch (err) {
@@ -153,6 +154,20 @@ export default function Page({
       refetch();
     }
   }, [searchParams, poolsInReview]);
+
+  useEffect(() => {
+    if (
+      searchParams[QUERY_PARAMS.communityPage.covenant] !== undefined &&
+      covenantSectionRef.current
+    ) {
+      const elementTop =
+        covenantSectionRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementTop - 130,
+        behavior: "smooth",
+      });
+    }
+  }, [covenantSectionRef.current, searchParams]);
 
   if (!tokenGarden || !registryCommunity) {
     return (
@@ -336,7 +351,7 @@ export default function Page({
           </div>
         </div>
       </section>
-      <section className="section-layout">
+      <section ref={covenantSectionRef} className="section-layout">
         <h2 className="mb-4">Covenant</h2>
         {registryCommunity?.covenantIpfsHash ?
           covenant ?

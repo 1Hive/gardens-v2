@@ -241,39 +241,39 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
 
     /// @notice Checks if the 'msg.sender' is the Allo contract.
     /// @dev Reverts if the 'msg.sender' is not the Allo contract.
-    function _checkOnlyAllo() internal view {
+    function _checkOnlyAllo() internal virtual view {
         if (msg.sender != address(allo)) revert UNAUTHORIZED();
     }
 
     /// @notice Checks if the '_sender' is a pool manager.
     /// @dev Reverts if the '_sender' is not a pool manager.
     /// @param _sender The address to check if they are a pool manager
-    function _checkOnlyPoolManager(address _sender) internal view {
+    function _checkOnlyPoolManager(address _sender) internal virtual view {
         if (!allo.isPoolManager(poolId, _sender)) revert UNAUTHORIZED();
     }
 
     /// @notice Checks if the pool is active.
     /// @dev Reverts if the pool is not active.
-    function _checkOnlyActivePool() internal view {
+    function _checkOnlyActivePool() internal virtual view {
         if (!poolActive) revert POOL_INACTIVE();
     }
 
     /// @notice Checks if the pool is inactive.
     /// @dev Reverts if the pool is active.
-    function _checkInactivePool() internal view {
+    function _checkInactivePool() internal virtual view {
         if (poolActive) revert POOL_ACTIVE();
     }
 
     /// @notice Checks if the pool is initialized.
     /// @dev Reverts if the pool is not initialized.
-    function _checkOnlyInitialized() internal view {
+    function _checkOnlyInitialized() internal virtual view {
         if (poolId == 0) revert NOT_INITIALIZED();
     }
 
     /// @notice Set the pool to active or inactive status.
     /// @dev This will emit a 'PoolActive()' event. Used by the strategy implementation.
     /// @param _active The status to set, 'true' means active, 'false' means inactive
-    function _setPoolActive(bool _active) internal {
+    function _setPoolActive(bool _active) internal virtual {
         poolActive = _active;
         emit PoolActive(_active);
     }

@@ -7,7 +7,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { FetchTokenResult } from "@wagmi/core";
 import Link from "next/link";
-import { Address, Address as AddressType, useAccount } from "wagmi";
+import { parseAbiParameters, encodeAbiParameters } from "viem";
+import { Address, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
   CVProposal,
@@ -26,13 +27,13 @@ import {
   ProposalCard,
 } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, cvStrategyABI } from "@/src/generated";
-import { LightCVStrategy, ProposalStatus } from "@/types";
+import { alloABI, registryCommunityABI } from "@/src/generated";
+import { LightCVStrategy } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
-import { encodeFunctionParams } from "@/utils/encodeFunctionParams";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
 
@@ -90,6 +91,7 @@ export function Proposals({
   // Hooks
   const { address: wallet } = useAccount();
   const { publish } = usePubSubContext();
+  const chainId = useChainIdFromPath();
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
@@ -132,6 +134,16 @@ export function Proposals({
       enabled: !!wallet,
     },
   );
+
+  //Contract reads
+  const { data: memberPower } = useContractRead({
+    address: communityAddress,
+    abi: registryCommunityABI,
+    functionName: "getMemberPowerInStrategy",
+    args: [wallet as Address, strategy.id as Address],
+    chainId: chainId,
+    enabled: !!wallet,
+  });
 
   // Derived state
   const isMemberCommunity =
@@ -225,16 +237,19 @@ export function Proposals({
   const getProposalsInputsDifferences = (
     inputData: ProposalInputItem[],
     currentData: ProposalInputItem[],
-  ): [number, bigint][] => {
-    return inputData.reduce<[number, bigint][]>((acc, input) => {
-      const current = currentData.find((item) => item.id === input.id);
-      const diff =
-        BigInt(Math.floor(input.value)) - BigInt(current?.value ?? 0);
-      if (diff !== 0n) {
-        acc.push([Number(input.id), diff]);
-      }
-      return acc;
-    }, []);
+  ) => {
+    return inputData.reduce<{ proposalId: bigint; deltaSupport: bigint }[]>(
+      (acc, input) => {
+        const current = currentData.find((item) => item.id === input.id);
+        const diff =
+          BigInt(Math.floor(input.value)) - BigInt(current?.value ?? 0);
+        if (diff !== 0n) {
+          acc.push({ proposalId: BigInt(input.id), deltaSupport: diff });
+        }
+        return acc;
+      },
+      [],
+    );
   };
 
   const calculateTotalTokens = (exceptIndex?: number) => {
@@ -262,24 +277,6 @@ export function Proposals({
     setInputAllocatedTokens(currentPoints + value);
   };
 
-  const submit = async () => {
-    if (!inputs) {
-      console.error("Inputs not yet computed");
-      return;
-    }
-    const proposalsDifferencesArr = getProposalsInputsDifferences(
-      inputs,
-      stakedFilters,
-    );
-    const encodedData = encodeFunctionParams(cvStrategyABI, "supportProposal", [
-      proposalsDifferencesArr,
-    ]);
-    const poolId = Number(strategy.poolId);
-    writeAllocate({
-      args: [BigInt(poolId), encodedData as AddressType],
-    });
-  };
-
   // Contract interaction
   const {
     write: writeAllocate,
@@ -303,6 +300,27 @@ export function Proposals({
       });
     },
   });
+  const submit = async () => {
+    if (!inputs) {
+      console.error("Inputs not yet computed");
+      return;
+    }
+    const proposalsDifferencesArr = getProposalsInputsDifferences(
+      inputs,
+      stakedFilters,
+    );
+
+    const abiTypes = parseAbiParameters(
+      "(uint256 proposalId, int256 deltaSupport)[]",
+    );
+    const encodedData = encodeAbiParameters(abiTypes, [
+      proposalsDifferencesArr,
+    ]);
+    const poolId = Number(strategy.poolId);
+    writeAllocate({
+      args: [BigInt(poolId), encodedData],
+    });
+  };
 
   useErrorDetails(errorAllocate, "errorAllocate");
 
@@ -312,7 +330,7 @@ export function Proposals({
     memberActivatedPoints,
   );
   const memberPoolWeight = calculatePercentage(
-    memberActivatedPoints,
+    Number(memberPower),
     strategy.totalEffectiveActivePoints,
   );
 
@@ -333,14 +351,14 @@ export function Proposals({
       name: "Your pool weight",
       stat: memberPoolWeight,
       className: poolWeightClassName,
-      info: "Represents your influence or voting power in the pool",
+      info: "Represents your voting power within the pool",
     },
     {
       id: 2,
       name: "Pool weight used",
       stat: calcPoolWeightUsed(memberSupportedProposalsPct),
       className: poolWeightClassName,
-      info: "This indicates how much of your pool weight you allocated in proposals.",
+      info: "Indicates the portion of your pool weight allocated in proposals.",
     },
     {
       id: 3,
@@ -351,7 +369,7 @@ export function Proposals({
           "bg-secondary-content text-secondary-soft border-secondary-content"
         : "bg-primary-content text-primary-soft border-primary-content"
       }`,
-      info: "This percentage reflects how much of your pool weight is supporting proposals.",
+      info: "Reflects the percentage of your pool weight supporting proposals.",
     },
   ];
 
@@ -368,11 +386,11 @@ export function Proposals({
     disableManageSupportBtnCondition,
   );
 
-  const endedProposals = proposals?.filter(
-    (x) =>
-      ProposalStatus[x.status] !== "active" &&
-      ProposalStatus[x.status] !== "disputed",
-  );
+  // const endedProposals = proposals?.filter(
+  //   (x) =>
+  //     ProposalStatus[x.status] !== "active" &&
+  //     ProposalStatus[x.status] !== "disputed",
+  // );
 
   // Render
   return (
@@ -414,11 +432,11 @@ export function Proposals({
           {proposals && inputs ?
             <>
               {proposals
-                .filter(
-                  (x) =>
-                    ProposalStatus[x.status] === "active" ||
-                    ProposalStatus[x.status] === "disputed",
-                )
+                // .filter(
+                //   (x) =>
+                //     ProposalStatus[x.status] === "active" ||
+                //     ProposalStatus[x.status] === "disputed",
+                // )
                 .map((proposalData, i) => (
                   <Fragment key={proposalData.proposalNumber}>
                     <ProposalCard
@@ -444,7 +462,7 @@ export function Proposals({
                     />
                   </Fragment>
                 ))}
-              {!allocationView && !!endedProposals?.length && (
+              {/* {!allocationView && !!endedProposals?.length && (
                 <details className="collapse collapse-arrow">
                   <summary className="collapse-title text-md font-medium bg-neutral-soft mb-4 rounded-b-2xl flex content-center">
                     Click to see ended proposals
@@ -483,7 +501,7 @@ export function Proposals({
                       ))}
                   </div>
                 </details>
-              )}
+              )} */}
             </>
           : <LoadingSpinner />}
         </div>

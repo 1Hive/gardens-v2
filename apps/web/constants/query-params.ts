@@ -4,6 +4,7 @@ export const QUERY_PARAMS = {
   },
   communityPage: {
     newPool: "newPool",
+    covenant: "covenant",
   },
   poolPage: {
     newPropsoal: "newProposal",
