@@ -1,5 +1,5 @@
 "use client";
-import { JSX, SVGProps, useState } from "react";
+import { JSX, SVGProps, useEffect, useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import {
@@ -35,6 +35,8 @@ const Hero = () => {
   return (
     <div className="bg-primary-soft">
       <header className="absolute inset-x-0 top-0 z-50">
+        <Banner />
+
         <nav
           aria-label="Global"
           className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8"
@@ -130,6 +132,7 @@ const Hero = () => {
           </Dialog.Panel>
         </Dialog>
       </header>
+
       <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20 pt-14">
         <div
           aria-hidden="true"
@@ -182,6 +185,58 @@ const Hero = () => {
         <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-white sm:h-32" />
       </div>
     </div>
+  );
+};
+
+const Banner = () => {
+  const [openBanner, setOpenBanner] = useState(true);
+  //const notOpenBanner = "NotOpenBannerAck";
+
+  // useEffect(() => {
+  //   const openBannerStorage = localStorage.getItem(notOpenBanner);
+  //   setOpenBanner(openBannerStorage !== "true");
+  // }, []);
+
+  // const handleBannerClose = () => {
+  //   setOpenBanner(false);
+  //   localStorage.setItem(notOpenBanner, "true");
+  // };
+
+  return (
+    <>
+      {openBanner && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 sm:flex sm:justify-center sm:px-6 sm:pb-5 lg:px-8">
+          <div className="pointer-events-auto flex items-center justify-between gap-x-6 bg-primary px-6 py-2.5 sm:rounded-xl sm:py-3 sm:pl-4 sm:pr-3.5">
+            <p className="subtitle2">
+              <a
+                href="https://juicebox.money/v2/p/697?np=1&tabid=nft_rewards"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <strong className="font-semibold">Juicebox campaign</strong>
+                <svg
+                  viewBox="0 0 2 2"
+                  aria-hidden="true"
+                  className="mx-2 inline h-0.5 w-0.5 fill-current"
+                >
+                  <circle r={1} cx={1} cy={1} />
+                </svg>
+                Get Protopian or Beekeeper NFT until Sep 28 &nbsp;
+                <span aria-hidden="true">&rarr;</span>
+              </a>
+            </p>
+            <button
+              type="button"
+              className="-m-1.5 flex-none p-1.5"
+              onClick={() => setOpenBanner(false)}
+            >
+              <span className="sr-only">Dismiss</span>
+              <XMarkIcon aria-hidden="true" className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
