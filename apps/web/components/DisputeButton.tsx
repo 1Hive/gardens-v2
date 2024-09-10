@@ -297,6 +297,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                 btnStyle="outline"
                 onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                 isLoading={rulingLoading === ABSTAINED_RULING}
+                disabled={disableTribunalSafeButtons}
               >
                 <InfoWrapper
                   classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
