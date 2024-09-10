@@ -11,7 +11,7 @@ import {
   Battery50Icon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { newLogo, commF, Banner } from "@/assets";
+import { newLogo, commF } from "@/assets";
 import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 
@@ -350,7 +350,7 @@ const SignUp = () => {
   return (
     <div className="bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="isolate overflow-hidden bg-neutral-content px-6 py-24 shadow-md sm:rounded-3xl sm:px-24 xl:py-32 relative">
+        <div className="isolate overflow-hidden bg-primary px-6 py-24 shadow-md sm:rounded-3xl sm:px-24 xl:py-32 relative">
           <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight sm:text-4xl">
             Cultivate change with Gardens
           </h2>
@@ -365,14 +365,8 @@ const SignUp = () => {
               target="_blank"
               rel="noreferrer"
             >
-              <Button>Sign up</Button>
+              <Button>Sign Up</Button>
             </a>
-            <Image
-              src={Banner}
-              alt="gardens"
-              className="absolute inset-0 w-full h-full object-cover -z-10"
-              loading="lazy"
-            />
           </div>
         </div>
       </div>
