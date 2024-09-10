@@ -33,10 +33,12 @@ export const useIpfsFetch = <TResult>({
     (async () => {
       try {
         let resp = await fetchIpfs<TResult>(hash);
-        if (modifier && resp != null) {
-          resp = await modifier(resp);
+        if (resp !== null) {
+          if (modifier) {
+            resp = await modifier(resp);
+          }
+          setData(resp);
         }
-        setData(resp);
       } catch (e: any) {
         setError(e);
       } finally {
@@ -53,7 +55,7 @@ export type MetadataV1 = {
   description: string;
 };
 
-export const useProposalMetadataIpfsFetch = ({
+export const useMetadataIpfsFetch = ({
   hash,
   enabled,
 }: {
