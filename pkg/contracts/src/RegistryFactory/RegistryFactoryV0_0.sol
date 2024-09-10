@@ -45,15 +45,15 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
-    function setRegistryCommunityTemplate(address template) external onlyOwner {
+    function setRegistryCommunityTemplate(address template) external virtual onlyOwner {
         registryCommunityTemplate = template;
     }
 
-    function setStrategyTemplate(address template) external onlyOwner {
+    function setStrategyTemplate(address template) external virtual onlyOwner {
         strategyTemplate = template;
     }
 
-    function setCollateralVaultTemplate(address template) external onlyOwner {
+    function setCollateralVaultTemplate(address template) external virtual onlyOwner {
         collateralVaultTemplate = template;
     }
 
@@ -63,7 +63,7 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         address _registryCommunityTemplate,
         address _strategyTemplate,
         address _collateralVaultTemplate
-    ) public virtual initializer {
+    ) public initializer {
         super.initialize(_owner);
         nonce = 0;
         _revertZeroAddress(_gardensFeeReceiver);
