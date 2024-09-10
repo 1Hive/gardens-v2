@@ -14,6 +14,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
@@ -66,6 +67,7 @@ export const CommunityForm = ({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { isConnected } = useDisableButtons();
 
   const chainFromPath = useChainFromPath()!;
 
@@ -370,7 +372,11 @@ export const CommunityForm = ({
             >
               Edit
             </Button>
-            <Button onClick={() => createCommunity()} isLoading={loading}>
+            <Button
+              onClick={() => createCommunity()}
+              isLoading={loading}
+              disabled={!isConnected}
+            >
               Submit
             </Button>
           </div>
