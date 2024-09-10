@@ -1,8 +1,6 @@
 import { toast } from "react-toastify";
 import { NOTIFICATION_AUTO_CLOSE_DELAY } from "@/globals";
 
-const ipfsGateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? "ipfs.io";
-
 export const ipfsJsonUpload = async (
   payload: string | object,
   toastId?: string,
@@ -69,8 +67,8 @@ export const fetchIpfs = async <TResult>(
   ipfsHash: string,
   isStringResult?: boolean,
 ) => {
-  const ipfsUri = `https://${ipfsGateway}/ipfs/${ipfsHash}?${process.env.NEXT_PUBLIC_PINATA_KEY ? "pinataGatewayToken=" + process.env.NEXT_PUBLIC_PINATA_KEY : ""}`;
-  const ipfsResult = await fetch(ipfsUri, {
+  const ipfsEndpoint = `/api/ipfs/${ipfsHash}${isStringResult ? "?isText=true" : ""}`;
+  const ipfsResult = await fetch(ipfsEndpoint, {
     method: "GET",
     headers: {
       "content-type": "application/json",
@@ -78,7 +76,7 @@ export const fetchIpfs = async <TResult>(
   });
 
   if (!ipfsResult.ok) {
-    console.error("Error fetching IPFS data", { ipfsUri });
+    console.error("Error fetching IPFS data", { ipfsEndpoint });
     return null;
   }
 
