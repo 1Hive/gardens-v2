@@ -109,6 +109,7 @@ export function useContractWriteWithConfirmations<
   return {
     ...txResult,
     ...txWaitResult,
+    isLoading: txResult.isLoading || txWaitResult.isLoading,
     transactionStatus: computedStatus as ComputedStatus | undefined,
     transactionData: txResult.data,
     confirmationsStatus: txWaitResult.status,
