@@ -40,5 +40,5 @@ jobs:
             ${{ steps.get_diff.outputs.pull_request_diff }}
           pull_request_chunk_size: "3500" # chunk size is important to avoid exceeding the API limits
           extra_prompt: |-
-            Ignore json files
+            Only review files with extensions: .ts, .tsx, .sol
           log_level: "DEBUG"
