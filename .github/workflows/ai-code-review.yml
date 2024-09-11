@@ -35,7 +35,7 @@ jobs:
           github_repository: ${{ github.repository }}
           github_pull_request_number: ${{ github.event.pull_request.number }}
           git_commit_hash: ${{ github.event.pull_request.head.sha }}
-          model: "gemini-1.5-pro-latest"
+          model: "gemini-1.5-flash-latest"
           pull_request_diff: |-
             ${{ steps.get_diff.outputs.pull_request_diff }}
           pull_request_chunk_size: "3500" # chunk size is important to avoid exceeding the API limits
