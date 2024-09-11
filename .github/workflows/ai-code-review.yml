@@ -1,8 +1,6 @@
 name: "Code Review by Gemini AI"
-
 on:
   pull_request:
-
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -18,15 +16,15 @@ jobs:
           PULL_REQUEST_HEAD_REF: "${{ github.event.pull_request.head.ref }}"
           PULL_REQUEST_BASE_REF: "${{ github.event.pull_request.base.ref }}"
         run: |-
-          git fetch origin "${{ env.PULL_REQUEST_HEAD_REF }}"
-          git fetch origin "${{ env.PULL_REQUEST_BASE_REF }}"
-          git checkout "${{ env.PULL_REQUEST_HEAD_REF }}"
-          git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" > "diff.txt"
+          git fetch origin "${{ env.PULL_REQUEST_HEAD_REF }}" # fetch the branch with changes
+          git fetch origin "${{ env.PULL_REQUEST_BASE_REF }}" # fetch the target branch
+          git checkout "${{ env.PULL_REQUEST_HEAD_REF }}" # switch to the branch with changes
+          git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" > "diff.txt" # generate a diff
           {
-            echo "pull_request_diff<<EOF";
+            echo "pull_request_diff<<EOF"; 
             cat "diff.txt";
             echo 'EOF';
-          } >> $GITHUB_OUTPUT
+          } >> $GITHUB_OUTPUT # save the diff to an output variable
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
         continue-on-error: true
@@ -40,7 +38,7 @@ jobs:
           model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
             ${{ steps.get_diff.outputs.pull_request_diff }}
-          pull_request_chunk_size: "3500"
+          pull_request_chunk_size: "3500" # chunk size is important to avoid exceeding the API limits
           extra_prompt: |-
-            Please comment directly on the corresponding lines of code.
+            Ignore json files
           log_level: "DEBUG"
