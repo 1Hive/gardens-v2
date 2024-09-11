@@ -1,6 +1,10 @@
 name: "Code Review by Gemini AI"
 on:
   pull_request:
+    paths:
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.sol"
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -9,7 +13,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v3
-      - name: "Get diff of the pull request"
+      - name: "Get filtered diff of the pull request"
         id: get_diff
         shell: bash
         env:
@@ -19,12 +23,12 @@ jobs:
           git fetch origin "${{ env.PULL_REQUEST_HEAD_REF }}" # fetch the branch with changes
           git fetch origin "${{ env.PULL_REQUEST_BASE_REF }}" # fetch the target branch
           git checkout "${{ env.PULL_REQUEST_HEAD_REF }}" # switch to the branch with changes
-          git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" > "diff.txt" # generate a diff
+          git diff -- '*.ts' '*.tsx' '*.sol' "origin/${{ env.PULL_REQUEST_BASE_REF }}" > "filtered_diff.txt" # generate a filtered diff
           {
             echo "pull_request_diff<<EOF"; 
-            cat "diff.txt";
+            cat "filtered_diff.txt";
             echo 'EOF';
-          } >> $GITHUB_OUTPUT # save the diff to an output variable
+          } >> $GITHUB_OUTPUT # save the filtered diff to an output variable
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
         continue-on-error: true
@@ -35,10 +39,11 @@ jobs:
           github_repository: ${{ github.repository }}
           github_pull_request_number: ${{ github.event.pull_request.number }}
           git_commit_hash: ${{ github.event.pull_request.head.sha }}
-          model: "gemini-1.5-flash-latest"
+          model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
             ${{ steps.get_diff.outputs.pull_request_diff }}
-          pull_request_chunk_size: "3500" # chunk size is important to avoid exceeding the API limits
+          pull_request_chunk_size: "5000" # chunk size is important to avoid exceeding the API limits
           extra_prompt: |-
-            Ignore json files
+            Only focus on logic and security-sensitive sections of the code.
+            Skip reviewing helper functions, comments, or tests.
           log_level: "DEBUG"
