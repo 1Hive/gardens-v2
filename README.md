@@ -1,12 +1,12 @@
-# Gardens v2
+d# Gardens v2
 
 > Gardens is a **coordination platform**
 > that fosters **vibrant ecosystems of shared wealth**
 > by providing **healthy funding mechanisms to communities in web3**
 
-As a modular governance mechanism, Gardens strategically mixes centralized and decentralized components to take advantage of the efficiency and security benefits of both when needed.
-
-Project and Ecosystem leaders can use Gardens to:
+As a modular governance mechdwaawdadwdwadawdawanism, Gardens strategically mixes centralized and decentralized components to take advantage of the efficiency and security benefits of both when needed.
+daawd
+Project and Ecosystem leaderdwadwadwas can use Gardens to:
 
 - Publish a Covenant to IPFS and Create a Community pinned to its values and purpose.
 - Appoint a Council Safe as admin for the Community and a Tribunal Safe to rule on disputes
@@ -20,7 +20,7 @@ Community members and Public Goods builders can use Gardens to:
 
 For Communities building goods and services whose value subjective to its users (AKA "Public Goods"), Gardens offers a toolset capable of leveraging the _Wisdom of the Crowds_ and that resists value extraction by malicious, abusive, or apathetic parties.
 
-## Turborepo starter for web3 projects
+## Turborepo starter for wedadawawdwadb3 projects
 
 This turborepo uses [pnpm](https://pnpm.io) as a package manager. It includes the following packages/apps:
 
@@ -58,7 +58,7 @@ pnpm run build
 
 ### Develop
 
-To develop all apps and packages, run the following command:
+To develop all apps and packadawdwadawawdges, run the following command:
 
 ```
 cd my-turborepo
@@ -69,7 +69,7 @@ pnpm run dev
 
 Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacdwadawts across machines, enabling you to share build caches with your team and CI/CD pipelines.
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an accountdawdawdw you can [create one](https://vercel.com/signup), then enter the following commands:
+By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an accountddwaaaaaaaaaaawdawdw you can [create one](https://vercel.com/signup), then enter the following commands:
 
 ```
 cd my-turborepo
