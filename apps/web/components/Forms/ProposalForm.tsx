@@ -5,7 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
 import { useToken } from "wagmi";
-import { Allo, CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
+import {
+  Allo,
+  ArbitrableConfig,
+  CVStrategy,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
@@ -31,11 +36,8 @@ type FormInputs = {
 };
 
 type ProposalFormProps = {
-  strategy: Pick<CVStrategy, "id" | "token"> & {
-    config: {
-      submitterCollateralAmount: bigint;
-    };
-  };
+  strategy: Pick<CVStrategy, "id" | "token">;
+  arbitrableConfig: Pick<ArbitrableConfig, "submitterCollateralAmount">;
   poolId: number;
   proposalType: number;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
@@ -109,6 +111,7 @@ function formatNumber(num: string | number): string {
 
 export const ProposalForm = ({
   strategy,
+  arbitrableConfig,
   poolId,
   proposalType,
   alloInfo,
@@ -158,8 +161,6 @@ export const ProposalForm = ({
 
   const proposalTypeName = PoolTypes[proposalType];
 
-  const arbitrationConfig = strategy.config;
-
   const createProposal = async () => {
     setLoading(true);
     const json = {
@@ -190,7 +191,7 @@ export const ProposalForm = ({
     contractName: "Allo",
     functionName: "registerRecipient",
     fallbackErrorMessage: "Error creating Proposal. Please try again.",
-    value: arbitrationConfig.submitterCollateralAmount,
+    value: arbitrableConfig.submitterCollateralAmount,
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(
         receipt,
@@ -396,9 +397,9 @@ export const ProposalForm = ({
       }
       <div className="flex w-full items-center justify-between py-6">
         <div>
-          {arbitrationConfig && (
+          {arbitrableConfig && (
             <WalletBalance
-              askedAmount={arbitrationConfig.submitterCollateralAmount}
+              askedAmount={arbitrableConfig.submitterCollateralAmount}
               label="Proposal stake"
               setIsEnoughBalance={setIsEnoughBalance}
               token="native"

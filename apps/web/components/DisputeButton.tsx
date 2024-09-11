@@ -11,9 +11,9 @@ import {
   useEnsName,
 } from "wagmi";
 import {
+  ArbitrableConfig,
   CVProposal,
   CVStrategy,
-  CVStrategyConfig,
   getProposalDisputesDocument,
   getProposalDisputesQuery,
   Maybe,
@@ -50,16 +50,16 @@ type Props = {
       CVProposal,
       "id" | "proposalNumber" | "blockLast" | "proposalStatus" | "createdAt"
     > & {
-      strategy: Pick<CVStrategy, "id"> & {
-        config: Pick<
-          CVStrategyConfig,
-          | "arbitrator"
-          | "tribunalSafe"
-          | "challengerCollateralAmount"
-          | "defaultRuling"
-          | "defaultRulingTimeout"
-        >;
-      };
+      strategy: Pick<CVStrategy, "id">;
+      arbitrableConfig: Pick<
+        ArbitrableConfig,
+        | "defaultRulingTimeout"
+        | "defaultRuling"
+        | "arbitrator"
+        | "challengerCollateralAmount"
+        | "submitterCollateralAmount"
+        | "tribunalSafe"
+      >;
     }
   > &
     MetadataV1;
@@ -79,7 +79,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const chainId = useChainIdFromPath();
   const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
 
-  const config = proposalData.strategy.config;
+  const config = proposalData.arbitrableConfig;
 
   const { data: disputesResult } = useSubgraphQuery<getProposalDisputesQuery>({
     query: getProposalDisputesDocument,
@@ -115,29 +115,23 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     arbitrationCost && config ?
       arbitrationCost + BigInt(config.challengerCollateralAmount)
     : undefined;
-
   const lastDispute =
     disputesResult?.proposalDisputes[
       disputesResult?.proposalDisputes.length - 1
     ];
-
   const isCooldown =
     !!lastDispute &&
     !!disputeCooldown &&
     +lastDispute.ruledAt + Number(disputeCooldown) > Date.now() / 1000;
-
+  const proposalStatus = ProposalStatus[proposalData.proposalStatus];
   const isDisputed =
-    proposalData &&
-    lastDispute &&
-    ProposalStatus[proposalData.proposalStatus] === "disputed";
-
+    proposalData && lastDispute && proposalStatus === "disputed";
   const isTimeout =
     lastDispute &&
     config &&
     +lastDispute.createdAt + +config.defaultRulingTimeout < Date.now() / 1000;
-
   const disputes = disputesResult?.proposalDisputes ?? [];
-
+  const isProposalEnded = proposalStatus !== "active" && !isDisputed;
   const isTribunalSafe = config.tribunalSafe === address?.toLowerCase();
 
   const { data: isTribunalMember } = useContractRead({
@@ -248,7 +242,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const content = (
     <div className="flex md:flex-col gap-10">
-      {isDisputed ?
+      {proposalStatus !== "active" ?
         <div className="p-16 rounded-lg">
           {disputes.map((dispute) => (
             <Fragment key={dispute.id}>
@@ -303,6 +297,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                 btnStyle="outline"
                 onClick={() => handleSubmitRuling(ABSTAINED_RULING)}
                 isLoading={rulingLoading === ABSTAINED_RULING}
+                disabled={disableTribunalSafeButtons}
               >
                 <InfoWrapper
                   classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
@@ -402,8 +397,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   return (
     <>
-      {(ProposalStatus[proposalData?.proposalStatus] === "active" ||
-        ProposalStatus[proposalData?.proposalStatus] === "disputed") && (
+      {(proposalStatus === "active" || lastDispute != null) && (
         <>
           <Button
             color="danger"
@@ -412,7 +406,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             disabled={isDisconnected}
             tooltip="Connect wallet"
           >
-            {isDisputed ? "Open dispute" : "Dispute"}
+            {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
           </Button>
           <Modal
             title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}
@@ -420,7 +414,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             isOpen={isModalOpened}
           >
             {content}
-            {buttons}
+            {!isProposalEnded && buttons}
           </Modal>
         </>
       )}
