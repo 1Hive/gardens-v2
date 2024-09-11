@@ -169,7 +169,7 @@ export function PoolForm({ token, communityAddr }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { publish } = usePubSubContext();
-  const { isConnected } = useDisableButtons();
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
   const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
   const { data: customTokenData } = useToken({
@@ -910,7 +910,8 @@ export function PoolForm({ token, communityAddr }: Props) {
             <Button
               onClick={() => createPool()}
               isLoading={loading}
-              disabled={!isConnected}
+              disabled={!isConnected || missmatchUrl}
+              tooltip={tooltipMessage}
             >
               Submit
             </Button>

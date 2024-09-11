@@ -148,7 +148,7 @@ export const ProposalForm = ({
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const { isConnected } = useDisableButtons();
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
@@ -420,7 +420,7 @@ export const ProposalForm = ({
             <Button
               onClick={() => createProposal()}
               isLoading={loading}
-              disabled={!isEnoughBalance || !isConnected}
+              disabled={!isEnoughBalance || !isConnected || missmatchUrl}
               tooltip={isEnoughBalance ? "" : "Insufficient balance"}
             >
               Submit

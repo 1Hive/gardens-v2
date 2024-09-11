@@ -67,7 +67,7 @@ export const CommunityForm = ({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { isConnected } = useDisableButtons();
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
   const chainFromPath = useChainFromPath()!;
 
@@ -375,7 +375,8 @@ export const CommunityForm = ({
             <Button
               onClick={() => createCommunity()}
               isLoading={loading}
-              disabled={!isConnected}
+              disabled={!isConnected || missmatchUrl}
+              tooltip={tooltipMessage}
             >
               Submit
             </Button>

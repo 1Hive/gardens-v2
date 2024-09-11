@@ -70,9 +70,8 @@ export default function Page() {
                 <h1 className="max-w-xl text-center text-neutral-content">
                   Gardens
                 </h1>
-                <p className="text-xl text-primary-content text-center max-w-lg">
-                  A place where communities grow through collective
-                  decision-making
+                <p className="text-xl text-primary-content text-center">
+                  A place to grow communities via collective decision-making
                 </p>
               </div>
             </div>
