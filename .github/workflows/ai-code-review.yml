@@ -1,6 +1,10 @@
 name: "Code Review by Gemini AI"
 on:
   pull_request:
+  paths:
+    - "**/*.ts"
+    - "**/*.tsx"
+    - "**/*.sol"
 jobs:
   review:
     runs-on: ubuntu-latest
