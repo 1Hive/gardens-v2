@@ -29,6 +29,7 @@ import {
   Statistic,
   InfoWrapper,
 } from "@/components";
+import CovenantEditButton from "@/components/CovenantEditButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
@@ -352,7 +353,10 @@ export default function Page({
         </div>
       </section>
       <section ref={covenantSectionRef} className="section-layout">
-        <h2 className="mb-4">Covenant</h2>
+        <div className="flex justify-between mb-4">
+          <h2>Covenant</h2>
+          <CovenantEditButton communityData={registryCommunity} />
+        </div>
         {registryCommunity?.covenantIpfsHash ?
           covenant ?
             <MarkdownWrapper>{covenant}</MarkdownWrapper>

@@ -32,15 +32,14 @@ import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1, useIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useIsSafe } from "@/hooks/useIsSafe";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import {
   cvStrategyABI,
   iArbitratorABI,
-  safeABI,
   safeArbitratorABI,
 } from "@/src/generated";
 import { DisputeStatus, ProposalStatus } from "@/types";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 
@@ -74,7 +73,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const [reason, setReason] = useState("");
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const { publish } = usePubSubContext();
-  const { address, isDisconnected } = useAccount();
+  const { isDisconnected } = useAccount();
   const [isDisputeCreateLoading, setIsDisputeCreateLoading] = useState(false);
   const chainId = useChainIdFromPath();
   const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
@@ -111,6 +110,13 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     address: proposalData.strategy.id as Address,
   });
 
+  const {
+    isSafeConnected: isTribunalSafe,
+    shouldSeeSafeButton: shouldSeeTribunalButton,
+  } = useIsSafe({
+    safeAddress: config.tribunalSafe,
+  });
+
   const totalStake =
     arbitrationCost && config ?
       arbitrationCost + BigInt(config.challengerCollateralAmount)
@@ -132,19 +138,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     +lastDispute.createdAt + +config.defaultRulingTimeout < Date.now() / 1000;
   const disputes = disputesResult?.proposalDisputes ?? [];
   const isProposalEnded = proposalStatus !== "active" && !isDisputed;
-  const isTribunalSafe = config.tribunalSafe === address?.toLowerCase();
-
-  const { data: isTribunalMember } = useContractRead({
-    address: config.tribunalSafe as Address,
-    abi: abiWithErrors2(safeABI),
-    functionName: "isOwner",
-    chainId: Number(chainId),
-    enabled: !!address,
-    args: [address as Address],
-    onError: () => {
-      console.error("Error reading isOwner from Tribunal Safe");
-    },
-  });
 
   const { writeAsync: writeDisputeProposalAsync } =
     useContractWriteWithConfirmations({
@@ -289,7 +282,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         <div className="w-full flex justify-end gap-4">
           {(
             DisputeStatus[lastDispute.status] === "waiting" &&
-            ((isTribunalMember ?? isTribunalSafe) || isTimeout)
+            (shouldSeeTribunalButton || isTimeout)
           ) ?
             <>
               <Button

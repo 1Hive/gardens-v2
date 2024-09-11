@@ -176,6 +176,7 @@ query getCommunity($communityAddr: ID!, $tokenAddr: ID!) {
   registryCommunity(id: $communityAddr) {
     communityName
     id
+    councilSafe
     members(where: { stakedTokens_gt: "0" }) {
       id
       stakedTokens

@@ -12,7 +12,6 @@ import { StopIcon } from "@heroicons/react/24/solid";
 import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
 import { Address } from "viem";
-import { useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
   getPoolDataQuery,
@@ -31,9 +30,10 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
-import { registryCommunityABI, safeABI } from "@/src/generated";
+import { useIsSafe } from "@/hooks/useIsSafe";
+import { registryCommunityABI } from "@/src/generated";
 import { PointSystems, PoolTypes, ProposalStatus } from "@/types";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abiWithErrors";
 import {
   convertSecondsToReadableTime,
   CV_SCALE_PRECISION,
@@ -99,14 +99,9 @@ export default function PoolHeader({
   spendingLimitPct,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
-  const { address } = useAccount();
   const { publish } = usePubSubContext();
 
   const blockTime = chainConfigMap[chainId].blockTime;
-
-  const isCouncilSafe =
-    address?.toLowerCase() ===
-    strategy.registryCommunity.councilSafe?.toLowerCase();
 
   const minimumConviction = calculateMinimumConviction(
     strategy.config.weight,
@@ -170,16 +165,12 @@ export default function PoolHeader({
     : poolConfig;
 
   //hooks
-  const { data: isCouncilMember } = useContractRead({
-    address: strategy.registryCommunity.councilSafe as Address,
-    abi: abiWithErrors2(safeABI),
-    functionName: "isOwner",
-    chainId: Number(chainId),
-    enabled: !!address,
-    args: [address as Address],
-    onError: () => {
-      console.error("Error reading isOwner from Coucil Safe");
-    },
+
+  const {
+    isSafeMemberConnected: isCouncilMember,
+    isSafeConnected: isCouncilSafe,
+  } = useIsSafe({
+    safeAddress: strategy.registryCommunity.councilSafe,
   });
 
   const { write: addStrategyByPoolId } = useContractWriteWithConfirmations({
