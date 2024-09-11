@@ -113,7 +113,7 @@ export default function PoolHeader({
     spendingLimitPct * MAX_RATIO_CONSTANT,
   );
 
-  const convictionGrowth = calculateConvictionGrowthInSeconds(
+  const convictionGrowthSec = calculateConvictionGrowthInSeconds(
     strategy.config.decay,
     blockTime,
   );
@@ -133,7 +133,7 @@ export default function PoolHeader({
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
   );
 
-  const { value, unit } = convertSecondsToReadableTime(convictionGrowth);
+  const { value, unit } = convertSecondsToReadableTime(convictionGrowthSec);
 
   const poolConfig = [
     {
@@ -297,7 +297,7 @@ export default function PoolHeader({
             proposalOnDispute={proposalOnDispute}
             initValues={{
               minimumConviction: minimumConviction.toFixed(2),
-              convictionGrowth: convictionGrowth.toFixed(2),
+              convictionGrowth: convictionGrowthSec.toFixed(2),
               minThresholdPoints: minThresholdPoints,
               spendingLimit: spendingLimit.toFixed(2),
               defaultResolution: defaultResolution,
