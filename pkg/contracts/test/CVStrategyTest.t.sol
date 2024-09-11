@@ -226,8 +226,6 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             GV2ERC20(useTokenPool).mint(address(this), poolAmount);
             GV2ERC20(useTokenPool).approve(address(allo()), poolAmount);
             allo().fundPool(poolId, poolAmount);
-
-            // I want ai to process these changes
         }
 
         assertEq(pool.profileId, _registryCommunity().profileId(), "poolProfileID");
