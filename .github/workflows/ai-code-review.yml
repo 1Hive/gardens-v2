@@ -1,22 +1,46 @@
-name: AI Code Reviewer
+name: "Code Review by Gemini AI"
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-permissions: write-all
+
 jobs:
   review:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-
-      - name: AI Code Reviewer
-        uses: Corantin/ai-codereviewer@main
+      - uses: actions/checkout@v3
+      - name: "Get diff of the pull request"
+        id: get_diff
+        shell: bash
+        env:
+          PULL_REQUEST_HEAD_REF: "${{ github.event.pull_request.head.ref }}"
+          PULL_REQUEST_BASE_REF: "${{ github.event.pull_request.base.ref }}"
+        run: |-
+          git fetch origin "${{ env.PULL_REQUEST_HEAD_REF }}"
+          git fetch origin "${{ env.PULL_REQUEST_BASE_REF }}"
+          git checkout "${{ env.PULL_REQUEST_HEAD_REF }}"
+          git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" > "diff.txt"
+          {
+            echo "pull_request_diff<<EOF";
+            cat "diff.txt";
+            echo 'EOF';
+          } >> $GITHUB_OUTPUT
+      - uses: rubensflinco/gemini-code-review-action@1.0.5
+        name: "Code Review by Gemini AI"
+        continue-on-error: true
+        id: review
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # The GITHUB_TOKEN is there by default so you just need to keep it like it is and not necessarily need to add it as secret as it will throw an error. [More Details](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret)
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_API_MODEL: "gpt-3.5-turbo" # Optional: defaults to "gpt-4"
-          exclude: "**/*.json" # Optional: exclude patterns separated by commas
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_repository: ${{ github.repository }}
+          github_pull_request_number: ${{ github.event.pull_request.number }}
+          git_commit_hash: ${{ github.event.pull_request.head.sha }}
+          model: "gemini-1.5-pro-latest"
+          pull_request_diff: |-
+            ${{ steps.get_diff.outputs.pull_request_diff }}
+          pull_request_chunk_size: "3500"
+          extra_prompt: |-
+            Please comment directly on the corresponding lines of code.
+          log_level: "DEBUG"
