@@ -10,9 +10,10 @@ import {
   LockClosedIcon,
   Battery50Icon,
   ArrowTopRightOnSquareIcon,
+  ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { newLogo, commF } from "@/assets";
+import { newLogo, commF, BrightIdLogo } from "@/assets";
 import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 
@@ -23,6 +24,7 @@ export default function Page() {
       <WhoIsFor />
       <OurStack />
       <ChainsDeploy />
+      <Protopians />
       <SignUp />
       <Footer />
     </>
@@ -428,7 +430,7 @@ const SignUp = () => {
             Cultivate change with Gardens
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-center text-lg leading-8">
-            Book a demo and start growing your community with Gardens.
+            Book a demo and start growing your community today.
           </p>
           <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-4 rounded-xl">
             <a
@@ -522,5 +524,83 @@ const Footer = () => {
         </div>
       </div>
     </footer>
+  );
+};
+
+const Protopians = () => {
+  return (
+    <div className="py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-x-8 gap-y-16 lg:grid-cols-2">
+          <div className="mx-auto w-full max-w-xl lg:mx-0">
+            <h2>Trusted by leading communities</h2>
+            <p className="mt-6 ext-lg leading-8">
+              Join the Protopians — early adopters who backed our Juicebox
+              funding round and are shaping the future with us. Discover why the
+              most innovative communities choose us.
+            </p>
+            <div className="mt-8 flex items-center gap-x-6">
+              <a
+                href="https://juicebox.money/v2/p/697?np=1&tabid=nft_rewards"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
+              >
+                Get a Protopian
+                <ArrowRightIcon
+                  width={16}
+                  height={16}
+                  className="text-primary-content"
+                />
+              </a>
+            </div>
+          </div>
+          <div className="mx-auto grid w-full max-w-xl grid-cols-2 items-center gap-y-12 sm:gap-y-14 lg:mx-0 lg:max-w-none lg:pl-8">
+            <a
+              href="https://www.brightid.org/"
+              className="hover:scale-105 transition-all duration-200 ease-in-out"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Image
+                src={BrightIdLogo}
+                alt="logo"
+                height={66}
+                width={175}
+                loading="lazy"
+              />
+            </a>
+            <a
+              href="https://www.brightid.org/"
+              className="hover:scale-105 transition-all duration-200 ease-in-out"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Image
+                src={BrightIdLogo}
+                alt="logo"
+                height={66}
+                width={175}
+                loading="lazy"
+              />
+            </a>
+            <a
+              href="https://www.brightid.org/"
+              className="hover:scale-105 transition-all duration-200 ease-in-out"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Image
+                src={BrightIdLogo}
+                alt="logo"
+                height={66}
+                width={175}
+                loading="lazy"
+              />
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
