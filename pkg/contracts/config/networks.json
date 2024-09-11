@@ -15,14 +15,14 @@
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
       },
       "PROXIES": {
-        "REGISTRY_FACTORY": "0x3d21D7C4c79bA08326C455E8CfEe2DEcec2c887e",
+        "REGISTRY_FACTORY": "0x7a603877488db46c0f6b40c2c770becfd7a65593",
         "REGISTRY_COMMUNITIES": [
-          "0x3ca8f9c04c7e3e1624ac2008f92f6f366a869444",
-          "0x8daf17a20c9dba35f005b6324f493785d239719d"
+          "0xf17e005599813f626ff6b4ff8189105b1306af94",
+          "0xffa2e39cce305c82ffa70f7da0333e5f172be5f6"
         ],
         "CV_STRATEGIES": [
-          "0x399a7d6b7e00059d88d86c57a5a182786fc7565f",
-          "0x6f00454894e0790aae84e7a6406e85075a321469"
+          "0x2b7e64cf97cb0ad9f074e941f29e99899cad6f00",
+          "0xbf647db7c6bbacaab6a1e956f97c1c4df5ca0d3e"
         ]
       }
     },
@@ -65,6 +65,13 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6",
+        "REGISTRY_COMMUNITIES": [
+          "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933"
+        ],
+        "CV_STRATEGIES": []
       }
     },
     {
@@ -77,11 +84,18 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
+        "REGISTRY_COMMUNITIES": [
+          "0x2088bbe7e70acfaf643e834c96aa4c277be6653e"
+        ],
+        "CV_STRATEGIES": []
       }
     },
     {
-      "name": "mainnet",
-      "chainId": 1,
+      "name": "polygon",
+      "chainId": 137,
       "testnet": false,
       "no-safe": false,
       "ENVS": {
@@ -89,11 +103,18 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0x57a9835b204dbcc101dbf981625a3625e8043b9c",
+        "REGISTRY_COMMUNITIES": [
+          "0x9eee52873350c26d6c7fa23d048d22c4ab82db09"
+        ],
+        "CV_STRATEGIES": []
       }
     },
     {
-      "name": "polygon",
-      "chainId": 137,
+      "name": "mainnet",
+      "chainId": 1,
       "testnet": false,
       "no-safe": false,
       "ENVS": {

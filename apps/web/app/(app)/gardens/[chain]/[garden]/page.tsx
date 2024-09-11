@@ -49,7 +49,7 @@ export default function Page({
     refetch,
   } = useSubgraphQuery<getGardenCommunitiesQuery>({
     query: getGardenCommunitiesDocument,
-    variables: { chainId: chain },
+    variables: { chainId: chain, tokenGarden: garden.toLowerCase() },
     changeScope: [
       {
         topic: "member",

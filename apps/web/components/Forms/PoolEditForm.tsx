@@ -402,46 +402,34 @@ export default function PoolEditForm({
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
               <h4 className="my-4">Arbitration settings</h4>
-              {isProposalOnDispute && (
-                <InfoBox
-                  infoBoxType="warning"
-                  content={
-                    "A disputed proposal is pending resolution. Please wait until it's resolved before adjusting proposal dispute settings."
-                  }
-                />
-              )}
             </div>
-            {!isProposalOnDispute && (
-              <div className="flex gap-4 mt-2">
-                <FormRadioButton
-                  label="Global gardens tribunal"
-                  checked={
-                    tribunalAddress.toLowerCase() ===
-                    chain.globalTribunal?.toLowerCase()
-                  }
-                  onChange={() =>
-                    setTribunalAddress(chain.globalTribunal ?? "")
-                  }
-                  registerKey="tribunalOption"
-                  value="global"
-                />
-                <FormRadioButton
-                  label="Custom tribunal"
-                  checked={
-                    tribunalAddress.toLowerCase() !==
-                    chain.globalTribunal?.toLowerCase()
-                  }
-                  onChange={() => {
-                    setTribunalAddress((oldAddress) =>
-                      chain.globalTribunal ? "" : oldAddress,
-                    );
-                    document.getElementById("tribunalAddress")?.focus();
-                  }}
-                  registerKey="tribunalOption"
-                  value="custom"
-                />
-              </div>
-            )}
+            <div className="flex gap-4 mt-2">
+              <FormRadioButton
+                label="Global gardens tribunal"
+                checked={
+                  tribunalAddress.toLowerCase() ===
+                  chain.globalTribunal?.toLowerCase()
+                }
+                onChange={() => setTribunalAddress(chain.globalTribunal ?? "")}
+                registerKey="tribunalOption"
+                value="global"
+              />
+              <FormRadioButton
+                label="Custom tribunal"
+                checked={
+                  tribunalAddress.toLowerCase() !==
+                  chain.globalTribunal?.toLowerCase()
+                }
+                onChange={() => {
+                  setTribunalAddress((oldAddress) =>
+                    chain.globalTribunal ? "" : oldAddress,
+                  );
+                  document.getElementById("tribunalAddress")?.focus();
+                }}
+                registerKey="tribunalOption"
+                value="custom"
+              />
+            </div>
             <FormAddressInput
               tooltip="The tribunal Safe, represented by trusted members, is
                 responsible for resolving proposal disputes. The global tribunal
@@ -453,7 +441,6 @@ export default function PoolEditForm({
               required
               onChange={(newValue) => setTribunalAddress(newValue)}
               value={tribunalAddress}
-              readOnly={isProposalOnDispute}
             />
             <div className="flex flex-col">
               <FormSelect
@@ -467,7 +454,6 @@ export default function PoolEditForm({
                   }))}
                 required
                 registerKey="defaultResolution"
-                readOnly={isProposalOnDispute}
                 register={register}
                 errors={undefined}
               />
@@ -484,7 +470,6 @@ export default function PoolEditForm({
                   step: 1 / 10 ** ETH_DECIMALS,
                   min: 1 / 10 ** ETH_DECIMALS,
                 }}
-                readOnly={isProposalOnDispute}
               />
               <FormInput
                 tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
@@ -497,7 +482,6 @@ export default function PoolEditForm({
                   step: 1 / 10 ** ETH_DECIMALS,
                   min: 1 / 10 ** ETH_DECIMALS,
                 }}
-                readOnly={isProposalOnDispute}
               />
             </div>
           </div>
