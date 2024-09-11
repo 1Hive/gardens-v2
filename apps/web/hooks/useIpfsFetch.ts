@@ -37,8 +37,8 @@ export const useIpfsFetch = <TResult>({
           if (modifier) {
             resp = await modifier(resp);
           }
-          setData(resp);
         }
+        setData(resp);
       } catch (e: any) {
         setError(e);
       } finally {

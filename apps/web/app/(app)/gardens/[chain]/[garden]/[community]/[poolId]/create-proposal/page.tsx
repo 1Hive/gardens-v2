@@ -55,6 +55,7 @@ export default function Page({
           </div>
         </div>
         <ProposalForm
+          arbitrableConfig={data.arbitrableConfigs[0]}
           strategy={strategyObj}
           poolId={poolId}
           proposalType={proposalType}

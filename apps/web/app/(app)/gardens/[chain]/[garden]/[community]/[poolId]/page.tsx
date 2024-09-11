@@ -113,6 +113,7 @@ export default function Page({
         poolToken={poolToken}
         token={tokenGarden}
         strategy={strategyObj}
+        arbitrableConfig={data.arbitrableConfigs[0]}
         poolId={poolId}
         ipfsResult={ipfsResult}
         isEnabled={isEnabled}

@@ -64,7 +64,7 @@ export default function Page() {
               className="text-accent"
               rel="noreferrer"
             >
-              https://discord.gg/H8fNyAWSBy
+              https://discord.gg/FjEVDqC6EP
             </a>
           </InfoBox>
         </>

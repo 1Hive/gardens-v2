@@ -1,8 +1,8 @@
 import { FC, Fragment } from "react";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import {
+  ArbitrableConfig,
   CVProposal,
-  CVStrategyConfig,
   ProposalDispute,
 } from "#/subgraph/.graphclient";
 import { Countdown } from "./Countdown";
@@ -12,9 +12,10 @@ import { DisputeOutcome, DisputeStatus, ProposalStatus } from "@/types";
 
 type Props = {
   proposalData: Pick<CVProposal, "createdAt" | "proposalStatus"> & {
-    strategy: {
-      config: Pick<CVStrategyConfig, "defaultRulingTimeout" | "defaultRuling">;
-    };
+    arbitrableConfig: Pick<
+      ArbitrableConfig,
+      "defaultRulingTimeout" | "defaultRuling"
+    >;
   };
   disputes: Array<
     Pick<
@@ -37,7 +38,7 @@ export const ProposalTimeline: FC<Props> = ({
   disputes = [],
   className,
 }) => {
-  const arbitrationConfig = proposalData.strategy.config;
+  const arbitrationConfig = proposalData.arbitrableConfig;
   const defaultRuling = DisputeOutcome[arbitrationConfig.defaultRuling];
   const proposalStatus = ProposalStatus[proposalData.proposalStatus];
 

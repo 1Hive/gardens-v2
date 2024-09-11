@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: localhost
+    network: optimism
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 10
     source:
-      address: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"
+      address: "0x1fac47cf25f1ca9f20ba366099d26b28401f5715"
       abi: RegistryFactoryV0_0
-      startBlock: 0
+      startBlock: 125112016
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -40,15 +40,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: localhost
+    network: optimism
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 10
     source:
-      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
+      address: "0xc93830dd463516ed5f28f6cd4f837173b87ff389"
       abi: PassportScorer
-      startBlock: 0
+      startBlock: 125112016
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -72,7 +72,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: localhost
+    network: optimism
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -134,7 +134,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: localhost
+    network: optimism
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -170,14 +170,16 @@ templates:
           handler: handlePowerDecreased
         - event: PointsDeactivated(address)
           handler: handlePointsDeactivated
-        - event: PoolParamsUpdated((uint256,uint256,uint256,uint256),(address,address,uint256,uint256,uint256,uint256))
-          handler: handlePoolParamsUpdated
+        - event: CVParamsUpdated((uint256,uint256,uint256,uint256))
+          handler: handleCVParamsUpdated
         - event: ProposalDisputed(address,uint256,uint256,address,string,uint256)
           handler: handleProposalDisputed
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleDisputeRuled
         - event: ProposalCancelled(uint256)
           handler: handleProposalCancelled
+        - event: ArbitrableConfigUpdated(uint256,address,address,uint256,uint256,uint256,uint256)
+          handler: handleArbitrableConfigUpdated
  
       file: ./src/mappings/cv-strategy.ts
   

@@ -13,7 +13,11 @@ import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
 import { Address } from "viem";
 import { useAccount, useContractRead } from "wagmi";
-import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
+import {
+  ArbitrableConfig,
+  getPoolDataQuery,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
@@ -42,6 +46,13 @@ type Props = {
   poolId: number;
   isEnabled: boolean;
   strategy: getPoolDataQuery["cvstrategies"][0];
+  arbitrableConfig: Pick<
+    ArbitrableConfig,
+    | "defaultRuling"
+    | "tribunalSafe"
+    | "submitterCollateralAmount"
+    | "challengerCollateralAmount"
+  >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
   poolToken: FetchTokenResult;
   pointSystem: number;
@@ -79,6 +90,7 @@ export default function PoolHeader({
   poolId,
   isEnabled,
   strategy,
+  arbitrableConfig,
   token,
   poolToken,
   pointSystem,
@@ -112,10 +124,10 @@ export default function PoolHeader({
   );
   const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
   const communityAddr = strategy.registryCommunity.id as Address;
-  const defaultResolution = strategy.config.defaultRuling;
-  const proposalCollateral = strategy.config.submitterCollateralAmount;
-  const disputeCollateral = strategy.config.challengerCollateralAmount;
-  const tribunalAddress = strategy.config.tribunalSafe;
+  const defaultResolution = arbitrableConfig.defaultRuling;
+  const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
+  const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
+  const tribunalAddress = arbitrableConfig.tribunalSafe;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",

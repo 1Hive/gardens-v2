@@ -11,9 +11,9 @@ import {
   useEnsName,
 } from "wagmi";
 import {
+  ArbitrableConfig,
   CVProposal,
   CVStrategy,
-  CVStrategyConfig,
   getProposalDisputesDocument,
   getProposalDisputesQuery,
   Maybe,
@@ -50,16 +50,16 @@ type Props = {
       CVProposal,
       "id" | "proposalNumber" | "blockLast" | "proposalStatus" | "createdAt"
     > & {
-      strategy: Pick<CVStrategy, "id"> & {
-        config: Pick<
-          CVStrategyConfig,
-          | "arbitrator"
-          | "tribunalSafe"
-          | "challengerCollateralAmount"
-          | "defaultRuling"
-          | "defaultRulingTimeout"
-        >;
-      };
+      strategy: Pick<CVStrategy, "id">;
+      arbitrableConfig: Pick<
+        ArbitrableConfig,
+        | "defaultRulingTimeout"
+        | "defaultRuling"
+        | "arbitrator"
+        | "challengerCollateralAmount"
+        | "submitterCollateralAmount"
+        | "tribunalSafe"
+      >;
     }
   > &
     MetadataV1;
@@ -79,7 +79,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const chainId = useChainIdFromPath();
   const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
 
-  const config = proposalData.strategy.config;
+  const config = proposalData.arbitrableConfig;
 
   const { data: disputesResult } = useSubgraphQuery<getProposalDisputesQuery>({
     query: getProposalDisputesDocument,
