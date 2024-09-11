@@ -28,7 +28,7 @@ contract ProxyOwnableUpgrader is OwnableUpgradeable, UUPSUpgradeable {
         }
     }
 
-    function _authorizeUpgrade(address) internal virtual override {
+    function _authorizeUpgrade(address) internal view override {
         if (owner() != msg.sender) {
             revert CallerNotOwner(msg.sender, owner());
         }

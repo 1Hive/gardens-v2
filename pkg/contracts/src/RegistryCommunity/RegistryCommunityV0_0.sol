@@ -22,6 +22,7 @@ import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 
+/// @custom:oz-upgrades-from RegistryCommunityV0_0
 contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -90,6 +91,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     using SafeERC20 for IERC20;
     using Clone for address;
 
+    string public constant VERSION = "0.0";
     /// @notice The native address to represent native token eg: ETH in mainnet
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     /// @notice The precision scale used in the contract to avoid loss of precision
@@ -287,7 +289,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     }
 
     function createPool(address _token, StrategyStruct.InitializeParams memory _params, Metadata memory _metadata)
-        public virtual
+        public
+        virtual
         returns (uint256 poolId, address strategy)
     {
         address strategyProxy = address(

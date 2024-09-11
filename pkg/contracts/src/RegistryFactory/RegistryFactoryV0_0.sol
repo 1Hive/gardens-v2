@@ -10,9 +10,10 @@ struct CommunityInfo {
     uint256 fee;
     bool valid;
 }
-/// @custom:oz-upgrades-from RegistryFactory
 
+/// @custom:oz-upgrades-from RegistryFactoryV0_0
 contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
+    string public constant VERSION = "0.0";
     uint256 public nonce;
 
     mapping(address => CommunityInfo) communityToInfo;

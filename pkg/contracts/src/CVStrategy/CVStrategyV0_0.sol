@@ -123,6 +123,7 @@ library StrategyStruct {
     }
 }
 
+/// @custom:oz-upgrades-from CVStrategyV0_0
 contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
@@ -210,6 +211,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|--------------------------------------------|*/
 
     // Constants for fixed numbers
+    string public constant VERSION = "0.0";
     uint256 public constant D = 10000000; //10**7
     uint256 internal constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 internal constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
@@ -223,9 +225,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // uint256 variables packed together
     uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
     uint256 public cloneNonce;
-    uint64 public disputeCount = 0;
-    uint256 public proposalCounter = 0;
-    uint256 public currentArbitrableConfigVersion = 0;
+    uint64 public disputeCount;
+    uint256 public proposalCounter;
+    uint256 public currentArbitrableConfigVersion;
 
     uint256 public totalStaked;
     uint256 public totalPointsActivated;
@@ -257,7 +259,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
-    function init(address _allo, address _collateralVaultTemplate, address owner) external initializer {
+    function init(address _allo, address _collateralVaultTemplate, address owner) external virtual initializer {
         super.init(_allo, "CVStrategy", owner);
         collateralVaultTemplate = _collateralVaultTemplate;
     }
