@@ -35,10 +35,11 @@ jobs:
           github_repository: ${{ github.repository }}
           github_pull_request_number: ${{ github.event.pull_request.number }}
           git_commit_hash: ${{ github.event.pull_request.head.sha }}
-          model: "gemini-1.5-flash-latest"
+          model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
             ${{ steps.get_diff.outputs.pull_request_diff }}
           pull_request_chunk_size: "3500" # chunk size is important to avoid exceeding the API limits
           extra_prompt: |-
             Only review files with extensions: .ts, .tsx, .sol
+            Focus your review on code logic, security vulnerabilities, and potential improvements in these files.
           log_level: "DEBUG"
