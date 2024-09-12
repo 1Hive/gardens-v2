@@ -27,6 +27,7 @@ import { InfoWrapper } from "./InfoWrapper";
 import { Modal } from "./Modal";
 import { ProposalTimeline } from "./ProposalTimeline";
 import { WalletBalance } from "./WalletBalance";
+import { DEFAULT_RULING_TIMEOUT_SEC } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -42,6 +43,7 @@ import {
 import { DisputeStatus, ProposalStatus } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
+import { convertSecondsToReadableTime } from "@/utils/numbers";
 
 type Props = {
   proposalData: Maybe<
@@ -233,6 +235,10 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     }
   };
 
+  const rulingTimeout = convertSecondsToReadableTime(
+    DEFAULT_RULING_TIMEOUT_SEC,
+  );
+
   const content = (
     <div className="flex md:flex-col gap-10">
       {proposalStatus !== "active" ?
@@ -254,7 +260,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
           />
           <InfoBox
             infoBoxType="info"
-            content="Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has one week to settle any disputes before it can be closed and collateral is returned."
+            content={`Disputing this proposal stops it from being executed but not from growing in support. The Tribunal has ${rulingTimeout.value} ${rulingTimeout.unit} to settle any disputes before it can be closed and collateral is returned.`}
           />
         </div>
       }

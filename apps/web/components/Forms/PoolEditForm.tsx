@@ -30,6 +30,7 @@ type ArbitrationSettings = {
   proposalCollateral: number | string;
   disputeCollateral: number | string;
   tribunalAddress: string;
+  defaultRulingTimeout: number | string;
 };
 
 type FormInputs = {
@@ -192,9 +193,7 @@ export default function PoolEditForm({
             token?.decimals,
           ),
           defaultRuling: BigInt(previewData.defaultResolution),
-          defaultRulingTimeout: BigInt(
-            process.env.NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT ?? 300,
-          ),
+          defaultRulingTimeout: BigInt(initValues.defaultRulingTimeout),
         },
         {
           maxRatio: maxRatio,

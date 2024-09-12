@@ -86,7 +86,6 @@ type ArbitrableConfig {
   submitterCollateralAmount: BigInt!
   defaultRuling: BigInt!
   defaultRulingTimeout: BigInt!
-  allowlist: [String!]
 }
 
 input ArbitrableConfig_filter {
@@ -199,12 +198,6 @@ input ArbitrableConfig_filter {
   defaultRulingTimeout_lte: BigInt
   defaultRulingTimeout_in: [BigInt!]
   defaultRulingTimeout_not_in: [BigInt!]
-  allowlist: [String!]
-  allowlist_not: [String!]
-  allowlist_contains: [String!]
-  allowlist_contains_nocase: [String!]
-  allowlist_not_contains: [String!]
-  allowlist_not_contains_nocase: [String!]
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [ArbitrableConfig_filter]
@@ -229,7 +222,6 @@ enum ArbitrableConfig_orderBy {
   submitterCollateralAmount
   defaultRuling
   defaultRulingTimeout
-  allowlist
 }
 
 scalar BigDecimal
@@ -583,7 +575,6 @@ type CVStrategyConfig {
   proposalType: BigInt!
   pointSystem: BigInt!
   maxAmount: BigInt
-  allowlist: [String!]
 }
 
 input CVStrategyConfig_filter {
@@ -660,12 +651,6 @@ input CVStrategyConfig_filter {
   maxAmount_lte: BigInt
   maxAmount_in: [BigInt!]
   maxAmount_not_in: [BigInt!]
-  allowlist: [String!]
-  allowlist_not: [String!]
-  allowlist_contains: [String!]
-  allowlist_contains_nocase: [String!]
-  allowlist_not_contains: [String!]
-  allowlist_not_contains_nocase: [String!]
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [CVStrategyConfig_filter]
@@ -691,7 +676,6 @@ enum CVStrategyConfig_orderBy {
   proposalType
   pointSystem
   maxAmount
-  allowlist
 }
 
 input CVStrategy_filter {
