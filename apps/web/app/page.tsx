@@ -176,7 +176,7 @@ const Hero = () => {
               </p>
               <div className="mt-10 flex items-center gap-x-6">
                 <a
-                  href="/gardens"
+                  href="https://app.gardens.fund/"
                   className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
                   target="_blank"
                   rel="noreferrer"
