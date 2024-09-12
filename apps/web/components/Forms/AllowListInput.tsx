@@ -120,7 +120,7 @@ export function AllowListInput({
     } else {
       setErrorMessage("");
     }
-  }, [errors, registerKey, addresses.length]);
+  }, [errors[registerKey], addresses.length]);
 
   return (
     <div className="flex flex-col max-w-md">
@@ -182,8 +182,9 @@ export function AllowListInput({
             btnStyle="outline"
             className="!py-3 !px-4 flex items-center"
             onClick={() => addAddresses(newAddress)}
+            tooltip="Add"
           >
-            <PlusIcon className="w-5 h-5" /> Add
+            <PlusIcon className="w-5 h-5" />
           </Button>
         </div>
       : <div className="mb-4">
@@ -219,7 +220,8 @@ export function AllowListInput({
         <>
           <div className="flex justify-between items-center my-3">
             <h3 className="text-lg font-medium">
-              Allowlist ({addresses.length} addresses)
+              Allowlist ({addresses.length} address
+              {addresses.length !== 1 && "es"})
             </h3>
             <div className="flex space-x-1">
               <Button

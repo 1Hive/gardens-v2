@@ -123,7 +123,7 @@ const proposalInputMap: Record<string, number[]> = {
 };
 
 const sybilResistanceOptions: Record<SybilResistanceType, string> = {
-  noSybilResist: "No sybil resistance",
+  noSybilResist: "No authorization required",
   allowList: "Allow list",
   gitcoinPassport: "Gitcoin passport",
 };
@@ -134,7 +134,7 @@ const sybilResistancePreview = (
   value?: string | Address[],
 ): ReactNode => {
   const previewMap: Record<SybilResistanceType, ReactNode> = {
-    noSybilResist: "No sybil resistance required (anyone can vote)",
+    noSybilResist: "No authorization required (anyone can vote)",
     allowList: (
       <div className="flex items-center gap-2">
         <span className="">Allow list </span>
@@ -254,7 +254,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       },
     },
     sybilResistanceType: {
-      label: "Sybil resistance:",
+      label: "Pool voting authorization:",
       parse: () =>
         sybilResistancePreview(
           sybilResistanceType,
@@ -687,7 +687,7 @@ export function PoolForm({ token, communityAddr }: Props) {
           {shouldRenderInputMap("sybilResistanceType", strategyType) && (
             <div className="flex flex-col gap-4">
               <FormSelect
-                label="Sybil resistance type"
+                label="Pool voting authorization"
                 register={register}
                 errors={errors}
                 required
