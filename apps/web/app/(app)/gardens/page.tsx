@@ -6,7 +6,7 @@ import {
   getTokenGardensDocument,
   getTokenGardensQuery,
 } from "#/subgraph/.graphclient";
-import { clouds1, clouds2 } from "@/assets";
+import { clouds1, clouds2, groupFlowers } from "@/assets";
 import { GardenCard, InfoBox } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
@@ -83,10 +83,11 @@ export default function Page() {
             <div className="mx-10 flex flex-col items-center gap-5">
               <div className="flex flex-col items-center">
                 <h1 className="max-w-xl text-center text-neutral-content">
-                  Explore and Join Gardens Ecosystems
+                  Gardens
                 </h1>
-                <p className="text-xl text-primary-content">
-                  A place where you help shape digital economies
+                <p className="text-xl text-primary-content text-center">
+                  A place where communities grow through collective
+                  decision-making
                 </p>
               </div>
             </div>
@@ -101,6 +102,7 @@ export default function Page() {
             {GardenList}
           </div>
         </section>
+        <Image src={groupFlowers} alt="flowers" />
       </div>
     </>
   );

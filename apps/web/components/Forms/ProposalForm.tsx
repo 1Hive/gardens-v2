@@ -19,6 +19,7 @@ import { Button } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -150,6 +151,7 @@ export const ProposalForm = ({
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
@@ -419,7 +421,7 @@ export const ProposalForm = ({
             <Button
               onClick={() => createProposal()}
               isLoading={loading}
-              disabled={!isEnoughBalance}
+              disabled={!isEnoughBalance || !isConnected || missmatchUrl}
               tooltip={isEnoughBalance ? "" : "Insufficient balance"}
             >
               Submit
