@@ -9,7 +9,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
 import {IArbitrable} from "../interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
-import {console} from "forge-std/console.sol";
+// import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "../ISybilScorer.sol";
 
@@ -120,7 +120,6 @@ library StrategyStruct {
         ArbitrableConfig arbitrableConfig;
         address registryCommunity;
         address sybilScorer;
-        address[] initialAllowlist;
     }
 }
 
@@ -202,8 +201,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         uint256 defaultRuling,
         uint256 defaultRulingTimeout
     );
-    event AllowlistMembersRemoved(uint256 poolId, address[] members);
-    event AllowlistMembersAdded(uint256 poolId, address[] members);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -278,7 +275,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (ip.registryCommunity == address(0)) {
             revert RegistryCannotBeZero();
         }
-        //Set councilsafe to whitelist admin
+
         registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
 
         proposalType = ip.proposalType;
@@ -286,13 +283,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
 
-        // address[] memory emptyArray;
-        console.log("ALLOWLIST", ip.initialAllowlist[0]);
-        console.log("ALLO ADDRESS", address(allo));
-        console.log("CALLER", msg.sender);
-        console.log("cv address", address(this));
-
-        _setPoolParams(ip.arbitrableConfig, ip.cvParams, new address[](0), new address[](0));
+        _setPoolParams(ip.arbitrableConfig, ip.cvParams);
 
         emit InitializedCV(_poolId, ip);
     }
@@ -348,12 +339,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function _canExecuteAction(address _user) internal view virtual returns (bool) {
         if (address(sybilScorer) == address(0)) {
-            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-            if (registryCommunity.hasRole(allowlistRole, address(0))) {
-                return true;
-            } else {
-                return registryCommunity.hasRole(allowlistRole, _user);
-            }
+            return true;
         }
         return sybilScorer.canExecuteAction(_user, address(this));
     }
@@ -1068,41 +1054,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return totalPointsActivated;
     }
 
-    function addToAllowList(address[] memory members) public {
-        onlyCouncilSafe();
-        _addToAllowList(members);
-    }
-
-    function _addToAllowList(address[] memory members) internal {
-        bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-
-        if (registryCommunity.hasRole(allowlistRole, address(0))) {
-            registryCommunity.revokeRole(allowlistRole, address(0));
-        }
-        for (uint256 i = 0; i < members.length; i++) {
-            if (!registryCommunity.hasRole(allowlistRole, members[i])) {
-                registryCommunity.grantRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
-            }
-        }
-
-        emit AllowlistMembersAdded(poolId, members);
-    }
-
-    function removeFromAllowList(address[] memory members) external {
-        onlyCouncilSafe();
-        _removeFromAllowList(members);
-    }
-
-    function _removeFromAllowList(address[] memory members) internal {
-        for (uint256 i = 0; i < members.length; i++) {
-            if (registryCommunity.hasRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i])) {
-                registryCommunity.revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
-            }
-        }
-
-        emit AllowlistMembersRemoved(poolId, members);
-    }
-
     /**
      * @dev Calculate conviction and store it on the proposal
      * @param _proposal Proposal
@@ -1143,9 +1094,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function _setPoolParams(
         StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
-        StrategyStruct.CVParams memory _cvParams,
-        address[] memory membersToAdd,
-        address[] memory membersToRemove
+        StrategyStruct.CVParams memory _cvParams
     ) internal virtual {
         if (
             _arbitrableConfig.tribunalSafe != address(0) && address(_arbitrableConfig.arbitrator) != address(0)
@@ -1184,9 +1133,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
                 _arbitrableConfig.defaultRulingTimeout
             );
         }
+
         cvParams = _cvParams;
-        _addToAllowList(membersToAdd);
-        _removeFromAllowList(membersToRemove);
         emit CVParamsUpdated(_cvParams);
     }
 
@@ -1224,20 +1172,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function setPoolParams(
         StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
-        StrategyStruct.CVParams memory _cvParams,
-        address[] memory membersToAdd,
-        address[] memory membersToRemove
+        StrategyStruct.CVParams memory _cvParams
     ) external virtual {
         onlyCouncilSafe();
-        _setPoolParams(_arbitrableConfig, _cvParams, membersToAdd, membersToRemove);
-    }
-
-    function setPoolParams(
-        StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
-        StrategyStruct.CVParams memory _cvParams
-    ) external {
-        onlyCouncilSafe();
-        _setPoolParams(_arbitrableConfig, _cvParams, new address[](0), new address[](0));
+        _setPoolParams(_arbitrableConfig, _cvParams);
     }
 
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)

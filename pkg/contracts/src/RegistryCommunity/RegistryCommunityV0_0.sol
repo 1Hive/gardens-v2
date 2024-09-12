@@ -228,7 +228,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     function setStrategyTemplate(address template) external onlyOwner {
         strategyTemplate = template;
     }
-    
+
     function setCollateralVaultTemplate(address template) external onlyOwner {
         collateralVaultTemplate = template;
     }
@@ -314,23 +314,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
             )
         );
 
-        (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
-
-        if (address(_params.sybilScorer) == address(0)) {
-            if(_params.initialAllowlist.length > 1000){
-                revert("Too many initial allowlist members, max is 1000");
-            }
-            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
-            for (uint256 i = 0; i < _params.initialAllowlist.length; i++) {
-                _grantRole(allowlistRole, _params.initialAllowlist[i]);
-            }
-        }
-
-        // Grant the strategy to grant for startegy specific allowlist
-        _setRoleAdmin(
-            keccak256(abi.encodePacked("ALLOWLIST", poolId)), keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
-        );
-        _grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
+        return createPool(strategyProxy, _token, _params, _metadata);
     }
 
     function createPool(
@@ -354,11 +338,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
     }
 
-<<<<<<< HEAD
-    function activateMemberInStrategy(address _member, address _strategy) public nonReentrant{
-=======
-    function activateMemberInStrategy(address _member, address _strategy) public virtual {
->>>>>>> origin/dev
+    function activateMemberInStrategy(address _member, address _strategy) public virtual nonReentrant {
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
         _revertZeroAddress(_strategy);
