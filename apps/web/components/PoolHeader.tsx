@@ -52,6 +52,7 @@ type Props = {
     | "tribunalSafe"
     | "submitterCollateralAmount"
     | "challengerCollateralAmount"
+    | "defaultRulingTimeout"
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
   poolToken: FetchTokenResult;
@@ -310,6 +311,7 @@ export default function PoolHeader({
               proposalCollateral: proposalCollateral,
               disputeCollateral: disputeCollateral,
               tribunalAddress: tribunalAddress,
+              defaultRulingTimeout: arbitrableConfig.defaultRulingTimeout,
             }}
             setModalOpen={setIsOpenModal}
           />

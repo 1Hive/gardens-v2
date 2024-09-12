@@ -2,13 +2,14 @@
 "use client";
 
 import { HTMLInputTypeAttribute } from "react";
+import MarkdownEditor from "@uiw/react-md-editor";
 import { RegisterOptions } from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
 
 type Props = {
   label?: string;
   subLabel?: string | undefined;
-  type: HTMLInputTypeAttribute;
+  type: HTMLInputTypeAttribute | "markdown";
   registerKey?: string;
   placeholder?: string;
   register?: any;
@@ -67,8 +68,10 @@ export function FormInput({
         </label>
       )}
       {subLabel && <p className="mb-1 text-xs">{subLabel}</p>}
-      <div className={`relative ${type !== "textarea" && "max-w-md"}`}>
-        {type !== "textarea" ?
+      <div
+        className={`relative ${type !== "textarea" && type !== "markdown" && "max-w-md"}`}
+      >
+        {type !== "textarea" && type !== "markdown" ?
           <input
             id={registerKey}
             onChange={onChange}
@@ -90,16 +93,37 @@ export function FormInput({
             })}
             {...otherProps}
           />
-        : <textarea
+        : type === "textarea" ?
+          <textarea
+            id={registerKey}
             placeholder={placeholder}
             className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 ${
               errors[registerKey] ? "input-error" : "input-info"
             }`}
+            value={value}
+            onChange={onChange}
             required={required}
             rows={rows}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
+            {...register(registerKey, {
+              required,
+              ...registerOptions,
+            })}
+            {...otherProps}
+          />
+        : <MarkdownEditor
             id={registerKey}
+            data-color-mode="light"
+            className={`${className} ${
+              errors[registerKey] ? "input-error" : "input-info"
+            }`}
+            value={value}
+            onChange={onChange}
+            required={required}
+            rows={rows}
+            disabled={disabled || readOnly}
+            readOnly={readOnly || disabled}
             {...register(registerKey, {
               required,
               ...registerOptions,
