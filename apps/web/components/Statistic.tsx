@@ -15,9 +15,12 @@ export const Statistic = ({
   label,
   children,
   tooltip,
+  className,
 }: IdentifierProps) => {
   return (
-    <div className="flex items-center gap-2 text-neutral-soft-content">
+    <div
+      className={`flex items-center gap-2 text-neutral-soft-content ${className}`}
+    >
       {icon && <div className="w-6 h-6">{icon}</div>}
       <div className={"tooltip flex items-center max-w-sm"} data-tip={tooltip}>
         {label && (

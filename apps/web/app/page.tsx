@@ -13,7 +13,7 @@ import {
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { newLogo, commF, BrightIdLogo } from "@/assets";
+import { newLogo, commF, BrightIdLogo, PublicNounsLogo } from "@/assets";
 import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 
@@ -536,8 +536,7 @@ const Protopians = () => {
             <h2>Trusted by leading communities</h2>
             <p className="mt-6 ext-lg leading-8">
               Join the Protopians — early adopters who backed our Juicebox
-              funding round and are shaping the future with us. Discover why the
-              most innovative communities choose us.
+              funding round and are shaping the future with us.
             </p>
             <div className="mt-8 flex items-center gap-x-6">
               <a
@@ -546,7 +545,7 @@ const Protopians = () => {
                 rel="noreferrer"
                 className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
               >
-                Get a Protopian
+                Get NFT and become a Protopian
                 <ArrowRightIcon
                   width={16}
                   height={16}
@@ -556,48 +555,41 @@ const Protopians = () => {
             </div>
           </div>
           <div className="mx-auto grid w-full max-w-xl grid-cols-2 items-center gap-y-12 sm:gap-y-14 lg:mx-0 lg:max-w-none lg:pl-8">
-            <a
-              href="https://www.brightid.org/"
-              className="hover:scale-105 transition-all duration-200 ease-in-out"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Image
-                src={BrightIdLogo}
-                alt="logo"
-                height={66}
-                width={175}
-                loading="lazy"
-              />
-            </a>
-            <a
-              href="https://www.brightid.org/"
-              className="hover:scale-105 transition-all duration-200 ease-in-out"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Image
-                src={BrightIdLogo}
-                alt="logo"
-                height={66}
-                width={175}
-                loading="lazy"
-              />
-            </a>
-            <a
-              href="https://www.brightid.org/"
-              className="hover:scale-105 transition-all duration-200 ease-in-out"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Image
-                src={BrightIdLogo}
-                alt="logo"
-                height={66}
-                width={175}
-                loading="lazy"
-              />
-            </a>
+            <div className="flex flex-col items-center gap-1">
+              <a
+                href="https://www.brightid.org/"
+                className="hover:scale-105 transition-all duration-200 ease-in-out"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Image
+                  src={BrightIdLogo}
+                  alt="logo"
+                  height={66}
+                  width={175}
+                  loading="lazy"
+                  className="max-h-[60px]"
+                />
+              </a>
+              <p className="subtitle2">BrightID</p>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <a
+                href="https://publicnouns.wtf/"
+                className="hover:scale-105 transition-all duration-200 ease-in-out flex flex-col items-center"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Image
+                  src={PublicNounsLogo}
+                  alt="logo"
+                  height={66}
+                  width={175}
+                  loading="lazy"
+                />
+              </a>
+              <p className="subtitle2">Public Nouns</p>
+            </div>
           </div>
         </div>
       </div>

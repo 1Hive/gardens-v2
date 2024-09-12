@@ -86,7 +86,8 @@ export default function Page() {
                   Gardens
                 </h1>
                 <p className="text-xl text-primary-content text-center">
-                  A place to grow communities via collective decision-making
+                  A place where communities grow through collective
+                  decision-making
                 </p>
               </div>
             </div>
