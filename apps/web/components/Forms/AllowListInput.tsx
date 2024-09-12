@@ -13,6 +13,7 @@ import {
   UseFormSetValue,
 } from "react-hook-form";
 import { Address } from "viem";
+import { FormAddressInput } from "./FormAddressInput";
 import { Button } from "../Button";
 import { InfoWrapper } from "../InfoWrapper";
 
@@ -146,9 +147,9 @@ export function AllowListInput({
       >
         <button
           type="button"
-          className={`w-full py-2 rounded-lg text-center px-4 ${
+          className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
             inputMode === "single" ?
-              "border border-secondary-content bg-secondary-soft text-black -m-[1px]"
+              "border border-border-neutral bg-neutral-soft text-black -m-[1px]"
             : ""
           }`}
           onClick={() => setInputMode("single")}
@@ -157,9 +158,9 @@ export function AllowListInput({
         </button>
         <button
           type="button"
-          className={`w-full py-2 rounded-lg text-center px-4 ${
+          className={`w-full py-2 rounded-lg text-center px-4 text-semibold ${
             inputMode === "bulk" ?
-              "border border-secondary-content bg-secondary-soft text-black -m-[1px]"
+              "border border-border-neutral bg-neutral-soft text-black -m-[1px]"
             : ""
           }`}
           onClick={() => setInputMode("bulk")}
@@ -167,18 +168,14 @@ export function AllowListInput({
           Bulk Input
         </button>
       </div>
-
       {inputMode === "single" ?
-        <div className="flex mb-4">
-          <input
-            type="text"
-            value={newAddress}
-            onChange={(e) => setNewAddress(e.target.value)}
-            required={required && addresses.length === 0}
+        <div className="flex mb-4 gap-2">
+          <FormAddressInput
             placeholder={placeholder}
-            className={`input input-bordered input-info w-full max-w-md mr-2 ${
-              className ?? ""
-            }`}
+            required={required && addresses.length === 0}
+            onChange={(e) => setNewAddress(e)}
+            value={newAddress}
+            className="w-full"
           />
           <Button
             type="button"
@@ -186,7 +183,7 @@ export function AllowListInput({
             className="!py-3 !px-4 flex items-center"
             onClick={() => addAddresses(newAddress)}
           >
-            <PlusIcon className="w-5 h-5 mr-2" /> Add
+            <PlusIcon className="w-5 h-5" /> Add
           </Button>
         </div>
       : <div className="mb-4">
@@ -206,8 +203,7 @@ export function AllowListInput({
             className=""
             onClick={() => addAddresses(bulkAddresses)}
           >
-            <ArrowUpTrayIcon className="w-5 h-5 mr-2 stroke-2" /> Add Bulk
-            Addresses
+            <ArrowUpTrayIcon className="w-5 h-5 stroke-2" /> Add Bulk Addresses
           </Button>
         </div>
       }
@@ -252,6 +248,7 @@ export function AllowListInput({
           <ul className="space-y-2 max-h-60 overflow-y-auto border1 p-2 rounded-xl">
             {addresses.map((address, index) => (
               <li
+                // eslint-disable-next-line react/no-array-index-key
                 key={`addr_${index}`}
                 className="flex items-center justify-between bg-base-200 rounded"
               >
@@ -260,7 +257,7 @@ export function AllowListInput({
                 </span>
                 <Button
                   type="button"
-                  btnStyle="outline"
+                  btnStyle="link"
                   className="!p-[2px] !text-black !border-black"
                   onClick={() => removeAddress(index)}
                 >

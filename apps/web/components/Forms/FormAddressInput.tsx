@@ -16,7 +16,7 @@ type Props = {
   placeholder?: string;
   errors?: any;
   register?: any;
-  registerKey: string;
+  registerKey?: string;
   registerOptions?: RegisterOptions;
   required?: boolean;
   readOnly?: boolean;
@@ -91,7 +91,7 @@ export const FormAddressInput = ({
   }, [resolvedAddress, input]);
 
   let modifier = "";
-  if (errors || !isValid) {
+  if (input && (errors || !isValid)) {
     modifier = "border-error";
   } else if (disabled) {
     modifier = "border-disabled";

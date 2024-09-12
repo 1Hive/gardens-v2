@@ -9,7 +9,6 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { Button } from "../Button";
 import { EthAddress } from "../EthAddress";
-import { InfoBox } from "../InfoBox";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";

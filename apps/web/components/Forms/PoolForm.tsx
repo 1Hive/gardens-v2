@@ -557,7 +557,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       trigger("poolTokenAddress");
     }
   }, [customTokenData, watchedAddress, trigger]);
-  console.log(sybilResistanceValue, errors);
+  console.debug(sybilResistanceValue, errors);
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
