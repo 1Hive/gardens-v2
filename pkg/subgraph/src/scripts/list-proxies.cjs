@@ -3,7 +3,7 @@ const { fromHex } = require("viem");
 
 const localhostSubgraph = "http://localhost:8000/subgraphs/name/kamikazebr/gv2";
 const arbitrumSepoliaSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-arbsepolia/version/latest";
+  "https://api.studio.thegraph.com/query/70985/gv2-arbsepolia/0.25";
 
 const arbitrumSubgraph =
   "https://api.studio.thegraph.com/query/70985/gv2-arbitrum/version/latest";
@@ -96,6 +96,22 @@ async function extractProxies(chainId) {
   }
 
   const result = await response.json();
+
+  if (!result.data) {
+    throw new Error("Error in response: " + (await response.text()));
+  }
+
+  // console.log({
+  //   registryFactories: result.data.registryFactories,
+  // });
+
+  // console.log({
+  //   registryCommunities: result.data.registryCommunities,
+  // });
+
+  // console.log({
+  //   cvstrategies: result.data.cvstrategies,
+  // });
 
   result.data.registryFactories.forEach((factory) => {
     registryFactoryProxy = factory.id;

@@ -7,7 +7,7 @@ import {
   getTokenGardensQuery,
 } from "#/subgraph/.graphclient";
 import { clouds1, clouds2 } from "@/assets";
-import { GardenCard } from "@/components";
+import { GardenCard, InfoBox } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useSubgraphQueryMultiChain } from "@/hooks/useSubgraphQueryMultiChain";
 
@@ -53,7 +53,22 @@ export default function Page() {
         </>
       );
     } else {
-      return <div className="text-center">No Gardens</div>;
+      return (
+        <>
+          <InfoBox infoBoxType="info">
+            <span />
+            Be the first to create your community 🌱 <br />
+            <a
+              target="_blank"
+              href="https://discord.gg/H8fNyAWSBy"
+              className="text-accent"
+              rel="noreferrer"
+            >
+              https://discord.gg/FjEVDqC6EP
+            </a>
+          </InfoBox>
+        </>
+      );
     }
   }, [fetching, tokenGardens?.length]);
 

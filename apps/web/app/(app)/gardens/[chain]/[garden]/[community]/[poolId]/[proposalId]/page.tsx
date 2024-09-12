@@ -16,6 +16,7 @@ import {
   EthAddress,
   Statistic,
 } from "@/components";
+import CancelButton from "@/components/CancelButton";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -24,9 +25,9 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
-import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { alloABI, cvStrategyABI } from "@/src/generated";
+import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
@@ -80,7 +81,7 @@ export default function Page({
     address: poolTokenAddr,
     enabled: !!poolTokenAddr,
   });
-  const { data: ipfsResult } = useProposalMetadataIpfsFetch({
+  const { data: ipfsResult } = useMetadataIpfsFetch({
     hash: proposalData?.metadataHash,
     enabled: !proposalData?.metadata,
   });
@@ -132,24 +133,6 @@ export default function Page({
         topic: "proposal",
         type: "update",
         function: "distribute",
-        id: proposalNumber,
-        containerId: strategyId,
-        chainId,
-      });
-    },
-  });
-
-  const { write: writeCancel } = useContractWriteWithConfirmations({
-    address: strategyId as Address,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "cancelProposal",
-    contractName: "CV Strategy",
-    fallbackErrorMessage: "Error cancelling proposal. Please try again.",
-    onConfirmations: () => {
-      publish({
-        topic: "proposal",
-        type: "update",
-        function: "cancelProposal",
         id: proposalNumber,
         containerId: strategyId,
         chainId,
@@ -235,13 +218,9 @@ export default function Page({
               </div>
               <div className="flex items-end">
                 {isProposerConnected && proposalStatus === "active" ?
-                  <Button
-                    btnStyle="outline"
-                    color="danger"
-                    onClick={() => writeCancel({ args: [proposalIdNumber] })}
-                  >
-                    Cancel
-                  </Button>
+                  <CancelButton
+                    proposalData={{ ...proposalData, ...metadata }}
+                  />
                 : <DisputeButton
                     proposalData={{ ...proposalData, ...metadata }}
                   />
@@ -258,7 +237,7 @@ export default function Page({
           >
             {status === "executed" ?
               "Proposal passed and executed successfully!"
-            : `Proposal as been ${status}.`}
+            : `Proposal has been ${status}.`}
           </h4>
         : <>
             <div className="flex justify-between">

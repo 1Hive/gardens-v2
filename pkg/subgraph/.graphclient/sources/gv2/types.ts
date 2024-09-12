@@ -93,6 +93,7 @@ export type ArbitrableConfig = {
   submitterCollateralAmount: Scalars['BigInt']['output'];
   defaultRuling: Scalars['BigInt']['output'];
   defaultRulingTimeout: Scalars['BigInt']['output'];
+  allowlist?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 export type ArbitrableConfig_filter = {
@@ -205,6 +206,12 @@ export type ArbitrableConfig_filter = {
   defaultRulingTimeout_lte?: InputMaybe<Scalars['BigInt']['input']>;
   defaultRulingTimeout_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   defaultRulingTimeout_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  allowlist?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
@@ -228,7 +235,8 @@ export type ArbitrableConfig_orderBy =
   | 'challengerCollateralAmount'
   | 'submitterCollateralAmount'
   | 'defaultRuling'
-  | 'defaultRulingTimeout';
+  | 'defaultRulingTimeout'
+  | 'allowlist';
 
 export type BlockChangedFilter = {
   number_gte: Scalars['Int']['input'];
@@ -592,6 +600,7 @@ export type CVStrategyConfig = {
   proposalType: Scalars['BigInt']['output'];
   pointSystem: Scalars['BigInt']['output'];
   maxAmount?: Maybe<Scalars['BigInt']['output']>;
+  allowlist?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 export type CVStrategyConfig_filter = {
@@ -668,6 +677,12 @@ export type CVStrategyConfig_filter = {
   maxAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
   maxAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   maxAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  allowlist?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
@@ -692,7 +707,8 @@ export type CVStrategyConfig_orderBy =
   | 'weight'
   | 'proposalType'
   | 'pointSystem'
-  | 'maxAmount';
+  | 'maxAmount'
+  | 'allowlist';
 
 export type CVStrategy_filter = {
   id?: InputMaybe<Scalars['ID']['input']>;
