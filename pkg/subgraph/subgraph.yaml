@@ -12,9 +12,9 @@ dataSources:
         type: Int
         data: 421614
     source:
-      address: "0xe5294937f881a0b3805f2c8bf8183def1200d685"
+      address: "0xf7e551e8b815b9ecc3922f833551d6f47a8159ec"
       abi: RegistryFactoryV0_0
-      startBlock: 78248039
+      startBlock: 79714794
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -46,9 +46,9 @@ dataSources:
         type: Int
         data: 421614
     source:
-      address: "0x7c3f14ae55dd041c2623c168074bf0b2ae06480a"
+      address: "0xd49884140c6bcf4bda7cce84cc607a7ef2b9b2f1"
       abi: PassportScorer
-      startBlock: 78248039
+      startBlock: 79714794
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -71,10 +71,10 @@ dataSources:
 
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunityV0_0
+    name: RegistryCommunityV0_1
     network: arbitrum-sepolia
     source:
-      abi: RegistryCommunityV0_0
+      abi: RegistryCommunityV0_1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -86,12 +86,12 @@ templates:
         - TokenGarden
         - Member
       abis:
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: RegistryCommunityV0_1
+          file: ../contracts/out/RegistryCommunityV0_1.sol/RegistryCommunityV0_1.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategyV0_1
+          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
         - name: RegistryFactoryV0_0
           file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
      
@@ -133,10 +133,10 @@ templates:
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategyV0_0
+    name: CVStrategyV0_1
     network: arbitrum-sepolia
     source:
-      abi: CVStrategyV0_0
+      abi: CVStrategyV0_1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -147,15 +147,17 @@ templates:
         - CVProposal
         - Allo
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: CVStrategyV0_1
+          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
+        - name: RegistryCommunityV0_1
+          file: ../contracts/out/RegistryCommunityV0_1.sol/RegistryCommunityV0_1.json
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address[]))
+        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
+        - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address[]))
+          handler: handleInitializedV2
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
         - event: PoolAmountIncreased(uint256)
@@ -197,8 +199,8 @@ templates:
       entities:
         - ProposalDisputeMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategyV0_1
+          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
   
   - name: ProposalMetadata
     kind: file/ipfs
@@ -210,5 +212,5 @@ templates:
       entities:
         - ProposalMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategyV0_1
+          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json

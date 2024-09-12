@@ -3188,6 +3188,7 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     }>, options?: TOperationContext): Promise<getPoolCreationDataQuery>;
     getGardenCommunities(variables: Exact<{
         chainId: any;
+        tokenGarden: string;
     }>, options?: TOperationContext): Promise<getGardenCommunitiesQuery>;
     getCommunity(variables: Exact<{
         communityAddr: string;
@@ -3315,9 +3316,11 @@ export type getPoolCreationDataQuery = {
 };
 export type getGardenCommunitiesQueryVariables = Exact<{
     chainId: Scalars['BigInt']['input'];
+    tokenGarden: Scalars['ID']['input'];
 }>;
 export type getGardenCommunitiesQuery = {
     registryCommunities: Array<(Pick<RegistryCommunity, 'id' | 'chainId' | 'isValid' | 'covenantIpfsHash' | 'communityName' | 'protocolFee' | 'communityFee' | 'registerToken' | 'registerStakeAmount' | 'alloAddress'> & {
+        garden: Pick<TokenGarden, 'id'>;
         members?: Maybe<Array<Pick<MemberCommunity, 'id' | 'memberAddress'>>>;
         strategies?: Maybe<Array<Pick<CVStrategy, 'id' | 'totalEffectiveActivePoints' | 'poolId' | 'poolAmount'>>>;
     })>;
@@ -3496,6 +3499,7 @@ export declare const getPoolCreationDataDocument: DocumentNode<getPoolCreationDa
 }>>;
 export declare const getGardenCommunitiesDocument: DocumentNode<getGardenCommunitiesQuery, Exact<{
     chainId: Scalars['BigInt']['input'];
+    tokenGarden: Scalars['ID']['input'];
 }>>;
 export declare const getCommunityDocument: DocumentNode<getCommunityQuery, Exact<{
     communityAddr: Scalars['ID']['input'];

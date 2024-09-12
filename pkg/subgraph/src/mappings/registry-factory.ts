@@ -1,4 +1,4 @@
-import { RegistryCommunityV0_0 as CommunityTemplate } from "../../generated/templates";
+import { RegistryCommunityV0_1 as CommunityTemplate } from "../../generated/templates";
 import { RegistryFactory, RegistryCommunity } from "../../generated/schema";
 
 import {

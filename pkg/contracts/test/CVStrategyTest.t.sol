@@ -196,7 +196,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             StrategyStruct.PointSystem.Unlimited,
             StrategyStruct.PointSystemConfig(200 * DECIMALS),
             arbitrableConfig
-        );
+            );
 
         // CVStrategyV0_0 strategy = new CVStrategyV0_0(address(allo()));
 

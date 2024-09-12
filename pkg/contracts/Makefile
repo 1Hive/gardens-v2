@@ -113,11 +113,27 @@ deploy-testnet-multi-arb:
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--ffi \
 	--chain-id 421614 \
 	--broadcast \
 	--legacy \
 	--via-ir \
+	--verify \
+	-vvvvv
+
+upgrade-testnet-multi-arb: 
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--ffi \
+	--chain-id 421614 \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	--verify \
 	-vvv
 
 verify-testnet-multi-arb: 
@@ -222,6 +238,7 @@ deploy-testnet-multi-op:
 	--ffi \
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--broadcast \
+	--verify \
 	-vvv
 
 # Arbitrum
@@ -236,6 +253,20 @@ deploy-multi-arbitrum:
 	--broadcast \
 	--legacy \
 	--via-ir \
+	-vvv
+
+upgrade-multi-arbitrum: 
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--account pkGarden \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--ffi \
+	--chain-id 42161 \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	--verify \
 	-vvv
 
 verify-arbitrum: 
@@ -266,6 +297,21 @@ deploy-multi-optimism:
 	--via-ir \
 	-vvv
 
+upgrade-multi-optimism: 
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--ffi \
+	--chain-id 10 \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	--verify \
+	-vvv
+
+
 verify-optimism: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_OPT) \
@@ -274,6 +320,48 @@ verify-optimism:
 	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--ffi \
 	--chain-id 10 \
+	--legacy \
+	--verify \
+	--via-ir \
+	-vvv \
+	--slow
+
+# Polygon
+
+deploy-multi-polygon: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--account pkGarden \
+	--ffi \
+	--chain-id 137 \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	-vvv
+
+upgrade-multi-polygon: 
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--account pkGarden \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--ffi \
+	--chain-id 137 \
+	--broadcast \
+	--legacy \
+	--via-ir \
+	--verify \
+	-vvv
+
+verify-polygon: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--account pkGarden \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--ffi \
+	--chain-id 137 \
 	--legacy \
 	--verify \
 	--via-ir \
@@ -302,34 +390,6 @@ verify-mainnet:
 	--etherscan-api-key $(ETHERSCAN_API_KEY) \
 	--ffi \
 	--chain-id 1 \
-	--legacy \
-	--verify \
-	--via-ir \
-	-vvv \
-	--slow
-
-# Polygon
-
-deploy-multi-polygon: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
-	--rpc-url $(RPC_URL_POLYGON) \
-	--sig "run(string)" 'polygon' \
-	--account pkGarden \
-	--ffi \
-	--chain-id 137 \
-	--broadcast \
-	--legacy \
-	--via-ir \
-	-vvv
-
-verify-polygon: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
-	--rpc-url $(RPC_URL_POLYGON) \
-	--sig "run(string)" 'polygon' \
-	--account pkGarden \
-	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
-	--ffi \
-	--chain-id 137 \
 	--legacy \
 	--verify \
 	--via-ir \

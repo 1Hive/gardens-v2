@@ -13,7 +13,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
-import { useProposalMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
+import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
 import { CV_SCALE_PRECISION } from "@/utils/numbers";
@@ -57,7 +57,7 @@ export default function Page({
     }
   }, [error]);
 
-  const { metadata: ipfsResult } = useProposalMetadataIpfsFetch({
+  const { metadata: ipfsResult } = useMetadataIpfsFetch({
     hash: data?.cvstrategies?.[0]?.metadata,
   });
 

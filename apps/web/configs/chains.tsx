@@ -6,7 +6,7 @@ import {
   Optimism,
   Polygon,
 } from "@thirdweb-dev/chain-icons";
-import { Address, zeroAddress } from "viem";
+import { Address } from "viem";
 import {
   arbitrum,
   arbitrumSepolia,
@@ -54,8 +54,8 @@ type ChainData = {
   isTestnet: boolean;
 };
 
-const SUBGRAPH_TESTNET_VERSION = "0.29";
-const SUBGRAPH_PRODNET_VERSION = "1.0";
+const SUBGRAPH_TESTNET_VERSION = "0.1.0";
+const SUBGRAPH_PRODNET_VERSION = "1.3";
 
 export const chainConfigMap: {
   [key: number | string]: ChainData;
@@ -78,7 +78,7 @@ export const chainConfigMap: {
   421614: {
     name: arbitrumSepolia.name,
     icon: Arbitrum,
-    explorer: "https://sepolia-explorer.arbitrum.io",
+    explorer: "https://arbitrum-sepolia.blockscout.com/",
     blockTime: 0.23,
     confirmations: 7,
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET!,
@@ -223,6 +223,6 @@ export function getChain(chainId: ChainId): Chain | undefined {
 
 export const ChainIcon: FC<ChainIconProps> = ({ chain, ...props }) => {
   const numericChainId = Number(chain);
-  const IconComponent = chainConfigMap[numericChainId].icon;
+  const IconComponent = chainConfigMap[numericChainId]?.icon;
   return IconComponent ? <IconComponent {...props} /> : null;
 };

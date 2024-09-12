@@ -20,10 +20,11 @@ const MarkdownWrapper = ({ children, optionsOverride }: Props) => {
           h5: { props: { className: "text-sm font-semibold" } },
           h6: { props: { className: "text-xs font-semibold" } },
         },
+
         ...optionsOverride,
       }}
     >
-      {children}
+      {children.replace(/\n/g, "\n\r")}
     </Markdown>
   );
 };
