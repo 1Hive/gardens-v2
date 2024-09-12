@@ -264,7 +264,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
-    function initialize(uint256 _poolId, bytes memory _data) external onlyAllo {
+    function initialize(uint256 _poolId, bytes memory _data) external virtual onlyAllo {
         __BaseStrategy_init(_poolId);
 
         collateralVault = ICollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));

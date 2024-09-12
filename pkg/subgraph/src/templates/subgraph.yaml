@@ -9,10 +9,10 @@ dataSources:
 {{/dataSources}}
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunityV0_0
+    name: RegistryCommunityV0_1
     network: {{network}}
     source:
-      abi: RegistryCommunityV0_0
+      abi: RegistryCommunityV0_1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -24,12 +24,12 @@ templates:
         - TokenGarden
         - Member
       abis:
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: RegistryCommunityV0_1
+          file: ../contracts/out/RegistryCommunityV0_1.sol/RegistryCommunityV0_1.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategyV0_1
+          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
         - name: RegistryFactoryV0_0
           file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
      
@@ -71,10 +71,10 @@ templates:
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategyV0_0
+    name: CVStrategyV0_1
     network: {{network}}
     source:
-      abi: CVStrategyV0_0
+      abi: CVStrategyV0_1
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -85,15 +85,17 @@ templates:
         - CVProposal
         - Allo
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
-        - name: RegistryCommunityV0_0
-          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
+        - name: CVStrategyV0_1
+          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
+        - name: RegistryCommunityV0_1
+          file: ../contracts/out/RegistryCommunityV0_1.sol/RegistryCommunityV0_1.json
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
-        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address[]))
+        - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
+        - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address[]))
+          handler: handleInitializedV2
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
         - event: PoolAmountIncreased(uint256)
@@ -135,8 +137,8 @@ templates:
       entities:
         - ProposalDisputeMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategyV0_1
+          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
   
   - name: ProposalMetadata
     kind: file/ipfs
@@ -148,5 +150,5 @@ templates:
       entities:
         - ProposalMetadata
       abis:
-        - name: CVStrategyV0_0
-          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: CVStrategyV0_1
+          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
