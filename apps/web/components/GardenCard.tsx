@@ -16,7 +16,7 @@ type TokenGarden = getTokenGardensQuery["tokenGardens"][number];
 
 export function GardenCard({ garden }: { garden: TokenGarden }) {
   const { id, name, chainId } = garden;
-  const link = `/gardens/${chainId}/${id}`;
+  const link = `/${chainId}/${id}`;
   const communities = garden.communities?.filter((comm) => comm.isValid);
   const commLength = communities?.length ?? 0;
 

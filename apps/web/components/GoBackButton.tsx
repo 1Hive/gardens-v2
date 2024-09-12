@@ -10,7 +10,7 @@ export const GoBackButton = () => {
 
   return (
     <>
-      {path === "/gardens" ? null : (
+      {path === "/" ? null : (
         <Button
           aria-label="Go back"
           btnStyle="link"

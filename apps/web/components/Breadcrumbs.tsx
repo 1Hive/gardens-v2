@@ -39,7 +39,7 @@ export function Breadcrumbs() {
 
     return segments
       .map((segment, index) => {
-        if (index < 2) {
+        if (index < 1) {
           return undefined;
         }
 
@@ -48,8 +48,8 @@ export function Breadcrumbs() {
           segment.startsWith("0x") ? truncateString(segment) : segment;
 
         if (titles) {
-          // index correction as first 2 segments are /gardens/[chainId]
-          const title = titles[index - 2];
+          // index correction as first 1 segments are /[chainId]
+          const title = titles[index - 1];
           if (title) {
             displayLabel = title;
           }

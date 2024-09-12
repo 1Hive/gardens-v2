@@ -26,7 +26,7 @@ export function NavBar() {
               <div className="flex gap-8">
                 <div className="flex flex-shrink-0 items-center gap-3 text-sm">
                   <Link
-                    href="/gardens"
+                    href="/"
                     className="flex items-center gap-3 text-sm"
                   >
                     <Image

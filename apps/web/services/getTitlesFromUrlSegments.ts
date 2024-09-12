@@ -49,7 +49,7 @@ interface QueryMapItem {
 }
 
 const queryMap: Record<number, QueryMapItem> = {
-  3: {
+  2: {
     document: getCommunityTitlesDocument,
     getVariables: (communityAddr: string) => ({
       communityAddr: communityAddr.toLowerCase(),
@@ -61,7 +61,7 @@ const queryMap: Record<number, QueryMapItem> = {
       return [community?.garden?.name, community?.communityName ?? undefined];
     },
   },
-  4: {
+  3: {
     document: getPoolTitlesDocument,
     getVariables: (poolId: string) => ({ poolId }),
     parseResult: async (
@@ -76,7 +76,7 @@ const queryMap: Record<number, QueryMapItem> = {
       ];
     },
   },
-  5: {
+  4: {
     document: getProposalTitlesDocument,
     getVariables: (proposalId: string) => ({ proposalId }),
     parseResult: async (
@@ -146,20 +146,20 @@ export async function getTitlesFromUrlSegments(
   segments: string[],
 ): Promise<(string | undefined)[] | undefined> {
   const segmentsLength = segments.length;
-  if (segmentsLength < 3) {
+  if (segmentsLength < 2) {
     return undefined;
   }
 
   const isStaticSegment = segments[segmentsLength - 1].includes("create");
   const entityIndex = isStaticSegment ? segmentsLength - 2 : segmentsLength - 1;
 
-  if (entityIndex === 2) {
+  if (entityIndex === 1) {
     const tokenArgs = {
-      address: segments[2] as Address,
-      chainId: parseInt(segments[1]),
+      address: segments[1] as Address,
+      chainId: parseInt(segments[0]),
     };
     const tokenData = await fetchToken(tokenArgs)
-      .then((token) => token?.symbol)
+      .then((token) => token?.name)
       .catch(() => {
         console.error("Error fetching token from address: ", tokenArgs);
         toast.error("Token not found");
@@ -173,7 +173,7 @@ export async function getTitlesFromUrlSegments(
   try {
     const result = await queryByChain(
       urqlClient,
-      segments[1],
+      segments[0],
       queryItem.document,
       queryItem.getVariables(segments[entityIndex]),
     );

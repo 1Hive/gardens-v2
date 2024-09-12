@@ -13,7 +13,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       className="bg-fixed bg-cover min-h-screen"
       style={{
         backgroundImage:
-          pathname === "/gardens" ? `url('${Banner.src}')` : undefined,
+          pathname === "/" ? `url('${Banner.src}')` : undefined,
       }}
     >
       <NavBar />

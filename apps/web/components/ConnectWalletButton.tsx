@@ -25,7 +25,7 @@ export function ConnectWallet() {
   const account = useAccount();
   const chainFromPath = useChainFromPath();
   const urlChainId = chainFromPath?.id;
-  const tokenUrlAddress = path.split("/")[3];
+  const tokenUrlAddress = path.split("/")[2];
 
   const { switchNetwork } = useSwitchNetwork();
   const { disconnect } = useDisconnect();

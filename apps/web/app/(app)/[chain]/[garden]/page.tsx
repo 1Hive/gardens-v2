@@ -165,7 +165,7 @@ export default function Page({
           </header>
           <div className="relative flex h-[219px] justify-center">
             <Link
-              href={`/gardens/${chain}/${garden}/create-community`}
+              href={`/${chain}/${garden}/create-community`}
               className="mt-6"
             >
               <Button

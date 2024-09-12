@@ -1,7 +1,7 @@
 export const navItems = [
   {
     name: "Gardens",
-    href: "/gardens",
+    href: "/",
   },
   {
     name: "Docs",

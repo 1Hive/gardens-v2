@@ -287,7 +287,7 @@ export default function Page({
         <header className="flex justify-between">
           <h2>Pools</h2>
           <Link
-            href={`/gardens/${chain}/${tokenAddr}/${communityAddr}/create-pool`}
+            href={`/${chain}/${tokenAddr}/${communityAddr}/create-pool`}
           >
             <Button
               btnStyle="filled"
