@@ -9,10 +9,10 @@ import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpersV0_0, CVStrategyV0_0, StrategyStruct} from "../test/CVStrategyHelpersV0_0.sol";
+import {CVStrategyHelpers, CVStrategyV0_1, StrategyStruct2, StrategyStruct} from "../test/CVStrategyHelpers.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
@@ -22,7 +22,7 @@ import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 import {TERC20} from "../test/shared/TERC20.sol";
 
-contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
+contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50 ether;
 
     address public constant SENDER = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
@@ -67,7 +67,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
         RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(FACTORY);
         // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
 
-        RegistryCommunityV0_0.InitializeParams memory params;
+        RegistryCommunityV0_1.InitializeParams memory params;
 
         params._allo = address(allo);
         params._gardenToken = IERC20(address(token));
@@ -81,7 +81,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
 
         assertTrue(params._councilSafe != address(0));
 
-        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+        RegistryCommunityV0_1 registryCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
 
         // console2.log("Registry Factory Addr: %s", address(registryFactory));
         // console2.log("Registry Community Addr: %s", address(registryCommunity));
@@ -92,7 +92,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
             address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
         );
 
-        StrategyStruct.InitializeParams memory paramsCV = getParams(
+        StrategyStruct2.InitializeParams memory paramsCV = getParams(
             address(registryCommunity),
             StrategyStruct.ProposalType.Funding,
             StrategyStruct.PointSystem.Unlimited,
@@ -127,7 +127,7 @@ contract DeployCVArbSepoliaCommFee is Native, CVStrategyHelpersV0_0, Script, Saf
 
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(address(token), paramsCV, metadata2);
 
-        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
+        CVStrategyV0_1 strategy1 = CVStrategyV0_1(payable(_strategy1));
 
         safeHelper(
             councilSafeDeploy,

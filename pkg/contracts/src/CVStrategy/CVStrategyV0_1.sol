@@ -16,7 +16,7 @@ library StrategyStruct2 {
     }
 }
 
-/// @custom:oz-upgrades-from CVStrategyV0_0
+/// @custom:oz-upgrades-from CVStrategyV0_1
 contract CVStrategyV0_1 is CVStrategyV0_0 {
     event AllowlistMembersRemoved(uint256 poolId, address[] members);
     event AllowlistMembersAdded(uint256 poolId, address[] members);
@@ -35,7 +35,7 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
             revert RegistryCannotBeZero();
         }
         //Set councilsafe to whitelist admin
-        registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
+        registryCommunity = RegistryCommunityV0_1(ip.registryCommunity);
 
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;

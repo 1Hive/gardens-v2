@@ -9,10 +9,10 @@ import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpersV0_0, CVStrategyV0_0, StrategyStruct} from "../test/CVStrategyHelpersV0_0.sol";
+import {CVStrategyHelpers, CVStrategyV0_1, StrategyStruct} from "../test/CVStrategyHelpers.sol";
 import {SafeArbitrator, IArbitrator} from "../src/SafeArbitrator.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -23,7 +23,7 @@ import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol
 import {TERC20} from "../test/shared/TERC20.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract DeployCVArbSepoliaPool is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
+contract DeployCVArbSepoliaPool is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50 * DECIMALS;
 
     address public SENDER = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
@@ -70,7 +70,7 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpersV0_0, Script, SafeSe
         // RegistryFactoryV0_0 registryFactory = new RegistryFactoryV0_0();
         // RegistryFactoryV0_0 registryFactory = RegistryFactory(0xeE8B920641210e26d4D18BD285A862156f31556f);
 
-        // RegistryCommunityV0_0.InitializeParams memory params;
+        // RegistryCommunityV0_1.InitializeParams memory params;
 
         // params._allo = address(allo);
         // params._gardenToken = IERC20(address(token));
@@ -81,8 +81,8 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpersV0_0, Script, SafeSe
         // // params._councilSafe = payable(address(_councilSafeWithOwner(pool_admin());
         // params._communityName = "GardensDAO";
 
-        // RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
-        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(COMMUNITY);
+        // RegistryCommunityV0_1 registryCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
+        RegistryCommunityV0_1 registryCommunity = RegistryCommunityV0_1(COMMUNITY);
 
         console2.log("Comm Safe Addr: %s", address(registryCommunity.councilSafe()));
 
@@ -101,7 +101,7 @@ contract DeployCVArbSepoliaPool is Native, CVStrategyHelpersV0_0, Script, SafeSe
         //     abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
         // );
         // IArbitrator safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
-        // StrategyStruct.InitializeParams memory paramsCV = getParams(
+        // StrategyStruct2.InitializeParams memory paramsCV = getParams(
         //     address(registryCommunity),
         //     StrategyStruct.ProposalType.Funding,
         //     StrategyStruct.PointSystem.Capped,

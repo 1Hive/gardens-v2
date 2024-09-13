@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
-import {RegistryCommunityV0_0} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_1} from "../RegistryCommunity/RegistryCommunityV0_1.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
@@ -242,7 +242,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     StrategyStruct.PointSystemConfig public pointConfig;
 
     // Contract reference
-    RegistryCommunityV0_0 public registryCommunity;
+    RegistryCommunityV0_1 public registryCommunity;
 
     ICollateralVault public collateralVault;
     ISybilScorer public sybilScorer;
@@ -276,7 +276,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             revert RegistryCannotBeZero();
         }
 
-        registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
+        registryCommunity = RegistryCommunityV0_1(ip.registryCommunity);
 
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
@@ -1160,7 +1160,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     //If we want to keep, we need a func to transfer power mapping (and more) in Registry contract -Kev
     // function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
-    //     registryCommunity = RegistryCommunityV0_0(_registryCommunity);
+    //     registryCommunity = RegistryCommunityV0_1(_registryCommunity);
     //     emit RegistryUpdated(_registryCommunity);
     // }
 

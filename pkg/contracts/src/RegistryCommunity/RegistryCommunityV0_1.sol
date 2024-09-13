@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "./RegistryCommunityV0_0.sol";
 import {StrategyStruct2} from "../CVStrategy/CVStrategyV0_1.sol";
 
-/// @custom:oz-upgrades-from RegistryCommunityV0_0
+/// @custom:oz-upgrades-from RegistryCommunityV0_1
 contract RegistryCommunityV0_1 is RegistryCommunityV0_0 {
     function createPool(address _token, StrategyStruct2.InitializeParams memory _params, Metadata memory _metadata)
         public

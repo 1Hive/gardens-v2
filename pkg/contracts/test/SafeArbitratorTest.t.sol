@@ -3,8 +3,8 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {CVStrategyV0_1, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_1.sol";
+import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
@@ -12,17 +12,17 @@ import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 import {IArbitrable} from "../src/interfaces/IArbitrable.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
-import {CVStrategyHelpersV0_0} from "./CVStrategyHelpersV0_0.sol";
+import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpersV0_0, SafeSetup {
+contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpers, SafeSetup {
     SafeArbitrator safeArbitrator;
-    CVStrategyV0_0 cvStrategy;
+    CVStrategyV0_1 cvStrategy;
     uint256 poolId;
-    RegistryCommunityV0_0 internal registryCommunity;
+    RegistryCommunityV0_1 internal registryCommunity;
     GV2ERC20 public token;
     // address allo_owner = address(0x1);
     address factoryOwner = address(1);
@@ -77,7 +77,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
 
         vm.stopPrank();
 
-        RegistryCommunityV0_0.InitializeParams memory params;
+        RegistryCommunityV0_1.InitializeParams memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -88,7 +88,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        registryCommunity = RegistryCommunityV0_0(
+        registryCommunity = RegistryCommunityV0_1(
             RegistryFactoryV0_0(
                 address(
                     new ERC1967Proxy(
@@ -97,8 +97,8 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
                             RegistryFactoryV0_0.initialize.selector,
                             address(factoryOwner),
                             address(2),
-                            address(new RegistryCommunityV0_0()),
-                            address(new CVStrategyV0_0()),
+                            address(new RegistryCommunityV0_1()),
+                            address(new CVStrategyV0_1()),
                             address(new CollateralVault())
                         )
                     )
@@ -124,7 +124,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         );
 
         poolId = _poolId;
-        cvStrategy = CVStrategyV0_0(payable(_strategy));
+        cvStrategy = CVStrategyV0_1(payable(_strategy));
         vm.startPrank(pool_admin());
         safeHelper(
             address(registryCommunity),

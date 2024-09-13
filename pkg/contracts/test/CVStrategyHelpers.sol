@@ -4,9 +4,9 @@ pragma solidity ^0.8.19;
 import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
-// import {StrategyStruct} from "../src/libraries/StrategyStruct.sol";
-import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {CVStrategyV0_1, StrategyStruct2} from "../src/CVStrategy/CVStrategyV0_1.sol";
+// import {StrategyStruct2} from "../src/libraries/StrategyStruct2.sol";
+// import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategyV0_1, StrategyStruct2,CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_1.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 
@@ -24,7 +24,7 @@ contract CVStrategyHelpers is Native, Accounts {
     uint256 internal constant TWO_128 = 2 ** 128;
     uint256 internal constant D = 10 ** 7;
 
-    // function poolProfile_id1(RegistryCommunityV0_0 registryCommunity) public virtual returns (bytes32) {
+    // function poolProfile_id1(RegistryCommunityV0_1 registryCommunity) public virtual returns (bytes32) {
     function poolProfile_id1(IRegistry registry, address pool_admin, address[] memory pool_managers)
         public
         virtual
@@ -103,7 +103,7 @@ contract CVStrategyHelpers is Native, Accounts {
             _pool_managers
         );
 
-        assert(CVStrategyV0_0(payable(strategy)).proposalType() == proposalType);
+        assert(CVStrategyV0_1(payable(strategy)).proposalType() == proposalType);
     }
 
     function createPool(

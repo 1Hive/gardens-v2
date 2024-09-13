@@ -22,14 +22,14 @@ import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {RegistryFactoryV0_1} from "../src/RegistryFactory/RegistryFactoryV0_1.sol";
-import {CVStrategyV0_0, StrategyStruct, IArbitrator} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategyV0_1, StrategyStruct, StrategyStruct2, IArbitrator} from "../src/CVStrategy/CVStrategyV0_1.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
-import {CVStrategyHelpersV0_0} from "./CVStrategyHelpersV0_0.sol";
+import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
@@ -40,8 +40,8 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 
 // @dev Run forge test --mc RegistryTest -vvvvv
 
-contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0_0, Errors, GasHelpers2, SafeSetup {
-    CVStrategyV0_0 public strategy;
+contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
+    CVStrategyV0_1 public strategy;
     IArbitrator safeArbitrator;
     GV2ERC20 public token;
     uint256 public mintAmount = 1_000_000 * DECIMALS;
@@ -57,8 +57,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
     // Metadata public metadata = Metadata({protocol: 1, pointer: "strategy pointer"});
 
     RegistryFactoryV0_0 internal registryFactory;
-    RegistryCommunityV0_0 internal registryCommunity;
-    RegistryCommunityV0_0 internal nonKickableCommunity;
+    RegistryCommunityV0_1 internal registryCommunity;
+    RegistryCommunityV0_1 internal nonKickableCommunity;
 
     address gardenOwner = makeAddr("communityGardenOwner");
     address gardenMember = makeAddr("communityGardenMember");
@@ -88,9 +88,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         //        strategy = address(new CVMockStrategy(address(allo())));
 
         ERC1967Proxy strategyProxy = new ERC1967Proxy(
-            address(new CVStrategyV0_0()),
+            address(new CVStrategyV0_1()),
             abi.encodeWithSelector(
-                CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()), pool_admin()
+                CVStrategyV0_1.init.selector, address(allo()), address(new CollateralVault()), pool_admin()
             )
         );
 
@@ -100,7 +100,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         );
         safeArbitrator = SafeArbitrator(payable(address(arbitratorProxy)));
 
-        strategy = CVStrategyV0_0(payable(strategyProxy));
+        strategy = CVStrategyV0_1(payable(strategyProxy));
         // strategy.init(address(allo()),address(this),address(this)); @todo Kev create a testRevert
         // allo.createPoolWithCustomStrategy() @todo kev create new testRvert
 
@@ -120,8 +120,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
                 RegistryFactoryV0_0.initialize.selector,
                 gardenOwner,
                 address(protocolFeeReceiver),
-                address(new RegistryCommunityV0_0()),
-                address(new CVStrategyV0_0()),
+                address(new RegistryCommunityV0_1()),
+                address(new CVStrategyV0_1()),
                 address(new CollateralVault())
             )
         );
@@ -133,7 +133,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         vm.stopPrank();
 
-        RegistryCommunityV0_0.InitializeParams memory params;
+        RegistryCommunityV0_1.InitializeParams memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -144,7 +144,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         params._isKickEnabled = true;
 
-        registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+        registryCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
 
         assertEq(registryFactory.nonce(), 1, "nonce before upgrade");
 
@@ -161,10 +161,10 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         params._isKickEnabled = false;
 
-        nonKickableCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+        nonKickableCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
     }
 
-    function _registryCommunity() internal view returns (RegistryCommunityV0_0) {
+    function _registryCommunity() internal view returns (RegistryCommunityV0_1) {
         return registryCommunity;
     }
 
@@ -172,7 +172,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         return registryFactory;
     }
 
-    function _nonKickableCommunity() internal view returns (RegistryCommunityV0_0) {
+    function _nonKickableCommunity() internal view returns (RegistryCommunityV0_1) {
         return nonKickableCommunity;
     }
 
@@ -740,7 +740,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.registerStakeAmount()
         );
-        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.DecreaseUnderMinimum.selector));
         vm.stopPrank();
     }
 
@@ -787,7 +787,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.registerStakeAmount()
         );
-        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+        // vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.DecreaseUnderMinimum.selector));
         vm.stopPrank();
     }
 
@@ -836,7 +836,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         sqrtValue = 8 * DECIMALS;
         assertEq(registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)), sqrtValue);
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(50 * DECIMALS);
         vm.stopPrank();
     }
@@ -896,7 +896,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         _nonKickableCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.KickNotEnabled.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.KickNotEnabled.selector));
         _nonKickableCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -927,7 +927,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.StrategyDisabled.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.StrategyDisabled.selector));
         strategy.activatePoints();
         vm.stopPrank();
     }
@@ -952,13 +952,13 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.StrategyExists.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.StrategyExists.selector));
         _registryCommunity().addStrategy(address(strategy));
         vm.stopPrank();
     }
 
     function test_revert_initialize_zeroStake() public {
-        RegistryCommunityV0_0.InitializeParams memory params;
+        RegistryCommunityV0_1.InitializeParams memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = 0;
@@ -967,8 +967,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         params._feeReceiver = address(daoFeeReceiver);
         params._councilSafe = payable(address(_councilSafe()));
         params._isKickEnabled = true;
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.ValueCannotBeZero.selector));
-        registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.ValueCannotBeZero.selector));
+        registryCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
     }
 
     function test_revert_deactivateMemberInStrategyCaller() public {
@@ -980,7 +980,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
         _registryCommunity().stakeAndRegisterMember();
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.SenderNotStrategy.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.SenderNotStrategy.selector));
         _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
 
         vm.stopPrank();
@@ -995,7 +995,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         _registryCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(address(strategy));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserAlreadyDeactivated.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserAlreadyDeactivated.selector));
         _registryCommunity().deactivateMemberInStrategy(gardenMember, address(strategy));
         vm.stopPrank();
         stopMeasuringGas();
@@ -1003,7 +1003,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
     function test_revertIncreasePower() public {
         vm.startPrank(gardenMember);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserNotInRegistry.selector));
         _registryCommunity().increasePower(20 * DECIMALS);
     }
 
@@ -1037,7 +1037,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
             registryCommunity.getMemberPowerInStrategy(gardenMember, address(strategy)),
             registryCommunity.getMemberStakedAmount(gardenMember)
         );
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.DecreaseUnderMinimum.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.DecreaseUnderMinimum.selector));
         _registryCommunity().decreasePower(101 * DECIMALS);
 
         //Test if decreasing by 100 doesn't revert as it shouldn't
@@ -1049,7 +1049,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
     function test_revertKickUnregisteredMember() public {
         startMeasuringGas("Registering and kicking member");
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserNotInRegistry.selector));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -1062,7 +1062,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         _registryCommunity().stakeAndRegisterMember();
         vm.stopPrank();
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserNotInCouncil.selector, gardenOwner));
         _registryCommunity().kickMember(gardenMember, address(councilSafe));
         vm.stopPrank();
         stopMeasuringGas();
@@ -1100,17 +1100,17 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
     function test_revertSetCouncilSafe() public {
         vm.startPrank(gardenMember);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenMember));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserNotInCouncil.selector, gardenMember));
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.AddressCannotBeZero.selector));
         _registryCommunity().setCouncilSafe(payable(address(0)));
         _registryCommunity().setCouncilSafe(payable(newCouncilSafe));
         assertEq(address(_registryCommunity().pendingCouncilSafe()), address(newCouncilSafe));
         vm.stopPrank();
         vm.startPrank(gardenMember);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.SenderNotNewOwner.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.SenderNotNewOwner.selector));
         _registryCommunity().acceptCouncilSafe();
         vm.stopPrank();
     }
@@ -1138,7 +1138,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
     function test_revertUnregisterMember() public {
         startMeasuringGas("Testing kick member revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInRegistry.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserNotInRegistry.selector));
         _registryCommunity().unregisterMember();
         vm.stopPrank();
         stopMeasuringGas();
@@ -1147,12 +1147,12 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
     function test_revertSetCommunityFee() public {
         startMeasuringGas("Testing update protocol revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserNotInCouncil.selector, gardenOwner));
         _registryCommunity().setCommunityFee(5);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.NewFeeGreaterThanMax.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.NewFeeGreaterThanMax.selector));
         _registryCommunity().setCommunityFee(11 * PERCENTAGE_SCALE);
         _registryCommunity().setCommunityFee(10 * PERCENTAGE_SCALE);
         assertEq(_registryCommunity().communityFee(), 10 * PERCENTAGE_SCALE);
@@ -1162,7 +1162,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
     function test_revertSetBasisStakeAmount() public {
         startMeasuringGas("Testing setBasisStake revert");
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserNotInCouncil.selector, gardenOwner));
         _registryCommunity().setBasisStakedAmount(500);
         vm.stopPrank();
         stopMeasuringGas();
@@ -1252,12 +1252,12 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         _registryCommunity().addStrategyByPoolId(poolId);
         vm.stopPrank();
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, address(this)));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserNotInCouncil.selector, address(this)));
         _registryCommunity().removeStrategyByPoolId(poolId);
 
         vm.startPrank(address(councilSafe));
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.AddressCannotBeZero.selector));
         _registryCommunity().removeStrategyByPoolId(poolId + 1);
 
         vm.stopPrank();
@@ -1284,12 +1284,12 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.startPrank(gardenOwner);
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserNotInCouncil.selector, gardenOwner));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserNotInCouncil.selector, gardenOwner));
         _registryCommunity().addStrategyByPoolId(poolId);
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.AddressCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.AddressCannotBeZero.selector));
         _registryCommunity().addStrategyByPoolId(poolId + 1);
         vm.stopPrank();
 
