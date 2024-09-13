@@ -122,7 +122,7 @@ const proposalInputMap: Record<string, number[]> = {
   poolTokenAddress: [0, 1],
 };
 
-const sybilResistanceOptions: Record<SybilResistanceType, string> = {
+const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
   noSybilResist: "No authorization required",
   allowList: "Allow list",
   gitcoinPassport: "Gitcoin passport",
@@ -203,6 +203,10 @@ export function PoolForm({ token, communityAddr }: Props) {
   const [tribunalAddress, setTribunalAddress] = useState(
     chain.globalTribunal ?? "",
   );
+  const [sybilResistanceOptions, setSybilResistanceOptions] = useState<
+    Partial<Record<SybilResistanceType, string>>
+  >(fullSybilResistanceOptions);
+
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -215,6 +219,17 @@ export function PoolForm({ token, communityAddr }: Props) {
 
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
+
+  useEffect(() => {
+    if (PointSystems[pointSystemType] !== "unlimited") {
+      const { noSybilResist, ...rest } = fullSybilResistanceOptions;
+      setSybilResistanceOptions(rest);
+      setValue("sybilResistanceType", "allowList");
+    } else {
+      setSybilResistanceOptions(fullSybilResistanceOptions);
+      setValue("sybilResistanceType", "noSybilResist");
+    }
+  }, [pointSystemType]);
 
   const formRowTypes: Record<
     string,
@@ -557,7 +572,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       trigger("poolTokenAddress");
     }
   }, [customTokenData, watchedAddress, trigger]);
-  console.debug(sybilResistanceValue, errors);
+
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
