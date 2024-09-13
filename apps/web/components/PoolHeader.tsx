@@ -326,7 +326,7 @@ export default function PoolHeader({
               />
             </Statistic>
           )}
-          <Statistic label="pool system">
+          <Statistic label="voting weight">
             <div className="flex flex-col gap-3 sm:flex-row">
               <Badge
                 label="conviction voting"

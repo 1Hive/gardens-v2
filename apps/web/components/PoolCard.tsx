@@ -55,7 +55,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
       <div className="mb-10 flex min-h-[60px] flex-col gap-2">
         <Statistic
           icon={<BoltIcon />}
-          label="voting weigth"
+          label="voting weight"
           count={capitalize(PointSystems[config?.pointSystem])}
         />
         <Statistic
