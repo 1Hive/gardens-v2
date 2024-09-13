@@ -213,7 +213,7 @@ contract CVStrategyV0_0 is
     /*|                VARIABLES                   |*/
     /*|--------------------------------------------|*/
 
-    // Constants for fixed numbers
+    /// @notice  @notice Constants for fixed numbers
     uint256 public constant D = 10000000; //10**7
     uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
@@ -222,45 +222,59 @@ contract CVStrategyV0_0 is
     uint256 public constant RULING_OPTIONS = 3;
     uint256 public constant DISPUTE_COOLDOWN_SEC = 2 hours;
 
+    /// @notice address of the collateral vault template used
     address private collateralVaultTemplate = address(0x3b1fbFB04DB3585920b2eAdBb8839FC9680FE8cd); // Always deploye template to this address with Create3
 
     // uint256 variables packed together
     uint256 internal surpressStateMutabilityWarning; // used to suppress Solidity warnings
+    /// @notice nonce for creating collateral vault clones
     uint256 public cloneNonce;
+    /// @notice total number of disputes
     uint64 public disputeCount = 0;
+    /// @notice total number of proposals
     uint256 public proposalCounter = 0;
-
+    /// @notice total amount of points staked
     uint256 public totalStaked;
+    /// @notice total amount of points activated
     uint256 public totalPointsActivated;
 
+    /// @notice the conviction voting parameters of the strategy
     StrategyStruct.CVParams public cvParams;
 
-    // Enum for handling proposal types
+    /// @notice Enum for handling proposal types
     StrategyStruct.ProposalType public proposalType;
 
-    // Struct variables for complex data structures
+    /// @notice Struct variables for complex data structures
+    /// @notice Point system used in the strategy
     StrategyStruct.PointSystem public pointSystem;
+    /// @notice Point system configuration params
     StrategyStruct.PointSystemConfig public pointConfig;
+    /// @notice Arbitrable configuration params
     StrategyStruct.ArbitrableConfig public arbitrableConfig;
 
-    // Contract reference
+    /// @notice RegistryCommunity contract tied to the strategy
     RegistryCommunityV0_0 public registryCommunity;
-
+    /// @notice Collateral vault interface tied to the strategy
     ICollateralVault public collateralVault;
+    /// @notice Sybil Scorer interface tied to the strategy
     ISybilScorer public sybilScorer;
 
-    // Mappings to handle relationships and staking details
+    /// @notice Mappings to handle relationships and staking details
     mapping(uint256 => StrategyStruct.Proposal) public proposals; // Mapping of proposal IDs to Proposal structures
     mapping(address => uint256) public totalVoterStakePct; // voter -> total staked points
     mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
-    mapping(uint256 => uint256) public disputeIdToProposalId;
+    mapping(uint256 => uint256) public disputeIdToProposalId; // disputeId -> proposalId
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
 
-    // False positive
+    /// @notice Initializes the strategy with the necessary parameters
+    /// @param _allo Address of the Allo contract
+    /// @param _collateralVaultTemplate Address of the collateral vault template
+    /// @param owner Address of the owner of the strategy
+    // False positive    
     // slither-disable-next-line unprotected-upgrade
     function init(address _allo, address _collateralVaultTemplate, address owner)
         external
@@ -273,6 +287,9 @@ contract CVStrategyV0_0 is
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
+    /// @notice Initializes the strategy with the necessary parameters
+    /// @param _poolId Pool ID of the strategy
+    /// @param _data Data to initialize the strategy, uses InitializeParams struct
     function initialize(uint256 _poolId, bytes memory _data) external virtual onlyAllo {
         __BaseStrategy_init(_poolId);
 
@@ -327,6 +344,9 @@ contract CVStrategyV0_0 is
         // // surpressStateMutabilityWarning++;
     }
 
+    /// @notice checks if the strategy supports the interface
+    /// @param interfaceId Interface ID to check
+    /// @return bool True if the interface is supported
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -340,6 +360,8 @@ contract CVStrategyV0_0 is
     /*|--------------------------------------------|*/
     /*|                 MODIFIERS                  |*/
     /*|--------------------------------------------|*/
+    /// @notice Modifier to check if the sender is a member of the community
+    /// reverts if the sender is not a member of the registry
     function checkSenderIsMember(address _sender) private view {
         if (_sender == address(0)) {
             revert UserCannotBeZero();
@@ -352,23 +374,28 @@ contract CVStrategyV0_0 is
         }
         // _;
     }
-
+    /// @notice Modifier to check if the sender is a member of the community
+    /// reverts if the sender is not the registry 
     function onlyRegistryCommunity() private view {
         if (msg.sender != address(registryCommunity)) {
             revert OnlyCommunityAllowed();
         }
     }
 
+    /// @notice Modifier to check if the address is 0
+    /// reverts if the address is 0
     function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
+    /// @notice Modifier to check if the sender is the council safe
     function onlyCouncilSafe() internal view {
         if (msg.sender != address(registryCommunity.councilSafe())) {
             revert OnlyCouncilSafe();
         }
     }
 
+    /// @notice Modifier to check if an action can be executed
     function _canExecuteAction(address _user) internal view returns (bool) {
         if (address(sybilScorer) == address(0)) {
             // if (registry.hasRole(address(0))) {
@@ -385,7 +412,10 @@ contract CVStrategyV0_0 is
     // it can change their status all the way to Accepted, or to Pending if there are more steps
     // if there are more steps, additional functions should be added to allow the owner to check
     // this could also check attestations directly and then Accept
-
+    /// @notice Registers a recipient in the strategy
+    /// @param _data Data to register the recipient, uses CreateProposal struct
+    /// @param _sender Address of the sender
+    /// @return Address of the recipient (proposal)
     function _registerRecipient(bytes memory _data, address _sender) internal override returns (address) {
         if (!_canExecuteAction(_sender)) {
             revert UserCannotExecuteAction();
@@ -448,10 +478,13 @@ contract CVStrategyV0_0 is
         return address(uint160(proposalId));
     }
 
+    /// @notice gets the decay param
+    /// @return uint256 decay param
     function getDecay() external view returns (uint256) {
         return cvParams.decay;
     }
 
+    /// @notice activates the points of a member
     function activatePoints() external {
         address member = msg.sender;
         if (!_canExecuteAction(member)) {
@@ -461,15 +494,18 @@ contract CVStrategyV0_0 is
         totalPointsActivated += registryCommunity.getMemberPowerInStrategy(member, address(this));
     }
 
+    /// @notice deactivates the points of a member
     function deactivatePoints() public {
         _deactivatePoints(msg.sender);
     }
-
+    /// @notice deactivates the points of a member
     function deactivatePoints(address _member) external {
         onlyRegistryCommunity();
         _deactivatePoints(_member);
     }
 
+    /// @notice deactivates the points of a member
+    /// @param _member Address of the member
     function _deactivatePoints(address _member) internal {
         totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
         registryCommunity.deactivateMemberInStrategy(_member, address(this));
@@ -478,6 +514,10 @@ contract CVStrategyV0_0 is
         emit PointsDeactivated(_member);
     }
 
+    /// @notice increases the power of a member
+    /// @param _member Address of the member
+    /// @param _amountToStake Amount of tokens to stake
+    /// @return uint256 Amount of points to increase, the registry will take care of increasing the points
     function increasePower(address _member, uint256 _amountToStake) external nonReentrant returns (uint256) {
         //requireMemberActivatedInStrategies
         onlyRegistryCommunity();
@@ -500,6 +540,10 @@ contract CVStrategyV0_0 is
         return pointsToIncrease;
     }
 
+    /// @notice decreases the power of a member
+    /// @param _member Address of the member
+    /// @param _amountToUnstake Amount of tokens to unstake
+    /// @return uint256 Amount of points to decrease, the registry will take care of decreasing the points
     function decreasePower(address _member, uint256 _amountToUnstake) external nonReentrant returns (uint256) {
         onlyRegistryCommunity();
         //requireMemberActivatedInStrategies
@@ -515,10 +559,16 @@ contract CVStrategyV0_0 is
         return pointsToDecrease;
     }
 
+    /// @notice gets the number of points to increase for the unlimited point system
+    /// @param _amountToStake Amount of tokens to stake
+    /// @return uint256 Amount of points to increase
     function increasePowerUnlimited(uint256 _amountToStake) internal pure returns (uint256) {
         return _amountToStake;
     }
 
+    /// @notice gets the number of points to increase for the capped point system
+    /// @param _member Address of the member
+    /// @param _amountToStake Amount of tokens to stake
     function increasePowerCapped(address _member, uint256 _amountToStake) internal view returns (uint256) {
         uint256 pointsToIncrease = _amountToStake;
         // console.log("POINTS TO INCREASE", pointsToIncrease);
@@ -532,6 +582,10 @@ contract CVStrategyV0_0 is
         return pointsToIncrease;
     }
 
+    /// @notice gets the number of points to increase for the quadratic point system
+    /// @param _member Address of the member
+    /// @param _amountToStake Amount of tokens to stake
+    /// @return uint256 Amount of points to increase
     function increasePowerQuadratic(address _member, uint256 _amountToStake) internal view returns (uint256) {
         uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
 
@@ -549,10 +603,17 @@ contract CVStrategyV0_0 is
         return pointsToIncrease;
     }
 
+    /// @notice gets the number of points to decrease for the capped and unlimited point systems
+    /// @param _amountToUnstake Amount of tokens to unstake
+    /// @return uint256 Amount of points to decrease
     function decreasePowerCappedUnlimited(uint256 _amountToUnstake) internal pure returns (uint256) {
         return _amountToUnstake;
     }
 
+    /// @notice gets the number of points to decrease for the quadratic point system
+    /// @param _member Address of the member
+    /// @param _amountToUnstake Amount of tokens to unstake
+    /// @return uint256 Amount of points to decrease
     function decreasePowerQuadratic(address _member, uint256 _amountToUnstake) internal view returns (uint256) {
         uint256 decimal = 18;
         try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
@@ -568,10 +629,14 @@ contract CVStrategyV0_0 is
         return pointsToDecrease;
     }
 
+    /// @notice gets the maxAmount of points from the strategy's point config
+    /// @return uint256 Max amount of points
     function getMaxAmount() public view returns (uint256) {
         return pointConfig.maxAmount;
     }
 
+    /// @notice gets the point system of the strategy
+    /// @return StrategyStruct.PointSystem Point system of the strategy
     function getPointSystem() public nonReentrant returns (StrategyStruct.PointSystem) {
         return pointSystem;
     }
@@ -587,6 +652,9 @@ contract CVStrategyV0_0 is
 
     // only called via allo.sol by users to allocate to a recipient
     // this will update some data in this contract to store votes, etc.
+    /// @notice Allocates points to a proposal
+    /// @param _data Data to allocate the points, uses ProposalSupport struct
+    /// @param _sender Address of the sender
     function _allocate(bytes memory _data, address _sender) internal override {
         checkSenderIsMember(_sender);
         if (!_canExecuteAction(_sender)) {
@@ -606,6 +674,8 @@ contract CVStrategyV0_0 is
     // this will distribute tokens to recipients
     // most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
     // this contract will need to track the amount paid already, so that it doesn't double pay
+    /// @notice Distributes tokens to recipients
+    /// @param _data Data to distribute the tokens for a proposal
     function _distribute(address[] memory, bytes memory _data, address) internal override {
         // surpressStateMutabilityWarning++;
         if (_data.length <= 0) {
@@ -654,6 +724,9 @@ contract CVStrategyV0_0 is
         } //signaling do nothing @todo write tests @todo add end date
     }
 
+    /// @notice checks if a proposal can be executed
+    /// @param proposalId Proposal ID
+    /// @return canBeExecuted bool True if the proposal can be executed
     function canExecuteProposal(uint256 proposalId) public view returns (bool canBeExecuted) {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
@@ -698,21 +771,24 @@ contract CVStrategyV0_0 is
         // _data;
         // return PayoutSummary(_recipientId, 0);
     }
-
+    /// @notice emits an event for pool amount increased
     function _afterIncreasePoolAmount(uint256 _amount) internal virtual override {
         emit PoolAmountIncreased(_amount);
     }
 
     // simply returns whether a allocator is valid or not, will usually be true for all
-
+    /// @notice checks if an allocator is valid UNIMPLEMENTED
     function _isValidAllocator(address _allocator) internal pure override returns (bool) {
         // surpressStateMutabilityWarning;
     }
 
+    /// @notice sets a pool to active status (To be removed?)
     function setPoolActive(bool _active) external {
         _setPoolActive(_active);
     }
 
+    /// @notice withdraws the support of a member from all his voted proposals
+    /// @param _member Address of the member to withdraw votes
     function withdraw(address _member) internal {
         // remove all proposals from the member
         uint256[] memory proposalsIds = voterStakedProposals[_member];
@@ -776,6 +852,9 @@ contract CVStrategyV0_0 is
         );
     }
 
+    /// @notice Get proposal metadata
+    /// @param _proposalId Proposal id
+    /// @return Metadata struct
     function getMetadata(uint256 _proposalId) external view returns (Metadata memory) {
         StrategyStruct.Proposal storage proposal = proposals[_proposalId];
         return proposal.metadata;
@@ -791,31 +870,49 @@ contract CVStrategyV0_0 is
         return _internal_getProposalVoterStake(_proposalId, _voter);
     }
 
+    /// @notice Get the total staked amount of a proposal
+    /// @param _proposalId Proposal id
+    /// @return Proposal staked amount
     function getProposalStakedAmount(uint256 _proposalId) external view returns (uint256) {
         return proposals[_proposalId].stakedAmount;
     }
     //    do a internal function to get the total voter stake
 
+    /// @notice Get the total voter stake of a voter
+    /// @param _voter Voter address
+    /// @return Voter total stake
     function getTotalVoterStakePct(address _voter) public view returns (uint256) {
         return totalVoterStakePct[_voter];
     }
 
+    /// @notice Get the total voter stake from a specific proposal
+    /// @param _proposalId Proposal id
+    /// @return Proposal total voter stake
     function _internal_getProposalVoterStake(uint256 _proposalId, address _voter) internal view returns (uint256) {
         return proposals[_proposalId].voterStakedPoints[_voter];
     }
 
+    /// @notice Get the basis staked amount from the registry
     function getBasisStakedAmount() internal view returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
-
+    
+    /// @notice check if a proposal exists
+    /// @param _proposalID Proposal ID
     function proposalExists(uint256 _proposalID) internal view returns (bool) {
         return proposals[_proposalID].proposalId > 0 && proposals[_proposalID].submitter != address(0);
     }
 
+    /// @notice check if requestedAmount is over the max ratio
+    /// @param _requestedAmount Requested amount
+    /// @return isOverMaxRatio bool True if the requested amount is over the max ratio
     function _isOverMaxRatio(uint256 _requestedAmount) internal view returns (bool isOverMaxRatio) {
         isOverMaxRatio = cvParams.maxRatio * poolAmount <= _requestedAmount * D;
     }
 
+    /// @notice check validity before adding support to a proposal
+    /// @param _sender Address of the sender
+    /// @param _proposalSupport Array of ProposalSupport
     function _check_before_addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport)
         internal
     {
@@ -848,6 +945,9 @@ contract CVStrategyV0_0 is
         totalVoterStakePct[_sender] = newTotalVotingSupport;
     }
 
+    /// @notice Add support to a proposal
+    /// @param _sender Address of the sender
+    /// @param _proposalSupport Array of ProposalSupport
     function _addSupport(address _sender, StrategyStruct.ProposalSupport[] memory _proposalSupport) internal {
         // Initialize for slither -Kev
         uint256[] memory proposalsIds = new uint256[](0);
@@ -925,6 +1025,10 @@ contract CVStrategyV0_0 is
         }
     }
 
+    /// @notice Applies delta to calculate the support of a proposal
+    /// @param _support Support of the proposal
+    /// @param _delta Delta to apply
+    /// @return uint256 New support
     function _applyDelta(uint256 _support, int256 _delta) internal pure returns (uint256) {
         int256 result = int256(_support) + _delta;
 
@@ -1045,11 +1149,14 @@ contract CVStrategyV0_0 is
         }
     }
 
+    /// @notice Get the total effective active points
+    /// @return uint256 Total points activated in this strategy
     function totalEffectiveActivePoints() public view returns (uint256) {
         return totalPointsActivated;
     }
 
-    //TODO
+    /// @notice adds a list of members to the allowedList when passportScorer sybil resistance isn't used
+    /// @param members Address of the members
     function _addToAllowlist(address[] memory members) internal {
         bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
 
@@ -1062,12 +1169,14 @@ contract CVStrategyV0_0 is
             }
         }
     }
-
+    /// @notice adds a list of members to the allowedList when passportScorer sybil resistance isn't used
+    /// @param members Address of the members
     function addToAllowlist(address[] memory members) public {
         onlyCouncilSafe();
         _addToAllowlist(members);
     }
-
+    /// @notice removes a list of members from the allowedList when passportScorer sybil resistance isn't used
+    /// @param members Address of the members
     function removeFromAllowList(address[] memory members) public {
         onlyCouncilSafe();
         for (uint256 i = 0; i < members.length; i++) {
@@ -1091,6 +1200,10 @@ contract CVStrategyV0_0 is
         _proposal.convictionLast = conviction;
     }
 
+    /// @dev Check if the block is valid and calculate conviction
+    /// @param _proposal Proposal
+    /// @param _oldStaked Amount of tokens staked on a proposal until now
+    /// @return conviction Conviction calculated
     function _checkBlockAndCalculateConviction(StrategyStruct.Proposal storage _proposal, uint256 _oldStaked)
         internal
         view
@@ -1112,6 +1225,9 @@ contract CVStrategyV0_0 is
         );
     }
 
+    /// @notice sets the pool params of the strategy
+    /// @param _arbitrableConfig ArbitrableConfig struct
+    /// @param _cvParams CVParams struct
     function _setPoolParams(
         StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
         StrategyStruct.CVParams memory _cvParams
@@ -1142,6 +1258,9 @@ contract CVStrategyV0_0 is
         emit PoolParamsUpdated(_cvParams, _arbitrableConfig);
     }
 
+    /// @notice updates the proposal conviction
+    /// @param proposalId Proposal ID
+    /// @return uint256 updated conviction of the proposal
     function updateProposalConviction(uint256 proposalId) public returns (uint256) {
         StrategyStruct.Proposal storage proposal = proposals[proposalId];
 
@@ -1158,6 +1277,9 @@ contract CVStrategyV0_0 is
         return proposal.convictionLast;
     }
 
+    /// @notice returns the max conviction of a proposal    
+    /// @param amount Amount of tokens staked on a proposal
+    /// @return uint256 max conviction of the proposal
     function getMaxConviction(uint256 amount) public view returns (uint256) {
         return ((amount * D) / (D - cvParams.decay));
     }
@@ -1168,12 +1290,17 @@ contract CVStrategyV0_0 is
     //     emit RegistryUpdated(_registryCommunity);
     // }
 
+    /// @notice sets the sybil scorer contract
+    /// @param _sybilScorer Address of the sybil scorer contract
     function setSybilScorer(address _sybilScorer) external {
         onlyCouncilSafe();
         _revertZeroAddress(_sybilScorer);
         sybilScorer = ISybilScorer(_sybilScorer);
     }
 
+    /// @notice calls the internal setPoolParams func
+    /// @param _arbitrableConfig ArbitrableConfig struct
+    /// @param _cvParams CVParams struct
     function setPoolParams(
         StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
         StrategyStruct.CVParams memory _cvParams
@@ -1182,6 +1309,11 @@ contract CVStrategyV0_0 is
         _setPoolParams(_arbitrableConfig, _cvParams);
     }
 
+    /// @notice disputes a proposal
+    /// @param proposalId Proposal ID
+    /// @param context Context of the dispute, the reason for the dispute
+    /// @param _extraData Extra data for the dispute
+    /// @return uint256 Dispute ID
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable
@@ -1241,6 +1373,9 @@ contract CVStrategyV0_0 is
         );
     }
 
+    /// @notice appeals a dispute
+    /// @param _disputeId id of the dispute
+    /// @param _ruling ruling of the dispute
     function rule(uint256 _disputeID, uint256 _ruling) external override {
         uint256 proposalId = disputeIdToProposalId[_disputeID];
         StrategyStruct.Proposal storage proposal = proposals[proposalId];

@@ -957,6 +957,35 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         vm.stopPrank();
     }
 
+    function testRevert_initialize_createPool() public {
+        vm.expectRevert(bytes("Initializable: contract is already initialized"));
+        strategy.init(address(allo()),address(this),address(this)); 
+        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        vm.startPrank(pool_admin());
+        uint256 poolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Fixed,
+            arbitrableConfig
+        );
+        vm.expectRevert(abi.encodeWithSelector(ALREADY_INITIALIZED.selector));
+        uint256 secondPoolId = createPool(
+            allo(),
+            address(strategy),
+            address(_registryCommunity()),
+            registry(),
+            NATIVE,
+            StrategyStruct.ProposalType(0),
+            StrategyStruct.PointSystem.Fixed,
+            arbitrableConfig
+        );
+        vm.stopPrank();
+    }
+
     function test_revert_initialize_zeroStake() public {
         RegistryCommunityV0_0.InitializeParams memory params;
         params._allo = address(allo());

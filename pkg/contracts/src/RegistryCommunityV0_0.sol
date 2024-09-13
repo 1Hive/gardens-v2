@@ -170,42 +170,43 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
 
+    /// @notice Only council members can call the function
     function onlyCouncilSafe() private view {
         if (!hasRole(COUNCIL_MEMBER, msg.sender)) {
             revert UserNotInCouncil(msg.sender);
         }
     }
-
+    /// @notice Only members can call the function
     function onlyRegistryMemberSender() private view {
         if (!isMember(msg.sender)) {
             revert UserNotInRegistry();
         }
     }
-
+    /// @notice Only members can call the function
     function onlyRegistryMemberAddress(address _sender) private view {
         if (!isMember(_sender)) {
             revert UserNotInRegistry();
         }
     }
-
+    /// @notice Only enabled strategies can call the function
     function onlyStrategyEnabled(address _strategy) private view {
         if (!enabledStrategies[_strategy]) {
             revert StrategyDisabled();
         }
     }
-
+    /// @notice Only the strategy can call the function
     function onlyStrategyAddress(address _sender, address _strategy) private pure {
         if (_sender != _strategy) {
             revert SenderNotStrategy();
         }
     }
-
+    /// @notice Only activated members in the strategy can call the function
     function onlyActivatedInStrategy(address _strategy) private view {
         if (!memberActivatedInStrategies[msg.sender][_strategy]) {
             revert PointsDeactivated();
         }
     }
-
+    /// @notice Only activated members in the strategy can call the function
     function _revertZeroAddress(address _address) internal pure {
         if (_address == address(0)) revert AddressCannotBeZero();
     }
@@ -213,17 +214,24 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /*|--------------------------------------------|*o
     /*|              STRUCTS/ENUMS                 |*/
     /*|--------------------------------------------|*/
+    /// @notice Member struct to store the staked amount and if is registered
     struct Member {
         address member;
         uint256 stakedAmount;
         bool isRegistered;
     }
-
     struct Strategies {
         address[] strategies;
     }
 
-    // AUDIT: acknowledged upgradeable contract hat does not protect initialize functions,
+    
+    /// 
+    /// @param params: The initial parameters of the registry 
+    /// @param _strategyTemplate : The address of the strategy used as template
+    /// @param _collateralVaultTemplate : The address of the collateral vault template
+    /// @param owner : The owner of the registry
+    /// @notice The function initializes the registry with the initial parameters        
+    // AUDIT: acknowledged upgradeable contract that does not protect initialize functions,
     // slither-disable-next-line unprotected-upgrade
     function initialize(
         RegistryCommunityV0_0.InitializeParams memory params,
@@ -291,7 +299,13 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
-
+    /// 
+    /// @param _token: The address of the token to be used in the pool 
+    /// @param _params : The parameters to initialize the strategy
+    /// @param _metadata : The metadata of the pool
+    /// @return poolId : The id of the pool created
+    /// @return strategy : The address of the strategy created
+    /// @notice The function creates a pool with the strategy template
     function createPool(address _token, StrategyStruct.InitializeParams memory _params, Metadata memory _metadata)
         public
         returns (uint256 poolId, address strategy)
@@ -305,7 +319,14 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
         return createPool(strategyProxy, _token, _params, _metadata);
     }
-
+    
+    /// @param _strategy: The address of the strategy to be used in the pool
+    /// @param _token: The address of the token to be used in the pool
+    /// @param _params : The parameters to initialize the strategy
+    /// @param _metadata : The metadata of the pool
+    /// @return poolId : The id of the pool created
+    /// @return strategy : The address of the strategy created
+    /// @notice The function creates a pool with the strategy provided
     function createPool(
         address _strategy,
         address _token,
@@ -327,6 +348,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
     }
 
+    /// @param _member: The address of the member to be activated in the strategy
+    /// @param _strategy: The address of the strategy to be activated
+    /// @notice The function activates a member in a strategy
     function activateMemberInStrategy(address _member, address _strategy) public nonReentrant{
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
@@ -355,6 +379,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit MemberActivatedStrategy(_member, _strategy, pointsToIncrease);
     }
 
+    /// @param _member: The address of the member to be deactivated in the strategy
+    /// @param _strategy: The address of the strategy to be deactivated
+    /// @notice The function deactivates a member in a strategy
     function deactivateMemberInStrategy(address _member, address _strategy) public {
         onlyRegistryMemberAddress(_member);
         _revertZeroAddress(_strategy);
@@ -372,6 +399,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit MemberDeactivatedStrategy(_member, _strategy);
     }
 
+    /// @param _member: The address of the member to be activated in the strategy
+    /// @param _strategy: The address of the strategy to be activated
+    /// @notice The function activates a member in a strategy
     function removeStrategyFromMember(address _member, address _strategy) internal {
         address[] storage memberStrategies = strategiesByMember[_member];
         for (uint256 i = 0; i < memberStrategies.length; i++) {
@@ -382,6 +412,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
+    /// @param _amountStaked The amount of tokens to stake
+    /// @notice The function increases the power of a member in a strategy
     function increasePower(uint256 _amountStaked) public nonReentrant {
         onlyRegistryMemberSender();
         address member = msg.sender;
@@ -442,14 +474,21 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit MemberPowerDecreased(member, _amountUnstaked);
     }
 
+    /// @param _member: The address of the member to get the power
+    /// @param _strategy: The address of the strategy to get the power
+    /// @return power: The power of the member in the strategy
     function getMemberPowerInStrategy(address _member, address _strategy) public view returns (uint256) {
         return memberPowerInStrategy[_member][_strategy];
     }
 
+    /// @param _member: The address of the member to get the staked amount
+    /// @return stakedAmount: The staked amount of the member
     function getMemberStakedAmount(address _member) public view returns (uint256) {
         return addressToMemberInfo[_member].stakedAmount;
     }
 
+    /// @param poolId: The id of the pool to get the strategy
+    /// @notice The function adds the strategy of a pool to enabled strategies
     function addStrategyByPoolId(uint256 poolId) public {
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
@@ -464,6 +503,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         _addStrategy(_newStrategy);
     }
 
+    /// @param _newStrategy: The address of the strategy to be added
+    /// @notice The function adds a strategy to enabled strategies
     function _addStrategy(address _newStrategy) internal {
         if (enabledStrategies[_newStrategy]) {
             revert StrategyExists();
@@ -472,6 +513,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit StrategyAdded(_newStrategy);
     }
 
+    /// @param poolId: The id of the pool to get the strategy
+    /// @notice The function removes the strategy of a pool from enabled strategies
     function removeStrategyByPoolId(uint256 poolId) public {
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
@@ -479,17 +522,22 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         _removeStrategy(strategy);
     }
 
+    /// @param _strategy: The address of the strategy to be removed
+    /// @notice The function removes a strategy from enabled strategies
     function _removeStrategy(address _strategy) internal {
         _revertZeroAddress(_strategy);
         enabledStrategies[_strategy] = false;
         emit StrategyRemoved(_strategy);
     }
-
+    /// @notice The function removes a strategy from enabled strategies
+    /// @param _strategy: The address of the strategy to be removed
     function removeStrategy(address _strategy) public {
         onlyCouncilSafe();
         _removeStrategy(_strategy);
     }
 
+    /// @notice The function sets the councilSafe of the community
+    /// @param _safe: The address of the new councilSafe
     function setCouncilSafe(address payable _safe) public {
         onlyCouncilSafe();
         _revertZeroAddress(_safe);
@@ -497,12 +545,13 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
 
+    /// @notice The function changes the councilSafe of the community
     function _changeCouncilSafe() internal {
         councilSafe = ISafe(pendingCouncilSafe);
         delete pendingCouncilSafe;
         emit CouncilSafeSet(pendingCouncilSafe);
     }
-
+    /// @notice The function accepts the councilSafe change
     function acceptCouncilSafe() public {
         if (msg.sender != pendingCouncilSafe) {
             revert SenderNotNewOwner();
@@ -510,11 +559,16 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         _changeCouncilSafe();
     }
 
+    /// @notice The function checks if a member is registered
+    /// @param _member: The address of the member to check
+    /// @return _isMember The boolean value if the member is registered
     function isMember(address _member) public view returns (bool _isMember) {
         Member memory newMember = addressToMemberInfo[_member];
         return newMember.isRegistered;
     }
 
+    /// @notice The function stakes and registers a member in the community
+    /// @dev The function transfers the staked amount to the contract, and allows the user to interact with the community
     function stakeAndRegisterMember() public nonReentrant {
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
@@ -551,6 +605,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
+    /// @notice The function returns the amount of tokens required to register a member
+    /// @return _stakeAmount: The amount of tokens required to register a member
     function getStakeAmountWithFees() public view returns (uint256) {
         IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
@@ -560,16 +616,22 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
 
+    /// @notice The function returns the amount of tokens required to register a member
+    /// @return _stakeAmount: The amount of tokens required to register a member
     function getBasisStakedAmount() external view returns (uint256) {
         return registerStakeAmount;
     }
 
+    /// @notice The function sets the amount of tokens required to register a member
+    /// @param _newAmount: The new amount of tokens required to register a member
     function setBasisStakedAmount(uint256 _newAmount) external {
         onlyCouncilSafe();
         registerStakeAmount = _newAmount;
         emit BasisStakedAmountSet(_newAmount);
     }
 
+    /// @notice The function sets the community fee
+    /// @param _newCommunityFee: The new community fee
     function setCommunityFee(uint256 _newCommunityFee) public {
         onlyCouncilSafe();
         if (_newCommunityFee > MAX_FEE) {
@@ -580,11 +642,15 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     }
 
     //function updateMinimumStake()
-
+    /// @notice The function checks if a member is a council member
+    /// @param _member: The address of the member to check
+    /// @return _isCouncilMember: The boolean value if the member is a council member
     function isCouncilMember(address _member) public view returns (bool) {
         return hasRole(COUNCIL_MEMBER, _member);
     }
 
+    /// @notice The function registers a member in the community
+    /// @dev The function removes the member from the community and transfers the staked amount back to the member
     function unregisterMember() public nonReentrant {
         address _member = msg.sender;
         onlyRegistryMemberAddress(_member);
@@ -597,6 +663,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit MemberUnregistered(_member, member.stakedAmount);
     }
 
+    /// @notice The function deactivates all strategies of a member
+    /// @param _member: The address of the member to deactivate the strategies
     function deactivateAllStrategies(address _member) internal {
         address[] memory memberStrategies = strategiesByMember[_member];
         // bytes4 interfaceId = IPointStrategy.withdraw.selector;
@@ -607,6 +675,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
+    /// @notice The function kicks a member from the community
+    /// @param _member: The address of the member to kick
+    /// @param _transferAddress: The address to transfer the staked amount
     function kickMember(address _member, address _transferAddress) public nonReentrant {
         onlyCouncilSafe();
         if (!isKickEnabled) {
