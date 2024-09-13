@@ -213,7 +213,7 @@ contract CVStrategyV0_0 is
     /*|                VARIABLES                   |*/
     /*|--------------------------------------------|*/
 
-    /// @notice  @notice Constants for fixed numbers
+    /// @notice Constants for fixed numbers
     uint256 public constant D = 10000000; //10**7
     uint256 private constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 private constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
