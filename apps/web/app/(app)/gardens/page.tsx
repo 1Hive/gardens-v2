@@ -95,7 +95,6 @@ export default function Page() {
               <Image src={clouds2} alt="clouds" />
             </div>
           </div>
-          <div className="relative" />
         </header>
         <section className="my-2 flex w-full max-w-2xl flex-col items-center justify-center gap-8 2xl:mt-10">
           <div className="grid max-w-7xl grid-cols-[repeat(auto-fit,minmax(310px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,320px)] z-10">
