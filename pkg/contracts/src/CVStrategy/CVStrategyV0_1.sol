@@ -54,9 +54,18 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
         address[] memory membersToRemove
     ) internal virtual {
         super._setPoolParams(_arbitrableConfig, _cvParams);
-
         _addToAllowList(membersToAdd);
         _removeFromAllowList(membersToRemove);
+    }
+
+    function setPoolParams(
+        StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
+        StrategyStruct.CVParams memory _cvParams,
+        address[] memory membersToAdd,
+        address[] memory membersToRemove
+    ) external virtual {
+        onlyCouncilSafe();
+        _setPoolParams(_arbitrableConfig, _cvParams, membersToAdd, membersToRemove);
     }
 
     function _canExecuteAction(address _user) internal view override returns (bool) {
