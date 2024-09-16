@@ -39,10 +39,9 @@ const Providers = ({ children }: Props) => {
   const [wagmiConfig, setWagmiConfig] =
     useState<ReturnType<typeof createCustomConfig>>();
   const chain = useChainFromPath() as Chain;
-
   const createCustomConfig = () => {
     const { publicClient, chains } = configureChains(
-      chain ? [chain, mainnet] : [mainnet],
+      chain?.rpcUrls ? [chain, mainnet] : [mainnet],
       [
         publicProvider(),
         alchemyProvider({

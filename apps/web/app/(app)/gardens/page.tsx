@@ -15,6 +15,12 @@ export default function Page() {
   const { data: gardens, fetching } =
     useSubgraphQueryMultiChain<getTokenGardensQuery>({
       query: getTokenGardensDocument,
+      modifier: (data) =>
+        data.sort(
+          (a, b) =>
+            (a.tokenGardens.length ? a.tokenGardens[0].chainId : 0) -
+            (b.tokenGardens.length ? b.tokenGardens[0].chainId : 0),
+        ),
       changeScope: [
         {
           topic: "garden",
