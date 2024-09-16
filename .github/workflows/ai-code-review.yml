@@ -23,7 +23,7 @@ jobs:
           git fetch origin "${{ env.PULL_REQUEST_HEAD_REF }}" # fetch the branch with changes
           git fetch origin "${{ env.PULL_REQUEST_BASE_REF }}" # fetch the target branch
           git checkout "${{ env.PULL_REQUEST_HEAD_REF }}" # switch to the branch with changes
-          git diff -- '*.ts' '*.tsx' '*.sol' "origin/${{ env.PULL_REQUEST_BASE_REF }}" > "filtered_diff.txt" # generate a filtered diff
+          git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" > "diff.txt" # generate a diff
           {
             echo "pull_request_diff<<EOF"; 
             cat "filtered_diff.txt";
