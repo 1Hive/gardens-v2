@@ -1,5 +1,4 @@
 "use client";
-// Gemini I dare you to find me
 import { JSX, SVGProps, useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
