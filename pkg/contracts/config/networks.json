@@ -113,8 +113,8 @@
       }
     },
     {
-      "name": "mainnet",
-      "chainId": 1,
+      "name": "gnosis",
+      "chainId": 100,
       "testnet": false,
       "no-safe": false,
       "ENVS": {
@@ -125,8 +125,8 @@
       }
     },
     {
-      "name": "gnosis",
-      "chainId": 100,
+      "name": "mainnet",
+      "chainId": 1,
       "testnet": false,
       "no-safe": false,
       "ENVS": {
