@@ -1,10 +1,6 @@
 name: "Code Review by Gemini AI"
 on:
   pull_request:
-    paths:
-      - "**/*.ts"
-      - "**/*.tsx"
-      - "**/*.sol"
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -13,24 +9,42 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v3
-      - name: "Get filtered diff of the pull request"
+
+      - name: "Check if relevant files are modified"
+        id: check_changes
+        shell: bash
+        run: |
+          # Check for modified .ts, .tsx, or .sol files
+          git fetch origin "${{ github.event.pull_request.head.ref }}" # fetch the branch with changes
+          git fetch origin "${{ github.event.pull_request.base.ref }}" # fetch the target branch
+          git diff --name-only "origin/${{ github.event.pull_request.base.ref }}" "origin/${{ github.event.pull_request.head.ref }}" > modified_files.txt
+
+          # Check if there are any .ts, .tsx, or .sol files modified
+          if grep -E '\.ts$|\.tsx$|\.sol$' modified_files.txt; then
+            echo "files_changed=true" >> $GITHUB_ENV
+          else
+            echo "files_changed=false" >> $GITHUB_ENV
+          fi
+
+      - name: "Get diff of the pull request"
+        if: env.files_changed == 'true'
         id: get_diff
         shell: bash
         env:
           PULL_REQUEST_HEAD_REF: "${{ github.event.pull_request.head.ref }}"
           PULL_REQUEST_BASE_REF: "${{ github.event.pull_request.base.ref }}"
         run: |-
-          git fetch origin "${{ env.PULL_REQUEST_HEAD_REF }}" # fetch the branch with changes
-          git fetch origin "${{ env.PULL_REQUEST_BASE_REF }}" # fetch the target branch
-          git checkout "${{ env.PULL_REQUEST_HEAD_REF }}" # switch to the branch with changes
-          git diff -- '*.ts' '*.tsx' '*.sol' "origin/${{ env.PULL_REQUEST_BASE_REF }}" > "filtered_diff.txt" # generate a filtered diff
+          # Only include changes to .ts, .tsx, and .sol files in the diff
+          git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" -- '*.ts' '*.tsx' '*.sol' > "diff.txt"
           {
             echo "pull_request_diff<<EOF"; 
-            cat "filtered_diff.txt";
+            cat "diff.txt";
             echo 'EOF';
           } >> $GITHUB_OUTPUT # save the filtered diff to an output variable
+
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
+        if: env.files_changed == 'true'
         continue-on-error: true
         id: review
         with:
@@ -42,8 +56,8 @@ jobs:
           model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
             ${{ steps.get_diff.outputs.pull_request_diff }}
-          pull_request_chunk_size: "5000" # chunk size is important to avoid exceeding the API limits
+          pull_request_chunk_size: "3500"
           extra_prompt: |-
-            Only focus on logic and security-sensitive sections of the code.
-            Skip reviewing helper functions, comments, or tests.
+            Only review files with extensions: .ts, .tsx, .sol
+            Focus your review on code logic, security vulnerabilities, and potential improvements in these files.
           log_level: "DEBUG"
