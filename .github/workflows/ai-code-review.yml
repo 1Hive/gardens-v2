@@ -1,5 +1,6 @@
 name: "Code Review by Gemini AI"
-on: pull_request
+on:
+  pull_request:
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -8,7 +9,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v3
-      - name: "Get filtered diff of the pull request"
+      - name: "Get diff of the pull request"
         id: get_diff
         shell: bash
         env:
@@ -21,9 +22,9 @@ jobs:
           git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" > "diff.txt" # generate a diff
           {
             echo "pull_request_diff<<EOF"; 
-            cat "filtered_diff.txt";
+            cat "diff.txt";
             echo 'EOF';
-          } >> $GITHUB_OUTPUT # save the filtered diff to an output variable
+          } >> $GITHUB_OUTPUT # save the diff to an output variable
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
         continue-on-error: true
@@ -37,8 +38,8 @@ jobs:
           model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
             ${{ steps.get_diff.outputs.pull_request_diff }}
-          pull_request_chunk_size: "5000" # chunk size is important to avoid exceeding the API limits
+          pull_request_chunk_size: "3500" # chunk size is important to avoid exceeding the API limits
           extra_prompt: |-
-            Only focus on logic and security-sensitive sections of the code.
-            Skip reviewing helper functions, comments, or tests.
+            Only review files with extensions: .ts, .tsx, .sol
+            Focus your review on code logic, security vulnerabilities, and potential improvements in these files.
           log_level: "DEBUG"
