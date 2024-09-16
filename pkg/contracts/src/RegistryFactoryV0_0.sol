@@ -68,6 +68,12 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
     /// @param _strategyTemplate: address of the template contract for creating new strategies
     /// @param _collateralVaultTemplate: address of the template contract for creating new collateral vaults
     // slither-disable-next-line unprotected-upgrade
+    /// @notice Initializes the contract
+    /// @param _owner The owner of the contract
+    /// @param _gardensFeeReceiver The address that will receive the fees
+    /// @param _registryCommunityTemplate The address of the template for the registry
+    /// @param _strategyTemplate The address of the template for the strategy   
+    /// @param _collateralVaultTemplate The address of the template for the collateral vault
     function initialize(
         address _owner,
         address _gardensFeeReceiver,
@@ -87,9 +93,9 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         emit FeeReceiverSet(_gardensFeeReceiver);
         // setReceiverAddress(_gardensFeeReceiver); //onlyOwner
     }
-    
-    /// @param params: parameters for the initialization of the registry
-    /// @dev Create a new registry with the given parameters
+    /// @notice Creates a new registry
+    /// @param params The parameters to initialize the registry
+    /// @return _createdRegistryAddress The address of the created registry
     function createRegistry(RegistryCommunityV0_0.InitializeParams memory params)
         public
         virtual
@@ -113,41 +119,44 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         return address(registryCommunity);
     }
 
-    /// @param _newFeeReceiver : address of the new fee receiver
-    /// @dev Set the address of the receiver of the fees
+    /// @notice Sets the address that will receive the fees
+    /// @param _newFeeReceiver The address that will receive the fees
     function setReceiverAddress(address _newFeeReceiver) public virtual onlyOwner {
         _revertZeroAddress(_newFeeReceiver);
         gardensFeeReceiver = _newFeeReceiver;
         emit FeeReceiverSet(_newFeeReceiver);
     }
-    /// @dev Get the address of the receiver of the fees
+
+    /// @notice Gets the address that will receive the fees
+    /// @return address The address that will receive the fees
     function getGardensFeeReceiver() external view virtual returns (address) {
         return gardensFeeReceiver;
     }
-    
-    /// @param _community: address of the community
-    /// @param _newProtocolFee : new protocol fee
+
+    /// @notice Sets the protocol fee for a community
+    /// @param _community the address of the community
+    /// @param _newProtocolFee the new protocol fee
     function setProtocolFee(address _community, uint256 _newProtocolFee) public virtual onlyOwner {
         communityToInfo[_community].fee = _newProtocolFee;
         emit ProtocolFeeSet(_community, _newProtocolFee);
     }
-    /// 
-    /// @param _community : address of the community
-    /// @param _isValid : validity of the community
+
+    /// @dev Sets the validity of a community
+    /// @param _community the address of the community
+    /// @param _isValid the new validity
     function setCommunityValidity(address _community, bool _isValid) public virtual onlyOwner {
         communityToInfo[_community].valid = _isValid;
         emit CommunityValiditySet(_community, _isValid);
     }
 
-    /// 
-    /// @param _community : address of the community
-    /// @dev Get the validity of the community
+    /// @notice Gets the validity of a community
+    /// @param _community the address of the community
     function getCommunityValidity(address _community) external view virtual returns (bool) {
         return communityToInfo[_community].valid;
     }
-    /// 
-    /// @param _community : address of the community
-    /// @dev Get the protocol fee of the community
+
+    /// @notice Gets the protocol fee for a community
+    /// @param _community: The address of the community
     function getProtocolFee(address _community) external view virtual returns (uint256) {
         if (!communityToInfo[_community].valid) {
             revert CommunityInvalid(_community);

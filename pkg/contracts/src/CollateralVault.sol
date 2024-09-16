@@ -8,6 +8,8 @@ import {console} from "forge-std/console.sol";
 import {ICollateralVault} from "./interfaces/ICollateralVault.sol";
 
 contract CollateralVault is ReentrancyGuard, ICollateralVault {
+    /// @notice Mapping of proposal collateral
+    /// @dev prooposalId => mapping of user => amount as collateral
     mapping(uint256 proposalId => mapping(address user => uint256 amount)) public proposalCollateral;
     address public owner;
 
@@ -38,11 +40,18 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
         owner = msg.sender;
     }
 
+    /// @notice Deposit collateral for a proposal
+    /// @param proposalId The proposal id
+    /// @param user The user who is depositing the collateral
     function depositCollateral(uint256 proposalId, address user) external payable onlyOwner nonReentrant {
         proposalCollateral[proposalId][user] += msg.value;
         emit CollateralDeposited(proposalId, user, msg.value);
     }
 
+    /// @notice Withdraw collateral for a proposal
+    /// @param _proposalId The proposal id
+    /// @param _user The user who is withdrawing the collateral
+    /// @param _amount The amount of collateral to withdraw
     function withdrawCollateral(uint256 _proposalId, address _user, uint256 _amount) external onlyOwner nonReentrant {
         uint256 availableAmount = proposalCollateral[_proposalId][_user];
         // if (_amount == 0) {
@@ -57,6 +66,11 @@ contract CollateralVault is ReentrancyGuard, ICollateralVault {
         emit CollateralWithdrawn(_proposalId, _user, _amount);
     }
 
+    /// @notice Withdraw collateral for a proposal
+    /// @param _proposalId The proposal id
+    /// @param _fromUser The user who is withdrawing the collateral
+    /// @param _toUser The user who is receiving the collateral
+    /// @param _amount The amount of collateral to withdraw
     function withdrawCollateralFor(uint256 _proposalId, address _fromUser, address _toUser, uint256 _amount)
         external
         onlyOwner

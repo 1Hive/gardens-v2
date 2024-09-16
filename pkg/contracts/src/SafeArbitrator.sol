@@ -64,6 +64,8 @@ contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable,Reen
         emit ArbitrationFeeUpdated(_arbitrationFee);
     }
 
+    /// @dev Register a safe for an arbitrable contract.
+    /// @param _safe Address of the safe.
     function registerSafe(address _safe) external {
         arbitrableTribunalSafe[msg.sender] = _safe;
         emit SafeRegistered(msg.sender, _safe);
@@ -96,6 +98,8 @@ contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable,Reen
     }
 
     /// @inheritdoc IArbitrator
+    /// @dev Create a dispute.
+    /// @notice Not implemented
     function createDispute(
         uint256, /*_choices*/
         bytes calldata, /*_extraData*/
@@ -143,6 +147,7 @@ contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable,Reen
         revert("Not supported");
     }
 
+    /// @inheritdoc IArbitrator
     function currentRuling(uint256 _disputeID) public view returns (uint256 ruling, bool tied, bool overridden) {
         DisputeStruct storage dispute = disputes[_disputeID];
         ruling = dispute.ruling;
