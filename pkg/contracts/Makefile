@@ -401,10 +401,12 @@ deploy-multi-gnosis:
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
 	--account pkGarden \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
 	--ffi \
 	--chain-id 100 \
 	--broadcast \
 	--legacy \
+	--verify \
 	--via-ir \
 	-vvv
 

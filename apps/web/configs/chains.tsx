@@ -29,10 +29,10 @@ export const chains: Chain[] = [
   sepolia,
 
   arbitrum,
-  polygon,
-  // mainnet,
   optimism,
-  // gnosis,
+  polygon,
+  gnosis,
+  // mainnet,
 ];
 
 if (process.env.NODE_ENV === "development") {
@@ -55,7 +55,7 @@ type ChainData = {
 };
 
 const SUBGRAPH_TESTNET_VERSION = "0.25";
-const SUBGRAPH_PRODNET_VERSION = "1.3";
+const SUBGRAPH_PRODNET_VERSION = "0.0.3";
 
 export const chainConfigMap: {
   [key: number | string]: ChainData;
