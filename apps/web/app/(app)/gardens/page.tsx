@@ -83,7 +83,7 @@ export default function Page() {
             <div className="mx-10 flex flex-col items-center gap-5">
               <div className="flex flex-col items-center">
                 <h1 className="max-w-xl text-center text-neutral-content">
-                  Gardens
+                  Welcome to Gardens
                 </h1>
                 <p className="text-xl text-primary-content text-center">
                   A place where communities grow through collective
