@@ -8,9 +8,8 @@ import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/
 
 contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, ISybilScorer {
     address public listManager;
-    /// @notice Mapping of user scores
+
     mapping(address => PassportData) public userScores;
-    /// @notice Mapping of strategies
     mapping(address => Strategy) public strategies;
 
     event UserScoreAdded(address indexed user, uint256 score, uint256 lastUpdated);
@@ -27,7 +26,6 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     error ZeroAddress();
     error StrategyAlreadyExists();
 
-    /// @notice Modifier to check if the caller is the owner or the list manager
     modifier onlyAuthorized() {
         if (msg.sender == owner() || msg.sender == listManager) {
             _;
@@ -36,7 +34,6 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
         }
     }
 
-    /// @notice Modifier to check if the caller is the owner, the list manager or the council safe of the strategy
     modifier onlyCouncilOrAuthorized(address _strategy) {
         if (msg.sender == owner() || msg.sender == listManager || msg.sender == strategies[_strategy].councilSafe) {
             _;
@@ -45,7 +42,6 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
         }
     }
 
-    /// @notice Modifier to check if the caller is the council safe of the strategy
     modifier onlyCouncil(address _strategy) {
         if (msg.sender == strategies[_strategy].councilSafe) {
             _;
@@ -54,7 +50,6 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
         }
     }
 
-    /// @notice Revert if the address is zero
     function _revertZeroAddress(address _address) private pure {
         if (_address == address(0)) {
             revert ZeroAddress();
