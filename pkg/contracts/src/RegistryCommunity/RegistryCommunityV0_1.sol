@@ -192,21 +192,23 @@ contract RegistryCommunityV0_1 is RegistryCommunityV0_0, IArbitrable {
 
         ConfigParameters storage newConfig = configurations[currentConfigVersion];
 
+        bytes32 parameterNameHash = keccak256(abi.encodePacked(request.parameterName));
+
         // here we can add or remove the ones that we want to be able to change or not
         // Every time that we change a parameter we need to override the functions that are using it to start using the configurations[currentConfigVersion]
-        if (keccak256(abi.encodePacked(request.parameterName)) == keccak256("registerStakeAmount")) {
+        if (parameterNameHash == keccak256("registerStakeAmount")) {
             newConfig.registerStakeAmount = request.newUintValue;
-        } else if (keccak256(abi.encodePacked(request.parameterName)) == keccak256("communityFee")) {
+        } else if (parameterNameHash == keccak256("communityFee")) {
             newConfig.communityFee = request.newUintValue;
-        } else if (keccak256(abi.encodePacked(request.parameterName)) == keccak256("isKickEnabled")) {
+        } else if (parameterNameHash == keccak256("isKickEnabled")) {
             newConfig.isKickEnabled = request.newBoolValue;
-        } else if (keccak256(abi.encodePacked(request.parameterName)) == keccak256("feeReceiver")) {
+        } else if (parameterNameHash == keccak256("feeReceiver")) {
             newConfig.feeReceiver = request.newAddressValue;
-        } else if (keccak256(abi.encodePacked(request.parameterName)) == keccak256("councilSafe")) {
+        } else if (parameterNameHash == keccak256("councilSafe")) {
             newConfig.councilSafe = ISafe(request.newAddressValue);
-        } else if (keccak256(abi.encodePacked(request.parameterName)) == keccak256("communityName")) {
+        } else if (parameterNameHash == keccak256("communityName")) {
             newConfig.communityName = request.newStringValue;
-        } else if (keccak256(abi.encodePacked(request.parameterName)) == keccak256("covenantIpfsHash")) {
+        } else if (parameterNameHash == keccak256("covenantIpfsHash")) {
             newConfig.covenantIpfsHash = request.newStringValue;
         } else {
             revert UnknownParameter(request.parameterName);
