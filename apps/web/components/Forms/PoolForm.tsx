@@ -211,6 +211,8 @@ export function PoolForm({ token, communityAddr }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { publish } = usePubSubContext();
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
+
   const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
@@ -344,6 +346,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     minimumConviction = minimumConviction / 100;
 
     const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
+
     const weightNum = minimumConviction * maxRatioNum ** 2;
 
     const blockTime = chain.blockTime;
@@ -993,7 +996,7 @@ export function PoolForm({ token, communityAddr }: Props) {
             <Button
               onClick={() => createPool()}
               isLoading={loading}
-              disabled={!isConnected}
+              disabled={!isConnected || missmatchUrl}
               tooltip={tooltipMessage}
             >
               Submit
