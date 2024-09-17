@@ -245,9 +245,9 @@ contract RegistryCommunityV0_1 is RegistryCommunityV0_0, IArbitrable {
             changeRequest.requestId, msg.sender
         );
 
+        changeRequest.status = ChangeRequestlStatus.Disputed;
         disputeId = arbitrableConfig.arbitrator.createDispute{value: arbitrationFee}(RULING_OPTIONS, _extraData);
 
-        changeRequest.status = ChangeRequestlStatus.Disputed;
         changeRequest.disputeInfo.disputeId = disputeId;
         changeRequest.disputeInfo.disputeTimestamp = block.timestamp;
         changeRequest.disputeInfo.challenger = msg.sender;
