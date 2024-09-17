@@ -182,7 +182,7 @@ contract RegistryCommunityV0_1 is RegistryCommunityV0_0, IArbitrable {
 
     function _finalizeChangeRequest(uint256 _requestId) internal virtual {
         ConfigChangeRequest storage request = configChangeRequests[_requestId];
-        if (request.status != ChangeRequestlStatus.Active || request.status == ChangeRequestlStatus.Disputed) {
+        if (request.status != ChangeRequestlStatus.Active || request.status != ChangeRequestlStatus.Disputed) {
             revert ChangeAlreadyExecuted(_requestId);
         }
 
@@ -316,11 +316,6 @@ contract RegistryCommunityV0_1 is RegistryCommunityV0_0, IArbitrable {
 
         emit Ruling(arbitrableConfigs[changeRequest.arbitrableConfigVersion].arbitrator, _disputeID, _ruling);
     }
-
-    /// @dev Internal function to handle the ruling logic
-    /// @param _disputeID The ID of the dispute.
-    /// @param _ruling The ruling given by the arbitrator.
-    function _executeRuling(uint256 _disputeID, uint256 _ruling) internal virtual {}
 
     function _setArbitrableParams(ArbitrableConfig memory _arbitrableConfig) internal virtual {
         if (
