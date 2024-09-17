@@ -210,17 +210,6 @@ const Hero = () => {
 
 const Banner = () => {
   const [openBanner, setOpenBanner] = useState(true);
-  //const notOpenBanner = "NotOpenBannerAck";
-
-  // useEffect(() => {
-  //   const openBannerStorage = localStorage.getItem(notOpenBanner);
-  //   setOpenBanner(openBannerStorage !== "true");
-  // }, []);
-
-  // const handleBannerClose = () => {
-  //   setOpenBanner(false);
-  //   localStorage.setItem(notOpenBanner, "true");
-  // };
 
   return (
     <>
