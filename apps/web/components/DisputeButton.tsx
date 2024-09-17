@@ -1,4 +1,4 @@
-import { FC, Fragment, useState } from "react";
+import { FC, Fragment, useMemo, useState } from "react";
 // @ts-ignore - no types available
 import { blo } from "blo";
 import { formatEther } from "viem";
@@ -74,7 +74,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const [reason, setReason] = useState("");
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const { publish } = usePubSubContext();
-  const { address, isDisconnected } = useAccount();
+  const { address } = useAccount();
   const [isDisputeCreateLoading, setIsDisputeCreateLoading] = useState(false);
   const chainId = useChainIdFromPath();
   const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
@@ -240,6 +240,22 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     }
   };
 
+  const disableSubmitBtn = useMemo<ConditionObject[]>(
+    () => [
+      {
+        condition: !isEnoughBalance,
+        message: "Insufficient balance",
+      },
+      {
+        condition: isCooldown,
+        message: "Please wait 2 hours before submitting another dispute",
+      },
+    ],
+    [isEnoughBalance, isCooldown],
+  );
+  const { isConnected, missmatchUrl, tooltipMessage } =
+    useDisableButtons(disableSubmitBtn);
+
   const content = (
     <div className="flex md:flex-col gap-10">
       {proposalStatus !== "active" ?
@@ -280,8 +296,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const disableTribunalSafeButtons = disableTribunalSafeBtnCondition.some(
     (cond) => cond.condition,
   );
-
-  const { tooltipMessage } = useDisableButtons(disableTribunalSafeBtnCondition);
 
   const buttons = (
     <div className="modal-action w-full">
@@ -376,15 +390,11 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             <Button
               onClick={handleSubmit}
               color="danger"
-              tooltip={
-                isEnoughBalance ?
-                  isCooldown ?
-                    "Please wait 2 hours before submitting another dispute"
-                  : ""
-                : "Insufficient balance"
-              }
               tooltipSide="tooltip-left"
-              disabled={!isEnoughBalance || isCooldown}
+              disabled={
+                !isConnected || missmatchUrl || !isEnoughBalance || isCooldown
+              }
+              tooltip={tooltipMessage}
               isLoading={isDisputeCreateLoading}
             >
               Dispute
@@ -403,8 +413,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             color="danger"
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
-            disabled={isDisconnected}
-            tooltip="Connect wallet"
           >
             {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
           </Button>
