@@ -122,7 +122,13 @@ export default function PoolHeader({
     strategy.config.minThresholdPoints,
     +token.decimals,
   );
-  const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
+
+  //const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
+  const spendingLimit =
+    (strategy.config.maxRatio / CV_SCALE_PRECISION) *
+    (1 - Math.sqrt(minimumConviction / 100)) *
+    100;
+
   const communityAddr = strategy.registryCommunity.id as Address;
   const defaultResolution = arbitrableConfig.defaultRuling;
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
