@@ -6,6 +6,8 @@ import {RegistryCommunityV0_1} from "../RegistryCommunity/RegistryCommunityV0_1.
 
 /// @custom:oz-upgrades-from RegistryFactoryV0_0
 contract RegistryFactoryV0_1 is RegistryFactoryV0_0 {
+    function initializeV2() public reinitializer(2) {}
+
     function createRegistry(RegistryCommunityV0_1.InitializeParams memory params)
         public
         virtual

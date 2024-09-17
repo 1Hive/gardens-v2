@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {BaseStrategy, IAllo} from "allo-v2-contracts/strategies/BaseStrategy.sol";
-import {RegistryCommunityV0_1} from "../RegistryCommunity/RegistryCommunityV0_1.sol";
+import {RegistryCommunityV0_0} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ERC165, IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
@@ -12,7 +12,6 @@ import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 // import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "../ISybilScorer.sol";
-
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {BaseStrategyUpgradeable} from "../BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -242,7 +241,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     StrategyStruct.PointSystemConfig public pointConfig;
 
     // Contract reference
-    RegistryCommunityV0_1 public registryCommunity;
+    address internal registryCommunity;
 
     ICollateralVault public collateralVault;
     ISybilScorer public sybilScorer;
@@ -253,6 +252,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     mapping(address => uint256[]) public voterStakedProposals; // voter -> proposal ids arrays
     mapping(uint256 => uint256) public disputeIdToProposalId;
     mapping(uint256 => StrategyStruct.ArbitrableConfig) public arbitrableConfigs;
+
+    function getRegistryCommunity() public view returns (RegistryCommunityV0_0) {
+        return RegistryCommunityV0_0(registryCommunity);
+    }
 
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
@@ -275,7 +278,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             revert RegistryCannotBeZero();
         }
 
-        registryCommunity = RegistryCommunityV0_1(ip.registryCommunity);
+        registryCommunity = ip.registryCommunity;
 
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
@@ -314,7 +317,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (address(registryCommunity) == address(0)) {
             revert RegistryCannotBeZero();
         }
-        if (!registryCommunity.isMember(_sender)) {
+        if (!getRegistryCommunity().isMember(_sender)) {
             revert UserNotInRegistry();
         }
         // _;
@@ -331,7 +334,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function onlyCouncilSafe() internal view virtual {
-        if (msg.sender != address(registryCommunity.councilSafe())) {
+        if (msg.sender != address(getRegistryCommunity().councilSafe())) {
             revert OnlyCouncilSafe();
         }
     }
@@ -425,8 +428,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (!_canExecuteAction(member)) {
             revert UserCannotExecuteAction();
         }
-        registryCommunity.activateMemberInStrategy(member, address(this));
-        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(member, address(this));
+        getRegistryCommunity().activateMemberInStrategy(member, address(this));
+        totalPointsActivated += getRegistryCommunity().getMemberPowerInStrategy(member, address(this));
     }
 
     function deactivatePoints() public virtual {
@@ -439,8 +442,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function _deactivatePoints(address _member) internal virtual {
-        totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
-        registryCommunity.deactivateMemberInStrategy(_member, address(this));
+        totalPointsActivated -= getRegistryCommunity().getMemberPowerInStrategy(_member, address(this));
+        getRegistryCommunity().deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         withdraw(_member);
         emit PointsDeactivated(_member);
@@ -460,7 +463,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         } else if (pointSystem == StrategyStruct.PointSystem.Quadratic) {
             pointsToIncrease = increasePowerQuadratic(_member, _amountToStake);
         }
-        bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
+        bool isActivated = getRegistryCommunity().memberActivatedInStrategies(_member, address(this));
         if (isActivated) {
             totalPointsActivated += pointsToIncrease;
         }
@@ -483,14 +486,14 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return pointsToDecrease;
     }
 
-    function increasePowerUnlimited(uint256 _amountToStake) internal virtual pure returns (uint256) {
+    function increasePowerUnlimited(uint256 _amountToStake) internal pure virtual returns (uint256) {
         return _amountToStake;
     }
 
     function increasePowerCapped(address _member, uint256 _amountToStake) internal view virtual returns (uint256) {
         uint256 pointsToIncrease = _amountToStake;
         // console.log("POINTS TO INCREASE", pointsToIncrease);
-        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        uint256 memberPower = getRegistryCommunity().getMemberPowerInStrategy(_member, address(this));
         // console.log("MEMBERPOWER", memberPower);
         if (memberPower + pointsToIncrease > pointConfig.maxAmount) {
             pointsToIncrease = pointConfig.maxAmount - memberPower;
@@ -501,16 +504,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function increasePowerQuadratic(address _member, uint256 _amountToStake) internal view virtual returns (uint256) {
-        uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
+        uint256 totalStake = getRegistryCommunity().getMemberStakedAmount(_member) + _amountToStake;
 
         uint256 decimal = 18;
-        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
+        try ERC20(address(getRegistryCommunity().gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
             // console.log("Error getting decimal");
         }
         uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
-        uint256 currentPoints = registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        uint256 currentPoints = getRegistryCommunity().getMemberPowerInStrategy(_member, address(this));
 
         uint256 pointsToIncrease = newTotalPoints - currentPoints;
 
@@ -528,16 +531,17 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         returns (uint256)
     {
         uint256 decimal = 18;
-        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
+        try ERC20(address(getRegistryCommunity().gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
             // console.log("Error getting decimal");
         }
         // console.log("_amountToUnstake", _amountToUnstake);
-        uint256 newTotalStake = registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake;
+        uint256 newTotalStake = getRegistryCommunity().getMemberStakedAmount(_member) - _amountToUnstake;
         // console.log("newTotalStake", newTotalStake);
         uint256 newTotalPoints = Math.sqrt(newTotalStake * 10 ** decimal);
-        uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
+        uint256 pointsToDecrease =
+            getRegistryCommunity().getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
         return pointsToDecrease;
     }
 
@@ -567,7 +571,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
         // surpressStateMutabilityWarning++;
 
-        bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
+        bool isMemberActivatedPoints = getRegistryCommunity().memberActivatedInStrategies(_sender, address(this));
         if (!isMemberActivatedPoints) {
             revert UserIsInactive();
         }
@@ -814,7 +818,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function getBasisStakedAmount() internal view virtual returns (uint256) {
-        return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
+        return getRegistryCommunity().getBasisStakedAmount(); // 50 HNY = 100%
     }
 
     function proposalExists(uint256 _proposalID) internal view virtual returns (bool) {
@@ -846,7 +850,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // console.logInt(deltaSupportSum);
         uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
         // console.log("newTotalVotingSupport", newTotalVotingSupport);
-        uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
+        uint256 participantBalance = getRegistryCommunity().getMemberPowerInStrategy(_sender, address(this));
 
         // console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
@@ -1276,7 +1280,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.disputeInfo.challenger,
-                address(registryCommunity.councilSafe()),
+                address(getRegistryCommunity().councilSafe()),
                 arbitrableConfig.challengerCollateralAmount
             );
         } else if (_ruling == 2) {
@@ -1287,7 +1291,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
-                address(registryCommunity.councilSafe()),
+                address(getRegistryCommunity().councilSafe()),
                 arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
             );
             collateralVault.withdrawCollateralFor(
