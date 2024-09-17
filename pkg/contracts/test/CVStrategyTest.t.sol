@@ -24,11 +24,11 @@ import {IArbitrator} from "../src/interfaces/IArbitrator.sol";
 import {GV2ERC20} from "../script/GV2ERC20.sol";
 // import {StrategyStruct2} from "../src/libraries/StrategyStruct2.sol";
 // import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
-import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+import {RegistryCommunityV0_1, RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
-import {CVStrategyV0_1, StrategyStruct, StrategyStruct2} from "../src/CVStrategy/CVStrategyV0_1.sol";
+import {CVStrategyV0_1, CVStrategyV0_0, StrategyStruct, StrategyStruct2} from "../src/CVStrategy/CVStrategyV0_1.sol";
 
 import {ISybilScorer, PassportData} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
@@ -41,7 +41,6 @@ import {ABDKMath64x64} from "./ABDKMath64x64.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 
 /* @dev Run
  * forge test --mc CVStrategyTest -vvvvv
@@ -196,7 +195,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             StrategyStruct.PointSystem.Unlimited,
             StrategyStruct.PointSystemConfig(200 * DECIMALS),
             arbitrableConfig
-            );
+        );
 
         // CVStrategyV0_1 strategy = new CVStrategyV0_1(address(allo()));
 
@@ -247,7 +246,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
     }
 
-    function _assertProposalStatus(CVStrategyV0_1 cv, uint256 proposalId, StrategyStruct.ProposalType _toBeChecked)
+    function _assertProposalStatus(CVStrategyV0_1 cv, uint256 proposalId, StrategyStruct.ProposalStatus _toBeChecked)
         internal
         view
     {
@@ -262,7 +261,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             // address requestedToken,
             // uint256 requestedAmount
             // uint256 stakedTokens,
-            StrategyStruct.ProposalType proposalStatus, // uint256 blockLast, // uint256 convictionLast // uint256 threshold // uint256 voterPointsPct
+            StrategyStruct.ProposalStatus proposalStatus, // uint256 blockLast, // uint256 convictionLast // uint256 threshold // uint256 voterPointsPct
             ,
             ,
             ,
@@ -293,7 +292,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), 11000 ether, NATIVE, metadata);
         bytes memory data = abi.encode(proposal);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.AmountOverMaxRatio.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.AmountOverMaxRatio.selector));
         allo().registerRecipient(poolId, data);
     }
 
@@ -303,7 +302,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
          * ASSERTS
          */
         CVStrategyV0_1 cv = CVStrategyV0_1(payable(address(pool.strategy)));
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.OnlyCommunityAllowed.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.OnlyCommunityAllowed.selector));
         cv.deactivatePoints(address(pool_admin()));
     }
 
@@ -327,8 +326,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // votes[2] = StrategyStruct.ProposalSupport(proposalId, -10 ); // 90 - 10 = 80% = 40
         // 35 + 45 + 40 = 120
         bytes memory data = abi.encode(votes);
-        // vm.expectRevert(CVStrategyV0_1.ProposalSupportDuplicated.selector);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.ProposalSupportDuplicated.selector, proposalId, 0));
+        // vm.expectRevert(CVStrategyV0_0.ProposalSupportDuplicated.selector);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalSupportDuplicated.selector, proposalId, 0));
         allo().allocate(poolId, data);
         stopMeasuringGas();
     }
@@ -354,8 +353,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // 35 + 45 + 40 = 120
         bytes memory data = abi.encode(votes);
         vm.startPrank(pool_admin());
-        vm.expectRevert(CVStrategyV0_1.UserNotInRegistry.selector);
-        // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.ProposalSupportDuplicated.selector, proposalId, 0));
+        vm.expectRevert(CVStrategyV0_0.UserNotInRegistry.selector);
+        // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalSupportDuplicated.selector, proposalId, 0));
         allo().allocate(poolId, data);
 
         vm.stopPrank();
@@ -374,7 +373,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         bytes memory data = abi.encode(votes);
         CVStrategyV0_1 cv = CVStrategyV0_1(payable(address(pool.strategy)));
         cv.deactivatePoints();
-        vm.expectRevert(CVStrategyV0_1.UserIsInactive.selector);
+        vm.expectRevert(CVStrategyV0_0.UserIsInactive.selector);
         allo().allocate(poolId, data);
     }
 
@@ -388,7 +387,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
         votes[0] = StrategyStruct.ProposalSupport(10, SUPPORT_PCT); // 0 + 70 = 70% = 35
         bytes memory data = abi.encode(votes);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.ProposalNotInList.selector, 10));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, 10));
         allo().allocate(poolId, data);
     }
 
@@ -406,7 +405,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         uint256 participantBalance = 50000000000000000000;
         vm.expectRevert(
             abi.encodeWithSelector(
-                CVStrategyV0_1.NotEnoughPointsToSupport.selector, newTotalVotingSupport, participantBalance
+                CVStrategyV0_0.NotEnoughPointsToSupport.selector, newTotalVotingSupport, participantBalance
             )
         );
         vm.stopPrank();
@@ -424,7 +423,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.ProposalSupport[] memory votes = new StrategyStruct.ProposalSupport[](1);
         votes[0] = StrategyStruct.ProposalSupport(proposalId, SUPPORT_PCT); // 0 + 70 = 70% = 35
         bytes memory data = abi.encode(votes);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.SupportUnderflow.selector, 0, SUPPORT_PCT, SUPPORT_PCT));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.SupportUnderflow.selector, 0, SUPPORT_PCT, SUPPORT_PCT));
         allo().allocate(poolId, data);
     }
 
@@ -437,7 +436,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         //Revert on create already tested, here checking the revert in calculateThreshold
         uint256 requestedAmount = REQUESTED_AMOUNT * 100000;
         CVStrategyV0_1 cv = CVStrategyV0_1(payable(address(pool.strategy)));
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.AmountOverMaxRatio.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.AmountOverMaxRatio.selector));
         cv.calculateThreshold(requestedAmount);
     }
 
@@ -457,7 +456,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //     CVStrategyV0_1 cv = CVStrategyV0_1(payable(address(pool.strategy)));
     //     vm.expectRevert(
     //         abi.encodeWithSelector(
-    //             CVStrategyV0_1.SupportUnderflow.selector,
+    //             CVStrategyV0_0.SupportUnderflow.selector,
     //             0,
     //             -100 * int256(cv.PRECISION_SCALE()),
     //             -100 * int256(cv.PRECISION_SCALE())
@@ -477,11 +476,11 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0x666), metadata);
         bytes memory data = abi.encode(proposal);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.TokenNotAllowed.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.TokenNotAllowed.selector));
         allo().registerRecipient(poolId, data);
         proposal = StrategyStruct.CreateProposal(poolId, pool_admin(), REQUESTED_AMOUNT, address(0), metadata);
         data = abi.encode(proposal);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.TokenCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.TokenCannotBeZero.selector));
         allo().registerRecipient(poolId, data);
     }
 
@@ -491,7 +490,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(0, pool_admin(), REQUESTED_AMOUNT, address(token), metadata);
         bytes memory data = abi.encode(proposal);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.PoolIdCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.PoolIdCannotBeZero.selector));
         allo().registerRecipient(poolId, data);
     }
 
@@ -862,7 +861,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         votes[1];
         bytes memory data = abi.encode(votes);
 
-        // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.SupportUnderflow.selector, 0, -100, -100));
+        // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.SupportUnderflow.selector, 0, -100, -100));
         allo().allocate(poolId, data);
         stopMeasuringGas();
 
@@ -889,7 +888,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         bytes memory data = abi.encode(votes);
 
         vm.startPrank(address(0));
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.UserCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotBeZero.selector));
         allo().allocate(poolId, data);
         vm.stopPrank();
     }
@@ -1846,7 +1845,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // console.log("Beneficienry After amount: %s", amount);
         (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
         assertEq(amount - submitterCollateralAmount, requestedAmount);
-        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalType.Executed);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
 
     function test_distribute_with_token() public {
@@ -1930,7 +1929,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         amount = getBalance(pool.token, beneficiary) - amount;
         console.log("Beneficienry After amount: %s", amount);
         assertEq(amount, requestedAmount, "requestedAmount");
-        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalType.Executed);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
 
     function test_distribute_native_token() public {
@@ -2004,17 +2003,17 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         allo().distribute(poolId, recipients, dataProposal);
         //@todo chec ProposalStatus
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.ProposalNotActive.selector, proposalId));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotActive.selector, proposalId));
         allo().distribute(poolId, recipients, dataProposal);
         // Removed this revert for now, waiting for further talks with team to check if we put back the revert in update
         // proposal conviction
-        // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.ProposalNotActive.selector, proposalId));
+        // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotActive.selector, proposalId));
         cv.updateProposalConviction(proposalId);
         amount = getBalance(pool.token, beneficiary);
         // console.log("Beneficienry After amount: %s", amount);
         (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
         assertEq(amount, requestedAmount + submitterCollateralAmount);
-        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalType.Executed);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
     }
 
     function testRevert_onlyCouncilSafe() public {
@@ -2028,7 +2027,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
         CVStrategyV0_1 cv = CVStrategyV0_1(payable(address(pool.strategy)));
         vm.startPrank(gardenMember);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.OnlyCouncilSafe.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.OnlyCouncilSafe.selector));
         cv.setSybilScorer(address(gardenMember));
     }
 
@@ -2043,7 +2042,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
         CVStrategyV0_1 cv = CVStrategyV0_1(payable(address(pool.strategy)));
         uint256 wrongProposalId = 4;
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.ProposalNotInList.selector, wrongProposalId));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, wrongProposalId));
         cv.updateProposalConviction(wrongProposalId);
         cv.updateProposalConviction(proposalId);
         address[] memory recipients = new address[](0);
@@ -2051,10 +2050,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
 
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.ConvictionUnderMinimumThreshold.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ConvictionUnderMinimumThreshold.selector));
         allo().distribute(poolId, recipients, dataProposal);
 
-        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalType.Active);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
     }
 
     function testRevert_proposalId_distribute() public {
@@ -2070,9 +2069,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         address[] memory recipients = new address[](0);
         bytes memory dataProposal = abi.encode(0);
         assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.ProposalIdCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalIdCannotBeZero.selector));
         allo().distribute(proposalId, recipients, dataProposal);
-        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalType.Active);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
     }
 
     function testRevert_proposalData_distribute() public {
@@ -2088,10 +2087,10 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         address[] memory recipients = new address[](0);
         bytes memory dataProposal = "";
         assertEq(cv.canExecuteProposal(proposalId), false, "canExecuteProposal");
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.ProposalDataIsEmpty.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalDataIsEmpty.selector));
         allo().distribute(proposalId, recipients, dataProposal);
-        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalType.Active);
-        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalType.Active);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
+        _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Active);
     }
 
     function testRevert_distribute_onlyAllo_Native() public {
@@ -2105,7 +2104,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         cv.distribute(recipientIds, data, sender);
         uint256 wrongId = 4;
         data = abi.encode(wrongId);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.ProposalNotInList.selector, wrongId));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, wrongId));
         allo().distribute(poolId, recipientIds, data);
     }
 
@@ -2131,7 +2130,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             StrategyStruct.PointSystemConfig(200 * DECIMALS),
             arbitrableConfig
         );
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.RegistryCannotBeZero.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.RegistryCannotBeZero.selector));
         _registryCommunity().createPool(NATIVE, params, metadata);
     }
 
@@ -2216,7 +2215,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
     //     // amount = getBalance(pool.token, beneficiary);
     //     // // console.log("Beneficienry After amount: %s", amount);
     //     // assertEq(amount, requestedAmount);
-    // _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalType.Executed);
+    // _assertProposalStatus(cv, proposalId, StrategyStruct.ProposalStatus.Executed);
 
     // }
 
@@ -2234,7 +2233,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (,, uint256 submitterCollateralAmount,,,) = cv.getArbitrableConfig();
         vm.deal(address(this), submitterCollateralAmount);
         vm.expectRevert(
-            abi.encodeWithSelector(CVStrategyV0_1.InsufficientCollateral.selector, 0, submitterCollateralAmount)
+            abi.encodeWithSelector(CVStrategyV0_0.InsufficientCollateral.selector, 0, submitterCollateralAmount)
         );
         uint256 WRONG_PROPOSAL_ID = uint160(allo().registerRecipient{value: 0}(poolId, data));
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
@@ -2263,7 +2262,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         allo().distribute(poolId, new address[](0), dataProposal);
         // console.log("Beneficienry After amount: %s", amount);
-        _assertProposalStatus(cv, PROPOSAL_ID, StrategyStruct.ProposalType.Active);
+        _assertProposalStatus(cv, PROPOSAL_ID, StrategyStruct.ProposalStatus.Active);
     }
 
     function printProposalDetails(CVStrategyV0_1 cv, uint256 proposalId) public view {
@@ -2344,7 +2343,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         registryCommunity.stakeAndRegisterMember();
         assertEq(registryCommunity.isMember(local()), true, "isMember");
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserAlreadyActivated.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserAlreadyActivated.selector));
         cv.activatePoints();
 
         vm.startPrank(pool_admin());
@@ -2368,7 +2367,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         assertEq(cv.totalPointsActivated(), MINIMUM_STAKE, "totalPointsAct1");
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.UserAlreadyActivated.selector));
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.UserAlreadyActivated.selector));
         cv.activatePoints();
 
         vm.startPrank(local());
@@ -2447,7 +2446,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         registryCommunity.stakeAndRegisterMember();
 
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.UserCannotExecuteAction.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
         cv.activatePoints();
 
         vm.stopPrank();
@@ -2519,7 +2518,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         StrategyStruct.CreateProposal memory proposal =
             StrategyStruct.CreateProposal(poolId, pool_admin(), 11000 ether, NATIVE, metadata);
         bytes memory data = abi.encode(proposal);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.UserCannotExecuteAction.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
         allo().registerRecipient(poolId, data);
         vm.stopPrank();
     }
@@ -2546,7 +2545,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.deal(address(6), submitterCollateralAmount * 2000);
         uint256 PROPOSAL_ID = uint160(allo().registerRecipient{value: submitterCollateralAmount}(poolId, data));
         vm.stopPrank();
-        _assertProposalStatus(cv, PROPOSAL_ID, StrategyStruct.ProposalType.Active);
+        _assertProposalStatus(cv, PROPOSAL_ID, StrategyStruct.ProposalStatus.Active);
     }
 
     function test_allocate_not_enough_score() public {
@@ -2573,7 +2572,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         registryCommunity.stakeAndRegisterMember();
 
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_1.UserCannotExecuteAction.selector));
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
         allo().allocate(poolId, data);
         vm.stopPrank();
     }

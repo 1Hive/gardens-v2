@@ -303,7 +303,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
             address(new CVStrategyV0_1()),
             abi.encodeWithSelector(
-                CVStrategyV0_1.init.selector, address(allo), address(new CollateralVault()), pool_admin()
+                CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()), pool_admin()
             )
         );
         CVStrategyV0_1 strategy1 = CVStrategyV0_1(payable(strategy1Proxy));
@@ -317,7 +317,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         ERC1967Proxy strategy2Proxy = new ERC1967Proxy(
             address(new CVStrategyV0_1()),
             abi.encodeWithSelector(
-                CVStrategyV0_1.init.selector, address(allo), address(new CollateralVault()), pool_admin()
+                CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()), pool_admin()
             )
         );
 

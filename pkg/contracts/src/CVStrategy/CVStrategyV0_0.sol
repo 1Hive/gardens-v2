@@ -55,7 +55,7 @@ library StrategyStruct {
     enum ProposalStatus {
         Inactive, // Inactive
         Active, // A vote that has been reported to Agreements
-        Paused, // A vote that is being challenged by Agreements
+        Paused, // A votee that is being challenged by Agreements
         Cancelled, // A vote that has been cancelled
         Executed, // A vote that has been executed
         Disputed, // A vote that has been disputed
@@ -258,7 +258,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     /*|              CONSTRUCTORS                  |*/
     /*|--------------------------------------------|*/
     // constructor(address _allo) BaseStrategy(address(_allo), "CVStrategy") {}
-
     function init(address _allo, address _collateralVaultTemplate, address owner) external virtual initializer {
         super.init(_allo, "CVStrategy", owner);
         collateralVaultTemplate = _collateralVaultTemplate;
@@ -344,7 +343,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return sybilScorer.canExecuteAction(_user, address(this));
     }
 
-    function setCollateralVaultTemplate(address template) external onlyOwner {
+    function setCollateralVaultTemplate(address template) external virtual onlyOwner {
         collateralVaultTemplate = template;
     }
 
@@ -353,7 +352,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // if there are more steps, additional functions should be added to allow the owner to check
     // this could also check attestations directly and then Accept
 
-    function _registerRecipient(bytes memory _data, address _sender) internal override returns (address) {
+    function _registerRecipient(bytes memory _data, address _sender) internal virtual override returns (address) {
         if (!_canExecuteAction(_sender)) {
             revert UserCannotExecuteAction();
         }
@@ -484,7 +483,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return pointsToDecrease;
     }
 
-    function increasePowerUnlimited(uint256 _amountToStake) internal pure returns (uint256) {
+    function increasePowerUnlimited(uint256 _amountToStake) internal virtual pure returns (uint256) {
         return _amountToStake;
     }
 
@@ -542,11 +541,11 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return pointsToDecrease;
     }
 
-    function getMaxAmount() public view returns (uint256) {
+    function getMaxAmount() public view virtual returns (uint256) {
         return pointConfig.maxAmount;
     }
 
-    function getPointSystem() public view returns (StrategyStruct.PointSystem) {
+    function getPointSystem() public view virtual returns (StrategyStruct.PointSystem) {
         return pointSystem;
     }
 
@@ -561,7 +560,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     // only called via allo.sol by users to allocate to a recipient
     // this will update some data in this contract to store votes, etc.
-    function _allocate(bytes memory _data, address _sender) internal override {
+    function _allocate(bytes memory _data, address _sender) internal virtual override {
         checkSenderIsMember(_sender);
         if (!_canExecuteAction(_sender)) {
             revert UserCannotExecuteAction();
@@ -580,7 +579,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // this will distribute tokens to recipients
     // most strategies will track a TOTAL amount per recipient, and a PAID amount, and pay the difference
     // this contract will need to track the amount paid already, so that it doesn't double pay
-    function _distribute(address[] memory, bytes memory _data, address) internal override {
+    function _distribute(address[] memory, bytes memory _data, address) internal virtual override {
         // surpressStateMutabilityWarning++;
         if (_data.length <= 0) {
             revert ProposalDataIsEmpty();

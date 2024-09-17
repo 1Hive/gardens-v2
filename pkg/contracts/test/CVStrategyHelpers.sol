@@ -6,7 +6,7 @@ import {Allo} from "allo-v2-contracts/core/Allo.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 // import {StrategyStruct2} from "../src/libraries/StrategyStruct2.sol";
 // import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {CVStrategyV0_1, StrategyStruct2,CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_1.sol";
+import {CVStrategyV0_1, StrategyStruct2, CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_1.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 

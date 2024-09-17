@@ -21,7 +21,7 @@ contract RegistryCommunityV0_1 is RegistryCommunityV0_0 {
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
 
         if (address(_params.sybilScorer) == address(0)) {
-            if(_params.initialAllowlist.length > 1000){
+            if (_params.initialAllowlist.length > 1000) {
                 revert("Too many initial allowlist members, max is 1000");
             }
             bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));

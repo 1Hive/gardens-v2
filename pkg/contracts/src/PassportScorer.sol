@@ -56,6 +56,7 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
         }
     }
     // slither-disable-next-line unprotected-upgrade
+
     function initialize(address _listManager) public initializer {
         __Ownable_init();
         _revertZeroAddress(_listManager);

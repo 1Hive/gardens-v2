@@ -18,10 +18,30 @@ library StrategyStruct2 {
 
 /// @custom:oz-upgrades-from CVStrategyV0_1
 contract CVStrategyV0_1 is CVStrategyV0_0 {
+    /*|--------------------------------------------|*/
+    /*|                 V0_1 EVENTS                |*/
+    /*|--------------------------------------------|*/
     event AllowlistMembersRemoved(uint256 poolId, address[] members);
     event AllowlistMembersAdded(uint256 poolId, address[] members);
-
     event InitializedCV2(uint256 poolId, StrategyStruct2.InitializeParams data);
+
+    /*|--------------------------------------------|*/
+    /*|              V0_1 ERRORS                   |*/
+    /*|--------------------------------------------|*/
+    error ProposalInvalidForAllocation();
+
+    /*|--------------------------------------------|*/
+    /*|                 V0_1 MODIFIERS             |*/
+    /*|--------------------------------------------|*/
+    function checkProposalAllocationValidity(uint256 _proposalId) internal view virtual returns (bool) {
+        StrategyStruct.Proposal storage p = proposals[_proposalId];
+        if (
+            p.proposalStatus == StrategyStruct.ProposalStatus.Inactive || p.proposalStatus == StrategyStruct.ProposalStatus.Cancelled
+                || p.proposalStatus == StrategyStruct.ProposalStatus.Executed || p.proposalStatus == StrategyStruct.ProposalStatus.Rejected
+        ) {
+            revert ProposalInvalidForAllocation();
+        }
+    }
 
     function initialize(uint256 _poolId, bytes memory _data) external override onlyAllo {
         __BaseStrategy_init(_poolId);
@@ -66,6 +86,12 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
     ) external virtual {
         onlyCouncilSafe();
         _setPoolParams(_arbitrableConfig, _cvParams, membersToAdd, membersToRemove);
+    }
+    function _beforeAllocate(bytes memory _data, address _sender) internal virtual override {
+        StrategyStruct.ProposalSupport[] memory pv = abi.decode(_data, (StrategyStruct.ProposalSupport[]));
+        for (uint256 i = 0; i < pv.length; i++) {
+            checkProposalAllocationValidity(pv[i].proposalId);
+        }
     }
 
     function _canExecuteAction(address _user) internal view override returns (bool) {
