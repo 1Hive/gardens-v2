@@ -55,23 +55,25 @@ export function PoolCard({ pool, tokenGarden }: Props) {
       <div className="mb-10 flex min-h-[60px] flex-col gap-2">
         <Statistic
           icon={<BoltIcon />}
-          label="Pool system"
+          label="voting weight"
           count={capitalize(PointSystems[config?.pointSystem])}
-         />
+        />
         <Statistic
           icon={<HandRaisedIcon />}
           count={proposals.length}
           label="proposals"
         />
-        {poolType && PoolTypes[poolType] === "funding" && (
-          <Statistic icon={<CurrencyDollarIcon />} label="funds">
-            <DisplayNumber
-              number={[BigInt(poolAmount), tokenGarden.decimals]}
-              compact={true}
-              tokenSymbol={tokenGarden.symbol}
-            />
-          </Statistic>
-        )}
+        <Statistic
+          icon={<CurrencyDollarIcon />}
+          label="funds"
+          className={`${poolType && PoolTypes[poolType] === "funding" ? "visible" : "invisible"}`}
+        >
+          <DisplayNumber
+            number={[BigInt(poolAmount), tokenGarden.decimals]}
+            compact={true}
+            tokenSymbol={tokenGarden.symbol}
+          />
+        </Statistic>
       </div>
       {!isEnabled ?
         <div className="banner  min-w-[262px]">

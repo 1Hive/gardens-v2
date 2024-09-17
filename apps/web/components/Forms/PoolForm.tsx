@@ -21,6 +21,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryCommunityABI } from "@/src/generated";
 import { DisputeOutcome, PointSystems, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -168,6 +169,8 @@ export function PoolForm({ token, communityAddr }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { publish } = usePubSubContext();
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
+
   const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
@@ -906,7 +909,12 @@ export function PoolForm({ token, communityAddr }: Props) {
             >
               Edit
             </Button>
-            <Button onClick={() => createPool()} isLoading={loading}>
+            <Button
+              onClick={() => createPool()}
+              isLoading={loading}
+              disabled={!isConnected || missmatchUrl}
+              tooltip={tooltipMessage}
+            >
               Submit
             </Button>
           </div>

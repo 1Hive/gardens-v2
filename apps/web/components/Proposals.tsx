@@ -572,12 +572,12 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
                 <span className="text-xs">{stat.stat} %</span>
               </div>
 
-              <p className="ml-20 truncate">{stat.name}</p>
+              <InfoWrapper tooltip={stat.info}>
+                <p className="ml-20 truncate">{stat.name}</p>
+              </InfoWrapper>
             </div>
             <div className="ml-20">
-              <InfoWrapper tooltip={stat.info}>
-                <p className="text-2xl font-semibold">{stat.stat} %</p>
-              </InfoWrapper>
+              <p className="text-2xl font-semibold">{stat.stat} %</p>
             </div>
           </div>
         ))}
