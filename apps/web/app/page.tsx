@@ -9,9 +9,11 @@ import {
   FingerPrintIcon,
   LockClosedIcon,
   Battery50Icon,
+  ArrowTopRightOnSquareIcon,
+  ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { newLogo, commF, HomeBanner } from "@/assets";
+import { newLogo, commF, BrightIdLogo, PublicNounsLogo } from "@/assets";
 import { Button } from "@/components";
 import { ChainIcon } from "@/configs/chains";
 
@@ -22,6 +24,7 @@ export default function Page() {
       <WhoIsFor />
       <OurStack />
       <ChainsDeploy />
+      <Protopians />
       <SignUp />
       <Footer />
     </>
@@ -35,6 +38,8 @@ const Hero = () => {
   return (
     <div className="bg-primary-soft">
       <header className="absolute inset-x-0 top-0 z-50">
+        <Banner />
+
         <nav
           aria-label="Global"
           className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8"
@@ -49,7 +54,6 @@ const Hero = () => {
                 width={40}
                 loading="lazy"
               />
-              {/* <GardensLogo className="h-10 text-primary" /> */}
               <span className="text-2xl font-medium">Gardens</span>
             </div>
           </div>
@@ -72,7 +76,20 @@ const Hero = () => {
               >
                 {item.name}
               </a>
-            ))} */}
+            ))} */}{" "}
+            <a
+              href="https://docs.gardens.fund"
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
+            >
+              Documentation
+              <ArrowTopRightOnSquareIcon
+                width={16}
+                height={16}
+                className="text-primary-content"
+              />
+            </a>
           </div>
         </nav>
         <Dialog
@@ -117,12 +134,17 @@ const Hero = () => {
                 </div>
                 <div className="py-6">
                   <a
-                    href="/gardens"
-                    className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
+                    href="https://docs.gardens.fund"
                     target="_blank"
                     rel="noreferrer"
+                    className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
                   >
-                    <Button>Launch App</Button>
+                    Documentation
+                    <ArrowTopRightOnSquareIcon
+                      width={16}
+                      height={16}
+                      className="text-primary-content"
+                    />
                   </a>
                 </div>
               </div>
@@ -130,6 +152,7 @@ const Hero = () => {
           </Dialog.Panel>
         </Dialog>
       </header>
+
       <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20 pt-14">
         <div
           aria-hidden="true"
@@ -161,13 +184,13 @@ const Hero = () => {
                   <Button>Launch App</Button>
                 </a>
                 <a
-                  href="https://docs.gardens.fund/"
+                  href="https://calendly.com/gardens-demo"
                   className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
                   target="_blank"
                   rel="noreferrer"
                 >
                   {/* TODO: point to our url docs */}
-                  <Button btnStyle="outline">Documentation</Button>
+                  <Button btnStyle="outline">Book Demo</Button>
                 </a>
               </div>
             </div>
@@ -182,6 +205,49 @@ const Hero = () => {
         <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-white sm:h-32" />
       </div>
     </div>
+  );
+};
+
+const Banner = () => {
+  const [openBanner, setOpenBanner] = useState(true);
+
+  return (
+    <>
+      {openBanner && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 sm:flex sm:justify-center sm:px-6 sm:pb-5 lg:px-8">
+          <div className="pointer-events-auto flex items-center justify-between gap-x-6 bg-primary-soft px-6 py-2.5 sm:rounded-xl sm:py-3 sm:pl-4 sm:pr-3.5">
+            <p className="subtitle2">
+              <a
+                href="https://juicebox.money/v2/p/697?np=1&tabid=nft_rewards"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <strong className="font-semibold">
+                  Join our Seedling Funding Round on Juicebox
+                </strong>
+                <svg
+                  viewBox="0 0 2 2"
+                  aria-hidden="true"
+                  className="mx-2 inline h-0.5 w-0.5 fill-current"
+                >
+                  <circle r={1} cx={1} cy={1} />
+                </svg>
+                Ends September 28 &nbsp;
+                <span aria-hidden="true">&rarr;</span>
+              </a>
+            </p>
+            <button
+              type="button"
+              className="-m-1.5 flex-none p-1.5"
+              onClick={() => setOpenBanner(false)}
+            >
+              <span className="sr-only">Dismiss</span>
+              <XMarkIcon aria-hidden="true" className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -221,11 +287,10 @@ const WhoIsFor = () => {
           <div>
             <h2 className="font-semibold leading-7">Who is Gardens for?</h2>
             <p className="mt-6 text-base leading-7 text-gray-600">
-              Gardens is a versatile platform designed to nurture and grow
-              decentralized ecosystems. Our intuitive tools empower a wide range
-              of organizations and individuals to harness the power of
-              collective intelligence, from token-based economies to public
-              goods initiatives.
+              Gardens is designed for organizations that create value beyond
+              conventional private goods or services. It offers a better ROI on
+              investments in shared resources and ecosystem growth compared to
+              traditional governance structures.
             </p>
           </div>
           <div className="col-span-2 grid grid-cols-1 gap-x-8 gap-y-10 text-base leading-7 text-gray-600 sm:grid-cols-2 lg:gap-y-16">
@@ -281,12 +346,11 @@ const OurStack = () => {
       <div className="mx-auto max-w-6xl px-6 lg:px-8 xl:px-0">
         <div className="max-w-2xl ">
           <p className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-            Comprehensive DAO Toolkit
+            A Curated Governance Toolkit
           </p>
           <p className="mt-6 text-lg leading-8">
-            {/* TODO: see if neccesary some minor description here */}
-            Gardens leverages cutting-edge Web3 technology to deliver a secure,
-            transparent, and decentralized platform.
+            We build on web3’s best infrastructure to offer a secure,
+            decentralized, and transparent platform.
           </p>
         </div>
         <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-6xl">
@@ -321,7 +385,7 @@ const ChainsDeploy = () => {
     <div className="bg-neutral py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:max-w-none">
-          <h2 className="font-semibold leading-8">Soon available on</h2>
+          <h2 className="font-semibold leading-8">Available networks: </h2>
           <div className="mx-auto mt-10 grid grid-cols-2 items-center gap-x-8 gap-y-10 sm:gap-x-10 lg:mx-0 lg:grid-cols-4">
             <div className=" flex w-full flex-col items-center justify-start gap-4 object-contain object-left lg:col-span-1">
               <ChainIcon chain={100} height={48} />
@@ -348,33 +412,24 @@ const ChainsDeploy = () => {
 
 const SignUp = () => {
   return (
-    <div className="bg-white py-16 sm:py-24">
+    <div className="bg-white py-16 sm:py-16">
       <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div className="isolate overflow-hidden bg-neutral-content px-6 py-24 shadow-md sm:rounded-3xl sm:px-24 xl:py-32 relative">
+        <div className="isolate overflow-hidden bg-primary px-6 py-16 border1 sm:rounded-3xl sm:px-24 xl:py-24 relative">
           <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight sm:text-4xl">
             Cultivate change with Gardens
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-center text-lg leading-8">
-            Join our pre-beta release and start growing your community.
+            Book a demo and start growing your community today.
           </p>
           <div className="mx-auto mt-10 flex max-w-md items-center justify-center gap-x-4 rounded-xl">
-            {/* TODO: link to gardnes form */}
             <a
-              href="/gardens"
+              href="https://calendly.com/gardens-demo"
               className="flex items-center justify-center text-sm font-semibold leading-6 text-gray-900"
               target="_blank"
               rel="noreferrer"
             >
-              <Button>Launch App</Button>
+              <Button>Book Demo</Button>
             </a>
-            <Image
-              src={HomeBanner}
-              alt="gardens"
-              className="absolute inset-0 w-full h-full object-cover -z-10"
-              loading="lazy"
-              // width={1200}
-              // height={100}
-            />
           </div>
         </div>
       </div>
@@ -458,5 +513,75 @@ const Footer = () => {
         </div>
       </div>
     </footer>
+  );
+};
+
+const Protopians = () => {
+  return (
+    <div className="py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-x-8 gap-y-16 lg:grid-cols-2">
+          <div className="mx-auto w-full max-w-xl lg:mx-0">
+            <h2>Trusted by leading communities</h2>
+            <p className="mt-6 ext-lg leading-8">
+              Join the Protopians — early adopters who backed our Juicebox
+              funding round and are shaping the future with us.
+            </p>
+            <div className="mt-8 flex items-center gap-x-6">
+              <a
+                href="https://juicebox.money/v2/p/697?np=1&tabid=nft_rewards"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary-content subtitle2 flex items-center gap-1 hover:opacity-90"
+              >
+                Get NFT and become a Protopian
+                <ArrowRightIcon
+                  width={16}
+                  height={16}
+                  className="text-primary-content"
+                />
+              </a>
+            </div>
+          </div>
+          <div className="mx-auto grid w-full max-w-xl grid-cols-2 items-center gap-y-12 sm:gap-y-14 lg:mx-0 lg:max-w-none lg:pl-8">
+            <div className="flex flex-col items-center gap-1">
+              <a
+                href="https://www.brightid.org/"
+                className="hover:scale-105 transition-all duration-200 ease-in-out"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Image
+                  src={BrightIdLogo}
+                  alt="logo"
+                  height={66}
+                  width={175}
+                  loading="lazy"
+                  className="max-h-[60px]"
+                />
+              </a>
+              <p className="subtitle2">BrightID</p>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <a
+                href="https://publicnouns.wtf/"
+                className="hover:scale-105 transition-all duration-200 ease-in-out flex flex-col items-center"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Image
+                  src={PublicNounsLogo}
+                  alt="logo"
+                  height={66}
+                  width={175}
+                  loading="lazy"
+                />
+              </a>
+              <p className="subtitle2">Public Nouns</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
