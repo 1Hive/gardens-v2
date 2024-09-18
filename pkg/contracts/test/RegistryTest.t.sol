@@ -22,6 +22,7 @@ import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactoryV0_0.sol";
 import {RegistryFactoryV0_1} from "../src/RegistryFactoryV0_1.sol";
+import {RegistryFactoryFacet} from "../src/facets/RegistryFactoryFacet.sol";
 import {CVStrategyV0_0, StrategyStruct, IArbitrator} from "../src/CVStrategyV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
@@ -35,12 +36,29 @@ import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
+import {Core} from "@openzeppelin/foundry/internal/Core.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {HelperContract} from "./HelperContract.sol";
+import {IDiamondCut} from "../src/interfaces/IDiamondCut.sol";
+import {IDiamond} from "../src/interfaces/IDiamond.sol";
+import "../src/facets/DiamondCutFacet.sol"; //@todo put 'from' on that import
+import "../src/facets/DiamondLoupeFacet.sol";
+import "../src/facets/OwnershipFacet.sol";
+import "../src/Diamond.sol";
 
 // @dev Run forge test --mc RegistryTest -vvvvv
 
-contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0_0, Errors, GasHelpers2, SafeSetup {
+contract RegistryTest is
+    Test,
+    AlloSetup,
+    RegistrySetupFull,
+    CVStrategyHelpersV0_0,
+    Errors,
+    GasHelpers2,
+    SafeSetup,
+    HelperContract
+{
     CVStrategyV0_0 public strategy;
     IArbitrator safeArbitrator;
     GV2ERC20 public token;
@@ -93,7 +111,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
                 CVStrategyV0_0.init.selector, address(allo()), address(new CollateralVault()), pool_admin()
             )
         );
-
 
         ERC1967Proxy arbitratorProxy = new ERC1967Proxy(
             address(new SafeArbitrator()), abi.encodeWithSelector(SafeArbitrator.initialize.selector, 2 ether)
@@ -151,17 +168,138 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
 
-        Upgrades.upgradeProxy(
+        // Upgrades.upgradeProxy(
+        //     address(_registryFactory()),
+        //     "RegistryFactoryV0_1.sol",
+        //     abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, gardenOwner)
+        // );
+        // assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
+
+        Diamond diamond = new Diamond();
+
+        
+        Core.upgradeProxyTo(
             address(_registryFactory()),
-            "RegistryFactoryV0_1.sol",
-            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector, gardenOwner)
+            address(diamond),
+            bytes("")
         );
+        
+        RegistryFactoryFacet(address(_registryFactory())).initialize(gardenOwner);
+
+        IDiamondCut(address(_registryFactory())).diamondCut(createCutsFactory(), address(0), "");
+
+        RegistryFactoryFacet(address(_registryFactory())).initializeV2(gardenOwner);
+
         assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
+
         vm.stopPrank();
 
         params._isKickEnabled = false;
 
         nonKickableCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+    }
+
+    function createCutsFactory() public returns (FacetCut[] memory cuts) {
+        DiamondCutFacet dCutFacet = new DiamondCutFacet();
+        DiamondLoupeFacet dLoupe = new DiamondLoupeFacet();
+        // OwnershipFacet ownerF = new OwnershipFacet();
+        RegistryFactoryFacet registryFactoryF = new RegistryFactoryFacet();
+
+        cuts = new FacetCut[](3);
+
+        bytes4[] memory sighashes = new bytes4[](1);
+        sighashes[0] = bytes4(0x1f931c1c);
+
+        cuts[0] = FacetCut({
+            facetAddress: address(dCutFacet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: sighashes
+        });
+
+        sighashes = new bytes4[](5);
+        sighashes[0] = bytes4(0x7a0ed627);
+        sighashes[1] = bytes4(0xadfca15e);
+        sighashes[2] = bytes4(0x52ef6b2c);
+        sighashes[3] = bytes4(0xcdffacc6);
+        sighashes[4] = bytes4(0x01ffc9a7);
+        //build cut struct
+        FacetCut[] memory cut = new FacetCut[](2);
+
+        cuts[1] = (FacetCut({facetAddress: address(dLoupe), action: FacetCutAction.Add, functionSelectors: sighashes}));
+
+        // sighashes = new bytes4[](2);
+        // sighashes[0] = bytes4(0xf2fde38b);
+        // sighashes[1] = bytes4(0x8da5cb5b);
+
+        // cut[1] = (FacetCut({facetAddress: address(ownerF), action: FacetCutAction.Add, functionSelectors: sighashes}));
+
+        bytes4[] memory sighashesInit = new bytes4[](25);
+        sighashesInit[0] = bytes4(0x77122d56);
+        sighashesInit[1] = bytes4(0xbeb331a3);
+        sighashesInit[2] = bytes4(0xb8bed901);
+        sighashesInit[3] = bytes4(0xf5016b5e);
+        sighashesInit[4] = bytes4(0x987435be);
+        sighashesInit[5] = bytes4(0x0a992e0c);
+        sighashesInit[6] = bytes4(0xc4d66de8);
+        sighashesInit[7] = bytes4(0x1459457a);
+        sighashesInit[8] = bytes4(0x29b6eca9);
+        sighashesInit[9] = bytes4(0x3101cfcb);
+        sighashesInit[10] = bytes4(0xaffed0e0);
+        sighashesInit[11] = bytes4(0x8da5cb5b);
+        sighashesInit[12] = bytes4(0x52d1902d);
+        sighashesInit[13] = bytes4(0x02c1d0b1);
+        sighashesInit[14] = bytes4(0x715018a6);
+        sighashesInit[15] = bytes4(0xb0d3713a);
+        sighashesInit[16] = bytes4(0x5a2c8ace);
+        sighashesInit[17] = bytes4(0xb5b3ca2c);
+        sighashesInit[18] = bytes4(0x8279c7db);
+        sighashesInit[19] = bytes4(0x5decae02);
+        sighashesInit[20] = bytes4(0x1b71f0e4);
+        sighashesInit[21] = bytes4(0x5c94e4d2);
+        sighashesInit[22] = bytes4(0xf2fde38b);
+        sighashesInit[23] = bytes4(0x3659cfe6);
+        sighashesInit[24] = bytes4(0x4f1ef286);
+
+        cuts[2] = (
+            FacetCut({
+                facetAddress: address(registryFactoryF),
+                action: FacetCutAction.Add,
+                functionSelectors: sighashesInit
+            })
+        );
+
+    }
+    function newDiamond(address owner) public returns (address diamond) {
+        
+
+        // diamod arguments
+        // DiamondArgs memory _args = DiamondArgs({owner: owner, init: address(0), initCalldata: " "});
+
+        // FacetCut with CutFacet for initialisation
+        // FacetCut[] memory cut0 = new FacetCut[](1);
+
+        
+        // initialise interfaces
+
+        IDiamondLoupe ILoupe = IDiamondLoupe(address(diamond));
+        // IDiamondCut ICut = IDiamondCut(address(diamond));
+
+        //upgrade diamond
+        // ICut.diamondCut(cut, address(0x0), "");
+
+        // get all addresses
+    //     address[] memory facetAddressList = ILoupe.facetAddresses();
+
+    //     for (uint256 i = 0; i < facetAddressList.length; i++) {
+    //         console.log(facetAddressList[i]);
+    //     }
+
+    //     bytes4[] memory _facetFunctionSelectors = ILoupe.facetFunctionSelectors(address(registryFactoryF));
+       
+    //    for (uint256 i = 0; i < _facetFunctionSelectors.length; i++) {
+    //         console.logBytes4(_facetFunctionSelectors[i]);
+    //     }
+
     }
 
     function _registryCommunity() internal view returns (RegistryCommunityV0_0) {
@@ -959,7 +1097,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpersV0
 
     function testRevert_initialize_createPool() public {
         vm.expectRevert(bytes("Initializable: contract is already initialized"));
-        strategy.init(address(allo()),address(this),address(this)); 
+        strategy.init(address(allo()), address(this), address(this));
         StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         vm.startPrank(pool_admin());
         uint256 poolId = createPool(
