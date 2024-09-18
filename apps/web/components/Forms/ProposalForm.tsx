@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
@@ -19,7 +19,7 @@ import { Button } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { useDisableButtons } from "@/hooks/useDisableButtons";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -151,7 +151,18 @@ export const ProposalForm = ({
   const [isEnoughBalance, setIsEnoughBalance] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
+
+  const disableSubmitBtn = useMemo<ConditionObject[]>(
+    () => [
+      {
+        condition: !isEnoughBalance,
+        message: "Insufficient balance",
+      },
+    ],
+    [isEnoughBalance],
+  );
+  const { isConnected, missmatchUrl, tooltipMessage } =
+    useDisableButtons(disableSubmitBtn);
 
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
@@ -422,7 +433,7 @@ export const ProposalForm = ({
               onClick={() => createProposal()}
               isLoading={loading}
               disabled={!isEnoughBalance || !isConnected || missmatchUrl}
-              tooltip={isEnoughBalance ? "" : "Insufficient balance"}
+              tooltip={tooltipMessage}
             >
               Submit
             </Button>

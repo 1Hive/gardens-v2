@@ -15,6 +15,12 @@ export default function Page() {
   const { data: gardens, fetching } =
     useSubgraphQueryMultiChain<getTokenGardensQuery>({
       query: getTokenGardensDocument,
+      modifier: (data) =>
+        data.sort(
+          (a, b) =>
+            (a.tokenGardens.length ? a.tokenGardens[0].chainId : 0) -
+            (b.tokenGardens.length ? b.tokenGardens[0].chainId : 0),
+        ),
       changeScope: [
         {
           topic: "garden",
@@ -83,7 +89,7 @@ export default function Page() {
             <div className="mx-10 flex flex-col items-center gap-5">
               <div className="flex flex-col items-center">
                 <h1 className="max-w-xl text-center text-neutral-content">
-                  Gardens
+                  Welcome to Gardens
                 </h1>
                 <p className="text-xl text-primary-content text-center">
                   A place where communities grow through collective

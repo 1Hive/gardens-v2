@@ -287,9 +287,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     minimumConviction = minimumConviction / 100;
 
     const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
-    const maxRatioNum2 = spendingLimit / (1 - Math.sqrt(minimumConviction));
 
-    console.log(maxRatioNum, maxRatioNum2);
     const weightNum = minimumConviction * maxRatioNum ** 2;
 
     const blockTime = chain.blockTime;

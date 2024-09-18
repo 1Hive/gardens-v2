@@ -40,12 +40,14 @@ export function useSubgraphQueryMultiChain<
   queryContext,
   changeScope,
   chainIds,
+  modifier,
 }: {
   query: DocumentInput<any, Variables>;
   variables?: Variables;
   queryContext?: Partial<OperationContext>;
   changeScope?: ChangeEventScope[] | ChangeEventScope;
   chainIds?: ChainId[];
+  modifier?: (data: Data[]) => Data[];
 }) {
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const mounted = useIsMounted();
@@ -172,7 +174,8 @@ export function useSubgraphQueryMultiChain<
       );
 
       // Make sure unique values are returned
-      setResponse(Array.from(new Set(responseMap.current.values())));
+      const result = Array.from(new Set(responseMap.current.values()));
+      setResponse(modifier ? modifier(result) : result);
       setFetching(false);
       fetchingRef.current = false;
     },
