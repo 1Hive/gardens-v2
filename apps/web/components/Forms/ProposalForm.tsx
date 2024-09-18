@@ -406,7 +406,7 @@ export const ProposalForm = ({
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-between py-6">
+      <div className="flex w-full items-center justify-between py-6 flex-wrap">
         <div>
           {arbitrableConfig && (
             <WalletBalance
