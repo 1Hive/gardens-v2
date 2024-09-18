@@ -300,7 +300,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const buttons = (
     <div className="modal-action w-full">
       {isDisputed ?
-        <div className="w-full flex justify-end gap-4">
+        <div className="w-full flex justify-end gap-4 flex-wrap">
           {(
             DisputeStatus[lastDispute.status] === "waiting" &&
             ((isTribunalMember ?? isTribunalSafe) || isTimeout)
