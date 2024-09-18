@@ -126,7 +126,7 @@ export default function Page({
             <div className="mb-2 flex flex-col">
               <div className="flex items-center gap-4">
                 <h2>{tokenGarden?.name}</h2>{" "}
-                <TokenLabel chainId={chain} classNames="bg-neutral-soft" />
+                <TokenLabel chainId={chain} className="bg-neutral-soft" />
               </div>
               <EthAddress
                 icon={false}
@@ -166,13 +166,14 @@ export default function Page({
           <div className="relative flex h-[219px] justify-center">
             <Link
               href={`/gardens/${chain}/${garden}/create-community`}
-              className="mt-6"
+              className="mt-6 z-10"
             >
               <Button
                 btnStyle="filled"
                 disabled={!isConnected || missmatchUrl}
                 tooltip={tooltipMessage}
                 icon={<PlusIcon height={24} width={24} />}
+                className="shadow-[0_9px_15px_-8px_rgba(0,0,0,0.75)]"
               >
                 Create a community
               </Button>

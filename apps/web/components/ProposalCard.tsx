@@ -87,14 +87,16 @@ export function ProposalCard({
   const proposalCardContent = (
     <>
       <div
-        className={`grid grid-cols-10 gap-8  py-3 ${isAllocationView && "section-layout"}`}
+        className={`flex gap-2 justify-between py-3 flex-wrap ${isAllocationView ? "section-layout" : ""}`}
       >
         <div
-          className={`col-span-3 flex gap-6 ${isAllocationView && "col-span-9"}`}
+          className={`col-span-3 flex gap-6 max-w-full ${isAllocationView ? "col-span-9" : ""}`}
         >
-          <Hashicon value={id} size={45} />
+          <div className="hidden sm:visible">
+            <Hashicon value={id} size={45} />
+          </div>
           <div className="overflow-hidden">
-            <h4 className="truncate first-letter:uppercase">
+            <h4 className="truncate first-letter:uppercase sm:w-[375px]">
               {metadata.title}
             </h4>
             <h6 className="text-sm">ID {proposalNumber}</h6>
@@ -102,7 +104,7 @@ export function ProposalCard({
         </div>
         <Badge
           status={proposalStatus}
-          classNames={`self-center ${isAllocationView ? "justify-self-end" : "justify-self-start"}`}
+          className={`self-center ${isAllocationView ? "justify-self-end" : "justify-self-start"}`}
         />
         {isAllocationView ?
           <div className="col-span-10 mt-4">
@@ -163,7 +165,7 @@ export function ProposalCard({
             </div>
           </div>
         : <>
-            <div className="col-span-3 ml-20 self-center justify-self-start">
+            <div className="col-span-3 self-center justify-self-start">
               {stakedFilter &&
                 (stakedFilter?.value > 0 ?
                   <p
