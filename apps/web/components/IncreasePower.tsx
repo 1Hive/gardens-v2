@@ -77,7 +77,7 @@ export const IncreasePower = ({
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
     token: registerToken as Address,
-    chainId: urlChainId ?? 0,
+    chainId: urlChainId,
   });
 
   const registryContractCallConfig = {
