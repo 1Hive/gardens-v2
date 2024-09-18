@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { Address } from "wagmi";
+import { Address, useChainId } from "wagmi";
 import { CVProposal, CVStrategy, Maybe } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { Modal } from "./Modal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { cvStrategyABI } from "@/src/generated";
@@ -22,7 +21,7 @@ type Props = {
 
 function CancelButton({ proposalData }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const chainId = useChainIdFromPath();
+  const chainId = useChainId();
   const { publish } = usePubSubContext();
   const { strategy } = proposalData;
   const [strategyId, proposalNumber] = proposalData.id.split("-");
@@ -40,7 +39,7 @@ function CancelButton({ proposalData }: Props) {
         function: "cancelProposal",
         id: +proposalNumber,
         containerId: strategyId,
-        chainId: chainId,
+        chainId,
       });
     },
   });

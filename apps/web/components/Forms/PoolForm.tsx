@@ -174,7 +174,6 @@ export function PoolForm({ token, communityAddr }: Props) {
   const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
-    chainId: +chain,
   });
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");

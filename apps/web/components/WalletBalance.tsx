@@ -3,7 +3,6 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { formatEther } from "viem";
 import { Address, useAccount, useBalance } from "wagmi";
 import { DisplayNumber } from "./DisplayNumber";
-import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 
 type Props = {
   label: string;
@@ -30,14 +29,12 @@ export const WalletBalance: FC<Props> = ({
 }) => {
   const { address, isDisconnected } = useAccount();
   const isEnoughBalanceRef = useRef(false);
-  const chainId = useChainIdFromPath();
 
   const { data } = useBalance({
     address,
     formatUnits: "ether",
     token: token === "native" ? undefined : (token as Address),
     watch: true,
-    chainId,
   });
 
   const balance = data && data.value;

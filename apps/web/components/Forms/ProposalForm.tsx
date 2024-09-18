@@ -233,7 +233,6 @@ export const ProposalForm = ({
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
     enabled: !!poolTokenAddr,
-    chainId,
   });
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
