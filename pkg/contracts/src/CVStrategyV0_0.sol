@@ -274,14 +274,13 @@ contract CVStrategyV0_0 is
     /// @param _allo Address of the Allo contract
     /// @param _collateralVaultTemplate Address of the collateral vault template
     /// @param owner Address of the owner of the strategy
-    // False positive    
+    // False positive
     // slither-disable-next-line unprotected-upgrade
     function init(address _allo, address _collateralVaultTemplate, address owner)
         external
         virtual
         initializer
         onlyInitializing
-        
     {
         super.init(_allo, "CVStrategy", owner);
         collateralVaultTemplate = _collateralVaultTemplate;
@@ -375,7 +374,8 @@ contract CVStrategyV0_0 is
         // _;
     }
     /// @notice Modifier to check if the sender is a member of the community
-    /// reverts if the sender is not the registry 
+    /// reverts if the sender is not the registry
+
     function onlyRegistryCommunity() private view {
         if (msg.sender != address(registryCommunity)) {
             revert OnlyCommunityAllowed();
@@ -499,6 +499,7 @@ contract CVStrategyV0_0 is
         _deactivatePoints(msg.sender);
     }
     /// @notice deactivates the points of a member
+
     function deactivatePoints(address _member) external {
         onlyRegistryCommunity();
         _deactivatePoints(_member);
@@ -772,6 +773,7 @@ contract CVStrategyV0_0 is
         // return PayoutSummary(_recipientId, 0);
     }
     /// @notice emits an event for pool amount increased
+
     function _afterIncreasePoolAmount(uint256 _amount) internal virtual override {
         emit PoolAmountIncreased(_amount);
     }
@@ -896,7 +898,7 @@ contract CVStrategyV0_0 is
     function getBasisStakedAmount() internal view returns (uint256) {
         return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
-    
+
     /// @notice check if a proposal exists
     /// @param _proposalID Proposal ID
     function proposalExists(uint256 _proposalID) internal view returns (bool) {
@@ -1171,12 +1173,14 @@ contract CVStrategyV0_0 is
     }
     /// @notice adds a list of members to the allowedList when passportScorer sybil resistance isn't used
     /// @param members Address of the members
+
     function addToAllowlist(address[] memory members) public {
         onlyCouncilSafe();
         _addToAllowlist(members);
     }
     /// @notice removes a list of members from the allowedList when passportScorer sybil resistance isn't used
     /// @param members Address of the members
+
     function removeFromAllowList(address[] memory members) public {
         onlyCouncilSafe();
         for (uint256 i = 0; i < members.length; i++) {
@@ -1277,7 +1281,7 @@ contract CVStrategyV0_0 is
         return proposal.convictionLast;
     }
 
-    /// @notice returns the max conviction of a proposal    
+    /// @notice returns the max conviction of a proposal
     /// @param amount Amount of tokens staked on a proposal
     /// @return uint256 max conviction of the proposal
     function getMaxConviction(uint256 amount) public view returns (uint256) {
@@ -1313,7 +1317,7 @@ contract CVStrategyV0_0 is
     /// @param proposalId Proposal ID
     /// @param context Context of the dispute, the reason for the dispute
     /// @param _extraData Extra data for the dispute
-    /// @return uint256 Dispute ID
+    /// @return disputeId uint256 Dispute ID
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
         external
         payable
@@ -1374,7 +1378,7 @@ contract CVStrategyV0_0 is
     }
 
     /// @notice appeals a dispute
-    /// @param _disputeId id of the dispute
+    /// @param _disputeID id of the dispute
     /// @param _ruling ruling of the dispute
     function rule(uint256 _disputeID, uint256 _ruling) external override {
         uint256 proposalId = disputeIdToProposalId[_disputeID];
