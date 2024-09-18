@@ -10,6 +10,17 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: "Check for !ai keyword in commit message"
+        id: check_commit_message
+        run: |
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MESSAGE"
+          if [[ "$COMMIT_MESSAGE" == *"!ai"* ]]; then
+            echo "run_ai=true" >> $GITHUB_ENV
+          else
+            echo "run_ai=false" >> $GITHUB_ENV
+          fi
+
       - name: "Check if relevant files are modified"
         id: check_changes
         shell: bash
@@ -27,7 +38,7 @@ jobs:
           fi
 
       - name: "Get diff of the pull request"
-        if: env.files_changed == 'true'
+        if: env.files_changed == 'true' && env.run_ai == 'true'
         id: get_diff
         shell: bash
         env:
@@ -44,7 +55,7 @@ jobs:
 
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
-        if: env.files_changed == 'true'
+        if: env.files_changed == 'true' && env.run_ai == 'true'
         continue-on-error: true
         id: review
         with:
