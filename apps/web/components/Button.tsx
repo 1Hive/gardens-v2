@@ -83,7 +83,7 @@ export function Button({
     <button
       type={type}
       className={`${btnStyles[btnStyle][disabled ? "disabled" : color]}
-      flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed ${styles}`}
+      flex relative cursor-pointer  justify-center rounded-lg px-6 py-4 transition-all ease-out disabled:cursor-not-allowed h-fit ${styles}`}
       onClick={onClick}
       disabled={disabled || isLoading}
     >
