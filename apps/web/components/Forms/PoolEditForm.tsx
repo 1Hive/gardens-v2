@@ -259,6 +259,7 @@ export default function PoolEditForm({
       token.decimals,
     );
 
+    // TODO: check sybil type and return corresponding data
     const initialAllowList =
       Array.isArray(initValues?.sybilResistanceValue) ?
         initValues.sybilResistanceValue

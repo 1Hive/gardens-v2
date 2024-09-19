@@ -15,6 +15,8 @@ import { Address, zeroAddress } from "viem";
 import { useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
+  getPassportStrategyDocument,
+  getPassportStrategyQuery,
   getPoolDataQuery,
   TokenGarden,
 } from "#/subgraph/.graphclient";
@@ -31,6 +33,7 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { registryCommunityABI, safeABI } from "@/src/generated";
 import {
   PointSystems,
@@ -41,6 +44,7 @@ import {
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   convertSecondsToReadableTime,
+  CV_PERCENTAGE_SCALE,
   CV_SCALE_PRECISION,
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
@@ -100,6 +104,20 @@ export default function PoolHeader({
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
   const { publish } = usePubSubContext();
+
+  const { data: passportStrategyData } =
+    useSubgraphQuery<getPassportStrategyQuery>({
+      query: getPassportStrategyDocument,
+      variables: { strategyId: strategy.id as Address },
+      // enabled: enableCheck,
+      //TODO: add changeScope = passport
+    });
+
+  const passportStrategy = passportStrategyData?.passportStrategy;
+  const passportScore =
+    passportStrategy?.threshold ?
+      Number(passportStrategy?.threshold) / CV_PERCENTAGE_SCALE
+    : null;
 
   const blockTime = chainConfigMap[chainId].blockTime;
   const spendingLimitPct =
@@ -237,18 +255,20 @@ export default function PoolHeader({
   );
 
   let sybilResistanceType: SybilResistanceType;
-  let sybilResistanceValue = (allowList as Address[]) ?? [];
+  let sybilResistanceValue: Address[] | number | undefined;
+  // if zeroAddress => all users allowed
   if (allowList && allowList.length > 0 && allowList[0] === zeroAddress) {
-    // all allowed = gitcoin passport or no restriction
-    if (false) {
+    if (passportScore && passportScore > 0) {
       // TODO: finish defining gitcoin passport condition...
       sybilResistanceType = "gitcoinPassport";
+      sybilResistanceValue = passportScore;
     } else {
       sybilResistanceType = "noSybilResist";
+      sybilResistanceValue = undefined;
     }
   } else {
-    // allowList
     sybilResistanceType = "allowList";
+    sybilResistanceValue = (allowList as Address[]) ?? [];
   }
 
   return (
