@@ -190,7 +190,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         // assertTrue(registryFactory.registryCommunityTemplate() != address(0x0), "Registry Community Template not set");
         // assertTrue(registryFactory.collateralVaultTemplate() != address(0x0), "Collateral Vault Template not set");
 
-        // CVStrategyInitializeParamsV0_0 memory params;
+        // RegistryCommunityInitializeParamsV0_0 memory params;
 
         // metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"});
         // params._metadata = metadata; // convenant ipfs
