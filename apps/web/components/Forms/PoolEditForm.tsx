@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
-import { TokenGarden } from "#/subgraph/.graphclient";
+import { CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
+import { AllowListInput, exportAddresses } from "./AllowListInput";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
@@ -14,10 +16,11 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { cvStrategyABI } from "@/src/generated";
-import { DisputeOutcome, PoolTypes } from "@/types";
+import { DisputeOutcome, PoolTypes, SybilResistanceType } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import {
   calculateDecay,
+  CV_PERCENTAGE_SCALE,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
   MAX_RATIO_CONSTANT,
@@ -36,10 +39,12 @@ type FormInputs = {
   minimumConviction: number | string;
   convictionGrowth: number | string;
   minThresholdPoints: string;
+  sybilResistanceValue?: undefined | number | Address[];
+  sybilResistanceType: SybilResistanceType;
 } & ArbitrationSettings;
 
 type Props = {
-  strategyAddr: Address;
+  strategy: Pick<CVStrategy, "id" | "poolId">;
   token: TokenGarden["decimals"];
   chainId: string;
   initValues: FormInputs;
@@ -48,9 +53,68 @@ type Props = {
   setModalOpen: (value: boolean) => void;
 };
 
+const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
+  noSybilResist: "No authorization required",
+  allowList: "Allow list",
+  gitcoinPassport: "Gitcoin passport",
+};
+
+const sybilResistancePreview = (
+  sybilType: SybilResistanceType,
+  addresses: string[],
+  value?: string | Address[],
+): ReactNode => {
+  const previewMap: Record<SybilResistanceType, ReactNode> = {
+    noSybilResist: "No authorization required (anyone can vote)",
+    allowList: (
+      <div className="flex items-center gap-2">
+        <span className="">Allow list </span>
+        <Button
+          type="button"
+          btnStyle="outline"
+          className="!p-1"
+          onClick={() => exportAddresses(addresses)}
+          showToolTip
+          tooltip="Export"
+        >
+          <ArrowDownTrayIcon className="w-4 h-4" />
+        </Button>
+      </div>
+    ),
+    gitcoinPassport: `Passport score required: ${value}`,
+  };
+
+  return previewMap[sybilType];
+};
+
+const parseAllowListMembers = (
+  initialList: Address[],
+  currentList: Address[],
+) => {
+  const initialSet = new Set(initialList);
+  const currentSet = new Set(currentList);
+
+  const membersToAdd: Address[] = [];
+  const membersToRemove: Address[] = [];
+
+  for (const address of initialSet) {
+    if (!currentSet.has(address)) {
+      membersToRemove.push(address);
+    }
+  }
+
+  for (const address of currentSet) {
+    if (!initialSet.has(address)) {
+      membersToAdd.push(address);
+    }
+  }
+
+  return { membersToAdd, membersToRemove };
+};
+
 export default function PoolEditForm({
   token,
-  strategyAddr,
+  strategy,
   chainId,
   initValues,
   proposalType,
@@ -60,9 +124,15 @@ export default function PoolEditForm({
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<FormInputs>({
     defaultValues: {
+      // sybil resistance
+      sybilResistanceValue: initValues.sybilResistanceValue,
+      sybilResistanceType: initValues.sybilResistanceType,
+      //pool settings
       spendingLimit: initValues.spendingLimit,
       minimumConviction: initValues.minimumConviction,
       convictionGrowth: initValues.convictionGrowth,
@@ -80,6 +150,9 @@ export default function PoolEditForm({
       tribunalAddress: initValues.tribunalAddress,
     },
   });
+  const sybilResistanceType = watch("sybilResistanceType");
+  const sybilResistanceValue = watch("sybilResistanceValue");
+
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
   const shouldRenderInput = (key: string): boolean => {
@@ -97,6 +170,10 @@ export default function PoolEditForm({
   const [tribunalAddress, setTribunalAddress] = useState(
     initValues?.tribunalAddress ?? "",
   );
+  const [sybilResistanceOptions, setSybilResistanceOptions] = useState<
+    Partial<Record<SybilResistanceType, string>>
+  >(fullSybilResistanceOptions);
+
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
   const chain = useChainFromPath()!;
@@ -120,6 +197,15 @@ export default function PoolEditForm({
         // check if string is empty or undefined with ||
         return value || "0";
       },
+    },
+    sybilResistanceType: {
+      label: "Pool voting authorization:",
+      parse: () =>
+        sybilResistancePreview(
+          sybilResistanceType,
+          Array.isArray(sybilResistanceValue) ? sybilResistanceValue : [],
+          sybilResistanceValue?.toString(),
+        ),
     },
     defaultResolution: {
       label: "Default resolution:",
@@ -173,6 +259,20 @@ export default function PoolEditForm({
       token.decimals,
     );
 
+    const initialAllowList =
+      Array.isArray(initValues?.sybilResistanceValue) ?
+        initValues.sybilResistanceValue
+      : [];
+    const currentAllowList =
+      Array.isArray(previewData?.sybilResistanceValue) ?
+        previewData.sybilResistanceValue
+      : [];
+
+    const { membersToAdd, membersToRemove } = parseAllowListMembers(
+      initialAllowList,
+      currentAllowList,
+    );
+
     if (!previewData) {
       throw new Error("No preview data");
     }
@@ -201,6 +301,8 @@ export default function PoolEditForm({
           decay: decay,
           minThresholdPoints: minThresholdPoints,
         },
+        membersToAdd,
+        membersToRemove,
       ],
     });
   };
@@ -212,10 +314,12 @@ export default function PoolEditForm({
     let formattedRows: FormRow[] = [];
 
     const reorderedData = {
+      sybilResistanceType: previewData.sybilResistanceType,
+      sybilResistanceValue: previewData.sybilResistanceValue,
+      spendingLimit: previewData.spendingLimit,
       minimumConviction: previewData.minimumConviction,
       convictionGrowth: previewData.convictionGrowth,
       minThresholdPoints: previewData.minThresholdPoints,
-      spendingLimit: previewData.spendingLimit,
       defaultResolution: previewData.defaultResolution,
       proposalCollateral: previewData.proposalCollateral,
       disputeCollateral: previewData.disputeCollateral,
@@ -242,7 +346,7 @@ export default function PoolEditForm({
   };
 
   const { write: writeEditPool } = useContractWriteWithConfirmations({
-    address: strategyAddr,
+    address: strategy.id as Address,
     abi: abiWithErrors(cvStrategyABI),
     contractName: "CV Strategy",
     functionName: "setPoolParams",
@@ -252,9 +356,18 @@ export default function PoolEditForm({
         topic: "pool",
         function: "setPoolParams",
         type: "update",
-        containerId: strategyAddr,
+        id: strategy.poolId,
         chainId: chainId,
       });
+      if (sybilResistanceType === "gitcoinPassport") {
+        const sybilValue =
+          typeof previewData?.sybilResistanceValue === "number" ?
+            previewData.sybilResistanceValue
+          : 0;
+        //TODO: update gitcoin passport score in strategy
+      } else {
+        setLoading(false);
+      }
     },
     onSettled: () => {
       setLoading(false);
@@ -279,8 +392,86 @@ export default function PoolEditForm({
           previewTitle="Check pool details"
         />
       : <div className="flex flex-col gap-6">
+          {/* sybil resistance section */}
+          <div className="flex flex-col gap-4">
+            <FormSelect
+              label="Pool voting authorization"
+              register={register}
+              errors={errors}
+              required
+              registerKey="sybilResistanceType"
+              options={Object.entries(sybilResistanceOptions).map(
+                ([value, text]) => ({
+                  label: text,
+                  value: value,
+                }),
+              )}
+            />
+            {sybilResistanceType === "gitcoinPassport" ?
+              <FormInput
+                label="Gitcoin Passport score"
+                register={register}
+                required={sybilResistanceType === "gitcoinPassport"}
+                registerOptions={{
+                  min: {
+                    value: 1 / CV_PERCENTAGE_SCALE,
+                    message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                  },
+                }}
+                otherProps={{
+                  step: 1 / CV_PERCENTAGE_SCALE,
+                  min: 1 / CV_PERCENTAGE_SCALE,
+                }}
+                errors={errors}
+                registerKey="sybilResistanceValue"
+                type="number"
+                placeholder="0"
+              />
+            : sybilResistanceType === "allowList" && (
+                <AllowListInput
+                  register={register}
+                  registerKey="sybilResistanceValue"
+                  addresses={sybilResistanceValue}
+                  required={sybilResistanceType === "allowList"}
+                  setValue={setValue}
+                  errors={errors}
+                />
+              )
+            }
+          </div>
+
           {/* pool settings section */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
+            {shouldRenderInput("spendingLimit") && (
+              <div className="flex max-w-64 flex-col">
+                <FormInput
+                  label="Spending limit"
+                  register={register}
+                  required
+                  errors={errors}
+                  registerKey="spendingLimit"
+                  type="number"
+                  placeholder="20"
+                  className="pr-14"
+                  otherProps={{
+                    step: 1 / CV_SCALE_PRECISION,
+                    min: 1 / CV_SCALE_PRECISION,
+                  }}
+                  registerOptions={{
+                    max: {
+                      value: 100,
+                      message: "Max amount cannot exceed 100%",
+                    },
+                    min: {
+                      value: 1 / CV_SCALE_PRECISION,
+                      message: "Amount must be greater than 0",
+                    },
+                  }}
+                >
+                  <span className="absolute right-4 top-4 text-black">%</span>
+                </FormInput>
+              </div>
+            )}
             {shouldRenderInput("minimumConviction") && (
               <div className="flex max-w-64 flex-col">
                 <FormInput
@@ -364,36 +555,6 @@ export default function PoolEditForm({
                   type="number"
                   placeholder="0"
                 />
-              </div>
-            )}
-            {shouldRenderInput("spendingLimit") && (
-              <div className="flex max-w-64 flex-col">
-                <FormInput
-                  label="Spending limit"
-                  register={register}
-                  required
-                  errors={errors}
-                  registerKey="spendingLimit"
-                  type="number"
-                  placeholder="20"
-                  className="pr-14"
-                  otherProps={{
-                    step: 1 / CV_SCALE_PRECISION,
-                    min: 1 / CV_SCALE_PRECISION,
-                  }}
-                  registerOptions={{
-                    max: {
-                      value: 100,
-                      message: "Max amount cannot exceed 100%",
-                    },
-                    min: {
-                      value: 1 / CV_SCALE_PRECISION,
-                      message: "Amount must be greater than 0",
-                    },
-                  }}
-                >
-                  <span className="absolute right-4 top-4 text-black">%</span>
-                </FormInput>
               </div>
             )}
           </div>
