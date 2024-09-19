@@ -23,10 +23,21 @@ import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {RegistryFactoryV0_1} from "../src/RegistryFactory/RegistryFactoryV0_1.sol";
-import {CVStrategyV0_1, CVStrategyV0_0, StrategyStruct, StrategyStruct2} from "../src/CVStrategy/CVStrategyV0_1.sol";
+import {
+    CVStrategyV0_1,
+    CVStrategyV0_0,
+    PointSystem,
+    ProposalType,
+    ArbitrableConfig,
+    CVStrategyInitializeParamsV0_0
+} from "../src/CVStrategy/CVStrategyV0_1.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {RegistryCommunityV0_1, RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+import {
+    RegistryCommunityV0_1,
+    RegistryCommunityV0_0,
+    RegistryCommunityInitializeParamsV0_0
+} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
@@ -106,7 +117,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         //        strategy = address(new MockStrategy(address(allo())));
         // uint256 poolId = createPool(
-        //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, StrategyStruct.ProposalType(0)
+        //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, ProposalType(0)
         // );
         vm.stopPrank();
         vm.startPrank(allo_owner());
@@ -133,7 +144,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         vm.stopPrank();
 
-        RegistryCommunityV0_1.InitializeParams memory params;
+        RegistryCommunityInitializeParamsV0_0 memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -176,9 +187,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         return nonKickableCommunity;
     }
 
-    function _generateArbitrableConfig() internal returns (StrategyStruct.ArbitrableConfig memory) {
-        return
-            StrategyStruct.ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600);
+    function _generateArbitrableConfig() internal returns (ArbitrableConfig memory) {
+        return ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600);
     }
 
     function test_stakeAndRegisterMember() public {
@@ -279,15 +289,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_activate_totalActivatedPoints_fixed_system() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Fixed,
+            ProposalType(0),
+            PointSystem.Fixed,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -320,15 +330,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_activate_deactivate_totalActivatedPoints_fixed_system() public {
         vm.startPrank(pool_admin());
 
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Fixed,
+            ProposalType(0),
+            PointSystem.Fixed,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -365,15 +375,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.assume(tokenAmount > 2 && tokenAmount < 100);
         vm.startPrank(pool_admin());
 
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -410,15 +420,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         // vm.assume(tokenAmount > 0);
 
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Capped,
+            ProposalType(0),
+            PointSystem.Capped,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -459,15 +469,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         vm.startPrank(pool_admin());
         {
-            StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+            ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
             uint256 poolId = createPool(
                 allo(),
                 address(strategy),
                 address(_registryCommunity()),
                 registry(),
                 NATIVE,
-                StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Quadratic,
+                ProposalType(0),
+                PointSystem.Quadratic,
                 arbitrableConfig
             );
             console.log("PoolId: %s", poolId);
@@ -514,15 +524,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_increasePowerQuadraticFixedValues() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Quadratic,
+            ProposalType(0),
+            PointSystem.Quadratic,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -569,8 +579,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     //         address(_registryCommunity()),
     //         registry(),
     //         NATIVE,
-    //         StrategyStruct.ProposalType(0),
-    //         StrategyStruct.PointSystem.Quadratic
+    //         ProposalType(0),
+    //         PointSystem.Quadratic
     //     );
     //     console.log("PoolId: %s", poolId);
     //     vm.stopPrank();
@@ -607,15 +617,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_activateAfterIncreasePowerQuadratic() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Quadratic,
+            ProposalType(0),
+            PointSystem.Quadratic,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -656,15 +666,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //To avoid InsufficientBalance
         vm.assume(tokenAmount < 100000);
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -692,15 +702,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_DecreasePower_after_increasePower_diff_orders() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             address(token),
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -746,15 +756,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_DecreasePower_after_increasePower() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -793,15 +803,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_decreasePowerQuadratic_FixedValues() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Quadratic,
+            ProposalType(0),
+            PointSystem.Quadratic,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -852,15 +862,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -908,15 +918,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         vm.stopPrank();
@@ -938,15 +948,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
 
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         vm.stopPrank();
@@ -958,7 +968,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_revert_initialize_zeroStake() public {
-        RegistryCommunityV0_1.InitializeParams memory params;
+        RegistryCommunityInitializeParamsV0_0 memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = 0;
@@ -1009,15 +1019,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_revertDecreasePower() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             NATIVE,
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -1175,15 +1185,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_removeStrategyByPoolId() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             address(token),
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -1206,15 +1216,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_addStrategyByPoolId() public {
         vm.startPrank(pool_admin());
 
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             address(token),
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -1232,15 +1242,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_Revert_removeStrategyByPoolId() public {
         vm.startPrank(pool_admin());
 
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             address(token),
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
@@ -1267,15 +1277,15 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_Revert_addStrategyByPoolId() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         uint256 poolId = createPool(
             allo(),
             address(strategy),
             address(_registryCommunity()),
             registry(),
             address(token),
-            StrategyStruct.ProposalType(0),
-            StrategyStruct.PointSystem.Unlimited,
+            ProposalType(0),
+            PointSystem.Unlimited,
             arbitrableConfig
         );
         console.log("PoolId: %s", poolId);
