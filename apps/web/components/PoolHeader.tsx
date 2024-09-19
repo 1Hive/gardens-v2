@@ -11,7 +11,7 @@ import {
 import { StopIcon } from "@heroicons/react/24/solid";
 import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
-import { Address } from "viem";
+import { Address, zeroAddress } from "viem";
 import { useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
@@ -32,7 +32,12 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { registryCommunityABI, safeABI } from "@/src/generated";
-import { PointSystems, PoolTypes, ProposalStatus } from "@/types";
+import {
+  PointSystems,
+  PoolTypes,
+  ProposalStatus,
+  SybilResistanceType,
+} from "@/types";
 import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   convertSecondsToReadableTime,
@@ -55,10 +60,7 @@ type Props = {
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
   poolToken: FetchTokenResult;
-  pointSystem: number;
   chainId: string;
-  proposalType: string;
-  spendingLimitPct: number;
 };
 
 function calculateConvictionGrowthInSeconds(
@@ -93,16 +95,15 @@ export default function PoolHeader({
   arbitrableConfig,
   token,
   poolToken,
-  pointSystem,
   chainId,
-  proposalType,
-  spendingLimitPct,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
   const { publish } = usePubSubContext();
 
   const blockTime = chainConfigMap[chainId].blockTime;
+  const spendingLimitPct =
+    (Number(strategy.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
   const isCouncilSafe =
     address?.toLowerCase() ===
@@ -128,6 +129,9 @@ export default function PoolHeader({
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
   const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
   const tribunalAddress = arbitrableConfig.tribunalSafe;
+  const proposalType = strategy.config.proposalType;
+  const pointSystem = strategy.config.pointSystem;
+  const allowList = strategy.config.allowlist;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
@@ -136,6 +140,11 @@ export default function PoolHeader({
   const { value, unit } = convertSecondsToReadableTime(convictionGrowth);
 
   const poolConfig = [
+    {
+      label: "Spending limit",
+      value: `${spendingLimit.toPrecision(2)} %`,
+      info: "Max percentage of the pool funds that can be spent in a single proposal",
+    },
     {
       label: "Min conviction",
       value: `${minimumConviction.toPrecision(2)} %`,
@@ -150,12 +159,6 @@ export default function PoolHeader({
       label: "Min Threshold",
       value: `${minThresholdPoints}`,
       info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
-    },
-    {
-      label: "Spending limit",
-      // TODO: check number for some pools, they have more zeros or another config ?
-      value: `${spendingLimit.toFixed(2)} %`,
-      info: "Max percentage of the pool funds that can be spent in a single proposal",
     },
   ];
 
@@ -233,6 +236,21 @@ export default function PoolHeader({
     disableCouncilSafeBtnCondition,
   );
 
+  let sybilResistanceType: SybilResistanceType;
+  let sybilResistanceValue = (allowList as Address[]) ?? [];
+  if (allowList && allowList.length > 0 && allowList[0] === zeroAddress) {
+    // all allowed = gitcoin passport or no restriction
+    if (false) {
+      // TODO: finish defining gitcoin passport condition...
+      sybilResistanceType = "gitcoinPassport";
+    } else {
+      sybilResistanceType = "noSybilResist";
+    }
+  } else {
+    // allowList
+    sybilResistanceType = "allowList";
+  }
+
   return (
     <section className="section-layout flex flex-col gap-0 overflow-hidden">
       <header className="mb-2 flex flex-col">
@@ -290,16 +308,18 @@ export default function PoolHeader({
           onClose={() => setIsOpenModal(false)}
         >
           <PoolEditForm
-            strategyAddr={strategy.id as Address}
+            strategy={strategy}
             token={token}
             proposalType={proposalType}
             chainId={chainId}
             proposalOnDispute={proposalOnDispute}
             initValues={{
+              sybilResistanceValue: sybilResistanceValue,
+              sybilResistanceType: sybilResistanceType,
+              spendingLimit: spendingLimit.toFixed(2),
               minimumConviction: minimumConviction.toFixed(2),
               convictionGrowth: convictionGrowth.toFixed(2),
               minThresholdPoints: minThresholdPoints,
-              spendingLimit: spendingLimit.toFixed(2),
               defaultResolution: defaultResolution,
               proposalCollateral: proposalCollateral,
               disputeCollateral: disputeCollateral,

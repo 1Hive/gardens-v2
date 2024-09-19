@@ -56,3 +56,8 @@ export type ChainId = string | number;
 
 export type LightCVStrategy = getPoolDataQuery["cvstrategies"][number];
 export type LightProposal = LightCVStrategy["proposals"][number];
+
+export type SybilResistanceType =
+  | "noSybilResist"
+  | "gitcoinPassport"
+  | "allowList";

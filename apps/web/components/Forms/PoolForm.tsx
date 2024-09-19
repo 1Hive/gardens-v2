@@ -24,7 +24,12 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryCommunityABI } from "@/src/generated";
-import { DisputeOutcome, PointSystems, PoolTypes } from "@/types";
+import {
+  DisputeOutcome,
+  PointSystems,
+  PoolTypes,
+  SybilResistanceType,
+} from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
@@ -49,8 +54,6 @@ type ArbitrationSettings = {
   disputeCollateral: number;
   tribunalAddress: string;
 };
-
-type SybilResistanceType = "noSybilResist" | "gitcoinPassport" | "allowList";
 
 type FormInputs = {
   title: string;
@@ -217,19 +220,18 @@ export function PoolForm({ token, communityAddr }: Props) {
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
   });
-  const { tooltipMessage, isConnected } = useDisableButtons();
 
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
 
   useEffect(() => {
     if (PointSystems[pointSystemType] !== "unlimited") {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { noSybilResist, ...rest } = fullSybilResistanceOptions;
       setSybilResistanceOptions(rest);
       setValue("sybilResistanceType", "allowList");
     } else {
       setSybilResistanceOptions(fullSybilResistanceOptions);
-      setValue("sybilResistanceType", "noSybilResist");
     }
   }, [pointSystemType]);
 
@@ -529,11 +531,11 @@ export function PoolForm({ token, communityAddr }: Props) {
       strategyType: previewData.strategyType,
       pointSystemType: previewData.pointSystemType,
       maxAmount: previewData.maxAmount,
-      minThresholdPoints: previewData.minThresholdPoints,
       optionType: previewData.optionType,
       spendingLimit: previewData.spendingLimit,
       minimumConviction: previewData.minimumConviction,
       convictionGrowth: previewData.convictionGrowth,
+      minThresholdPoints: previewData.minThresholdPoints,
       sybilResistanceType: previewData.sybilResistanceType,
       sybilResistanceValue: previewData.sybilResistanceValue,
       defaultResolution: previewData.defaultResolution,
@@ -575,7 +577,6 @@ export function PoolForm({ token, communityAddr }: Props) {
       trigger("poolTokenAddress");
     }
   }, [customTokenData, watchedAddress, trigger]);
-
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -719,9 +720,9 @@ export function PoolForm({ token, communityAddr }: Props) {
               />
               {sybilResistanceType === "gitcoinPassport" ?
                 <FormInput
-                  label="Gitcoin Passport score required"
+                  label="Gitcoin Passport score"
                   register={register}
-                  required
+                  required={sybilResistanceType === "gitcoinPassport"}
                   registerOptions={{
                     min: {
                       value: 1 / CV_PERCENTAGE_SCALE,
@@ -742,7 +743,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                     register={register}
                     registerKey="sybilResistanceValue"
                     addresses={sybilResistanceValue}
-                    required
+                    required={sybilResistanceType === "allowList"}
                     setValue={setValue}
                     errors={errors}
                   />
@@ -921,38 +922,40 @@ export function PoolForm({ token, communityAddr }: Props) {
                   </FormInput>
                 </div>
               )}
-              <div className="flex max-w-64 flex-col">
-                <FormInput
-                  tooltip="It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life"
-                  label="Conviction growth"
-                  register={register}
-                  required
-                  errors={errors}
-                  registerKey="convictionGrowth"
-                  type="number"
-                  placeholder="10"
-                  readOnly={optionType !== 0}
-                  className="pr-14"
-                  otherProps={{
-                    step: INPUT_TOKEN_MIN_VALUE,
-                    min: INPUT_TOKEN_MIN_VALUE,
-                  }}
-                  registerOptions={{
-                    max: {
-                      value: 100,
-                      message: "Max amount cannot exceed 100 DAYS",
-                    },
-                    min: {
-                      value: INPUT_TOKEN_MIN_VALUE,
-                      message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
-                    },
-                  }}
-                >
-                  <span className="absolute right-4 top-4 text-black">
-                    days
-                  </span>
-                </FormInput>
-              </div>
+              {shouldRenderInputMap("convictionGrowth", strategyType) && (
+                <div className="flex max-w-64 flex-col">
+                  <FormInput
+                    tooltip="It's the time for conviction to reach proposal support. This parameter is logarithmic, represented as a half life"
+                    label="Conviction growth"
+                    register={register}
+                    required
+                    errors={errors}
+                    registerKey="convictionGrowth"
+                    type="number"
+                    placeholder="10"
+                    readOnly={optionType !== 0}
+                    className="pr-14"
+                    otherProps={{
+                      step: INPUT_TOKEN_MIN_VALUE,
+                      min: INPUT_TOKEN_MIN_VALUE,
+                    }}
+                    registerOptions={{
+                      max: {
+                        value: 100,
+                        message: "Max amount cannot exceed 100 DAYS",
+                      },
+                      min: {
+                        value: INPUT_TOKEN_MIN_VALUE,
+                        message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                      },
+                    }}
+                  >
+                    <span className="absolute right-4 top-4 text-black">
+                      days
+                    </span>
+                  </FormInput>
+                </div>
+              )}
             </div>
             {shouldRenderInputMap("minThresholdPoints", strategyType) && (
               <div className="flex flex-col">

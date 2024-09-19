@@ -16,7 +16,6 @@ import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
-import { CV_SCALE_PRECISION } from "@/utils/numbers";
 
 export const dynamic = "force-dynamic";
 
@@ -97,13 +96,10 @@ export default function Page({
     return <div className="mt-52 text-center">Pool {poolId} not found</div>;
   }
 
-  const pointSystem = data.cvstrategies?.[0].config.pointSystem;
   const communityAddress = strategyObj.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
   const proposalType = strategyObj.config.proposalType;
   const poolAmount = strategyObj.poolAmount as number;
-  const spendingLimitPct =
-    (Number(strategyObj.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
 
@@ -117,10 +113,7 @@ export default function Page({
         poolId={poolId}
         ipfsResult={ipfsResult}
         isEnabled={isEnabled}
-        pointSystem={pointSystem}
         chainId={chain}
-        proposalType={proposalType}
-        spendingLimitPct={spendingLimitPct}
       />
       {isEnabled && (
         <>
