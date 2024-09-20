@@ -48,7 +48,7 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
     /*|--------------------------------------------|*/
     /*|              V0_1 ERRORS                   |*/
     /*|--------------------------------------------|*/
-    error ProposalInvalidForAllocation();
+    error ProposalInvalidForAllocation(uint256 _proposalId, StrategyStruct.ProposalStatus _proposalStatus);
 
     /*|--------------------------------------------|*/
     /*|                 V0_1 MODIFIERS             |*/
@@ -59,7 +59,7 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
             p.proposalStatus == ProposalStatus.Inactive || p.proposalStatus == ProposalStatus.Cancelled
                 || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
         ) {
-            revert ProposalInvalidForAllocation();
+            revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
         }
     }
 
@@ -85,9 +85,7 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
-
         _setPoolParams(ip.arbitrableConfig, ip.cvParams, new address[](0), new address[](0));
-
         emit InitializedCV2(_poolId, ip);
     }
 

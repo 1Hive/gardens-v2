@@ -396,7 +396,14 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         ProposalSupport[] memory votes = new ProposalSupport[](1);
         votes[0] = ProposalSupport(10, SUPPORT_PCT); // 0 + 70 = 70% = 35
         bytes memory data = abi.encode(votes);
-        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, 10));
+        // Had to change the way to test the reverts, will fail because of invalid proposal
+        // since a proposal that doesn't exist will automatically have inactive status
+        // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, 10));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVStrategyV0_1.ProposalInvalidForAllocation.selector, 10, StrategyStruct.ProposalStatus.Inactive
+            )
+        );
         allo().allocate(poolId, data);
     }
 
@@ -856,7 +863,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         );
     }
 
-    function test_allocate_proposalSupport_empty_array() public {
+    function testRevert_allocate_proposalSupport_empty_array() public {
         (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         /**
@@ -868,36 +875,34 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         votes[0] = ProposalSupport(proposalId, 100e4);
         votes[1];
         bytes memory data = abi.encode(votes);
-
-        // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.SupportUnderflow.selector, 0, -100, -100));
-        allo().allocate(poolId, data);
-        stopMeasuringGas();
-
-        CVStrategyV0_1 cv = CVStrategyV0_1(payable(address(pool.strategy)));
-
-        assertEq(cv.getProposalVoterStake(proposalId, address(this)), 100e4); // 100% of 50 = 50
-        assertEq(cv.getProposalStakedAmount(proposalId), 100e4);
+        // will revert for proposalId 0 because votes[1] is empty so default proposalId value will be 0
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CVStrategyV0_1.ProposalInvalidForAllocation.selector, 0, StrategyStruct.ProposalStatus.Inactive
+            )
+        );
+        allo().allocate(proposalId, data);
     }
 
     function testRevert_allocate_senderZero() public {
         uint256 PRECISE_FIVE_PERCENT = 5e4;
         // uint256 TWO_POINT_FIVE_TOKENS = uintPRECISE_FIVE_PERCENT;
 
-        (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         /**
          * ASSERTS
          *
          */
         // startMeasuringGas("Support a Proposal");
-        ProposalSupport[] memory votes = new ProposalSupport[](2);
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
 
-        votes[0] = ProposalSupport(1, int256(PRECISE_FIVE_PERCENT));
+        votes[0] = ProposalSupport(proposalId, int256(PRECISE_FIVE_PERCENT));
         bytes memory data = abi.encode(votes);
 
         vm.startPrank(address(0));
         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotBeZero.selector));
-        allo().allocate(poolId, data);
+        allo().allocate(proposalId, data);
         vm.stopPrank();
     }
 
@@ -905,18 +910,18 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         uint256 PRECISE_FIVE_PERCENT = 5e4;
         // uint256 TWO_POINT_FIVE_TOKENS = uintPRECISE_FIVE_PERCENT;
 
-        (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
 
         /**
          * ASSERTS
          *
          */
         // startMeasuringGas("Support a Proposal");
-        ProposalSupport[] memory votes = new ProposalSupport[](2);
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
 
-        votes[0] = ProposalSupport(1, int256(PRECISE_FIVE_PERCENT));
+        votes[0] = ProposalSupport(proposalId, int256(PRECISE_FIVE_PERCENT));
         bytes memory data = abi.encode(votes);
-        allo().allocate(poolId, data);
+        allo().allocate(proposalId, data);
         stopMeasuringGas();
 
         CVStrategyV0_1 cv = CVStrategyV0_1(payable(address(pool.strategy)));

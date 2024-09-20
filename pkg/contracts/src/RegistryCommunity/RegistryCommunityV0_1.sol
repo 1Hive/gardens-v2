@@ -30,7 +30,6 @@ contract RegistryCommunityV0_1 is RegistryCommunityV0_0 {
                 abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, owner())
             )
         );
-
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
 
         if (address(_params.sybilScorer) == address(0)) {
