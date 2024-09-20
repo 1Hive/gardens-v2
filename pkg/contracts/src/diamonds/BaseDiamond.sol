@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 
 
 import {LibDiamond} from "./libraries/LibDiamond.sol";
@@ -11,11 +11,8 @@ import {IERC173} from "./interfaces/IERC173.sol";
 import {IERC1822Proxiable} from "@openzeppelin/contracts/interfaces/draft-IERC1822.sol";
 // When no function exists for function called
 
-import {IDiamondCut} from "./interfaces/IDiamondCut.sol";
-import {LibDiamond} from "./libraries/LibDiamond.sol";
-
-
 error FunctionNotFound(bytes4 _functionSelector);
+error DiamondAlreadyInitialized();
 
 // This is used in diamond constructor
 // more arguments are added to this struct
@@ -26,19 +23,16 @@ struct DiamondArgs {
     bytes initCalldata;
 }
 
-contract Diamond is IERC1822Proxiable, IDiamondCut {
+contract BaseDiamond is IERC1822Proxiable, IDiamondCut {
     bytes32 internal constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
-    // constructor(IDiamondCut.FacetCut[] memory _diamondCut, DiamondArgs memory _args) payable {
-    //     LibDiamond.setContractOwner(_args.owner);
-    //     LibDiamond.diamondCut(_diamondCut, _args.init, _args.initCalldata);
 
-    //     // Code can be added here to perform actions and set state variables.
-    // }
     constructor() payable {
     }
 
     function initialize(address _owner) external {
-        require(!LibDiamond.isInitialized(),"ALREADY_INITIALIZED");
+        if (LibDiamond.isInitialized()) {
+            revert DiamondAlreadyInitialized();
+        }
         LibDiamond.setContractOwner(_owner);
         LibDiamond.setInitialized();
     }
@@ -85,7 +79,7 @@ contract Diamond is IERC1822Proxiable, IDiamondCut {
     /// @param _init The address of the contract or facet to execute _calldata
     /// @param _calldata A function call, including function selector and arguments
     ///                  _calldata is executed with delegatecall on _init
-    function diamondCut(FacetCut[] calldata _diamondCut, address _init, bytes calldata _calldata) external override {
+    function diamondCut(FacetCut[] calldata _diamondCut, address _init, bytes calldata _calldata) external override virtual {
         LibDiamond.enforceIsContractOwner();
         LibDiamond.diamondCut(_diamondCut, _init, _calldata);
     }
