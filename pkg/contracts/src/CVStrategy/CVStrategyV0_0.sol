@@ -9,7 +9,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
 import {IArbitrable} from "../interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
-// import {console} from "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ISybilScorer, PassportData} from "../ISybilScorer.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
@@ -342,6 +342,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function _canExecuteAction(address _user) internal view virtual returns (bool) {
+        console.log("sybilScorer", address(sybilScorer));
         if (address(sybilScorer) == address(0)) {
             return true;
         }
@@ -964,15 +965,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // atTWO_128 = 2^128 * a^t
         //        @audit-issue why that _pow require that need be less than TWO_128? why dont use 256?
         //        @audit-ok they use 2^128 as the container for the result of the _pow function
-
-        //        uint256 atTWO_128 = _pow((decay << 128).div(D), t);
         uint256 atTWO_128 = _pow((cvParams.decay << 128) / D, t);
-        // solium-disable-previous-line
-        // conviction = (atTWO_128 * _lastConv + _oldAmount * D * (2^128 - atTWO_128) / (D - aD) + 2^127) / 2^128
-        //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
-        //            >> 128;
-        //        return (atTWO_128.mul(_lastConv).add(_oldAmount.mul(D).mul(TWO_128.sub(atTWO_128)).div(D - decay))).add(TWO_127)
-        //            >> 128;
         return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - cvParams.decay))) + TWO_127)
             >> 128;
     }
@@ -1029,7 +1022,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         require(_b < TWO_128, "_b should be less than 2^128");
         return ((_a * _b) + TWO_127) >> 128;
     }
-
+      
     /**
      * Calculate (_a / 2^128)^_b * 2^128.  Parameter _a should be less than 2^128.
      *

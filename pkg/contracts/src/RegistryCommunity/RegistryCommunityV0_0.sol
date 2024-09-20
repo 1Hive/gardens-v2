@@ -241,9 +241,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         RegistryCommunityInitializeParamsV0_0 memory params,
         address _strategyTemplate,
         address _collateralVaultTemplate,
-        address owner
+        address _owner
     ) public initializer {
-        super.initialize(owner);
+        super.initialize(_owner);
         __ReentrancyGuard_init();
         __AccessControl_init();
 

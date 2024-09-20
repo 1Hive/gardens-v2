@@ -15,7 +15,7 @@ import {
     CreateProposal
 } from "../CVStrategy/CVStrategyV0_0.sol";
 
-import {CVStrategyV0_1, CVStrategyInitializeParamsV0_1} from "../CVStrategy/CVStrategyV0_1.sol";
+import {CVStrategyV0_1, CVStrategyInitializeParamsV0_1} from "@src/CVStrategy/CVStrategyV0_1.sol";
 
 /// @custom:oz-upgrades-from RegistryCommunityV0_0
 contract RegistryCommunityV0_1 is RegistryCommunityV0_0 {
