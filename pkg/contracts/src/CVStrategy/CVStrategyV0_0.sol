@@ -243,7 +243,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     PointSystemConfig public pointConfig;
 
     // Contract reference
-    address internal registryCommunity;
+    address public registryCommunity;
 
     ICollateralVault public collateralVault;
     ISybilScorer public sybilScorer;
