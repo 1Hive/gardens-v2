@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {CVStrategyV0_0, StrategyStruct} from "./CVStrategyV0_0.sol";
+// import {console} from "forge-std/console.sol";
 
 import {ISybilScorer, PassportData} from "../ISybilScorer.sol";
 import {RegistryCommunityV0_1} from "../RegistryCommunity/RegistryCommunityV0_1.sol";
@@ -34,7 +35,7 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
     /*|--------------------------------------------|*/
     /*|              V0_1 ERRORS                   |*/
     /*|--------------------------------------------|*/
-    error ProposalInvalidForAllocation();
+    error ProposalInvalidForAllocation(uint256 _proposalId, StrategyStruct.ProposalStatus _proposalStatus);
 
     /*|--------------------------------------------|*/
     /*|                 V0_1 MODIFIERS             |*/
@@ -47,7 +48,7 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
                 || p.proposalStatus == StrategyStruct.ProposalStatus.Executed
                 || p.proposalStatus == StrategyStruct.ProposalStatus.Rejected
         ) {
-            revert ProposalInvalidForAllocation();
+            revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
         }
     }
 
@@ -73,9 +74,7 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
-
         _setPoolParams(ip.arbitrableConfig, ip.cvParams, new address[](0), new address[](0));
-
         emit InitializedCV2(_poolId, ip);
     }
 

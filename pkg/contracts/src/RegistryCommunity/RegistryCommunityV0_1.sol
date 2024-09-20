@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
+// import {console} from "forge-std/console.sol";
 import {RegistryCommunityV0_0, Metadata, ERC1967Proxy, CVStrategyV0_0} from "./RegistryCommunityV0_0.sol";
 import {StrategyStruct2} from "../CVStrategy/CVStrategyV0_1.sol";
 
 /// @custom:oz-upgrades-from RegistryCommunityV0_0
 contract RegistryCommunityV0_1 is RegistryCommunityV0_0 {
+
     function createPool(address _token, StrategyStruct2.InitializeParams memory _params, Metadata memory _metadata)
         public
         virtual
@@ -17,7 +19,6 @@ contract RegistryCommunityV0_1 is RegistryCommunityV0_0 {
                 abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, owner())
             )
         );
-
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
 
         if (address(_params.sybilScorer) == address(0)) {
