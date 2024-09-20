@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import "../RegistryFactory/RegistryFactoryV0_0.sol";
+import {RegistryFactoryV0_0, ERC1967Proxy} from "../RegistryFactory/RegistryFactoryV0_0.sol";
+import {
+    RegistryCommunityInitializeParamsV0_0,
+    RegistryCommunityV0_0
+} from "../RegistryCommunity/RegistryCommunityV0_0.sol";
 import {RegistryCommunityV0_1} from "../RegistryCommunity/RegistryCommunityV0_1.sol";
 
 /// @custom:oz-upgrades-from RegistryFactoryV0_0
 contract RegistryFactoryV0_1 is RegistryFactoryV0_0 {
     function initializeV2() public reinitializer(2) {}
 
-    function createRegistry(RegistryCommunityV0_1.InitializeParams memory params)
+    function createRegistry(RegistryCommunityInitializeParamsV0_0 memory params)
         public
         virtual
         override

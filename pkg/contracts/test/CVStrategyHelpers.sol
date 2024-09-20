@@ -4,9 +4,19 @@ pragma solidity ^0.8.19;
 import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 // import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
-// import {StrategyStruct2} from "../src/libraries/StrategyStruct2.sol";
-// import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_0.sol";
-import {CVStrategyV0_1, StrategyStruct2, CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_1.sol";
+// import {CVStrategyV0_1} from "../src/libraries/CVStrategyV0_1.sol";
+// import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {
+    CVStrategyV0_1,
+    CVStrategyV0_0,
+    ProposalType,
+    PointSystem,
+    CreateProposal,
+    PointSystemConfig,
+    ArbitrableConfig,
+    CVStrategyInitializeParamsV0_1
+} from "../src/CVStrategy/CVStrategyV0_1.sol";
+import {CVStrategyInitializeParamsV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 
@@ -40,11 +50,11 @@ contract CVStrategyHelpers is Native, Accounts {
 
     function getParams(
         address registryCommunity,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem,
-        StrategyStruct.PointSystemConfig memory pointConfig,
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig
-    ) public pure returns (StrategyStruct2.InitializeParams memory params) {
+        ProposalType proposalType,
+        PointSystem pointSystem,
+        PointSystemConfig memory pointConfig,
+        ArbitrableConfig memory arbitrableConfig
+    ) public pure returns (CVStrategyInitializeParamsV0_1 memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         params.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         params.cvParams.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
@@ -55,7 +65,7 @@ contract CVStrategyHelpers is Native, Accounts {
         params.pointSystem = pointSystem;
 
         if (pointConfig.maxAmount == 0) {
-            // StrategyStruct.PointSystemConfig memory pointConfig;
+            // PointSystemConfig memory pointConfig;
             //Capped point system
             pointConfig.maxAmount = 200 * DECIMALS;
         }
@@ -71,13 +81,13 @@ contract CVStrategyHelpers is Native, Accounts {
         address registryCommunity,
         IRegistry registry,
         address token,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem,
-        StrategyStruct.PointSystemConfig memory pointConfig,
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig
+        ProposalType proposalType,
+        PointSystem pointSystem,
+        PointSystemConfig memory pointConfig,
+        ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        StrategyStruct2.InitializeParams memory params =
+        CVStrategyInitializeParamsV0_1 memory params =
             getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig);
 
         address[] memory _pool_managers = new address[](2);
@@ -112,9 +122,9 @@ contract CVStrategyHelpers is Native, Accounts {
         address registryCommunity,
         IRegistry registry,
         address token,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem,
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig
+        ProposalType proposalType,
+        PointSystem pointSystem,
+        ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         return createPool(
             allo,
@@ -124,7 +134,7 @@ contract CVStrategyHelpers is Native, Accounts {
             token,
             proposalType,
             pointSystem,
-            StrategyStruct.PointSystemConfig(0),
+            PointSystemConfig(0),
             arbitrableConfig
         );
     }

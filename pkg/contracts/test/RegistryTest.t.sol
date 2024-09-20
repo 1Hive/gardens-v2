@@ -23,10 +23,22 @@ import {GV2ERC20} from "../script/GV2ERC20.sol";
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {RegistryFactoryV0_1} from "../src/RegistryFactory/RegistryFactoryV0_1.sol";
-import {CVStrategyV0_1, CVStrategyV0_0, StrategyStruct, StrategyStruct2} from "../src/CVStrategy/CVStrategyV0_1.sol";
+import {
+    CVStrategyV0_1,
+    CVStrategyV0_0,
+    PointSystem,
+    ProposalType,
+    ArbitrableConfig,
+    CVStrategyInitializeParamsV0_0,
+    PointSystemConfig
+} from "../src/CVStrategy/CVStrategyV0_1.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {RegistryCommunityV0_1, RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+import {
+    RegistryCommunityV0_1,
+    RegistryCommunityV0_0,
+    RegistryCommunityInitializeParamsV0_0
+} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {SafeSetup} from "./shared/SafeSetup.sol";
 
@@ -35,10 +47,17 @@ import {CVStrategyHelpers} from "./CVStrategyHelpers.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
+// import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
+import {Core} from "@openzeppelin/foundry/internal/Core.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {RegistryFactoryDiamond,BaseDiamond} from "@src/diamonds/RegistryFactoryDiamond.sol";
 
+import {IDiamond} from "@src/diamonds/interfaces/IDiamond.sol";
+import {IDiamondCut} from "@src/diamonds/interfaces/IDiamondCut.sol";
+import {DiamondCutFacet} from "@src/diamonds/facets/DiamondCutFacet.sol";
+import {DiamondLoupeFacet} from "@src/diamonds/facets/DiamondLoupeFacet.sol";
+import {RegistryFactoryFacet} from "@src/diamonds/facets/RegistryFactoryFacet.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
 
 contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
@@ -105,8 +124,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         // allo.createPoolWithCustomStrategy() @todo kev create new testRvert
 
         //        strategy = address(new MockStrategy(address(allo())));
-        // uint256 poolId = createPool(
-        //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, StrategyStruct.ProposalType(0)
+        // uint256 /* _poolId */ = createPool(
+        //     allo(), address(strategy), address(_registryCommunity()), registry(), NATIVE, ProposalType(0)
         // );
         vm.stopPrank();
         vm.startPrank(allo_owner());
@@ -132,7 +151,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         vm.stopPrank();
 
-        RegistryCommunityV0_1.InitializeParams memory params;
+        RegistryCommunityInitializeParamsV0_0 memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -144,14 +163,14 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         params._isKickEnabled = true;
 
         registryCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         (uint256 returnedPoolId, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
-                StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Unlimited,
-                StrategyStruct.PointSystemConfig(0),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
                 arbitrableConfig
             ),
             metadata
@@ -163,12 +182,32 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(gardenOwner);
         _registryFactory().setProtocolFee(address(registryCommunity), PROTOCOL_FEE_PERCENTAGE);
 
-        Upgrades.upgradeProxy(
+        // Upgrades.upgradeProxy(
+        //     address(_registryFactory()),
+        //     "RegistryFactoryV0_1.sol",
+        //     abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
+        // );
+
+        // assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
+
+        
+        Core.upgradeProxyTo(
             address(_registryFactory()),
-            "RegistryFactoryV0_1.sol",
-            abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
+            address(new RegistryFactoryDiamond()),
+            abi.encodeWithSelector(BaseDiamond.initialize.selector, gardenOwner)
         );
+        
+        // RegistryFactoryFacet(address(_registryFactory())).initialize(gardenOwner);
+
+        IDiamondCut(address(_registryFactory())).diamondCut(createCutsFactory(), address(0), "");
+
+        RegistryFactoryFacet(address(_registryFactory())).initializeV2(gardenOwner);
+
+        assertEq(address(RegistryFactoryDiamond(payable(address(registryFactory)))._owner()), address(gardenOwner), "owner after upgrade");
         assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
+        assertEq(registryFactory.VERSION(), "0.0", "VERSION after upgrade");
+
+
         vm.stopPrank();
 
         params._isKickEnabled = false;
@@ -176,6 +215,76 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         nonKickableCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
     }
 
+    function createCutsFactory() public returns (IDiamond.FacetCut[] memory cuts) {
+        DiamondCutFacet dCutFacet = new DiamondCutFacet();//@todo can be removed
+        DiamondLoupeFacet dLoupe = new DiamondLoupeFacet();
+        // OwnershipFacet ownerF = new OwnershipFacet();
+        RegistryFactoryFacet registryFactoryF = new RegistryFactoryFacet();
+
+        cuts = new IDiamond.FacetCut[](3);
+
+        bytes4[] memory sighashes = new bytes4[](1);
+        sighashes[0] = bytes4(0x1f931c1c);
+
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(dCutFacet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: sighashes
+        });
+
+        sighashes = new bytes4[](5);
+        sighashes[0] = bytes4(0x7a0ed627);
+        sighashes[1] = bytes4(0xadfca15e);
+        sighashes[2] = bytes4(0x52ef6b2c);
+        sighashes[3] = bytes4(0xcdffacc6);
+        sighashes[4] = bytes4(0x01ffc9a7);
+        //build cut struct
+        // IDiamond.FacetCut[] memory cut = new IDiamond.FacetCut[](2);
+
+        cuts[1] = (IDiamond.FacetCut({facetAddress: address(dLoupe), action: IDiamond.FacetCutAction.Add, functionSelectors: sighashes}));
+
+        // sighashes = new bytes4[](2);
+        // sighashes[0] = bytes4(0xf2fde38b);
+        // sighashes[1] = bytes4(0x8da5cb5b);
+
+        // cut[1] = (IDiamond.FacetCut({facetAddress: address(ownerF), action: IDiamond.FacetCutAction.Add, functionSelectors: sighashes}));
+
+        bytes4[] memory sighashesInit = new bytes4[](25);
+        sighashesInit[0] = bytes4(0x77122d56);
+        sighashesInit[1] = bytes4(0xbeb331a3);
+        sighashesInit[2] = bytes4(0xb8bed901);
+        sighashesInit[3] = bytes4(0xf5016b5e);
+        sighashesInit[4] = bytes4(0x987435be);
+        sighashesInit[5] = bytes4(0x0a992e0c);
+        sighashesInit[6] = bytes4(0xc4d66de8);
+        sighashesInit[7] = bytes4(0x1459457a);
+        sighashesInit[8] = bytes4(0x29b6eca9);
+        sighashesInit[9] = bytes4(0x3101cfcb);
+        sighashesInit[10] = bytes4(0xaffed0e0);
+        sighashesInit[11] = bytes4(0x8da5cb5b);
+        sighashesInit[12] = bytes4(0x52d1902d);
+        sighashesInit[13] = bytes4(0x02c1d0b1);
+        sighashesInit[14] = bytes4(0x715018a6);
+        sighashesInit[15] = bytes4(0xb0d3713a);
+        sighashesInit[16] = bytes4(0x5a2c8ace);
+        sighashesInit[17] = bytes4(0xb5b3ca2c);
+        sighashesInit[18] = bytes4(0x8279c7db);
+        sighashesInit[19] = bytes4(0x5decae02);
+        sighashesInit[20] = bytes4(0x1b71f0e4);
+        sighashesInit[21] = bytes4(0x5c94e4d2);
+        sighashesInit[22] = bytes4(0xf2fde38b);
+        sighashesInit[23] = bytes4(0x3659cfe6);
+        sighashesInit[24] = bytes4(0x4f1ef286);
+
+        cuts[2] = (
+            IDiamond.FacetCut({
+                facetAddress: address(registryFactoryF),
+                action: IDiamond.FacetCutAction.Add,
+                functionSelectors: sighashesInit
+            })
+        );
+
+    }
     function _registryCommunity() internal view returns (RegistryCommunityV0_1) {
         return registryCommunity;
     }
@@ -188,9 +297,8 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         return nonKickableCommunity;
     }
 
-    function _generateArbitrableConfig() internal returns (StrategyStruct.ArbitrableConfig memory) {
-        return
-            StrategyStruct.ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600);
+    function _generateArbitrableConfig() internal returns (ArbitrableConfig memory) {
+        return ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 600);
     }
 
     function test_stakeAndRegisterMember() public {
@@ -291,20 +399,21 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_activate_totalActivatedPoints_fixed_system() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        (uint256 poolId, address strategyProxy) = registryCommunity.createPool(
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        (/*uint256  _poolId */, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
-                StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Fixed,
-                StrategyStruct.PointSystemConfig(0),
+                ProposalType(0),
+                PointSystem.Fixed,
+                PointSystemConfig(0),
                 arbitrableConfig
             ),
             metadata
         );
+        // poolId = _poolId;
         CVStrategyV0_1 fixedStrategy = CVStrategyV0_1(payable(strategyProxy));
-        console.log("PoolId: %s", poolId);
+        
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
@@ -334,20 +443,20 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_activate_deactivate_totalActivatedPoints_fixed_system() public {
         vm.startPrank(pool_admin());
 
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        (uint256 poolId, address strategyProxy) = registryCommunity.createPool(
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        (/*uint256  _poolId */, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
-                StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Fixed,
-                StrategyStruct.PointSystemConfig(0),
+                ProposalType(0),
+                PointSystem.Fixed,
+                PointSystemConfig(0),
                 arbitrableConfig
             ),
             metadata
         );
         CVStrategyV0_1 fixedStrategy = CVStrategyV0_1(payable(strategyProxy));
-        console.log("PoolId: %s", poolId);
+        
         vm.stopPrank();
 
         vm.startPrank(address(councilSafe));
@@ -380,6 +489,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function testFuzz_increasePower(uint256 tokenAmount) public {
         vm.assume(tokenAmount > 2 && tokenAmount < 100);
         vm.startPrank(pool_admin());
+
         assertEq(strategy.getMaxAmount(), 200 * DECIMALS);
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
@@ -413,20 +523,20 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         // vm.assume(tokenAmount > 0);
 
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        (uint256 poolId, address strategyProxy) = registryCommunity.createPool(
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        (/*uint256  _poolId */, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
-                StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Capped,
-                StrategyStruct.PointSystemConfig(0),
+                ProposalType(0),
+                PointSystem.Capped,
+                PointSystemConfig(0),
                 arbitrableConfig
             ),
             metadata
         );
         CVStrategyV0_1 cappedStrategy = CVStrategyV0_1(payable(strategyProxy));
-        console.log("PoolId: %s", poolId);
+        
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(cappedStrategy));
@@ -463,14 +573,14 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.assume(secondIncrease < 10000 && secondIncrease > 0);
 
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         (, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
-                StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Quadratic,
-                StrategyStruct.PointSystemConfig(0),
+                ProposalType(0),
+                PointSystem.Quadratic,
+                PointSystemConfig(0),
                 arbitrableConfig
             ),
             metadata
@@ -518,20 +628,20 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_increasePowerQuadraticFixedValues() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        (uint256 poolId, address strategyProxy) = registryCommunity.createPool(
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        (/*uint256  _poolId */, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
-                StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Quadratic,
-                StrategyStruct.PointSystemConfig(0),
+                ProposalType(0),
+                PointSystem.Quadratic,
+                PointSystemConfig(0),
                 arbitrableConfig
             ),
             metadata
         );
         CVStrategyV0_1 quadraticStrategy = CVStrategyV0_1(payable(strategyProxy));
-        console.log("PoolId: %s", poolId);
+        
         vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(quadraticStrategy));
@@ -573,14 +683,14 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     // function test_activateAfterIncreasePowerQuadratic() public {
     //     vm.startPrank(pool_admin());
-    //     uint256 poolId = createPool(
+    //     uint256 /* _poolId */ = createPool(
     //         allo(),
     //         address(strategy),
     //         address(_registryCommunity()),
     //         registry(),
     //         NATIVE,
-    //         StrategyStruct.ProposalType(0),
-    //         StrategyStruct.PointSystem.Quadratic
+    //         ProposalType(0),
+    //         PointSystem.Quadratic
     //     );
     //     console.log("PoolId: %s", poolId);
     //     vm.stopPrank();
@@ -617,14 +727,14 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_activateAfterIncreasePowerQuadratic() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
-        (uint256 poolId, address strategyProxy) = registryCommunity.createPool(
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        (/*uint256  _poolId */, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
-                StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Quadratic,
-                StrategyStruct.PointSystemConfig(0),
+                ProposalType(0),
+                PointSystem.Quadratic,
+                PointSystemConfig(0),
                 arbitrableConfig
             ),
             metadata
@@ -693,6 +803,21 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_DecreasePower_after_increasePower_diff_orders() public {
+        vm.startPrank(pool_admin());
+        // ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        // uint256 poolId = createPool(
+        //     allo(),
+        //     address(strategy),
+        //     address(_registryCommunity()),
+        //     registry(),
+        //     address(token),
+        //     ProposalType(0),
+        //     PointSystem.Unlimited,
+        //     arbitrableConfig
+        // );
+        // console.log("PoolId: %s", poolId);
+        vm.stopPrank();
+
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
         vm.stopPrank();
@@ -732,6 +857,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_DecreasePower_after_increasePower() public {
+        vm.startPrank(pool_admin());
+        vm.stopPrank();
+
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
         vm.stopPrank();
@@ -765,14 +893,14 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_decreasePowerQuadratic_FixedValues() public {
         vm.startPrank(pool_admin());
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
         (, address strategyProxy) = registryCommunity.createPool(
             NATIVE,
             getParams(
                 address(registryCommunity),
-                StrategyStruct.ProposalType(0),
-                StrategyStruct.PointSystem.Quadratic,
-                StrategyStruct.PointSystemConfig(0),
+                ProposalType(0),
+                PointSystem.Quadratic,
+                PointSystemConfig(0),
                 arbitrableConfig
             ),
             metadata
@@ -822,6 +950,10 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_kickMember() public {
         startMeasuringGas("Registering and kicking member");
 
+        //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
+
+        vm.startPrank(pool_admin());
+        vm.stopPrank();
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
         vm.stopPrank();
@@ -862,11 +994,6 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     function test_revert_activateMemberInStrategy() public {
         startMeasuringGas("Registering and kicking member");
 
-        //CVStrategy cv = CVStrategy(payable(address(pool.strategy)));
-        //Commented to test revert if strategy not enabled
-        // vm.startPrank(address(councilSafe));
-        // _registryCommunity().addStrategy(address(strategy));
-        // vm.stopPrank();
         vm.startPrank(gardenMember);
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
         _registryCommunity().stakeAndRegisterMember();
@@ -877,6 +1004,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
     function test_revert_addStrategy() public {
         startMeasuringGas("Registering and kicking member");
+
         vm.startPrank(address(councilSafe));
         _registryCommunity().addStrategy(address(strategy));
         vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_0.StrategyExists.selector));
@@ -885,7 +1013,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_revert_initialize_zeroStake() public {
-        RegistryCommunityV0_1.InitializeParams memory params;
+        RegistryCommunityInitializeParamsV0_0 memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = 0;
@@ -1087,6 +1215,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_removeStrategyByPoolId() public {
+
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.startPrank(address(councilSafe));
@@ -1102,6 +1231,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_addStrategyByPoolId() public {
+
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.startPrank(address(councilSafe));
@@ -1112,6 +1242,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
     }
 
     function test_Revert_removeStrategyByPoolId() public {
+
         assertEq(_registryCommunity().enabledStrategies(address(strategy)), false);
 
         vm.startPrank(address(councilSafe));

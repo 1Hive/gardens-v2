@@ -1,8 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import {CVStrategyV0_0, StrategyStruct} from "./CVStrategyV0_0.sol";
-// import {console} from "forge-std/console.sol";
+import {
+    CVStrategyV0_0,
+    CVParams,
+    ProposalType,
+    PointSystem,
+    PointSystemConfig,
+    ArbitrableConfig,
+    Proposal,
+    ProposalStatus,
+    ProposalSupport,
+    CreateProposal,
+    CVStrategyInitializeParamsV0_0
+} from "./CVStrategyV0_0.sol";
 
 import {ISybilScorer, PassportData} from "../ISybilScorer.sol";
 import {RegistryCommunityV0_1} from "../RegistryCommunity/RegistryCommunityV0_1.sol";
@@ -10,17 +21,19 @@ import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {ICollateralVault} from "../interfaces/ICollateralVault.sol";
 import {IArbitrator} from "../interfaces/IArbitrator.sol";
 
-library StrategyStruct2 {
-    struct InitializeParams {
-        StrategyStruct.CVParams cvParams;
-        StrategyStruct.ProposalType proposalType;
-        StrategyStruct.PointSystem pointSystem;
-        StrategyStruct.PointSystemConfig pointConfig;
-        StrategyStruct.ArbitrableConfig arbitrableConfig;
-        address registryCommunity;
-        address sybilScorer;
-        address[] initialAllowlist;
-    }
+/*|--------------------------------------------|*/
+/*|              STRUCTS/ENUMS                 |*/
+/*|--------------------------------------------|*/
+
+struct CVStrategyInitializeParamsV0_1 {
+    CVParams cvParams;
+    ProposalType proposalType;
+    PointSystem pointSystem;
+    PointSystemConfig pointConfig;
+    ArbitrableConfig arbitrableConfig;
+    address registryCommunity;
+    address sybilScorer;
+    address[] initialAllowlist;
 }
 
 /// @custom:oz-upgrades-from CVStrategyV0_0
@@ -30,23 +43,21 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
     /*|--------------------------------------------|*/
     event AllowlistMembersRemoved(uint256 poolId, address[] members);
     event AllowlistMembersAdded(uint256 poolId, address[] members);
-    event InitializedCV2(uint256 poolId, StrategyStruct2.InitializeParams data);
+    event InitializedCV2(uint256 poolId, CVStrategyInitializeParamsV0_1 data);
 
     /*|--------------------------------------------|*/
     /*|              V0_1 ERRORS                   |*/
     /*|--------------------------------------------|*/
-    error ProposalInvalidForAllocation(uint256 _proposalId, StrategyStruct.ProposalStatus _proposalStatus);
+    error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus);
 
     /*|--------------------------------------------|*/
     /*|                 V0_1 MODIFIERS             |*/
     /*|--------------------------------------------|*/
     function checkProposalAllocationValidity(uint256 _proposalId) internal view virtual {
-        StrategyStruct.Proposal storage p = proposals[_proposalId];
+        Proposal storage p = proposals[_proposalId];
         if (
-            p.proposalStatus == StrategyStruct.ProposalStatus.Inactive
-                || p.proposalStatus == StrategyStruct.ProposalStatus.Cancelled
-                || p.proposalStatus == StrategyStruct.ProposalStatus.Executed
-                || p.proposalStatus == StrategyStruct.ProposalStatus.Rejected
+            p.proposalStatus == ProposalStatus.Inactive || p.proposalStatus == ProposalStatus.Cancelled
+                || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
         ) {
             revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
         }
@@ -62,7 +73,7 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
         collateralVault = ICollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));
         collateralVault.initialize();
 
-        StrategyStruct2.InitializeParams memory ip = abi.decode(_data, (StrategyStruct2.InitializeParams));
+        CVStrategyInitializeParamsV0_1 memory ip = abi.decode(_data, (CVStrategyInitializeParamsV0_1));
 
         if (ip.registryCommunity == address(0)) {
             revert RegistryCannotBeZero();
@@ -79,8 +90,8 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
     }
 
     function _setPoolParams(
-        StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
-        StrategyStruct.CVParams memory _cvParams,
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
         address[] memory membersToAdd,
         address[] memory membersToRemove
     ) internal virtual {
@@ -90,8 +101,8 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
     }
 
     function setPoolParams(
-        StrategyStruct.ArbitrableConfig memory _arbitrableConfig,
-        StrategyStruct.CVParams memory _cvParams,
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
         address[] memory membersToAdd,
         address[] memory membersToRemove
     ) external virtual {
@@ -99,8 +110,8 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
         _setPoolParams(_arbitrableConfig, _cvParams, membersToAdd, membersToRemove);
     }
 
-    function _beforeAllocate(bytes memory _data, address _sender) internal virtual override {
-        StrategyStruct.ProposalSupport[] memory pv = abi.decode(_data, (StrategyStruct.ProposalSupport[]));
+    function _beforeAllocate(bytes memory _data,  address /*_sender*/) internal virtual override {
+        ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         for (uint256 i = 0; i < pv.length; i++) {
             checkProposalAllocationValidity(pv[i].proposalId);
         }

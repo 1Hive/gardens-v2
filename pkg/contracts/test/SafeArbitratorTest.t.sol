@@ -3,8 +3,17 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
-import {CVStrategyV0_1, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_1.sol";
-import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+import {
+    CVStrategyV0_1,
+    CVStrategyV0_0,
+    CVStrategyInitializeParamsV0_0,
+    ArbitrableConfig,
+    PointSystemConfig,
+    PointSystem,
+    ProposalType,
+    CreateProposal
+} from "../src/CVStrategy/CVStrategyV0_1.sol";
+import {RegistryCommunityV0_1, RegistryCommunityInitializeParamsV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
@@ -77,7 +86,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
 
         vm.stopPrank();
 
-        RegistryCommunityV0_1.InitializeParams memory params;
+        RegistryCommunityInitializeParamsV0_0 memory params;
         params._allo = address(allo());
         params._gardenToken = IERC20(address(token));
         params._registerStakeAmount = MINIMUM_STAKE;
@@ -113,12 +122,10 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
             NATIVE,
             getParams(
                 address(registryCommunity),
-                StrategyStruct.ProposalType.Funding,
-                StrategyStruct.PointSystem.Unlimited,
-                StrategyStruct.PointSystemConfig(200 * DECIMALS),
-                StrategyStruct.ArbitrableConfig(
-                    safeArbitrator, payable(address(_councilSafe())), 0.02 ether, 0.01 ether, 1, 300
-                )
+                ProposalType.Funding,
+                PointSystem.Unlimited,
+                PointSystemConfig(200 * DECIMALS),
+                ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 0.02 ether, 0.01 ether, 1, 300)
             ),
             metadata
         );
@@ -143,8 +150,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
 
     function createProposal() public returns (uint256 proposalId) {
         uint256 requestAmount = 1 ether;
-        StrategyStruct.CreateProposal memory proposal =
-            StrategyStruct.CreateProposal(poolId, pool_admin(), requestAmount, address(NATIVE), metadata);
+        CreateProposal memory proposal = CreateProposal(poolId, pool_admin(), requestAmount, address(NATIVE), metadata);
         bytes memory data = abi.encode(proposal);
 
         (,, uint256 submitterCollateralAmount,,,) = cvStrategy.getArbitrableConfig();
