@@ -48,7 +48,7 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
     /*|--------------------------------------------|*/
     /*|              V0_1 ERRORS                   |*/
     /*|--------------------------------------------|*/
-    error ProposalInvalidForAllocation(uint256 _proposalId, StrategyStruct.ProposalStatus _proposalStatus);
+    error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus);
 
     /*|--------------------------------------------|*/
     /*|                 V0_1 MODIFIERS             |*/
@@ -110,7 +110,7 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
         _setPoolParams(_arbitrableConfig, _cvParams, membersToAdd, membersToRemove);
     }
 
-    function _beforeAllocate(bytes memory _data, address _sender) internal virtual override {
+    function _beforeAllocate(bytes memory _data,  address /*_sender*/) internal virtual override {
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         for (uint256 i = 0; i < pv.length; i++) {
             checkProposalAllocationValidity(pv[i].proposalId);

@@ -401,7 +401,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, 10));
         vm.expectRevert(
             abi.encodeWithSelector(
-                CVStrategyV0_1.ProposalInvalidForAllocation.selector, 10, StrategyStruct.ProposalStatus.Inactive
+                CVStrategyV0_1.ProposalInvalidForAllocation.selector, 10, ProposalStatus.Inactive
             )
         );
         allo().allocate(poolId, data);
@@ -878,7 +878,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // will revert for proposalId 0 because votes[1] is empty so default proposalId value will be 0
         vm.expectRevert(
             abi.encodeWithSelector(
-                CVStrategyV0_1.ProposalInvalidForAllocation.selector, 0, StrategyStruct.ProposalStatus.Inactive
+                CVStrategyV0_1.ProposalInvalidForAllocation.selector, 0, ProposalStatus.Inactive
             )
         );
         allo().allocate(proposalId, data);
