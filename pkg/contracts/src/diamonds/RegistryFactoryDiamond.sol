@@ -3,13 +3,6 @@ pragma solidity ^0.8.19;
 
 import {BaseDiamond} from "./BaseDiamond.sol";
 import {LibDiamond} from "./libraries/LibDiamond.sol";
-import {IDiamondCut} from "./interfaces/IDiamondCut.sol";
-import {IDiamondLoupe} from "./interfaces/IDiamondLoupe.sol";
-import {IERC173} from "./interfaces/IERC173.sol";
-//import { IERC165} from "./interfaces/IERC165.sol";
-
-import {IERC1822Proxiable} from "@openzeppelin/contracts/interfaces/draft-IERC1822.sol";
-// When no function exists for function called
 
 struct CommunityInfo {
     uint256 fee;
