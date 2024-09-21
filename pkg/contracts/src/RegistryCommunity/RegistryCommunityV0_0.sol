@@ -118,7 +118,10 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     using SafeERC20 for IERC20;
     using Clone for address;
 
-    string public constant VERSION = "0.0";
+    // string public constant VERSION = "0.0";
+    function VERSION() public pure virtual returns (string memory) {
+        return "0.0";
+    }
     /// @notice The native address to represent native token eg: ETH in mainnet
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     /// @notice The precision scale used in the contract to avoid loss of precision

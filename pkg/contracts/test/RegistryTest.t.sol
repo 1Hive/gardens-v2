@@ -58,9 +58,12 @@ import {IDiamondCut} from "@src/diamonds/interfaces/IDiamondCut.sol";
 import {DiamondCutFacet} from "@src/diamonds/facets/DiamondCutFacet.sol";
 import {DiamondLoupeFacet} from "@src/diamonds/facets/DiamondLoupeFacet.sol";
 import {RegistryFactoryFacet} from "@src/diamonds/facets/RegistryFactoryFacet.sol";
+import {RegistryCommunityFacet} from "@src/diamonds/facets/RegistryCommunityFacet.sol";
+
+import {HelperContract} from "./HelperContract.sol";
 // @dev Run forge test --mc RegistryTest -vvvvv
 
-contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup {
+contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, Errors, GasHelpers2, SafeSetup, HelperContract {
     CVStrategyV0_1 public strategy;
     uint256 public poolId;
     IArbitrator safeArbitrator;
@@ -194,18 +197,32 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         Core.upgradeProxyTo(
             address(_registryFactory()),
             address(new RegistryFactoryDiamond()),
-            abi.encodeWithSelector(BaseDiamond.initialize.selector, gardenOwner)
+            abi.encodeWithSelector(BaseDiamond.initializeOwner.selector, gardenOwner)
         );
         
         // RegistryFactoryFacet(address(_registryFactory())).initialize(gardenOwner);
 
         IDiamondCut(address(_registryFactory())).diamondCut(createCutsFactory(), address(0), "");
 
-        RegistryFactoryFacet(address(_registryFactory())).initializeV2(gardenOwner);
+ 
+        BaseDiamond communityDiamond = new BaseDiamond();
+
+
+        (IDiamond.FacetCut[] memory cuts, RegistryCommunityFacet rcfTemplate ) = _createCutsCommunity();
+
+
+        
+        RegistryFactoryFacet(address(_registryFactory())).initializeV2(
+            gardenOwner,
+            address(communityDiamond),
+            cuts,
+            address(new BaseDiamond()),
+            address(new BaseDiamond())
+        );
 
         assertEq(address(RegistryFactoryDiamond(payable(address(registryFactory)))._owner()), address(gardenOwner), "owner after upgrade");
         assertEq(registryFactory.nonce(), 1, "nonce after upgrade");
-        assertEq(registryFactory.VERSION(), "0.0", "VERSION after upgrade");
+        assertEq(registryFactory.VERSION(), "0.1", "VERSION after upgrade");
 
 
         vm.stopPrank();
@@ -219,7 +236,7 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         DiamondCutFacet dCutFacet = new DiamondCutFacet();//@todo can be removed
         DiamondLoupeFacet dLoupe = new DiamondLoupeFacet();
         // OwnershipFacet ownerF = new OwnershipFacet();
-        RegistryFactoryFacet registryFactoryF = new RegistryFactoryFacet();
+        RegistryFactoryFacet registryCommunityF = new RegistryFactoryFacet();
 
         cuts = new IDiamond.FacetCut[](3);
 
@@ -249,42 +266,92 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
 
         // cut[1] = (IDiamond.FacetCut({facetAddress: address(ownerF), action: IDiamond.FacetCutAction.Add, functionSelectors: sighashes}));
 
-        bytes4[] memory sighashesInit = new bytes4[](25);
-        sighashesInit[0] = bytes4(0x77122d56);
-        sighashesInit[1] = bytes4(0xbeb331a3);
-        sighashesInit[2] = bytes4(0xb8bed901);
-        sighashesInit[3] = bytes4(0xf5016b5e);
-        sighashesInit[4] = bytes4(0x987435be);
-        sighashesInit[5] = bytes4(0x0a992e0c);
-        sighashesInit[6] = bytes4(0xc4d66de8);
-        sighashesInit[7] = bytes4(0x1459457a);
-        sighashesInit[8] = bytes4(0x29b6eca9);
-        sighashesInit[9] = bytes4(0x3101cfcb);
-        sighashesInit[10] = bytes4(0xaffed0e0);
-        sighashesInit[11] = bytes4(0x8da5cb5b);
-        sighashesInit[12] = bytes4(0x52d1902d);
-        sighashesInit[13] = bytes4(0x02c1d0b1);
-        sighashesInit[14] = bytes4(0x715018a6);
-        sighashesInit[15] = bytes4(0xb0d3713a);
-        sighashesInit[16] = bytes4(0x5a2c8ace);
-        sighashesInit[17] = bytes4(0xb5b3ca2c);
-        sighashesInit[18] = bytes4(0x8279c7db);
-        sighashesInit[19] = bytes4(0x5decae02);
-        sighashesInit[20] = bytes4(0x1b71f0e4);
-        sighashesInit[21] = bytes4(0x5c94e4d2);
-        sighashesInit[22] = bytes4(0xf2fde38b);
-        sighashesInit[23] = bytes4(0x3659cfe6);
-        sighashesInit[24] = bytes4(0x4f1ef286);
+        // bytes4[] memory sighashesInit = new bytes4[](26);
+        // sighashesInit[0] = bytes4(0x77122d56);
+        // sighashesInit[1] = bytes4(0xbeb331a3);
+        // sighashesInit[2] = bytes4(0xb8bed901);
+        // sighashesInit[3] = bytes4(0xf5016b5e);
+        // sighashesInit[4] = bytes4(0x987435be);
+        // sighashesInit[5] = bytes4(0x0a992e0c);
+        // sighashesInit[6] = bytes4(0xc4d66de8);
+        // sighashesInit[7] = bytes4(0x1459457a);
+        // sighashesInit[8] = bytes4(0xf27ebced);
+        // sighashesInit[9] = bytes4(0x3101cfcb);
+        // sighashesInit[10] = bytes4(0xaffed0e0);
+        // sighashesInit[11] = bytes4(0x8da5cb5b);
+        // sighashesInit[12] = bytes4(0x52d1902d);
+        // sighashesInit[13] = bytes4(0x02c1d0b1);
+        // sighashesInit[14] = bytes4(0x715018a6);
+        // sighashesInit[15] = bytes4(0xb0d3713a);
+        // sighashesInit[16] = bytes4(0x5a2c8ace);
+        // sighashesInit[17] = bytes4(0xb5b3ca2c);
+        // sighashesInit[18] = bytes4(0x8279c7db);
+        // sighashesInit[19] = bytes4(0x5decae02);
+        // sighashesInit[20] = bytes4(0x1b71f0e4);
+        // sighashesInit[21] = bytes4(0x5c94e4d2);
+        // sighashesInit[22] = bytes4(0xf2fde38b);
+        // sighashesInit[23] = bytes4(0x3659cfe6);
+        // sighashesInit[24] = bytes4(0x4f1ef286);
+        // sighashesInit[25] = bytes4(0xffa1ad74);
 
         cuts[2] = (
             IDiamond.FacetCut({
-                facetAddress: address(registryFactoryF),
+                facetAddress: address(registryCommunityF),
                 action: IDiamond.FacetCutAction.Add,
-                functionSelectors: sighashesInit
+                functionSelectors: generateSelectors("RegistryFactoryFacet")
+
             })
         );
 
     }
+
+     function _createCutsCommunity() public returns (IDiamond.FacetCut[] memory cuts,RegistryCommunityFacet registryCommunityF) {
+        DiamondCutFacet dCutFacet = new DiamondCutFacet();//@todo can be removed
+        DiamondLoupeFacet dLoupe = new DiamondLoupeFacet();
+        // OwnershipFacet ownerF = new OwnershipFacet();
+        registryCommunityF = new RegistryCommunityFacet();
+
+        cuts = new IDiamond.FacetCut[](3);
+
+        bytes4[] memory sighashes = new bytes4[](1);
+        sighashes[0] = bytes4(0x1f931c1c);
+
+        cuts[0] = IDiamond.FacetCut({
+            facetAddress: address(dCutFacet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: sighashes
+        });
+
+        sighashes = new bytes4[](5);
+        sighashes[0] = bytes4(0x7a0ed627);
+        sighashes[1] = bytes4(0xadfca15e);
+        sighashes[2] = bytes4(0x52ef6b2c);
+        sighashes[3] = bytes4(0xcdffacc6);
+        // sighashes[4] = bytes4(0x01ffc9a7); //supportsInterface(byte4)
+        //build cut struct
+        // IDiamond.FacetCut[] memory cut = new IDiamond.FacetCut[](2);
+
+        cuts[1] = (IDiamond.FacetCut({facetAddress: address(dLoupe), action: IDiamond.FacetCutAction.Add, functionSelectors: sighashes}));
+
+        // sighashes = new bytes4[](2);
+        // sighashes[0] = bytes4(0xf2fde38b);
+        // sighashes[1] = bytes4(0x8da5cb5b);
+
+        // cut[1] = (IDiamond.FacetCut({facetAddress: address(ownerF), action: IDiamond.FacetCutAction.Add, functionSelectors: sighashes}));
+
+        // bytes4[] memory sighashesInit = new bytes4[](26);
+        
+        cuts[2] = (
+            IDiamond.FacetCut({
+                facetAddress: address(registryCommunityF),
+                action: IDiamond.FacetCutAction.Add,
+                functionSelectors: generateSelectors("RegistryCommunityFacet")
+            })
+        );
+
+    }
+   
+    
     function _registryCommunity() internal view returns (RegistryCommunityV0_1) {
         return registryCommunity;
     }

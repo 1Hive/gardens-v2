@@ -2,11 +2,9 @@
 pragma solidity ^0.8.19;
 
 
-import {LibDiamond} from "./libraries/LibDiamond.sol";
-import {IDiamondCut} from "./interfaces/IDiamondCut.sol";
-import {IDiamondLoupe} from "./interfaces/IDiamondLoupe.sol";
-import {IERC173} from "./interfaces/IERC173.sol";
-//import { IERC165} from "./interfaces/IERC165.sol";
+import {BaseDiamond} from "@src/diamonds/BaseDiamond.sol";
+import {LibDiamond} from "@src/diamonds/libraries/LibDiamond.sol";
+import {IDiamondCut} from "@src/diamonds/interfaces/IDiamondCut.sol";
 
 import {IERC1822Proxiable} from "@openzeppelin/contracts/interfaces/draft-IERC1822.sol";
 // When no function exists for function called
@@ -29,7 +27,7 @@ contract BaseDiamond is IERC1822Proxiable, IDiamondCut {
     constructor() payable {
     }
 
-    function initialize(address _owner) external {
+    function initializeOwner(address _owner) external {
         if (LibDiamond.isInitialized()) {
             revert DiamondAlreadyInitialized();
         }
