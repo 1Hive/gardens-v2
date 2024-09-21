@@ -4,19 +4,19 @@ import { ChainIcon, getChain } from "@/configs/chains";
 type TokenLabelProps = {
   chainId: string | number;
   noSymbol?: boolean;
-  classNames?: string;
+  className?: string;
   iconSize?: number;
 };
 
 export function TokenLabel({
   chainId,
   noSymbol = false,
-  classNames,
+  className,
   iconSize = 24,
 }: TokenLabelProps) {
   return (
     <div
-      className={`items-center flex h-fit w-fit justify-center rounded-full px-4 py-2 ${classNames}`}
+      className={`items-center flex h-fit w-fit justify-center rounded-full px-4 py-2 ${className}`}
     >
       <div className="flex content-center justify-center">
         {/* TODO: change Icon library */}
