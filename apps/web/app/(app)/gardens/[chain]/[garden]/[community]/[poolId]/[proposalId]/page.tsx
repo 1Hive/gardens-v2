@@ -192,7 +192,7 @@ export default function Page({
             <MarkdownWrapper>
               {metadata?.description ?? "No description found"}
             </MarkdownWrapper>
-            <div className="flex justify-between">
+            <div className="flex justify-between flex-wrap gap-2">
               <div className="flex flex-col gap-2">
                 {!isSignalingType && (
                   <>

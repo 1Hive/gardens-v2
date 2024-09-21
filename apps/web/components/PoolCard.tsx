@@ -76,7 +76,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
         </Statistic>
       </div>
       {!isEnabled ?
-        <div className="banner  min-w-[262px]">
+        <div className="banner md:min-w-[262px]">
           <ClockIcon className="h-8 w-8 text-secondary-content" />
           <h6>Waiting for approval</h6>
         </div>

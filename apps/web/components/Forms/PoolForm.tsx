@@ -658,7 +658,7 @@ export function PoolForm({ token, communityAddr }: Props) {
             )}
           </div>
           <InfoBox
-            classNames="w-fit mt-4"
+            className="w-fit mt-4"
             infoBoxType="info"
             content={
               "The following sections can be updated by the council in the future."
@@ -753,7 +753,7 @@ export function PoolForm({ token, communityAddr }: Props) {
           {/* pool settings section */}
           <div className="flex flex-col">
             <h4 className="my-4">Pool settings</h4>
-            <div className="flex gap-8">
+            <div className="flex gap-8 flex-wrap">
               {Object.entries(poolSettingValues).map(
                 ([key, { label, description }]) => {
                   return (
