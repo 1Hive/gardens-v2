@@ -14,6 +14,7 @@ import {IDiamond} from "@src/diamonds/interfaces/IDiamond.sol";
 import {IDiamondCut} from "@src/diamonds/interfaces/IDiamondCut.sol";
 import {DiamondCutFacet} from "@src/diamonds/facets/DiamondCutFacet.sol";
 import {DiamondLoupeFacet} from "@src/diamonds/facets/DiamondLoupeFacet.sol";
+import {LibDiamond} from "@src/diamonds/libraries/LibDiamond.sol";
 
 import {BaseDiamond} from "@src/diamonds/BaseDiamond.sol";
 
@@ -41,6 +42,8 @@ contract RegistryFactoryFacet is RegistryFactoryV0_0  {
         registryCommunityTemplate = _registryCommunityTemplate;
         strategyTemplate = _strategyTemplate;
         collateralVaultTemplate = _collateralVaultTemplate;
+
+    
         for (uint i = 0; i < _cuts.length; i++) {
             cutsCommunity.push(IDiamond.FacetCut({
                 facetAddress: _cuts[i].facetAddress,
@@ -63,10 +66,11 @@ contract RegistryFactoryFacet is RegistryFactoryV0_0  {
 
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(registryCommunityTemplate),
-            abi.encodeWithSelector(BaseDiamond.initializeOwner.selector, owner())
+            abi.encodeWithSelector(BaseDiamond.initializeOwnerCut.selector, owner(), cutsCommunity, address(0), new bytes(0))
         );
+        // LibDiamond.grantRoleDiamond(LibDiamond.DEFAULT_ADMIN_ROLE, address(proxy));
 
-        IDiamondCut(address(proxy)).diamondCut(cutsCommunity, address(0), ""); // @TODO put init address for add supportInterfaces with DiamondInit.sol 
+        // IDiamondCut(address(proxy)).diamondCut(cutsCommunity, address(0), ""); // @TODO put init address for add supportInterfaces with DiamondInit.sol 
 
 
         RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(payable(address(proxy)));

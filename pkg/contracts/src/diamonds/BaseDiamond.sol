@@ -5,6 +5,7 @@ pragma solidity ^0.8.19;
 import {BaseDiamond} from "@src/diamonds/BaseDiamond.sol";
 import {LibDiamond} from "@src/diamonds/libraries/LibDiamond.sol";
 import {IDiamondCut} from "@src/diamonds/interfaces/IDiamondCut.sol";
+import {IDiamond} from "@src/diamonds/interfaces/IDiamond.sol";
 
 import {IERC1822Proxiable} from "@openzeppelin/contracts/interfaces/draft-IERC1822.sol";
 // When no function exists for function called
@@ -27,12 +28,21 @@ contract BaseDiamond is IERC1822Proxiable, IDiamondCut {
     constructor() payable {
     }
 
-    function initializeOwner(address _owner) external {
+    function initializeOwnerCut(address _owner,IDiamond.FacetCut[] memory _diamondCut, address _init, bytes memory _calldata) external {
+        _initializeOwner(_owner, _diamondCut, _init, _calldata);
+    }
+    function _initializeOwner(address _owner,IDiamond.FacetCut[] memory _diamondCut, address _init, bytes memory _calldata) internal {
         if (LibDiamond.isInitialized()) {
             revert DiamondAlreadyInitialized();
         }
         LibDiamond.setContractOwner(_owner);
         LibDiamond.setInitialized();
+        LibDiamond.diamondCut(_diamondCut, _init, _calldata);
+
+    }
+
+    function initializeOwner(address _owner) external {
+        _initializeOwner(_owner, new FacetCut[](0), address(0), new bytes(0));
     }
 
     
