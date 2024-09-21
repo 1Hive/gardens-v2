@@ -16,7 +16,7 @@ struct CommunityInfo {
 
 /// @custom:oz-upgrades-from RegistryFactoryV0_0
 contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
-    string public constant VERSION = "0.0";
+    // string public constant  VERSION = "0.0";
     uint256 public nonce;
 
     mapping(address => CommunityInfo) communityToInfo;
@@ -134,5 +134,9 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
         return communityToInfo[_community].fee;
     }
 
+
+    function VERSION() public pure virtual returns (string memory) {
+        return "0.0";
+    }
     uint256[50] private __gap;
 }

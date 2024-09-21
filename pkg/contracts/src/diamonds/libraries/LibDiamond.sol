@@ -32,6 +32,7 @@ error InitializationFunctionReverted(address _initializationContractAddress, byt
 library LibDiamond {
     bytes32 constant DIAMOND_STORAGE_POSITION = keccak256("diamond.standard.diamond.storage");
     bytes32 constant _IS_INITALIZED_SLOT = keccak256("diamond.contract.isInitialized");
+    // bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
     
 
     struct FacetAddressAndSelectorPosition {
@@ -39,6 +40,7 @@ library LibDiamond {
         uint16 selectorPosition;
     }
 
+   
     struct DiamondStorage {
         // function selector => facet address and selector position in selectors array
         mapping(bytes4 => FacetAddressAndSelectorPosition) facetAddressAndSelectorPosition;
@@ -47,7 +49,12 @@ library LibDiamond {
         // owner of the contract
         address contractOwner;
         bool isInitialized;
+        // mapping(bytes32 => AccessRoleData)  roles;
     }
+    // struct AccessRoleData {
+    //     mapping(address => bool) members;
+    //     bytes32 adminRole;
+    // }
 
     function diamondStorage() internal pure returns (DiamondStorage storage ds) {
         bytes32 position = DIAMOND_STORAGE_POSITION;
@@ -72,14 +79,28 @@ library LibDiamond {
         emit OwnershipTransferred(previousOwner, _newOwner);
     }
 
+    // function grantRoleDiamond(bytes32 role, address account) internal {
+    //     if (!hasRoleDiamond(role, account)) {
+    //         diamondStorage().roles[role].members[account] = true;
+    //         // emit RoleGranted(role, account, msg.msg.sender);
+    //     }
+    // }
+    // function hasRoleDiamond(bytes32 role, address account) internal view returns (bool) {
+    //     return diamondStorage().roles[role].members[account];
+    // }
+
     function contractOwner() internal view returns (address contractOwner_) {
         contractOwner_ = diamondStorage().contractOwner;
     }
 
     function enforceIsContractOwner() internal view {
-        if (msg.sender != diamondStorage().contractOwner) {
+        // if (diamondStorage().roles[DEFAULT_ADMIN_ROLE].members[msg.sender] == false) {
+        //     revert NotContractOwner(msg.sender, address(0x0));
+        // }
+        if(msg.sender != diamondStorage().contractOwner){
             revert NotContractOwner(msg.sender, diamondStorage().contractOwner);
         }
+        
     }
 
     event DiamondCut(IDiamondCut.FacetCut[] _diamondCut, address _init, bytes _calldata);
