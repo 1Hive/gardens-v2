@@ -257,7 +257,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     useDisableButtons(disableSubmitBtn);
 
   const content = (
-    <div className="flex md:flex-col gap-10">
+    <div className="flex md:flex-col gap-10 flex-wrap">
       {proposalStatus !== "active" ?
         <div className="p-16 rounded-lg">
           {disputes.map((dispute) => (
@@ -300,7 +300,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const buttons = (
     <div className="modal-action w-full">
       {isDisputed ?
-        <div className="w-full flex justify-end gap-4">
+        <div className="w-full flex justify-end gap-4 flex-wrap">
           {(
             DisputeStatus[lastDispute.status] === "waiting" &&
             ((isTribunalMember ?? isTribunalSafe) || isTimeout)
@@ -314,7 +314,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                 disabled={disableTribunalSafeButtons}
               >
                 <InfoWrapper
-                  classNames={`[&>svg]:text-secondary-content ${isTimeout ? "tooltip-left" : ""}`}
+                  className={"[&>svg]:text-secondary-content"}
                   tooltip={
                     "Abstain to follow the pool's default resolution (approve/reject) and return collaterals to both parties."
                   }
@@ -333,7 +333,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     tooltip={tooltipMessage}
                   >
                     <InfoWrapper
-                      classNames="[&>svg]:text-primary-content"
+                      className="[&>svg]:text-primary-content"
                       tooltip={
                         "Approve if the dispute is invalid and the proposal should remain active."
                       }
@@ -350,7 +350,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     tooltip={tooltipMessage}
                   >
                     <InfoWrapper
-                      classNames="[&>svg]:text-danger-button [&:before]:mr-10 tooltip-left"
+                      className="[&>svg]:text-danger-button [&:before]:mr-10"
                       tooltip={
                         "Reject if the proposal violates the rules outlined in the community covenant."
                       }
@@ -367,7 +367,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             />
           }
         </div>
-      : <div className="flex w-full justify-between items-end">
+      : <div className="flex w-full justify-between items-end flex-wrap gap-2">
           <div>
             {totalStake && (
               <WalletBalance
@@ -390,7 +390,6 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             <Button
               onClick={handleSubmit}
               color="danger"
-              tooltipSide="tooltip-left"
               disabled={
                 !isConnected || missmatchUrl || !isEnoughBalance || isCooldown
               }
