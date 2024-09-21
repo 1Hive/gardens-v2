@@ -80,6 +80,7 @@ export default function Page({
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
     enabled: !!poolTokenAddr,
+    chainId,
   });
   const { data: ipfsResult } = useMetadataIpfsFetch({
     hash: proposalData?.metadataHash,
