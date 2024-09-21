@@ -47,7 +47,7 @@ export const ChartWrapper = ({
     <>
       <div className="mt-7 flex flex-col gap-12">
         <h3>Conviction voting chart</h3>
-        <div className="flex gap-4">
+        <div className="flex gap-4 flex-wrap">
           {legend
             .filter((item) => !(isSignalingType && item.name === "Threshold"))
             .map((item) => (

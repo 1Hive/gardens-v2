@@ -403,7 +403,7 @@ export default function PoolEditForm({
             <div className="flex flex-col">
               <h4 className="my-4">Arbitration settings</h4>
             </div>
-            <div className="flex gap-4 mt-2">
+            <div className="flex gap-4 mt-2 flex-wrap">
               <FormRadioButton
                 label="Global gardens tribunal"
                 checked={
