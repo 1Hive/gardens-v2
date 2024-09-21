@@ -106,7 +106,7 @@ export const ProposalTimeline: FC<Props> = ({
                 </div>
                 <div className="timeline-start shadow-lg p-2 border border-tertiary-content rounded-lg flex items-center">
                   <InfoWrapper
-                    classNames="[&>svg]:text-tertiary-content m-0.5"
+                    className="[&>svg]:text-tertiary-content m-0.5"
                     tooltip={`The tribunal safe has 3 days to rule the dispute. Past this delay and considering the abstain behavior on this pool, this proposal will be ${defaultRuling === "rejected" ? "closed as rejected" : "back to active"} and both collateral will be restored.`}
                   >
                     <Countdown endTimestamp={timeoutTimestamp} />
@@ -135,7 +135,7 @@ export const ProposalTimeline: FC<Props> = ({
                           "Pool default ruling on timeout is to Approve"
                         : "The proposal will be closed as rejected."
                       }
-                      classNames={`[&>svg]:text-error-content [&:before]:ml-[-26px] ${isTimeout && defaultRuling === "approved" && "[&>svg]:opacity-50"}`}
+                      className={`[&>svg]:text-error-content [&:before]:ml-[-26px] ${isTimeout && defaultRuling === "approved" && "[&>svg]:opacity-50"}`}
                     >
                       <span
                         className={`${isTimeout && defaultRuling === "approved" && "opacity-50"}`}
@@ -156,7 +156,7 @@ export const ProposalTimeline: FC<Props> = ({
                           "Pool default ruling on timeout is to Reject"
                         : "The proposal will keep the accumulated conviction growth and be back to active."
                       }
-                      classNames={`${isTimeout && defaultRuling === "rejected" && "[&>svg]:opacity-50 [&:before]:ml-[-38px]"}`}
+                      className={`${isTimeout && defaultRuling === "rejected" && "[&>svg]:opacity-50 [&:before]:ml-[-38px]"}`}
                     >
                       <span
                         className={`${isTimeout && defaultRuling === "rejected" && "opacity-50"}`}
