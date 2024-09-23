@@ -219,7 +219,7 @@ export default function Page({
 
   return (
     <div className="page-layout">
-      <header className="section-layout flex flex-row items-center gap-10">
+      <header className="section-layout flex flex-row items-center gap-10 flex-wrap justify-end">
         <div>
           <Image
             src={commImg}
@@ -268,7 +268,7 @@ export default function Page({
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 mt-auto">
           <RegisterMember
             memberData={isMemberResult}
             registrationCost={getTotalRegistrationCost()}

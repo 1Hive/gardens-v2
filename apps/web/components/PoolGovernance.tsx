@@ -44,7 +44,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
   return (
     <section className="section-layout">
-      <header className="flex justify-between">
+      <header className="flex justify-between flex-wrap">
         <h2>Pool Governance</h2>
         <div className="flex flex-col gap-2">
           <CheckPassport
@@ -62,9 +62,9 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
       </header>
       {address && (
         <div className="mt-4 flex flex-col justify-between items-start">
-          <div className="flex flex-1 gap-10">
+          <div className="flex flex-1 gap-10 flex-wrap">
             <div className="flex flex-col items-start gap-2">
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-6 flex-wrap">
                 <p className="subtitle2">Your stake in the community:</p>
                 <DisplayNumber
                   tokenSymbol={strategy.registryCommunity.garden.symbol}
@@ -87,7 +87,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             <InfoBox
               content={poolSystemDefinition[poolSystem]}
               infoBoxType="info"
-              classNames="flex-1 w-full"
+              className="flex-1 w-full"
             />
           </div>
         </div>

@@ -219,6 +219,7 @@ export function PoolForm({ token, communityAddr }: Props) {
   const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
+    chainId: +chain,
   });
 
   const pointSystemType = watch("pointSystemType");
@@ -697,7 +698,7 @@ export function PoolForm({ token, communityAddr }: Props) {
           </div>
           <div className="border-border-neutral border-t-[1px]" />
           <InfoBox
-            classNames="w-fit"
+            className="w-fit"
             infoBoxType="info"
             content={
               "The following sections can be updated by the council in the future."
@@ -839,7 +840,7 @@ export function PoolForm({ token, communityAddr }: Props) {
           {/* pool settings section */}
           <div className="flex flex-col">
             <h4 className="my-4">Pool settings</h4>
-            <div className="flex gap-8">
+            <div className="flex gap-8 flex-wrap">
               {Object.entries(poolSettingValues).map(
                 ([key, { label, description }]) => {
                   return (
