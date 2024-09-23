@@ -19,9 +19,9 @@ import { DisputeOutcome, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import {
   calculateDecay,
+  calculateMaxRatioNum,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
-  MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { capitalize } from "@/utils/text";
 
@@ -159,9 +159,9 @@ export default function PoolEditForm({
     spendingLimit = spendingLimit / 100;
     minimumConviction = minimumConviction / 100;
 
-    const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
-    const weightNum = minimumConviction * maxRatioNum ** 2;
+    const maxRatioNum = calculateMaxRatioNum(spendingLimit, minimumConviction);
 
+    const weightNum = minimumConviction * maxRatioNum ** 2;
     const blockTime = chainConfigMap[chainId].blockTime;
 
     // pool settings

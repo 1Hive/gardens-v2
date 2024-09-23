@@ -79,7 +79,7 @@ export const chainConfigMap: {
     name: arbitrumSepolia.name,
     icon: Arbitrum,
     explorer: "https://arbitrum-sepolia.blockscout.com/",
-    blockTime: 0.23,
+    blockTime: 14,
     confirmations: 7,
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP?.replace("/version/latest", "")}/${SUBGRAPH_TESTNET_VERSION}`,
