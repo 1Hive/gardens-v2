@@ -744,7 +744,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                     register={register}
                     registerKey="sybilResistanceValue"
                     addresses={sybilResistanceValue}
-                    required={sybilResistanceType === "allowList"}
+                    // required={sybilResistanceType === "allowList"}
                     setValue={setValue}
                     errors={errors}
                   />

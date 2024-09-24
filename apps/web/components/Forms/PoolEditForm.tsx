@@ -53,11 +53,11 @@ type Props = {
   setModalOpen: (value: boolean) => void;
 };
 
-const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
-  noSybilResist: "No authorization required",
-  allowList: "Allow list",
-  gitcoinPassport: "Gitcoin passport",
-};
+// const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
+//   noSybilResist: "No authorization required",
+//   allowList: "Allow list",
+//   gitcoinPassport: "Gitcoin passport",
+// };
 
 const sybilResistancePreview = (
   sybilType: SybilResistanceType,
@@ -169,9 +169,9 @@ export default function PoolEditForm({
   const [tribunalAddress, setTribunalAddress] = useState(
     initValues?.tribunalAddress ?? "",
   );
-  const [sybilResistanceOptions, setSybilResistanceOptions] = useState<
-    Partial<Record<SybilResistanceType, string>>
-  >(fullSybilResistanceOptions);
+  // const [sybilResistanceOptions, setSybilResistanceOptions] = useState<
+  //   Partial<Record<SybilResistanceType, string>>
+  // >(fullSybilResistanceOptions);
 
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
@@ -394,7 +394,7 @@ export default function PoolEditForm({
       : <div className="flex flex-col gap-6">
           {/* sybil resistance section */}
           <div className="flex flex-col gap-4">
-            <FormSelect
+            {/* <FormSelect
               label="Pool voting authorization"
               register={register}
               errors={errors}
@@ -406,7 +406,7 @@ export default function PoolEditForm({
                   value: value,
                 }),
               )}
-            />
+            /> */}
             {sybilResistanceType === "gitcoinPassport" ?
               <FormInput
                 label="Gitcoin Passport score"

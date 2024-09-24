@@ -259,7 +259,6 @@ export default function PoolHeader({
   // if zeroAddress => all users allowed
   if (allowList && allowList.length > 0 && allowList[0] === zeroAddress) {
     if (passportScore && passportScore > 0) {
-      // TODO: finish defining gitcoin passport condition...
       sybilResistanceType = "gitcoinPassport";
       sybilResistanceValue = passportScore;
     } else {
