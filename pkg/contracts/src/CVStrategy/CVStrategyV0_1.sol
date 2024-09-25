@@ -34,6 +34,7 @@ struct CVStrategyInitializeParamsV0_1 {
     address registryCommunity;
     address sybilScorer;
     address[] initialAllowlist;
+    uint256 passportThreshold;
 }
 
 /// @custom:oz-upgrades-from CVStrategyV0_0
@@ -100,6 +101,17 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
         _removeFromAllowList(membersToRemove);
     }
 
+    function _setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 sybilScoreThreshold
+    ) internal virtual {
+        super._setPoolParams(_arbitrableConfig, _cvParams);
+        if (address(sybilScorer) != address(0)) {
+            sybilScorer.modifyThreshold(address(this), sybilScoreThreshold);
+        }
+    }
+
     function setPoolParams(
         ArbitrableConfig memory _arbitrableConfig,
         CVParams memory _cvParams,
@@ -108,6 +120,15 @@ contract CVStrategyV0_1 is CVStrategyV0_0 {
     ) external virtual {
         onlyCouncilSafe();
         _setPoolParams(_arbitrableConfig, _cvParams, membersToAdd, membersToRemove);
+    }
+
+    function setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 sybilScoreThreshold
+    ) external virtual {
+        onlyCouncilSafe();
+        _setPoolParams(_arbitrableConfig, _cvParams, sybilScoreThreshold);
     }
 
     function _beforeAllocate(bytes memory _data, address /*_sender*/ ) internal virtual override {

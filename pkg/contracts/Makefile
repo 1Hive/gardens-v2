@@ -134,6 +134,7 @@ upgrade-testnet-multi-arb:
 	--legacy \
 	--via-ir \
 	--verify \
+	--with-gas-price 500000000 \
 	-vvv
 
 verify-testnet-multi-arb: 
