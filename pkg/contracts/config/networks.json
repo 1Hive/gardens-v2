@@ -15,14 +15,13 @@
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
       },
       "PROXIES": {
-        "REGISTRY_FACTORY": "0x7a603877488db46c0f6b40c2c770becfd7a65593",
+        "REGISTRY_FACTORY": "0x5b1ed8559c26b06b79729e46aee400605f07a109",
         "REGISTRY_COMMUNITIES": [
-          "0xf17e005599813f626ff6b4ff8189105b1306af94",
-          "0xffa2e39cce305c82ffa70f7da0333e5f172be5f6"
+          "0x1f9959dacba2af3fe5f09675f045d043505b252c"
         ],
         "CV_STRATEGIES": [
-          "0x2b7e64cf97cb0ad9f074e941f29e99899cad6f00",
-          "0xbf647db7c6bbacaab6a1e956f97c1c4df5ca0d3e"
+          "0x39372af87b894aa04e8b1005a1214278d4263a1a",
+          "0x721a2c46a92a5caab2013cfc0fcc9f01bb1e94cc"
         ]
       }
     },
