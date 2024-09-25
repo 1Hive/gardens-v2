@@ -6,8 +6,8 @@ import {AlloSetup} from "allo-v2-test/foundry/shared/AlloSetup.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {RegistryFactoryV0_1} from "../src/RegistryFactory/RegistryFactoryV0_1.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
-import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+import {CVStrategyV0_1} from "../src/CVStrategy/CVStrategyV0_1.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
@@ -36,8 +36,8 @@ contract ProxyOwnerTest is Test {
                 RegistryFactoryV0_0.initialize.selector,
                 address(proxyOwner), // owner
                 address(protocolFeeReceiver), // gardensFeeReceiver
-                address(new RegistryCommunityV0_0()), // registryCommunityTemplate
-                address(new CVStrategyV0_0()), // strategyTemplate
+                address(new RegistryCommunityV0_1()), // registryCommunityTemplate
+                address(new CVStrategyV0_1()), // strategyTemplate
                 address(new CollateralVault()) // collateralVaultTemplate
             )
         );
@@ -58,8 +58,8 @@ contract ProxyOwnerTest is Test {
                 RegistryFactoryV0_0.initialize.selector,
                 address(deployerWallet), // owner
                 address(protocolFeeReceiver), // gardensFeeReceiver
-                address(new RegistryCommunityV0_0()), // registryCommunityTemplate
-                address(new CVStrategyV0_0()), // strategyTemplate
+                address(new RegistryCommunityV0_1()), // registryCommunityTemplate
+                address(new CVStrategyV0_1()), // strategyTemplate
                 address(new CollateralVault()) // collateralVaultTemplate
             )
         );
@@ -88,8 +88,8 @@ contract ProxyOwnerTest is Test {
     //             RegistryFactoryV0_0.initialize.selector,
     //             address(proxyOwner), // owner
     //             address(protocolFeeReceiver), // gardensFeeReceiver
-    //             address(new RegistryCommunityV0_0()), // registryCommunityTemplate
-    //             address(new CVStrategyV0_0()), // strategyTemplate
+    //             address(new RegistryCommunityV0_1()), // registryCommunityTemplate
+    //             address(new CVStrategyV0_1()), // strategyTemplate
     //             address(new CollateralVault()) // collateralVaultTemplate
     //         )
     //     );
@@ -112,8 +112,8 @@ contract ProxyOwnerTest is Test {
     //             RegistryFactoryV0_0.initialize.selector,
     //             address(anotherWallet), // owner
     //             address(protocolFeeReceiver), // gardensFeeReceiver
-    //             address(new RegistryCommunityV0_0()), // registryCommunityTemplate
-    //             address(new CVStrategyV0_0()), // strategyTemplate
+    //             address(new RegistryCommunityV0_1()), // registryCommunityTemplate
+    //             address(new CVStrategyV0_1()), // strategyTemplate
     //             address(new CollateralVault()) // collateralVaultTemplate
     //         )
     //     );

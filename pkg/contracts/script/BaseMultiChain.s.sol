@@ -7,14 +7,14 @@ import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "../src/CVStrategy/CVStrategyV0_0.sol";
+import "../src/CVStrategy/CVStrategyV0_1.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpersV0_0, CVStrategyV0_0} from "../test/CVStrategyHelpersV0_0.sol";
+import {CVStrategyHelpers, CVStrategyV0_1} from "../test/CVStrategyHelpers.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -22,7 +22,7 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
@@ -32,7 +32,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 
-abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
+abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     using stdJson for string;
 
     uint256 public MINIMUM_STAKE = 1 ether;
@@ -169,7 +169,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
 
         // if (REGISTRY_FACTORY == address(0)) {
         //     // registryFactory = new RegistryFactoryV0_0();
-        //     RegistryCommunityV0_0 comm = new RegistryCommunityV0_0();
+        //     RegistryCommunityV0_1 comm = new RegistryCommunityV0_1();
         //     console2.log("Registry Community Addr: %s", address(comm));
         //     proxy = new ERC1967Proxy(
         //         address(new RegistryFactoryV0_0()),
@@ -190,7 +190,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         // assertTrue(registryFactory.registryCommunityTemplate() != address(0x0), "Registry Community Template not set");
         // assertTrue(registryFactory.collateralVaultTemplate() != address(0x0), "Collateral Vault Template not set");
 
-        // RegistryCommunityV0_0.InitializeParams memory params;
+        // RegistryCommunityInitializeParamsV0_0 memory params;
 
         // metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"});
         // params._metadata = metadata; // convenant ipfs
@@ -206,9 +206,9 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
 
         // assertTrue(params._councilSafe != address(0));
 
-        // RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
+        // RegistryCommunityV0_1 registryCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
 
-        // StrategyStruct.PointSystemConfig memory pointConfig;
+        // PointSystemConfig memory pointConfig;
         // pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
         // proxy = new ERC1967Proxy(
@@ -216,12 +216,12 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         // );
         // arbitrator = SafeArbitrator(payable(address(proxy)));
 
-        // StrategyStruct.InitializeParams memory paramsCV = getParams(
+        // CVStrategyInitializeParamsV0_0 memory paramsCV = getParams(
         //     address(registryCommunity),
-        //     StrategyStruct.ProposalType.Funding,
-        //     StrategyStruct.PointSystem.Fixed,
+        //     ProposalType.Funding,
+        //     PointSystem.Fixed,
         //     pointConfig,
-        //     StrategyStruct.ArbitrableConfig(
+        //     ArbitrableConfig(
         //         IArbitrator(address(arbitrator)), payable(COUNCIL_SAFE), 0.002 ether, 0.001 ether, 1, 300
         //     )
         // );
@@ -239,7 +239,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         //     address(token), paramsCV, Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
         // );
 
-        // CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
+        // CVStrategyV0_1 strategy1 = CVStrategyV0_1(payable(_strategy1));
 
         // // strategy1.setDecay(_etherToFloat(0.9965402 ether));
         // // strategy1.setDecay(_etherToFloat(0.8705505 ether)); // alpha = decay
@@ -249,15 +249,15 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         // // strategy1.setMaxRatio(_etherToFloat(0.3219782 ether)); // beta = maxRatio
         // // strategy1.setWeight(_etherToFloat(0.010367 ether)); // RHO = p  = weight
 
-        // paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
-        // paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
+        // paramsCV.proposalType = ProposalType.Signaling;
+        // paramsCV.pointSystem = PointSystem.Unlimited;
         // paramsCV.sybilScorer = address(sybilScorer);
 
         // (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(
         //     address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
         // );
 
-        // CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
+        // CVStrategyV0_1 strategy2 = CVStrategyV0_1(payable(_strategy2));
 
         // // Goss: Commented because already set in getParams
         // // strategy2.setDecay(_etherToFloat(0.9999903 ether)); // alpha = decay
@@ -302,7 +302,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         // token.approve(address(allo), type(uint256).max);
         // allo.fundPool(poolId, 10_000 ether);
 
-        // StrategyStruct.CreateProposal memory proposal = StrategyStruct.CreateProposal(
+        // CreateProposal memory proposal = CreateProposal(
         //     poolId,
         //     BENEFICIARY,
         //     500 ether,
@@ -312,7 +312,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         // bytes memory data = abi.encode(proposal);
         // allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
-        // proposal = StrategyStruct.CreateProposal(
+        // proposal = CreateProposal(
         //     poolId,
         //     BENEFICIARY,
         //     1500 ether,
@@ -322,7 +322,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         // data = abi.encode(proposal);
         // allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
-        // proposal = StrategyStruct.CreateProposal(
+        // proposal = CreateProposal(
         //     poolId,
         //     BENEFICIARY,
         //     1500 ether,
@@ -333,7 +333,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         // allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
         // // Strategy with Signaling
-        // StrategyStruct.CreateProposal memory proposal2 = StrategyStruct.CreateProposal(
+        // CreateProposal memory proposal2 = CreateProposal(
         //     poolIdSignaling,
         //     address(0),
         //     0,
@@ -343,7 +343,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         // bytes memory data2 = abi.encode(proposal2);
         // allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
-        // proposal2 = StrategyStruct.CreateProposal(
+        // proposal2 = CreateProposal(
         //     poolIdSignaling,
         //     address(0),
         //     0,
@@ -354,7 +354,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeS
         // data2 = abi.encode(proposal2);
         // allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
-        // proposal2 = StrategyStruct.CreateProposal(
+        // proposal2 = CreateProposal(
         //     poolIdSignaling,
         //     address(0),
         //     0,

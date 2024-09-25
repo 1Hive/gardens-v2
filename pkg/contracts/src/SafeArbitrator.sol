@@ -12,7 +12,7 @@ import {IArbitrator} from "./interfaces/IArbitrator.sol";
 
 /// @title Safe Arbitrator
 /// @dev This is an arbitrator middleware that will allow a safe to decide on the result of disputes.
-contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable,ReentrancyGuardUpgradeable {
+contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     event ArbitrationFeeUpdated(uint256 _newArbitrationFee);
     event SafeRegistered(address indexed _arbitrable, address _safe);
     event SafeArbitratorInitialized(uint256 _arbitrationFee);
@@ -73,8 +73,8 @@ contract SafeArbitrator is IArbitrator, UUPSUpgradeable, OwnableUpgradeable,Reen
     function createDispute(uint256 _choices, bytes calldata _extraData)
         external
         payable
-        nonReentrant
         override
+        nonReentrant
         returns (uint256 disputeID)
     {
         if (msg.value < arbitrationCost(_extraData)) {

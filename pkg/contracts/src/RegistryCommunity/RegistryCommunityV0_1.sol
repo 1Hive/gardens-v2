@@ -1,12 +1,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.19;
 
-import "./RegistryCommunityV0_0.sol";
-import {StrategyStruct2} from "../CVStrategy/CVStrategyV0_1.sol";
+import {
+    RegistryCommunityV0_0,
+    Metadata,
+    ERC1967Proxy,
+    RegistryCommunityInitializeParamsV0_0
+} from "./RegistryCommunityV0_0.sol";
+import {
+    CVStrategyV0_0,
+    PointSystemConfig,
+    ArbitrableConfig,
+    ProposalType,
+    CreateProposal
+} from "../CVStrategy/CVStrategyV0_0.sol";
+
+import {CVStrategyV0_1, CVStrategyInitializeParamsV0_1} from "@src/CVStrategy/CVStrategyV0_1.sol";
 
 /// @custom:oz-upgrades-from RegistryCommunityV0_0
 contract RegistryCommunityV0_1 is RegistryCommunityV0_0 {
-    function createPool(address _token, StrategyStruct2.InitializeParams memory _params, Metadata memory _metadata)
+    function createPool(address _token, CVStrategyInitializeParamsV0_1 memory _params, Metadata memory _metadata)
         public
         virtual
         returns (uint256 poolId, address strategy)
@@ -17,11 +30,10 @@ contract RegistryCommunityV0_1 is RegistryCommunityV0_0 {
                 abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, owner())
             )
         );
-
         (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
 
         if (address(_params.sybilScorer) == address(0)) {
-            if(_params.initialAllowlist.length > 1000){
+            if (_params.initialAllowlist.length > 1000) {
                 revert("Too many initial allowlist members, max is 1000");
             }
             bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
@@ -40,7 +52,7 @@ contract RegistryCommunityV0_1 is RegistryCommunityV0_0 {
     function createPool(
         address _strategy,
         address _token,
-        StrategyStruct2.InitializeParams memory _params,
+        CVStrategyInitializeParamsV0_1 memory _params,
         Metadata memory _metadata
     ) public virtual returns (uint256 poolId, address strategy) {
         address token = NATIVE;

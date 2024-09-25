@@ -9,9 +9,9 @@ import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpersV0_0, CVStrategyV0_0} from "../test/CVStrategyHelpersV0_0.sol";
+import {CVStrategyHelpers, CVStrategyV0_1} from "../test/CVStrategyHelpers.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
@@ -22,7 +22,7 @@ import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 
-contract AddStrategy is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
+contract AddStrategy is Native, CVStrategyHelpers, Script, SafeSetup {
     uint256 public constant MINIMUM_STAKE = 50;
 
     address public SENDER = 0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD;
@@ -97,7 +97,7 @@ contract AddStrategy is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
             COMMUNITY = _comm;
         }
 
-        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(COMMUNITY);
+        RegistryCommunityV0_1 registryCommunity = RegistryCommunityV0_1(COMMUNITY);
 
         if (SAFE == address(0)) {
             SAFE = address(registryCommunity.councilSafe());
@@ -109,7 +109,7 @@ contract AddStrategy is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
         assertTrue(address(registryCommunity.councilSafe()) != address(0), "Council Safe not set");
         assertTrue(address(councilSafeDeploy) != address(0), "Council Safe empty");
 
-        CVStrategyV0_0 strategy1 = CVStrategyV0_0(_strategy);
+        CVStrategyV0_1 strategy1 = CVStrategyV0_1(_strategy);
 
         safeHelper(
             councilSafeDeploy,
