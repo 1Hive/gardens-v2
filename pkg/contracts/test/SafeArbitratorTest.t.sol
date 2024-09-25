@@ -13,7 +13,10 @@ import {
     ProposalType,
     CreateProposal
 } from "../src/CVStrategy/CVStrategyV0_1.sol";
-import {RegistryCommunityV0_1, RegistryCommunityInitializeParamsV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+import {
+    RegistryCommunityV0_1,
+    RegistryCommunityInitializeParamsV0_0
+} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
@@ -125,7 +128,8 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
                 ProposalType.Funding,
                 PointSystem.Unlimited,
                 PointSystemConfig(200 * DECIMALS),
-                ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 0.02 ether, 0.01 ether, 1, 300)
+                ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 0.02 ether, 0.01 ether, 1, 300),
+                new address[](1)
             ),
             metadata
         );

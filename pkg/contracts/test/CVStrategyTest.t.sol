@@ -207,7 +207,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             proposalType,
             PointSystem.Unlimited,
             PointSystemConfig(200 * DECIMALS),
-            arbitrableConfig
+            arbitrableConfig,
+            new address[](1)
         );
 
         // CVStrategyV0_1 strategy = new CVStrategyV0_1(address(allo()));
@@ -400,9 +401,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // since a proposal that doesn't exist will automatically have inactive status
         // vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.ProposalNotInList.selector, 10));
         vm.expectRevert(
-            abi.encodeWithSelector(
-                CVStrategyV0_1.ProposalInvalidForAllocation.selector, 10, ProposalStatus.Inactive
-            )
+            abi.encodeWithSelector(CVStrategyV0_1.ProposalInvalidForAllocation.selector, 10, ProposalStatus.Inactive)
         );
         allo().allocate(poolId, data);
     }
@@ -877,9 +876,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         bytes memory data = abi.encode(votes);
         // will revert for proposalId 0 because votes[1] is empty so default proposalId value will be 0
         vm.expectRevert(
-            abi.encodeWithSelector(
-                CVStrategyV0_1.ProposalInvalidForAllocation.selector, 0, ProposalStatus.Inactive
-            )
+            abi.encodeWithSelector(CVStrategyV0_1.ProposalInvalidForAllocation.selector, 0, ProposalStatus.Inactive)
         );
         allo().allocate(proposalId, data);
     }
@@ -2131,13 +2128,121 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.expectRevert(abi.encodeWithSelector(UNAUTHORIZED.selector));
         cv.distribute(recipientIds, data, sender);
     }
+    // This test checks if youre still able to remove your support if you cant execute action
+    // since its the only thing you should still be able to do if you lose the right to
+    // _executeAction()
+
+    function test_allocate_noRevert_when_remove_support() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        // registryCommunity.setBasisStakedAmount(45000);
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45 ether)
+        );
+        CVStrategyV0_1 cv = CVStrategyV0_1(payable(address(pool.strategy)));
+        vm.startPrank(address(councilSafe));
+        address[] memory membersToAdd = new address[](1);
+        membersToAdd[0] = pool_admin();
+        cv.addToAllowList(membersToAdd);
+        vm.stopPrank();
+
+        /**
+         * ASSERTS
+         */
+        // // startMeasuringGas("Support a Proposal");
+        vm.startPrank(pool_admin());
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember();
+        cv.activatePoints();
+        uint256 AMOUNT_STAKED = 100;
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        votes[0] = ProposalSupport(proposalId, int256(AMOUNT_STAKED));
+        bytes memory data = abi.encode(votes);
+        allo().allocate(poolId, data);
+        vm.stopPrank();
+        // stopMeasuringGas();
+
+        assertEq(cv.getProposalVoterStake(1, pool_admin()), AMOUNT_STAKED);
+        assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED);
+
+        vm.startPrank(address(councilSafe));
+        address[] memory membersToRemove = new address[](1);
+        membersToRemove[0] = pool_admin();
+        cv.removeFromAllowList(membersToRemove);
+        vm.stopPrank();
+        vm.startPrank(pool_admin());
+        int256 REMOVE_SUPPORT = -80;
+        votes[0] = ProposalSupport(1, REMOVE_SUPPORT);
+        data = abi.encode(votes);
+        allo().allocate(poolId, data);
+        vm.stopPrank();
+        assertEq(
+            cv.getProposalVoterStake(1, pool_admin()), uint256(int256(AMOUNT_STAKED) + REMOVE_SUPPORT), "VoterStake"
+        );
+    }
+
+    // Test to check that the user can't add support after being removed from allowlist
+    // Should only be able to remove and not add
+    function testRevert_allocate_userCantExecuteAction() public {
+        (IAllo.Pool memory pool, uint256 poolId, uint256 proposalId) = _createProposal(NATIVE, 0, 0);
+        // registryCommunity.setBasisStakedAmount(45000);
+        safeHelper(
+            address(registryCommunity),
+            0,
+            abi.encodeWithSelector(registryCommunity.setBasisStakedAmount.selector, 45 ether)
+        );
+        CVStrategyV0_1 cv = CVStrategyV0_1(payable(address(pool.strategy)));
+        vm.startPrank(address(councilSafe));
+        address[] memory membersToAdd = new address[](1);
+        membersToAdd[0] = pool_admin();
+        cv.addToAllowList(membersToAdd);
+        vm.stopPrank();
+
+        /**
+         * ASSERTS
+         */
+        // // startMeasuringGas("Support a Proposal");
+        vm.startPrank(pool_admin());
+        token.approve(address(registryCommunity), STAKE_WITH_FEES);
+        registryCommunity.stakeAndRegisterMember();
+        cv.activatePoints();
+        uint256 AMOUNT_STAKED = 100;
+        ProposalSupport[] memory votes = new ProposalSupport[](1);
+        votes[0] = ProposalSupport(proposalId, int256(AMOUNT_STAKED));
+        bytes memory data = abi.encode(votes);
+        allo().allocate(poolId, data);
+        vm.stopPrank();
+        // stopMeasuringGas();
+
+        assertEq(cv.getProposalVoterStake(1, pool_admin()), AMOUNT_STAKED);
+        assertEq(cv.getProposalStakedAmount(1), AMOUNT_STAKED);
+
+        vm.startPrank(address(councilSafe));
+        address[] memory membersToRemove = new address[](1);
+        membersToRemove[0] = pool_admin();
+        cv.removeFromAllowList(membersToRemove);
+        vm.stopPrank();
+        vm.startPrank(pool_admin());
+        int256 EXTRA_SUPPORT = 20;
+        votes[0] = ProposalSupport(1, EXTRA_SUPPORT);
+        data = abi.encode(votes);
+        vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.UserCannotExecuteAction.selector));
+        allo().allocate(poolId, data);
+        vm.stopPrank();
+    }
 
     function testRevert_initialize_registryZero() public {
         address collateralVaultTemplate = address(new CollateralVault());
         ArbitrableConfig memory arbitrableConfig =
             ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 3 ether, 2 ether, 1, 300);
         CVStrategyInitializeParamsV0_1 memory params = getParams(
-            address(0), ProposalType.Funding, PointSystem.Unlimited, PointSystemConfig(200 * DECIMALS), arbitrableConfig
+            address(0),
+            ProposalType.Funding,
+            PointSystem.Unlimited,
+            PointSystemConfig(200 * DECIMALS),
+            arbitrableConfig,
+            new address[](1)
         );
         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.RegistryCannotBeZero.selector));
         _registryCommunity().createPool(NATIVE, params, metadata);
