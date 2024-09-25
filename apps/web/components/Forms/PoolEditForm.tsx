@@ -15,9 +15,9 @@ import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { cvStrategyABI } from "@/src/generated";
+import { cvStrategyABI, passportScorerABI } from "@/src/generated";
 import { DisputeOutcome, PoolTypes, SybilResistanceType } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   calculateDecay,
   CV_PERCENTAGE_SCALE,
@@ -350,7 +350,7 @@ export default function PoolEditForm({
     abi: abiWithErrors(cvStrategyABI),
     contractName: "CV Strategy",
     functionName: "setPoolParams",
-    fallbackErrorMessage: "Error editing a pool. Please ty again.",
+    fallbackErrorMessage: "Error editing a pool. Please try again.",
     onConfirmations: () => {
       publish({
         topic: "pool",
@@ -359,15 +359,44 @@ export default function PoolEditForm({
         id: strategy.poolId,
         chainId: chainId,
       });
-      if (sybilResistanceType === "gitcoinPassport") {
+      if (
+        sybilResistanceType === "gitcoinPassport" &&
+        typeof previewData?.sybilResistanceValue === "number"
+      ) {
         const sybilValue =
-          typeof previewData?.sybilResistanceValue === "number" ?
-            previewData.sybilResistanceValue
-          : 0;
-        //TODO: update gitcoin passport score in strategy
+          previewData.sybilResistanceValue * CV_PERCENTAGE_SCALE;
+
+        writeModifyThreshold({
+          args: [strategy.id as Address, BigInt(sybilValue)],
+        });
       } else {
+        console.log("no passport value assigned");
         setLoading(false);
       }
+    },
+    onSettled: () => {
+      setLoading(false);
+    },
+    onSuccess: () => {
+      setModalOpen(false);
+    },
+  });
+
+  const { write: writeModifyThreshold } = useContractWriteWithConfirmations({
+    address: chain.passportScorer as Address,
+    abi: abiWithErrors2(passportScorerABI),
+    contractName: "Passport Scorer",
+    functionName: "modifyThreshold",
+    fallbackErrorMessage:
+      "Error modifying passport threshold. Please try again.",
+    onConfirmations: () => {
+      publish({
+        topic: "pool",
+        function: "modifyThreshold",
+        type: "update",
+        id: strategy.poolId,
+        chainId: chainId,
+      });
     },
     onSettled: () => {
       setLoading(false);
