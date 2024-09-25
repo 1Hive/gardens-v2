@@ -231,6 +231,9 @@ export default function PoolEditForm({
 
   const contractWrite = () => {
     setLoading(true);
+    if (!previewData) {
+      throw new Error("No preview data");
+    }
     let spendingLimit: number;
     let minimumConviction;
     let convictionGrowth;
@@ -258,7 +261,6 @@ export default function PoolEditForm({
       token.decimals,
     );
 
-    // TODO: check sybil type and return corresponding data
     const initialAllowList =
       Array.isArray(initValues?.sybilResistanceValue) ?
         initValues.sybilResistanceValue
@@ -272,10 +274,6 @@ export default function PoolEditForm({
       initialAllowList,
       currentAllowList,
     );
-
-    if (!previewData) {
-      throw new Error("No preview data");
-    }
 
     writeEditPool({
       args: [
@@ -370,7 +368,7 @@ export default function PoolEditForm({
           args: [strategy.id as Address, BigInt(sybilValue)],
         });
       } else {
-        console.log("no passport value assigned");
+        console.debug("no passport value assigned");
         setLoading(false);
       }
     },
