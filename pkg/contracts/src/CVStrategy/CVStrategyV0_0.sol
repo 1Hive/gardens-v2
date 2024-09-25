@@ -569,8 +569,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // this will update some data in this contract to store votes, etc.
     function _allocate(bytes memory _data, address _sender) internal virtual override {
         checkSenderIsMember(_sender);
+        ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         if (!_canExecuteAction(_sender)) {
-            revert UserCannotExecuteAction();
+            for (uint256 i = 0; i < pv.length; i++) {
+                if (pv[i].deltaSupport > 0) {
+                    revert UserCannotExecuteAction();
+                }
+            }
         }
         // surpressStateMutabilityWarning++;
 
@@ -578,7 +583,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (!isMemberActivatedPoints) {
             revert UserIsInactive();
         }
-        ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
+        // ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         _check_before_addSupport(_sender, pv);
         _addSupport(_sender, pv);
     }
@@ -834,8 +839,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     function _check_before_addSupport(address _sender, ProposalSupport[] memory _proposalSupport) internal {
         int256 deltaSupportSum = 0;
+        bool canAddSupport = _canExecuteAction(_sender);
         for (uint256 i = 0; i < _proposalSupport.length; i++) {
             // check if _proposalSupport index i exist
+            if (!canAddSupport && _proposalSupport[i].deltaSupport > 0) {
+                revert UserCannotExecuteAction();
+            }
             if (_proposalSupport[i].proposalId == 0) {
                 //@todo: check better way to do that.
                 // console.log("proposalId == 0");
@@ -1022,7 +1031,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         require(_b < TWO_128, "_b should be less than 2^128");
         return ((_a * _b) + TWO_127) >> 128;
     }
-      
+
     /**
      * Calculate (_a / 2^128)^_b * 2^128.  Parameter _a should be less than 2^128.
      *

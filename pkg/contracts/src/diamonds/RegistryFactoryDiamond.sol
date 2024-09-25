@@ -15,6 +15,7 @@ struct CommunityInfo {
     uint256 fee;
     bool valid;
 }
+
 contract RegistryFactoryDiamond is BaseDiamond {
     /*|--------------------------------------------|*/
     /*|           CONSTANTS & IMMUTABLE            |*/

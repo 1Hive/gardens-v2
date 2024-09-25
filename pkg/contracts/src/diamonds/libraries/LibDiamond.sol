@@ -32,7 +32,6 @@ error InitializationFunctionReverted(address _initializationContractAddress, byt
 library LibDiamond {
     bytes32 constant DIAMOND_STORAGE_POSITION = keccak256("diamond.standard.diamond.storage");
     bytes32 constant _IS_INITALIZED_SLOT = keccak256("diamond.contract.isInitialized");
-    
 
     struct FacetAddressAndSelectorPosition {
         address facetAddress;
@@ -57,8 +56,9 @@ library LibDiamond {
     }
 
     function isInitialized() internal view returns (bool) {
-       return diamondStorage().isInitialized;
+        return diamondStorage().isInitialized;
     }
+
     function setInitialized() internal {
         diamondStorage().isInitialized = true;
     }

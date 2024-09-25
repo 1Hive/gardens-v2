@@ -53,7 +53,8 @@ contract CVStrategyHelpers is Native, Accounts {
         ProposalType proposalType,
         PointSystem pointSystem,
         PointSystemConfig memory pointConfig,
-        ArbitrableConfig memory arbitrableConfig
+        ArbitrableConfig memory arbitrableConfig,
+        address[] memory initialAllowlist
     ) public pure returns (CVStrategyInitializeParamsV0_1 memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         params.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
@@ -71,8 +72,8 @@ contract CVStrategyHelpers is Native, Accounts {
         }
         params.pointConfig = pointConfig;
         params.arbitrableConfig = arbitrableConfig;
-        params.initialAllowlist = new address[](1);
-        params.initialAllowlist[0] = address(0);
+        // params.initialAllowlist = new address[](1);
+        params.initialAllowlist = initialAllowlist;
     }
 
     function createPool(
@@ -88,7 +89,7 @@ contract CVStrategyHelpers is Native, Accounts {
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         CVStrategyInitializeParamsV0_1 memory params =
-            getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig);
+            getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1));
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);

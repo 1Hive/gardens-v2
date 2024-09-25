@@ -91,7 +91,9 @@ contract RegistryFactoryV0_0 is ProxyOwnableUpgrader {
 
         ERC1967Proxy proxy = new ERC1967Proxy(
             address(registryCommunityTemplate),
-            abi.encodeWithSelector(RegistryCommunityV0_0.initialize.selector, params, strategyTemplate, collateralVaultTemplate, owner())
+            abi.encodeWithSelector(
+                RegistryCommunityV0_0.initialize.selector, params, strategyTemplate, collateralVaultTemplate, owner()
+            )
         );
 
         RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(payable(address(proxy)));
