@@ -113,6 +113,10 @@ export default function PoolHeader({
     spendingLimitPct * MAX_RATIO_CONSTANT,
   );
 
+  // TEST:
+  //create pool with different min conviction values
+  //
+
   const convictionGrowthSec = calculateConvictionGrowthInSeconds(
     strategy.config.decay,
     blockTime,
@@ -122,7 +126,13 @@ export default function PoolHeader({
     strategy.config.minThresholdPoints,
     +token.decimals,
   );
-  const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
+
+  //const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
+  const spendingLimit =
+    (strategy.config.maxRatio / CV_SCALE_PRECISION) *
+    (1 - Math.sqrt(minimumConviction / 100)) *
+    100;
+
   const communityAddr = strategy.registryCommunity.id as Address;
   const defaultResolution = arbitrableConfig.defaultRuling;
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
@@ -297,7 +307,7 @@ export default function PoolHeader({
             proposalOnDispute={proposalOnDispute}
             initValues={{
               minimumConviction: minimumConviction.toFixed(2),
-              convictionGrowth: convictionGrowthSec.toFixed(2),
+              convictionGrowth: convictionGrowthSec.toFixed(4),
               minThresholdPoints: minThresholdPoints,
               spendingLimit: spendingLimit.toFixed(2),
               defaultResolution: defaultResolution,

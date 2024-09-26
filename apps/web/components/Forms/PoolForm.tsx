@@ -29,10 +29,10 @@ import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
   calculateDecay,
+  calculateMaxRatioNum,
   CV_PERCENTAGE_SCALE,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
-  MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { capitalize, ethAddressRegEx } from "@/utils/text";
 
@@ -287,7 +287,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     spendingLimit = spendingLimit / 100;
     minimumConviction = minimumConviction / 100;
 
-    const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
+    const maxRatioNum = calculateMaxRatioNum(spendingLimit, minimumConviction);
 
     const weightNum = minimumConviction * maxRatioNum ** 2;
 
