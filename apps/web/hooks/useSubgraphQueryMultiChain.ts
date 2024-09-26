@@ -25,8 +25,10 @@ import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 
+const isQueryAllChains = localStorage.getItem("queryAllChains") === "true";
+
 const allChains: ChainId[] = Object.values(chains)
-  .filter((x) => (isProd ? !x.testnet : !!x.testnet || x.id === localhost.id))
+  .filter((x) => isQueryAllChains || (isProd ? !x.testnet : !!x.testnet || x.id === localhost.id))
   .map((x) => x.id);
 
 const pendingRefreshToastId = "pending-refresh";

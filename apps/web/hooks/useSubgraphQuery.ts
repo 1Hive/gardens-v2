@@ -174,11 +174,10 @@ export function useSubgraphQuery<
       return result;
     }
     if (
-      (result.data &&
-        (!isEqual(result.data, latestResponse.current.response.data) ||
-          retryCount >= CHANGE_EVENT_MAX_RETRIES ||
-          !mounted.current)) ||
-      retryCount === 3
+      result.data &&
+      (!isEqual(result.data, latestResponse.current.response.data) ||
+        retryCount >= CHANGE_EVENT_MAX_RETRIES ||
+        !mounted.current)
     ) {
       if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
         console.debug(
@@ -250,7 +249,7 @@ export function useSubgraphQuery<
   return {
     ...response,
     refetch: () => {
-      return refetchFromOutside();
+      return refetch();
     },
     fetching,
   };
