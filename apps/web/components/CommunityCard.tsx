@@ -8,7 +8,7 @@ import { Card } from "./Card";
 import { Statistic } from "./Statistic";
 import { commImg } from "@/assets";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 
 type CommunityCardProps = {
   name: string;

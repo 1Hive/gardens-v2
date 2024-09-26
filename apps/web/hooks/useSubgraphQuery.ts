@@ -142,7 +142,7 @@ export function useSubgraphQuery<
     }
     setFetching(true);
     fetchingRef.current = true;
-    const res = await refetch();
+    const res = await refetch(undefined, false);
     setResponse(res);
     setFetching(false);
     fetchingRef.current = false;
@@ -151,19 +151,22 @@ export function useSubgraphQuery<
 
   const refetch = async (
     retryCount?: number,
+    withToast: boolean = true,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
     const result = await fetch();
     if (!retryCount) {
       retryCount = 0;
-      toast.loading("Pulling new data", {
-        toastId: pendingRefreshToastId,
-        autoClose: false,
-        closeOnClick: true,
-        style: {
-          width: "fit-content",
-          marginLeft: "auto",
-        },
-      });
+      if (withToast) {
+        toast.loading("Pulling new data", {
+          toastId: pendingRefreshToastId,
+          autoClose: false,
+          closeOnClick: true,
+          style: {
+            width: "fit-content",
+            marginLeft: "auto",
+          },
+        });
+      }
     }
 
     if (result.error) {
@@ -171,10 +174,11 @@ export function useSubgraphQuery<
       return result;
     }
     if (
-      result.data &&
-      (!isEqual(result.data, latestResponse.current.response.data) ||
-        retryCount >= CHANGE_EVENT_MAX_RETRIES ||
-        !mounted.current)
+      (result.data &&
+        (!isEqual(result.data, latestResponse.current.response.data) ||
+          retryCount >= CHANGE_EVENT_MAX_RETRIES ||
+          !mounted.current)) ||
+      retryCount === 3
     ) {
       if (retryCount >= CHANGE_EVENT_MAX_RETRIES) {
         console.debug(

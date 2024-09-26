@@ -11,7 +11,7 @@ import { getProposals } from "@/actions/getProposals";
 import { Badge, Card } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
