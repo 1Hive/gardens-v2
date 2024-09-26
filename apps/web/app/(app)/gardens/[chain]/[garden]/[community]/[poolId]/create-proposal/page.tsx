@@ -37,7 +37,6 @@ export default function Page({
   const alloInfo = data?.allos[0];
   const proposalType = strategyObj.config?.proposalType as number;
   const poolAmount = strategyObj.poolAmount as number;
-  console.log({ poolAmount });
 
   const maxRatioDivPrecision =
     (Number(strategyObj.config?.maxRatio) / CV_SCALE_PRECISION) *
