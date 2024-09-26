@@ -34,7 +34,6 @@ struct CVStrategyInitializeParamsV0_1 {
     address registryCommunity;
     address sybilScorer;
     address[] initialAllowlist;
-    uint256 passportThreshold;
 }
 
 /// @custom:oz-upgrades-from CVStrategyV0_0
