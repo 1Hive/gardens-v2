@@ -9,7 +9,6 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { Button } from "../Button";
 import { EthAddress } from "../EthAddress";
-import { InfoBox } from "../InfoBox";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
@@ -55,7 +54,6 @@ export default function PoolEditForm({
   chainId,
   initValues,
   proposalType,
-  proposalOnDispute: isProposalOnDispute,
   setModalOpen,
 }: Props) {
   const {
@@ -66,7 +64,7 @@ export default function PoolEditForm({
     defaultValues: {
       spendingLimit: initValues.spendingLimit,
       minimumConviction: initValues.minimumConviction,
-      convictionGrowth: initValues.convictionGrowth,
+      convictionGrowth: Math.round(+initValues.convictionGrowth / 3600 / 24), // convert seconds to days
       minThresholdPoints: initValues.minThresholdPoints,
       // arb settings
       defaultResolution: initValues.defaultResolution,
@@ -403,7 +401,7 @@ export default function PoolEditForm({
             <div className="flex flex-col">
               <h4 className="my-4">Arbitration settings</h4>
             </div>
-            <div className="flex gap-4 mt-2">
+            <div className="flex gap-4 mt-2 flex-wrap">
               <FormRadioButton
                 label="Global gardens tribunal"
                 checked={
