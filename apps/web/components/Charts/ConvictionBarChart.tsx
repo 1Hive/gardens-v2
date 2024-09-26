@@ -231,7 +231,7 @@ export const ConvictionBarChart = ({
       axisLine: {
         show: false,
       },
-      max: maxValue,
+      max: 50,
     },
     tooltip: {
       trigger: "axis",
@@ -253,12 +253,12 @@ export const ConvictionBarChart = ({
     },
     animation: true,
     barGap: "-100%",
-    showBackground: true,
-    backgroundStyle: {
-      color: "#D5D5D5",
-    },
     series: [
       {
+        showBackground: true,
+        backgroundStyle: {
+          color: "rgba(180, 180, 180, 0.2)",
+        },
         type: "bar",
         name: "Support",
         itemStyle: {

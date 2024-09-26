@@ -189,7 +189,7 @@ export function ProposalCard({
                         Total Support: 5% of pool weight (at least 3.23% more
                         needed to pass)
                       </p>
-                      <div className="h-4">
+                      <div className="h-3">
                         <ConvictionBarChart
                           compact
                           currentConvictionPct={currentConvictionPct}
