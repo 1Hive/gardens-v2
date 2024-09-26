@@ -67,8 +67,6 @@ export function ProposalCard({
       tokenData,
     });
 
-  //TODO: move execute func to proposalId page
-
   const inputValue =
     inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
 
@@ -87,28 +85,45 @@ export function ProposalCard({
   const proposalCardContent = (
     <>
       <div
-        className={`flex gap-2 justify-between py-3 flex-wrap ${isAllocationView ? "section-layout" : ""}`}
+        className={`flex gap-3 justify-between py-3 flex-wrap  ${isAllocationView ? "section-layout" : ""}`}
       >
-        <div
-          className={`col-span-3 flex gap-6 max-w-full ${isAllocationView ? "col-span-9" : ""}`}
-        >
-          <div className="hidden sm:visible">
+        <div className=" flex w-full">
+          {/* icon title and id */}
+          <div className={"flex gap-6 flex-1 "}>
+            {/* <div className="hidden sm:visible"> */}
             <Hashicon value={id} size={45} />
+            {/* </div> */}
+            <div className="overflow-hidden">
+              <h4 className="truncate first-letter:uppercase max-w-xl">
+                {metadata.title}
+              </h4>
+              <h6 className="text-sm">ID {proposalNumber}</h6>
+            </div>
           </div>
-          <div className="overflow-hidden">
-            <h4 className="truncate first-letter:uppercase">
-              {metadata.title}
-            </h4>
-            <h6 className="text-sm">ID {proposalNumber}</h6>
+
+          {/* requestes and status */}
+          <div className="flex gap-6 text-neutral-soft-content">
+            {!isSignalingType && (
+              <div className="flex items-center gap-1 justify-self-end">
+                <p className="">Requested amount: </p>
+                <DisplayNumber
+                  number={formatUnits(requestedAmount, poolToken.decimals)}
+                  tokenSymbol={poolToken.symbol}
+                  compact={true}
+                />
+              </div>
+            )}
+            <Badge
+              status={proposalStatus}
+              className="self-center justify-self-end"
+            />
           </div>
         </div>
-        <div className="flex gap-12 flex-wrap">
-          <Badge
-            status={proposalStatus}
-            className={`self-center ${isAllocationView ? "justify-self-end" : "justify-self-start"}`}
-          />
-          {isAllocationView ?
-            <div className="col-span-10 mt-4">
+
+        {/* support description or slider */}
+        <div className="flex gap-12 flex-wrap w-full ">
+          <div className="mt-4 w-full">
+            {isAllocationView ?
               <div className=" flex w-full flex-wrap items-center justify-between gap-6">
                 <div className="flex items-center gap-8">
                   <div>
@@ -165,57 +180,33 @@ export function ProposalCard({
                   </div>
                 </div>
               </div>
-            </div>
-          : <>
-              <div className="col-span-3 self-center justify-self-start">
-                {stakedFilter &&
-                  (stakedFilter?.value > 0 ?
-                    <p
-                      className="text-primary-content text-xs flex items-center justify-center
-                gap-3"
-                    >
-                      Total allocated{" "}
-                      <span className="font-medium text-2xl">
-                        {`${allocatedInProposal.toString()}%`}
-                      </span>
-                    </p>
-                  : <p className="text-xs text-neutral-soft-content text-center">
-                      No allocation yet
-                    </p>)}
-              </div>
-              <div className="col-span-3 self-center flex flex-col gap-2">
+            : <div className="w-full">
                 {currentConvictionPct != null &&
                   thresholdPct != null &&
                   totalSupportPct != null && (
-                    <div className="h-4">
-                      <ConvictionBarChart
-                        compact
-                        currentConvictionPct={currentConvictionPct}
-                        thresholdPct={isSignalingType ? 0 : thresholdPct}
-                        proposalSupportPct={totalSupportPct}
-                        isSignalingType={isSignalingType}
-                        proposalId={proposalNumber}
-                      />
+                    <div className="">
+                      <p className="mb-2 text-sm">
+                        Total Support: 5% of pool weight (at least 3.23% more
+                        needed to pass)
+                      </p>
+                      <div className="h-4">
+                        <ConvictionBarChart
+                          compact
+                          currentConvictionPct={currentConvictionPct}
+                          thresholdPct={isSignalingType ? 0 : thresholdPct}
+                          proposalSupportPct={totalSupportPct}
+                          isSignalingType={isSignalingType}
+                          proposalId={proposalNumber}
+                        />
+                      </div>
                     </div>
                   )}
-                {!isSignalingType && (
-                  <div className="flex items-baseline gap-1">
-                    <p className="text-xs text-neutral-soft-content">
-                      Requested amount:{" "}
-                    </p>
-                    <DisplayNumber
-                      number={formatUnits(requestedAmount, poolToken.decimals)}
-                      tokenSymbol={poolToken.symbol}
-                      compact={true}
-                      className="text-neutral-soft-content text-xs"
-                    />
-                  </div>
-                )}
               </div>
-            </>
-          }
+            }
+          </div>
         </div>
       </div>
+      {!isAllocationView && <p className="text-sm">3 Supporters</p>}
     </>
   );
 
@@ -232,4 +223,23 @@ export function ProposalCard({
       }
     </>
   );
+}
+
+{
+  /*<div className="col-span-3 self-center justify-self-start">
+ {stakedFilter &&
+  (stakedFilter?.value > 0 ?
+    <p
+      className="text-primary-content text-xs flex items-center justify-center
+gap-3"
+    >
+      Total allocated{" "}
+      <span className="font-medium text-2xl">
+        {`${allocatedInProposal.toString()}%`}
+      </span>
+    </p>
+  : <p className="text-xs text-neutral-soft-content text-center">
+      No allocation yet
+    </p>)} 
+</div*/
 }
