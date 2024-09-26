@@ -1,16 +1,23 @@
 const viemChains = require("viem/chains");
-const { fromHex } = require("viem");
+const subgraphConfig = require("../../../../apps/web/configs/subgraph.json");
 
 const localhostSubgraph = "http://localhost:8000/subgraphs/name/kamikazebr/gv2";
 const arbitrumSepoliaSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-arbsepolia/0.25";
+  "https://api.studio.thegraph.com/query/70985/gv2-arbsepolia/" +
+  subgraphConfig.VERSION_TESTNET;
 
 const arbitrumSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-arbitrum/version/latest";
+  "https://api.studio.thegraph.com/query/70985/gv2-arbitrum/" +
+  subgraphConfig.VERSION_PROD;
 const maticSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-matic/version/latest";
+  "https://api.studio.thegraph.com/query/70985/gv2-matic/" +
+  subgraphConfig.VERSION_PROD;
 const optimismSubgraph =
-  "https://api.studio.thegraph.com/query/70985/gv2-optimism/version/latest";
+  "https://api.studio.thegraph.com/query/70985/gv2-optimism/" +
+  subgraphConfig.VERSION_PROD;
+const gnosisSubgraph =
+  "https://api.studio.thegraph.com/query/70985/gv2-gnosis/" +
+  subgraphConfig.VERSION_PROD;
 
 // @ts-ignore
 const chainArg = process.argv[process.argv.length - 1];
@@ -25,7 +32,7 @@ const jsons = {
 
   // @ts-ignore
   [viemChains.optimism.id]: optimismSubgraph,
-  // [viemChains.gnosis.id]: gnosisLatest,
+  [viemChains.gnosis.id]: gnosisSubgraph,
   // @ts-ignore
   [viemChains.polygon.id]: maticSubgraph,
   // @ts-ignore
@@ -126,14 +133,15 @@ async function extractProxies(chainId) {
   });
 
   return {
-    registryFactoryProxy,
-    registryCommunityProxies,
-    cvStrategiesProxies,
+    REGISTRY_FACTORY: registryFactoryProxy,
+    REGISTRY_COMMUNITIES: registryCommunityProxies,
+    CV_STRATEGIES: cvStrategiesProxies,
   };
 }
 
 extractProxies(chainArg)
   .then((proxies) => {
-    console.debug({ proxies });
+    const json = JSON.stringify({ PROXIES: proxies }, null, 2);
+    console.debug(json);
   })
   .catch((err) => console.error(err));

@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: optimism
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 10
+        data: 421614
     source:
-      address: "0x1fac47cf25f1ca9f20ba366099d26b28401f5715"
+      address: "0x7a603877488db46c0f6b40c2c770becfd7a65593"
       abi: RegistryFactoryV0_0
-      startBlock: 125112016
+      startBlock: 77903587
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -40,15 +40,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: optimism
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 10
+        data: 421614
     source:
-      address: "0xc93830dd463516ed5f28f6cd4f837173b87ff389"
+      address: "0xf0988f8c1c2fb62ea746b86c1ce70636fa4a49ff"
       abi: PassportScorer
-      startBlock: 125112016
+      startBlock: 77903587
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -72,7 +72,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: optimism
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -134,7 +134,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: optimism
+    network: arbitrum-sepolia
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -180,8 +180,31 @@ templates:
           handler: handleProposalCancelled
         - event: ArbitrableConfigUpdated(uint256,address,address,uint256,uint256,uint256,uint256)
           handler: handleArbitrableConfigUpdated
- 
       file: ./src/mappings/cv-strategy.ts
+
+  - kind: ethereum/contract
+    name: CollateralVault
+    network: arbitrum-sepolia
+    source:
+      abi: CollateralVault
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CollateralVault
+        - CollateralVaultDeposit
+      abis:
+        - name: CollateralVault
+          file: ../contracts/out/CollateralVault.sol/CollateralVault.json
+      eventHandlers:
+        - event: CollateralDeposited(uint256,indexed address,uint256)
+          handler: handleCollateralDeposited
+        - event: CollateralWithdrawn(uint256,indexed address,indexed address,uint256,bool)
+          handler: handleCollateralWithdrawnFor
+        - event: CollateralWithdrawn(uint256,indexed address,uint256,bool)
+          handler: handleCollateralWithdrawn
+      file: ./src/mappings/cv-strategy.ts  
   
   - name: ProposalDisputeMetadata
     kind: file/ipfs
