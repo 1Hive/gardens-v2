@@ -169,6 +169,7 @@ export const ConvictionBarChart = ({
 
   const supportGtConv = proposalSupportPct > currentConvictionPct;
   const convEqSupport = proposalSupportPct === currentConvictionPct;
+
   const maxValue = Math.max(
     proposalSupportPct,
     currentConvictionPct,
@@ -179,7 +180,7 @@ export const ConvictionBarChart = ({
     disabled: true,
   };
 
-  const borderRadius = [5];
+  const borderRadius = [50, 0, 0, 50];
 
   const markLine: MarkLineComponentOption = {
     symbol: "none",
@@ -258,6 +259,7 @@ export const ConvictionBarChart = ({
         showBackground: true,
         backgroundStyle: {
           color: "rgba(180, 180, 180, 0.2)",
+          borderRadius: [50, 50],
         },
         type: "bar",
         name: "Support",

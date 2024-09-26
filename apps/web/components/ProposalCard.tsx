@@ -15,6 +15,7 @@ import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
 import { PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
+import { prettyTimestamp } from "@/utils/text";
 
 type ProposalCardProps = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
@@ -82,26 +83,34 @@ export function ProposalCard({
 
   const isSignalingType = PoolTypes[type] === "signaling";
 
+  const supportNeededToPass = (
+    (thresholdPct ?? 0) - (totalSupportPct ?? 0)
+  ).toFixed(2);
+
   const proposalCardContent = (
     <>
       <div
         className={`flex gap-3 justify-between py-3 flex-wrap  ${isAllocationView ? "section-layout" : ""}`}
       >
-        <div className=" flex w-full">
+        <div className="flex w-full">
           {/* icon title and id */}
           <div className={"flex gap-6 flex-1 "}>
-            {/* <div className="hidden sm:visible"> */}
-            <Hashicon value={id} size={45} />
-            {/* </div> */}
+            <div className="hidden sm:block">
+              <Hashicon value={id} size={45} />
+            </div>
             <div className="overflow-hidden">
               <h4 className="truncate first-letter:uppercase max-w-xl">
                 {metadata.title}
               </h4>
-              <h6 className="text-sm">ID {proposalNumber}</h6>
+              <div className="flex items-baseline gap-4">
+                <h6 className="text-sm">ID {proposalNumber}</h6>
+                {/* TODO: add and fetch createdAt from query */}
+                {/* <p>Created { prettyTimestamp(proposalData. ?? 0)}</p> */}
+              </div>
             </div>
           </div>
 
-          {/* requestes and status */}
+          {/* amount requested and proposal status */}
           <div className="flex gap-6 text-neutral-soft-content">
             {!isSignalingType && (
               <div className="flex items-center gap-1 justify-self-end">
@@ -156,26 +165,20 @@ export function ProposalCard({
                           <div className="flex flex-col items-center justify-center">
                             <p className="subtitle2">
                               <span className="text-2xl font-semibold text-primary-content">
-                                {inputValue}
-                              </span>
-                              /100%
-                            </p>
-                            <p className="text-primary-content">
-                              Total allocated
-                            </p>
-                          </div>
-                          <div className="flex flex-col items-center justify-center">
-                            <p className="subtitle2">
-                              <span className="text-2xl font-semibold text-primary-content">
                                 {poolWeightAllocatedInProposal}
                               </span>
-                              /{memberPoolWeight}%
+                              /{memberPoolWeight}%{" "}
+                              <span className="text-neutral-soft-content text-sm">
+                                ({allocatedInProposal}% of your total weight)
+                              </span>
                             </p>
-                            <p className="text-primary-content">Pool weight</p>
+                            {/* <p className="text-primary-content">Support</p> */}
                           </div>
                         </div>
                       </>
-                    : <p className="text-neutral-soft-content">No allocation</p>
+                    : <p className="text-neutral-soft-content">
+                        No supported yet
+                      </p>
                     }
                   </div>
                 </div>
@@ -186,8 +189,13 @@ export function ProposalCard({
                   totalSupportPct != null && (
                     <div className="">
                       <p className="mb-2 text-sm">
-                        Total Support: 5% of pool weight (at least 3.23% more
-                        needed to pass)
+                        Total Support: <span>{totalSupportPct}%</span> of pool
+                        weight{" "}
+                        <span className="text-neutral-soft-content text-sm">
+                          {Number(supportNeededToPass) > 0 ?
+                            `(at least ${supportNeededToPass}% needed)`
+                          : ""}
+                        </span>
                       </p>
                       <div className="h-3">
                         <ConvictionBarChart
@@ -206,7 +214,17 @@ export function ProposalCard({
           </div>
         </div>
       </div>
-      {!isAllocationView && <p className="text-sm">3 Supporters</p>}
+      {
+        <div className="">
+          {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
+            <p className="flex items-baseline text-xs">
+              Supported {poolWeightAllocatedInProposal}%
+            </p>
+          )}
+        </div>
+      }
+      {/* TODO: fetch every member stake */}
+      {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}
     </>
   );
 
@@ -223,23 +241,4 @@ export function ProposalCard({
       }
     </>
   );
-}
-
-{
-  /*<div className="col-span-3 self-center justify-self-start">
- {stakedFilter &&
-  (stakedFilter?.value > 0 ?
-    <p
-      className="text-primary-content text-xs flex items-center justify-center
-gap-3"
-    >
-      Total allocated{" "}
-      <span className="font-medium text-2xl">
-        {`${allocatedInProposal.toString()}%`}
-      </span>
-    </p>
-  : <p className="text-xs text-neutral-soft-content text-center">
-      No allocation yet
-    </p>)} 
-</div*/
 }

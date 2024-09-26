@@ -362,7 +362,7 @@ export function Proposals({
     },
     {
       id: 3,
-      name: "Total allocated",
+      name: "Total support",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
@@ -393,6 +393,7 @@ export function Proposals({
   // );
 
   // Render
+
   return (
     <>
       <PoolGovernance
@@ -551,7 +552,7 @@ export function Proposals({
 function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
     <div className="mt-10">
-      <h3>Allocation Overview</h3>
+      <h3>Support Overview</h3>
       <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <div

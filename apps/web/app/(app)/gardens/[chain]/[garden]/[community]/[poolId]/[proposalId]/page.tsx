@@ -31,16 +31,7 @@ import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
-
-const prettyTimestamp = (timestamp: number) => {
-  const date = new Date(timestamp * 1000);
-
-  const day = date.getDate();
-  const month = date.toLocaleString("default", { month: "short" });
-  const year = date.getFullYear();
-
-  return `${day} ${month} ${year}`;
-};
+import { prettyTimestamp } from "@/utils/text";
 
 export default function Page({
   params: { proposalId, garden, poolId },
