@@ -17,6 +17,7 @@ import {
   polygon,
   sepolia,
 } from "viem/chains";
+import Subgraph from "../configs/subgraph.json";
 import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
@@ -54,8 +55,8 @@ type ChainData = {
   isTestnet: boolean;
 };
 
-const SUBGRAPH_TESTNET_VERSION = "0.25";
-const SUBGRAPH_PRODNET_VERSION = "0.0.3";
+const SUBGRAPH_TESTNET_VERSION = Subgraph.VERSION_TESTNET;
+const SUBGRAPH_PRODNET_VERSION = Subgraph.VERSION_PROD;
 
 export const chainConfigMap: {
   [key: number | string]: ChainData;

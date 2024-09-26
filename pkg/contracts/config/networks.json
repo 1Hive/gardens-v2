@@ -69,9 +69,13 @@
       "PROXIES": {
         "REGISTRY_FACTORY": "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6",
         "REGISTRY_COMMUNITIES": [
+          "0x8281fd9c5f709a681813c49843a253a05d9b837c",
           "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933"
         ],
-        "CV_STRATEGIES": []
+        "CV_STRATEGIES": [
+          "0xad3d78ed1b03f26238845612eeb3c5b2677fa359",
+          "0xb9739585e54374268c231f042d384bfa57e41c95"
+        ]
       }
     },
     {
@@ -88,9 +92,19 @@
       "PROXIES": {
         "REGISTRY_FACTORY": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
         "REGISTRY_COMMUNITIES": [
-          "0x2088bbe7e70acfaf643e834c96aa4c277be6653e"
+          "0x2088bbe7e70acfaf643e834c96aa4c277be6653e",
+          "0x3da181b922a890ec30c41ebe764c49f28f890e77",
+          "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955"
         ],
-        "CV_STRATEGIES": []
+        "CV_STRATEGIES": [
+          "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
+          "0x63e2b63072e131c0e5ad72205e03cbe6ca1484fa",
+          "0x8f80c90ef85254bd1c401804058bb68f2eb7cfab",
+          "0x94daa3f0e1380139e178f8cc523eea39395bcf78",
+          "0x964251300e577801ce3e21897c6a335505fedee5",
+          "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
+          "0xd9cf1f7d077166236e260819257a567b1ca22c8c"
+        ]
       }
     },
     {
@@ -122,6 +136,11 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
+        "REGISTRY_COMMUNITIES": [],
+        "CV_STRATEGIES": []
       }
     },
     {
