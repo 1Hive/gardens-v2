@@ -21,8 +21,23 @@
           "0xffa2e39cce305c82ffa70f7da0333e5f172be5f6"
         ],
         "CV_STRATEGIES": [
+          "0x17769fb86708abf03d7083ea7dc6b01976a91c47",
+          "0x271c5834f61901623c00ca274dc0911131e3865d",
           "0x2b7e64cf97cb0ad9f074e941f29e99899cad6f00",
-          "0xbf647db7c6bbacaab6a1e956f97c1c4df5ca0d3e"
+          "0x39db23696c0ad7a4afc5db891154a426193d3046",
+          "0x45cbefe5f9f0df5f76c8bdd07003724ec100497f",
+          "0x5d63ec43e1ac82d0bb4434f2d2202eec7bb05d69",
+          "0x768a7ce48322a6360db94a4c3eae3e50babb032c",
+          "0x769e1039322c9516581849485f9780390c2fac9c",
+          "0x7932c33f0a0dd335aecbe83a3d88b2435543a0fb",
+          "0x84b9c9d4f40e3c05278b6f688c5c78c89c7c95a8",
+          "0xbd7474ca99a439d2926526a0168e3e948d2987c6",
+          "0xbf647db7c6bbacaab6a1e956f97c1c4df5ca0d3e",
+          "0xc5ae99a250617a875abc9bbb485dfde746cf3ba9",
+          "0xd76cd68881ad9c95000ad0a8d2f332374e91d23b",
+          "0xdc3a597e60297bf51627918019ba7252b844970c",
+          "0xe0eb96a8c31d95ccca8f7fa52ee38d0d42b4167b",
+          "0xe57e7f0707bdb9c826a7c6da352dfb2be1275c21"
         ]
       }
     },

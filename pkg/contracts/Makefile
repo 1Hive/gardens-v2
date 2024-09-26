@@ -105,8 +105,7 @@ deploy-verify-arbsep:
   --rpc-url $(RPC_URL_ARB_TESTNET) \
   0xd7b72fcb6a4e2857685175f609d1498ff5392e46 \
   /home/corantin/Documents/GitHub/gardens-v2/main/pkg/contracts/src/RegistryFactoryV0_0.sol:RegistryFactoryV0_0 \
-  --verifier blockscout \
-	--verifier-url https://arb-sepolia.blockscout.com/api/
+	--etherscan-api-key $(ETHERSCAN_API_KEY)
 
 deploy-testnet-multi-arb: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -125,8 +124,7 @@ upgrade-testnet-multi-arb:
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
-	--verifier blockscout \
-	--verifier-url https://arb-sepolia.blockscout.com/api/ \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--ffi \
 	--broadcast \
 	--chain-id 421614 \
@@ -227,6 +225,21 @@ deploy-test-arb:
 	--verify \
 	-vvv
 
+deploy-new-collateral-vault-template-arbitrum-sepolia: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_ARB_TESTNET) \
+	--sig "run(string)" 'arbsepolia' \
+	--account pkGarden \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--ffi \
+	--chain-id 421614 \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--with-gas-price 1301660000 \
+	--verify \
+	-vvv
+
 # Optimism Sepolia
 
 deploy-testnet-multi-op: 
@@ -241,6 +254,20 @@ deploy-testnet-multi-op:
 	-vvv
 
 # Arbitrum
+
+deploy-new-collateral-vault-template-arbitrum: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_ARB) \
+	--sig "run(string)" 'arbitrum' \
+	--account pkGarden \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--ffi \
+	--chain-id 42161 \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
 
 deploy-multi-arbitrum: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -269,11 +296,12 @@ upgrade-multi-arbitrum:
 	-vvv
 
 verify-arbitrum: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_ARB) \
 	--sig "run(string)" 'arbitrum' \
 	--account pkGarden \
-	--etherscan-api-key $(ARBISCAN_API_KEY) \
+	--verifier blockscout \
+	--verifier-url https://arbitrum.blockscout.com/api/ \
 	--ffi \
 	--chain-id 42161 \
 	--legacy \
@@ -284,16 +312,32 @@ verify-arbitrum:
 
 # Optimism
 
+deploy-new-collateral-vault-template-optimism: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_OPT) \
+	--sig "run(string)" 'optimism' \
+	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--ffi \
+	--chain-id 10 \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
 deploy-multi-optimism: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
 	--account pkGarden \
+	--etherscan-api-key $(OPTIMISM_API_KEY) \
 	--ffi \
 	--chain-id 10 \
 	--broadcast \
 	--legacy \
 	--via-ir \
+	--verify \
 	-vvv
 
 upgrade-multi-optimism: 
@@ -310,13 +354,13 @@ upgrade-multi-optimism:
 	--verify \
 	-vvv
 
-
 verify-optimism: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_OPT) \
 	--sig "run(string)" 'optimism' \
 	--account pkGarden \
-	--etherscan-api-key $(OPTIMISM_API_KEY) \
+	--verifier blockscout \
+	--verifier-url https://optimism.blockscout.com/api/ \
 	--ffi \
 	--chain-id 10 \
 	--legacy \
@@ -326,6 +370,20 @@ verify-optimism:
 	--slow
 
 # Polygon
+
+deploy-new-collateral-vault-template-polygon: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_POLYGON) \
+	--sig "run(string)" 'polygon' \
+	--account pkGarden \
+	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--ffi \
+	--chain-id 137 \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
 
 deploy-multi-polygon: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -354,11 +412,12 @@ upgrade-multi-polygon:
 	-vvv
 
 verify-polygon: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_POLYGON) \
 	--sig "run(string)" 'polygon' \
 	--account pkGarden \
-	--etherscan-api-key $(POLYGONSCAN_API_KEY) \
+	--verifier blockscout \
+	--verifier-url https://polygon.blockscout.com/api/ \
 	--ffi \
 	--chain-id 137 \
 	--legacy \
@@ -382,7 +441,7 @@ deploy-multi-mainnet:
 	-vvv
 
 verify-mainnet: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_MAINNET) \
 	--sig "run(string)" 'mainnet' \
 	--account pkGarden \
@@ -396,6 +455,34 @@ verify-mainnet:
 	--slow
 
 # Gnosis
+
+deploy-new-collateral-vault-template-gnosis: 
+	-forge script script/DeployCollateralVaultTemplate.s.sol:DeployCollateralVaultTemplate \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--account pkGarden \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--ffi \
+	--chain-id 100 \
+	--legacy \
+	--broadcast \
+	--via-ir \
+	--verify \
+	-vvv
+
+deploy-multi-gnosis: 
+	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	--rpc-url $(RPC_URL_GNOSIS) \
+	--sig "run(string)" 'gnosis' \
+	--account pkGarden \
+	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--ffi \
+	--chain-id 100 \
+	--broadcast \
+	--legacy \
+	--verify \
+	--via-ir \
+	-vvv
 
 deploy-multi-gnosis: 
 	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
@@ -412,11 +499,12 @@ deploy-multi-gnosis:
 	-vvv
 
 verify-gnosis: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
 	--account pkGarden \
-	--etherscan-api-key $(GNOSISSCAN_API_KEY) \
+	--verifier blockscout \
+	--verifier-url https://gnosis.blockscout.com/api/ \
 	--ffi \
 	--chain-id 100 \
 	--legacy \
