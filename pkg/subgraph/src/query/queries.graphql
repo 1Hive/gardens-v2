@@ -276,6 +276,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       proposalStatus
       stakedAmount
       convictionLast
+      createdAt
       blockLast
       threshold
       strategy {

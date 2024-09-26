@@ -102,10 +102,12 @@ export function ProposalCard({
               <h4 className="truncate first-letter:uppercase max-w-xl">
                 {metadata.title}
               </h4>
-              <div className="flex items-baseline gap-4">
+              <div className="flex items-baseline gap-3">
                 <h6 className="text-sm">ID {proposalNumber}</h6>
-                {/* TODO: add and fetch createdAt from query */}
-                {/* <p>Created { prettyTimestamp(proposalData. ?? 0)}</p> */}
+
+                <p className="text-sm">
+                  Created: {prettyTimestamp(proposalData.createdAt ?? 0)}
+                </p>
               </div>
             </div>
           </div>
