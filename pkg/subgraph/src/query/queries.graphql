@@ -336,6 +336,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
       token
       maxCVSupply
       totalEffectiveActivePoints
+      poolId
       config {
         proposalType
         pointSystem

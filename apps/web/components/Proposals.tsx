@@ -110,7 +110,7 @@ export function Proposals({
       },
       {
         topic: "proposal",
-        containerId: strategy.id,
+        containerId: strategy.poolId,
         function: "allocate",
       },
     ],
@@ -126,7 +126,7 @@ export function Proposals({
       changeScope: [
         {
           topic: "proposal",
-          id: strategy.id,
+          containerId: strategy.poolId,
           type: "update",
         },
         { topic: "member", id: wallet },
@@ -295,7 +295,7 @@ export function Proposals({
       publish({
         topic: "proposal",
         type: "update",
-        containerId: strategy.id,
+        containerId: strategy.poolId,
         function: "allocate",
       });
     },
@@ -393,6 +393,8 @@ export function Proposals({
   // );
 
   // Render
+
+  console.log(proposals?.[2].stakedAmount);
 
   return (
     <>

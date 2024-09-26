@@ -218,7 +218,7 @@ export function ProposalCard({
         <div className="">
           {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
             <p className="flex items-baseline text-xs">
-              Supported {poolWeightAllocatedInProposal}%
+              Your support: {poolWeightAllocatedInProposal}%
             </p>
           )}
         </div>
