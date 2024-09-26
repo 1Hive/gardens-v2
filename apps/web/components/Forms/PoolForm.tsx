@@ -30,7 +30,7 @@ import {
   PoolTypes,
   SybilResistanceType,
 } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
@@ -138,21 +138,26 @@ const sybilResistancePreview = (
 ): ReactNode => {
   const previewMap: Record<SybilResistanceType, ReactNode> = {
     noSybilResist: "No authorization required (anyone can vote)",
-    allowList: (
-      <div className="flex items-center gap-2">
-        <span className="">Allow list </span>
-        <Button
-          type="button"
-          btnStyle="outline"
-          className="!p-1"
-          onClick={() => exportAddresses(addresses)}
-          showToolTip
-          tooltip="Export"
-        >
-          <ArrowDownTrayIcon className="w-4 h-4" />
-        </Button>
-      </div>
-    ),
+    allowList: (() => {
+      if (addresses.length === 0) {
+        return "Allow list (no addresses submitted)";
+      }
+      return (
+        <div className="flex items-center gap-2">
+          <span className="">Allow list </span>
+          <Button
+            type="button"
+            btnStyle="outline"
+            className="!p-1"
+            onClick={() => exportAddresses(addresses)}
+            showToolTip
+            tooltip="Export"
+          >
+            <ArrowDownTrayIcon className="w-4 h-4" />
+          </Button>
+        </div>
+      );
+    })(),
     gitcoinPassport: `Passport score required: ${value}`,
   };
 
@@ -283,7 +288,7 @@ export function PoolForm({ token, communityAddr }: Props) {
         ),
     },
     defaultResolution: {
-      label: "Default resolution:",
+      label: "Dispute default resolution:",
       parse: (value: string) =>
         DisputeOutcome[value] == "approved" ? "Approve" : "Reject",
     },
@@ -371,13 +376,16 @@ export function PoolForm({ token, communityAddr }: Props) {
     }
 
     // sybil resistance set
-    let allowList: Address[];
+    let allowList: Address[] = [];
     if (
       sybilResistanceType === "allowList" &&
       Array.isArray(sybilResistanceValue)
     ) {
       allowList = sybilResistanceValue;
-    } else {
+    } else if (
+      sybilResistanceType === "noSybilResist" ||
+      sybilResistanceType === "gitcoinPassport"
+    ) {
       allowList = [zeroAddress];
     }
 
@@ -424,7 +432,7 @@ export function PoolForm({ token, communityAddr }: Props) {
 
   const { write: writeCreatePool } = useContractWriteWithConfirmations({
     address: communityAddr,
-    abi: abiWithErrors(registryCommunityABI),
+    abi: abiWithErrors2(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool. Please try again.",
@@ -719,7 +727,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                   }),
                 )}
               />
-              {sybilResistanceType === "gitcoinPassport" ?
+              {sybilResistanceType === "gitcoinPassport" && (
                 <FormInput
                   label="Gitcoin Passport score"
                   register={register}
@@ -739,17 +747,17 @@ export function PoolForm({ token, communityAddr }: Props) {
                   type="number"
                   placeholder="0"
                 />
-              : sybilResistanceType === "allowList" && (
-                  <AllowListInput
-                    register={register}
-                    registerKey="sybilResistanceValue"
-                    addresses={sybilResistanceValue}
-                    // required={sybilResistanceType === "allowList"}
-                    setValue={setValue}
-                    errors={errors}
-                  />
-                )
-              }
+              )}
+              {sybilResistanceType === "allowList" && (
+                <AllowListInput
+                  register={register}
+                  registerKey="sybilResistanceValue"
+                  addresses={sybilResistanceValue}
+                  // required={sybilResistanceType === "allowList"}
+                  setValue={setValue}
+                  errors={errors}
+                />
+              )}
             </div>
           )}
           {/* arbitration section */}
@@ -798,7 +806,7 @@ export function PoolForm({ token, communityAddr }: Props) {
             <div className="flex flex-col">
               <FormSelect
                 tooltip="The default resolution will be applied in the case of abstained or dispute ruling timeout."
-                label="Default resolution"
+                label="Dispute default resolution"
                 options={Object.entries(DisputeOutcome)
                   .slice(1)
                   .map(([value, text]) => ({

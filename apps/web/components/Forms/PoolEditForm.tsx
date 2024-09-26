@@ -15,9 +15,9 @@ import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
-import { cvStrategyABI, passportScorerABI } from "@/src/generated";
+import { cvStrategyABI } from "@/src/generated";
 import { DisputeOutcome, PoolTypes, SybilResistanceType } from "@/types";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { abiWithErrors2 } from "@/utils/abiWithErrors";
 import {
   calculateDecay,
   CV_PERCENTAGE_SCALE,
@@ -53,11 +53,22 @@ type Props = {
   setModalOpen: (value: boolean) => void;
 };
 
-// const fullSybilResistanceOptions: Record<SybilResistanceType, string> = {
-//   noSybilResist: "No authorization required",
-//   allowList: "Allow list",
-//   gitcoinPassport: "Gitcoin passport",
-// };
+type BaseArgs = [
+  {
+    arbitrator: `0x${string}`;
+    tribunalSafe: `0x${string}`;
+    submitterCollateralAmount: bigint;
+    challengerCollateralAmount: bigint;
+    defaultRuling: bigint;
+    defaultRulingTimeout: bigint;
+  },
+  {
+    maxRatio: bigint;
+    weight: bigint;
+    decay: bigint;
+    minThresholdPoints: bigint;
+  },
+];
 
 const sybilResistancePreview = (
   sybilType: SybilResistanceType,
@@ -169,9 +180,6 @@ export default function PoolEditForm({
   const [tribunalAddress, setTribunalAddress] = useState(
     initValues?.tribunalAddress ?? "",
   );
-  // const [sybilResistanceOptions, setSybilResistanceOptions] = useState<
-  //   Partial<Record<SybilResistanceType, string>>
-  // >(fullSybilResistanceOptions);
 
   const [loading, setLoading] = useState(false);
   const { publish } = usePubSubContext();
@@ -275,34 +283,49 @@ export default function PoolEditForm({
       currentAllowList,
     );
 
-    writeEditPool({
-      args: [
-        {
-          arbitrator: chain.arbitrator as Address,
-          tribunalSafe: tribunalAddress as Address,
-          submitterCollateralAmount: parseUnits(
-            previewData.proposalCollateral.toString(),
-            token?.decimals,
-          ),
-          challengerCollateralAmount: parseUnits(
-            previewData.disputeCollateral.toString(),
-            token?.decimals,
-          ),
-          defaultRuling: BigInt(previewData.defaultResolution),
-          defaultRulingTimeout: BigInt(
-            process.env.NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT ?? 300,
-          ),
-        },
-        {
-          maxRatio: maxRatio,
-          weight: weight,
-          decay: decay,
-          minThresholdPoints: minThresholdPoints,
-        },
-        membersToAdd,
-        membersToRemove,
-      ],
-    });
+    let sybilScoreThreshold =
+      typeof previewData?.sybilResistanceValue === "number" ?
+        BigInt(previewData?.sybilResistanceValue * CV_PERCENTAGE_SCALE)
+      : 0n;
+
+    const baseArgs: BaseArgs = [
+      {
+        arbitrator: chain.arbitrator as Address,
+        tribunalSafe: tribunalAddress as Address,
+        submitterCollateralAmount: parseUnits(
+          previewData.proposalCollateral.toString(),
+          token?.decimals,
+        ),
+        challengerCollateralAmount: parseUnits(
+          previewData.disputeCollateral.toString(),
+          token?.decimals,
+        ),
+        defaultRuling: BigInt(previewData.defaultResolution),
+        defaultRulingTimeout: BigInt(
+          process.env.NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT ?? 300,
+        ),
+      },
+      {
+        maxRatio: maxRatio,
+        weight: weight,
+        decay: decay,
+        minThresholdPoints: minThresholdPoints,
+      },
+    ];
+
+    if (sybilResistanceType === "allowList") {
+      writeEditPool({
+        args: [...baseArgs, membersToAdd, membersToRemove],
+      });
+    } else if (sybilResistanceType === "gitcoinPassport") {
+      writeEditPool({
+        args: [...baseArgs, sybilScoreThreshold],
+      });
+    } else {
+      writeEditPool({
+        args: [...baseArgs],
+      });
+    }
   };
 
   const formatFormRows = () => {
@@ -345,7 +368,7 @@ export default function PoolEditForm({
 
   const { write: writeEditPool } = useContractWriteWithConfirmations({
     address: strategy.id as Address,
-    abi: abiWithErrors(cvStrategyABI),
+    abi: abiWithErrors2(cvStrategyABI),
     contractName: "CV Strategy",
     functionName: "setPoolParams",
     fallbackErrorMessage: "Error editing a pool. Please try again.",
@@ -353,44 +376,6 @@ export default function PoolEditForm({
       publish({
         topic: "pool",
         function: "setPoolParams",
-        type: "update",
-        id: strategy.poolId,
-        chainId: chainId,
-      });
-      if (
-        sybilResistanceType === "gitcoinPassport" &&
-        typeof previewData?.sybilResistanceValue === "number"
-      ) {
-        const sybilValue =
-          previewData.sybilResistanceValue * CV_PERCENTAGE_SCALE;
-
-        writeModifyThreshold({
-          args: [strategy.id as Address, BigInt(sybilValue)],
-        });
-      } else {
-        console.debug("no passport value assigned");
-        setLoading(false);
-      }
-    },
-    onSettled: () => {
-      setLoading(false);
-    },
-    onSuccess: () => {
-      setModalOpen(false);
-    },
-  });
-
-  const { write: writeModifyThreshold } = useContractWriteWithConfirmations({
-    address: chain.passportScorer as Address,
-    abi: abiWithErrors2(passportScorerABI),
-    contractName: "Passport Scorer",
-    functionName: "modifyThreshold",
-    fallbackErrorMessage:
-      "Error modifying passport threshold. Please try again.",
-    onConfirmations: () => {
-      publish({
-        topic: "pool",
-        function: "modifyThreshold",
         type: "update",
         id: strategy.poolId,
         chainId: chainId,
@@ -419,21 +404,7 @@ export default function PoolEditForm({
           previewTitle="Check pool details"
         />
       : <div className="flex flex-col gap-6">
-          {/* sybil resistance section */}
           <div className="flex flex-col gap-4">
-            {/* <FormSelect
-              label="Pool voting authorization"
-              register={register}
-              errors={errors}
-              required
-              registerKey="sybilResistanceType"
-              options={Object.entries(sybilResistanceOptions).map(
-                ([value, text]) => ({
-                  label: text,
-                  value: value,
-                }),
-              )}
-            /> */}
             {sybilResistanceType === "gitcoinPassport" ?
               <FormInput
                 label="Gitcoin Passport score"
@@ -459,7 +430,7 @@ export default function PoolEditForm({
                   register={register}
                   registerKey="sybilResistanceValue"
                   addresses={sybilResistanceValue}
-                  required={sybilResistanceType === "allowList"}
+                  // required={sybilResistanceType === "allowList"}
                   setValue={setValue}
                   errors={errors}
                 />
