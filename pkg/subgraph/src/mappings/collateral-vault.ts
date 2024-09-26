@@ -1,3 +1,4 @@
+import { log } from "@graphprotocol/graph-ts";
 import {
   CollateralVault,
   CollateralVaultDeposit
@@ -48,6 +49,13 @@ export function handleCollateralWithdrawn(event: CollateralWithdrawn): void {
   deposit.withdrawnAt = event.block.timestamp;
   deposit.withdrawnTo = event.params.user;
 
+  if (event.params.isInsufficientAvailableAmount) {
+    log.error(
+      "Insufficient available amount to withdraw for proposalId {} and from user {}",
+      [event.params.proposalId.toString(), event.params.user.toHexString()]
+    );
+  }
+
   deposit.save();
 }
 
@@ -65,6 +73,13 @@ export function handleCollateralWithdrawnFor(
   deposit.amount = deposit.amount.minus(event.params.amount);
   deposit.withdrawnAt = event.block.timestamp;
   deposit.withdrawnTo = event.params.toUser;
+
+  if (event.params.isInsufficientAvailableAmount) {
+    log.error(
+      "Insufficient available amount to withdraw for proposalId {} and from user {}",
+      [event.params.proposalId.toString(), event.params.fromUser.toHexString()]
+    );
+  }
 
   deposit.save();
 }
