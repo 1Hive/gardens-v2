@@ -164,7 +164,7 @@ export const chainConfigMap: {
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_GNOSIS!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
-    allo: "0x",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x",
     passportScorer: "0x",
     isTestnet: false,
