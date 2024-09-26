@@ -2,6 +2,7 @@
 
 import React, { Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { ChevronUpIcon, PowerIcon } from "@heroicons/react/24/solid";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import cn from "classnames";
@@ -42,14 +43,12 @@ export function ConnectWallet() {
 
   return (
     <ConnectButton.Custom>
-      {({
-        account: accountAddress,
-        chain,
-        openConnectModal,
-        mounted,
-      }) => {
+      {({ account: accountAddress, chain, openConnectModal, mounted }) => {
         const ready = mounted;
         const connected = ready && accountAddress && chain;
+        const isWrongNetwork =
+          chain?.id != urlChainId && urlChainId && !isNaN(urlChainId);
+
         return (
           <>
             {(() => {
@@ -64,7 +63,7 @@ export function ConnectWallet() {
                       width={20}
                       loading="lazy"
                     />
-                    Connect wallet
+                    <span className="hidden sm:block">Connect wallet</span>
                   </Button>
                 );
               }
@@ -89,19 +88,22 @@ export function ConnectWallet() {
                     <>
                       <Menu.Button>
                         <div
-                          className={`flex w-fit cursor-pointer items-center gap-4 rounded-2xl px-4 py-2 hover:opacity-85  
+                          className={`flex w-fit cursor-pointer items-center gap-4 rounded-2xl pl-4 py-2 hover:opacity-85 pr-2 
                              ${cn({ "bg-danger-soft": urlChainId && urlChainId !== chain.id }, { "bg-primary": !urlChainId || urlChainId === chain.id })}      
                           `}
                         >
-                          <Image
-                            alt={"Chain icon"}
-                            src={`https://effigy.im/a/${accountAddress.address}.png`}
-                            className="rounded-full "
-                            width={34}
-                            height={34}
-                            loading="lazy"
-                          />
-                          <div className="flex flex-col">
+                          {isWrongNetwork ?
+                            <ExclamationTriangleIcon className="text-danger-content w-6" />
+                          : <Image
+                              alt={"Chain icon"}
+                              src={`https://effigy.im/a/${accountAddress.address}.png`}
+                              className="rounded-full"
+                              width={34}
+                              height={34}
+                              loading="lazy"
+                            />
+                          }
+                          <div className="hidden sm:flex flex-col">
                             <h5 className="text-left">
                               {formatAddress(accountAddress.address)}
                             </h5>
@@ -160,18 +162,16 @@ export function ConnectWallet() {
 
                             {/* Switch network and Disconnect buttons */}
                             <Menu.Item as="div" className="flex flex-col gap-2">
-                              {chain.id !== urlChainId &&
-                                urlChainId &&
-                                !isNaN(urlChainId) && (
-                                  <Button
-                                    className="overflow-hidden truncate"
-                                    onClick={() =>
-                                      switchNetwork && switchNetwork(urlChainId)
-                                    }
-                                  >
-                                    Switch to {chainFromPath?.name ?? ""}
-                                  </Button>
-                                )}
+                              {isWrongNetwork && (
+                                <Button
+                                  className="overflow-hidden truncate"
+                                  onClick={() =>
+                                    switchNetwork && switchNetwork(urlChainId)
+                                  }
+                                >
+                                  Switch to {chainFromPath?.name ?? ""}
+                                </Button>
+                              )}
 
                               <Button
                                 onClick={() => disconnect()}
