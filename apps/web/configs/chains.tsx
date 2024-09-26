@@ -17,6 +17,7 @@ import {
   polygon,
   sepolia,
 } from "viem/chains";
+import Subgraph from "../configs/subgraph.json";
 import { ChainId } from "@/types";
 
 type ChainIconProps = React.SVGProps<SVGSVGElement> & {
@@ -54,8 +55,8 @@ type ChainData = {
   isTestnet: boolean;
 };
 
-const SUBGRAPH_TESTNET_VERSION = "0.25";
-const SUBGRAPH_PRODNET_VERSION = "0.0.3";
+const SUBGRAPH_TESTNET_VERSION = Subgraph.VERSION_TESTNET;
+const SUBGRAPH_PRODNET_VERSION = Subgraph.VERSION_PROD;
 
 export const chainConfigMap: {
   [key: number | string]: ChainData;
@@ -164,7 +165,7 @@ export const chainConfigMap: {
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_GNOSIS!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
-    allo: "0x",
+    allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x",
     passportScorer: "0x",
     isTestnet: false,
