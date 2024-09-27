@@ -13,27 +13,31 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v3
+
+      - name: Only PR comments
+        if: ${{ !github.event.issue.pull_request || !contains(github.event.comment.body,'!ai') }}
+        run: exit 1
+
       - name: Put a reaction to the comment
-        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:EYES}){reaction{content}subject{id}}}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_ID: ${{ github.event.comment.node_id }}
+
       - name: Fetch PR details using GitHub API
-        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         id: pr-details
         uses: actions/github-script@v6
         with:
           script: |
             const pr_number = context.payload.issue.number;
-            const pr = await github.pulls.get({
+            const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pr_number
             });
             return pr.data;
+
       - name: "Get diff of the pull request"
-        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         id: get_diff
         shell: bash
         env:
@@ -52,7 +56,6 @@ jobs:
 
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
-        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         continue-on-error: true
         id: review
         with:
