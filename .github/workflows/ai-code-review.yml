@@ -38,7 +38,6 @@ jobs:
               repo: context.repo.repo,
               pull_number: pr_number
             });
-            echo diff
             return { diff };
 
       - name: Log diff
