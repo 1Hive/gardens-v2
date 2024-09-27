@@ -19,13 +19,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_ID: ${{ github.event.comment.node_id }}
+      - name: Fetch PR details using GitHub API
+        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
+        id: pr-details
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr_number = context.payload.issue.number;
+            const pr = await github.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
+            return pr.data;
       - name: "Get diff of the pull request"
         if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         id: get_diff
         shell: bash
         env:
-          PULL_REQUEST_HEAD_REF: "${{ github.event.pull_request.head.ref }}"
-          PULL_REQUEST_BASE_REF: "${{ github.event.pull_request.base.ref }}"
+          PULL_REQUEST_HEAD_REF: "${{ steps.pr-details.outputs.head.ref }}"
+          PULL_REQUEST_BASE_REF: "${{ steps.pr-details.outputs.base.ref }}"
         run: |-
           echo "PULL_REQUEST_HEAD_REF: $PULL_REQUEST_HEAD_REF"
           echo "PULL_REQUEST_BASE_REF: $PULL_REQUEST_BASE_REF"
@@ -46,8 +59,8 @@ jobs:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           github_repository: ${{ github.repository }}
-          github_pull_request_number: ${{ github.event.pull_request.number }}
-          git_commit_hash: ${{ github.event.pull_request.head.sha }}
+          github_pull_request_number: ${{ context.payload.issue.number }}
+          git_commit_hash: ${{ steps.pr-details.outputs.head.sha }}
           model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
             ${{ steps.get_diff.outputs.pull_request_diff }}
