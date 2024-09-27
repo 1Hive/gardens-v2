@@ -6,7 +6,6 @@ on:
 
 jobs:
   review:
-    if: contains(github.event.comment.html_url, '/pull/') # Ensure it only runs on pull requests.
     runs-on: ubuntu-latest
     permissions:
       contents: read
