@@ -14,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Put a reaction to the comment
+        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:EYES}){reaction{content}subject{id}}}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
