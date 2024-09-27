@@ -60,14 +60,6 @@ jobs:
             core.setOutput("diff", filteredDiff);
             core.setOutput("headSha", headSha);
 
-      - name: Log filtered diff to file
-        run: |
-          echo "${{ steps.pr-diff.outputs.diff }}" > filtered_pr_diff.txt
-          echo "Filtered PR Diff saved to filtered_pr_diff.txt"
-
-      - name: Log head SHA
-        run: echo "Head Commit SHA: ${{ steps.pr-diff.outputs.headSha }}"
-
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
         continue-on-error: true
