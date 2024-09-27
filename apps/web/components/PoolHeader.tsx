@@ -113,10 +113,6 @@ export default function PoolHeader({
     spendingLimitPct * MAX_RATIO_CONSTANT,
   );
 
-  // TEST:
-  //create pool with different min conviction values
-  //
-
   const convictionGrowth = calculateConvictionGrowthInSeconds(
     strategy.config.decay,
     blockTime,
@@ -127,7 +123,6 @@ export default function PoolHeader({
     +token.decimals,
   );
 
-  //const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
   const spendingLimit =
     (strategy.config.maxRatio / CV_SCALE_PRECISION) *
     (1 - Math.sqrt(minimumConviction / 100)) *

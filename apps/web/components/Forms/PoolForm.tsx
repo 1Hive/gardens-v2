@@ -291,8 +291,8 @@ export function PoolForm({ token, communityAddr }: Props) {
     const weightNum = minimumConviction * maxRatioNum ** 2;
 
     const blockTime = chain.blockTime;
-    // pool settings
 
+    // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));
     const weight = BigInt(Math.round(weightNum * CV_SCALE_PRECISION));
     const decay = BigInt(calculateDecay(blockTime, convictionGrowth));
