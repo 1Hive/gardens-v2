@@ -4,6 +4,7 @@ import {
   ReactNode,
   useState,
   useEffect,
+  useRef,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { logOnce } from "@/utils/log";
@@ -22,6 +23,7 @@ export const QueryParamsProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const path = usePathname();
   const [queryParams, setQueryParams] = useState<{ [k: string]: string }>({});
+  const pathRef = useRef(path);
 
   useEffect(() => {
     const params = Object.fromEntries(searchParams.entries());
@@ -36,6 +38,10 @@ export const QueryParamsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     router.push(path); // Navigate to the path without query params
+    if (pathRef.current !== path) {
+      setQueryParams({}); // Reset query params when changing page
+    }
+    pathRef.current = path;
   }, [router, path]);
 
   return (
