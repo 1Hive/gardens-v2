@@ -1,7 +1,8 @@
 name: "Code Review by Gemini AI"
 on:
   issue_comment:
-    types: [created, edited] # Triggers when a comment is created.
+    types:
+      - created
 
 jobs:
   review:
@@ -12,20 +13,13 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v3
-
-      - name: "Check if comment contains !ai"
-        id: check_comment_message
-        run: |
-          COMMENT_MESSAGE=${{ github.event.comment.body }}
-          echo "Comment message: $COMMENT_MESSAGE"
-          if [[ "$COMMENT_MESSAGE" == *"!ai"* ]]; then
-            echo "run_ai=true" >> $GITHUB_ENV
-          else
-            echo "run_ai=false" >> $GITHUB_ENV
-          fi
-
+      - name: Put a reaction to the comment
+        run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:EYES}){reaction{content}subject{id}}}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_ID: ${{ github.event.comment.node_id }}
       - name: "Get diff of the pull request"
-        if: env.files_changed == 'true' && env.run_ai == 'true'
+        if: ${{ github.event.issue.pull_request && github.event.comment.body == '/ai' }}
         id: get_diff
         shell: bash
         env:
@@ -42,7 +36,7 @@ jobs:
 
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
-        if: env.files_changed == 'true' && env.run_ai == 'true'
+        if: ${{ github.event.issue.pull_request && github.event.comment.body == '/ai' }}
         continue-on-error: true
         id: review
         with:
