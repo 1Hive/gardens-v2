@@ -55,6 +55,5 @@ jobs:
             ${{ steps.pr-diff.outputs.diff }}
           pull_request_chunk_size: "3500"
           extra_prompt: |-
-            Only review files with extensions: .ts, .tsx, .sol
             Focus your review on code logic, security vulnerabilities, and potential improvements in these files.
           log_level: "DEBUG"
