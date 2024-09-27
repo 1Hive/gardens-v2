@@ -19,7 +19,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_ID: ${{ github.event.comment.node_id }}
       - name: "Get diff of the pull request"
-        if: ${{ github.event.issue.pull_request && github.event.comment.body == '/ai' }}
+        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         id: get_diff
         shell: bash
         env:
@@ -38,7 +38,7 @@ jobs:
 
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
-        if: ${{ github.event.issue.pull_request && github.event.comment.body == '/ai' }}
+        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         continue-on-error: true
         id: review
         with:
