@@ -238,7 +238,8 @@ export default function PoolHeader({
       <header className="mb-2 flex flex-col">
         <div className="flex justify-between flex-wrap">
           <h2>
-            {ipfsResult?.title} #{poolId}
+            {ipfsResult?.title}
+            <h5 className="">#{poolId}</h5>
           </h2>
           {(isCouncilMember ?? isCouncilSafe) && (
             // true
