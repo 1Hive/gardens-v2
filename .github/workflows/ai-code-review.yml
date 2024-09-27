@@ -3,6 +3,7 @@ on:
   issue_comment:
     types:
       - created
+      - updated
 
 jobs:
   review:
@@ -13,18 +14,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Put a reaction to the comment
+        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:EYES}){reaction{content}subject{id}}}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_ID: ${{ github.event.comment.node_id }}
       - name: "Get diff of the pull request"
-        if: ${{ github.event.issue.pull_request && github.event.comment.body == '/ai' }}
+        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         id: get_diff
         shell: bash
         env:
           PULL_REQUEST_HEAD_REF: "${{ github.event.pull_request.head.ref }}"
           PULL_REQUEST_BASE_REF: "${{ github.event.pull_request.base.ref }}"
         run: |-
+          echo "PULL_REQUEST_HEAD_REF: $PULL_REQUEST_HEAD_REF"
+          echo "PULL_REQUEST_BASE_REF: $PULL_REQUEST_BASE_REF"
           # Only include changes to .ts, .tsx, and .sol files in the diff
           git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" -- '*.ts' '*.tsx' '*.sol' > "diff.txt"
           {
@@ -35,7 +39,7 @@ jobs:
 
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
-        if: ${{ github.event.issue.pull_request && github.event.comment.body == '/ai' }}
+        if: ${{ github.event.issue.pull_request && github.event.comment.body == '!ai' }}
         continue-on-error: true
         id: review
         with:
