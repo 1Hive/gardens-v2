@@ -12,18 +12,18 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: "Check if comment contains !ai"
         id: check_comment_message
         run: |
-        COMMENT_MESSAGE=${{ github.event.comment.body }}
+          COMMENT_MESSAGE=${{ github.event.comment.body }}
           echo "Comment message: $COMMENT_MESSAGE"
           if [[ "$COMMENT_MESSAGE" == *"!ai"* ]]; then
             echo "run_ai=true" >> $GITHUB_ENV
           else
             echo "run_ai=false" >> $GITHUB_ENV
           fi
-      
+
       - name: "Get diff of the pull request"
         if: env.files_changed == 'true' && env.run_ai == 'true'
         id: get_diff
