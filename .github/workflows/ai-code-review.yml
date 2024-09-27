@@ -1,18 +1,29 @@
 name: "Code Review by Gemini AI"
 on:
   issue_comment:
-    types: [created] # Triggers when a comment is created.
+    types: [created, edited] # Triggers when a comment is created.
 
 jobs:
   review:
-    if: github.event.issue.pull_request != null && contains(github.event.comment.body, '!ai') # Ensure it only runs on pull requests.
+  if: ${{ github.event.issue.pull_request }} # Ensure it only runs on pull requests.
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v3
-
+      
+      - name: "Check if comment contains !ai"
+        id: check_comment_message
+        run: |
+        COMMENT_MESSAGE=${{ github.event.comment.body }}
+          echo "Comment message: $COMMENT_MESSAGE"
+          if [[ "$COMMENT_MESSAGE" == *"!ai"* ]]; then
+            echo "run_ai=true" >> $GITHUB_ENV
+          else
+            echo "run_ai=false" >> $GITHUB_ENV
+          fi
+      
       - name: "Get diff of the pull request"
         if: env.files_changed == 'true' && env.run_ai == 'true'
         id: get_diff
