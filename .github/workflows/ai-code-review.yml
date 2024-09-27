@@ -25,6 +25,8 @@ jobs:
           PULL_REQUEST_HEAD_REF: "${{ github.event.pull_request.head.ref }}"
           PULL_REQUEST_BASE_REF: "${{ github.event.pull_request.base.ref }}"
         run: |-
+          echo "PULL_REQUEST_HEAD_REF: $PULL_REQUEST_HEAD_REF"
+          echo "PULL_REQUEST_BASE_REF: $PULL_REQUEST_BASE_REF"
           # Only include changes to .ts, .tsx, and .sol files in the diff
           git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" -- '*.ts' '*.tsx' '*.sol' > "diff.txt"
           {
