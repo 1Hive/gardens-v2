@@ -1,6 +1,9 @@
 name: "Code Review by Gemini AI"
 on:
-  psuh:
+  issue_comment:
+    types:
+      - created
+      - updated
 
 jobs:
   review:
