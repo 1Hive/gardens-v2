@@ -59,7 +59,7 @@ jobs:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           github_repository: ${{ github.repository }}
-          github_pull_request_number: ${{ context.payload.issue.number }}
+          github_pull_request_number: ${{ steps.pr-details.outputs.number }}
           git_commit_hash: ${{ steps.pr-details.outputs.head.sha }}
           model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
