@@ -106,7 +106,7 @@ export function ProposalCard({
                 <h6 className="text-sm">ID {proposalNumber}</h6>
 
                 <p className="text-sm text-neutral-soft-content">
-                  Created: {prettyTimestamp(proposalData.createdAt ?? 0)}
+                  {prettyTimestamp(proposalData.createdAt ?? 0)}
                 </p>
               </div>
             </div>

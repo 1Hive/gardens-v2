@@ -530,9 +530,7 @@ export function Proposals({
             </Button>
           </div>
         : <div>
-            <h4>Do you have a great idea?</h4>
-            <div className="flex items-center gap-6">
-              <p>Share it with the community and get support!</p>
+            <div className="flex items-center justify-center gap-6">
               <CheckPassport strategyAddr={strategy.id as Address}>
                 <Link href={createProposalUrl}>
                   <Button
