@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      issues: read
     steps:
       - uses: actions/checkout@v3
 
@@ -30,6 +31,11 @@ jobs:
         with:
           script: |
             const pr_number = context.payload.issue.number;
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
             const { data: diff } = await github.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
               headers: {
                 accept: 'application/vnd.github.v3.diff'
@@ -38,10 +44,17 @@ jobs:
               repo: context.repo.repo,
               pull_number: pr_number
             });
-            return { diff };
+            return { diff, headSha: pr.data.head.sha };
 
       - name: Log diff
-        run: echo "${{steps.pr-diff.outputs.diff}}"
+        env:
+          DIFF: ${{ steps.pr-diff.outputs.diff }}
+        run: echo "$DIFF"
+
+      - name: Log head sha
+        env:
+          HEAD_SHA: ${{ steps.pr-diff.outputs.headSha }}
+        run: echo "$HEAD_SHA"
 
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
@@ -52,6 +65,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           github_repository: ${{ github.repository }}
           github_pull_request_number: ${{ github.event.issue.number }}
+          git_commit_hash: ${{ steps.pr-diff.outputs.headSha }}
           model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
             ${{ steps.pr-diff.outputs.diff }}
