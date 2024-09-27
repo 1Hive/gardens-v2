@@ -60,6 +60,11 @@ jobs:
             core.setOutput("diff", filteredDiff);
             core.setOutput("headSha", headSha);
 
+      - name: Log filtered diff to file
+        continue-on-error: true
+        run: |
+          echo "${{ steps.pr-diff.outputs.diff }}"
+
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
         continue-on-error: true
