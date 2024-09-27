@@ -52,8 +52,7 @@ jobs:
 
       - name: Log diff to file
         run: |
-          echo "${{ steps.pr-diff.outputs.diff }}" > pr_diff.txt
-          echo "PR Diff saved to pr_diff.txt"
+          echo "${{ steps.pr-diff.outputs.diff }}"
 
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
