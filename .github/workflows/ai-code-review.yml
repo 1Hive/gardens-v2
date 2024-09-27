@@ -69,14 +69,15 @@ jobs:
             core.setOutput("headSha", headSha);
 
       - name: Log filtered diff to file
+        id: log-diff
         continue-on-error: true
         run: |
           echo "${{ steps.pr-diff.outputs.diff }}"
 
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
-        continue-on-error: true
         id: review
+        continue-on-error: true
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -90,3 +91,10 @@ jobs:
           extra_prompt: |-
             Focus your review on code logic, security vulnerabilities, and potential improvements in these files.
           log_level: "DEBUG"
+
+      - name: Add thumbs down reaction if something went wrong
+        if: failure() # This step runs if any previous step failed
+        run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:THUMBSDOWN}){reaction{content}subject{id}}}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_ID: ${{ github.event.comment.node_id }}
