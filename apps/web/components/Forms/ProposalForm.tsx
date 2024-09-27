@@ -233,6 +233,7 @@ export const ProposalForm = ({
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
     enabled: !!poolTokenAddr,
+    chainId,
   });
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
@@ -406,7 +407,7 @@ export const ProposalForm = ({
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-between py-6">
+      <div className="flex w-full items-center justify-between py-6 flex-wrap">
         <div>
           {arbitrableConfig && (
             <WalletBalance
