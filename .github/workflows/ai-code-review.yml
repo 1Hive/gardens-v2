@@ -38,7 +38,11 @@ jobs:
               repo: context.repo.repo,
               pull_number: pr_number
             });
+            echo diff
             return { diff };
+
+      - name: Log diff
+        run: echo "${{steps.pr-diff.outputs.diff}}"
 
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
