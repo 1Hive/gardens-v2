@@ -45,13 +45,21 @@ jobs:
               pull_number: pr_number
             });
 
-            // Filter the diff for only .ts, .tsx, and .sol files
-            const filteredDiff = diff.split('\n').filter(line => {
-              // Keep the line if it specifies a change in .ts, .tsx, or .sol files
-              return line.startsWith('diff --git') && (
-                line.endsWith('.ts') || line.endsWith('.tsx') || line.endsWith('.sol')
-              );
-            }).join('\n');
+            // Initialize variables to store filtered diff and a flag for capturing lines
+            let filteredDiff = '';
+            let capture = false;
+
+            // Iterate over each line in the diff
+            diff.split('\n').forEach(line => {
+              // Check if the line is a diff line for the relevant file types
+              if (line.startsWith('diff --git')) {
+                capture = line.endsWith('.ts') || line.endsWith('.tsx') || line.endsWith('.sol');
+              }
+              // If capturing, append the current line to the filtered diff
+              if (capture) {
+                filteredDiff += line + '\n';
+              }
+            });
 
             // Get the head commit SHA
             const headSha = pr.data.head.sha;
