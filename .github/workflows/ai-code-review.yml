@@ -1,9 +1,11 @@
 name: "Code Review by Gemini AI"
 on:
-  workflow_dispatch:
+  issue_comment:
+    types: [created] # Triggers when a comment is created.
 
 jobs:
   review:
+    if: github.event.issue.pull_request != null && contains(github.event.comment.body, '!ai') # Ensure it only runs on pull requests.
     runs-on: ubuntu-latest
     permissions:
       contents: read
