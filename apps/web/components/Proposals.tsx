@@ -348,17 +348,17 @@ export function Proposals({
   const stats: Stats[] = [
     {
       id: 1,
-      name: "Your pool weight",
+      name: "Your voting weight",
       stat: memberPoolWeight,
       className: poolWeightClassName,
       info: "Represents your voting power within the pool",
     },
     {
       id: 2,
-      name: "Pool weight used",
+      name: "Voting weight used",
       stat: calcPoolWeightUsed(memberSupportedProposalsPct),
       className: poolWeightClassName,
-      info: "Indicates the portion of your pool weight allocated in proposals.",
+      info: "Indicates the portion of your pool weight currently allocated in proposals.",
     },
     {
       id: 3,
@@ -393,8 +393,6 @@ export function Proposals({
   // );
 
   // Render
-
-  console.log(proposals?.[2].stakedAmount);
 
   return (
     <>

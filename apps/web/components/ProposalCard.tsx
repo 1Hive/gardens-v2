@@ -161,7 +161,7 @@ export function ProposalCard({
                     </div>
                   </div>
                   <div className="mb-2">
-                    {Number(inputValue) > 0 ?
+                    {Number(inputValue) > 0 && (
                       <>
                         <div className="flex gap-10">
                           <div className="flex flex-col items-center justify-center">
@@ -171,17 +171,14 @@ export function ProposalCard({
                               </span>
                               /{memberPoolWeight}%{" "}
                               <span className="text-neutral-soft-content text-sm">
-                                ({allocatedInProposal}% of your total weight)
+                                ({allocatedInProposal}% of your total support)
                               </span>
                             </p>
                             {/* <p className="text-primary-content">Support</p> */}
                           </div>
                         </div>
                       </>
-                    : <p className="text-neutral-soft-content">
-                        No supported yet
-                      </p>
-                    }
+                    )}
                   </div>
                 </div>
               </div>

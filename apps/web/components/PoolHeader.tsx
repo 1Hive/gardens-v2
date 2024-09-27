@@ -237,10 +237,12 @@ export default function PoolHeader({
     <section className="section-layout flex flex-col gap-0">
       <header className="mb-2 flex flex-col">
         <div className="flex justify-between flex-wrap">
-          <h2>
-            {ipfsResult?.title}
-            <h5 className="">#{poolId}</h5>
-          </h2>
+          <div>
+            <h2>
+              {ipfsResult?.title}
+              <h5 className="">#{poolId}</h5>
+            </h2>
+          </div>
           {(isCouncilMember ?? isCouncilSafe) && (
             // true
             <div className="flex gap-2">
