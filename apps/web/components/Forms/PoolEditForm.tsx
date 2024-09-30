@@ -297,7 +297,7 @@ export default function PoolEditForm({
                   }}
                   registerOptions={{
                     max: {
-                      value: 100,
+                      value: 99.9,
                       message: "Max amount cannot exceed 100%",
                     },
                     min: {

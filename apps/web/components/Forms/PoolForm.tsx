@@ -824,7 +824,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                     }}
                     registerOptions={{
                       max: {
-                        value: 100,
+                        value: 99.9,
                         message: "Max amount cannot exceed 100%",
                       },
                       min: {
