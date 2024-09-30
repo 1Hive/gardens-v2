@@ -90,16 +90,16 @@ export function ProposalCard({
   const proposalCardContent = (
     <>
       <div
-        className={`flex gap-3 justify-between py-3 flex-wrap  ${isAllocationView ? "section-layout" : ""}`}
+        className={`flex gap-3 justify-between py-3 flex-wrap ${isAllocationView ? "section-layout" : ""}`}
       >
-        <div className="flex w-full">
+        <div className="flex flex-col sm:flex-row w-full">
           {/* icon title and id */}
-          <div className={"flex gap-6 flex-1 "}>
+          <div className="flex gap-6 flex-1">
             <div className="hidden sm:block">
               <Hashicon value={id} size={45} />
             </div>
             <div className="overflow-hidden">
-              <h4 className="truncate first-letter:uppercase max-w-xl">
+              <h4 className="truncate first-letter:uppercase sm:max-w-md lg:max-w-lg">
                 {metadata.title}
               </h4>
               <div className="flex items-baseline gap-3">
