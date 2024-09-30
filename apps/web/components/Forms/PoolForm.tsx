@@ -825,11 +825,11 @@ export function PoolForm({ token, communityAddr }: Props) {
                     registerOptions={{
                       max: {
                         value: 99.9,
-                        message: "Max amount cannot exceed 100%",
+                        message: "Minimum conviction should be under 100%",
                       },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
-                        message: "Amount must be greater than 0",
+                        message: "Minimum conviction must be greater than 0",
                       },
                     }}
                   >
