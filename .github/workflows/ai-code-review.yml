@@ -86,7 +86,7 @@ jobs:
           model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
             ${{ steps.pr-diff.outputs.diff }}
-          pull_request_chunk_size: "3500"
+          pull_request_chunk_size: "5000"
           extra_prompt: |-
             Focus your review on code logic, security vulnerabilities, and potential improvements in these files.
             Never ask to provide more core and only review the code you received.
