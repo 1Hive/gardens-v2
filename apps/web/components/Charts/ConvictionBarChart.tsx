@@ -169,6 +169,7 @@ export const ConvictionBarChart = ({
 
   const supportGtConv = proposalSupportPct > currentConvictionPct;
   const convEqSupport = proposalSupportPct === currentConvictionPct;
+
   const maxValue = Math.max(
     proposalSupportPct,
     currentConvictionPct,
@@ -179,7 +180,7 @@ export const ConvictionBarChart = ({
     disabled: true,
   };
 
-  const borderRadius = [5];
+  const borderRadius = [50, 0, 0, 50];
 
   const markLine: MarkLineComponentOption = {
     symbol: "none",
@@ -231,7 +232,7 @@ export const ConvictionBarChart = ({
       axisLine: {
         show: false,
       },
-      max: maxValue,
+      max: 50,
     },
     tooltip: {
       trigger: "axis",
@@ -253,12 +254,13 @@ export const ConvictionBarChart = ({
     },
     animation: true,
     barGap: "-100%",
-    showBackground: true,
-    backgroundStyle: {
-      color: "#D5D5D5",
-    },
     series: [
       {
+        showBackground: true,
+        backgroundStyle: {
+          color: "rgba(180, 180, 180, 0.2)",
+          borderRadius: [50, 50],
+        },
         type: "bar",
         name: "Support",
         itemStyle: {
