@@ -88,8 +88,11 @@ jobs:
             ${{ steps.pr-diff.outputs.diff }}
           pull_request_chunk_size: "5000"
           extra_prompt: |-
-            Focus your review on code logic, security vulnerabilities, and potential improvements in these files.
-            Never ask to provide more core and only review the code you received.
+            Make a pull request review in regards of the added and removed code.
+            Start with a summary of the changes and then list detail the review and suggestions.
+            Focus on code quality, security, performance, best practices and potential mistakes.
+            Never ask to provide more code and only review the code you received even if its partial.
+            When a line start with a minus (`-`) it means that the line was removed, when it starts with plus (`+`) it means that the line was added.
           log_level: "DEBUG"
 
       - name: Add thumbs down reaction if something went wrong
