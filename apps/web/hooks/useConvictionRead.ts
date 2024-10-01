@@ -3,11 +3,14 @@ import { Address, useContractRead } from "wagmi";
 import {
   CVProposal,
   CVStrategy,
+  CVStrategyConfig,
   Maybe,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { useChainFromPath } from "./useChainFromPath";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { cvStrategyABI } from "@/src/generated";
+import { getRemainingBlocksToPass } from "@/utils/convictionFormulas";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt } from "@/utils/numbers";
 
@@ -24,6 +27,7 @@ type ProposalDataLight = Maybe<
     strategy: Pick<
       CVStrategy,
       "id" | "maxCVSupply" | "totalEffectiveActivePoints"
+      //need the pool.config.decay (alpha)
     >;
   }
 >;
@@ -38,30 +42,14 @@ export const useConvictionRead = ({
   enabled?: boolean;
 }) => {
   const chainIdFromPath = useChainIdFromPath();
+  const chain = useChainFromPath();
+
   const cvStrategyContract = {
     address: (proposalData?.strategy.id ?? zeroAddress) as Address,
     abi: cvStrategyABI,
     chainId: chainIdFromPath,
     enabled: !!proposalData,
   };
-
-  //const blockNumber = useBlockNumber();
-  //const timePassed = BigInt(blockNumber?.data ?? 0n) - (blockLast ?? 0n);
-
-  //new way of getting conviction from contract
-  // const { data: convictionFromContract, error: errorConviction } =
-  //   useContractRead({
-  //     ...cvStrategyContract,
-  //     functionName: "calculateConviction",
-  //     args: [
-  //       timePassed,
-  //       proposalData?.convictionLast,
-  //       proposalData?.stakedAmount,
-  //     ],
-  //     enabled: enabled,
-  //   });
-
-  //
 
   const { data: updatedConviction, error: errorConviction } = useContractRead({
     ...cvStrategyContract,
@@ -95,7 +83,7 @@ export const useConvictionRead = ({
     };
   }
 
-  if (!proposalData || updatedConviction == null) {
+  if (!proposalData || updatedConviction == null || chain == undefined) {
     return {
       thresholdPct: undefined,
       totalSupportPct: undefined,
@@ -122,6 +110,17 @@ export const useConvictionRead = ({
     token?.decimals ?? 18,
   );
 
+  const blockTime = chain.blockTime;
+
+  const remainingBlocks = getRemainingBlocksToPass(
+    Number(thresholdFromContract),
+    Number(updatedConviction),
+    Number(proposalData.stakedAmount),
+    0.9998876,
+  );
+
+  const timeToPass = Date.now() / 1000 + remainingBlocks * blockTime;
+
   // console.log({
   //   convictionFromContract,
   //   updatedConviction,
@@ -143,5 +142,6 @@ export const useConvictionRead = ({
     totalSupportPct,
     currentConvictionPct,
     updatedConviction,
+    timeToPass,
   };
 };

@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 export const Countdown = ({
   endTimestamp,
   format = "auto",
+  display = "auto",
 }: {
   endTimestamp: number;
   format?: "time" | "date" | "datetime" | "minutes" | "seconds" | "auto";
+  display?: "inline" | "auto";
 }) => {
   const [remainingTimeMs, setRemainingTime] = useState(0);
 
@@ -31,44 +33,52 @@ export const Countdown = ({
   const hours = (Math.floor(remainingTimeMs / (1000 * 60 * 60)) % 24) * 3 + 1;
   const days = Math.floor(remainingTimeMs / (1000 * 60 * 60 * 24)) * 3 + 1;
 
-  return remainingTimeMs === 0 ?
-      <div>Timeout</div>
+  const content = (
+    <>
+      {(computedMode === "datetime" || computedMode === "date") && (
+        <div className={`flex ${display !== "inline" ? "flex-col" : ""}`}>
+          <span className="countdown font-mono text-5xl">
+            <span style={{ "--value": days } as React.CSSProperties} />
+          </span>
+          days
+        </div>
+      )}
+      {(computedMode === "datetime" ||
+        computedMode === "time" ||
+        computedMode === "date") && (
+        <div className={`flex ${display !== "inline" ? "flex-col" : ""}`}>
+          <span className="countdown font-mono text-5xl">
+            <span style={{ "--value": hours } as React.CSSProperties} />
+          </span>
+          hrs
+        </div>
+      )}
+      {(computedMode === "datetime" ||
+        computedMode === "minutes" ||
+        computedMode === "time") && (
+        <div className={`flex ${display !== "inline" ? "flex-col" : ""}`}>
+          <span className="countdown font-mono text-5xl">
+            <span style={{ "--value": minutes } as React.CSSProperties} />
+          </span>
+          min
+        </div>
+      )}
+      {(computedMode === "datetime" || computedMode === "minutes") && (
+        <div className={`flex ${display !== "inline" ? "flex-col" : ""}`}>
+          <span className="countdown font-mono text-5xl">
+            <span style={{ "--value": seconds } as React.CSSProperties} />
+          </span>
+          sec
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    remainingTimeMs === 0 ? <div>Timeout</div>
+    : display === "inline" ? <div className="flex gap-2">{content}</div>
     : <div className="grid grid-flow-col gap-1 text-center auto-cols-max">
-        {(computedMode === "datetime" || computedMode === "date") && (
-          <div className="flex flex-col">
-            <span className="countdown font-mono text-5xl">
-              <span style={{ "--value": days } as React.CSSProperties} />
-            </span>
-            days
-          </div>
-        )}
-        {(computedMode === "datetime" ||
-          computedMode === "time" ||
-          computedMode === "date") && (
-          <div className="flex flex-col">
-            <span className="countdown font-mono text-5xl">
-              <span style={{ "--value": hours } as React.CSSProperties} />
-            </span>
-            hrs
-          </div>
-        )}
-        {(computedMode === "datetime" ||
-          computedMode === "minutes" ||
-          computedMode === "time") && (
-          <div className="flex flex-col">
-            <span className="countdown font-mono text-5xl">
-              <span style={{ "--value": minutes } as React.CSSProperties} />
-            </span>
-            min
-          </div>
-        )}
-        {(computedMode === "datetime" || computedMode === "minutes") && (
-          <div className="flex flex-col">
-            <span className="countdown font-mono text-5xl">
-              <span style={{ "--value": seconds } as React.CSSProperties} />
-            </span>
-            sec
-          </div>
-        )}
-      </div>;
+        {content}
+      </div>
+  );
 };

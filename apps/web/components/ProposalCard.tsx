@@ -5,6 +5,7 @@ import { FetchTokenResult } from "@wagmi/core";
 import { usePathname } from "next/navigation";
 import { formatUnits } from "viem";
 import { Allo } from "#/subgraph/.graphclient";
+import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import { getProposals } from "@/actions/getProposals";
@@ -62,7 +63,7 @@ export function ProposalCard({
   const isNewProposal =
     searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalNumber;
 
-  const { currentConvictionPct, thresholdPct, totalSupportPct } =
+  const { currentConvictionPct, thresholdPct, totalSupportPct, timeToPass } =
     useConvictionRead({
       proposalData,
       tokenData,
@@ -111,6 +112,8 @@ export function ProposalCard({
               </div>
             </div>
           </div>
+
+          {<Countdown endTimestamp={Number(timeToPass)} display="inline" />}
 
           {/* amount requested and proposal status */}
           <div className="flex gap-6 text-neutral-soft-content">
@@ -189,7 +192,7 @@ export function ProposalCard({
                     <div className="">
                       <p className="mb-2 text-sm">
                         Total Support: <span>{totalSupportPct}%</span> of pool
-                        weight{" "}
+                        weight
                         <span className="text-neutral-soft-content text-sm">
                           {Number(supportNeededToPass) > 0 ?
                             `(at least ${supportNeededToPass}% needed)`
