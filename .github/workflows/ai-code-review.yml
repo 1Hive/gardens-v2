@@ -96,7 +96,7 @@ jobs:
           log_level: "DEBUG"
 
       - name: Add thumbs down reaction if something went wrong
-        if: failure() # This step runs if any previous step failed
+        if: steps.review.outcome == 'failure'
         run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:THUMBS_DOWN}){reaction{content}subject{id}}}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
