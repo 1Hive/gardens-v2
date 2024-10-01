@@ -61,6 +61,8 @@ export const useConvictionRead = ({
   //     enabled: enabled,
   //   });
 
+  //
+
   const { data: updatedConviction, error: errorConviction } = useContractRead({
     ...cvStrategyContract,
     functionName: "updateProposalConviction" as any,
