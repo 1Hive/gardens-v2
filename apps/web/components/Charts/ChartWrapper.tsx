@@ -28,12 +28,12 @@ export const ChartWrapper = ({
       name: "Support",
       // TODO: missing color in Design system: ask designer
       className: "bg-[#A8E066] h-4 w-4 rounded-full",
-      info: "Represents the total pool voting weight currently allocated to a proposal.",
+      info: "Represents the total pool weight currently allocated to a proposal.",
     },
     {
       name: "Conviction",
       className: "bg-primary-content  h-4 w-4 rounded-full",
-      info: "Accumulated pool voting weight for a proposal, increasing over time, based on the conviction growth rate.",
+      info: "Accumulated pool weight for a proposal, increasing over time, based on the conviction growth param.",
     },
     {
       name: "Threshold",

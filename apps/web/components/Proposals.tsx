@@ -110,7 +110,7 @@ export function Proposals({
       },
       {
         topic: "proposal",
-        containerId: strategy.id,
+        containerId: strategy.poolId,
         function: "allocate",
       },
     ],
@@ -126,7 +126,7 @@ export function Proposals({
       changeScope: [
         {
           topic: "proposal",
-          id: strategy.id,
+          containerId: strategy.poolId,
           type: "update",
         },
         { topic: "member", id: wallet },
@@ -295,7 +295,7 @@ export function Proposals({
       publish({
         topic: "proposal",
         type: "update",
-        containerId: strategy.id,
+        containerId: strategy.poolId,
         function: "allocate",
       });
     },
@@ -348,21 +348,21 @@ export function Proposals({
   const stats: Stats[] = [
     {
       id: 1,
-      name: "Your pool weight",
+      name: "Your voting weight",
       stat: memberPoolWeight,
       className: poolWeightClassName,
       info: "Represents your voting power within the pool",
     },
     {
       id: 2,
-      name: "Pool weight used",
+      name: "Voting weight used",
       stat: calcPoolWeightUsed(memberSupportedProposalsPct),
       className: poolWeightClassName,
-      info: "Indicates the portion of your pool weight allocated in proposals.",
+      info: "Indicates the portion of your pool weight currently allocated in proposals.",
     },
     {
       id: 3,
-      name: "Total allocated",
+      name: "Total support",
       stat: memberSupportedProposalsPct,
       className: `${
         memberSupportedProposalsPct >= 100 ?
@@ -393,6 +393,7 @@ export function Proposals({
   // );
 
   // Render
+
   return (
     <>
       <PoolGovernance
@@ -527,9 +528,7 @@ export function Proposals({
             </Button>
           </div>
         : <div>
-            <h4>Do you have a great idea?</h4>
-            <div className="flex items-center gap-6">
-              <p>Share it with the community and get support!</p>
+            <div className="flex items-center justify-center gap-6">
               <CheckPassport strategyAddr={strategy.id as Address}>
                 <Link href={createProposalUrl}>
                   <Button
@@ -551,7 +550,7 @@ export function Proposals({
 function UserAllocationStats({ stats }: { stats: Stats[] }) {
   return (
     <div className="mt-10">
-      <h3>Allocation Overview</h3>
+      <h3>Support Overview</h3>
       <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <div
