@@ -759,6 +759,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                   // required={sybilResistanceType === "allowList"}
                   setValue={setValue}
                   errors={errors}
+                  pointSystemType={pointSystemType}
                 />
               )}
             </div>

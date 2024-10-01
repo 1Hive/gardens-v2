@@ -51,6 +51,7 @@ module.exports = {
       fontFamily: {
         press: ["var(--font-inter)"],
         chakra: ["var(--font-chakra)"],
+        mono: ["Chakra Petch", "monospace"],
       },
       colors: {
         //added color for the our daisy - lightTheme

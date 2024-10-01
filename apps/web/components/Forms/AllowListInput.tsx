@@ -6,16 +6,19 @@ import {
   TrashIcon,
   XMarkIcon,
   PlusIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
+import { blo } from "blo";
 import {
   RegisterOptions,
   UseFormRegister,
   UseFormSetValue,
 } from "react-hook-form";
-import { Address } from "viem";
+import { Address, zeroAddress } from "viem";
 import { FormAddressInput } from "./FormAddressInput";
 import { Button } from "../Button";
 import { InfoWrapper } from "../InfoWrapper";
+import { PointSystems } from "@/types";
 
 type AllowListInputProps = {
   label?: string;
@@ -30,6 +33,7 @@ type AllowListInputProps = {
   registerOptions?: RegisterOptions;
   className?: string;
   tooltip?: string;
+  pointSystemType: number;
 };
 
 export const exportAddresses = (addresses: string[]) => {
@@ -59,8 +63,9 @@ export function AllowListInput({
   registerOptions,
   className,
   tooltip,
+  pointSystemType,
 }: AllowListInputProps) {
-  const [addresses, setAddresses] = useState<string[]>(
+  const [addresses, setAddresses] = useState<Address[]>(
     Array.isArray(initialAddresses) ? initialAddresses : [],
   );
   const [newAddress, setNewAddress] = useState("");
@@ -76,19 +81,23 @@ export function AllowListInput({
     const newAddresses = newAddressesInput
       .split(/[\n,]+/)
       .map((addr) => addr.trim());
-    const validNewAddresses = newAddresses.filter(isValidEthereumAddress);
-    const updatedAddresses = [...new Set([...addresses, ...validNewAddresses])];
+    const validNewAddresses = newAddresses.filter(
+      isValidEthereumAddress,
+    ) as Address[];
 
+    let updatedAddresses = [...new Set([...addresses, ...validNewAddresses])];
+    updatedAddresses = updatedAddresses.filter((addr) => addr !== zeroAddress);
     const addedAddressesCount = updatedAddresses.length - addresses.length;
 
-    setAddresses(updatedAddresses);
+    setAddresses(updatedAddresses as Address[]);
     setValue(registerKey, updatedAddresses); // Update form value
     setNewAddress("");
     setBulkAddresses("");
 
     if (
       newAddresses.length > 0 &&
-      newAddresses.length !== addedAddressesCount
+      newAddresses.length !== addedAddressesCount &&
+      addresses[0] !== zeroAddress
     ) {
       setErrorMessage(
         `Added ${addedAddressesCount} address${addedAddressesCount !== 1 ? "es" : ""}. Invalid or repeated addresses were skipped.`,
@@ -110,6 +119,10 @@ export function AllowListInput({
     setErrorMessage("");
   };
 
+  const handleAllowEveryone = () => {
+    setAddresses([zeroAddress]);
+  };
+
   useEffect(() => {
     register(registerKey, { ...registerOptions, required });
   }, [register, registerKey, registerOptions, required]);
@@ -121,6 +134,8 @@ export function AllowListInput({
       setErrorMessage("");
     }
   }, [errors[registerKey], addresses.length]);
+
+  const isUnlimited = PointSystems[pointSystemType] === "unlimited";
 
   return (
     <div className="flex flex-col max-w-md">
@@ -216,59 +231,86 @@ export function AllowListInput({
         </div>
       )}
 
+      <div className="flex justify-between items-center my-3">
+        <h3 className="text-lg font-medium">
+          Allowlist ({addresses.length} address
+          {addresses.length !== 1 && "es"})
+        </h3>
+        <div className="flex space-x-1">
+          <Button
+            type="button"
+            btnStyle="outline"
+            className={`!p-2 font-normal text-[14px] leading-4 
+              ${!isUnlimited ? "" : "!text-black !border-black"}`}
+            onClick={handleAllowEveryone}
+            showToolTip
+            disabled={!isUnlimited}
+            icon={<UserGroupIcon className="w-4 h-4" />}
+            tooltip={
+              !isUnlimited ?
+                "Only unlimited points system pools\n can allow everyone"
+              : "Allow everyone in the pool"
+            }
+          >
+            Everyone
+          </Button>
+          <Button
+            type="button"
+            btnStyle="outline"
+            className="!p-2 !text-black !border-black"
+            onClick={clearAllAddresses}
+            showToolTip
+            tooltip="Clear All"
+          >
+            <TrashIcon className="w-4 h-4" />
+          </Button>
+          <Button
+            type="button"
+            btnStyle="outline"
+            className="!p-2"
+            onClick={() => exportAddresses(addresses)}
+            showToolTip
+            tooltip="Export"
+          >
+            <ArrowDownTrayIcon className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
       {addresses.length > 0 && (
-        <>
-          <div className="flex justify-between items-center my-3">
-            <h3 className="text-lg font-medium">
-              Allowlist ({addresses.length} address
-              {addresses.length !== 1 && "es"})
-            </h3>
-            <div className="flex space-x-1">
+        <ul className="space-y-2 max-h-60 overflow-y-auto border1 p-2 rounded-xl">
+          {addresses.map((address, index) => (
+            <li
+              // eslint-disable-next-line react/no-array-index-key
+              key={`addr_${index}`}
+              className="flex items-center justify-between bg-base-200 rounded"
+            >
+              <div className="truncate flex-grow mr-2 text-sm text-medium">
+                {address === zeroAddress ?
+                  "Everyone is allowed in the pool."
+                : <div className="font-mono flex items-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      alt=""
+                      className={"!rounded-full mr-2"}
+                      src={blo(address)}
+                      width="24"
+                      height="24"
+                    />
+                    {address}
+                  </div>
+                }
+              </div>
               <Button
                 type="button"
-                btnStyle="outline"
-                className="!p-2 !text-black !border-black"
-                onClick={clearAllAddresses}
-                showToolTip
-                tooltip="Clear All"
+                btnStyle="link"
+                className="!p-[2px] !text-black !border-black"
+                onClick={() => removeAddress(index)}
               >
-                <TrashIcon className="w-4 h-4" />
+                <XMarkIcon className="w-5 h-5" />
               </Button>
-              <Button
-                type="button"
-                btnStyle="outline"
-                className="!p-2"
-                onClick={() => exportAddresses(addresses)}
-                showToolTip
-                tooltip="Export"
-              >
-                <ArrowDownTrayIcon className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          <ul className="space-y-2 max-h-60 overflow-y-auto border1 p-2 rounded-xl">
-            {addresses.map((address, index) => (
-              <li
-                // eslint-disable-next-line react/no-array-index-key
-                key={`addr_${index}`}
-                className="flex items-center justify-between bg-base-200 rounded"
-              >
-                <span className="truncate flex-grow mr-2 text-sm text-medium">
-                  {address}
-                </span>
-                <Button
-                  type="button"
-                  btnStyle="link"
-                  className="!p-[2px] !text-black !border-black"
-                  onClick={() => removeAddress(index)}
-                >
-                  <XMarkIcon className="w-5 h-5" />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

@@ -57,7 +57,7 @@ const btnStyles: BtnStyles = {
     tertiary: "",
     danger:
       "text-danger-button border border-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
-    disabled: "text-neutral-soft border border-neutral-soft",
+    disabled: "text-neutral-soft-content border border-neutral-soft-content",
   },
   link: {
     primary: "text-primary-content",

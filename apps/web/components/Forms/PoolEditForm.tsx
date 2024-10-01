@@ -49,6 +49,7 @@ type Props = {
   chainId: string;
   initValues: FormInputs;
   proposalType: string;
+  pointSystemType: number;
   proposalOnDispute: boolean;
   setModalOpen: (value: boolean) => void;
 };
@@ -129,6 +130,7 @@ export default function PoolEditForm({
   chainId,
   initValues,
   proposalType,
+  pointSystemType,
   setModalOpen,
 }: Props) {
   const {
@@ -427,12 +429,14 @@ export default function PoolEditForm({
               />
             : sybilResistanceType === "allowList" && (
                 <AllowListInput
+                  label="Allow list"
                   register={register}
                   registerKey="sybilResistanceValue"
                   addresses={sybilResistanceValue}
                   // required={sybilResistanceType === "allowList"}
                   setValue={setValue}
                   errors={errors}
+                  pointSystemType={pointSystemType}
                 />
               )
             }

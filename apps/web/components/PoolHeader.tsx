@@ -112,7 +112,7 @@ export default function PoolHeader({
       // enabled: enableCheck,
       //TODO: add changeScope = passport
     });
-
+  const pointSystemType = Number(strategy.config.pointSystem);
   const passportStrategy = passportStrategyData?.passportStrategy;
   const passportScore =
     passportStrategy?.threshold ?
@@ -256,19 +256,25 @@ export default function PoolHeader({
 
   let sybilResistanceType: SybilResistanceType;
   let sybilResistanceValue: Address[] | number | undefined;
-  // if zeroAddress => all users allowed
-  if (allowList && allowList.length > 0 && allowList[0] === zeroAddress) {
-    if (passportScore && passportScore > 0) {
-      sybilResistanceType = "gitcoinPassport";
-      sybilResistanceValue = passportScore;
-    } else {
-      sybilResistanceType = "noSybilResist";
-      sybilResistanceValue = undefined;
-    }
+
+  if (passportScore && passportScore > 0) {
+    sybilResistanceType = "gitcoinPassport";
+    sybilResistanceValue = passportScore;
   } else {
     sybilResistanceType = "allowList";
     sybilResistanceValue = (allowList as Address[]) ?? [];
   }
+  // else if (
+  // allowList
+  // &&
+  // allowList.length > 0 &&
+  // allowList[0] === zeroAddress
+  // ) {
+  //   sybilResistanceType = "allowList";
+  //   sybilResistanceValue = (allowList as Address[]) ?? [];
+  // sybilResistanceType = "noSybilResist";
+  // sybilResistanceValue = undefined;
+  // }
 
   return (
     <section className="section-layout flex flex-col gap-0">
@@ -328,6 +334,7 @@ export default function PoolHeader({
         >
           <PoolEditForm
             strategy={strategy}
+            pointSystemType={pointSystemType}
             token={token}
             proposalType={proposalType}
             chainId={chainId}
