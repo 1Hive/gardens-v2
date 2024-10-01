@@ -80,7 +80,7 @@ export default function Page() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center gap-8 relative z-10">
+      <div className="flex flex-col items-center justify-center gap-8 relative">
         <header className="flex flex-col items-center gap-8 2xl:mt-20">
           <div className="flex items-center text-center">
             <div className="relative flex-1">
