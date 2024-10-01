@@ -330,7 +330,6 @@ export function PoolForm({ token, communityAddr }: Props) {
     setPreviewData(data);
     setShowPreview(true);
   };
-
   const contractWrite = async (ipfsHash: string) => {
     let spendingLimit: number;
     let minimumConviction;
@@ -470,28 +469,32 @@ export function PoolForm({ token, communityAddr }: Props) {
     >["args"],
   ) => {
     try {
-      if (typeof previewData?.sybilResistanceValue !== "number") {
-        throw new Error("Gitcoin pasport value is not number");
+      if (
+        typeof previewData?.sybilResistanceValue === "number" ||
+        typeof previewData?.sybilResistanceValue === "string"
+      ) {
+        const res = await fetch("/api/passport-oracle/addStrategy", {
+          method: "POST",
+          body: JSON.stringify({
+            strategy: newPoolData._strategy,
+            threshold:
+              (previewData?.sybilResistanceValue ?? 0) * CV_PERCENTAGE_SCALE,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        console.debug(res);
+        setLoading(false);
+        router.push(
+          pathname?.replace(
+            "/create-pool",
+            `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId.toString()}`,
+          ),
+        );
+      } else {
+        throw new Error("Gitcoin pasport value is not number or string");
       }
-      const res = await fetch("/api/passport-oracle/addStrategy", {
-        method: "POST",
-        body: JSON.stringify({
-          strategy: newPoolData._strategy,
-          threshold:
-            (previewData?.sybilResistanceValue ?? 0) * CV_PERCENTAGE_SCALE,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      console.debug(res);
-      setLoading(false);
-      router.push(
-        pathname?.replace(
-          "/create-pool",
-          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId.toString()}`,
-        ),
-      );
     } catch (error) {
       console.error(error);
       setLoading(false);
