@@ -11,6 +11,12 @@ import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunityV0
 import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json";
 import { abi as SafeArbitrator } from "#/contracts/out/SafeArbitrator.sol/SafeArbitrator.json";
 
+const registryCommunityABIWithoutCreatePoolV0 = registryCommunityABI.filter(
+  (x) =>
+    x.name !== "createPool" ||
+    x.inputs[1].internalType !== "struct CVStrategyInitializeParamsV0_0",
+);
+
 export default defineConfig({
   out: "src/generated.ts",
   contracts: [
@@ -28,7 +34,7 @@ export default defineConfig({
     },
     {
       name: "RegistryCommunity",
-      abi: registryCommunityABI as Abi,
+      abi: registryCommunityABIWithoutCreatePoolV0 as Abi,
     },
     {
       name: "Allo",
