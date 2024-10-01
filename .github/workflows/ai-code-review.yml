@@ -103,11 +103,11 @@ jobs:
           NODE_ID: ${{ github.event.comment.node_id }}
 
       - name: Get Gemini step log
-        if: failure()
+        if: steps.review.outcome == 'failure'
         id: get-gemini-log
         run: |
           echo "gemini_log<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ steps.review.outputs.log }}" >> $GITHUB_OUTPUT
+          gh run view ${{ steps.review.outputs.run_id }} --log >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Add comment with log
