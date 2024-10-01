@@ -98,3 +98,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_ID: ${{ github.event.comment.node_id }}
+
+      - name: Get Gemini step log
+        if: failure()
+        id: get-gemini-log
+        run: |
+          echo "gemini_log<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ steps.review.outputs.log }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Add comment with log
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Gemini Code Review encountered an error. Here is the step log:\n\n```\n${{ steps.get-gemini-log.outputs.gemini_log }}\n```'
+            });
