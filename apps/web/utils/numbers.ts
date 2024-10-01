@@ -195,6 +195,13 @@ function calculateDecay(blockTime: number, convictionGrowth: number) {
   return Math.floor(result);
 }
 
+function calculateMaxRatioNum(
+  spendingLimit: number,
+  minimumConviction: number,
+) {
+  return spendingLimit / (1 - Math.sqrt(minimumConviction));
+}
+
 export {
   calculateFees,
   formatTokenAmount,
@@ -204,4 +211,5 @@ export {
   calculatePercentageBigInt,
   calculatePercentage,
   calculateDecay,
+  calculateMaxRatioNum,
 };

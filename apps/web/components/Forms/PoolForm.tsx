@@ -29,10 +29,10 @@ import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
   calculateDecay,
+  calculateMaxRatioNum,
   CV_PERCENTAGE_SCALE,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
-  MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { capitalize, ethAddressRegEx } from "@/utils/text";
 
@@ -287,13 +287,13 @@ export function PoolForm({ token, communityAddr }: Props) {
     spendingLimit = spendingLimit / 100;
     minimumConviction = minimumConviction / 100;
 
-    const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
+    const maxRatioNum = calculateMaxRatioNum(spendingLimit, minimumConviction);
 
     const weightNum = minimumConviction * maxRatioNum ** 2;
 
     const blockTime = chain.blockTime;
-    // pool settings
 
+    // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));
     const weight = BigInt(Math.round(weightNum * CV_SCALE_PRECISION));
     const decay = BigInt(calculateDecay(blockTime, convictionGrowth));
@@ -824,12 +824,12 @@ export function PoolForm({ token, communityAddr }: Props) {
                     }}
                     registerOptions={{
                       max: {
-                        value: 100,
-                        message: "Max amount cannot exceed 100%",
+                        value: 99.9,
+                        message: "Minimum conviction should be under 100%",
                       },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
-                        message: "Amount must be greater than 0",
+                        message: "Minimum conviction must be greater than 0",
                       },
                     }}
                   >
