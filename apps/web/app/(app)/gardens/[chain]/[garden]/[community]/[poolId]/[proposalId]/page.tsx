@@ -88,6 +88,7 @@ export default function Page({
     updatedConviction,
   } = useConvictionRead({
     proposalData,
+    strategyConfig: proposalData?.strategy.config,
     tokenData: data?.tokenGarden,
     enabled: proposalData?.proposalNumber != null,
   });

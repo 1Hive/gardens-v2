@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { zeroAddress } from "viem";
 import { Address, useContractRead } from "wagmi";
 import {
@@ -12,7 +13,7 @@ import { useChainIdFromPath } from "./useChainIdFromPath";
 import { cvStrategyABI } from "@/src/generated";
 import { getRemainingBlocksToPass } from "@/utils/convictionFormulas";
 import { logOnce } from "@/utils/log";
-import { calculatePercentageBigInt } from "@/utils/numbers";
+import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
 
 type ProposalDataLight = Maybe<
   Pick<
@@ -27,17 +28,18 @@ type ProposalDataLight = Maybe<
     strategy: Pick<
       CVStrategy,
       "id" | "maxCVSupply" | "totalEffectiveActivePoints"
-      //need the pool.config.decay (alpha)
     >;
   }
 >;
 
 export const useConvictionRead = ({
   proposalData,
+  strategyConfig,
   tokenData: token,
   enabled = true,
 }: {
   proposalData: ProposalDataLight | undefined;
+  strategyConfig: Pick<CVStrategyConfig, "decay"> | undefined;
   tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined;
   enabled?: boolean;
 }) => {
@@ -74,21 +76,46 @@ export const useConvictionRead = ({
     logOnce("error", "Error reading conviction", errorConviction);
   }
 
+  //calculate time to pass for proposal te be executed
+  const alphaDecay = +strategyConfig?.decay / CV_SCALE_PRECISION;
+
+  const remainingBlocksToPass = useMemo(
+    () =>
+      getRemainingBlocksToPass(
+        Number(thresholdFromContract),
+        Number(updatedConviction),
+        Number(proposalData?.stakedAmount),
+        alphaDecay,
+      ),
+    [thresholdFromContract, updatedConviction, proposalData?.stakedAmount],
+  );
+  const blockTime = chain?.blockTime;
+
+  const timeToPass =
+    Date.now() / 1000 + remainingBlocksToPass * (blockTime ?? 0);
+
   if (!enabled) {
     return {
       thresholdPct: undefined,
       totalSupportPct: undefined,
       currentConvictionPct: undefined,
       updatedConviction: undefined,
+      timeToPass: undefined,
     };
   }
 
-  if (!proposalData || updatedConviction == null || chain == undefined) {
+  if (
+    !proposalData ||
+    updatedConviction == null ||
+    chain == undefined ||
+    !strategyConfig
+  ) {
     return {
       thresholdPct: undefined,
       totalSupportPct: undefined,
       currentConvictionPct: undefined,
       updatedConviction: undefined,
+      timeToPass: undefined,
     };
   }
 
@@ -109,17 +136,6 @@ export const useConvictionRead = ({
     proposalData.strategy.maxCVSupply,
     token?.decimals ?? 18,
   );
-
-  const blockTime = chain.blockTime;
-
-  const remainingBlocks = getRemainingBlocksToPass(
-    Number(thresholdFromContract),
-    Number(updatedConviction),
-    Number(proposalData.stakedAmount),
-    0.9998876,
-  );
-
-  const timeToPass = Date.now() / 1000 + remainingBlocks * blockTime;
 
   // console.log({
   //   convictionFromContract,

@@ -55,6 +55,7 @@ export async function getProposals(strategy: LightCVStrategy) {
           type: strategy.config?.proposalType as number,
           status: strategy.proposals[index].proposalStatus,
           createdAt: strategy.proposals[index].createdAt,
+          requestedAmount: strategy.proposals[index].requestedAmount,
         };
       })
       .sort((a, b) => +a.proposalNumber - +b.proposalNumber); // Sort by proposal number ascending

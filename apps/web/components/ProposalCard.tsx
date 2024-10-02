@@ -4,7 +4,7 @@ import { Hashicon } from "@emeraldpay/hashicon-react";
 import { FetchTokenResult } from "@wagmi/core";
 import { usePathname } from "next/navigation";
 import { formatUnits } from "viem";
-import { Allo } from "#/subgraph/.graphclient";
+import { Allo, CVStrategyConfig } from "#/subgraph/.graphclient";
 import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
@@ -20,6 +20,7 @@ import { prettyTimestamp } from "@/utils/text";
 
 type ProposalCardProps = {
   proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
+  strategyConfig: Pick<CVStrategyConfig, "decay">;
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   index: number;
@@ -38,6 +39,7 @@ type ProposalCardProps = {
 
 export function ProposalCard({
   proposalData,
+  strategyConfig,
   inputData,
   stakedFilter,
   index,
@@ -59,13 +61,13 @@ export function ProposalCard({
   const pathname = usePathname();
 
   const searchParams = useCollectQueryParams();
-  // TODO: ADD border color when new proposal is added
   const isNewProposal =
     searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalNumber;
 
   const { currentConvictionPct, thresholdPct, totalSupportPct, timeToPass } =
     useConvictionRead({
       proposalData,
+      strategyConfig: strategyConfig,
       tokenData,
     });
 
