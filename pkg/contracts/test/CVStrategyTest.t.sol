@@ -688,7 +688,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         uint256 cv_amount = cv.calculateConviction(10, 0, AMOUNT_STAKED);
         console.log("cv_amount: %s", cv_amount);
-        uint256 cv_cmp = _calculateConviction(10, 0, AMOUNT_STAKED, 0.9 ether / 10 ** 11);
+        uint256 cv_cmp = _calculateConviction(10, 0, AMOUNT_STAKED, 0.9 ether / 10 ** 4);
         console.log("cv_cmp: %s", cv_cmp);
         assertEq(cv_amount, cv_cmp);
     }
@@ -991,7 +991,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e14));
         vm.roll(rollTo100 * 2);
 
         console.log("after block.number", block.number);
@@ -1099,7 +1099,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e14));
         vm.roll(rollTo100 * 2);
 
         console.log("after block.number", block.number);
@@ -1277,7 +1277,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         }
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e14));
 
         vm.roll(rollTo100 * 2);
         console.log("after block.number", block.number);
@@ -1403,7 +1403,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         }
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e14));
         vm.roll(rollTo100 * 2);
         console.log("after block.number", block.number);
         console.log("Conviction After:  %s", cv.updateProposalConviction(proposalId));
