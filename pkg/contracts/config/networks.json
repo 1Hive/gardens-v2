@@ -20,8 +20,18 @@
           "0x1f9959dacba2af3fe5f09675f045d043505b252c"
         ],
         "CV_STRATEGIES": [
+          "0x12d7725472e168ce56203acd1f54e7a1f3299834",
+          "0x18cf8cea0b9e9a77290b26bc901549b9c8543c49",
+          "0x19146c7a7a6b6f44bb764c242b568788d230335e",
           "0x39372af87b894aa04e8b1005a1214278d4263a1a",
-          "0x721a2c46a92a5caab2013cfc0fcc9f01bb1e94cc"
+          "0x6b5b7ae6efa6b5f90690fe3e47a96b44b72e9678",
+          "0x721a2c46a92a5caab2013cfc0fcc9f01bb1e94cc",
+          "0x9b5eefa5f8d129a5d9908f50a6c0b8c6c1b5629e",
+          "0xbb48cd55408cc369c683bd9a2e11d941a015fa84",
+          "0xd158c17dafac9327a189fb91f4d0ca849d62fb76",
+          "0xd6f8993760d42ccf46e3448263f367089fd3d5ec",
+          "0xdba16727a280a3986c738804ad44705ab4d8f253",
+          "0xde4f3a5c1b05c44793eda6b00482b5123c17b26d"
         ]
       }
     },
@@ -68,9 +78,13 @@
       "PROXIES": {
         "REGISTRY_FACTORY": "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6",
         "REGISTRY_COMMUNITIES": [
+          "0x8281fd9c5f709a681813c49843a253a05d9b837c",
           "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933"
         ],
-        "CV_STRATEGIES": []
+        "CV_STRATEGIES": [
+          "0xad3d78ed1b03f26238845612eeb3c5b2677fa359",
+          "0xb9739585e54374268c231f042d384bfa57e41c95"
+        ]
       }
     },
     {
@@ -87,9 +101,19 @@
       "PROXIES": {
         "REGISTRY_FACTORY": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
         "REGISTRY_COMMUNITIES": [
-          "0x2088bbe7e70acfaf643e834c96aa4c277be6653e"
+          "0x2088bbe7e70acfaf643e834c96aa4c277be6653e",
+          "0x3da181b922a890ec30c41ebe764c49f28f890e77",
+          "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955"
         ],
-        "CV_STRATEGIES": []
+        "CV_STRATEGIES": [
+          "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
+          "0x63e2b63072e131c0e5ad72205e03cbe6ca1484fa",
+          "0x8f80c90ef85254bd1c401804058bb68f2eb7cfab",
+          "0x94daa3f0e1380139e178f8cc523eea39395bcf78",
+          "0x964251300e577801ce3e21897c6a335505fedee5",
+          "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
+          "0xd9cf1f7d077166236e260819257a567b1ca22c8c"
+        ]
       }
     },
     {
@@ -112,8 +136,8 @@
       }
     },
     {
-      "name": "mainnet",
-      "chainId": 1,
+      "name": "gnosis",
+      "chainId": 100,
       "testnet": false,
       "no-safe": false,
       "ENVS": {
@@ -121,11 +145,16 @@
         "ALLO_PROXY": "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
         "ALLO_IMPL": "0xB087535DB0df98fC4327136e897A5985E5Cfbd66",
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
+      },
+      "PROXIES": {
+        "REGISTRY_FACTORY": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
+        "REGISTRY_COMMUNITIES": [],
+        "CV_STRATEGIES": []
       }
     },
     {
-      "name": "gnosis",
-      "chainId": 100,
+      "name": "mainnet",
+      "chainId": 1,
       "testnet": false,
       "no-safe": false,
       "ENVS": {

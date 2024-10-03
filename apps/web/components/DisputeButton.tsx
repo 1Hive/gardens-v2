@@ -50,7 +50,7 @@ type Props = {
       CVProposal,
       "id" | "proposalNumber" | "blockLast" | "proposalStatus" | "createdAt"
     > & {
-      strategy: Pick<CVStrategy, "id">;
+      strategy: Pick<CVStrategy, "id" | "poolId">;
       arbitrableConfig: Pick<
         ArbitrableConfig,
         | "defaultRulingTimeout"
@@ -89,7 +89,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     changeScope: {
       topic: "proposal",
       id: proposalData?.proposalNumber,
-      containerId: proposalData?.strategy.id,
+      containerId: proposalData?.strategy.poolId,
       type: "update",
     },
     enabled: !!proposalData,
@@ -165,7 +165,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
           type: "update",
           function: "disputeProposal",
           id: proposalData.proposalNumber,
-          containerId: proposalData.strategy.id,
+          containerId: proposalData.strategy.poolId,
           chainId,
         });
       },
@@ -197,7 +197,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         type: "update",
         function: "executeRuling",
         id: proposalData.proposalNumber,
-        containerId: proposalData.strategy.id,
+        containerId: proposalData.strategy.poolId,
         chainId,
       });
     },
@@ -219,7 +219,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
         type: "update",
         function: "rule",
         id: proposalData.proposalNumber,
-        containerId: proposalData.strategy.id,
+        containerId: proposalData.strategy.poolId,
         chainId,
       });
     },

@@ -15,6 +15,9 @@ const maticSubgraph =
 const optimismSubgraph =
   "https://api.studio.thegraph.com/query/70985/gv2-optimism/" +
   subgraphConfig.VERSION_PROD;
+const gnosisSubgraph =
+  "https://api.studio.thegraph.com/query/70985/gv2-gnosis/" +
+  subgraphConfig.VERSION_PROD;
 
 // @ts-ignore
 const chainArg = process.argv[process.argv.length - 1];
@@ -29,7 +32,7 @@ const jsons = {
 
   // @ts-ignore
   [viemChains.optimism.id]: optimismSubgraph,
-  // [viemChains.gnosis.id]: gnosisLatest,
+  [viemChains.gnosis.id]: gnosisSubgraph,
   // @ts-ignore
   [viemChains.polygon.id]: maticSubgraph,
   // @ts-ignore
@@ -78,6 +81,7 @@ async function extractProxies(chainId) {
   }
 }`;
 
+  console.debug("Querying subgraph", subgraphEndpoint);
   const response = await fetch(subgraphEndpoint, {
     method: "POST",
     headers: {
@@ -138,7 +142,7 @@ async function extractProxies(chainId) {
 
 extractProxies(chainArg)
   .then((proxies) => {
-    const json = JSON.stringify(proxies, null, 2);
+    const json = JSON.stringify({ PROXIES: proxies }, null, 2);
     console.debug(json);
   })
   .catch((err) => console.error(err));

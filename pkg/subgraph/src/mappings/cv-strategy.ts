@@ -395,7 +395,8 @@ export function handlePowerDecreased(event: PowerDecreased): void {
 export function handleCVParamsUpdated(event: CVParamsUpdated): void {
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
-    log.error("CVStrategy: handlePoolParamsUpdated cvs not found: {}", [
+    // Ignore because can be from initialization and the config will be computed there
+    log.warning("CVStrategy: handlePoolParamsUpdated cvs not found: {}", [
       event.address.toHexString()
     ]);
     return;

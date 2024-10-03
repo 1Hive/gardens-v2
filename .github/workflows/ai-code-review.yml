@@ -1,6 +1,10 @@
 name: "Code Review by Gemini AI"
 on:
-  pull_request:
+  issue_comment:
+    types:
+      - created
+      - updated
+
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -10,41 +14,38 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: "Check for !ai keyword in commit message"
-        id: check_commit_message
-        run: |
-          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-          echo "Commit message: $COMMIT_MESSAGE"
-          if [[ "$COMMIT_MESSAGE" == *"!ai"* ]]; then
-            echo "run_ai=true" >> $GITHUB_ENV
-          else
-            echo "run_ai=false" >> $GITHUB_ENV
-          fi
+      - name: Only PR comments
+        if: ${{ !github.event.issue.pull_request || !contains(github.event.comment.body,'!ai') }}
+        run: exit 1
 
-      - name: "Check if relevant files are modified"
-        id: check_changes
-        shell: bash
-        run: |
-          # Check for modified .ts, .tsx, or .sol files
-          git fetch origin "${{ github.event.pull_request.head.ref }}" # fetch the branch with changes
-          git fetch origin "${{ github.event.pull_request.base.ref }}" # fetch the target branch
-          git diff --name-only "origin/${{ github.event.pull_request.base.ref }}" "origin/${{ github.event.pull_request.head.ref }}" > modified_files.txt
+      - name: Put a reaction to the comment
+        run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:EYES}){reaction{content}subject{id}}}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_ID: ${{ github.event.comment.node_id }}
 
-          # Check if there are any .ts, .tsx, or .sol files modified
-          if grep -E '\.ts$|\.tsx$|\.sol$' modified_files.txt; then
-            echo "files_changed=true" >> $GITHUB_ENV
-          else
-            echo "files_changed=false" >> $GITHUB_ENV
-          fi
+      - name: Fetch PR details using GitHub API
+        id: pr-details
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr_number = context.payload.issue.number;
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
+            return pr.data;
 
       - name: "Get diff of the pull request"
-        if: env.files_changed == 'true' && env.run_ai == 'true'
         id: get_diff
         shell: bash
         env:
-          PULL_REQUEST_HEAD_REF: "${{ github.event.pull_request.head.ref }}"
-          PULL_REQUEST_BASE_REF: "${{ github.event.pull_request.base.ref }}"
+          PULL_REQUEST_HEAD_REF: "${{ steps.pr-details.outputs.head.ref }}"
+          PULL_REQUEST_BASE_REF: "${{ steps.pr-details.outputs.base.ref }}"
         run: |-
+          echo "PULL_REQUEST_HEAD_REF: $PULL_REQUEST_HEAD_REF"
+          echo "PULL_REQUEST_BASE_REF: $PULL_REQUEST_BASE_REF"
           # Only include changes to .ts, .tsx, and .sol files in the diff
           git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" -- '*.ts' '*.tsx' '*.sol' > "diff.txt"
           {
@@ -55,15 +56,14 @@ jobs:
 
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
-        if: env.files_changed == 'true' && env.run_ai == 'true'
         continue-on-error: true
         id: review
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           github_repository: ${{ github.repository }}
-          github_pull_request_number: ${{ github.event.pull_request.number }}
-          git_commit_hash: ${{ github.event.pull_request.head.sha }}
+          github_pull_request_number: ${{ steps.pr-details.outputs.number }}
+          git_commit_hash: ${{ steps.pr-details.outputs.head.sha }}
           model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
             ${{ steps.get_diff.outputs.pull_request_diff }}

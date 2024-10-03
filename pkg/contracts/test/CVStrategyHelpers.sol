@@ -32,7 +32,7 @@ contract CVStrategyHelpers is Native, Accounts {
 
     uint256 internal constant TWO_127 = 2 ** 127;
     uint256 internal constant TWO_128 = 2 ** 128;
-    uint256 internal constant D = 10 ** 7;
+    uint256 internal constant D = 10 ** 14;
 
     // function poolProfile_id1(RegistryCommunityV0_1 registryCommunity) public virtual returns (bytes32) {
     function poolProfile_id1(IRegistry registry, address pool_admin, address[] memory pool_managers)
@@ -141,7 +141,7 @@ contract CVStrategyHelpers is Native, Accounts {
     }
 
     function _etherToFloat(uint256 _amount) internal pure returns (uint256) {
-        return _amount / 10 ** 11;
+        return _amount / 10 ** 4;
     }
 
     function _mul(uint256 _a, uint256 _b) internal pure returns (uint256 _result) {

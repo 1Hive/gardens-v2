@@ -8,7 +8,7 @@ dataSources:
     name: RegistryFactoryV0_0
     network: arbitrum-sepolia
     context:
-      chainId: 
+      chainId:
         type: Int
         data: 421614
     source:
@@ -33,16 +33,16 @@ dataSources:
         - event: CommunityValiditySet(address,bool)
           handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
-          handler: handleProtocolFeeSet  
+          handler: handleProtocolFeeSet
         - event: Initialized(uint8)
-          handler: handleRegistryInitialized  
+          handler: handleRegistryInitialized
       file: ./src/mappings/registry-factory.ts
 
   - kind: ethereum/contract
     name: PassportScorer
     network: arbitrum-sepolia
     context:
-      chainId: 
+      chainId:
         type: Int
         data: 421614
     source:
@@ -94,7 +94,7 @@ templates:
           file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
         - name: RegistryFactoryV0_0
           file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
-     
+
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -123,7 +123,7 @@ templates:
         - event: MemberPowerIncreased(address,uint256)
           handler: handleMemberPowerIncreased
         # - event: BasisStakedAmountSet(uint256)
-          # handler: handleBasisStakedAmountSet
+        # handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
         #   handler: handleCouncilSafeSet
         # - event: CouncilSafeChangeStarted(address,address)
@@ -186,9 +186,33 @@ templates:
           handler: handleAllowlistMembersAdded
         - event: AllowlistMembersRemoved(uint256,address[])
           handler: handleAllowlistMembersRemoved
- 
+
       file: ./src/mappings/cv-strategy.ts
-  
+
+  - kind: ethereum/contract
+    name: CollateralVault
+    network: arbitrum-sepolia
+    source:
+      abi: CollateralVault
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CollateralVault
+        - CollateralVaultDeposit
+      abis:
+        - name: CollateralVault
+          file: ../contracts/out/CollateralVault.sol/CollateralVault.json
+      eventHandlers:
+        - event: CollateralDeposited(uint256,indexed address,uint256)
+          handler: handleCollateralDeposited
+        - event: CollateralWithdrawn(uint256,indexed address,indexed address,uint256,bool)
+          handler: handleCollateralWithdrawnFor
+        - event: CollateralWithdrawn(uint256,indexed address,uint256,bool)
+          handler: handleCollateralWithdrawn
+      file: ./src/mappings/cv-strategy.ts
+
   - name: ProposalDisputeMetadata
     kind: file/ipfs
     mapping:
@@ -201,7 +225,7 @@ templates:
       abis:
         - name: CVStrategyV0_1
           file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
-  
+
   - name: ProposalMetadata
     kind: file/ipfs
     mapping:

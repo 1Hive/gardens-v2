@@ -31,16 +31,7 @@ import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
-
-const prettyTimestamp = (timestamp: number) => {
-  const date = new Date(timestamp * 1000);
-
-  const day = date.getDate();
-  const month = date.toLocaleString("default", { month: "short" });
-  const year = date.getFullYear();
-
-  return `${day} ${month} ${year}`;
-};
+import { prettyTimestamp } from "@/utils/text";
 
 export default function Page({
   params: { proposalId, garden, poolId },
@@ -53,7 +44,7 @@ export default function Page({
   };
 }) {
   const { isDisconnected, address } = useAccount();
-  const [strategyId, proposalNumber] = proposalId.split("-");
+  const [, proposalNumber] = proposalId.split("-");
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -62,7 +53,7 @@ export default function Page({
     },
     changeScope: {
       topic: "proposal",
-      containerId: strategyId,
+      containerId: poolId,
       id: proposalNumber,
       type: "update",
     },
@@ -135,7 +126,7 @@ export default function Page({
         type: "update",
         function: "distribute",
         id: proposalNumber,
-        containerId: strategyId,
+        containerId: poolId,
         chainId,
       });
     },

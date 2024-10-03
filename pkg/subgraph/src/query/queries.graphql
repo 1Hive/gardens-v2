@@ -277,6 +277,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       proposalStatus
       stakedAmount
       convictionLast
+      createdAt
       blockLast
       threshold
       strategy {
@@ -337,6 +338,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
       token
       maxCVSupply
       totalEffectiveActivePoints
+      poolId
       config {
         proposalType
         pointSystem

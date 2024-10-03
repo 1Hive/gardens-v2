@@ -14,7 +14,7 @@ import { abiWithErrors } from "@/utils/abi";
 type Props = {
   proposalData: Maybe<
     Pick<CVProposal, "id" | "proposalNumber"> & {
-      strategy: Pick<CVStrategy, "id">;
+      strategy: Pick<CVStrategy, "id" | "poolId">;
     }
   > &
     MetadataV1;
@@ -25,7 +25,7 @@ function CancelButton({ proposalData }: Props) {
   const chainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
   const { strategy } = proposalData;
-  const [strategyId, proposalNumber] = proposalData.id.split("-");
+  const [, proposalNumber] = proposalData.id.split("-");
 
   const { write: writeCancel, isLoading } = useContractWriteWithConfirmations({
     address: strategy.id as Address,
@@ -39,7 +39,7 @@ function CancelButton({ proposalData }: Props) {
         type: "update",
         function: "cancelProposal",
         id: +proposalNumber,
-        containerId: strategyId,
+        containerId: proposalData.strategy.poolId,
         chainId: chainId,
       });
     },

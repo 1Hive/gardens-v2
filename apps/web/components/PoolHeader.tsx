@@ -141,7 +141,12 @@ export default function PoolHeader({
     strategy.config.minThresholdPoints,
     +token.decimals,
   );
-  const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
+
+  const spendingLimit =
+    (strategy.config.maxRatio / CV_SCALE_PRECISION) *
+    (1 - Math.sqrt(minimumConviction / 100)) *
+    100;
+
   const communityAddr = strategy.registryCommunity.id as Address;
   const defaultResolution = arbitrableConfig.defaultRuling;
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
@@ -280,9 +285,12 @@ export default function PoolHeader({
     <section className="section-layout flex flex-col gap-0">
       <header className="mb-2 flex flex-col">
         <div className="flex justify-between flex-wrap">
-          <h2>
-            {ipfsResult?.title} #{poolId}
-          </h2>
+          <div>
+            <h2>
+              {ipfsResult?.title}
+              <h5 className="">#{poolId}</h5>
+            </h2>
+          </div>
           {(isCouncilMember ?? isCouncilSafe) && (
             // true
             <div className="flex gap-2">
@@ -344,7 +352,7 @@ export default function PoolHeader({
               sybilResistanceType: sybilResistanceType,
               spendingLimit: spendingLimit.toFixed(2),
               minimumConviction: minimumConviction.toFixed(2),
-              convictionGrowth: convictionGrowthSec.toFixed(2),
+              convictionGrowth: convictionGrowthSec.toFixed(4),
               minThresholdPoints: minThresholdPoints,
               defaultResolution: defaultResolution,
               proposalCollateral: proposalCollateral,

@@ -77,7 +77,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               </div>
               {showPoolGovernanceData && (
                 <div className="flex items-start gap-6">
-                  <p className="subtitle2">Your governance weight:</p>
+                  <p className="subtitle2">Your voting weight:</p>
                   <p className="subtitle2 text-primary-content">
                     {memberPoolWeight.toFixed(2)} %
                   </p>

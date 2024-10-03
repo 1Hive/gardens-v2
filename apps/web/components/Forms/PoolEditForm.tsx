@@ -21,9 +21,9 @@ import { filterFunctionFromABI } from "@/utils/abi";
 import {
   calculateDecay,
   CV_PERCENTAGE_SCALE,
+  calculateMaxRatioNum,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
-  MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { capitalize } from "@/utils/text";
 
@@ -239,9 +239,9 @@ export default function PoolEditForm({
     spendingLimit = spendingLimit / 100;
     minimumConviction = minimumConviction / 100;
 
-    const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
-    const weightNum = minimumConviction * maxRatioNum ** 2;
+    const maxRatioNum = calculateMaxRatioNum(spendingLimit, minimumConviction);
 
+    const weightNum = minimumConviction * maxRatioNum ** 2;
     const blockTime = chainConfigMap[chainId].blockTime;
 
     // pool settings
@@ -492,12 +492,12 @@ export default function PoolEditForm({
                   }}
                   registerOptions={{
                     max: {
-                      value: 100,
-                      message: "Max amount cannot exceed 100%",
+                      value: 99.9,
+                      message: "Minimum conviction should be under 100%",
                     },
                     min: {
                       value: 1 / CV_SCALE_PRECISION,
-                      message: "Amount must be greater than 0",
+                      message: "Minimum conviction must be greater than 0",
                     },
                   }}
                 >

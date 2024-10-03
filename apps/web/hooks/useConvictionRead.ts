@@ -39,7 +39,7 @@ export const useConvictionRead = ({
 }) => {
   const chainIdFromPath = useChainIdFromPath();
   const cvStrategyContract = {
-    address: (proposalData?.strategy.id ?? zeroAddress) as Address,
+    address: proposalData?.strategy.id as Address,
     abi: cvStrategyABI,
     chainId: chainIdFromPath,
     enabled: !!proposalData,
