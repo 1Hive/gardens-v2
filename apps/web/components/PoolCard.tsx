@@ -42,7 +42,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
   const poolType = config?.proposalType as number | undefined;
 
   const isNewPool =
-    searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId;
+    searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId.toString();
   return (
     <Card
       href={`${pathname}/${poolId}`}

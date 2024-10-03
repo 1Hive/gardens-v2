@@ -4,21 +4,26 @@ import { Hashicon } from "@emeraldpay/hashicon-react";
 import { FetchTokenResult } from "@wagmi/core";
 import { usePathname } from "next/navigation";
 import { formatUnits } from "viem";
-import { Allo } from "#/subgraph/.graphclient";
+import {
+  Allo,
+  CVStrategyConfig,
+  getPoolDataQuery,
+} from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
-import { getProposals } from "@/actions/getProposals";
 import { Badge, Card } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
+import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
 type ProposalCardProps = {
-  proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
+  proposalData: getPoolDataQuery["cvstrategies"][number]["proposals"][number];
+  strategyConfig: Pick<CVStrategyConfig, "proposalType">;
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   index: number;
@@ -32,11 +37,11 @@ type ProposalCardProps = {
   alloInfo: Allo;
   tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
   inputHandler: (i: number, value: number) => void;
-  triggerRenderProposals: () => void;
 };
 
 export function ProposalCard({
   proposalData,
+  strategyConfig,
   inputData,
   stakedFilter,
   index,
@@ -47,20 +52,21 @@ export function ProposalCard({
   tokenData,
   inputHandler,
 }: ProposalCardProps) {
-  const {
-    metadata,
-    id,
-    proposalNumber,
-    proposalStatus,
-    requestedAmount,
-    type,
-  } = proposalData;
+  const { data: metadataResult } = useMetadataIpfsFetch({
+    hash: proposalData.metadataHash,
+    enabled: !proposalData.metadata,
+  });
+
+  const metadata = proposalData.metadata ?? metadataResult;
+
+  const { id, proposalNumber, proposalStatus, requestedAmount } = proposalData;
   const pathname = usePathname();
 
   const searchParams = useCollectQueryParams();
   // TODO: ADD border color when new proposal is added
   const isNewProposal =
-    searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalNumber;
+    searchParams[QUERY_PARAMS.poolPage.newProposal] ==
+    proposalNumber.toString();
 
   const { currentConvictionPct, thresholdPct, totalSupportPct } =
     useConvictionRead({
@@ -81,7 +87,8 @@ export function ProposalCard({
     100
   ).toFixed(2);
 
-  const isSignalingType = PoolTypes[type] === "signaling";
+  const isSignalingType =
+    PoolTypes[strategyConfig.proposalType] === "signaling";
 
   const supportNeededToPass = (
     (thresholdPct ?? 0) - (totalSupportPct ?? 0)
@@ -100,7 +107,10 @@ export function ProposalCard({
             </div>
             <div className="overflow-hidden">
               <h4 className="truncate first-letter:uppercase sm:max-w-md lg:max-w-lg">
-                {metadata.title}
+                {metadata ?
+                  metadata.title
+                : <div className="[--fallback-b3:#f0f0f0] skeleton w-96 h-7 rounded-md" />
+                }
               </h4>
               <div className="flex items-baseline gap-3">
                 <h6 className="text-sm">ID {proposalNumber}</h6>

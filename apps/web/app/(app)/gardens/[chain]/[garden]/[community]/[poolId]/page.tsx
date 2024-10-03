@@ -44,6 +44,7 @@ export default function Page({
       },
     ],
   });
+
   const strategyObj = data?.cvstrategies?.[0];
   const poolTokenAddr = strategyObj?.token as Address;
   const { data: poolToken } = useToken({
@@ -72,17 +73,24 @@ export default function Page({
       "poolAmount: " + strategyObj?.poolAmount,
     );
   }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
-
+  const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
+  
   useEffect(() => {
-    const newProposalId = searchParams[QUERY_PARAMS.poolPage.newPropsoal];
+    console.log({
+      newProposalId,
+      data,
+      proposals: strategyObj?.proposals.map((c) => c.proposalNumber.toString()),
+    });
     if (
       newProposalId &&
       data &&
-      !strategyObj?.proposals.some((c) => c.proposalNumber === newProposalId)
+      !strategyObj?.proposals.some(
+        (c) => c.proposalNumber.toString() === newProposalId,
+      )
     ) {
       refetch();
     }
-  }, [searchParams, strategyObj?.proposals]);
+  }, [newProposalId, searchParams, strategyObj?.proposals, data]);
 
   const tokenGarden = data?.tokenGarden;
 

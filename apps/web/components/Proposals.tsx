@@ -12,13 +12,13 @@ import { Address, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
   CVProposal,
+  getPoolDataQuery,
   getMemberStrategyDocument,
   getMemberStrategyQuery,
   isMemberDocument,
   isMemberQuery,
 } from "#/subgraph/.graphclient";
 import { LoadingSpinner } from "./LoadingSpinner";
-import { getProposals } from "@/actions/getProposals";
 import {
   Button,
   CheckPassport,
@@ -32,7 +32,6 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
-import { LightCVStrategy } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
@@ -61,7 +60,7 @@ type Stats = {
 };
 
 interface ProposalsProps {
-  strategy: LightCVStrategy;
+  strategy: getPoolDataQuery["cvstrategies"][number];
   alloInfo: Allo;
   poolToken: FetchTokenResult;
   communityAddress: Address;
@@ -80,13 +79,8 @@ export function Proposals({
   const [allocationView, setAllocationView] = useState(false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
   const [inputs, setInputs] = useState<ProposalInputItem[]>();
-  const [proposals, setProposals] =
-    useState<Awaited<ReturnType<typeof getProposals>>>();
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
   const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
-  const [fetchingProposals, setFetchingProposals] = useState<
-    boolean | undefined
-  >();
 
   // Hooks
   const { address: wallet } = useAccount();
@@ -151,6 +145,8 @@ export function Proposals({
   const memberActivatedStrategy =
     Number(memberStrategyData?.memberStrategy?.activatedPoints) > 0;
 
+  const proposals = strategy.proposals;
+
   // Effects
   useEffect(() => {
     if (error) {
@@ -193,12 +189,6 @@ export function Proposals({
   }, [memberActivatedStrategy]);
 
   useEffect(() => {
-    if (!fetchingProposals) {
-      triggerRenderProposals();
-    }
-  }, [wallet, strategy, fetchingProposals]);
-
-  useEffect(() => {
     if (!proposals) return;
 
     const newInputs = proposals.map(({ proposalNumber }) => {
@@ -209,30 +199,6 @@ export function Proposals({
     });
     setInputs(newInputs);
   }, [proposals, stakedFilters]);
-
-  // Functions
-  const triggerRenderProposals = () => {
-    if (fetchingProposals == null) {
-      setFetchingProposals(true);
-    }
-    getProposals(strategy)
-      .then((res) => {
-        if (res !== undefined) {
-          setProposals(res);
-        } else {
-          console.debug("No proposals");
-        }
-      })
-      .catch((err) => {
-        console.error("Error while fetching proposals: ", {
-          error: err,
-          strategy,
-        });
-      })
-      .finally(() => {
-        setFetchingProposals(false);
-      });
-  };
 
   const getProposalsInputsDifferences = (
     inputData: ProposalInputItem[],
@@ -442,6 +408,7 @@ export function Proposals({
                   <Fragment key={proposalData.proposalNumber}>
                     <ProposalCard
                       proposalData={proposalData}
+                      strategyConfig={strategy.config}
                       inputData={inputs[i]}
                       stakedFilter={stakedFilters[i]}
                       index={i}
@@ -457,7 +424,6 @@ export function Proposals({
                       poolToken={poolToken}
                       tokenDecimals={tokenDecimals}
                       alloInfo={alloInfo}
-                      triggerRenderProposals={triggerRenderProposals}
                       inputHandler={inputHandler}
                       tokenData={strategy.registryCommunity.garden}
                     />

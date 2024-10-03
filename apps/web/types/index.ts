@@ -53,6 +53,3 @@ export const DisputeOutcome: Record<
 };
 
 export type ChainId = string | number;
-
-export type LightCVStrategy = getPoolDataQuery["cvstrategies"][number];
-export type LightProposal = LightCVStrategy["proposals"][number];
