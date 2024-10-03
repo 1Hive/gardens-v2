@@ -41,7 +41,7 @@ import {
   ProposalStatus,
   SybilResistanceType,
 } from "@/types";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import {
   convertSecondsToReadableTime,
   CV_PERCENTAGE_SCALE,
@@ -193,7 +193,7 @@ export default function PoolHeader({
   //hooks
   const { data: isCouncilMember } = useContractRead({
     address: strategy.registryCommunity.councilSafe as Address,
-    abi: abiWithErrors2(safeABI),
+    abi: abiWithErrors(safeABI),
     functionName: "isOwner",
     chainId: Number(chainId),
     enabled: !!address,

@@ -17,7 +17,7 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { cvStrategyABI } from "@/src/generated";
 import { DisputeOutcome, PoolTypes, SybilResistanceType } from "@/types";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
+import { filterFunctionFromABI } from "@/utils/abi";
 import {
   calculateDecay,
   CV_PERCENTAGE_SCALE,
@@ -53,23 +53,6 @@ type Props = {
   proposalOnDispute: boolean;
   setModalOpen: (value: boolean) => void;
 };
-
-type BaseArgs = [
-  {
-    arbitrator: `0x${string}`;
-    tribunalSafe: `0x${string}`;
-    submitterCollateralAmount: bigint;
-    challengerCollateralAmount: bigint;
-    defaultRuling: bigint;
-    defaultRulingTimeout: bigint;
-  },
-  {
-    maxRatio: bigint;
-    weight: bigint;
-    decay: bigint;
-    minThresholdPoints: bigint;
-  },
-];
 
 const sybilResistancePreview = (
   sybilType: SybilResistanceType,
@@ -285,12 +268,7 @@ export default function PoolEditForm({
       currentAllowList,
     );
 
-    let sybilScoreThreshold =
-      typeof previewData?.sybilResistanceValue === "number" ?
-        BigInt(previewData?.sybilResistanceValue * CV_PERCENTAGE_SCALE)
-      : 0n;
-
-    const baseArgs: BaseArgs = [
+    const coreArgs = [
       {
         arbitrator: chain.arbitrator as Address,
         tribunalSafe: tribunalAddress as Address,
@@ -313,19 +291,19 @@ export default function PoolEditForm({
         decay: decay,
         minThresholdPoints: minThresholdPoints,
       },
-    ];
+    ] as const;
 
-    if (sybilResistanceType === "allowList") {
-      writeEditPool({
-        args: [...baseArgs, membersToAdd, membersToRemove],
-      });
-    } else if (sybilResistanceType === "gitcoinPassport") {
-      writeEditPool({
-        args: [...baseArgs, sybilScoreThreshold],
+    if (
+      sybilResistanceType === "gitcoinPassport" &&
+      typeof previewData?.sybilResistanceValue === "number"
+    ) {
+      const sybilValue = previewData.sybilResistanceValue * CV_PERCENTAGE_SCALE;
+      writeEditPoolWithScoreThreshold({
+        args: [...coreArgs, BigInt(sybilValue)],
       });
     } else {
-      writeEditPool({
-        args: [...baseArgs],
+      writeEditPoolWithAllowlist({
+        args: [...coreArgs, membersToAdd, membersToRemove],
       });
     }
   };
@@ -368,9 +346,8 @@ export default function PoolEditForm({
     return formattedRows;
   };
 
-  const { write: writeEditPool } = useContractWriteWithConfirmations({
+  const setPoolParamsWritePayload = {
     address: strategy.id as Address,
-    abi: abiWithErrors2(cvStrategyABI),
     contractName: "CV Strategy",
     functionName: "setPoolParams",
     fallbackErrorMessage: "Error editing a pool. Please try again.",
@@ -389,7 +366,31 @@ export default function PoolEditForm({
     onSuccess: () => {
       setModalOpen(false);
     },
-  });
+  } as const;
+
+  const { write: writeEditPoolWithAllowlist } =
+    useContractWriteWithConfirmations({
+      ...setPoolParamsWritePayload,
+      abi: filterFunctionFromABI(
+        cvStrategyABI,
+        (abiItem) =>
+          abiItem.name === "setPoolParams" &&
+          !!abiItem.inputs.find((param) => param.name === "membersToAdd"),
+      ),
+    });
+
+  const { write: writeEditPoolWithScoreThreshold } =
+    useContractWriteWithConfirmations({
+      ...setPoolParamsWritePayload,
+      abi: filterFunctionFromABI(
+        cvStrategyABI,
+        (abiItem) =>
+          abiItem.name === "setPoolParams" &&
+          !!abiItem.inputs.find(
+            (param) => param.name === "sybilScoreThreshold",
+          ),
+      ),
+    });
 
   const handlePreview = (data: FormInputs) => {
     setPreviewData(data);

@@ -16,7 +16,7 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryFactoryABI, safeABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {

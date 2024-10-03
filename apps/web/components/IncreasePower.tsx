@@ -20,7 +20,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { registryCommunityABI } from "@/src/generated";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { parseToken } from "@/utils/numbers";
 import { getTxMessage } from "@/utils/transactionMessages";
 
@@ -82,7 +82,7 @@ export const IncreasePower = ({
 
   const registryContractCallConfig = {
     address: communityAddress as Address,
-    abi: abiWithErrors2(registryCommunityABI),
+    abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
   };
 

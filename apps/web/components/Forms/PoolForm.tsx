@@ -30,7 +30,7 @@ import {
   PoolTypes,
   SybilResistanceType,
 } from "@/types";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import { filterFunctionFromABI } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
@@ -431,7 +431,15 @@ export function PoolForm({ token, communityAddr }: Props) {
 
   const { write: writeCreatePool } = useContractWriteWithConfirmations({
     address: communityAddr,
-    abi: abiWithErrors2(registryCommunityABI),
+    abi: filterFunctionFromABI(registryCommunityABI, (item) => {
+      return (
+        item.name === "createPool" &&
+        item.inputs[1].name === "_params" &&
+        !!item.inputs[1].components.find(
+          (param) => param.name === "initialAllowlist",
+        )
+      );
+    }),
     contractName: "Registry Community",
     functionName: "createPool",
     fallbackErrorMessage: "Error creating a pool. Please try again.",
@@ -469,32 +477,28 @@ export function PoolForm({ token, communityAddr }: Props) {
     >["args"],
   ) => {
     try {
-      if (
-        typeof previewData?.sybilResistanceValue === "number" ||
-        typeof previewData?.sybilResistanceValue === "string"
-      ) {
-        const res = await fetch("/api/passport-oracle/addStrategy", {
-          method: "POST",
-          body: JSON.stringify({
-            strategy: newPoolData._strategy,
-            threshold:
-              (previewData?.sybilResistanceValue ?? 0) * CV_PERCENTAGE_SCALE,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        console.debug(res);
-        setLoading(false);
-        router.push(
-          pathname?.replace(
-            "/create-pool",
-            `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId.toString()}`,
-          ),
-        );
-      } else {
-        throw new Error("Gitcoin pasport value is not number or string");
+      let sybilScoreThreshold = +(previewData?.sybilResistanceValue ?? 0);
+      if (Number.isNaN(sybilScoreThreshold)) {
+        throw new Error("Gitcoin pasport value is not number");
       }
+      const res = await fetch("/api/passport-oracle/addStrategy", {
+        method: "POST",
+        body: JSON.stringify({
+          strategy: newPoolData._strategy,
+          threshold: sybilScoreThreshold * CV_PERCENTAGE_SCALE,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.debug(res);
+      setLoading(false);
+      router.push(
+        pathname?.replace(
+          "/create-pool",
+          `?${QUERY_PARAMS.communityPage.newPool}=${newPoolData._poolId.toString()}`,
+        ),
+      );
     } catch (error) {
       console.error(error);
       setLoading(false);

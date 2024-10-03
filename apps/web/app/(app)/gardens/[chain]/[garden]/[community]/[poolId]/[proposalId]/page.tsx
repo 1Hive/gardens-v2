@@ -29,7 +29,7 @@ import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
 
 const prettyTimestamp = (timestamp: number) => {
