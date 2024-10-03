@@ -146,11 +146,16 @@ export default function Page({
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
+    const fetchedPools = poolsInReview.some((c) => c.poolId === newPoolId);
     if (
       newPoolId &&
       result &&
-      !poolsInReview.some((c) => c.poolId === newPoolId)
+      !poolsInReview.some((p) => p.poolId === newPoolId)
     ) {
+      console.debug("Community: New pool not yet fetched, refetching...", {
+        newPoolId,
+        fetchedPools,
+      });
       refetch();
     }
   }, [searchParams, poolsInReview]);

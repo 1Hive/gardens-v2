@@ -73,24 +73,23 @@ export default function Page({
       "poolAmount: " + strategyObj?.poolAmount,
     );
   }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
-  const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
-  
+
   useEffect(() => {
-    console.log({
-      newProposalId,
-      data,
-      proposals: strategyObj?.proposals.map((c) => c.proposalNumber.toString()),
-    });
-    if (
-      newProposalId &&
-      data &&
-      !strategyObj?.proposals.some(
-        (c) => c.proposalNumber.toString() === newProposalId,
-      )
-    ) {
+    const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
+    if (!strategyObj) {
+      return;
+    }
+    const fetchedProposals = strategyObj?.proposals.map((p) =>
+      p.proposalNumber.toString(),
+    );
+    if (newProposalId && !fetchedProposals.includes(newProposalId)) {
+      console.debug("Pool: New proposal not yet fetched, refetching...", {
+        newProposalId,
+        fetchedProposals,
+      });
       refetch();
     }
-  }, [newProposalId, searchParams, strategyObj?.proposals, data]);
+  }, [searchParams, strategyObj?.proposals]);
 
   const tokenGarden = data?.tokenGarden;
 

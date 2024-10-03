@@ -142,7 +142,7 @@ export function useSubgraphQuery<
     }
     setFetching(true);
     fetchingRef.current = true;
-    const res = await refetch(undefined, false);
+    const res = await refetch(undefined);
     setResponse(res);
     setFetching(false);
     fetchingRef.current = false;
@@ -151,22 +151,20 @@ export function useSubgraphQuery<
 
   const refetch = async (
     retryCount?: number,
-    withToast: boolean = true,
   ): Promise<Awaited<ReturnType<typeof fetch>>> => {
     const result = await fetch();
+
     if (!retryCount) {
       retryCount = 0;
-      if (withToast) {
-        toast.loading("Pulling new data", {
-          toastId: pendingRefreshToastId,
-          autoClose: false,
-          closeOnClick: true,
-          style: {
-            width: "fit-content",
-            marginLeft: "auto",
-          },
-        });
-      }
+      toast.loading("Pulling new data", {
+        toastId: pendingRefreshToastId,
+        autoClose: false,
+        closeOnClick: true,
+        style: {
+          width: "fit-content",
+          marginLeft: "auto",
+        },
+      });
     }
 
     if (result.error) {
@@ -249,7 +247,7 @@ export function useSubgraphQuery<
   return {
     ...response,
     refetch: () => {
-      return refetch();
+      return refetchFromOutside();
     },
     fetching,
   };

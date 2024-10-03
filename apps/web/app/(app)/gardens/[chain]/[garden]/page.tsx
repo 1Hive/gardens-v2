@@ -80,15 +80,19 @@ export default function Page({
   useEffect(() => {
     const newCommunityId =
       searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase();
-
+    const fetchedCommunities = communities.map((c) => c.id.toLowerCase());
     if (
       newCommunityId &&
       result &&
-      !communities.some((c) => c.id.toLowerCase() === newCommunityId)
+      !fetchedCommunities.includes(newCommunityId)
     ) {
+      console.debug("Garden: New pool not yet fetched, refetching...", {
+        newCommunityId,
+        fetchedCommunities,
+      });
       refetch();
     }
-  }, [searchParams, result]);
+  }, [searchParams, communities]);
 
   if (!result) {
     return (

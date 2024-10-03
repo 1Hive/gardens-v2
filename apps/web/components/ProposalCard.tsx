@@ -23,7 +23,7 @@ import { prettyTimestamp } from "@/utils/text";
 
 type ProposalCardProps = {
   proposalData: getPoolDataQuery["cvstrategies"][number]["proposals"][number];
-  strategyConfig: Pick<CVStrategyConfig, "proposalType">;
+  strategyConfig: Pick<CVStrategyConfig, "decay" | "proposalType">;
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   index: number;

@@ -24,7 +24,7 @@ export function useErrorDetails(error: Error | null, name?: string) {
 
   useEffect(() => {
     if (errorName) {
-      console.debug(name ? `ErrorDetails:${name}` : "errorName", errorName);
+      console.error(name ? `ErrorDetails:${name}` : "errorName", errorName);
     }
   }, [errorName]);
 
