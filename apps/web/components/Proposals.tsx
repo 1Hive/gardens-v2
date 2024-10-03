@@ -20,6 +20,7 @@ import {
   RegistryCommunity,
 } from "#/subgraph/.graphclient";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { PoolGovernanceProps } from "./PoolGovernance";
 import { ProposalCardProps } from "./ProposalCard";
 import {
   Button,
@@ -71,7 +72,7 @@ interface ProposalsProps {
         ProposalCardProps["proposalData"]
     >;
     config: ProposalCardProps["strategyConfig"];
-  };
+  } & PoolGovernanceProps["strategy"];
   alloInfo: Allo;
   poolToken: FetchTokenResult;
   communityAddress: Address;

@@ -8,6 +8,7 @@ import {
   Allo,
   CVProposal,
   CVStrategyConfig,
+  Maybe,
   ProposalMetadata,
 } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
@@ -32,7 +33,7 @@ export type ProposalCardProps = {
     "id" | "proposalStatus" | "metadataHash" | "createdAt"
   > &
     ProposalDataLight & {
-      metadata: Pick<ProposalMetadata, "title">;
+      metadata?: Maybe<Pick<ProposalMetadata, "title">>;
     };
   strategyConfig: Pick<CVStrategyConfig, "decay" | "proposalType">;
   inputData: ProposalInputItem;
