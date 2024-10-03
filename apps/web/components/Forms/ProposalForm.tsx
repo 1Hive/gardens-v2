@@ -221,7 +221,6 @@ export const ProposalForm = ({
           "/create-proposal",
           `?${QUERY_PARAMS.poolPage.newProposal}=${proposalId}`,
         );
-        console.log({ newPath });
         router.push(newPath);
       }
     },

@@ -1,5 +1,3 @@
-import { getPoolDataQuery } from "#/subgraph/.graphclient";
-
 export * from "./styles";
 
 export const PoolTypes: Record<string, "signaling" | "funding" | "streaming"> =

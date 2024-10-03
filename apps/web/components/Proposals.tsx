@@ -12,13 +12,15 @@ import { Address, useAccount, useContractRead } from "wagmi";
 import {
   Allo,
   CVProposal,
-  getPoolDataQuery,
   getMemberStrategyDocument,
   getMemberStrategyQuery,
   isMemberDocument,
   isMemberQuery,
+  CVStrategy,
+  RegistryCommunity,
 } from "#/subgraph/.graphclient";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { ProposalCardProps } from "./ProposalCard";
 import {
   Button,
   CheckPassport,
@@ -60,7 +62,16 @@ type Stats = {
 };
 
 interface ProposalsProps {
-  strategy: getPoolDataQuery["cvstrategies"][number];
+  strategy: Pick<CVStrategy, "id" | "poolId" | "totalEffectiveActivePoints"> & {
+    registryCommunity: Pick<RegistryCommunity, "id"> & {
+      garden: Pick<RegistryCommunity["garden"], "decimals">;
+    };
+    proposals: Array<
+      Pick<CVProposal, "proposalNumber" | "proposalStatus"> &
+        ProposalCardProps["proposalData"]
+    >;
+    config: ProposalCardProps["strategyConfig"];
+  };
   alloInfo: Allo;
   poolToken: FetchTokenResult;
   communityAddress: Address;

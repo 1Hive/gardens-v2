@@ -6,23 +6,34 @@ import { usePathname } from "next/navigation";
 import { formatUnits } from "viem";
 import {
   Allo,
+  CVProposal,
   CVStrategyConfig,
-  getPoolDataQuery,
+  ProposalMetadata,
 } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import { Badge, Card } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
-import { useConvictionRead } from "@/hooks/useConvictionRead";
+import {
+  ProposalDataLight,
+  useConvictionRead,
+} from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
-type ProposalCardProps = {
-  proposalData: getPoolDataQuery["cvstrategies"][number]["proposals"][number];
+export type ProposalCardProps = {
+  proposalData: Pick<
+    CVProposal,
+    "id" | "proposalStatus" | "metadataHash" | "createdAt"
+  > &
+    ProposalDataLight & {
+      metadata: Pick<ProposalMetadata, "title">;
+    };
   strategyConfig: Pick<CVStrategyConfig, "decay" | "proposalType">;
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
@@ -107,14 +118,12 @@ export function ProposalCard({
             </div>
             <div className="overflow-hidden">
               <h4 className="truncate first-letter:uppercase sm:max-w-md lg:max-w-lg">
-                {metadata ?
-                  metadata.title
-                : <div className="[--fallback-b3:#f0f0f0] skeleton w-96 h-7 rounded-md" />
-                }
+                <Skeleton isLoading={!metadata} className="w-96 h-5">
+                  {metadata?.title}
+                </Skeleton>
               </h4>
               <div className="flex items-baseline gap-3">
                 <h6 className="text-sm">ID {proposalNumber}</h6>
-
                 <p className="text-sm text-neutral-soft-content">
                   {prettyTimestamp(proposalData.createdAt ?? 0)}
                 </p>
