@@ -14,7 +14,7 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
 import { useConvictionRead } from "@/hooks/useConvictionRead";
-import { PoolTypes } from "@/types";
+import { PoolTypes, ProposalStatus } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
@@ -86,9 +86,16 @@ export function ProposalCard({
 
   const isSignalingType = PoolTypes[type] === "signaling";
 
+  const alreadyExecuted = ProposalStatus[proposalStatus] === "executed";
+
   const supportNeededToPass = (
     (thresholdPct ?? 0) - (totalSupportPct ?? 0)
   ).toFixed(2);
+
+  const proposalWillPass =
+    Number(supportNeededToPass) < 0 &&
+    (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
+    !alreadyExecuted;
 
   const proposalCardContent = (
     <>
@@ -114,14 +121,11 @@ export function ProposalCard({
               </div>
             </div>
           </div>
-
-          {<Countdown endTimestamp={Number(timeToPass)} display="inline" />}
-
           {/* amount requested and proposal status */}
           <div className="flex gap-6 text-neutral-soft-content">
             {!isSignalingType && (
               <div className="flex items-center gap-1 justify-self-end">
-                <p className="">Requested amount: </p>
+                <p className="">Request amount:</p>
                 <DisplayNumber
                   number={formatUnits(requestedAmount, poolToken.decimals)}
                   tokenSymbol={poolToken.symbol}
@@ -192,15 +196,30 @@ export function ProposalCard({
                   thresholdPct != null &&
                   totalSupportPct != null && (
                     <div className="">
-                      <p className="mb-2 text-sm">
-                        Total Support: <span>{totalSupportPct}%</span> of pool
-                        weight
-                        <span className="text-neutral-soft-content text-sm">
-                          {Number(supportNeededToPass) > 0 ?
-                            `(at least ${supportNeededToPass}% needed)`
-                          : ""}
-                        </span>
-                      </p>
+                      <div className="flex items-baseline gap-1">
+                        <p className="mb-2 text-sm">
+                          Total Support: <span>{totalSupportPct}%</span> of pool
+                          weight{" "}
+                          <span className="text-neutral-soft-content text-sm">
+                            {Number(supportNeededToPass) > 0 ?
+                              `(at least ${supportNeededToPass}% needed)`
+                            : proposalWillPass ?
+                              "(proposal will pass)"
+                            : (
+                              Number(supportNeededToPass) < 0 &&
+                              !alreadyExecuted
+                            ) ?
+                              "(ready to be executed!)"
+                            : ""}
+                          </span>
+                        </p>
+                        {proposalWillPass && (
+                          <Countdown
+                            endTimestamp={Number(timeToPass)}
+                            display="inline"
+                          />
+                        )}
+                      </div>
                       <div className="h-3">
                         <ConvictionBarChart
                           compact

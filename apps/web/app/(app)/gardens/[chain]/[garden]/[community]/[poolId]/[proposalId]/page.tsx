@@ -190,7 +190,7 @@ export default function Page({
                 {!isSignalingType && (
                   <>
                     <Statistic
-                      label={"requested amount"}
+                      label={"request amount"}
                       icon={<InformationCircleIcon />}
                     >
                       <DisplayNumber
