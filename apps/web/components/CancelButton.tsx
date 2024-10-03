@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { Address, useChainId } from "wagmi";
+import { Address } from "wagmi";
 import { CVProposal, CVStrategy, Maybe } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
 import { Modal } from "./Modal";
 import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { cvStrategyABI } from "@/src/generated";
@@ -13,7 +14,7 @@ import { abiWithErrors } from "@/utils/abiWithErrors";
 type Props = {
   proposalData: Maybe<
     Pick<CVProposal, "id" | "proposalNumber"> & {
-      strategy: Pick<CVStrategy, "id">;
+      strategy: Pick<CVStrategy, "id" | "poolId">;
     }
   > &
     MetadataV1;
@@ -21,10 +22,10 @@ type Props = {
 
 function CancelButton({ proposalData }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const chainId = useChainId();
+  const chainId = useChainIdFromPath();
   const { publish } = usePubSubContext();
   const { strategy } = proposalData;
-  const [strategyId, proposalNumber] = proposalData.id.split("-");
+  const [, proposalNumber] = proposalData.id.split("-");
 
   const { write: writeCancel, isLoading } = useContractWriteWithConfirmations({
     address: strategy.id as Address,
@@ -38,8 +39,8 @@ function CancelButton({ proposalData }: Props) {
         type: "update",
         function: "cancelProposal",
         id: +proposalNumber,
-        containerId: strategyId,
-        chainId,
+        containerId: proposalData.strategy.poolId,
+        chainId: chainId,
       });
     },
   });

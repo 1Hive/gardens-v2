@@ -21,6 +21,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryCommunityABI } from "@/src/generated";
 import { DisputeOutcome, PointSystems, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -28,10 +29,10 @@ import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
   calculateDecay,
+  calculateMaxRatioNum,
   CV_PERCENTAGE_SCALE,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
-  MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { capitalize, ethAddressRegEx } from "@/utils/text";
 
@@ -168,9 +169,12 @@ export function PoolForm({ token, communityAddr }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { publish } = usePubSubContext();
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
+
   const watchedAddress = watch("poolTokenAddress").toLowerCase() as Address;
   const { data: customTokenData } = useToken({
     address: watchedAddress ?? "0x",
+    chainId: +chain,
   });
   const pointSystemType = watch("pointSystemType");
   const strategyType = watch("strategyType");
@@ -283,12 +287,13 @@ export function PoolForm({ token, communityAddr }: Props) {
     spendingLimit = spendingLimit / 100;
     minimumConviction = minimumConviction / 100;
 
-    const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
+    const maxRatioNum = calculateMaxRatioNum(spendingLimit, minimumConviction);
+
     const weightNum = minimumConviction * maxRatioNum ** 2;
 
     const blockTime = chain.blockTime;
-    // pool settings
 
+    // pool settings
     const maxRatio = BigInt(Math.round(maxRatioNum * CV_SCALE_PRECISION));
     const weight = BigInt(Math.round(weightNum * CV_SCALE_PRECISION));
     const decay = BigInt(calculateDecay(blockTime, convictionGrowth));
@@ -655,7 +660,7 @@ export function PoolForm({ token, communityAddr }: Props) {
             )}
           </div>
           <InfoBox
-            classNames="w-fit mt-4"
+            className="w-fit mt-4"
             infoBoxType="info"
             content={
               "The following sections can be updated by the council in the future."
@@ -750,7 +755,7 @@ export function PoolForm({ token, communityAddr }: Props) {
           {/* pool settings section */}
           <div className="flex flex-col">
             <h4 className="my-4">Pool settings</h4>
-            <div className="flex gap-8">
+            <div className="flex gap-8 flex-wrap">
               {Object.entries(poolSettingValues).map(
                 ([key, { label, description }]) => {
                   return (
@@ -820,12 +825,12 @@ export function PoolForm({ token, communityAddr }: Props) {
                     }}
                     registerOptions={{
                       max: {
-                        value: 100,
-                        message: "Max amount cannot exceed 100%",
+                        value: 99.9,
+                        message: "Minimum conviction should be under 100%",
                       },
                       min: {
                         value: 1 / CV_SCALE_PRECISION,
-                        message: "Amount must be greater than 0",
+                        message: "Minimum conviction must be greater than 0",
                       },
                     }}
                   >
@@ -905,7 +910,12 @@ export function PoolForm({ token, communityAddr }: Props) {
             >
               Edit
             </Button>
-            <Button onClick={() => createPool()} isLoading={loading}>
+            <Button
+              onClick={() => createPool()}
+              isLoading={loading}
+              disabled={!isConnected || missmatchUrl}
+              tooltip={tooltipMessage}
+            >
               Submit
             </Button>
           </div>

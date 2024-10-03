@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
@@ -19,6 +19,7 @@ import { Button } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -151,6 +152,18 @@ export const ProposalForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
+  const disableSubmitBtn = useMemo<ConditionObject[]>(
+    () => [
+      {
+        condition: !isEnoughBalance,
+        message: "Insufficient balance",
+      },
+    ],
+    [isEnoughBalance],
+  );
+  const { isConnected, missmatchUrl, tooltipMessage } =
+    useDisableButtons(disableSubmitBtn);
+
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
     +tokenGarden?.decimals,
@@ -220,6 +233,7 @@ export const ProposalForm = ({
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
     enabled: !!poolTokenAddr,
+    chainId,
   });
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
@@ -393,7 +407,7 @@ export const ProposalForm = ({
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-between py-6">
+      <div className="flex w-full items-center justify-between py-6 flex-wrap">
         <div>
           {arbitrableConfig && (
             <WalletBalance
@@ -419,8 +433,8 @@ export const ProposalForm = ({
             <Button
               onClick={() => createProposal()}
               isLoading={loading}
-              disabled={!isEnoughBalance}
-              tooltip={isEnoughBalance ? "" : "Insufficient balance"}
+              disabled={!isEnoughBalance || !isConnected || missmatchUrl}
+              tooltip={tooltipMessage}
             >
               Submit
             </Button>

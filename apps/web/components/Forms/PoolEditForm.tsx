@@ -9,7 +9,6 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { Button } from "../Button";
 import { EthAddress } from "../EthAddress";
-import { InfoBox } from "../InfoBox";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
@@ -19,9 +18,9 @@ import { DisputeOutcome, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import {
   calculateDecay,
+  calculateMaxRatioNum,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
-  MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { capitalize } from "@/utils/text";
 
@@ -55,7 +54,6 @@ export default function PoolEditForm({
   chainId,
   initValues,
   proposalType,
-  proposalOnDispute: isProposalOnDispute,
   setModalOpen,
 }: Props) {
   const {
@@ -66,7 +64,7 @@ export default function PoolEditForm({
     defaultValues: {
       spendingLimit: initValues.spendingLimit,
       minimumConviction: initValues.minimumConviction,
-      convictionGrowth: initValues.convictionGrowth,
+      convictionGrowth: Math.round(+initValues.convictionGrowth / 3600 / 24), // convert seconds to days
       minThresholdPoints: initValues.minThresholdPoints,
       // arb settings
       defaultResolution: initValues.defaultResolution,
@@ -159,9 +157,9 @@ export default function PoolEditForm({
     spendingLimit = spendingLimit / 100;
     minimumConviction = minimumConviction / 100;
 
-    const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
-    const weightNum = minimumConviction * maxRatioNum ** 2;
+    const maxRatioNum = calculateMaxRatioNum(spendingLimit, minimumConviction);
 
+    const weightNum = minimumConviction * maxRatioNum ** 2;
     const blockTime = chainConfigMap[chainId].blockTime;
 
     // pool settings
@@ -299,12 +297,12 @@ export default function PoolEditForm({
                   }}
                   registerOptions={{
                     max: {
-                      value: 100,
-                      message: "Max amount cannot exceed 100%",
+                      value: 99.9,
+                      message: "Minimum conviction should be under 100%",
                     },
                     min: {
                       value: 1 / CV_SCALE_PRECISION,
-                      message: "Amount must be greater than 0",
+                      message: "Minimum conviction must be greater than 0",
                     },
                   }}
                 >
@@ -403,7 +401,7 @@ export default function PoolEditForm({
             <div className="flex flex-col">
               <h4 className="my-4">Arbitration settings</h4>
             </div>
-            <div className="flex gap-4 mt-2">
+            <div className="flex gap-4 mt-2 flex-wrap">
               <FormRadioButton
                 label="Global gardens tribunal"
                 checked={

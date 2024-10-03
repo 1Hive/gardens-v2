@@ -18,7 +18,6 @@ contract UpgradeCVMultichain is BaseMultiChain {
         RegistryFactoryV0_0 registryFactory = RegistryFactoryV0_0(payable(address(registryFactoryProxy)));
         // Upgrades.upgradeProxy(address(registryFactoryProxy), "RegistryFactoryV0_0.sol:RegistryFactoryV0_0", "");
         // abi.encodeWithSelector(RegistryFactoryV0_1.initializeV2.selector)
-        registryFactory.upgradeTo(address(new RegistryFactoryV0_0())); // DOESNT VALIDATE SAFE UPGRADING
         registryFactory.setRegistryCommunityTemplate(registryImplementation);
         registryFactory.setStrategyTemplate(strategyImplementation);
 

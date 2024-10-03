@@ -1,10 +1,10 @@
 name: "Code Review by Gemini AI"
 on:
-  pull_request:
-    paths:
-      - "**/*.ts"
-      - "**/*.tsx"
-      - "**/*.sol"
+  issue_comment:
+    types:
+      - created
+      - updated
+
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -13,22 +13,47 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v3
-      - name: "Get filtered diff of the pull request"
+
+      - name: Only PR comments
+        if: ${{ !github.event.issue.pull_request || !contains(github.event.comment.body,'!ai') }}
+        run: exit 1
+
+      - name: Put a reaction to the comment
+        run: gh api graphql --silent --raw-field query="mutation AddReaction {addReaction(input:{subjectId:\"$NODE_ID\",content:EYES}){reaction{content}subject{id}}}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_ID: ${{ github.event.comment.node_id }}
+
+      - name: Fetch PR details using GitHub API
+        id: pr-details
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr_number = context.payload.issue.number;
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
+            return pr.data;
+
+      - name: "Get diff of the pull request"
         id: get_diff
         shell: bash
         env:
-          PULL_REQUEST_HEAD_REF: "${{ github.event.pull_request.head.ref }}"
-          PULL_REQUEST_BASE_REF: "${{ github.event.pull_request.base.ref }}"
+          PULL_REQUEST_HEAD_REF: "${{ steps.pr-details.outputs.head.ref }}"
+          PULL_REQUEST_BASE_REF: "${{ steps.pr-details.outputs.base.ref }}"
         run: |-
-          git fetch origin "${{ env.PULL_REQUEST_HEAD_REF }}" # fetch the branch with changes
-          git fetch origin "${{ env.PULL_REQUEST_BASE_REF }}" # fetch the target branch
-          git checkout "${{ env.PULL_REQUEST_HEAD_REF }}" # switch to the branch with changes
-          git diff -- '*.ts' '*.tsx' '*.sol' "origin/${{ env.PULL_REQUEST_BASE_REF }}" > "filtered_diff.txt" # generate a filtered diff
+          echo "PULL_REQUEST_HEAD_REF: $PULL_REQUEST_HEAD_REF"
+          echo "PULL_REQUEST_BASE_REF: $PULL_REQUEST_BASE_REF"
+          # Only include changes to .ts, .tsx, and .sol files in the diff
+          git diff "origin/${{ env.PULL_REQUEST_BASE_REF }}" -- '*.ts' '*.tsx' '*.sol' > "diff.txt"
           {
             echo "pull_request_diff<<EOF"; 
-            cat "filtered_diff.txt";
+            cat "diff.txt";
             echo 'EOF';
           } >> $GITHUB_OUTPUT # save the filtered diff to an output variable
+
       - uses: rubensflinco/gemini-code-review-action@1.0.5
         name: "Code Review by Gemini AI"
         continue-on-error: true
@@ -37,13 +62,13 @@ jobs:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           github_repository: ${{ github.repository }}
-          github_pull_request_number: ${{ github.event.pull_request.number }}
-          git_commit_hash: ${{ github.event.pull_request.head.sha }}
+          github_pull_request_number: ${{ steps.pr-details.outputs.number }}
+          git_commit_hash: ${{ steps.pr-details.outputs.head.sha }}
           model: "gemini-1.5-pro-latest"
           pull_request_diff: |-
             ${{ steps.get_diff.outputs.pull_request_diff }}
-          pull_request_chunk_size: "5000" # chunk size is important to avoid exceeding the API limits
+          pull_request_chunk_size: "3500"
           extra_prompt: |-
-            Only focus on logic and security-sensitive sections of the code.
-            Skip reviewing helper functions, comments, or tests.
+            Only review files with extensions: .ts, .tsx, .sol
+            Focus your review on code logic, security vulnerabilities, and potential improvements in these files.
           log_level: "DEBUG"

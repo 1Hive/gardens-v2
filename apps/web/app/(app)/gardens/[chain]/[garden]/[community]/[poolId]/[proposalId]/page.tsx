@@ -31,16 +31,7 @@ import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
-
-const prettyTimestamp = (timestamp: number) => {
-  const date = new Date(timestamp * 1000);
-
-  const day = date.getDate();
-  const month = date.toLocaleString("default", { month: "short" });
-  const year = date.getFullYear();
-
-  return `${day} ${month} ${year}`;
-};
+import { prettyTimestamp } from "@/utils/text";
 
 export default function Page({
   params: { proposalId, garden, poolId },
@@ -53,7 +44,7 @@ export default function Page({
   };
 }) {
   const { isDisconnected, address } = useAccount();
-  const [strategyId, proposalNumber] = proposalId.split("-");
+  const [, proposalNumber] = proposalId.split("-");
   const { data } = useSubgraphQuery<getProposalDataQuery>({
     query: getProposalDataDocument,
     variables: {
@@ -62,7 +53,7 @@ export default function Page({
     },
     changeScope: {
       topic: "proposal",
-      containerId: strategyId,
+      containerId: poolId,
       id: proposalNumber,
       type: "update",
     },
@@ -80,6 +71,7 @@ export default function Page({
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
     enabled: !!poolTokenAddr,
+    chainId,
   });
   const { data: ipfsResult } = useMetadataIpfsFetch({
     hash: proposalData?.metadataHash,
@@ -134,7 +126,7 @@ export default function Page({
         type: "update",
         function: "distribute",
         id: proposalNumber,
-        containerId: strategyId,
+        containerId: poolId,
         chainId,
       });
     },
@@ -192,7 +184,7 @@ export default function Page({
             <MarkdownWrapper>
               {metadata?.description ?? "No description found"}
             </MarkdownWrapper>
-            <div className="flex justify-between">
+            <div className="flex justify-between flex-wrap gap-2">
               <div className="flex flex-col gap-2">
                 {!isSignalingType && (
                   <>

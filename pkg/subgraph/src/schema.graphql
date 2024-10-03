@@ -204,3 +204,20 @@ type ProposalMetadata @entity(immutable: false) {
   title: String!
   description: String!
 }
+
+type CollateralVault @entity(immutable: false) {
+  id: ID!
+  strategy: CVStrategy!
+  collaterals: [CollateralVaultDeposit!] @derivedFrom(field: "collateralVault")
+}
+
+type CollateralVaultDeposit @entity(immutable: false) {
+  id: ID!
+  collateralVault: CollateralVault!
+  amount: BigInt!
+  depositor: Bytes!
+  createdAt: BigInt!
+  proposalId: BigInt!
+  withdrawnAt: BigInt
+  withdrawnTo: Bytes
+}
