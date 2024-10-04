@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Address } from "viem";
 import { getPoolDataDocument, getPoolDataQuery } from "#/subgraph/.graphclient";
 import { ProposalForm } from "@/components/Forms";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -61,7 +60,6 @@ export default function Page({
           proposalType={proposalType}
           alloInfo={alloInfo}
           tokenGarden={tokenGarden}
-          tokenAddress={garden as Address}
           spendingLimit={poolAmountSpendingLimit}
           spendingLimitPct={spendingLimitPct}
           poolAmount={poolAmount}
