@@ -1,4 +1,3 @@
-import { zeroAddress } from "viem";
 import { Address, useContractRead } from "wagmi";
 import {
   CVProposal,

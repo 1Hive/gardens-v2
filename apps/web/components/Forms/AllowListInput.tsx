@@ -121,6 +121,7 @@ export function AllowListInput({
 
   const handleAllowEveryone = () => {
     setAddresses([zeroAddress]);
+    setValue(registerKey, [zeroAddress]); // Update form value
   };
 
   useEffect(() => {
