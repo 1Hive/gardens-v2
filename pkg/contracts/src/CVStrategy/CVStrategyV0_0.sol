@@ -213,7 +213,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     // Constants for fixed numbers
     string public constant VERSION = "0.0";
-    uint256 public constant D = 100000000000000; //10**14
+    uint256 public constant D = 10000000; //10**7
     uint256 internal constant TWO_128 = 0x100000000000000000000000000000000; // 2**128
     uint256 internal constant TWO_127 = 0x80000000000000000000000000000000; // 2**127
     uint256 internal constant TWO_64 = 0x10000000000000000; // 2**64
