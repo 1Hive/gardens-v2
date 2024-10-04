@@ -327,6 +327,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     function activateMemberInStrategy(address _member, address _strategy) public virtual {
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
+        onlyStrategyAddress(msg.sender, _strategy);
         _revertZeroAddress(_strategy);
 
         if (memberActivatedInStrategies[_member][_strategy]) {
