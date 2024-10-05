@@ -505,6 +505,16 @@ export function PoolForm({ token, communityAddr }: Props) {
     }
   }, [customTokenData, watchedAddress, trigger]);
 
+  const votingWeightSystemDescriptions = {
+    fixed: "All community member have equal voting in the pool",
+    capped:
+      "Voting weight is equal to tokens staked in the community with no max limit.",
+    unlimited:
+      "Voting weight is equal to tokens staked in the community with no max limit.",
+    quadratic:
+      "Voting weight decreases progressively as more tokens are staked.",
+  };
+
   return (
     <form onSubmit={handleSubmit(handlePreview)} className="w-full">
       {showPreview ?
@@ -582,46 +592,58 @@ export function PoolForm({ token, communityAddr }: Props) {
               />
             </div>
             <div className="flex flex-col">
-              <FormSelect
-                label="Pool System"
-                register={register}
-                errors={errors}
-                required
-                registerKey="pointSystemType"
-                options={Object.entries(PointSystems).map(([value, text]) => ({
-                  label: text,
-                  value: value,
-                }))}
-              />
-            </div>
-            {pointSystemType == 1 && (
-              <div className="flex flex-col">
-                <FormInput
-                  label="Token max amount"
-                  register={register}
-                  required
-                  registerOptions={{
-                    min: {
-                      value: INPUT_TOKEN_MIN_VALUE,
-                      message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
-                    },
-                  }}
-                  otherProps={{
-                    step: INPUT_TOKEN_MIN_VALUE,
-                    min: INPUT_TOKEN_MIN_VALUE,
-                  }}
-                  errors={errors}
-                  className="pr-14"
-                  registerKey="maxAmount"
-                  type="number"
-                  placeholder="0"
-                >
-                  <span className="absolute right-4 top-4 text-black">
-                    {token.symbol}
-                  </span>
-                </FormInput>
+              <label className="label w-fit">
+                Voting Weight System
+                <span className="ml-1">*</span>
+              </label>
+              <div className="ml-2 flex flex-col gap-2">
+                {Object.entries(PointSystems).map(([value, label], i) => (
+                  <>
+                    <FormRadioButton
+                      key={value}
+                      value={value}
+                      label={capitalize(label)}
+                      inline={true}
+                      onChange={() =>
+                        setValue("pointSystemType", parseInt(value))
+                      }
+                      checked={parseInt(value) === pointSystemType}
+                      registerKey="pointSystemType"
+                      description={votingWeightSystemDescriptions[label]}
+                    />
+                    {pointSystemType == 1 && i === 1 && (
+                      <div className="flex flex-col">
+                        <FormInput
+                          label="Token max amount"
+                          register={register}
+                          required
+                          registerOptions={{
+                            min: {
+                              value: INPUT_TOKEN_MIN_VALUE,
+                              message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                            },
+                          }}
+                          otherProps={{
+                            step: INPUT_TOKEN_MIN_VALUE,
+                            min: INPUT_TOKEN_MIN_VALUE,
+                          }}
+                          errors={errors}
+                          className="pr-14"
+                          registerKey="maxAmount"
+                          type="number"
+                          placeholder="0"
+                        >
+                          <span className="absolute right-4 top-4 text-black">
+                            {token.symbol}
+                          </span>
+                        </FormInput>
+                      </div>
+                    )}
+                  </>
+                ))}
               </div>
-            )}
+            </div>
+
             {shouldRenderInputMap(
               "isSybilResistanceRequired",
               strategyType,
