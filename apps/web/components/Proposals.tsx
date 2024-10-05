@@ -22,6 +22,7 @@ import {
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PoolGovernanceProps } from "./PoolGovernance";
 import { ProposalCardProps } from "./ProposalCard";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 import {
   Button,
   CheckPassport,
@@ -425,7 +426,6 @@ export function Proposals({
                       stakedFilter={stakedFilters[i]}
                       index={i}
                       isAllocationView={allocationView}
-                      tooltipMessage={tooltipMessage}
                       memberActivatedPoints={memberActivatedPoints}
                       memberPoolWeight={memberPoolWeight}
                       executeDisabled={
@@ -550,7 +550,9 @@ function UserAllocationStats({ stats }: { stats: Stats[] }) {
               </div>
 
               <InfoWrapper tooltip={stat.info}>
-                <p className="ml-20 truncate">{stat.name}</p>
+                <p className="ml-20">
+                  <TooltipIfOverflow>{stat.name}</TooltipIfOverflow>
+                </p>
               </InfoWrapper>
             </div>
             <div className="ml-20">

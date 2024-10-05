@@ -15,6 +15,7 @@ import {
   useDisconnect,
   useSwitchNetwork,
 } from "wagmi";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 import { walletIcon } from "@/assets";
 import { Button, DisplayNumber } from "@/components";
 import { ChainIcon } from "@/configs/chains";
@@ -164,12 +165,13 @@ export function ConnectWallet() {
                             <Menu.Item as="div" className="flex flex-col gap-2">
                               {isWrongNetwork && (
                                 <Button
-                                  className="overflow-hidden truncate"
                                   onClick={() =>
                                     switchNetwork && switchNetwork(urlChainId)
                                   }
                                 >
-                                  Switch to {chainFromPath?.name ?? ""}
+                                  <TooltipIfOverflow>
+                                    {`Switch to ${chainFromPath?.name ?? ""}`}
+                                  </TooltipIfOverflow>
                                 </Button>
                               )}
 
