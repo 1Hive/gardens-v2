@@ -68,10 +68,6 @@ export function ProposalCard({
   });
 
   const metadata = proposalData.metadata ?? metadataResult;
-  const isEnded =
-    ProposalStatus[proposalData.proposalStatus] === "cancelled" ||
-    ProposalStatus[proposalData.proposalStatus] === "rejected" ||
-    ProposalStatus[proposalData.proposalStatus] === "executed";
 
   const { id, proposalNumber, proposalStatus, requestedAmount } = proposalData;
   const pathname = usePathname();
@@ -235,16 +231,13 @@ export function ProposalCard({
           </div>
         </div>
       </div>
-      {!isEnded &&
-        !isAllocationView &&
-        stakedFilter &&
-        stakedFilter?.value > 0 && (
-          <div className="">
-            <p className="flex items-baseline text-xs">
-              Your support: {poolWeightAllocatedInProposal}%
-            </p>
-          </div>
-        )}
+      {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
+        <div className="">
+          <p className="flex items-baseline text-xs">
+            Your support: {poolWeightAllocatedInProposal}%
+          </p>
+        </div>
+      )}
       {/* TODO: fetch every member stake */}
       {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}
     </>
