@@ -48,6 +48,7 @@ cache/
 pkg/subgraph/generated
 pkg/**/data
 cookies.json
+.graphclientrc.yml
 
 lcov.info
 # some abi should be ignored
