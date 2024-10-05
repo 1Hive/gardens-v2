@@ -557,7 +557,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                 registerKey="poolTokenAddress"
                 placeholder="0x.."
                 type="text"
-                className="pr-14"
+                className="pr-14 font-mono text-sm"
               >
                 {customTokenData?.symbol && (
                   <span className="absolute right-4 top-4 text-black">

@@ -101,7 +101,7 @@ export const FormAddressInput = ({
   }
 
   return (
-    <div className={`flex flex-col max-w-md ${className ?? ""}`}>
+    <div className={`flex flex-col max-w-md text-sm ${className ?? ""}`}>
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer">
           <span className="label-text">
@@ -123,7 +123,7 @@ export const FormAddressInput = ({
       >
         <input
           ref={inputRef}
-          className={`input px-0 w-full border-none focus:border-none outline-none focus:outline-none ${readOnly || disabled ? "cursor-not-allowed" : ""}`}
+          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${readOnly || disabled ? "cursor-not-allowed" : ""}`}
           placeholder={placeholder || "Enter address or ENS name"}
           id={registerKey}
           name={registerKey}
