@@ -264,7 +264,7 @@ export default function Page({
               thresholdPct={thresholdPct}
               proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
-              proposalId={Number(proposalIdNumber)}
+              proposalNumber={Number(proposalIdNumber)}
             />
           </>
         }

@@ -35,13 +35,15 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
+import { ProposalStatus } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
 
 // Types
 export type ProposalInputItem = {
-  id: string;
+  proposalId: string;
+  proposalNumber: number;
   value: number;
 };
 
@@ -90,9 +92,13 @@ export function Proposals({
   // State
   const [allocationView, setAllocationView] = useState(false);
   const [inputAllocatedTokens, setInputAllocatedTokens] = useState<number>(0);
-  const [inputs, setInputs] = useState<ProposalInputItem[]>();
+  const [inputs, setInputs] = useState<{ [key: string]: ProposalInputItem }>(
+    {},
+  );
   const [memberActivatedPoints, setMemberActivatedPoints] = useState<number>(0);
-  const [stakedFilters, setStakedFilters] = useState<ProposalInputItem[]>([]);
+  const [stakedFilters, setStakedFilters] = useState<{
+    [key: string]: ProposalInputItem;
+  }>({});
 
   // Hooks
   const { address: wallet } = useAccount();
@@ -141,7 +147,7 @@ export function Proposals({
     },
   );
 
-  //Contract reads
+  // Contract reads
   const { data: memberPower } = useContractRead({
     address: communityAddress,
     abi: registryCommunityABI,
@@ -179,10 +185,14 @@ export function Proposals({
       0n,
     );
 
-    const memberStakes: ProposalInputItem[] = stakesFiltered.map((item) => ({
-      id: item.proposal.proposalNumber,
-      value: Number(item.amount),
-    }));
+    const memberStakes: { [key: string]: ProposalInputItem } = {};
+    stakesFiltered.forEach((item) => {
+      memberStakes[item.proposal.id] = {
+        proposalId: item.proposal.id,
+        value: Number(item.amount),
+        proposalNumber: item.proposal.proposalNumber,
+      };
+    });
 
     setInputAllocatedTokens(Number(totalStaked));
     setStakedFilters(memberStakes);
@@ -203,40 +213,47 @@ export function Proposals({
   useEffect(() => {
     if (!proposals) return;
 
-    const newInputs = proposals.map(({ proposalNumber }) => {
-      const stakedFilter = stakedFilters.find(
-        (item) => item.id === proposalNumber,
-      );
-      return { id: proposalNumber, value: stakedFilter?.value ?? 0 };
+    const newInputs: { [key: string]: ProposalInputItem } = {};
+    proposals.forEach(({ id, proposalNumber }) => {
+      newInputs[id] = {
+        proposalId: id,
+        value: stakedFilters[id]?.value ?? 0,
+        proposalNumber,
+      };
     });
     setInputs(newInputs);
   }, [proposals, stakedFilters]);
 
   const getProposalsInputsDifferences = (
-    inputData: ProposalInputItem[],
-    currentData: ProposalInputItem[],
+    inputData: { [key: string]: ProposalInputItem },
+    currentData: { [key: string]: ProposalInputItem },
   ) => {
-    return inputData.reduce<{ proposalId: bigint; deltaSupport: bigint }[]>(
-      (acc, input) => {
-        const current = currentData.find((item) => item.id === input.id);
-        const diff =
-          BigInt(Math.floor(input.value)) - BigInt(current?.value ?? 0);
-        if (diff !== 0n) {
-          acc.push({ proposalId: BigInt(input.id), deltaSupport: diff });
-        }
-        return acc;
-      },
-      [],
-    );
+    return Object.values(inputData).reduce<
+      { proposalId: bigint; deltaSupport: bigint }[]
+    >((acc, input) => {
+      const current = currentData[input.proposalId];
+      const diff =
+        BigInt(Math.floor(input.value)) - BigInt(current?.value ?? 0);
+      if (diff !== 0n) {
+        acc.push({
+          proposalId: BigInt(input.proposalNumber),
+          deltaSupport: diff,
+        });
+      }
+      return acc;
+    }, []);
   };
 
-  const calculateTotalTokens = (exceptIndex?: number) => {
+  const calculateTotalTokens = (exceptProposalId?: string) => {
     if (!inputs) {
       console.error("Inputs not yet computed");
       return 0;
     }
-    return inputs.reduce((acc, curr, i) => {
-      if (exceptIndex !== undefined && exceptIndex === i) {
+    return Object.values(inputs).reduce((acc, curr) => {
+      if (
+        exceptProposalId !== undefined &&
+        exceptProposalId === curr.proposalId
+      ) {
         return acc;
       } else {
         return acc + Number(curr.value);
@@ -244,14 +261,14 @@ export function Proposals({
     }, 0);
   };
 
-  const inputHandler = (i: number, value: number) => {
-    const currentPoints = calculateTotalTokens(i);
+  const inputHandler = (proposalId: string, value: number) => {
+    const currentPoints = calculateTotalTokens(proposalId);
     const maxAllowableValue = memberActivatedPoints - currentPoints;
     value = Math.min(value, maxAllowableValue);
 
-    setInputs((prev) =>
-      prev?.map((input, index) => (index === i ? { ...input, value } : input)),
-    );
+    const input = inputs[proposalId];
+    input.value = value;
+    setInputs((prev) => ({ ...prev, [proposalId]: input }));
     setInputAllocatedTokens(currentPoints + value);
   };
 
@@ -278,6 +295,7 @@ export function Proposals({
       });
     },
   });
+
   const submit = async () => {
     if (!inputs) {
       console.error("Inputs not yet computed");
@@ -357,21 +375,16 @@ export function Proposals({
       message: "Must have points activated to support proposals",
     },
   ];
+
   const disableManSupportButton = disableManageSupportBtnCondition.some(
     (cond) => cond.condition,
   );
+
   const { tooltipMessage, isConnected, missmatchUrl } = useDisableButtons(
     disableManageSupportBtnCondition,
   );
 
-  // const endedProposals = proposals?.filter(
-  //   (x) =>
-  //     ProposalStatus[x.status] !== "active" &&
-  //     ProposalStatus[x.status] !== "disputed",
-  // );
-
   // Render
-
   return (
     <>
       <PoolGovernance
@@ -411,19 +424,18 @@ export function Proposals({
           {proposals && inputs ?
             <>
               {proposals
-                // .filter(
-                //   (x) =>
-                //     ProposalStatus[x.status] === "active" ||
-                //     ProposalStatus[x.status] === "disputed",
-                // )
-                .map((proposalData, i) => (
-                  <Fragment key={proposalData.proposalNumber}>
+                .filter(
+                  (x) =>
+                    ProposalStatus[x.proposalStatus] === "active" ||
+                    ProposalStatus[x.proposalStatus] === "disputed",
+                )
+                .map((proposalData) => (
+                  <Fragment key={proposalData.id}>
                     <ProposalCard
                       proposalData={proposalData}
                       strategyConfig={strategy.config}
-                      inputData={inputs[i]}
-                      stakedFilter={stakedFilters[i]}
-                      index={i}
+                      inputData={inputs[proposalData.id]}
+                      stakedFilter={stakedFilters[proposalData.id]}
                       isAllocationView={allocationView}
                       tooltipMessage={tooltipMessage}
                       memberActivatedPoints={memberActivatedPoints}
@@ -441,46 +453,45 @@ export function Proposals({
                     />
                   </Fragment>
                 ))}
-              {/* {!allocationView && !!endedProposals?.length && (
-                <details className="collapse collapse-arrow">
-                  <summary className="collapse-title text-md font-medium bg-neutral-soft mb-4 rounded-b-2xl flex content-center">
-                    Click to see ended proposals
-                  </summary>
-                  <div className="collapse-content px-0 flex flex-col gap-6">
-                    {proposals
-                      .filter(
-                        (x) =>
-                          ProposalStatus[x.status] !== "active" &&
-                          ProposalStatus[x.status] !== "disputed",
-                      )
-                      .map((proposalData, i) => (
-                        <Fragment key={proposalData.proposalNumber}>
-                          <ProposalCard
-                            proposalData={proposalData}
-                            inputData={inputs[i]}
-                            stakedFilter={stakedFilters[i]}
-                            index={i}
-                            isAllocationView={allocationView}
-                            tooltipMessage={tooltipMessage}
-                            memberActivatedPoints={memberActivatedPoints}
-                            memberPoolWeight={memberPoolWeight}
-                            executeDisabled={
-                              proposalData.proposalStatus == 4 ||
-                              !isConnected ||
-                              missmatchUrl
-                            }
-                            poolToken={poolToken}
-                            tokenDecimals={tokenDecimals}
-                            alloInfo={alloInfo}
-                            triggerRenderProposals={triggerRenderProposals}
-                            inputHandler={inputHandler}
-                            tokenData={strategy.registryCommunity.garden}
-                          />
-                        </Fragment>
-                      ))}
-                  </div>
-                </details>
-              )} */}
+              <div className="collapse collapse-arrow">
+                <input type="checkbox" />
+                <div className="collapse-title text-xl font-medium">
+                  Click to show/hide ended proposals
+                </div>
+                <div className="collapse-content flex flex-col gap-6 px-0">
+                  {proposals
+                    .filter(
+                      (x) =>
+                        ProposalStatus[x.proposalStatus] === "cancelled" ||
+                        ProposalStatus[x.proposalStatus] === "rejected" ||
+                        ProposalStatus[x.proposalStatus] === "executed",
+                    )
+                    .map((proposalData) => (
+                      <Fragment key={proposalData.proposalNumber}>
+                        <ProposalCard
+                          proposalData={proposalData}
+                          strategyConfig={strategy.config}
+                          inputData={inputs[proposalData.id]}
+                          stakedFilter={stakedFilters[proposalData.id]}
+                          isAllocationView={allocationView}
+                          tooltipMessage={tooltipMessage}
+                          memberActivatedPoints={memberActivatedPoints}
+                          memberPoolWeight={memberPoolWeight}
+                          executeDisabled={
+                            proposalData.proposalStatus == 4 ||
+                            !isConnected ||
+                            missmatchUrl
+                          }
+                          poolToken={poolToken}
+                          tokenDecimals={tokenDecimals}
+                          alloInfo={alloInfo}
+                          inputHandler={inputHandler}
+                          tokenData={strategy.registryCommunity.garden}
+                        />
+                      </Fragment>
+                    ))}
+                </div>
+              </div>
             </>
           : <LoadingSpinner />}
         </div>
