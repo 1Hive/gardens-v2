@@ -384,6 +384,12 @@ export function Proposals({
     disableManageSupportBtnCondition,
   );
 
+  const endedProposals = proposals.filter(
+    (x) =>
+      ProposalStatus[x.proposalStatus] === "cancelled" ||
+      ProposalStatus[x.proposalStatus] === "rejected" ||
+      ProposalStatus[x.proposalStatus] === "executed",
+  );
   // Render
   return (
     <>
@@ -453,20 +459,14 @@ export function Proposals({
                     />
                   </Fragment>
                 ))}
-              <div className="collapse collapse-arrow">
-                <input type="checkbox" />
-                <div className="collapse-title text-xl font-medium">
-                  Click to show/hide ended proposals
-                </div>
-                <div className="collapse-content flex flex-col gap-6 px-0">
-                  {proposals
-                    .filter(
-                      (x) =>
-                        ProposalStatus[x.proposalStatus] === "cancelled" ||
-                        ProposalStatus[x.proposalStatus] === "rejected" ||
-                        ProposalStatus[x.proposalStatus] === "executed",
-                    )
-                    .map((proposalData) => (
+              {!!endedProposals.length && (
+                <div className="collapse collapse-arrow">
+                  <input type="checkbox" />
+                  <div className="collapse-title text-xl font-medium">
+                    Click to show/hide ended proposals
+                  </div>
+                  <div className="collapse-content flex flex-col gap-6 px-0">
+                    {endedProposals.map((proposalData) => (
                       <Fragment key={proposalData.proposalNumber}>
                         <ProposalCard
                           proposalData={proposalData}
@@ -490,8 +490,9 @@ export function Proposals({
                         />
                       </Fragment>
                     ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           : <LoadingSpinner />}
         </div>

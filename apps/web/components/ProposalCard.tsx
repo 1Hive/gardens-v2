@@ -23,7 +23,7 @@ import {
   useConvictionRead,
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
-import { PoolTypes, ProposalStatus } from "@/types";
+import { PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
