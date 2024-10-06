@@ -267,11 +267,8 @@ export const CommunityForm = ({
                 step: INPUT_TOKEN_MIN_VALUE,
                 min: INPUT_TOKEN_MIN_VALUE,
               }}
-            >
-              <span className="absolute right-4 top-4 text-black">
-                {tokenGarden.symbol}
-              </span>
-            </FormInput>
+              suffix={tokenGarden.symbol}
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -296,9 +293,8 @@ export const CommunityForm = ({
                   message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
                 },
               }}
-            >
-              <span className="absolute right-4 top-4 text-black">%</span>
-            </FormInput>
+              suffix="%"
+            />
           </div>
           <div className="flex flex-col">
             <FormInput

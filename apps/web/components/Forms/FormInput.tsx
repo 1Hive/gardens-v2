@@ -15,7 +15,6 @@ type Props = {
   errors?: any;
   required?: boolean;
   registerOptions?: RegisterOptions;
-  children?: any;
   rows?: number;
   readOnly?: boolean;
   disabled?: boolean;
@@ -25,6 +24,7 @@ type Props = {
   step?: number | string;
   tooltip?: string;
   onChange?: (value: any) => void;
+  suffix?: string;
 };
 
 export function FormInput({
@@ -37,7 +37,6 @@ export function FormInput({
   errors = false,
   required = false,
   registerOptions,
-  children,
   rows,
   readOnly,
   disabled,
@@ -47,6 +46,7 @@ export function FormInput({
   step,
   tooltip,
   onChange,
+  suffix,
 }: Props) {
   const fixedInputClassname =
     "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
@@ -107,7 +107,9 @@ export function FormInput({
             {...otherProps}
           />
         }
-        {children}
+        {suffix && (
+          <span className="absolute right-4 top-4 text-black">{suffix}</span>
+        )}
       </div>
       {errors && (
         <p className="text-error mt-2 text-sm font-semibold ml-1">

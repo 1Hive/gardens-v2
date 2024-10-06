@@ -305,9 +305,8 @@ export default function PoolEditForm({
                       message: "Minimum conviction must be greater than 0",
                     },
                   }}
-                >
-                  <span className="absolute right-4 top-4 text-black">%</span>
-                </FormInput>
+                  suffix="%"
+                />
               </div>
             )}
             {shouldRenderInput("convictionGrowth") && (
@@ -335,11 +334,8 @@ export default function PoolEditForm({
                       message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
                     },
                   }}
-                >
-                  <span className="absolute right-4 top-4 text-black">
-                    days
-                  </span>
-                </FormInput>
+                  suffix="days"
+                />
               </div>
             )}
             {shouldRenderInput("minThresholdPoints") && (
@@ -390,9 +386,8 @@ export default function PoolEditForm({
                       message: "Amount must be greater than 0",
                     },
                   }}
-                >
-                  <span className="absolute right-4 top-4 text-black">%</span>
-                </FormInput>
+                  suffix="%"
+                />
               </div>
             )}
           </div>

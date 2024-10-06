@@ -139,7 +139,7 @@ export const FormAddressInput = ({
             ...registerOptions,
           })}
         />
-        {inputRef.current?.value && (
+        {input && (
           // Don't want to use nextJS Image here (and adding remote patterns for the URL)
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -147,7 +147,7 @@ export const FormAddressInput = ({
             className={"!rounded-full ml-2"}
             src={
               avatarUrl ? avatarUrl : (
-                blo((inputRef.current?.value ?? "0x") as Address)
+                blo((input ?? "0x") as Address)
               )
             }
             width="30"
