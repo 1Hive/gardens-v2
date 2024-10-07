@@ -97,6 +97,20 @@ export function ProposalCard({
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
     !alreadyExecuted;
 
+  const ProposalCountDown = () => {
+    return (
+      <span className="text-neutral-soft-content text-sm">
+        {Number(supportNeededToPass) > 0 && !alreadyExecuted ?
+          `At least ${supportNeededToPass}% needed`
+        : proposalWillPass ?
+          "Estimated time to pass:"
+        : Number(supportNeededToPass) < 0 && !alreadyExecuted ?
+          "Ready to be executed"
+        : ""}
+      </span>
+    );
+  };
+
   const proposalCardContent = (
     <>
       <div
@@ -195,24 +209,15 @@ export function ProposalCard({
                 {currentConvictionPct != null &&
                   thresholdPct != null &&
                   totalSupportPct != null && (
-                    <div className="">
-                      <div className="flex items-baseline gap-1">
-                        <p className="mb-2 text-sm">
-                          Total Support: <span>{totalSupportPct}%</span> of pool
-                          weight{" "}
-                          <span className="text-neutral-soft-content text-sm">
-                            {Number(supportNeededToPass) > 0 ?
-                              `(at least ${supportNeededToPass}% needed)`
-                            : proposalWillPass ?
-                              "(proposal will pass)"
-                            : (
-                              Number(supportNeededToPass) < 0 &&
-                              !alreadyExecuted
-                            ) ?
-                              "(ready to be executed!)"
-                            : ""}
-                          </span>
-                        </p>
+                    <div>
+                      <div className="flex items-end gap-1 mb-2">
+                        <div>
+                          <p className="text-sm">
+                            Total Support: <span>{totalSupportPct}%</span> of
+                            pool weight.{" "}
+                          </p>
+                        </div>
+                        <ProposalCountDown />
                         {proposalWillPass && (
                           <Countdown
                             endTimestamp={Number(timeToPass)}
