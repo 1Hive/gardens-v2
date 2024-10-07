@@ -31,6 +31,7 @@ import {
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
+import { Skeleton } from "@/components/Skeleton";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -45,7 +46,6 @@ import {
   SCALE_PRECISION,
   SCALE_PRECISION_DECIMALS,
 } from "@/utils/numbers";
-import { Skeleton } from "@/components/Skeleton";
 
 export default function Page({
   params: { chain, garden: tokenAddr, community: communityAddr },
