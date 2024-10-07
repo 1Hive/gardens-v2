@@ -252,13 +252,11 @@ export function ProposalCard({
           </div>
         </div>
       </div>
-      {
-        <div>
-          <p className="flex items-baseline text-xs">
-            Your support: {poolWeightAllocatedInProposal}%
-          </p>
-        </div>
-      }
+      {!isAllocationView && (
+        <p className="flex items-baseline text-xs">
+          Your support: {poolWeightAllocatedInProposal}%
+        </p>
+      )}
     </>
   );
 
