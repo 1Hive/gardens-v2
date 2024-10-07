@@ -54,7 +54,7 @@ type Props = {
     | "challengerCollateralAmount"
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
-  poolToken: FetchTokenResult;
+  poolToken?: FetchTokenResult;
   pointSystem: number;
   chainId: string;
   proposalType: string;

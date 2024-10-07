@@ -39,7 +39,7 @@ export type ProposalCardProps = {
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   index: number;
-  poolToken: FetchTokenResult;
+  poolToken?: FetchTokenResult;
   isAllocationView: boolean;
   memberActivatedPoints: number;
   memberPoolWeight: number;
@@ -134,7 +134,7 @@ export function ProposalCard({
 
           {/* amount requested and proposal status */}
           <div className="flex gap-6 text-neutral-soft-content">
-            {!isSignalingType && (
+            {!isSignalingType && poolToken && (
               <div className="flex items-center gap-1 justify-self-end">
                 <p className="">Requested amount: </p>
                 <DisplayNumber

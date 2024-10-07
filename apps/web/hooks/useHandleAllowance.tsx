@@ -9,7 +9,7 @@ import { getTxMessage } from "@/utils/transactionMessages";
 
 export function useHandleAllowance(
   accountAddr: Address | undefined,
-  tokenAddr: Address,
+  tokenAddr: Address | undefined,
   tokenSymbol: string,
   spenderAddr: Address,
   amount: bigint,
@@ -32,7 +32,7 @@ export function useHandleAllowance(
     abi: abiWithErrors(erc20ABI),
     args: [accountAddr as Address, spenderAddr],
     functionName: "allowance",
-    enabled: accountAddr !== undefined,
+    enabled: !!tokenAddr && accountAddr !== undefined,
   });
 
   const {

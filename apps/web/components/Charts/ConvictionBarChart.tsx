@@ -170,12 +170,6 @@ export const ConvictionBarChart = ({
   const supportGtConv = proposalSupportPct > currentConvictionPct;
   const convEqSupport = proposalSupportPct === currentConvictionPct;
 
-  const maxValue = Math.max(
-    proposalSupportPct,
-    currentConvictionPct,
-    thresholdPct,
-  );
-
   const emphasis = {
     disabled: true,
   };
@@ -232,7 +226,7 @@ export const ConvictionBarChart = ({
       axisLine: {
         show: false,
       },
-      max: 50,
+      max: 100,
     },
     tooltip: {
       trigger: "axis",
