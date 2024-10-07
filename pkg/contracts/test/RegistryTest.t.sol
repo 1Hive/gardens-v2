@@ -992,6 +992,72 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.startPrank(gardenOwner);
         allowlistStrategy.activatePoints();
         vm.stopPrank();
+    }   
+
+    function testRevert_allowlistTooBig() public {
+        vm.startPrank(pool_admin());
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        // Max is 10000, should revert
+        uint256 limit = 10001;
+        address[] memory allowlist = new address[](limit);
+        for (uint i = 0; i < limit; i++) {
+            allowlist[i] = address(uint160(uint(keccak256(abi.encodePacked(i)))));
+        }
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.AllowlistTooBig.selector, limit));
+        registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                allowlist
+            ),
+            metadata
+        );
+    }
+
+    function test_createPool_loop_gas() public {
+        vm.startPrank(pool_admin());
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        uint256 limit = 10000;
+        address[] memory allowlist = new address[](limit);
+        for (uint i = 0; i < limit; i++) {
+            allowlist[i] = address(uint160(uint(keccak256(abi.encodePacked(i)))));
+        }
+        // CreatePool with one address = 1 246 096 gas used
+        // CreatePool with two addresses = 1 271 771
+        // Around 25000 gas per extra address
+        registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                allowlist
+            ),
+            metadata
+        );
+        // address[] memory secondAllowlist = new address[](limit);
+        //CreatePool with two addresses = 1 214 971 gas
+        //CreatePool with five addresses = 1 291 999 gas
+        //CreatePool with 20 addresses = 1 677 151 gas
+        // (, address secondProxy) = registryCommunity.createPool(
+        //     NATIVE,
+        //     getParams(
+        //         address(registryCommunity),
+        //         ProposalType(0),
+        //         PointSystem.Unlimited,
+        //         PointSystemConfig(0),
+        //         arbitrableConfig,
+        //         secondAllowlist
+        //     ),
+        //     metadata
+        // );
+        // vm.stopPrank();
     }
 
     function test_add_to_allowlist_after_addressZero_initialized() public {
