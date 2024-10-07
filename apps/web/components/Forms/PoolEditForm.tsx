@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { trimEnd } from "lodash-es";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
@@ -64,7 +65,10 @@ export default function PoolEditForm({
     defaultValues: {
       spendingLimit: initValues.spendingLimit,
       minimumConviction: initValues.minimumConviction,
-      convictionGrowth: Math.round(+initValues.convictionGrowth / 3600 / 24), // convert seconds to days
+      convictionGrowth: trimEnd(trimEnd(
+        (+initValues.convictionGrowth / 3600 / 24).toFixed(2),
+        "0",
+      ), "."), // convert seconds to days
       minThresholdPoints: initValues.minThresholdPoints,
       // arb settings
       defaultResolution: initValues.defaultResolution,
