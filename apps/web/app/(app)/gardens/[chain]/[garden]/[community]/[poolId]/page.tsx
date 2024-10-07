@@ -46,13 +46,11 @@ export default function Page({
   });
 
   const strategyObj = data?.cvstrategies?.[0];
-  const proposalType =
-    strategyObj?.config.proposalType &&
-    PoolTypes[strategyObj?.config.proposalType];
   const poolTokenAddr = strategyObj?.token as Address;
+  const proposalType = strategyObj?.config.proposalType;
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
-    enabled: !!poolTokenAddr && proposalType === "funding",
+    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
     chainId: +chain,
   });
 
@@ -98,8 +96,7 @@ export default function Page({
 
   if (
     !tokenGarden ||
-    !proposalType ||
-    (!poolToken && proposalType === "funding")
+    (!poolToken && PoolTypes[proposalType] === "funding")
   ) {
     return (
       <div className="mt-96">
