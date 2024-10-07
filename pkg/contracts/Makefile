@@ -114,6 +114,7 @@ deploy-testnet-multi-arb:
 	--account pkGarden \
 	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--ffi \
+	--broadcast \
 	--chain-id 421614 \
 	--legacy \
 	--via-ir \
