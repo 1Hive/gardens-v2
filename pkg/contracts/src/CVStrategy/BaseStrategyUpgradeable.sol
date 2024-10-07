@@ -22,11 +22,7 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// === Storage Variables ====
     /// ==========================
 
-    IAllo internal allo;
-    bytes32 internal strategyId;
-    bool internal poolActive;
-    uint256 internal poolId;
-    uint256 internal poolAmount;
+
 
     /// ====================================
     /// ========== Constructor =============
