@@ -345,11 +345,8 @@ export const ProposalForm = ({
                 registerKey="amount"
                 type="number"
                 placeholder="0"
-              >
-                <span className="absolute right-4 top-4 text-black">
-                  {poolToken?.symbol}
-                </span>
-              </FormInput>
+                suffix={poolToken?.symbol}
+               />
             </div>
           )}
           {proposalTypeName !== "signaling" && (
