@@ -12,9 +12,9 @@ dataSources:
         type: Int
         data: 421614
     source:
-      address: "0xc66f9ccd8bc9115c9d62feab271f27558b4fa418"
+      address: "0x9fb6667cec448916ba7a297fa714250f505d63c7"
       abi: RegistryFactoryV0_0
-      startBlock: 85922515
+      startBlock: 86663035
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -46,9 +46,9 @@ dataSources:
         type: Int
         data: 421614
     source:
-      address: "0x8e894ef1e8110ca592dee6286fe0342b8ee721c8"
+      address: "0xc7984ad49e471c2044d1660e5d1f4958c2699c5e"
       abi: PassportScorer
-      startBlock: 85922515
+      startBlock: 86663035
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

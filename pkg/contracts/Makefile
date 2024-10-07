@@ -112,11 +112,12 @@ deploy-testnet-multi-arb:
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--ffi \
 	--chain-id 421614 \
-	--broadcast \
 	--legacy \
 	--via-ir \
+	--verify \
 	-vvvvv
 
 upgrade-testnet-multi-arb: 
