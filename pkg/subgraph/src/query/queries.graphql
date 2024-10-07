@@ -342,6 +342,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
         proposalType
         pointSystem
         minThresholdPoints
+        decay
       }
     }
     arbitrableConfig {

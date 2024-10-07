@@ -4,10 +4,14 @@ export const Countdown = ({
   endTimestamp,
   format = "auto",
   display = "auto",
+  title = true,
+  className,
 }: {
   endTimestamp: number;
   format?: "time" | "date" | "datetime" | "minutes" | "seconds" | "auto";
   display?: "inline" | "auto";
+  title?: boolean;
+  className?: string;
 }) => {
   const [remainingTimeMs, setRemainingTime] = useState(0);
 
@@ -75,8 +79,9 @@ export const Countdown = ({
   );
 
   return (
-    remainingTimeMs === 0 ? <div>Timeout</div>
-    : display === "inline" ? <div className="flex gap-2">{content}</div>
+    remainingTimeMs === 0 && title ? <div>Timeout</div>
+    : display === "inline" ?
+      <div className={`flex gap-2 ${className}`}>{content}</div>
     : <div className="grid grid-flow-col gap-1 text-center auto-cols-max">
         {content}
       </div>

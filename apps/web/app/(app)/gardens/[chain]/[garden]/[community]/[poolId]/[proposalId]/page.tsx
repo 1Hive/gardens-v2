@@ -86,10 +86,11 @@ export default function Page({
     thresholdPct,
     totalSupportPct,
     updatedConviction,
+    timeToPass,
   } = useConvictionRead({
     proposalData,
-    strategyConfig: proposalData?.strategy.config,
-    tokenData: data?.tokenGarden,
+    strategyConfig: proposalData?.strategy?.config,
+    tokenData: data?.tokenGarden?.decimals,
     enabled: proposalData?.proposalNumber != null,
   });
 
@@ -266,6 +267,7 @@ export default function Page({
               proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
               proposalId={Number(proposalIdNumber)}
+              timeToPass={Number(timeToPass)}
             />
           </>
         }

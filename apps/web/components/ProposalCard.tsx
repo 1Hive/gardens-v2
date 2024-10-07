@@ -99,15 +99,31 @@ export function ProposalCard({
 
   const ProposalCountDown = () => {
     return (
-      <span className="text-neutral-soft-content text-sm">
-        {Number(supportNeededToPass) > 0 && !alreadyExecuted ?
-          `At least ${supportNeededToPass}% needed`
-        : proposalWillPass ?
-          "Estimated time to pass:"
-        : Number(supportNeededToPass) < 0 && !alreadyExecuted ?
-          "Ready to be executed"
-        : ""}
-      </span>
+      <>
+        <p className="text-neutral-soft-content text-sm">
+          {(
+            Number(supportNeededToPass) > 0 &&
+            !alreadyExecuted &&
+            !(currentConvictionPct ?? 0 > (thresholdPct ?? 0))
+          ) ?
+            `At least ${supportNeededToPass}% needed`
+          : proposalWillPass ?
+            "Estimated time to pass:"
+          : (
+            !alreadyExecuted &&
+            (currentConvictionPct ?? 0 > (thresholdPct ?? 0))
+          ) ?
+            "Ready to be executed"
+          : ""}
+        </p>
+        {proposalWillPass && (
+          <Countdown
+            endTimestamp={Number(timeToPass)}
+            display="inline"
+            className="text-neutral-soft-content text-sm"
+          />
+        )}
+      </>
     );
   };
 
@@ -214,16 +230,10 @@ export function ProposalCard({
                         <div>
                           <p className="text-sm">
                             Total Support: <span>{totalSupportPct}%</span> of
-                            pool weight.{" "}
+                            pool weight.
                           </p>
                         </div>
                         <ProposalCountDown />
-                        {proposalWillPass && (
-                          <Countdown
-                            endTimestamp={Number(timeToPass)}
-                            display="inline"
-                          />
-                        )}
                       </div>
                       <div className="h-3">
                         <ConvictionBarChart
@@ -243,16 +253,12 @@ export function ProposalCard({
         </div>
       </div>
       {
-        <div className="">
-          {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
-            <p className="flex items-baseline text-xs">
-              Your support: {poolWeightAllocatedInProposal}%
-            </p>
-          )}
+        <div>
+          <p className="flex items-baseline text-xs">
+            Your support: {poolWeightAllocatedInProposal}%
+          </p>
         </div>
       }
-      {/* TODO: fetch every member stake */}
-      {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}
     </>
   );
 

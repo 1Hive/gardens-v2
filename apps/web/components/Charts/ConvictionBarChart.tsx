@@ -4,6 +4,7 @@ import React from "react";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
 import { ChartWrapper } from "./ChartWrapper";
+import { Countdown } from "../Countdown";
 
 type ScenarioMapping = {
   condition: () => boolean;
@@ -17,6 +18,7 @@ type ConvictionBarChartProps = {
   isSignalingType: boolean;
   proposalId: number;
   compact?: boolean;
+  timeToPass?: number;
 };
 
 export const ConvictionBarChart = ({
@@ -26,6 +28,7 @@ export const ConvictionBarChart = ({
   isSignalingType,
   proposalId,
   compact,
+  timeToPass,
 }: ConvictionBarChartProps) => {
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
@@ -55,7 +58,7 @@ export const ConvictionBarChart = ({
         },
       ],
     },
-    //1) Conviction < Total Support < Threshold --- working ...
+    //1) Conviction < Total Support < Threshold
     convictionLTSupportLTThreshold: {
       condition: () =>
         currentConvictionPct < proposalSupportPct &&
@@ -67,15 +70,14 @@ export const ConvictionBarChart = ({
         },
       ],
     },
-    //2) Conviction < Threshold < Total Support --- working ...
+    // 2) Conviction < Threshold < Total Support
     convictionLTThresholdLTSupport: {
       condition: () =>
         currentConvictionPct < thresholdPct &&
         thresholdPct < proposalSupportPct,
       details: [
         {
-          // TODO: add real date
-          message: "This proposal will pass",
+          message: "",
           growing: true,
         },
       ],
@@ -170,12 +172,6 @@ export const ConvictionBarChart = ({
   const supportGtConv = proposalSupportPct > currentConvictionPct;
   const convEqSupport = proposalSupportPct === currentConvictionPct;
 
-  const maxValue = Math.max(
-    proposalSupportPct,
-    currentConvictionPct,
-    thresholdPct,
-  );
-
   const emphasis = {
     disabled: true,
   };
@@ -232,7 +228,7 @@ export const ConvictionBarChart = ({
       axisLine: {
         show: false,
       },
-      max: 50,
+      max: 100,
     },
     tooltip: {
       trigger: "axis",
@@ -328,16 +324,31 @@ export const ConvictionBarChart = ({
           option={option}
           style={{ height: "100%", width: "100%" }}
         />
-      : <ChartWrapper
-          message={message}
-          growing={growing}
-          isSignalingType={isSignalingType}
-        >
-          <EChartsReact
-            option={option}
-            style={{ height: "100%", width: "100%" }}
-          />
-        </ChartWrapper>
+      : <>
+          <ChartWrapper
+            message={message}
+            growing={growing}
+            isSignalingType={isSignalingType}
+          >
+            <EChartsReact
+              option={option}
+              style={{ height: "100%", width: "100%" }}
+            />
+          </ChartWrapper>
+          {scenarioMappings.supportLTConvictionLTThreshold &&
+            !(currentConvictionPct > thresholdPct) &&
+            !(Number(supportNeeded) > 0) && (
+              <div className="flex items-center gap-2">
+                <p>Estimated time to pass:</p>
+                <Countdown
+                  endTimestamp={Number(timeToPass)}
+                  display="inline"
+                  title={false}
+                  className=""
+                />
+              </div>
+            )}
+        </>
       }
     </>
   );
