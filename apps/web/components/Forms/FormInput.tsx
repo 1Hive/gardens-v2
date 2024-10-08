@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import { HTMLInputTypeAttribute } from "react";
-import MarkdownEditor from "@uiw/react-md-editor";
-import { RegisterOptions } from "react-hook-form";
+import { HTMLInputTypeAttribute, useEffect, useMemo } from "react";
+import MarkdownEditor from "@uiw/react-markdown-editor";
+import { RegisterOptions, UseFormRegister } from "react-hook-form";
+import {} from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
 
 type Props = {
@@ -12,7 +13,7 @@ type Props = {
   type: HTMLInputTypeAttribute | "markdown";
   registerKey?: string;
   placeholder?: string;
-  register?: any;
+  register?: UseFormRegister<any>;
   errors?: any;
   required?: boolean;
   registerOptions?: RegisterOptions;
@@ -34,7 +35,7 @@ export function FormInput({
   type,
   registerKey = "",
   placeholder = "",
-  register = () => ({}),
+  register = () => ({}) as any,
   errors = false,
   required = false,
   registerOptions,
@@ -51,6 +52,24 @@ export function FormInput({
 }: Props) {
   const fixedInputClassname =
     "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
+
+  useEffect(() => {
+    register(registerKey, registerOptions);
+  }, [registerKey]);
+
+  const registered = useMemo(() => {
+    return register(registerKey, {
+      required,
+      disabled,
+      ...registerOptions,
+      onChange: (e) => {
+        onChange?.(e);
+        registerOptions?.onChange?.(e);
+      },
+      value: value !== undefined ? value : undefined,
+    });
+  }, [registerKey]);
+
   return (
     <div className="flex flex-col">
       {label && (
@@ -74,8 +93,6 @@ export function FormInput({
         {type !== "textarea" && type !== "markdown" ?
           <input
             id={registerKey}
-            onChange={onChange}
-            value={value}
             type={type}
             placeholder={placeholder}
             className={`hide-input-arrows input input-bordered ${
@@ -87,7 +104,6 @@ export function FormInput({
             readOnly={readOnly || disabled}
             {...register(registerKey, {
               required,
-              readOnly,
               disabled,
               ...registerOptions,
             })}
@@ -100,36 +116,41 @@ export function FormInput({
             className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 ${
               errors[registerKey] ? "input-error" : "input-info"
             }`}
-            value={value}
-            onChange={onChange}
             required={required}
             rows={rows}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
             {...register(registerKey, {
               required,
+              disabled,
               ...registerOptions,
             })}
             {...otherProps}
           />
-        : <MarkdownEditor
-            id={registerKey}
-            data-color-mode="light"
-            className={`${className} ${
-              errors[registerKey] ? "input-error" : "input-info"
-            }`}
-            value={value}
-            onChange={onChange}
-            required={required}
-            rows={rows}
-            disabled={disabled || readOnly}
-            readOnly={readOnly || disabled}
-            {...register(registerKey, {
-              required,
-              ...registerOptions,
-            })}
-            {...otherProps}
-          />
+        : <div data-color-mode="light">
+            <MarkdownEditor
+              id={registerKey}
+              style={{
+                resize: "vertical",
+                overflow: "auto",
+                minHeight: "200px",
+              }}
+              disabled={disabled || readOnly}
+              readOnly={readOnly || disabled}
+              required={required}
+              {...register(registerKey, {
+                required,
+                disabled,
+                ...registerOptions,
+              })}
+              onChange={(v) => {
+                const e = { target: { value: v } };
+                registered.onChange(e);
+                onChange?.(e);
+              }}
+              {...otherProps}
+            />
+          </div>
         }
         {children}
       </div>

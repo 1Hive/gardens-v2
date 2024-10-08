@@ -129,12 +129,12 @@ export default function PoolEditForm({
     proposalCollateral: {
       label: "Proposal collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     disputeCollateral: {
       label: "Dispute collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     tribunalAddress: {
       label: "Tribunal safe:",
