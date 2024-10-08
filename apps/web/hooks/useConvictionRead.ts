@@ -15,7 +15,7 @@ import { getRemainingBlocksToPass } from "@/utils/convictionFormulas";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
 
-type ProposalDataLight = Maybe<
+export type ProposalDataLight = Maybe<
   Pick<
     CVProposal,
     | "proposalNumber"
