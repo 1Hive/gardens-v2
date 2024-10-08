@@ -20,6 +20,7 @@ import {CVStrategyV0_1, CVStrategyInitializeParamsV0_1} from "@src/CVStrategy/CV
 /// @custom:oz-upgrades-from RegistryCommunityV0_0
 contract RegistryCommunityV0_1 is RegistryCommunityV0_0 {
     error AllowlistTooBig(uint256 size);
+
     function createPool(address _token, CVStrategyInitializeParamsV0_1 memory _params, Metadata memory _metadata)
         public
         virtual
