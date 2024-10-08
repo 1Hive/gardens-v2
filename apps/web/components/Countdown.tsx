@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Skeleton } from "./Skeleton";
 
 export const Countdown = ({
   endTimestamp,
@@ -80,16 +81,18 @@ export const Countdown = ({
     </>
   );
 
-  if (isInitialized) {
-    return <span>loading...</span>; // return skeleton
-  }
-
   return (
-    remainingTimeMs === 0 && title ? <div>Timeout</div>
+    <Skeleton isLoading={isInitialized} className="w-20">
+      {
+    remainingTimeMs === 0 && title ?
+        <div>Timeout</div>
+     
     : display === "inline" ?
       <div className={`flex gap-2 ${className}`}>{content}</div>
     : <div className="grid grid-flow-col gap-1 text-center auto-cols-max">
         {content}
       </div>
+}
+      </Skeleton>
   );
 };
