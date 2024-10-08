@@ -14,10 +14,12 @@ export const Countdown = ({
   className?: string;
 }) => {
   const [remainingTimeMs, setRemainingTime] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setRemainingTime(Math.max(endTimestamp * 1000 - Date.now(), 0));
+      setIsInitialized(false);
       // console.log("Countdown", endTimestamp * 1000 - Date.now());
     }, 1000); // Update every second
     return () => {
@@ -77,6 +79,10 @@ export const Countdown = ({
       )}
     </>
   );
+
+  if (isInitialized) {
+    return <span>loading...</span>; // return skeleton
+  }
 
   return (
     remainingTimeMs === 0 && title ? <div>Timeout</div>
