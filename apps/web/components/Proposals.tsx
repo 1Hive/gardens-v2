@@ -474,7 +474,6 @@ export function Proposals({
                           inputData={inputs[proposalData.id]}
                           stakedFilter={stakedFilters[proposalData.id]}
                           isAllocationView={allocationView}
-                          tooltipMessage={tooltipMessage}
                           memberActivatedPoints={memberActivatedPoints}
                           memberPoolWeight={memberPoolWeight}
                           executeDisabled={
