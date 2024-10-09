@@ -11,14 +11,14 @@ import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {SafeArbitrator, IArbitrator} from "../src/SafeArbitrator.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers, CVStrategyV0_1} from "../test/CVStrategyHelpers.sol";
+import {CVStrategyHelpers, CVStrategyV0_0} from "../test/CVStrategyHelpers.sol";
 import {TERC20} from "../test/shared/TERC20.sol";
-import {CVStrategyV0_1} from "../src/CVStrategy/CVStrategyV0_1.sol";
+import {CVStrategyV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {
-    RegistryCommunityV0_1,
+    RegistryCommunityV0_0,
     RegistryCommunityInitializeParamsV0_0
-} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
@@ -27,14 +27,13 @@ import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.s
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 import {
     CVStrategyV0_0,
-    CVStrategyV0_1,
     PointSystemConfig,
     PointSystem,
     ArbitrableConfig,
     ProposalType,
     CreateProposal
-} from "../src/CVStrategy/CVStrategyV0_1.sol";
-import {CVStrategyInitializeParamsV0_0} from "../src/CVStrategy/CVStrategyV0_0.sol";
+} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {CVStrategyInitializeParamsV0_1} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -92,8 +91,8 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
                 RegistryFactoryV0_0.initialize.selector,
                 pool_admin(),
                 address(protocolFeeReceiver),
-                address(new RegistryCommunityV0_1()),
-                address(new CVStrategyV0_1()),
+                address(new RegistryCommunityV0_0()),
+                address(new CVStrategyV0_0()),
                 address(new CollateralVault())
             )
         );
@@ -118,10 +117,10 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "Pioneers of Sepolia";
 
-        RegistryCommunityV0_1 registryCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
         token.mint(address(pool_admin()), 10_000 ether);
 
-        CVStrategyInitializeParamsV0_0 memory paramsCV;
+        CVStrategyInitializeParamsV0_1 memory paramsCV;
 
         // CVParams
         paramsCV.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
@@ -158,7 +157,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         (uint256 poolId, address _strategy1) = registryCommunity.createPool(
             address(token), paramsCV, Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
         );
-        CVStrategyV0_1 strategy1 = CVStrategyV0_1(payable(_strategy1));
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
 
         safeHelper(
             address(registryCommunity),
@@ -171,7 +170,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
 
         (uint256 poolIdFixed, address _strategy2) = registryCommunity.createPool(address(token), paramsCV, metadata);
 
-        CVStrategyV0_1 strategy2 = CVStrategyV0_1(payable(_strategy2));
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
 
         safeHelper(
             address(registryCommunity),
@@ -306,18 +305,18 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         params._councilSafe = payable(address(_councilSafe()));
         params._communityName = "Pioneers of Matias";
 
-        RegistryCommunityV0_1 registryCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
+        RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
 
         console.log("Registry Community Addr: %s", address(registryCommunity));
 
         token.mint(address(pool_admin()), 10_000 ether);
         ERC1967Proxy strategy1Proxy = new ERC1967Proxy(
-            address(new CVStrategyV0_1()),
+            address(new CVStrategyV0_0()),
             abi.encodeWithSelector(
                 CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()), pool_admin()
             )
         );
-        CVStrategyV0_1 strategy1 = CVStrategyV0_1(payable(strategy1Proxy));
+        CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(strategy1Proxy));
 
         safeHelper(
             address(registryCommunity),
@@ -326,13 +325,13 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         );
 
         ERC1967Proxy strategy2Proxy = new ERC1967Proxy(
-            address(new CVStrategyV0_1()),
+            address(new CVStrategyV0_0()),
             abi.encodeWithSelector(
                 CVStrategyV0_0.init.selector, address(allo), address(new CollateralVault()), pool_admin()
             )
         );
 
-        CVStrategyV0_1 strategy2 = CVStrategyV0_1(payable(strategy2Proxy));
+        CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(strategy2Proxy));
 
         safeHelper(
             address(registryCommunity),

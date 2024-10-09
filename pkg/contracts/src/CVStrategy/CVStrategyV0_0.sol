@@ -124,6 +124,17 @@ struct CVStrategyInitializeParamsV0_0 {
     address sybilScorer;
 }
 
+struct CVStrategyInitializeParamsV0_1 {
+    CVParams cvParams;
+    ProposalType proposalType;
+    PointSystem pointSystem;
+    PointSystemConfig pointConfig;
+    ArbitrableConfig arbitrableConfig;
+    address registryCommunity;
+    address sybilScorer;
+    address[] initialAllowlist;
+}
+
 /// @custom:oz-upgrades-from CVStrategyV0_0
 contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy, ERC165 {
     /*|--------------------------------------------|*/
@@ -165,12 +176,14 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     // error CollateralVaultCannotBeZero();
     error DefaultRulingNotSet();
     error DisputeCooldownNotPassed(uint256 _proposalId, uint256 _remainingSec);
+    error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
     /*|--------------------------------------------|*/
 
     event InitializedCV(uint256 poolId, CVStrategyInitializeParamsV0_0 data);
+    event InitializedCV2(uint256 poolId, CVStrategyInitializeParamsV0_1 data);
     event Distributed(uint256 proposalId, address beneficiary, uint256 amount);
     event ProposalCreated(uint256 poolId, uint256 proposalId);
     event PoolAmountIncreased(uint256 amount);
@@ -202,6 +215,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         uint256 defaultRuling,
         uint256 defaultRulingTimeout
     );
+    event AllowlistMembersRemoved(uint256 poolId, address[] members);
+    event AllowlistMembersAdded(uint256 poolId, address[] members);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -243,7 +258,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     PointSystemConfig public pointConfig;
 
     // Contract reference
-    address public registryCommunity;
+    RegistryCommunityV0_0 public registryCommunity;
 
     ICollateralVault public collateralVault;
     ISybilScorer public sybilScorer;
@@ -255,10 +270,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     mapping(uint256 => uint256) public disputeIdToProposalId;
     mapping(uint256 => ArbitrableConfig) public arbitrableConfigs;
 
-    function getRegistryCommunity() public view returns (RegistryCommunityV0_0) {
-        return RegistryCommunityV0_0(registryCommunity);
-    }
-
     /*|--------------------------------------------|*/
     /*|              CONSTRUCTORS                  |*/
     /*|--------------------------------------------|*/
@@ -268,28 +279,26 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         collateralVaultTemplate = _collateralVaultTemplate;
     }
 
-    function initialize(uint256 _poolId, bytes memory _data) external virtual onlyAllo {
+    function initialize(uint256 _poolId, bytes memory _data) external override onlyAllo {
         __BaseStrategy_init(_poolId);
 
         collateralVault = ICollateralVault(Clone.createClone(collateralVaultTemplate, cloneNonce++));
         collateralVault.initialize();
 
-        CVStrategyInitializeParamsV0_0 memory ip = abi.decode(_data, (CVStrategyInitializeParamsV0_0));
+        CVStrategyInitializeParamsV0_1 memory ip = abi.decode(_data, (CVStrategyInitializeParamsV0_1));
 
         if (ip.registryCommunity == address(0)) {
             revert RegistryCannotBeZero();
         }
-
-        registryCommunity = ip.registryCommunity;
+        //Set councilsafe to whitelist admin
+        registryCommunity = RegistryCommunityV0_0(ip.registryCommunity);
 
         proposalType = ip.proposalType;
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
-
-        _setPoolParams(ip.arbitrableConfig, ip.cvParams);
-
-        emit InitializedCV(_poolId, ip);
+        _setPoolParams(ip.arbitrableConfig, ip.cvParams, new address[](0), new address[](0));
+        emit InitializedCV2(_poolId, ip);
     }
 
     /*|--------------------------------------------|*/
@@ -319,7 +328,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (address(registryCommunity) == address(0)) {
             revert RegistryCannotBeZero();
         }
-        if (!getRegistryCommunity().isMember(_sender)) {
+        if (!registryCommunity.isMember(_sender)) {
             revert UserNotInRegistry();
         }
         // _;
@@ -336,17 +345,31 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function onlyCouncilSafe() internal view virtual {
-        if (msg.sender != address(getRegistryCommunity().councilSafe())) {
+        if (msg.sender != address(registryCommunity.councilSafe())) {
             revert OnlyCouncilSafe();
         }
     }
 
-    function _canExecuteAction(address _user) internal view virtual returns (bool) {
-        console.log("sybilScorer", address(sybilScorer));
+    function _canExecuteAction(address _user) internal view returns (bool) {
         if (address(sybilScorer) == address(0)) {
-            return true;
+            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+            if (registryCommunity.hasRole(allowlistRole, address(0))) {
+                return true;
+            } else {
+                return registryCommunity.hasRole(allowlistRole, _user);
+            }
         }
         return sybilScorer.canExecuteAction(_user, address(this));
+    }
+
+    function _checkProposalAllocationValidity(uint256 _proposalId) internal view virtual {
+        Proposal storage p = proposals[_proposalId];
+        if (
+            p.proposalStatus == ProposalStatus.Inactive || p.proposalStatus == ProposalStatus.Cancelled
+                || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
+        ) {
+            revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
+        }
     }
 
     function setCollateralVaultTemplate(address template) external virtual onlyOwner {
@@ -431,8 +454,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         if (!_canExecuteAction(member)) {
             revert UserCannotExecuteAction();
         }
-        getRegistryCommunity().activateMemberInStrategy(member, address(this));
-        totalPointsActivated += getRegistryCommunity().getMemberPowerInStrategy(member, address(this));
+        registryCommunity.activateMemberInStrategy(member, address(this));
+        totalPointsActivated += registryCommunity.getMemberPowerInStrategy(member, address(this));
     }
 
     function deactivatePoints() public virtual {
@@ -445,8 +468,8 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function _deactivatePoints(address _member) internal virtual {
-        totalPointsActivated -= getRegistryCommunity().getMemberPowerInStrategy(_member, address(this));
-        getRegistryCommunity().deactivateMemberInStrategy(_member, address(this));
+        totalPointsActivated -= registryCommunity.getMemberPowerInStrategy(_member, address(this));
+        registryCommunity.deactivateMemberInStrategy(_member, address(this));
         // remove support from all proposals
         withdraw(_member);
         emit PointsDeactivated(_member);
@@ -466,7 +489,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         } else if (pointSystem == PointSystem.Quadratic) {
             pointsToIncrease = increasePowerQuadratic(_member, _amountToStake);
         }
-        bool isActivated = getRegistryCommunity().memberActivatedInStrategies(_member, address(this));
+        bool isActivated = registryCommunity.memberActivatedInStrategies(_member, address(this));
         if (isActivated) {
             totalPointsActivated += pointsToIncrease;
         }
@@ -496,7 +519,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function increasePowerCapped(address _member, uint256 _amountToStake) internal view virtual returns (uint256) {
         uint256 pointsToIncrease = _amountToStake;
         // console.log("POINTS TO INCREASE", pointsToIncrease);
-        uint256 memberPower = getRegistryCommunity().getMemberPowerInStrategy(_member, address(this));
+        uint256 memberPower = registryCommunity.getMemberPowerInStrategy(_member, address(this));
         // console.log("MEMBERPOWER", memberPower);
         if (memberPower + pointsToIncrease > pointConfig.maxAmount) {
             pointsToIncrease = pointConfig.maxAmount - memberPower;
@@ -507,16 +530,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function increasePowerQuadratic(address _member, uint256 _amountToStake) internal view virtual returns (uint256) {
-        uint256 totalStake = getRegistryCommunity().getMemberStakedAmount(_member) + _amountToStake;
+        uint256 totalStake = registryCommunity.getMemberStakedAmount(_member) + _amountToStake;
 
         uint256 decimal = 18;
-        try ERC20(address(getRegistryCommunity().gardenToken())).decimals() returns (uint8 _decimal) {
+        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
             // console.log("Error getting decimal");
         }
         uint256 newTotalPoints = Math.sqrt(totalStake * 10 ** decimal);
-        uint256 currentPoints = getRegistryCommunity().getMemberPowerInStrategy(_member, address(this));
+        uint256 currentPoints = registryCommunity.getMemberPowerInStrategy(_member, address(this));
 
         uint256 pointsToIncrease = newTotalPoints - currentPoints;
 
@@ -534,17 +557,16 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         returns (uint256)
     {
         uint256 decimal = 18;
-        try ERC20(address(getRegistryCommunity().gardenToken())).decimals() returns (uint8 _decimal) {
+        try ERC20(address(registryCommunity.gardenToken())).decimals() returns (uint8 _decimal) {
             decimal = uint256(_decimal);
         } catch {
             // console.log("Error getting decimal");
         }
         // console.log("_amountToUnstake", _amountToUnstake);
-        uint256 newTotalStake = getRegistryCommunity().getMemberStakedAmount(_member) - _amountToUnstake;
+        uint256 newTotalStake = registryCommunity.getMemberStakedAmount(_member) - _amountToUnstake;
         // console.log("newTotalStake", newTotalStake);
         uint256 newTotalPoints = Math.sqrt(newTotalStake * 10 ** decimal);
-        uint256 pointsToDecrease =
-            getRegistryCommunity().getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
+        uint256 pointsToDecrease = registryCommunity.getMemberPowerInStrategy(_member, address(this)) - newTotalPoints;
         return pointsToDecrease;
     }
 
@@ -565,6 +587,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     //     // allo().allocate(poolId, abi.encode(proposalId));
     // }
 
+    function _beforeAllocate(bytes memory _data, address /*_sender*/ ) internal virtual override {
+        ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
+        for (uint256 i = 0; i < pv.length; i++) {
+            _checkProposalAllocationValidity(pv[i].proposalId);
+        }
+    }
+
     // only called via allo.sol by users to allocate to a recipient
     // this will update some data in this contract to store votes, etc.
     function _allocate(bytes memory _data, address _sender) internal virtual override {
@@ -579,7 +608,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
         // surpressStateMutabilityWarning++;
 
-        bool isMemberActivatedPoints = getRegistryCommunity().memberActivatedInStrategies(_sender, address(this));
+        bool isMemberActivatedPoints = registryCommunity.memberActivatedInStrategies(_sender, address(this));
         if (!isMemberActivatedPoints) {
             revert UserIsInactive();
         }
@@ -826,7 +855,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     }
 
     function getBasisStakedAmount() internal view virtual returns (uint256) {
-        return getRegistryCommunity().getBasisStakedAmount(); // 50 HNY = 100%
+        return registryCommunity.getBasisStakedAmount(); // 50 HNY = 100%
     }
 
     function proposalExists(uint256 _proposalID) internal view virtual returns (bool) {
@@ -860,7 +889,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         // console.logInt(deltaSupportSum);
         uint256 newTotalVotingSupport = _applyDelta(getTotalVoterStakePct(_sender), deltaSupportSum);
         // console.log("newTotalVotingSupport", newTotalVotingSupport);
-        uint256 participantBalance = getRegistryCommunity().getMemberPowerInStrategy(_sender, address(this));
+        uint256 participantBalance = registryCommunity.getMemberPowerInStrategy(_sender, address(this));
 
         // console.log("participantBalance", participantBalance);
         // Check that the sum of support is not greater than the participant balance
@@ -1159,7 +1188,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
     //If we want to keep, we need a func to transfer power mapping (and more) in Registry contract -Kev
     // function setRegistryCommunity(address _registryCommunity) external onlyPoolManager(msg.sender) {
-    //     registryCommunity = RegistryCommunityV0_1(_registryCommunity);
+    //     registryCommunity = RegistryCommunityV0_0(_registryCommunity);
     //     emit RegistryUpdated(_registryCommunity);
     // }
 
@@ -1169,9 +1198,45 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         sybilScorer = ISybilScorer(_sybilScorer);
     }
 
-    function setPoolParams(ArbitrableConfig memory _arbitrableConfig, CVParams memory _cvParams) external virtual {
-        onlyCouncilSafe();
+    function _setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        address[] memory membersToAdd,
+        address[] memory membersToRemove
+    ) internal virtual {
         _setPoolParams(_arbitrableConfig, _cvParams);
+        _addToAllowList(membersToAdd);
+        _removeFromAllowList(membersToRemove);
+    }
+
+    function _setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 sybilScoreThreshold
+    ) internal virtual {
+        _setPoolParams(_arbitrableConfig, _cvParams);
+        if (address(sybilScorer) != address(0)) {
+            sybilScorer.modifyThreshold(address(this), sybilScoreThreshold);
+        }
+    }
+
+    function setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        address[] memory membersToAdd,
+        address[] memory membersToRemove
+    ) external virtual {
+        onlyCouncilSafe();
+        _setPoolParams(_arbitrableConfig, _cvParams, membersToAdd, membersToRemove);
+    }
+
+    function setPoolParams(
+        ArbitrableConfig memory _arbitrableConfig,
+        CVParams memory _cvParams,
+        uint256 sybilScoreThreshold
+    ) external virtual {
+        onlyCouncilSafe();
+        _setPoolParams(_arbitrableConfig, _cvParams, sybilScoreThreshold);
     }
 
     function disputeProposal(uint256 proposalId, string calldata context, bytes calldata _extraData)
@@ -1273,7 +1338,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.disputeInfo.challenger,
-                address(getRegistryCommunity().councilSafe()),
+                address(registryCommunity.councilSafe()),
                 arbitrableConfig.challengerCollateralAmount
             );
         } else if (_ruling == 2) {
@@ -1284,7 +1349,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
             collateralVault.withdrawCollateralFor(
                 proposalId,
                 proposal.submitter,
-                address(getRegistryCommunity().councilSafe()),
+                address(registryCommunity.councilSafe()),
                 arbitrableConfigs[currentArbitrableConfigVersion].submitterCollateralAmount / 2
             );
             collateralVault.withdrawCollateralFor(
@@ -1317,6 +1382,41 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
         proposals[proposalId].proposalStatus = ProposalStatus.Cancelled;
         emit ProposalCancelled(proposalId);
+    }
+
+    function addToAllowList(address[] memory members) public {
+        onlyCouncilSafe();
+        _addToAllowList(members);
+    }
+
+    function _addToAllowList(address[] memory members) internal {
+        bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+
+        if (registryCommunity.hasRole(allowlistRole, address(0))) {
+            registryCommunity.revokeRole(allowlistRole, address(0));
+        }
+        for (uint256 i = 0; i < members.length; i++) {
+            if (!registryCommunity.hasRole(allowlistRole, members[i])) {
+                registryCommunity.grantRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
+            }
+        }
+
+        emit AllowlistMembersAdded(poolId, members);
+    }
+
+    function removeFromAllowList(address[] memory members) external {
+        onlyCouncilSafe();
+        _removeFromAllowList(members);
+    }
+
+    function _removeFromAllowList(address[] memory members) internal {
+        for (uint256 i = 0; i < members.length; i++) {
+            if (registryCommunity.hasRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i])) {
+                registryCommunity.revokeRole(keccak256(abi.encodePacked("ALLOWLIST", poolId)), members[i]);
+            }
+        }
+
+        emit AllowlistMembersRemoved(poolId, members);
     }
 
     uint256[50] private __gap;

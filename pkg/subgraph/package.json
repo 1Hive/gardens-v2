@@ -28,6 +28,8 @@
     "build-deploy:ethsep": "pnpm build:ethsep && pnpm deploy:ethsep:last",
     "local": "pnpm create-local && pnpm build && pnpm deploy:local",
     "last-addr": "ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-addr.ts",
+    "proxies:arbsep": "node src/scripts/list-proxies.cjs arbitrum-sepolia",
+    "proxies:prod": "node src/scripts/list-proxies.cjs matic && node src/scripts/list-proxies.cjs arbitrum && node src/scripts/list-proxies.cjs optimism && node src/scripts/list-proxies.cjs gnosis",
     "build-client": "graphclient build --fileType js",
     "build-all": "pnpm create-local && pnpm build && pnpm deploy:local",
     "deploy:arbsep:last": "dotenvx run -- ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-version.ts gv2-arbsepolia",
