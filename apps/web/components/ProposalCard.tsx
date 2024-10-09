@@ -109,6 +109,8 @@ export function ProposalCard({
     (thresholdPct ?? 0) - (totalSupportPct ?? 0)
   ).toFixed(2);
 
+  const readyToBeExecuted = (currentConvictionPct ?? 0) >= (thresholdPct ?? 0);
+
   const proposalWillPass =
     Number(supportNeededToPass) < 0 &&
     (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
@@ -121,19 +123,16 @@ export function ProposalCard({
           {(
             Number(supportNeededToPass) > 0 &&
             !alreadyExecuted &&
-            !(currentConvictionPct ?? 0 > (thresholdPct ?? 0))
+            !readyToBeExecuted
           ) ?
             `At least ${supportNeededToPass}% needed`
           : proposalWillPass ?
             "Estimated time to pass:"
-          : (
-            !alreadyExecuted &&
-            (currentConvictionPct ?? 0 > (thresholdPct ?? 0))
-          ) ?
+          : !alreadyExecuted && readyToBeExecuted ?
             "Ready to be executed"
           : ""}
         </p>
-        {proposalWillPass && (
+        {proposalWillPass && !readyToBeExecuted && (
           <Countdown
             endTimestamp={Number(timeToPass)}
             display="inline"
