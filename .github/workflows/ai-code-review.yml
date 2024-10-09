@@ -111,7 +111,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Add comment with log
-        if: failure()
+        if: steps.review.outcome == 'failure'
         uses: actions/github-script@v6
         with:
           script: |
