@@ -35,7 +35,7 @@ export function FormRadioButton({
           {label}
         </label>
       </div>
-      <p className="text-sm">{description}</p>
+      <p className="text-sm text-neutral-soft-content">{description}</p>
     </div>
   );
 }

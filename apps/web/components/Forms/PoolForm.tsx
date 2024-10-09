@@ -530,13 +530,11 @@ export function PoolForm({ token, communityAddr }: Props) {
   }, [customTokenData, watchedAddress, trigger]);
 
   const votingWeightSystemDescriptions = {
-    fixed: "All community member have equal voting in the pool",
-    capped:
-      "Voting weight is equal to tokens staked in the community with no max limit.",
-    unlimited:
-      "Voting weight is equal to tokens staked in the community with no max limit.",
+    fixed: "Everyone has the same voting weight, limited to registration stake",
+    capped: "Voting weight is equal to tokens staked, up to a limit",
+    unlimited: "Voting weight is equal to tokens staked, no limit.",
     quadratic:
-      "Voting weight decreases progressively as more tokens are staked.",
+      "Voting weight increases as more tokens are staked, following a quadratic curve.",
   };
 
   return (
@@ -700,7 +698,7 @@ export function PoolForm({ token, communityAddr }: Props) {
             className="w-fit mt-4"
             infoBoxType="info"
             content={
-              "The following sections can be updated by the council in the future."
+              "The following sections can be updated by the council safe."
             }
           />
           {/* arbitration section */}
