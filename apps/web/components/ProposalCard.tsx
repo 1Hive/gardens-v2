@@ -78,10 +78,14 @@ export function ProposalCard({
     searchParams[QUERY_PARAMS.poolPage.newProposal] ==
     proposalNumber.toString();
 
+  const isSignalingType =
+    PoolTypes[strategyConfig.proposalType] === "signaling";
+
   const { currentConvictionPct, thresholdPct, totalSupportPct } =
     useConvictionRead({
       proposalData,
       tokenData,
+      proposalType: strategyConfig.proposalType,
     });
 
   const inputValue =
@@ -96,9 +100,6 @@ export function ProposalCard({
     (inputValue * memberPoolWeight) /
     100
   ).toFixed(2);
-
-  const isSignalingType =
-    PoolTypes[strategyConfig.proposalType] === "signaling";
 
   const supportNeededToPass = (
     (thresholdPct ?? 0) - (totalSupportPct ?? 0)
