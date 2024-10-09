@@ -1,0 +1,7 @@
+sources:
+  - name: gv2
+    handler:
+      graphql:
+        endpoint: https://api.studio.thegraph.com/query/70985/gv2-arbsepolia/{{VERSION_TESTNET}}
+documents:
+  - ./src/query/queries.graphql
