@@ -798,6 +798,153 @@ export type CVStrategy_filter = {
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
 export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token';
+export type CollateralVault = {
+    id: Scalars['ID']['output'];
+    strategy: CVStrategy;
+    collaterals?: Maybe<Array<CollateralVaultDeposit>>;
+};
+export type CollateralVaultcollateralsArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<CollateralVaultDeposit_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<CollateralVaultDeposit_filter>;
+};
+export type CollateralVaultDeposit = {
+    id: Scalars['ID']['output'];
+    collateralVault: CollateralVault;
+    amount: Scalars['BigInt']['output'];
+    depositor: Scalars['Bytes']['output'];
+    createdAt: Scalars['BigInt']['output'];
+    proposalId: Scalars['BigInt']['output'];
+    withdrawnAt?: Maybe<Scalars['BigInt']['output']>;
+    withdrawnTo?: Maybe<Scalars['Bytes']['output']>;
+};
+export type CollateralVaultDeposit_filter = {
+    id?: InputMaybe<Scalars['ID']['input']>;
+    id_not?: InputMaybe<Scalars['ID']['input']>;
+    id_gt?: InputMaybe<Scalars['ID']['input']>;
+    id_lt?: InputMaybe<Scalars['ID']['input']>;
+    id_gte?: InputMaybe<Scalars['ID']['input']>;
+    id_lte?: InputMaybe<Scalars['ID']['input']>;
+    id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    collateralVault?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_not?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_gt?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_lt?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_gte?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_lte?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    collateralVault_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    collateralVault_contains?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_not_contains?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_starts_with?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_ends_with?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    collateralVault_?: InputMaybe<CollateralVault_filter>;
+    amount?: InputMaybe<Scalars['BigInt']['input']>;
+    amount_not?: InputMaybe<Scalars['BigInt']['input']>;
+    amount_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    amount_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    amount_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    amount_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    amount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    amount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    depositor?: InputMaybe<Scalars['Bytes']['input']>;
+    depositor_not?: InputMaybe<Scalars['Bytes']['input']>;
+    depositor_gt?: InputMaybe<Scalars['Bytes']['input']>;
+    depositor_lt?: InputMaybe<Scalars['Bytes']['input']>;
+    depositor_gte?: InputMaybe<Scalars['Bytes']['input']>;
+    depositor_lte?: InputMaybe<Scalars['Bytes']['input']>;
+    depositor_in?: InputMaybe<Array<Scalars['Bytes']['input']>>;
+    depositor_not_in?: InputMaybe<Array<Scalars['Bytes']['input']>>;
+    depositor_contains?: InputMaybe<Scalars['Bytes']['input']>;
+    depositor_not_contains?: InputMaybe<Scalars['Bytes']['input']>;
+    createdAt?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    createdAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    createdAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    proposalId?: InputMaybe<Scalars['BigInt']['input']>;
+    proposalId_not?: InputMaybe<Scalars['BigInt']['input']>;
+    proposalId_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    proposalId_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    proposalId_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    proposalId_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    proposalId_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    proposalId_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    withdrawnAt?: InputMaybe<Scalars['BigInt']['input']>;
+    withdrawnAt_not?: InputMaybe<Scalars['BigInt']['input']>;
+    withdrawnAt_gt?: InputMaybe<Scalars['BigInt']['input']>;
+    withdrawnAt_lt?: InputMaybe<Scalars['BigInt']['input']>;
+    withdrawnAt_gte?: InputMaybe<Scalars['BigInt']['input']>;
+    withdrawnAt_lte?: InputMaybe<Scalars['BigInt']['input']>;
+    withdrawnAt_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    withdrawnAt_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+    withdrawnTo?: InputMaybe<Scalars['Bytes']['input']>;
+    withdrawnTo_not?: InputMaybe<Scalars['Bytes']['input']>;
+    withdrawnTo_gt?: InputMaybe<Scalars['Bytes']['input']>;
+    withdrawnTo_lt?: InputMaybe<Scalars['Bytes']['input']>;
+    withdrawnTo_gte?: InputMaybe<Scalars['Bytes']['input']>;
+    withdrawnTo_lte?: InputMaybe<Scalars['Bytes']['input']>;
+    withdrawnTo_in?: InputMaybe<Array<Scalars['Bytes']['input']>>;
+    withdrawnTo_not_in?: InputMaybe<Array<Scalars['Bytes']['input']>>;
+    withdrawnTo_contains?: InputMaybe<Scalars['Bytes']['input']>;
+    withdrawnTo_not_contains?: InputMaybe<Scalars['Bytes']['input']>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<CollateralVaultDeposit_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<CollateralVaultDeposit_filter>>>;
+};
+export type CollateralVaultDeposit_orderBy = 'id' | 'collateralVault' | 'collateralVault__id' | 'amount' | 'depositor' | 'createdAt' | 'proposalId' | 'withdrawnAt' | 'withdrawnTo';
+export type CollateralVault_filter = {
+    id?: InputMaybe<Scalars['ID']['input']>;
+    id_not?: InputMaybe<Scalars['ID']['input']>;
+    id_gt?: InputMaybe<Scalars['ID']['input']>;
+    id_lt?: InputMaybe<Scalars['ID']['input']>;
+    id_gte?: InputMaybe<Scalars['ID']['input']>;
+    id_lte?: InputMaybe<Scalars['ID']['input']>;
+    id_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    id_not_in?: InputMaybe<Array<Scalars['ID']['input']>>;
+    strategy?: InputMaybe<Scalars['String']['input']>;
+    strategy_not?: InputMaybe<Scalars['String']['input']>;
+    strategy_gt?: InputMaybe<Scalars['String']['input']>;
+    strategy_lt?: InputMaybe<Scalars['String']['input']>;
+    strategy_gte?: InputMaybe<Scalars['String']['input']>;
+    strategy_lte?: InputMaybe<Scalars['String']['input']>;
+    strategy_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    strategy_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    strategy_contains?: InputMaybe<Scalars['String']['input']>;
+    strategy_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_contains?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_starts_with?: InputMaybe<Scalars['String']['input']>;
+    strategy_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_ends_with?: InputMaybe<Scalars['String']['input']>;
+    strategy_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    strategy_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    strategy_?: InputMaybe<CVStrategy_filter>;
+    collaterals_?: InputMaybe<CollateralVaultDeposit_filter>;
+    /** Filter for the block changed event. */
+    _change_block?: InputMaybe<BlockChangedFilter>;
+    and?: InputMaybe<Array<InputMaybe<CollateralVault_filter>>>;
+    or?: InputMaybe<Array<InputMaybe<CollateralVault_filter>>>;
+};
+export type CollateralVault_orderBy = 'id' | 'strategy' | 'strategy__id' | 'strategy__poolId' | 'strategy__poolAmount' | 'strategy__metadata' | 'strategy__maxCVSupply' | 'strategy__totalEffectiveActivePoints' | 'strategy__isEnabled' | 'strategy__token' | 'collaterals';
 export type Member = {
     id: Scalars['ID']['output'];
     memberCommunity?: Maybe<Array<MemberCommunity>>;
@@ -1510,6 +1657,10 @@ export type Query = {
     proposalDisputeMetadata_collection: Array<ProposalDisputeMetadata>;
     proposalMetadata?: Maybe<ProposalMetadata>;
     proposalMetadata_collection: Array<ProposalMetadata>;
+    collateralVault?: Maybe<CollateralVault>;
+    collateralVaults: Array<CollateralVault>;
+    collateralVaultDeposit?: Maybe<CollateralVaultDeposit>;
+    collateralVaultDeposits: Array<CollateralVaultDeposit>;
     /** Access to subgraph metadata */
     _meta?: Maybe<_Meta_>;
 };
@@ -1762,6 +1913,34 @@ export type QueryproposalMetadata_collectionArgs = {
     orderBy?: InputMaybe<ProposalMetadata_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
     where?: InputMaybe<ProposalMetadata_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerycollateralVaultArgs = {
+    id: Scalars['ID']['input'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerycollateralVaultsArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<CollateralVault_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<CollateralVault_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerycollateralVaultDepositArgs = {
+    id: Scalars['ID']['input'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type QuerycollateralVaultDepositsArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<CollateralVaultDeposit_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<CollateralVaultDeposit_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -2203,6 +2382,10 @@ export type Subscription = {
     proposalDisputeMetadata_collection: Array<ProposalDisputeMetadata>;
     proposalMetadata?: Maybe<ProposalMetadata>;
     proposalMetadata_collection: Array<ProposalMetadata>;
+    collateralVault?: Maybe<CollateralVault>;
+    collateralVaults: Array<CollateralVault>;
+    collateralVaultDeposit?: Maybe<CollateralVaultDeposit>;
+    collateralVaultDeposits: Array<CollateralVaultDeposit>;
     /** Access to subgraph metadata */
     _meta?: Maybe<_Meta_>;
 };
@@ -2455,6 +2638,34 @@ export type SubscriptionproposalMetadata_collectionArgs = {
     orderBy?: InputMaybe<ProposalMetadata_orderBy>;
     orderDirection?: InputMaybe<OrderDirection>;
     where?: InputMaybe<ProposalMetadata_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptioncollateralVaultArgs = {
+    id: Scalars['ID']['input'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptioncollateralVaultsArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<CollateralVault_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<CollateralVault_filter>;
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptioncollateralVaultDepositArgs = {
+    id: Scalars['ID']['input'];
+    block?: InputMaybe<Block_height>;
+    subgraphError?: _SubgraphErrorPolicy_;
+};
+export type SubscriptioncollateralVaultDepositsArgs = {
+    skip?: InputMaybe<Scalars['Int']['input']>;
+    first?: InputMaybe<Scalars['Int']['input']>;
+    orderBy?: InputMaybe<CollateralVaultDeposit_orderBy>;
+    orderDirection?: InputMaybe<OrderDirection>;
+    where?: InputMaybe<CollateralVaultDeposit_filter>;
     block?: InputMaybe<Block_height>;
     subgraphError?: _SubgraphErrorPolicy_;
 };
@@ -2711,6 +2922,12 @@ export type ResolversTypes = ResolversObject<{
     CVStrategyConfig_orderBy: CVStrategyConfig_orderBy;
     CVStrategy_filter: CVStrategy_filter;
     CVStrategy_orderBy: CVStrategy_orderBy;
+    CollateralVault: ResolverTypeWrapper<CollateralVault>;
+    CollateralVaultDeposit: ResolverTypeWrapper<CollateralVaultDeposit>;
+    CollateralVaultDeposit_filter: CollateralVaultDeposit_filter;
+    CollateralVaultDeposit_orderBy: CollateralVaultDeposit_orderBy;
+    CollateralVault_filter: CollateralVault_filter;
+    CollateralVault_orderBy: CollateralVault_orderBy;
     Float: ResolverTypeWrapper<Scalars['Float']['output']>;
     ID: ResolverTypeWrapper<Scalars['ID']['output']>;
     Int: ResolverTypeWrapper<Scalars['Int']['output']>;
@@ -2781,6 +2998,10 @@ export type ResolversParentTypes = ResolversObject<{
     CVStrategyConfig: CVStrategyConfig;
     CVStrategyConfig_filter: CVStrategyConfig_filter;
     CVStrategy_filter: CVStrategy_filter;
+    CollateralVault: CollateralVault;
+    CollateralVaultDeposit: CollateralVaultDeposit;
+    CollateralVaultDeposit_filter: CollateralVaultDeposit_filter;
+    CollateralVault_filter: CollateralVault_filter;
     Float: Scalars['Float']['output'];
     ID: Scalars['ID']['output'];
     Int: Scalars['Int']['output'];
@@ -2907,6 +3128,23 @@ export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType exte
     allowlist?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
+export type CollateralVaultResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CollateralVault'] = ResolversParentTypes['CollateralVault']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    strategy?: Resolver<ResolversTypes['CVStrategy'], ParentType, ContextType>;
+    collaterals?: Resolver<Maybe<Array<ResolversTypes['CollateralVaultDeposit']>>, ParentType, ContextType, RequireFields<CollateralVaultcollateralsArgs, 'skip' | 'first'>>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+export type CollateralVaultDepositResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CollateralVaultDeposit'] = ResolversParentTypes['CollateralVaultDeposit']> = ResolversObject<{
+    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+    collateralVault?: Resolver<ResolversTypes['CollateralVault'], ParentType, ContextType>;
+    amount?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    depositor?: Resolver<ResolversTypes['Bytes'], ParentType, ContextType>;
+    createdAt?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    proposalId?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+    withdrawnAt?: Resolver<Maybe<ResolversTypes['BigInt']>, ParentType, ContextType>;
+    withdrawnTo?: Resolver<Maybe<ResolversTypes['Bytes']>, ParentType, ContextType>;
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
 export interface Int8ScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Int8'], any> {
     name: 'Int8';
 }
@@ -3017,6 +3255,10 @@ export type QueryResolvers<ContextType = MeshContext, ParentType extends Resolve
     proposalDisputeMetadata_collection?: Resolver<Array<ResolversTypes['ProposalDisputeMetadata']>, ParentType, ContextType, RequireFields<QueryproposalDisputeMetadata_collectionArgs, 'skip' | 'first' | 'subgraphError'>>;
     proposalMetadata?: Resolver<Maybe<ResolversTypes['ProposalMetadata']>, ParentType, ContextType, RequireFields<QueryproposalMetadataArgs, 'id' | 'subgraphError'>>;
     proposalMetadata_collection?: Resolver<Array<ResolversTypes['ProposalMetadata']>, ParentType, ContextType, RequireFields<QueryproposalMetadata_collectionArgs, 'skip' | 'first' | 'subgraphError'>>;
+    collateralVault?: Resolver<Maybe<ResolversTypes['CollateralVault']>, ParentType, ContextType, RequireFields<QuerycollateralVaultArgs, 'id' | 'subgraphError'>>;
+    collateralVaults?: Resolver<Array<ResolversTypes['CollateralVault']>, ParentType, ContextType, RequireFields<QuerycollateralVaultsArgs, 'skip' | 'first' | 'subgraphError'>>;
+    collateralVaultDeposit?: Resolver<Maybe<ResolversTypes['CollateralVaultDeposit']>, ParentType, ContextType, RequireFields<QuerycollateralVaultDepositArgs, 'id' | 'subgraphError'>>;
+    collateralVaultDeposits?: Resolver<Array<ResolversTypes['CollateralVaultDeposit']>, ParentType, ContextType, RequireFields<QuerycollateralVaultDepositsArgs, 'skip' | 'first' | 'subgraphError'>>;
     _meta?: Resolver<Maybe<ResolversTypes['_Meta_']>, ParentType, ContextType, Partial<Query_metaArgs>>;
 }>;
 export type RegistryCommunityResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['RegistryCommunity'] = ResolversParentTypes['RegistryCommunity']> = ResolversObject<{
@@ -3092,6 +3334,10 @@ export type SubscriptionResolvers<ContextType = MeshContext, ParentType extends 
     proposalDisputeMetadata_collection?: SubscriptionResolver<Array<ResolversTypes['ProposalDisputeMetadata']>, "proposalDisputeMetadata_collection", ParentType, ContextType, RequireFields<SubscriptionproposalDisputeMetadata_collectionArgs, 'skip' | 'first' | 'subgraphError'>>;
     proposalMetadata?: SubscriptionResolver<Maybe<ResolversTypes['ProposalMetadata']>, "proposalMetadata", ParentType, ContextType, RequireFields<SubscriptionproposalMetadataArgs, 'id' | 'subgraphError'>>;
     proposalMetadata_collection?: SubscriptionResolver<Array<ResolversTypes['ProposalMetadata']>, "proposalMetadata_collection", ParentType, ContextType, RequireFields<SubscriptionproposalMetadata_collectionArgs, 'skip' | 'first' | 'subgraphError'>>;
+    collateralVault?: SubscriptionResolver<Maybe<ResolversTypes['CollateralVault']>, "collateralVault", ParentType, ContextType, RequireFields<SubscriptioncollateralVaultArgs, 'id' | 'subgraphError'>>;
+    collateralVaults?: SubscriptionResolver<Array<ResolversTypes['CollateralVault']>, "collateralVaults", ParentType, ContextType, RequireFields<SubscriptioncollateralVaultsArgs, 'skip' | 'first' | 'subgraphError'>>;
+    collateralVaultDeposit?: SubscriptionResolver<Maybe<ResolversTypes['CollateralVaultDeposit']>, "collateralVaultDeposit", ParentType, ContextType, RequireFields<SubscriptioncollateralVaultDepositArgs, 'id' | 'subgraphError'>>;
+    collateralVaultDeposits?: SubscriptionResolver<Array<ResolversTypes['CollateralVaultDeposit']>, "collateralVaultDeposits", ParentType, ContextType, RequireFields<SubscriptioncollateralVaultDepositsArgs, 'skip' | 'first' | 'subgraphError'>>;
     _meta?: SubscriptionResolver<Maybe<ResolversTypes['_Meta_']>, "_meta", ParentType, ContextType, Partial<Subscription_metaArgs>>;
 }>;
 export interface TimestampScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Timestamp'], any> {
@@ -3132,6 +3378,8 @@ export type Resolvers<ContextType = MeshContext> = ResolversObject<{
     CVProposal?: CVProposalResolvers<ContextType>;
     CVStrategy?: CVStrategyResolvers<ContextType>;
     CVStrategyConfig?: CVStrategyConfigResolvers<ContextType>;
+    CollateralVault?: CollateralVaultResolvers<ContextType>;
+    CollateralVaultDeposit?: CollateralVaultDepositResolvers<ContextType>;
     Int8?: GraphQLScalarType;
     Member?: MemberResolvers<ContextType>;
     MemberCommunity?: MemberCommunityResolvers<ContextType>;

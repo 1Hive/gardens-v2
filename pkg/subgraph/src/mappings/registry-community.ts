@@ -1,4 +1,4 @@
-import { CVStrategyV0_1 as CVStrategyTemplate } from "../../generated/templates";
+import { CVStrategyV0_0 as CVStrategyTemplate } from "../../generated/templates";
 import {
   Member,
   RegistryCommunity,
@@ -13,7 +13,7 @@ import {
 import { BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 import {
   RegistryInitialized,
-  RegistryCommunityV0_1 as RegistryCommunityContract,
+  RegistryCommunityV0_0 as RegistryCommunityContract,
   MemberRegistered,
   MemberActivatedStrategy,
   StrategyAdded,
@@ -24,13 +24,13 @@ import {
   MemberKicked,
   MemberPowerIncreased,
   MemberPowerDecreased
-} from "../../generated/templates/RegistryCommunityV0_1/RegistryCommunityV0_1";
+} from "../../generated/templates/RegistryCommunityV0_0/RegistryCommunityV0_0";
 
 import { RegistryFactoryV0_0 as RegistryFactoryContract } from "../../generated/RegistryFactoryV0_0/RegistryFactoryV0_0";
 
-import { CVStrategyV0_1 as CVStrategyContract } from "../../generated/templates/CVStrategyV0_1/CVStrategyV0_1";
+import { CVStrategyV0_0 as CVStrategyContract } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
-import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunityV0_1/ERC20";
+import { ERC20 as ERC20Contract } from "../../generated/templates/RegistryCommunityV0_0/ERC20";
 import { CTX_CHAIN_ID, CTX_FACTORY_ADDRESS } from "./registry-factory";
 
 const TOKEN_NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
