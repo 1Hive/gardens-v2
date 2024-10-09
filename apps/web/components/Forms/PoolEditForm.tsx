@@ -29,6 +29,7 @@ type ArbitrationSettings = {
   proposalCollateral: number | string;
   disputeCollateral: number | string;
   tribunalAddress: string;
+  defaultRulingTimeout: number | string;
 };
 
 type FormInputs = {
@@ -128,12 +129,12 @@ export default function PoolEditForm({
     proposalCollateral: {
       label: "Proposal collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     disputeCollateral: {
       label: "Dispute collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     tribunalAddress: {
       label: "Tribunal safe:",
@@ -190,9 +191,7 @@ export default function PoolEditForm({
             token?.decimals,
           ),
           defaultRuling: BigInt(previewData.defaultResolution),
-          defaultRulingTimeout: BigInt(
-            process.env.NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT ?? 300,
-          ),
+          defaultRulingTimeout: BigInt(initValues.defaultRulingTimeout),
         },
         {
           maxRatio: maxRatio,
