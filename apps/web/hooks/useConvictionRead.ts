@@ -8,6 +8,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { cvStrategyABI } from "@/src/generated";
+import { PoolTypes } from "@/types";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt } from "@/utils/numbers";
 
@@ -32,10 +33,12 @@ export const useConvictionRead = ({
   proposalData,
   tokenData: token,
   enabled = true,
+  proposalType,
 }: {
   proposalData: ProposalDataLight | undefined;
   tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined;
   enabled?: boolean;
+  proposalType: number;
 }) => {
   const chainIdFromPath = useChainIdFromPath();
   const cvStrategyContract = {
@@ -73,7 +76,7 @@ export const useConvictionRead = ({
       ...cvStrategyContract,
       functionName: "calculateThreshold" as any,
       args: [proposalData?.requestedAmount ?? 0],
-      enabled,
+      enabled: enabled && PoolTypes[proposalType] === "funding",
     });
 
   if (errorThreshold) {
