@@ -14,7 +14,7 @@ export const Countdown = ({
   className?: string;
 }) => {
   const [remainingTimeMs, setRemainingTime] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => {
