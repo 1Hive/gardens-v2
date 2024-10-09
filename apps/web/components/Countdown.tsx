@@ -70,7 +70,7 @@ export const Countdown = ({
         </div>
       )}
       {(computedMode === "datetime" || computedMode === "minutes") && (
-        <div className={`flex ${display !== "inline" ? "flex-col" : ""}`}>
+        <div className={`flex ${display !== "inline" ? "flex-col" : "items-center"}`}>
           <span className="countdown font-mono text-5xl">
             <span style={{ "--value": seconds } as React.CSSProperties} />
           </span>
