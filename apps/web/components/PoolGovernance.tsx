@@ -21,7 +21,7 @@ export type PoolGovernanceProps = {
   tokenDecimals: number;
   strategy: Pick<CVStrategy, "id"> & {
     registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
-    config: Pick<CVStrategyConfig, "pointSystem">;
+    config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
   };
   communityAddress: Address;
   memberTokensInCommunity: number;

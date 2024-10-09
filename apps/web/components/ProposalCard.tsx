@@ -35,7 +35,10 @@ export type ProposalCardProps = {
     ProposalDataLight & {
       metadata?: Maybe<Pick<ProposalMetadata, "title">>;
     };
-  strategyConfig: Pick<CVStrategyConfig, "decay" | "proposalType">;
+  strategyConfig: Pick<
+    CVStrategyConfig,
+    "decay" | "proposalType" | "allowlist"
+  >;
   inputData: ProposalInputItem;
   stakedFilter: ProposalInputItem;
   index: number;
