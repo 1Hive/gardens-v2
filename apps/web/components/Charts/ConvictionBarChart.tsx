@@ -344,7 +344,6 @@ export const ConvictionBarChart = ({
                   endTimestamp={Number(timeToPass)}
                   display="inline"
                   title={false}
-                  className=""
                 />
               </div>
             )}

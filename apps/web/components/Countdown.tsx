@@ -11,11 +11,11 @@ export const Countdown = ({
   endTimestamp: number;
   format?: "time" | "date" | "datetime" | "minutes" | "seconds" | "auto";
   display?: "inline" | "auto";
-  title?: boolean;
+  showTimeout?: boolean;
   className?: string;
 }) => {
   const [remainingTimeMs, setRemainingTime] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -43,7 +43,7 @@ export const Countdown = ({
   const content = (
     <>
       {(computedMode === "datetime" || computedMode === "date") && (
-        <div className={`flex ${display !== "inline" ? "flex-col" : ""}`}>
+        <div className={`flex ${display !== "inline" ? "flex-col" : "items-center"}`}>
           <span className="countdown font-mono text-5xl">
             <span style={{ "--value": days } as React.CSSProperties} />
           </span>
@@ -53,7 +53,7 @@ export const Countdown = ({
       {(computedMode === "datetime" ||
         computedMode === "time" ||
         computedMode === "date") && (
-        <div className={`flex ${display !== "inline" ? "flex-col" : ""}`}>
+        <div className={`flex ${display !== "inline" ? "flex-col" : "items-center"}`}>
           <span className="countdown font-mono text-5xl">
             <span style={{ "--value": hours } as React.CSSProperties} />
           </span>
@@ -63,7 +63,7 @@ export const Countdown = ({
       {(computedMode === "datetime" ||
         computedMode === "minutes" ||
         computedMode === "time") && (
-        <div className={`flex ${display !== "inline" ? "flex-col" : ""}`}>
+        <div className={`flex ${display !== "inline" ? "flex-col" : "items-center"}`}>
           <span className="countdown font-mono text-5xl">
             <span style={{ "--value": minutes } as React.CSSProperties} />
           </span>
@@ -71,7 +71,7 @@ export const Countdown = ({
         </div>
       )}
       {(computedMode === "datetime" || computedMode === "minutes") && (
-        <div className={`flex ${display !== "inline" ? "flex-col" : ""}`}>
+        <div className={`flex ${display !== "inline" ? "flex-col" : "items-center"}`}>
           <span className="countdown font-mono text-5xl">
             <span style={{ "--value": seconds } as React.CSSProperties} />
           </span>
