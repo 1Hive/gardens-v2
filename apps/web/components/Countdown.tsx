@@ -10,7 +10,7 @@ export const Countdown = ({
   endTimestamp: number;
   format?: "time" | "date" | "datetime" | "minutes" | "seconds" | "auto";
   display?: "inline" | "auto";
-  title?: boolean;
+  showTimeout?: boolean;
   className?: string;
 }) => {
   const [remainingTimeMs, setRemainingTime] = useState(0);
