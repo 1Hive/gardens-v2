@@ -123,6 +123,7 @@ export const ProposalForm = ({
     handleSubmit,
     formState: { errors },
     getValues,
+    setValue,
   } = useForm<FormInputs>();
 
   const { publish } = usePubSubContext();
@@ -389,7 +390,11 @@ export const ProposalForm = ({
               required
               errors={errors}
               registerKey="description"
-              type="textarea"
+              onChange={(e) => {
+                setValue("description", e.target.value);
+              }}
+              value={getValues("description")}
+              type="markdown"
               rows={10}
               placeholder="Proposal description"
             />

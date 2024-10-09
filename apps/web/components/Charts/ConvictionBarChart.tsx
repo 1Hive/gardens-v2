@@ -15,7 +15,7 @@ type ConvictionBarChartProps = {
   thresholdPct: number;
   proposalSupportPct: number;
   isSignalingType: boolean;
-  proposalId: number;
+  proposalNumber: number;
   compact?: boolean;
 };
 
@@ -24,7 +24,7 @@ export const ConvictionBarChart = ({
   thresholdPct,
   proposalSupportPct,
   isSignalingType,
-  proposalId,
+  proposalNumber,
   compact,
 }: ConvictionBarChartProps) => {
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
@@ -209,7 +209,7 @@ export const ConvictionBarChart = ({
   const option: EChartsOption = {
     emphasis: emphasis,
     yAxis: {
-      data: [`Proposal #${proposalId}`],
+      data: [`Proposal #${proposalNumber}`],
       axisTick: { show: false },
 
       axisLine: {

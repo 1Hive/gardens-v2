@@ -229,12 +229,12 @@ export function PoolForm({ token, communityAddr }: Props) {
     proposalCollateral: {
       label: "Proposal collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     disputeCollateral: {
       label: "Dispute collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     tribunalAddress: {
       label: "Tribunal safe:",
@@ -530,11 +530,14 @@ export function PoolForm({ token, communityAddr }: Props) {
             <div className="flex flex-col">
               <FormInput
                 label="Description"
-                register={register}
+                onChange={(value) => {
+                  setValue("description", value);
+                }}
+                value={getValues("description")}
                 required
                 errors={errors}
                 registerKey="description"
-                type="textarea"
+                type="markdown"
                 rows={7}
                 placeholder="Enter a description of your pool..."
               />
