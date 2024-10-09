@@ -4,19 +4,17 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {
-    CVStrategyV0_1,
     CVStrategyV0_0,
-    CVStrategyInitializeParamsV0_0,
     ArbitrableConfig,
     PointSystemConfig,
     PointSystem,
     ProposalType,
     CreateProposal
-} from "../src/CVStrategy/CVStrategyV0_1.sol";
+} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {
-    RegistryCommunityV0_1,
+    RegistryCommunityV0_0,
     RegistryCommunityInitializeParamsV0_0
-} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 import {RegistrySetupFull} from "allo-v2-test/foundry/shared/RegistrySetup.sol";
@@ -32,9 +30,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHelpers, SafeSetup {
     SafeArbitrator safeArbitrator;
-    CVStrategyV0_1 cvStrategy;
+    CVStrategyV0_0 cvStrategy;
     uint256 poolId;
-    RegistryCommunityV0_1 internal registryCommunity;
+    RegistryCommunityV0_0 internal registryCommunity;
     GV2ERC20 public token;
     // address allo_owner = address(0x1);
     address factoryOwner = address(1);
@@ -100,7 +98,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         params._metadata = metadata;
         params._councilSafe = payable(address(_councilSafe()));
 
-        registryCommunity = RegistryCommunityV0_1(
+        registryCommunity = RegistryCommunityV0_0(
             RegistryFactoryV0_0(
                 address(
                     new ERC1967Proxy(
@@ -109,8 +107,8 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
                             RegistryFactoryV0_0.initialize.selector,
                             address(factoryOwner),
                             address(2),
-                            address(new RegistryCommunityV0_1()),
-                            address(new CVStrategyV0_1()),
+                            address(new RegistryCommunityV0_0()),
+                            address(new CVStrategyV0_0()),
                             address(new CollateralVault())
                         )
                     )
@@ -135,7 +133,7 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
         );
 
         poolId = _poolId;
-        cvStrategy = CVStrategyV0_1(payable(_strategy));
+        cvStrategy = CVStrategyV0_0(payable(_strategy));
         vm.startPrank(pool_admin());
         safeHelper(
             address(registryCommunity),

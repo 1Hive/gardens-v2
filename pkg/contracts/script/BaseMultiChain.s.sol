@@ -7,14 +7,14 @@ import "forge-std/StdJson.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "../src/CVStrategy/CVStrategyV0_1.sol";
+import "../src/CVStrategy/CVStrategyV0_0.sol";
 import {SafeArbitrator} from "../src/SafeArbitrator.sol";
 import {IAllo} from "allo-v2-contracts/core/interfaces/IAllo.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpers, CVStrategyV0_1} from "../test/CVStrategyHelpers.sol";
+import {CVStrategyHelpers, CVStrategyV0_0} from "../test/CVStrategyHelpers.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -22,7 +22,7 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 
-import {RegistryCommunityV0_1} from "../src/RegistryCommunity/RegistryCommunityV0_1.sol";
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
@@ -169,7 +169,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
         // if (REGISTRY_FACTORY == address(0)) {
         //     // registryFactory = new RegistryFactoryV0_0();
-        //     RegistryCommunityV0_1 comm = new RegistryCommunityV0_1();
+        //     RegistryCommunityV0_0 comm = new RegistryCommunityV0_0();
         //     console2.log("Registry Community Addr: %s", address(comm));
         //     proxy = new ERC1967Proxy(
         //         address(new RegistryFactoryV0_0()),
@@ -206,7 +206,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
 
         // assertTrue(params._councilSafe != address(0));
 
-        // RegistryCommunityV0_1 registryCommunity = RegistryCommunityV0_1(registryFactory.createRegistry(params));
+        // RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(registryFactory.createRegistry(params));
 
         // PointSystemConfig memory pointConfig;
         // pointConfig.maxAmount = MINIMUM_STAKE * 2;
@@ -216,7 +216,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         // );
         // arbitrator = SafeArbitrator(payable(address(proxy)));
 
-        // CVStrategyInitializeParamsV0_0 memory paramsCV = getParams(
+        // CVStrategyInitializeParamsV0_1 memory paramsCV = getParams(
         //     address(registryCommunity),
         //     ProposalType.Funding,
         //     PointSystem.Fixed,
@@ -239,7 +239,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         //     address(token), paramsCV, Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
         // );
 
-        // CVStrategyV0_1 strategy1 = CVStrategyV0_1(payable(_strategy1));
+        // CVStrategyV0_0 strategy1 = CVStrategyV0_0(payable(_strategy1));
 
         // // strategy1.setDecay(_etherToFloat(0.9965402 ether));
         // // strategy1.setDecay(_etherToFloat(0.8705505 ether)); // alpha = decay
@@ -257,7 +257,7 @@ abstract contract BaseMultiChain is Native, CVStrategyHelpers, Script, SafeSetup
         //     address(0), paramsCV, Metadata({protocol: 1, pointer: "QmReQ5dwWgVZTMKkJ4EWHSM6MBmKN21PQN45YtRRAUHiLG"})
         // );
 
-        // CVStrategyV0_1 strategy2 = CVStrategyV0_1(payable(_strategy2));
+        // CVStrategyV0_0 strategy2 = CVStrategyV0_0(payable(_strategy2));
 
         // // Goss: Commented because already set in getParams
         // // strategy2.setDecay(_etherToFloat(0.9999903 ether)); // alpha = decay

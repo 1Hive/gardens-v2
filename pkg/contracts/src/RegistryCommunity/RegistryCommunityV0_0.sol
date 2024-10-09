@@ -20,7 +20,7 @@ import {IRegistryFactory} from "../IRegistryFactory.sol";
 import {
     CVStrategyV0_0,
     IPointStrategy,
-    CVStrategyInitializeParamsV0_0,
+    CVStrategyInitializeParamsV0_1,
     PointSystem
 } from "../CVStrategy/CVStrategyV0_0.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
@@ -90,6 +90,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
     event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
     event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
+    error AllowlistTooBig(uint256 size);
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
@@ -304,7 +305,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
-    function createPool(address _token, CVStrategyInitializeParamsV0_0 memory _params, Metadata memory _metadata)
+    function createPool(address _token, CVStrategyInitializeParamsV0_1 memory _params, Metadata memory _metadata)
         public
         virtual
         returns (uint256 poolId, address strategy)
@@ -315,14 +316,29 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
                 abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, owner())
             )
         );
+        (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
 
-        return createPool(strategyProxy, _token, _params, _metadata);
+        if (address(_params.sybilScorer) == address(0)) {
+            if (_params.initialAllowlist.length > 10000) {
+                revert AllowlistTooBig(_params.initialAllowlist.length);
+            }
+            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+            for (uint256 i = 0; i < _params.initialAllowlist.length; i++) {
+                _grantRole(allowlistRole, _params.initialAllowlist[i]);
+            }
+        }
+
+        // Grant the strategy to grant for startegy specific allowlist
+        _setRoleAdmin(
+            keccak256(abi.encodePacked("ALLOWLIST", poolId)), keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
+        );
+        _grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
     }
 
     function createPool(
         address _strategy,
         address _token,
-        CVStrategyInitializeParamsV0_0 memory _params,
+        CVStrategyInitializeParamsV0_1 memory _params,
         Metadata memory _metadata
     ) public virtual returns (uint256 poolId, address strategy) {
         address token = NATIVE;
