@@ -10,7 +10,7 @@ import { cvStrategyABI } from "@/src/generated";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt } from "@/utils/numbers";
 
-type ProposalDataLight = Maybe<
+export type ProposalDataLight = Maybe<
   Pick<
     CVProposal,
     | "proposalNumber"

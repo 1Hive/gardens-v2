@@ -42,7 +42,6 @@ type ProposalFormProps = {
   proposalType: number;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
-  tokenAddress: Address;
   spendingLimit: number;
   spendingLimitPct: number;
   poolAmount: number;
@@ -116,7 +115,6 @@ export const ProposalForm = ({
   proposalType,
   alloInfo,
   tokenGarden,
-  tokenAddress,
   spendingLimit,
   spendingLimitPct,
 }: ProposalFormProps) => {
@@ -217,16 +215,15 @@ export const ProposalForm = ({
         id: proposalId.toString(), // proposalId is a bigint
         chainId,
       });
+      setLoading(false);
       if (pathname) {
-        router.push(
-          pathname.replace(
-            "/create-proposal",
-            `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`,
-          ),
+        const newPath = pathname.replace(
+          "/create-proposal",
+          `?${QUERY_PARAMS.poolPage.newProposal}=${proposalId}`,
         );
+        router.push(newPath);
       }
     },
-    onSettled: () => setLoading(false),
   });
 
   const poolTokenAddr = strategy?.token as Address;
@@ -265,7 +262,7 @@ export const ProposalForm = ({
       poolId,
       previewData.beneficiary,
       requestedAmount,
-      tokenAddress,
+      poolTokenAddr,
       metadata,
     ]);
 
@@ -275,18 +272,10 @@ export const ProposalForm = ({
         previewData?.beneficiary ||
           "0x0000000000000000000000000000000000000000",
         requestedAmount,
-        tokenAddress,
+        poolTokenAddr,
         metadata,
       ],
     ]);
-
-    console.debug(
-      poolId,
-      previewData.beneficiary,
-      requestedAmount,
-      tokenAddress,
-      metadata,
-    );
 
     return encodedData;
   };

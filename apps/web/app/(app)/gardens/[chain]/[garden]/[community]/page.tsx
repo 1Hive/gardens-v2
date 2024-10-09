@@ -34,7 +34,7 @@ import MarkdownWrapper from "@/components/MarkdownWrapper";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
@@ -146,11 +146,16 @@ export default function Page({
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
+    const fetchedPools = poolsInReview.some((c) => c.poolId === newPoolId);
     if (
       newPoolId &&
       result &&
-      !poolsInReview.some((c) => c.poolId === newPoolId)
+      !poolsInReview.some((p) => p.poolId === newPoolId)
     ) {
+      console.debug("Community: New pool not yet fetched, refetching...", {
+        newPoolId,
+        fetchedPools,
+      });
       refetch();
     }
   }, [searchParams, poolsInReview]);

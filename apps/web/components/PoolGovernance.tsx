@@ -4,23 +4,30 @@ import React from "react";
 import { Dnum } from "dnum";
 import { Address, useAccount } from "wagmi";
 import {
+  CVStrategy,
+  CVStrategyConfig,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
+import {
   ActivatePoints,
   Badge,
   DisplayNumber,
   CheckPassport,
   InfoBox,
 } from "@/components/";
-import { LightCVStrategy } from "@/types";
 
-interface PoolGovernanceProps {
+export type PoolGovernanceProps = {
   memberPoolWeight: number;
   tokenDecimals: number;
-  strategy: LightCVStrategy;
+  strategy: Pick<CVStrategy, "id"> & {
+    registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
+    config: Pick<CVStrategyConfig, "pointSystem">;
+  };
   communityAddress: Address;
   memberTokensInCommunity: number;
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
-}
+};
 
 export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   memberPoolWeight,

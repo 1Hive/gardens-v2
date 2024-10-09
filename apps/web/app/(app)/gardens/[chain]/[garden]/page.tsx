@@ -26,7 +26,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 
@@ -80,15 +80,19 @@ export default function Page({
   useEffect(() => {
     const newCommunityId =
       searchParams[QUERY_PARAMS.gardenPage.newCommunity]?.toLowerCase();
-
+    const fetchedCommunities = communities.map((c) => c.id.toLowerCase());
     if (
       newCommunityId &&
       result &&
-      !communities.some((c) => c.id.toLowerCase() === newCommunityId)
+      !fetchedCommunities.includes(newCommunityId)
     ) {
+      console.debug("Garden: New pool not yet fetched, refetching...", {
+        newCommunityId,
+        fetchedCommunities,
+      });
       refetch();
     }
-  }, [searchParams, result]);
+  }, [searchParams, communities]);
 
   if (!result) {
     return (
