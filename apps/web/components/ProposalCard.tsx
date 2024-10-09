@@ -80,12 +80,17 @@ export function ProposalCard({
     searchParams[QUERY_PARAMS.poolPage.newProposal] ==
     proposalNumber.toString();
 
-  const { currentConvictionPct, thresholdPct, totalSupportPct, timeToPass } =
-    useConvictionRead({
-      proposalData,
-      strategyConfig: strategyConfig,
-      tokenData,
-    });
+  const {
+    currentConvictionPct,
+    thresholdPct,
+    totalSupportPct,
+    timeToPass,
+    triggerConvictionRefetch,
+  } = useConvictionRead({
+    proposalData,
+    strategyConfig: strategyConfig,
+    tokenData,
+  });
 
   const inputValue =
     inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
@@ -137,6 +142,8 @@ export function ProposalCard({
             endTimestamp={Number(timeToPass)}
             display="inline"
             className="text-neutral-soft-content text-sm"
+            onTimeout={triggerConvictionRefetch}
+            showTimeout={false}
           />
         )}
       </>
@@ -146,7 +153,7 @@ export function ProposalCard({
   const proposalCardContent = (
     <>
       <div
-        className={`flex gap-3 justify-between py-3 flex-wrap ${isAllocationView ? "section-layout" : ""}`}
+        className={`flex gap-3 justify-between py-3 flex-wrap ${isAllocationView ? `section-layout ${isNewProposal ? "shadow-2xl" : ""}` : ""}`}
       >
         <div className="flex flex-col sm:flex-row w-full">
           {/* icon title and id */}

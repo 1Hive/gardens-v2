@@ -87,6 +87,7 @@ export default function Page({
     totalSupportPct,
     updatedConviction,
     timeToPass,
+    triggerConvictionRefetch,
   } = useConvictionRead({
     proposalData,
     strategyConfig: proposalData?.strategy?.config,
@@ -268,6 +269,7 @@ export default function Page({
               isSignalingType={isSignalingType}
               proposalId={Number(proposalIdNumber)}
               timeToPass={Number(timeToPass)}
+              onReadyToExecute={triggerConvictionRefetch}
             />
           </>
         }

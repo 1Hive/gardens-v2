@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import type { EChartsOption, MarkLineComponentOption } from "echarts";
 import EChartsReact from "echarts-for-react";
 import { ChartWrapper } from "./ChartWrapper";
@@ -19,6 +19,7 @@ type ConvictionBarChartProps = {
   proposalId: number;
   compact?: boolean;
   timeToPass?: number;
+  onReadyToExecute?: () => void;
 };
 
 export const ConvictionBarChart = ({
@@ -29,6 +30,7 @@ export const ConvictionBarChart = ({
   proposalId,
   compact,
   timeToPass,
+  onReadyToExecute,
 }: ConvictionBarChartProps) => {
   const supportNeeded = (thresholdPct - proposalSupportPct).toFixed(2);
   const scenarioMappings: Record<string, ScenarioMapping> = {
@@ -159,15 +161,18 @@ export const ConvictionBarChart = ({
     },
   };
 
-  const { message, growing } = Object.values(scenarioMappings).find(
-    ({ condition }) => condition(),
-  )?.details[0] ?? {
-    message:
-      proposalSupportPct == 0 ?
-        "Proposal waiting for support"
-      : "Scenario not found",
-    growing: null,
-  };
+  const { message, growing } = useMemo(() => {
+    return (
+      Object.values(scenarioMappings).find(({ condition }) => condition())
+        ?.details[0] ?? {
+        message:
+          proposalSupportPct == 0 ?
+            "Proposal waiting for support"
+          : "Scenario not found",
+        growing: null,
+      }
+    );
+  }, [timeToPass, currentConvictionPct, proposalSupportPct, thresholdPct]);
 
   const supportGtConv = proposalSupportPct > currentConvictionPct;
   const convEqSupport = proposalSupportPct === currentConvictionPct;
@@ -265,7 +270,7 @@ export const ConvictionBarChart = ({
         },
 
         label: {
-          show: !compact ?? false,
+          show: !compact,
           position: "insideRight",
           color: "#191919",
           fontSize: 10,
@@ -286,7 +291,7 @@ export const ConvictionBarChart = ({
           borderRadius: borderRadius,
         },
         label: {
-          show: !compact ?? false,
+          show: !compact,
           position: "insideRight",
           color: "#FFFFFF",
           fontSize: 10,
@@ -317,6 +322,11 @@ export const ConvictionBarChart = ({
     ],
   };
 
+  const readyToBeExecuted = currentConvictionPct >= thresholdPct;
+  const proposalWillPass =
+    Number(supportNeeded) < 0 &&
+    (currentConvictionPct ?? 0) < (thresholdPct ?? 0);
+
   return (
     <>
       {compact ?
@@ -336,14 +346,15 @@ export const ConvictionBarChart = ({
             />
           </ChartWrapper>
           {scenarioMappings.supportLTConvictionLTThreshold &&
-            !(currentConvictionPct > thresholdPct) &&
-            !(Number(supportNeeded) > 0) && (
+            proposalWillPass &&
+            !readyToBeExecuted && (
               <div className="flex items-center gap-2">
                 <p>Estimated time to pass:</p>
                 <Countdown
                   endTimestamp={Number(timeToPass)}
                   display="inline"
-                  title={false}
+                  showTimeout={false}
+                  onTimeout={onReadyToExecute}
                 />
               </div>
             )}
