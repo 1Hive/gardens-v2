@@ -21,6 +21,7 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
+import { Skeleton } from "@/components/Skeleton";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -166,9 +167,11 @@ export default function Page({
           <div className="flex w-full flex-col gap-8">
             <div>
               <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                <h2>
-                  {metadata?.title} #{proposalIdNumber.toString()}
-                </h2>
+                <Skeleton isLoading={!metadata} className="!w-96 h-8">
+                  <h2>
+                    {metadata?.title} #{proposalIdNumber.toString()}
+                  </h2>
+                </Skeleton>
                 <Badge type={proposalType} />
               </div>
               <div className="flex items-center justify-between gap-4 sm:justify-start">
@@ -181,9 +184,13 @@ export default function Page({
                 </p>
               </div>
             </div>
-            <MarkdownWrapper>
-              {metadata?.description ?? "No description found"}
-            </MarkdownWrapper>
+            <div>
+              <Skeleton rows={5} isLoading={!metadata}>
+                <MarkdownWrapper>
+                  {metadata?.description ?? "No description found"}
+                </MarkdownWrapper>
+              </Skeleton>
+            </div>
             <div className="flex justify-between flex-wrap gap-2">
               <div className="flex flex-col gap-2">
                 {!isSignalingType && (
@@ -264,7 +271,7 @@ export default function Page({
               thresholdPct={thresholdPct}
               proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
-              proposalId={Number(proposalIdNumber)}
+              proposalNumber={Number(proposalIdNumber)}
             />
           </>
         }
