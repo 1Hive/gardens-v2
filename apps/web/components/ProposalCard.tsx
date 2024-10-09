@@ -39,7 +39,7 @@ export type ProposalCardProps = {
   strategyConfig: Pick<CVStrategyConfig, "decay" | "proposalType">;
   inputData?: ProposalInputItem;
   stakedFilter: ProposalInputItem;
-  poolToken: FetchTokenResult;
+  poolToken?: FetchTokenResult;
   isAllocationView: boolean;
   memberActivatedPoints: number;
   memberPoolWeight: number;
@@ -78,10 +78,14 @@ export function ProposalCard({
     searchParams[QUERY_PARAMS.poolPage.newProposal] ==
     proposalNumber.toString();
 
+  const isSignalingType =
+    PoolTypes[strategyConfig.proposalType] === "signaling";
+
   const { currentConvictionPct, thresholdPct, totalSupportPct } =
     useConvictionRead({
       proposalData,
       tokenData,
+      proposalType: strategyConfig.proposalType,
     });
 
   const inputValue =
@@ -96,9 +100,6 @@ export function ProposalCard({
     (inputValue * memberPoolWeight) /
     100
   ).toFixed(2);
-
-  const isSignalingType =
-    PoolTypes[strategyConfig.proposalType] === "signaling";
 
   const supportNeededToPass = (
     (thresholdPct ?? 0) - (totalSupportPct ?? 0)
@@ -134,7 +135,7 @@ export function ProposalCard({
 
           {/* amount requested and proposal status */}
           <div className="flex gap-6 text-neutral-soft-content">
-            {!isSignalingType && (
+            {!isSignalingType && poolToken && (
               <div className="flex items-center gap-1 justify-self-end">
                 <p>Requested amount: </p>
                 <DisplayNumber

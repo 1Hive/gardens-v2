@@ -69,11 +69,6 @@ export default function Page({
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
-  const { data: poolToken } = useToken({
-    address: poolTokenAddr,
-    enabled: !!poolTokenAddr,
-    chainId,
-  });
   const { data: ipfsResult } = useMetadataIpfsFetch({
     hash: proposalData?.metadataHash,
     enabled: !proposalData?.metadata,
@@ -81,6 +76,19 @@ export default function Page({
   const metadata = proposalData?.metadata ?? ipfsResult;
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
+
+  const proposalType = proposalData?.strategy.config?.proposalType;
+  const isSignalingType = PoolTypes[proposalType] === "signaling";
+  const requestedAmount = proposalData?.requestedAmount;
+  const beneficiary = proposalData?.beneficiary as Address | undefined;
+  const submitter = proposalData?.submitter as Address | undefined;
+  const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
+
+  const { data: poolToken } = useToken({
+    address: poolTokenAddr,
+    enabled: !!poolTokenAddr && !isSignalingType,
+    chainId,
+  });
 
   const {
     currentConvictionPct,
@@ -91,14 +99,8 @@ export default function Page({
     proposalData,
     tokenData: data?.tokenGarden,
     enabled: proposalData?.proposalNumber != null,
+    proposalType: proposalType,
   });
-
-  const proposalType = proposalData?.strategy.config?.proposalType;
-  const requestedAmount = proposalData?.requestedAmount;
-  const beneficiary = proposalData?.beneficiary as Address | undefined;
-  const submitter = proposalData?.submitter as Address | undefined;
-  const isSignalingType = PoolTypes[proposalType] === "signaling";
-  const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
 
   //encode proposal id to pass as argument to distribute function
   const encodedDataProposalId = (proposalId_: bigint) => {

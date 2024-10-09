@@ -226,7 +226,7 @@ export const ConvictionBarChart = ({
       axisLine: {
         show: false,
       },
-      max: 50,
+      max: 100,
     },
     tooltip: {
       trigger: "axis",

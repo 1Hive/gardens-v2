@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { trimEnd } from "lodash-es";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
