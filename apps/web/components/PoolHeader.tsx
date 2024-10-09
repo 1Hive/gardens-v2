@@ -313,7 +313,7 @@ export default function PoolHeader({
               proposalCollateral: proposalCollateral,
               disputeCollateral: disputeCollateral,
               tribunalAddress: tribunalAddress,
-              rulingTime: rulingTime,
+              rulingTime,
             }}
             setModalOpen={setIsOpenModal}
           />

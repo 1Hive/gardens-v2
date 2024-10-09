@@ -57,6 +57,7 @@ export const CommunityForm = ({
     handleSubmit,
     formState: { errors },
     getValues,
+    setValue,
   } = useForm<FormInputs>();
 
   const { publish } = usePubSubContext();
@@ -281,7 +282,7 @@ export const CommunityForm = ({
               className="pr-14"
               otherProps={{
                 step: 1 / CV_PERCENTAGE_SCALE,
-                min: 1 / CV_PERCENTAGE_SCALE,
+                min: 0,
               }}
               registerOptions={{
                 max: {
@@ -289,8 +290,8 @@ export const CommunityForm = ({
                   message: "Max amount cannot exceed 100%",
                 },
                 min: {
-                  value: 1 / CV_PERCENTAGE_SCALE,
-                  message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                  value: 0,
+                  message: "Amount must be greater than 0",
                 },
               }}
               suffix="%"
@@ -349,7 +350,11 @@ export const CommunityForm = ({
               required
               errors={errors}
               registerKey="covenant"
-              type="textarea"
+              onChange={(e) => {
+                setValue("covenant", e.target.value);
+              }}
+              value={getValues("covenant")}
+              type="markdown"
               rows={7}
               placeholder="Covenant description..."
             />
