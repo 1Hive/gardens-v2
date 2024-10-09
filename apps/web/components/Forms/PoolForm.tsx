@@ -30,6 +30,7 @@ import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
   calculateDecay,
   calculateMaxRatioNum,
+  convertSecondsToReadableTime,
   CV_PERCENTAGE_SCALE,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
@@ -202,7 +203,12 @@ export function PoolForm({ token, communityAddr }: Props) {
     },
     convictionGrowth: {
       label: "Conviction growth:",
-      parse: (value: string) => value + " days",
+      parse: (days: string) => {
+        const { value, unit } = convertSecondsToReadableTime(
+          parseTimeUnit(+days, "days", "seconds"),
+        );
+        return value + " " + unit + (value > 1 ? "s" : "");
+      },
     },
     strategyType: {
       label: "Strategy type:",
@@ -236,17 +242,22 @@ export function PoolForm({ token, communityAddr }: Props) {
     },
     rulingTime: {
       label: "Ruling time:",
-      parse: (value: string) => value + " days",
+      parse: (days: string) => {
+        const { value, unit } = convertSecondsToReadableTime(
+          parseTimeUnit(+days, "days", "seconds"),
+        );
+        return value + " " + unit + (value > 1 ? "s" : "");
+      },
     },
     proposalCollateral: {
       label: "Proposal collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     disputeCollateral: {
       label: "Dispute collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     tribunalAddress: {
       label: "Tribunal safe:",
@@ -476,6 +487,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       isSybilResistanceRequired: previewData.isSybilResistanceRequired,
       passportThreshold: previewData.passportThreshold,
       defaultResolution: previewData.defaultResolution,
+      rulingTime: previewData.rulingTime,
       proposalCollateral: previewData.proposalCollateral,
       disputeCollateral: previewData.disputeCollateral,
       tribunalAddress: tribunalAddress,
@@ -733,6 +745,10 @@ export function PoolForm({ token, communityAddr }: Props) {
               register={register}
               type="number"
               required
+              otherProps={{
+                step: 1 / 24 / 3600, // 1 seconds as day unit
+                min: 1 / 24 / 3600, // 1 seconds as day unit
+              }}
               suffix="days"
               tooltip="Number of days Tribunal has to make a decision on the dispute. Past that time, the default resolution will be applied."
             />

@@ -22,7 +22,7 @@ export function FormCheckBox({
   register,
   required = false,
   registerOptions,
-  defaultChecked = false,
+  defaultChecked,
   value,
   onChange,
   tooltip,

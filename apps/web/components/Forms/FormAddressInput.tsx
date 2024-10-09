@@ -67,8 +67,8 @@ export const FormAddressInput = ({
   });
 
   useEffect(() => {
-    setInput(value ?? inputRef.current?.value);
-  }, [value ?? inputRef.current?.value]);
+    setInput(inputRef.current?.value);
+  }, [inputRef.current?.value]);
 
   useEffect(() => {
     if (!isMounted()) {
@@ -145,11 +145,7 @@ export const FormAddressInput = ({
           <img
             alt=""
             className={"!rounded-full ml-2"}
-            src={
-              avatarUrl ? avatarUrl : (
-                blo((input ?? "0x") as Address)
-              )
-            }
+            src={avatarUrl ? avatarUrl : blo((input ?? "0x") as Address)}
             width="30"
             height="30"
           />
