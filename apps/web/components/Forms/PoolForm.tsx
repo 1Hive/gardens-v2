@@ -746,8 +746,8 @@ export function PoolForm({ token, communityAddr }: Props) {
               type="number"
               required
               otherProps={{
-                step: 1 / 24 / 3600, // 1 seconds as day unit
-                min: 1 / 24 / 3600, // 1 seconds as day unit
+                min: 1 / 24 / 3600, // 1 second
+                step: 0,
               }}
               suffix="days"
               tooltip="Number of days Tribunal has to make a decision on the dispute. Past that time, the default resolution will be applied."

@@ -217,7 +217,11 @@ export default function PoolEditForm({
             token?.decimals,
           ),
           defaultRuling: BigInt(previewData.defaultResolution),
-          defaultRulingTimeout: BigInt(previewData.rulingTime),
+          defaultRulingTimeout: BigInt(
+            Math.round(
+              parseTimeUnit(previewData.rulingTime, "days", "seconds"),
+            ),
+          ),
         },
         {
           maxRatio: maxRatio,
@@ -459,8 +463,7 @@ export default function PoolEditForm({
               type="number"
               required
               otherProps={{
-                step: 1 / 24 / 3600, // 1 seconds as day unit
-                min: 1 / 24 / 3600, // 1 seconds as day unit
+                step: 0.0001,
               }}
               suffix="Days"
               tooltip="Number of days Tribunal has to make a decision on the dispute. Past that time, the default resolution will be applied."
