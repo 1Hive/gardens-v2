@@ -31,6 +31,7 @@ import {
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
+import { Skeleton } from "@/components/Skeleton";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -359,9 +360,9 @@ export default function Page({
       <section ref={covenantSectionRef} className="section-layout">
         <h2 className="mb-4">Covenant</h2>
         {registryCommunity?.covenantIpfsHash ?
-          covenant ?
-            <MarkdownWrapper>{covenant}</MarkdownWrapper>
-          : <LoadingSpinner />
+          <Skeleton isLoading={!covenant} rows={5}>
+            <MarkdownWrapper>{covenant!}</MarkdownWrapper>
+          </Skeleton>
         : <p className="italic">No covenant was submitted.</p>}
         <div className="mt-10 flex justify-center">
           <Image
