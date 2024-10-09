@@ -994,6 +994,56 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
         vm.stopPrank();
     }
 
+    function testRevert_allowlistTooBig() public {
+        vm.startPrank(pool_admin());
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        // Max is 10000, should revert
+        uint256 limit = 10001;
+        address[] memory allowlist = new address[](limit);
+        for (uint256 i = 0; i < limit; i++) {
+            allowlist[i] = address(uint160(uint256(keccak256(abi.encodePacked(i)))));
+        }
+        vm.expectRevert(abi.encodeWithSelector(RegistryCommunityV0_1.AllowlistTooBig.selector, limit));
+        registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                allowlist
+            ),
+            metadata
+        );
+    }
+
+    function test_createPool_loop_gas() public {
+        vm.startPrank(pool_admin());
+        ArbitrableConfig memory arbitrableConfig = _generateArbitrableConfig();
+        uint256 limit = 10000;
+        address[] memory allowlist = new address[](limit);
+        for (uint256 i = 0; i < limit; i++) {
+            allowlist[i] = address(uint160(uint256(keccak256(abi.encodePacked(i)))));
+        }
+        // CreatePool with one address = 1 246 096 gas used
+        // CreatePool with two addresses = 1 271 771
+        // Around 25000 gas per extra address
+        registryCommunity.createPool(
+            NATIVE,
+            getParams(
+                address(registryCommunity),
+                ProposalType(0),
+                PointSystem.Unlimited,
+                PointSystemConfig(0),
+                arbitrableConfig,
+                allowlist
+            ),
+            metadata
+        );
+        vm.stopPrank();
+    }
+
     function test_add_to_allowlist_after_addressZero_initialized() public {
         // The strategy created in setup has address(0) as initial member,
         // in other words everyone
