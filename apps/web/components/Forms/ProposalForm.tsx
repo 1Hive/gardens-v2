@@ -123,6 +123,7 @@ export const ProposalForm = ({
     handleSubmit,
     formState: { errors },
     getValues,
+    setValue,
   } = useForm<FormInputs>();
 
   const { publish } = usePubSubContext();
@@ -229,16 +230,16 @@ export const ProposalForm = ({
   const poolTokenAddr = strategy?.token as Address;
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
-    enabled: !!poolTokenAddr,
+    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
     chainId,
   });
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
   const spendingLimitNumber = spendingLimit / 10 ** (poolToken?.decimals ?? 0);
 
-  if (!poolToken) {
+  if (!poolToken && PoolTypes[proposalType] === "funding") {
     return (
-      <div className="mt-96">
+      <div className="m-40">
         <LoadingSpinner />
       </div>
     );
@@ -345,11 +346,8 @@ export const ProposalForm = ({
                 registerKey="amount"
                 type="number"
                 placeholder="0"
-              >
-                <span className="absolute right-4 top-4 text-black">
-                  {poolToken?.symbol}
-                </span>
-              </FormInput>
+                suffix={poolToken?.symbol}
+               />
             </div>
           )}
           {proposalTypeName !== "signaling" && (
@@ -389,7 +387,11 @@ export const ProposalForm = ({
               required
               errors={errors}
               registerKey="description"
-              type="textarea"
+              onChange={(e) => {
+                setValue("description", e.target.value);
+              }}
+              value={getValues("description")}
+              type="markdown"
               rows={10}
               placeholder="Proposal description"
             />

@@ -46,9 +46,10 @@ export default function Page({
 
   const strategyObj = data?.cvstrategies?.[0];
   const poolTokenAddr = strategyObj?.token as Address;
+  const proposalType = strategyObj?.config.proposalType;
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
-    enabled: !!poolTokenAddr,
+    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
     chainId: +chain,
   });
 
@@ -92,7 +93,10 @@ export default function Page({
 
   const tokenGarden = data?.tokenGarden;
 
-  if (!tokenGarden || !poolToken) {
+  if (
+    !tokenGarden ||
+    (!poolToken && PoolTypes[proposalType] === "funding")
+  ) {
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -106,7 +110,6 @@ export default function Page({
 
   const communityAddress = strategyObj.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
-  const proposalType = strategyObj.config.proposalType;
   const poolAmount = strategyObj.poolAmount as number;
 
   const isEnabled = data.cvstrategies?.[0]?.isEnabled as boolean;
@@ -125,7 +128,7 @@ export default function Page({
       />
       {isEnabled && (
         <>
-          {PoolTypes[proposalType] !== "signaling" && (
+          {poolToken && PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
               poolToken={poolToken}
               alloInfo={alloInfo}

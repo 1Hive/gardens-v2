@@ -263,7 +263,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         decimals
       }
     }
-    proposals {
+    proposals(orderBy: createdAt, orderDirection: desc) {
       id
       proposalNumber
       metadata {
@@ -343,6 +343,7 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
         proposalType
         pointSystem
         minThresholdPoints
+        decay
       }
     }
     arbitrableConfig {

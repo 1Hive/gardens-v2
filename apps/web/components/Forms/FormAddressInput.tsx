@@ -67,8 +67,8 @@ export const FormAddressInput = ({
   });
 
   useEffect(() => {
-    setInput(value ?? inputRef.current?.value);
-  }, [value ?? inputRef.current?.value]);
+    setInput(inputRef.current?.value);
+  }, [inputRef.current?.value]);
 
   useEffect(() => {
     if (!isMounted()) {
@@ -101,7 +101,7 @@ export const FormAddressInput = ({
   }
 
   return (
-    <div className={`flex flex-col max-w-md ${className ?? ""}`}>
+    <div className={`flex flex-col max-w-md text-sm ${className ?? ""}`}>
       {label && (
         <label htmlFor={registerKey} className="label cursor-pointer">
           <span className="label-text">
@@ -123,7 +123,7 @@ export const FormAddressInput = ({
       >
         <input
           ref={inputRef}
-          className={`input px-0 w-full border-none focus:border-none outline-none focus:outline-none ${readOnly || disabled ? "cursor-not-allowed" : ""}`}
+          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${readOnly || disabled ? "cursor-not-allowed" : ""}`}
           placeholder={placeholder || "Enter address or ENS name"}
           id={registerKey}
           name={registerKey}
@@ -139,17 +139,13 @@ export const FormAddressInput = ({
             ...registerOptions,
           })}
         />
-        {inputRef.current?.value && (
+        {input && (
           // Don't want to use nextJS Image here (and adding remote patterns for the URL)
           // eslint-disable-next-line @next/next/no-img-element
           <img
             alt=""
             className={"!rounded-full ml-2"}
-            src={
-              avatarUrl ? avatarUrl : (
-                blo((inputRef.current?.value ?? "0x") as Address)
-              )
-            }
+            src={avatarUrl ? avatarUrl : blo((input ?? "0x") as Address)}
             width="30"
             height="30"
           />
