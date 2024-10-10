@@ -95,9 +95,12 @@ export default function Page({
     thresholdPct,
     totalSupportPct,
     updatedConviction,
+    timeToPass,
+    triggerConvictionRefetch,
   } = useConvictionRead({
     proposalData,
-    tokenData: data?.tokenGarden,
+    strategyConfig: proposalData?.strategy?.config,
+    tokenData: data?.tokenGarden?.decimals,
     enabled: proposalData?.proposalNumber != null,
     proposalType: proposalType,
   });
@@ -198,7 +201,7 @@ export default function Page({
                 {!isSignalingType && (
                   <>
                     <Statistic
-                      label={"requested amount"}
+                      label={"request amount"}
                       icon={<InformationCircleIcon />}
                     >
                       <DisplayNumber
@@ -274,6 +277,8 @@ export default function Page({
               proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
               proposalNumber={Number(proposalIdNumber)}
+              timeToPass={Number(timeToPass)}
+              onReadyToExecute={triggerConvictionRefetch}
             />
           </>
         }

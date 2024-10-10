@@ -11,6 +11,7 @@ import {
   Maybe,
   ProposalMetadata,
 } from "#/subgraph/.graphclient";
+import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
@@ -73,20 +74,21 @@ export function ProposalCard({
   const pathname = usePathname();
 
   const searchParams = useCollectQueryParams();
-  // TODO: ADD border color when new proposal is added
   const isNewProposal =
     searchParams[QUERY_PARAMS.poolPage.newProposal] ==
     proposalNumber.toString();
 
-  const isSignalingType =
-    PoolTypes[strategyConfig.proposalType] === "signaling";
-
-  const { currentConvictionPct, thresholdPct, totalSupportPct } =
-    useConvictionRead({
-      proposalData,
-      tokenData,
-      proposalType: strategyConfig.proposalType,
-    });
+  const {
+    currentConvictionPct,
+    thresholdPct,
+    totalSupportPct,
+    timeToPass,
+    triggerConvictionRefetch,
+  } = useConvictionRead({
+    proposalData,
+    strategyConfig,
+    tokenData,
+  });
 
   const inputValue =
     inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
@@ -101,14 +103,55 @@ export function ProposalCard({
     100
   ).toFixed(2);
 
+  const isSignalingType =
+    PoolTypes[strategyConfig.proposalType] === "signaling";
+
+  const alreadyExecuted = proposalStatus[proposalStatus] === "executed";
+
   const supportNeededToPass = (
     (thresholdPct ?? 0) - (totalSupportPct ?? 0)
   ).toFixed(2);
 
+  const readyToBeExecuted = (currentConvictionPct ?? 0) >= (thresholdPct ?? 0);
+
+  const proposalWillPass =
+    Number(supportNeededToPass) < 0 &&
+    (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
+    !alreadyExecuted;
+
+  const ProposalCountDown = () => {
+    return (
+      <>
+        <p className="text-neutral-soft-content text-sm">
+          {(
+            Number(supportNeededToPass) > 0 &&
+            !alreadyExecuted &&
+            !readyToBeExecuted
+          ) ?
+            `At least ${supportNeededToPass}% needed`
+          : proposalWillPass ?
+            "Estimated time to pass:"
+          : !alreadyExecuted && readyToBeExecuted ?
+            "Ready to be executed"
+          : ""}
+        </p>
+        {proposalWillPass && !readyToBeExecuted && (
+          <Countdown
+            endTimestamp={Number(timeToPass)}
+            display="inline"
+            className="text-neutral-soft-content text-sm"
+            onTimeout={triggerConvictionRefetch}
+            showTimeout={false}
+          />
+        )}
+      </>
+    );
+  };
+
   const proposalCardContent = (
     <>
       <div
-        className={`flex gap-3 justify-between py-3 flex-wrap ${isAllocationView ? "section-layout" : ""}`}
+        className={`flex gap-3 justify-between py-3 flex-wrap ${isAllocationView ? `section-layout ${isNewProposal ? "shadow-2xl" : ""}` : ""}`}
       >
         <div className="flex flex-col sm:flex-row w-full">
           {/* icon title and id */}
@@ -132,7 +175,6 @@ export function ProposalCard({
               </div>
             </div>
           </div>
-
           {/* amount requested and proposal status */}
           <div className="flex gap-6 text-neutral-soft-content">
             {!isSignalingType && poolToken && (
@@ -207,16 +249,16 @@ export function ProposalCard({
                 {currentConvictionPct != null &&
                   thresholdPct != null &&
                   totalSupportPct != null && (
-                    <div className="">
-                      <p className="mb-2 text-sm">
-                        Total Support: <span>{totalSupportPct}%</span> of pool
-                        weight{" "}
-                        <span className="text-neutral-soft-content text-sm">
-                          {Number(supportNeededToPass) > 0 ?
-                            `(at least ${supportNeededToPass}% needed)`
-                          : ""}
-                        </span>
-                      </p>
+                    <div>
+                      <div className="flex items-end gap-1 mb-2">
+                        <div>
+                          <p className="text-sm">
+                            Total Support: <span>{totalSupportPct}%</span> of
+                            pool weight.
+                          </p>
+                        </div>
+                        <ProposalCountDown />
+                      </div>
                       <div className="h-3">
                         <ConvictionBarChart
                           compact
@@ -235,11 +277,9 @@ export function ProposalCard({
         </div>
       </div>
       {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
-        <div className="">
-          <p className="flex items-baseline text-xs">
-            Your support: {poolWeightAllocatedInProposal}%
-          </p>
-        </div>
+        <p className="flex items-baseline text-xs">
+          Your support: {poolWeightAllocatedInProposal}%
+        </p>
       )}
       {/* TODO: fetch every member stake */}
       {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}
