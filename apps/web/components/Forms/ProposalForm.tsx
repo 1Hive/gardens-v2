@@ -230,16 +230,16 @@ export const ProposalForm = ({
   const poolTokenAddr = strategy?.token as Address;
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
-    enabled: !!poolTokenAddr,
+    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
     chainId,
   });
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
   const spendingLimitNumber = spendingLimit / 10 ** (poolToken?.decimals ?? 0);
 
-  if (!poolToken) {
+  if (!poolToken && PoolTypes[proposalType] === "funding") {
     return (
-      <div className="mt-96">
+      <div className="m-40">
         <LoadingSpinner />
       </div>
     );

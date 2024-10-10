@@ -11,6 +11,7 @@ import {
 import { useChainFromPath } from "./useChainFromPath";
 import { useChainIdFromPath } from "./useChainIdFromPath";
 import { cvStrategyABI } from "@/src/generated";
+import { PoolTypes } from "@/types";
 import { getRemainingBlocksToPass } from "@/utils/convictionFormulas";
 import { logOnce } from "@/utils/log";
 import { calculatePercentageBigInt, CV_SCALE_PRECISION } from "@/utils/numbers";
@@ -39,7 +40,7 @@ export const useConvictionRead = ({
   enabled = true,
 }: {
   proposalData: ProposalDataLight | undefined;
-  strategyConfig: Pick<CVStrategyConfig, "decay"> | undefined;
+  strategyConfig: Pick<CVStrategyConfig, "decay" | "proposalType"> | undefined;
   tokenData: Maybe<Pick<TokenGarden, "decimals">> | undefined;
   enabled?: boolean;
 }) => {
@@ -69,7 +70,7 @@ export const useConvictionRead = ({
       ...cvStrategyContract,
       functionName: "calculateThreshold" as any,
       args: [proposalData?.requestedAmount ?? 0],
-      enabled,
+      enabled: enabled && PoolTypes[strategyConfig?.proposalType] === "funding",
     });
 
   if (errorThreshold) {

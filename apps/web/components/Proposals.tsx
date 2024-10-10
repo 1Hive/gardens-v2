@@ -76,7 +76,7 @@ interface ProposalsProps {
     config: ProposalCardProps["strategyConfig"];
   } & PoolGovernanceProps["strategy"];
   alloInfo: Allo;
-  poolToken: FetchTokenResult;
+  poolToken?: FetchTokenResult;
   communityAddress: Address;
   createProposalUrl: string;
   proposalType: number;
