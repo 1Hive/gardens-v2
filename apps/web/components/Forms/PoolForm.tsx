@@ -562,8 +562,8 @@ export function PoolForm({ token, communityAddr }: Props) {
             <div className="flex flex-col">
               <FormInput
                 label="Description"
-                onChange={(value) => {
-                  setValue("description", value);
+                onChange={(e) => {
+                  setValue("description", e.target.value);
                 }}
                 value={getValues("description")}
                 required
@@ -771,9 +771,8 @@ export function PoolForm({ token, communityAddr }: Props) {
               <FormAddressInput
                 tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                 label="Tribunal address"
-                registerKey="tribunalAddress"
                 required
-                onChange={(newValue) => setTribunalAddress(newValue)}
+                onChange={(e) => setTribunalAddress(e.target.value)}
                 value={tribunalAddress}
               />
               <FormCheckBox
