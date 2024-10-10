@@ -1,12 +1,12 @@
+import { Abi } from "viem";
 import {
+  alloABI,
   cvStrategyABI,
+  erc20ABI,
   registryCommunityABI,
   registryFactoryABI,
-  alloABI,
-  erc20ABI,
-  safeABI
+  safeABI,
 } from "@/src/generated";
-import { Abi } from "viem";
 
 const FuncFilterError = (item: { type: string }) => item.type === "error";
 
@@ -17,17 +17,15 @@ const errorsABI = [
   ...registryCommunityABI.filter(FuncFilterError),
   ...registryFactoryABI.filter(FuncFilterError),
   ...erc20ABI.filter(FuncFilterError),
-  ...safeABI.filter(FuncFilterError)
+  ...safeABI.filter(FuncFilterError),
 ];
 
 // console.log("errorsABI", errorsABI);
 
-export function abiWithErrors(abi: Abi): Abi {
+export function abiWithErrors(abi: Abi) {
   return [...abi, ...errorsABI];
 }
 
-export function abiWithErrors2<Tabi extends Abi>(
-  abi: Tabi,
-): Tabi & typeof errorsABI {
-  return [...abi, ...errorsABI] as Tabi & typeof errorsABI;
+export function abiWithErrors2<Tabi extends Abi>(abi: Tabi) {
+  return [...abi, ...errorsABI];
 }

@@ -1,0 +1,568 @@
+pkg/contracts/script/AddOwner.s.sol ^0.8.19
+├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0
+│   ├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+│   ├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+│   ├── lib/forge-std/src/safeconsole.sol >=0.6.2, <0.9.0
+│   ├── lib/forge-std/src/StdChains.sol >=0.6.2, <0.9.0
+│   │   └── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   ├── lib/forge-std/src/StdCheats.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/StdStorage.sol >=0.6.2, <0.9.0
+│   │   │   └── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+│   │   └── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   ├── lib/forge-std/src/StdJson.sol >=0.6.0, <0.9.0
+│   │   └── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   ├── lib/forge-std/src/StdMath.sol >=0.6.2, <0.9.0
+│   ├── lib/forge-std/src/StdStorage.sol >=0.6.2, <0.9.0 (*)
+│   ├── lib/forge-std/src/StdStyle.sol >=0.4.22, <0.9.0
+│   │   └── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   ├── lib/forge-std/src/StdUtils.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/interfaces/IMulticall3.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/mocks/MockERC20.sol >=0.6.2, <0.9.0
+│   │   │   └── lib/forge-std/src/interfaces/IERC20.sol >=0.6.2
+│   │   ├── lib/forge-std/src/mocks/MockERC721.sol >=0.6.2, <0.9.0
+│   │   │   └── lib/forge-std/src/interfaces/IERC721.sol >=0.6.2
+│   │   │       └── lib/forge-std/src/interfaces/IERC165.sol >=0.6.2
+│   │   └── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   ├── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   └── lib/forge-std/src/Base.sol >=0.6.2, <0.9.0
+│       ├── lib/forge-std/src/StdStorage.sol >=0.6.2, <0.9.0 (*)
+│       └── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19
+│   ├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19
+│   │   └── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+│   ├── lib/allo-v2/contracts/core/interfaces/IStrategy.sol ^0.8.19
+│   │   └── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+│   └── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19
+│   ├── lib/allo-v2/lib/solady/src/auth/Ownable.sol ^0.8.4
+│   ├── lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol ^0.8.2
+│   │   └── lib/openzeppelin-contracts-upgradeable/contracts/utils/AddressUpgradeable.sol ^0.8.1
+│   ├── lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol ^0.8.0
+│   ├── lib/openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol ^0.8.0
+│   │   ├── lib/openzeppelin-contracts-upgradeable/contracts/access/IAccessControlUpgradeable.sol ^0.8.0
+│   │   ├── lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol ^0.8.0
+│   │   │   └── lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol ^0.8.2 (*)
+│   │   ├── lib/openzeppelin-contracts-upgradeable/contracts/utils/StringsUpgradeable.sol ^0.8.0
+│   │   │   ├── lib/openzeppelin-contracts-upgradeable/contracts/utils/math/MathUpgradeable.sol ^0.8.0
+│   │   │   └── lib/openzeppelin-contracts-upgradeable/contracts/utils/math/SignedMathUpgradeable.sol ^0.8.0
+│   │   ├── lib/openzeppelin-contracts-upgradeable/contracts/utils/introspection/ERC165Upgradeable.sol ^0.8.0
+│   │   │   ├── lib/openzeppelin-contracts-upgradeable/contracts/utils/introspection/IERC165Upgradeable.sol ^0.8.0
+│   │   │   └── lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol ^0.8.2 (*)
+│   │   └── lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol ^0.8.2 (*)
+│   ├── lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol ^0.8.0
+│   │   └── lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol ^0.8.2 (*)
+│   ├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+│   ├── lib/allo-v2/contracts/core/libraries/Clone.sol =0.8.19
+│   │   └── lib/openzeppelin-contracts-upgradeable/contracts/proxy/ClonesUpgradeable.sol ^0.8.0
+│   ├── lib/allo-v2/contracts/core/libraries/Errors.sol =0.8.19
+│   ├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+│   └── lib/allo-v2/contracts/core/libraries/Transfer.sol =0.8.19
+│       ├── lib/allo-v2/lib/solady/src/utils/SafeTransferLib.sol ^0.8.4
+│       └── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19
+│   ├── lib/openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol ^0.8.0 (*)
+│   ├── lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol ^0.8.2 (*)
+│   ├── lib/allo-v2/lib/solady/src/tokens/ERC20.sol ^0.8.4
+│   ├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+│   ├── lib/allo-v2/contracts/core/Anchor.sol =0.8.19
+│   │   ├── lib/openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol ^0.8.0
+│   │   │   └── lib/openzeppelin-contracts/contracts/token/ERC721/IERC721Receiver.sol ^0.8.0
+│   │   ├── lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Holder.sol ^0.8.0
+│   │   │   └── lib/openzeppelin-contracts/contracts/token/ERC1155/utils/ERC1155Receiver.sol ^0.8.0
+│   │   │       ├── lib/openzeppelin-contracts/contracts/token/ERC1155/IERC1155Receiver.sol ^0.8.0
+│   │   │       │   └── lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol ^0.8.0
+│   │   │       └── lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol ^0.8.0
+│   │   │           └── lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol ^0.8.0
+│   │   └── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+│   ├── lib/allo-v2/contracts/core/libraries/Errors.sol =0.8.19
+│   ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+│   ├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+│   └── lib/allo-v2/contracts/core/libraries/Transfer.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19
+│   ├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+│   ├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+│   ├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19
+│   │   ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+│   │   ├── lib/allo-v2/contracts/strategies/BaseStrategy.sol ^0.8.19
+│   │   │   ├── lib/allo-v2/contracts/core/interfaces/IStrategy.sol ^0.8.19 (*)
+│   │   │   ├── lib/allo-v2/contracts/core/libraries/Transfer.sol =0.8.19 (*)
+│   │   │   └── lib/allo-v2/contracts/core/libraries/Errors.sol =0.8.19
+│   │   ├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19
+│   │   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+│   │   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol ^0.8.0
+│   │   │   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+│   │   │   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol ^0.8.0
+│   │   │   │   └── lib/openzeppelin-contracts/contracts/utils/Address.sol ^0.8.1
+│   │   │   ├── lib/openzeppelin-contracts/contracts/utils/introspection/ERC165Checker.sol ^0.8.0
+│   │   │   │   └── lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol ^0.8.0
+│   │   │   ├── lib/openzeppelin-contracts/contracts/proxy/utils/UUPSUpgradeable.sol ^0.8.0
+│   │   │   │   ├── lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol ^0.8.0
+│   │   │   │   └── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Upgrade.sol ^0.8.2
+│   │   │   │       ├── lib/openzeppelin-contracts/contracts/proxy/beacon/IBeacon.sol ^0.8.0
+│   │   │   │       ├── lib/openzeppelin-contracts/contracts/interfaces/IERC1967.sol ^0.8.0
+│   │   │   │       ├── lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol ^0.8.0
+│   │   │   │       ├── lib/openzeppelin-contracts/contracts/utils/Address.sol ^0.8.1
+│   │   │   │       └── lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol ^0.8.0
+│   │   │   ├── lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol ^0.8.0 (*)
+│   │   │   ├── lib/openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol ^0.8.0 (*)
+│   │   │   ├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+│   │   │   ├── lib/allo-v2/contracts/core/libraries/Clone.sol =0.8.19 (*)
+│   │   │   ├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+│   │   │   ├── pkg/contracts/src/interfaces/FAllo.sol ^0.8.19
+│   │   │   │   ├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+│   │   │   │   └── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+│   │   │   ├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+│   │   │   ├── pkg/contracts/src/IRegistryFactory.sol ^0.8.19
+│   │   │   ├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+│   │   │   ├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0
+│   │   │   │   ├── lib/openzeppelin-foundry-upgrades/src/Options.sol ^0.8.0
+│   │   │   │   └── lib/openzeppelin-foundry-upgrades/src/internal/Core.sol ^0.8.0
+│   │   │   │       ├── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   │   │   │       ├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+│   │   │   │       ├── lib/openzeppelin-foundry-upgrades/lib/solidity-stringutils/src/strings.sol ^0.8.0
+│   │   │   │       ├── lib/openzeppelin-foundry-upgrades/src/Options.sol ^0.8.0
+│   │   │   │       ├── lib/openzeppelin-foundry-upgrades/src/internal/Versions.sol ^0.8.0
+│   │   │   │       ├── lib/openzeppelin-foundry-upgrades/src/internal/Utils.sol ^0.8.0
+│   │   │   │       │   ├── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   │   │   │       │   ├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+│   │   │   │       │   └── lib/openzeppelin-foundry-upgrades/lib/solidity-stringutils/src/strings.sol ^0.8.0
+│   │   │   │       ├── lib/openzeppelin-foundry-upgrades/src/internal/DefenderDeploy.sol ^0.8.0
+│   │   │   │       │   ├── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   │   │   │       │   ├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+│   │   │   │       │   ├── lib/openzeppelin-foundry-upgrades/lib/solidity-stringutils/src/strings.sol ^0.8.0
+│   │   │   │       │   ├── lib/openzeppelin-contracts/contracts/utils/Strings.sol ^0.8.0
+│   │   │   │       │   │   ├── lib/openzeppelin-contracts/contracts/utils/math/Math.sol ^0.8.0
+│   │   │   │       │   │   └── lib/openzeppelin-contracts/contracts/utils/math/SignedMath.sol ^0.8.0
+│   │   │   │       │   ├── lib/openzeppelin-foundry-upgrades/src/internal/Utils.sol ^0.8.0 (*)
+│   │   │   │       │   ├── lib/openzeppelin-foundry-upgrades/src/internal/Versions.sol ^0.8.0
+│   │   │   │       │   ├── lib/openzeppelin-foundry-upgrades/src/Options.sol ^0.8.0
+│   │   │   │       │   └── lib/openzeppelin-foundry-upgrades/src/Defender.sol ^0.8.0
+│   │   │   │       │       ├── lib/openzeppelin-foundry-upgrades/src/Options.sol ^0.8.0
+│   │   │   │       │       ├── lib/openzeppelin-foundry-upgrades/src/internal/Core.sol ^0.8.0 (*)
+│   │   │   │       │       └── lib/openzeppelin-foundry-upgrades/src/internal/DefenderDeploy.sol ^0.8.0 (*)
+│   │   │   │       ├── lib/openzeppelin-foundry-upgrades/src/internal/interfaces/IUpgradeableProxy.sol ^0.8.0
+│   │   │   │       ├── lib/openzeppelin-foundry-upgrades/src/internal/interfaces/IProxyAdmin.sol ^0.8.0
+│   │   │   │       └── lib/openzeppelin-foundry-upgrades/src/internal/interfaces/IUpgradeableBeacon.sol ^0.8.0
+│   │   │   ├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0
+│   │   │   │   ├── lib/openzeppelin-contracts/contracts/proxy/Proxy.sol ^0.8.0
+│   │   │   │   └── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Upgrade.sol ^0.8.2 (*)
+│   │   │   └── pkg/contracts/src/ProxyOwnableUpgrader.sol ^0.8.19
+│   │   │       ├── lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol ^0.8.0
+│   │   │       │   ├── lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol ^0.8.0 (*)
+│   │   │       │   └── lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol ^0.8.2 (*)
+│   │   │       └── lib/openzeppelin-contracts/contracts/proxy/utils/UUPSUpgradeable.sol ^0.8.0 (*)
+│   │   ├── lib/openzeppelin-contracts/contracts/utils/introspection/ERC165.sol ^0.8.0 (*)
+│   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol ^0.8.0
+│   │   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+│   │   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol ^0.8.0
+│   │   │   │   └── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+│   │   │   └── lib/openzeppelin-contracts/contracts/utils/Context.sol ^0.8.0
+│   │   ├── pkg/contracts/src/interfaces/IArbitrator.sol ^0.8.19
+│   │   │   ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+│   │   │   └── pkg/contracts/src/interfaces/IArbitrable.sol ^0.8.19
+│   │   │       └── pkg/contracts/src/interfaces/IArbitrator.sol ^0.8.19 (*)
+│   │   ├── pkg/contracts/src/interfaces/IArbitrable.sol ^0.8.19 (*)
+│   │   ├── lib/allo-v2/contracts/core/libraries/Clone.sol =0.8.19 (*)
+│   │   ├── lib/openzeppelin-contracts/contracts/utils/math/Math.sol ^0.8.0
+│   │   ├── pkg/contracts/src/ISybilScorer.sol ^0.8.19
+│   │   ├── lib/openzeppelin-contracts/contracts/proxy/utils/UUPSUpgradeable.sol ^0.8.0 (*)
+│   │   ├── pkg/contracts/src/BaseStrategyUpgradeable.sol ^0.8.19
+│   │   │   ├── pkg/contracts/src/ProxyOwnableUpgrader.sol ^0.8.19 (*)
+│   │   │   ├── lib/allo-v2/contracts/core/interfaces/IStrategy.sol ^0.8.19 (*)
+│   │   │   ├── lib/allo-v2/contracts/core/libraries/Transfer.sol =0.8.19 (*)
+│   │   │   ├── lib/allo-v2/contracts/core/libraries/Errors.sol =0.8.19
+│   │   │   └── lib/openzeppelin-contracts/contracts/proxy/utils/Initializable.sol ^0.8.2
+│   │   │       └── lib/openzeppelin-contracts/contracts/utils/Address.sol ^0.8.1
+│   │   ├── lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol ^0.8.0 (*)
+│   │   └── pkg/contracts/src/interfaces/ICollateralVault.sol ^0.8.19
+│   ├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+│   ├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+│   └── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19
+│       └── lib/forge-std/src/StdCheats.sol >=0.6.2, <0.9.0 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19
+│   ├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+│   ├── pkg/contracts/src/ProxyOwnableUpgrader.sol ^0.8.19 (*)
+│   ├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+│   └── lib/allo-v2/contracts/core/libraries/Clone.sol =0.8.19 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19
+│   ├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+│   │   ├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+│   │   ├── lib/forge-std/src/safeconsole.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/StdAssertions.sol >=0.6.2, <0.9.0
+│   │   │   └── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/StdChains.sol >=0.6.2, <0.9.0 (*)
+│   │   ├── lib/forge-std/src/StdCheats.sol >=0.6.2, <0.9.0 (*)
+│   │   ├── lib/forge-std/src/StdError.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/StdInvariant.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/StdJson.sol >=0.6.0, <0.9.0 (*)
+│   │   ├── lib/forge-std/src/StdMath.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/StdStorage.sol >=0.6.2, <0.9.0 (*)
+│   │   ├── lib/forge-std/src/StdStyle.sol >=0.4.22, <0.9.0 (*)
+│   │   ├── lib/forge-std/src/StdToml.sol >=0.6.0, <0.9.0
+│   │   │   └── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   │   ├── lib/forge-std/src/StdUtils.sol >=0.6.2, <0.9.0 (*)
+│   │   ├── lib/forge-std/src/Vm.sol >=0.6.2, <0.9.0
+│   │   └── lib/forge-std/src/Base.sol >=0.6.2, <0.9.0 (*)
+│   ├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+│   ├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+│   └── lib/openzeppelin-contracts/contracts/utils/Address.sol ^0.8.1
+├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+└── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+pkg/contracts/script/AddStrategy.s.sol ^0.8.13
+├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+└── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+pkg/contracts/script/BaseMultiChain.s.sol ^0.8.13
+├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+├── lib/forge-std/src/StdJson.sol >=0.6.0, <0.9.0 (*)
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── lib/openzeppelin-contracts/contracts/utils/Strings.sol ^0.8.0 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19
+│   ├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+│   ├── lib/openzeppelin-contracts/contracts/proxy/utils/UUPSUpgradeable.sol ^0.8.0 (*)
+│   ├── lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol ^0.8.0 (*)
+│   ├── pkg/contracts/src/interfaces/IArbitrable.sol ^0.8.19 (*)
+│   └── pkg/contracts/src/interfaces/IArbitrator.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/script/GV2ERC20.sol ^0.8.19
+│   └── lib/allo-v2/lib/solady/src/tokens/ERC20.sol ^0.8.4
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19
+│   ├── lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol ^0.8.0
+│   ├── lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol ^0.8.0 (*)
+│   ├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+│   └── pkg/contracts/src/interfaces/ICollateralVault.sol ^0.8.19
+├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
+├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+├── pkg/contracts/src/PassportScorer.sol ^0.8.19
+│   ├── pkg/contracts/src/ISybilScorer.sol ^0.8.19
+│   ├── lib/openzeppelin-contracts/contracts/proxy/utils/UUPSUpgradeable.sol ^0.8.0 (*)
+│   ├── lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol ^0.8.0 (*)
+│   └── lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol ^0.8.2 (*)
+└── pkg/contracts/src/ISybilScorer.sol ^0.8.19
+pkg/contracts/script/DeployCV.s.sol ^0.8.13
+├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/TERC20.sol ^0.8.19
+│   └── lib/allo-v2/lib/solady/src/tokens/ERC20.sol ^0.8.4
+├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/ISybilScorer.sol ^0.8.19
+├── pkg/contracts/src/PassportScorer.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
+└── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+pkg/contracts/script/DeployCVArbSepolia.s.sol ^0.8.13
+├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+├── pkg/contracts/test/shared/TERC20.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/IArbitrator.sol ^0.8.19 (*)
+└── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+pkg/contracts/script/DeployCVArbSepoliaCommFee.s.sol ^0.8.13
+├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+└── pkg/contracts/test/shared/TERC20.sol ^0.8.19 (*)
+pkg/contracts/script/DeployCVArbSepoliaPool.s.sol ^0.8.13
+├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+├── pkg/contracts/test/shared/TERC20.sol ^0.8.19 (*)
+└── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+pkg/contracts/script/DeployCVMultiChain.s.sol ^0.8.13
+├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+├── lib/forge-std/src/StdJson.sol >=0.6.0, <0.9.0 (*)
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── lib/openzeppelin-contracts/contracts/utils/Strings.sol ^0.8.0 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/script/GV2ERC20.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
+├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+├── pkg/contracts/src/PassportScorer.sol ^0.8.19 (*)
+├── pkg/contracts/src/ISybilScorer.sol ^0.8.19
+└── pkg/contracts/src/ProxyOwner.sol ^0.8.19
+    └── lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol ^0.8.0 (*)
+pkg/contracts/script/DeployCollateralVaultTemplate.sol ^0.8.19
+├── lib/allo-v2/lib/hats-protocol/lib/solady/src/utils/CREATE3.sol ^0.8.4
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+└── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+pkg/contracts/script/GV2ERC20.sol ^0.8.19 (*)
+pkg/contracts/script/Playground.s.sol ^0.8.19
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+└── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+pkg/contracts/script/Playground.sol ^0.8.19
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+└── pkg/contracts/script/DeployCollateralVaultTemplate.sol ^0.8.19 (*)
+pkg/contracts/script/UpgradeCVMultichain.s.sol ^0.8.13
+├── pkg/contracts/script/BaseMultiChain.s.sol ^0.8.13 (*)
+└── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_1.sol ^0.8.19
+    └── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+pkg/contracts/script/VerifyTest.s.sol ^0.8.13
+├── lib/forge-std/src/console2.sol >=0.4.22, <0.9.0
+├── lib/forge-std/src/Script.sol >=0.6.2, <0.9.0 (*)
+├── lib/forge-std/src/StdJson.sol >=0.6.0, <0.9.0 (*)
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── lib/openzeppelin-contracts/contracts/utils/Strings.sol ^0.8.0 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IRegistry.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/script/GV2ERC20.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
+├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+├── pkg/contracts/src/PassportScorer.sol ^0.8.19 (*)
+├── pkg/contracts/src/ISybilScorer.sol ^0.8.19
+└── pkg/contracts/script/BaseMultiChain.s.sol ^0.8.13 (*)
+pkg/contracts/src/BaseStrategyUpgradeable.sol ^0.8.19 (*)
+pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+pkg/contracts/src/IRegistryFactory.sol ^0.8.19
+pkg/contracts/src/ISafe.sol ^0.8.19
+pkg/contracts/src/ISybilScorer.sol ^0.8.19
+pkg/contracts/src/PassportScorer.sol ^0.8.19 (*)
+pkg/contracts/src/ProxyOwnableUpgrader.sol ^0.8.19 (*)
+pkg/contracts/src/ProxyOwner.sol ^0.8.19 (*)
+pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+pkg/contracts/src/RegistryFactory/RegistryFactoryV0_1.sol ^0.8.19 (*)
+pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+pkg/contracts/src/interfaces/FAllo.sol ^0.8.19 (*)
+pkg/contracts/src/interfaces/IArbitrable.sol ^0.8.19 (*)
+pkg/contracts/src/interfaces/IArbitrator.sol ^0.8.19 (*)
+pkg/contracts/src/interfaces/ICollateralVault.sol ^0.8.19
+pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+pkg/contracts/test/ABDKMath64x64.sol ^0.8.0
+pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+pkg/contracts/test/CVStrategyTest.t.sol ^0.8.19
+├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
+├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IStrategy.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Errors.sol =0.8.19
+├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── lib/allo-v2/test/foundry/shared/AlloSetup.sol ^0.8.19
+│   ├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
+│   ├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+│   └── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+├── lib/allo-v2/test/foundry/shared/RegistrySetup.sol ^0.8.19
+│   ├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
+│   ├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+│   ├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+│   └── lib/allo-v2/test/foundry/shared/Accounts.sol ^0.8.19 (*)
+├── lib/allo-v2/test/utils/TestStrategy.sol ^0.8.0
+│   ├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+│   └── lib/allo-v2/contracts/core/interfaces/IStrategy.sol ^0.8.19 (*)
+├── lib/allo-v2/test/utils/MockStrategy.sol ^0.8.19
+│   └── lib/allo-v2/contracts/strategies/BaseStrategy.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/IArbitrator.sol ^0.8.19 (*)
+├── pkg/contracts/script/GV2ERC20.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/ISybilScorer.sol ^0.8.19
+├── pkg/contracts/src/PassportScorer.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/GasHelpers2.sol ^0.8.19
+│   └── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/test/ABDKMath64x64.sol ^0.8.0
+├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
+├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+└── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+pkg/contracts/test/PassportScorerTest.t.sol ^0.8.19
+├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
+├── pkg/contracts/src/PassportScorer.sol ^0.8.19 (*)
+├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
+└── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+pkg/contracts/test/ProxyOwnerTest.t.sol ^0.8.19
+├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
+├── lib/allo-v2/test/foundry/shared/AlloSetup.sol ^0.8.19 (*)
+├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_1.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
+├── pkg/contracts/src/ProxyOwner.sol ^0.8.19 (*)
+├── pkg/contracts/src/ProxyOwnableUpgrader.sol ^0.8.19 (*)
+└── lib/openzeppelin-foundry-upgrades/src/Options.sol ^0.8.0
+pkg/contracts/test/RegistryTest.t.sol ^0.8.19
+├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
+├── lib/forge-std/src/console.sol >=0.4.22, <0.9.0
+├── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+├── lib/allo-v2/contracts/core/interfaces/IAllo.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/interfaces/IStrategy.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/Allo.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/Registry.sol =0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Errors.sol =0.8.19
+├── lib/allo-v2/contracts/core/libraries/Metadata.sol =0.8.19
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── lib/allo-v2/test/foundry/shared/AlloSetup.sol ^0.8.19 (*)
+├── lib/allo-v2/test/foundry/shared/RegistrySetup.sol ^0.8.19 (*)
+├── lib/allo-v2/test/utils/TestStrategy.sol ^0.8.0 (*)
+├── lib/allo-v2/test/utils/MockStrategy.sol ^0.8.19 (*)
+├── pkg/contracts/script/GV2ERC20.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/GasHelpers2.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_1.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/ISafe.sol ^0.8.19
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── lib/openzeppelin-contracts/contracts/utils/math/Math.sol ^0.8.0
+├── lib/openzeppelin-foundry-upgrades/src/LegacyUpgrades.sol ^0.8.0 (*)
+└── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+pkg/contracts/test/SafeArbitratorTest.t.sol ^0.8.19
+├── lib/forge-std/src/Test.sol >=0.6.2, <0.9.0 (*)
+├── pkg/contracts/src/SafeArbitrator.sol ^0.8.19 (*)
+├── pkg/contracts/src/CVStrategy/CVStrategyV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryCommunity/RegistryCommunityV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/RegistryFactory/RegistryFactoryV0_0.sol ^0.8.19 (*)
+├── pkg/contracts/src/CollateralVault.sol ^0.8.19 (*)
+├── lib/allo-v2/test/foundry/shared/RegistrySetup.sol ^0.8.19 (*)
+├── lib/allo-v2/test/foundry/shared/AlloSetup.sol ^0.8.19 (*)
+├── pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+├── pkg/contracts/src/interfaces/IArbitrable.sol ^0.8.19 (*)
+├── pkg/contracts/script/GV2ERC20.sol ^0.8.19 (*)
+├── pkg/contracts/test/CVStrategyHelpersV0_0.sol ^0.8.19 (*)
+├── lib/allo-v2/contracts/core/libraries/Native.sol =0.8.19
+├── lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol ^0.8.0 (*)
+└── lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol ^0.8.0
+pkg/contracts/test/shared/GasHelpers2.sol ^0.8.19 (*)
+pkg/contracts/test/shared/SafeSetup.sol ^0.8.19 (*)
+pkg/contracts/test/shared/TERC20.sol ^0.8.19 (*)

@@ -2,6 +2,6 @@ sources:
   - name: gv2
     handler:
       graphql:
-        endpoint: ${SUBGRAPH_URL:http://localhost:8000/subgraphs/name/kamikazebr/gv2}
+        endpoint: https://api.studio.thegraph.com/query/70985/gv2-arbsepolia/0.0.2
 documents:
   - ./src/query/queries.graphql

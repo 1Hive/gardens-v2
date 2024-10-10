@@ -1,11 +1,14 @@
-import { Address } from "#/subgraph/src/scripts/last-addr";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
-import { registryCommunityABI } from "@/src/generated";
+import { useAccount, Address } from "wagmi";
+import { CVStrategy, RegistryCommunity } from "#/subgraph/.graphclient";
 import { useViemClient } from "./useViemClient";
-import { CVStrategy } from "#/subgraph/.graphclient";
+import { registryCommunityABI } from "@/src/generated";
 
-export function useIsMemberActivated(strategy: CVStrategy) {
+export function useIsMemberActivated(
+  strategy: Pick<CVStrategy, "id"> & {
+    registryCommunity: Pick<RegistryCommunity, "id">;
+  },
+) {
   const { address } = useAccount();
   const client = useViemClient();
 
@@ -14,7 +17,9 @@ export function useIsMemberActivated(strategy: CVStrategy) {
     useState<Error | null>(null);
 
   useEffect(() => {
-    if (!address) return;
+    if (!address) {
+      return;
+    }
 
     fetchData();
   }, [address]);

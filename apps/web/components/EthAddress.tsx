@@ -1,12 +1,13 @@
 "use client";
+
 import React from "react";
-import { Addreth, ThemeDeclaration, Theme } from "addreth";
+import { Addreth } from "addreth/no-wagmi";
 import { Address } from "viem";
-import { chainIdMap } from "@/configs/chainServer";
-import { getChainIdFromPath } from "@/utils/path";
+import { LoadingSpinner } from "./LoadingSpinner";
+import { useChainFromPath } from "@/hooks/useChainFromPath";
 
 type EthAddressProps = {
-  address: Address;
+  address?: Address;
   actions?: "all" | "copy" | "explorer" | "none";
   icon?: false | "ens" | "identicon" | ((address: Address) => string);
 };
@@ -18,8 +19,9 @@ type EthAddressProps = {
 export const EthAddress = ({
   address,
   actions = "all",
-  icon = false,
+  icon = "identicon",
 }: EthAddressProps) => {
+  const chain = useChainFromPath();
   // const theme: ThemeDeclaration = {
   //   textColor: "black",
   //   // secondaryColor: "black",
@@ -35,25 +37,25 @@ export const EthAddress = ({
   //   popupRadius: 12,
   //   popupShadow: "black",
   // };
-  const chainId = getChainIdFromPath();
 
-  return (
-    <Addreth
-      // theme={theme}
-      theme={{
-        base: "simple-light",
-        badgeIconRadius: 12,
-        badgeHeight: 32,
-        fontSize: 16,
-      }}
-      actions={actions}
-      icon={icon}
-      address={address}
-      explorer={(address) => ({
-        name: chainIdMap[chainId].name,
-        url: `${chainIdMap[chainId].explorer}${address}`,
-        accountUrl: `${chainIdMap[chainId].explorer}${address}`,
-      })}
-    />
-  );
+  return address && chain?.id ?
+      <Addreth
+        // theme={theme}
+        theme={{
+          base: "simple-light",
+          textColor: "var(--color-green-500)",
+          badgeIconRadius: 12,
+          badgeHeight: 32,
+          fontSize: 16,
+        }}
+        actions={actions}
+        icon={icon}
+        address={address as Address}
+        explorer={(addr: string) => ({
+          name: chain.name,
+          url: `${chain.explorer}/address/${addr}`,
+          accountUrl: `${chain.explorer}/address/${addr}`,
+        })}
+      />
+    : <LoadingSpinner />;
 };

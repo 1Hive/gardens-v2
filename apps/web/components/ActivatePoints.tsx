@@ -1,13 +1,16 @@
 "use client";
-import React, { useEffect } from "react";
-import { Button } from "./Button";
-import { Address, useContractWrite, useAccount } from "wagmi";
-import { cvStrategyABI, registryCommunityABI } from "@/src/generated";
-import useErrorDetails from "@/utils/getErrorName";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+
+import React from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useTransactionNotification } from "@/hooks/useTransactionNotification";
-import { useDisableButtons, ConditionObject } from "@/hooks/useDisableButtons";
+import { Address, useAccount } from "wagmi";
+import { Button } from "./Button";
+import { usePubSubContext } from "@/contexts/pubsub.context";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
+import { cvStrategyABI } from "@/src/generated";
+import { abiWithErrors } from "@/utils/abiWithErrors";
+import { useErrorDetails } from "@/utils/getErrorName";
 
 type ActiveMemberProps = {
   strategyAddress: Address;
@@ -24,28 +27,47 @@ export function ActivatePoints({
 }: ActiveMemberProps) {
   const { address: connectedAccount } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const chainId = useChainIdFromPath();
+  const { publish } = usePubSubContext();
 
-  const {
-    data: activatePointsData,
-    write: writeActivatePoints,
-    error: errorActivatePoints,
-    status: activatePointsStatus,
-  } = useContractWrite({
-    address: strategyAddress,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "activatePoints",
-  });
+  const { write: writeActivatePoints, error: errorActivatePoints } =
+    useContractWriteWithConfirmations({
+      chainId,
+      address: strategyAddress,
+      contractName: "CV Strategy",
+      abi: abiWithErrors(cvStrategyABI),
+      functionName: "activatePoints",
+      fallbackErrorMessage: "Error activating points. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          id: connectedAccount,
+          type: "update",
+          function: "activatePoints",
+          containerId: communityAddress,
+          chainId,
+        });
+      },
+    });
 
-  const {
-    data: deactivatePointsData,
-    write: writeDeactivatePoints,
-    error: errorDeactivatePoints,
-    status: deactivatePointsStatus,
-  } = useContractWrite({
-    address: strategyAddress,
-    abi: abiWithErrors(cvStrategyABI),
-    functionName: "deactivatePoints",
-  });
+  const { write: writeDeactivatePoints, error: errorDeactivatePoints } =
+    useContractWriteWithConfirmations({
+      address: strategyAddress,
+      abi: abiWithErrors(cvStrategyABI),
+      contractName: "CV Strategy",
+      functionName: "deactivatePoints",
+      fallbackErrorMessage: "Error deactivating points. Please try again.",
+      onConfirmations: () => {
+        publish({
+          topic: "member",
+          id: connectedAccount,
+          containerId: communityAddress,
+          type: "update",
+          function: "deactivatePoints",
+          chainId,
+        });
+      },
+    });
 
   useErrorDetails(errorActivatePoints, "activatePoints");
   useErrorDetails(errorDeactivatePoints, "deactivatePoints");
@@ -53,28 +75,16 @@ export function ActivatePoints({
   async function handleChange() {
     if (connectedAccount) {
       if (isMemberActivated) {
-        writeDeactivatePoints?.();
+        writeDeactivatePoints?.({ args: [] });
       } else {
-        writeActivatePoints?.();
+        writeActivatePoints?.({
+          args: [],
+        });
       }
     } else {
       openConnectModal?.();
     }
   }
-
-  const { updateTransactionStatus: updateActivePointsStatus } =
-    useTransactionNotification(activatePointsData);
-
-  const { updateTransactionStatus: updateDeactivePointsStatus } =
-    useTransactionNotification(deactivatePointsData);
-
-  useEffect(() => {
-    updateActivePointsStatus(activatePointsStatus);
-  }, [activatePointsStatus]);
-
-  useEffect(() => {
-    updateDeactivePointsStatus(deactivatePointsStatus);
-  }, [deactivatePointsStatus]);
 
   // Activate Disable Button condition => message mapping
   const disableActiveBtnCondition: ConditionObject[] = [
@@ -93,17 +103,14 @@ export function ActivatePoints({
   );
 
   return (
-    <>
-      <div className="flex flex-col gap-4 pl-4">
-        <Button
-          onClick={handleChange}
-          className="w-fit bg-primary"
-          disabled={missmatchUrl || disableActiveBtn}
-          tooltip={String(tooltipMessage)}
-        >
-          {isMemberActivated ? "Deactivate governance" : "Activate governance"}
-        </Button>
-      </div>
-    </>
+    <Button
+      onClick={handleChange}
+      btnStyle={isMemberActivated ? "outline" : "filled"}
+      color={isMemberActivated ? "danger" : "primary"}
+      disabled={missmatchUrl || disableActiveBtn}
+      tooltip={String(tooltipMessage)}
+    >
+      {isMemberActivated ? "Deactivate governance" : "Activate governance"}
+    </Button>
   );
 }

@@ -2,7 +2,7 @@ import React from "react";
 
 // logo color #8DE995
 
-export const GardensLogo = ({ className }: { className?: string }) => {
+const GardensLogo = ({ className }: { className?: string }) => {
   return (
     <svg
       width="100%"
@@ -82,3 +82,5 @@ export const GardensLogo = ({ className }: { className?: string }) => {
     </svg>
   );
 };
+
+export default GardensLogo;

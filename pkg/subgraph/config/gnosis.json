@@ -1,0 +1,18 @@
+{
+  "network": "gnosis",
+  "chainId": 100,
+  "dataSources": [
+    {
+      "name": "RegistryFactoryV0_0",
+      "startBlock": 36032424,
+      "address": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
+      "customTemplate": "registryFactory"
+    },
+    {
+      "name": "PassportScorer",
+      "startBlock": 36032424,
+      "address": "0xd7b72fcb6a4e2857685175f609d1498ff5392e46",
+      "customTemplate": "passportScorer"
+    }
+  ]
+}
