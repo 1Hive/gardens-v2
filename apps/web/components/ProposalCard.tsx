@@ -37,9 +37,8 @@ export type ProposalCardProps = {
       metadata?: Maybe<Pick<ProposalMetadata, "title">>;
     };
   strategyConfig: Pick<CVStrategyConfig, "decay" | "proposalType">;
-  inputData: ProposalInputItem;
+  inputData?: ProposalInputItem;
   stakedFilter: ProposalInputItem;
-  index: number;
   poolToken: FetchTokenResult;
   isAllocationView: boolean;
   memberActivatedPoints: number;
@@ -49,7 +48,7 @@ export type ProposalCardProps = {
   tokenDecimals: number;
   alloInfo: Allo;
   tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
-  inputHandler: (i: number, value: number) => void;
+  inputHandler: (proposalId: string, value: number) => void;
 };
 
 export function ProposalCard({
@@ -57,7 +56,6 @@ export function ProposalCard({
   strategyConfig,
   inputData,
   stakedFilter,
-  index,
   poolToken,
   isAllocationView,
   memberActivatedPoints,
@@ -211,7 +209,7 @@ export function ProposalCard({
                       }
                       step={memberActivatedPoints / 100}
                       onChange={(e) =>
-                        inputHandler(index, Number(e.target.value))
+                        inputHandler(proposalData.id, Number(e.target.value))
                       }
                     />
                     <div className="flex w-full justify-between px-2.5">
@@ -224,7 +222,7 @@ export function ProposalCard({
                     </div>
                   </div>
                   <div className="mb-2">
-                    {Number(inputValue) > 0 && (
+                    {inputValue > 0 && (
                       <>
                         <div className="flex gap-10">
                           <div className="flex flex-col items-center justify-center">
@@ -266,7 +264,7 @@ export function ProposalCard({
                           thresholdPct={isSignalingType ? 0 : thresholdPct}
                           proposalSupportPct={totalSupportPct}
                           isSignalingType={isSignalingType}
-                          proposalId={proposalNumber}
+                          proposalNumber={proposalNumber}
                         />
                       </div>
                     </div>
@@ -276,11 +274,13 @@ export function ProposalCard({
           </div>
         </div>
       </div>
-      {!isAllocationView && (
+      {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
         <p className="flex items-baseline text-xs">
           Your support: {poolWeightAllocatedInProposal}%
         </p>
       )}
+      {/* TODO: fetch every member stake */}
+      {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}
     </>
   );
 
