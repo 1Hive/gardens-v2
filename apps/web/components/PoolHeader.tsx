@@ -135,6 +135,7 @@ export default function PoolHeader({
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
   const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
   const tribunalAddress = arbitrableConfig.tribunalSafe;
+  const rulingTime = arbitrableConfig.defaultRulingTimeout;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
@@ -312,7 +313,7 @@ export default function PoolHeader({
               proposalCollateral: proposalCollateral,
               disputeCollateral: disputeCollateral,
               tribunalAddress: tribunalAddress,
-              defaultRulingTimeout: arbitrableConfig.defaultRulingTimeout,
+              rulingTime,
             }}
             setModalOpen={setIsOpenModal}
           />
