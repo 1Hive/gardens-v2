@@ -13,6 +13,7 @@ import {
 } from "#/subgraph/.graphclient";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 import { Badge, Card } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
@@ -43,7 +44,6 @@ export type ProposalCardProps = {
   memberActivatedPoints: number;
   memberPoolWeight: number;
   executeDisabled: boolean;
-  tooltipMessage: string;
   tokenDecimals: number;
   alloInfo: Allo;
   tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
@@ -116,10 +116,12 @@ export function ProposalCard({
             <div className="hidden sm:block">
               <Hashicon value={id} size={45} />
             </div>
-            <div className="overflow-hidden">
-              <h4 className="truncate first-letter:uppercase sm:max-w-md lg:max-w-lg">
+            <div>
+              <h4 className="sm:max-w-md lg:max-w-lg">
                 <Skeleton isLoading={!metadata} className="w-96 h-5">
-                  {metadata?.title}
+                  <TooltipIfOverflow className="first-letter:uppercase">
+                    {metadata?.title}
+                  </TooltipIfOverflow>
                 </Skeleton>
               </h4>
               <div className="flex items-baseline gap-3">
@@ -135,7 +137,7 @@ export function ProposalCard({
           <div className="flex gap-6 text-neutral-soft-content">
             {!isSignalingType && poolToken && (
               <div className="flex items-center gap-1 justify-self-end">
-                <p className="">Requested amount: </p>
+                <p>Requested amount: </p>
                 <DisplayNumber
                   number={formatUnits(requestedAmount, poolToken.decimals)}
                   tokenSymbol={poolToken.symbol}
