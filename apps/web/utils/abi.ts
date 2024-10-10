@@ -1,3 +1,4 @@
+import { AbiFunction } from "abitype";
 import { Abi } from "viem";
 import {
   alloABI,
@@ -22,10 +23,21 @@ const errorsABI = [
 
 // console.log("errorsABI", errorsABI);
 
-export function abiWithErrors(abi: Abi) {
+export function abiWithErrors<TAbi extends Abi>(abi: TAbi) {
   return [...abi, ...errorsABI];
 }
 
-export function abiWithErrors2<Tabi extends Abi>(abi: Tabi) {
-  return [...abi, ...errorsABI];
+export function filterFunctionFromABI<
+  TAbi extends Abi,
+  TAbiItem extends TAbi[number] & AbiFunction,
+>(
+  abi: TAbi,
+  selector: (abiItem: TAbiItem) => boolean,
+  withErrors: boolean = true,
+): TAbi {
+  const filtered = abi.filter((abiItem) => {
+    if (abiItem.type !== "function") return false;
+    return selector(abiItem as TAbiItem);
+  }) as unknown as TAbi;
+  return withErrors ? (abiWithErrors(filtered) as unknown as TAbi) : filtered;
 }

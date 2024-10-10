@@ -51,3 +51,8 @@ export const DisputeOutcome: Record<
 };
 
 export type ChainId = string | number;
+
+export type SybilResistanceType =
+  | "noSybilResist"
+  | "gitcoinPassport"
+  | "allowList";

@@ -21,7 +21,7 @@ export type PoolGovernanceProps = {
   tokenDecimals: number;
   strategy: Pick<CVStrategy, "id"> & {
     registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
-    config: Pick<CVStrategyConfig, "pointSystem">;
+    config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
   };
   communityAddress: Address;
   memberTokensInCommunity: number;
@@ -59,7 +59,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             enableCheck={!memberActivatedStrategy}
           >
             <ActivatePoints
-              strategyAddress={strategy.id as Address}
+              strategy={strategy}
               communityAddress={communityAddress}
               isMemberActivated={memberActivatedStrategy}
               isMember={isMemberCommunity}

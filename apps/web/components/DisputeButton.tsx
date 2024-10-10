@@ -41,7 +41,7 @@ import {
   safeArbitratorABI,
 } from "@/src/generated";
 import { DisputeStatus, ProposalStatus } from "@/types";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { convertSecondsToReadableTime } from "@/utils/numbers";
@@ -138,7 +138,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
 
   const { data: isTribunalMember } = useContractRead({
     address: config.tribunalSafe as Address,
-    abi: abiWithErrors2(safeABI),
+    abi: abiWithErrors(safeABI),
     functionName: "isOwner",
     chainId: Number(chainId),
     enabled: !!address,

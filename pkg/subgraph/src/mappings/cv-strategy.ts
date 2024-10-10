@@ -19,7 +19,7 @@ import {
   InitializedCV,
   InitializedCV2,
   ProposalCreated,
-  CVStrategyV0_1 as CVStrategyContract,
+  CVStrategyV0_0 as CVStrategyContract,
   PoolAmountIncreased,
   SupportAdded,
   PowerIncreased,
@@ -33,9 +33,9 @@ import {
   AllowlistMembersAdded,
   AllowlistMembersRemoved,
   InitializedCV2DataStruct
-} from "../../generated/templates/CVStrategyV0_1/CVStrategyV0_1";
+} from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
-import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_1/Allo";
+import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
 
 import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 

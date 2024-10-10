@@ -14,7 +14,7 @@ import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithC
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useHandleAllowance } from "@/hooks/useHandleAllowance";
 import { alloABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { getTxMessage } from "@/utils/transactionMessages";
 
 interface PoolMetricsProps {

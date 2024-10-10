@@ -126,7 +126,7 @@ export function CheckPassport({
   ) => {
     _score = Number(_score);
     setScore(_score);
-    if (score > threshold) {
+    if (score >= threshold) {
       console.debug("Score meets threshold, moving forward...");
     } else {
       console.debug("Score is too low, opening modal...");

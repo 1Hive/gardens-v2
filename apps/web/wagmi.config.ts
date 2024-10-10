@@ -7,7 +7,7 @@ import { abi as ArbitratorAbi } from "#/contracts/out/IArbitrator.sol/IArbitrato
 import { abi as SafeABI } from "#/contracts/out/ISafe.sol/ISafe.json";
 import { abi as mockERC20ABI } from "#/contracts/out/MockERC20.sol/MockERC20.json";
 import { abi as PassportScorerABI } from "#/contracts/out/PassportScorer.sol/PassportScorer.json";
-import { abi as registryCommunityABI } from "#/contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json";
+import { abi as registryComityABI } from "#/contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json";
 import { abi as registryFactoryABI } from "#/contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json";
 import { abi as SafeArbitrator } from "#/contracts/out/SafeArbitrator.sol/SafeArbitrator.json";
 
@@ -28,7 +28,7 @@ export default defineConfig({
     },
     {
       name: "RegistryCommunity",
-      abi: registryCommunityABI as Abi,
+      abi: registryComityABI as Abi,
     },
     {
       name: "Allo",
