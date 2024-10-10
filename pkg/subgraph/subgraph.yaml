@@ -71,8 +71,8 @@ dataSources:
 
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunityV0_0
-    network: localhost
+    name: RegistryCommunityV0_1
+    network: arbitrum-sepolia
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -133,8 +133,8 @@ templates:
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategyV0_0
-    network: localhost
+    name: CVStrategyV0_1
+    network: arbitrum-sepolia
     source:
       abi: CVStrategyV0_0
     mapping:
