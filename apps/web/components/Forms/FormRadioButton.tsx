@@ -7,7 +7,7 @@ type Props = {
   label: string;
   description?: string;
   inline?: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
 };
 
 export function FormRadioButton({
