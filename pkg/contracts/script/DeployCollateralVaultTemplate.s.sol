@@ -6,6 +6,8 @@ import {CREATE3} from "allo-v2/lib/hats-protocol/lib/solady/src/utils/CREATE3.so
 import "forge-std/Script.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 
+import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+
 contract DeployCollateralVaultTemplate is BaseMultiChain {
     using stdJson for string;
 

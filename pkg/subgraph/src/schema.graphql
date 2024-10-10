@@ -24,6 +24,7 @@ type CVStrategyConfig @entity(immutable: false) {
   proposalType: BigInt!
   pointSystem: BigInt!
   maxAmount: BigInt
+  allowlist: [String!]
 }
 
 type ArbitrableConfig @entity(immutable: false) {
@@ -36,6 +37,8 @@ type ArbitrableConfig @entity(immutable: false) {
   submitterCollateralAmount: BigInt!
   defaultRuling: BigInt!
   defaultRulingTimeout: BigInt!
+
+  allowlist: [String!]
 }
 
 type CVProposal @entity(immutable: false) {

@@ -33,9 +33,10 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
     /// ====================================
 
     /// @notice Constructor to set the Allo contract and "strategyId'.
+    /// @notice `init` here its the initialize for upgradable contracts, different from `initialize()` that its used for Allo
     /// @param _allo Address of the Allo contract.
-    // / @param _name Name of the strategy
-    // constructor( {}
+    /// @param _name Name of the strategy
+    /// @param owner Address of the owner of the strategy
 
     function init(address _allo, string memory _name, address owner) public virtual onlyInitializing {
         super.initialize(owner);
@@ -240,32 +241,32 @@ abstract contract BaseStrategyUpgradeable is ProxyOwnableUpgrader, IStrategy, Tr
 
     /// @notice Checks if the 'msg.sender' is the Allo contract.
     /// @dev Reverts if the 'msg.sender' is not the Allo contract.
-    function _checkOnlyAllo() internal virtual view {
+    function _checkOnlyAllo() internal view virtual {
         if (msg.sender != address(allo)) revert UNAUTHORIZED();
     }
 
     /// @notice Checks if the '_sender' is a pool manager.
     /// @dev Reverts if the '_sender' is not a pool manager.
     /// @param _sender The address to check if they are a pool manager
-    function _checkOnlyPoolManager(address _sender) internal virtual view {
+    function _checkOnlyPoolManager(address _sender) internal view virtual {
         if (!allo.isPoolManager(poolId, _sender)) revert UNAUTHORIZED();
     }
 
     /// @notice Checks if the pool is active.
     /// @dev Reverts if the pool is not active.
-    function _checkOnlyActivePool() internal virtual view {
+    function _checkOnlyActivePool() internal view virtual {
         if (!poolActive) revert POOL_INACTIVE();
     }
 
     /// @notice Checks if the pool is inactive.
     /// @dev Reverts if the pool is active.
-    function _checkInactivePool() internal virtual view {
+    function _checkInactivePool() internal view virtual {
         if (poolActive) revert POOL_ACTIVE();
     }
 
     /// @notice Checks if the pool is initialized.
     /// @dev Reverts if the pool is not initialized.
-    function _checkOnlyInitialized() internal virtual view {
+    function _checkOnlyInitialized() internal view virtual {
         if (poolId == 0) revert NOT_INITIALIZED();
     }
 

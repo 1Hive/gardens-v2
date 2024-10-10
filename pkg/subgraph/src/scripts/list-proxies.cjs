@@ -81,6 +81,7 @@ async function extractProxies(chainId) {
   }
 }`;
 
+  console.debug("Querying subgraph", subgraphEndpoint);
   const response = await fetch(subgraphEndpoint, {
     method: "POST",
     headers: {
