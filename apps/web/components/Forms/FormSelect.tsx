@@ -1,5 +1,5 @@
 import React from "react";
-import { RegisterOptions } from "react-hook-form";
+import { RegisterOptions, UseFormRegister } from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
 
 export type Option = { label: string; value: string | number };
@@ -7,7 +7,7 @@ export type Option = { label: string; value: string | number };
 type Props = {
   label: string;
   registerKey: any;
-  register: any;
+  register?: UseFormRegister<any>;
   errors?: any;
   required?: boolean;
   registerOptions?: RegisterOptions;
@@ -48,9 +48,8 @@ export function FormSelect({
           "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
         }`}
         id={registerKey}
-        {...register(registerKey, {
+        {...register?.(registerKey, {
           required,
-          readOnly,
           disabled,
           ...registerOptions,
         })}

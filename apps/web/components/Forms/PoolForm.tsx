@@ -17,7 +17,6 @@ import { FormPreview, FormRow } from "./FormPreview";
 import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
-import { InfoBox } from "../InfoBox";
 import { Button } from "@/components/Button";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
@@ -208,19 +207,22 @@ export function PoolForm({ token, communityAddr }: Props) {
         chain.id === polygon.id ?
           defaultMaticChallengeColateral
         : defaultEthChallengeColateral,
+      tribunalAddress: chain.globalTribunal ?? "",
     },
   });
   const sybilResistanceType = watch("sybilResistanceType");
   const sybilResistanceValue = watch("sybilResistanceValue");
+  const isGlobalTribunalValue =
+    watch("tribunalAddress") === chain.globalTribunal;
+  const tribunalAddress = watch("tribunalAddress");
+  console.log({ tribunalAddress });
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
 
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [optionType, setOptionType] = useState(1);
-  const [tribunalAddress, setTribunalAddress] = useState(
-    chain.globalTribunal ?? "",
-  );
+
   const [sybilResistanceOptions, setSybilResistanceOptions] = useState<
     Partial<Record<SybilResistanceType, string>>
   >(fullSybilResistanceOptions);
@@ -435,7 +437,7 @@ export function PoolForm({ token, communityAddr }: Props) {
               previewData.disputeCollateral.toString(),
               ETH_DECIMALS,
             ),
-            tribunalSafe: tribunalAddress as Address,
+            tribunalSafe: previewData.tribunalAddress as Address,
             arbitrator: chain.arbitrator as Address,
           },
           pointConfig: { maxAmount: parseUnits(maxAmountStr, token.decimals) },
@@ -582,7 +584,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       rulingTime: previewData.rulingTime,
       proposalCollateral: previewData.proposalCollateral,
       disputeCollateral: previewData.disputeCollateral,
-      tribunalAddress: tribunalAddress,
+      tribunalAddress: previewData.tribunalAddress,
     };
 
     Object.entries(reorderedData).forEach(([key, value]) => {
@@ -652,7 +654,7 @@ export function PoolForm({ token, communityAddr }: Props) {
             <FormInput
               label="Description"
               onChange={(value) => {
-                setValue("description", value);
+                setValue("description", value.target.value);
               }}
               value={getValues("description")}
               required
@@ -697,62 +699,62 @@ export function PoolForm({ token, communityAddr }: Props) {
                 suffix={customTokenData?.symbol}
               />
             )}
-            <label className="label w-fit">
-              Voting Weight System
-              <span className="ml-1">*</span>
-            </label>
-            <div className="ml-2 flex flex-col gap-2">
-              {Object.entries(PointSystems).map(([value, label], i) => (
-                <>
-                  <FormRadioButton
-                    key={value}
-                    value={value}
-                    label={capitalize(label)}
-                    inline={true}
-                    onChange={() =>
-                      setValue("pointSystemType", parseInt(value))
-                    }
-                    checked={parseInt(value) === pointSystemType}
-                    registerKey="pointSystemType"
-                    description={votingWeightSystemDescriptions[label]}
-                  />
-                  {pointSystemType == 1 && i === 1 && (
-                    <div className="flex flex-col">
-                      <FormInput
-                        label="Token max amount"
-                        register={register}
-                        required
-                        registerOptions={{
-                          min: {
-                            value: INPUT_TOKEN_MIN_VALUE,
-                            message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
-                          },
-                        }}
-                        otherProps={{
-                          step: INPUT_TOKEN_MIN_VALUE,
-                          min: INPUT_TOKEN_MIN_VALUE,
-                        }}
-                        errors={errors}
-                        className="pr-14"
-                        registerKey="maxAmount"
-                        type="number"
-                        placeholder="0"
-                        suffix={token.symbol}
-                      />
-                    </div>
-                  )}
-                </>
-              ))}
+            <div>
+              <label className="label w-fit">
+                Voting Weight System
+                <span className="ml-1">*</span>
+              </label>
+              <div className="ml-2 flex flex-col gap-2">
+                {Object.entries(PointSystems).map(([value, label], i) => (
+                  <React.Fragment key={value}>
+                    <FormRadioButton
+                      value={value}
+                      label={capitalize(label)}
+                      inline={true}
+                      onChange={() =>
+                        setValue("pointSystemType", parseInt(value))
+                      }
+                      checked={parseInt(value) === pointSystemType}
+                      registerKey="pointSystemType"
+                      description={votingWeightSystemDescriptions[label]}
+                    />
+                    {pointSystemType == 1 && i === 1 && (
+                      <div className="flex flex-col">
+                        <FormInput
+                          label="Token max amount"
+                          register={register}
+                          required
+                          registerOptions={{
+                            min: {
+                              value: INPUT_TOKEN_MIN_VALUE,
+                              message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                            },
+                          }}
+                          otherProps={{
+                            step: INPUT_TOKEN_MIN_VALUE,
+                            min: INPUT_TOKEN_MIN_VALUE,
+                          }}
+                          errors={errors}
+                          className="pr-14"
+                          registerKey="maxAmount"
+                          type="number"
+                          placeholder="0"
+                          suffix={token.symbol}
+                        />
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="border-border-neutral border-t-[1px]" />
-          <InfoBox
-            className="w-fit"
-            infoBoxType="info"
-            content={
-              "The following sections can be updated by the council safe."
-            }
-          />
+          <div className="flex flex-col gap-2">
+            <hr />
+            <span className="text-neutral-soft-content mx-auto">
+              Council can edit this section once the pool is created.
+            </span>
+          </div>
+
           {shouldRenderInputMap("sybilResistanceType", strategyType) && (
             <div className="flex flex-col gap-4">
               <FormSelect
@@ -803,7 +805,6 @@ export function PoolForm({ token, communityAddr }: Props) {
             </div>
           )}
           {/* arbitration section */}
-
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
               <h4 className="my-4">Arbitration settings</h4>
@@ -870,25 +871,19 @@ export function PoolForm({ token, communityAddr }: Props) {
                 tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                 label="Tribunal address"
                 registerKey="tribunalAddress"
+                register={register}
                 required
-                onChange={(newValue) => setTribunalAddress(newValue)}
-                value={tribunalAddress}
               />
               <FormCheckBox
                 label="Use global tribunal"
-                register={register}
                 registerKey="useGlobalTribunal"
                 type="checkbox"
                 tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
-                value={
-                  tribunalAddress.toLowerCase() ===
-                  chain.globalTribunal?.toLowerCase()
-                }
-                onChange={() => {
-                  setTribunalAddress((oldAddress) =>
-                    oldAddress === chain.globalTribunal ?
-                      ""
-                    : (chain.globalTribunal ?? ""),
+                value={isGlobalTribunalValue}
+                onChange={(e) => {
+                  setValue(
+                    "tribunalAddress",
+                    e.target.checked ? (chain.globalTribunal ?? "") : "",
                   );
                 }}
               />

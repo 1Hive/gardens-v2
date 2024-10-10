@@ -1,6 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  ChangeEventHandler,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { blo } from "blo";
-import { RegisterOptions } from "react-hook-form";
+import { RegisterOptions, UseFormRegister } from "react-hook-form";
 import { useIsMounted } from "usehooks-ts";
 import { Address, isAddress } from "viem";
 import { normalize } from "viem/ens";
@@ -15,7 +21,7 @@ type Props = {
   label?: string;
   placeholder?: string;
   errors?: any;
-  register?: any;
+  register?: UseFormRegister<any>;
   registerKey?: string;
   registerOptions?: RegisterOptions;
   required?: boolean;
@@ -24,14 +30,14 @@ type Props = {
   value?: string;
   disabled?: boolean;
   tooltip?: string;
-  onChange?: (value: string) => void;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
 };
 
 export const FormAddressInput = ({
   label,
   placeholder = "",
   errors = false,
-  register = () => ({}),
+  register,
   registerKey = "",
   registerOptions,
   required = false,
@@ -42,10 +48,18 @@ export const FormAddressInput = ({
   tooltip,
   onChange,
 }: Props) => {
-  const [input, setInput] = useState<string | undefined>(value);
   const [isValid, setIsValid] = useState<boolean | null>(true);
   const isMounted = useIsMounted();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const registered = register?.(registerKey, {
+    required,
+    disabled,
+    value: value == null ? undefined : value,
+    ...registerOptions,
+  });
+
+  const input = inputRef.current?.value ?? value;
 
   const { data: resolvedAddress } = useEnsAddress({
     name: !!input && isENS(input) ? normalize(input) : undefined,
@@ -67,20 +81,24 @@ export const FormAddressInput = ({
   });
 
   useEffect(() => {
-    setInput(inputRef.current?.value);
-  }, [inputRef.current?.value]);
-
-  useEffect(() => {
     if (!isMounted()) {
       return;
     }
     if (resolvedAddress) {
-      onChange?.(resolvedAddress);
+      const ev = {
+        target: { value: resolvedAddress },
+      } as ChangeEvent<HTMLInputElement>;
+      registered?.onChange?.(ev);
+      onChange?.(ev);
       setIsValid(true);
     } else if (input != null && !isENS(input)) {
+      const ev = {
+        target: { value: input },
+      } as ChangeEvent<HTMLInputElement>;
       // Direct address validation
       if (input !== value) {
-        onChange?.(input);
+        registered?.onChange?.(ev);
+        onChange?.(ev);
       }
       try {
         setIsValid(isAddress(input));
@@ -127,17 +145,10 @@ export const FormAddressInput = ({
           placeholder={placeholder || "Enter address or ENS name"}
           id={registerKey}
           name={registerKey}
-          value={input}
-          onChange={(ev) => setInput(ev.target.value)}
+          {...registered}
           disabled={disabled || readOnly}
           readOnly={readOnly || disabled}
           required={required}
-          {...register(registerKey, {
-            required,
-            readOnly,
-            disabled,
-            ...registerOptions,
-          })}
         />
         {input && (
           // Don't want to use nextJS Image here (and adding remote patterns for the URL)

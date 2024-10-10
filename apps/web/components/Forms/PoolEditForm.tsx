@@ -651,7 +651,7 @@ export default function PoolEditForm({
                 label="Tribunal address"
                 registerKey="tribunalAddress"
                 required
-                onChange={(newValue) => setTribunalAddress(newValue)}
+                onChange={(ev) => setValue("tribunalAddress", ev.target.value)}
                 value={tribunalAddress}
               />
               <FormCheckBox
