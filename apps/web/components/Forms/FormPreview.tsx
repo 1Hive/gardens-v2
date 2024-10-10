@@ -1,5 +1,6 @@
 import React, { ReactNode } from "react";
 import MarkdownWrapper from "../MarkdownWrapper";
+import TooltipIfOverflow from "../TooltipIfOverflow";
 
 export type FormRow = { label: string; data: ReactNode };
 
@@ -27,7 +28,10 @@ export function FormPreview({
       </div>
       {title && description && (
         <div className="my-8 flex flex-col">
-          <h3 className="mb-4">{title}</h3>
+          <h3 className="mb-4">
+            <TooltipIfOverflow>{title}</TooltipIfOverflow>
+          </h3>
+
           <MarkdownWrapper>{description}</MarkdownWrapper>
         </div>
       )}

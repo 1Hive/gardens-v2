@@ -3607,7 +3607,7 @@ export type getProposalDataQuery = {
     cvproposal?: Maybe<(Pick<CVProposal, 'id' | 'proposalNumber' | 'beneficiary' | 'blockLast' | 'convictionLast' | 'createdAt' | 'metadataHash' | 'proposalStatus' | 'requestedAmount' | 'requestedToken' | 'stakedAmount' | 'submitter' | 'threshold' | 'updatedAt' | 'version'> & {
         metadata?: Maybe<Pick<ProposalMetadata, 'title' | 'description'>>;
         strategy: (Pick<CVStrategy, 'id' | 'token' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'poolId'> & {
-            config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem' | 'minThresholdPoints'>;
+            config: Pick<CVStrategyConfig, 'proposalType' | 'pointSystem' | 'minThresholdPoints' | 'decay'>;
         });
         arbitrableConfig: Pick<ArbitrableConfig, 'arbitrator' | 'defaultRuling' | 'defaultRulingTimeout' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'tribunalSafe'>;
     })>;

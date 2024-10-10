@@ -21,6 +21,7 @@ import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { DisputeButton } from "@/components/DisputeButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
+import { Skeleton } from "@/components/Skeleton";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -68,11 +69,6 @@ export default function Page({
 
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
-  const { data: poolToken } = useToken({
-    address: poolTokenAddr,
-    enabled: !!poolTokenAddr,
-    chainId,
-  });
   const { data: ipfsResult } = useMetadataIpfsFetch({
     hash: proposalData?.metadataHash,
     enabled: !proposalData?.metadata,
@@ -81,23 +77,32 @@ export default function Page({
   const isProposerConnected =
     proposalData?.submitter === address?.toLowerCase();
 
+  const proposalType = proposalData?.strategy.config?.proposalType;
+  const isSignalingType = PoolTypes[proposalType] === "signaling";
+  const requestedAmount = proposalData?.requestedAmount;
+  const beneficiary = proposalData?.beneficiary as Address | undefined;
+  const submitter = proposalData?.submitter as Address | undefined;
+  const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
+
+  const { data: poolToken } = useToken({
+    address: poolTokenAddr,
+    enabled: !!poolTokenAddr && !isSignalingType,
+    chainId,
+  });
+
   const {
     currentConvictionPct,
     thresholdPct,
     totalSupportPct,
     updatedConviction,
+    timeToPass,
+    triggerConvictionRefetch,
   } = useConvictionRead({
     proposalData,
-    tokenData: data?.tokenGarden,
+    strategyConfig: proposalData?.strategy?.config,
+    tokenData: data?.tokenGarden?.decimals,
     enabled: proposalData?.proposalNumber != null,
   });
-
-  const proposalType = proposalData?.strategy.config?.proposalType;
-  const requestedAmount = proposalData?.requestedAmount;
-  const beneficiary = proposalData?.beneficiary as Address | undefined;
-  const submitter = proposalData?.submitter as Address | undefined;
-  const isSignalingType = PoolTypes[proposalType] === "signaling";
-  const proposalStatus = ProposalStatus[proposalData?.proposalStatus];
 
   //encode proposal id to pass as argument to distribute function
   const encodedDataProposalId = (proposalId_: bigint) => {
@@ -166,9 +171,11 @@ export default function Page({
           <div className="flex w-full flex-col gap-8">
             <div>
               <div className="mb-4 flex flex-col items-start gap-4 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                <h2>
-                  {metadata?.title} #{proposalIdNumber.toString()}
-                </h2>
+                <Skeleton isLoading={!metadata} className="!w-96 h-8">
+                  <h2>
+                    {metadata?.title} #{proposalIdNumber.toString()}
+                  </h2>
+                </Skeleton>
                 <Badge type={proposalType} />
               </div>
               <div className="flex items-center justify-between gap-4 sm:justify-start">
@@ -181,15 +188,19 @@ export default function Page({
                 </p>
               </div>
             </div>
-            <MarkdownWrapper>
-              {metadata?.description ?? "No description found"}
-            </MarkdownWrapper>
+            <div>
+              <Skeleton rows={5} isLoading={!metadata}>
+                <MarkdownWrapper>
+                  {metadata?.description ?? "No description found"}
+                </MarkdownWrapper>
+              </Skeleton>
+            </div>
             <div className="flex justify-between flex-wrap gap-2">
               <div className="flex flex-col gap-2">
                 {!isSignalingType && (
                   <>
                     <Statistic
-                      label={"requested amount"}
+                      label={"request amount"}
                       icon={<InformationCircleIcon />}
                     >
                       <DisplayNumber
@@ -264,7 +275,9 @@ export default function Page({
               thresholdPct={thresholdPct}
               proposalSupportPct={totalSupportPct}
               isSignalingType={isSignalingType}
-              proposalId={Number(proposalIdNumber)}
+              proposalNumber={Number(proposalIdNumber)}
+              timeToPass={Number(timeToPass)}
+              onReadyToExecute={triggerConvictionRefetch}
             />
           </>
         }
