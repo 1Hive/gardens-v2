@@ -129,6 +129,7 @@ export function FormInput({
           />
         : <div data-color-mode="light">
             <MarkdownEditor
+              className="textarea textarea-info p-0 ![--color-canvas-subtle:var(--n)] ![--color-neutral-muted:#cceeff44]"
               id={registerKey}
               style={{
                 resize: "vertical",
