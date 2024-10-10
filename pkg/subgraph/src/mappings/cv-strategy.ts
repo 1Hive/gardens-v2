@@ -1,4 +1,5 @@
 import {
+  ArbitrableConfig,
   CVProposal,
   CVStrategy,
   CVStrategyConfig,
@@ -13,6 +14,7 @@ import {
 } from "../../generated/templates";
 
 import {
+  ArbitrableConfigUpdated,
   Distributed,
   InitializedCV,
   ProposalCreated,
@@ -24,9 +26,8 @@ import {
   PointsDeactivated,
   Ruling,
   ProposalDisputed,
-  PoolParamsUpdated,
-  PoolParamsUpdatedCvParamsStruct,
-  PoolParamsUpdatedArbitrableConfigStruct,
+  CVParamsUpdated,
+  CVParamsUpdatedCvParamsStruct,
   ProposalCancelled
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
@@ -80,15 +81,11 @@ export function handleInitialized(event: InitializedCV): void {
 
   log.debug("handleInitialized changetypes", []);
   // @ts-ignore
-  let cvParams = changetype<PoolParamsUpdatedCvParamsStruct>(
+  let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(
     event.params.data.cvParams
   );
-  // @ts-ignore
-  let arbitrableConfig = changetype<PoolParamsUpdatedArbitrableConfigStruct>(
-    event.params.data.arbitrableConfig
-  );
 
-  computeConfig(config, cvParams, arbitrableConfig);
+  computeConfig(config, cvParams);
 
   config.D = cvc.D();
   config.save();
@@ -136,6 +133,7 @@ export function handleProposalCreated(event: ProposalCreated): void {
 
   newProposal.requestedAmount = proposal.getRequestedAmount();
   newProposal.maxCVStaked = maxConviction;
+  newProposal.arbitrableConfig = `${event.address.toHex()}-${proposal.getArbitrableConfigVersion().toString()}`;
 
   newProposal.proposalStatus = BigInt.fromI32(
     cvc.getProposal(event.params.proposalId).getProposalStatus()
@@ -431,10 +429,11 @@ export function handlePowerDecreased(event: PowerDecreased): void {
   memberStrategy.save();
 }
 
-export function handlePoolParamsUpdated(event: PoolParamsUpdated): void {
+export function handleCVParamsUpdated(event: CVParamsUpdated): void {
   let cvs = CVStrategy.load(event.address.toHexString());
   if (cvs == null) {
-    log.error("CVStrategy: handlePoolParamsUpdated cvs not found: {}", [
+    // Ignore because can be from initialization and the config will be computed there
+    log.warning("CVStrategy: handlePoolParamsUpdated cvs not found: {}", [
       event.address.toHexString()
     ]);
     return;
@@ -458,27 +457,34 @@ export function handlePoolParamsUpdated(event: PoolParamsUpdated): void {
     ]
   );
 
-  log.debug(
-    "handlePoolParamsUpdated: ArbitrationConfig:[arbitrator:{},tribunalSafe:{},challengerCollateralAmount:{},submitterCollateralAmount:{},defaultRuling:{},defaultRulingTimeout:{}]",
-    [
-      event.params.arbitrableConfig.arbitrator.toHexString(),
-      event.params.arbitrableConfig.tribunalSafe.toHexString(),
-      event.params.arbitrableConfig.challengerCollateralAmount.toString(),
-      event.params.arbitrableConfig.submitterCollateralAmount.toString(),
-      event.params.arbitrableConfig.defaultRuling.toString(),
-      event.params.arbitrableConfig.defaultRulingTimeout.toString()
-    ]
-  );
-
-  computeConfig(config, event.params.cvParams, event.params.arbitrableConfig);
+  computeConfig(config, event.params.cvParams);
 
   config.save();
 }
 
+export function handleArbitrableConfigUpdated(
+  event: ArbitrableConfigUpdated
+): void {
+  let arbitrableConfig = new ArbitrableConfig(
+    `${event.address.toHex()}-${event.params.currentArbitrableConfigVersion.toString()}`
+  );
+  arbitrableConfig.version = event.params.currentArbitrableConfigVersion;
+  arbitrableConfig.strategy = event.address.toHexString();
+  arbitrableConfig.arbitrator = event.params.arbitrator.toHexString();
+  arbitrableConfig.tribunalSafe = event.params.tribunalSafe.toHexString();
+  arbitrableConfig.challengerCollateralAmount =
+    event.params.challengerCollateralAmount;
+  arbitrableConfig.submitterCollateralAmount =
+    event.params.submitterCollateralAmount;
+  arbitrableConfig.defaultRuling = event.params.defaultRuling;
+  arbitrableConfig.defaultRulingTimeout = event.params.defaultRulingTimeout;
+
+  arbitrableConfig.save();
+}
+
 function computeConfig(
   config: CVStrategyConfig,
-  cvParams: PoolParamsUpdatedCvParamsStruct,
-  arbitrationConfig: PoolParamsUpdatedArbitrableConfigStruct
+  cvParams: CVParamsUpdatedCvParamsStruct
 ): void {
   // CV Params
   log.debug("CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]", [
@@ -491,16 +497,6 @@ function computeConfig(
   config.decay = cvParams.decay;
   config.minThresholdPoints = cvParams.minThresholdPoints;
   config.maxRatio = cvParams.maxRatio;
-
-  // ArbitrationConfig
-  config.arbitrator = arbitrationConfig.arbitrator.toHexString();
-  config.tribunalSafe = arbitrationConfig.tribunalSafe.toHexString();
-  config.challengerCollateralAmount =
-    arbitrationConfig.challengerCollateralAmount;
-  config.submitterCollateralAmount =
-    arbitrationConfig.submitterCollateralAmount;
-  config.defaultRuling = arbitrationConfig.defaultRuling;
-  config.defaultRulingTimeout = arbitrationConfig.defaultRulingTimeout;
 }
 
 export function handleProposalDisputed(event: ProposalDisputed): void {

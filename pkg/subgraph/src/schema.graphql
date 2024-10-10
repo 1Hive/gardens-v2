@@ -24,8 +24,12 @@ type CVStrategyConfig @entity(immutable: false) {
   proposalType: BigInt!
   pointSystem: BigInt!
   maxAmount: BigInt
+}
 
-  # Arbitration Config
+type ArbitrableConfig @entity(immutable: false) {
+  id: ID!
+  version: BigInt!
+  strategy: CVStrategy!
   arbitrator: String!
   tribunalSafe: String!
   challengerCollateralAmount: BigInt!
@@ -56,6 +60,7 @@ type CVProposal @entity(immutable: false) {
   # agreementActionId: BigInt!
   createdAt: BigInt!
   updatedAt: BigInt!
+  arbitrableConfig: ArbitrableConfig!
 }
 
 # type ProposalMeta @entity(immutable: false) {
@@ -195,4 +200,21 @@ type ProposalMetadata @entity(immutable: false) {
   id: ID!
   title: String!
   description: String!
+}
+
+type CollateralVault @entity(immutable: false) {
+  id: ID!
+  strategy: CVStrategy!
+  collaterals: [CollateralVaultDeposit!] @derivedFrom(field: "collateralVault")
+}
+
+type CollateralVaultDeposit @entity(immutable: false) {
+  id: ID!
+  collateralVault: CollateralVault!
+  amount: BigInt!
+  depositor: Bytes!
+  createdAt: BigInt!
+  proposalId: BigInt!
+  withdrawnAt: BigInt
+  withdrawnTo: Bytes
 }

@@ -15,14 +15,17 @@ export const Statistic = ({
   label,
   children,
   tooltip,
+  className,
 }: IdentifierProps) => {
   return (
-    <div className="flex items-center gap-2 text-neutral-soft-content">
-      {icon && <div className="w-6 h-6">{icon}</div>}
+    <div
+      className={`flex items-center gap-2 text-neutral-soft-content ${className}`}
+    >
       <div
-        className={"tooltip flex cursor-default items-center max-w-sm"}
+        className={"tooltip flex items-center gap-2 max-w-sm"}
         data-tip={tooltip}
       >
+        {icon && <div className="w-6 h-6">{icon}</div>}
         {label && (
           <p className="first-letter:uppercase">
             {label}: {count}

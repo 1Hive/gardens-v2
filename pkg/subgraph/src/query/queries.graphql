@@ -142,9 +142,14 @@ query getPoolCreationData($communityAddr: ID!, $tokenAddr: ID!) {
   }
 }
 
-query getGardenCommunities($chainId: BigInt!) {
-  registryCommunities(where: { chainId: $chainId }) {
+query getGardenCommunities($chainId: BigInt!, $tokenGarden: ID!) {
+  registryCommunities(
+    where: { chainId: $chainId, garden_: { id: $tokenGarden } }
+  ) {
     id
+    garden {
+      id
+    }
     chainId
     isValid
     covenantIpfsHash
@@ -239,12 +244,6 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     }
     config {
       id
-      arbitrator
-      defaultRuling
-      defaultRulingTimeout
-      challengerCollateralAmount
-      submitterCollateralAmount
-      tribunalSafe
       weight
       decay
       maxAmount
@@ -263,7 +262,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         decimals
       }
     }
-    proposals {
+    proposals(orderBy: createdAt, orderDirection: desc) {
       id
       proposalNumber
       metadata {
@@ -277,6 +276,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       proposalStatus
       stakedAmount
       convictionLast
+      createdAt
       blockLast
       threshold
       strategy {
@@ -285,6 +285,19 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
         totalEffectiveActivePoints
       }
     }
+  }
+  arbitrableConfigs(
+    first: 1
+    orderBy: version
+    orderDirection: desc
+    where: { strategy_: { poolId: $poolId } }
+  ) {
+    submitterCollateralAmount
+    challengerCollateralAmount
+    arbitrator
+    defaultRuling
+    defaultRulingTimeout
+    tribunalSafe
   }
 }
 
@@ -324,16 +337,21 @@ query getProposalData($garden: ID!, $proposalId: ID!) {
       token
       maxCVSupply
       totalEffectiveActivePoints
+      poolId
       config {
         proposalType
         pointSystem
         minThresholdPoints
-        challengerCollateralAmount
-        arbitrator
-        defaultRuling
-        defaultRulingTimeout
-        tribunalSafe
+        decay
       }
+    }
+    arbitrableConfig {
+      arbitrator
+      defaultRuling
+      defaultRulingTimeout
+      challengerCollateralAmount
+      submitterCollateralAmount
+      tribunalSafe
     }
   }
 }
@@ -495,13 +513,24 @@ query getProposalDisputes($proposalId: ID!) {
   }
 }
 
-query getStrategyArbitrationConfig($strategyConfigId: ID!) {
-  cvstrategyConfig(id: $strategyConfigId) {
+query getArbitrableConfigs($strategyId: String!) {
+  arbitrableConfigs(where: { strategy: $strategyId }) {
+    arbitrator
     challengerCollateralAmount
     submitterCollateralAmount
-    arbitrator
     tribunalSafe
     defaultRuling
     defaultRulingTimeout
   }
 }
+
+# query getStrategyArbitrationConfig($strategyConfigId: ID!) {
+#   cvstrategyConfig(id: $strategyConfigId) {
+#     challengerCollateralAmount
+#     submitterCollateralAmount
+#     arbitrator
+#     tribunalSafe
+#     defaultRuling
+#     defaultRulingTimeout
+#   }
+# }

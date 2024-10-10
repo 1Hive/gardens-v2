@@ -77,7 +77,7 @@ export const IncreasePower = ({
   const { data: accountTokenBalance } = useBalance({
     address: accountAddress,
     token: registerToken as Address,
-    chainId: urlChainId ?? 0,
+    chainId: urlChainId,
   });
 
   const registryContractCallConfig = {
@@ -232,7 +232,7 @@ export const IncreasePower = ({
         </div>
       </TransactionModal>
 
-      <div className="flex justify-between gap-4">
+      <div className="flex justify-between gap-4 flex-wrap">
         <div className="flex flex-col justify-between gap-2">
           <div className="flex justify-between">
             <div className="flex-start flex gap-2">
@@ -253,7 +253,7 @@ export const IncreasePower = ({
           <InfoBox
             content="staking more tokens in the community can increase your voting power in pools to support proposals."
             infoBoxType="info"
-            classNames="max-w-xl"
+            className="max-w-xl"
           />
         </div>
         <div className="flex flex-col gap-4">

@@ -17,7 +17,7 @@ import {
 import { blueLand, grass } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { PointSystems, PoolTypes } from "@/types";
 import { capitalize } from "@/utils/text";
 
@@ -42,7 +42,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
   const poolType = config?.proposalType as number | undefined;
 
   const isNewPool =
-    searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId;
+    searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId.toString();
   return (
     <Card
       href={`${pathname}/${poolId}`}
@@ -55,26 +55,28 @@ export function PoolCard({ pool, tokenGarden }: Props) {
       <div className="mb-10 flex min-h-[60px] flex-col gap-2">
         <Statistic
           icon={<BoltIcon />}
-          label="Pool system"
+          label="voting weight"
           count={capitalize(PointSystems[config?.pointSystem])}
-         />
+        />
         <Statistic
           icon={<HandRaisedIcon />}
           count={proposals.length}
           label="proposals"
         />
-        {poolType && PoolTypes[poolType] === "funding" && (
-          <Statistic icon={<CurrencyDollarIcon />} label="funds">
-            <DisplayNumber
-              number={[BigInt(poolAmount), tokenGarden.decimals]}
-              compact={true}
-              tokenSymbol={tokenGarden.symbol}
-            />
-          </Statistic>
-        )}
+        <Statistic
+          icon={<CurrencyDollarIcon />}
+          label="funds"
+          className={`${poolType && PoolTypes[poolType] === "funding" ? "visible" : "invisible"}`}
+        >
+          <DisplayNumber
+            number={[BigInt(poolAmount), tokenGarden.decimals]}
+            compact={true}
+            tokenSymbol={tokenGarden.symbol}
+          />
+        </Statistic>
       </div>
       {!isEnabled ?
-        <div className="banner  min-w-[262px]">
+        <div className="banner md:min-w-[262px]">
           <ClockIcon className="h-8 w-8 text-secondary-content" />
           <h6>Waiting for approval</h6>
         </div>

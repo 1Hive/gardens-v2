@@ -9,7 +9,7 @@ type BadgeProps = {
   type?: number;
   status?: number;
   label?: string;
-  classNames?: string;
+  className?: string;
   icon?: React.ReactNode;
   isCapitalize?: boolean;
 };
@@ -37,7 +37,7 @@ export function Badge({
   type,
   status,
   label,
-  classNames,
+  className,
   icon,
 }: BadgeProps): JSX.Element {
   const isStatusBadge = status !== undefined;
@@ -69,7 +69,7 @@ export function Badge({
 
   return (
     <div
-      className={`${BASE_STYLES} ${styles} ${classNames} flex items-center gap-2`}
+      className={`${BASE_STYLES} ${styles} ${className} flex items-center gap-2`}
     >
       {iconIncluded && (
         <div className="h-6 w-6 text-inherit">{iconIncluded}</div>

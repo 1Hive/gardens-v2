@@ -25,8 +25,19 @@ import { initUrqlClient } from "@/providers/urql";
 import { ChainId } from "@/types";
 import { delayAsync } from "@/utils/delayAsync";
 
+let isQueryAllChains = false;
+try {
+  isQueryAllChains = localStorage.getItem("queryAllChains") === "true";
+} catch (error) {
+  // ignore when not browser side
+}
+
 const allChains: ChainId[] = Object.values(chains)
-  .filter((x) => (isProd ? !x.testnet : !!x.testnet || x.id === localhost.id))
+  .filter(
+    (x) =>
+      isQueryAllChains ||
+      (isProd ? !x.testnet : !!x.testnet || x.id === localhost.id),
+  )
   .map((x) => x.id);
 
 const pendingRefreshToastId = "pending-refresh";
@@ -40,12 +51,14 @@ export function useSubgraphQueryMultiChain<
   queryContext,
   changeScope,
   chainIds,
+  modifier,
 }: {
   query: DocumentInput<any, Variables>;
   variables?: Variables;
   queryContext?: Partial<OperationContext>;
   changeScope?: ChangeEventScope[] | ChangeEventScope;
   chainIds?: ChainId[];
+  modifier?: (data: Data[]) => Data[];
 }) {
   const { connected, subscribe, unsubscribe } = usePubSubContext();
   const mounted = useIsMounted();
@@ -172,7 +185,8 @@ export function useSubgraphQueryMultiChain<
       );
 
       // Make sure unique values are returned
-      setResponse(Array.from(new Set(responseMap.current.values())));
+      const result = Array.from(new Set(responseMap.current.values()));
+      setResponse(modifier ? modifier(result) : result);
       setFetching(false);
       fetchingRef.current = false;
     },

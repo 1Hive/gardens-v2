@@ -1,11 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, encodeAbiParameters, parseUnits } from "viem";
 import { useToken } from "wagmi";
-import { Allo, CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
+import {
+  Allo,
+  ArbitrableConfig,
+  CVStrategy,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
@@ -14,6 +19,7 @@ import { Button } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
@@ -30,16 +36,12 @@ type FormInputs = {
 };
 
 type ProposalFormProps = {
-  strategy: Pick<CVStrategy, "id" | "token"> & {
-    config: {
-      submitterCollateralAmount: bigint;
-    };
-  };
+  strategy: Pick<CVStrategy, "id" | "token">;
+  arbitrableConfig: Pick<ArbitrableConfig, "submitterCollateralAmount">;
   poolId: number;
   proposalType: number;
   alloInfo: Pick<Allo, "id" | "chainId" | "tokenNative">;
   tokenGarden: Pick<TokenGarden, "symbol" | "decimals">;
-  tokenAddress: Address;
   spendingLimit: number;
   spendingLimitPct: number;
   poolAmount: number;
@@ -108,11 +110,11 @@ function formatNumber(num: string | number): string {
 
 export const ProposalForm = ({
   strategy,
+  arbitrableConfig,
   poolId,
   proposalType,
   alloInfo,
   tokenGarden,
-  tokenAddress,
   spendingLimit,
   spendingLimitPct,
 }: ProposalFormProps) => {
@@ -121,6 +123,7 @@ export const ProposalForm = ({
     handleSubmit,
     formState: { errors },
     getValues,
+    setValue,
   } = useForm<FormInputs>();
 
   const { publish } = usePubSubContext();
@@ -148,6 +151,18 @@ export const ProposalForm = ({
   const router = useRouter();
   const pathname = usePathname();
 
+  const disableSubmitBtn = useMemo<ConditionObject[]>(
+    () => [
+      {
+        condition: !isEnoughBalance,
+        message: "Insufficient balance",
+      },
+    ],
+    [isEnoughBalance],
+  );
+  const { isConnected, missmatchUrl, tooltipMessage } =
+    useDisableButtons(disableSubmitBtn);
+
   const spendingLimitString = formatTokenAmount(
     spendingLimit,
     +tokenGarden?.decimals,
@@ -155,8 +170,6 @@ export const ProposalForm = ({
   );
 
   const proposalTypeName = PoolTypes[proposalType];
-
-  const arbitrationConfig = strategy.config;
 
   const createProposal = async () => {
     setLoading(true);
@@ -188,7 +201,7 @@ export const ProposalForm = ({
     contractName: "Allo",
     functionName: "registerRecipient",
     fallbackErrorMessage: "Error creating Proposal. Please try again.",
-    value: arbitrationConfig.submitterCollateralAmount,
+    value: arbitrableConfig.submitterCollateralAmount,
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(
         receipt,
@@ -203,30 +216,30 @@ export const ProposalForm = ({
         id: proposalId.toString(), // proposalId is a bigint
         chainId,
       });
+      setLoading(false);
       if (pathname) {
-        router.push(
-          pathname.replace(
-            "/create-proposal",
-            `?${QUERY_PARAMS.poolPage.newPropsoal}=${proposalId}`,
-          ),
+        const newPath = pathname.replace(
+          "/create-proposal",
+          `?${QUERY_PARAMS.poolPage.newProposal}=${proposalId}`,
         );
+        router.push(newPath);
       }
     },
-    onSettled: () => setLoading(false),
   });
 
   const poolTokenAddr = strategy?.token as Address;
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
-    enabled: !!poolTokenAddr,
+    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
+    chainId,
   });
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** (poolToken?.decimals ?? 0);
   const spendingLimitNumber = spendingLimit / 10 ** (poolToken?.decimals ?? 0);
 
-  if (!poolToken) {
+  if (!poolToken && PoolTypes[proposalType] === "funding") {
     return (
-      <div className="mt-96">
+      <div className="m-40">
         <LoadingSpinner />
       </div>
     );
@@ -250,7 +263,7 @@ export const ProposalForm = ({
       poolId,
       previewData.beneficiary,
       requestedAmount,
-      tokenAddress,
+      poolTokenAddr,
       metadata,
     ]);
 
@@ -260,18 +273,10 @@ export const ProposalForm = ({
         previewData?.beneficiary ||
           "0x0000000000000000000000000000000000000000",
         requestedAmount,
-        tokenAddress,
+        poolTokenAddr,
         metadata,
       ],
     ]);
-
-    console.debug(
-      poolId,
-      previewData.beneficiary,
-      requestedAmount,
-      tokenAddress,
-      metadata,
-    );
 
     return encodedData;
   };
@@ -341,11 +346,8 @@ export const ProposalForm = ({
                 registerKey="amount"
                 type="number"
                 placeholder="0"
-              >
-                <span className="absolute right-4 top-4 text-black">
-                  {poolToken?.symbol}
-                </span>
-              </FormInput>
+                suffix={poolToken?.symbol}
+               />
             </div>
           )}
           {proposalTypeName !== "signaling" && (
@@ -385,18 +387,22 @@ export const ProposalForm = ({
               required
               errors={errors}
               registerKey="description"
-              type="textarea"
+              onChange={(e) => {
+                setValue("description", e.target.value);
+              }}
+              value={getValues("description")}
+              type="markdown"
               rows={10}
               placeholder="Proposal description"
             />
           </div>
         </div>
       }
-      <div className="flex w-full items-center justify-between py-6">
+      <div className="flex w-full items-center justify-between py-6 flex-wrap">
         <div>
-          {arbitrationConfig && (
+          {arbitrableConfig && (
             <WalletBalance
-              askedAmount={arbitrationConfig.submitterCollateralAmount}
+              askedAmount={arbitrableConfig.submitterCollateralAmount}
               label="Proposal stake"
               setIsEnoughBalance={setIsEnoughBalance}
               token="native"
@@ -418,8 +424,8 @@ export const ProposalForm = ({
             <Button
               onClick={() => createProposal()}
               isLoading={loading}
-              disabled={!isEnoughBalance}
-              tooltip={isEnoughBalance ? "" : "Insufficient balance"}
+              disabled={!isEnoughBalance || !isConnected || missmatchUrl}
+              tooltip={tooltipMessage}
             >
               Submit
             </Button>

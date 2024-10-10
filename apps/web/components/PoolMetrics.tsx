@@ -116,7 +116,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
       </TransactionModal>
       <section className="section-layout gap-4 flex flex-col">
         <h2>Pool Funds</h2>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap">
           <div className="flex gap-3 items-baseline">
             <p className="subtitle2">Funds available:</p>
             <DisplayNumber
@@ -127,7 +127,7 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
             />
           </div>
           <form
-            className="flex gap-2"
+            className="flex gap-2 flex-wrap"
             onSubmit={(e) => {
               e.preventDefault();
               handleFundPool();
@@ -144,11 +144,8 @@ export const PoolMetrics: FC<PoolMetricsProps> = ({
                 step: INPUT_TOKEN_MIN_VALUE,
                 min: INPUT_TOKEN_MIN_VALUE,
               }}
-            >
-              <span className="absolute right-4 top-4 text-black">
-                {poolToken.symbol}
-              </span>
-            </FormInput>
+              suffix={poolToken.symbol}
+            />
             <Button
               type="submit"
               disabled={missmatchUrl || !accountAddress}

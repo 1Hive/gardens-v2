@@ -13,13 +13,18 @@ import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
 import { Address } from "viem";
 import { useAccount, useContractRead } from "wagmi";
-import { getPoolDataQuery, TokenGarden } from "#/subgraph/.graphclient";
+import {
+  ArbitrableConfig,
+  getPoolDataQuery,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { EthAddress } from "./EthAddress";
 import PoolEditForm from "./Forms/PoolEditForm";
 import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
+import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
@@ -42,8 +47,16 @@ type Props = {
   poolId: number;
   isEnabled: boolean;
   strategy: getPoolDataQuery["cvstrategies"][0];
+  arbitrableConfig: Pick<
+    ArbitrableConfig,
+    | "defaultRuling"
+    | "tribunalSafe"
+    | "submitterCollateralAmount"
+    | "challengerCollateralAmount"
+    | "defaultRulingTimeout"
+  >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
-  poolToken: FetchTokenResult;
+  poolToken?: FetchTokenResult;
   pointSystem: number;
   chainId: string;
   proposalType: string;
@@ -79,6 +92,7 @@ export default function PoolHeader({
   poolId,
   isEnabled,
   strategy,
+  arbitrableConfig,
   token,
   poolToken,
   pointSystem,
@@ -101,7 +115,7 @@ export default function PoolHeader({
     spendingLimitPct * MAX_RATIO_CONSTANT,
   );
 
-  const convictionGrowth = calculateConvictionGrowthInSeconds(
+  const convictionGrowthSec = calculateConvictionGrowthInSeconds(
     strategy.config.decay,
     blockTime,
   );
@@ -110,18 +124,24 @@ export default function PoolHeader({
     strategy.config.minThresholdPoints,
     +token.decimals,
   );
-  const spendingLimit = spendingLimitPct * MAX_RATIO_CONSTANT;
+
+  const spendingLimit =
+    (strategy.config.maxRatio / CV_SCALE_PRECISION) *
+    (1 - Math.sqrt(minimumConviction / 100)) *
+    100;
+
   const communityAddr = strategy.registryCommunity.id as Address;
-  const defaultResolution = strategy.config.defaultRuling;
-  const proposalCollateral = strategy.config.submitterCollateralAmount;
-  const disputeCollateral = strategy.config.challengerCollateralAmount;
-  const tribunalAddress = strategy.config.tribunalSafe;
+  const defaultResolution = arbitrableConfig.defaultRuling;
+  const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
+  const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
+  const tribunalAddress = arbitrableConfig.tribunalSafe;
+  const rulingTime = arbitrableConfig.defaultRulingTimeout;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
   );
 
-  const { value, unit } = convertSecondsToReadableTime(convictionGrowth);
+  const { value, unit } = convertSecondsToReadableTime(convictionGrowthSec);
 
   const poolConfig = [
     {
@@ -222,14 +242,15 @@ export default function PoolHeader({
   );
 
   return (
-    <section className="section-layout flex flex-col gap-0 overflow-hidden">
+    <section className="section-layout flex flex-col gap-0">
       <header className="mb-2 flex flex-col">
-        <div className="flex justify-between">
-          <h2>
-            {ipfsResult?.title} #{poolId}
-          </h2>
-          {(isCouncilMember ?? isCouncilSafe) && (
-            // true
+        <div className="flex justify-between flex-wrap">
+          <Skeleton isLoading={!ipfsResult} className="!w-96 h-8">
+            <h2>
+              {ipfsResult?.title} #{poolId}
+            </h2>
+          </Skeleton>
+          {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2">
               <Button
                 btnStyle="outline"
@@ -285,22 +306,25 @@ export default function PoolHeader({
             proposalOnDispute={proposalOnDispute}
             initValues={{
               minimumConviction: minimumConviction.toFixed(2),
-              convictionGrowth: convictionGrowth.toFixed(2),
+              convictionGrowth: convictionGrowthSec.toFixed(4),
               minThresholdPoints: minThresholdPoints,
               spendingLimit: spendingLimit.toFixed(2),
               defaultResolution: defaultResolution,
               proposalCollateral: proposalCollateral,
               disputeCollateral: disputeCollateral,
               tribunalAddress: tribunalAddress,
+              rulingTime,
             }}
             setModalOpen={setIsOpenModal}
           />
         </Modal>
       </header>
-      <MarkdownWrapper>
-        {ipfsResult?.description ?? "No description found"}
-      </MarkdownWrapper>
-      <div className="mb-10 mt-8 flex items-start gap-24">
+      <Skeleton rows={5} isLoading={!ipfsResult}>
+        <MarkdownWrapper>
+          {ipfsResult?.description ?? "No description found"}
+        </MarkdownWrapper>
+      </Skeleton>
+      <div className="mb-10 mt-8 flex items-start justify-between gap-8 flex-wrap">
         <div className="flex flex-col gap-2 max-w-fit">
           <Statistic label="pool type">
             <Badge type={parseInt(proposalType)} />
@@ -314,11 +338,11 @@ export default function PoolHeader({
               />
             </Statistic>
           )}
-          <Statistic label="pool system">
+          <Statistic label="voting weight">
             <div className="flex flex-col gap-3 sm:flex-row">
               <Badge
                 label="conviction voting"
-                classNames="text-secondary-content"
+                className="text-secondary-content"
                 icon={<ChartBarIcon />}
               />
               <Badge label={PointSystems[pointSystem]} icon={<BoltIcon />} />

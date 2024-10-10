@@ -14,6 +14,7 @@ import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
+import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryFactoryABI, safeABI } from "@/src/generated";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import { getEventFromReceipt } from "@/utils/contracts";
@@ -56,6 +57,7 @@ export const CommunityForm = ({
     handleSubmit,
     formState: { errors },
     getValues,
+    setValue,
   } = useForm<FormInputs>();
 
   const { publish } = usePubSubContext();
@@ -66,6 +68,7 @@ export const CommunityForm = ({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { isConnected, missmatchUrl, tooltipMessage } = useDisableButtons();
 
   const chainFromPath = useChainFromPath()!;
 
@@ -265,11 +268,8 @@ export const CommunityForm = ({
                 step: INPUT_TOKEN_MIN_VALUE,
                 min: INPUT_TOKEN_MIN_VALUE,
               }}
-            >
-              <span className="absolute right-4 top-4 text-black">
-                {tokenGarden.symbol}
-              </span>
-            </FormInput>
+              suffix={tokenGarden.symbol}
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -282,7 +282,7 @@ export const CommunityForm = ({
               className="pr-14"
               otherProps={{
                 step: 1 / CV_PERCENTAGE_SCALE,
-                min: 1 / CV_PERCENTAGE_SCALE,
+                min: 0,
               }}
               registerOptions={{
                 max: {
@@ -290,13 +290,12 @@ export const CommunityForm = ({
                   message: "Max amount cannot exceed 100%",
                 },
                 min: {
-                  value: 1 / CV_PERCENTAGE_SCALE,
-                  message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                  value: 0,
+                  message: "Amount must be greater than 0",
                 },
               }}
-            >
-              <span className="absolute right-4 top-4 text-black">%</span>
-            </FormInput>
+              suffix="%"
+            />
           </div>
           <div className="flex flex-col">
             <FormInput
@@ -351,7 +350,11 @@ export const CommunityForm = ({
               required
               errors={errors}
               registerKey="covenant"
-              type="textarea"
+              onChange={(e) => {
+                setValue("covenant", e.target.value);
+              }}
+              value={getValues("covenant")}
+              type="markdown"
               rows={7}
               placeholder="Covenant description..."
             />
@@ -370,7 +373,12 @@ export const CommunityForm = ({
             >
               Edit
             </Button>
-            <Button onClick={() => createCommunity()} isLoading={loading}>
+            <Button
+              onClick={() => createCommunity()}
+              isLoading={loading}
+              disabled={!isConnected || missmatchUrl}
+              tooltip={tooltipMessage}
+            >
               Submit
             </Button>
           </div>

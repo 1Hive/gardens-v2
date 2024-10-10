@@ -22,6 +22,7 @@ import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
 
+/// @custom:oz-upgrades-from RegistryCommunityV0_0
 contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
     /*|--------------------------------------------|*/
     /*|                 EVENTS                     |*/
@@ -90,6 +91,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     using SafeERC20 for IERC20;
     using Clone for address;
 
+    string public constant VERSION = "0.0";
     /// @notice The native address to represent native token eg: ETH in mainnet
     address public constant NATIVE = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     /// @notice The precision scale used in the contract to avoid loss of precision
@@ -158,13 +160,13 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     /*|              MODIFIERS                     |*/
     /*|--------------------------------------------|*/
 
-    function onlyCouncilSafe() internal view {
+    function onlyCouncilSafe() internal view virtual {
         if (!hasRole(COUNCIL_MEMBER, msg.sender)) {
             revert UserNotInCouncil(msg.sender);
         }
     }
 
-    function onlyRegistryMemberSender() internal view {
+    function onlyRegistryMemberSender() internal view virtual {
         if (!isMember(msg.sender)) {
             revert UserNotInRegistry();
         }
@@ -288,6 +290,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
     function createPool(address _token, StrategyStruct.InitializeParams memory _params, Metadata memory _metadata)
         public
+        virtual
         returns (uint256 poolId, address strategy)
     {
         address strategyProxy = address(
@@ -305,7 +308,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         address _token,
         StrategyStruct.InitializeParams memory _params,
         Metadata memory _metadata
-    ) public returns (uint256 poolId, address strategy) {
+    ) public virtual returns (uint256 poolId, address strategy) {
         address token = NATIVE;
         if (_token != address(0)) {
             token = _token;
@@ -321,7 +324,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
     }
 
-    function activateMemberInStrategy(address _member, address _strategy) public {
+    function activateMemberInStrategy(address _member, address _strategy) public virtual {
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
         _revertZeroAddress(_strategy);
@@ -349,7 +352,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit MemberActivatedStrategy(_member, _strategy, pointsToIncrease);
     }
 
-    function deactivateMemberInStrategy(address _member, address _strategy) public {
+    function deactivateMemberInStrategy(address _member, address _strategy) public virtual {
         onlyRegistryMemberAddress(_member);
         _revertZeroAddress(_strategy);
         onlyStrategyAddress(msg.sender, _strategy);
@@ -366,7 +369,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit MemberDeactivatedStrategy(_member, _strategy);
     }
 
-    function removeStrategyFromMember(address _member, address _strategy) internal {
+    function removeStrategyFromMember(address _member, address _strategy) internal virtual {
         address[] storage memberStrategies = strategiesByMember[_member];
         for (uint256 i = 0; i < memberStrategies.length; i++) {
             if (memberStrategies[i] == _strategy) {
@@ -376,7 +379,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
-    function increasePower(uint256 _amountStaked) public nonReentrant {
+    function increasePower(uint256 _amountStaked) public virtual nonReentrant {
         onlyRegistryMemberSender();
         address member = msg.sender;
         address[] memory memberStrategies = strategiesByMember[member];
@@ -403,7 +406,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
      * @notice Decrease the power of a member in a strategy
      * @param _amountUnstaked The amount of tokens to unstake
      */
-    function decreasePower(uint256 _amountUnstaked) public nonReentrant {
+    function decreasePower(uint256 _amountUnstaked) public virtual nonReentrant {
         onlyRegistryMemberSender();
         address member = msg.sender;
         address[] storage memberStrategies = strategiesByMember[member];
@@ -436,15 +439,15 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit MemberPowerDecreased(member, _amountUnstaked);
     }
 
-    function getMemberPowerInStrategy(address _member, address _strategy) public view returns (uint256) {
+    function getMemberPowerInStrategy(address _member, address _strategy) public view virtual returns (uint256) {
         return memberPowerInStrategy[_member][_strategy];
     }
 
-    function getMemberStakedAmount(address _member) public view returns (uint256) {
+    function getMemberStakedAmount(address _member) public view virtual returns (uint256) {
         return addressToMemberInfo[_member].stakedAmount;
     }
 
-    function addStrategyByPoolId(uint256 poolId) public {
+    function addStrategyByPoolId(uint256 poolId) public virtual {
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
         _revertZeroAddress(strategy);
@@ -453,12 +456,12 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
-    function addStrategy(address _newStrategy) public {
+    function addStrategy(address _newStrategy) public virtual {
         onlyCouncilSafe();
         _addStrategy(_newStrategy);
     }
 
-    function _addStrategy(address _newStrategy) internal {
+    function _addStrategy(address _newStrategy) internal virtual {
         if (enabledStrategies[_newStrategy]) {
             revert StrategyExists();
         }
@@ -466,50 +469,50 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit StrategyAdded(_newStrategy);
     }
 
-    function removeStrategyByPoolId(uint256 poolId) public {
+    function removeStrategyByPoolId(uint256 poolId) public virtual {
         onlyCouncilSafe();
         address strategy = address(allo.getPool(poolId).strategy);
         _revertZeroAddress(strategy);
         _removeStrategy(strategy);
     }
 
-    function _removeStrategy(address _strategy) internal {
+    function _removeStrategy(address _strategy) internal virtual {
         _revertZeroAddress(_strategy);
         enabledStrategies[_strategy] = false;
         emit StrategyRemoved(_strategy);
     }
 
-    function removeStrategy(address _strategy) public {
+    function removeStrategy(address _strategy) public virtual {
         onlyCouncilSafe();
         _removeStrategy(_strategy);
     }
 
-    function setCouncilSafe(address payable _safe) public {
+    function setCouncilSafe(address payable _safe) public virtual {
         onlyCouncilSafe();
         _revertZeroAddress(_safe);
         pendingCouncilSafe = _safe;
         emit CouncilSafeChangeStarted(address(councilSafe), pendingCouncilSafe);
     }
 
-    function _changeCouncilSafe() internal {
+    function _changeCouncilSafe() internal virtual {
         councilSafe = ISafe(pendingCouncilSafe);
         delete pendingCouncilSafe;
         emit CouncilSafeSet(pendingCouncilSafe);
     }
 
-    function acceptCouncilSafe() public {
+    function acceptCouncilSafe() public virtual {
         if (msg.sender != pendingCouncilSafe) {
             revert SenderNotNewOwner();
         }
         _changeCouncilSafe();
     }
 
-    function isMember(address _member) public view returns (bool _isMember) {
+    function isMember(address _member) public view virtual returns (bool _isMember) {
         Member memory newMember = addressToMemberInfo[_member];
         return newMember.isRegistered;
     }
 
-    function stakeAndRegisterMember() public nonReentrant {
+    function stakeAndRegisterMember() public virtual nonReentrant {
         address _member = msg.sender;
         Member storage newMember = addressToMemberInfo[_member];
         IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
@@ -545,7 +548,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
-    function getStakeAmountWithFees() public view returns (uint256) {
+    function getStakeAmountWithFees() public view virtual returns (uint256) {
         IRegistryFactory gardensFactory = IRegistryFactory(registryFactory);
         uint256 communityFeeAmount = (registerStakeAmount * communityFee) / (100 * PRECISION_SCALE);
         uint256 gardensFeeAmount =
@@ -554,17 +557,17 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         return registerStakeAmount + communityFeeAmount + gardensFeeAmount;
     }
 
-    function getBasisStakedAmount() external view returns (uint256) {
+    function getBasisStakedAmount() external view virtual returns (uint256) {
         return registerStakeAmount;
     }
 
-    function setBasisStakedAmount(uint256 _newAmount) external {
+    function setBasisStakedAmount(uint256 _newAmount) external virtual {
         onlyCouncilSafe();
         registerStakeAmount = _newAmount;
         emit BasisStakedAmountSet(_newAmount);
     }
 
-    function setCommunityFee(uint256 _newCommunityFee) public {
+    function setCommunityFee(uint256 _newCommunityFee) public virtual {
         onlyCouncilSafe();
         if (_newCommunityFee > MAX_FEE) {
             revert NewFeeGreaterThanMax();
@@ -575,11 +578,11 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
 
     //function updateMinimumStake()
 
-    function isCouncilMember(address _member) public view returns (bool) {
+    function isCouncilMember(address _member) public view virtual returns (bool) {
         return hasRole(COUNCIL_MEMBER, _member);
     }
 
-    function unregisterMember() public nonReentrant {
+    function unregisterMember() public virtual nonReentrant {
         address _member = msg.sender;
         onlyRegistryMemberAddress(_member);
         deactivateAllStrategies(_member);
@@ -591,7 +594,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit MemberUnregistered(_member, member.stakedAmount);
     }
 
-    function deactivateAllStrategies(address _member) internal {
+    function deactivateAllStrategies(address _member) internal virtual {
         address[] memory memberStrategies = strategiesByMember[_member];
         // bytes4 interfaceId = IPointStrategy.withdraw.selector;
         for (uint256 i = 0; i < memberStrategies.length; i++) {
@@ -601,7 +604,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         }
     }
 
-    function kickMember(address _member, address _transferAddress) public nonReentrant {
+    function kickMember(address _member, address _transferAddress) public virtual nonReentrant {
         onlyCouncilSafe();
         if (!isKickEnabled) {
             revert KickNotEnabled();

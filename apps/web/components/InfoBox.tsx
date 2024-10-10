@@ -5,11 +5,12 @@ type InfoBoxStyles = "success" | "warning" | "error" | "info";
 
 type InfoBoxProps = {
   infoBoxType: InfoBoxStyles;
-  content: string;
+  content?: string;
   contentStyle?: string;
-  classNames?: string;
+  className?: string;
   icon?: React.ReactNode;
   hideIcon?: boolean;
+  children?: React.ReactNode;
 };
 
 const BASE_STYLES =
@@ -27,26 +28,25 @@ export function InfoBox({
   infoBoxType,
   content,
   contentStyle,
-  classNames,
+  className,
   icon,
   hideIcon,
+  children,
 }: InfoBoxProps): JSX.Element {
   return (
     <div
-      className={`${BASE_STYLES} ${infoBoxStyles[infoBoxType]} ${classNames}`}
+      className={`${BASE_STYLES} ${infoBoxStyles[infoBoxType]} ${className}`}
     >
       {!hideIcon && (
         <div className="h-9 w-9 text-inherit">
           {" "}
-          {icon ?? (
-            <InformationCircleIcon className="h-9 w-9" />
-          )}
+          {icon ?? <InformationCircleIcon className="h-9 w-9" />}
         </div>
       )}
       <p
         className={`leading-5 text-neutral-content first-letter:uppercase ${contentStyle}`}
       >
-        {content}
+        {children ?? content}
       </p>
     </div>
   );

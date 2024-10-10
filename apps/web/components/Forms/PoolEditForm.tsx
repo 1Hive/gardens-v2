@@ -1,15 +1,15 @@
 import React, { useState } from "react";
+import { trimEnd } from "lodash-es";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
 import { FormAddressInput } from "./FormAddressInput";
+import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
-import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { Button } from "../Button";
 import { EthAddress } from "../EthAddress";
-import { InfoBox } from "../InfoBox";
 import { chainConfigMap } from "@/configs/chains";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
@@ -19,17 +19,20 @@ import { DisputeOutcome, PoolTypes } from "@/types";
 import { abiWithErrors } from "@/utils/abiWithErrors";
 import {
   calculateDecay,
+  calculateMaxRatioNum,
+  convertSecondsToReadableTime,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
-  MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
 import { capitalize } from "@/utils/text";
+import { parseTimeUnit } from "@/utils/time";
 
 type ArbitrationSettings = {
   defaultResolution: number;
   proposalCollateral: number | string;
   disputeCollateral: number | string;
   tribunalAddress: string;
+  rulingTime: number;
 };
 
 type FormInputs = {
@@ -55,7 +58,6 @@ export default function PoolEditForm({
   chainId,
   initValues,
   proposalType,
-  proposalOnDispute: isProposalOnDispute,
   setModalOpen,
 }: Props) {
   const {
@@ -66,10 +68,19 @@ export default function PoolEditForm({
     defaultValues: {
       spendingLimit: initValues.spendingLimit,
       minimumConviction: initValues.minimumConviction,
-      convictionGrowth: initValues.convictionGrowth,
+      convictionGrowth: parseTimeUnit(
+        +initValues.convictionGrowth,
+        "seconds",
+        "days",
+      ), // convert seconds to days
       minThresholdPoints: initValues.minThresholdPoints,
       // arb settings
       defaultResolution: initValues.defaultResolution,
+      rulingTime: parseTimeUnit(
+        initValues.rulingTime, // ?? 7 days
+        "seconds",
+        "days",
+      ),
       proposalCollateral: formatUnits(
         BigInt(initValues.proposalCollateral),
         ETH_DECIMALS,
@@ -81,6 +92,7 @@ export default function PoolEditForm({
       tribunalAddress: initValues.tribunalAddress,
     },
   });
+
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
   const shouldRenderInput = (key: string): boolean => {
@@ -113,7 +125,12 @@ export default function PoolEditForm({
     },
     convictionGrowth: {
       label: "Conviction growth:",
-      parse: (value: string) => value + " days",
+      parse: (days: string) => {
+        const { value, unit } = convertSecondsToReadableTime(
+          parseTimeUnit(+days, "days", "seconds"),
+        );
+        return value + " " + unit + (value > 1 ? "s" : "");
+      },
     },
     minThresholdPoints: {
       label: "Minimum threshold points:",
@@ -127,15 +144,24 @@ export default function PoolEditForm({
       parse: (value: string) =>
         DisputeOutcome[value] == "approved" ? "Approve" : "Reject",
     },
+    rulingTime: {
+      label: "Ruling time:",
+      parse: (days: string) => {
+        const { value, unit } = convertSecondsToReadableTime(
+          parseTimeUnit(+days, "days", "seconds"),
+        );
+        return value + " " + unit + (value > 1 ? "s" : "");
+      },
+    },
     proposalCollateral: {
       label: "Proposal collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     disputeCollateral: {
       label: "Dispute collateral:",
       parse: (value: string) =>
-        value + " " + chain.nativeCurrency?.symbol ?? "ETH",
+        value + " " + chain.nativeCurrency?.symbol || "",
     },
     tribunalAddress: {
       label: "Tribunal safe:",
@@ -159,9 +185,9 @@ export default function PoolEditForm({
     spendingLimit = spendingLimit / 100;
     minimumConviction = minimumConviction / 100;
 
-    const maxRatioNum = spendingLimit / MAX_RATIO_CONSTANT;
-    const weightNum = minimumConviction * maxRatioNum ** 2;
+    const maxRatioNum = calculateMaxRatioNum(spendingLimit, minimumConviction);
 
+    const weightNum = minimumConviction * maxRatioNum ** 2;
     const blockTime = chainConfigMap[chainId].blockTime;
 
     // pool settings
@@ -193,7 +219,9 @@ export default function PoolEditForm({
           ),
           defaultRuling: BigInt(previewData.defaultResolution),
           defaultRulingTimeout: BigInt(
-            process.env.NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT ?? 300,
+            Math.round(
+              parseTimeUnit(previewData.rulingTime, "days", "seconds"),
+            ),
           ),
         },
         {
@@ -218,6 +246,7 @@ export default function PoolEditForm({
       minThresholdPoints: previewData.minThresholdPoints,
       spendingLimit: previewData.spendingLimit,
       defaultResolution: previewData.defaultResolution,
+      rulingTime: previewData.rulingTime,
       proposalCollateral: previewData.proposalCollateral,
       disputeCollateral: previewData.disputeCollateral,
       tribunalAddress: tribunalAddress,
@@ -281,7 +310,7 @@ export default function PoolEditForm({
         />
       : <div className="flex flex-col gap-6">
           {/* pool settings section */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col">
             {shouldRenderInput("minimumConviction") && (
               <div className="flex max-w-64 flex-col">
                 <FormInput
@@ -299,17 +328,16 @@ export default function PoolEditForm({
                   }}
                   registerOptions={{
                     max: {
-                      value: 100,
-                      message: "Max amount cannot exceed 100%",
+                      value: 99.9,
+                      message: "Minimum conviction should be under 100%",
                     },
                     min: {
                       value: 1 / CV_SCALE_PRECISION,
-                      message: "Amount must be greater than 0",
+                      message: "Minimum conviction must be greater than 0",
                     },
                   }}
-                >
-                  <span className="absolute right-4 top-4 text-black">%</span>
-                </FormInput>
+                  suffix="%"
+                />
               </div>
             )}
             {shouldRenderInput("convictionGrowth") && (
@@ -337,11 +365,8 @@ export default function PoolEditForm({
                       message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
                     },
                   }}
-                >
-                  <span className="absolute right-4 top-4 text-black">
-                    days
-                  </span>
-                </FormInput>
+                  suffix="Days"
+                />
               </div>
             )}
             {shouldRenderInput("minThresholdPoints") && (
@@ -392,112 +417,99 @@ export default function PoolEditForm({
                       message: "Amount must be greater than 0",
                     },
                   }}
-                >
-                  <span className="absolute right-4 top-4 text-black">%</span>
-                </FormInput>
+                  suffix="%"
+                />
               </div>
             )}
           </div>
           {/* arbitration section */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
-              <h4 className="my-4">Arbitration settings</h4>
-              {isProposalOnDispute && (
-                <InfoBox
-                  infoBoxType="warning"
-                  content={
-                    "A disputed proposal is pending resolution. Please wait until it's resolved before adjusting proposal dispute settings."
-                  }
-                />
-              )}
+              <h6 className="mt-4">Arbitration settings</h6>
             </div>
-            {!isProposalOnDispute && (
-              <div className="flex gap-4 mt-2">
-                <FormRadioButton
-                  label="Global gardens tribunal"
-                  checked={
-                    tribunalAddress.toLowerCase() ===
-                    chain.globalTribunal?.toLowerCase()
-                  }
-                  onChange={() =>
-                    setTribunalAddress(chain.globalTribunal ?? "")
-                  }
-                  registerKey="tribunalOption"
-                  value="global"
-                />
-                <FormRadioButton
-                  label="Custom tribunal"
-                  checked={
-                    tribunalAddress.toLowerCase() !==
-                    chain.globalTribunal?.toLowerCase()
-                  }
-                  onChange={() => {
-                    setTribunalAddress((oldAddress) =>
-                      chain.globalTribunal ? "" : oldAddress,
-                    );
-                    document.getElementById("tribunalAddress")?.focus();
-                  }}
-                  registerKey="tribunalOption"
-                  value="custom"
-                />
-              </div>
-            )}
-            <FormAddressInput
-              tooltip="The tribunal Safe, represented by trusted members, is
-                responsible for resolving proposal disputes. The global tribunal
-                Safe is a shared option featuring trusted members of the Gardens
-                community. It's use is recommended for objective dispute resolution."
-              label="Tribunal address"
-              registerKey="tribunalAddress"
+            <FormInput
+              tooltip={
+                'Deposited by proposal creator and forfeited if the proposal is ruled as "Rejected" by the Tribunal (violation of Covenant found).\n Deposit is returned when the proposal is either cancelled by the creator or executed successfully.'
+              }
+              type="number"
+              label={"Collateral to Create Proposal"}
               register={register}
+              registerKey="proposalCollateral"
               required
-              onChange={(newValue) => setTribunalAddress(newValue)}
-              value={tribunalAddress}
-              readOnly={isProposalOnDispute}
+              otherProps={{
+                step: 1 / 10 ** ETH_DECIMALS,
+                min: 1 / 10 ** ETH_DECIMALS,
+              }}
+              suffix={chain.nativeCurrency?.symbol ?? ""}
+            />
+            <FormInput
+              tooltip={
+                'Deposited by the proposal disputer and forfeited if the proposal is ruled as "Allowed" by the Tribunal (no violation of Covenant found). Deposit is returned if the proposal is ruled as "Rejected."'
+              }
+              type="number"
+              label={"Collateral to Dispute Proposal"}
+              register={register}
+              registerKey="disputeCollateral"
+              required
+              otherProps={{
+                step: 1 / 10 ** ETH_DECIMALS,
+                min: 1 / 10 ** ETH_DECIMALS,
+              }}
+              suffix={chain.nativeCurrency?.symbol ?? ""}
+            />
+            <FormInput
+              label="Ruling Time"
+              registerKey="rulingTime"
+              register={register}
+              type="number"
+              required
+              otherProps={{
+                step: 0.0001,
+              }}
+              suffix="Days"
+              tooltip="Number of days Tribunal has to make a decision on the dispute. Past that time, the default resolution will be applied."
+            />
+            <FormSelect
+              tooltip={
+                'Resolution executed if the Tribunal rules "Abstain", or doesn\'t make a ruling in time.'
+              }
+              label="Default Abstain Resolution"
+              options={Object.entries(DisputeOutcome)
+                .slice(1)
+                .map(([value, text]) => ({
+                  label: capitalize(text),
+                  value: value,
+                }))}
+              required
+              registerKey="defaultResolution"
+              register={register}
             />
             <div className="flex flex-col">
-              <FormSelect
-                tooltip="The default resolution will be applied in the case of abstained or dispute ruling timeout."
-                label="Default resolution"
-                options={Object.entries(DisputeOutcome)
-                  .slice(1)
-                  .map(([value, text]) => ({
-                    label: capitalize(text),
-                    value: value,
-                  }))}
+              <FormAddressInput
+                tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
+                label="Tribunal address"
+                registerKey="tribunalAddress"
                 required
-                registerKey="defaultResolution"
-                readOnly={isProposalOnDispute}
-                register={register}
-                errors={undefined}
+                onChange={(newValue) => setTribunalAddress(newValue)}
+                value={tribunalAddress}
               />
-            </div>
-            <div className="flex gap-4 max-w-md">
-              <FormInput
-                tooltip="Proposal submission stake. Locked until proposal is resolved, can be forfeited if disputed."
-                type="number"
-                label={`Proposal collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
+              <FormCheckBox
+                label="Use global tribunal"
                 register={register}
-                registerKey="proposalCollateral"
-                required
-                otherProps={{
-                  step: 1 / 10 ** ETH_DECIMALS,
-                  min: 1 / 10 ** ETH_DECIMALS,
+                registerKey="useGlobalTribunal"
+                type="checkbox"
+                tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
+                value={
+                  tribunalAddress.toLowerCase() ===
+                  chain.globalTribunal?.toLowerCase()
+                }
+                onChange={() => {
+                  setTribunalAddress((oldAddress) =>
+                    oldAddress === chain.globalTribunal ?
+                      ""
+                    : chain.globalTribunal ?? "",
+                  );
                 }}
-                readOnly={isProposalOnDispute}
-              />
-              <FormInput
-                tooltip="Proposal dispute stake. Locked until dispute is resolved, can be forfeited if dispute is denied."
-                type="number"
-                label={`Dispute collateral (${chain.nativeCurrency?.symbol ?? "ETH"})`}
-                register={register}
-                registerKey="disputeCollateral"
-                required
-                otherProps={{
-                  step: 1 / 10 ** ETH_DECIMALS,
-                  min: 1 / 10 ** ETH_DECIMALS,
-                }}
-                readOnly={isProposalOnDispute}
               />
             </div>
           </div>

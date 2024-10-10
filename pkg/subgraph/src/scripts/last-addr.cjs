@@ -4,7 +4,7 @@ const arbitrumSepoliaLatest = require("../../../../broadcast/DeployCVMultiChain.
 // const optimismSepoliaLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/11155420/run-latest.json");
 const sepoliaLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/11155111/run-latest.json");
 const optimismLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/10/run-latest.json");
-// const gnosisLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/100/run-latest.json");
+const gnosisLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/100/run-latest.json");
 const polygonLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/137/run-latest.json");
 const arbitrumLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/42161/run-latest.json");
 // const mainnetLatest = require("../../../../broadcast/DeployCVMultiChain.s.sol/1/run-latest.json");
@@ -19,7 +19,7 @@ const jsons = {
   [viemChains.sepolia.id]: sepoliaLatest,
 
   [viemChains.optimism.id]: optimismLatest,
-  // [viemChains.gnosis.id]: gnosisLatest,
+  [viemChains.gnosis.id]: gnosisLatest,
   [viemChains.polygon.id]: polygonLatest,
   [viemChains.arbitrum.id]: arbitrumLatest,
   // [viemChains.mainnet.id]: mainnetLatest

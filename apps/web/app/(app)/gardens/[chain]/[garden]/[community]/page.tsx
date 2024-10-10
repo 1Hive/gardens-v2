@@ -31,10 +31,11 @@ import {
 } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import MarkdownWrapper from "@/components/MarkdownWrapper";
+import { Skeleton } from "@/components/Skeleton";
 import { TokenGardenFaucet } from "@/components/TokenGardenFaucet";
 import { isProd } from "@/configs/isProd";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
@@ -146,11 +147,16 @@ export default function Page({
 
   useEffect(() => {
     const newPoolId = searchParams[QUERY_PARAMS.communityPage.newPool];
+    const fetchedPools = poolsInReview.some((c) => c.poolId === newPoolId);
     if (
       newPoolId &&
       result &&
-      !poolsInReview.some((c) => c.poolId === newPoolId)
+      !poolsInReview.some((p) => p.poolId === newPoolId)
     ) {
+      console.debug("Community: New pool not yet fetched, refetching...", {
+        newPoolId,
+        fetchedPools,
+      });
       refetch();
     }
   }, [searchParams, poolsInReview]);
@@ -219,7 +225,7 @@ export default function Page({
 
   return (
     <div className="page-layout">
-      <header className="section-layout flex flex-row items-center gap-10">
+      <header className="section-layout flex flex-row items-center gap-10 flex-wrap justify-end">
         <div>
           <Image
             src={commImg}
@@ -268,7 +274,7 @@ export default function Page({
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 mt-auto">
           <RegisterMember
             memberData={isMemberResult}
             registrationCost={getTotalRegistrationCost()}
@@ -354,9 +360,9 @@ export default function Page({
       <section ref={covenantSectionRef} className="section-layout">
         <h2 className="mb-4">Covenant</h2>
         {registryCommunity?.covenantIpfsHash ?
-          covenant ?
-            <MarkdownWrapper>{covenant}</MarkdownWrapper>
-          : <LoadingSpinner />
+          <Skeleton isLoading={!covenant} rows={5}>
+            <MarkdownWrapper>{covenant!}</MarkdownWrapper>
+          </Skeleton>
         : <p className="italic">No covenant was submitted.</p>}
         <div className="mt-10 flex justify-center">
           <Image

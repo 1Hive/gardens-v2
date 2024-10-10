@@ -4,23 +4,30 @@ import React from "react";
 import { Dnum } from "dnum";
 import { Address, useAccount } from "wagmi";
 import {
+  CVStrategy,
+  CVStrategyConfig,
+  TokenGarden,
+} from "#/subgraph/.graphclient";
+import {
   ActivatePoints,
   Badge,
   DisplayNumber,
   CheckPassport,
   InfoBox,
 } from "@/components/";
-import { LightCVStrategy } from "@/types";
 
-interface PoolGovernanceProps {
+export type PoolGovernanceProps = {
   memberPoolWeight: number;
   tokenDecimals: number;
-  strategy: LightCVStrategy;
+  strategy: Pick<CVStrategy, "id"> & {
+    registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
+    config: Pick<CVStrategyConfig, "pointSystem">;
+  };
   communityAddress: Address;
   memberTokensInCommunity: number;
   isMemberCommunity: boolean;
   memberActivatedStrategy: boolean;
-}
+};
 
 export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
   memberPoolWeight,
@@ -44,7 +51,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
 
   return (
     <section className="section-layout">
-      <header className="flex justify-between">
+      <header className="flex justify-between flex-wrap">
         <h2>Pool Governance</h2>
         <div className="flex flex-col gap-2">
           <CheckPassport
@@ -62,9 +69,9 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
       </header>
       {address && (
         <div className="mt-4 flex flex-col justify-between items-start">
-          <div className="flex flex-1 gap-10">
+          <div className="flex flex-1 gap-10 flex-wrap">
             <div className="flex flex-col items-start gap-2">
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-6 flex-wrap">
                 <p className="subtitle2">Your stake in the community:</p>
                 <DisplayNumber
                   tokenSymbol={strategy.registryCommunity.garden.symbol}
@@ -77,7 +84,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
               </div>
               {showPoolGovernanceData && (
                 <div className="flex items-start gap-6">
-                  <p className="subtitle2">Your governance weight:</p>
+                  <p className="subtitle2">Your voting weight:</p>
                   <p className="subtitle2 text-primary-content">
                     {memberPoolWeight.toFixed(2)} %
                   </p>
@@ -87,7 +94,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
             <InfoBox
               content={poolSystemDefinition[poolSystem]}
               infoBoxType="info"
-              classNames="flex-1 w-full"
+              className="flex-1 w-full"
             />
           </div>
         </div>

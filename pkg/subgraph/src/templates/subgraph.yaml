@@ -108,16 +108,41 @@ templates:
           handler: handlePowerDecreased
         - event: PointsDeactivated(address)
           handler: handlePointsDeactivated
-        - event: PoolParamsUpdated((uint256,uint256,uint256,uint256),(address,address,uint256,uint256,uint256,uint256))
-          handler: handlePoolParamsUpdated
+        - event: CVParamsUpdated((uint256,uint256,uint256,uint256))
+          handler: handleCVParamsUpdated
         - event: ProposalDisputed(address,uint256,uint256,address,string,uint256)
           handler: handleProposalDisputed
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleDisputeRuled
         - event: ProposalCancelled(uint256)
           handler: handleProposalCancelled
- 
+        - event: ArbitrableConfigUpdated(uint256,address,address,uint256,uint256,uint256,uint256)
+          handler: handleArbitrableConfigUpdated
       file: ./src/mappings/cv-strategy.ts
+
+  - kind: ethereum/contract
+    name: CollateralVault
+    network: {{network}}
+    source:
+      abi: CollateralVault
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CollateralVault
+        - CollateralVaultDeposit
+      abis:
+        - name: CollateralVault
+          file: ../contracts/out/CollateralVault.sol/CollateralVault.json
+      eventHandlers:
+        - event: CollateralDeposited(uint256,indexed address,uint256)
+          handler: handleCollateralDeposited
+        - event: CollateralWithdrawn(uint256,indexed address,indexed address,uint256,bool)
+          handler: handleCollateralWithdrawnFor
+        - event: CollateralWithdrawn(uint256,indexed address,uint256,bool)
+          handler: handleCollateralWithdrawn
+      file: ./src/mappings/cv-strategy.ts  
   
   - name: ProposalDisputeMetadata
     kind: file/ipfs

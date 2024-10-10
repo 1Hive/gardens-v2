@@ -53,9 +53,9 @@ export function Modal({
       className={`modal max-sm:modal-bottom ${className}`}
       ref={dialogRef}
     >
-      <div className="modal-box max-w-5xl w-fit flex flex-col gap-8 rounded-3xl bg-primary p-8">
+      <div className="modal-box overflow-auto max-w-5xl w-fit flex flex-col gap-8 rounded-3xl bg-primary p-8">
         <div className="flex items-center justify-between gap-6">
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
             {icon && (
               <div className="flex h-12 w-12 items-center justify-center">
                 {icon}
