@@ -55,8 +55,8 @@ export function PoolCard({ pool, tokenGarden }: Props) {
       href={`${pathname}/${poolId}`}
       className={`w-[275px] sm:min-w-[313px] ${isNewPool ? "shadow-2xl" : ""}`}
     >
-      <header className="mb-4 flex flex-col w-full justify-between items-start gap-4">
-        <Skeleton isLoading={!ipfsResult} className="w-96 h-5">
+      <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
+        <Skeleton isLoading={!ipfsResult}>
           <h3 className="flex items-start w-fit max-w-full">
             <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
           </h3>
