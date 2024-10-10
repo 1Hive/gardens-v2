@@ -24,6 +24,7 @@ import { EthAddress } from "./EthAddress";
 import PoolEditForm from "./Forms/PoolEditForm";
 import MarkdownWrapper from "./MarkdownWrapper";
 import { Modal } from "./Modal";
+import { Skeleton } from "./Skeleton";
 import { Statistic } from "./Statistic";
 import { blueLand, grassLarge } from "@/assets";
 import { chainConfigMap } from "@/configs/chains";
@@ -52,9 +53,10 @@ type Props = {
     | "tribunalSafe"
     | "submitterCollateralAmount"
     | "challengerCollateralAmount"
+    | "defaultRulingTimeout"
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
-  poolToken: FetchTokenResult;
+  poolToken?: FetchTokenResult;
   pointSystem: number;
   chainId: string;
   proposalType: string;
@@ -133,6 +135,7 @@ export default function PoolHeader({
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
   const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
   const tribunalAddress = arbitrableConfig.tribunalSafe;
+  const rulingTime = arbitrableConfig.defaultRulingTimeout;
 
   const proposalOnDispute = strategy.proposals?.some(
     (proposal) => ProposalStatus[proposal.proposalStatus] === "disputed",
@@ -242,14 +245,12 @@ export default function PoolHeader({
     <section className="section-layout flex flex-col gap-0">
       <header className="mb-2 flex flex-col">
         <div className="flex justify-between flex-wrap">
-          <div>
+          <Skeleton isLoading={!ipfsResult} className="!w-96 h-8">
             <h2>
-              {ipfsResult?.title}
-              <h5 className="">#{poolId}</h5>
+              {ipfsResult?.title} #{poolId}
             </h2>
-          </div>
-          {(isCouncilMember ?? isCouncilSafe) && (
-            // true
+          </Skeleton>
+          {(!!isCouncilMember || isCouncilSafe) && (
             <div className="flex gap-2">
               <Button
                 btnStyle="outline"
@@ -312,14 +313,17 @@ export default function PoolHeader({
               proposalCollateral: proposalCollateral,
               disputeCollateral: disputeCollateral,
               tribunalAddress: tribunalAddress,
+              rulingTime,
             }}
             setModalOpen={setIsOpenModal}
           />
         </Modal>
       </header>
-      <MarkdownWrapper>
-        {ipfsResult?.description ?? "No description found"}
-      </MarkdownWrapper>
+      <Skeleton rows={5} isLoading={!ipfsResult}>
+        <MarkdownWrapper>
+          {ipfsResult?.description ?? "No description found"}
+        </MarkdownWrapper>
+      </Skeleton>
       <div className="mb-10 mt-8 flex items-start justify-between gap-8 flex-wrap">
         <div className="flex flex-col gap-2 max-w-fit">
           <Statistic label="pool type">

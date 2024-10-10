@@ -12,7 +12,7 @@ import { PoolMetrics, Proposals } from "@/components";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import PoolHeader from "@/components/PoolHeader";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { PoolTypes } from "@/types";
@@ -44,11 +44,13 @@ export default function Page({
       },
     ],
   });
+
   const strategyObj = data?.cvstrategies?.[0];
   const poolTokenAddr = strategyObj?.token as Address;
+  const proposalType = strategyObj?.config.proposalType;
   const { data: poolToken } = useToken({
     address: poolTokenAddr,
-    enabled: !!poolTokenAddr,
+    enabled: !!poolTokenAddr && PoolTypes[proposalType] === "funding",
     chainId: +chain,
   });
 
@@ -74,19 +76,28 @@ export default function Page({
   }, [strategyObj?.config, strategyObj?.config, strategyObj?.poolAmount]);
 
   useEffect(() => {
-    const newProposalId = searchParams[QUERY_PARAMS.poolPage.newPropsoal];
-    if (
-      newProposalId &&
-      data &&
-      !strategyObj?.proposals.some((c) => c.proposalNumber === newProposalId)
-    ) {
+    const newProposalId = searchParams[QUERY_PARAMS.poolPage.newProposal];
+    if (!strategyObj) {
+      return;
+    }
+    const fetchedProposals = strategyObj?.proposals.map((p) =>
+      p.proposalNumber.toString(),
+    );
+    if (newProposalId && !fetchedProposals.includes(newProposalId)) {
+      console.debug("Pool: New proposal not yet fetched, refetching...", {
+        newProposalId,
+        fetchedProposals,
+      });
       refetch();
     }
   }, [searchParams, strategyObj?.proposals]);
 
   const tokenGarden = data?.tokenGarden;
 
-  if (!tokenGarden || !poolToken) {
+  if (
+    !tokenGarden ||
+    (!poolToken && PoolTypes[proposalType] === "funding")
+  ) {
     return (
       <div className="mt-96">
         <LoadingSpinner />
@@ -101,7 +112,6 @@ export default function Page({
   const pointSystem = data.cvstrategies?.[0].config.pointSystem;
   const communityAddress = strategyObj.registryCommunity.id as Address;
   const alloInfo = data.allos[0];
-  const proposalType = strategyObj.config.proposalType;
   const poolAmount = strategyObj.poolAmount as number;
   const spendingLimitPct =
     (Number(strategyObj.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
@@ -125,7 +135,7 @@ export default function Page({
       />
       {isEnabled && (
         <>
-          {PoolTypes[proposalType] !== "signaling" && (
+          {poolToken && PoolTypes[proposalType] !== "signaling" && (
             <PoolMetrics
               poolToken={poolToken}
               alloInfo={alloInfo}

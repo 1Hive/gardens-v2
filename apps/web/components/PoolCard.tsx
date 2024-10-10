@@ -17,7 +17,7 @@ import {
 import { blueLand, grass } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
 import { PointSystems, PoolTypes } from "@/types";
 import { capitalize } from "@/utils/text";
 
@@ -42,7 +42,7 @@ export function PoolCard({ pool, tokenGarden }: Props) {
   const poolType = config?.proposalType as number | undefined;
 
   const isNewPool =
-    searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId;
+    searchParams[QUERY_PARAMS.communityPage.newPool] === pool.poolId.toString();
   return (
     <Card
       href={`${pathname}/${poolId}`}

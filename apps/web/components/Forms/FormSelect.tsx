@@ -8,7 +8,7 @@ type Props = {
   label: string;
   registerKey: any;
   register: any;
-  errors: any;
+  errors?: any;
   required?: boolean;
   registerOptions?: RegisterOptions;
   options: Option[];
@@ -29,7 +29,7 @@ export function FormSelect({
   disabled,
 }: Props) {
   return (
-    <>
+    <div>
       <label htmlFor={registerKey} className="label w-fit">
         {tooltip ?
           <InfoWrapper tooltip={tooltip}>
@@ -62,6 +62,6 @@ export function FormSelect({
           </option>
         ))}
       </select>
-    </>
+    </div>
   );
 }

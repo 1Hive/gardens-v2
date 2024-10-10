@@ -28,7 +28,7 @@
     "build-deploy:ethsep": "pnpm build:ethsep && pnpm deploy:ethsep:last",
     "local": "pnpm create-local && pnpm build && pnpm deploy:local",
     "last-addr": "ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-addr.ts",
-    "build-client": "graphclient build --fileType js",
+    "build-client": "mustache ../../apps/web/configs/subgraph.json .graphclientrc.template.yml > .graphclientrc.yml && graphclient build --fileType js",
     "build-all": "pnpm create-local && pnpm build && pnpm deploy:local",
     "deploy:arbsep:last": "dotenvx run -- ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-version.ts gv2-arbsepolia",
     "deploy:ethsep:last": "dotenvx run -- ts-node --esm -P ../../apps/web/tsconfig.json ./src/scripts/last-version.ts gv2-ethsepolia",

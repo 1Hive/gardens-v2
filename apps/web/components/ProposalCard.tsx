@@ -4,42 +4,58 @@ import { Hashicon } from "@emeraldpay/hashicon-react";
 import { FetchTokenResult } from "@wagmi/core";
 import { usePathname } from "next/navigation";
 import { formatUnits } from "viem";
-import { Allo } from "#/subgraph/.graphclient";
+import {
+  Allo,
+  CVProposal,
+  CVStrategyConfig,
+  Maybe,
+  ProposalMetadata,
+} from "#/subgraph/.graphclient";
+import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
-import { getProposals } from "@/actions/getProposals";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 import { Badge, Card } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
+import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
-import { useCollectQueryParams } from "@/hooks/useCollectQueryParams";
-import { useConvictionRead } from "@/hooks/useConvictionRead";
+import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import {
+  ProposalDataLight,
+  useConvictionRead,
+} from "@/hooks/useConvictionRead";
+import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PoolTypes } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
-type ProposalCardProps = {
-  proposalData: NonNullable<Awaited<ReturnType<typeof getProposals>>>[0];
-  inputData: ProposalInputItem;
+export type ProposalCardProps = {
+  proposalData: Pick<
+    CVProposal,
+    "id" | "proposalStatus" | "metadataHash" | "createdAt"
+  > &
+    ProposalDataLight & {
+      metadata?: Maybe<Pick<ProposalMetadata, "title">>;
+    };
+  strategyConfig: Pick<CVStrategyConfig, "decay" | "proposalType">;
+  inputData?: ProposalInputItem;
   stakedFilter: ProposalInputItem;
-  index: number;
-  poolToken: FetchTokenResult;
+  poolToken?: FetchTokenResult;
   isAllocationView: boolean;
   memberActivatedPoints: number;
   memberPoolWeight: number;
   executeDisabled: boolean;
-  tooltipMessage: string;
   tokenDecimals: number;
   alloInfo: Allo;
   tokenData: Parameters<typeof useConvictionRead>[0]["tokenData"];
-  inputHandler: (i: number, value: number) => void;
-  triggerRenderProposals: () => void;
+  inputHandler: (proposalId: string, value: number) => void;
 };
 
 export function ProposalCard({
   proposalData,
+  strategyConfig,
   inputData,
   stakedFilter,
-  index,
   poolToken,
   isAllocationView,
   memberActivatedPoints,
@@ -47,26 +63,32 @@ export function ProposalCard({
   tokenData,
   inputHandler,
 }: ProposalCardProps) {
-  const {
-    metadata,
-    id,
-    proposalNumber,
-    proposalStatus,
-    requestedAmount,
-    type,
-  } = proposalData;
+  const { data: metadataResult } = useMetadataIpfsFetch({
+    hash: proposalData.metadataHash,
+    enabled: !proposalData.metadata,
+  });
+
+  const metadata = proposalData.metadata ?? metadataResult;
+
+  const { id, proposalNumber, proposalStatus, requestedAmount } = proposalData;
   const pathname = usePathname();
 
   const searchParams = useCollectQueryParams();
-  // TODO: ADD border color when new proposal is added
   const isNewProposal =
-    searchParams[QUERY_PARAMS.poolPage.newPropsoal] == proposalNumber;
+    searchParams[QUERY_PARAMS.poolPage.newProposal] ==
+    proposalNumber.toString();
 
-  const { currentConvictionPct, thresholdPct, totalSupportPct } =
-    useConvictionRead({
-      proposalData,
-      tokenData,
-    });
+  const {
+    currentConvictionPct,
+    thresholdPct,
+    totalSupportPct,
+    timeToPass,
+    triggerConvictionRefetch,
+  } = useConvictionRead({
+    proposalData,
+    strategyConfig,
+    tokenData,
+  });
 
   const inputValue =
     inputData ? calculatePercentage(inputData.value, memberActivatedPoints) : 0;
@@ -81,16 +103,55 @@ export function ProposalCard({
     100
   ).toFixed(2);
 
-  const isSignalingType = PoolTypes[type] === "signaling";
+  const isSignalingType =
+    PoolTypes[strategyConfig.proposalType] === "signaling";
+
+  const alreadyExecuted = proposalStatus[proposalStatus] === "executed";
 
   const supportNeededToPass = (
     (thresholdPct ?? 0) - (totalSupportPct ?? 0)
   ).toFixed(2);
 
+  const readyToBeExecuted = (currentConvictionPct ?? 0) >= (thresholdPct ?? 0);
+
+  const proposalWillPass =
+    Number(supportNeededToPass) < 0 &&
+    (currentConvictionPct ?? 0) < (thresholdPct ?? 0) &&
+    !alreadyExecuted;
+
+  const ProposalCountDown = () => {
+    return (
+      <>
+        <p className="text-neutral-soft-content text-sm">
+          {(
+            Number(supportNeededToPass) > 0 &&
+            !alreadyExecuted &&
+            !readyToBeExecuted
+          ) ?
+            `At least ${supportNeededToPass}% needed`
+          : proposalWillPass ?
+            "Estimated time to pass:"
+          : !alreadyExecuted && readyToBeExecuted ?
+            "Ready to be executed"
+          : ""}
+        </p>
+        {proposalWillPass && !readyToBeExecuted && (
+          <Countdown
+            endTimestamp={Number(timeToPass)}
+            display="inline"
+            className="text-neutral-soft-content text-sm"
+            onTimeout={triggerConvictionRefetch}
+            showTimeout={false}
+          />
+        )}
+      </>
+    );
+  };
+
   const proposalCardContent = (
     <>
       <div
-        className={`flex gap-3 justify-between py-3 flex-wrap ${isAllocationView ? "section-layout" : ""}`}
+        className={`flex gap-3 justify-between py-3 flex-wrap ${isAllocationView ? `section-layout ${isNewProposal ? "shadow-2xl" : ""}` : ""}`}
       >
         <div className="flex flex-col sm:flex-row w-full">
           {/* icon title and id */}
@@ -98,25 +159,27 @@ export function ProposalCard({
             <div className="hidden sm:block">
               <Hashicon value={id} size={45} />
             </div>
-            <div className="overflow-hidden">
-              <h4 className="truncate first-letter:uppercase sm:max-w-md lg:max-w-lg">
-                {metadata.title}
+            <div>
+              <h4 className="sm:max-w-md lg:max-w-lg">
+                <Skeleton isLoading={!metadata} className="w-96 h-5">
+                  <TooltipIfOverflow className="first-letter:uppercase">
+                    {metadata?.title}
+                  </TooltipIfOverflow>
+                </Skeleton>
               </h4>
               <div className="flex items-baseline gap-3">
                 <h6 className="text-sm">ID {proposalNumber}</h6>
-
                 <p className="text-sm text-neutral-soft-content">
                   {prettyTimestamp(proposalData.createdAt ?? 0)}
                 </p>
               </div>
             </div>
           </div>
-
           {/* amount requested and proposal status */}
           <div className="flex gap-6 text-neutral-soft-content">
-            {!isSignalingType && (
+            {!isSignalingType && poolToken && (
               <div className="flex items-center gap-1 justify-self-end">
-                <p className="">Requested amount: </p>
+                <p>Requested amount: </p>
                 <DisplayNumber
                   number={formatUnits(requestedAmount, poolToken.decimals)}
                   tokenSymbol={poolToken.symbol}
@@ -148,7 +211,7 @@ export function ProposalCard({
                       }
                       step={memberActivatedPoints / 100}
                       onChange={(e) =>
-                        inputHandler(index, Number(e.target.value))
+                        inputHandler(proposalData.id, Number(e.target.value))
                       }
                     />
                     <div className="flex w-full justify-between px-2.5">
@@ -161,7 +224,7 @@ export function ProposalCard({
                     </div>
                   </div>
                   <div className="mb-2">
-                    {Number(inputValue) > 0 && (
+                    {inputValue > 0 && (
                       <>
                         <div className="flex gap-10">
                           <div className="flex flex-col items-center justify-center">
@@ -186,16 +249,16 @@ export function ProposalCard({
                 {currentConvictionPct != null &&
                   thresholdPct != null &&
                   totalSupportPct != null && (
-                    <div className="">
-                      <p className="mb-2 text-sm">
-                        Total Support: <span>{totalSupportPct}%</span> of pool
-                        weight{" "}
-                        <span className="text-neutral-soft-content text-sm">
-                          {Number(supportNeededToPass) > 0 ?
-                            `(at least ${supportNeededToPass}% needed)`
-                          : ""}
-                        </span>
-                      </p>
+                    <div>
+                      <div className="flex items-end gap-1 mb-2">
+                        <div>
+                          <p className="text-sm">
+                            Total Support: <span>{totalSupportPct}%</span> of
+                            pool weight.
+                          </p>
+                        </div>
+                        <ProposalCountDown />
+                      </div>
                       <div className="h-3">
                         <ConvictionBarChart
                           compact
@@ -203,7 +266,7 @@ export function ProposalCard({
                           thresholdPct={isSignalingType ? 0 : thresholdPct}
                           proposalSupportPct={totalSupportPct}
                           isSignalingType={isSignalingType}
-                          proposalId={proposalNumber}
+                          proposalNumber={proposalNumber}
                         />
                       </div>
                     </div>
@@ -213,15 +276,11 @@ export function ProposalCard({
           </div>
         </div>
       </div>
-      {
-        <div className="">
-          {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
-            <p className="flex items-baseline text-xs">
-              Your support: {poolWeightAllocatedInProposal}%
-            </p>
-          )}
-        </div>
-      }
+      {!isAllocationView && stakedFilter && stakedFilter?.value > 0 && (
+        <p className="flex items-baseline text-xs">
+          Your support: {poolWeightAllocatedInProposal}%
+        </p>
+      )}
       {/* TODO: fetch every member stake */}
       {/* {!isAllocationView && <p className="text-sm mt-1">3 Supporters</p>} */}
     </>
@@ -233,7 +292,7 @@ export function ProposalCard({
         proposalCardContent
       : <Card
           href={`${pathname}/${id}`}
-          className={`py-4 ${isNewProposal ? "shadow-xl" : ""}`}
+          className={`py-4 ${isNewProposal ? "shadow-2xl" : ""}`}
         >
           {proposalCardContent}
         </Card>
