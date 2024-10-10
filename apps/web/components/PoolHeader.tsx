@@ -11,7 +11,7 @@ import {
 import { StopIcon } from "@heroicons/react/24/solid";
 import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
-import { Address, zeroAddress } from "viem";
+import { Address } from "viem";
 import { useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
@@ -269,17 +269,6 @@ export default function PoolHeader({
     sybilResistanceType = "allowList";
     sybilResistanceValue = (allowList as Address[]) ?? [];
   }
-  // else if (
-  // allowList
-  // &&
-  // allowList.length > 0 &&
-  // allowList[0] === zeroAddress
-  // ) {
-  //   sybilResistanceType = "allowList";
-  //   sybilResistanceValue = (allowList as Address[]) ?? [];
-  // sybilResistanceType = "noSybilResist";
-  // sybilResistanceValue = undefined;
-  // }
 
   return (
     <section className="section-layout flex flex-col gap-0">
