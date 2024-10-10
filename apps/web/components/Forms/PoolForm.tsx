@@ -414,7 +414,7 @@ export function PoolForm({ token, communityAddr }: Props) {
 
     writeCreatePool({
       args: [
-        previewData.poolTokenAddress as Address,
+        (previewData.poolTokenAddress || zeroAddress) as Address,
         {
           cvParams: {
             decay: decay,
