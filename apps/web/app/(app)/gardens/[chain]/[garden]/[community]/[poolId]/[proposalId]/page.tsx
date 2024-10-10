@@ -102,7 +102,6 @@ export default function Page({
     strategyConfig: proposalData?.strategy?.config,
     tokenData: data?.tokenGarden?.decimals,
     enabled: proposalData?.proposalNumber != null,
-    proposalType: proposalType,
   });
 
   //encode proposal id to pass as argument to distribute function
