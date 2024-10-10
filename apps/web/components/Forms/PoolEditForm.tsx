@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { trimEnd } from "lodash-es";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
 import { TokenGarden } from "#/subgraph/.graphclient";
@@ -488,9 +487,8 @@ export default function PoolEditForm({
               <FormAddressInput
                 tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                 label="Tribunal address"
-                registerKey="tribunalAddress"
                 required
-                onChange={(newValue) => setTribunalAddress(newValue)}
+                onChange={(e) => setTribunalAddress(e.target.value)}
                 value={tribunalAddress}
               />
               <FormCheckBox
