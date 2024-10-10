@@ -26,7 +26,7 @@ type Props = {
   step?: number | string;
   tooltip?: string;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
-  suffix?: string;
+  suffix?: React.ReactNode;
 };
 
 export function FormInput({
@@ -93,6 +93,7 @@ export function FormInput({
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
             value={value}
+            onChange={onChange}
             {...otherProps}
           />
         : type === "textarea" ?
@@ -107,6 +108,7 @@ export function FormInput({
             rows={rows}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
+            onChange={onChange}
             value={value}
             {...otherProps}
           />
@@ -122,8 +124,7 @@ export function FormInput({
               }}
               disabled={disabled || readOnly}
               readOnly={readOnly || disabled}
-                required={required}
-                val
+              required={required}
               onChange={(v) => {
                 const e = {
                   target: { value: v },

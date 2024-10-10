@@ -212,10 +212,7 @@ export function PoolForm({ token, communityAddr }: Props) {
   });
   const sybilResistanceType = watch("sybilResistanceType");
   const sybilResistanceValue = watch("sybilResistanceValue");
-  const isGlobalTribunalValue =
-    watch("tribunalAddress") === chain.globalTribunal;
   const tribunalAddress = watch("tribunalAddress");
-  console.log({ tribunalAddress });
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
   const INPUT_MIN_THRESHOLD_VALUE = 0;
 
@@ -796,7 +793,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                   register={register}
                   registerKey="sybilResistanceValue"
                   addresses={sybilResistanceValue}
-                  // required={sybilResistanceType === "allowList"}
+                  required={sybilResistanceType === "allowList"}
                   setValue={setValue}
                   errors={errors}
                   pointSystemType={pointSystemType}
@@ -870,20 +867,30 @@ export function PoolForm({ token, communityAddr }: Props) {
               <FormAddressInput
                 tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                 label="Tribunal address"
-                registerKey="tribunalAddress"
-                register={register}
                 required
+                value={tribunalAddress}
+                onChange={(e) => { 
+                  setValue("tribunalAddress", e.target.value);
+                }}
               />
               <FormCheckBox
                 label="Use global tribunal"
                 registerKey="useGlobalTribunal"
                 type="checkbox"
                 tooltip="Check this box to use the Gardens global tribunal Safe to rule on proposal disputes in the Pool, a service we offer if your community does not have an impartial 3rd party that can rule on violations of the Covenant."
-                value={isGlobalTribunalValue}
+                value={
+                  tribunalAddress?.toLowerCase() ===
+                  chain.globalTribunal?.toLowerCase()
+                }
                 onChange={(e) => {
                   setValue(
                     "tribunalAddress",
-                    e.target.checked ? (chain.globalTribunal ?? "") : "",
+                    (
+                      tribunalAddress.toLowerCase() ===
+                        chain.globalTribunal?.toLowerCase()
+                    ) ?
+                      ""
+                    : (chain.globalTribunal ?? ""),
                   );
                 }}
               />

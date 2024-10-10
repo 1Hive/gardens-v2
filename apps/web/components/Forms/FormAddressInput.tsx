@@ -1,115 +1,96 @@
 import {
   ChangeEvent,
   ChangeEventHandler,
+  useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
 import { blo } from "blo";
 import { RegisterOptions, UseFormRegister } from "react-hook-form";
-import { useIsMounted } from "usehooks-ts";
 import { Address, isAddress } from "viem";
-import { normalize } from "viem/ens";
-import { mainnet, useEnsAddress, useEnsAvatar, useEnsName } from "wagmi";
+import { useEnsAddress, useEnsAvatar, useEnsName } from "wagmi";
 import { InfoWrapper } from "../InfoWrapper";
 import { isENS } from "@/utils/web3";
+import { useDebounce } from "@/hooks/useDebounce";
+import { uniqueId } from "lodash-es";
 
 /**
  * Address input with ENS name resolution
  */
 type Props = {
   label?: string;
-  placeholder?: string;
   errors?: any;
-  register?: UseFormRegister<any>;
-  registerKey?: string;
-  registerOptions?: RegisterOptions;
   required?: boolean;
+  placeholder?: string;
   readOnly?: boolean;
+  disabled?: boolean;
   className?: string;
   value?: string;
-  disabled?: boolean;
   tooltip?: string;
-  onChange?: ChangeEventHandler<HTMLInputElement>;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
 };
 
 export const FormAddressInput = ({
   label,
-  placeholder = "",
   errors = false,
-  register,
-  registerKey = "",
-  registerOptions,
   required = false,
-  readOnly = false,
+  placeholder = "0x",
+  readOnly,
+  disabled,
   className,
   value = undefined,
-  disabled = false,
   tooltip,
   onChange,
 }: Props) => {
-  const [isValid, setIsValid] = useState<boolean | null>(true);
-  const isMounted = useIsMounted();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const id = uniqueId("address-input-");
+  const _debouncedValue = useDebounce(value, 500);
+  const debouncedValue = isAddress(value ?? "") ? value : _debouncedValue;
+  const isDebouncedValueLive = debouncedValue === value;
 
-  const registered = register?.(registerKey, {
-    required,
-    disabled,
-    value: value == null ? undefined : value,
-    ...registerOptions,
-  });
+  const settledValue = isDebouncedValueLive ? debouncedValue : undefined;
 
-  const input = inputRef.current?.value ?? value;
-
-  const { data: resolvedAddress } = useEnsAddress({
-    name: !!input && isENS(input) ? normalize(input) : undefined,
-    chainId: mainnet.id,
-    enabled: !!input && isENS(input),
+  const { data: ensAddress } = useEnsAddress({
+    name: settledValue,
+    enabled: isENS(debouncedValue),
+    chainId: 1,
+    cacheTime: 30_000,
   });
 
   const { data: ensName } = useEnsName({
-    address: resolvedAddress ?? (input as Address),
-    chainId: mainnet.id,
-    enabled:
-      !!(resolvedAddress ?? input) && isAddress(resolvedAddress! ?? input),
+    address: settledValue as Address,
+    enabled: isAddress(debouncedValue ?? ""),
+    chainId: 1,
+    cacheTime: 30_000,
   });
 
   const { data: avatarUrl } = useEnsAvatar({
     name: ensName,
-    chainId: mainnet.id,
-    enabled: !!ensName,
+    enabled: Boolean(ensName),
+    chainId: 1,
+    cacheTime: 30_000,
   });
 
   useEffect(() => {
-    if (!isMounted()) {
-      return;
-    }
-    if (resolvedAddress) {
+    if (!ensAddress) return;
+    const ev = {
+      target: { value: ensAddress },
+    } as ChangeEvent<HTMLInputElement>;
+    onChange?.(ev);
+  }, [ensAddress, onChange, debouncedValue]);
+
+  const handleChange = useCallback(
+    (newValue: string) => {
       const ev = {
-        target: { value: resolvedAddress },
+        target: { value: newValue },
       } as ChangeEvent<HTMLInputElement>;
-      registered?.onChange?.(ev);
       onChange?.(ev);
-      setIsValid(true);
-    } else if (input != null && !isENS(input)) {
-      const ev = {
-        target: { value: input },
-      } as ChangeEvent<HTMLInputElement>;
-      // Direct address validation
-      if (input !== value) {
-        registered?.onChange?.(ev);
-        onChange?.(ev);
-      }
-      try {
-        setIsValid(isAddress(input));
-      } catch (error) {
-        setIsValid(false);
-      }
-    }
-  }, [resolvedAddress, input]);
+    },
+    [onChange],
+  );
 
   let modifier = "";
-  if (input && (errors || !isValid)) {
+  if (errors) {
     modifier = "border-error";
   } else if (disabled) {
     modifier = "border-disabled";
@@ -121,7 +102,7 @@ export const FormAddressInput = ({
   return (
     <div className={`flex flex-col max-w-md text-sm ${className ?? ""}`}>
       {label && (
-        <label htmlFor={registerKey} className="label cursor-pointer">
+        <label htmlFor={id} className="label cursor-pointer">
           <span className="label-text">
             {tooltip ?
               <InfoWrapper tooltip={tooltip}>
@@ -140,23 +121,23 @@ export const FormAddressInput = ({
         className={`form-control input input-info flex flex-row font-normal items-center ${modifier}`}
       >
         <input
-          ref={inputRef}
           className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${readOnly || disabled ? "cursor-not-allowed" : ""}`}
           placeholder={placeholder || "Enter address or ENS name"}
-          id={registerKey}
-          name={registerKey}
-          {...registered}
+          id={id}
+          name={id}
+          onChange={(e) => handleChange(e.target.value)}
           disabled={disabled || readOnly}
           readOnly={readOnly || disabled}
           required={required}
+          value={value}
         />
-        {input && (
+        {value && (
           // Don't want to use nextJS Image here (and adding remote patterns for the URL)
           // eslint-disable-next-line @next/next/no-img-element
           <img
             alt=""
             className={"!rounded-full ml-2"}
-            src={avatarUrl ? avatarUrl : blo((input ?? "0x") as Address)}
+            src={avatarUrl ? avatarUrl : blo(value as Address)}
             width="30"
             height="30"
           />

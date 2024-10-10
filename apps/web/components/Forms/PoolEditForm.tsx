@@ -649,7 +649,6 @@ export default function PoolEditForm({
               <FormAddressInput
                 tooltip="Enter a Safe address to rule on proposal disputes in the Pool and determine if they are in violation of the Covenant."
                 label="Tribunal address"
-                registerKey="tribunalAddress"
                 required
                 onChange={(ev) => setValue("tribunalAddress", ev.target.value)}
                 value={tribunalAddress}

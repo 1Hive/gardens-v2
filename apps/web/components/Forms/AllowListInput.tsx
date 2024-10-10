@@ -189,7 +189,7 @@ export function AllowListInput({
           <FormAddressInput
             placeholder={placeholder}
             required={required && addresses.length === 0}
-            onChange={(e) => setNewAddress(e)}
+            onChange={(e) => setNewAddress(e.target.value)}
             value={newAddress}
             className="w-full"
           />
