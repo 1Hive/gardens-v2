@@ -19,8 +19,11 @@ import { getViemChain } from "@/utils/web3";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY ?? "";
 const LOCAL_RPC = "http://127.0.0.1:8545";
+<<<<<<<< HEAD:apps/web/app/api/passport-oracle/dailyJob/[chain]/route.ts
 
 const API_ENDPOINT = "/api/passport/scores";
+========
+>>>>>>>> 648e2f64 (:recycle: Refactored daily job route for multi-chain support):apps/web/app/api/passport-oracle/daily-job/[chain]/route.ts
 
 interface PassportUser {
   id: string;
@@ -52,12 +55,9 @@ const query = gql`
 `;
 
 const fetchScoresFromService = async (): Promise<ApiScore[]> => {
-  const url = new URL(
-    API_ENDPOINT,
-    `http://${process.env.HOST ?? "localhost"}:${process.env.PORT ?? 3000}`,
-  );
+  const url = `${process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : "http://localhost:3000"}/api/passport/scores/`;
 
-  const response = await fetch(url.toString(), {
+  const response = await fetch(url, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -172,18 +172,35 @@ const updateScores = async (chain: string) => {
   return updates;
 };
 
+<<<<<<<< HEAD:apps/web/app/api/passport-oracle/dailyJob/[chain]/route.ts
 export async function POST(req: Request, { params }: Params) {
+========
+export async function GET(req: Request, { params }: Params) {
+>>>>>>>> 648e2f64 (:recycle: Refactored daily job route for multi-chain support):apps/web/app/api/passport-oracle/daily-job/[chain]/route.ts
   const apiKey = req.headers.get("Authorization");
   const { chain } = params;
 
   if (apiKey !== process.env.CRON_SECRET) {
+<<<<<<<< HEAD:apps/web/app/api/passport-oracle/dailyJob/[chain]/route.ts
+========
+    console.error("Unauthorized", {
+      req: req.url,
+      chain,
+    });
+>>>>>>>> 648e2f64 (:recycle: Refactored daily job route for multi-chain support):apps/web/app/api/passport-oracle/daily-job/[chain]/route.ts
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const updates = await updateScores(chain);
     return NextResponse.json(
-      { message: "Scores updated successfully", updates },
+      {
+        message:
+          updates.length ?
+            "Scores updated successfully"
+          : "No updates required",
+        updates,
+      },
       { status: 200 },
     );
   } catch (error) {
