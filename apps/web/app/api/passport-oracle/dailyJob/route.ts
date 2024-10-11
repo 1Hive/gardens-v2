@@ -170,7 +170,13 @@ const updateScores = async () => {
   return updates;
 };
 
-export async function GET() {
+export async function POST(req: Request) {
+  const apiKey = req.headers.get("x-api-key");
+
+  if (apiKey !== process.env.CRON_API_KEY) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const updates = await updateScores();
     return NextResponse.json(
