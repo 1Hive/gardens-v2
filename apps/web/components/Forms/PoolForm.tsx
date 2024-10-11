@@ -389,7 +389,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     >["args"],
   ) => {
     try {
-      const res = await fetch("/api/passport-oracle/addStrategy", {
+      const res = await fetch(`/api/passport-oracle/addStrategy/${chain.id}`, {
         method: "POST",
         body: JSON.stringify({
           strategy: newPoolData._strategy,

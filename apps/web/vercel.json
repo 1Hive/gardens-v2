@@ -1,0 +1,24 @@
+{
+  "crons": [
+    {
+      "path": "/api/passport-oracles/daily-job/10",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/passport-oracles/daily-job/137",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/passport-oracles/daily-job/100",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/passport-oracles/daily-job/42161",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/passport-oracles/daily-job/421614",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}
