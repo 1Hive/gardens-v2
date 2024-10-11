@@ -504,7 +504,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       if (Number.isNaN(sybilScoreThreshold)) {
         throw new Error("Gitcoin pasport value is not number");
       }
-      const res = await fetch("/api/passport-oracle/addStrategy", {
+      const res = await fetch("/api/passport-oracle/add-strategy", {
         method: "POST",
         body: JSON.stringify({
           strategy: newPoolData._strategy,
@@ -869,7 +869,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                 label="Tribunal address"
                 required
                 value={tribunalAddress}
-                onChange={(e) => { 
+                onChange={(e) => {
                   setValue("tribunalAddress", e.target.value);
                 }}
               />
@@ -882,7 +882,7 @@ export function PoolForm({ token, communityAddr }: Props) {
                   tribunalAddress?.toLowerCase() ===
                   chain.globalTribunal?.toLowerCase()
                 }
-                onChange={(e) => {
+                onChange={() => {
                   setValue(
                     "tribunalAddress",
                     (

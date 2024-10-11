@@ -11,6 +11,7 @@ import {
 import { Button } from "./Button";
 import { Modal } from "@/components";
 import { isProd } from "@/configs/isProd";
+import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
 
@@ -39,6 +40,7 @@ export function CheckPassport({
   const [score, setScore] = useState<number>(0);
   const [shouldOpenModal, setShouldOpenModal] = useState(false);
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
+  const chainFromPath = useChainIdFromPath();
 
   //pool threshold should be ready on!
 
@@ -157,7 +159,7 @@ export function CheckPassport({
   const submitPassport = async (
     address: string,
   ): Promise<SubmitPassportResponse> => {
-    const SUBMIT_SIGNED_PASSPORT_URI = "/api/passport/submitPassport";
+    const SUBMIT_SIGNED_PASSPORT_URI = "/api/passport/submit-passport";
 
     try {
       const response = await fetch(SUBMIT_SIGNED_PASSPORT_URI, {
@@ -187,7 +189,7 @@ export function CheckPassport({
   };
 
   const writeScorer = async (address: string): Promise<any> => {
-    const WRITE_SCORER_URI = "/api/passport-oracle/writeScore";
+    const WRITE_SCORER_URI = `/api/passport-oracle/writeScore/${chainFromPath}`;
     try {
       const response = await fetch(WRITE_SCORER_URI, {
         method: "POST",

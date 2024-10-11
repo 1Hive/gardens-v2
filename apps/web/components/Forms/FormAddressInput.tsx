@@ -1,19 +1,11 @@
-import {
-  ChangeEvent,
-  ChangeEventHandler,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { ChangeEvent, useCallback, useEffect } from "react";
 import { blo } from "blo";
-import { RegisterOptions, UseFormRegister } from "react-hook-form";
+import { uniqueId } from "lodash-es";
 import { Address, isAddress } from "viem";
 import { useEnsAddress, useEnsAvatar, useEnsName } from "wagmi";
 import { InfoWrapper } from "../InfoWrapper";
-import { isENS } from "@/utils/web3";
 import { useDebounce } from "@/hooks/useDebounce";
-import { uniqueId } from "lodash-es";
+import { isENS } from "@/utils/web3";
 
 /**
  * Address input with ENS name resolution
@@ -44,22 +36,22 @@ export const FormAddressInput = ({
   onChange,
 }: Props) => {
   const id = uniqueId("address-input-");
-  const _debouncedValue = useDebounce(value, 500);
-  const debouncedValue = isAddress(value ?? "") ? value : _debouncedValue;
-  const isDebouncedValueLive = debouncedValue === value;
+  const debouncedValue = useDebounce(value, 500);
+  const debouncedOrValue = isAddress(value ?? "") ? value : debouncedValue;
+  const isDebouncedValueLive = debouncedOrValue === value;
 
-  const settledValue = isDebouncedValueLive ? debouncedValue : undefined;
+  const settledValue = isDebouncedValueLive ? debouncedOrValue : undefined;
 
   const { data: ensAddress } = useEnsAddress({
     name: settledValue,
-    enabled: isENS(debouncedValue),
+    enabled: isENS(debouncedOrValue),
     chainId: 1,
     cacheTime: 30_000,
   });
 
   const { data: ensName } = useEnsName({
     address: settledValue as Address,
-    enabled: isAddress(debouncedValue ?? ""),
+    enabled: isAddress(debouncedOrValue ?? ""),
     chainId: 1,
     cacheTime: 30_000,
   });
@@ -77,7 +69,7 @@ export const FormAddressInput = ({
       target: { value: ensAddress },
     } as ChangeEvent<HTMLInputElement>;
     onChange?.(ev);
-  }, [ensAddress, onChange, debouncedValue]);
+  }, [ensAddress, onChange, debouncedOrValue]);
 
   const handleChange = useCallback(
     (newValue: string) => {
@@ -121,13 +113,13 @@ export const FormAddressInput = ({
         className={`form-control input input-info flex flex-row font-normal items-center ${modifier}`}
       >
         <input
-          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${readOnly || disabled ? "cursor-not-allowed" : ""}`}
+          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${(readOnly ?? disabled) ? "cursor-not-allowed" : ""}`}
           placeholder={placeholder || "Enter address or ENS name"}
           id={id}
           name={id}
           onChange={(e) => handleChange(e.target.value)}
-          disabled={disabled || readOnly}
-          readOnly={readOnly || disabled}
+          disabled={disabled ?? readOnly}
+          readOnly={readOnly ?? disabled}
           required={required}
           value={value}
         />
