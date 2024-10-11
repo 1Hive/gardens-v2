@@ -18,7 +18,7 @@
     },
     {
       "path": "/api/passport-oracles/daily-job/421614",
-      "schedule": "*/1 * * * *"
+      "schedule": "*/15 * * * *"
     }
   ]
 }
