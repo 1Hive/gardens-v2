@@ -1,5 +1,6 @@
 // api/add-strategy
 
+import { Params } from "next/dist/shared/lib/router/utils/route-matcher";
 import { NextResponse } from "next/server";
 import {
   createPublicClient,
@@ -19,26 +20,20 @@ import { getViemChain } from "@/utils/web3";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY;
 
-const CHAIN_ID = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
 const LOCAL_RPC = "http://127.0.0.1:8545";
 
-const RPC_URL = getConfigByChain(CHAIN_ID)?.rpcUrl ?? LOCAL_RPC;
+export async function POST(req: Request, { params }: Params) {
+  const apiKey = req.headers.get("Authorization");
+  const { chain } = params;
 
-const PASSPORT_SCORER_ADDRESS = getConfigByChain(CHAIN_ID)
-  ?.passportScorer as Address;
+  if (apiKey !== process.env.CRON_SECRET) {
+    console.error("Unauthorized", {
+      req: req.url,
+      chain,
+    });
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
 
-const client = createPublicClient({
-  chain: getViemChain(CHAIN_ID),
-  transport: http(RPC_URL),
-});
-
-const walletClient = createWalletClient({
-  account: privateKeyToAccount(`${LIST_MANAGER_PRIVATE_KEY}` as Address),
-  chain: getViemChain(CHAIN_ID),
-  transport: custom(client.transport),
-});
-
-export async function POST(req: Request) {
   const { strategy, threshold } = await req.json();
 
   if (!strategy || !threshold) {
@@ -52,6 +47,22 @@ export async function POST(req: Request) {
   }
 
   try {
+    const RPC_URL = getConfigByChain(chain)?.rpcUrl ?? LOCAL_RPC;
+
+    const PASSPORT_SCORER_ADDRESS = getConfigByChain(chain)
+      ?.passportScorer as Address;
+
+    const client = createPublicClient({
+      chain: getViemChain(chain),
+      transport: http(RPC_URL),
+    });
+
+    const walletClient = createWalletClient({
+      account: privateKeyToAccount(`${LIST_MANAGER_PRIVATE_KEY}` as Address),
+      chain: getViemChain(chain),
+      transport: custom(client.transport),
+    });
+
     // Get registryCommunity address from CVStrategy
     let registryCommunityAddress: Address;
     try {
