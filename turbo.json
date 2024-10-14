@@ -32,11 +32,9 @@
         "SCORER_ID",
         "PASSPORT_SCORER_ADDRESS",
         "LIST_MANAGER_PRIVATE_KEY",
-        "CHAIN_ID",
         "NODE_ENV",
         "NEXT_ABLY_API_KEY",
-        "HOST",
-        "PORT",
+        "VERCEL_URL",
         "NEXT_PUBLIC_ENV_GARDENS",
         "NEXT_RUNTIME",
         "NEXT_PUBLIC_SENTRY_DSN",
@@ -62,7 +60,7 @@
         "NEXT_PUBLIC_RPC_URL_OPTIMISM",
         "NEXT_PUBLIC_RPC_URL_GNOSIS",
         "NEXT_PUBLIC_RPC_URL_MATIC",
-        "CRON_API_KEY"
+        "CRON_SECRET"
       ]
     },
     "test": {

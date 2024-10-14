@@ -1,5 +1,6 @@
 // api/passport-oracles/daily-job
 
+import { Params } from "next/dist/shared/lib/router/utils/route-matcher";
 import { NextResponse } from "next/server";
 import { gql } from "urql";
 import {
@@ -17,12 +18,7 @@ import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
 import { getViemChain } from "@/utils/web3";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY ?? "";
-const CHAIN_ID = process.env.CHAIN_ID ? parseInt(process.env.CHAIN_ID) : 1337;
 const LOCAL_RPC = "http://127.0.0.1:8545";
-const RPC_URL = getConfigByChain(CHAIN_ID)?.rpcUrl ?? LOCAL_RPC;
-const CONTRACT_ADDRESS = getConfigByChain(CHAIN_ID)?.passportScorer as Address;
-const SUBGRAPH = getConfigByChain(CHAIN_ID)?.subgraphUrl as string;
-const API_ENDPOINT = "/api/passport/scores";
 
 interface PassportUser {
   id: string;
@@ -42,19 +38,6 @@ interface ApiScore {
   stamp_scores: Record<string, number>;
 }
 
-const client = createPublicClient({
-  chain: getViemChain(CHAIN_ID),
-  transport: http(RPC_URL),
-});
-
-const walletClient = createWalletClient({
-  account: privateKeyToAccount(LIST_MANAGER_PRIVATE_KEY as Address),
-  chain: getViemChain(CHAIN_ID),
-  transport: custom(client.transport),
-});
-
-const { urqlClient } = initUrqlClient({ chainId: CHAIN_ID });
-
 const query = gql`
   query {
     passportUsers {
@@ -67,12 +50,9 @@ const query = gql`
 `;
 
 const fetchScoresFromService = async (): Promise<ApiScore[]> => {
-  const url = new URL(
-    API_ENDPOINT,
-    `http://${process.env.HOST ?? "localhost"}:${process.env.PORT ?? 3000}`,
-  );
+  const url = `${process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : "http://localhost:3000"}/api/passport/scores/`;
 
-  const response = await fetch(url.toString(), {
+  const response = await fetch(url, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -120,8 +100,12 @@ const compareScores = (
 };
 
 const updateScoresOnChain = async (
+  chain: string,
   updates: { userAddress: Address; score: number; lastUpdated: number }[],
 ) => {
+  const RPC_URL = getConfigByChain(chain)?.rpcUrl ?? LOCAL_RPC;
+  const CONTRACT_ADDRESS = getConfigByChain(chain)?.passportScorer as Address;
+
   for (const update of updates) {
     const integerScore = Number(update.score) * CV_PERCENTAGE_SCALE;
     const data = {
@@ -137,12 +121,25 @@ const updateScoresOnChain = async (
       ] as const,
     };
 
+    const client = createPublicClient({
+      chain: getViemChain(chain),
+      transport: http(RPC_URL),
+    });
+
+    const walletClient = createWalletClient({
+      account: privateKeyToAccount(LIST_MANAGER_PRIVATE_KEY as Address),
+      chain: getViemChain(chain),
+      transport: custom(client.transport),
+    });
+
     const hash = await walletClient.writeContract(data);
     await client.waitForTransactionReceipt({ hash });
   }
 };
 
-const updateScores = async () => {
+const updateScores = async (chain: string) => {
+  const SUBGRAPH = getConfigByChain(chain)?.subgraphUrl as string;
+  const { urqlClient } = initUrqlClient({ chainId: chain });
   const subgraphResponse = await urqlClient
     .query<{ passportUsers: PassportUser[] }>(
       query,
@@ -164,23 +161,34 @@ const updateScores = async () => {
   const updates = compareScores(subgraphUsers, apiScores);
 
   if (updates.length > 0) {
-    await updateScoresOnChain(updates);
+    await updateScoresOnChain(chain, updates);
   }
 
   return updates;
 };
 
-export async function POST(req: Request) {
-  const apiKey = req.headers.get("x-api-key");
+export async function GET(req: Request, { params }: Params) {
+  const apiKey = req.headers.get("Authorization");
+  const { chain } = params;
 
-  if (apiKey !== process.env.CRON_API_KEY) {
+  if (apiKey !== process.env.CRON_SECRET) {
+    console.error("Unauthorized", {
+      req: req.url,
+      chain,
+    });
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const updates = await updateScores();
+    const updates = await updateScores(chain);
     return NextResponse.json(
-      { message: "Scores updated successfully", updates },
+      {
+        message:
+          updates.length ?
+            "Scores updated successfully"
+          : "No updates required",
+        updates,
+      },
       { status: 200 },
     );
   } catch (error) {
