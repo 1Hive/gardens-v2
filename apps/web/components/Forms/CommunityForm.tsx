@@ -341,7 +341,7 @@ export const CommunityForm = ({
 
           <div className="flex">
             <FormCheckBox
-              label="Council safe can expel members"
+              label="Council safe can remove members"
               register={register}
               errors={errors}
               registerKey="isKickMemberEnabled"
@@ -366,7 +366,7 @@ export const CommunityForm = ({
             />
             <div className="flex sm:items-center gap-4">
               <a
-                href="https://www.notion.so/1hive-gardens/Community-Onboarding-b9abf08bb1a64ca299defade9f31368f"
+                href="https://www.notion.so/1hive-gardens/Covenant-the-community-constitution-103d6929d014801da379c5952d66d1a0"
                 target="_blank"
                 rel="noreferrer"
                 className="text-primary-content flex items-center gap-1 hover:opacity-90"
