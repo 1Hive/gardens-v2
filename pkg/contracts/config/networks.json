@@ -20,31 +20,12 @@
           "0x1f9959dacba2af3fe5f09675f045d043505b252c"
         ],
         "CV_STRATEGIES": [
-          "0x12d7725472e168ce56203acd1f54e7a1f3299834",
-          "0x18cf8cea0b9e9a77290b26bc901549b9c8543c49",
-          "0x19146c7a7a6b6f44bb764c242b568788d230335e",
-          "0x1f4dadec079030aa6ea9006636adc2da4eaa80bb",
-          "0x319dc92c7e4b5682e85f8d8e56007fa8a2b7c2ce",
-          "0x39372af87b894aa04e8b1005a1214278d4263a1a",
-          "0x6b5b7ae6efa6b5f90690fe3e47a96b44b72e9678",
-          "0x721a2c46a92a5caab2013cfc0fcc9f01bb1e94cc",
-          "0x754aa684c01fec4c8c0a8740b9f361cce40af828",
-          "0x8d6cf0e6e74c66233f2bdff24b0ed05b934c562b",
-          "0x927f32fadd308f6d0f3d5b0d7b338c2cccc2a964",
-          "0x9713b93d0ee69f714a55435d075d94b489fd15a6",
-          "0x9b5eefa5f8d129a5d9908f50a6c0b8c6c1b5629e",
-          "0xa0b5676e081cb87e977be9ada40104c49f088627",
-          "0xa37dcfbb2c7a3f6db4a2235740a3af953cd7fbe7",
-          "0xbb48cd55408cc369c683bd9a2e11d941a015fa84",
-          "0xc2892aae603510c8b0aabb5b80f43185c5a13b8f",
-          "0xd158c17dafac9327a189fb91f4d0ca849d62fb76",
-          "0xd6f8993760d42ccf46e3448263f367089fd3d5ec",
-          "0xd9b062c60fc606b795781bfd4799569f3da4dc2e",
-          "0xdba16727a280a3986c738804ad44705ab4d8f253",
-          "0xdd364105997d4a81303cebf5e8c5c446d688e62d",
-          "0xde4f3a5c1b05c44793eda6b00482b5123c17b26d",
-          "0xe26f19304157da0422d78a8a678745e5229a642b",
-          "0xf9deac197a784e01f8858cff6a88ce343c1fd77d"
+          "0x2927db50355bf5dee0d242fdebd523c0877605c9",
+          "0x5331a67e3d24d2159c0f4cd2cc49773d53ba78ae",
+          "0xbcd04fc19e0c6c9fc0251eb094d8d0d7ae743ac5",
+          "0xc5b49d68df8306a14612acf1d864ce1c5934c680",
+          "0xc6536c1fc4a6ed85fab35e951995082f85876208",
+          "0xd63f1c293eb4e7536b14a679f4d750f8a05554da"
         ],
         "PASSPORT_SCORER": "0xbeca1cf897ecd4bb21b835eaa221f1b6a96524f4"
       }

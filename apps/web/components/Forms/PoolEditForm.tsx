@@ -428,7 +428,7 @@ export default function PoolEditForm({
   return (
     <form
       onSubmit={handleSubmit(handlePreview)}
-      className="w-[480px] max-w-2xl"
+      className="w-[480px] max-w-4xl"
     >
       {showPreview ?
         <FormPreview

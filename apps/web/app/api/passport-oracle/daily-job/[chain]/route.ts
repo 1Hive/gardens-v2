@@ -14,7 +14,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { getConfigByChain } from "@/configs/chains";
 import { initUrqlClient } from "@/providers/urql";
 import { passportScorerABI } from "@/src/generated";
-import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
+import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 import { getViemChain } from "@/utils/web3";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY ?? "";
@@ -107,7 +107,7 @@ const updateScoresOnChain = async (
   const CONTRACT_ADDRESS = getConfigByChain(chain)?.passportScorer as Address;
 
   for (const update of updates) {
-    const integerScore = Number(update.score) * CV_PERCENTAGE_SCALE;
+    const integerScore = Number(update.score) * CV_PASSPORT_THRESHOLD_SCALE;
     const data = {
       abi: passportScorerABI,
       address: CONTRACT_ADDRESS,

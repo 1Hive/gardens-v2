@@ -4,6 +4,7 @@ import {
   alloABI,
   cvStrategyABI,
   erc20ABI,
+  passportScorerABI,
   registryCommunityABI,
   registryFactoryABI,
   safeABI,
@@ -19,6 +20,7 @@ const errorsABI = [
   ...registryFactoryABI.filter(FuncFilterError),
   ...erc20ABI.filter(FuncFilterError),
   ...safeABI.filter(FuncFilterError),
+  ...passportScorerABI.filter(FuncFilterError),
 ];
 
 // console.log("errorsABI", errorsABI);

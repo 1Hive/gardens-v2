@@ -36,6 +36,7 @@ import {
   calculateDecay,
   calculateMaxRatioNum,
   convertSecondsToReadableTime,
+  CV_PASSPORT_THRESHOLD_SCALE,
   CV_PERCENTAGE_SCALE,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
@@ -446,7 +447,8 @@ export function PoolForm({ token, communityAddr }: Props) {
                 !previewData.sybilResistanceValue
             ) ?
               0
-            : (previewData.sybilResistanceValue as unknown as number),
+            : (previewData.sybilResistanceValue as unknown as number) *
+                CV_PASSPORT_THRESHOLD_SCALE,
           ),
           initialAllowlist: allowList,
         },

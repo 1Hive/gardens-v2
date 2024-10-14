@@ -27,6 +27,10 @@
           handler: handleUserRemoved
         - event: StrategyAdded(indexed address,uint256,bool,address)
           handler: handleStrategyAdded
+        - event: StrategyRemoved(indexed address)
+          handler: handleStrategyRemoved
         - event: StrategyActivated(indexed address)
           handler: handleStrategyActivated
+        - event: ThresholdModified(indexed address,uint256)
+          handler: handleThresholdModified
       file: ./src/mappings/passport-scorer.ts

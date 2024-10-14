@@ -5,6 +5,7 @@ import {ISybilScorer, PassportData, Strategy} from "./ISybilScorer.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import {CVStrategyV0_0} from "./CVStrategy/CVStrategyV0_0.sol";
 
 /// @custom:oz-upgrades-from PassportScorer
 contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, ISybilScorer {
@@ -22,6 +23,7 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     event ThresholdModified(address indexed strategy, uint256 newThreshold);
 
     error OnlyAuthorized();
+    error OnlyAuthorizedOrUser();
     error OnlyCouncilOrAuthorized();
     error OnlyCouncil();
     error ZeroAddress();
@@ -35,10 +37,19 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
         }
     }
 
+    modifier onlyAuthorizedOrUser(address _user) {
+        if (msg.sender == owner() || msg.sender == listManager || msg.sender == _user) {
+            _;
+        } else {
+            revert OnlyAuthorizedOrUser();
+        }
+    }
+
     modifier onlyCouncilOrAuthorized(address _strategy) {
+        address registryCommunity = address(CVStrategyV0_0(payable(_strategy)).registryCommunity());
         if (
-            msg.sender == owner() || msg.sender == _strategy || msg.sender == listManager
-                || msg.sender == strategies[_strategy].councilSafe
+            msg.sender == owner() || msg.sender == _strategy || msg.sender == registryCommunity
+                || msg.sender == listManager || msg.sender == strategies[_strategy].councilSafe
         ) {
             _;
         } else {
@@ -70,7 +81,11 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     /// @notice Add a userScore to the list
     /// @param _user address of the user to add
     /// @param _passportData PassportData struct with the user score and lastUpdated
-    function addUserScore(address _user, PassportData memory _passportData) external override onlyAuthorized {
+    function addUserScore(address _user, PassportData memory _passportData)
+        external
+        override
+        onlyAuthorizedOrUser(_user)
+    {
         _revertZeroAddress(_user);
         userScores[_user] = _passportData;
         emit UserScoreAdded(_user, _passportData.score, _passportData.lastUpdated);
@@ -96,7 +111,11 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     /// @notice Add a strategy to the contract
     /// @param _threshold is expressed on a scale of 10**4
     /// @param _councilSafe address of the council safe
-    function addStrategy(address _strategy, uint256 _threshold, address _councilSafe) external {
+    function addStrategy(address _strategy, uint256 _threshold, address _councilSafe)
+        external
+        override
+        onlyCouncilOrAuthorized(_strategy)
+    {
         _revertZeroAddress(_strategy);
         _revertZeroAddress(_councilSafe);
         if (strategies[_strategy].threshold != 0 || strategies[_strategy].councilSafe != address(0)) {
@@ -110,14 +129,13 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     /// @param _strategy address of the strategy to remove
     function removeStrategy(address _strategy) external override onlyCouncilOrAuthorized(_strategy) {
         _revertZeroAddress(_strategy);
-        strategies[_strategy].active = false;
-        strategies[_strategy].threshold = 0;
+        delete strategies[_strategy];
         emit StrategyRemoved(_strategy);
     }
 
     /// @notice Activate a strategy
     /// @param _strategy address of the strategy to activate
-    function activateStrategy(address _strategy) external onlyCouncil(_strategy) {
+    function activateStrategy(address _strategy) external onlyCouncilOrAuthorized(_strategy) {
         _revertZeroAddress(_strategy);
         strategies[_strategy].active = true;
         emit StrategyActivated(_strategy);

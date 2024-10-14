@@ -302,11 +302,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
-        if (address(sybilScorer) != address(0x0)) {
-            _registerToSybilScorer(ip.sybilScorerThreshold);
-        }
         _setPoolParams(ip.arbitrableConfig, ip.cvParams, new address[](0), new address[](0));
         emit InitializedCV2(_poolId, ip);
+
+        if (address(sybilScorer) != address(0x0)) {
+          _registerToSybilScorer(ip.sybilScorerThreshold);
+        }
     }
 
     /*|--------------------------------------------|*/

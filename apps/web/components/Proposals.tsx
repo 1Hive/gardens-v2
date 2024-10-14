@@ -418,7 +418,7 @@ export function Proposals({
               (proposals.length === 0 ?
                 <h4 className="text-2xl">No submitted proposals to support</h4>
               : !allocationView && (
-                  <CheckPassport strategyAddr={strategy.id as Address}>
+                  <CheckPassport strategy={strategy.id as Address}>
                     <Button
                       icon={
                         <AdjustmentsHorizontalIcon height={24} width={24} />
@@ -525,7 +525,7 @@ export function Proposals({
           </div>
         : <div>
             <div className="flex items-center justify-center gap-6">
-              <CheckPassport strategyAddr={strategy.id as Address}>
+              <CheckPassport strategy={strategy.id as Address}>
                 <Link href={createProposalUrl}>
                   <Button
                     icon={<PlusIcon height={24} width={24} />}

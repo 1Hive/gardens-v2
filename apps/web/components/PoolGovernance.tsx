@@ -55,7 +55,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         <h2>Pool Governance</h2>
         <div className="flex flex-col gap-2">
           <CheckPassport
-            strategyAddr={strategy.id as Address}
+            strategy={strategy.id as Address}
             enableCheck={!memberActivatedStrategy}
           >
             <ActivatePoints
