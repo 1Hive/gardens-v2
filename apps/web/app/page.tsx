@@ -229,7 +229,7 @@ const Banner = () => {
           <div className="pointer-events-auto flex items-center justify-between gap-x-6 bg-primary-soft px-6 py-2.5 sm:rounded-xl sm:py-3 sm:pl-4 sm:pr-3.5 shadow-xl">
             <p className="subtitle2">
               <a
-                href="https://explorer.gitcoin.co/#/round/42161/641"
+                href=" https://www.notion.so/1hive-gardens/Growing-the-Public-Gardens-GG22-Community-Round-118d6929d01480a1adf3f772880f72a1"
                 target="_blank"
                 rel="noreferrer"
               >
