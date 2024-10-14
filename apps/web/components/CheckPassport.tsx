@@ -14,12 +14,12 @@ import { Skeleton } from "./Skeleton";
 import { Modal } from "@/components";
 import { isProd } from "@/configs/isProd";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import {
   CV_PASSPORT_THRESHOLD_SCALE,
   CV_PERCENTAGE_SCALE,
 } from "@/utils/numbers";
-import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 
 type SubmitPassportResponse = {
   data: any;
@@ -68,38 +68,37 @@ export function CheckPassport({
       enabled: !!walletAddr && enableCheck,
       //TODO: add changeScope = passportUserData
     });
-  
-  
+
   // Call the addUserScore function from the passport contract
-  const {write: submitScore } = useContractWriteWithConfirmations({
-    contract: strategy.sybilScorer as Address,
-    method: "addUserScore",
-    args: [walletAddr, score],
-    onCompleted: () => {
-      console.log("User score added to passport contract");
-    }
-  })
-  const {
-    write: writeDistribute,
-    error: errorDistribute,
-    isError: isErrorDistribute,
-  } = useContractWriteWithConfirmations({
-    address: data?.allos[0]?.id as Address,
-    abi: abiWithErrors(alloABI),
-    functionName: "distribute",
-    contractName: "Allo",
-    fallbackErrorMessage: "Error executing proposal. Please try again.",
-    onConfirmations: () => {
-      publish({
-        topic: "proposal",
-        type: "update",
-        function: "distribute",
-        id: proposalNumber,
-        containerId: poolId,
-        chainId,
-      });
-    },
-  });
+  // const {write: submitScore } = useContractWriteWithConfirmations({
+  //   contract: strategy.sybilScorer as Address,
+  //   method: "addUserScore",
+  //   args: [walletAddr, score],
+  //   onCompleted: () => {
+  //     console.log("User score added to passport contract");
+  //   }
+  // })
+  // const {
+  //   write: writeDistribute,
+  //   error: errorDistribute,
+  //   isError: isErrorDistribute,
+  // } = useContractWriteWithConfirmations({
+  //   address: data?.allos[0]?.id as Address,
+  //   abi: abiWithErrors(alloABI),
+  //   functionName: "distribute",
+  //   contractName: "Allo",
+  //   fallbackErrorMessage: "Error executing proposal. Please try again.",
+  //   onConfirmations: () => {
+  //     publish({
+  //       topic: "proposal",
+  //       type: "update",
+  //       function: "distribute",
+  //       id: proposalNumber,
+  //       containerId: poolId,
+  //       chainId,
+  //     });
+  //   },
+  // });
   const passportUser = passportUserData?.passportUser;
 
   const { data: passportStrategyData } =
