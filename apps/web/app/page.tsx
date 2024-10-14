@@ -229,12 +229,12 @@ const Banner = () => {
           <div className="pointer-events-auto flex items-center justify-between gap-x-6 bg-primary-soft px-6 py-2.5 sm:rounded-xl sm:py-3 sm:pl-4 sm:pr-3.5 shadow-xl">
             <p className="subtitle2">
               <a
-                href="https://juicebox.money/v2/p/697?np=1&tabid=nft_rewards"
+                href="https://explorer.gitcoin.co/#/round/42161/641"
                 target="_blank"
                 rel="noreferrer"
               >
                 <strong className="font-semibold">
-                  Join our Seedling Funding Round on Juicebox
+                  Apply for funding for your new Gardens community
                 </strong>
                 <svg
                   viewBox="0 0 2 2"
@@ -243,7 +243,7 @@ const Banner = () => {
                 >
                   <circle r={1} cx={1} cy={1} />
                 </svg>
-                Ends September 28 &nbsp;
+                Deadline October 23 &nbsp;
                 <span aria-hidden="true">&rarr;</span>
               </a>
             </p>
