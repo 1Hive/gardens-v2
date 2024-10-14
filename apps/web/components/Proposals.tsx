@@ -67,7 +67,10 @@ type Stats = {
 };
 
 interface ProposalsProps {
-  strategy: Pick<CVStrategy, "id" | "poolId" | "totalEffectiveActivePoints"> & {
+  strategy: Pick<
+    CVStrategy,
+    "id" | "poolId" | "totalEffectiveActivePoints" | "sybilScorer"
+  > & {
     registryCommunity: Pick<RegistryCommunity, "id"> & {
       garden: Pick<RegistryCommunity["garden"], "decimals">;
     };
@@ -418,7 +421,7 @@ export function Proposals({
               (proposals.length === 0 ?
                 <h4 className="text-2xl">No submitted proposals to support</h4>
               : !allocationView && (
-                  <CheckPassport strategy={strategy.id as Address}>
+                  <CheckPassport strategy={strategy}>
                     <Button
                       icon={
                         <AdjustmentsHorizontalIcon height={24} width={24} />
@@ -525,7 +528,7 @@ export function Proposals({
           </div>
         : <div>
             <div className="flex items-center justify-center gap-6">
-              <CheckPassport strategy={strategy.id as Address}>
+              <CheckPassport strategy={strategy}>
                 <Link href={createProposalUrl}>
                   <Button
                     icon={<PlusIcon height={24} width={24} />}

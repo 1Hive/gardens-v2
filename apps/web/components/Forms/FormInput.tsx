@@ -92,7 +92,7 @@ export function FormInput({
             step={step}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
-            value={value}
+            // value={value}
             onChange={onChange}
             {...otherProps}
           />
