@@ -19,7 +19,7 @@ import {
 export type PoolGovernanceProps = {
   memberPoolWeight: number;
   tokenDecimals: number;
-  strategy: Pick<CVStrategy, "id"> & {
+  strategy: Pick<CVStrategy, "id" | "sybilScorer"> & {
     registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
     config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
   };
@@ -55,7 +55,7 @@ export const PoolGovernance: React.FC<PoolGovernanceProps> = ({
         <h2>Pool Governance</h2>
         <div className="flex flex-col gap-2">
           <CheckPassport
-            strategy={strategy.id as Address}
+            strategy={strategy}
             enableCheck={!memberActivatedStrategy}
           >
             <ActivatePoints
