@@ -6,6 +6,7 @@ export default function useCheckAllowList(
   address: Address | undefined,
 ) {
   const [isAllowed, setIsAllowed] = useState(false);
+  console.log({ allowList });
 
   useEffect(() => {
     if (allowList.length === 0) {

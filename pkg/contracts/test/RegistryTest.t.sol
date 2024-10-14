@@ -169,7 +169,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Unlimited,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                new address[](1)
+                new address[](1),
+                address(0),
+                0
             ),
             metadata
         );
@@ -414,7 +416,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Fixed,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                new address[](1)
+                new address[](1),
+                address(0),
+                0
             ),
             metadata
         );
@@ -459,7 +463,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Fixed,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                new address[](1)
+                new address[](1),
+                address(0),
+                0
             ),
             metadata
         );
@@ -540,7 +546,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Capped,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                new address[](1)
+                new address[](1),
+                address(0),
+                0
             ),
             metadata
         );
@@ -591,7 +599,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Quadratic,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                new address[](1)
+                new address[](1),
+                address(0),
+                0
             ),
             metadata
         );
@@ -647,7 +657,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Quadratic,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                new address[](1)
+                new address[](1),
+                address(0),
+                0
             ),
             metadata
         );
@@ -747,7 +759,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Quadratic,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                new address[](1)
+                new address[](1),
+                address(0),
+                0
             ),
             metadata
         );
@@ -920,7 +934,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Unlimited,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                allowlist
+                allowlist,
+                address(0),
+                0
             ),
             metadata
         );
@@ -961,7 +977,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Unlimited,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                allowlist
+                allowlist,
+                address(0),
+                0
             ),
             metadata
         );
@@ -1009,7 +1027,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Unlimited,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                allowlist
+                allowlist,
+                address(0),
+                0
             ),
             metadata
         );
@@ -1034,7 +1054,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Unlimited,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                allowlist
+                allowlist,
+                address(0),
+                0
             ),
             metadata
         );
@@ -1110,7 +1132,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Unlimited,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                allowlist
+                allowlist,
+                address(0),
+                0
             ),
             metadata
         );
@@ -1147,7 +1171,9 @@ contract RegistryTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers, 
                 PointSystem.Quadratic,
                 PointSystemConfig(0),
                 arbitrableConfig,
-                new address[](1)
+                new address[](1),
+                address(0),
+                0
             ),
             metadata
         );

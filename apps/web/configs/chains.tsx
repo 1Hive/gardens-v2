@@ -87,7 +87,7 @@ export const chainConfigMap: {
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xe32566076534973ff78b512ec6a321a58c2b735c",
-    passportScorer: "0xff53a163e43eccc00d8fde7aca24aa9fa4da7356",
+    passportScorer: "0xbeca1cf897ecd4bb21b835eaa221f1b6a96524f4",
     isTestnet: true,
   },
   11155111: {
@@ -118,21 +118,21 @@ export const chainConfigMap: {
     name: arbitrum.name,
     icon: Arbitrum,
     explorer: "https://arbitrum.blockscout.com",
-    blockTime: 0.25,
+    blockTime: 14,
     confirmations: 7, // 7
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ARBITRUM!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARBITRUM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xd58ff588177f02cc535a0e235a4c002a17e27202",
-    passportScorer: "0x57a9835b204dbcc101dbf981625a3625e8043b9c",
+    passportScorer: "0xa2d5900d53a548637dd61312d02b90f3ff1d6a5e",
     isTestnet: false,
   },
   10: {
     name: optimism.name,
     icon: Optimism,
     explorer: "https://optimism.blockscout.com",
-    blockTime: 2,
+    blockTime: 14,
     confirmations: 2, // 2
     rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_OPTIMISM!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_OPTIMISM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
@@ -153,7 +153,7 @@ export const chainConfigMap: {
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0x7842e2d0dda2e64727c251382e9b1ee70fa33b94",
-    passportScorer: "0xa71023bc64c9711c2037ab491de80fd74504bd55",
+    passportScorer: "0x1fac47cf25f1ca9f20ba366099d26b28401f5715",
     isTestnet: false,
   },
   100: {
@@ -166,8 +166,8 @@ export const chainConfigMap: {
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
-    arbitrator: "0x",
-    passportScorer: "0x",
+    arbitrator: "0x4d858f327d63bbf693291b96f9e585cac64895a9",
+    passportScorer: "0xd7b72fcb6a4e2857685175f609d1498ff5392e46",
     isTestnet: false,
   },
   // 1: {

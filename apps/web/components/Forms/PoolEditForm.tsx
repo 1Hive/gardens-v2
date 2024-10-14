@@ -3,7 +3,7 @@ import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { useForm } from "react-hook-form";
 import { Address, formatUnits, parseUnits } from "viem";
 import { CVStrategy, TokenGarden } from "#/subgraph/.graphclient";
-import { AllowListInput, exportAddresses } from "./AllowListInput";
+import { AllowListInput } from "./AllowListInput";
 import { FormAddressInput } from "./FormAddressInput";
 import { FormCheckBox } from "./FormCheckBox";
 import { FormInput } from "./FormInput";
@@ -47,7 +47,7 @@ type FormInputs = {
 } & ArbitrationSettings;
 
 type Props = {
-  strategy: Pick<CVStrategy, "id" | "poolId">;
+  strategy: Pick<CVStrategy, "id" | "poolId" | "sybilScorer">;
   token: TokenGarden["decimals"];
   chainId: string;
   initValues: FormInputs;
@@ -63,22 +63,23 @@ const sybilResistancePreview = (
   value?: string | Address[],
 ): ReactNode => {
   const previewMap: Record<SybilResistanceType, ReactNode> = {
-    noSybilResist: "No authorization required (anyone can vote)",
-    allowList: (
-      <div className="flex items-center gap-2">
-        <span className="">Allow list </span>
-        <Button
-          type="button"
-          btnStyle="outline"
-          className="!p-1"
-          onClick={() => exportAddresses(addresses)}
-          showToolTip
-          tooltip="Export"
-        >
+    noSybilResist: "No restrictions (anyone can vote)",
+    allowList: (() => {
+      if (addresses.length === 0) {
+        return "Allow list (no addresses submitted)";
+      }
+      return (
+        <div className="flex items-center gap-2">
+          <span className="">Allow list</span>
           <ArrowDownTrayIcon className="w-4 h-4" />
-        </Button>
-      </div>
-    ),
+          <div>
+            {addresses.map((address) => (
+              <EthAddress key={address} address={address as Address} />
+            ))}
+          </div>
+        </div>
+      );
+    })(),
     gitcoinPassport: `Passport score required: ${value}`,
   };
 
@@ -157,7 +158,8 @@ export default function PoolEditForm({
       tribunalAddress: initValues.tribunalAddress,
     },
   });
-  const sybilResistanceType = watch("sybilResistanceType");
+  const sybilResistanceType =
+    strategy.sybilScorer == null ? "allowList" : "gitcoinPassport";
   const sybilResistanceValue = watch("sybilResistanceValue");
 
   const INPUT_TOKEN_MIN_VALUE = 1 / 10 ** token.decimals;
@@ -472,8 +474,9 @@ export default function PoolEditForm({
 
           {/* pool settings section */}
           <div className="flex flex-col">
+            <h6 className="mb-4">Conviction params</h6>
             {shouldRenderInput("spendingLimit") && (
-              <div className="flex max-w-64 flex-col">
+              <div className="flex flex-col">
                 <FormInput
                   label="Spending limit"
                   register={register}
@@ -502,7 +505,7 @@ export default function PoolEditForm({
               </div>
             )}
             {shouldRenderInput("minimumConviction") && (
-              <div className="flex max-w-64 flex-col">
+              <div className="flex flex-col">
                 <FormInput
                   label="Minimum conviction"
                   register={register}
@@ -531,7 +534,7 @@ export default function PoolEditForm({
               </div>
             )}
             {shouldRenderInput("convictionGrowth") && (
-              <div className="flex max-w-64 flex-col">
+              <div className="flex flex-col">
                 <FormInput
                   label="Conviction growth"
                   register={register}
@@ -585,9 +588,7 @@ export default function PoolEditForm({
           </div>
           {/* arbitration section */}
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col">
-              <h6 className="mt-4">Arbitration settings</h6>
-            </div>
+            <h6 className="mt-4">Arbitration settings</h6>
             <FormInput
               tooltip={
                 'Deposited by proposal creator and forfeited if the proposal is ruled as "Rejected" by the Tribunal (violation of Covenant found).\n Deposit is returned when the proposal is either cancelled by the creator or executed successfully.'

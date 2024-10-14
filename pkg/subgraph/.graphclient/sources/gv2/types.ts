@@ -569,6 +569,7 @@ export type CVStrategy = {
   totalEffectiveActivePoints: Scalars['BigInt']['output'];
   isEnabled: Scalars['Boolean']['output'];
   token: Scalars['String']['output'];
+  sybilScorer?: Maybe<PassportScorer>;
 };
 
 
@@ -845,6 +846,27 @@ export type CVStrategy_filter = {
   token_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   token_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   token_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_gt?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_lt?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_gte?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_lte?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  sybilScorer_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  sybilScorer_contains?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_contains?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_starts_with?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_ends_with?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_?: InputMaybe<PassportScorer_filter>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
@@ -886,7 +908,9 @@ export type CVStrategy_orderBy =
   | 'maxCVSupply'
   | 'totalEffectiveActivePoints'
   | 'isEnabled'
-  | 'token';
+  | 'token'
+  | 'sybilScorer'
+  | 'sybilScorer__id';
 
 export type CollateralVault = {
   id: Scalars['ID']['output'];

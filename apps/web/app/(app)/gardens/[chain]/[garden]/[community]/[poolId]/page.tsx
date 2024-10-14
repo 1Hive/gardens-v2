@@ -27,7 +27,7 @@ export default function Page({
   params: { chain: string; poolId: number; garden: string };
 }) {
   const searchParams = useCollectQueryParams();
-
+  
   const { data, refetch, error } = useSubgraphQuery<getPoolDataQuery>({
     query: getPoolDataDocument,
     variables: { poolId: poolId, garden: garden },

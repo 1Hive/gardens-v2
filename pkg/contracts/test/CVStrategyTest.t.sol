@@ -203,7 +203,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             PointSystem.Unlimited,
             PointSystemConfig(200 * DECIMALS),
             arbitrableConfig,
-            new address[](1)
+            new address[](1),
+            address(0),
+            0
         );
 
         // CVStrategyV0_0 strategy = new CVStrategyV0_0(address(allo()));
@@ -987,7 +989,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7));
         vm.roll(rollTo100 * 2);
 
         console.log("after block.number", block.number);
@@ -1096,7 +1098,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7));
         vm.roll(rollTo100 * 2);
 
         console.log("after block.number", block.number);
@@ -1226,7 +1228,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
-        // console2.log(cv.getDecay());
+        // console2.log(getDecay(cv));
         vm.roll(10);
         console.log("after block.number", block.number);
         // x = 8731 / 149253
@@ -1275,7 +1277,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         }
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7));
 
         vm.roll(rollTo100 * 2);
         console.log("after block.number", block.number);
@@ -1352,7 +1354,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         // assertEq(cv.getMaxConviction(cv.getProposalStakedAmount(proposalId)), 57806809642175848314931, "maxCVStaked");
 
-        // console2.log(cv.getDecay());
+        // console2.log(getDecay(cv));
         vm.roll(10);
         console.log("after block.number", block.number);
         // x = 8731 / 149253
@@ -1401,7 +1403,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         }
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7));
         vm.roll(rollTo100 * 2);
         console.log("after block.number", block.number);
         console.log("Conviction After:  %s", cv.updateProposalConviction(proposalId));
@@ -1504,7 +1506,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         );
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7));
 
         vm.roll(rollTo100);
         // vm.roll(110);
@@ -1801,8 +1803,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         console.log("TOTAL POINTS ACTIVATED", cv.totalEffectiveActivePoints());
         stopMeasuringGas();
 
-        // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
-        vm.roll(calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7)));
+        // uint256 rollTo100 = calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7));
+        vm.roll(calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7)));
 
         cv.updateProposalConviction(proposalId);
 
@@ -1879,7 +1881,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7));
         vm.roll(rollTo100);
 
         cv.updateProposalConviction(proposalId);
@@ -1962,7 +1964,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         stopMeasuringGas();
 
         uint256 rollTo100 =
-            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(cv.getDecay(), 1e7));
+            calculateBlocksTo100(ABDKMath64x64.divu(9999999, 1e7), ABDKMath64x64.divu(getDecay(cv), 1e7));
         vm.roll(rollTo100);
 
         cv.updateProposalConviction(proposalId);
@@ -2037,7 +2039,7 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
         vm.startPrank(gardenMember);
         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.OnlyCouncilSafe.selector));
-        cv.setSybilScorer(address(gardenMember));
+        cv.setSybilScorer(address(gardenMember), 5);
     }
 
     function testRevert_conviction_distribute() public {
@@ -2241,7 +2243,9 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
             PointSystem.Unlimited,
             PointSystemConfig(200 * DECIMALS),
             arbitrableConfig,
-            new address[](1)
+            new address[](1),
+            address(0),
+            0
         );
         vm.expectRevert(abi.encodeWithSelector(CVStrategyV0_0.RegistryCannotBeZero.selector));
         _registryCommunity().createPool(NATIVE, params, metadata);
@@ -2518,9 +2522,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer));
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
@@ -2543,9 +2546,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer));
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
@@ -2567,9 +2569,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer));
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
 
         // passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
@@ -2616,9 +2617,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer));
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
@@ -2637,9 +2637,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         (IAllo.Pool memory pool, uint256 poolId,) = _createProposal(NATIVE, 0, 0);
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer));
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
@@ -2662,9 +2661,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer));
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
@@ -2691,9 +2689,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
 
         CVStrategyV0_0 cv = CVStrategyV0_0(payable(address(pool.strategy)));
 
-        passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
         vm.startPrank(address(_councilSafe()));
-        cv.setSybilScorer(address(passportScorer));
+        cv.setSybilScorer(address(passportScorer), MINIMUM_SCORE);
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 

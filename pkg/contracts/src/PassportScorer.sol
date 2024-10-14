@@ -6,6 +6,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 
+/// @custom:oz-upgrades-from PassportScorer
 contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, ISybilScorer {
     address public listManager;
 
@@ -35,7 +36,10 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     }
 
     modifier onlyCouncilOrAuthorized(address _strategy) {
-        if (msg.sender == owner() || msg.sender == listManager || msg.sender == strategies[_strategy].councilSafe) {
+        if (
+            msg.sender == owner() || msg.sender == _strategy || msg.sender == listManager
+                || msg.sender == strategies[_strategy].councilSafe
+        ) {
             _;
         } else {
             revert OnlyCouncilOrAuthorized();
@@ -92,7 +96,7 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     /// @notice Add a strategy to the contract
     /// @param _threshold is expressed on a scale of 10**4
     /// @param _councilSafe address of the council safe
-    function addStrategy(address _strategy, uint256 _threshold, address _councilSafe) external onlyAuthorized {
+    function addStrategy(address _strategy, uint256 _threshold, address _councilSafe) external {
         _revertZeroAddress(_strategy);
         _revertZeroAddress(_councilSafe);
         if (strategies[_strategy].threshold != 0 || strategies[_strategy].councilSafe != address(0)) {

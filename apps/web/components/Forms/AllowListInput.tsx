@@ -129,7 +129,7 @@ export function AllowListInput({
   }, [register, registerKey, registerOptions, required]);
 
   useEffect(() => {
-    if (errors[registerKey] && addresses.length === 0) {
+    if (errors[registerKey] && addresses.length === 0 && required) {
       setErrorMessage("At least one address is required");
     } else {
       setErrorMessage("");

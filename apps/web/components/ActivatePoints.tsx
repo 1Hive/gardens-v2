@@ -35,7 +35,7 @@ export function ActivatePoints({
   const { publish } = usePubSubContext();
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
   const isAllowed = useCheckAllowList(allowList, connectedAccount);
-
+  
   const { write: writeActivatePoints, error: errorActivatePoints } =
     useContractWriteWithConfirmations({
       chainId,

@@ -2,7 +2,7 @@ import {
   CVStrategy,
   PassportScorer,
   PassportStrategy,
-  PassportUser,
+  PassportUser
 } from "../../generated/schema";
 import { log, BigInt } from "@graphprotocol/graph-ts";
 import {
@@ -10,19 +10,30 @@ import {
   UserRemoved,
   StrategyAdded,
   StrategyActivated,
+  Initialized
 } from "../../generated/PassportScorer/PassportScorer";
+
+export function handleInitialized(event: Initialized): void {
+  let passportScorer = new PassportScorer(event.address.toHexString());
+  passportScorer.save();
+}
 
 export function handleUserScoreAdded(event: UserScoreAdded): void {
   let passportScorer = PassportScorer.load(event.address.toHexString());
+
   if (passportScorer == null) {
-    passportScorer = new PassportScorer(event.address.toHexString());
-    passportScorer.save();
+    log.error(
+      "PassportScorer: handleUserScoreAdded, PassportScorer not found: {}",
+      [event.address.toHexString()]
+    );
+    return;
   }
 
   let passportUser = PassportUser.load(event.params.user.toHexString());
   if (passportUser == null) {
     passportUser = new PassportUser(event.params.user.toHexString());
   }
+
   passportUser.score = event.params.score;
   passportUser.userAddress = event.params.user.toHexString();
   passportUser.lastUpdated = event.block.timestamp;
@@ -33,7 +44,9 @@ export function handleUserScoreAdded(event: UserScoreAdded): void {
 export function handleUserRemoved(event: UserRemoved): void {
   let passportUser = PassportUser.load(event.params.user.toHexString());
   if (passportUser == null) {
-    log.debug("PassportScorer: PassportUser not found: {}", [event.params.user.toHexString()]);
+    log.debug("PassportScorer: PassportUser not found: {}", [
+      event.params.user.toHexString()
+    ]);
     return;
   }
   passportUser.score = BigInt.fromI32(0);
@@ -43,13 +56,17 @@ export function handleUserRemoved(event: UserRemoved): void {
 export function handleStrategyAdded(event: StrategyAdded): void {
   let passportScorer = PassportScorer.load(event.address.toHexString());
   if (passportScorer == null) {
-    passportScorer = new PassportScorer(event.address.toHexString());
-    passportScorer.save();
+    log.error(
+      "PassportScorer: handleStrategyAdded, PassportScorer not found: {}",
+      [event.address.toHexString()]
+    );
+    return;
   }
+
   let cvStrategy = CVStrategy.load(event.params.strategy.toHexString());
   if (cvStrategy == null) {
-    log.debug("PassportScorer: CvStrategy  not found: {}", [
-      event.params.strategy.toHexString(),
+    log.debug("PassportScorer: handleStrategyAdded, CvStrategy not found: {}", [
+      event.params.strategy.toHexString()
     ]);
     return;
   }
@@ -66,9 +83,10 @@ export function handleStrategyAdded(event: StrategyAdded): void {
 export function handleStrategyActivated(event: StrategyActivated): void {
   let strategy = PassportStrategy.load(event.params.strategy.toHexString());
   if (strategy == null) {
-    log.debug("PassportScorer: PassportStrategy  not found: {}", [
-      event.params.strategy.toHexString(),
-    ]);
+    log.debug(
+      "PassportScorer: handleStrategyActivated, PassportStrategy not found: {}",
+      [event.params.strategy.toHexString()]
+    );
     return;
   }
   strategy.active = true;

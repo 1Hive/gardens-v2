@@ -239,6 +239,9 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     poolId
     totalEffectiveActivePoints
     isEnabled
+    sybilScorer {
+      id
+    }
     memberActive {
       id
     }

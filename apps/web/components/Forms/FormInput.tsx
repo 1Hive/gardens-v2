@@ -125,6 +125,7 @@ export function FormInput({
               disabled={disabled || readOnly}
               readOnly={readOnly || disabled}
               required={required}
+              value={value}
               onChange={(v) => {
                 const e = {
                   target: { value: v },

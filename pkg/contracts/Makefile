@@ -487,8 +487,8 @@ deploy-multi-gnosis:
 	--via-ir \
 	-vvv
 
-deploy-multi-gnosis: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+upgrade-multi-gnosis: 
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
 	--account pkGarden \

@@ -132,6 +132,7 @@ contract DeployCV is Native, CVStrategyHelpers, Script, SafeSetup {
         paramsCV.proposalType = ProposalType.Funding;
         paramsCV.pointSystem = PointSystem.Unlimited;
         paramsCV.sybilScorer = address(sybilScorer);
+        paramsCV.sybilScorerThreshold = 1;
 
         // Point config
         PointSystemConfig memory pointConfig;

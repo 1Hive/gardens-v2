@@ -62,6 +62,13 @@ export function CheckPassport({
   });
   const passportUser = passportUserData?.passportUser;
 
+  console.log({
+    walletAddr: walletAddr?.toLowerCase(),
+    passportUserData,
+    passportUser,
+    enableCheck,
+  });
+
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,

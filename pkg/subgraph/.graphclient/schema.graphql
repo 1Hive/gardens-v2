@@ -570,6 +570,7 @@ type CVStrategy {
   totalEffectiveActivePoints: BigInt!
   isEnabled: Boolean!
   token: String!
+  sybilScorer: PassportScorer
 }
 
 type CVStrategyConfig {
@@ -829,6 +830,27 @@ input CVStrategy_filter {
   token_ends_with_nocase: String
   token_not_ends_with: String
   token_not_ends_with_nocase: String
+  sybilScorer: String
+  sybilScorer_not: String
+  sybilScorer_gt: String
+  sybilScorer_lt: String
+  sybilScorer_gte: String
+  sybilScorer_lte: String
+  sybilScorer_in: [String!]
+  sybilScorer_not_in: [String!]
+  sybilScorer_contains: String
+  sybilScorer_contains_nocase: String
+  sybilScorer_not_contains: String
+  sybilScorer_not_contains_nocase: String
+  sybilScorer_starts_with: String
+  sybilScorer_starts_with_nocase: String
+  sybilScorer_not_starts_with: String
+  sybilScorer_not_starts_with_nocase: String
+  sybilScorer_ends_with: String
+  sybilScorer_ends_with_nocase: String
+  sybilScorer_not_ends_with: String
+  sybilScorer_not_ends_with_nocase: String
+  sybilScorer_: PassportScorer_filter
   """Filter for the block changed event."""
   _change_block: BlockChangedFilter
   and: [CVStrategy_filter]
@@ -871,6 +893,8 @@ enum CVStrategy_orderBy {
   totalEffectiveActivePoints
   isEnabled
   token
+  sybilScorer
+  sybilScorer__id
 }
 
 type CollateralVault {

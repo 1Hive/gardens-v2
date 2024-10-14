@@ -543,6 +543,7 @@ export type CVStrategy = {
     totalEffectiveActivePoints: Scalars['BigInt']['output'];
     isEnabled: Scalars['Boolean']['output'];
     token: Scalars['String']['output'];
+    sybilScorer?: Maybe<PassportScorer>;
 };
 export type CVStrategyproposalsArgs = {
     skip?: InputMaybe<Scalars['Int']['input']>;
@@ -792,12 +793,33 @@ export type CVStrategy_filter = {
     token_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
     token_not_ends_with?: InputMaybe<Scalars['String']['input']>;
     token_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_not?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_gt?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_lt?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_gte?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_lte?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    sybilScorer_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+    sybilScorer_contains?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_not_contains?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_starts_with?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_ends_with?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+    sybilScorer_?: InputMaybe<PassportScorer_filter>;
     /** Filter for the block changed event. */
     _change_block?: InputMaybe<BlockChangedFilter>;
     and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
     or?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
 };
-export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token';
+export type CVStrategy_orderBy = 'id' | 'poolId' | 'poolAmount' | 'metadata' | 'registryCommunity' | 'registryCommunity__id' | 'registryCommunity__chainId' | 'registryCommunity__strategyTemplate' | 'registryCommunity__profileId' | 'registryCommunity__communityFee' | 'registryCommunity__protocolFee' | 'registryCommunity__communityName' | 'registryCommunity__covenantIpfsHash' | 'registryCommunity__councilSafe' | 'registryCommunity__isKickEnabled' | 'registryCommunity__registerStakeAmount' | 'registryCommunity__registerToken' | 'registryCommunity__alloAddress' | 'registryCommunity__isValid' | 'config' | 'config__id' | 'config__D' | 'config__decay' | 'config__maxRatio' | 'config__minThresholdPoints' | 'config__weight' | 'config__proposalType' | 'config__pointSystem' | 'config__maxAmount' | 'proposals' | 'memberActive' | 'maxCVSupply' | 'totalEffectiveActivePoints' | 'isEnabled' | 'token' | 'sybilScorer' | 'sybilScorer__id';
 export type CollateralVault = {
     id: Scalars['ID']['output'];
     strategy: CVStrategy;
@@ -3112,6 +3134,7 @@ export type CVStrategyResolvers<ContextType = MeshContext, ParentType extends Re
     totalEffectiveActivePoints?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
     isEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
     token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+    sybilScorer?: Resolver<Maybe<ResolversTypes['PassportScorer']>, ParentType, ContextType>;
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 export type CVStrategyConfigResolvers<ContextType = MeshContext, ParentType extends ResolversParentTypes['CVStrategyConfig'] = ResolversParentTypes['CVStrategyConfig']> = ResolversObject<{
@@ -3601,6 +3624,7 @@ export type getPoolDataQuery = {
     allos: Array<Pick<Allo, 'id' | 'chainId' | 'tokenNative'>>;
     tokenGarden?: Maybe<Pick<TokenGarden, 'address' | 'name' | 'symbol' | 'description' | 'totalBalance' | 'ipfsCovenant' | 'decimals'>>;
     cvstrategies: Array<(Pick<CVStrategy, 'token' | 'poolAmount' | 'metadata' | 'id' | 'poolId' | 'totalEffectiveActivePoints' | 'isEnabled'> & {
+        sybilScorer?: Maybe<Pick<PassportScorer, 'id'>>;
         memberActive?: Maybe<Array<Pick<Member, 'id'>>>;
         config: Pick<CVStrategyConfig, 'id' | 'weight' | 'decay' | 'maxAmount' | 'maxRatio' | 'minThresholdPoints' | 'pointSystem' | 'proposalType' | 'allowlist'>;
         registryCommunity: (Pick<RegistryCommunity, 'id' | 'councilSafe' | 'isValid'> & {

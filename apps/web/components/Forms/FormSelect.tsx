@@ -11,6 +11,7 @@ type Props = {
   errors?: any;
   required?: boolean;
   registerOptions?: RegisterOptions;
+  placeholder?: string;
   options: Option[];
   tooltip?: string;
   readOnly?: boolean;
@@ -23,6 +24,7 @@ export function FormSelect({
   register,
   required = false,
   registerOptions,
+  placeholder,
   options,
   tooltip,
   readOnly,
@@ -55,6 +57,11 @@ export function FormSelect({
         })}
         disabled={disabled}
       >
+        {placeholder && (
+          <option value="" disabled selected>
+            {placeholder}
+          </option>
+        )}
         {options.map(({ value, label: lab }) => (
           <option value={value} key={value}>
             {lab}

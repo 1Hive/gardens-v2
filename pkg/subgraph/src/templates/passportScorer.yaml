@@ -19,6 +19,8 @@
         - name: {{name}}
           file: ../contracts/out/{{name}}.sol/{{name}}.json
       eventHandlers:
+        - event: Initialized(uint8)
+          handler: handleInitialized
         - event: UserScoreAdded(indexed address,uint256,uint256)
           handler: handleUserScoreAdded
         - event: UserRemoved(indexed address)

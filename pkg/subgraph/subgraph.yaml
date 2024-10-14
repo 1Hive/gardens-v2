@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: localhost
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
       address: "0x5b1ed8559c26b06b79729e46aee400605f07a109"
       abi: RegistryFactoryV0_0
@@ -40,11 +40,11 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: localhost
+    network: arbitrum-sepolia
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
       address: "0xbeca1cf897ecd4bb21b835eaa221f1b6a96524f4"
       abi: PassportScorer
@@ -59,6 +59,8 @@ dataSources:
         - name: PassportScorer
           file: ../contracts/out/PassportScorer.sol/PassportScorer.json
       eventHandlers:
+        - event: Initialized(uint8)
+          handler: handleInitialized
         - event: UserScoreAdded(indexed address,uint256,uint256)
           handler: handleUserScoreAdded
         - event: UserRemoved(indexed address)
@@ -71,7 +73,7 @@ dataSources:
 
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunityV0_1
+    name: RegistryCommunityV0_0
     network: arbitrum-sepolia
     source:
       abi: RegistryCommunityV0_0
@@ -133,7 +135,7 @@ templates:
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategyV0_1
+    name: CVStrategyV0_0
     network: arbitrum-sepolia
     source:
       abi: CVStrategyV0_0
@@ -156,7 +158,7 @@ templates:
       eventHandlers:
         - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
-        - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address[]))
+        - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[]))
           handler: handleInitializedV2
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
@@ -186,12 +188,14 @@ templates:
           handler: handleAllowlistMembersAdded
         - event: AllowlistMembersRemoved(uint256,address[])
           handler: handleAllowlistMembersRemoved
+        - event: SybilScorerUpdated(address)
+          handler: handleSybilScorerUpdated
  
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: CollateralVault
     mapping:
