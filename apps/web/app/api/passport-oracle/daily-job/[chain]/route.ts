@@ -19,11 +19,6 @@ import { getViemChain } from "@/utils/web3";
 
 const LIST_MANAGER_PRIVATE_KEY = process.env.LIST_MANAGER_PRIVATE_KEY ?? "";
 const LOCAL_RPC = "http://127.0.0.1:8545";
-<<<<<<<< HEAD:apps/web/app/api/passport-oracle/dailyJob/[chain]/route.ts
-
-const API_ENDPOINT = "/api/passport/scores";
-========
->>>>>>>> 648e2f64 (:recycle: Refactored daily job route for multi-chain support):apps/web/app/api/passport-oracle/daily-job/[chain]/route.ts
 
 interface PassportUser {
   id: string;
@@ -172,22 +167,15 @@ const updateScores = async (chain: string) => {
   return updates;
 };
 
-<<<<<<<< HEAD:apps/web/app/api/passport-oracle/dailyJob/[chain]/route.ts
-export async function POST(req: Request, { params }: Params) {
-========
 export async function GET(req: Request, { params }: Params) {
->>>>>>>> 648e2f64 (:recycle: Refactored daily job route for multi-chain support):apps/web/app/api/passport-oracle/daily-job/[chain]/route.ts
   const apiKey = req.headers.get("Authorization");
   const { chain } = params;
 
   if (apiKey !== process.env.CRON_SECRET) {
-<<<<<<<< HEAD:apps/web/app/api/passport-oracle/dailyJob/[chain]/route.ts
-========
     console.error("Unauthorized", {
       req: req.url,
       chain,
     });
->>>>>>>> 648e2f64 (:recycle: Refactored daily job route for multi-chain support):apps/web/app/api/passport-oracle/daily-job/[chain]/route.ts
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
