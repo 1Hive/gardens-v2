@@ -178,7 +178,8 @@ export const IncreasePower = ({
       condition:
         parseUnits(amount.toString(), tokenDecimals) >
         memberStakedTokens - registerStakeAmountBigInt,
-      message: "You can only decrease your added stake.",
+      message:
+        "You have the minimun tokens staked to be a member in this community.",
     },
   ];
 
