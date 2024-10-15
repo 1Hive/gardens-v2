@@ -330,7 +330,7 @@ export const ProposalForm = ({
                 registerOptions={{
                   max: {
                     value: spendingLimitNumber,
-                    message: `Max amount cannot exceed ${formatNumber(spendingLimitString)} ${poolToken?.symbol}`,
+                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimitString)} ${poolToken?.symbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
@@ -403,10 +403,10 @@ export const ProposalForm = ({
           {arbitrableConfig && (
             <WalletBalance
               askedAmount={arbitrableConfig.submitterCollateralAmount}
-              label="Proposal stake"
+              label="Collateral deposit"
               setIsEnoughBalance={setIsEnoughBalance}
               token="native"
-              tooltip="A stake is required for proposal submission. It will be refunded upon proposal execution or cancellation, except in the case of disputes, where it is forfeited."
+              tooltip="A stake is required as collateral for proposal submission and is returned upon execution or cancellation, except in the case of disputed and found to be in violation of the Covenant by the Tribunal, where it is forfeited."
             />
           )}
         </div>

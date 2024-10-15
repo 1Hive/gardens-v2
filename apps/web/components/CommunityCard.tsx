@@ -34,7 +34,7 @@ export function CommunityCard({
     <Card
       key={id}
       href={`${pathname}/${id}`}
-      className={`w-[275px] sm:m-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
+      className={`w-[275px] sm:min-w-[313px] ${isNewCommunity ? "shadow-2xl" : ""}`}
     >
       <Image
         src={commImg}

@@ -14,10 +14,13 @@ import {
   CVStrategyConfig,
   TokenGarden,
 } from "#/subgraph/.graphclient";
+import { Skeleton } from "./Skeleton";
+import TooltipIfOverflow from "./TooltipIfOverflow";
 import { blueLand, grass } from "@/assets";
 import { Badge, Card, DisplayNumber, Statistic } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { useCollectQueryParams } from "@/contexts/collectQueryParams.context";
+import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { PointSystems, PoolTypes } from "@/types";
 import { capitalize } from "@/utils/text";
 
@@ -36,7 +39,11 @@ export function PoolCard({ pool, tokenGarden }: Props) {
   const pathname = usePathname();
   const searchParams = useCollectQueryParams();
 
-  let { poolAmount, poolId, proposals, isEnabled, config } = pool;
+  let { poolAmount, poolId, proposals, isEnabled, config, metadata } = pool;
+
+  const { metadata: ipfsResult } = useMetadataIpfsFetch({
+    hash: metadata,
+  });
 
   poolAmount = poolAmount || 0;
   const poolType = config?.proposalType as number | undefined;
@@ -46,13 +53,20 @@ export function PoolCard({ pool, tokenGarden }: Props) {
   return (
     <Card
       href={`${pathname}/${poolId}`}
-      className={isNewPool ? "shadow-2xl" : ""}
+      className={`w-[275px] sm:min-w-[313px] ${isNewPool ? "shadow-2xl" : ""}`}
     >
-      <header className="mb-4 flex w-full items-center justify-between">
-        <h4>Pool #{poolId}</h4>
-        <Badge type={poolType} />
+      <header className="mb-4 flex flex-col w-full justify-between items-start gap-2">
+        <Skeleton isLoading={!ipfsResult}>
+          <h3 className="flex items-start w-fit max-w-full">
+            <TooltipIfOverflow>{ipfsResult?.title}</TooltipIfOverflow>
+          </h3>
+        </Skeleton>
+        <div className="flex justify-between items-center w-full">
+          <h6>ID #{poolId}</h6>
+          <Badge type={poolType} />
+        </div>
       </header>
-      <div className="mb-10 flex min-h-[60px] flex-col gap-2">
+      <div className="mb-8 flex min-h-[60px] flex-col gap-2">
         <Statistic
           icon={<BoltIcon />}
           label="voting weight"
