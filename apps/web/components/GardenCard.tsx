@@ -51,13 +51,13 @@ export function GardenCard({ garden }: { garden: TokenGarden }) {
             <div className="align-start flex flex-col justify-start">
               <p className="text-neutral-content text-sm">Network:</p>
               <div className="flex gap-2.5 items-center mt-1">
+                <h5 className="text-neutral-content">
+                  {getConfigByChain(chainId)?.name}
+                </h5>
                 <div className="flex content-center justify-center">
                   {/* TODO: change Icon library */}
                   <ChainIcon chain={chainId} height={24} />
                 </div>
-                <h5 className="text-neutral-content">
-                  {getConfigByChain(chainId)?.name}
-                </h5>
               </div>
             </div>
           </div>
