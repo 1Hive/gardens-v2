@@ -9,15 +9,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "./Button";
 import { getTitlesFromUrlSegments } from "@/services/getTitlesFromUrlSegments";
+import { truncateString } from "@/utils/text";
 
 interface Breadcrumb {
   href: string;
   label: string;
 }
 
-const truncateString = (str: string) => {
-  return `${str.slice(0, 6)}...${str.slice(-4)}`;
-};
+
 
 export function Breadcrumbs() {
   const path = usePathname();

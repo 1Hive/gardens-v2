@@ -4,6 +4,7 @@ import { formatUnits } from "viem";
 export const INPUT_MIN_VALUE = 0.000000000001;
 export const MAX_RATIO_CONSTANT = 0.77645;
 export const CV_PERCENTAGE_SCALE = 10 ** 4;
+export const CV_PASSPORT_THRESHOLD_SCALE = 10 ** 4;
 export const CV_PERCENTAGE_SCALE_DECIMALS = 4;
 
 export const UI_PERCENTAGE_FORMAT = 10 ** 2; // 100% = 1

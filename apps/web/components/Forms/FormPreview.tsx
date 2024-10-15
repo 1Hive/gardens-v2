@@ -32,7 +32,9 @@ export function FormPreview({
             <TooltipIfOverflow>{title}</TooltipIfOverflow>
           </h3>
 
-          <MarkdownWrapper>{description}</MarkdownWrapper>
+          <div className="block shadow-inner p-4">
+            <MarkdownWrapper>{description}</MarkdownWrapper>
+          </div>
         </div>
       )}
 

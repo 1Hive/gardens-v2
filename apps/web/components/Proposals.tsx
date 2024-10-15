@@ -32,12 +32,13 @@ import {
 } from "@/components";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
+import useCheckAllowList from "@/hooks/useCheckAllowList";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI, registryCommunityABI } from "@/src/generated";
 import { ProposalStatus } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { calculatePercentage } from "@/utils/numbers";
 
@@ -66,7 +67,10 @@ type Stats = {
 };
 
 interface ProposalsProps {
-  strategy: Pick<CVStrategy, "id" | "poolId" | "totalEffectiveActivePoints"> & {
+  strategy: Pick<
+    CVStrategy,
+    "id" | "poolId" | "totalEffectiveActivePoints" | "sybilScorer"
+  > & {
     registryCommunity: Pick<RegistryCommunity, "id"> & {
       garden: Pick<RegistryCommunity["garden"], "decimals">;
     };
@@ -105,6 +109,8 @@ export function Proposals({
   const { address: wallet } = useAccount();
   const { publish } = usePubSubContext();
   const chainId = useChainIdFromPath();
+  const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
+  const isAllowed = useCheckAllowList(allowList, wallet);
 
   const tokenDecimals = strategy.registryCommunity.garden.decimals;
 
@@ -283,7 +289,7 @@ export function Proposals({
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
     contractName: "Allo",
-    fallbackErrorMessage: "Error allocating points. Please try again.",
+    fallbackErrorMessage: "Error allocating points, please report a bug.",
     onSuccess: () => {
       setAllocationView(false);
     },
@@ -375,6 +381,10 @@ export function Proposals({
       condition: !memberActivatedStrategy,
       message: "Must have points activated to support proposals",
     },
+    {
+      condition: !isAllowed,
+      message: "Address not in allowlist",
+    },
   ];
 
   const disableManSupportButton = disableManageSupportBtnCondition.some(
@@ -411,14 +421,14 @@ export function Proposals({
               (proposals.length === 0 ?
                 <h4 className="text-2xl">No submitted proposals to support</h4>
               : !allocationView && (
-                  <CheckPassport strategyAddr={strategy.id as Address}>
+                  <CheckPassport strategy={strategy}>
                     <Button
                       icon={
                         <AdjustmentsHorizontalIcon height={24} width={24} />
                       }
                       onClick={() => setAllocationView((prev) => !prev)}
-                      disabled={disableManSupportButton}
-                      tooltip={String(tooltipMessage)}
+                      disabled={disableManSupportButton || !isAllowed}
+                      tooltip={tooltipMessage}
                     >
                       Manage support
                     </Button>
@@ -518,11 +528,12 @@ export function Proposals({
           </div>
         : <div>
             <div className="flex items-center justify-center gap-6">
-              <CheckPassport strategyAddr={strategy.id as Address}>
+              <CheckPassport strategy={strategy}>
                 <Link href={createProposalUrl}>
                   <Button
                     icon={<PlusIcon height={24} width={24} />}
-                    disabled={!isConnected || missmatchUrl}
+                    disabled={!isConnected || missmatchUrl || !isAllowed}
+                    tooltip="Address not in allowlist"
                   >
                     Create a proposal
                   </Button>

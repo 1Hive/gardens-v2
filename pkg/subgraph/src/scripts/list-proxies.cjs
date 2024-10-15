@@ -44,6 +44,7 @@ async function extractProxies(chainId) {
   let registryFactoryProxy;
   let registryCommunityProxies = [];
   let cvStrategiesProxies = [];
+  let passportScorerProxy;
 
   let subgraphEndpoint;
 
@@ -79,8 +80,12 @@ async function extractProxies(chainId) {
   cvstrategies {
     id
   }
+  passportScorers {
+    id
+  }
 }`;
 
+  console.debug("Querying subgraph", subgraphEndpoint);
   const response = await fetch(subgraphEndpoint, {
     method: "POST",
     headers: {
@@ -108,21 +113,7 @@ async function extractProxies(chainId) {
     throw new Error("Error in response: " + (await response.text()));
   }
 
-  // console.log({
-  //   registryFactories: result.data.registryFactories,
-  // });
-
-  // console.log({
-  //   registryCommunities: result.data.registryCommunities,
-  // });
-
-  // console.log({
-  //   cvstrategies: result.data.cvstrategies,
-  // });
-
-  result.data.registryFactories.forEach((factory) => {
-    registryFactoryProxy = factory.id;
-  });
+  registryFactoryProxy = result.data.registryFactories[0].id;
 
   result.data.registryCommunities.forEach((community) => {
     registryCommunityProxies.push(community.id);
@@ -132,10 +123,13 @@ async function extractProxies(chainId) {
     cvStrategiesProxies.push(strategy.id);
   });
 
+  passportScorerProxy = result.data.passportScorers[0].id;
+
   return {
     REGISTRY_FACTORY: registryFactoryProxy,
     REGISTRY_COMMUNITIES: registryCommunityProxies,
     CV_STRATEGIES: cvStrategiesProxies,
+    PASSPORT_SCORER: passportScorerProxy,
   };
 }
 

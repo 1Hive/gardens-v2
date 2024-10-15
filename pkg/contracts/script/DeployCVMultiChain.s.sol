@@ -14,7 +14,7 @@ import {Allo} from "allo-v2-contracts/core/Allo.sol";
 import {IRegistry} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 import {Registry} from "allo-v2-contracts/core/Registry.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
-import {CVStrategyHelpersV0_0, CVStrategyV0_0} from "../test/CVStrategyHelpersV0_0.sol";
+import {CVStrategyHelpers, CVStrategyV0_0} from "../test/CVStrategyHelpers.sol";
 import {GV2ERC20} from "./GV2ERC20.sol";
 import {SafeSetup} from "../test/shared/SafeSetup.sol";
 import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
@@ -22,7 +22,10 @@ import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
 import {RegistryFactoryV0_0} from "../src/RegistryFactory/RegistryFactoryV0_0.sol";
 
-import {RegistryCommunityV0_0} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
+import {
+    RegistryCommunityV0_0,
+    RegistryCommunityInitializeParamsV0_0
+} from "../src/RegistryCommunity/RegistryCommunityV0_0.sol";
 import {ISafe as Safe, SafeProxyFactory, Enum} from "../src/interfaces/ISafe.sol";
 import {CollateralVault} from "../src/CollateralVault.sol";
 // import {SafeProxyFactory} from "safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
@@ -33,7 +36,7 @@ import {PassportScorer} from "../src/PassportScorer.sol";
 import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {ProxyOwner} from "../src/ProxyOwner.sol";
 
-contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup {
+contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
     using stdJson for string;
 
     uint256 public MINIMUM_STAKE = 1 ether;
@@ -203,7 +206,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             assertTrue(token != GV2ERC20(address(0)));
             assertTrue(TOKEN != address(0));
 
-            RegistryCommunityV0_0.InitializeParams memory params;
+            RegistryCommunityInitializeParamsV0_0 memory params;
 
             metadata = Metadata({protocol: 1, pointer: "QmX5jPva6koRnn88s7ZcPnNXKg1UzmYaZu9h15d8kzH1CN"});
             params._metadata = metadata; // convenant ipfs
@@ -221,17 +224,20 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
 
             RegistryCommunityV0_0 registryCommunity = RegistryCommunityV0_0(REGISTRY_FACTORY.createRegistry(params));
 
-            StrategyStruct.PointSystemConfig memory pointConfig;
+            PointSystemConfig memory pointConfig;
             pointConfig.maxAmount = MINIMUM_STAKE * 2;
 
-            StrategyStruct.InitializeParams memory paramsCV = getParams(
+            CVStrategyInitializeParamsV0_1 memory paramsCV = getParams(
                 address(registryCommunity),
-                StrategyStruct.ProposalType.Funding,
-                StrategyStruct.PointSystem.Fixed,
+                ProposalType.Funding,
+                PointSystem.Fixed,
                 pointConfig,
-                StrategyStruct.ArbitrableConfig(
+                ArbitrableConfig(
                     IArbitrator(address(ARBITRATOR)), payable(COUNCIL_SAFE), 0.002 ether, 0.001 ether, 1, 300
-                )
+                ),
+                new address[](1),
+                address(0),
+                0
             );
 
             (uint256 poolId, address _strategy1) = registryCommunity.createPool(
@@ -240,8 +246,8 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
                 Metadata({protocol: 1, pointer: "QmVtM9MpAJLre2TZXqRc2FTeEdseeY1HTkQUe7QuwGcEAN"})
             );
 
-            paramsCV.proposalType = StrategyStruct.ProposalType.Signaling;
-            paramsCV.pointSystem = StrategyStruct.PointSystem.Unlimited;
+            paramsCV.proposalType = ProposalType.Signaling;
+            paramsCV.pointSystem = PointSystem.Unlimited;
             paramsCV.sybilScorer = address(PASSPORT_SCORER);
 
             (uint256 poolIdSignaling, address _strategy2) = registryCommunity.createPool(
@@ -288,7 +294,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             token.approve(address(allo), type(uint256).max);
             allo.fundPool(poolId, 10_000 ether);
 
-            StrategyStruct.CreateProposal memory proposal = StrategyStruct.CreateProposal(
+            CreateProposal memory proposal = CreateProposal(
                 poolId,
                 BENEFICIARY,
                 500 ether,
@@ -298,7 +304,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             bytes memory data = abi.encode(proposal);
             allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
-            proposal = StrategyStruct.CreateProposal(
+            proposal = CreateProposal(
                 poolId,
                 BENEFICIARY,
                 1500 ether,
@@ -308,7 +314,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             data = abi.encode(proposal);
             allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
-            proposal = StrategyStruct.CreateProposal(
+            proposal = CreateProposal(
                 poolId,
                 BENEFICIARY,
                 1500 ether,
@@ -319,7 +325,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             allo.registerRecipient{value: 0.002 ether}(poolId, data);
 
             // Strategy with Signaling
-            StrategyStruct.CreateProposal memory proposal2 = StrategyStruct.CreateProposal(
+            CreateProposal memory proposal2 = CreateProposal(
                 poolIdSignaling,
                 address(0),
                 0,
@@ -329,7 +335,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             bytes memory data2 = abi.encode(proposal2);
             allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
-            proposal2 = StrategyStruct.CreateProposal(
+            proposal2 = CreateProposal(
                 poolIdSignaling,
                 address(0),
                 0,
@@ -340,7 +346,7 @@ contract DeployCVMultiChain is Native, CVStrategyHelpersV0_0, Script, SafeSetup 
             data2 = abi.encode(proposal2);
             allo.registerRecipient{value: 0.002 ether}(poolIdSignaling, data2);
 
-            proposal2 = StrategyStruct.CreateProposal(
+            proposal2 = CreateProposal(
                 poolIdSignaling,
                 address(0),
                 0,

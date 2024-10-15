@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.19;
 
-import {ISybilScorer, PassportData, Strategy} from "./ISybilScorer.sol";
+import {ISybilScorer, Strategy} from "./ISybilScorer.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import {CVStrategyV0_0} from "./CVStrategy/CVStrategyV0_0.sol";
 
+/// @custom:oz-upgrades-from PassportScorer
 contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, ISybilScorer {
     address public listManager;
 
-    mapping(address => PassportData) public userScores;
+    mapping(address => uint256) public userScores;
     mapping(address => Strategy) public strategies;
 
-    event UserScoreAdded(address indexed user, uint256 score, uint256 lastUpdated);
+    event UserScoreAdded(address indexed user, uint256 score);
     event UserRemoved(address indexed user);
     event ListManagerChanged(address indexed oldManager, address indexed newManager);
     event StrategyAdded(address indexed strategy, uint256 threshold, bool active, address councilSafe);
@@ -21,6 +23,7 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     event ThresholdModified(address indexed strategy, uint256 newThreshold);
 
     error OnlyAuthorized();
+    error OnlyAuthorizedOrUser();
     error OnlyCouncilOrAuthorized();
     error OnlyCouncil();
     error ZeroAddress();
@@ -35,7 +38,11 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     }
 
     modifier onlyCouncilOrAuthorized(address _strategy) {
-        if (msg.sender == owner() || msg.sender == listManager || msg.sender == strategies[_strategy].councilSafe) {
+        address registryCommunity = address(CVStrategyV0_0(payable(_strategy)).registryCommunity());
+        if (
+            msg.sender == owner() || msg.sender == _strategy || msg.sender == registryCommunity
+                || msg.sender == listManager || msg.sender == strategies[_strategy].councilSafe
+        ) {
             _;
         } else {
             revert OnlyCouncilOrAuthorized();
@@ -55,6 +62,7 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
             revert ZeroAddress();
         }
     }
+    // slither-disable-next-line unprotected-upgrade
 
     function initialize(address _listManager) public initializer {
         __Ownable_init();
@@ -64,11 +72,11 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
 
     /// @notice Add a userScore to the list
     /// @param _user address of the user to add
-    /// @param _passportData PassportData struct with the user score and lastUpdated
-    function addUserScore(address _user, PassportData memory _passportData) external override onlyAuthorized {
+    /// @param _score score to assign to the user
+    function addUserScore(address _user, uint256 _score) external override onlyAuthorized {
         _revertZeroAddress(_user);
-        userScores[_user] = _passportData;
-        emit UserScoreAdded(_user, _passportData.score, _passportData.lastUpdated);
+        userScores[_user] = _score;
+        emit UserScoreAdded(_user, _score);
     }
 
     /// @notice Remove a user from the list
@@ -91,7 +99,11 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     /// @notice Add a strategy to the contract
     /// @param _threshold is expressed on a scale of 10**4
     /// @param _councilSafe address of the council safe
-    function addStrategy(address _strategy, uint256 _threshold, address _councilSafe) external onlyAuthorized {
+    function addStrategy(address _strategy, uint256 _threshold, address _councilSafe)
+        external
+        override
+        onlyCouncilOrAuthorized(_strategy)
+    {
         _revertZeroAddress(_strategy);
         _revertZeroAddress(_councilSafe);
         if (strategies[_strategy].threshold != 0 || strategies[_strategy].councilSafe != address(0)) {
@@ -105,14 +117,13 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     /// @param _strategy address of the strategy to remove
     function removeStrategy(address _strategy) external override onlyCouncilOrAuthorized(_strategy) {
         _revertZeroAddress(_strategy);
-        strategies[_strategy].active = false;
-        strategies[_strategy].threshold = 0;
+        delete strategies[_strategy];
         emit StrategyRemoved(_strategy);
     }
 
     /// @notice Activate a strategy
     /// @param _strategy address of the strategy to activate
-    function activateStrategy(address _strategy) external onlyCouncil(_strategy) {
+    function activateStrategy(address _strategy) external onlyCouncilOrAuthorized(_strategy) {
         _revertZeroAddress(_strategy);
         strategies[_strategy].active = true;
         emit StrategyActivated(_strategy);
@@ -131,26 +142,14 @@ contract PassportScorer is Initializable, UUPSUpgradeable, OwnableUpgradeable, I
     /// @param _user address of the user to check
     /// @param _strategy address of the strategy to check
     function canExecuteAction(address _user, address _strategy) external view override returns (bool) {
-        PassportData memory userScore = userScores[_user];
+        uint256 userScore = userScores[_user];
         Strategy memory strategy = strategies[_strategy];
 
         if (!strategy.active) {
             return true;
         }
 
-        return userScore.score >= strategy.threshold;
-    }
-
-    /// @notice Get the score of a user
-    /// @param _user address of the user to check
-    function getUserScore(address _user) external view returns (PassportData memory) {
-        return userScores[_user];
-    }
-
-    /// @notice Get the strategy data
-    /// @param _strategy address of the strategy to check
-    function getStrategy(address _strategy) external view returns (Strategy memory) {
-        return strategies[_strategy];
+        return userScore >= strategy.threshold;
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}

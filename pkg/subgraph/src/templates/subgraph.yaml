@@ -94,6 +94,8 @@ templates:
       eventHandlers:
         - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
+        - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[]))
+          handler: handleInitializedV2
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
         - event: PoolAmountIncreased(uint256)
@@ -118,6 +120,13 @@ templates:
           handler: handleProposalCancelled
         - event: ArbitrableConfigUpdated(uint256,address,address,uint256,uint256,uint256,uint256)
           handler: handleArbitrableConfigUpdated
+        - event: AllowlistMembersAdded(uint256,address[])
+          handler: handleAllowlistMembersAdded
+        - event: AllowlistMembersRemoved(uint256,address[])
+          handler: handleAllowlistMembersRemoved
+        - event: SybilScorerUpdated(address)
+          handler: handleSybilScorerUpdated
+ 
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract

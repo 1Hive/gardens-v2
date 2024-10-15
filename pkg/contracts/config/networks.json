@@ -15,30 +15,19 @@
         "REGISTRY": "0x4AAcca72145e1dF2aeC137E1f3C5E3D75DB8b5f3"
       },
       "PROXIES": {
-        "REGISTRY_FACTORY": "0x7a603877488db46c0f6b40c2c770becfd7a65593",
+        "REGISTRY_FACTORY": "0x5b1ed8559c26b06b79729e46aee400605f07a109",
         "REGISTRY_COMMUNITIES": [
-          "0xf17e005599813f626ff6b4ff8189105b1306af94",
-          "0xffa2e39cce305c82ffa70f7da0333e5f172be5f6"
+          "0x1f9959dacba2af3fe5f09675f045d043505b252c"
         ],
         "CV_STRATEGIES": [
-          "0x17769fb86708abf03d7083ea7dc6b01976a91c47",
-          "0x271c5834f61901623c00ca274dc0911131e3865d",
-          "0x2b7e64cf97cb0ad9f074e941f29e99899cad6f00",
-          "0x39db23696c0ad7a4afc5db891154a426193d3046",
-          "0x45cbefe5f9f0df5f76c8bdd07003724ec100497f",
-          "0x5d63ec43e1ac82d0bb4434f2d2202eec7bb05d69",
-          "0x768a7ce48322a6360db94a4c3eae3e50babb032c",
-          "0x769e1039322c9516581849485f9780390c2fac9c",
-          "0x7932c33f0a0dd335aecbe83a3d88b2435543a0fb",
-          "0x84b9c9d4f40e3c05278b6f688c5c78c89c7c95a8",
-          "0xbd7474ca99a439d2926526a0168e3e948d2987c6",
-          "0xbf647db7c6bbacaab6a1e956f97c1c4df5ca0d3e",
-          "0xc5ae99a250617a875abc9bbb485dfde746cf3ba9",
-          "0xd76cd68881ad9c95000ad0a8d2f332374e91d23b",
-          "0xdc3a597e60297bf51627918019ba7252b844970c",
-          "0xe0eb96a8c31d95ccca8f7fa52ee38d0d42b4167b",
-          "0xe57e7f0707bdb9c826a7c6da352dfb2be1275c21"
-        ]
+          "0x2927db50355bf5dee0d242fdebd523c0877605c9",
+          "0x5331a67e3d24d2159c0f4cd2cc49773d53ba78ae",
+          "0xbcd04fc19e0c6c9fc0251eb094d8d0d7ae743ac5",
+          "0xc5b49d68df8306a14612acf1d864ce1c5934c680",
+          "0xc6536c1fc4a6ed85fab35e951995082f85876208",
+          "0xd63f1c293eb4e7536b14a679f4d750f8a05554da"
+        ],
+        "PASSPORT_SCORER": "0xbeca1cf897ecd4bb21b835eaa221f1b6a96524f4"
       }
     },
     {

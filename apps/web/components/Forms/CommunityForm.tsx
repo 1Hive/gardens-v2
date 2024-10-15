@@ -17,7 +17,7 @@ import { useChainFromPath } from "@/hooks/useChainFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useDisableButtons } from "@/hooks/useDisableButtons";
 import { registryFactoryABI, safeABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import {
@@ -158,7 +158,7 @@ export const CommunityForm = ({
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
     contractName: "Registry Factory",
-    fallbackErrorMessage: "Error creating community. Please try again.",
+    fallbackErrorMessage: "Error creating community, please report a bug.",
     onConfirmations: async (receipt) => {
       const newCommunityAddr = getEventFromReceipt(
         receipt,

@@ -239,6 +239,9 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
     poolId
     totalEffectiveActivePoints
     isEnabled
+    sybilScorer {
+      id
+    }
     memberActive {
       id
     }
@@ -251,6 +254,7 @@ query getPoolData($garden: ID!, $poolId: BigInt!) {
       minThresholdPoints
       pointSystem
       proposalType
+      allowlist
     }
     registryCommunity {
       id
@@ -521,6 +525,18 @@ query getArbitrableConfigs($strategyId: String!) {
     tribunalSafe
     defaultRuling
     defaultRulingTimeout
+  }
+}
+
+query getMemberPassportAndCommunities($memberId: ID!) {
+  member(id: $memberId) {
+    memberCommunity {
+      id
+    }
+  }
+  passportUser(id: $memberId) {
+    lastUpdated
+    score
   }
 }
 
