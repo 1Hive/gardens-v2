@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Address, Chain, createPublicClient, http, parseUnits } from "viem";
@@ -237,7 +238,7 @@ export const CommunityForm = ({
           formRows={formatFormRows()}
           previewTitle="Check details and covenant description"
         />
-      : <div className="flex flex-col gap-2 overflow-hidden p-1">
+      : <div className="flex flex-col gap-2 p-1">
           <div className="flex flex-col">
             <FormInput
               label="Community Name"
@@ -269,6 +270,7 @@ export const CommunityForm = ({
                 min: INPUT_TOKEN_MIN_VALUE,
               }}
               suffix={tokenGarden.symbol}
+              tooltip="Amount of tokens user must stake to join and participate in community governance. Refundable upon leaving the community."
             />
           </div>
           <div className="flex flex-col">
@@ -295,6 +297,7 @@ export const CommunityForm = ({
                 },
               }}
               suffix="%"
+              tooltip="A percentage fee applied from the membership stake amount when joining a community."
             />
           </div>
           <div className="flex flex-col">
@@ -311,6 +314,7 @@ export const CommunityForm = ({
               registerKey="feeReceiver"
               placeholder="0x.."
               type="text"
+              tooltip="Safe or Ethereum address that receives the fees paid by members."
             />
           </div>
           <div className="flex flex-col">
@@ -331,21 +335,23 @@ export const CommunityForm = ({
               registerKey="councilSafe"
               placeholder="0x.."
               type="text"
+              tooltip="The moderators of the community. Choose a Safe address that can create pools and manage settings in the community."
             />
           </div>
 
           <div className="flex">
             <FormCheckBox
-              label="Admins can expel members"
+              label="Council safe can remove members"
               register={register}
               errors={errors}
               registerKey="isKickMemberEnabled"
               type="checkbox"
+              tooltip="If enabled, the council can remove members from the community. Removed members will receive their staked tokens back and can rejoin later."
             />
           </div>
           <div className="flex flex-col">
             <FormInput
-              label="Covenant description"
+              label="Covenant"
               register={register}
               required
               errors={errors}
@@ -358,6 +364,21 @@ export const CommunityForm = ({
               rows={7}
               placeholder="Covenant description..."
             />
+            <div className="flex sm:items-center gap-4">
+              <a
+                href="https://www.notion.so/1hive-gardens/Covenant-the-community-constitution-103d6929d014801da379c5952d66d1a0"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary-content flex items-center gap-1 hover:opacity-90"
+              >
+                Tools for creating your Community&apos;s Covenant
+                <ArrowTopRightOnSquareIcon
+                  width={16}
+                  height={16}
+                  className="text-primary-content"
+                />
+              </a>
+            </div>
           </div>
         </div>
       }
