@@ -49,7 +49,7 @@ const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
 export function handleInitialized(event: InitializedCV): void {
   // @ts-ignore
   const data2 = changetype<InitializedCV2DataStruct>(event.params.data);
-  data2[7] = ethereum.Value.fromAddressArray([Address.zero()]); // Initialize allowlist to everyone allowed
+  data2[8] = ethereum.Value.fromAddressArray([Address.zero()]); // Initialize allowlist to everyone allowed
   computeInitialize(event.address, event.params.poolId, data2);
 }
 
@@ -695,6 +695,8 @@ function computeInitialize(
   let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(data.cvParams);
 
   computeConfig(config, cvParams);
+
+  // With allowlist
   computeAllowList(config, data.initialAllowlist, []);
 
   config.D = cvc.D();

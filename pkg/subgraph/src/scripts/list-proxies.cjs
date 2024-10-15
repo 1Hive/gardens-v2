@@ -113,7 +113,7 @@ async function extractProxies(chainId) {
     throw new Error("Error in response: " + (await response.text()));
   }
 
-  registryFactoryProxy = result.data.registryFactories[0].id;
+  registryFactoryProxy = result.data.registryFactories?.[0]?.id;
 
   result.data.registryCommunities.forEach((community) => {
     registryCommunityProxies.push(community.id);
@@ -123,7 +123,7 @@ async function extractProxies(chainId) {
     cvStrategiesProxies.push(strategy.id);
   });
 
-  passportScorerProxy = result.data.passportScorers[0].id;
+  passportScorerProxy = result.data.passportScorers?.[0]?.id;
 
   return {
     REGISTRY_FACTORY: registryFactoryProxy,
