@@ -17,28 +17,47 @@
       "PROXIES": {
         "REGISTRY_FACTORY": "0x7a603877488db46c0f6b40c2c770becfd7a65593",
         "REGISTRY_COMMUNITIES": [
+          "0x20731544b8c29c17c42a1cb1278371af5c08142f",
+          "0x4d434729b80c95b0454a77fc152464b2f196abf0",
+          "0xc2b5443ccb8aa0b8f2b93b560beaee1b5bb964e5",
           "0xf17e005599813f626ff6b4ff8189105b1306af94",
+          "0xf6d60f30eed6e3ec588242cff30d9c8f596370cb",
           "0xffa2e39cce305c82ffa70f7da0333e5f172be5f6"
         ],
         "CV_STRATEGIES": [
           "0x17769fb86708abf03d7083ea7dc6b01976a91c47",
+          "0x233105f07593424866adeaa27a4045dcb6301844",
           "0x271c5834f61901623c00ca274dc0911131e3865d",
+          "0x2a309fc9b3d3031826fae08254c3eb3fb3e136a9",
           "0x2b7e64cf97cb0ad9f074e941f29e99899cad6f00",
           "0x39db23696c0ad7a4afc5db891154a426193d3046",
           "0x45cbefe5f9f0df5f76c8bdd07003724ec100497f",
+          "0x5ba5c0d3908c12773adf3a8c2aa504339b537011",
           "0x5d63ec43e1ac82d0bb4434f2d2202eec7bb05d69",
+          "0x6500599270e13fbed12c1de58904e0358937a66c",
           "0x768a7ce48322a6360db94a4c3eae3e50babb032c",
           "0x769e1039322c9516581849485f9780390c2fac9c",
           "0x7932c33f0a0dd335aecbe83a3d88b2435543a0fb",
+          "0x7cebd57140c10e81fb283fb3dee28f98a6a1f3e7",
           "0x84b9c9d4f40e3c05278b6f688c5c78c89c7c95a8",
+          "0x876e104878b6dfdda13d717b5c9aec91439bc45b",
+          "0xa999227ef53b685cd0a91ca2301e550e6373d03c",
+          "0xaf83df434a976e7e4620e44b474c40f6fa7dbe18",
+          "0xb4a340406311a6baf6d0ca84059ca69bb3b02a07",
+          "0xb9540d3e9dff4de30ae19a96c604d261d3919a21",
           "0xbd7474ca99a439d2926526a0168e3e948d2987c6",
           "0xbf647db7c6bbacaab6a1e956f97c1c4df5ca0d3e",
+          "0xc0410861dbae69dbe94ab2db56ef988625dcd322",
           "0xc5ae99a250617a875abc9bbb485dfde746cf3ba9",
           "0xd76cd68881ad9c95000ad0a8d2f332374e91d23b",
+          "0xd8e2fc7ddc06e67b039cfaf2e1255de55e0789a0",
           "0xdc3a597e60297bf51627918019ba7252b844970c",
+          "0xdd02fe21984aef0d8d3fa46d545b2dece39749b4",
           "0xe0eb96a8c31d95ccca8f7fa52ee38d0d42b4167b",
-          "0xe57e7f0707bdb9c826a7c6da352dfb2be1275c21"
-        ]
+          "0xe57e7f0707bdb9c826a7c6da352dfb2be1275c21",
+          "0xfd71d94f892670d3085cfaf1d93d0e4eb0b8963b"
+        ],
+        "PASSPORT_SCORER": "0xfF53a163e43EccC00d8FdE7acA24aa9FA4da7356"
       }
     },
     {

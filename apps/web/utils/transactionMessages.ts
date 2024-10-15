@@ -36,6 +36,6 @@ function parseErrorMessage(error: Error, fallbackErrorMessage?: string) {
   } else if (fallbackErrorMessage) {
     return fallbackErrorMessage;
   } else {
-    return "Transaction failed. Please try again";
+    return "Transaction failed. Please report a bug";
   }
 }

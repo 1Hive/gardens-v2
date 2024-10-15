@@ -16,3 +16,12 @@ export const prettyTimestamp = (timestamp: number) => {
 
   return `${day} ${month} ${year}`;
 };
+
+export const truncateString = (str: string) => {
+  return `${str.slice(0, 6)}...${str.slice(-4)}`;
+};
+
+export const shortenAddress = (address: string, chars = 4): string => {
+  if (!address) return "";
+  return `${address.substring(0, chars + 2)}...${address.substring(42 - chars)}`;
+};

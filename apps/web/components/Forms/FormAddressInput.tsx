@@ -113,7 +113,7 @@ export const FormAddressInput = ({
         className={`form-control input input-info flex flex-row font-normal items-center ${modifier}`}
       >
         <input
-          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${readOnly ?? disabled ? "cursor-not-allowed" : ""}`}
+          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${(readOnly ?? disabled) ? "cursor-not-allowed" : ""}`}
           placeholder={placeholder || "Enter address or ENS name"}
           id={id}
           name={id}

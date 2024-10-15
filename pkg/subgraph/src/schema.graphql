@@ -11,6 +11,7 @@ type CVStrategy @entity(immutable: false) {
   totalEffectiveActivePoints: BigInt!
   isEnabled: Boolean!
   token: String!
+  sybilScorer: PassportScorer
 }
 
 type CVStrategyConfig @entity(immutable: false) {
@@ -24,6 +25,7 @@ type CVStrategyConfig @entity(immutable: false) {
   proposalType: BigInt!
   pointSystem: BigInt!
   maxAmount: BigInt
+  allowlist: [String!]
 }
 
 type ArbitrableConfig @entity(immutable: false) {
@@ -36,6 +38,7 @@ type ArbitrableConfig @entity(immutable: false) {
   submitterCollateralAmount: BigInt!
   defaultRuling: BigInt!
   defaultRulingTimeout: BigInt!
+  allowlist: [String!]
 }
 
 type CVProposal @entity(immutable: false) {

@@ -93,6 +93,7 @@ export type ArbitrableConfig = {
   submitterCollateralAmount: Scalars['BigInt']['output'];
   defaultRuling: Scalars['BigInt']['output'];
   defaultRulingTimeout: Scalars['BigInt']['output'];
+  allowlist?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 export type ArbitrableConfig_filter = {
@@ -205,6 +206,12 @@ export type ArbitrableConfig_filter = {
   defaultRulingTimeout_lte?: InputMaybe<Scalars['BigInt']['input']>;
   defaultRulingTimeout_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   defaultRulingTimeout_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  allowlist?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<ArbitrableConfig_filter>>>;
@@ -228,7 +235,8 @@ export type ArbitrableConfig_orderBy =
   | 'challengerCollateralAmount'
   | 'submitterCollateralAmount'
   | 'defaultRuling'
-  | 'defaultRulingTimeout';
+  | 'defaultRulingTimeout'
+  | 'allowlist';
 
 export type BlockChangedFilter = {
   number_gte: Scalars['Int']['input'];
@@ -561,6 +569,7 @@ export type CVStrategy = {
   totalEffectiveActivePoints: Scalars['BigInt']['output'];
   isEnabled: Scalars['Boolean']['output'];
   token: Scalars['String']['output'];
+  sybilScorer?: Maybe<PassportScorer>;
 };
 
 
@@ -592,6 +601,7 @@ export type CVStrategyConfig = {
   proposalType: Scalars['BigInt']['output'];
   pointSystem: Scalars['BigInt']['output'];
   maxAmount?: Maybe<Scalars['BigInt']['output']>;
+  allowlist?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 export type CVStrategyConfig_filter = {
@@ -668,6 +678,12 @@ export type CVStrategyConfig_filter = {
   maxAmount_lte?: InputMaybe<Scalars['BigInt']['input']>;
   maxAmount_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
   maxAmount_not_in?: InputMaybe<Array<Scalars['BigInt']['input']>>;
+  allowlist?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not_contains?: InputMaybe<Array<Scalars['String']['input']>>;
+  allowlist_not_contains_nocase?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategyConfig_filter>>>;
@@ -692,7 +708,8 @@ export type CVStrategyConfig_orderBy =
   | 'weight'
   | 'proposalType'
   | 'pointSystem'
-  | 'maxAmount';
+  | 'maxAmount'
+  | 'allowlist';
 
 export type CVStrategy_filter = {
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -829,6 +846,27 @@ export type CVStrategy_filter = {
   token_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
   token_not_ends_with?: InputMaybe<Scalars['String']['input']>;
   token_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_gt?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_lt?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_gte?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_lte?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  sybilScorer_not_in?: InputMaybe<Array<Scalars['String']['input']>>;
+  sybilScorer_contains?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_contains?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_contains_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_starts_with?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_starts_with?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_starts_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_ends_with?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_ends_with?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_not_ends_with_nocase?: InputMaybe<Scalars['String']['input']>;
+  sybilScorer_?: InputMaybe<PassportScorer_filter>;
   /** Filter for the block changed event. */
   _change_block?: InputMaybe<BlockChangedFilter>;
   and?: InputMaybe<Array<InputMaybe<CVStrategy_filter>>>;
@@ -870,7 +908,9 @@ export type CVStrategy_orderBy =
   | 'maxCVSupply'
   | 'totalEffectiveActivePoints'
   | 'isEnabled'
-  | 'token';
+  | 'token'
+  | 'sybilScorer'
+  | 'sybilScorer__id';
 
 export type CollateralVault = {
   id: Scalars['ID']['output'];

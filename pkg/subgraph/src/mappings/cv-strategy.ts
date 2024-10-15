@@ -17,6 +17,7 @@ import {
   ArbitrableConfigUpdated,
   Distributed,
   InitializedCV,
+  InitializedCV2,
   ProposalCreated,
   CVStrategyV0_0 as CVStrategyContract,
   PoolAmountIncreased,
@@ -28,12 +29,16 @@ import {
   ProposalDisputed,
   CVParamsUpdated,
   CVParamsUpdatedCvParamsStruct,
-  ProposalCancelled
+  ProposalCancelled,
+  AllowlistMembersAdded,
+  AllowlistMembersRemoved,
+  InitializedCV2DataStruct,
+  SybilScorerUpdated
 } from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
 import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
 
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
 // export const CTX_PROPOSAL_ID = "proposalId";
 // export const CTX_METADATA_ID = "metadataId";
@@ -42,55 +47,14 @@ const DISPUTE_STATUS_WAITING = BigInt.fromI32(0);
 const DISPUTE_STATUS_SOLVED = BigInt.fromI32(1);
 
 export function handleInitialized(event: InitializedCV): void {
-  log.debug("CVStrategy: handleInitialized {}", [
-    event.params.poolId.toString()
-  ]);
-  const poolId = event.params.poolId;
-  const registryCommunity = event.params.data.registryCommunity.toHexString();
-  const pType = event.params.data.proposalType;
-  const maxAmount = event.params.data.pointConfig.maxAmount;
-  const pointSystem = event.params.data.pointSystem;
-  // log.debug(
-  //   "handleInitialized registryCommunity:{} decay:{} maxRatio:{} minThresholdPoints:{} weight:{} pType:{} maxAmount:{}",
-  //   [registryCommunity, pType.toString(), maxAmount.toString()]
-  // );
-  const cvc = CVStrategyContract.bind(event.address);
-  let cvs = new CVStrategy(event.address.toHex());
-  let alloAddr = cvc.getAllo();
-  log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
-  const allo = AlloContract.bind(alloAddr);
-  const alloPool = allo.getPool(poolId);
-  let metadata = alloPool.metadata.pointer;
-  if (metadata) {
-    log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
-    cvs.metadata = metadata ? metadata.toString() : null;
-  }
-  cvs.token = alloPool.token.toHexString();
-  cvs.poolId = poolId;
-  cvs.registryCommunity = registryCommunity;
-  let config = new CVStrategyConfig(
-    `${event.address.toHex()}-${poolId.toString()}-config`
-  );
-  cvs.poolAmount = cvc.getPoolAmount();
-  cvs.maxCVSupply = BigInt.fromI32(0);
-  cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
-  cvs.isEnabled = false;
-  config.proposalType = BigInt.fromI32(pType);
-  config.pointSystem = BigInt.fromI32(pointSystem);
-  config.maxAmount = maxAmount;
-
-  log.debug("handleInitialized changetypes", []);
   // @ts-ignore
-  let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(
-    event.params.data.cvParams
-  );
+  const data2 = changetype<InitializedCV2DataStruct>(event.params.data);
+  data2[8] = ethereum.Value.fromAddressArray([Address.zero()]); // Initialize allowlist to everyone allowed
+  computeInitialize(event.address, event.params.poolId, data2);
+}
 
-  computeConfig(config, cvParams);
-
-  config.D = cvc.D();
-  config.save();
-  cvs.config = config.id;
-  cvs.save();
+export function handleInitializedV2(event: InitializedCV2): void {
+  computeInitialize(event.address, event.params.poolId, event.params.data);
 }
 
 export function handleProposalCreated(event: ProposalCreated): void {
@@ -458,6 +422,9 @@ export function handleCVParamsUpdated(event: CVParamsUpdated): void {
   );
 
   computeConfig(config, event.params.cvParams);
+  if (config.allowlist == null) {
+    config.allowlist = [];
+  }
 
   config.save();
 }
@@ -480,23 +447,6 @@ export function handleArbitrableConfigUpdated(
   arbitrableConfig.defaultRulingTimeout = event.params.defaultRulingTimeout;
 
   arbitrableConfig.save();
-}
-
-function computeConfig(
-  config: CVStrategyConfig,
-  cvParams: CVParamsUpdatedCvParamsStruct
-): void {
-  // CV Params
-  log.debug("CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]", [
-    cvParams.weight.toString(),
-    cvParams.decay.toString(),
-    cvParams.minThresholdPoints.toString(),
-    cvParams.maxRatio.toString()
-  ]);
-  config.weight = cvParams.weight;
-  config.decay = cvParams.decay;
-  config.minThresholdPoints = cvParams.minThresholdPoints;
-  config.maxRatio = cvParams.maxRatio;
 }
 
 export function handleProposalDisputed(event: ProposalDisputed): void {
@@ -594,4 +544,163 @@ export function handleProposalCancelled(event: ProposalCancelled): void {
   );
 
   proposal.save();
+}
+
+export function handleAllowlistMembersAdded(
+  event: AllowlistMembersAdded
+): void {
+  if (event.params.members.length == 0) {
+    return;
+  }
+
+  let config = CVStrategyConfig.load(
+    `${event.address.toHex()}-${event.params.poolId.toString()}-config`
+  );
+
+  if (config == null) {
+    log.error("CVStrategy: handleAllowlistMembersAdded config not found: {}", [
+      `${event.address.toHex()}-${event.params.poolId.toString()}-config`
+    ]);
+    return;
+  }
+
+  computeAllowList(config, event.params.members, []);
+  config.save();
+}
+
+export function handleAllowlistMembersRemoved(
+  event: AllowlistMembersRemoved
+): void {
+  if (event.params.members.length == 0) {
+    return;
+  }
+
+  let config = CVStrategyConfig.load(
+    `${event.address.toHex()}-${event.params.poolId.toString()}-config`
+  );
+
+  if (config == null) {
+    log.error(
+      "CVStrategy: handleAllowlistMembersRemoved config not found: {}",
+      [`${event.address.toHex()}-${event.params.poolId.toString()}-config`]
+    );
+    return;
+  }
+
+  computeAllowList(config, [], event.params.members);
+  config.save();
+}
+
+export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.error("CVStrategy: handleSybilScorerUpdated cvs not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  cvs.sybilScorer = event.params.sybilScorer.toHexString();
+  cvs.save();
+}
+
+/// -- Privates -- ///
+
+function computeConfig(
+  config: CVStrategyConfig,
+  cvParams: CVParamsUpdatedCvParamsStruct
+): void {
+  // CV Params
+  log.debug("CVParams:[weight:{},decay:{},minThresholdPoints:{},maxRatio:{}]", [
+    cvParams.weight.toString(),
+    cvParams.decay.toString(),
+    cvParams.minThresholdPoints.toString(),
+    cvParams.maxRatio.toString()
+  ]);
+  config.weight = cvParams.weight;
+  config.decay = cvParams.decay;
+  config.minThresholdPoints = cvParams.minThresholdPoints;
+  config.maxRatio = cvParams.maxRatio;
+}
+
+function computeAllowList(
+  config: CVStrategyConfig,
+  addressToAdd: Address[],
+  addressToRemove: Address[]
+): void {
+  let members = config.allowlist;
+
+  if (members == null) {
+    members = [];
+  }
+
+  for (let i = 0; i < addressToAdd.length; i++) {
+    if (members.indexOf(addressToAdd[i].toHexString()) == -1) {
+      members.push(addressToAdd[i].toHexString());
+    }
+  }
+
+  for (let i = 0; i < addressToRemove.length; i++) {
+    let index = members.indexOf(addressToRemove[i].toHexString());
+    if (index != -1) {
+      members.splice(index, 1);
+    }
+  }
+
+  config.allowlist = members;
+}
+
+function computeInitialize(
+  contractAddress: Address,
+  poolId: BigInt,
+  data: InitializedCV2DataStruct
+): void {
+  log.debug("CVStrategy: handleInitialized {}", [poolId.toString()]);
+  const registryCommunity = data.registryCommunity.toHexString();
+  const pType = data.proposalType;
+  const maxAmount = data.pointConfig.maxAmount;
+  const pointSystem = data.pointSystem;
+  // log.debug(
+  //   "handleInitialized registryCommunity:{} decay:{} maxRatio:{} minThresholdPoints:{} weight:{} pType:{} maxAmount:{}",
+  //   [registryCommunity, pType.toString(), maxAmount.toString()]
+  // );
+  const cvc = CVStrategyContract.bind(contractAddress);
+  let cvs = new CVStrategy(contractAddress.toHex());
+  let alloAddr = cvc.getAllo();
+  log.debug("CVStrategy: alloAddr:{}", [alloAddr.toHexString()]);
+  const allo = AlloContract.bind(alloAddr);
+  const alloPool = allo.getPool(poolId);
+  let metadata = alloPool.metadata.pointer;
+  if (metadata) {
+    log.debug("CVStrategy: metadata:{}", [metadata.toString()]);
+    cvs.metadata = metadata ? metadata.toString() : null;
+  }
+  cvs.token = alloPool.token.toHexString();
+  cvs.poolId = poolId;
+  cvs.registryCommunity = registryCommunity;
+  let config = new CVStrategyConfig(
+    `${contractAddress.toHex()}-${poolId.toString()}-config`
+  );
+  cvs.poolAmount = cvc.getPoolAmount();
+  cvs.maxCVSupply = BigInt.fromI32(0);
+  cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
+  cvs.isEnabled = false;
+  cvs.sybilScorer = data.sybilScorer.toHexString();
+  config.proposalType = BigInt.fromI32(pType);
+  config.pointSystem = BigInt.fromI32(pointSystem);
+  config.maxAmount = maxAmount;
+
+  log.debug("handleInitialized changetypes", []);
+  // @ts-ignore
+  let cvParams = changetype<CVParamsUpdatedCvParamsStruct>(data.cvParams);
+
+  computeConfig(config, cvParams);
+
+  // With allowlist
+  computeAllowList(config, data.initialAllowlist, []);
+
+  config.D = cvc.D();
+  config.save();
+  cvs.config = config.id;
+  cvs.save();
 }

@@ -3,15 +3,21 @@ pragma solidity ^0.8.19;
 
 import "forge-std/console.sol";
 import {Allo} from "allo-v2-contracts/core/Allo.sol";
-// import {Metadata} from "allo-v2-contracts/core/libraries/Metadata.sol";
-// import {StrategyStruct} from "../src/libraries/StrategyStruct.sol";
-import {CVStrategyV0_0, StrategyStruct} from "../src/CVStrategy/CVStrategyV0_0.sol";
+import {
+    CVStrategyV0_0,
+    ProposalType,
+    PointSystem,
+    CreateProposal,
+    PointSystemConfig,
+    ArbitrableConfig,
+    CVStrategyInitializeParamsV0_1
+} from "../src/CVStrategy/CVStrategyV0_0.sol";
 import {Native} from "allo-v2-contracts/core/libraries/Native.sol";
 import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.sol";
 
 import {Accounts} from "allo-v2-test/foundry/shared/Accounts.sol";
 
-contract CVStrategyHelpersV0_0 is Native, Accounts {
+contract CVStrategyHelpers is Native, Accounts {
     Metadata public metadata = Metadata({protocol: 1, pointer: "QmW4zFLFJRN7J67EzNmdC2r2M9u2iJDha2fj5Gee6hJzSY"}); //@todo CID from IPFS
 
     uint256 public constant DECIMALS = 10 ** 18;
@@ -39,11 +45,14 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
 
     function getParams(
         address registryCommunity,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem,
-        StrategyStruct.PointSystemConfig memory pointConfig,
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig
-    ) public pure returns (StrategyStruct.InitializeParams memory params) {
+        ProposalType proposalType,
+        PointSystem pointSystem,
+        PointSystemConfig memory pointConfig,
+        ArbitrableConfig memory arbitrableConfig,
+        address[] memory initialAllowlist,
+        address sybilScorer,
+        uint256 sybilScorerThreshold
+    ) public pure returns (CVStrategyInitializeParamsV0_1 memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         params.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
         params.cvParams.maxRatio = _etherToFloat(0.2 ether); // beta = maxRatio
@@ -52,14 +61,18 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
         params.registryCommunity = registryCommunity;
         params.proposalType = proposalType;
         params.pointSystem = pointSystem;
+        params.sybilScorer = sybilScorer;
+        params.sybilScorerThreshold = sybilScorerThreshold;
 
         if (pointConfig.maxAmount == 0) {
-            // StrategyStruct.PointSystemConfig memory pointConfig;
+            // PointSystemConfig memory pointConfig;
             //Capped point system
             pointConfig.maxAmount = 200 * DECIMALS;
         }
         params.pointConfig = pointConfig;
         params.arbitrableConfig = arbitrableConfig;
+        // params.initialAllowlist = new address[](1);
+        params.initialAllowlist = initialAllowlist;
     }
 
     function createPool(
@@ -68,14 +81,14 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
         address registryCommunity,
         IRegistry registry,
         address token,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem,
-        StrategyStruct.PointSystemConfig memory pointConfig,
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig
+        ProposalType proposalType,
+        PointSystem pointSystem,
+        PointSystemConfig memory pointConfig,
+        ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
-        StrategyStruct.InitializeParams memory params =
-            getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig);
+        CVStrategyInitializeParamsV0_1 memory params =
+        getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1), address(0), 0);
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
@@ -109,9 +122,9 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
         address registryCommunity,
         IRegistry registry,
         address token,
-        StrategyStruct.ProposalType proposalType,
-        StrategyStruct.PointSystem pointSystem,
-        StrategyStruct.ArbitrableConfig memory arbitrableConfig
+        ProposalType proposalType,
+        PointSystem pointSystem,
+        ArbitrableConfig memory arbitrableConfig
     ) public returns (uint256 poolId) {
         return createPool(
             allo,
@@ -121,7 +134,7 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
             token,
             proposalType,
             pointSystem,
-            StrategyStruct.PointSystemConfig(0),
+            PointSystemConfig(0),
             arbitrableConfig
         );
     }
@@ -160,5 +173,10 @@ contract CVStrategyHelpersV0_0 is Native, Accounts {
         uint256 t = _timePassed;
         uint256 atTWO_128 = _pow((decay << 128) / D, t);
         return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - decay))) + TWO_127) >> 128;
+    }
+
+    function getDecay(CVStrategyV0_0 strategy) public view returns (uint256) {
+        (,, uint256 decay,) = strategy.cvParams();
+        return decay;
     }
 }

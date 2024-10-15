@@ -1,19 +1,22 @@
 "use client";
 import React, { ReactElement, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
 import {
+  CVStrategy,
   getPassportStrategyDocument,
   getPassportStrategyQuery,
   getPassportUserDocument,
   getPassportUserQuery,
 } from "#/subgraph/.graphclient";
 import { Button } from "./Button";
+import { Skeleton } from "./Skeleton";
 import { Modal } from "@/components";
 import { isProd } from "@/configs/isProd";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import { CV_PERCENTAGE_SCALE } from "@/utils/numbers";
+import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 
 type SubmitPassportResponse = {
   data: any;
@@ -21,7 +24,7 @@ type SubmitPassportResponse = {
 };
 
 type CheckPassportProps = {
-  strategyAddr: Address;
+  strategy: Pick<CVStrategy, "id" | "sybilScorer">;
   children: ReactElement<{
     onClick: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   }>;
@@ -31,7 +34,7 @@ type CheckPassportProps = {
 // CheckPassport component should only wrap a Button or similar component
 
 export function CheckPassport({
-  strategyAddr,
+  strategy,
   children,
   enableCheck = true,
 }: CheckPassportProps) {
@@ -54,18 +57,20 @@ export function CheckPassport({
     }
   }, [shouldOpenModal]);
 
-  const { data: passportUserData } = useSubgraphQuery<getPassportUserQuery>({
-    query: getPassportUserDocument,
-    variables: { userId: walletAddr?.toLowerCase() },
-    enabled: !!walletAddr && enableCheck,
-    //TODO: add changeScope = passportUserData
-  });
+  const { data: passportUserData, fetching: passportUserFetching } =
+    useSubgraphQuery<getPassportUserQuery>({
+      query: getPassportUserDocument,
+      variables: { userId: walletAddr?.toLowerCase() },
+      enabled: !!walletAddr && enableCheck,
+      //TODO: add changeScope = passportUserData
+    });
+
   const passportUser = passportUserData?.passportUser;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
-      variables: { strategyId: strategyAddr },
+      variables: { strategyId: strategy.id },
       enabled: enableCheck,
       //TODO: add changeScope = passport
     });
@@ -73,7 +78,7 @@ export function CheckPassport({
   const passportStrategy = passportStrategyData?.passportStrategy;
   const threshold =
     passportStrategy?.threshold ?
-      Number(passportStrategy?.threshold) / CV_PERCENTAGE_SCALE
+      Number(passportStrategy?.threshold) / CV_PASSPORT_THRESHOLD_SCALE
     : 10000;
 
   if (!enableCheck) {
@@ -111,7 +116,7 @@ export function CheckPassport({
   ) => {
     if (passportUser) {
       checkScoreRequirement(
-        Number(passportUser?.score) / CV_PERCENTAGE_SCALE,
+        Number(passportUser?.score) / CV_PASSPORT_THRESHOLD_SCALE,
         e,
       );
     } else {
@@ -128,7 +133,7 @@ export function CheckPassport({
   ) => {
     _score = Number(_score);
     setScore(_score);
-    if (score > threshold) {
+    if (score >= threshold) {
       console.debug("Score meets threshold, moving forward...");
     } else {
       console.debug("Score is too low, opening modal...");
@@ -146,11 +151,17 @@ export function CheckPassport({
       console.debug(passportResponse);
       // gitcoin passport score does not need formating
       if (passportResponse?.data?.score) {
-        await writeScorer(_walletAddr);
-        checkScoreRequirement(passportResponse?.data?.score);
+        const result = await writeScorer(_walletAddr);
+        if (result.error) {
+          console.error("Error writing scorer:", result.errorMessage);
+          toast.error("Error writing scorer, please report a bug.");
+        } else {
+          checkScoreRequirement(passportResponse?.data?.score);
+        }
       }
     } catch (error) {
       console.error("Error submitting passport:", error);
+      toast.error("Error submitting passport, please report a bug.");
       setIsSubmiting(false);
     }
     setIsSubmiting(false);
@@ -189,7 +200,7 @@ export function CheckPassport({
   };
 
   const writeScorer = async (address: string): Promise<any> => {
-    const WRITE_SCORER_URI = `/api/passport-oracle/writeScore/${chainFromPath}`;
+    const WRITE_SCORER_URI = `/api/passport-oracle/write-score/${chainFromPath}`;
     try {
       const response = await fetch(WRITE_SCORER_URI, {
         method: "POST",
@@ -228,11 +239,13 @@ export function CheckPassport({
         isOpen={isOpenModal}
         onClose={() => setIsOpenModal(false)}
       >
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-8 max-w-96">
           <div>
             <p>
               Passport score:{" "}
-              <span className="font-semibold">{score.toFixed(2)}</span>
+              <Skeleton isLoading={passportUserFetching}>
+                <span className="font-semibold">{score.toFixed(2)}</span>
+              </Skeleton>
             </p>
             <p>
               Pool requirement:{" "}
@@ -265,7 +278,11 @@ export function CheckPassport({
                   onClick={() => submitAndWriteScorer(walletAddr)}
                   className="w-fit"
                   btnStyle="outline"
-                  isLoading={isSubmiting}
+                  isLoading={isSubmiting || passportUserFetching}
+                  disabled={passportUserFetching}
+                  tooltip={
+                    passportUserFetching ? "Fetching passport score..." : ""
+                  }
                 >
                   Check again
                 </Button>
