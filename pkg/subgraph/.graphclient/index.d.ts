@@ -3509,6 +3509,9 @@ export declare function getBuiltGraphSDK<TGlobalContext = any, TOperationContext
     getArbitrableConfigs(variables: Exact<{
         strategyId: Scalars["String"]["input"];
     }>, options?: TOperationContext): Promise<getArbitrableConfigsQuery>;
+    getMemberPassportAndCommunities(variables: Exact<{
+        memberId: Scalars["ID"]["input"];
+    }>, options?: TOperationContext): Promise<getMemberPassportAndCommunitiesQuery>;
 };
 export type getFactoriesQueryVariables = Exact<{
     [key: string]: never;
@@ -3749,6 +3752,15 @@ export type getArbitrableConfigsQueryVariables = Exact<{
 export type getArbitrableConfigsQuery = {
     arbitrableConfigs: Array<Pick<ArbitrableConfig, 'arbitrator' | 'challengerCollateralAmount' | 'submitterCollateralAmount' | 'tribunalSafe' | 'defaultRuling' | 'defaultRulingTimeout'>>;
 };
+export type getMemberPassportAndCommunitiesQueryVariables = Exact<{
+    memberId: Scalars['ID']['input'];
+}>;
+export type getMemberPassportAndCommunitiesQuery = {
+    member?: Maybe<{
+        memberCommunity?: Maybe<Array<Pick<MemberCommunity, 'id'>>>;
+    }>;
+    passportUser?: Maybe<Pick<PassportUser, 'lastUpdated' | 'score'>>;
+};
 export declare const getFactoriesDocument: DocumentNode<getFactoriesQuery, getFactoriesQueryVariables>;
 export declare const getTokenGardensDocument: DocumentNode<getTokenGardensQuery, getTokenGardensQueryVariables>;
 export declare const getMemberStrategyDocument: DocumentNode<getMemberStrategyQuery, getMemberStrategyQueryVariables>;
@@ -3771,6 +3783,7 @@ export declare const getPassportStrategyDocument: DocumentNode<getPassportStrate
 export declare const getPassportUserDocument: DocumentNode<getPassportUserQuery, getPassportUserQueryVariables>;
 export declare const getProposalDisputesDocument: DocumentNode<getProposalDisputesQuery, getProposalDisputesQueryVariables>;
 export declare const getArbitrableConfigsDocument: DocumentNode<getArbitrableConfigsQuery, getArbitrableConfigsQueryVariables>;
+export declare const getMemberPassportAndCommunitiesDocument: DocumentNode<getMemberPassportAndCommunitiesQuery, getMemberPassportAndCommunitiesQueryVariables>;
 export type Requester<C = {}, E = unknown> = <R, V>(doc: DocumentNode, vars?: V, options?: C) => Promise<R> | AsyncIterable<R>;
 export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getFactories(variables?: getFactoriesQueryVariables, options?: C): Promise<getFactoriesQuery>;
@@ -3795,5 +3808,6 @@ export declare function getSdk<C, E>(requester: Requester<C, E>): {
     getPassportUser(variables: getPassportUserQueryVariables, options?: C): Promise<getPassportUserQuery>;
     getProposalDisputes(variables: getProposalDisputesQueryVariables, options?: C): Promise<getProposalDisputesQuery>;
     getArbitrableConfigs(variables: getArbitrableConfigsQueryVariables, options?: C): Promise<getArbitrableConfigsQuery>;
+    getMemberPassportAndCommunities(variables: getMemberPassportAndCommunitiesQueryVariables, options?: C): Promise<getMemberPassportAndCommunitiesQuery>;
 };
 export type Sdk = ReturnType<typeof getSdk>;

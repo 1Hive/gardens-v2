@@ -82,7 +82,7 @@ export const chainConfigMap: {
     explorer: "https://sepolia.arbiscan.io/",
     blockTime: 14,
     confirmations: 7,
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ARB_TESTNET!,
+    rpcUrl: process.env.RPC_URL_ARB_TESTNET!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARB_SEP?.replace("/version/latest", "")}/${SUBGRAPH_TESTNET_VERSION}`,
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
@@ -96,7 +96,7 @@ export const chainConfigMap: {
     explorer: "https://eth-sepolia.blockscout.com",
     blockTime: 12,
     confirmations: 1, // 3
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ETH_TESTNET!,
+    rpcUrl: process.env.RPC_URL_ETH_TESTNET!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETH_SEP?.replace("/version/latest", "")}/${SUBGRAPH_TESTNET_VERSION}`,
     globalTribunal: "0xc6Eaf449f79B081300F5317122B2Dff3f039ad0b",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
@@ -120,7 +120,7 @@ export const chainConfigMap: {
     explorer: "https://arbitrum.blockscout.com",
     blockTime: 14,
     confirmations: 7, // 7
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ARBITRUM!,
+    rpcUrl: process.env.RPC_URL_ARBITRUM!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ARBITRUM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1b8c7f06f537711a7caf6770051a43b4f3e69a7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
@@ -134,7 +134,7 @@ export const chainConfigMap: {
     explorer: "https://optimism.blockscout.com",
     blockTime: 14,
     confirmations: 2, // 2
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_OPTIMISM!,
+    rpcUrl: process.env.RPC_URL_OPTIMISM!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_OPTIMISM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
@@ -148,7 +148,7 @@ export const chainConfigMap: {
     explorer: "https://polygon.blockscout.com",
     blockTime: 2.1,
     confirmations: 4, // 4
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_MATIC!,
+    rpcUrl: process.env.RPC_URL_MATIC!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_MATIC?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
@@ -162,7 +162,7 @@ export const chainConfigMap: {
     explorer: "https://gnosis.blockscout.com",
     blockTime: 5.2,
     confirmations: 4, // 4
-    rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_GNOSIS!,
+    rpcUrl: process.env.RPC_URL_GNOSIS!,
     subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_GNOSIS?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
@@ -176,7 +176,7 @@ export const chainConfigMap: {
   //   explorer: "https://eth.blockscout.com",
   //   blockTime: 12,
   //   confirmations: 3, // 3
-  //   rpcUrl: process.env.NEXT_PUBLIC_RPC_URL_ETHEREUM!,
+  //   rpcUrl: process.env.RPC_URL_ETHEREUM!,
   //   subgraphUrl: `${process.env.NEXT_PUBLIC_SUBGRAPH_URL_ETHEREUM?.replace("/version/latest", "")}/${SUBGRAPH_PRODNET_VERSION}`,
   //   globalTribunal: "0x",
   //   allo: "0x",

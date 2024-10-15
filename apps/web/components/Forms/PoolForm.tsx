@@ -37,7 +37,6 @@ import {
   calculateMaxRatioNum,
   convertSecondsToReadableTime,
   CV_PASSPORT_THRESHOLD_SCALE,
-  CV_PERCENTAGE_SCALE,
   CV_SCALE_PRECISION,
   ETH_DECIMALS,
 } from "@/utils/numbers";
@@ -473,7 +472,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     }),
     contractName: "Registry Community",
     functionName: "createPool",
-    fallbackErrorMessage: "Error creating a pool. Please try again.",
+    fallbackErrorMessage: "Error creating a pool, please report a bug.",
     onConfirmations: async (receipt) => {
       const newPoolData = getEventFromReceipt(
         receipt,
@@ -747,13 +746,13 @@ export function PoolForm({ token, communityAddr }: Props) {
                   required={sybilResistanceType === "gitcoinPassport"}
                   registerOptions={{
                     min: {
-                      value: 1 / CV_PERCENTAGE_SCALE,
-                      message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                      value: 1 / CV_PASSPORT_THRESHOLD_SCALE,
+                      message: `Amount must be greater than ${1 / CV_PASSPORT_THRESHOLD_SCALE}`,
                     },
                   }}
                   otherProps={{
-                    step: 1 / CV_PERCENTAGE_SCALE,
-                    min: 1 / CV_PERCENTAGE_SCALE,
+                    step: 1 / CV_PASSPORT_THRESHOLD_SCALE,
+                    min: 1 / CV_PASSPORT_THRESHOLD_SCALE,
                   }}
                   errors={errors}
                   registerKey="sybilResistanceValue"

@@ -32,7 +32,7 @@ function CancelButton({ proposalData }: Props) {
     abi: abiWithErrors(cvStrategyABI),
     functionName: "cancelProposal",
     contractName: "CV Strategy",
-    fallbackErrorMessage: "Error cancelling proposal. Please try again.",
+    fallbackErrorMessage: "Error cancelling proposal, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "proposal",

@@ -157,7 +157,7 @@ export const CommunityForm = ({
     abi: abiWithErrors(registryFactoryABI),
     functionName: "createRegistry",
     contractName: "Registry Factory",
-    fallbackErrorMessage: "Error creating community. Please try again.",
+    fallbackErrorMessage: "Error creating community, please report a bug.",
     onConfirmations: async (receipt) => {
       const newCommunityAddr = getEventFromReceipt(
         receipt,

@@ -289,7 +289,7 @@ export function Proposals({
     abi: abiWithErrors(alloABI),
     functionName: "allocate",
     contractName: "Allo",
-    fallbackErrorMessage: "Error allocating points. Please try again.",
+    fallbackErrorMessage: "Error allocating points, please report a bug.",
     onSuccess: () => {
       setAllocationView(false);
     },

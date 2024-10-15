@@ -61,7 +61,7 @@ dataSources:
       eventHandlers:
         - event: Initialized(uint8)
           handler: handleInitialized
-        - event: UserScoreAdded(indexed address,uint256,uint256)
+        - event: UserScoreAdded(indexed address,uint256)
           handler: handleUserScoreAdded
         - event: UserRemoved(indexed address)
           handler: handleUserRemoved

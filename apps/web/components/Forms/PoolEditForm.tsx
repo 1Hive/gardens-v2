@@ -20,7 +20,7 @@ import { DisputeOutcome, PoolTypes, SybilResistanceType } from "@/types";
 import { filterFunctionFromABI } from "@/utils/abi";
 import {
   calculateDecay,
-  CV_PERCENTAGE_SCALE,
+  CV_PASSPORT_THRESHOLD_SCALE,
   calculateMaxRatioNum,
   convertSecondsToReadableTime,
   CV_SCALE_PRECISION,
@@ -325,7 +325,8 @@ export default function PoolEditForm({
       sybilResistanceType === "gitcoinPassport" &&
       typeof previewData?.sybilResistanceValue === "number"
     ) {
-      const sybilValue = previewData.sybilResistanceValue * CV_PERCENTAGE_SCALE;
+      const sybilValue =
+        previewData.sybilResistanceValue * CV_PASSPORT_THRESHOLD_SCALE;
       writeEditPoolWithScoreThreshold({
         args: [...coreArgs, BigInt(sybilValue)],
       });
@@ -379,7 +380,7 @@ export default function PoolEditForm({
     address: strategy.id as Address,
     contractName: "CV Strategy",
     functionName: "setPoolParams",
-    fallbackErrorMessage: "Error editing a pool. Please try again.",
+    fallbackErrorMessage: "Error editing a pool, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "pool",
@@ -444,13 +445,13 @@ export default function PoolEditForm({
                 required={sybilResistanceType === "gitcoinPassport"}
                 registerOptions={{
                   min: {
-                    value: 1 / CV_PERCENTAGE_SCALE,
-                    message: `Amount must be greater than ${1 / CV_PERCENTAGE_SCALE}`,
+                    value: 1 / CV_PASSPORT_THRESHOLD_SCALE,
+                    message: `Amount must be greater than ${1 / CV_PASSPORT_THRESHOLD_SCALE}`,
                   },
                 }}
                 otherProps={{
-                  step: 1 / CV_PERCENTAGE_SCALE,
-                  min: 1 / CV_PERCENTAGE_SCALE,
+                  step: 1 / CV_PASSPORT_THRESHOLD_SCALE,
+                  min: 1 / CV_PASSPORT_THRESHOLD_SCALE,
                 }}
                 errors={errors}
                 registerKey="sybilResistanceValue"

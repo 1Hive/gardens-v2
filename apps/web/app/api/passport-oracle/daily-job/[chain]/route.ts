@@ -108,18 +108,6 @@ const updateScoresOnChain = async (
 
   for (const update of updates) {
     const integerScore = Number(update.score) * CV_PASSPORT_THRESHOLD_SCALE;
-    const data = {
-      abi: passportScorerABI,
-      address: CONTRACT_ADDRESS,
-      functionName: "addUserScore" as const,
-      args: [
-        update.userAddress,
-        {
-          score: BigInt(integerScore),
-          lastUpdated: BigInt(Date.now()),
-        },
-      ] as const,
-    };
 
     const client = createPublicClient({
       chain: getViemChain(chain),
@@ -132,20 +120,25 @@ const updateScoresOnChain = async (
       transport: custom(client.transport),
     });
 
-    const hash = await walletClient.writeContract(data);
+    const hash = await walletClient.writeContract({
+      abi: passportScorerABI,
+      address: CONTRACT_ADDRESS,
+      functionName: "addUserScore" as const,
+      args: [update.userAddress, BigInt(integerScore)] as const,
+    });
     await client.waitForTransactionReceipt({ hash });
   }
 };
 
 const updateScores = async (chain: string) => {
-  const SUBGRAPH = getConfigByChain(chain)?.subgraphUrl as string;
+  const subgraphUrl = getConfigByChain(chain)?.subgraphUrl as string;
   const { urqlClient } = initUrqlClient({ chainId: chain });
   const subgraphResponse = await urqlClient
     .query<{ passportUsers: PassportUser[] }>(
       query,
       {},
       {
-        url: SUBGRAPH,
+        url: subgraphUrl,
         requestPolicy: "network-only",
       },
     )

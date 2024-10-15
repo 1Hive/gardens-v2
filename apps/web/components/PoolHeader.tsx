@@ -45,7 +45,7 @@ import {
 import { abiWithErrors } from "@/utils/abi";
 import {
   convertSecondsToReadableTime,
-  CV_PERCENTAGE_SCALE,
+  CV_PASSPORT_THRESHOLD_SCALE,
   CV_SCALE_PRECISION,
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
@@ -118,7 +118,7 @@ export default function PoolHeader({
   const passportStrategy = passportStrategyData?.passportStrategy;
   const passportScore =
     passportStrategy?.threshold ?
-      Number(passportStrategy?.threshold) / CV_PERCENTAGE_SCALE
+      Number(passportStrategy?.threshold) / CV_PASSPORT_THRESHOLD_SCALE
     : null;
 
   const blockTime = chainConfigMap[chainId].blockTime;
@@ -216,7 +216,7 @@ export default function PoolHeader({
     abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "addStrategyByPoolId",
-    fallbackErrorMessage: "Error approving pool. Please try again.",
+    fallbackErrorMessage: "Error approving pool, please report a bug.",
     args: [BigInt(poolId)],
     onConfirmations: () => {
       publish({
@@ -233,7 +233,7 @@ export default function PoolHeader({
     abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "removeStrategyByPoolId",
-    fallbackErrorMessage: "Error disabling pool. Please try again.",
+    fallbackErrorMessage: "Error disabling pool, please report a bug.",
     args: [BigInt(poolId)],
     onConfirmations: () => {
       publish({

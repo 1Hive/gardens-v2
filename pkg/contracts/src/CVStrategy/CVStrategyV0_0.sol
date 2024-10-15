@@ -11,7 +11,7 @@ import {IArbitrable} from "../interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {ISybilScorer, PassportData} from "../ISybilScorer.sol";
+import {ISybilScorer} from "../ISybilScorer.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {BaseStrategyUpgradeable} from "../BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";

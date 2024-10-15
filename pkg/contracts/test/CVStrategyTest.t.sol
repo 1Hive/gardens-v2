@@ -42,7 +42,7 @@ import {
     CVParams
 } from "../src/CVStrategy/CVStrategyV0_0.sol";
 
-import {ISybilScorer, PassportData} from "../src/ISybilScorer.sol";
+import {ISybilScorer} from "../src/ISybilScorer.sol";
 import {PassportScorer} from "../src/PassportScorer.sol";
 
 import {GasHelpers2} from "./shared/GasHelpers2.sol";
@@ -2527,8 +2527,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
-        PassportData memory passportData = PassportData({score: MINIMUM_SCORE + 1, lastUpdated: block.timestamp});
-        passportScorer.addUserScore(address(6), passportData);
+        uint256 passportScore = MINIMUM_SCORE + 1;
+        passportScorer.addUserScore(address(6), passportScore);
 
         vm.startPrank(address(6));
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
@@ -2551,8 +2551,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
-        PassportData memory passportData = PassportData({score: MINIMUM_SCORE - 1, lastUpdated: block.timestamp});
-        passportScorer.addUserScore(address(6), passportData);
+        uint256 passportScore = MINIMUM_SCORE - 1;
+        passportScorer.addUserScore(address(6), passportScore);
 
         vm.startPrank(address(6));
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
@@ -2576,8 +2576,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         vm.stopPrank();
 
         //notice how we set the score to the user as 0
-        PassportData memory passportData = PassportData({score: 0, lastUpdated: block.timestamp});
-        passportScorer.addUserScore(address(6), passportData);
+        uint256 passportScore =0;
+        passportScorer.addUserScore(address(6), passportScore);
 
         vm.startPrank(address(6));
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
@@ -2598,8 +2598,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         passportScorer.addStrategy(address(cv), MINIMUM_SCORE, address(_councilSafe()));
 
         //notice how we set the score to the user as 0
-        PassportData memory passportData = PassportData({score: 0, lastUpdated: block.timestamp});
-        passportScorer.addUserScore(address(6), passportData);
+        uint256 passportScore = 0;
+        passportScorer.addUserScore(address(6), passportScore);
 
         vm.startPrank(address(6));
         token.approve(address(registryCommunity), STAKE_WITH_FEES);
@@ -2622,8 +2622,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
-        PassportData memory passportData = PassportData({score: MINIMUM_SCORE - 1, lastUpdated: block.timestamp});
-        passportScorer.addUserScore(address(6), passportData);
+        uint256 passportScore = MINIMUM_SCORE - 1;
+        passportScorer.addUserScore(address(6), passportScore);
 
         vm.startPrank(address(6));
         CreateProposal memory proposal = CreateProposal(poolId, pool_admin(), 11000 ether, NATIVE, metadata);
@@ -2642,8 +2642,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
-        PassportData memory passportData = PassportData({score: MINIMUM_SCORE + 1, lastUpdated: block.timestamp});
-        passportScorer.addUserScore(address(6), passportData);
+        uint256 passportScore = MINIMUM_SCORE + 1;
+        passportScorer.addUserScore(address(6), passportScore);
 
         vm.startPrank(address(6));
 
@@ -2666,8 +2666,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
-        PassportData memory passportData = PassportData({score: MINIMUM_SCORE - 1, lastUpdated: block.timestamp});
-        passportScorer.addUserScore(address(6), passportData);
+        uint256 passportScore = MINIMUM_SCORE - 1;
+        passportScorer.addUserScore(address(6), passportScore);
 
         ProposalSupport[] memory votes = new ProposalSupport[](1);
         votes[0] = ProposalSupport(proposalId, 80);
@@ -2694,8 +2694,8 @@ contract CVStrategyTest is Test, AlloSetup, RegistrySetupFull, CVStrategyHelpers
         passportScorer.activateStrategy(address(cv));
         vm.stopPrank();
 
-        PassportData memory passportData = PassportData({score: MINIMUM_SCORE + 1, lastUpdated: block.timestamp});
-        passportScorer.addUserScore(address(6), passportData);
+        uint256 passportScore = MINIMUM_SCORE + 1;
+        passportScorer.addUserScore(address(6), passportScore);
 
         ProposalSupport[] memory votes = new ProposalSupport[](1);
         votes[0] = ProposalSupport(proposalId, 80);

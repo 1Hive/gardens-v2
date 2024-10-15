@@ -1,5 +1,6 @@
 "use client";
 import React, { ReactElement, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Address } from "viem";
 import { useAccount } from "wagmi";
 import {
@@ -14,12 +15,8 @@ import { Skeleton } from "./Skeleton";
 import { Modal } from "@/components";
 import { isProd } from "@/configs/isProd";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
-import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
-import {
-  CV_PASSPORT_THRESHOLD_SCALE,
-  CV_PERCENTAGE_SCALE,
-} from "@/utils/numbers";
+import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
 
 type SubmitPassportResponse = {
   data: any;
@@ -47,7 +44,6 @@ export function CheckPassport({
   const [shouldOpenModal, setShouldOpenModal] = useState(false);
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
   const chainFromPath = useChainIdFromPath();
-  const [isPassportFetching, setIsPassportFetching] = useState(true);
 
   //pool threshold should be ready on!
 
@@ -69,42 +65,12 @@ export function CheckPassport({
       //TODO: add changeScope = passportUserData
     });
 
-  // Call the addUserScore function from the passport contract
-  // const {write: submitScore } = useContractWriteWithConfirmations({
-  //   contract: strategy.sybilScorer as Address,
-  //   method: "addUserScore",
-  //   args: [walletAddr, score],
-  //   onCompleted: () => {
-  //     console.log("User score added to passport contract");
-  //   }
-  // })
-  // const {
-  //   write: writeDistribute,
-  //   error: errorDistribute,
-  //   isError: isErrorDistribute,
-  // } = useContractWriteWithConfirmations({
-  //   address: data?.allos[0]?.id as Address,
-  //   abi: abiWithErrors(alloABI),
-  //   functionName: "distribute",
-  //   contractName: "Allo",
-  //   fallbackErrorMessage: "Error executing proposal. Please try again.",
-  //   onConfirmations: () => {
-  //     publish({
-  //       topic: "proposal",
-  //       type: "update",
-  //       function: "distribute",
-  //       id: proposalNumber,
-  //       containerId: poolId,
-  //       chainId,
-  //     });
-  //   },
-  // });
   const passportUser = passportUserData?.passportUser;
 
   const { data: passportStrategyData } =
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
-      variables: { strategyId: strategy },
+      variables: { strategyId: strategy.id },
       enabled: enableCheck,
       //TODO: add changeScope = passport
     });
@@ -150,7 +116,7 @@ export function CheckPassport({
   ) => {
     if (passportUser) {
       checkScoreRequirement(
-        Number(passportUser?.score) / CV_PERCENTAGE_SCALE,
+        Number(passportUser?.score) / CV_PASSPORT_THRESHOLD_SCALE,
         e,
       );
     } else {
@@ -185,11 +151,17 @@ export function CheckPassport({
       console.debug(passportResponse);
       // gitcoin passport score does not need formating
       if (passportResponse?.data?.score) {
-        await writeScorer(_walletAddr);
-        checkScoreRequirement(passportResponse?.data?.score);
+        const result = await writeScorer(_walletAddr);
+        if (result.error) {
+          console.error("Error writing scorer:", result.errorMessage);
+          toast.error("Error writing scorer, please report a bug.");
+        } else {
+          checkScoreRequirement(passportResponse?.data?.score);
+        }
       }
     } catch (error) {
       console.error("Error submitting passport:", error);
+      toast.error("Error submitting passport, please report a bug.");
       setIsSubmiting(false);
     }
     setIsSubmiting(false);

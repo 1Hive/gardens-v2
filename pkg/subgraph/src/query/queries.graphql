@@ -528,6 +528,18 @@ query getArbitrableConfigs($strategyId: String!) {
   }
 }
 
+query getMemberPassportAndCommunities($memberId: ID!) {
+  member(id: $memberId) {
+    memberCommunity {
+      id
+    }
+  }
+  passportUser(id: $memberId) {
+    lastUpdated
+    score
+  }
+}
+
 # query getStrategyArbitrationConfig($strategyConfigId: ID!) {
 #   cvstrategyConfig(id: $strategyConfigId) {
 #     challengerCollateralAmount

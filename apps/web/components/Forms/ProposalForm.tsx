@@ -200,7 +200,7 @@ export const ProposalForm = ({
     abi: abiWithErrors(alloABI),
     contractName: "Allo",
     functionName: "registerRecipient",
-    fallbackErrorMessage: "Error creating Proposal. Please try again.",
+    fallbackErrorMessage: "Error creating Proposal, please report a bug.",
     value: arbitrableConfig.submitterCollateralAmount,
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(
@@ -347,7 +347,7 @@ export const ProposalForm = ({
                 type="number"
                 placeholder="0"
                 suffix={poolToken?.symbol}
-               />
+              />
             </div>
           )}
           {proposalTypeName !== "signaling" && (

@@ -35,7 +35,7 @@ export function ActivatePoints({
   const { publish } = usePubSubContext();
   const allowList = (strategy?.config?.allowlist as Address[]) ?? [];
   const isAllowed = useCheckAllowList(allowList, connectedAccount);
-  
+
   const { write: writeActivatePoints, error: errorActivatePoints } =
     useContractWriteWithConfirmations({
       chainId,
@@ -43,7 +43,7 @@ export function ActivatePoints({
       contractName: "CV Strategy",
       abi: abiWithErrors(cvStrategyABI),
       functionName: "activatePoints",
-      fallbackErrorMessage: "Error activating points. Please try again.",
+      fallbackErrorMessage: "Error activating points, please report a bug.",
       onConfirmations: () => {
         publish({
           topic: "member",
@@ -62,7 +62,7 @@ export function ActivatePoints({
       abi: abiWithErrors(cvStrategyABI),
       contractName: "CV Strategy",
       functionName: "deactivatePoints",
-      fallbackErrorMessage: "Error deactivating points. Please try again.",
+      fallbackErrorMessage: "Error deactivating points, please report a bug.",
       onConfirmations: () => {
         publish({
           topic: "member",

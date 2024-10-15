@@ -119,7 +119,7 @@ export const IncreasePower = ({
     ...registryContractCallConfig,
     functionName: "decreasePower",
     args: [requestedAmount],
-    fallbackErrorMessage: "Error decreasing power. Please try again.",
+    fallbackErrorMessage: "Error decreasing power, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "member",

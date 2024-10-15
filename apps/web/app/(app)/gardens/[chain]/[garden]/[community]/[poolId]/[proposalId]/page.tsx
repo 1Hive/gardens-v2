@@ -124,7 +124,7 @@ export default function Page({
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
     contractName: "Allo",
-    fallbackErrorMessage: "Error executing proposal. Please try again.",
+    fallbackErrorMessage: "Error executing proposal, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "proposal",
