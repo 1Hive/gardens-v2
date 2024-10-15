@@ -69,14 +69,15 @@ const sybilResistancePreview = (
         return "Allow list (no addresses submitted)";
       }
       return (
-        <div className="flex items-center gap-2">
-          <span className="">Allow list</span>
-          <ArrowDownTrayIcon className="w-4 h-4" />
-          <div>
-            {addresses.map((address) => (
-              <EthAddress key={address} address={address as Address} />
-            ))}
-          </div>
+        <div className="flex flex-col">
+          <div className="w-fit text-nowrap flex-nowrap">Allow list:</div>
+          <ul className="bg-base-200">
+            <li className="flex flex-col">
+              {addresses.map((address) => (
+                <EthAddress key={address} address={address as Address} />
+              ))}
+            </li>
+          </ul>
         </div>
       );
     })(),
@@ -176,11 +177,11 @@ export default function PoolEditForm({
     }
     return true;
   };
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<FormInputs>();
   const [tribunalAddress, setTribunalAddress] = useState(
-    initValues?.tribunalAddress ?? "",                                                                                                            
+    initValues?.tribunalAddress ?? "",
   );
 
   const [loading, setLoading] = useState(false);
@@ -289,6 +290,7 @@ export default function PoolEditForm({
       Array.isArray(initValues?.sybilResistanceValue) ?
         initValues.sybilResistanceValue
       : [];
+
     const currentAllowList =
       Array.isArray(previewData?.sybilResistanceValue) ?
         previewData.sybilResistanceValue
@@ -324,12 +326,9 @@ export default function PoolEditForm({
       },
     ] as const;
 
-    if (
-      sybilResistanceType === "gitcoinPassport" &&
-      typeof previewData?.sybilResistanceValue === "number"
-    ) {
+    if (sybilResistanceType === "gitcoinPassport") {
       const sybilValue =
-        previewData.sybilResistanceValue * CV_PASSPORT_THRESHOLD_SCALE;
+        +(previewData.sybilResistanceValue ?? 0) * CV_PASSPORT_THRESHOLD_SCALE;
       writeEditPoolWithScoreThreshold({
         args: [...coreArgs, BigInt(sybilValue)],
       });
@@ -691,7 +690,7 @@ export default function PoolEditForm({
               }}
               btnStyle="outline"
             >
-              Go Back
+              Edit
             </Button>
             <Button onClick={() => contractWrite()} isLoading={loading}>
               Submit

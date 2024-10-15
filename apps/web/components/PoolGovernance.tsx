@@ -19,7 +19,7 @@ import {
 export type PoolGovernanceProps = {
   memberPoolWeight: number;
   tokenDecimals: number;
-  strategy: Pick<CVStrategy, "id" | "sybilScorer"> & {
+  strategy: Pick<CVStrategy, "id" | "sybilScorer" | "poolId"> & {
     registryCommunity: { garden: Pick<TokenGarden, "symbol"> };
     config: Pick<CVStrategyConfig, "pointSystem" | "allowlist">;
   };

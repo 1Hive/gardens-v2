@@ -82,7 +82,7 @@ export const FormAddressInput = ({
   );
 
   let modifier = "";
-  if (errors) {
+  if (Object.keys(errors).length > 0) {
     modifier = "border-error";
   } else if (disabled) {
     modifier = "border-disabled";

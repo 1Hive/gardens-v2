@@ -56,9 +56,10 @@ export function FormSelect({
           ...registerOptions,
         })}
         disabled={disabled}
+        defaultValue={""}
       >
         {placeholder && (
-          <option value="" disabled selected>
+          <option value="" disabled>
             {placeholder}
           </option>
         )}

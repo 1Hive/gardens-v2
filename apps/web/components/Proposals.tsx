@@ -401,6 +401,10 @@ export function Proposals({
       ProposalStatus[x.proposalStatus] === "rejected" ||
       ProposalStatus[x.proposalStatus] === "executed",
   );
+
+  const isEndedProposalActiveAllocation = endedProposals.some(
+    (x) => stakedFilters[x.id] !== undefined,
+  );
   // Render
   return (
     <>
@@ -473,7 +477,12 @@ export function Proposals({
                 <div className="collapse collapse-arrow">
                   <input type="checkbox" />
                   <div className="collapse-title text-xl font-medium">
-                    Click to show/hide ended proposals
+                    Click to show/hide ended proposals{" "}
+                    {allocationView && isEndedProposalActiveAllocation ?
+                      <span className="text-primary-content">
+                        (active allocation)
+                      </span>
+                    : ""}
                   </div>
                   <div className="collapse-content flex flex-col gap-6 px-0">
                     {endedProposals.map((proposalData) => (

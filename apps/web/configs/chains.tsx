@@ -87,7 +87,7 @@ export const chainConfigMap: {
     globalTribunal: "0xb05A948B5c1b057B88D381bDe3A375EfEA87EbAD",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xe32566076534973ff78b512ec6a321a58c2b735c",
-    passportScorer: "0xbeca1cf897ecd4bb21b835eaa221f1b6a96524f4",
+    passportScorer: "0xfF53a163e43EccC00d8FdE7acA24aa9FA4da7356",
     isTestnet: true,
   },
   11155111: {

@@ -358,7 +358,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     tooltip={tooltipMessage}
                   >
                     <InfoWrapper
-                      className="[&>svg]:text-danger-button [&:before]:mr-10"
+                      className="[&>svg]:text-error"
                       tooltip={
                         "Reject if the proposal violates the rules outlined in the community covenant."
                       }

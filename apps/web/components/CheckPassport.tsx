@@ -17,6 +17,7 @@ import { isProd } from "@/configs/isProd";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { CV_PASSPORT_THRESHOLD_SCALE } from "@/utils/numbers";
+import { usePubSubContext } from "@/contexts/pubsub.context";
 
 type SubmitPassportResponse = {
   data: any;
@@ -24,7 +25,7 @@ type SubmitPassportResponse = {
 };
 
 type CheckPassportProps = {
-  strategy: Pick<CVStrategy, "id" | "sybilScorer">;
+  strategy: Pick<CVStrategy, "id" | "sybilScorer" | "poolId">;
   children: ReactElement<{
     onClick: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   }>;
@@ -44,6 +45,7 @@ export function CheckPassport({
   const [shouldOpenModal, setShouldOpenModal] = useState(false);
   const [isSubmiting, setIsSubmiting] = useState<boolean>(false);
   const chainFromPath = useChainIdFromPath();
+  const { publish } = usePubSubContext();
 
   //pool threshold should be ready on!
 
@@ -62,7 +64,12 @@ export function CheckPassport({
       query: getPassportUserDocument,
       variables: { userId: walletAddr?.toLowerCase() },
       enabled: !!walletAddr && enableCheck,
-      //TODO: add changeScope = passportUserData
+      changeScope: {
+        topic: "member",
+        id: walletAddr?.toLowerCase(),
+        chainId: chainFromPath,
+        type: "update",
+      },
     });
 
   const passportUser = passportUserData?.passportUser;
@@ -72,7 +79,12 @@ export function CheckPassport({
       query: getPassportStrategyDocument,
       variables: { strategyId: strategy.id },
       enabled: enableCheck,
-      //TODO: add changeScope = passport
+      changeScope: {
+        topic: "member",
+        id: strategy.poolId,
+        chainId: chainFromPath,
+        type: "update",
+      },
     });
 
   const passportStrategy = passportStrategyData?.passportStrategy;
@@ -133,7 +145,7 @@ export function CheckPassport({
   ) => {
     _score = Number(_score);
     setScore(_score);
-    if (score >= threshold) {
+    if (_score >= threshold) {
       console.debug("Score meets threshold, moving forward...");
     } else {
       console.debug("Score is too low, opening modal...");
@@ -170,10 +182,8 @@ export function CheckPassport({
   const submitPassport = async (
     address: string,
   ): Promise<SubmitPassportResponse> => {
-    const SUBMIT_SIGNED_PASSPORT_URI = "/api/passport/submit-passport";
-
     try {
-      const response = await fetch(SUBMIT_SIGNED_PASSPORT_URI, {
+      const response = await fetch("/api/passport/submit-passport", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -200,24 +210,35 @@ export function CheckPassport({
   };
 
   const writeScorer = async (address: string): Promise<any> => {
-    const WRITE_SCORER_URI = `/api/passport-oracle/write-score/${chainFromPath}`;
     try {
-      const response = await fetch(WRITE_SCORER_URI, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/api/passport-oracle/write-score/${chainFromPath}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ user: address }),
         },
-        body: JSON.stringify({ user: address }),
-      });
+      );
 
       if (!response.ok) {
         return {
           error: true,
           data: response,
+          errorMessage: await response.text(),
         };
       }
 
       const data = await response.json();
+
+      publish({
+        topic: "member",
+        type: "update",
+        id: address,
+        chainId: chainFromPath,
+      });
+
       console.debug("Response from writeScorer API:", data);
       return data;
     } catch (err) {
@@ -244,7 +265,7 @@ export function CheckPassport({
             <p>
               Passport score:{" "}
               <Skeleton isLoading={passportUserFetching}>
-                <span className="font-semibold">{score.toFixed(2)}</span>
+                <span className="font-semibold w-12">{score.toFixed(2)}</span>
               </Skeleton>
             </p>
             <p>

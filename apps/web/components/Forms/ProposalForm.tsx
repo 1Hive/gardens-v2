@@ -15,7 +15,7 @@ import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { WalletBalance } from "../WalletBalance";
-import { Button } from "@/components";
+import { Button, EthAddress } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -26,6 +26,8 @@ import { abiWithErrors } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { formatTokenAmount } from "@/utils/numbers";
+import { capitalize } from "@/utils/text";
+import { FormAddressInput } from "./FormAddressInput";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -49,7 +51,7 @@ type ProposalFormProps = {
 
 type FormRowTypes = {
   label: string;
-  parse?: (value: any) => string;
+  parse?: (value: any) => React.ReactNode;
 };
 
 const abiParameters = [
@@ -124,11 +126,13 @@ export const ProposalForm = ({
     formState: { errors },
     getValues,
     setValue,
+    watch,
   } = useForm<FormInputs>();
 
   const { publish } = usePubSubContext();
 
   const chainId = alloInfo.chainId;
+  const beneficiary = watch("beneficiary");
 
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
@@ -137,9 +141,13 @@ export const ProposalForm = ({
     },
     beneficiary: {
       label: "Beneficiary:",
+      parse: (value: string) => (
+        <EthAddress address={value as Address}></EthAddress>
+      ),
     },
     proposalType: {
       label: "Proposal Type:",
+      parse: (value: number) => capitalize(PoolTypes[value]),
     },
     strategy: { label: "Strategy:" },
   };
@@ -352,20 +360,14 @@ export const ProposalForm = ({
           )}
           {proposalTypeName !== "signaling" && (
             <div className="flex flex-col">
-              <FormInput
-                label="Beneficary address"
-                register={register}
-                registerOptions={{
-                  pattern: {
-                    value: ethereumAddressRegEx,
-                    message: "Invalid Eth Address",
-                  },
+              <FormAddressInput
+                label="Beneficiary address"
+                value={beneficiary}
+                onChange={(e) => {
+                  setValue("beneficiary", e.target.value);
                 }}
                 required
                 errors={errors}
-                registerKey="beneficiary"
-                type="text"
-                placeholder="0x000..."
               />
             </div>
           )}

@@ -15,7 +15,7 @@ import { Countdown } from "./Countdown";
 import { DisplayNumber } from "./DisplayNumber";
 import { ProposalInputItem } from "./Proposals";
 import TooltipIfOverflow from "./TooltipIfOverflow";
-import { Badge, Card } from "@/components";
+import { Badge, Button, Card } from "@/components";
 import { ConvictionBarChart } from "@/components/Charts/ConvictionBarChart";
 import { Skeleton } from "@/components/Skeleton";
 import { QUERY_PARAMS } from "@/constants/query-params";
@@ -25,7 +25,7 @@ import {
   useConvictionRead,
 } from "@/hooks/useConvictionRead";
 import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
-import { PoolTypes } from "@/types";
+import { PoolTypes, ProposalStatus } from "@/types";
 import { calculatePercentage } from "@/utils/numbers";
 import { prettyTimestamp } from "@/utils/text";
 
@@ -151,6 +151,11 @@ export function ProposalCard({
     );
   };
 
+  const isProposalEnded =
+    ProposalStatus[proposalStatus] === "cancelled" ||
+    ProposalStatus[proposalStatus] === "rejected" ||
+    ProposalStatus[proposalStatus] === "executed";
+
   const proposalCardContent = (
     <>
       <div
@@ -204,19 +209,27 @@ export function ProposalCard({
               <div className=" flex w-full flex-wrap items-center justify-between gap-6">
                 <div className="flex items-center gap-8">
                   <div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={memberActivatedPoints}
-                      value={inputData?.value}
-                      className={
-                        "range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)]"
+                    <div
+                      className={isProposalEnded ? "tooltip" : ""}
+                      data-tip={
+                        isProposalEnded ?
+                          "Cannot change allocation when a proposal is ended"
+                        : ""
                       }
-                      step={memberActivatedPoints / 100}
-                      onChange={(e) =>
-                        inputHandler(proposalData.id, Number(e.target.value))
-                      }
-                    />
+                    >
+                      <input
+                        type="range"
+                        min={0}
+                        max={memberActivatedPoints}
+                        value={inputData?.value}
+                        className={`range range-md min-w-[460px] cursor-pointer bg-neutral-soft [--range-shdw:var(--color-green-500)] ${isProposalEnded ? "grayscale !cursor-not-allowed" : ""}`}
+                        step={memberActivatedPoints / 100}
+                        onChange={(e) =>
+                          inputHandler(proposalData.id, Number(e.target.value))
+                        }
+                        disabled={isProposalEnded}
+                      />
+                    </div>
                     <div className="flex w-full justify-between px-2.5">
                       {[...Array(21)].map((_, i) => (
                         // eslint-disable-next-line react/no-array-index-key
@@ -226,6 +239,16 @@ export function ProposalCard({
                       ))}
                     </div>
                   </div>
+
+                  {isProposalEnded && inputData?.value != 0 && (
+                    <Button
+                      className="mb-2 !p-2 !px-3"
+                      btnStyle="outline"
+                      onClick={() => inputHandler(proposalData.id, 0)}
+                    >
+                      &times;
+                    </Button>
+                  )}
                   <div className="mb-2">
                     {inputValue > 0 && (
                       <>

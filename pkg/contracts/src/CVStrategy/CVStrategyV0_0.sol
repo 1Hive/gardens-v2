@@ -302,7 +302,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         pointSystem = ip.pointSystem;
         pointConfig = ip.pointConfig;
         sybilScorer = ISybilScorer(ip.sybilScorer);
-        
+
         emit InitializedCV2(_poolId, ip);
 
         _setPoolParams(ip.arbitrableConfig, ip.cvParams, new address[](0), new address[](0));
@@ -372,11 +372,14 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return sybilScorer.canExecuteAction(_user, address(this));
     }
 
-    function _checkProposalAllocationValidity(uint256 _proposalId) internal view virtual {
+    function _checkProposalAllocationValidity(uint256 _proposalId, int256 deltaSupport) internal view virtual {
         Proposal storage p = proposals[_proposalId];
         if (
-            p.proposalStatus == ProposalStatus.Inactive || p.proposalStatus == ProposalStatus.Cancelled
-                || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
+            deltaSupport > 0
+                && (
+                    p.proposalStatus == ProposalStatus.Inactive || p.proposalStatus == ProposalStatus.Cancelled
+                        || p.proposalStatus == ProposalStatus.Executed || p.proposalStatus == ProposalStatus.Rejected
+                )
         ) {
             revert ProposalInvalidForAllocation(_proposalId, p.proposalStatus);
         }
@@ -592,7 +595,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     function _beforeAllocate(bytes memory _data, address /*_sender*/ ) internal virtual override {
         ProposalSupport[] memory pv = abi.decode(_data, (ProposalSupport[]));
         for (uint256 i = 0; i < pv.length; i++) {
-            _checkProposalAllocationValidity(pv[i].proposalId);
+            _checkProposalAllocationValidity(pv[i].proposalId, pv[i].deltaSupport);
         }
     }
 

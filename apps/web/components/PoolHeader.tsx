@@ -11,7 +11,7 @@ import {
 import { StopIcon } from "@heroicons/react/24/solid";
 import { FetchTokenResult } from "@wagmi/core";
 import Image from "next/image";
-import { Address } from "viem";
+import { Address, zeroAddress } from "viem";
 import { useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
@@ -112,8 +112,12 @@ export default function PoolHeader({
     useSubgraphQuery<getPassportStrategyQuery>({
       query: getPassportStrategyDocument,
       variables: { strategyId: strategy.id as Address },
-      // enabled: enableCheck,
-      //TODO: add changeScope = passport
+      changeScope: {
+        topic: "pool",
+        type: "update",
+        id: strategy.poolId,
+        chainId: chainId,
+      },
     });
   const pointSystemType = Number(strategy.config.pointSystem);
   const passportStrategy = passportStrategyData?.passportStrategy;
@@ -198,17 +202,20 @@ export default function PoolHeader({
       info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
     },
     {
-      label: "Restriction system",
+      label: "Protection",
       value:
         sybilResistanceType ?
-          sybilResistanceType === "gitcoinPassport" ?
-            "Gitcoin Passport"
+          sybilResistanceType === "gitcoinPassport" ? "Gitcoin Passport"
+          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
+            "No restriction"
           : "Allowlist"
         : "",
       info:
         sybilResistanceType ?
           sybilResistanceType === "gitcoinPassport" ?
             `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${(sybilResistanceValue as number).toFixed(2)}`
+          : (sybilResistanceValue as Array<Address>)?.[0] === zeroAddress ?
+            "Any wallet can interact with this pool"
           : `Only users in the allowlist can interact with this pool: \n -${(sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ")}`
         : "",
     },

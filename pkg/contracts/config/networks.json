@@ -17,8 +17,11 @@
       "PROXIES": {
         "REGISTRY_FACTORY": "0x7a603877488db46c0f6b40c2c770becfd7a65593",
         "REGISTRY_COMMUNITIES": [
+          "0x17a3d80b587202999243aca5e7938537d090d420",
           "0x20731544b8c29c17c42a1cb1278371af5c08142f",
           "0x4d434729b80c95b0454a77fc152464b2f196abf0",
+          "0x5a044599606c86e14e085f4bada529242d28e5e8",
+          "0x622255fc131da4294cabfb7f08cc3add78fd728f",
           "0xc2b5443ccb8aa0b8f2b93b560beaee1b5bb964e5",
           "0xf17e005599813f626ff6b4ff8189105b1306af94",
           "0xf6d60f30eed6e3ec588242cff30d9c8f596370cb",
@@ -30,6 +33,7 @@
           "0x271c5834f61901623c00ca274dc0911131e3865d",
           "0x2a309fc9b3d3031826fae08254c3eb3fb3e136a9",
           "0x2b7e64cf97cb0ad9f074e941f29e99899cad6f00",
+          "0x2c3adb40206952738927b6648c14de835d3a87d9",
           "0x39db23696c0ad7a4afc5db891154a426193d3046",
           "0x45cbefe5f9f0df5f76c8bdd07003724ec100497f",
           "0x5ba5c0d3908c12773adf3a8c2aa504339b537011",
@@ -55,9 +59,11 @@
           "0xdd02fe21984aef0d8d3fa46d545b2dece39749b4",
           "0xe0eb96a8c31d95ccca8f7fa52ee38d0d42b4167b",
           "0xe57e7f0707bdb9c826a7c6da352dfb2be1275c21",
+          "0xee81fb9c0a60dfc69a7922bc3472418dd46f7dd3",
+          "0xfbaecc060d6a9051eb13c824b9eaff825976d44f",
           "0xfd71d94f892670d3085cfaf1d93d0e4eb0b8963b"
         ],
-        "PASSPORT_SCORER": "0xfF53a163e43EccC00d8FdE7acA24aa9FA4da7356"
+        "PASSPORT_SCORER": "0xff53a163e43eccc00d8fde7aca24aa9fa4da7356"
       }
     },
     {

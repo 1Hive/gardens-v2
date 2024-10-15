@@ -285,7 +285,7 @@ export function PoolForm({ token, communityAddr }: Props) {
       },
     },
     sybilResistanceType: {
-      label: "Pool voting restriction:",
+      label: "Protection:",
       parse: () =>
         sybilResistancePreview(
           sybilResistanceType,
@@ -402,7 +402,6 @@ export function PoolForm({ token, communityAddr }: Props) {
     ) {
       allowList = [zeroAddress];
     }
-
     writeCreatePool({
       args: [
         (previewData.poolTokenAddress || zeroAddress) as Address,
@@ -416,7 +415,9 @@ export function PoolForm({ token, communityAddr }: Props) {
           arbitrableConfig: {
             defaultRuling: BigInt(previewData.defaultResolution),
             defaultRulingTimeout: BigInt(
-              parseTimeUnit(previewData.rulingTime, "days", "seconds"),
+              Math.round(
+                parseTimeUnit(previewData.rulingTime, "days", "seconds"),
+              ),
             ),
             submitterCollateralAmount: parseUnits(
               previewData.proposalCollateral.toString(),
