@@ -261,13 +261,9 @@ export const CommunityForm = ({
               type="number"
               registerOptions={{
                 min: {
-                  value: INPUT_TOKEN_MIN_VALUE,
-                  message: `Amount must be greater than ${INPUT_TOKEN_MIN_VALUE}`,
+                  value: 0,
+                  message: `Amount must be greater than 0`,
                 },
-              }}
-              otherProps={{
-                step: INPUT_TOKEN_MIN_VALUE,
-                min: INPUT_TOKEN_MIN_VALUE,
               }}
               suffix={tokenGarden.symbol}
               tooltip="Amount of tokens user must stake to join and participate in community governance. Refundable upon leaving the community."
@@ -341,7 +337,7 @@ export const CommunityForm = ({
 
           <div className="flex">
             <FormCheckBox
-              label="Council safe can remove members"
+              label="council safe can remove members"
               register={register}
               errors={errors}
               registerKey="isKickMemberEnabled"
