@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 "use client";
 
-import { HTMLInputTypeAttribute, useEffect, useMemo } from "react";
+import { ChangeEvent, HTMLInputTypeAttribute } from "react";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import { RegisterOptions, UseFormRegister } from "react-hook-form";
 import {} from "react-hook-form";
@@ -25,8 +25,8 @@ type Props = {
   value?: string | number;
   step?: number | string;
   tooltip?: string;
-  onChange?: (value: any) => void;
-  suffix?: string;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  suffix?: React.ReactNode;
 };
 
 export function FormInput({
@@ -35,7 +35,7 @@ export function FormInput({
   type,
   registerKey = "",
   placeholder = "",
-  register = () => ({}) as any,
+  register,
   errors = false,
   required = false,
   registerOptions,
@@ -50,25 +50,14 @@ export function FormInput({
   onChange,
   suffix,
 }: Props) {
+  const registered = register?.(registerKey, {
+    required,
+    disabled,
+    ...registerOptions,
+  });
+
   const fixedInputClassname =
     "!border-gray-300 focus:border-gray-300 focus:outline-gray-300 cursor-not-allowed bg-transparent";
-
-  useEffect(() => {
-    register(registerKey, registerOptions);
-  }, [registerKey]);
-
-  const registered = useMemo(() => {
-    return register(registerKey, {
-      required,
-      disabled,
-      ...registerOptions,
-      onChange: (e) => {
-        onChange?.(e);
-        registerOptions?.onChange?.(e);
-      },
-      value: value !== undefined ? value : undefined,
-    });
-  }, [registerKey]);
 
   return (
     <div className="flex flex-col">
@@ -92,6 +81,7 @@ export function FormInput({
       >
         {type !== "textarea" && type !== "markdown" ?
           <input
+            {...registered}
             id={registerKey}
             type={type}
             placeholder={placeholder}
@@ -102,15 +92,13 @@ export function FormInput({
             step={step}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
-            {...register(registerKey, {
-              required,
-              disabled,
-              ...registerOptions,
-            })}
+            // value={value}
+            onChange={onChange}
             {...otherProps}
           />
         : type === "textarea" ?
           <textarea
+            {...registered}
             id={registerKey}
             placeholder={placeholder}
             className={`${className} textarea textarea-info line-clamp-5 w-full overflow-auto h-24 ${
@@ -120,15 +108,14 @@ export function FormInput({
             rows={rows}
             disabled={disabled || readOnly}
             readOnly={readOnly || disabled}
-            {...register(registerKey, {
-              required,
-              disabled,
-              ...registerOptions,
-            })}
+            onChange={onChange}
+            value={value}
             {...otherProps}
           />
         : <div data-color-mode="light">
             <MarkdownEditor
+              {...registered}
+              className="textarea textarea-info p-0 ![--color-canvas-subtle:var(--n)] ![--color-neutral-muted:#cceeff44]"
               id={registerKey}
               style={{
                 resize: "vertical",
@@ -138,14 +125,12 @@ export function FormInput({
               disabled={disabled || readOnly}
               readOnly={readOnly || disabled}
               required={required}
-              {...register(registerKey, {
-                required,
-                disabled,
-                ...registerOptions,
-              })}
+              value={value}
               onChange={(v) => {
-                const e = { target: { value: v } };
-                registered.onChange(e);
+                const e = {
+                  target: { value: v },
+                } as ChangeEvent<HTMLInputElement>;
+                registered?.onChange(e);
                 onChange?.(e);
               }}
               {...otherProps}

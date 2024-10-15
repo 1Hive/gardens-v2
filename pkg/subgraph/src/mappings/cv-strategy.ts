@@ -19,7 +19,7 @@ import {
   InitializedCV,
   InitializedCV2,
   ProposalCreated,
-  CVStrategyV0_1 as CVStrategyContract,
+  CVStrategyV0_0 as CVStrategyContract,
   PoolAmountIncreased,
   SupportAdded,
   PowerIncreased,
@@ -32,10 +32,11 @@ import {
   ProposalCancelled,
   AllowlistMembersAdded,
   AllowlistMembersRemoved,
-  InitializedCV2DataStruct
-} from "../../generated/templates/CVStrategyV0_1/CVStrategyV0_1";
+  InitializedCV2DataStruct,
+  SybilScorerUpdated
+} from "../../generated/templates/CVStrategyV0_0/CVStrategyV0_0";
 
-import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_1/Allo";
+import { Allo as AlloContract } from "../../generated/templates/CVStrategyV0_0/Allo";
 
 import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
@@ -421,7 +422,9 @@ export function handleCVParamsUpdated(event: CVParamsUpdated): void {
   );
 
   computeConfig(config, event.params.cvParams);
-  computeAllowList(config, [], []);
+  if (config.allowlist == null) {
+    config.allowlist = [];
+  }
 
   config.save();
 }
@@ -546,17 +549,21 @@ export function handleProposalCancelled(event: ProposalCancelled): void {
 export function handleAllowlistMembersAdded(
   event: AllowlistMembersAdded
 ): void {
+  if (event.params.members.length == 0) {
+    return;
+  }
+
   let config = CVStrategyConfig.load(
     `${event.address.toHex()}-${event.params.poolId.toString()}-config`
   );
 
   if (config == null) {
-    log.error(
-      "CVStrategy: handleAllowlistMembersRemoved config not found: {}",
-      [`${event.address.toHex()}-${event.params.poolId.toString()}-config`]
-    );
+    log.error("CVStrategy: handleAllowlistMembersAdded config not found: {}", [
+      `${event.address.toHex()}-${event.params.poolId.toString()}-config`
+    ]);
     return;
   }
+
   computeAllowList(config, event.params.members, []);
   config.save();
 }
@@ -564,6 +571,10 @@ export function handleAllowlistMembersAdded(
 export function handleAllowlistMembersRemoved(
   event: AllowlistMembersRemoved
 ): void {
+  if (event.params.members.length == 0) {
+    return;
+  }
+
   let config = CVStrategyConfig.load(
     `${event.address.toHex()}-${event.params.poolId.toString()}-config`
   );
@@ -578,6 +589,19 @@ export function handleAllowlistMembersRemoved(
 
   computeAllowList(config, [], event.params.members);
   config.save();
+}
+
+export function handleSybilScorerUpdated(event: SybilScorerUpdated): void {
+  let cvs = CVStrategy.load(event.address.toHexString());
+  if (cvs == null) {
+    log.error("CVStrategy: handleSybilScorerUpdated cvs not found: {}", [
+      event.address.toHexString()
+    ]);
+    return;
+  }
+
+  cvs.sybilScorer = event.params.sybilScorer.toHexString();
+  cvs.save();
 }
 
 /// -- Privates -- ///
@@ -661,6 +685,7 @@ function computeInitialize(
   cvs.maxCVSupply = BigInt.fromI32(0);
   cvs.totalEffectiveActivePoints = cvc.totalEffectiveActivePoints();
   cvs.isEnabled = false;
+  cvs.sybilScorer = data.sybilScorer.toHexString();
   config.proposalType = BigInt.fromI32(pType);
   config.pointSystem = BigInt.fromI32(pointSystem);
   config.maxAmount = maxAmount;

@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: localhost
+    network: arbitrum-sepolia
     context:
-      chainId:
+      chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
       address: "0x5b1ed8559c26b06b79729e46aee400605f07a109"
       abi: RegistryFactoryV0_0
@@ -33,18 +33,18 @@ dataSources:
         - event: CommunityValiditySet(address,bool)
           handler: handleCommunityValiditySet
         - event: ProtocolFeeSet(address,uint256)
-          handler: handleProtocolFeeSet
+          handler: handleProtocolFeeSet  
         - event: Initialized(uint8)
-          handler: handleRegistryInitialized
+          handler: handleRegistryInitialized  
       file: ./src/mappings/registry-factory.ts
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: localhost
+    network: arbitrum-sepolia
     context:
-      chainId:
+      chainId: 
         type: Int
-        data: 1337
+        data: 421614
     source:
       address: "0xbeca1cf897ecd4bb21b835eaa221f1b6a96524f4"
       abi: PassportScorer
@@ -59,22 +59,28 @@ dataSources:
         - name: PassportScorer
           file: ../contracts/out/PassportScorer.sol/PassportScorer.json
       eventHandlers:
-        - event: UserScoreAdded(indexed address,uint256,uint256)
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: UserScoreAdded(indexed address,uint256)
           handler: handleUserScoreAdded
         - event: UserRemoved(indexed address)
           handler: handleUserRemoved
         - event: StrategyAdded(indexed address,uint256,bool,address)
           handler: handleStrategyAdded
+        - event: StrategyRemoved(indexed address)
+          handler: handleStrategyRemoved
         - event: StrategyActivated(indexed address)
           handler: handleStrategyActivated
+        - event: ThresholdModified(indexed address,uint256)
+          handler: handleThresholdModified
       file: ./src/mappings/passport-scorer.ts
 
 templates:
   - kind: ethereum/contract
-    name: RegistryCommunityV0_1
+    name: RegistryCommunityV0_0
     network: arbitrum-sepolia
     source:
-      abi: RegistryCommunityV0_1
+      abi: RegistryCommunityV0_0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -86,15 +92,15 @@ templates:
         - TokenGarden
         - Member
       abis:
-        - name: RegistryCommunityV0_1
-          file: ../contracts/out/RegistryCommunityV0_1.sol/RegistryCommunityV0_1.json
+        - name: RegistryCommunityV0_0
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
         - name: ERC20
           file: ../contracts/out/ERC20.sol/ERC20.json
-        - name: CVStrategyV0_1
-          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
         - name: RegistryFactoryV0_0
           file: ../contracts/out/RegistryFactoryV0_0.sol/RegistryFactoryV0_0.json
-
+     
       eventHandlers:
         - event: RegistryInitialized(bytes32,string,(uint256,string))
           handler: handleInitialized
@@ -123,7 +129,7 @@ templates:
         - event: MemberPowerIncreased(address,uint256)
           handler: handleMemberPowerIncreased
         # - event: BasisStakedAmountSet(uint256)
-        # handler: handleBasisStakedAmountSet
+          # handler: handleBasisStakedAmountSet
         # - event: CouncilSafeSet(address)
         #   handler: handleCouncilSafeSet
         # - event: CouncilSafeChangeStarted(address,address)
@@ -133,10 +139,10 @@ templates:
       file: ./src/mappings/registry-community.ts
 
   - kind: ethereum/contract
-    name: CVStrategyV0_1
+    name: CVStrategyV0_0
     network: arbitrum-sepolia
     source:
-      abi: CVStrategyV0_1
+      abi: CVStrategyV0_0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -147,16 +153,16 @@ templates:
         - CVProposal
         - Allo
       abis:
-        - name: CVStrategyV0_1
-          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
-        - name: RegistryCommunityV0_1
-          file: ../contracts/out/RegistryCommunityV0_1.sol/RegistryCommunityV0_1.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+        - name: RegistryCommunityV0_0
+          file: ../contracts/out/RegistryCommunityV0_0.sol/RegistryCommunityV0_0.json
         - name: Allo
           file: ../contracts/out/Allo.sol/Allo.json
       eventHandlers:
         - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
-        - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,address[]))
+        - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[]))
           handler: handleInitializedV2
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
@@ -186,12 +192,14 @@ templates:
           handler: handleAllowlistMembersAdded
         - event: AllowlistMembersRemoved(uint256,address[])
           handler: handleAllowlistMembersRemoved
-
+        - event: SybilScorerUpdated(address)
+          handler: handleSybilScorerUpdated
+ 
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: localhost
+    network: arbitrum-sepolia
     source:
       abi: CollateralVault
     mapping:
@@ -211,8 +219,8 @@ templates:
           handler: handleCollateralWithdrawnFor
         - event: CollateralWithdrawn(uint256,indexed address,uint256,bool)
           handler: handleCollateralWithdrawn
-      file: ./src/mappings/cv-strategy.ts
-
+      file: ./src/mappings/cv-strategy.ts  
+  
   - name: ProposalDisputeMetadata
     kind: file/ipfs
     mapping:
@@ -223,9 +231,9 @@ templates:
       entities:
         - ProposalDisputeMetadata
       abis:
-        - name: CVStrategyV0_1
-          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
-
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json
+  
   - name: ProposalMetadata
     kind: file/ipfs
     mapping:
@@ -236,5 +244,5 @@ templates:
       entities:
         - ProposalMetadata
       abis:
-        - name: CVStrategyV0_1
-          file: ../contracts/out/CVStrategyV0_1.sol/CVStrategyV0_1.json
+        - name: CVStrategyV0_0
+          file: ../contracts/out/CVStrategyV0_0.sol/CVStrategyV0_0.json

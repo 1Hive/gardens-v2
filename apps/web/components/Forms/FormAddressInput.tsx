@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect } from "react";
 import { blo } from "blo";
-import { RegisterOptions } from "react-hook-form";
-import { useIsMounted } from "usehooks-ts";
+import { uniqueId } from "lodash-es";
 import { Address, isAddress } from "viem";
-import { normalize } from "viem/ens";
-import { mainnet, useEnsAddress, useEnsAvatar, useEnsName } from "wagmi";
+import { useEnsAddress, useEnsAvatar, useEnsName } from "wagmi";
 import { InfoWrapper } from "../InfoWrapper";
+import { useDebounce } from "@/hooks/useDebounce";
 import { isENS } from "@/utils/web3";
 
 /**
@@ -13,85 +12,77 @@ import { isENS } from "@/utils/web3";
  */
 type Props = {
   label?: string;
-  placeholder?: string;
   errors?: any;
-  register?: any;
-  registerKey: string;
-  registerOptions?: RegisterOptions;
   required?: boolean;
+  placeholder?: string;
   readOnly?: boolean;
+  disabled?: boolean;
   className?: string;
   value?: string;
-  disabled?: boolean;
   tooltip?: string;
-  onChange?: (value: string) => void;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
 };
 
 export const FormAddressInput = ({
   label,
-  placeholder = "",
   errors = false,
-  register = () => ({}),
-  registerKey = "",
-  registerOptions,
   required = false,
-  readOnly = false,
+  placeholder = "0x",
+  readOnly,
+  disabled,
   className,
   value = undefined,
-  disabled = false,
   tooltip,
   onChange,
 }: Props) => {
-  const [input, setInput] = useState<string | undefined>(value);
-  const [isValid, setIsValid] = useState<boolean | null>(true);
-  const isMounted = useIsMounted();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const id = uniqueId("address-input-");
+  const debouncedValue = useDebounce(value, 500);
+  const debouncedOrValue = isAddress(value ?? "") ? value : debouncedValue;
+  const isDebouncedValueLive = debouncedOrValue === value;
 
-  const { data: resolvedAddress } = useEnsAddress({
-    name: !!input && isENS(input) ? normalize(input) : undefined,
-    chainId: mainnet.id,
-    enabled: !!input && isENS(input),
+  const settledValue = isDebouncedValueLive ? debouncedOrValue : undefined;
+
+  const { data: ensAddress } = useEnsAddress({
+    name: settledValue,
+    enabled: isENS(debouncedOrValue),
+    chainId: 1,
+    cacheTime: 30_000,
   });
 
   const { data: ensName } = useEnsName({
-    address: resolvedAddress ?? (input as Address),
-    chainId: mainnet.id,
-    enabled:
-      !!(resolvedAddress ?? input) && isAddress(resolvedAddress! ?? input),
+    address: settledValue as Address,
+    enabled: isAddress(debouncedOrValue ?? ""),
+    chainId: 1,
+    cacheTime: 30_000,
   });
 
   const { data: avatarUrl } = useEnsAvatar({
     name: ensName,
-    chainId: mainnet.id,
-    enabled: !!ensName,
+    enabled: Boolean(ensName),
+    chainId: 1,
+    cacheTime: 30_000,
   });
 
   useEffect(() => {
-    setInput(inputRef.current?.value);
-  }, [inputRef.current?.value]);
+    if (!ensAddress) return;
+    const ev = {
+      target: { value: ensAddress },
+    } as ChangeEvent<HTMLInputElement>;
+    onChange?.(ev);
+  }, [ensAddress, onChange, debouncedOrValue]);
 
-  useEffect(() => {
-    if (!isMounted()) {
-      return;
-    }
-    if (resolvedAddress) {
-      onChange?.(resolvedAddress);
-      setIsValid(true);
-    } else if (input != null && !isENS(input)) {
-      // Direct address validation
-      if (input !== value) {
-        onChange?.(input);
-      }
-      try {
-        setIsValid(isAddress(input));
-      } catch (error) {
-        setIsValid(false);
-      }
-    }
-  }, [resolvedAddress, input]);
+  const handleChange = useCallback(
+    (newValue: string) => {
+      const ev = {
+        target: { value: newValue },
+      } as ChangeEvent<HTMLInputElement>;
+      onChange?.(ev);
+    },
+    [onChange],
+  );
 
   let modifier = "";
-  if (errors || !isValid) {
+  if (errors) {
     modifier = "border-error";
   } else if (disabled) {
     modifier = "border-disabled";
@@ -103,7 +94,7 @@ export const FormAddressInput = ({
   return (
     <div className={`flex flex-col max-w-md text-sm ${className ?? ""}`}>
       {label && (
-        <label htmlFor={registerKey} className="label cursor-pointer">
+        <label htmlFor={id} className="label cursor-pointer">
           <span className="label-text">
             {tooltip ?
               <InfoWrapper tooltip={tooltip}>
@@ -122,30 +113,23 @@ export const FormAddressInput = ({
         className={`form-control input input-info flex flex-row font-normal items-center ${modifier}`}
       >
         <input
-          ref={inputRef}
-          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${readOnly || disabled ? "cursor-not-allowed" : ""}`}
+          className={`input font-mono text-sm px-0 w-full border-none focus:border-none outline-none focus:outline-none ${(readOnly ?? disabled) ? "cursor-not-allowed" : ""}`}
           placeholder={placeholder || "Enter address or ENS name"}
-          id={registerKey}
-          name={registerKey}
-          value={input}
-          onChange={(ev) => setInput(ev.target.value)}
-          disabled={disabled || readOnly}
-          readOnly={readOnly || disabled}
+          id={id}
+          name={id}
+          onChange={(e) => handleChange(e.target.value)}
+          disabled={disabled ?? readOnly}
+          readOnly={readOnly ?? disabled}
           required={required}
-          {...register(registerKey, {
-            required,
-            readOnly,
-            disabled,
-            ...registerOptions,
-          })}
+          value={value}
         />
-        {input && (
+        {value && (
           // Don't want to use nextJS Image here (and adding remote patterns for the URL)
           // eslint-disable-next-line @next/next/no-img-element
           <img
             alt=""
             className={"!rounded-full ml-2"}
-            src={avatarUrl ? avatarUrl : blo((input ?? "0x") as Address)}
+            src={avatarUrl ? avatarUrl : blo(value as Address)}
             width="30"
             height="30"
           />

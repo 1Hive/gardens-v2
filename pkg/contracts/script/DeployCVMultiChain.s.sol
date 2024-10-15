@@ -235,7 +235,9 @@ contract DeployCVMultiChain is Native, CVStrategyHelpers, Script, SafeSetup {
                 ArbitrableConfig(
                     IArbitrator(address(ARBITRATOR)), payable(COUNCIL_SAFE), 0.002 ether, 0.001 ether, 1, 300
                 ),
-                new address[](1)
+                new address[](1),
+                address(0),
+                0
             );
 
             (uint256 poolId, address _strategy1) = registryCommunity.createPool(

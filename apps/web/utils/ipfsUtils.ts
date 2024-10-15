@@ -32,7 +32,7 @@ export const ipfsJsonUpload = async (
       },
       error: {
         toastId,
-        render: "Error uploading data. Please try again.",
+        render: "Error uploading data, please report a bug.",
         type: "error",
         closeOnClick: true,
         autoClose: NOTIFICATION_AUTO_CLOSE_DELAY,

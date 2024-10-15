@@ -11,7 +11,7 @@ import {IArbitrable} from "../interfaces/IArbitrable.sol";
 import {Clone} from "allo-v2-contracts/core/libraries/Clone.sol";
 import {console} from "forge-std/console.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {ISybilScorer, PassportData} from "../ISybilScorer.sol";
+import {ISybilScorer} from "../ISybilScorer.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {BaseStrategyUpgradeable} from "../BaseStrategyUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -132,6 +132,7 @@ struct CVStrategyInitializeParamsV0_1 {
     ArbitrableConfig arbitrableConfig;
     address registryCommunity;
     address sybilScorer;
+    uint256 sybilScorerThreshold;
     address[] initialAllowlist;
 }
 
@@ -177,6 +178,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     error DefaultRulingNotSet();
     error DisputeCooldownNotPassed(uint256 _proposalId, uint256 _remainingSec);
     error ProposalInvalidForAllocation(uint256 _proposalId, ProposalStatus _proposalStatus);
+    error AShouldBeUnderTwo_128();
+    error BShouldBeLessTwo_128();
+    error AShouldBeUnderOrEqTwo_128();
 
     /*|--------------------------------------------|*/
     /*|              CUSTOM EVENTS                 |*/
@@ -217,6 +221,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     );
     event AllowlistMembersRemoved(uint256 poolId, address[] members);
     event AllowlistMembersAdded(uint256 poolId, address[] members);
+    event SybilScorerUpdated(address sybilScorer);
 
     /*|-------------------------------------/-------|*o
     /*|              STRUCTS/ENUMS                 |*/
@@ -299,6 +304,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         sybilScorer = ISybilScorer(ip.sybilScorer);
         _setPoolParams(ip.arbitrableConfig, ip.cvParams, new address[](0), new address[](0));
         emit InitializedCV2(_poolId, ip);
+
+        if (address(sybilScorer) != address(0x0)) {
+          _registerToSybilScorer(ip.sybilScorerThreshold);
+        }
     }
 
     /*|--------------------------------------------|*/
@@ -445,9 +454,9 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         return address(uint160(proposalId));
     }
 
-    function getDecay() external view virtual returns (uint256) {
-        return cvParams.decay;
-    }
+    // function getDecay() external view virtual returns (uint256) {
+    //     return cvParams.decay;
+    // }
 
     function activatePoints() external virtual {
         address member = msg.sender;
@@ -483,7 +492,7 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
         uint256 pointsToIncrease = 0;
         if (pointSystem == PointSystem.Unlimited) {
-            pointsToIncrease = increasePowerUnlimited(_amountToStake);
+            pointsToIncrease = _amountToStake; // from increasePowerUnlimited(_amountToUnstake)
         } else if (pointSystem == PointSystem.Capped) {
             pointsToIncrease = increasePowerCapped(_member, _amountToStake);
         } else if (pointSystem == PointSystem.Quadratic) {
@@ -503,17 +512,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
 
         uint256 pointsToDecrease = 0;
         if (pointSystem == PointSystem.Unlimited || pointSystem == PointSystem.Capped) {
-            pointsToDecrease = decreasePowerCappedUnlimited(_amountToUnstake);
+            pointsToDecrease = _amountToUnstake; // from decreasePowerCappedUnlimited(_amountToUnstake)
         } else {
             pointsToDecrease = decreasePowerQuadratic(_member, _amountToUnstake);
         }
         totalPointsActivated -= pointsToDecrease;
         emit PowerDecreased(_member, _amountToUnstake, pointsToDecrease);
         return pointsToDecrease;
-    }
-
-    function increasePowerUnlimited(uint256 _amountToStake) internal pure virtual returns (uint256) {
-        return _amountToStake;
     }
 
     function increasePowerCapped(address _member, uint256 _amountToStake) internal view virtual returns (uint256) {
@@ -544,10 +549,6 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         uint256 pointsToIncrease = newTotalPoints - currentPoints;
 
         return pointsToIncrease;
-    }
-
-    function decreasePowerCappedUnlimited(uint256 _amountToUnstake) internal pure virtual returns (uint256) {
-        return _amountToUnstake;
     }
 
     function decreasePowerQuadratic(address _member, uint256 _amountToUnstake)
@@ -1056,8 +1057,13 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      * @return _result _a * _b / 2^128
      */
     function _mul(uint256 _a, uint256 _b) internal pure virtual returns (uint256 _result) {
-        require(_a <= TWO_128, "_a should be less than or equal to 2^128");
-        require(_b < TWO_128, "_b should be less than 2^128");
+        if (_a > TWO_128) {
+            revert AShouldBeUnderOrEqTwo_128();
+        }
+        if (_b > TWO_128) {
+            revert BShouldBeLessTwo_128();
+        }
+
         return ((_a * _b) + TWO_127) >> 128;
     }
 
@@ -1069,7 +1075,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
      * @return _result (_a / 2^128)^_b * 2^128
      */
     function _pow(uint256 _a, uint256 _b) internal pure virtual returns (uint256 _result) {
-        require(_a < TWO_128, "_a should be less than 2^128");
+        if (_a >= TWO_128) {
+            revert AShouldBeUnderTwo_128();
+        }
+
         uint256 a = _a;
         uint256 b = _b;
         _result = TWO_128;
@@ -1192,10 +1201,12 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
     //     emit RegistryUpdated(_registryCommunity);
     // }
 
-    function setSybilScorer(address _sybilScorer) external virtual {
+    function setSybilScorer(address _sybilScorer, uint256 threshold) external virtual {
         onlyCouncilSafe();
         _revertZeroAddress(_sybilScorer);
         sybilScorer = ISybilScorer(_sybilScorer);
+        _registerToSybilScorer(threshold);
+        emit SybilScorerUpdated(_sybilScorer);
     }
 
     function _setPoolParams(
@@ -1417,6 +1428,10 @@ contract CVStrategyV0_0 is BaseStrategyUpgradeable, IArbitrable, IPointStrategy,
         }
 
         emit AllowlistMembersRemoved(poolId, members);
+    }
+
+    function _registerToSybilScorer(uint256 threshold) internal {
+        sybilScorer.addStrategy(address(this), threshold, address(registryCommunity.councilSafe()));
     }
 
     uint256[50] private __gap;

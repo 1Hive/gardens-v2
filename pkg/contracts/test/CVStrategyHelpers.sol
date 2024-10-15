@@ -49,7 +49,9 @@ contract CVStrategyHelpers is Native, Accounts {
         PointSystem pointSystem,
         PointSystemConfig memory pointConfig,
         ArbitrableConfig memory arbitrableConfig,
-        address[] memory initialAllowlist
+        address[] memory initialAllowlist,
+        address sybilScorer,
+        uint256 sybilScorerThreshold
     ) public pure returns (CVStrategyInitializeParamsV0_1 memory params) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         params.cvParams.decay = _etherToFloat(0.9999799 ether); // alpha = decay
@@ -59,6 +61,8 @@ contract CVStrategyHelpers is Native, Accounts {
         params.registryCommunity = registryCommunity;
         params.proposalType = proposalType;
         params.pointSystem = pointSystem;
+        params.sybilScorer = sybilScorer;
+        params.sybilScorerThreshold = sybilScorerThreshold;
 
         if (pointConfig.maxAmount == 0) {
             // PointSystemConfig memory pointConfig;
@@ -84,7 +88,7 @@ contract CVStrategyHelpers is Native, Accounts {
     ) public returns (uint256 poolId) {
         // IAllo allo = IAllo(ALLO_PROXY_ADDRESS);
         CVStrategyInitializeParamsV0_1 memory params =
-            getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1));
+        getParams(registryCommunity, proposalType, pointSystem, pointConfig, arbitrableConfig, new address[](1), address(0), 0);
 
         address[] memory _pool_managers = new address[](2);
         _pool_managers[0] = address(this);
@@ -169,5 +173,10 @@ contract CVStrategyHelpers is Native, Accounts {
         uint256 t = _timePassed;
         uint256 atTWO_128 = _pow((decay << 128) / D, t);
         return (((atTWO_128 * _lastConv) + ((_oldAmount * D * (TWO_128 - atTWO_128)) / (D - decay))) + TWO_127) >> 128;
+    }
+
+    function getDecay(CVStrategyV0_0 strategy) public view returns (uint256) {
+        (,, uint256 decay,) = strategy.cvParams();
+        return decay;
     }
 }

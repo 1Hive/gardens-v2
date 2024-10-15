@@ -26,6 +26,7 @@ import {
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
+import {ISybilScorer} from "../ISybilScorer.sol";
 
 /*|--------------------------------------------|*/
 /*|              STRUCTS/ENUMS                 |*/
@@ -90,6 +91,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     event MemberPowerIncreased(address _member, uint256 _stakedAmount);
     event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
     event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
+
     error AllowlistTooBig(uint256 size);
 
     /*|--------------------------------------------|*/
@@ -499,6 +501,10 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
             revert StrategyExists();
         }
         enabledStrategies[_newStrategy] = true;
+        ISybilScorer sybilScorer= CVStrategyV0_0(payable(_newStrategy)).sybilScorer();
+        if (address(sybilScorer) != address(0)) {
+          sybilScorer.activateStrategy(_newStrategy);
+        }
         emit StrategyAdded(_newStrategy);
     }
 

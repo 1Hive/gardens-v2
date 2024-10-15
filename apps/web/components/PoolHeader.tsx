@@ -15,6 +15,8 @@ import { Address } from "viem";
 import { useAccount, useContractRead } from "wagmi";
 import {
   ArbitrableConfig,
+  getPassportStrategyDocument,
+  getPassportStrategyQuery,
   getPoolDataQuery,
   TokenGarden,
 } from "#/subgraph/.graphclient";
@@ -32,15 +34,23 @@ import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
+import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { registryCommunityABI, safeABI } from "@/src/generated";
-import { PointSystems, PoolTypes, ProposalStatus } from "@/types";
-import { abiWithErrors, abiWithErrors2 } from "@/utils/abiWithErrors";
+import {
+  PointSystems,
+  PoolTypes,
+  ProposalStatus,
+  SybilResistanceType,
+} from "@/types";
+import { abiWithErrors } from "@/utils/abi";
 import {
   convertSecondsToReadableTime,
+  CV_PASSPORT_THRESHOLD_SCALE,
   CV_SCALE_PRECISION,
   formatTokenAmount,
   MAX_RATIO_CONSTANT,
 } from "@/utils/numbers";
+import { shortenAddress } from "@/utils/text";
 
 type Props = {
   ipfsResult: MetadataV1 | null;
@@ -57,10 +67,7 @@ type Props = {
   >;
   token: Pick<TokenGarden, "address" | "name" | "symbol" | "decimals">;
   poolToken?: FetchTokenResult;
-  pointSystem: number;
   chainId: string;
-  proposalType: string;
-  spendingLimitPct: number;
 };
 
 function calculateConvictionGrowthInSeconds(
@@ -95,16 +102,29 @@ export default function PoolHeader({
   arbitrableConfig,
   token,
   poolToken,
-  pointSystem,
   chainId,
-  proposalType,
-  spendingLimitPct,
 }: Props) {
   const [isOpenModal, setIsOpenModal] = useState(false);
   const { address } = useAccount();
   const { publish } = usePubSubContext();
 
+  const { data: passportStrategyData } =
+    useSubgraphQuery<getPassportStrategyQuery>({
+      query: getPassportStrategyDocument,
+      variables: { strategyId: strategy.id as Address },
+      // enabled: enableCheck,
+      //TODO: add changeScope = passport
+    });
+  const pointSystemType = Number(strategy.config.pointSystem);
+  const passportStrategy = passportStrategyData?.passportStrategy;
+  const passportScore =
+    passportStrategy?.threshold ?
+      Number(passportStrategy?.threshold) / CV_PASSPORT_THRESHOLD_SCALE
+    : null;
+
   const blockTime = chainConfigMap[chainId].blockTime;
+  const spendingLimitPct =
+    (Number(strategy.config.maxRatio || 0) / CV_SCALE_PRECISION) * 100;
 
   const isCouncilSafe =
     address?.toLowerCase() ===
@@ -135,6 +155,9 @@ export default function PoolHeader({
   const proposalCollateral = arbitrableConfig.submitterCollateralAmount;
   const disputeCollateral = arbitrableConfig.challengerCollateralAmount;
   const tribunalAddress = arbitrableConfig.tribunalSafe;
+  const proposalType = strategy.config.proposalType;
+  const pointSystem = strategy.config.pointSystem;
+  const allowList = strategy.config.allowlist;
   const rulingTime = arbitrableConfig.defaultRulingTimeout;
 
   const proposalOnDispute = strategy.proposals?.some(
@@ -143,7 +166,22 @@ export default function PoolHeader({
 
   const { value, unit } = convertSecondsToReadableTime(convictionGrowthSec);
 
+  let sybilResistanceType: SybilResistanceType;
+  let sybilResistanceValue: Address[] | number | undefined;
+  if (passportScore && passportScore > 0) {
+    sybilResistanceType = "gitcoinPassport";
+    sybilResistanceValue = passportScore;
+  } else {
+    sybilResistanceType = "allowList";
+    sybilResistanceValue = allowList as Address[] | undefined;
+  }
+
   const poolConfig = [
+    {
+      label: "Spending limit",
+      value: `${spendingLimit.toPrecision(2)} %`,
+      info: "Max percentage of the pool funds that can be spent in a single proposal",
+    },
     {
       label: "Min conviction",
       value: `${minimumConviction.toPrecision(2)} %`,
@@ -160,10 +198,19 @@ export default function PoolHeader({
       info: `A fixed amount of ${token.symbol} that overrides Minimum Conviction when the Pool's activated governance is low.`,
     },
     {
-      label: "Spending limit",
-      // TODO: check number for some pools, they have more zeros or another config ?
-      value: `${spendingLimit.toFixed(2)} %`,
-      info: "Max percentage of the pool funds that can be spent in a single proposal",
+      label: "Restriction system",
+      value:
+        sybilResistanceType ?
+          sybilResistanceType === "gitcoinPassport" ?
+            "Gitcoin Passport"
+          : "Allowlist"
+        : "",
+      info:
+        sybilResistanceType ?
+          sybilResistanceType === "gitcoinPassport" ?
+            `Only users with a Gitcoin Passport above the threshold can interact with this pool: \n Threshold: ${(sybilResistanceValue as number).toFixed(2)}`
+          : `Only users in the allowlist can interact with this pool: \n -${(sybilResistanceValue as Array<string>).map((x) => shortenAddress(x)).join("\n- ")}`
+        : "",
     },
   ];
 
@@ -180,7 +227,7 @@ export default function PoolHeader({
   //hooks
   const { data: isCouncilMember } = useContractRead({
     address: strategy.registryCommunity.councilSafe as Address,
-    abi: abiWithErrors2(safeABI),
+    abi: abiWithErrors(safeABI),
     functionName: "isOwner",
     chainId: Number(chainId),
     enabled: !!address,
@@ -195,7 +242,7 @@ export default function PoolHeader({
     abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "addStrategyByPoolId",
-    fallbackErrorMessage: "Error approving pool. Please try again.",
+    fallbackErrorMessage: "Error approving pool, please report a bug.",
     args: [BigInt(poolId)],
     onConfirmations: () => {
       publish({
@@ -207,12 +254,13 @@ export default function PoolHeader({
       });
     },
   });
+
   const { write: removeStrategyByPoolId } = useContractWriteWithConfirmations({
     address: communityAddr,
     abi: abiWithErrors(registryCommunityABI),
     contractName: "Registry Community",
     functionName: "removeStrategyByPoolId",
-    fallbackErrorMessage: "Error disabling pool. Please try again.",
+    fallbackErrorMessage: "Error disabling pool, please report a bug.",
     args: [BigInt(poolId)],
     onConfirmations: () => {
       publish({
@@ -298,25 +346,30 @@ export default function PoolHeader({
           isOpen={isOpenModal}
           onClose={() => setIsOpenModal(false)}
         >
-          <PoolEditForm
-            strategyAddr={strategy.id as Address}
-            token={token}
-            proposalType={proposalType}
-            chainId={chainId}
-            proposalOnDispute={proposalOnDispute}
-            initValues={{
-              minimumConviction: minimumConviction.toFixed(2),
-              convictionGrowth: convictionGrowthSec.toFixed(4),
-              minThresholdPoints: minThresholdPoints,
-              spendingLimit: spendingLimit.toFixed(2),
-              defaultResolution: defaultResolution,
-              proposalCollateral: proposalCollateral,
-              disputeCollateral: disputeCollateral,
-              tribunalAddress: tribunalAddress,
-              rulingTime,
-            }}
-            setModalOpen={setIsOpenModal}
-          />
+          {!!passportStrategyData && (
+            <PoolEditForm
+              strategy={strategy}
+              pointSystemType={pointSystemType}
+              token={token}
+              proposalType={proposalType}
+              chainId={chainId}
+              proposalOnDispute={proposalOnDispute}
+              initValues={{
+                sybilResistanceValue: sybilResistanceValue,
+                sybilResistanceType: sybilResistanceType,
+                spendingLimit: spendingLimit.toFixed(2),
+                minimumConviction: minimumConviction.toFixed(2),
+                convictionGrowth: convictionGrowthSec.toFixed(4),
+                minThresholdPoints: minThresholdPoints,
+                defaultResolution: defaultResolution,
+                proposalCollateral: proposalCollateral,
+                disputeCollateral: disputeCollateral,
+                tribunalAddress: tribunalAddress,
+                rulingTime,
+              }}
+              setModalOpen={setIsOpenModal}
+            />
+          )}
         </Modal>
       </header>
       <Skeleton rows={5} isLoading={!ipfsResult}>

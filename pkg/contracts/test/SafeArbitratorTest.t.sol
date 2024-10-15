@@ -127,7 +127,9 @@ contract SafeArbitratorTest is Test, RegistrySetupFull, AlloSetup, CVStrategyHel
                 PointSystem.Unlimited,
                 PointSystemConfig(200 * DECIMALS),
                 ArbitrableConfig(safeArbitrator, payable(address(_councilSafe())), 0.02 ether, 0.01 ether, 1, 300),
-                new address[](1)
+                new address[](1),
+                address(0),
+                0
             ),
             metadata
         );
