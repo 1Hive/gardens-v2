@@ -17,6 +17,7 @@ import { FormRadioButton } from "./FormRadioButton";
 import { FormSelect } from "./FormSelect";
 import { EthAddress } from "../EthAddress";
 import { Button } from "@/components/Button";
+import { DEFAULT_RULING_TIMEOUT_SEC } from "@/configs/constants";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainFromPath } from "@/hooks/useChainFromPath";
@@ -187,11 +188,7 @@ export function PoolForm({ token, communityAddr }: Props) {
     defaultValues: {
       strategyType: 1,
       pointSystemType: 0,
-      rulingTime: parseTimeUnit(
-        +(process.env.NEXT_PUBLIC_DEFAULT_RULING_TIMEOUT ?? 604800),
-        "seconds",
-        "days",
-      ),
+      rulingTime: parseTimeUnit(DEFAULT_RULING_TIMEOUT_SEC, "seconds", "days"),
       defaultResolution: 1,
       minThresholdPoints: 0,
       poolTokenAddress: token.id,
