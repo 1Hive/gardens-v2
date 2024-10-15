@@ -336,7 +336,7 @@ export const ConvictionBarChart = ({
         />
       : <>
           <ChartWrapper
-            message={message}
+            message={isSignalingType ? undefined : message}
             growing={growing}
             isSignalingType={isSignalingType}
           >

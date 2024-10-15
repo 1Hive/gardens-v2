@@ -139,7 +139,7 @@ export const chainConfigMap: {
     globalTribunal: "0x1B8C7f06F537711A7CAf6770051A43B4F3E69A7e",
     allo: "0x1133eA7Af70876e64665ecD07C0A0476d09465a1",
     arbitrator: "0xb39dfa15f96055664179e8ecaa890f3fa26c21e9",
-    passportScorer: "0x83bde2e2d8acaaad2d300da195df3cf86b234bdd",
+    passportScorer: "0xc93830dd463516ed5f28f6cd4f837173b87ff389",
     isTestnet: false,
   },
   137: {

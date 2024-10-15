@@ -134,7 +134,7 @@ export function ProposalCard({
             `At least ${supportNeededToPass}% needed`
           : proposalWillPass ?
             "Estimated time to pass:"
-          : !alreadyExecuted && readyToBeExecuted ?
+          : !alreadyExecuted && readyToBeExecuted && !isSignalingType ?
             "Ready to be executed"
           : ""}
         </p>

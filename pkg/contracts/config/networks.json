@@ -110,12 +110,16 @@
         "REGISTRY_FACTORY": "0xc1c2e092b7dbc8413e1ac02e92c161b0bda783f6",
         "REGISTRY_COMMUNITIES": [
           "0x8281fd9c5f709a681813c49843a253a05d9b837c",
+          "0xc3ba42da1d9f6b09d4d1315ac04f873a5ba64d3c",
           "0xf62a2e4ecf3bf73313b3bbbfb1563cb4433c8933"
         ],
         "CV_STRATEGIES": [
+          "0x7749aee50faeca5d7eed53bcbcf07db5aaf72e51",
           "0xad3d78ed1b03f26238845612eeb3c5b2677fa359",
-          "0xb9739585e54374268c231f042d384bfa57e41c95"
-        ]
+          "0xb9739585e54374268c231f042d384bfa57e41c95",
+          "0xea03978db787d89572cb7a07b60ac65b98111143"
+        ],
+        "PASSPORT_SCORER": "0xa2d5900d53a548637dd61312d02b90f3ff1d6a5e"
       }
     },
     {
@@ -134,7 +138,8 @@
         "REGISTRY_COMMUNITIES": [
           "0x2088bbe7e70acfaf643e834c96aa4c277be6653e",
           "0x3da181b922a890ec30c41ebe764c49f28f890e77",
-          "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955"
+          "0x888e2fbc7e7afe3a8f9b54030d0cb0eed896f955",
+          "0xcee4e641af10b05c17a657d038c2a0071e1ec051"
         ],
         "CV_STRATEGIES": [
           "0x1c720bfa4a2535fb6675b859a717b4cba56fd97b",
@@ -144,7 +149,8 @@
           "0x964251300e577801ce3e21897c6a335505fedee5",
           "0xaeecbc91e44541204d0c784e4ac3e8eca6a47cc8",
           "0xd9cf1f7d077166236e260819257a567b1ca22c8c"
-        ]
+        ],
+        "PASSPORT_SCORER": "0xc93830dd463516ed5f28f6cd4f837173b87ff389"
       }
     },
     {
@@ -163,7 +169,8 @@
         "REGISTRY_COMMUNITIES": [
           "0x9eee52873350c26d6c7fa23d048d22c4ab82db09"
         ],
-        "CV_STRATEGIES": []
+        "CV_STRATEGIES": [],
+        "PASSPORT_SCORER": "0x1fac47cf25f1ca9f20ba366099d26b28401f5715"
       }
     },
     {
@@ -179,8 +186,11 @@
       },
       "PROXIES": {
         "REGISTRY_FACTORY": "0x08df82f74d1f56f650e98da2dd4240f1a31711bc",
-        "REGISTRY_COMMUNITIES": [],
-        "CV_STRATEGIES": []
+        "REGISTRY_COMMUNITIES": [
+          "0xe2396fe2169ca026962971d3b2e373ba925b6257"
+        ],
+        "CV_STRATEGIES": [],
+        "PASSPORT_SCORER": "0xd7b72fcb6a4e2857685175f609d1498ff5392e46"
       }
     },
     {
