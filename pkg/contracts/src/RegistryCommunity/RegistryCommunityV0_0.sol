@@ -17,10 +17,57 @@ import {IRegistry, Metadata} from "allo-v2-contracts/core/interfaces/IRegistry.s
 import {FAllo} from "../interfaces/FAllo.sol";
 import {ISafe} from "../interfaces/ISafe.sol";
 import {IRegistryFactory} from "../IRegistryFactory.sol";
-import {CVStrategyV0_0, StrategyStruct, IPointStrategy} from "../CVStrategy/CVStrategyV0_0.sol";
+import {
+    CVStrategyV0_0,
+    IPointStrategy,
+    CVStrategyInitializeParamsV0_1,
+    PointSystem
+} from "../CVStrategy/CVStrategyV0_0.sol";
 import {Upgrades} from "@openzeppelin/foundry/LegacyUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ProxyOwnableUpgrader} from "../ProxyOwnableUpgrader.sol";
+import {ISybilScorer} from "../ISybilScorer.sol";
+
+/*|--------------------------------------------|*/
+/*|              STRUCTS/ENUMS                 |*/
+/*|--------------------------------------------|*/
+
+/// @dev Initialize parameters for the contract
+/// @param _allo The Allo contract address
+/// @param _gardenToken The token used to stake in the community
+/// @param _registerStakeAmount The amount of tokens required to register a member
+/// @param _communityFee The fee charged to the community for each registration
+/// @param _nonce The nonce used to create new strategy clones
+/// @param _registryFactory The address of the registry factory
+/// @param _feeReceiver The address that receives the community fee
+/// @param _metadata The covenant IPFS hash of the community
+/// @param _councilSafe The council safe contract address
+/// @param _communityName The community name
+/// @param _isKickEnabled Enable or disable the kick feature
+struct RegistryCommunityInitializeParamsV0_0 {
+    address _allo;
+    IERC20 _gardenToken;
+    uint256 _registerStakeAmount;
+    uint256 _communityFee;
+    uint256 _nonce;
+    address _registryFactory;
+    address _feeReceiver;
+    Metadata _metadata;
+    address payable _councilSafe;
+    string _communityName;
+    bool _isKickEnabled;
+    string covenantIpfsHash;
+}
+
+struct Member {
+    address member;
+    uint256 stakedAmount;
+    bool isRegistered;
+}
+
+struct Strategies {
+    address[] strategies;
+}
 
 /// @custom:oz-upgrades-from RegistryCommunityV0_0
 contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
@@ -45,6 +92,8 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     event MemberPowerDecreased(address _member, uint256 _unstakedAmount);
     event PoolCreated(uint256 _poolId, address _strategy, address _community, address _token, Metadata _metadata); // 0x778cac0a
 
+    error AllowlistTooBig(uint256 size);
+
     /*|--------------------------------------------|*/
     /*|              CUSTOM ERRORS                 |*/
     /*|--------------------------------------------|*/
@@ -67,25 +116,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
     error PointsDeactivated();
     error DecreaseUnderMinimum();
     error CantDecreaseMoreThanPower(uint256 _decreaseAmount, uint256 _currentPower);
-
-    /*|--------------------------------------------|*/
-    /*|              STRUCTS/ENUMS                 |*/
-    /*|--------------------------------------------|*/
-
-    struct InitializeParams {
-        address _allo;
-        IERC20 _gardenToken;
-        uint256 _registerStakeAmount;
-        uint256 _communityFee;
-        uint256 _nonce;
-        address _registryFactory;
-        address _feeReceiver;
-        Metadata _metadata;
-        address payable _councilSafe;
-        string _communityName;
-        bool _isKickEnabled;
-        string covenantIpfsHash;
-    }
 
     using ERC165Checker for address;
     using SafeERC20 for IERC20;
@@ -200,19 +230,6 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         if (_address == address(0)) revert AddressCannotBeZero();
     }
 
-    /*|--------------------------------------------|*o
-    /*|              STRUCTS/ENUMS                 |*/
-    /*|--------------------------------------------|*/
-    struct Member {
-        address member;
-        uint256 stakedAmount;
-        bool isRegistered;
-    }
-
-    struct Strategies {
-        address[] strategies;
-    }
-
     function setStrategyTemplate(address template) external onlyOwner {
         strategyTemplate = template;
     }
@@ -221,13 +238,15 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         collateralVaultTemplate = template;
     }
 
+    // AUDIT: acknowledged upgradeable contract hat does not protect initialize functions,
+    // slither-disable-next-line unprotected-upgrade
     function initialize(
-        RegistryCommunityV0_0.InitializeParams memory params,
+        RegistryCommunityInitializeParamsV0_0 memory params,
         address _strategyTemplate,
         address _collateralVaultTemplate,
-        address owner
+        address _owner
     ) public initializer {
-        super.initialize(owner);
+        super.initialize(_owner);
         __ReentrancyGuard_init();
         __AccessControl_init();
 
@@ -288,7 +307,7 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit RegistryInitialized(profileId, communityName, params._metadata);
     }
 
-    function createPool(address _token, StrategyStruct.InitializeParams memory _params, Metadata memory _metadata)
+    function createPool(address _token, CVStrategyInitializeParamsV0_1 memory _params, Metadata memory _metadata)
         public
         virtual
         returns (uint256 poolId, address strategy)
@@ -299,14 +318,29 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
                 abi.encodeWithSelector(CVStrategyV0_0.init.selector, address(allo), collateralVaultTemplate, owner())
             )
         );
+        (poolId, strategy) = createPool(strategyProxy, _token, _params, _metadata);
 
-        return createPool(strategyProxy, _token, _params, _metadata);
+        if (address(_params.sybilScorer) == address(0)) {
+            if (_params.initialAllowlist.length > 10000) {
+                revert AllowlistTooBig(_params.initialAllowlist.length);
+            }
+            bytes32 allowlistRole = keccak256(abi.encodePacked("ALLOWLIST", poolId));
+            for (uint256 i = 0; i < _params.initialAllowlist.length; i++) {
+                _grantRole(allowlistRole, _params.initialAllowlist[i]);
+            }
+        }
+
+        // Grant the strategy to grant for startegy specific allowlist
+        _setRoleAdmin(
+            keccak256(abi.encodePacked("ALLOWLIST", poolId)), keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId))
+        );
+        _grantRole(keccak256(abi.encodePacked("ALLOWLIST_ADMIN", poolId)), strategy);
     }
 
     function createPool(
         address _strategy,
         address _token,
-        StrategyStruct.InitializeParams memory _params,
+        CVStrategyInitializeParamsV0_1 memory _params,
         Metadata memory _metadata
     ) public virtual returns (uint256 poolId, address strategy) {
         address token = NATIVE;
@@ -324,9 +358,10 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         emit PoolCreated(poolId, strategy, address(this), _token, _metadata);
     }
 
-    function activateMemberInStrategy(address _member, address _strategy) public virtual {
+    function activateMemberInStrategy(address _member, address _strategy) public virtual nonReentrant {
         onlyRegistryMemberAddress(_member);
         onlyStrategyEnabled(_strategy);
+        onlyStrategyAddress(msg.sender, _strategy);
         _revertZeroAddress(_strategy);
 
         if (memberActivatedInStrategies[_member][_strategy]) {
@@ -338,9 +373,9 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
         uint256 totalStakedAmount = member.stakedAmount;
         uint256 pointsToIncrease = registerStakeAmount;
 
-        if (IPointStrategy(_strategy).getPointSystem() == StrategyStruct.PointSystem.Quadratic) {
+        if (IPointStrategy(_strategy).getPointSystem() == PointSystem.Quadratic) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, 0);
-        } else if (IPointStrategy(_strategy).getPointSystem() != StrategyStruct.PointSystem.Fixed) {
+        } else if (IPointStrategy(_strategy).getPointSystem() != PointSystem.Fixed) {
             pointsToIncrease = IPointStrategy(_strategy).increasePower(_member, totalStakedAmount);
         }
 
@@ -466,6 +501,10 @@ contract RegistryCommunityV0_0 is ProxyOwnableUpgrader, ReentrancyGuardUpgradeab
             revert StrategyExists();
         }
         enabledStrategies[_newStrategy] = true;
+        ISybilScorer sybilScorer= CVStrategyV0_0(payable(_newStrategy)).sybilScorer();
+        if (address(sybilScorer) != address(0)) {
+          sybilScorer.activateStrategy(_newStrategy);
+        }
         emit StrategyAdded(_newStrategy);
     }
 

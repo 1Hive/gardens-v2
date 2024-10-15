@@ -112,11 +112,13 @@ deploy-testnet-multi-arb:
 	--rpc-url $(RPC_URL_ARB_TESTNET) \
 	--sig "run(string)" 'arbsepolia' \
 	--account pkGarden \
+	--etherscan-api-key $(ARBISCAN_API_KEY) \
 	--ffi \
 	--chain-id 421614 \
 	--broadcast \
 	--legacy \
 	--via-ir \
+	--verify \
 	-vvvvv
 
 upgrade-testnet-multi-arb: 
@@ -131,6 +133,7 @@ upgrade-testnet-multi-arb:
 	--legacy \
 	--via-ir \
 	--verify \
+	--with-gas-price 500000000 \
 	-vvv
 
 verify-testnet-multi-arb: 
@@ -484,8 +487,8 @@ deploy-multi-gnosis:
 	--via-ir \
 	-vvv
 
-deploy-multi-gnosis: 
-	-forge script script/DeployCVMultiChain.s.sol:DeployCVMultiChain \
+upgrade-multi-gnosis: 
+	-forge script script/UpgradeCVMultichain.s.sol:UpgradeCVMultichain \
 	--rpc-url $(RPC_URL_GNOSIS) \
 	--sig "run(string)" 'gnosis' \
 	--account pkGarden \

@@ -27,7 +27,6 @@ import { InfoWrapper } from "./InfoWrapper";
 import { Modal } from "./Modal";
 import { ProposalTimeline } from "./ProposalTimeline";
 import { WalletBalance } from "./WalletBalance";
-import { DEFAULT_RULING_TIMEOUT_SEC } from "@/configs/constants";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
@@ -41,7 +40,7 @@ import {
   safeArbitratorABI,
 } from "@/src/generated";
 import { DisputeStatus, ProposalStatus } from "@/types";
-import { abiWithErrors2 } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { delayAsync } from "@/utils/delayAsync";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { convertSecondsToReadableTime } from "@/utils/numbers";
@@ -81,7 +80,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   const chainId = useChainIdFromPath();
   const [rulingLoading, setisRulingLoading] = useState<number | false>(false);
 
-  const config = proposalData.arbitrableConfig;
+  const arbitrationConfig = proposalData.arbitrableConfig;
 
   const { data: disputesResult } = useSubgraphQuery<getProposalDisputesQuery>({
     query: getProposalDisputesDocument,
@@ -101,8 +100,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     chainId,
     abi: iArbitratorABI,
     functionName: "arbitrationCost",
-    address: config?.arbitrator as Address,
-    enabled: !!config?.arbitrator,
+    address: arbitrationConfig?.arbitrator as Address,
+    enabled: !!arbitrationConfig?.arbitrator,
     args: ["0x0"],
   });
 
@@ -114,8 +113,8 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
   });
 
   const totalStake =
-    arbitrationCost && config ?
-      arbitrationCost + BigInt(config.challengerCollateralAmount)
+    arbitrationCost && arbitrationConfig ?
+      arbitrationCost + BigInt(arbitrationConfig.challengerCollateralAmount)
     : undefined;
   const lastDispute =
     disputesResult?.proposalDisputes[
@@ -130,15 +129,17 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     proposalData && lastDispute && proposalStatus === "disputed";
   const isTimeout =
     lastDispute &&
-    config &&
-    +lastDispute.createdAt + +config.defaultRulingTimeout < Date.now() / 1000;
+    arbitrationConfig &&
+    +lastDispute.createdAt + +arbitrationConfig.defaultRulingTimeout <
+      Date.now() / 1000;
   const disputes = disputesResult?.proposalDisputes ?? [];
   const isProposalEnded = proposalStatus !== "active" && !isDisputed;
-  const isTribunalSafe = config.tribunalSafe === address?.toLowerCase();
+  const isTribunalSafe =
+    arbitrationConfig.tribunalSafe === address?.toLowerCase();
 
   const { data: isTribunalMember } = useContractRead({
-    address: config.tribunalSafe as Address,
-    abi: abiWithErrors2(safeABI),
+    address: arbitrationConfig.tribunalSafe as Address,
+    abi: abiWithErrors(safeABI),
     functionName: "isOwner",
     chainId: Number(chainId),
     enabled: !!address,
@@ -188,7 +189,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     contractName: "SafeArbitrator",
     functionName: "executeRuling",
     abi: safeArbitratorABI,
-    address: config?.arbitrator as Address,
+    address: arbitrationConfig?.arbitrator as Address,
     onSuccess: () => {
       setIsModalOpened(false);
     },
@@ -260,7 +261,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
     useDisableButtons(disableSubmitBtn);
 
   const rulingTimeout = convertSecondsToReadableTime(
-    DEFAULT_RULING_TIMEOUT_SEC,
+    arbitrationConfig.defaultRulingTimeout,
   );
 
   const content = (
@@ -357,7 +358,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                     tooltip={tooltipMessage}
                   >
                     <InfoWrapper
-                      className="[&>svg]:text-danger-button [&:before]:mr-10"
+                      className="[&>svg]:text-error"
                       tooltip={
                         "Reject if the proposal violates the rules outlined in the community covenant."
                       }
@@ -381,7 +382,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
                 label="Dispute Stake"
                 token="native"
                 askedAmount={totalStake}
-                tooltip={`Collateral: ${formatEther(config.challengerCollateralAmount)} ETH \n Fee: ${formatEther(arbitrationCost ?? 0n)} ETH`}
+                tooltip={`Collateral: ${formatEther(arbitrationConfig.challengerCollateralAmount)} ETH \n Fee: ${formatEther(arbitrationCost ?? 0n)} ETH`}
                 setIsEnoughBalance={setIsEnoughBalance}
               />
             )}
@@ -420,7 +421,7 @@ export const DisputeButton: FC<Props> = ({ proposalData }) => {
             btnStyle="outline"
             onClick={() => setIsModalOpened(true)}
           >
-            {isDisputed ?? isProposalEnded ? "Open dispute" : "Dispute"}
+            {(isDisputed ?? isProposalEnded) ? "Open dispute" : "Dispute"}
           </Button>
           <Modal
             title={`Disputed Proposal: ${proposalData.title} #${proposalData.proposalNumber}`}

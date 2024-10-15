@@ -1,5 +1,5 @@
 import React from "react";
-import { RegisterOptions } from "react-hook-form";
+import { RegisterOptions, UseFormRegister } from "react-hook-form";
 import { InfoWrapper } from "../InfoWrapper";
 
 export type Option = { label: string; value: string | number };
@@ -7,10 +7,11 @@ export type Option = { label: string; value: string | number };
 type Props = {
   label: string;
   registerKey: any;
-  register: any;
+  register?: UseFormRegister<any>;
   errors?: any;
   required?: boolean;
   registerOptions?: RegisterOptions;
+  placeholder?: string;
   options: Option[];
   tooltip?: string;
   readOnly?: boolean;
@@ -23,13 +24,14 @@ export function FormSelect({
   register,
   required = false,
   registerOptions,
+  placeholder,
   options,
   tooltip,
   readOnly,
   disabled,
 }: Props) {
   return (
-    <div>
+    <div className="flex flex-col">
       <label htmlFor={registerKey} className="label w-fit">
         {tooltip ?
           <InfoWrapper tooltip={tooltip}>
@@ -48,14 +50,19 @@ export function FormSelect({
           "!border-gray-300 focus:none !outline-gray-300 !pointer-events-none bg-transparent !cursor-not-allowed"
         }`}
         id={registerKey}
-        {...register(registerKey, {
+        {...register?.(registerKey, {
           required,
-          readOnly,
           disabled,
           ...registerOptions,
         })}
         disabled={disabled}
+        defaultValue={""}
       >
+        {placeholder && (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        )}
         {options.map(({ value, label: lab }) => (
           <option value={value} key={value}>
             {lab}

@@ -15,17 +15,19 @@ import { FormInput } from "./FormInput";
 import { FormPreview, FormRow } from "./FormPreview";
 import { LoadingSpinner } from "../LoadingSpinner";
 import { WalletBalance } from "../WalletBalance";
-import { Button } from "@/components";
+import { Button, EthAddress } from "@/components";
 import { QUERY_PARAMS } from "@/constants/query-params";
 import { usePubSubContext } from "@/contexts/pubsub.context";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { ConditionObject, useDisableButtons } from "@/hooks/useDisableButtons";
 import { alloABI } from "@/src/generated";
 import { PoolTypes } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { getEventFromReceipt } from "@/utils/contracts";
 import { ipfsJsonUpload } from "@/utils/ipfsUtils";
 import { formatTokenAmount } from "@/utils/numbers";
+import { capitalize } from "@/utils/text";
+import { FormAddressInput } from "./FormAddressInput";
 
 //protocol : 1 => means ipfs!, to do some checks later
 type FormInputs = {
@@ -49,7 +51,7 @@ type ProposalFormProps = {
 
 type FormRowTypes = {
   label: string;
-  parse?: (value: any) => string;
+  parse?: (value: any) => React.ReactNode;
 };
 
 const abiParameters = [
@@ -124,11 +126,13 @@ export const ProposalForm = ({
     formState: { errors },
     getValues,
     setValue,
+    watch,
   } = useForm<FormInputs>();
 
   const { publish } = usePubSubContext();
 
   const chainId = alloInfo.chainId;
+  const beneficiary = watch("beneficiary");
 
   const formRowTypes: Record<string, FormRowTypes> = {
     amount: {
@@ -137,9 +141,13 @@ export const ProposalForm = ({
     },
     beneficiary: {
       label: "Beneficiary:",
+      parse: (value: string) => (
+        <EthAddress address={value as Address}></EthAddress>
+      ),
     },
     proposalType: {
       label: "Proposal Type:",
+      parse: (value: number) => capitalize(PoolTypes[value]),
     },
     strategy: { label: "Strategy:" },
   };
@@ -200,7 +208,7 @@ export const ProposalForm = ({
     abi: abiWithErrors(alloABI),
     contractName: "Allo",
     functionName: "registerRecipient",
-    fallbackErrorMessage: "Error creating Proposal. Please try again.",
+    fallbackErrorMessage: "Error creating Proposal, please report a bug.",
     value: arbitrableConfig.submitterCollateralAmount,
     onConfirmations: (receipt) => {
       const proposalId = getEventFromReceipt(
@@ -330,7 +338,7 @@ export const ProposalForm = ({
                 registerOptions={{
                   max: {
                     value: spendingLimitNumber,
-                    message: `Max amount cannot exceed ${formatNumber(spendingLimitString)} ${poolToken?.symbol}`,
+                    message: `Max amount must remain under the spending limit of ${formatNumber(spendingLimitString)} ${poolToken?.symbol}`,
                   },
                   min: {
                     value: INPUT_TOKEN_MIN_VALUE,
@@ -347,25 +355,19 @@ export const ProposalForm = ({
                 type="number"
                 placeholder="0"
                 suffix={poolToken?.symbol}
-               />
+              />
             </div>
           )}
           {proposalTypeName !== "signaling" && (
             <div className="flex flex-col">
-              <FormInput
-                label="Beneficary address"
-                register={register}
-                registerOptions={{
-                  pattern: {
-                    value: ethereumAddressRegEx,
-                    message: "Invalid Eth Address",
-                  },
+              <FormAddressInput
+                label="Beneficiary address"
+                value={beneficiary}
+                onChange={(e) => {
+                  setValue("beneficiary", e.target.value);
                 }}
                 required
                 errors={errors}
-                registerKey="beneficiary"
-                type="text"
-                placeholder="0x000..."
               />
             </div>
           )}
@@ -403,10 +405,10 @@ export const ProposalForm = ({
           {arbitrableConfig && (
             <WalletBalance
               askedAmount={arbitrableConfig.submitterCollateralAmount}
-              label="Proposal stake"
+              label="Collateral deposit"
               setIsEnoughBalance={setIsEnoughBalance}
               token="native"
-              tooltip="A stake is required for proposal submission. It will be refunded upon proposal execution or cancellation, except in the case of disputes, where it is forfeited."
+              tooltip="A stake is required as collateral for proposal submission and is returned upon execution or cancellation, except in the case of disputed and found to be in violation of the Covenant by the Tribunal, where it is forfeited."
             />
           )}
         </div>

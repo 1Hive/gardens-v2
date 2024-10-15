@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { zeroAddress } from "viem";
 import { Address, useContractRead } from "wagmi";
 import {
   CVProposal,
@@ -48,7 +47,7 @@ export const useConvictionRead = ({
   const chain = useChainFromPath();
 
   const cvStrategyContract = {
-    address: (proposalData?.strategy.id ?? zeroAddress) as Address,
+    address: proposalData?.strategy.id as Address,
     abi: cvStrategyABI,
     chainId: chainIdFromPath,
     enabled: !!proposalData,
@@ -141,16 +140,6 @@ export const useConvictionRead = ({
     proposalData.strategy.maxCVSupply,
     token?.decimals ?? 18,
   );
-
-  // console.log({
-  //   convictionFromContract,
-  //   updatedConviction,
-  //   convictionLast,
-  //   maxCVSupply: proposalData.strategy.maxCVSupply,
-  //   stakedAmount: proposalData.stakedAmount,
-  //   totalEffectiveActivePoints:
-  //     proposalData.strategy.totalEffectiveActivePoints,
-  // });
 
   logOnce("debug", "Conviction computed numbers", {
     thresholdPct,

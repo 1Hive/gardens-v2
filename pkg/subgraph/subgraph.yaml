@@ -6,15 +6,15 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: RegistryFactoryV0_0
-    network: localhost
+    network: gnosis
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 100
     source:
-      address: "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e"
+      address: "0x08df82f74d1f56f650e98da2dd4240f1a31711bc"
       abi: RegistryFactoryV0_0
-      startBlock: 0
+      startBlock: 36032424
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -40,15 +40,15 @@ dataSources:
 
   - kind: ethereum/contract
     name: PassportScorer
-    network: localhost
+    network: gnosis
     context:
       chainId: 
         type: Int
-        data: 1337
+        data: 100
     source:
-      address: "0x0165878a594ca255338adfa4d48449f69242eb8f"
+      address: "0xd7b72fcb6a4e2857685175f609d1498ff5392e46"
       abi: PassportScorer
-      startBlock: 0
+      startBlock: 36032424
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -59,20 +59,26 @@ dataSources:
         - name: PassportScorer
           file: ../contracts/out/PassportScorer.sol/PassportScorer.json
       eventHandlers:
-        - event: UserScoreAdded(indexed address,uint256,uint256)
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: UserScoreAdded(indexed address,uint256)
           handler: handleUserScoreAdded
         - event: UserRemoved(indexed address)
           handler: handleUserRemoved
         - event: StrategyAdded(indexed address,uint256,bool,address)
           handler: handleStrategyAdded
+        - event: StrategyRemoved(indexed address)
+          handler: handleStrategyRemoved
         - event: StrategyActivated(indexed address)
           handler: handleStrategyActivated
+        - event: ThresholdModified(indexed address,uint256)
+          handler: handleThresholdModified
       file: ./src/mappings/passport-scorer.ts
 
 templates:
   - kind: ethereum/contract
     name: RegistryCommunityV0_0
-    network: localhost
+    network: gnosis
     source:
       abi: RegistryCommunityV0_0
     mapping:
@@ -134,7 +140,7 @@ templates:
 
   - kind: ethereum/contract
     name: CVStrategyV0_0
-    network: localhost
+    network: gnosis
     source:
       abi: CVStrategyV0_0
     mapping:
@@ -156,6 +162,8 @@ templates:
       eventHandlers:
         - event: InitializedCV(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address))
           handler: handleInitialized
+        - event: InitializedCV2(uint256,((uint256,uint256,uint256,uint256),uint8,uint8,(uint256),(address,address,uint256,uint256,uint256,uint256),address,address,uint256,address[]))
+          handler: handleInitializedV2
         - event: ProposalCreated(uint256,uint256)
           handler: handleProposalCreated
         - event: PoolAmountIncreased(uint256)
@@ -180,11 +188,18 @@ templates:
           handler: handleProposalCancelled
         - event: ArbitrableConfigUpdated(uint256,address,address,uint256,uint256,uint256,uint256)
           handler: handleArbitrableConfigUpdated
+        - event: AllowlistMembersAdded(uint256,address[])
+          handler: handleAllowlistMembersAdded
+        - event: AllowlistMembersRemoved(uint256,address[])
+          handler: handleAllowlistMembersRemoved
+        - event: SybilScorerUpdated(address)
+          handler: handleSybilScorerUpdated
+ 
       file: ./src/mappings/cv-strategy.ts
 
   - kind: ethereum/contract
     name: CollateralVault
-    network: localhost
+    network: gnosis
     source:
       abi: CollateralVault
     mapping:

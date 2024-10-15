@@ -30,7 +30,7 @@ import { useMetadataIpfsFetch } from "@/hooks/useIpfsFetch";
 import { useSubgraphQuery } from "@/hooks/useSubgraphQuery";
 import { alloABI } from "@/src/generated";
 import { PoolTypes, ProposalStatus } from "@/types";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 import { useErrorDetails } from "@/utils/getErrorName";
 import { prettyTimestamp } from "@/utils/text";
 
@@ -124,7 +124,7 @@ export default function Page({
     abi: abiWithErrors(alloABI),
     functionName: "distribute",
     contractName: "Allo",
-    fallbackErrorMessage: "Error executing proposal. Please try again.",
+    fallbackErrorMessage: "Error executing proposal, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "proposal",

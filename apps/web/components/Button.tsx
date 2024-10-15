@@ -12,9 +12,11 @@ type ButtonProps = {
   btnStyle?: BtnStyle;
   color?: Color;
   onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
+  showToolTip?: boolean;
   className?: string;
   disabled?: boolean;
   tooltip?: string;
+  tooltipClassName?: string;
   tooltipSide?:
     | "tooltip-top"
     | "tooltip-bottom"
@@ -55,7 +57,7 @@ const btnStyles: BtnStyles = {
     tertiary: "",
     danger:
       "text-danger-button border border-danger-button hover:text-danger-hover-content hover:outline-danger-hover-content",
-    disabled: "text-neutral-soft border border-neutral-soft",
+    disabled: "text-neutral-soft-content border border-neutral-soft-content",
   },
   link: {
     primary: "text-primary-content",
@@ -70,7 +72,9 @@ export function Button({
   onClick,
   className: styles,
   disabled = false,
-  tooltip = "Connect wallet",
+  tooltip,
+  showToolTip = false,
+  tooltipClassName: tooltipStyles,
   tooltipSide = "tooltip-top",
   children,
   btnStyle = "filled",
@@ -98,8 +102,11 @@ export function Button({
     </button>
   );
 
-  return disabled ?
-      <div className={`tooltip ${tooltipSide} ${styles}`} data-tip={tooltip}>
+  return disabled || showToolTip ?
+      <div
+        className={`tooltip ${tooltipSide} ${tooltipStyles}`}
+        data-tip={tooltip}
+      >
         {buttonElement}
       </div>
     : buttonElement;

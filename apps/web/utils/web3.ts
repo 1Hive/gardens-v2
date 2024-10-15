@@ -5,7 +5,7 @@ import { ChainId } from "@/types";
 export function getViemChain(chainId: ChainId): Chain {
   for (const chain of Object.values(chains)) {
     if ("id" in chain) {
-      if (chain.id === chainId) {
+      if (chain.id == chainId) {
         return chain;
       }
     }

@@ -9,7 +9,7 @@ import { useChainIdFromPath } from "@/hooks/useChainIdFromPath";
 import { useContractWriteWithConfirmations } from "@/hooks/useContractWriteWithConfirmations";
 import { MetadataV1 } from "@/hooks/useIpfsFetch";
 import { cvStrategyABI } from "@/src/generated";
-import { abiWithErrors } from "@/utils/abiWithErrors";
+import { abiWithErrors } from "@/utils/abi";
 
 type Props = {
   proposalData: Maybe<
@@ -32,7 +32,7 @@ function CancelButton({ proposalData }: Props) {
     abi: abiWithErrors(cvStrategyABI),
     functionName: "cancelProposal",
     contractName: "CV Strategy",
-    fallbackErrorMessage: "Error cancelling proposal. Please try again.",
+    fallbackErrorMessage: "Error cancelling proposal, please report a bug.",
     onConfirmations: () => {
       publish({
         topic: "proposal",
