@@ -222,3 +222,13 @@ caption {
     display: none;
   }
 }
+
+.md-editor-preview {
+  ol {
+    list-style-type: decimal;
+  }
+
+  ul {
+    list-style: unset;
+  }
+}

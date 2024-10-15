@@ -219,7 +219,7 @@ export function getConfigByChain(chainId: ChainId): ChainData | undefined {
 }
 
 export function getChain(chainId: ChainId): Chain | undefined {
-  return chains.find((chain) => chain.id === chainId);
+  return chains.find((chain) => chain.id == chainId);
 }
 
 export const ChainIcon: FC<ChainIconProps> = ({ chain, ...props }) => {
